@@ -3,9 +3,6 @@ import type { SimulatorPresentationPackage } from "../public/contracts";
 export function createTestPresentationPackage(): SimulatorPresentationPackage {
   const jacket = structuralPng(360, 360);
   const backdrop = structuralPng(1600, 720);
-  const slots = [0, 1, 2, 3, 4].map(() => structuralPng(1600, 720)) as [
-    Uint8Array, Uint8Array, Uint8Array, Uint8Array, Uint8Array,
-  ];
   return {
     song: {
       title: "Test Song",
@@ -16,7 +13,7 @@ export function createTestPresentationPackage(): SimulatorPresentationPackage {
     },
     difficulty: { type: "EXPERT", level: 25 },
     jacketPng: jacket,
-    stage: { backdropPng: backdrop, sdCharacterAtlases: slots },
+    stage: { backdropPng: backdrop, sdCharacterAtlases: null },
     liveStartVoiceMp3: null,
     mv: null,
   };

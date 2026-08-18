@@ -48,9 +48,16 @@ export async function createPixiStartupDirectionScene(
   isFullLength: boolean,
   includeStandardStage = true,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
+  if (presentation.sdCharacters.length !== 0) {
+    return evidenceRequired(
+      "render.startup-direction.non-empty-sd-character-assets",
+      ["SDN01", "SDN02", "SDN04"],
+      "The portable host maps literal-null SD-character input to one owned empty collection; character placeholders or caller overlays are forbidden.",
+    );
+  }
   const prepared = [] as Texture[];
   const images = includeStandardStage
-    ? [presentation.stageBackdrop, ...presentation.sdCharacters, presentation.jacket]
+    ? [presentation.stageBackdrop, presentation.jacket]
     : [presentation.jacket];
   for (const image of images) {
     const profile: RenderResourceAssetProfile = Object.freeze({

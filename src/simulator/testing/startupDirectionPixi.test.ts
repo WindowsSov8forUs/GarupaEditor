@@ -26,9 +26,19 @@ import { startupDirectionResourceKey } from "../resources/staticResourceSelector
 
 async function main(): Promise<void> {
   await testCommonResourcePreparation();
-  const presentation = await deriveSessionPresentation(createTestPresentationPackage(), { inspect: async () => ({ status: "accepted", value: {} }) } as any);
+  const presentation = await deriveSessionPresentation(createTestPresentationPackage());
   assert.equal(presentation.status, "accepted");
   if (presentation.status !== "accepted") return;
+  const forbiddenCharacters = await createPixiStartupDirectionScene(
+    { ...presentation.value, sdCharacters: [presentation.value.stageBackdrop] } as any,
+    {} as any,
+    {} as any,
+    true,
+  );
+  assert.equal(forbiddenCharacters.status, "evidence-required");
+  if (forbiddenCharacters.status === "evidence-required") {
+    assert.equal(forbiddenCharacters.capability, "render.startup-direction.non-empty-sd-character-assets");
+  }
   const commonTextures = Array.from({ length: 8 }, () => new Texture());
   const scene = await createPixiStartupDirectionScene(
     presentation.value,
@@ -49,7 +59,7 @@ async function main(): Promise<void> {
   if (scene.status !== "ok") return;
   assert.equal(scene.value.backgroundRoot.label, PIXI_STARTUP_BACKGROUND_LABEL);
   assert.equal(scene.value.foregroundRoot.label, PIXI_STARTUP_FOREGROUND_LABEL);
-  assert.equal(scene.value.snapshot().dynamicTextureCount, 7);
+  assert.equal(scene.value.snapshot().dynamicTextureCount, 2);
   scene.value.publish({
     ...INITIAL_STARTUP_DIRECTION_SCENE_STATE,
     sequence: 1,
@@ -63,6 +73,7 @@ async function main(): Promise<void> {
   });
   assert.equal(scene.value.snapshot().informationAlpha, 1);
   assert.equal(scene.value.snapshot().stageProgress, 0.5);
+  assert.equal(scene.value.snapshot().characterAlpha, 0);
 
   const particle = new Container({ label: PIXI_PARTICLE_STAGE_LABEL });
   const ordinary = new Container({ label: PIXI_ORDINARY_STAGE_LABEL });

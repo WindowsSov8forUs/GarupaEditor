@@ -240,7 +240,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     );
     const assembly = await assembleSimulatorResources(
       bgm.value,
-      presentation.value.liveStartVoice,
       selection,
       this.platform.staticResources,
       {
@@ -361,7 +360,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           }),
       startupDirection: {
         scene: startupScene.value,
-        liveStartVoiceCue: presentation.value.liveStartVoice?.cue ?? null,
+        liveStartVoiceCue: null,
         purpose,
       },
     }, backends);
@@ -447,8 +446,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (existing !== undefined) return existing;
     const pending = deriveSessionPresentation(
       recipe.request.presentation,
-      this.audioPreflight,
-      recipe.request.config.sessionMode === "live",
     );
     this.presentationByRecipe.set(recipe, pending);
     return pending;

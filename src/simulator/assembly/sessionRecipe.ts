@@ -37,7 +37,7 @@ import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 7;
+  readonly schemaVersion: 8;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -67,7 +67,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 7 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 8 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {

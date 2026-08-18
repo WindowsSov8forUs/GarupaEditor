@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema7 exact shape/copy/PNG/MP3/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema8 exact shape/copy/PNG/literal-null SD+voice/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -20,16 +20,16 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 7);
+  assert.equal(result.value.schemaVersion, 8);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
   const first = result.value.request.presentation.jacketPng[0];
   source.presentation.jacketPng[0] = 0;
-  source.presentation.stage.sdCharacterAtlases[0][0] = 0;
   assert.equal(result.value.request.presentation.jacketPng[0], first);
   assert.notEqual(result.value.request.presentation.jacketPng, source.presentation.jacketPng);
-  assert.notEqual(result.value.request.presentation.stage.sdCharacterAtlases[0], source.presentation.stage.sdCharacterAtlases[0]);
+  assert.equal(result.value.request.presentation.stage.sdCharacterAtlases, null);
+  assert.equal(result.value.request.presentation.liveStartVoiceMp3, null);
 
   const mvBytes = Uint8Array.of(1, 2, 3, 4);
   const copied = copyAndFreezeSimulatorPresentation({
@@ -73,9 +73,11 @@ function testMalformedPresentationFailsClosed(): void {
   const extra: any = request();
   extra.presentation.defaultJacket = true;
   assertInvalid(extra, "simulator.presentation.invalid-public-package");
-  const slots: any = request();
-  slots.presentation.stage.sdCharacterAtlases.pop();
-  assertInvalid(slots, "simulator.presentation.invalid-public-package");
+  for (const forbiddenSdCharacters of [[], [Uint8Array.of(1)], createTestPresentationPackage().stage.backdropPng]) {
+    const suppliedCharacters: any = request();
+    suppliedCharacters.presentation.stage.sdCharacterAtlases = forbiddenSdCharacters;
+    assertInvalid(suppliedCharacters, "simulator.presentation.invalid-public-package");
+  }
   const wrongSize: any = request();
   wrongSize.presentation.stage.backdropPng = Uint8Array.from(wrongSize.presentation.jacketPng);
   assertInvalid(wrongSize, "simulator.presentation.invalid-png");
@@ -88,9 +90,11 @@ function testMalformedPresentationFailsClosed(): void {
   const missingGlyph: any = request();
   missingGlyph.presentation.song.title = "😀";
   assertInvalid(missingGlyph, "simulator.presentation.missing-font-glyph");
-  const badVoice: any = request();
-  badVoice.presentation.liveStartVoiceMp3 = new Uint16Array([1]);
-  assertInvalid(badVoice, "simulator.presentation.invalid-public-package");
+  for (const forbiddenVoice of [Uint8Array.of(0xff, 0xfb, 0x90, 0), new Uint16Array([1])]) {
+    const suppliedVoice: any = request();
+    suppliedVoice.presentation.liveStartVoiceMp3 = forbiddenVoice;
+    assertInvalid(suppliedVoice, "simulator.presentation.invalid-public-package");
+  }
   for (const mv of [
     {},
     { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 0, mime: "video/mp4" },
@@ -108,28 +112,15 @@ function testMalformedPresentationFailsClosed(): void {
 
 async function testInternalDerivation(): Promise<void> {
   const presentation = createTestPresentationPackage();
-  const nullVoice = await deriveSessionPresentation(presentation, preflight());
-  assert.equal(nullVoice.status, "accepted");
-  if (nullVoice.status === "accepted") {
-    assert.equal(nullVoice.value.jacket.width, 360);
-    assert.equal(nullVoice.value.stageBackdrop.width, 1600);
-    assert.equal(nullVoice.value.sdCharacters.length, 5);
-    assert.equal(nullVoice.value.liveStartVoice, null);
-    assert.match(nullVoice.value.jacket.logicalId, /^startup\/session\/jacket\/[0-9A-F]{64}$/);
-  }
-  const voice = { ...presentation, liveStartVoiceMp3: Uint8Array.of(0xff, 0xfb, 0x90, 0x00) };
-  const prepared = await deriveSessionPresentation(voice, preflight());
+  const prepared = await deriveSessionPresentation(presentation);
   assert.equal(prepared.status, "accepted");
   if (prepared.status === "accepted") {
-    assert.equal(prepared.value.liveStartVoice?.sampleFrames, 44100);
-    assert.equal(prepared.value.liveStartVoice?.durationSeconds, 1);
+    assert.equal(prepared.value.jacket.width, 360);
+    assert.equal(prepared.value.stageBackdrop.width, 1600);
+    assert.equal(prepared.value.sdCharacters.length, 0);
+    assert.equal(Object.isFrozen(prepared.value.sdCharacters), true);
+    assert.match(prepared.value.jacket.logicalId, /^startup\/session\/jacket\/[0-9A-F]{64}$/);
   }
-  const invalid = await deriveSessionPresentation(
-    { ...presentation, liveStartVoiceMp3: Uint8Array.of(1, 2, 3, 4) },
-    preflight(),
-  );
-  assert.equal(invalid.status, "rejected");
-  if (invalid.status === "rejected") assert.equal(invalid.failure.capability, "simulator.presentation.invalid-live-start-voice-mp3");
 }
 
 function request(): SimulatorModuleLaunchRequest {
@@ -150,13 +141,6 @@ function request(): SimulatorModuleLaunchRequest {
         highAspectRatio: 1, habahiroMeshWidthSetting: Math.fround(1),
       },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },
-    },
-  };
-}
-function preflight(): any {
-  return {
-    async inspect() {
-      return { status: "accepted", value: { codec: "mp3", sampleRate: 44100, channels: 2, sampleFrames: 44100, durationSeconds: 1 } };
     },
   };
 }

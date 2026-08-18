@@ -14,6 +14,6 @@
 - `reverse-snapshots/live-rehearsal/` 包含已推送Reverse `d100f96e`四模式/MoveTime合同与`6c0dfb76`control rendering profile两个最小JSON；不复制R1 trace或截图，controls atlas复用既有Score HUD快照。
 - `reverse-snapshots/public-life-profile/` 只包含已推送Reverse `2cbea93d`的结构化合同JSON，用于校验普通单曲`1000/1000/2000`初始化与non-full/full伤害`-100/-50`、`-50/-25`；不复制ARM64切片或本地静态输入。
 - `reverse-snapshots/ordinary-rendering-total-reaudit/` 只晋升Reverse `6908ddfa`的候选最小夹具：selected hierarchy/world坐标、HUD descendant布局/TweenAlpha/GameJudge静态oracle、particle→Note/HUD combined-root顺序、资源logical IDs及明确不作为原作oracle的browser验收政策；不复制13,323行完整账本、原始trace或Reverse closure。
-- `reverse-snapshots/startup-direction/` 只包含已推送Reverse `78e6a70e` 的SD01–SD16行为合同、portable hierarchy/geometry/timing/profile及唯一新增line-star PNG；共享atlas/font复用既有fixture，不复制ARM64、raw trace、截图、Prefab或动态presentation资源。
+- `reverse-snapshots/startup-direction/` 包含已推送Reverse `78e6a70e` 的SD01–SD16行为合同、portable hierarchy/geometry/timing/profile及line-star PNG，并新增Reverse `d408d758`的SDN01–SDN04空SD/空语音合同；共享atlas/font复用既有fixture，不复制ARM64、raw trace、截图、Prefab或动态presentation资源。
 - `reverse-snapshots/startup-audio/` 只包含已推送Reverse `b17e64e9`的完整四模式startup-audio callgraph合同，以及供离线真实MP3解码所需的最小`SE_RHYTHM_GAYA`字节快照。该MP3由合同中的外部reference URL取得并以151,033 bytes / `00DCFC…7554`固定；它只服务testing，production不得读取fixture或隐式联网。
 - `reverse-snapshots/mv-live/` 只包含已推送Reverse `38802391`的runtime contract、command oracle、zero-count closure、portable media profile，以及项目自制20-frame MP4/H264和WebM/VP9 browser probe；不复制R1 trace、截图、83个ARM64切片或61MB original USM。probe不是原作画面/时序依据，production不得读取fixture。

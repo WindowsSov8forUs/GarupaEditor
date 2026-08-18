@@ -50,7 +50,7 @@ try {
   if (audioStable.some((value) => value !== audioStable[0])) throw new Error("startup WebView2 audio fresh processes differ");
   const visualDigest = createHash("sha256").update(visualStable[0]).digest("hex");
   const audioDigest = createHash("sha256").update(audioStable[0]).digest("hex");
-  if (visualDigest !== "0f33657eff4dfacad24ad51a495cb1adde81af9b5e3fa4a44a8996f5a93dc14d") {
+  if (visualDigest !== "6fe9d1f49a1991af225be68731ba9f72346dcd35ef6c2eb735777b9170648f5b") {
     throw new Error(`startup visual digest changed: ${visualDigest}`);
   }
   if (audioDigest !== "88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268") {
@@ -62,7 +62,7 @@ try {
   for (let index = 1; index <= 3; index += 1) rmSync(join(harnessRoot, `startup-capture-${index}.json`), { force: true });
 }
 function verify(value) {
-  if (value.schema !== "garupa-startup-direction-webview2-v2" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.captures?.length !== 28 || value.cleanup?.stageChildren !== 0 || value.cleanup?.audioDisposed !== true) {
+  if (value.schema !== "garupa-startup-direction-webview2-v3" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.sdCharacterVisuals !== 0 || value.scene?.captures?.length !== 28 || value.cleanup?.stageChildren !== 0 || value.cleanup?.audioDisposed !== true) {
     throw new Error(`startup WebView2 failure: ${JSON.stringify(value)}`);
   }
   if (value.scene.captures.some((row) => row.visible <= 0 || !/^[0-9a-f]{64}$/.test(row.rgbaSha256))) throw new Error("startup WebView2 capture is empty or unhashed");

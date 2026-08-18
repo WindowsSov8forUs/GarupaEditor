@@ -31,15 +31,9 @@ export interface SimulatorPresentationPackage {
   readonly jacketPng: SimulatorPresentationPng;
   readonly stage: {
     readonly backdropPng: SimulatorPresentationPng;
-    readonly sdCharacterAtlases: readonly [
-      SimulatorPresentationPng,
-      SimulatorPresentationPng,
-      SimulatorPresentationPng,
-      SimulatorPresentationPng,
-      SimulatorPresentationPng,
-    ];
+    readonly sdCharacterAtlases: null;
   };
-  readonly liveStartVoiceMp3: Uint8Array | null;
+  readonly liveStartVoiceMp3: null;
   readonly mv: SimulatorPresentationMvPackage | null;
 }
 

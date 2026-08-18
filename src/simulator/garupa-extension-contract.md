@@ -7,7 +7,7 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
-- Public request schema 7 supplies only canonical `GarupaChartJson`, BGM bytes
+- Public request schema 8 supplies only canonical `GarupaChartJson`, BGM bytes
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.

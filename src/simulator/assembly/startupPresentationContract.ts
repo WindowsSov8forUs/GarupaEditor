@@ -1,16 +1,12 @@
 import type {
   SimulatorPresentationMvPackage,
   SimulatorPresentationPackage,
-  SimulatorPresentationPng,
 } from "../public/contracts";
 import {
   rejected,
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
-import { inspectMp3FirstFrame } from "./sessionBgmDerivation";
 import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
-
-export const STARTUP_PRESENTATION_SD_SLOT_COUNT = 5 as const;
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
 export const STARTUP_STAGE_SIZE = Object.freeze({ width: 1600, height: 720 });
 
@@ -25,7 +21,7 @@ export function copyAndFreezeSimulatorPresentation(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationPackage> {
   if (!isExactObject(value, "difficulty,jacketPng,liveStartVoiceMp3,mv,song,stage")) {
-    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage, liveStartVoiceMp3 and nullable mv keys.");
+    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage, literal-null liveStartVoiceMp3 and nullable mv keys.");
   }
   const presentation = value as unknown as SimulatorPresentationPackage;
   if (!isExactObject(presentation.song, "arranger,bandName,composer,lyricist,title") ||
@@ -54,36 +50,14 @@ export function copyAndFreezeSimulatorPresentation(
     return invalid("Difficulty requires one confirmed uppercase type and one positive integer level.");
   }
   if (!isExactObject(presentation.stage, "backdropPng,sdCharacterAtlases") ||
-    !Array.isArray(presentation.stage.sdCharacterAtlases) ||
-    presentation.stage.sdCharacterAtlases.length !== STARTUP_PRESENTATION_SD_SLOT_COUNT) {
-    return invalid("The standard 2D stage requires one backdrop and exactly five ordered SD character overlays.");
+    presentation.stage.sdCharacterAtlases !== null ||
+    presentation.liveStartVoiceMp3 !== null) {
+    return invalid("The standard 2D stage requires one backdrop while SD-character atlases and live-start voice remain literal null; placeholders and caller media are forbidden by SDN01/SDN02/SDN03/SDN04.");
   }
   const jacket = copyPng(presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height, "jacket");
   if (jacket.status === "rejected") return jacket;
   const backdrop = copyPng(presentation.stage.backdropPng, STARTUP_STAGE_SIZE.width, STARTUP_STAGE_SIZE.height, "stage-backdrop");
   if (backdrop.status === "rejected") return backdrop;
-  const slots: SimulatorPresentationPng[] = [];
-  for (let index = 0; index < STARTUP_PRESENTATION_SD_SLOT_COUNT; index += 1) {
-    const slot = copyPng(
-      presentation.stage.sdCharacterAtlases[index],
-      STARTUP_STAGE_SIZE.width,
-      STARTUP_STAGE_SIZE.height,
-      `sd-character-${index}`,
-    );
-    if (slot.status === "rejected") return slot;
-    slots.push(slot.value);
-  }
-  const voice = presentation.liveStartVoiceMp3;
-  if (voice !== null && (!(voice instanceof Uint8Array) ||
-    Object.getPrototypeOf(voice) !== Uint8Array.prototype || voice.byteLength === 0)) {
-    return invalid("liveStartVoiceMp3 is either null for the evidenced missing SoundResource route or one non-empty direct Uint8Array.");
-  }
-  if (voice !== null) {
-    const mp3 = inspectMp3FirstFrame(voice);
-    if (mp3.status === "rejected") {
-      return rejected("resource-decode", "simulator.presentation.invalid-live-start-voice-mp3", mp3.failure.boundary);
-    }
-  }
   const mv = copyMvPackage(presentation.mv);
   if (mv.status === "rejected") return mv;
   return accepted(Object.freeze({
@@ -101,9 +75,9 @@ export function copyAndFreezeSimulatorPresentation(
     jacketPng: jacket.value,
     stage: Object.freeze({
       backdropPng: backdrop.value,
-      sdCharacterAtlases: Object.freeze(slots) as unknown as SimulatorPresentationPackage["stage"]["sdCharacterAtlases"],
+      sdCharacterAtlases: null,
     }),
-    liveStartVoiceMp3: voice === null ? null : Uint8Array.from(voice),
+    liveStartVoiceMp3: null,
     mv: mv.value,
   }));
 }

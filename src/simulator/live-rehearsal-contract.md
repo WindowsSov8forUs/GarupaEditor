@@ -36,7 +36,7 @@ Standard四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OP
 
 Retry创建fresh Practice链，不继承旧owner；MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
-Launch根仍精确三键`{chartData,presentation,config}`。Schema 7 presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。
+Launch根仍精确三键`{chartData,presentation,config}`。Schema 8 presentation将SD角色与开场语音固定为null，另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。
 
 ## Life初始化与生命周期
 

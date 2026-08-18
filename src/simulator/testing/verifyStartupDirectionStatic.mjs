@@ -12,12 +12,16 @@ const recipe = read("assembly/sessionRecipe.ts");
 const controller = read("engine/managers/startupDirectionController.ts");
 const startupAudioOwner = read("engine/audio/startupAudioOwner.ts");
 const platform = read("platform/platformComposition.ts");
+const presentationContract = read("assembly/startupPresentationContract.ts");
+const presentationDerivation = read("assembly/sessionPresentationDerivation.ts");
+const resourceAssembly = read("assembly/resourceAssembly.ts");
 const publicBarrel = read("public/index.ts") + read("index.ts");
 
 for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
-  "readonly liveStartVoiceMp3: Uint8Array | null;",
-  "readonly schemaVersion: 7;",
+  "readonly sdCharacterAtlases: null;",
+  "readonly liveStartVoiceMp3: null;",
+  "readonly schemaVersion: 8;",
   'Object.keys(request).sort().join(\",\") !== \"chartData,config,presentation\"',
   '"move-time-reconstruction"',
 ]) {
@@ -26,13 +30,31 @@ for (const required of [
 for (const state of ["Prepare: 0", "OPFirstAnimStart: 1", "OPFirstAnimEnd: 2", "OPLastAnimStart: 3", "PlayingNone: 4", "PlayingSound: 5"]) {
   if (!read("engine/data/inGameState.ts").includes(state)) throw new Error(`startup state missing: ${state}`);
 }
-for (const evidence of ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD13", "SD14", "SD15", "SD16"]) {
+for (const evidence of ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD13", "SD14", "SD15", "SD16", "SDN01", "SDN02", "SDN03", "SDN04"]) {
   if (!joined.includes(evidence)) throw new Error(`startup evidence consumption missing: ${evidence}`);
 }
 for (const required of [
   "deriveSessionPresentation", "getStartupDirectionCommonResources",
-  "createPixiStartupDirectionScene", "liveStartVoiceCue", "purpose",
+  "createPixiStartupDirectionScene", "liveStartVoiceCue: null", "purpose",
 ]) if (!platform.includes(required)) throw new Error(`production startup composition missing: ${required}`);
+for (const required of [
+  "presentation.stage.sdCharacterAtlases !== null",
+  "presentation.liveStartVoiceMp3 !== null",
+  "sdCharacterAtlases: null", "liveStartVoiceMp3: null",
+]) if (!presentationContract.includes(required)) throw new Error(`literal-null presentation boundary missing: ${required}`);
+for (const required of [
+  "readonly sdCharacters: readonly [];", "Object.freeze([]) as readonly []",
+]) if (!presentationDerivation.includes(required)) throw new Error(`empty SD collection mapping missing: ${required}`);
+if (!/selection\.audioSe,\s*store,\s*null,/m.test(resourceAssembly)) {
+  throw new Error("resource assembly does not force the live-start voice resource to null");
+}
+for (const [source, forbidden] of [
+  [contracts, ["SimulatorProductLaneCount", "liveStartVoiceMp3: Uint8Array", "sdCharacterAtlases: readonly"]],
+  [presentationDerivation, ["PreparedLiveStartVoice", "deriveVoice(", "AudioResourcePreflightAdapter", "inspectMp3FirstFrame"]],
+  [resourceAssembly, ["PreparedLiveStartVoice", "liveStartVoice.logicalId", "liveStartVoice.bytes"]],
+]) for (const symbol of forbidden) if (source.includes(symbol)) {
+  throw new Error(`retired caller startup asset path remains: ${symbol}`);
+}
 for (const required of [
   "preflightStartupOpening", "preflightEnterStartupPlaying",
   '"bgm.prepare-paused"', '"gaya.start"', '"gaya.fade-stop-at-zero"',
@@ -61,6 +83,23 @@ const fixture = JSON.parse(readFileSync(join(
 if (fixture.schema_version !== 2 || fixture.evidence.filter((row) => /^SD/.test(row.id)).length !== 16) {
   throw new Error("startup SD01-SD16 fixture contract changed");
 }
+const nullAssets = JSON.parse(readFileSync(join(
+  testingRoot, "fixtures/reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
+), "utf8"));
+if (nullAssets.status !== "closed-static-portable-null-route" ||
+  nullAssets.portable_contract?.sd_character_atlases_public_value !== null ||
+  nullAssets.portable_contract?.sd_character_internal_collection !== "owned-frozen-empty-non-null" ||
+  nullAssets.portable_contract?.sd_character_visual_count !== 0 ||
+  nullAssets.portable_contract?.sd_intro_wait_seconds !== 3 ||
+  nullAssets.portable_contract?.live_start_voice_mp3_public_value !== null ||
+  nullAssets.portable_contract?.live_start_voice_resource !== null ||
+  nullAssets.portable_contract?.stage_backdrop_required !== true ||
+  nullAssets.portable_contract?.startup_timing_changed !== false ||
+  nullAssets.portable_contract?.placeholder_assets_allowed !== false ||
+  nullAssets.closure?.production_authorization !== true ||
+  Object.entries(nullAssets.closure ?? {}).some(([key, value]) => key.endsWith("_count") && value !== 0)) {
+  throw new Error("startup SDN01-SDN04 literal-null fixture closure changed");
+}
 const callgraph = JSON.parse(readFileSync(join(
   testingRoot, "fixtures/reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
 ), "utf8"));
@@ -71,7 +110,7 @@ if (closed && (
   closure.missing_resource_count !== 0 || closure.runtime_hook_failure_count !== 0 ||
   closure.production_authorization !== true
 )) throw new Error("startup capability closed without zero-count authorized complete callgraph");
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 schema=7 callgraph=${closed ? "closed-authorized" : "open"}`);
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=8 callgraph=${closed ? "closed-authorized" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

@@ -25,7 +25,7 @@ const WIDTH = 1600;
 const HEIGHT = 720;
 
 void main().catch((error) => window.ipc.postMessage(JSON.stringify({
-  schema: "garupa-startup-direction-webview2-v2", status: "error",
+  schema: "garupa-startup-direction-webview2-v3", status: "error",
   message: String(error instanceof Error ? error.message : error),
   stack: String(error instanceof Error ? error.stack ?? "" : ""),
 })));
@@ -64,6 +64,7 @@ async function main(): Promise<void> {
     ["rehearsal", "manual"], ["rehearsal", "auto"],
   ] as const;
   const captures: unknown[] = [];
+  let sdCharacterVisuals: number | null = null;
   for (const [sessionMode, inputMode] of modes) {
     const presentation = requireAccepted<any>(await deriveSessionPresentation({
       song: { title: "Test Song", bandName: "Test Band", lyricist: "Lyrics", composer: "Composer", arranger: "Arranger" },
@@ -71,11 +72,15 @@ async function main(): Promise<void> {
       jacketPng: await canvasPng(360, 360, `rgb(25 90 170)`),
       stage: {
         backdropPng: await canvasPng(1600, 720, `rgb(12 18 35)`),
-        sdCharacterAtlases: await overlays(),
+        sdCharacterAtlases: null,
       },
       liveStartVoiceMp3: null,
       mv: null,
-    }, { inspect: async () => ({ status: "audio-resource-decode" as const, failure: { code: "audio-resource-decode" as const, capability: "unused", boundary: "unused" } }) } as any));
+    }));
+    sdCharacterVisuals ??= presentation.sdCharacters.length;
+    if (presentation.sdCharacters.length !== 0 || sdCharacterVisuals !== 0) {
+      throw new Error("literal-null SD character mapping published a visual");
+    }
     const scene = requireOk<any>(await createPixiStartupDirectionScene(
       presentation,
       { lineStar: line, jacketFrame: frame, difficultyFrames: difficulties, fullLiveLabel: full, fontFamily: font.family },
@@ -101,10 +106,10 @@ async function main(): Promise<void> {
   }
   const audio = await runStartupAudioObservation();
   const result = Object.freeze({
-    schema: "garupa-startup-direction-webview2-v2",
+    schema: "garupa-startup-direction-webview2-v3",
     status: "ok",
     runtime: { userAgent: navigator.userAgent, pixiVersion: (await import("pixi.js")).VERSION, rendererName: app.renderer.name },
-    scene: { modes: 4, captures },
+    scene: { modes: 4, sdCharacterVisuals, captures },
     audio,
     cleanup: { stageChildren: app.stage.children.length, audioDisposed: audio.cleanup.backendState === "disposed" },
     resources: { urls: performance.getEntriesByType("resource").map((entry) => entry.name).sort() },
@@ -284,15 +289,6 @@ function textureFrame(base: Texture, key: string): Texture {
   const row = CURRENT_SCORE_HUD_PORTABLE_RESOURCES.find((entry) => entry.profile.logicalAssetId === "hud/score/ui-common-atlas")!.profile.atlasRows.find((entry) => entry.exactKey === key);
   if (row === undefined) throw new Error(`missing current atlas row ${key}`);
   return new Texture({ source: base.source, frame: new Rectangle(row.x, row.y, row.width, row.height) });
-}
-async function overlays(): Promise<readonly [Uint8Array, Uint8Array, Uint8Array, Uint8Array, Uint8Array]> {
-  return [
-    await canvasPng(1600, 720, "rgb(210 60 90 / 25%)", 260),
-    await canvasPng(1600, 720, "rgb(60 210 130 / 25%)", 520),
-    await canvasPng(1600, 720, "rgb(80 130 230 / 25%)", 800),
-    await canvasPng(1600, 720, "rgb(230 190 60 / 25%)", 1080),
-    await canvasPng(1600, 720, "rgb(180 80 220 / 25%)", 1340),
-  ];
 }
 async function canvasPng(width: number, height: number, color: string, centerX = width / 2): Promise<Uint8Array> {
   const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;

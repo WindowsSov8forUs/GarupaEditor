@@ -13,11 +13,11 @@
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
 | Ordinary Note/HUD Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、121条actual Pixi world records、parent/Y/mask/fallback反例、全部Note/HUD生命周期及完整production WebView2 combined scene限定范围 |
 | Ordinary particle visible composition | `closed-portable` | 17-root actual Pixi world/UV/blend/viewport、stage-order/UV-row反例、production particle decoder、跨stage ordering及dispose归零限定范围 |
-| Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、nullable voice、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
+| Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但Public稳定null、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
-| Complete startup direction/audio | `closed-portable` | Reverse `78e6a70e`的SD01–SD16与`b17e64e9`完整调用图：standard Live启动Gaya，Practice不创建；BGM prepared-paused、optional voice release、Retry/MoveTime及cleanup均已验收 |
+| Complete startup direction/audio | `closed-portable` | Reverse `78e6a70e`的SD01–SD16、`b17e64e9`完整调用图及`d408d758`的SDN01–SDN04：standard Live启动Gaya，Practice不创建；Public SD/voice稳定null分别映射非null空角色集合与缺SoundResource路径，stage和固定时序不变；BGM prepared-paused、Retry/MoveTime及cleanup均已验收 |
 | Gameplay MV Live | `closed-portable` | Reverse `38802391`：仅Live Manual/Auto；signed Int32 delay三分支、MovieBeforeSound(17)、movie states0–4、Gaya=false、pause/resume、early/late finish、exit/fault/dispose；caller提供严格MP4/WebM字节，视频muted/non-loop并center-contain。Rehearsal MV、独立MVView、Star3D及CRI/USM/device exact不在正向范围 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，不接受格式中不存在的laneCount；任意有限lane按七轨参考坐标连续投影，场地始终仅有0..6七条轨道线；按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
@@ -42,7 +42,7 @@
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-Public合同覆盖四种`sessionMode × inputMode` request；完整startup production gate已由zero-count closure关闭并移除。平台未安装时仍失败为`simulator.entry.platform-not-installed`。Schema 7 launch request精确为`{ chartData, presentation, config }`；`chartData`精确包含已解析Garupa JSON `chart`、逐谱BGM字节与显式`isFullLength`，拒绝格式中不存在的laneCount。根级`presentation`携带本地化文字、difficulty、jacket、standard stage/5 SD、nullable Live voice，以及必填nullable `mv`。`mv:null`选择standard；non-null精确为`{bytes,musicStartDelayMilliseconds}`并选择Live MV，不新增config开关。MP4/WebM container、MIME、duration、dimensions、SHA和logical ID内部派生；standard stage仍严格校验但MV路线不decode/附着且绝不作故障fallback。全部字节深复制，坏shape/glyph/CRC/MP3/video/decode在engine/mount前失败关闭。simulator在资源/backend装配前验证MP3结构、解码并内部派生SHA-256、cue、sample rate、channels、sample frames及duration；Retry/MoveTime复用同一recipe的冻结profile与浏览器解码缓存。`isFullLength`仍不得从音频时长推断。不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
+Public合同覆盖四种`sessionMode × inputMode` request；完整startup production gate已由zero-count closure关闭并移除。平台未安装时仍失败为`simulator.entry.platform-not-installed`。Schema 8 launch request精确为`{ chartData, presentation, config }`；`chartData`精确包含已解析Garupa JSON `chart`、逐谱BGM字节与显式`isFullLength`，拒绝格式中不存在的laneCount。根级`presentation`携带本地化文字、difficulty、jacket、standard stage backdrop、固定`sdCharacterAtlases:null`、固定`liveStartVoiceMp3:null`，以及必填nullable `mv`。`mv:null`选择standard；non-null精确为`{bytes,musicStartDelayMilliseconds}`并选择Live MV，不新增config开关。MP4/WebM container、MIME、duration、dimensions、SHA和logical ID内部派生；standard stage仍严格校验但MV路线不decode/附着且绝不作故障fallback。全部字节深复制，坏shape/glyph/CRC/MP3/video/decode在engine/mount前失败关闭。simulator在资源/backend装配前验证MP3结构、解码并内部派生SHA-256、cue、sample rate、channels、sample frames及duration；Retry/MoveTime复用同一recipe的冻结profile与浏览器解码缓存。`isFullLength`仍不得从音频时长推断。不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
@@ -67,7 +67,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：普通完整场景digest为`a09166cf…2199`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`3f03e17e…50ad`；standard启动视觉/音频digest保持`0f33657e…14d`与`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、deterministic-seek raster digest为`ad8f9c4b…b9094`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：普通完整场景digest为`a09166cf…2199`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`3f03e17e…50ad`；standard启动在移除不可提供的SD角色后，视觉digest更新为`6fe9d1f4…8f5b`，音频digest保持`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、deterministic-seek raster digest为`ad8f9c4b…b9094`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
@@ -78,8 +78,8 @@ Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bi
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、standalone MVView/Star3D/其他excluded和Stage 9边界不因产品Score或gameplay MV portable升级。
+Reverse启动空资源修订提交`d408d758f39873c2c997107903300e58d56c59c6`约束Public literal-null到非null空SD集合/缺语音资源的窄映射。Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、standalone MVView/Star3D/其他excluded和Stage 9边界不因产品Score或gameplay MV portable升级。
 
-日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以12个development groups覆盖既有compiled/static集合并新增MV semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前34-semantic-leaf DAG包含startup-audio callgraph、MV contract、3-fresh ordinary/startup WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以12个development groups覆盖既有compiled/static集合并新增MV semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前35-semantic-leaf DAG包含startup-audio callgraph、MV contract、3-fresh ordinary/startup WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。

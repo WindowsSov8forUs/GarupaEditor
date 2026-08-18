@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "status": "closed-static-portable-null-route",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "source_commit": "6f266049afe57fbf5a874c7984ca12c27bb57c58",
+  "sources": [
+    {
+      "identity": "load_my_deck",
+      "path": "startup-direction-runtime-contract-10-1-4/arm64/03314b30__InGameSDCharaContoller__LoadMyDeckSDCharacters.arm64.tsv",
+      "bytes": 5054,
+      "sha256": "2EAF486EA9BDFCE3AC58A145C2EDBBC85D2A9F7FB4B62493D62EF78D7DCC1827"
+    },
+    {
+      "identity": "intro_animation",
+      "path": "startup-direction-runtime-contract-10-1-4/arm64/03317498__InGameSDCharaContoller__introAnimation_MoveNext.arm64.tsv",
+      "bytes": 3846,
+      "sha256": "BD673BC24FADA3911066A5EE7F70326A2A09DE855AED45E978ADC2A628ADE0FE"
+    },
+    {
+      "identity": "play_live_start_voice",
+      "path": "startup-direction-runtime-contract-10-1-4/arm64/03312090__InGameVoiceControllerBase__PlayLiveStartVoice.arm64.tsv",
+      "bytes": 4917,
+      "sha256": "0F6F5249DD696C029D8796D5FD9B22A10F584A2EB6104B26E7A3BCEA87439A19"
+    },
+    {
+      "identity": "is_playing_live_start_voice",
+      "path": "startup-direction-runtime-contract-10-1-4/arm64/033123bc__InGameVoiceControllerBase__isPlayingLiveStartVoice.arm64.tsv",
+      "bytes": 1484,
+      "sha256": "832E106F040CD45FD720D9B6ADD83645006FEC74DEE974ABCCE6DA6194E4C5DA"
+    },
+    {
+      "identity": "runtime_contract",
+      "path": "startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "bytes": 15209,
+      "sha256": "617B154830A78170CC8DF380D8A7214D42278A78A1048195E8E46B227621C356"
+    }
+  ],
+  "findings": [
+    {
+      "id": "SDN01",
+      "status": "confirmed-static",
+      "finding": "LoadMyDeckSDCharacters reads the source collection count, branches directly to the normal epilogue when count is zero, and therefore performs zero LoadCharacter calls. A null source collection follows the throw helper instead, so portable absence must map to an owned empty collection rather than a null engine collection.",
+      "source": "load_my_deck",
+      "addresses": [
+        "0x3314BC4",
+        "0x3314BC8",
+        "0x3314BCC",
+        "0x3314CD0",
+        "0x3314CE4",
+        "0x3314CF8",
+        "0x3314CFC"
+      ]
+    },
+    {
+      "id": "SDN02",
+      "status": "confirmed-static",
+      "finding": "The SD intro coroutine rejects a null internal character collection but accepts count zero: its first loop comparison branches to the same fixed 3.0-second wait without invoking any character animation. Empty SD visuals therefore preserve startup scheduling while publishing no character sprites.",
+      "source": "intro_animation",
+      "addresses": [
+        "0x3317520",
+        "0x3317524",
+        "0x3317530",
+        "0x3317534",
+        "0x3317538",
+        "0x331753C",
+        "0x33175C8",
+        "0x33175D0"
+      ]
+    },
+    {
+      "id": "SDN03",
+      "status": "confirmed-static",
+      "finding": "PlayLiveStartVoice reaches PlayVoice only after a usable voice model, dictionary entry and selected cue; missing data takes the no-resource return path. isPlayingLiveStartVoice returns false when its SoundResource field is null. This reaffirms SD13 and authorizes a permanently null portable live-start voice input.",
+      "source": "play_live_start_voice+is_playing_live_start_voice+runtime_contract/SD13",
+      "addresses": [
+        "0x3312130",
+        "0x3312134",
+        "0x33121C0",
+        "0x33121E4",
+        "0x33121FC",
+        "0x3312260",
+        "0x33123F4",
+        "0x33123F8",
+        "0x3312408",
+        "0x3312440",
+        "0x3312448"
+      ]
+    },
+    {
+      "id": "SDN04",
+      "status": "portable-mapping-confirmed",
+      "finding": "For a host that can never provide character or live-start-voice assets, the fail-closed public shape uses literal null for both fields. SD-character null maps only to a frozen allocated empty collection; voice null maps only to the original missing SoundResource path. The stage backdrop remains mandatory, stage/character timing remains unchanged, and no transparent placeholder, default character, silent audio, inferred identity or no-op fallback is introduced."
+    }
+  ],
+  "portable_contract": {
+    "sd_character_atlases_public_value": null,
+    "sd_character_internal_collection": "owned-frozen-empty-non-null",
+    "sd_character_visual_count": 0,
+    "sd_intro_wait_seconds": 3.0,
+    "live_start_voice_mp3_public_value": null,
+    "live_start_voice_resource": null,
+    "is_playing_live_start_voice": false,
+    "stage_backdrop_required": true,
+    "startup_timing_changed": false,
+    "placeholder_assets_allowed": false
+  },
+  "supersession": {
+    "previous_profile": "startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+    "previous_policy": "five caller-supplied transparent SD overlays",
+    "disposition": "superseded only for GarupaEditor hosts that cannot provide SD-character or live-start-voice assets; common prefab, stage backdrop, information resources and timing remain unchanged"
+  },
+  "closure": {
+    "unknown_branch_count": 0,
+    "unmapped_public_field_count": 0,
+    "placeholder_fallback_count": 0,
+    "production_authorization": true
+  }
+}

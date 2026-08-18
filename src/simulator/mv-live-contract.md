@@ -23,7 +23,7 @@
 - CRI Mana/USM codec、Android decoder、speaker onset或Unity/GPU framebuffer exact；
 - Stage 9主程序接入。
 
-## Public schema 7
+## Public schema 8
 
 根请求仍精确为 `{ chartData, presentation, config }`。`presentation`必须显式携带：
 
@@ -45,7 +45,7 @@ interface SimulatorPresentationPackage {
 - delay必须为signed Int32；不得clamp或改写；
 - caller不得提供MIME、container、codec、duration、dimensions、SHA、logical ID、cue、player或quality；
 - simulator只接受严格结构且browser可解码的MP4或WebM，并内部派生全部身份与metadata；
-- stage backdrop和五槽SD仍是schema必填并严格校验，但MV路线不decode/附着它们，也不在MV故障时fallback。
+- stage backdrop仍是schema必填并严格校验；`sdCharacterAtlases`与`liveStartVoiceMp3`按Reverse `d408d758`固定为null。MV路线不decode/附着standard stage，也不在MV故障时fallback。
 
 `presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、shared-store、mount、scheduler和domain mutation前以`evidence-required / simulator.mv-live.unsupported-rehearsal-mode`拒绝。
 
@@ -59,7 +59,7 @@ InGameMusicVideoState = None(0) / WaitingPlay(1) /
   PauseOfWaitingPlay(2) / Playing(3) / Pause(4)
 ```
 
-共同startup先完成既有0→1→2→3方向、prepared-paused BGM与optional Live voice。MV背景`GayaSoundRequired=false`，因此Live MV不创建`SE_RHYTHM_GAYA`。
+共同startup先完成既有0→1→2→3方向、prepared-paused BGM与原作缺SoundResource语音路径；Public voice稳定为null。MV背景`GayaSoundRequired=false`，因此Live MV不创建`SE_RHYTHM_GAYA`。
 
 ### delay > 0
 

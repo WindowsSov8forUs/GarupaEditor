@@ -99,7 +99,8 @@ export type GarupaJsonPositionEvidenceId =
   | "GJP-D01";
 
 export type StartupDirectionEvidenceId =
-  `SD${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16"}`;
+  | `SD${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16"}`
+  | `SDN0${"1" | "2" | "3" | "4"}`;
 
 export type StartupAudioEvidenceId =
   | "SRA-CG01"
