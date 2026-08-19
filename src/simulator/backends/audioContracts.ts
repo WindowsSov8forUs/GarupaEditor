@@ -53,8 +53,7 @@ export interface AudioLoopFrames {
 
 export type AudioFixedSeLogicalId =
   | "sound/common"
-  | "sound/tapseskin/directionalflickskin00"
-  | "sound/tapseskin/skin00";
+  | `sound/tapseskin/${string}`;
 
 interface AudioResourceProfileBase {
   readonly logicalId: string;

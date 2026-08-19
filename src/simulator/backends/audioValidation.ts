@@ -32,6 +32,12 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
 } as const);
 
 const FIXED_SE_LOGICAL_IDS_SET: ReadonlySet<string> = new Set(Object.values(FIXED_SE_LOGICAL_IDS));
+const SKIN_TAP_CUES: ReadonlySet<string> = new Set([
+  "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect",
+]);
+const SKIN_DIRECTIONAL_CUES: ReadonlySet<string> = new Set([
+  "directional_fl", "directional_fl_2", "directional_fl_3",
+]);
 
 const RESOURCE_KEYS = Object.freeze([
   "role", "logicalId", "cue", "byteLength", "sha256", "mime", "codec",
@@ -119,6 +125,7 @@ export function validateAndFreezeAudioProfile(
   let bgm: AudioSessionBgmResourceProfile | null = null;
   let voice: AudioSessionVoiceResourceProfile | null = null;
   const seenSe = new Set<string>();
+  const fixedSe: AudioFixedSeResourceProfile[] = [];
   for (const resource of profile.resources) {
     if (resource?.role === "bgm") {
       if (bgm !== null) {
@@ -143,6 +150,7 @@ export function validateAndFreezeAudioProfile(
     }
     const validated = validateFixedSeResource(resource, seenSe);
     if (validated.status !== "accepted") return validated;
+    fixedSe.push(validated.value);
   }
   if (bgm === null || seenSe.size !== CURRENT_AUDIO_SE_RESOURCES.length) {
     return rejectProfile(
@@ -174,7 +182,7 @@ export function validateAndFreezeAudioProfile(
     }),
     resources: Object.freeze([
       bgm,
-      ...CURRENT_AUDIO_SE_RESOURCES,
+      ...fixedSe,
       ...(voice === null ? [] : [voice]),
     ]),
   }));
@@ -382,6 +390,36 @@ function validateFixedSeResource(
   }
   const expectedLogicalId = FIXED_SE_LOGICAL_IDS[resource.cue as keyof typeof FIXED_SE_LOGICAL_IDS];
   const expected = CURRENT_AUDIO_SE_RESOURCES.find((candidate) => candidate.cue === resource.cue);
+  const dynamicTap = SKIN_TAP_CUES.has(resource.cue) &&
+    typeof resource.logicalId === "string" && resource.logicalId.startsWith("sound/tapseskin/") &&
+    resource.logicalId !== "sound/tapseskin/directionalflickskin00";
+  const dynamicDirectional = SKIN_DIRECTIONAL_CUES.has(resource.cue) &&
+    resource.logicalId === "sound/tapseskin/directionalflickskin00";
+  if (dynamicTap || dynamicDirectional) {
+    if (seen.has(resource.cue) || !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
+      !SHA256_PATTERN.test(resource.sha256) || resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
+      !Number.isSafeInteger(resource.sampleRate) || ![8000, 44100, 48000].includes(resource.sampleRate) ||
+      (resource.channels !== 1 && resource.channels !== 2) ||
+      !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
+      !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 ||
+      resource.identity !== "semantic-exact" || resource.signal !== "portable-equivalent-lossy") {
+      return rejectProfile("audio.profile.invalid-skin-se", "Selected Skin SE requires exact internally pinned MP3 bytes and positive decoded metadata.");
+    }
+    if (resource.cue === "SE_RHYTHM_TAP_LONG") {
+      if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
+        resource.loop.start !== 0 || !Number.isSafeInteger(resource.loop.end) ||
+        resource.loop.end <= 0 || resource.loop.end > resource.sampleFrames) {
+        return rejectProfile("audio.profile.invalid-skin-loop", "Selected Skin Long SE requires one explicit bounded whole-source portable loop.");
+      }
+    } else if (resource.loop !== null) {
+      return rejectProfile("audio.profile.unexpected-skin-loop", "Only selected Skin Long SE may loop.");
+    }
+    seen.add(resource.cue);
+    return audioAccepted(Object.freeze({
+      ...resource,
+      loop: resource.loop === null ? null : Object.freeze({ ...resource.loop }),
+    } as AudioFixedSeResourceProfile));
+  }
   if (
     expectedLogicalId === undefined || expected === undefined || seen.has(resource.cue) ||
     resource.logicalId !== expectedLogicalId || resource.byteLength !== expected.byteLength ||

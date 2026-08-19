@@ -21,6 +21,12 @@ import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack"
 import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
+import { prepareSkinAudioOverlay } from "../assembly/skinAudioPreparation";
+import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
+import {
+  audioRejected,
+  validateAndFreezeAudioProfile,
+} from "../backends/audioValidation";
 
 async function main(): Promise<void> {
   testCatalog();
@@ -288,6 +294,19 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   assert.notEqual(overlay!.fieldBindings, null);
   assert.match(overlay!.fieldBindings!.backgroundLineLogicalAssetId, /skin_april2021/);
   assert.match(overlay!.backgroundLogicalAssetId!, /skin_april2021/);
+  const audio = requireAccepted(prepareSkinAudioOverlay(
+    CURRENT_AUDIO_TEST_PROFILE,
+    { read: async () => audioRejected("audio-resource-unavailable", "base", "base") },
+    packs,
+    recipe.tapSE.logicalResource!,
+    recipe.directional.seLogicalResource,
+  ));
+  const perfect = audio.profile.resources.find((resource) => resource.cue === "perfect")!;
+  const directional = audio.profile.resources.find((resource) => resource.cue === "directional_fl")!;
+  assert.equal(perfect.logicalId, "sound/tapseskin/skinapril2021");
+  assert.equal(directional.logicalId, "sound/tapseskin/directionalflickskin00");
+  assert.equal(validateAndFreezeAudioProfile(audio.profile).status, "accepted");
+  assert.equal((await audio.provider.read(perfect)).status, "accepted");
   const tampered = entries.map((entry) => ({ ...entry, bytes: Uint8Array.from(entry.bytes) }));
   tampered[0]!.bytes[0] ^= 0xff;
   const badStore = requireAccepted(ImmutableSharedStaticResourceStore.create(tampered));

@@ -32,6 +32,7 @@ import {
   type PreparedSkinPortablePack,
 } from "../resources/skinPortablePack";
 import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
+import { prepareSkinAudioOverlay } from "./skinAudioPreparation";
 import {
   createSharedHabahiroTransport,
   prepareSharedAudioResources,
@@ -270,6 +271,14 @@ export async function assembleSimulatorResources(
     null,
   );
   if (audio.status === "rejected") return audio;
+  const skinAudio = prepareSkinAudioOverlay(
+    audio.value.profile,
+    audio.value.provider,
+    skinPortablePacks.value,
+    selection.skin.resolved.tapSE.logicalResource!,
+    selection.skin.resolved.directional.seLogicalResource,
+  );
+  if (skinAudio.status === "rejected") return skinAudio;
   const particles = await prepareSharedParticleProvider(selection.particles, store);
   if (particles.status === "rejected") return particles;
 
@@ -311,8 +320,8 @@ export async function assembleSimulatorResources(
 
   const audioReady = await targets.audio.backend.prepare(
     targets.sessionId,
-    audio.value.profile,
-    audio.value.provider,
+    skinAudio.value.profile,
+    skinAudio.value.provider,
     targets.audio.preflight,
   );
   if (audioReady.status !== "accepted") {
