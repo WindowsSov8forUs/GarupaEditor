@@ -1,6 +1,8 @@
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
 
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import type { OriginalSkinSettings } from "../engine/skin/contracts";
@@ -15,8 +17,12 @@ import {
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
 import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
+import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 
-function main(): void {
+async function main(): Promise<void> {
   testCatalog();
   testValidation();
   testNormalRoutes();
@@ -25,6 +31,7 @@ function main(): void {
   testHabahiroAndMvPrecedence();
   testFailedClosedPackage();
   testResourceInventory();
+  await testPortablePackAndRenderOverlay();
   testIdentityAndFreeze();
   console.log("Skin settings tests passed: current catalog, exact validation, per-component modes, HAB/MV, failed package, frozen identity");
 }
@@ -225,7 +232,7 @@ function testResourceInventory(): void {
   ));
   const ordinaryInventory = selectResolvedSkinResourceInventory(ordinary);
   assert.equal(ordinaryInventory.recipeIdentity, ordinary.identity);
-  assert.equal(ordinaryInventory.resources.length, 9);
+  assert.equal(ordinaryInventory.resources.length, 8);
   assert.ok(ordinaryInventory.resources.every((resource) =>
     resource.resourceKey.startsWith("simulator-static/current-10.1.4/skin-portable/")));
   const hab = requireOk(resolveOriginalSkinRecipe(
@@ -235,12 +242,58 @@ function testResourceInventory(): void {
     "standard",
   ));
   const habInventory = selectResolvedSkinResourceInventory(hab);
-  assert.equal(habInventory.resources.length, 11);
+  assert.equal(habInventory.resources.length, 10);
   assert.equal(habInventory.resources.filter((resource) =>
     resource.role === "habahiro-change-flash")[0]?.logicalResource,
   "ingameskin/tapeffect/habahiro");
   assert.ok(Object.isFrozen(habInventory));
   assert.ok(Object.isFrozen(habInventory.resources));
+}
+
+async function testPortablePackAndRenderOverlay(): Promise<void> {
+  const recipe = requireOk(resolveOriginalSkinRecipe(
+    aggregate("limited", 3, "on"),
+    createSimulatorModeIdentity("live", "manual"),
+    "ordinary",
+    "standard",
+  ));
+  const selected = selectResolvedSkinResourceInventory(recipe);
+  const fixtureRoot = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/skin-settings/limited3",
+  );
+  const entries = selected.resources.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(
+      fixtureRoot,
+      `${resource.logicalResource.replace(/\//g, "__")}.json`,
+    ))),
+  }));
+  const store = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const packs = requireAccepted(await prepareSelectedSkinPortablePacks(
+    selected.resources,
+    store,
+  ));
+  assert.equal(packs.length, 9);
+  assert.ok(packs.every((pack) => Object.isFrozen(pack)));
+  const overlay = requireAccepted(await prepareSkinRenderOverlay(
+    recipe,
+    packs,
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+  ));
+  assert.notEqual(overlay, null);
+  assert.ok(overlay!.assets.length > 0);
+  assert.match(overlay!.bindings.noteAtlasLogicalAssetId, /skin_april2021/);
+  assert.match(overlay!.bindings.ordinaryVisible!.judgeLogicalAssetId, /skinapril2021/);
+  assert.notEqual(overlay!.fieldBindings, null);
+  assert.match(overlay!.fieldBindings!.backgroundLineLogicalAssetId, /skin_april2021/);
+  assert.match(overlay!.backgroundLogicalAssetId!, /skin_april2021/);
+  const tampered = entries.map((entry) => ({ ...entry, bytes: Uint8Array.from(entry.bytes) }));
+  tampered[0]!.bytes[0] ^= 0xff;
+  const badStore = requireAccepted(ImmutableSharedStaticResourceStore.create(tampered));
+  const rejected = await prepareSelectedSkinPortablePacks(selected.resources, badStore);
+  assert.equal(rejected.status, "rejected");
+  if (rejected.status === "rejected") assert.equal(rejected.failure.capability, "simulator.skin.pack-integrity");
 }
 
 function testIdentityAndFreeze(): void {
@@ -312,5 +365,12 @@ function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { r
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }
+function requireAccepted<T>(result: { readonly status: "accepted"; readonly value: T } | { readonly status: "rejected"; readonly failure: { readonly capability: string; readonly boundary?: string } }): T {
+  if (result.status !== "accepted") throw new Error(`${result.failure.capability}: ${result.failure.boundary ?? ""}`);
+  return result.value;
+}
 
-main();
+void main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -104,13 +104,18 @@ export class InGameManager {
     if (noteValidation.status !== "ok") {
       return noteValidation;
     }
-    const fieldSetup = this.renderProducer?.isCompleteHabahiro() === true &&
-        this.renderScene?.habahiro !== undefined
-      ? this.renderProducer.preflightFieldSetup(
-          this.renderScene.habahiro.fieldBefore,
-          this.renderScene.habahiro.fieldMasks,
-        )
-      : null;
+    const fieldSetup = this.renderScene?.field !== undefined
+      ? this.renderProducer?.preflightFieldSetup(
+          this.renderScene.field.objects,
+          this.renderScene.field.masks,
+        ) ?? null
+      : this.renderProducer?.isCompleteHabahiro() === true &&
+          this.renderScene?.habahiro !== undefined
+        ? this.renderProducer.preflightFieldSetup(
+            this.renderScene.habahiro.fieldBefore,
+            this.renderScene.habahiro.fieldMasks,
+          )
+        : null;
     if (fieldSetup?.status === "evidence-required") return fieldSetup;
     if (fieldSetup?.status === "ok") {
       const committed = fieldSetup.value.commit();

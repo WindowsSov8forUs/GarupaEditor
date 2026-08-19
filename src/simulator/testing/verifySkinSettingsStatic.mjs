@@ -14,7 +14,7 @@ const validation = read("engine/skin/originalSkinValidation.ts");
 const resolver = read("engine/skin/originalSkinResolver.ts");
 const derivation = read("assembly/sessionSkinDerivation.ts");
 const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
-const assembly = read("assembly/resourceAssembly.ts");
+const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts");
 const composition = read("platform/platformComposition.ts");
 
 for (const symbol of [
@@ -61,6 +61,10 @@ for (const required of [
   "validateSkinResourceSelection",
   "deriveSessionSkinRecipe",
   "selectSimulatorStaticResources(chart.value, skin.value)",
+  "prepareSelectedSkinPortablePacks",
+  "prepareSkinRenderOverlay",
+  "current-official-portable",
+  "syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin",
 ]) if (!(selector + assembly + composition).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));

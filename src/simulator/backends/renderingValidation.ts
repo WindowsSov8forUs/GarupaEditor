@@ -32,7 +32,7 @@ const ANIMATION_ROLES = new Set([
   "score-gauge-ss", "habahiro-lane-change",
 ]);
 const PROVENANCE_VALUES = new Set([
-  "current-apk", "current-device-cache", "current-external-portable",
+  "current-apk", "current-device-cache", "current-official-portable", "current-external-portable",
   "historical-proxy", "generated-current-ordinary-proxy",
 ]);
 const REQUIRED_COMPONENTS = Object.freeze([

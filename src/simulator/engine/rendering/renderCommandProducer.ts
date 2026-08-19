@@ -113,6 +113,11 @@ export interface HabahiroSceneInput {
   readonly fieldMasks: readonly RenderFieldMaskPlan[];
 }
 
+export interface OriginalSkinFieldSceneInput {
+  readonly objects: readonly RenderFieldObjectPlan[];
+  readonly masks: readonly RenderFieldMaskPlan[];
+}
+
 export interface OrdinaryFixedNoteSceneInput {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
@@ -126,6 +131,7 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly syncLineEdgeMargin?: RenderFloat32;
   readonly screenToSafeAreaRatio?: RenderFloat32;
   readonly longMeshColor?: RenderColor;
+  readonly field?: OriginalSkinFieldSceneInput;
   readonly habahiro?: HabahiroSceneInput;
 }
 

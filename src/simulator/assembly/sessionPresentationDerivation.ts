@@ -43,6 +43,23 @@ export async function deriveSessionPresentation(
   }));
 }
 
+export function replacePreparedSessionStageBackdrop(
+  presentation: PreparedSessionPresentation,
+  selected: { readonly bytes: Uint8Array; readonly width: number; readonly height: number } | null,
+): SimulatorAssemblyResult<PreparedSessionPresentation> {
+  if (selected === null) return accepted(presentation);
+  const backdrop = deriveImage(
+    "stage-backdrop",
+    null,
+    selected.bytes,
+    selected.width,
+    selected.height,
+  );
+  return backdrop.status === "rejected"
+    ? backdrop
+    : accepted(Object.freeze({ ...presentation, stageBackdrop: backdrop.value }));
+}
+
 function deriveImage(
   role: PreparedPresentationImage["role"],
   slot: number | null,

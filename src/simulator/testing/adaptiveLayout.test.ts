@@ -99,7 +99,7 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
   }
   const scene = createSimulatorSceneLayout(input, {
     specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-    judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+    judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
   }, "ordinary", {
     noteAtlasLogicalAssetId: "note",
     directionalAtlasLogicalAssetId: "directional",

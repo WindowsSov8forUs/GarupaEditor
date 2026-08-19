@@ -510,7 +510,7 @@ function testProductManualChainOwner(): void {
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     sceneResources,
@@ -593,7 +593,7 @@ function testProductManualEngineOutcome(): void {
   const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const layout = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
     "ordinary", resources,
   ));
   const product = getGarupaProductChartProfile(chart)!;
@@ -684,7 +684,7 @@ async function testProductReplayLifecycle(): Promise<void> {
   const manualResources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const manualScene = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
     "ordinary", manualResources,
   )).garupaProductScene;
   const createManualFresh = () => {
@@ -753,7 +753,7 @@ function testProductRenderCommands(): void {
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     resources,

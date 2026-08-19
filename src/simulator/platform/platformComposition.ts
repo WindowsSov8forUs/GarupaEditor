@@ -84,6 +84,7 @@ import {
 import type { SimulatorEngineBuildPurpose } from "../host/contracts";
 import {
   deriveSessionPresentation,
+  replacePreparedSessionStageBackdrop,
   type PreparedSessionPresentation,
 } from "../assembly/sessionPresentationDerivation";
 import { deriveSessionSkinRecipe } from "../assembly/sessionSkinDerivation";
@@ -275,15 +276,17 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           renderer: particleRenderer,
           preflight: new PortableParticleResourcePreflightAdapter(),
         },
-        createSceneLayout: (kind, resources) => {
+        createSceneLayout: (kind, resources, fieldBindings) => {
           const scene = createSimulatorSceneLayout(
             surface.value,
             {
               ...recipe.request.config.visual,
               judgeOffsetFrames: recipe.request.config.judgeOffsetFrames,
+              syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
             },
             kind,
             resources,
+            fieldBindings,
           );
           return scene.status === "ok" ? accepted(scene.value) : fromEvidence(scene);
         },
@@ -305,6 +308,16 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         disposeAssembly(assembly.value, movie),
       );
     }
+    const effectivePresentation = replacePreparedSessionStageBackdrop(
+      presentation.value,
+      assembly.value.backgroundImage,
+    );
+    if (effectivePresentation.status === "rejected") {
+      return rejectedWithCleanup(
+        effectivePresentation,
+        disposeAssembly(assembly.value, movie),
+      );
+    }
     const commonStartup = renderer.getStartupDirectionCommonResources();
     if (commonStartup.status !== "ok") {
       return rejectedWithCleanup(
@@ -313,7 +326,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       );
     }
     const startupScene = await createPixiStartupDirectionScene(
-      presentation.value,
+      effectivePresentation.value,
       commonStartup.value,
       new BrowserPixiTextureDecoder(),
       recipe.request.chartData.isFullLength,

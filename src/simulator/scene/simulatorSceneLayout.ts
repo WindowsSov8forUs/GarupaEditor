@@ -48,6 +48,7 @@ export interface SimulatorSceneVisualConfig {
   readonly noteSize: number;
   readonly judgeOffsetFrames: number;
   readonly habahiroMeshWidthSetting: number;
+  readonly syncLineEdgeMargin: number;
 }
 
 export type SimulatorSceneSurfaceProfile = SimulatorSurfaceState;
@@ -85,6 +86,10 @@ export function createSimulatorSceneLayout(
   config: SimulatorSceneVisualConfig,
   renderingKind: "ordinary" | "habahiro",
   resources: RenderEngineResourceBindings,
+  fieldBindings: {
+    readonly backgroundLineLogicalAssetId: string;
+    readonly judgeLineLogicalAssetId: string;
+  } | null = null,
 ): SimulatorResult<SimulatorSceneLayout> {
   const checkedSurface = copyAndValidateInitialSimulatorSurface(surface);
   if (checkedSurface.status !== "ok") return checkedSurface;
@@ -92,7 +97,8 @@ export function createSimulatorSceneLayout(
     !exactPositiveFloat32(config.specificSpeed) ||
     !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
     !Number.isInteger(config.judgeOffsetFrames) || config.judgeOffsetFrames < -5 || config.judgeOffsetFrames > 5 ||
-    !exactFloat32(config.habahiroMeshWidthSetting)
+    !exactFloat32(config.habahiroMeshWidthSetting) ||
+    !exactFloat32(config.syncLineEdgeMargin)
   ) {
     return reject(
       "scene.invalid-visual-config",
@@ -109,6 +115,9 @@ export function createSimulatorSceneLayout(
     ? createPortableHabahiroScene(resources, config.habahiroMeshWidthSetting)
     : ok<HabahiroSceneInput | undefined>(undefined);
   if (habahiro.status !== "ok") return habahiro;
+  const field = renderingKind === "ordinary" && fieldBindings !== null
+    ? createOriginalSkinFieldScene(fieldBindings)
+    : undefined;
   const ordinaryNoteScene: OrdinaryFixedNoteSceneInput = Object.freeze({
     specificSpeed: values.value.specificSpeed,
     noteSettingScale: values.value.noteSettingScale,
@@ -119,9 +128,10 @@ export function createSimulatorSceneLayout(
     goalPositions: values.value.goalPositions,
     noteColor: white(),
     noteDomainLayer: 3,
-    syncLineEdgeMargin: f32(0.2),
+    syncLineEdgeMargin: f32(config.syncLineEdgeMargin),
     screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
     longMeshColor: color(0.8, 0.8, 0.8, 0.6),
+    ...(field === undefined ? {} : { field }),
     ...(habahiro.value === undefined ? {} : { habahiro: habahiro.value }),
   });
   const geometry = new CurrentSimulatorManualGeometry(
@@ -521,6 +531,47 @@ function createParticleScene(
   }));
 }
 
+function createOriginalSkinFieldScene(bindings: {
+  readonly backgroundLineLogicalAssetId: string;
+  readonly judgeLineLogicalAssetId: string;
+}) {
+  const mask: RenderFieldMaskPlan = Object.freeze({
+    renderObjectId: "render:skin-field:mask",
+    polygon: Object.freeze([vector2(-4, -5), vector2(4, -5), vector2(4, 5), vector2(-4, 5)]),
+    position: vector3(0, 0, 0),
+    scale: vector2(1, 1),
+    rotationDegrees: f32(0),
+    ordering: ordering(0, -1),
+  });
+  return Object.freeze({
+    objects: Object.freeze([
+      fieldObject(
+        "render:skin-field:lines",
+        "field-line",
+        bindings.backgroundLineLogicalAssetId,
+        "bg_line_rhythm",
+        0,
+        0,
+        mask.renderObjectId,
+        1,
+        0,
+      ),
+      fieldObject(
+        "render:skin-field:judge-line",
+        "judge-line",
+        bindings.judgeLineLogicalAssetId,
+        "game_play_line",
+        0,
+        -3.45,
+        null,
+        1,
+        1,
+      ),
+    ]),
+    masks: Object.freeze([mask]),
+  });
+}
+
 function createPortableHabahiroScene(
   resources: RenderEngineResourceBindings,
   meshWidthSetting: number,
@@ -529,10 +580,10 @@ function createPortableHabahiroScene(
   if (atlas === undefined) {
     return reject("scene.habahiro-resource-binding-missing", "HABAHIRO field assembly requires the internally selected normal source atlas.");
   }
-  const beforeField = fieldObject("render:habahiro:field", "field-line", atlas, 0, 0, "render:habahiro:field-mask", 1, 0);
-  const beforeJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, 0, -3.45, null, 1, 1);
-  const afterField = fieldObject("render:habahiro:field", "field-line", atlas, 0, -0.25, "render:habahiro:field-mask", 1.05, 0);
-  const afterJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, 0, -3.2, null, 1.05, 1);
+  const beforeField = fieldObject("render:habahiro:field", "field-line", atlas, "note_normal_0", 0, 0, "render:habahiro:field-mask", 1, 0);
+  const beforeJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, "note_normal_0", 0, -3.45, null, 1, 1);
+  const afterField = fieldObject("render:habahiro:field", "field-line", atlas, "note_normal_0", 0, -0.25, "render:habahiro:field-mask", 1.05, 0);
+  const afterJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, "note_normal_0", 0, -3.2, null, 1.05, 1);
   const mask: RenderFieldMaskPlan = Object.freeze({
     renderObjectId: "render:habahiro:field-mask",
     polygon: Object.freeze([vector2(-4, -5), vector2(4, -5), vector2(4, 5), vector2(-4, 5)]),
@@ -554,6 +605,7 @@ function fieldObject(
   renderObjectId: string,
   role: "field-line" | "judge-line",
   logicalAssetId: string,
+  exactKey: string,
   x: number,
   y: number,
   maskObjectId: string | null,
@@ -564,7 +616,7 @@ function fieldObject(
     renderObjectId,
     role,
     logicalAssetId,
-    exactKey: "note_normal_0",
+    exactKey,
     position: vector3(x, y, 0),
     scale: vector2(scale, 1),
     rotationDegrees: f32(0),

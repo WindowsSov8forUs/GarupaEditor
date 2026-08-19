@@ -4,6 +4,7 @@
     "allowImportingTsExtensions": false,
     "module": "CommonJS",
     "moduleResolution": "Node",
+    "esModuleInterop": true,
     "noEmit": false,
     "rootDir": "../../.."
   },

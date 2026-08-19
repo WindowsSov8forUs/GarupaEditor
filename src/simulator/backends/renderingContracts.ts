@@ -119,6 +119,7 @@ export interface RenderResourceAssetProfile {
   readonly provenance:
     | "current-apk"
     | "current-device-cache"
+    | "current-official-portable"
     | "current-external-portable"
     | "historical-proxy"
     | "generated-current-ordinary-proxy";

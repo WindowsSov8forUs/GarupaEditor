@@ -1,4 +1,8 @@
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
+import {
+  getCurrentSkinPortablePack,
+  type CurrentSkinPortablePackEntry,
+} from "../backends/resources/currentSkinResourceManifest";
 
 const SKIN_RESOURCE_NAMESPACE = "simulator-static/current-10.1.4/skin-portable" as const;
 
@@ -12,17 +16,18 @@ export type SelectedSkinResourceRole =
   | "directional-note"
   | "directional-effect"
   | "directional-se"
-  | "judge"
-  | "structural-stage";
+  | "judge";
 
 export interface SelectedSkinResourceIdentity {
   readonly role: SelectedSkinResourceRole;
   readonly logicalResource: string;
   readonly resourceKey: string;
+  readonly profile: CurrentSkinPortablePackEntry | null;
 }
 
 export interface SelectedSkinResourceInventory {
   readonly recipeIdentity: string;
+  readonly resolved: ResolvedOriginalSkinRecipe;
   readonly resources: readonly SelectedSkinResourceIdentity[];
 }
 
@@ -42,7 +47,6 @@ export function selectResolvedSkinResourceInventory(
     ["directional-effect", recipe.directional.effectLogicalResource],
     ["directional-se", recipe.directional.seLogicalResource],
     ["judge", recipe.judge.logicalResource],
-    ["structural-stage", recipe.structuralStage.logicalResource],
   ];
   const seen = new Set<string>();
   const resources: SelectedSkinResourceIdentity[] = [];
@@ -55,10 +59,12 @@ export function selectResolvedSkinResourceInventory(
       role,
       logicalResource,
       resourceKey: skinPortableResourceKey(role, logicalResource),
+      profile: getCurrentSkinPortablePack(logicalResource),
     }));
   }
   return Object.freeze({
     recipeIdentity: recipe.identity,
+    resolved: recipe,
     resources: Object.freeze(resources),
   });
 }

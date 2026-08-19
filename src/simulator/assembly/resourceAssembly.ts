@@ -28,6 +28,11 @@ import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
 import {
+  prepareSelectedSkinPortablePacks,
+  type PreparedSkinPortablePack,
+} from "../resources/skinPortablePack";
+import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
+import {
   createSharedHabahiroTransport,
   prepareSharedAudioResources,
   prepareSharedOrdinaryRenderResources,
@@ -58,12 +63,27 @@ export interface SimulatorResourceAssemblyTargets {
   createSceneLayout(
     renderingKind: "ordinary" | "habahiro",
     resources: RenderEngineResourceBindings,
+    fieldBindings: {
+      readonly backgroundLineLogicalAssetId: string;
+      readonly judgeLineLogicalAssetId: string;
+    } | null,
   ): SimulatorAssemblyResult<SimulatorSceneLayout>;
 }
 
 export interface PreparedSimulatorResourceAssembly {
   readonly sessionId: string;
   readonly skinRecipeIdentity: string;
+  readonly skinPortablePacks: readonly PreparedSkinPortablePack[];
+  readonly fieldBindings: {
+    readonly backgroundLineLogicalAssetId: string;
+    readonly judgeLineLogicalAssetId: string;
+  } | null;
+  readonly backgroundLogicalAssetId: string | null;
+  readonly backgroundImage: {
+    readonly bytes: Uint8Array;
+    readonly width: number;
+    readonly height: number;
+  } | null;
   readonly renderBindings: RenderEngineResourceBindings;
   readonly audioBackend: SimulatorAudioBackend;
   readonly rendererBackend: SimulatorRendererBackend;
@@ -89,6 +109,12 @@ export async function assembleSimulatorResources(
   }
   const skinSelection = validateSkinResourceSelection(selection);
   if (skinSelection.status === "rejected") return skinSelection;
+  const skinPortablePacks = selection.skin.recipeIdentity.startsWith(
+    "skin-recipe-v1|default-current|",
+  )
+    ? accepted<readonly PreparedSkinPortablePack[]>(Object.freeze([]))
+    : await prepareSelectedSkinPortablePacks(selection.skin.resources, store);
+  if (skinPortablePacks.status === "rejected") return skinPortablePacks;
 
   let renderPack: {
     readonly profile: Parameters<SimulatorRendererBackend["prepare"]>[1];
@@ -137,6 +163,28 @@ export async function assembleSimulatorResources(
           slideAmong: habahiro.value.bindings.slideAmongAtlasLogicalAssetId,
         }),
       }),
+    });
+  }
+  const skinRender = await prepareSkinRenderOverlay(
+    selection.skin.resolved,
+    skinPortablePacks.value,
+    renderPack.bindings,
+  );
+  if (skinRender.status === "rejected") return skinRender;
+  if (skinRender.value !== null) {
+    renderPack = Object.freeze({
+      ...renderPack,
+      profile: Object.freeze({
+        ...renderPack.profile,
+        packIdentity: `${renderPack.profile.packIdentity}+skin-current-10.1.4-static-portable-v1`,
+        assets: Object.freeze([...renderPack.profile.assets, ...skinRender.value.assets]),
+      }),
+      provider: mergeRenderProviders(
+        renderPack.provider,
+        skinRender.value.provider,
+        skinRender.value.assets.map((asset) => asset.logicalAssetId),
+      ),
+      bindings: skinRender.value.bindings,
     });
   }
   const ordinaryVisible = await prepareSharedOrdinaryVisibleRenderResources(
@@ -188,7 +236,11 @@ export async function assembleSimulatorResources(
       startupDirection.value.assets.map((asset) => asset.logicalAssetId),
     ),
   });
-  const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
+  const scene = targets.createSceneLayout(
+    selection.rendering.kind,
+    renderPack.bindings,
+    skinRender.value?.fieldBindings ?? null,
+  );
   if (scene.status === "rejected") return scene;
   const projection = scene.value.surfaceLayout.camera;
   renderPack = Object.freeze({
@@ -318,6 +370,10 @@ export async function assembleSimulatorResources(
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
     skinRecipeIdentity: selection.skin.recipeIdentity,
+    skinPortablePacks: skinPortablePacks.value,
+    fieldBindings: skinRender.value?.fieldBindings ?? null,
+    backgroundLogicalAssetId: skinRender.value?.backgroundLogicalAssetId ?? null,
+    backgroundImage: skinRender.value?.backgroundImage ?? null,
     renderBindings: renderPack.bindings,
     audioBackend: targets.audio.backend,
     rendererBackend: targets.rendering.backend,
@@ -332,7 +388,7 @@ function validateSkinResourceSelection(
 ): SimulatorAssemblyResult<void> {
   if (typeof selection.skin.recipeIdentity !== "string" ||
     !selection.skin.recipeIdentity.startsWith("skin-recipe-v1|") ||
-    !Array.isArray(selection.skin.resources) || selection.skin.resources.length < 9) {
+    !Array.isArray(selection.skin.resources) || selection.skin.resources.length < 8) {
     return rejected(
       "resource-integrity",
       "simulator.assembly.invalid-skin-resource-selection",
@@ -344,11 +400,12 @@ function validateSkinResourceSelection(
     const identity = `${resource.role}\u0000${resource.logicalResource}`;
     if (identities.has(identity) || !resource.resourceKey.startsWith(
       "simulator-static/current-10.1.4/skin-portable/",
-    )) {
+    ) || resource.profile === null ||
+      resource.profile.logicalResource !== resource.logicalResource) {
       return rejected(
         "resource-integrity",
         "simulator.assembly.duplicate-or-external-skin-resource",
-        "Skin resources require unique simulator-owned role/identity pairs and exact internal static-store keys; URL and alias keys are forbidden.",
+        "Skin resources require unique simulator-owned role/identity pairs, one exact current portable-pack profile and internal static-store keys; URL and alias keys are forbidden.",
       );
     }
     identities.add(identity);
