@@ -15,7 +15,10 @@ import {
 } from "../scene/rehearsalControlScene";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
-import { createTestPresentationPackage } from "./startupPresentationTestProfile";
+import {
+  createDefaultTestSkinSettings,
+  createTestPresentationPackage,
+} from "./startupPresentationTestProfile";
 import {
   installSimulatorModuleLauncher,
   launchInstalledSimulatorModule,
@@ -251,16 +254,20 @@ function testRecipeOwnership(): void {
   (source.chartData.chart[0] as { value: number }).value = 999;
   (source.chartData as { isFullLength: boolean }).isFullLength = true;
   (source.config.audio as { masterGain: number }).masterGain = 0;
+  (source.config.skin as { noteSkin: number }).noteSkin = 6;
   assert.deepEqual([...recipe.request.chartData.bgm], [0xff, 0xfb, 0x90, 0x00]);
   assert.equal((recipe.request.chartData.chart[0] as { readonly value: number }).value, 120);
   assert.ok(Object.isFrozen(recipe.request.chartData.chart));
   assert.ok(Object.isFrozen(recipe.request.chartData.chart[0]));
   assert.equal(recipe.request.chartData.isFullLength, false);
   assert.equal(recipe.request.config.audio.masterGain, 1);
+  assert.equal(recipe.request.config.skin.noteSkin, 0);
+  assert.ok(Object.isFrozen(recipe.request.config.skin));
+  assert.ok(Object.isFrozen(recipe.request.config.skin.special));
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 10);
+  assert.equal(recipe.schemaVersion, 11);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -298,6 +305,31 @@ function testRecipeOwnership(): void {
   const callerHighAspect: any = request();
   callerHighAspect.config.visual.highAspectRatio = 1;
   assert.equal(createSimulatorSessionRecipe(callerHighAspect).status, "rejected");
+  const independentJudge: any = request();
+  independentJudge.config.skin.judgeSkinId = "skin_april2019";
+  assert.equal(createSimulatorSessionRecipe(independentJudge).status, "rejected");
+  const invalidNormalSkin: any = request();
+  invalidNormalSkin.config.skin.noteSkin = 7;
+  assert.equal(createSimulatorSessionRecipe(invalidNormalSkin).status, "rejected");
+  const invalidSpecialId: any = request();
+  invalidSpecialId.config.skin.special = {
+    kind: "collabo", seasonSpecialId: 37,
+    components: specialComponentStates("on"),
+  };
+  assert.equal(createSimulatorSessionRecipe(invalidSpecialId).status, "rejected");
+  const aggregate = request();
+  (aggregate.config as any).skin.special = {
+    kind: "limited", limitedSkinId: 2,
+    components: specialComponentStates("on"),
+  };
+  const aggregateRecipe = requireAccepted(createSimulatorSessionRecipe(aggregate));
+  const aggregateSpecial = aggregateRecipe.request.config.skin.special;
+  assert.equal(aggregateSpecial.kind, "limited");
+  if (aggregateSpecial.kind === "limited") {
+    assert.ok(Object.isFrozen(aggregateSpecial.components));
+    ((aggregate.config.skin.special as any).components as any).judge = "off";
+    assert.equal(aggregateSpecial.components.judge, "on");
+  }
 }
 
 function testGarupaProductExtensionRecipeBoundary(): void {
@@ -781,6 +813,18 @@ function factory(session: SimulatorOwnedSession): SimulatorOwnedSessionFactory {
   return { async create() { return accepted(session); } };
 }
 
+function specialComponentStates(state: "on" | "off") {
+  return {
+    laneAndLine: state,
+    tapEffect: state,
+    rhythmIcon: state,
+    background: state,
+    soundEffect: state,
+    judge: state,
+    directionalFlickIcon: state,
+  } as const;
+}
+
 function request(): SimulatorModuleLaunchRequest {
   return {
     chartData: {
@@ -797,6 +841,7 @@ function request(): SimulatorModuleLaunchRequest {
       inputMode: "auto",
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
+      skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),

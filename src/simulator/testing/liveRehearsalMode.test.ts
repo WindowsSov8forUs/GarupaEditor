@@ -15,7 +15,10 @@ import { createSimulatorSessionRecipe, RecipeOwnedSessionFactory } from "../asse
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
 import type { SimulatorSessionRecipe } from "../assembly/sessionRecipe";
 import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
-import { createTestPresentationPackage } from "./startupPresentationTestProfile";
+import {
+  createDefaultTestSkinSettings,
+  createTestPresentationPackage,
+} from "./startupPresentationTestProfile";
 import type { AudioResourceProfileSet } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
@@ -366,6 +369,7 @@ function request(
       inputMode,
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
+      skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),
@@ -398,6 +402,15 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
     },
     config: {
       ...value.config,
+      skin: {
+        ...value.config.skin,
+        special: value.config.skin.special.kind === "none"
+          ? { kind: "none" }
+          : {
+              ...value.config.skin.special,
+              components: { ...value.config.skin.special.components },
+            },
+      },
       visual: { ...value.config.visual },
       audio: { ...value.config.audio },
     },

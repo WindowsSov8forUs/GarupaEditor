@@ -35,11 +35,48 @@ export interface SimulatorPresentationPackage {
   readonly mv: SimulatorPresentationMvPackage | null;
 }
 
+export type SimulatorSpecialSkinState = "on" | "off";
+
+export interface SimulatorSpecialSkinComponentStates {
+  readonly laneAndLine: SimulatorSpecialSkinState;
+  readonly tapEffect: SimulatorSpecialSkinState;
+  readonly rhythmIcon: SimulatorSpecialSkinState;
+  readonly background: SimulatorSpecialSkinState;
+  readonly soundEffect: SimulatorSpecialSkinState;
+  readonly judge: SimulatorSpecialSkinState;
+  readonly directionalFlickIcon: SimulatorSpecialSkinState;
+}
+
+export type SimulatorSpecialSkinSelection =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "collabo";
+      readonly seasonSpecialId: number;
+      readonly components: SimulatorSpecialSkinComponentStates;
+    }
+  | {
+      readonly kind: "limited";
+      readonly limitedSkinId: number;
+      readonly components: SimulatorSpecialSkinComponentStates;
+    };
+
+export interface SimulatorOriginalSkinSettings {
+  readonly noteSkin: number;
+  readonly fieldSkin: number;
+  readonly tapEffect: number;
+  readonly judgeSE: number;
+  readonly directionalFlick: number;
+  readonly directionalFlickEffect: number;
+  readonly isFixedBG: boolean;
+  readonly special: SimulatorSpecialSkinSelection;
+}
+
 export interface SimulatorLaunchConfig {
   readonly sessionMode: SimulatorPublicSessionMode;
   readonly inputMode: SimulatorPublicInputMode;
   readonly highFrequencyMode: boolean;
   readonly judgeOffsetFrames: number;
+  readonly skin: SimulatorOriginalSkinSettings;
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;

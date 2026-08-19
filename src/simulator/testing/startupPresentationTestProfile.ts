@@ -1,4 +1,20 @@
-import type { SimulatorPresentationPackage } from "../public/contracts";
+import type {
+  SimulatorOriginalSkinSettings,
+  SimulatorPresentationPackage,
+} from "../public/contracts";
+
+export function createDefaultTestSkinSettings(): SimulatorOriginalSkinSettings {
+  return {
+    noteSkin: 0,
+    fieldSkin: 0,
+    tapEffect: 0,
+    judgeSE: 0,
+    directionalFlick: 0,
+    directionalFlickEffect: 0,
+    isFixedBG: false,
+    special: { kind: "none" },
+  };
+}
 
 export function createTestPresentationPackage(): SimulatorPresentationPackage {
   const jacket = structuralPng(360, 360);

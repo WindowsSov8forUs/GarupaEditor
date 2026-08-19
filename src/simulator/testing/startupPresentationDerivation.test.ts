@@ -6,13 +6,16 @@ import { createSimulatorSessionRecipe } from "../assembly/sessionRecipe";
 import { deriveSessionPresentation } from "../assembly/sessionPresentationDerivation";
 import { copyAndFreezeSimulatorPresentation } from "../assembly/startupPresentationContract";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
-import { createTestPresentationPackage } from "./startupPresentationTestProfile";
+import {
+  createDefaultTestSkinSettings,
+  createTestPresentationPackage,
+} from "./startupPresentationTestProfile";
 
 async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema10 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema11 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -20,7 +23,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 10);
+  assert.equal(result.value.schemaVersion, 11);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -136,6 +139,7 @@ function request(): SimulatorModuleLaunchRequest {
       inputMode: "manual",
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
+      skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11), noteSize: Math.fround(100),
         habahiroMeshWidthSetting: Math.fround(1),
