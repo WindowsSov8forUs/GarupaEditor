@@ -27,7 +27,7 @@ for (const required of [
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 9;", "schemaVersion: 9 as const",
+  "readonly schemaVersion: 10;", "schemaVersion: 10 as const",
   '"bgm,chart,isFullLength"', "copyAndFreezeGarupaChartJson",
 ]) if (!recipe.includes(required)) throw new Error(`schema-9 recipe missing ${required}`);
 for (const forbidden of ["chartData.bmsText", "chartData.laneCount"]) {

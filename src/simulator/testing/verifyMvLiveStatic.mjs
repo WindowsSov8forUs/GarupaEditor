@@ -40,7 +40,7 @@ for (const required of [
   "readonly bytes: Uint8Array;",
   "readonly musicStartDelayMilliseconds: number;",
   "readonly mv: SimulatorPresentationMvPackage | null;",
-  "readonly schemaVersion: 9;",
+  "readonly schemaVersion: 10;",
 ]) if (!(contracts + recipe).includes(required)) throw new Error(`MV Public/schema boundary missing: ${required}`);
 for (const required of [
   'mvLivePortable: "closed-portable" as const',

@@ -390,9 +390,7 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
       jacketPng: Uint8Array.from(value.presentation.jacketPng),
       stage: {
         backdropPng: Uint8Array.from(value.presentation.stage.backdropPng),
-        sdCharacterAtlases: null,
       },
-      liveStartVoiceMp3: null,
       mv: value.presentation.mv === null ? null : {
         bytes: Uint8Array.from(value.presentation.mv.bytes),
         musicStartDelayMilliseconds: value.presentation.mv.musicStartDelayMilliseconds,

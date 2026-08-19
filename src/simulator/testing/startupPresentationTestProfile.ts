@@ -13,8 +13,7 @@ export function createTestPresentationPackage(): SimulatorPresentationPackage {
     },
     difficulty: { type: "EXPERT", level: 25 },
     jacketPng: jacket,
-    stage: { backdropPng: backdrop, sdCharacterAtlases: null },
-    liveStartVoiceMp3: null,
+    stage: { backdropPng: backdrop },
     mv: null,
   };
 }

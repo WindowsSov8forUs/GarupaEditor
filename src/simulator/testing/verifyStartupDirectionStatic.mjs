@@ -19,9 +19,7 @@ const publicBarrel = read("public/index.ts") + read("index.ts");
 
 for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
-  "readonly sdCharacterAtlases: null;",
-  "readonly liveStartVoiceMp3: null;",
-  "readonly schemaVersion: 9;",
+  "readonly schemaVersion: 10;",
   'Object.keys(request).sort().join(\",\") !== \"chartData,config,presentation\"',
   '"move-time-reconstruction"',
 ]) {
@@ -38,10 +36,10 @@ for (const required of [
   "createPixiStartupDirectionScene", "liveStartVoiceCue: null", "purpose",
 ]) if (!platform.includes(required)) throw new Error(`production startup composition missing: ${required}`);
 for (const required of [
-  "presentation.stage.sdCharacterAtlases !== null",
-  "presentation.liveStartVoiceMp3 !== null",
-  "sdCharacterAtlases: null", "liveStartVoiceMp3: null",
-]) if (!presentationContract.includes(required)) throw new Error(`literal-null presentation boundary missing: ${required}`);
+  'isExactObject(value, "difficulty,jacketPng,mv,song,stage")',
+  'isExactObject(presentation.stage, "backdropPng")',
+  "startup characters and live-start voice are absent simulator-owned resources",
+]) if (!presentationContract.includes(required)) throw new Error(`caller-free absent-startup-asset boundary missing: ${required}`);
 for (const required of [
   "readonly sdCharacters: readonly [];", "Object.freeze([]) as readonly []",
 ]) if (!presentationDerivation.includes(required)) throw new Error(`empty SD collection mapping missing: ${required}`);
@@ -49,7 +47,8 @@ if (!/selection\.audioSe,\s*store,\s*null,/m.test(resourceAssembly)) {
   throw new Error("resource assembly does not force the live-start voice resource to null");
 }
 for (const [source, forbidden] of [
-  [contracts, ["SimulatorProductLaneCount", "liveStartVoiceMp3: Uint8Array", "sdCharacterAtlases: readonly"]],
+  [contracts, ["SimulatorProductLaneCount", "liveStartVoiceMp3", "sdCharacterAtlases"]],
+  [presentationContract, ["liveStartVoiceMp3", "sdCharacterAtlases"]],
   [presentationDerivation, ["PreparedLiveStartVoice", "deriveVoice(", "AudioResourcePreflightAdapter", "inspectMp3FirstFrame"]],
   [resourceAssembly, ["PreparedLiveStartVoice", "liveStartVoice.logicalId", "liveStartVoice.bytes"]],
 ]) for (const symbol of forbidden) if (source.includes(symbol)) {
@@ -110,7 +109,7 @@ if (closed && (
   closure.missing_resource_count !== 0 || closure.runtime_hook_failure_count !== 0 ||
   closure.production_authorization !== true
 )) throw new Error("startup capability closed without zero-count authorized complete callgraph");
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=9 callgraph=${closed ? "closed-authorized" : "open"}`);
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=10 caller-startup-assets=0 callgraph=${closed ? "closed-authorized" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

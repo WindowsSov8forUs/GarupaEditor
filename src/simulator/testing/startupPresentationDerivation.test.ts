@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema9 exact shape/copy/intrinsic stage PNG/literal-null SD+voice/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema10 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -20,7 +20,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 9);
+  assert.equal(result.value.schemaVersion, 10);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -28,8 +28,8 @@ function testExactShapeAndOwnership(): void {
   source.presentation.jacketPng[0] = 0;
   assert.equal(result.value.request.presentation.jacketPng[0], first);
   assert.notEqual(result.value.request.presentation.jacketPng, source.presentation.jacketPng);
-  assert.equal(result.value.request.presentation.stage.sdCharacterAtlases, null);
-  assert.equal(result.value.request.presentation.liveStartVoiceMp3, null);
+  assert.equal("sdCharacterAtlases" in result.value.request.presentation.stage, false);
+  assert.equal("liveStartVoiceMp3" in result.value.request.presentation, false);
 
   const mvBytes = Uint8Array.of(1, 2, 3, 4);
   const copied = copyAndFreezeSimulatorPresentation({
@@ -73,7 +73,7 @@ function testMalformedPresentationFailsClosed(): void {
   const extra: any = request();
   extra.presentation.defaultJacket = true;
   assertInvalid(extra, "simulator.presentation.invalid-public-package");
-  for (const forbiddenSdCharacters of [[], [Uint8Array.of(1)], createTestPresentationPackage().stage.backdropPng]) {
+  for (const forbiddenSdCharacters of [null, [], [Uint8Array.of(1)], createTestPresentationPackage().stage.backdropPng]) {
     const suppliedCharacters: any = request();
     suppliedCharacters.presentation.stage.sdCharacterAtlases = forbiddenSdCharacters;
     assertInvalid(suppliedCharacters, "simulator.presentation.invalid-public-package");
@@ -90,7 +90,7 @@ function testMalformedPresentationFailsClosed(): void {
   const missingGlyph: any = request();
   missingGlyph.presentation.song.title = "😀";
   assertInvalid(missingGlyph, "simulator.presentation.missing-font-glyph");
-  for (const forbiddenVoice of [Uint8Array.of(0xff, 0xfb, 0x90, 0), new Uint16Array([1])]) {
+  for (const forbiddenVoice of [null, Uint8Array.of(0xff, 0xfb, 0x90, 0), new Uint16Array([1])]) {
     const suppliedVoice: any = request();
     suppliedVoice.presentation.liveStartVoiceMp3 = forbiddenVoice;
     assertInvalid(suppliedVoice, "simulator.presentation.invalid-public-package");

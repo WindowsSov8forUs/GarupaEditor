@@ -78,9 +78,7 @@ async function main(): Promise<void> {
       jacketPng: await canvasPng(360, 360, `rgb(25 90 170)`),
       stage: {
         backdropPng: await canvasPng(1600, 720, `rgb(12 18 35)`),
-        sdCharacterAtlases: null,
       },
-      liveStartVoiceMp3: null,
       mv: null,
     }));
     sdCharacterVisuals ??= presentation.sdCharacters.length;
@@ -123,8 +121,7 @@ async function main(): Promise<void> {
       song: { title: "Test Song", bandName: "Test Band", lyricist: null, composer: null, arranger: null },
       difficulty: { type: "EXPERT", level: 25 },
       jacketPng: await canvasPng(360, 360, "rgb(25 90 170)"),
-      stage: { backdropPng: await canvasPng(360, 360, "rgb(12 18 35)"), sdCharacterAtlases: null },
-      liveStartVoiceMp3: null,
+      stage: { backdropPng: await canvasPng(360, 360, "rgb(12 18 35)") },
       mv: null,
     }));
     const scene = requireOk<any>(await createPixiStartupDirectionScene(

@@ -19,8 +19,8 @@ export interface ValidatedPngStructure {
 export function copyAndFreezeSimulatorPresentation(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationPackage> {
-  if (!isExactObject(value, "difficulty,jacketPng,liveStartVoiceMp3,mv,song,stage")) {
-    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage, literal-null liveStartVoiceMp3 and nullable mv keys.");
+  if (!isExactObject(value, "difficulty,jacketPng,mv,song,stage")) {
+    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage and nullable mv keys; startup characters and live-start voice are simulator-owned absent resources.");
   }
   const presentation = value as unknown as SimulatorPresentationPackage;
   if (!isExactObject(presentation.song, "arranger,bandName,composer,lyricist,title") ||
@@ -48,10 +48,8 @@ export function copyAndFreezeSimulatorPresentation(
     !Number.isSafeInteger(presentation.difficulty.level) || presentation.difficulty.level <= 0) {
     return invalid("Difficulty requires one confirmed uppercase type and one positive integer level.");
   }
-  if (!isExactObject(presentation.stage, "backdropPng,sdCharacterAtlases") ||
-    presentation.stage.sdCharacterAtlases !== null ||
-    presentation.liveStartVoiceMp3 !== null) {
-    return invalid("The standard 2D stage requires one backdrop while SD-character atlases and live-start voice remain literal null; placeholders and caller media are forbidden by SDN01/SDN02/SDN03/SDN04.");
+  if (!isExactObject(presentation.stage, "backdropPng")) {
+    return invalid("The standard 2D stage requires exactly one backdrop; startup characters and live-start voice are absent simulator-owned resources, so caller keys or placeholders are forbidden by SDN01/SDN02/SDN03/SDN04.");
   }
   const jacket = copyPng(presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height, "jacket");
   if (jacket.status === "rejected") return jacket;
@@ -74,9 +72,7 @@ export function copyAndFreezeSimulatorPresentation(
     jacketPng: jacket.value,
     stage: Object.freeze({
       backdropPng: backdrop.value,
-      sdCharacterAtlases: null,
     }),
-    liveStartVoiceMp3: null,
     mv: mv.value,
   }));
 }

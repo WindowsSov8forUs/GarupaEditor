@@ -40,7 +40,7 @@ npm.cmd run simulator:test:startup-audio-callgraph
 npm.cmd run simulator:test:startup-direction-webview2
 ```
 
-第一项覆盖schema 9、presentation复制/冻结、严格PNG/cmap、Reverse `d408d758`授权的固定null SD/voice与非null空角色集合、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage PNG只是显式产品输入，不是原作默认资源或像素oracle；测试和production均不再生成SD角色placeholder或开场语音。
+第一项覆盖schema 10、presentation复制/冻结、严格PNG/cmap、拒绝legacy null/非null SD/voice caller字段、Reverse `d408d758`授权的内部冻结空角色集合与缺SoundResource路径、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage PNG只是显式产品输入，不是原作默认资源或像素oracle；测试和production均不再生成SD角色placeholder或开场语音。
 
 ## MV Live leaves
 
@@ -49,7 +49,7 @@ npm.cmd run simulator:test:mv-live
 npm.cmd run simulator:test:mv-live-webview2
 ```
 
-第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 9 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，serialized-widget raster digest为`5253f7943b57bbe653ec767ac396b1e3f39d0ca6ffc96f11fc44e4fa5e105477`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
+第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 10 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，serialized-widget raster digest为`5253f7943b57bbe653ec767ac396b1e3f39d0ca6ffc96f11fc44e4fa5e105477`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
 
 ## Garupa/ExGarupa product-extension leaves
 
@@ -59,7 +59,7 @@ npm.cmd run simulator:test:garupa-extensions-webview2
 npm.cmd run simulator:test:garupa-external -- HOST________/D_N_A.json HOST________/B.B.K.K.B.K.K..json
 ```
 
-第一项覆盖schema 9、无laneCount的Public边界、固定0..6七条场地线、任意有限continuous/outside lane、product profile/axis、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary。第二项用production Browser decoder和actual WebGL执行3 fresh process，锁定initial/negative/zero/restore digest `2d6c70ef1c2776ac89638b3ef0eff895b7a423aeace3643a2b8aa45277ddce06`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱的parser/profile/axis与Auto/Manual AP；外部文件不复制进fixture或production。
+第一项覆盖schema 10、无laneCount的Public边界、固定0..6七条场地线、任意有限continuous/outside lane、product profile/axis、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary。第二项用production Browser decoder和actual WebGL执行3 fresh process，锁定initial/negative/zero/restore digest `2d6c70ef1c2776ac89638b3ef0eff895b7a423aeace3643a2b8aa45277ddce06`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱的parser/profile/axis与Auto/Manual AP；外部文件不复制进fixture或production。
 
 ## Adaptive layout leaf
 

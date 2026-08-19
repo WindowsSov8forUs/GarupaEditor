@@ -32,9 +32,9 @@ if (publicContract.includes("highAspectRatio") || recipe.includes("config.visual
   throw new Error("caller-authored HighAspectRatio remains in Public/recipe boundary");
 }
 for (const required of [
-  "readonly schemaVersion: 9",
+  "readonly schemaVersion: 10",
   '"habahiroMeshWidthSetting,noteSize,specificSpeed"',
-]) if (!recipe.includes(required)) throw new Error(`Schema 9 adaptive boundary missing ${required}`);
+]) if (!recipe.includes(required)) throw new Error(`Schema 10 adaptive boundary missing ${required}`);
 
 const surface = read("platform/surfaceContracts.ts");
 for (const required of [
