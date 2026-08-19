@@ -14,6 +14,7 @@ import {
 } from "../engine/skin/currentMasterCatalog";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
+import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
 
 function main(): void {
   testCatalog();
@@ -23,6 +24,7 @@ function main(): void {
   testPartialAndDirectionalRoutes();
   testHabahiroAndMvPrecedence();
   testFailedClosedPackage();
+  testResourceInventory();
   testIdentityAndFreeze();
   console.log("Skin settings tests passed: current catalog, exact validation, per-component modes, HAB/MV, failed package, frozen identity");
 }
@@ -215,6 +217,30 @@ function testFailedClosedPackage(): void {
   if (result.status === "evidence-required") {
     assert.equal(result.capability, "skin.special-package-unavailable");
   }
+}
+
+function testResourceInventory(): void {
+  const ordinary = requireOk(resolveOriginalSkinRecipe(
+    defaults(), createSimulatorModeIdentity("live", "manual"), "ordinary", "standard",
+  ));
+  const ordinaryInventory = selectResolvedSkinResourceInventory(ordinary);
+  assert.equal(ordinaryInventory.recipeIdentity, ordinary.identity);
+  assert.equal(ordinaryInventory.resources.length, 9);
+  assert.ok(ordinaryInventory.resources.every((resource) =>
+    resource.resourceKey.startsWith("simulator-static/current-10.1.4/skin-portable/")));
+  const hab = requireOk(resolveOriginalSkinRecipe(
+    aggregate("limited", 2, "on"),
+    createSimulatorModeIdentity("live", "manual"),
+    "habahiro",
+    "standard",
+  ));
+  const habInventory = selectResolvedSkinResourceInventory(hab);
+  assert.equal(habInventory.resources.length, 11);
+  assert.equal(habInventory.resources.filter((resource) =>
+    resource.role === "habahiro-change-flash")[0]?.logicalResource,
+  "ingameskin/tapeffect/habahiro");
+  assert.ok(Object.isFrozen(habInventory));
+  assert.ok(Object.isFrozen(habInventory.resources));
 }
 
 function testIdentityAndFreeze(): void {

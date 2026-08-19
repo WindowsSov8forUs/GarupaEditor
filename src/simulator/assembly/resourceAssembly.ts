@@ -63,6 +63,7 @@ export interface SimulatorResourceAssemblyTargets {
 
 export interface PreparedSimulatorResourceAssembly {
   readonly sessionId: string;
+  readonly skinRecipeIdentity: string;
   readonly renderBindings: RenderEngineResourceBindings;
   readonly audioBackend: SimulatorAudioBackend;
   readonly rendererBackend: SimulatorRendererBackend;
@@ -86,6 +87,8 @@ export async function assembleSimulatorResources(
       "Autonomous resource assembly requires one internally generated non-empty session identity.",
     );
   }
+  const skinSelection = validateSkinResourceSelection(selection);
+  if (skinSelection.status === "rejected") return skinSelection;
 
   let renderPack: {
     readonly profile: Parameters<SimulatorRendererBackend["prepare"]>[1];
@@ -314,6 +317,7 @@ export async function assembleSimulatorResources(
 
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
+    skinRecipeIdentity: selection.skin.recipeIdentity,
     renderBindings: renderPack.bindings,
     audioBackend: targets.audio.backend,
     rendererBackend: targets.rendering.backend,
@@ -321,6 +325,35 @@ export async function assembleSimulatorResources(
     particleRendererBackend: targets.particles.renderer,
     sceneLayout: scene.value,
   }));
+}
+
+function validateSkinResourceSelection(
+  selection: SimulatorStaticResourceSelection,
+): SimulatorAssemblyResult<void> {
+  if (typeof selection.skin.recipeIdentity !== "string" ||
+    !selection.skin.recipeIdentity.startsWith("skin-recipe-v1|") ||
+    !Array.isArray(selection.skin.resources) || selection.skin.resources.length < 9) {
+    return rejected(
+      "resource-integrity",
+      "simulator.assembly.invalid-skin-resource-selection",
+      "Resolved Skin assembly requires one canonical recipe identity and the complete internally selected component inventory.",
+    );
+  }
+  const identities = new Set<string>();
+  for (const resource of selection.skin.resources) {
+    const identity = `${resource.role}\u0000${resource.logicalResource}`;
+    if (identities.has(identity) || !resource.resourceKey.startsWith(
+      "simulator-static/current-10.1.4/skin-portable/",
+    )) {
+      return rejected(
+        "resource-integrity",
+        "simulator.assembly.duplicate-or-external-skin-resource",
+        "Skin resources require unique simulator-owned role/identity pairs and exact internal static-store keys; URL and alias keys are forbidden.",
+      );
+    }
+    identities.add(identity);
+  }
+  return accepted(undefined);
 }
 
 function mergeRenderProviders(

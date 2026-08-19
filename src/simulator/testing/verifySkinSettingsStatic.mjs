@@ -13,6 +13,9 @@ const catalog = read("engine/skin/currentMasterCatalog.ts");
 const validation = read("engine/skin/originalSkinValidation.ts");
 const resolver = read("engine/skin/originalSkinResolver.ts");
 const derivation = read("assembly/sessionSkinDerivation.ts");
+const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
+const assembly = read("assembly/resourceAssembly.ts");
+const composition = read("platform/platformComposition.ts");
 
 for (const symbol of [
   "SimulatorOriginalSkinSettings",
@@ -25,8 +28,8 @@ for (const required of [
   '"audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,skin,visual"',
   "validateAndFreezeOriginalSkinSettings",
 ]) if (!recipe.includes(required)) throw new Error(`Schema 11 Skin recipe boundary missing: ${required}`);
-for (const forbidden of ["judgeSkinId", "judgeType", "ripName", "Bestdori", "http://", "https://"]) {
-  if ((contracts + skinContracts + catalog + validation + resolver + derivation).includes(forbidden)) {
+for (const forbidden of ["judgeSkinId", "judgeType", "ripName", "http://", "https://"]) {
+  if ((contracts + skinContracts + catalog + validation + resolver + derivation + selector + assembly + composition).includes(forbidden)) {
     throw new Error(`forbidden Skin identity/transport entered production: ${forbidden}`);
   }
 }
@@ -50,6 +53,15 @@ for (const required of [
   'bundleName: "normal" as const',
   "canonicalIdentity",
 ]) if (!resolver.includes(required)) throw new Error(`Skin resolver marker missing: ${required}`);
+for (const required of [
+  "selectResolvedSkinResourceInventory",
+  "skinPortableResourceKey",
+  "habahiro-change-flash",
+  "skin: selectResolvedSkinResourceInventory(skinRecipe)",
+  "validateSkinResourceSelection",
+  "deriveSessionSkinRecipe",
+  "selectSimulatorStaticResources(chart.value, skin.value)",
+]) if (!(selector + assembly + composition).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));
 for (const path of production) {

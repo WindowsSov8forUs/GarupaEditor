@@ -86,6 +86,7 @@ import {
   deriveSessionPresentation,
   type PreparedSessionPresentation,
 } from "../assembly/sessionPresentationDerivation";
+import { deriveSessionSkinRecipe } from "../assembly/sessionSkinDerivation";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
 import {
   copyAndValidateInitialSimulatorSurface,
@@ -231,7 +232,11 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") {
       return rejectedWithCleanup(score, releasePendingMovie());
     }
-    const selection = selectSimulatorStaticResources(chart.value);
+    const skin = deriveSessionSkinRecipe(recipe.request, score.value.mode, chart.value);
+    if (skin.status !== "ok") {
+      return rejectedWithCleanup(fromEvidence(skin), releasePendingMovie());
+    }
+    const selection = selectSimulatorStaticResources(chart.value, skin.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
     const movie = mvResource.value === null

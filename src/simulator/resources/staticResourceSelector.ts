@@ -28,6 +28,11 @@ import {
 } from "../backends/resources/currentStartupDirectionResourceManifest";
 import type { ParticleResourceAllowlistEntry } from "../backends/particleContracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
+import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
+import {
+  selectResolvedSkinResourceInventory,
+  type SelectedSkinResourceInventory,
+} from "./skinResourceSelector";
 
 const STATIC_RESOURCE_NAMESPACE = "simulator-static/current-10.1.4" as const;
 
@@ -104,10 +109,12 @@ export interface SimulatorStaticResourceSelection {
   readonly ordinaryVisible: readonly SelectedOrdinaryVisibleResource[];
   readonly scoreGaugeSsAnimation: SelectedScoreGaugeSsAnimationResource;
   readonly rendering: SelectedRenderResourceRoute;
+  readonly skin: SelectedSkinResourceInventory;
 }
 
 export function selectSimulatorStaticResources(
   chart: ChartConstructionResult,
+  skinRecipe: ResolvedOriginalSkinRecipe,
 ): SimulatorStaticResourceSelection {
   const audioSe = Object.freeze(CURRENT_AUDIO_SE_RESOURCES.map((profile) =>
     Object.freeze({
@@ -179,6 +186,7 @@ export function selectSimulatorStaticResources(
     ordinaryVisible,
     scoreGaugeSsAnimation,
     rendering,
+    skin: selectResolvedSkinResourceInventory(skinRecipe),
   });
 }
 

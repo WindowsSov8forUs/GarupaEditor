@@ -36,7 +36,8 @@ import {
   ImmutableSharedStaticResourceStore,
   type SharedStaticResourceResult,
 } from "../resources/sharedStaticResourceStore";
-import { selectSimulatorStaticResources } from "../resources/staticResourceSelector";
+import { selectSimulatorStaticResources as selectStaticResourceInternal } from "../resources/staticResourceSelector";
+import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import {
   createSimulatorSessionRecipe,
   RecipeOwnedSessionFactory,
@@ -811,6 +812,16 @@ class SurfaceRejectingSession extends FakeSession {
 
 function factory(session: SimulatorOwnedSession): SimulatorOwnedSessionFactory {
   return { async create() { return accepted(session); } };
+}
+
+function selectSimulatorStaticResources(chart: any) {
+  const skin = requireOk(resolveOriginalSkinRecipe(
+    request().config.skin,
+    LIVE_AUTO_MODE,
+    chart.habahiroChangeAbsolutePos >= 0 ? "habahiro" : "ordinary",
+    "standard",
+  ));
+  return selectStaticResourceInternal(chart, skin);
 }
 
 function specialComponentStates(state: "on" | "off") {
