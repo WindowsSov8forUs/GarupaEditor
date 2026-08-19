@@ -37,6 +37,7 @@ export async function prepareSkinRenderOverlay(
   const selected = new Set([
     recipe.note.logicalResource,
     recipe.field.logicalResource,
+    recipe.tapEffect.logicalResource,
     recipe.background.logicalResource,
     recipe.directional.noteLogicalResource,
     recipe.judge.logicalResource,
@@ -151,7 +152,7 @@ function buildAssets(pack: PreparedSkinPortablePack): SimulatorAssemblyResult<{
         blendMode: "normal" as const,
       }),
       atlasRows: atlasRows.value,
-      materialRole: materialRole(value.m_Name),
+      materialRole: materialRole(pack.role, value.m_Name),
       animationRole: "none" as const,
       provenance: "current-official-portable" as const,
     }));
@@ -235,6 +236,15 @@ function resolveBindings(
   let right = base.multipleDirectionalLineRightLogicalAssetId;
   if (base.ordinaryVisible === undefined) return invalid("simulator.skin.render-visible-bindings");
   let ordinaryVisible: NonNullable<RenderEngineResourceBindings["ordinaryVisible"]> = base.ordinaryVisible;
+  const effectAssets = assets.get(recipe.tapEffect.logicalResource ?? "");
+  const productJudgementEffectLogicalAssetId = effectAssets === undefined
+    ? undefined
+    : effectAssets.get("effect_circle") ?? effectAssets.get("Default-Particle") ??
+      effectAssets.get("Default-ParticleSystem") ?? effectAssets.values().next().value;
+  if (effectAssets !== undefined &&
+    (typeof productJudgementEffectLogicalAssetId !== "string" || productJudgementEffectLogicalAssetId.length === 0)) {
+    return invalid("simulator.skin.product-effect-binding");
+  }
   if (recipe.chartMode === "ordinary") {
     const noteAssets = assets.get(recipe.note.logicalResource!);
     const directionalAssets = assets.get(recipe.directional.noteLogicalResource);
@@ -267,6 +277,9 @@ function resolveBindings(
     multipleDirectionalLineLeftLogicalAssetId: left,
     multipleDirectionalLineRightLogicalAssetId: right,
     ordinaryVisible,
+    ...(productJudgementEffectLogicalAssetId === undefined
+      ? {}
+      : { productJudgementEffectLogicalAssetId }),
   }));
 }
 
@@ -278,7 +291,11 @@ function role(packRole: PreparedSkinPortablePack["role"], name: string): RenderR
   return "material-texture";
 }
 
-function materialRole(name: string): RenderResourceAssetProfile["materialRole"] {
+function materialRole(
+  packRole: PreparedSkinPortablePack["role"],
+  name: string,
+): RenderResourceAssetProfile["materialRole"] {
+  if (packRole === "tap-effect" || packRole === "directional-effect") return "curve-note";
   if (name === "longNoteLine") return "long-note";
   if (name === "longNoteLine2") return "curve-note";
   if (name === "simultaneous_line") return "sync-line";

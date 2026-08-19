@@ -61,6 +61,7 @@ export interface RenderEngineResourceBindings {
   readonly multipleDirectionalLineRightLogicalAssetId?: string;
   readonly longNoteMaterialLogicalAssetId?: string;
   readonly curveNoteMaterialLogicalAssetId?: string;
+  readonly productJudgementEffectLogicalAssetId?: string;
   readonly habahiroAtlasLogicalAssetIds?: {
     readonly normal: string;
     readonly normal16: string;

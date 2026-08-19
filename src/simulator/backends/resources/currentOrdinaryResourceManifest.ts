@@ -78,6 +78,7 @@ export const CURRENT_ORDINARY_RENDER_BINDINGS = Object.freeze({
   multipleDirectionalLineRightLogicalAssetId: "ordinary/notes/directionalflickskin00/line-right",
   longNoteMaterialLogicalAssetId: "ordinary/notes/skin00/long-note-line",
   curveNoteMaterialLogicalAssetId: "ordinary/notes/skin00/curve-note-line",
+  productJudgementEffectLogicalAssetId: "ordinary/notes/skin00/curve-note-line",
   scoreHud: CURRENT_SCORE_HUD_BINDINGS,
   ordinaryVisible: CURRENT_ORDINARY_VISIBLE_BINDINGS,
 });

@@ -234,6 +234,14 @@ export class GarupaProductRenderProducer {
           role: "note-mesh",
           parentObjectId: null,
         }));
+        commands.push(command(commands.length, {
+          kind: "bind-resource",
+          renderObjectId: objectId,
+          binding: "material",
+          logicalAssetId: this.resources.productJudgementEffectLogicalAssetId ??
+            this.resources.curveNoteMaterialLogicalAssetId!,
+          exactKey: null,
+        }));
         commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
         plannedCreated.add(objectId);
         plannedVisible.add(objectId);
