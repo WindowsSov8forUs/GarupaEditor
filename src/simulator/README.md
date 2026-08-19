@@ -31,6 +31,7 @@
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；该结论只限定original-compatible图。产品任意continuous/outside lane由sidecar拥有，不伪造成Button 07 |
 | WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.86（锁定`.78`同一151.0.4129 patch line）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
+| Original Skin settings / switching | `open-evidence-required` | Reverse `762dd877`只关闭静态身份/调用链且`production_implementation_authorization=false`；当前production继续固定已证据化默认资源，完整master/resource/lifecycle closure提交并push前不得加入Skin Public或selector |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
