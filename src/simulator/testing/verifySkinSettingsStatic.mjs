@@ -16,6 +16,7 @@ const derivation = read("assembly/sessionSkinDerivation.ts");
 const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
 const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts");
 const composition = read("platform/platformComposition.ts");
+const lifecycle = read("assembly/sessionRecipe.ts") + read("public/capabilities.ts");
 
 for (const symbol of [
   "SimulatorOriginalSkinSettings",
@@ -66,9 +67,12 @@ for (const required of [
   "current-official-portable",
   "syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin",
   "prepareSkinAudioOverlay",
-  "sound/tapseskin/directionalflickskin00",
   "replacement.size !== 9",
-]) if (!(selector + assembly + composition).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
+  "skinByRecipe",
+  "skinRecipeIdentity: assembly.value.skinRecipeIdentity",
+  "fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity",
+  "selectedSkinGate",
+]) if (!(selector + assembly + composition + lifecycle).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));
 for (const path of production) {

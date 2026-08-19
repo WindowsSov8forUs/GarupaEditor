@@ -413,6 +413,9 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.combo, 7);
   assert.equal(stepped.report.capabilities.rendering, null);
   assert.equal(stepped.report.capabilities.background, "standard-current-portable");
+  assert.equal(stepped.report.capabilities.skin, "default-current");
+  assert.equal(stepped.report.capabilities.originalSkinSettings, "closed-static-portable");
+  assert.equal(stepped.report.capabilities.selectedSkinGate, "closed-static-portable");
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
   assert.equal(stepped.report.capabilities.mvLivePortable, "closed-portable");
@@ -606,6 +609,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     rendering: null,
     background: "standard-current-portable",
     chart: "standard-original-compatible",
+    skin: null,
     publicAutonomousCore: "closed-portable",
     ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
@@ -628,10 +632,12 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     dynamicSurfaceResize: "open-evidence-required",
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
+    originalSkinSettings: "closed-static-portable",
     mainProgramIntegration: "unauthorized-stage-9",
     selectedRenderingGate: "open-evidence-required",
     selectedBackgroundGate: "closed-portable",
     selectedChartGate: "closed-portable",
+    selectedSkinGate: "open-evidence-required",
   }, "close receipt publishes each capability gate without an aggregate complete claim");
   assert.equal(session.steps, 1, "user-close owns frame before engine step");
   assert.equal(session.closes, 1);
@@ -868,6 +874,8 @@ function engineBuild(engine: any) {
     engine,
     mode: LIVE_AUTO_MODE,
     chartFidelity: "standard-original-compatible" as const,
+    skinRecipeIdentity: "skin-recipe-v1|default-current|test",
+    skinFidelity: "default-current" as const,
     surface: TEST_SURFACE,
     validateSurface: () => accepted(undefined),
   });

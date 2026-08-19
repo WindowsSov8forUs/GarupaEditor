@@ -23,4 +23,5 @@ export type {
   SimulatorSpecialSkinComponentStates,
   SimulatorSpecialSkinSelection,
   SimulatorSpecialSkinState,
+  SimulatorSkinFidelity,
 } from "./public";

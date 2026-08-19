@@ -88,6 +88,9 @@ import {
   type PreparedSessionPresentation,
 } from "../assembly/sessionPresentationDerivation";
 import { deriveSessionSkinRecipe } from "../assembly/sessionSkinDerivation";
+import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
+import type { ChartConstructionResult } from "../engine/chart/types";
+import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
 import {
   copyAndValidateInitialSimulatorSurface,
@@ -154,6 +157,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   private readonly presentationByRecipe = new WeakMap<
     SimulatorSessionRecipe,
     Promise<SimulatorAssemblyResult<PreparedSessionPresentation>>
+  >();
+  private readonly skinByRecipe = new WeakMap<
+    SimulatorSessionRecipe,
+    Promise<SimulatorAssemblyResult<ResolvedOriginalSkinRecipe>>
   >();
 
   constructor(
@@ -233,9 +240,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") {
       return rejectedWithCleanup(score, releasePendingMovie());
     }
-    const skin = deriveSessionSkinRecipe(recipe.request, score.value.mode, chart.value);
-    if (skin.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(skin), releasePendingMovie());
+    const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
+    if (skin.status === "rejected") {
+      return rejectedWithCleanup(skin, releasePendingMovie());
     }
     const selection = selectSimulatorStaticResources(chart.value, skin.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
@@ -478,12 +485,31 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
         ? "garupa-product-extension" as const
         : "standard-original-compatible" as const,
+      skinRecipeIdentity: assembly.value.skinRecipeIdentity,
+      skinFidelity: skin.value.fidelity,
       surface: surface.value,
       validateSurface: () => validateCurrentPlatformSurface(
         this.platform.graphics,
         surface.value,
       ),
     }));
+  }
+
+  private deriveSkin(
+    recipe: SimulatorSessionRecipe,
+    mode: SimulatorModeIdentity,
+    chart: ChartConstructionResult,
+  ): Promise<SimulatorAssemblyResult<ResolvedOriginalSkinRecipe>> {
+    const existing = this.skinByRecipe.get(recipe);
+    if (existing !== undefined) return existing;
+    const derived = deriveSessionSkinRecipe(recipe.request, mode, chart);
+    const pending = Promise.resolve(
+      derived.status === "ok"
+        ? accepted<ResolvedOriginalSkinRecipe>(derived.value)
+        : fromEvidence<ResolvedOriginalSkinRecipe>(derived),
+    );
+    this.skinByRecipe.set(recipe, pending);
+    return pending;
   }
 
   private derivePresentation(

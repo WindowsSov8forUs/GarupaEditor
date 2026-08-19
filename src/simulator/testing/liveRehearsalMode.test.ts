@@ -120,6 +120,8 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
             engine: engine.value,
             mode,
             chartFidelity: "standard-original-compatible" as const,
+            skinRecipeIdentity: "skin-recipe-v1|default-current|live-rehearsal-test",
+            skinFidelity: "default-current" as const,
             surface: TEST_SURFACE,
             validateSurface: () => accepted(undefined),
           })

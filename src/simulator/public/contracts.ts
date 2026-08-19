@@ -139,8 +139,14 @@ export type SimulatorChartFidelity =
   | "standard-original-compatible"
   | "garupa-product-extension";
 
+export type SimulatorSkinFidelity =
+  | "default-current"
+  | "normal-current-static-portable"
+  | "special-current-static-portable";
+
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
+  | "closed-static-portable"
   | "closed-product-extension"
   | "degraded-explicit"
   | "excluded"
@@ -154,6 +160,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
   readonly background: SimulatorBackgroundFidelity | null;
   readonly chart: SimulatorChartFidelity;
+  readonly skin: SimulatorSkinFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
@@ -176,10 +183,12 @@ export interface SimulatorModuleCapabilitySummary {
   readonly dynamicSurfaceResize: "open-evidence-required";
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
+  readonly originalSkinSettings: "closed-static-portable";
   readonly mainProgramIntegration: "unauthorized-stage-9";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
   readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";
+  readonly selectedSkinGate: "closed-static-portable" | "open-evidence-required";
 }
 
 export interface SimulatorModuleCloseReport {

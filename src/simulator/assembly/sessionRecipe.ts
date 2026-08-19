@@ -20,6 +20,7 @@ import type {
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
   SimulatorRenderingFidelity,
+  SimulatorSkinFidelity,
 } from "../public/contracts";
 import type {
   SimulatorOwnedSession,
@@ -47,6 +48,8 @@ export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
   readonly mode: SimulatorModeIdentity;
   readonly chartFidelity: SimulatorChartFidelity;
+  readonly skinRecipeIdentity: string;
+  readonly skinFidelity: SimulatorSkinFidelity;
   readonly surface: SimulatorSurfaceState;
   validateSurface(): SimulatorAssemblyResult<void>;
 }
@@ -102,6 +105,8 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         }
         if (
           fresh.value.chartFidelity === initial.value.chartFidelity &&
+          fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity &&
+          fresh.value.skinFidelity === initial.value.skinFidelity &&
           sameSurface(fresh.value.surface, initial.value.surface)
         ) {
           return ok(fresh.value.engine);
@@ -126,6 +131,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         ? "standard-current-portable"
         : "mv-live-host-supplied-portable",
       initial.value.chartFidelity,
+      initial.value.skinFidelity,
       initial.value.surface,
       initial.value.validateSurface,
     ));
@@ -141,6 +147,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly sessionMode: "live" | "rehearsal",
     private readonly backgroundFidelity: SimulatorBackgroundFidelity,
     private readonly chartFidelity: SimulatorChartFidelity,
+    private readonly skinFidelity: SimulatorSkinFidelity,
     private readonly surface: SimulatorSurfaceState,
     private readonly validateSurface: () => SimulatorAssemblyResult<void>,
   ) {}
@@ -246,6 +253,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
           this.renderingFidelity,
           this.backgroundFidelity,
           this.chartFidelity,
+          this.skinFidelity,
         ),
       });
     }
@@ -335,6 +343,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         this.renderingFidelity,
         this.backgroundFidelity,
         this.chartFidelity,
+        this.skinFidelity,
       ),
     });
   }

@@ -4,6 +4,7 @@ import type {
   SimulatorModuleCapabilitySummary,
   SimulatorModuleLaunchResult,
   SimulatorRenderingFidelity,
+  SimulatorSkinFidelity,
 } from "./contracts";
 
 export const TOTAL_REVALIDATION_CAPABILITY = "simulator.audit.total-revalidation-open";
@@ -28,11 +29,13 @@ export function createSimulatorModuleCapabilitySummary(
   rendering: SimulatorRenderingFidelity | null,
   background: SimulatorBackgroundFidelity | null,
   chart: SimulatorChartFidelity = "standard-original-compatible",
+  skin: SimulatorSkinFidelity | null = null,
 ): SimulatorModuleCapabilitySummary {
   return Object.freeze({
     rendering,
     background,
     chart,
+    skin,
     publicAutonomousCore: "closed-portable" as const,
     ordinaryCommandScene: "closed-portable" as const,
     habahiroCurrentExternalComplete: "closed-portable" as const,
@@ -55,6 +58,7 @@ export function createSimulatorModuleCapabilitySummary(
     dynamicSurfaceResize: "open-evidence-required" as const,
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
+    originalSkinSettings: "closed-static-portable" as const,
     mainProgramIntegration: "unauthorized-stage-9" as const,
     selectedRenderingGate: rendering === null
       ? "open-evidence-required" as const
@@ -65,5 +69,8 @@ export function createSimulatorModuleCapabilitySummary(
     selectedChartGate: chart === "garupa-product-extension"
       ? "closed-product-extension" as const
       : "closed-portable" as const,
+    selectedSkinGate: skin === null
+      ? "open-evidence-required" as const
+      : "closed-static-portable" as const,
   });
 }
