@@ -36,6 +36,7 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
+import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 11;
@@ -342,6 +343,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
 function copyLaunchRequest(
   request: SimulatorModuleLaunchRequest,
 ): SimulatorAssemblyResult<SimulatorModuleLaunchRequest> {
+  const skin = request !== null && typeof request === "object" && !Array.isArray(request) &&
+    request.config !== null && typeof request.config === "object" && !Array.isArray(request.config)
+    ? validateAndFreezeOriginalSkinSettings(request.config.skin)
+    : null;
   if (
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config,presentation" ||
@@ -356,7 +361,7 @@ function copyLaunchRequest(
     typeof request.config.highFrequencyMode !== "boolean" ||
     !Number.isInteger(request.config.judgeOffsetFrames) ||
     request.config.judgeOffsetFrames < -5 || request.config.judgeOffsetFrames > 5 ||
-    !isValidOriginalSkinSettings(request.config.skin) ||
+    skin === null || skin.status !== "ok" ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
       "habahiroMeshWidthSetting,noteSize,specificSpeed" ||
@@ -400,89 +405,11 @@ function copyLaunchRequest(
       inputMode: request.config.inputMode,
       highFrequencyMode: request.config.highFrequencyMode,
       judgeOffsetFrames: request.config.judgeOffsetFrames,
-      skin: copyAndFreezeOriginalSkinSettings(request.config.skin),
+      skin: skin.value,
       visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
-}
-
-const CURRENT_COLLABORATION_SKIN_IDS = new Set([
-  17, 21, 36, 86, 88, 91, 159, 160, 161, 167, 207, 208, 209, 210, 219,
-  227, 262, 263, 265, 267, 276, 277, 278, 279, 283, 284, 285, 286, 291, 293,
-]);
-const CURRENT_LIMITED_SKIN_IDS = new Set([1, 2, 3, 4]);
-const SPECIAL_COMPONENT_KEYS =
-  "background,directionalFlickIcon,judge,laneAndLine,rhythmIcon,soundEffect,tapEffect";
-
-function isValidOriginalSkinSettings(value: unknown): value is SimulatorModuleLaunchRequest["config"]["skin"] {
-  if (value === null || typeof value !== "object" || Array.isArray(value) ||
-    Object.keys(value).sort().join(",") !==
-      "directionalFlick,directionalFlickEffect,fieldSkin,isFixedBG,judgeSE,noteSkin,special,tapEffect") {
-    return false;
-  }
-  const skin = value as Record<string, unknown>;
-  if (!isIntegerInRange(skin.noteSkin, 0, 6) ||
-    !isIntegerInRange(skin.fieldSkin, 0, 14) ||
-    !isIntegerInRange(skin.tapEffect, 0, 4) ||
-    !isIntegerInRange(skin.judgeSE, 0, 3) ||
-    !isIntegerInRange(skin.directionalFlick, 0, 4) ||
-    !isIntegerInRange(skin.directionalFlickEffect, 0, 1) ||
-    typeof skin.isFixedBG !== "boolean" ||
-    skin.special === null || typeof skin.special !== "object" || Array.isArray(skin.special)) {
-    return false;
-  }
-  const special = skin.special as Record<string, unknown>;
-  if (special.kind === "none") return Object.keys(special).join(",") === "kind";
-  const idKey = special.kind === "collabo"
-    ? "seasonSpecialId"
-    : special.kind === "limited"
-      ? "limitedSkinId"
-      : null;
-  if (idKey === null || Object.keys(special).sort().join(",") !== `components,kind,${idKey}` ||
-    !Number.isSafeInteger(special[idKey]) ||
-    (special.kind === "collabo"
-      ? !CURRENT_COLLABORATION_SKIN_IDS.has(special[idKey] as number)
-      : !CURRENT_LIMITED_SKIN_IDS.has(special[idKey] as number)) ||
-    special.components === null || typeof special.components !== "object" ||
-    Array.isArray(special.components) ||
-    Object.keys(special.components).sort().join(",") !== SPECIAL_COMPONENT_KEYS) {
-    return false;
-  }
-  return Object.values(special.components as Record<string, unknown>)
-    .every((state) => state === "on" || state === "off");
-}
-
-function copyAndFreezeOriginalSkinSettings(
-  skin: SimulatorModuleLaunchRequest["config"]["skin"],
-): SimulatorModuleLaunchRequest["config"]["skin"] {
-  const special = skin.special.kind === "none"
-    ? Object.freeze({ kind: "none" as const })
-    : skin.special.kind === "collabo"
-      ? Object.freeze({
-          kind: "collabo" as const,
-          seasonSpecialId: skin.special.seasonSpecialId,
-          components: Object.freeze({ ...skin.special.components }),
-        })
-      : Object.freeze({
-          kind: "limited" as const,
-          limitedSkinId: skin.special.limitedSkinId,
-          components: Object.freeze({ ...skin.special.components }),
-        });
-  return Object.freeze({
-    noteSkin: skin.noteSkin,
-    fieldSkin: skin.fieldSkin,
-    tapEffect: skin.tapEffect,
-    judgeSE: skin.judgeSE,
-    directionalFlick: skin.directionalFlick,
-    directionalFlickEffect: skin.directionalFlickEffect,
-    isFixedBG: skin.isFixedBG,
-    special,
-  });
-}
-
-function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
-  return Number.isSafeInteger(value) && (value as number) >= minimum && (value as number) <= maximum;
 }
 
 function sameSurface(left: SimulatorSurfaceState, right: SimulatorSurfaceState): boolean {
