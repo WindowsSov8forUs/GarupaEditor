@@ -18,8 +18,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "./contracts.ts",
-    "./selections.ts",
-    "./testing/**/*.ts"
+    "./**/*.ts"
   ]
 }
