@@ -48,6 +48,7 @@
     "simulator:test:public-life-profile": "node src/simulator/testing/runPublicLifeProfileTests.mjs",
     "simulator:test:live-rehearsal": "node src/simulator/testing/runLiveRehearsalModeTests.mjs",
     "simulator:test:original-live-settings": "node src/simulator/testing/runOriginalLiveSettingsTests.mjs",
+    "simulator:test:original-live-settings-webview2": "node src/simulator/testing/runOriginalLiveSettingsWebView2Tests.mjs",
     "simulator:test:skin-settings": "node src/simulator/testing/runSkinSettingsTests.mjs",
     "simulator:test:skin-settings-webview2": "node src/simulator/testing/runSkinSettingsWebView2Tests.mjs",
     "simulator:test:startup-direction": "node src/simulator/testing/runStartupDirectionTests.mjs",

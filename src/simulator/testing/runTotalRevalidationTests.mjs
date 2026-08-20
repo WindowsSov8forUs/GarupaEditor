@@ -39,6 +39,7 @@ const baseLeaves = [
   ["garupa-product-extension", "runGarupaProductExtensionTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
+  ["original-live-settings", "runOriginalLiveSettingsTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
   ["startup-audio-callgraph", "runStartupAudioCallgraphTests.mjs", {}],
   ["mv-live", "runMvLiveTests.mjs", {}],
@@ -54,6 +55,7 @@ const quickLeaves = [
   ["garupa-product-extension", "runGarupaProductExtensionTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
+  ["original-live-settings", "runOriginalLiveSettingsTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
   ["mv-live", "runMvLiveTests.mjs", {}],
   ["skin-settings", "runSkinSettingsTests.mjs", {}],
@@ -65,6 +67,7 @@ const browserLeaves = [
   ["garupa-product-browser-webview2", "runGarupaProductWebView2Tests.mjs", browserEnvironment],
   ["startup-direction-browser-webview2", "runStartupDirectionWebView2Tests.mjs", browserEnvironment],
   ["mv-live-browser-webview2", "runMvLiveWebView2Tests.mjs", browserEnvironment],
+  ["original-live-settings-browser-webview2", "runOriginalLiveSettingsWebView2Tests.mjs", browserEnvironment],
   ["skin-settings-browser-webview2", "runSkinSettingsWebView2Tests.mjs", browserEnvironment],
 ];
 const leaves = quick ? quickLeaves : [...baseLeaves, ...browserLeaves];

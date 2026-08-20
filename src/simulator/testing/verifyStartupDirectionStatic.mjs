@@ -109,7 +109,7 @@ if (closed && (
   closure.missing_resource_count !== 0 || closure.runtime_hook_failure_count !== 0 ||
   closure.production_authorization !== true
 )) throw new Error("startup capability closed without zero-count authorized complete callgraph");
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=11 caller-startup-assets=0 callgraph=${closed ? "closed-authorized" : "open"}`);
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=12 caller-startup-assets=0 callgraph=${closed ? "closed-authorized" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

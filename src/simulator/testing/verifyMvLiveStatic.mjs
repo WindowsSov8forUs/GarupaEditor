@@ -91,6 +91,14 @@ for (const forbidden of [
   /stageFallback|fallbackToStage|staticFrameFallback/i,
   /hold\.start-loop|se\.play-one-shot|SE_RHYTHM_GAYA/,
 ]) if (forbidden.test(movieFiles)) throw new Error(`MV production forbidden dependency/fallback: ${forbidden}`);
+for (const required of [
+  "GarupaSimulatorMvLiveDarkCover", "sprite.alpha = 1", "setDarkCover",
+  "Math.fround(0.8)", "Math.fround(this.mvDarkness / 100)",
+  'darkCoverPhase: "hidden" | "fading" | "steady"',
+]) if (!movieFiles.includes(required)) throw new Error(`MV Darkness dark-cover owner missing: ${required}`);
+if ((movieFiles.match(/sprite\.alpha\s*=/g) ?? []).length !== 1) {
+  throw new Error("MV Darkness must not become Movie Sprite opacity");
+}
 if (!movieFiles.includes("video.muted = true") || !movieFiles.includes("video.loop = false") ||
   !movieFiles.includes("video.playsInline = true") || !movieFiles.includes("video.autoplay = false") ||
   !movieFiles.includes("URL.revokeObjectURL") || !movieFiles.includes("new VideoSource")) {
