@@ -10,6 +10,15 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{Emitter, Manager};
 
+mod resource_manager;
+use resource_manager::{
+    resource_collect_garbage, resource_commit_catalog_snapshot, resource_create_snapshot,
+    resource_import_user_media, resource_initialize, resource_install_network_package,
+    resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
+    resource_read_record, resource_read_snapshot_file, resource_release_snapshot, resource_remove,
+    resource_verify, ApplicationResourceState,
+};
+
 const DOWNLOAD_PROGRESS_EVENT: &str = "download-progress";
 const BESTDORI_LOGIN_API: &str = "https://bestdori.com/api/user/login";
 const BESTDORI_ME_API: &str = "https://bestdori.com/api/user/me";
@@ -1989,6 +1998,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .manage(BestdoriAuthState::default())
+        .manage(ApplicationResourceState::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
             let state = app_handle.state::<BestdoriAuthState>();
@@ -2015,7 +2025,21 @@ pub fn run() {
             load_editor_settings_cache,
             save_chart_json_via_dialog,
             save_chart_png_via_dialog,
-            share_file
+            share_file,
+            resource_initialize,
+            resource_list_records,
+            resource_read_record,
+            resource_load_catalog_snapshot,
+            resource_commit_catalog_snapshot,
+            resource_install_network_package,
+            resource_import_user_media,
+            resource_create_snapshot,
+            resource_open_snapshot,
+            resource_read_snapshot_file,
+            resource_release_snapshot,
+            resource_verify,
+            resource_remove,
+            resource_collect_garbage
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
