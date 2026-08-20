@@ -23,7 +23,7 @@
 - CRI Mana/USM codec、Android decoder、speaker onset或Unity/GPU framebuffer exact；
 - Stage 9主程序接入。
 
-## Public schema 10
+## Public schema 11
 
 根请求仍精确为 `{ chartData, presentation, config }`。`presentation`必须显式携带：
 
@@ -45,7 +45,7 @@ interface SimulatorPresentationPackage {
 - delay必须为signed Int32；不得clamp或改写；
 - caller不得提供MIME、container、codec、duration、dimensions、SHA、logical ID、cue、player或quality；
 - simulator只接受严格结构且browser可解码的MP4或WebM，并内部派生全部身份与metadata；
-- stage backdrop仍是schema必填并严格校验；Reverse `d408d758`证明的空SD集合与缺语音SoundResource由simulator内部固定，Public不再携带对应null字段。MV路线不decode/附着standard stage，也不在MV故障时fallback。
+- stage backdrop仍是schema必填并严格校验；Reverse `d408d758`证明的空SD集合与缺语音SoundResource由simulator内部固定，Public不再携带对应null字段。MV路线不decode/附着standard stage，也不在MV故障时fallback；所选特殊Background同样不附着，其他Skin组件继续按各自谓词生效。
 
 `presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、shared-store、mount、scheduler和domain mutation前以`evidence-required / simulator.mv-live.unsupported-rehearsal-mode`拒绝。
 

@@ -35,6 +35,7 @@ const compiledTests = [
   "c07EvidenceConsumption.test.js",
   "autonomousModule.test.js",
   "sceneLayout.test.js",
+  "skinSettings.test.js",
 ];
 const staticChecks = [
   "verifyAudioStatic.mjs",
@@ -42,6 +43,7 @@ const staticChecks = [
   "verifyParticleStatic.mjs",
   "verifyAutonomousModuleStatic.mjs",
   "verifyRenderProductionStatic.mjs",
+  "verifySkinSettingsStatic.mjs",
 ];
 const compiledTestingRoot = join(compiledRoot, "src", "simulator", "testing");
 for (const test of compiledTests) run(process.execPath, [join(compiledTestingRoot, test)]);

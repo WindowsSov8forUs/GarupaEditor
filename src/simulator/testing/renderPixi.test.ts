@@ -1,4 +1,4 @@
-import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
+import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
@@ -29,6 +29,11 @@ import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingG
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
+import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
+import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand
   ? Omit<T, "sessionId" | "sequence" | "frame" | "substep">
@@ -460,6 +465,7 @@ async function main(): Promise<void> {
   await verifyActualPixiHabahiroComplete(profile, resources);
   const fullChart = await verifyActualPixiFullChart(profile, resources);
   await verifyActualPixiGarupaProduct(profile, resources);
+  await verifyActualPixiSelectedSkin(baseProfile);
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
     writeFileSync(observationPath, JSON.stringify({
@@ -479,6 +485,70 @@ async function main(): Promise<void> {
     }, null, 2));
   }
   console.log("actual Pixi ordinary visible oracle passed: Note cubic owners + Combo/AP/AddScore/Result/Life resource routes");
+}
+
+async function verifyActualPixiSelectedSkin(
+  baseProfile: RenderResourceProfile,
+): Promise<void> {
+  const recipe = requireOk(resolveOriginalSkinRecipe({
+    noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
+    directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
+    special: {
+      kind: "limited", limitedSkinId: 3,
+      components: {
+        laneAndLine: "on", tapEffect: "on", rhythmIcon: "on",
+        background: "on", soundEffect: "on", judge: "on",
+        directionalFlickIcon: "on",
+      },
+    },
+  }, LIVE_MANUAL_MODE, "ordinary", "standard"), "selected Skin recipe");
+  const selected = selectResolvedSkinResourceInventory(recipe);
+  const root = join(fixtureRoot, "skin-settings/limited3");
+  const store = ImmutableSharedStaticResourceStore.create(selected.resources.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(root, `${resource.logicalResource.replace(/\//g, "__")}.json`))),
+  })));
+  if (store.status !== "accepted") throw new Error(store.failure.capability);
+  const packs = await prepareSelectedSkinPortablePacks(selected.resources, store.value);
+  if (packs.status !== "accepted") throw new Error(packs.failure.capability);
+  const overlay = await prepareSkinRenderOverlay(recipe, packs.value, CURRENT_ORDINARY_RENDER_BINDINGS);
+  if (overlay.status !== "accepted" || overlay.value === null) throw new Error("selected Skin render overlay");
+  const renderer = new PixiRendererBackend(decoder);
+  const profile: RenderResourceProfile = {
+    ...baseProfile,
+    packIdentity: "selected-skin-actual-pixi",
+    assets: overlay.value.assets,
+  };
+  requireOk(await renderer.prepare(
+    "actual-pixi-selected-skin",
+    profile,
+    overlay.value.provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "selected Skin renderer prepare");
+  requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "selected Skin surface");
+  const commands: RenderCommand[] = [
+    { kind: "create-object", renderObjectId: "skin:note", poolFamily: "normal", role: "note-root", parentObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 0, frame: 0, substep: 0 },
+    { kind: "bind-resource", renderObjectId: "skin:note", binding: "sprite",
+      logicalAssetId: overlay.value.bindings.noteAtlasLogicalAssetId, exactKey: "note_normal_0",
+      sessionId: "actual-pixi-selected-skin", sequence: 1, frame: 0, substep: 0 },
+    { kind: "activate-object", renderObjectId: "skin:note",
+      sessionId: "actual-pixi-selected-skin", sequence: 2, frame: 0, substep: 0 },
+  ];
+  const batch = requireOk(renderer.preflight(commands), "selected Skin bind preflight");
+  requireOk(renderer.commit(batch), "selected Skin bind commit");
+  const sprite = renderer.stage.getChildByLabel("skin:note") as any;
+  const textureLabels: string[] = [];
+  const collectTextures = (node: any) => {
+    if (node?.texture?.label) textureLabels.push(String(node.texture.label));
+    for (const child of node?.children ?? []) collectTextures(child);
+  };
+  collectTextures(sprite);
+  assert(sprite !== null && textureLabels.some((label) => label.includes("skin_april2021")),
+    "actual Pixi consumes selected Note atlas texture");
+  requireOk(renderer.dispose(), "selected Skin renderer dispose");
+  equal(renderer.snapshot().objectCount, 0, "selected Skin Pixi cleanup");
+  console.log(`actual Pixi selected Skin passed: assets=${overlay.value.assets.length} packs=${packs.value.length}`);
 }
 
 async function verifyActualPixiGarupaProduct(

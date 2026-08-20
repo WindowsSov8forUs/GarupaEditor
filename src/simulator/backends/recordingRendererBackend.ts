@@ -545,7 +545,8 @@ function validateResourceProvenance(
   const invalid = profile.assets.some((asset) => {
     if (profile.fidelity.mode === "ordinary") {
       return asset.provenance !== "current-apk" &&
-        asset.provenance !== "current-device-cache";
+        asset.provenance !== "current-device-cache" &&
+        asset.provenance !== "current-official-portable";
     }
     return asset.provenance !== "current-external-portable" &&
       asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";

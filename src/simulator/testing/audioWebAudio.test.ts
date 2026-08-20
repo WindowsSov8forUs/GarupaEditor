@@ -1,6 +1,9 @@
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
+const { createHash } = require("node:crypto");
 
 import type {
   AudioDecodedResourceMetadata,
@@ -14,6 +17,12 @@ import {
   CURRENT_BGM_REGRESSION_RESOURCE,
 } from "./audioSessionBgmTestProfile";
 import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
+import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
+import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
+import { prepareSkinAudioOverlay } from "../assembly/skinAudioPreparation";
 
 const profileByLength = new Map(
   CURRENT_AUDIO_TEST_PROFILE.resources.map((resource) => [resource.byteLength, resource]),
@@ -299,8 +308,83 @@ async function main(): Promise<void> {
   }
   assert.equal(disposeFault.snapshot().state, "disposed");
   assert.equal(disposeFault.snapshot().resourceCount, 0);
+  await testSelectedSkinWebAudio();
 
   console.log("audio Web Audio tests passed: prepare/decode graph transport MoveTime publication context-loss sync-fault dispose");
+}
+
+async function testSelectedSkinWebAudio(): Promise<void> {
+  const recipeResult = resolveOriginalSkinRecipe({
+    noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
+    directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
+    special: {
+      kind: "limited", limitedSkinId: 3,
+      components: {
+        laneAndLine: "on", tapEffect: "on", rhythmIcon: "on", background: "on",
+        soundEffect: "on", judge: "on", directionalFlickIcon: "on",
+      },
+    },
+  }, LIVE_MANUAL_MODE, "ordinary", "standard");
+  if (recipeResult.status !== "ok") throw new Error(recipeResult.capability);
+  const selected = selectResolvedSkinResourceInventory(recipeResult.value);
+  const root = join(process.cwd(), "src/simulator/testing/fixtures/reverse-snapshots/skin-settings/limited3");
+  const storeResult = ImmutableSharedStaticResourceStore.create(selected.resources.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(root, `${resource.logicalResource.replace(/\//g, "__")}.json`))),
+  })));
+  if (storeResult.status !== "accepted") throw new Error(storeResult.failure.capability);
+  const packs = await prepareSelectedSkinPortablePacks(selected.resources, storeResult.value);
+  if (packs.status !== "accepted") throw new Error(packs.failure.capability);
+  const overlay = prepareSkinAudioOverlay(
+    CURRENT_AUDIO_TEST_PROFILE,
+    provider,
+    packs.value,
+    recipeResult.value.tapSE.logicalResource!,
+    recipeResult.value.directional.seLogicalResource,
+  );
+  if (overlay.status !== "accepted") throw new Error(overlay.failure.capability);
+  const bySha = new Map(overlay.value.profile.resources.map((resource) => [resource.sha256, resource]));
+  const resourceForBytes = (bytes: Uint8Array) => {
+    const hash = createHash("sha256").update(bytes).digest("hex").toUpperCase();
+    return bySha.get(hash) ?? CURRENT_AUDIO_TEST_PROFILE.resources.find((resource) =>
+      resource.byteLength === bytes.byteLength)!;
+  };
+  const selectedPreflight: AudioResourcePreflightAdapter = {
+    async sha256(bytes) {
+      return audioAccepted(resourceForBytes(bytes).sha256);
+    },
+    async inspect(bytes) {
+      const resource = resourceForBytes(bytes);
+      return audioAccepted({
+        codec: "mp3", sampleRate: resource.sampleRate, channels: resource.channels,
+        durationSeconds: resource.durationSeconds, sampleFrames: resource.sampleFrames,
+      });
+    },
+    getDecodedBuffer(bytes) {
+      const resource = resourceForBytes(bytes);
+      return audioAccepted({
+        sampleRate: resource.sampleRate, numberOfChannels: resource.channels,
+        length: resource.sampleFrames, duration: resource.durationSeconds,
+      } as AudioBuffer);
+    },
+  };
+  const context = new FakeAudioContext();
+  const backend = new WebAudioSimulatorBackend(context as unknown as AudioContext);
+  const prepared = await backend.prepare(
+    "selected-skin-web-audio", overlay.value.profile, overlay.value.provider, selectedPreflight,
+  );
+  assert.equal(prepared.status, "accepted", JSON.stringify(prepared));
+  execute(backend, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "hold.start-loop", cue: "SE_RHYTHM_TAP_LONG", owner_key: "skin:hold",
+      volume_bits: "0x3F800000", fade_in_bits: "0x00000000" },
+    { kind: "se.play-one-shot", cue: "perfect", voice_key: "skin:perfect", volume_bits: "0x3F800000",
+      pitch_bits: "0x00000000", pan_distance_bits: "0x00000000", pan_angle_bits: "0x00000000" },
+  ]);
+  assert.equal(context.sources[context.sources.length - 2]!.loop, true);
+  assert.equal(context.sources[context.sources.length - 1]!.loop, false);
+  assert.equal(backend.dispose().status, "accepted");
+  console.log("WebAudio selected Skin passed: Tap SE replacement + fixed Directional pack + loop owner cleanup");
 }
 
 function execute(backend: WebAudioSimulatorBackend, commands: readonly any[]): void {

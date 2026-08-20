@@ -13,7 +13,7 @@ The old 1600×720 delivery frame is now only one regression sample. It is not a 
 
 ## Platform boundary
 
-Viewport and safe area are platform capabilities, not Public business request fields. Public Schema 10 remains exactly `{chartData,presentation,config}` and accepts neither `config.visual.highAspectRatio` nor caller-authored startup-character/voice fields.
+Viewport and safe area are platform capabilities, not Public business request fields. Public Schema 11 remains exactly `{chartData,presentation,config}` and accepts neither `config.visual.highAspectRatio` nor caller-authored startup-character/voice fields.
 
 The platform supplies exactly one initial state:
 

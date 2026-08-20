@@ -7,7 +7,7 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
-- Public request schema 10 supplies only canonical `GarupaChartJson`, BGM bytes
+- Public request schema 11 supplies only canonical `GarupaChartJson`, BGM bytes
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.
@@ -19,6 +19,14 @@ Reverse remains the only authority for original behavior.
 - A chart uses the original-compatible route only when every authored item can be
   represented without dropping SV/group/lane/connection semantics. An extended
   Slide uses one product chain owner for the whole chain.
+
+## Original Skin reuse
+
+- Product-extension charts consume the same frozen original Skin recipe as original-compatible charts; they do not expose a second custom-Judge or rip-map mode.
+- Note and Directional fronts use the selected original atlas bindings directly at continuous authored coordinates. No lane clamp or nearest-Sprite fallback is introduced.
+- Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
+- Product judgement flash binds the selected TapEffect portable texture while retaining the documented product continuous-span mesh/lifetime. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes.
+- The selected special ParticleSystem module graph is not yet the product particle simulator owner; whole-pack preflight alone does not upgrade that open implementation gap.
 
 ## Position and lane
 
