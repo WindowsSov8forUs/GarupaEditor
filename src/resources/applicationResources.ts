@@ -6,6 +6,7 @@ import {
   type ResourceResult,
 } from "./contracts";
 import { MemoryApplicationResourceBackend } from "./memoryResourceBackend";
+import { BestdoriApplicationResourceProvider } from "./providers/bestdoriCatalogProvider";
 import { TauriApplicationResourceBackend } from "./providers/tauriResourceBackend";
 
 let bootstrapPromise: Promise<ResourceResult<ApplicationResourceManager>> | null = null;
@@ -25,9 +26,12 @@ async function bootstrap(): Promise<ResourceResult<ApplicationResourceManager>> 
   );
   const initialized = await manager.initialize();
   if (initialized.status === "rejected") return initialized;
+  const provider = manager.registerCatalogProvider(new BestdoriApplicationResourceProvider());
+  if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
   if (builtins.status === "rejected") return builtins;
   installBuiltinDocumentResources(manager);
+  void manager.refreshCatalog("bestdori");
   return resourceAccepted(manager);
 }
 

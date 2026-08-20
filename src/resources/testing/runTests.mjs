@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -14,6 +14,12 @@ const typeScriptCli = require.resolve("typescript/bin/tsc");
 try {
   run(process.execPath, [join(testingRoot, "verifyResourceBoundaries.mjs")]);
   run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.json"), "--outDir", outputRoot]);
+  const outputDataRoot = join(outputRoot, "src", "data");
+  mkdirSync(outputDataRoot, { recursive: true });
+  cpSync(
+    join(repositoryRoot, "src", "data", "judge-rip-files-map.json"),
+    join(outputDataRoot, "judge-rip-files-map.json"),
+  );
   run(process.execPath, [join(outputRoot, "src", "resources", "testing", "main.test.js")]);
 } finally {
   rmSync(outputRoot, { recursive: true, force: true });

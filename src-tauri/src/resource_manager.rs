@@ -186,6 +186,7 @@ pub fn resource_initialize(
         ensure_layout(&root)?;
         remove_directory_contents(&root.join("transactions"))?;
         remove_directory_contents(&root.join("snapshots"))?;
+        migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
         runtime.open_snapshots.clear();
         runtime.initialized = true;
     }
@@ -1002,6 +1003,249 @@ fn next_identity(state: &ApplicationResourceState, label: &str) -> String {
     format!("{label}-{now:x}-{sequence:x}")
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LegacyMigrationReport {
+    storage_schema: u32,
+    completed_at_unix_milliseconds: u128,
+    imported: Vec<String>,
+    skipped: Vec<String>,
+}
+
+fn migrate_legacy_bestdori_cache(
+    app: &tauri::AppHandle,
+    resource_root: &Path,
+    state: &ApplicationResourceState,
+) -> Result<(), String> {
+    let marker = resource_root.join("migration.json");
+    if marker.exists() {
+        return Ok(());
+    }
+    let app_data = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("resolve app data directory for migration failed: {error}"))?;
+    let candidates = [
+        (app_data.join("assets/game/noteskin"), "noteskin"),
+        (app_data.join("assets/game/fieldskin"), "fieldskin"),
+        (app_data.join("assets/game/bgskin"), "bgskin"),
+        (app_data.join("assets/game/judgeskin"), "judgeskin"),
+        (app_data.join("assets/sound/tapseskin"), "tapseskin"),
+        (app_data.join("assets/sound/common_rip"), "sound-common"),
+    ];
+    let mut report = LegacyMigrationReport {
+        storage_schema: STORAGE_SCHEMA,
+        completed_at_unix_milliseconds: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis(),
+        imported: Vec::new(),
+        skipped: Vec::new(),
+    };
+    for (directory, family) in candidates {
+        if !directory.exists() {
+            continue;
+        }
+        let entries = match fs::read_dir(&directory) {
+            Ok(entries) => entries,
+            Err(error) => {
+                report
+                    .skipped
+                    .push(format!("{}: {error}", directory.to_string_lossy()));
+                continue;
+            }
+        };
+        for entry in entries {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) => {
+                    report.skipped.push(format!("{family}: {error}"));
+                    continue;
+                }
+            };
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let name = entry.file_name().to_string_lossy().to_string();
+            let Some((server, native_id)) = parse_legacy_package_name(&name, family) else {
+                report.skipped.push(format!(
+                    "{family}/{name}: ambiguous legacy package identity"
+                ));
+                continue;
+            };
+            let resource_id = format!("bestdori/{server}/{family}/{native_id}");
+            if record_path(resource_root, &resource_id).exists() {
+                continue;
+            }
+            match import_legacy_package(
+                resource_root,
+                &path,
+                &resource_id,
+                &server,
+                family,
+                &native_id,
+                &next_identity(state, "legacy"),
+            ) {
+                Ok(()) => report.imported.push(resource_id),
+                Err(error) => report.skipped.push(format!("{family}/{name}: {error}")),
+            }
+        }
+    }
+    let bytes = serde_json::to_vec(&report)
+        .map_err(|error| format!("serialize resource migration report failed: {error}"))?;
+    atomic_write(
+        resource_root,
+        &marker,
+        &bytes,
+        &next_identity(state, "migration-report"),
+    )
+}
+
+fn parse_legacy_package_name(name: &str, family: &str) -> Option<(String, String)> {
+    for server in ["jp", "en", "tw", "cn", "kr"] {
+        let prefix = format!("{server}-{family}-");
+        if let Some(native_id) = name.strip_prefix(&prefix) {
+            if !native_id.is_empty()
+                && native_id
+                    .chars()
+                    .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-'))
+            {
+                return Some((server.to_string(), native_id.to_string()));
+            }
+        }
+    }
+    None
+}
+
+fn import_legacy_package(
+    resource_root: &Path,
+    package_root: &Path,
+    resource_id: &str,
+    server: &str,
+    family: &str,
+    native_id: &str,
+    transaction_id: &str,
+) -> Result<(), String> {
+    let canonical_root = package_root
+        .canonicalize()
+        .map_err(|error| format!("canonicalize legacy package failed: {error}"))?;
+    let mut files = Vec::new();
+    collect_legacy_files(&canonical_root, &canonical_root, &mut files)?;
+    if files.is_empty() {
+        return Err("legacy package has no importable files".to_string());
+    }
+    let (section, manifest_section) = if family == "tapseskin" || family == "sound-common" {
+        ("sound", "sound")
+    } else {
+        ("ingameskin", "ingameskin")
+    };
+    let remote_family = if family == "sound-common" {
+        "common"
+    } else {
+        family
+    };
+    let asset_suffix = if family == "sound-common" {
+        "common_rip".to_string()
+    } else {
+        format!("{native_id}_rip")
+    };
+    let manifest_name = if family == "sound-common" {
+        "common".to_string()
+    } else {
+        native_id.to_string()
+    };
+    let descriptor = serde_json::json!({
+        "ref": { "id": resource_id },
+        "origin": "network",
+        "kind": "package",
+        "title": native_id,
+        "availability": "installed",
+        "files": null,
+        "catalogObservedAt": null,
+        "source": {
+            "provider": "bestdori",
+            "server": server,
+            "family": family,
+            "nativeId": native_id,
+            "manifestUrl": format!("https://bestdori.com/api/explorer/{server}/assets/{manifest_section}/{remote_family}/{manifest_name}.json"),
+            "assetBaseUrl": format!("https://bestdori.com/assets/{server}/{section}/{remote_family}/{asset_suffix}"),
+        }
+    });
+    commit_resource(resource_root, descriptor, files, transaction_id)?;
+    Ok(())
+}
+
+fn collect_legacy_files(
+    package_root: &Path,
+    directory: &Path,
+    output: &mut Vec<ResourceInstallFileInput>,
+) -> Result<(), String> {
+    for entry in fs::read_dir(directory)
+        .map_err(|error| format!("read legacy package directory failed: {error}"))?
+    {
+        let entry = entry.map_err(|error| format!("read legacy package entry failed: {error}"))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|error| format!("read legacy package file type failed: {error}"))?;
+        if file_type.is_symlink() {
+            return Err("legacy package contains a symbolic link".to_string());
+        }
+        let path = entry.path();
+        if file_type.is_dir() {
+            collect_legacy_files(package_root, &path, output)?;
+            continue;
+        }
+        if !file_type.is_file() || entry.file_name() == ".manifest.json" {
+            continue;
+        }
+        let canonical = path
+            .canonicalize()
+            .map_err(|error| format!("canonicalize legacy package file failed: {error}"))?;
+        if !canonical.starts_with(package_root) {
+            return Err("legacy package file escapes its package root".to_string());
+        }
+        let logical_path = canonical
+            .strip_prefix(package_root)
+            .map_err(|error| format!("derive legacy package path failed: {error}"))?
+            .to_string_lossy()
+            .replace('\\', "/");
+        let logical_path = normalize_logical_path(&logical_path)?;
+        let bytes = fs::read(&canonical)
+            .map_err(|error| format!("read legacy package file failed: {error}"))?;
+        if bytes.is_empty() {
+            return Err(format!("legacy package file is empty: {logical_path}"));
+        }
+        output.push(ResourceInstallFileInput {
+            media_type: media_type_for_legacy_path(&logical_path).to_string(),
+            logical_path,
+            base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
+        });
+    }
+    Ok(())
+}
+
+fn media_type_for_legacy_path(path: &str) -> &'static str {
+    let lower = path.to_ascii_lowercase();
+    if lower.ends_with(".png") {
+        "image/png"
+    } else if lower.ends_with(".mp3") {
+        "audio/mpeg"
+    } else if lower.ends_with(".mp4") {
+        "video/mp4"
+    } else if lower.ends_with(".webm") {
+        "video/webm"
+    } else if lower.ends_with(".json")
+        || lower.ends_with(".bundle")
+        || lower.ends_with(".asset")
+        || lower.ends_with(".sprites")
+    {
+        "application/json"
+    } else {
+        "application/octet-stream"
+    }
+}
+
 fn remove_directory_contents(directory: &Path) -> Result<(), String> {
     fs::create_dir_all(directory)
         .map_err(|error| format!("create cleanup directory failed: {error}"))?;
@@ -1068,5 +1312,15 @@ mod tests {
         assert!(normalize_resource_id("bestdori/jp/noteskin/skin999").is_ok());
         assert!(normalize_resource_id("bestdori/jp/noteskin/future_collaboration").is_ok());
         assert!(normalize_resource_id("simulator-static/current-10.1.4/x").is_err());
+    }
+
+    #[test]
+    fn legacy_package_identity_requires_explicit_server_family_prefix() {
+        assert_eq!(
+            parse_legacy_package_name("jp-noteskin-skin00", "noteskin"),
+            Some(("jp".to_string(), "skin00".to_string()))
+        );
+        assert!(parse_legacy_package_name("skin00", "noteskin").is_none());
+        assert!(parse_legacy_package_name("jp-fieldskin-skin00", "noteskin").is_none());
     }
 }

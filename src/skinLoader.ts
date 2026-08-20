@@ -32,7 +32,7 @@ import {
   readSkinTextFile,
 } from "./services/bestdori/api";
 import {
-  buildFallbackBestdoriSkinCatalogOptions,
+  buildEmptyBestdoriSkinCatalogOptions,
   loadBestdoriSkinCatalogOptions as loadBestdoriSkinCatalogOptionsFromService,
   type BestdoriCatalogKind,
   type BestdoriSkinCatalogOptions,
@@ -152,7 +152,7 @@ const JUDGE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   ),
 );
 
-let activeBestdoriSkinCatalogOptions: BestdoriSkinCatalogOptions = buildFallbackBestdoriSkinCatalogOptions();
+let activeBestdoriSkinCatalogOptions: BestdoriSkinCatalogOptions = buildEmptyBestdoriSkinCatalogOptions();
 
 export function activateBestdoriSkinCatalogOptions(options: BestdoriSkinCatalogOptions): void {
   activeBestdoriSkinCatalogOptions = options;
