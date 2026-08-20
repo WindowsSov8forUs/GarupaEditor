@@ -1,5 +1,4 @@
 import judgeRipFilesMapJson from "../../data/judge-rip-files-map.json";
-import defaultCoverImage from "../../assets/default-cover.png";
 import {
   blobToDataUrl,
   decodeBase64ToArrayBuffer,
@@ -416,7 +415,6 @@ export const SONOLUS_TEST_SERVER_ROOT = "https://sonolus.ayachan.fun/test";
 export const NOTGARUPA_SERVER_ROOT = "https://notgarupa.sov8.cn";
 const SONOLUS_TEST_LEVELS_ENDPOINT = `${SONOLUS_TEST_SERVER_ROOT}/sonolus/levels`;
 const NOTGARUPA_LEVELS_ENDPOINT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
-export const BESTDORI_DEFAULT_SONG_COVER_URL = defaultCoverImage;
 export const BESTDORI_OFFICIAL_CHART_TEAM = "=BANDORI OFFICIAL CHART TEAM=";
 
 export function normalizeBestdoriAssetServer(value: string | null | undefined): BestdoriAssetServer {
@@ -1496,7 +1494,7 @@ export async function resolveBestdoriCommunitySongResourceUrls(
       type: "bandori",
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
-      coverUrl: await fetchBestdoriSongJacketUrlWithFallback(songId, songInfo),
+      coverUrl: buildBestdoriSongJacketUrl(songId, songInfo),
     };
   }
   const llsifMisc = await fetchBestdoriLlsifMisc();
@@ -1528,17 +1526,6 @@ export function buildBestdoriSongJacketUrl(songId: number, songInfo: BestdoriSon
   return `${BESTDORI_ASSETS_ROOT}/${server}/musicjacket/musicjacket${jacketFolderIndex}_rip/assets-star-forassetbundle-startapp-musicjacket-musicjacket${jacketFolderIndex}-${jacketImage}-jacket.png`;
 }
 
-export async function fetchBestdoriSongJacketUrlWithFallback(
-  songId: number,
-  songInfo: BestdoriSongInfo,
-): Promise<string> {
-  try {
-    return buildBestdoriSongJacketUrl(songId, songInfo);
-  } catch {
-    return BESTDORI_DEFAULT_SONG_COVER_URL;
-  }
-}
-
 export function buildBestdoriSongMvUrl(songInfo: BestdoriSongInfo): string | null {
   const videos = resolveBestdoriSongMusicVideos(songInfo);
   const keys = Object.keys(videos);
@@ -1562,7 +1549,7 @@ export async function fetchBestdoriSongResourceUrls(
   const songInfo = options?.songInfo ?? (await fetchBestdoriSongInfo(songId));
   const server = resolveBestdoriSongServerName(songInfo);
   const audioUrl = buildBestdoriSongAudioUrl(songId, songInfo);
-  const jacketUrl = await fetchBestdoriSongJacketUrlWithFallback(songId, songInfo);
+  const jacketUrl = buildBestdoriSongJacketUrl(songId, songInfo);
   const mvUrl = buildBestdoriSongMvUrl(songInfo);
   return {
     server,

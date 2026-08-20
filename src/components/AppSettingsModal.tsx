@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { type EditorOptionSettings } from "../chartCore";
-import displayIcon from "../assets/icons/display.svg";
-import optionsIcon from "../assets/icons/settings.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { StepperIcon } from "./StepperIcon";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StandardModal, StandardValueModal } from "./StandardModal";
@@ -170,6 +169,8 @@ export function AppSettingsModal({
   optionSettings,
   onApplyOptionSettings,
 }: AppSettingsModalProps) {
+  const displayIcon = useApplicationResourceUrl("ui.icon.display");
+  const optionsIcon = useApplicationResourceUrl("ui.icon.settings");
   const [childPage, setChildPage] = useState<SettingsChildPage | null>(null);
   const [draftOptionSettings, setDraftOptionSettings] = useState<EditorOptionSettings>(
     normalizeOptionDraft(optionSettings),

@@ -1,61 +1,3 @@
-@font-face {
-  font-family: "TTShinGoM";
-  src: url("./assets/fonts/TTShinGoM.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GB18030";
-  src: url("./assets/fonts/GB18030.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "ChartUI";
-  src: url("./assets/fonts/TTShinGoM.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  unicode-range:
-    U+0000-00FF,
-    U+0100-024F,
-    U+0250-02AF,
-    U+02B0-02FF,
-    U+0300-036F,
-    U+1E00-1EFF,
-    U+2000-206F,
-    U+20A0-20CF,
-    U+2100-214F,
-    U+2460-24FF,
-    U+2500-257F,
-    U+25A0-25FF,
-    U+3000-303F,
-    U+3040-309F,
-    U+30A0-30FF,
-    U+31F0-31FF,
-    U+FF61-FF9F;
-}
-
-@font-face {
-  font-family: "ChartUI";
-  src: url("./assets/fonts/GB18030.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  unicode-range:
-    U+2E80-2EFF,
-    U+2F00-2FDF,
-    U+31C0-31EF,
-    U+3400-4DBF,
-    U+4E00-9FFF,
-    U+F900-FAFF,
-    U+2F800-2FA1F;
-}
-
 :root {
   --bg-0: #f7e9df;
   --bg-1: #e7dff3;
@@ -168,7 +110,7 @@ body {
   font-synthesis: none;
   color: var(--text);
   background-color: #0c1020;
-  background-image: url("./assets/live.png");
+  background-image: var(--app-resource-background-image);
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;

@@ -171,13 +171,7 @@ import {
   type EditorTool,
   type NoteType,
 } from "../chartCore";
-import defaultCoverImage from "../assets/default-cover.png";
-import undoActionIcon from "../assets/icons/undo-action.svg";
-import clearActionIcon from "../assets/icons/clear-action.svg";
-import applyActionIcon from "../assets/icons/apply-action.svg";
-import copyActionIcon from "../assets/icons/copy-action.svg";
-import pasteActionIcon from "../assets/icons/paste-action.svg";
-import mirrorActionIcon from "../assets/icons/mirror-action.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
@@ -551,6 +545,13 @@ function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSo
 }
 
 function ChartEditorController() {
+  const defaultCoverImage = useApplicationResourceUrl("ui.default-cover");
+  const undoActionIcon = useApplicationResourceUrl("ui.icon.undo-action");
+  const clearActionIcon = useApplicationResourceUrl("ui.icon.clear-action");
+  const applyActionIcon = useApplicationResourceUrl("ui.icon.apply-action");
+  const copyActionIcon = useApplicationResourceUrl("ui.icon.copy-action");
+  const pasteActionIcon = useApplicationResourceUrl("ui.icon.paste-action");
+  const mirrorActionIcon = useApplicationResourceUrl("ui.icon.mirror-action");
   const [metadata, setMetadataState] = useState<ChartMetadata>(DEFAULT_METADATA);
   const [settings, setSettingsState] = useState<ChartSettings>(DEFAULT_SETTINGS);
   const [appOptionSettings, setAppOptionSettings] = useState<EditorOptionSettings>(DEFAULT_EDITOR_OPTION_SETTINGS);

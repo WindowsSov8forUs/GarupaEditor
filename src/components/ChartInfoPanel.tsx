@@ -1,6 +1,6 @@
 import { memo, type CSSProperties } from "react";
 import { formatDuration, getDifficultyStyle, type ChartMetadata } from "../chartCore";
-import editIcon from "../assets/icons/edit.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { OverflowScrollText } from "./OverflowScrollText";
 
 type ChartInfoPanelProps = {
@@ -20,6 +20,7 @@ export const ChartInfoPanel = memo(function ChartInfoPanel({
   onOpenMetadataEditor,
   onCoverImageError,
 }: ChartInfoPanelProps) {
+  const editIcon = useApplicationResourceUrl("ui.icon.edit");
   return (
     <section className="chart-info-panel">
       <div className="chart-info-body">

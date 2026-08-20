@@ -11,8 +11,7 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import { beatToSeconds, sanitizeFileName } from "../chartCore";
-import backArrowIcon from "../assets/icons/back-arrow.svg";
-import imageExportIcon from "../assets/icons/image-export.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { DownloadProgressModal } from "../components/DownloadProgressModal";
 import { OverlayDialogModal, type OverlayDialogState } from "../components/OverlayDialogModal";
 import { StepperIcon } from "../components/StepperIcon";
@@ -731,6 +730,8 @@ function renderSegmentCanvas(args: {
 }
 
 export default function StaticChartRenderWindow() {
+  const backArrowIcon = useApplicationResourceUrl("ui.icon.back-arrow");
+  const imageExportIcon = useApplicationResourceUrl("ui.icon.image-export");
   const routeParams = useMemo(() => parseStaticRenderRouteParams(), []);
   const { requestId, isMobileRoute } = routeParams;
   const [payload, setPayload] = useState<StaticRenderPayload | null>(null);

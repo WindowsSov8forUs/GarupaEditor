@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "chart:test": "node src/chart/testing/runTests.mjs",
     "resources:test": "node src/resources/testing/runTests.mjs",
+    "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
     "simulator:test:first-slice": "node src/simulator/testing/runFirstSliceTests.mjs",
     "simulator:test:chart-boundary": "node src/simulator/testing/runChartConstructionBoundaryTests.mjs",
     "simulator:test:chart-parsing": "node src/simulator/testing/runChartConstructionParsingTests.mjs",

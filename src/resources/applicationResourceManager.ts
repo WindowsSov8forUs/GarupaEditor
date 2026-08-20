@@ -1,7 +1,6 @@
 import type {
   ApplicationResourceBackend,
   ResourceCatalogProvider,
-  ResourceInstallFile,
   ResourceObjectUrlFactory,
   StoredResourceRecord,
 } from "./backend";
@@ -12,6 +11,7 @@ import {
   type ApplicationResourceDescriptor,
   type BuiltinResourceDescriptor,
   type NetworkResourceDescriptor,
+  type ObservedIntegrity,
   type ResourceCatalogSnapshot,
   type ResourceConsumerLease,
   type ResourceDescriptor,
@@ -33,12 +33,25 @@ import {
 } from "./selections";
 import { observeResourceIntegrity } from "./sha256";
 
+export interface BuiltinResourceRegistrationFile {
+  readonly logicalPath: string;
+  readonly mediaType: string;
+  readonly integrity?: ObservedIntegrity;
+  readonly bytes?: Uint8Array;
+  readonly loadBytes?: () => Promise<Uint8Array>;
+}
+
 export interface BuiltinResourceRegistration {
   readonly id: string;
   readonly kind: BuiltinResourceDescriptor["kind"];
   readonly title: string;
   readonly sourceUrl: string;
-  readonly files: readonly ResourceInstallFile[];
+  readonly files: readonly BuiltinResourceRegistrationFile[];
+}
+
+interface RegisteredBuiltinResource {
+  readonly descriptor: BuiltinResourceDescriptor;
+  readonly filesByPath: ReadonlyMap<string, ManagedBuiltinFile>;
 }
 
 export interface ResourceListQuery {
@@ -56,10 +69,7 @@ export interface ImportUserMediaRequest {
 }
 
 export class ApplicationResourceManager {
-  private readonly builtins = new Map<string, {
-    readonly descriptor: BuiltinResourceDescriptor;
-    readonly bytesByPath: ReadonlyMap<string, Uint8Array>;
-  }>();
+  private readonly builtins = new Map<string, RegisteredBuiltinResource>();
   private readonly installed = new Map<string, StoredResourceRecord>();
   private readonly providers = new Map<string, ResourceCatalogProvider>();
   private readonly activeCatalogs = new Map<string, ResourceCatalogSnapshot>();
@@ -124,7 +134,7 @@ export class ApplicationResourceManager {
     });
     this.builtins.set(reference.value.id, Object.freeze({
       descriptor,
-      bytesByPath: prepared.value.bytesByPath,
+      filesByPath: prepared.value.filesByPath,
     }));
     return resourceAccepted(descriptor);
   }
@@ -145,6 +155,15 @@ export class ApplicationResourceManager {
 
   getSelection(): ApplicationResourceSelection {
     return this.selection;
+  }
+
+  resolveBuiltinSlotUrl(slot: ApplicationResourceSlot): ResourceResult<string> {
+    const ref = this.selection[slot];
+    if (ref === null) return invalid("resources.manager.unselected-builtin-slot");
+    const builtin = this.builtins.get(ref.id);
+    return builtin === undefined
+      ? invalid("resources.manager.selected-slot-is-not-builtin")
+      : resourceAccepted(builtin.descriptor.sourceUrl);
   }
 
   replaceSelection(
@@ -325,13 +344,10 @@ export class ApplicationResourceManager {
     const builtin = this.builtins.get(ref.id);
     if (builtin !== undefined) {
       for (const file of builtin.descriptor.files ?? []) {
-        const bytes = builtin.bytesByPath.get(file.logicalPath);
-        if (bytes === undefined) return integrityFailure("resources.manager.builtin-file-missing");
-        const observed = await observeResourceIntegrity(bytes);
-        if (observed.status === "rejected") return observed;
-        if (observed.value.byteLength !== file.integrity.byteLength || observed.value.sha256 !== file.integrity.sha256) {
-          return integrityFailure("resources.manager.builtin-file-tampered");
-        }
+        const owner = builtin.filesByPath.get(file.logicalPath);
+        if (owner === undefined) return integrityFailure("resources.manager.builtin-file-missing");
+        const loaded = await owner.read();
+        if (loaded.status === "rejected") return loaded;
       }
       return resourceAccepted(builtin.descriptor);
     }
@@ -369,10 +385,7 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     readonly snapshotId: ResourceSnapshotId,
     readonly slots: Readonly<Record<string, ResourceRef>>,
     private readonly filesBySlot: Readonly<Record<string, readonly ResourceFileRecord[]>>,
-    private readonly builtins: ReadonlyMap<string, {
-      readonly descriptor: BuiltinResourceDescriptor;
-      readonly bytesByPath: ReadonlyMap<string, Uint8Array>;
-    }>,
+    private readonly builtins: ReadonlyMap<string, RegisteredBuiltinResource>,
     private readonly backend: ApplicationResourceBackend,
     private readonly objectUrls: ResourceObjectUrlFactory,
   ) {
@@ -390,9 +403,11 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     if (ref === undefined) throw new Error(`resource slot is not leased: ${slot}`);
     const builtin = this.builtins.get(ref.id);
     if (builtin !== undefined) {
-      const bytes = builtin.bytesByPath.get(logicalPath);
-      if (bytes === undefined) throw new Error(`builtin resource file is not leased: ${slot}/${logicalPath}`);
-      return Uint8Array.from(bytes);
+      const owner = builtin.filesByPath.get(logicalPath);
+      if (owner === undefined) throw new Error(`builtin resource file is not leased: ${slot}/${logicalPath}`);
+      const loaded = await owner.read();
+      if (loaded.status === "rejected") throw new Error(`${loaded.failure.capability}: ${loaded.failure.boundary}`);
+      return Uint8Array.from(loaded.value);
     }
     const read = await this.backend.readSnapshotFile(this.snapshotId, slot, logicalPath);
     if (read.status === "rejected") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);
@@ -431,35 +446,89 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
 let nextLeaseIdentity = 1;
 
 async function prepareFiles(
-  files: readonly ResourceInstallFile[],
+  files: readonly BuiltinResourceRegistrationFile[],
 ): Promise<ResourceResult<{
   readonly records: readonly ResourceFileRecord[];
-  readonly bytesByPath: ReadonlyMap<string, Uint8Array>;
+  readonly filesByPath: ReadonlyMap<string, ManagedBuiltinFile>;
 }>> {
   const records: ResourceFileRecord[] = [];
-  const bytesByPath = new Map<string, Uint8Array>();
+  const filesByPath = new Map<string, ManagedBuiltinFile>();
   for (const file of files) {
     if (
       typeof file.logicalPath !== "string" || file.logicalPath.length === 0 ||
       file.logicalPath.includes("\\") || file.logicalPath.split("/").some((part) => part.length === 0 || part === "." || part === "..") ||
-      bytesByPath.has(file.logicalPath) || typeof file.mediaType !== "string" || file.mediaType.trim().length === 0 ||
-      !(file.bytes instanceof Uint8Array) || file.bytes.byteLength <= 0
+      filesByPath.has(file.logicalPath) || typeof file.mediaType !== "string" || file.mediaType.trim().length === 0 ||
+      (file.bytes === undefined && (file.integrity === undefined || file.loadBytes === undefined))
     ) {
       return invalid("resources.manager.invalid-builtin-file");
     }
-    const bytes = Uint8Array.from(file.bytes);
-    const integrity = await observeResourceIntegrity(bytes);
-    if (integrity.status === "rejected") return integrity;
-    records.push(Object.freeze({
+    let integrity = file.integrity;
+    if (file.bytes !== undefined) {
+      const observed = await observeResourceIntegrity(file.bytes);
+      if (observed.status === "rejected") return observed;
+      if (integrity !== undefined && (
+        integrity.byteLength !== observed.value.byteLength || integrity.sha256 !== observed.value.sha256
+      )) return integrityFailure("resources.manager.builtin-registration-integrity");
+      integrity = observed.value;
+    }
+    if (integrity === undefined) return invalid("resources.manager.builtin-integrity-missing");
+    const record = Object.freeze({
       logicalPath: file.logicalPath,
       mediaType: file.mediaType.trim().toLowerCase(),
-      integrity: integrity.value,
-    }));
-    bytesByPath.set(file.logicalPath, bytes);
+      integrity,
+    });
+    records.push(record);
+    filesByPath.set(file.logicalPath, new ManagedBuiltinFile(
+      record,
+      file.bytes === undefined ? null : Uint8Array.from(file.bytes),
+      file.loadBytes ?? null,
+    ));
   }
   return records.length === 0
     ? invalid("resources.manager.empty-builtin-files")
-    : resourceAccepted(Object.freeze({ records: Object.freeze(records), bytesByPath }));
+    : resourceAccepted(Object.freeze({ records: Object.freeze(records), filesByPath }));
+}
+
+class ManagedBuiltinFile {
+  private bytes: Uint8Array | null;
+  private pending: Promise<ResourceResult<Uint8Array>> | null = null;
+
+  constructor(
+    private readonly record: ResourceFileRecord,
+    initialBytes: Uint8Array | null,
+    private readonly loadBytes: (() => Promise<Uint8Array>) | null,
+  ) {
+    this.bytes = initialBytes;
+  }
+
+  async read(): Promise<ResourceResult<Uint8Array>> {
+    if (this.bytes !== null) return resourceAccepted(Uint8Array.from(this.bytes));
+    if (this.loadBytes === null) return integrityFailure("resources.manager.builtin-loader-missing");
+    this.pending ??= this.loadAndVerify();
+    const loaded = await this.pending;
+    if (loaded.status === "accepted") this.bytes = Uint8Array.from(loaded.value);
+    else this.pending = null;
+    return loaded.status === "rejected" ? loaded : resourceAccepted(Uint8Array.from(loaded.value));
+  }
+
+  private async loadAndVerify(): Promise<ResourceResult<Uint8Array>> {
+    let bytes: Uint8Array;
+    try {
+      bytes = await this.loadBytes!();
+    } catch {
+      return resourceRejected(
+        "resource-unavailable",
+        "resources.manager.builtin-load-failed",
+        "The selected builtin resource could not be read from the application payload.",
+      );
+    }
+    const observed = await observeResourceIntegrity(bytes);
+    if (observed.status === "rejected") return observed;
+    return observed.value.byteLength === this.record.integrity.byteLength &&
+      observed.value.sha256 === this.record.integrity.sha256
+      ? resourceAccepted(Uint8Array.from(bytes))
+      : integrityFailure("resources.manager.builtin-load-integrity");
+  }
 }
 
 function freezeCatalog(snapshot: ResourceCatalogSnapshot): ResourceCatalogSnapshot {

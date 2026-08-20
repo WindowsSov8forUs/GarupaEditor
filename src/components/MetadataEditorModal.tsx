@@ -15,7 +15,7 @@ import {
   toFinite,
   type ChartMetadata,
 } from "../chartCore";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
@@ -78,6 +78,7 @@ export function MetadataEditorModal({
   onAudioUpload,
   onMvUpload,
 }: MetadataEditorModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<MetadataEditorTab>("info");

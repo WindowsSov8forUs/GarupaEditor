@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import {
   fetchBestdoriCommunityPostTags,
   type BestdoriPostTag,
@@ -43,6 +43,7 @@ export function ExportJsonModal({
   onApplyUploadNotGarupaServerChart,
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ExportModalTab>("chart-code");

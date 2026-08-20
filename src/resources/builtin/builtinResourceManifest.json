@@ -1,0 +1,115 @@
+{
+  "storageSchema": 1,
+  "entries": [
+    {
+      "path": "default-cover.png",
+      "byteLength": 14086,
+      "sha256": "9395BE5EF1E67A523D45709361C4429435DABCA76BD3534F8AB4C4CCACB52797"
+    },
+    {
+      "path": "fonts/GB18030.ttf",
+      "byteLength": 17507340,
+      "sha256": "01BBB65B3B21F8D445FE15412FC3B5864425033F534464BE26DE0AA7ED8150C0"
+    },
+    {
+      "path": "fonts/TTShinGoM.ttf",
+      "byteLength": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    {
+      "path": "icons/apply-action.svg",
+      "byteLength": 552,
+      "sha256": "E3EC9859FF144CC23D022434C666B5AB7F412F5E0C91B3E8F6F93619A2BCF1FD"
+    },
+    {
+      "path": "icons/back-arrow.svg",
+      "byteLength": 499,
+      "sha256": "2708E20AFE3A41EED8866B531521F2D09308581EE1C0252682709C7F919DECF0"
+    },
+    {
+      "path": "icons/clear-action.svg",
+      "byteLength": 828,
+      "sha256": "770E64C203FFC8D6B8EB403BAE19353B776E7A0A6726D244D4033F5A4430DF67"
+    },
+    {
+      "path": "icons/copy-action.svg",
+      "byteLength": 346,
+      "sha256": "F6D131D11489C165BF7708E80448EF2AFCD362F6797DC31ABDD7EAF45A47896C"
+    },
+    {
+      "path": "icons/display.svg",
+      "byteLength": 2616,
+      "sha256": "49220C8E690E930AA1E5DC04E31F9188E8AE91C0C07275747FD12F5649F87C8A"
+    },
+    {
+      "path": "icons/edit.svg",
+      "byteLength": 3457,
+      "sha256": "79773C76E2DD8458D28D2CE7B2F7A263261D89CA358DF60B316B4FDFA6EF3B28"
+    },
+    {
+      "path": "icons/image-export.svg",
+      "byteLength": 1675,
+      "sha256": "E6061F9F1569F174070C03CE1A1BF1DDB36C2F9C82EBB5BD865DC9A580BF05B3"
+    },
+    {
+      "path": "icons/json-export.svg",
+      "byteLength": 1426,
+      "sha256": "EF8B4F706BD44E0776A002DBD11C44B4E81AB157538A353DB192010BAD9FF616"
+    },
+    {
+      "path": "icons/json-import.svg",
+      "byteLength": 1426,
+      "sha256": "72F1B8DFBD85C2AD8C3E2AC7131A32D4A338CB050728B0388F6116203159C437"
+    },
+    {
+      "path": "icons/mirror-action.svg",
+      "byteLength": 597,
+      "sha256": "4B8D67DFD5A69EC9D3C960F4F7B84E33AD4378D43545D4AA6B9FD6730DC0E179"
+    },
+    {
+      "path": "icons/options-title.svg",
+      "byteLength": 641,
+      "sha256": "AA36F2F8C4EE905E627EF7623E27BB4317F570A1FC235D25C660930FA836C728"
+    },
+    {
+      "path": "icons/paste-action.svg",
+      "byteLength": 533,
+      "sha256": "4958C683360F1196B23CC69109A2A00E8D7A8FB9139B5A9EC5D9F4A3647F1D35"
+    },
+    {
+      "path": "icons/preview.svg",
+      "byteLength": 3852,
+      "sha256": "2672575D7022983E87FCD228E03F1FC80CF0266111142ADBFAE92A1FF1D90619"
+    },
+    {
+      "path": "icons/settings.svg",
+      "byteLength": 2524,
+      "sha256": "BB0271E98458AE33111BBEBC9B8EDC954E591768A9222E880417DA508F4E40B0"
+    },
+    {
+      "path": "icons/simulator-pause.svg",
+      "byteLength": 458,
+      "sha256": "F789AEEBFBAEB883DBF460323DB6120A9C40EB3FA06474D6A9FEE7B67D603940"
+    },
+    {
+      "path": "icons/simulator-play.svg",
+      "byteLength": 346,
+      "sha256": "7CCE08F68662B7ED6CEF7143F58586DE04B32F481697A092F616FF61E779D904"
+    },
+    {
+      "path": "icons/skin.svg",
+      "byteLength": 2538,
+      "sha256": "C1A79ADC4BD5E05D36029D9AE1720D734D21BA0A88283F2F50907C373E54008A"
+    },
+    {
+      "path": "icons/undo-action.svg",
+      "byteLength": 283,
+      "sha256": "F7C9988501FF8109DF897A0BC357839FCB503B268B19D0C5DCFC8951CDD4BC80"
+    },
+    {
+      "path": "live.png",
+      "byteLength": 596898,
+      "sha256": "9396BAF609E11A76F152947F255ABABF47035504356F712DC1A0E11F908422F1"
+    }
+  ]
+}

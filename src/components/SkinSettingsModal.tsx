@@ -1,5 +1,5 @@
 import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { useModalLayer } from "./useModalLayer";
@@ -134,6 +134,7 @@ export function SkinSettingsModal({
   isSkinApplying,
   onApplySkinSelection,
 }: SkinSettingsModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
 

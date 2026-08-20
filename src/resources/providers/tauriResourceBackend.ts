@@ -130,7 +130,7 @@ async function invokeResult<T>(
   } catch (error) {
     return resourceRejected(
       "resource-platform-unavailable",
-      `resources.tauri.${command.replaceAll("_", "-")}`,
+      `resources.tauri.${command.split("_").join("-")}`,
       error instanceof Error ? error.message : String(error),
     );
   }

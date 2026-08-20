@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactNode } from "react";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { useModalLayer } from "./useModalLayer";
 import { useModalTransition, type ModalTransitionPhase } from "./useModalTransition";
 import { useModalTransitionValue } from "./useModalTransitionValue";
@@ -35,12 +35,14 @@ function renderStandardModalFrame(
     mounted: boolean;
     phase: ModalTransitionPhase;
     layerStyle: CSSProperties;
+    optionsTitleIcon: string;
   },
 ) {
   const {
     mounted,
     phase,
     layerStyle,
+    optionsTitleIcon,
     title,
     maskClassName = "modal-mask",
     cardClassName = "",
@@ -99,6 +101,7 @@ export function StandardModal({
   open,
   ...props
 }: StandardModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const layerStyle = useModalLayer(open, mounted);
 
@@ -107,6 +110,7 @@ export function StandardModal({
     mounted,
     phase,
     layerStyle,
+    optionsTitleIcon,
   });
 }
 
@@ -116,6 +120,7 @@ export function StandardValueModal<T>({
   children,
   ...props
 }: StandardValueModalProps<T>) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase, renderedValue } = useModalTransitionValue(value);
   const layerStyle = useModalLayer(value !== null, mounted);
 
@@ -128,6 +133,7 @@ export function StandardValueModal<T>({
     mounted,
     phase,
     layerStyle,
+    optionsTitleIcon,
     title: typeof title === "function" ? title(renderedValue) : title,
     children: children(renderedValue),
   });

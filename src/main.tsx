@@ -1,6 +1,8 @@
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
+import { bootstrapApplicationResources } from "./resources/applicationResources";
 
 interface AppErrorBoundaryState {
   hasError: boolean;
@@ -68,10 +70,24 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
   }
 }
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <AppErrorBoundary>
-      <App />
-    </AppErrorBoundary>
-  </React.StrictMode>,
-);
+const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+
+void bootstrapApplicationResources().then((resources) => {
+  root.render(
+    <React.StrictMode>
+      <AppErrorBoundary>
+        {resources.status === "accepted" ? (
+          <ApplicationResourceProvider manager={resources.value}>
+            <App />
+          </ApplicationResourceProvider>
+        ) : (
+          <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "20px" }}>
+            <section>
+              资源系统初始化失败：{resources.failure.capability}：{resources.failure.boundary}
+            </section>
+          </main>
+        )}
+      </AppErrorBoundary>
+    </React.StrictMode>,
+  );
+});
