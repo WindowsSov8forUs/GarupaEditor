@@ -8,8 +8,7 @@ export type CurrentSkinResourceRole =
   | "directional-effect"
   | "special-background"
   | "tap-se"
-  | "judge"
-  | "structural-stage";
+  | "judge";
 
 export interface CurrentSkinPortablePackEntry {
   readonly logicalResource: string;
@@ -40,7 +39,7 @@ function parseManifest(value: unknown): readonly CurrentSkinPortablePackEntry[] 
     value.schemaVersion !== 1 ||
     value.packIdentity !== CURRENT_SKIN_PORTABLE_PACK_IDENTITY ||
     value.networkAllowed !== false || !Array.isArray(value.packs) ||
-    value.packs.length !== 133) {
+    value.packs.length !== 130) {
     throw new Error("invalid current Skin portable-pack manifest root");
   }
   const rows: CurrentSkinPortablePackEntry[] = [];
@@ -75,7 +74,6 @@ function parseManifest(value: unknown): readonly CurrentSkinPortablePackEntry[] 
     "special-background": 20,
     "tap-se": 16,
     "judge": 5,
-    "structural-stage": 3,
   };
   if (Object.entries(expected).some(([role, count]) =>
     counts.get(role as CurrentSkinResourceRole) !== count)) {
@@ -91,6 +89,5 @@ function record(value: unknown): value is Record<string, unknown> {
 function isRole(value: unknown): value is CurrentSkinResourceRole {
   return value === "notes" || value === "directional-note" || value === "field" ||
     value === "tap-effect" || value === "directional-effect" ||
-    value === "special-background" || value === "tap-se" || value === "judge" ||
-    value === "structural-stage";
+    value === "special-background" || value === "tap-se" || value === "judge";
 }

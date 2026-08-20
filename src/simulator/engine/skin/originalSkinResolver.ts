@@ -165,11 +165,6 @@ export function resolveOriginalSkinRecipe(
     judgeBundle,
     `ingameskin/judgeskin/${judgeBundle}`,
   );
-  const structuralStage = Object.freeze({
-    route: "mode-stage" as const,
-    bundleName: "normal" as const,
-    logicalResource: "ingameskin/stageskin/normal",
-  });
   const fidelity: OriginalSkinFidelity = settings.value.special.kind !== "none"
     ? "special-current-static-portable"
     : isDefaultNormalSettings(settings.value)
@@ -188,7 +183,6 @@ export function resolveOriginalSkinRecipe(
     tapSE,
     directional,
     judge,
-    structuralStage,
   } as const;
   return ok(Object.freeze({
     identity: canonicalIdentity(settings.value, partial),
@@ -251,7 +245,6 @@ function canonicalIdentity(
     `directional-effect:${value.directional.effectVariant}`,
     `directional-se:${value.directional.seLogicalResource}`,
     identityPart("judge", value.judge.route, value.judge.bundleName),
-    "stage:normal",
   ].join("|");
 }
 

@@ -100,7 +100,6 @@ function testNormalRoutes(): void {
     defaultRecipe.directional.effectLogicalResource,
     defaultRecipe.directional.seLogicalResource,
     defaultRecipe.judge.logicalResource,
-    defaultRecipe.structuralStage.logicalResource,
   ], [
     "ingameskin/noteskin/skin00",
     "ingameskin/fieldskin/skin00",
@@ -110,7 +109,6 @@ function testNormalRoutes(): void {
     "ingameskin/tapeffect/directionalflickskin00normal",
     "sound/tapseskin/directionalflickskin00",
     "ingameskin/judgeskin/skin00",
-    "ingameskin/stageskin/normal",
   ]);
   assert.equal(defaultRecipe.background.route, "presentation-background");
   const nondefault = defaults();

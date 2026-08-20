@@ -84,5 +84,4 @@ export interface ResolvedOriginalSkinRecipe {
   readonly tapSE: ResolvedSkinComponent;
   readonly directional: ResolvedDirectionalSkinComponent;
   readonly judge: ResolvedSkinComponent;
-  readonly structuralStage: ResolvedSkinComponent & { readonly bundleName: "normal" };
 }

@@ -127,7 +127,6 @@ function buildAssets(pack: PreparedSkinPortablePack): SimulatorAssemblyResult<{
     if (sourcePathId === null) return invalid("simulator.skin.render-texture-shape");
     const file = fileById.get(`texture:${sourcePathId}`);
     if (file === undefined || file.width !== value.m_Width || file.height !== value.m_Height) {
-      if (pack.role === "structural-stage") continue;
       return invalid("simulator.skin.render-texture-file");
     }
     const logicalAssetId = `skin/${encodeURIComponent(pack.logicalResource)}/texture/${sourcePathId}`;

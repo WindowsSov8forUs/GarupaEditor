@@ -16,6 +16,8 @@ const derivation = read("assembly/sessionSkinDerivation.ts");
 const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
 const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
 const composition = read("platform/platformComposition.ts");
+const fieldOwner = read("engine/managers/inGameManager.ts");
+const skinManifest = read("backends/resources/currentSkinResourceManifest.ts");
 const lifecycle = read("assembly/sessionRecipe.ts") + read("public/capabilities.ts");
 
 for (const symbol of [
@@ -51,9 +53,12 @@ for (const required of [
   'effectSetting === 0 ? "normal" : "light"',
   'backgroundMode === "mv"',
   'component("practice-background"',
-  'bundleName: "normal" as const',
   "canonicalIdentity",
 ]) if (!resolver.includes(required)) throw new Error(`Skin resolver marker missing: ${required}`);
+if ((skinContracts + resolver + selector + skinManifest).includes("structuralStage") ||
+  (resolver + selector + skinManifest).includes("ingameskin/stageskin/")) {
+  throw new Error("Live2D-only structural stage leaked into current Standard/MV Skin recipe or manifest");
+}
 for (const required of [
   "selectResolvedSkinResourceInventory",
   "skinPortableResourceKey",
@@ -77,6 +82,13 @@ for (const required of [
   "validateSelectedSkinParticlePack",
   "selected-skin-portable-textures",
 ]) if (!(selector + assembly + composition + lifecycle).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
+for (const required of [
+  "this.renderScene?.field !== undefined",
+  "this.renderProducer?.preflightFieldSetup(",
+  "this.renderScene.field.objects",
+  "this.renderScene.field.masks",
+  "fieldSetup.value.commit()",
+]) if (!fieldOwner.includes(required)) throw new Error(`selected Field runtime owner missing: ${required}`);
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));
 for (const path of production) {
