@@ -29,13 +29,13 @@
 | Continuous / outside lane | `closed-product-extension` | Garupa任意有限lane在固定七轨参考坐标上执行fractional/outside Float32 affine scene、front/mesh/particle及raw Manual span；场地线恒为0..6七条，不round/clamp到原Button |
 | ExGarupa Slide graph / Manual | `closed-product-extension` | singleton、Hidden head/tail、all-Hidden、same-position、任意schema合法visible类型、Auto和chain-finger Manual均按authored graph闭合 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；该结论只限定original-compatible图。产品任意continuous/outside lane由sidecar拥有，不伪造成Button 07 |
-| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.86（锁定`.78`同一151.0.4129 patch line）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
+| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.93（与锁定`.78`同属151.0.4129 patch line，仅作当前portable观察）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Original Skin settings / switching | `closed-static-portable` | Reverse `977f5e71`授权并冻结133 whole packs；Schema 11 aggregate resolver、Note/Directional/Judge/Field/Background、Tap/Judge/Directional SE、TapEffect/Directional ParticleSystem动态模块图、Retry/MoveTime identity及actual Pixi/WebAudio/3-fresh WebView2已接线；Collabo 36包级失败关闭。非默认device/frame parity仍不声明 |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
-状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-product-extension`表示GarupaEditor产品合同和产品验收已闭合，但不声明原作等价；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
+状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-static-portable`表示原作选择/生命周期由静态链关闭且portable资源/backend验收完成，但不伪称非默认特殊包实机帧；`closed-product-extension`表示GarupaEditor产品合同和产品验收已闭合，但不声明原作等价；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
 
 ## Public合同
 
@@ -70,7 +70,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：以下1600×720 digest只保留为锁定browser的回归观察，不是布局authority。普通完整场景digest为`5ebf9c9d…d088`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`2d6c70ef…ce06`；standard启动在serialized hierarchy迁移后视觉digest为`dfaeb868…8f8f`，并新增4:3/32:9 actual WebView2 captures，音频digest保持`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、serialized widget raster digest为`5253f794…5477`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：以下1600×720 digest只保留为锁定browser的回归观察，不是布局authority。普通完整场景digest为`c581a9a8…d99c`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`2d6c70ef…ce06`；standard启动在serialized hierarchy迁移后视觉digest为`dfaeb868…8f8f`，并新增4:3/32:9 actual WebView2 captures，音频digest保持`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、serialized widget raster digest为`5253f794…5477`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
@@ -83,6 +83,6 @@ Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bi
 
 Reverse多比例布局提交`9167dce77d0472a000b509f993b0e66e44e4797f`关闭任意初始横屏surface、StarUI/safe-area、GameCamera、gameplay/particle、UIRoot/MoveTime及MV widget参数化合同，并证据化拒绝局中revision。Reverse启动空资源修订提交`d408d758f39873c2c997107903300e58d56c59c6`证明非null空SD集合与缺语音SoundResource路径；Schema 11继续将这两个恒定事实完全收回simulator内部，不再要求caller提交无信息null字段。Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、standalone MVView/Star3D/其他excluded和Stage 9边界不因产品Score或gameplay MV portable升级。
 
-日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以12个development groups覆盖既有compiled/static集合并新增MV semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前35-semantic-leaf DAG包含startup-audio callgraph、MV contract、3-fresh ordinary/startup WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以14个development groups覆盖既有compiled/static集合并新增Skin semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前38-semantic-leaf DAG包含startup-audio、MV、Skin contract、3-fresh ordinary/startup/Skin WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。
