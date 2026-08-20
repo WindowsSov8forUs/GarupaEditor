@@ -86,6 +86,7 @@ async function main(): Promise<void> {
     axis,
     layout.garupaProductScene,
     layout.ordinaryNoteScene.specificSpeed,
+    true,
   );
   requireOk(producer.validate());
   const first = requireOk(producer.preflightFrame(0, []));

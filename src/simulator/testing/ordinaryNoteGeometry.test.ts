@@ -241,7 +241,7 @@ function main(): void {
       { length: 7 },
       (_, lane) => vector3(Math.fround((lane - 3) * 2.2), -3.450000047683716, -13.5),
     )),
-    noteColor: color(1, 1, 1, 1),
+    noteTint: color(1, 1, 1, 1),
     noteDomainLayer: 3,
   });
   requireOk(validateOrdinaryFixedNoteSceneInput(fixedScene), "validate fixed ordinary scene");
@@ -278,6 +278,7 @@ function main(): void {
     f32(120),
     f32(97),
     fixedScene,
+    true,
     1,
   ), "preflight ordinary activation");
   equal(
@@ -295,6 +296,7 @@ function main(): void {
     f32(120),
     f32(97),
     fixedScene,
+    true,
     1,
   ), "R4 front Flick activation preflight");
   flickPrepared.transaction.discard();
@@ -311,6 +313,7 @@ function main(): void {
       f32(120),
       f32(97),
       fixedScene,
+      true,
       1,
     );
     equal(childRejected.status, "evidence-required", `front family ${unsupportedFront} child route remains fail-closed`);
@@ -321,6 +324,7 @@ function main(): void {
     f32(120),
     f32(97),
     fixedScene,
+    true,
     1,
   ), "current R7 virtual-lane activation");
   requireOk(virtualPrepared.transaction.discard(), "discard virtual-lane activation probe");

@@ -357,6 +357,7 @@ function buildProductNode(
     type: connection.type,
     beat: connection.beat,
     absolutePosition: position.value.absolutePos,
+    shortRhythmUnder8beat: position.value.shortRhythmUnder8beat,
     lane: connection.lane,
     width: connection.width,
     spanStart,

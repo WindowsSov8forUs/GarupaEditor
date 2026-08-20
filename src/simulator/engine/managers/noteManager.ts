@@ -131,6 +131,8 @@ export interface NoteManagerSnapshot {
   readonly schedulerTrace: readonly NoteManagerTraceEntry[];
   readonly bpmChangeCount: number;
   readonly performanceLevelCounters: readonly number[];
+  readonly activeOrdinarySyncLineCount: number;
+  readonly suppressedOrdinarySyncLinePairCount: number;
   readonly calculatedData: ReturnType<InGameCalculatedData["snapshot"]>;
 }
 
@@ -214,6 +216,7 @@ export class NoteManager {
   >();
   private readonly activeOrdinarySyncLines: Array<ActiveOrdinarySyncLine | null> =
     Array.from({ length: SYNC_LINE_POOL_LENGTH }, () => null);
+  private suppressedOrdinarySyncLinePairCountValue = 0;
   private readonly activeMultipleDirectionalLines: Array<ActiveMultipleDirectionalLine | null> =
     Array.from({ length: MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH }, () => null);
   private readonly ordinaryLongRenderStates = new Map<
@@ -835,6 +838,8 @@ export class NoteManager {
       schedulerTrace: [...this.schedulerTraceValue],
       bpmChangeCount: this.bpmChangeCount,
       performanceLevelCounters: [...this.performanceLevelCountersValue],
+      activeOrdinarySyncLineCount: this.activeOrdinarySyncLines.filter((line) => line !== null).length,
+      suppressedOrdinarySyncLinePairCount: this.suppressedOrdinarySyncLinePairCountValue,
       calculatedData: this.inGameCalculatedData.snapshot(),
     };
   }
@@ -868,6 +873,7 @@ export class NoteManager {
     this.activeNotesValue.length = 0;
     this.activeBpmChangesValue.length = 0;
     this.activeOrdinarySyncLines.fill(null);
+    this.suppressedOrdinarySyncLinePairCountValue = 0;
     this.activeMultipleDirectionalLines.fill(null);
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
@@ -1245,6 +1251,10 @@ export class NoteManager {
       ) {
         continue;
       }
+      if (!this.inGameCalculatedData.isSyncLineEnabled) {
+        this.suppressedOrdinarySyncLinePairCountValue += 1;
+        continue;
+      }
       const poolIndex = this.activeOrdinarySyncLines.findIndex((line) => line === null);
       if (poolIndex < 0) {
         return evidenceRequired(
@@ -1459,6 +1469,7 @@ export class NoteManager {
           noteBpm.value,
           launcherMusicPosition.value,
           this.ordinaryNoteScene,
+          this.inGameCalculatedData.noteColor,
           substepIndex,
         );
         if (prepared.status !== "ok") return prepared;

@@ -1,4 +1,5 @@
 import { LIVE_AUTO_MODE } from "./modeFixtures";
+import { originalLiveSettingsForTest } from "./originalLiveSettingsTestProfile";
 declare function require(name: string): any;
 declare const process: any;
 const { readFileSync } = require("node:fs");
@@ -356,7 +357,7 @@ const ORDINARY_NOTE_SCENE = Object.freeze({
     { length: 7 },
     (_, lane) => vector3(Math.fround((lane - 3) * 2.2), -3.450000047683716, -13.5),
   )),
-  noteColor: Object.freeze({
+  noteTint: Object.freeze({
     red: f32(1),
     green: f32(1),
     blue: f32(1),
@@ -869,7 +870,31 @@ async function testOrdinarySyncLineLifecycle(): Promise<void> {
   const lineDeactivationIndex = disposed.findIndex((command) => command === lineDeactivations[0]);
   equal(disposed[lineDeactivationIndex - 1]?.kind, "hide-object", "line hide precedes deactivation");
   equal(renderer.snapshot().objectCount, 0, "session release removes roots and all fixed line owners");
-  console.log("ok 6 - ordinary simultaneous line fixed pool, motion and shared teardown lifecycle");
+
+  const suppressedRenderer = new RecordingSimulatorRendererBackend();
+  requireOk(await suppressedRenderer.prepare(
+    SESSION,
+    syncProfile(),
+    new LocalProvider(),
+    preflight(),
+  ), "sync-line disabled renderer prepare");
+  const suppressedEngine = requireOk(createSimulatorEngine({
+    ...input,
+    runtime: {
+      ...input.runtime,
+      originalLiveSettings: originalLiveSettingsForTest({ syncLine: false }),
+    },
+  }, createRecordingSimulatorBackends(suppressedRenderer)), "sync-line disabled engine create");
+  requireOk(suppressedEngine.initialize(), "sync-line disabled initialize");
+  equal(suppressedRenderer.snapshot().objectCount, 82, "disabled setting retains the fixed pool owner");
+  requireOk(suppressedEngine.step(0), "sync-line disabled simultaneous activation");
+  const suppressedSnapshot = requireOk(suppressedEngine.snapshot(), "sync-line disabled snapshot");
+  equal(suppressedSnapshot.managers.noteManager.activeOrdinarySyncLineCount, 0, "disabled setting activates no line");
+  equal(suppressedSnapshot.managers.noteManager.suppressedOrdinarySyncLinePairCount, 1, "disabled setting preserves the paired endpoint identity");
+  equal(suppressedRenderer.commandSnapshot().filter((command) => command.kind === "set-line").length, 0, "disabled setting publishes no line geometry");
+  requireOk(suppressedEngine.dispose(), "sync-line disabled dispose");
+  equal(suppressedRenderer.snapshot().objectCount, 0, "disabled fixed pool cleans up");
+  console.log("ok 6 - ordinary simultaneous line setting retains fixed pool while gating publication and teardown");
 }
 
 async function testHostReadyGate(): Promise<void> {
@@ -1013,6 +1038,17 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
     ButtonType.Button_05_BMS_1P_05,
     ButtonType.Button_06_BMS_1P_06,
   ]);
+  const rhythmColored = { ...normal, shortRhythmUnder8beat: true };
+  equal(
+    requireOk(resolveFrontSpriteBinding(rhythmColored, false, RESOURCES, true), "NoteColor true binding").exactKey,
+    "note_normal_16_0",
+    "NoteColor true selects normal16 only for a short-rhythm Normal front",
+  );
+  equal(
+    requireOk(resolveFrontSpriteBinding(rhythmColored, false, RESOURCES, false), "NoteColor false binding").exactKey,
+    "note_normal_0",
+    "NoteColor false returns the same front to normal without tint fallback",
+  );
   for (let width = 1; width <= 7; width += 1) {
     const range = Object.freeze(laneButtons.slice(0, width));
     const center = range[Math.floor((width - 1) / 2)]!;
@@ -1023,7 +1059,7 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
       buttonType: center,
       buttonTypes: range,
       buttonTypesArray: range,
-    }, false, RESOURCES), `R4 Slide width ${width} binding`);
+    }, false, RESOURCES, true), `R4 Slide width ${width} binding`);
     equal(binding.exactKey, `note_long_${center}`,
       `R4 Slide width ${width} uses its authored center lane key`);
   }

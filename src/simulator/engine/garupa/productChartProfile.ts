@@ -20,6 +20,7 @@ export interface GarupaProductNode {
   readonly type: GarupaChartJsonSlideConnection["type"];
   readonly beat: number;
   readonly absolutePosition: number;
+  readonly shortRhythmUnder8beat: boolean;
   readonly lane: number;
   readonly width: number;
   readonly spanStart: number;

@@ -768,6 +768,7 @@ function testProductRenderCommands(): void {
     axis,
     scene.garupaProductScene,
     scene.ordinaryNoteScene.specificSpeed,
+    true,
   );
   assert.equal(producer.validate().status, "ok");
   const first = requireOk(producer.preflightFrame(0, []));

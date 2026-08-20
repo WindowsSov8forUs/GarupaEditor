@@ -43,6 +43,7 @@ export class GarupaProductRenderProducer {
     private readonly axis: GarupaProductTimingGroupAxisProfile,
     private readonly scene: GarupaProductSceneLayout,
     private readonly specificSpeed: RenderFloat32,
+    private readonly noteColor: boolean,
   ) {}
 
   validate(): SimulatorResult<void> {
@@ -52,7 +53,8 @@ export class GarupaProductRenderProducer {
       this.renderer.snapshot().state !== "ready" ||
       this.scene.fieldLines.length !== 7 ||
       this.scene.fieldLines.some((line, index) => line.lane !== index) ||
-      this.resources.curveNoteMaterialLogicalAssetId === undefined) {
+      this.resources.curveNoteMaterialLogicalAssetId === undefined ||
+      typeof this.noteColor !== "boolean") {
       return rejected(
         "render.garupa-product.invalid-owner-binding",
         "Product rendering requires one ready matching renderer, the unchanged seven reference field lines and an explicit curve material binding.",
@@ -148,7 +150,7 @@ export class GarupaProductRenderProducer {
             role: "note-root",
             parentObjectId: null,
           }));
-          const binding = frontBinding(node, this.resources);
+          const binding = frontBinding(node, this.resources, this.noteColor);
           commands.push(command(commands.length, {
             kind: "bind-resource",
             renderObjectId: objectId,
@@ -313,16 +315,27 @@ function commandFactory(sessionId: string, renderer: SimulatorRendererBackend, f
   }) as RenderCommand;
 }
 
-function frontBinding(node: GarupaProductNode, resources: RenderEngineResourceBindings) {
+function frontBinding(
+  node: GarupaProductNode,
+  resources: RenderEngineResourceBindings,
+  noteColor: boolean,
+) {
   if (node.type === "Directional") {
     return Object.freeze({
       logicalAssetId: resources.directionalAtlasLogicalAssetId,
       exactKey: `note_flick_${node.direction === "Left" ? "l" : "r"}_3`,
     });
   }
+  const family = node.type === "Skill"
+    ? "note_skill"
+    : node.type === "Flick"
+      ? "note_flick"
+      : noteColor && node.shortRhythmUnder8beat
+        ? "note_normal_16"
+        : "note_normal";
   return Object.freeze({
     logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${node.type === "Skill" ? "note_skill" : node.type === "Flick" ? "note_flick" : "note_normal"}_3`,
+    exactKey: `${family}_3`,
   });
 }
 

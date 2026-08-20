@@ -806,6 +806,7 @@ export function createSimulatorEngine(
           productAxis,
           input.rendering.garupaProductScene!,
           input.rendering.ordinaryNoteScene.specificSpeed,
+          originalLiveSettings.noteColor,
         );
     productTimeline = new GarupaProductTimelineManager(
       productProfile,

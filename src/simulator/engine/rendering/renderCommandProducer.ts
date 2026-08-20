@@ -127,7 +127,7 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly highAspectRatio: RenderFloat32;
   readonly noteStartPositions: readonly RenderVector3[];
   readonly goalPositions: readonly RenderVector3[];
-  readonly noteColor: RenderColor;
+  readonly noteTint: RenderColor;
   readonly noteDomainLayer: number;
   readonly syncLineEdgeMargin?: RenderFloat32;
   readonly screenToSafeAreaRatio?: RenderFloat32;
@@ -1196,11 +1196,12 @@ export class RenderCommandProducer {
   preflightNoteActivation(
     poolObjectId: string,
     information: NoteInformation,
+    noteColor: boolean,
     substep: number,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (!Number.isSafeInteger(substep) || substep < 0) {
+    if (typeof noteColor !== "boolean" || !Number.isSafeInteger(substep) || substep < 0) {
       return evidenceRequired(
         "render.producer.invalid-substep",
         ["RPR-D13", "PR33", "PR39"],
@@ -1211,6 +1212,7 @@ export class RenderCommandProducer {
       information,
       this.renderer.snapshot().fidelity?.mode === "habahiro",
       this.resources,
+      noteColor,
     );
     if (binding.status !== "ok") return binding;
     const renderObjectId = rootRenderObjectId(poolObjectId);
@@ -1239,13 +1241,14 @@ export class RenderCommandProducer {
     noteBpm: RenderFloat32,
     launcherMusicPosition: RenderFloat32,
     scene: OrdinaryFixedNoteSceneInput,
+    noteColor: boolean,
     substep: number,
   ): SimulatorResult<PreparedOrdinaryNoteActivation> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
-    if (!Number.isSafeInteger(substep) || substep < 0) {
+    if (typeof noteColor !== "boolean" || !Number.isSafeInteger(substep) || substep < 0) {
       return evidenceRequired(
         "render.producer.invalid-substep",
         ["RPR-D13", "PR33", "PR39"],
@@ -1306,8 +1309,8 @@ export class RenderCommandProducer {
       : resolveOrdinaryMotionLaneIndex(information, r7Slide);
     if (lane.status !== "ok") return lane;
     const binding = habahiro
-      ? resolveHabahiroFrontSpriteBinding(information, this.resources)
-      : resolveFrontSpriteBinding(information, false, this.resources);
+      ? resolveHabahiroFrontSpriteBinding(information, this.resources, noteColor)
+      : resolveFrontSpriteBinding(information, false, this.resources, noteColor);
     if (binding.status !== "ok") return binding;
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
@@ -1366,7 +1369,7 @@ export class RenderCommandProducer {
       position: start,
       scale: Object.freeze({ x: one.value, y: one.value }),
       rotationDegrees: zero.value,
-      color: scene.noteColor,
+      color: scene.noteTint,
       ordering,
       maskObjectId: null,
     }, {
@@ -1408,7 +1411,7 @@ export class RenderCommandProducer {
       commands.push({
         ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
         position: start, scale: Object.freeze({ x: one.value, y: one.value }),
-        rotationDegrees: zero.value, color: scene.noteColor,
+        rotationDegrees: zero.value, color: scene.noteTint,
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
           sourceDepthOrSortingOrder: 72,
@@ -1436,7 +1439,7 @@ export class RenderCommandProducer {
         position: motion.position,
         scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
         rotationDegrees: zero.value,
-        color: scene.noteColor,
+        color: scene.noteTint,
         ordering,
         maskObjectId: null,
       });
@@ -1445,7 +1448,7 @@ export class RenderCommandProducer {
         renderObjectId: habahiroIconRenderObjectId(poolObjectId),
         position: motion.position,
         scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
-        rotationDegrees: zero.value, color: scene.noteColor,
+        rotationDegrees: zero.value, color: scene.noteTint,
         ordering: Object.freeze({
           ...ordering,
           sourceDepthOrSortingOrder: 72,
@@ -1511,7 +1514,7 @@ export class RenderCommandProducer {
         position: longChildState.renderedTransform.position,
         scale: Object.freeze({ x: one.value, y: one.value }),
         rotationDegrees: zero.value,
-        color: scene.noteColor,
+        color: scene.noteTint,
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
           sourceDepthOrSortingOrder: 70,
@@ -1642,7 +1645,7 @@ export class RenderCommandProducer {
           position: childTransform.position,
           scale: Object.freeze({ x: childTransform.localScale.x, y: childTransform.localScale.y }),
           rotationDegrees: zero.value,
-          color: scene.noteColor,
+          color: scene.noteTint,
           ordering: Object.freeze({
             domainLayer: scene.noteDomainLayer,
             sourceDepthOrSortingOrder: 70,
@@ -1966,7 +1969,7 @@ export class RenderCommandProducer {
         y: next.value.renderedTransform.localScale.y,
       }),
       rotationDegrees: zero.value,
-      color: scene.noteColor,
+      color: scene.noteTint,
       ordering: Object.freeze({
         domainLayer: scene.noteDomainLayer,
         sourceDepthOrSortingOrder: 70,
@@ -2082,7 +2085,7 @@ export class RenderCommandProducer {
             y: state.lifecycle.renderedTransform.localScale.y,
           }),
           rotationDegrees: zero.value,
-          color: scene.noteColor,
+          color: scene.noteTint,
           ordering: Object.freeze({
             domainLayer: scene.noteDomainLayer,
             sourceDepthOrSortingOrder: 70,
@@ -2146,7 +2149,7 @@ export class RenderCommandProducer {
       );
     }
     return this.preflightOrdinaryNoteMotion(poolObjectId, motionState, {
-      color: scene.noteColor,
+      color: scene.noteTint,
       ordering: Object.freeze({
         domainLayer: scene.noteDomainLayer,
         sourceDepthOrSortingOrder: 70,
@@ -2481,7 +2484,7 @@ export function validateOrdinaryFixedNoteSceneInput(
     scene.noteStartPositions.length !== 7 ||
     scene.goalPositions.length !== 7 ||
     vectors.some((value) => !validateVector3(value)) ||
-    !validateColor(scene.noteColor) ||
+    !validateColor(scene.noteTint) ||
     !Number.isSafeInteger(scene.noteDomainLayer) ||
     (scene.syncLineEdgeMargin !== undefined &&
       (!validateRenderFloat32(scene.syncLineEdgeMargin) ||
@@ -2639,6 +2642,7 @@ export function resolveFrontSpriteBinding(
   information: NoteInformation,
   habahiro: boolean,
   resources: RenderEngineResourceBindings,
+  noteColor: boolean,
 ): SimulatorResult<{
   readonly logicalAssetId: string;
   readonly exactKey: string;
@@ -2684,7 +2688,7 @@ export function resolveFrontSpriteBinding(
   } else {
     switch (information.fireNoteType) {
       case FrontNoteType.Normal:
-        family = information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
+        family = noteColor && information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
         break;
       case FrontNoteType.Long:
       case FrontNoteType.SlideA:
@@ -2711,6 +2715,7 @@ export function resolveFrontSpriteBinding(
 function resolveHabahiroFrontSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
+  noteColor: boolean,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
@@ -2719,7 +2724,7 @@ function resolveHabahiroFrontSpriteBinding(
     return ok(Object.freeze({ logicalAssetId: atlases.skill, exactKey: `note_skill_${laneSuffix.value}` }));
   }
   if (information.fireNoteType === FrontNoteType.Normal) {
-    return information.shortRhythmUnder8beat
+    return noteColor && information.shortRhythmUnder8beat
       ? ok(Object.freeze({ logicalAssetId: atlases.normal16, exactKey: `note_normal_16_${laneSuffix.value}` }))
       : ok(Object.freeze({ logicalAssetId: atlases.normal, exactKey: `note_normal_${laneSuffix.value}` }));
   }

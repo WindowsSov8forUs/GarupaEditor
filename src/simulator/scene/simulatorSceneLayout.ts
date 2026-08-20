@@ -126,7 +126,7 @@ export function createSimulatorSceneLayout(
     highAspectRatio: values.value.highAspectRatio,
     noteStartPositions: values.value.noteStartPositions,
     goalPositions: values.value.goalPositions,
-    noteColor: white(),
+    noteTint: white(),
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(config.syncLineEdgeMargin),
     screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
