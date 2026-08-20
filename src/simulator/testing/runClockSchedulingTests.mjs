@@ -59,12 +59,22 @@ function validateClockScheduling() {
   ));
 
   const LIVE_MANUAL_MODE = createSimulatorModeIdentity("live", "manual");
-  const inputFor = (chart, highFrequencyMode = false, judgeOffsetFrames = 0) => ({
+  const DEFAULT_ORIGINAL_LIVE_SETTINGS = Object.freeze({
+    core: Object.freeze({ highFrequencyMode: false, judgementAdjustValue: 0, judgementAdjustValueB: 0, mvDarkness: 20 }),
+    syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+  });
+  const inputFor = (chart, highFrequencyMode = false, judgementAdjustValueB = 0) => ({
     chart,
-    runtime: { highFrequencyMode, judgeOffsetFrames, mode: Object.freeze({
-      sessionMode:"live", inputMode:"manual", inGameMode:"single-normal",
-      isEnablePractice:false, isDemoPlayMode:false, isAutoLive:false, isAutoPlay:false,
-    }) },
+    runtime: {
+      originalLiveSettings: Object.freeze({
+        core: Object.freeze({ highFrequencyMode, judgementAdjustValue: 0, judgementAdjustValueB, mvDarkness: 20 }),
+        syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+      }),
+      mode: Object.freeze({
+        sessionMode:"live", inputMode:"manual", inGameMode:"single-normal",
+        isEnablePractice:false, isDemoPlayMode:false, isAutoLive:false, isAutoPlay:false,
+      }),
+    },
   });
   const chartFixtures = join(
     repositoryRoot,
@@ -283,11 +293,11 @@ function validateClockScheduling() {
 
   console.log("clock scheduling simulator tests passed: 15");
 
-  function createCommandOnlyManager(chart, judgeOffsetFrames, bpmChangeCount) {
-    return createManager(chart, findCommandBatches(chart), judgeOffsetFrames, bpmChangeCount);
+  function createCommandOnlyManager(chart, judgementAdjustValueB, bpmChangeCount) {
+    return createManager(chart, findCommandBatches(chart), judgementAdjustValueB, bpmChangeCount);
   }
 
-  function createManager(chart, batches, judgeOffsetFrames, bpmChangeCount) {
+  function createManager(chart, batches, judgementAdjustValueB, bpmChangeCount) {
     const controller = new InGameMusicScoreController(chart);
     const oneFrame = new InGameOneFrameJudgementController();
     assertEqual(oneFrame.initialize().status, "ok", "command manager OneFrame initialize");
@@ -297,8 +307,8 @@ function validateClockScheduling() {
       controller,
       controller,
       bpmChangeCount,
-      judgeOffsetFrames,
-      new InGameCalculatedData(LIVE_MANUAL_MODE),
+      judgementAdjustValueB,
+      new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS),
       () => oneFrame.getUsableOneFrameData(),
       () => ({ status: "evidence-required", capability: "unused", requiredEvidence: [], boundary: "unused" }),
     );

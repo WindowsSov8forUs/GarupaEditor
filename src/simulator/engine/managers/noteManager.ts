@@ -231,7 +231,7 @@ export class NoteManager {
     private readonly clock: NoteManagerClock,
     private readonly musicScoreController: InGameMusicScoreController,
     private readonly bpmChangeCount: number,
-    private readonly judgeOffsetFrames: number,
+    private readonly judgementAdjustValueB: number,
     readonly inGameCalculatedData: InGameCalculatedData,
     private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
     private readonly submitAutoLiveJudgement: (
@@ -443,7 +443,7 @@ export class NoteManager {
         note.registerManualRuntime({
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
-          getJudgeOffsetFrames: () => this.judgeOffsetFrames,
+          getJudgementAdjustValueB: () => this.judgementAdjustValueB,
           judgeSlide: (source, adjustedMusicPosition) =>
             this.slideNoteManager.judge(source, adjustedMusicPosition),
           geometry: this.manualInputGeometry,
@@ -666,13 +666,13 @@ export class NoteManager {
 
   getAdjustedMusicPosition(): number {
     return this.musicScoreController.getAdjustedMusicPosition(
-      this.judgeOffsetFrames,
+      this.judgementAdjustValueB,
     );
   }
 
   peekAdjustedMusicPosition(): number {
     return this.musicScoreController.peekAdjustedMusicPosition(
-      this.judgeOffsetFrames,
+      this.judgementAdjustValueB,
     );
   }
 

@@ -16,7 +16,7 @@ import { LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./
 const config = Object.freeze({
   specificSpeed: Math.fround(11),
   noteSize: Math.fround(100),
-  judgeOffsetFrames: 0,
+  judgementAdjustValueB: 0,
   habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
 });
 const surface = Object.freeze({

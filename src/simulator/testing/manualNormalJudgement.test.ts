@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import {
   ButtonType,
@@ -111,7 +112,7 @@ function createNormalGraph(sources: readonly NoteInformation[]): NormalGraph {
     music,
     0,
     0,
-    new InGameCalculatedData(manualPlayMode),
+    new InGameCalculatedData(manualPlayMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
     () => evidenceRequired("test.auto-live-not-used", ["D05"], "not used"),
     undefined,

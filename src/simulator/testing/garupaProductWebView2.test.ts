@@ -71,7 +71,7 @@ async function main(): Promise<void> {
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const layout = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
     "ordinary", CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));

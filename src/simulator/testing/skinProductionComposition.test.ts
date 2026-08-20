@@ -109,7 +109,7 @@ async function runComposition(scenario: "default" | "limited3"): Promise<void> {
           safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
           origin: "bottom-left",
         }, {
-          specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0,
+          specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0,
           habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: skin.note.noteSyncEdgeMargin,
         }, kind, resources, fieldBindings);
         return scene.status === "ok"

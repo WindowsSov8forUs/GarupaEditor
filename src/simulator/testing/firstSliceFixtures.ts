@@ -17,6 +17,7 @@ import type {
   EvidenceReference,
 } from "../engine/evidence";
 import type { SimulatorEngineInput } from "../host/contracts";
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 
 const testingIds = new WeakMap<NoteInformation, string>();
 
@@ -125,8 +126,7 @@ export function engineInput(
   return {
     chart: chart(noteBatches),
     runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS,
       mode: LIVE_MANUAL_MODE,
     },
   };

@@ -59,6 +59,7 @@ export function createSimulatorModuleCapabilitySummary(
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
     originalSkinSettings: "closed-static-portable" as const,
+    originalLiveSettings: "closed-portable" as const,
     mainProgramIntegration: "unauthorized-stage-9" as const,
     selectedRenderingGate: rendering === null
       ? "open-evidence-required" as const

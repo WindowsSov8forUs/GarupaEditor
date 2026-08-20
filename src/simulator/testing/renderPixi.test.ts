@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
@@ -561,7 +562,7 @@ async function verifyActualPixiSelectedSkin(
   const scene = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720,
       safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0,
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0,
       habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: recipe.note.noteSyncEdgeMargin },
     "ordinary", overlay.value.bindings, overlay.value.fieldBindings,
   ), "selected Field scene");
@@ -619,7 +620,7 @@ async function verifyActualPixiGarupaProduct(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
+      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
@@ -745,11 +746,7 @@ async function verifyActualPixiFullChart(
   const scene = ordinaryScene();
   const engine = requireOk(createSimulatorEngine({
     chart,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode: LIVE_AUTO_MODE,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId,

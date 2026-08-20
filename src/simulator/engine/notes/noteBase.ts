@@ -41,7 +41,7 @@ export interface NoteStateSnapshot {
 export interface ManualNoteRuntime {
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
-  readonly getJudgeOffsetFrames: () => number;
+  readonly getJudgementAdjustValueB: () => number;
   readonly judgeSlide: (
     source: NoteInformation,
     adjustedMusicPosition: number,

@@ -117,6 +117,12 @@ export type MultiaspectLayoutEvidenceId =
   | `ML-E0${"1" | "2" | "3" | "4"}`
   | "ML-R05";
 
+export type OriginalLiveSettingsEvidenceId =
+  | `OLS-E${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "20" | "21" | "22" | "23" | "24" | "25" | "26" | "27" | "28" | "29" | "30" | "31" | "32" | "33" | "34" | "35" | "36"}`
+  | `OLS-R0${"1" | "2" | "3" | "4" | "5" | "6"}`
+  | "OLS-P01"
+  | "OLS-C01";
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -132,7 +138,8 @@ export type SimulatorEvidenceId =
   | StartupDirectionEvidenceId
   | StartupAudioEvidenceId
   | MvLiveEvidenceId
-  | MultiaspectLayoutEvidenceId;
+  | MultiaspectLayoutEvidenceId
+  | OriginalLiveSettingsEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

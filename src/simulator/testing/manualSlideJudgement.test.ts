@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
@@ -122,7 +123,7 @@ function slideRoot(
 function createGraph(
   root: NoteInformation,
   extraRoots: readonly NoteInformation[] = [],
-  judgeOffsetFrames = 0,
+  judgementAdjustValueB = 0,
 ): Graph {
   const batch: NoteBatchInformation = {
     barIndex: 0, numerator: 0, denominator: 192, absolutePos: 1,
@@ -134,8 +135,8 @@ function createGraph(
   requireOk(oneFrame.initialize(), "initialize OneFrame");
   const geometry = new Geometry();
   const manager = new NoteManager(
-    [batch], new SlideNoteManager(), new Clock(), music, 0, judgeOffsetFrames,
-    new InGameCalculatedData(manualMode),
+    [batch], new SlideNoteManager(), new Clock(), music, 0, judgementAdjustValueB,
+    new InGameCalculatedData(manualMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
     () => evidenceRequired("test.auto-unused", ["MJ20"], "unused"),
     undefined,

@@ -1150,7 +1150,7 @@ export class NoteSlide extends NoteFrontBase {
       }
       const result =
         slideDecision.value.result === NoteResultType.Great &&
-          runtime.value.getJudgeOffsetFrames() !== 0
+          runtime.value.getJudgementAdjustValueB() !== 0
           ? NoteResultType.Perfect
           : slideDecision.value.result;
       if (slideDecision.value.correction > 1 || result !== NoteResultType.Perfect) {

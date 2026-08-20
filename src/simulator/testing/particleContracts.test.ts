@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
@@ -582,11 +583,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
   const backends = createRecordingSimulatorBackends(undefined, failingBackend, failingRenderer);
   const created = createSimulatorEngine({
     chart,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode: LIVE_AUTO_MODE,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },
     particles: { sessionId: "later-failure" },
   }, backends);
   const engine = requireOk(created, "later-failure engine");
@@ -617,11 +614,7 @@ async function testWholeEngineReplay(): Promise<void> {
     backends.push(particle);
     return createSimulatorEngine({
       chart,
-      runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
-        mode: REHEARSAL_AUTO_MODE,
-      },
+      runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: REHEARSAL_AUTO_MODE },
       particles: { sessionId },
     }, createRecordingSimulatorBackends(undefined, particle));
   };

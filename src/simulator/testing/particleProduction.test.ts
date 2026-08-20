@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
@@ -98,11 +99,7 @@ async function replay(
   assert.equal((await particle.prepare(sessionId, provider, preflight)).status, "accepted");
   const engine = requireOk(createSimulatorEngine({
     chart: chartData,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode: LIVE_AUTO_MODE,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },
     particles: { sessionId },
   }, createRecordingSimulatorBackends(undefined, particle)), `create ${sessionId}`);
   requireOk(engine.initialize(), `initialize ${sessionId}`);

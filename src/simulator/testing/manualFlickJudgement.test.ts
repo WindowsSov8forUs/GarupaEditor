@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
@@ -96,7 +97,7 @@ function graph(information: NoteInformation): FlickGraph {
   const geometry = new IdentityGeometry();
   const manager = new NoteManager(
     [batch], new SlideNoteManager(), new Clock(), music, 0, 0,
-    new InGameCalculatedData(manualMode),
+    new InGameCalculatedData(manualMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
     () => { throw new Error("manual test cannot submit Auto Live") },
     undefined,

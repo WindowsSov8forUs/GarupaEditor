@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import {
   LIVE_AUTO_MODE,
   LIVE_MANUAL_MODE,
@@ -362,7 +363,7 @@ async function createSession(
     { revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
+      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
@@ -397,11 +398,7 @@ async function createSession(
   });
   const engine = requireOk(createSimulatorEngine({
     chart,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode: identity,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: identity },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: id,

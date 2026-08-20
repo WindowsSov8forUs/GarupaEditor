@@ -10,12 +10,13 @@ import {
   createDefaultTestSkinSettings,
   createTestPresentationPackage,
 } from "./startupPresentationTestProfile";
+import { DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 
 async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema11 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema12 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -23,7 +24,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 11);
+  assert.equal(result.value.schemaVersion, 12);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -138,7 +139,7 @@ function request(): SimulatorModuleLaunchRequest {
       sessionMode: "live",
       inputMode: "manual",
       highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      ...DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
       skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11), noteSize: Math.fround(100),

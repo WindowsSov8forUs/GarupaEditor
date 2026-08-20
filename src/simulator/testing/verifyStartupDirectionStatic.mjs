@@ -19,7 +19,7 @@ const publicBarrel = read("public/index.ts") + read("index.ts");
 
 for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
-  "readonly schemaVersion: 11;",
+  "readonly schemaVersion: 12;",
   'Object.keys(request).sort().join(\",\") !== \"chartData,config,presentation\"',
   '"move-time-reconstruction"',
 ]) {

@@ -71,11 +71,19 @@ export interface SimulatorOriginalSkinSettings {
   readonly special: SimulatorSpecialSkinSelection;
 }
 
-export interface SimulatorLaunchConfig {
+export interface SimulatorOriginalLiveSettings {
+  readonly judgementAdjustValue: number;
+  readonly judgementAdjustValueB: number;
+  readonly syncLine: boolean;
+  readonly noteColor: boolean;
+  readonly visibleTapLaneEffect: boolean;
+  readonly mvDarkness: number;
+}
+
+export interface SimulatorLaunchConfig extends SimulatorOriginalLiveSettings {
   readonly sessionMode: SimulatorPublicSessionMode;
   readonly inputMode: SimulatorPublicInputMode;
   readonly highFrequencyMode: boolean;
-  readonly judgeOffsetFrames: number;
   readonly skin: SimulatorOriginalSkinSettings;
   readonly visual: {
     readonly specificSpeed: number;
@@ -184,6 +192,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly originalSkinSettings: "closed-static-portable";
+  readonly originalLiveSettings: "closed-portable";
   readonly mainProgramIntegration: "unauthorized-stage-9";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
   readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";

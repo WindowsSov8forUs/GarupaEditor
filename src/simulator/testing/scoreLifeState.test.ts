@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
@@ -208,11 +209,7 @@ function testFullChartAutoMaximum(): void {
   const independentUnitCount = independentScoringUnitCount(fullChart);
   const engine = requireOk(createSimulatorEngine({
     chart: fullChart,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode: LIVE_AUTO_MODE,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: "score-full-chart-auto",

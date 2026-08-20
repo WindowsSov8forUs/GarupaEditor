@@ -1,4 +1,5 @@
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import type { OriginalLiveSettings } from "./originalLiveSettings";
 
 export type SimulatorSessionMode = "live" | "rehearsal";
 export type SimulatorInputMode = "manual" | "auto";
@@ -17,7 +18,13 @@ export interface SimulatorModeIdentity extends SimulatorModeSelection {
   readonly isAutoPlay: boolean;
 }
 
-export type InGameCalculatedDataSnapshot = SimulatorModeIdentity;
+export interface InGameCalculatedDataSnapshot extends SimulatorModeIdentity {
+  readonly judgementAdjustValue: number;
+  readonly judgementAdjustValueB: number;
+  readonly isSyncLineEnabled: boolean;
+  readonly noteColor: boolean;
+  readonly visibleTapLaneEffect: boolean;
+}
 
 export function createSimulatorModeIdentity(
   sessionMode: SimulatorSessionMode,
@@ -61,15 +68,30 @@ export function validateSimulatorModeIdentity(
 export class InGameCalculatedData {
   private readonly modeValue: SimulatorModeIdentity;
 
-  constructor(mode: SimulatorModeIdentity) {
+  constructor(
+    mode: SimulatorModeIdentity,
+    private readonly settings: OriginalLiveSettings,
+  ) {
     this.modeValue = mode;
   }
 
   get isAutoPlay(): boolean { return this.modeValue.isAutoPlay; }
   get mode(): SimulatorModeIdentity { return this.modeValue; }
+  get judgementAdjustValue(): number { return this.settings.core.judgementAdjustValue; }
+  get judgementAdjustValueB(): number { return this.settings.core.judgementAdjustValueB; }
+  get isSyncLineEnabled(): boolean { return this.settings.syncLine; }
+  get noteColor(): boolean { return this.settings.noteColor; }
+  get visibleTapLaneEffect(): boolean { return this.settings.visibleTapLaneEffect; }
 
   snapshot(): InGameCalculatedDataSnapshot {
-    return Object.freeze({ ...this.modeValue });
+    return Object.freeze({
+      ...this.modeValue,
+      judgementAdjustValue: this.judgementAdjustValue,
+      judgementAdjustValueB: this.judgementAdjustValueB,
+      isSyncLineEnabled: this.isSyncLineEnabled,
+      noteColor: this.noteColor,
+      visibleTapLaneEffect: this.visibleTapLaneEffect,
+    });
   }
 }
 

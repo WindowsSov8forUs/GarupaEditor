@@ -26,6 +26,10 @@ import { PortableRenderResourcePreflightAdapter } from "../backends/resources/lo
 import { createCurrentSinglePlayLifeProfile } from "../engine/data/currentSinglePlayLifeProfile";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
+import {
+  createOriginalLiveSettings,
+  originalLiveSettingsIdentity,
+} from "../engine/data/originalLiveSettings";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
@@ -240,6 +244,18 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") {
       return rejectedWithCleanup(score, releasePendingMovie());
     }
+    const originalLiveSettings = createOriginalLiveSettings({
+      highFrequencyMode: recipe.request.config.highFrequencyMode,
+      judgementAdjustValue: recipe.request.config.judgementAdjustValue,
+      judgementAdjustValueB: recipe.request.config.judgementAdjustValueB,
+      mvDarkness: recipe.request.config.mvDarkness,
+      syncLine: recipe.request.config.syncLine,
+      noteColor: recipe.request.config.noteColor,
+      visibleTapLaneEffect: recipe.request.config.visibleTapLaneEffect,
+    });
+    if (originalLiveSettings.status !== "ok") {
+      return rejectedWithCleanup(fromEvidence(originalLiveSettings), releasePendingMovie());
+    }
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
     if (skin.status === "rejected") {
       return rejectedWithCleanup(skin, releasePendingMovie());
@@ -275,7 +291,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             surface.value,
             {
               ...recipe.request.config.visual,
-              judgeOffsetFrames: recipe.request.config.judgeOffsetFrames,
+              judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
               syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
             },
             kind,
@@ -376,8 +392,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const engine = createSimulatorEngine({
       chart: chart.value,
       runtime: {
-        highFrequencyMode: recipe.request.config.highFrequencyMode,
-        judgeOffsetFrames: recipe.request.config.judgeOffsetFrames,
+        originalLiveSettings: originalLiveSettings.value,
         mode: score.value.mode,
       },
       scoreLifeState: score.value,
@@ -484,6 +499,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
         ? "garupa-product-extension" as const
         : "standard-original-compatible" as const,
+      originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings.value),
       skinRecipeIdentity: assembly.value.skinRecipeIdentity,
       skinFidelity: skin.value.fidelity,
       surface: surface.value,

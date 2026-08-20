@@ -113,6 +113,19 @@ function validateAutoLive() {
   ));
   const LIVE_MANUAL_MODE = createSimulatorModeIdentity("live", "manual");
   const LIVE_AUTO_MODE = createSimulatorModeIdentity("live", "auto");
+  const originalLiveSettings = (judgementAdjustValueB = 0) => Object.freeze({
+    core: Object.freeze({ highFrequencyMode: false, judgementAdjustValue: 0, judgementAdjustValueB, mvDarkness: 20 }),
+    syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+  });
+  const DEFAULT_ORIGINAL_LIVE_SETTINGS = originalLiveSettings();
+  const calculatedSnapshot = (mode, judgementAdjustValueB = 0) => ({
+    ...mode,
+    judgementAdjustValue: 0,
+    judgementAdjustValueB,
+    isSyncLineEnabled: true,
+    noteColor: true,
+    visibleTapLaneEffect: true,
+  });
   const fixture = require(join(
     simulatorRoot,
     "testing",
@@ -256,29 +269,35 @@ function validateAutoLive() {
   );
 
   test("AL01", "显式模式与已验证 owner 不受调用者别名突变", () => {
-    const manualMode = new InGameCalculatedData(LIVE_MANUAL_MODE);
-    const autoMode = new InGameCalculatedData(LIVE_AUTO_MODE);
+    const manualMode = new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS);
+    const autoMode = new InGameCalculatedData(LIVE_AUTO_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS);
     assert.equal(manualMode.isAutoPlay, false);
     assert.equal(autoMode.isAutoPlay, true);
     assert.equal(Object.isFrozen(autoMode.mode), true);
     assert.equal(Reflect.set(autoMode.mode, "isAutoLive", false), false);
-    assert.deepEqual(autoMode.snapshot(), LIVE_AUTO_MODE);
+    assert.deepEqual(autoMode.snapshot(), {
+      ...LIVE_AUTO_MODE,
+      judgementAdjustValue: 0,
+      judgementAdjustValueB: 0,
+      isSyncLineEnabled: true,
+      noteColor: true,
+      visibleTapLaneEffect: true,
+    });
 
     const mutableAutoMode = { ...LIVE_AUTO_MODE };
     const autoHost = ok(createSimulatorEngine({
       chart: fixture.chart([batch(2, [normalInfo(99, 2)])], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: mutableAutoMode,
       },
     }, createRecordingSimulatorBackends()), "mutable Auto host create");
     mutableAutoMode.isAutoLive = false;
     assert.deepEqual(ok(autoHost.snapshot(), "Auto host after flag mutation")
-      .managers.noteManager.calculatedData, LIVE_AUTO_MODE);
+      .managers.noteManager.calculatedData, calculatedSnapshot(LIVE_AUTO_MODE));
     mutableAutoMode.sessionMode = "rehearsal";
     assert.deepEqual(ok(autoHost.snapshot(), "Auto host after axis mutation")
-      .managers.noteManager.calculatedData, LIVE_AUTO_MODE);
+      .managers.noteManager.calculatedData, calculatedSnapshot(LIVE_AUTO_MODE));
     ok(autoHost.initialize(), "mutable Auto host initialize");
     ok(autoHost.step(1 / 60), "mutable Auto host activate");
     ok(autoHost.step(1 / 60), "mutable Auto host crossing");
@@ -291,15 +310,14 @@ function validateAutoLive() {
     const manualHost = ok(createSimulatorEngine({
       chart: fixture.chart([], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: mutableManualMode,
       },
     }, createRecordingSimulatorBackends()), "mutable manual host create");
     mutableManualMode.inputMode = "auto";
     mutableManualMode.isAutoPlay = true;
     assert.deepEqual(ok(manualHost.snapshot(), "manual host after alias mutation")
-      .managers.noteManager.calculatedData, LIVE_MANUAL_MODE);
+      .managers.noteManager.calculatedData, calculatedSnapshot(LIVE_MANUAL_MODE));
     ok(manualHost.dispose(), "mutable manual host dispose");
 
     const manual = bindNote(new notes.NoteNormal("manual"), normalInfo(101), {
@@ -340,8 +358,7 @@ function validateAutoLive() {
     const snapshotHost = ok(createSimulatorEngine({
       chart: fixture.chart([], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 5,
+        originalLiveSettings: originalLiveSettings(5),
         mode: LIVE_MANUAL_MODE,
       },
     }, createRecordingSimulatorBackends()), "snapshot purity host create");
@@ -855,8 +872,7 @@ function validateAutoLive() {
         ...Array.from({ length: 5 }, (_, index) => normalInfo(211 + index, 2)),
       ])], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, createRecordingSimulatorBackends());
@@ -1041,8 +1057,7 @@ function validateAutoLive() {
     const disposedHost = ok(createSimulatorEngine({
       chart: fixture.chart([], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, disposedBackends), "dispose-before-initialize host create");
@@ -1315,8 +1330,7 @@ function validateAutoLive() {
       const engineResult = createSimulatorEngine({
         chart,
         runtime: {
-          highFrequencyMode: false,
-          judgeOffsetFrames: 0,
+          originalLiveSettings: originalLiveSettings(0),
           mode: LIVE_AUTO_MODE,
         },
       }, createRecordingSimulatorBackends());
@@ -1349,7 +1363,13 @@ function validateAutoLive() {
     const backends = createRecordingSimulatorBackends();
     const input = (mode) => ({
       chart,
-      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+      runtime: {
+        originalLiveSettings: Object.freeze({
+          core: Object.freeze({ highFrequencyMode: false, judgementAdjustValue: 0, judgementAdjustValueB: 0, mvDarkness: 20 }),
+          syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+        }),
+        mode,
+      },
     });
     evidence(createSimulatorEngine(input(undefined), backends), "runtime.invalid-mode-identity");
     evidence(createSimulatorEngine(input({ kind: "mode14" }), backends),
@@ -1532,8 +1552,7 @@ function validateAutoLive() {
     evidence(createSimulatorEngine({
       chart: invalidBatchChart,
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, invalidBatchBackends), "auto-live.invalid-long-after-graph");
@@ -1559,8 +1578,7 @@ function validateAutoLive() {
     evidence(createSimulatorEngine({
       chart: fixture.chart([batch(100, [invalidChildRoleRoot])], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, invalidChildRoleBackends), "auto-live.invalid-slide-child-role");
@@ -1589,8 +1607,7 @@ function validateAutoLive() {
     evidence(createSimulatorEngine({
       chart: sharedChildChart,
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
@@ -1599,8 +1616,7 @@ function validateAutoLive() {
     evidence(createSimulatorEngine({
       chart: fixture.chart([batch(100, [duplicateRoot, duplicateRoot])], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, createRecordingSimulatorBackends()), "auto-live.duplicate-runtime-note-identity");
@@ -1623,8 +1639,7 @@ function validateAutoLive() {
     evidence(createSimulatorEngine({
       chart: fixture.chart([batch(100, [rootChildOwner, rootChildIdentity])], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
@@ -1836,8 +1851,7 @@ function validateAutoLive() {
     const nonFiniteClockEngine = ok(createSimulatorEngine({
       chart: fixture.chart([], 120),
       runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
+        originalLiveSettings: originalLiveSettings(0),
         mode: LIVE_AUTO_MODE,
       },
     }, nonFiniteClockBackends), "non-finite clock engine create");
@@ -2001,7 +2015,7 @@ function validateAutoLive() {
       music,
       bpmChangeCount,
       0,
-      new InGameCalculatedData(LIVE_AUTO_MODE),
+      new InGameCalculatedData(LIVE_AUTO_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS),
       () => oneFrame.getUsableOneFrameData(),
       (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
     );
@@ -2780,8 +2794,7 @@ function validateAutoLive() {
       const engine = ok(createSimulatorEngine({
         chart,
         runtime: {
-          highFrequencyMode: false,
-          judgeOffsetFrames: replay.judge_offset_frames,
+          originalLiveSettings: originalLiveSettings(replay.judge_offset_frames),
           mode: LIVE_AUTO_MODE,
         },
       }, createRecordingSimulatorBackends()), `G22 replay engine ${caseId}`);

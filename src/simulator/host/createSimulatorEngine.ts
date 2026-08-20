@@ -16,6 +16,11 @@ import {
   validateSimulatorModeIdentity,
 } from "../engine/data/inGameCalculatedData";
 import {
+  snapshotOriginalLiveSettings,
+  validateOriginalLiveSettings,
+  type OriginalLiveSettings,
+} from "../engine/data/originalLiveSettings";
+import {
   copyManualInputPosition,
   type ManualInputButtonResolution,
   type ManualInputFrame,
@@ -79,6 +84,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly audioProducer: AudioCommandProducer | null,
     private readonly particleCoordinator: ParticleFrameCoordinator | null,
     private readonly productTimeline: GarupaProductTimelineManager | null,
+    private readonly originalLiveSettings: OriginalLiveSettings,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -399,6 +405,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok({
       director: this.inGameDirector.snapshot(),
       managers: this.inGameManager.snapshot(),
+      originalLiveSettings: snapshotOriginalLiveSettings(this.originalLiveSettings),
       adjustedMusicPosition,
       backendTrace: this.backends.snapshot(),
       renderingBackend: this.backends.rendering?.snapshot() ?? null,
@@ -727,18 +734,13 @@ export function createSimulatorEngine(
       "The gameplay runtime consumes the normal construction result captured before the separate command parse, not an isCommand construction result.",
     );
   }
-  if (
-    typeof input.runtime.highFrequencyMode !== "boolean" ||
-    !Number.isInteger(input.runtime.judgeOffsetFrames) ||
-    input.runtime.judgeOffsetFrames < -5 ||
-    input.runtime.judgeOffsetFrames > 5
-  ) {
-    return evidenceRequired(
-      "runtime.invalid-confirmed-settings",
-      ["E19", "E22"],
-      "High Frequency must be boolean and the confirmed production judgement-offset range is the signed integer interval [-5, 5].",
-    );
+  const originalLiveSettingsValidation = validateOriginalLiveSettings(
+    input.runtime.originalLiveSettings,
+  );
+  if (originalLiveSettingsValidation.status !== "ok") {
+    return originalLiveSettingsValidation;
   }
+  const originalLiveSettings = originalLiveSettingsValidation.value;
   const modeValidation = validateSimulatorModeIdentity(input.runtime.mode);
   if (modeValidation.status !== "ok") return modeValidation;
   const movieBackgroundResult = createMovieBackground(
@@ -748,7 +750,10 @@ export function createSimulatorEngine(
   );
   if (movieBackgroundResult.status !== "ok") return movieBackgroundResult;
   const slideNoteManager = new SlideNoteManager();
-  const inGameCalculatedData = new InGameCalculatedData(modeValidation.value);
+  const inGameCalculatedData = new InGameCalculatedData(
+    modeValidation.value,
+    originalLiveSettings,
+  );
   const scoringPlanResult = input.scoreLifeState === undefined
     ? ok(null)
     : createConstructedChartScoringPlan(input.chart);
@@ -804,7 +809,7 @@ export function createSimulatorEngine(
       oneFrameJudgementController,
       productRender,
       productScene ?? null,
-      input.runtime.judgeOffsetFrames,
+      originalLiveSettings.core.judgementAdjustValueB,
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -819,7 +824,7 @@ export function createSimulatorEngine(
     musicScoreController,
     musicScoreController,
     runtimeMetadata.processBpmChangeCount,
-    input.runtime.judgeOffsetFrames,
+    originalLiveSettings.core.judgementAdjustValueB,
     inGameCalculatedData,
     () => oneFrameJudgementController.getUsableOneFrameData(),
     (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
@@ -879,7 +884,7 @@ export function createSimulatorEngine(
   );
   const inGameDirector = new InGameDirector(
     inGameManager,
-    input.runtime.highFrequencyMode,
+    originalLiveSettings.core.highFrequencyMode,
     backends.frameRate,
   );
 
@@ -892,6 +897,7 @@ export function createSimulatorEngine(
     audioProducer,
     particleCoordinator,
     productTimeline,
+    originalLiveSettings,
     backends,
   ));
 }

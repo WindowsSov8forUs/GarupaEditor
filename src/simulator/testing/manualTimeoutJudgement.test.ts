@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
@@ -15,7 +16,7 @@ import { NoteLong, NoteSlide } from "../engine/notes/noteTypes";
 import { noteInformation } from "./firstSliceFixtures";
 interface TestCase { readonly name: string; readonly run: () => void }
 const tests: TestCase[] = [];
-const manualMode = new InGameCalculatedData(LIVE_MANUAL_MODE);
+const manualMode = new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS);
 const deadlineDistance = floatFromBits(0x41a66666);
 const afterDeadlineDistance = floatFromBits(0x41a66667);
 const origin = Object.freeze({ x: Math.fround(0), y: Math.fround(0) });
@@ -92,7 +93,7 @@ function createLong() {
     submitJudgement: () => evidenceRequired("test.auto", ["MJ16"], "unused") });
   note.registerManualRuntime({
     getAdjustedMusicPosition: () => adjusted, getCurrentBpm: () => Math.fround(120),
-    getJudgeOffsetFrames: () => 0,
+    getJudgementAdjustValueB: () => 0,
     judgeSlide: () => evidenceRequired("test.slide", ["MJ16"], "unused"),
     geometry: new Geometry(), beginJudgementTransaction: () => controller.createManualJudgementTransaction(),
     submitJudgement: (request) => immediate(controller, request),
@@ -150,7 +151,7 @@ function createSlide() {
     submitJudgement: () => evidenceRequired("test.auto", ["MJ23"], "unused") });
   note.registerManualRuntime({
     getAdjustedMusicPosition: () => adjusted, getCurrentBpm: () => Math.fround(120),
-    getJudgeOffsetFrames: () => 0, judgeSlide: (child, music) => slideManager.judge(child, music),
+    getJudgementAdjustValueB: () => 0, judgeSlide: (child, music) => slideManager.judge(child, music),
     geometry, beginJudgementTransaction: () => controller.createManualJudgementTransaction(),
     submitJudgement: (request) => immediate(controller, request),
   });

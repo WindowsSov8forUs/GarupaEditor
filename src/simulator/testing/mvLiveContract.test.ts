@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
@@ -134,7 +135,7 @@ async function testHostBinding(): Promise<void> {
   const mode = createSimulatorModeIdentity("live", "auto");
   const engine = requireOk<any>(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     movie: { sessionId, musicStartDelayMilliseconds: -2180 },
     startupDirection: {
       scene: new RecordingStartupDirectionBackend(),
@@ -163,8 +164,7 @@ async function testHostBinding(): Promise<void> {
   const rejected = createSimulatorEngine({
     chart,
     runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS,
       mode: createSimulatorModeIdentity("rehearsal", "manual"),
     },
     movie: { sessionId: "movie:rehearsal", musicStartDelayMilliseconds: -2180 },
@@ -183,7 +183,7 @@ async function testHostBinding(): Promise<void> {
   assert.equal((await cleanupMovie.prepare("movie:cleanup", cleanupResource)).status, "accepted");
   const cleanupEngine = requireOk<any>(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     movie: { sessionId: "movie:cleanup", musicStartDelayMilliseconds: -2180 },
     startupDirection: { scene: null, liveStartVoiceCue: null, purpose: "initial" },
   }, createRecordingSimulatorBackends(undefined, undefined, undefined, cleanupMovie)));

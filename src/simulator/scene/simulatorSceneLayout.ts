@@ -46,7 +46,7 @@ const SLIDE_TERMINAL_Y_DISTANCE = Math.fround(100);
 export interface SimulatorSceneVisualConfig {
   readonly specificSpeed: number;
   readonly noteSize: number;
-  readonly judgeOffsetFrames: number;
+  readonly judgementAdjustValueB: number;
   readonly habahiroMeshWidthSetting: number;
   readonly syncLineEdgeMargin: number;
 }
@@ -96,7 +96,7 @@ export function createSimulatorSceneLayout(
   if (
     !exactPositiveFloat32(config.specificSpeed) ||
     !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
-    !Number.isInteger(config.judgeOffsetFrames) || config.judgeOffsetFrames < -5 || config.judgeOffsetFrames > 5 ||
+    !Number.isInteger(config.judgementAdjustValueB) || config.judgementAdjustValueB < -5 || config.judgementAdjustValueB > 5 ||
     !exactFloat32(config.habahiroMeshWidthSetting) ||
     !exactFloat32(config.syncLineEdgeMargin)
   ) {
@@ -136,7 +136,7 @@ export function createSimulatorSceneLayout(
   });
   const geometry = new CurrentSimulatorManualGeometry(
     values.value,
-    config.judgeOffsetFrames,
+    config.judgementAdjustValueB,
     renderingKind,
     originalLayout.value,
   );
@@ -319,7 +319,7 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
 
   constructor(
     private readonly scene: SceneValues,
-    judgeOffsetFrames: number,
+    judgementAdjustValueB: number,
     private readonly renderingKind: "ordinary" | "habahiro",
     private readonly surfaceLayout: OriginalSurfaceLayout,
   ) {
@@ -327,7 +327,7 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
     this.judgePositions = generated;
     const goalY = scene.goalPositions[3]!.y.value;
     const overedIndex = generated.findIndex((value) => value > goalY);
-    const selected = overedIndex - 1 + judgeOffsetFrames;
+    const selected = overedIndex - 1 + judgementAdjustValueB;
     if (overedIndex <= 0 || selected < 0 || selected >= generated.length) {
       throw new Error("scene.slide-judge-profile-out-of-range");
     }

@@ -30,10 +30,10 @@ for (const symbol of [
   'readonly skin: SimulatorOriginalSkinSettings;',
 ]) if (!contracts.includes(symbol)) throw new Error(`Skin Public symbol missing: ${symbol}`);
 for (const required of [
-  "readonly schemaVersion: 11;",
-  '"audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,skin,visual"',
+  "readonly schemaVersion: 12;",
+  '"audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual"',
   "validateAndFreezeOriginalSkinSettings",
-]) if (!recipe.includes(required)) throw new Error(`Schema 11 Skin recipe boundary missing: ${required}`);
+]) if (!recipe.includes(required)) throw new Error(`Schema 12 Skin recipe boundary missing: ${required}`);
 for (const forbidden of ["judgeSkinId", "judgeType", "ripName", "http://", "https://"]) {
   if ((contracts + skinContracts + catalog + validation + resolver + derivation + selector + assembly + composition).includes(forbidden)) {
     throw new Error(`forbidden Skin identity/transport entered production: ${forbidden}`);
@@ -146,7 +146,7 @@ for (const path of production) {
     if (text.includes(forbidden)) throw new Error(`Skin production dependency escape: ${path}: ${forbidden}`);
   }
 }
-console.log("Skin settings static boundary verified: Schema 11 aggregate-only catalog/resolver, HAB/MV/mode routes, no transport or independent Judge");
+console.log("Skin settings static boundary verified: Schema 12 aggregate-only catalog/resolver, HAB/MV/mode routes, no transport or independent Judge");
 
 function collect(root) {
   const paths = [];

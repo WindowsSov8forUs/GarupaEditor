@@ -69,7 +69,7 @@ export class GarupaProductTimelineManager {
     private readonly oneFrame: InGameOneFrameJudgementController,
     private readonly render: GarupaProductRenderProducer | null,
     private readonly scene: GarupaProductSceneLayout | null = null,
-    private readonly judgeOffsetFrames = 0,
+    private readonly judgementAdjustValueB = 0,
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
@@ -152,7 +152,7 @@ export class GarupaProductTimelineManager {
       );
     }
     const visualPosition = this.music.musicPosition;
-    const judgementPosition = this.music.getAdjustedMusicPosition(this.judgeOffsetFrames);
+    const judgementPosition = this.music.getAdjustedMusicPosition(this.judgementAdjustValueB);
     if (!Number.isFinite(visualPosition) || visualPosition < 0 || !Number.isFinite(judgementPosition)) {
       return rejected(
         "simulator.garupa-extension.non-finite-current-position",

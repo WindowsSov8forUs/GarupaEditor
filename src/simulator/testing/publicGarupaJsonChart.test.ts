@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 declare const require: (id: string) => any;
 declare const process: any;
 const assert = require("node:assert/strict");
@@ -208,7 +209,7 @@ function testDirectConstruction(): void {
   const mode = createSimulatorModeIdentity("live", "auto");
   const engine = requireOk(createSimulatorEngine({
     chart: result,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: "garupa-json-direct-test",
@@ -413,7 +414,7 @@ function testAutoAndManualEngineOutcomes(): void {
   const autoMode = createSimulatorModeIdentity("live", "auto");
   const auto = requireOk(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode: autoMode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: autoMode },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: "garupa-json-auto-quota",
@@ -432,7 +433,7 @@ function testAutoAndManualEngineOutcomes(): void {
   const manualMode = createSimulatorModeIdentity("live", "manual");
   const manual = requireOk(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode: manualMode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: manualMode },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: "garupa-json-manual-miss",
@@ -468,7 +469,7 @@ function testProductAutoEngineOutcome(): void {
   const mode = createSimulatorModeIdentity("live", "auto");
   const engine = requireOk(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId: "garupa-product-auto",
@@ -510,7 +511,7 @@ function testProductManualChainOwner(): void {
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
+      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     sceneResources,
@@ -593,7 +594,7 @@ function testProductManualEngineOutcome(): void {
   const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const layout = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
     "ordinary", resources,
   ));
   const product = getGarupaProductChartProfile(chart)!;
@@ -609,7 +610,7 @@ function testProductManualEngineOutcome(): void {
   const engine = requireOk(createSimulatorEngine({
     chart,
     garupaProductScene: layout.garupaProductScene,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     scoreLifeState: {
       schemaVersion: 3, sessionId: "garupa-product-manual", mode,
       life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
@@ -649,7 +650,7 @@ async function testProductReplayLifecycle(): Promise<void> {
     ])));
     return requireOk(createSimulatorEngine({
       chart,
-      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+      runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
       scoreLifeState: {
         schemaVersion: 3, sessionId: `garupa-replay-${generation++}`, mode,
         life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
@@ -684,7 +685,7 @@ async function testProductReplayLifecycle(): Promise<void> {
   const manualResources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const manualScene = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
     "ordinary", manualResources,
   )).garupaProductScene;
   const createManualFresh = () => {
@@ -696,7 +697,7 @@ async function testProductReplayLifecycle(): Promise<void> {
     return requireOk(createSimulatorEngine({
       chart,
       garupaProductScene: manualScene,
-      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode: manualMode },
+      runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: manualMode },
       scoreLifeState: {
         schemaVersion: 3, sessionId: `garupa-replay-manual-${generation++}`, mode: manualMode,
         life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
@@ -753,7 +754,7 @@ function testProductRenderCommands(): void {
     { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
       specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
+      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
     },
     "ordinary",
     resources,

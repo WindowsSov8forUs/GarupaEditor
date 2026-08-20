@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
@@ -30,7 +31,7 @@ function testFourModeStateAndMutationGate(): void {
       const scene = new RecordingStartupDirectionBackend();
       const engine = requireOk<any>(createSimulatorEngine({
         chart,
-        runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+        runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
         scoreLifeState: {
           schemaVersion: 3,
           sessionId: `startup:${sessionMode}:${inputMode}`,
@@ -189,7 +190,7 @@ async function testFourModeAudioTimeline(): Promise<void> {
       )).status, "accepted");
       const engine = requireOk<any>(createSimulatorEngine({
         chart,
-        runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+        runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
         audio: {
           sessionId,
           bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((row) => row.role === "bgm")!.cue,
@@ -254,7 +255,7 @@ async function testMoveTimeAudioPurpose(): Promise<void> {
   )).status, "accepted");
   const engine = requireOk<any>(createSimulatorEngine({
     chart,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     audio: {
       sessionId,
       bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((row) => row.role === "bgm")!.cue,

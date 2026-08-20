@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
@@ -93,7 +94,7 @@ function createGraph(count: 1 | 2 | 3): Graph {
   requireOk(oneFrame.initialize(), "initialize OneFrame");
   const manager = new NoteManager(
     [batch], new SlideNoteManager(), new Clock(), music, 0, 0,
-    new InGameCalculatedData(manualMode),
+    new InGameCalculatedData(manualMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
     () => evidenceRequired("test.auto-unused", ["MJ10"], "unused"),
     undefined,

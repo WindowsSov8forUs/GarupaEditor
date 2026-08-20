@@ -12,6 +12,7 @@ import {
   createDefaultTestSkinSettings,
   createTestPresentationPackage,
 } from "./startupPresentationTestProfile";
+import { DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 
 const fixture = JSON.parse(readFileSync(join(
   process.cwd(),
@@ -107,7 +108,7 @@ function testPublicExactShape(): void {
 function testRecipeOwnership(): void {
   const source = request(true);
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  assert.equal(recipe.schemaVersion, 11);
+  assert.equal(recipe.schemaVersion, 12);
   assert.equal(recipe.request.chartData.isFullLength, true);
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);
@@ -152,7 +153,7 @@ function request(
       sessionMode,
       inputMode,
       highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      ...DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
       skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11),

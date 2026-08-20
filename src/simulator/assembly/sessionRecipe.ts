@@ -38,9 +38,10 @@ import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData"
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
+import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 11;
+  readonly schemaVersion: 12;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -48,6 +49,7 @@ export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
   readonly mode: SimulatorModeIdentity;
   readonly chartFidelity: SimulatorChartFidelity;
+  readonly originalLiveSettingsIdentity: string;
   readonly skinRecipeIdentity: string;
   readonly skinFidelity: SimulatorSkinFidelity;
   readonly surface: SimulatorSurfaceState;
@@ -74,7 +76,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 11 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 12 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -105,6 +107,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         }
         if (
           fresh.value.chartFidelity === initial.value.chartFidelity &&
+          fresh.value.originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity &&
           fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity &&
           fresh.value.skinFidelity === initial.value.skinFidelity &&
           sameSurface(fresh.value.surface, initial.value.surface)
@@ -352,10 +355,24 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
 function copyLaunchRequest(
   request: SimulatorModuleLaunchRequest,
 ): SimulatorAssemblyResult<SimulatorModuleLaunchRequest> {
-  const skin = request !== null && typeof request === "object" && !Array.isArray(request) &&
+  const configRecord = request !== null && typeof request === "object" && !Array.isArray(request) &&
     request.config !== null && typeof request.config === "object" && !Array.isArray(request.config)
-    ? validateAndFreezeOriginalSkinSettings(request.config.skin)
+    ? request.config
     : null;
+  const skin = configRecord === null
+    ? null
+    : validateAndFreezeOriginalSkinSettings(configRecord.skin);
+  const originalLiveSettings = configRecord === null
+    ? null
+    : createOriginalLiveSettings({
+        highFrequencyMode: configRecord.highFrequencyMode,
+        judgementAdjustValue: configRecord.judgementAdjustValue,
+        judgementAdjustValueB: configRecord.judgementAdjustValueB,
+        mvDarkness: configRecord.mvDarkness,
+        syncLine: configRecord.syncLine,
+        noteColor: configRecord.noteColor,
+        visibleTapLaneEffect: configRecord.visibleTapLaneEffect,
+      });
   if (
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config,presentation" ||
@@ -364,12 +381,10 @@ function copyLaunchRequest(
     typeof request.chartData.isFullLength !== "boolean" ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
-      "audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,skin,visual" ||
+      "audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual" ||
     (request.config.sessionMode !== "live" && request.config.sessionMode !== "rehearsal") ||
     (request.config.inputMode !== "manual" && request.config.inputMode !== "auto") ||
-    typeof request.config.highFrequencyMode !== "boolean" ||
-    !Number.isInteger(request.config.judgeOffsetFrames) ||
-    request.config.judgeOffsetFrames < -5 || request.config.judgeOffsetFrames > 5 ||
+    originalLiveSettings === null || originalLiveSettings.status !== "ok" ||
     skin === null || skin.status !== "ok" ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
@@ -412,8 +427,13 @@ function copyLaunchRequest(
     config: Object.freeze({
       sessionMode: request.config.sessionMode,
       inputMode: request.config.inputMode,
-      highFrequencyMode: request.config.highFrequencyMode,
-      judgeOffsetFrames: request.config.judgeOffsetFrames,
+      highFrequencyMode: originalLiveSettings.value.core.highFrequencyMode,
+      judgementAdjustValue: originalLiveSettings.value.core.judgementAdjustValue,
+      judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
+      mvDarkness: originalLiveSettings.value.core.mvDarkness,
+      syncLine: originalLiveSettings.value.syncLine,
+      noteColor: originalLiveSettings.value.noteColor,
+      visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect,
       skin: skin.value,
       visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),

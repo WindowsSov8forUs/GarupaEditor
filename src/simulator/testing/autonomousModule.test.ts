@@ -15,6 +15,7 @@ import {
 } from "../scene/rehearsalControlScene";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
+import { DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import {
   createDefaultTestSkinSettings,
   createTestPresentationPackage,
@@ -268,7 +269,7 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 11);
+  assert.equal(recipe.schemaVersion, 12);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -415,6 +416,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.background, "standard-current-portable");
   assert.equal(stepped.report.capabilities.skin, "default-current");
   assert.equal(stepped.report.capabilities.originalSkinSettings, "closed-static-portable");
+  assert.equal(stepped.report.capabilities.originalLiveSettings, "closed-portable");
   assert.equal(stepped.report.capabilities.selectedSkinGate, "closed-static-portable");
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
@@ -633,6 +635,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
+    originalLiveSettings: "closed-portable",
     mainProgramIntegration: "unauthorized-stage-9",
     selectedRenderingGate: "open-evidence-required",
     selectedBackgroundGate: "closed-portable",
@@ -857,7 +860,7 @@ function request(): SimulatorModuleLaunchRequest {
       sessionMode: "live",
       inputMode: "auto",
       highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      ...DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
       skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11),
@@ -874,6 +877,7 @@ function engineBuild(engine: any) {
     engine,
     mode: LIVE_AUTO_MODE,
     chartFidelity: "standard-original-compatible" as const,
+    originalLiveSettingsIdentity: "60:0:0:20:1:1:1",
     skinRecipeIdentity: "skin-recipe-v1|default-current|test",
     skinFidelity: "default-current" as const,
     surface: TEST_SURFACE,

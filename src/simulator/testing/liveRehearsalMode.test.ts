@@ -1,3 +1,7 @@
+import {
+  DEFAULT_ORIGINAL_LIVE_SETTINGS,
+  DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
+} from "./originalLiveSettingsTestProfile";
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
@@ -64,7 +68,17 @@ function testFourCanonicalModes(): void {
       isAutoPlay: autoPlay,
     });
     const engine = requireOk(createModeEngine(mode, `identity:${sessionMode}:${inputMode}`), "identity engine");
-    assert.deepEqual(requireOk(engine.snapshot(), "identity snapshot").managers.noteManager.calculatedData, mode);
+    assert.deepEqual(
+      requireOk(engine.snapshot(), "identity snapshot").managers.noteManager.calculatedData,
+      {
+        ...mode,
+        judgementAdjustValue: 0,
+        judgementAdjustValueB: 0,
+        isSyncLineEnabled: true,
+        noteColor: true,
+        visibleTapLaneEffect: true,
+      },
+    );
     requireOk(engine.initialize(), "identity initialize");
     requireOk(engine.dispose(), "identity dispose");
   }
@@ -120,6 +134,7 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
             engine: engine.value,
             mode,
             chartFidelity: "standard-original-compatible" as const,
+            originalLiveSettingsIdentity: "60:0:0:20:1:1:1",
             skinRecipeIdentity: "skin-recipe-v1|default-current|live-rehearsal-test",
             skinFidelity: "default-current" as const,
             surface: TEST_SURFACE,
@@ -227,7 +242,7 @@ async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
     }
     const engine = createSimulatorEngine({
       chart,
-      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+      runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
       scoreLifeState: {
         schemaVersion: 3,
         sessionId,
@@ -332,11 +347,7 @@ function createModeEngine(
 ): SimulatorResult<SimulatorEngine> {
   return createSimulatorEngine({
     chart,
-    runtime: {
-      highFrequencyMode: false,
-      judgeOffsetFrames: 0,
-      mode,
-    },
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
     scoreLifeState: {
       schemaVersion: 3,
       sessionId,
@@ -370,7 +381,7 @@ function request(
       sessionMode,
       inputMode,
       highFrequencyMode: false,
-      judgeOffsetFrames: 0,
+      ...DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
       skin: createDefaultTestSkinSettings(),
       visual: {
         specificSpeed: Math.fround(11),

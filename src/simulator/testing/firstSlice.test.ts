@@ -1,3 +1,4 @@
+import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { ButtonType, type NoteBatchInformation } from "../engine/chart/types";
@@ -160,7 +161,7 @@ function createTestGraph(
     music,
     bpmChangeCount,
     0,
-    new InGameCalculatedData(LIVE_MANUAL_MODE),
+    new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => controller.getUsableOneFrameData(),
     () => evidenceRequired("test.auto-live-not-used", ["R04"], "not used"),
     (_family, poolObjectId) => {
@@ -377,7 +378,16 @@ test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制�
   const cloned = { ...valid, chart: { ...valid.chart } };
   assertEqual(createSimulatorEngine(cloned, createRecordingSimulatorBackends()).status,
     "evidence-required", "cloned chart");
-  const invalidOffset = { ...valid, runtime: { ...valid.runtime, judgeOffsetFrames: 6 } };
+  const invalidOffset = {
+    ...valid,
+    runtime: {
+      ...valid.runtime,
+      originalLiveSettings: {
+        ...valid.runtime.originalLiveSettings,
+        core: { ...valid.runtime.originalLiveSettings.core, judgementAdjustValueB: 6 },
+      },
+    },
+  };
   assertEqual(createSimulatorEngine(invalidOffset, createRecordingSimulatorBackends()).status,
     "evidence-required", "offset range");
   assertEqual(
@@ -402,7 +412,13 @@ test("120 模式请求、快照与 dispose 保持确定", () => {
   const input = engineInput();
   const engine = requireOk(createSimulatorEngine({
     ...input,
-    runtime: { ...input.runtime, highFrequencyMode: true },
+    runtime: {
+      ...input.runtime,
+      originalLiveSettings: {
+        ...input.runtime.originalLiveSettings,
+        core: { ...input.runtime.originalLiveSettings.core, highFrequencyMode: true },
+      },
+    },
   }, backends), "create 120 engine");
   requireOk(engine.initialize(), "initialize");
   const first = requireOk(engine.snapshot(), "first snapshot");

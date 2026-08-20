@@ -28,6 +28,10 @@ import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
 import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
 import type { GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
+import type {
+  OriginalLiveSettings,
+  OriginalLiveSettingsSnapshot,
+} from "../engine/data/originalLiveSettings";
 
 export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
 
@@ -45,8 +49,7 @@ export interface SimulatorParticleSessionInput {
 export interface SimulatorEngineInput {
   readonly chart: ChartConstructionResult;
   readonly runtime: {
-    readonly highFrequencyMode: boolean;
-    readonly judgeOffsetFrames: number;
+    readonly originalLiveSettings: OriginalLiveSettings;
     readonly mode: SimulatorModeIdentity;
   };
   readonly scoreLifeState?: ScoreLifeStateProfile;
@@ -68,6 +71,7 @@ export interface SimulatorEngineInput {
 export interface SimulatorSnapshot {
   readonly director: InGameDirectorSnapshot;
   readonly managers: InGameManagerSnapshot;
+  readonly originalLiveSettings: OriginalLiveSettingsSnapshot;
   readonly adjustedMusicPosition: number;
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
   readonly renderingBackend: RenderBackendSnapshot | null;
