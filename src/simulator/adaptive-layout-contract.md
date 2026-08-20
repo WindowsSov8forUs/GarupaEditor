@@ -13,7 +13,7 @@ The old 1600×720 delivery frame is now only one regression sample. It is not a 
 
 ## Platform boundary
 
-Viewport and safe area are platform capabilities, not Public business request fields. Public Schema 11 remains exactly `{chartData,presentation,config}` and accepts neither `config.visual.highAspectRatio` nor caller-authored startup-character/voice fields.
+Viewport and safe area are platform capabilities, not Public business request fields. Public Schema 12 remains exactly `{chartData,presentation,config}` and accepts neither `config.visual.highAspectRatio` nor caller-authored startup-character/voice fields.
 
 The platform supplies exactly one initial state:
 
@@ -85,7 +85,7 @@ noteSettingScale      = screenWidthAdjustRate * normalizedNoteSize
 particleScaleTotal    = noteSettingScale * ScreenToSafeAreaRatio
 ```
 
-Button/launcher positions, seven original lane goals, note starts, manual inverse projection, Long/Slide width and particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
+Button/launcher positions, seven original lane goals, thirteen full/half tap-lane-effect owners, note starts, manual inverse projection, Long/Slide width and particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
 
 ## NGUI, HUD and Rehearsal controls
 

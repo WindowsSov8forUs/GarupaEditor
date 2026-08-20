@@ -7,6 +7,7 @@
 - Life初始化/Full伤害：Reverse `2cbea93d`，`artifacts/investigations/simulator-public-life-profile-10-1-4/`，PLP-E01–PLP-E07。
 - 谱面MV Live：Reverse `38802391`，`mv-live-runtime-contract-10-1-4/`与`mv-live-portable-media-profile-10-1-4/`；完整合同见[`mv-live-contract.md`](./mv-live-contract.md)。
 - 锁定样本：`jp.co.craftegg.band` 10.1.4 / 230 / arm64-v8a。
+- 原作Live设置：Reverse `aae7e4fe`/`50bc40b6`，OLS-E01–E37、OLS-R01–R06、OLS-P01、OLS-C01；完整合同见[`original-live-settings-contract.md`](./original-live-settings-contract.md)。
 - 产品例外：CS-V1计分及timeline revision由本项目[`scoring-contract.md`](./scoring-contract.md)授权，不冒充原作Score。
 
 ## 两条正交轴
@@ -37,7 +38,13 @@ Standard四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OP
 
 Retry创建fresh Practice链，不继承旧owner；MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
-Launch根仍精确三键`{chartData,presentation,config}`。Schema 11 presentation不再包含SD角色或开场语音字段；simulator内部固定建立冻结空SD集合与缺SoundResource路径。Presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。Skin recipe同样在initial冻结：Live Auto只让Judge回默认而保留其他特殊组件，Rehearsal两种input均按Practice禁用聚合组件；Retry/MoveTime fresh build必须匹配同一canonical Skin identity。
+Launch根仍精确三键`{chartData,presentation,config}`。Schema 12 presentation不再包含SD角色或开场语音字段；simulator内部固定建立冻结空SD集合与缺SoundResource路径。Presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。Skin recipe同样在initial冻结：Live Auto只让Judge回默认而保留其他特殊组件，Rehearsal两种input均按Practice禁用聚合组件；Retry/MoveTime fresh build必须匹配同一canonical Skin identity。
+
+## Original Live settings lifecycle
+
+Schema 12必填Primary A `-30..30`、Secondary B `-5..5`、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness `0..70 step10`。配置在initial冻结；Retry fresh必须复用同一identity，MoveTime reconstruction复用配置但显式bypass Primary startup counter，Pause/Resume不重载且不热切换。
+
+A>0延迟BGM resume A个outer updates；A<0先启动BGM，再冻结gameplay/input/Note/judgement/Score/Life/particle `abs(A)`帧；B仍是独立Note position/Slide轴。Pause冻结Primary与MV dark-cover/lane-effect动画，Pause入口清除活动lane effect；resume不补算冻结帧。视觉bool不改变业务判定和音频/粒子owner。
 
 ## Life初始化与生命周期
 

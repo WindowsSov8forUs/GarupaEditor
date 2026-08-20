@@ -7,7 +7,7 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
-- Public request schema 11 supplies only canonical `GarupaChartJson`, BGM bytes
+- Public request Schema 12 supplies only canonical `GarupaChartJson`, BGM bytes
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.
@@ -27,6 +27,14 @@ Reverse remains the only authority for original behavior.
 - Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
 - Product judgement flash binds the selected TapEffect portable texture while retaining the documented product continuous-span mesh/lifetime. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes.
 - The selected TapEffect/Directional whole-pack module graph is prepared by the shared deterministic particle backend. Product continuous-span flash geometry remains a product mapping and binds the selected TapEffect texture; it is not original fractional-lane evidence.
+
+## Original Live settings narrow projection
+
+- Primary/Secondary judgement adjustment and MvDarkness use the same global original owners; product charts do not create alternate clocks or movie-opacity controls.
+- Product nodes freeze `shortRhythmUnder8beat`; NoteColor uses the original normal/normal16 predicate and selected atlas.
+- Same-position visible nodes freeze deterministic authored-order SyncLine sidecar pairs. Each endpoint uses its own continuous projection every frame; no lane is rounded, clamped or selected as nearest.
+- VisibleTapLaneEffect creates a separate recovered-Sprite sidecar at the exact continuous span center and authored width. Turning it Off does not disable the existing product judgement flash/particle, Judge, SE, Combo, Score or Life.
+- These continuous/outside projections are `closed-product-extension`. They are not evidence that the original discrete GamePlayButton/NoteSyncLine owners accept fractional or outside lanes.
 
 ## Position and lane
 
@@ -159,7 +167,7 @@ Retry and MoveTime reject any fresh-generation fidelity mismatch.
 Portable product raster acceptance uses production Browser decoding and actual
 Pixi/WebGL in three fresh WebView2 processes. The initial/negative-SV/zero-SV/
 restored-positive stable digest is
-`3f03e17e2d3de98f9e4b456fae34802823ac430695785a74b030ecac02c450ad`.
+`a9fcc1b1fa0d25033a722ce273764f6f26eeb492b381758c0cb6f5967b73eb0f`.
 This is a product portable claim, not Unity framebuffer or fixed-device parity.
 
 This contract does not open character skills, Fever, multiplayer, HABAHIRO

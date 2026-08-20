@@ -13,6 +13,7 @@ export type {
   SimulatorModuleFinalResult,
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
+  SimulatorOriginalLiveSettings,
   SimulatorOriginalSkinSettings,
   SimulatorPresentationMvPackage,
   SimulatorPresentationPackage,

@@ -10,7 +10,7 @@ npm.cmd run simulator:test
 npm.cmd run simulator:test:quick
 ```
 
-This compiles the isolated simulator and the complete TypeScript test tree once, verifies fixture provenance and source-level dependency/contract boundaries once, then runs 14 development groups spanning compiled unit/contract tests, static checks, strict Garupa JSON direct-chart construction, chart parsing, clock scheduling, Auto Live, Public Life and Live/Rehearsal. The score-life leaf independently verifies CS-V1 BigInt quotas, normalized judgement rates, chart-owned identities, duplicate failure boundaries, and a full-chart `10,000,000+N` Auto result.
+This compiles the isolated simulator and the complete TypeScript test tree once, verifies fixture provenance and source-level dependency/contract boundaries once, then runs 15 development groups spanning compiled unit/contract tests, static checks, strict Garupa JSON direct-chart construction, chart parsing, clock scheduling, Auto Live, Public Life and Live/Rehearsal. The score-life leaf independently verifies CS-V1 BigInt quotas, normalized judgement rates, chart-owned identities, duplicate failure boundaries, and a full-chart `10,000,000+N` Auto result.
 
 The shared compiled subset reports 28 unit/contract tests and 6 static checks; the dedicated Skin leaf adds the compiled full production-composition test for a total of 29 compiled unit/contract executables across the quick tier. Its audio coverage includes the Public BGM byte-only boundary, strict MPEG source-format/decode agreement under Web Audio context resampling, SHA/cue/profile derivation, caller-buffer ownership, Gaya owned-loop/fade, voice release, cleanup faults and the complete startup-callgraph fixture. The dedicated callgraph test consumes 44 methods, 10 R1 traces, four distinct mode rows, the hash-pinned Gaya bytes and zero-count closure.
 
@@ -22,7 +22,7 @@ The quick tier includes the startup-direction schema/state/mutation/Pixi/static 
 npm.cmd run simulator:test:total-revalidation
 ```
 
-This runs the current 38-semantic-leaf DAG, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current digests are ordinary `c581a9a867731205c27c461df53b09bb324ed1abd24c19915004638b01aad99c`, startup visual `dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f`（包含4:3/32:9 captures）, and startup audio `88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268`. The audio digest covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
+This runs the current 40-semantic-leaf DAG, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current digests are ordinary `53fff434639585383f7fff18b2c9ad97aa45ab47afdc27aad476399cb1fb39a4`, startup visual `dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f`（包含4:3/32:9 captures）, and startup audio `88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268`. The audio digest covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
 
 Cargo release targets are retained under each ignored WebView2 harness `target/` directory, so repeated full runs reuse validated Rust artifacts. To force the historical cold-build boundary:
 
@@ -40,7 +40,16 @@ npm.cmd run simulator:test:startup-audio-callgraph
 npm.cmd run simulator:test:startup-direction-webview2
 ```
 
-第一项覆盖schema 11、presentation复制/冻结、严格PNG/cmap、拒绝legacy null/非null SD/voice caller字段、Reverse `d408d758`授权的内部冻结空角色集合与缺SoundResource路径、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage PNG只是显式产品输入，不是原作默认资源或像素oracle；测试和production均不再生成SD角色placeholder或开场语音。
+第一项覆盖Schema 12、presentation复制/冻结、严格PNG/cmap、拒绝legacy null/非null SD/voice caller字段、Reverse `d408d758`授权的内部冻结空角色集合与缺SoundResource路径、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage PNG只是显式产品输入，不是原作默认资源或像素oracle；测试和production均不再生成SD角色placeholder或开场语音。
+
+## Original Live settings leaves
+
+```powershell
+npm.cmd run simulator:test:original-live-settings
+npm.cmd run simulator:test:original-live-settings-webview2
+```
+
+第一项覆盖Schema 12 exact shape、旧alias拒绝、A/B值域与frozen identity、Primary正零负counter、Pause/Retry/MoveTime、SyncLine/NoteColor差分、13-slot TapLaneEffect、MvDarkness dark cover、Garupa/HAB窄产品投影和静态原子顺序门。第二项在3个fresh WebView2进程中用production PNG decoder真实解码四个lane-effect Sprite并执行on→10-frame fade→disabled，observation digest为`de2b524c583b674b7dae85e325e9725d4619a21a704875485939bc4ccec86ae7`。ordinary full-scene和MV leaves分别覆盖全谱lane effect与dark cover。
 
 ## Original Skin leaves
 
@@ -49,7 +58,7 @@ npm.cmd run simulator:test:skin-settings
 npm.cmd run simulator:test:skin-settings-webview2
 ```
 
-第一项覆盖Schema 11 exact shape、42 normal/34 aggregate catalog、四模式/HAB/MV逐组件resolver、Collabo 36包级失败、whole-pack/embedded-file双SHA，并以production静态顺序门保证selected Skin assembly先于MV Movie backend construction/prepare、assembly拒绝只释放pending media resource、Movie prepare拒绝完整回滚所有owners；同时对default 54-resource/8-pack与Limited-3 55-resource/9-pack执行完整production resource composition、Field command publication和cleanup；WebAudio实际执行default与Limited-3 selected cues。`render-pixi`真实绑定并绘制selected Note、Field、Judge和可达special Background，不再只检查atlas identity。第二项分别对default和Limited-3各执行3 fresh WebView2 process，使用production PNG/particle decoder和actual WebGL绘制Field/Judge（Limited另含special Background），RGBA raster分别为`e4718031c61a8a3effcbcb120d379e9db191f666776754ea49de138802c966c2`与`5b0c4791586045bfc3cc785c734435c972df5c5eeed3330393e4f8530ebc1311`，observation digest分别为`bfbbafa4e2b78c2762c83085f0d62836d4bfdc6aafc99c8dcbe1e459c64ce6df`与`2631c173924fcb7fdeaf8f47934455dc8e6a7595a06f2b8a3c2d4c3530ed7c82`。同一门检查dynamic ordinary/directional ParticleSystem与Field/backend cleanup归零；digest只属于当前browser observation，不是原设备随机流或framebuffer authority。
+第一项覆盖Schema 12 exact shape、42 normal/34 aggregate catalog、四模式/HAB/MV逐组件resolver、Collabo 36包级失败、whole-pack/embedded-file双SHA，并以production静态顺序门保证selected Skin assembly先于MV Movie backend construction/prepare、assembly拒绝只释放pending media resource、Movie prepare拒绝完整回滚所有owners；同时对default 58-resource/8-pack与Limited-3 59-resource/9-pack执行完整production resource composition、Field command publication和cleanup；WebAudio实际执行default与Limited-3 selected cues。`render-pixi`真实绑定并绘制selected Note、Field、Judge和可达special Background，不再只检查atlas identity。第二项分别对default和Limited-3各执行3 fresh WebView2 process，使用production PNG/particle decoder和actual WebGL绘制Field/Judge（Limited另含special Background），RGBA raster分别为`e4718031c61a8a3effcbcb120d379e9db191f666776754ea49de138802c966c2`与`5b0c4791586045bfc3cc785c734435c972df5c5eeed3330393e4f8530ebc1311`，observation digest分别为`bfbbafa4e2b78c2762c83085f0d62836d4bfdc6aafc99c8dcbe1e459c64ce6df`与`2631c173924fcb7fdeaf8f47934455dc8e6a7595a06f2b8a3c2d4c3530ed7c82`。同一门检查dynamic ordinary/directional ParticleSystem与Field/backend cleanup归零；digest只属于当前browser observation，不是原设备随机流或framebuffer authority。
 
 ## MV Live leaves
 
@@ -58,7 +67,7 @@ npm.cmd run simulator:test:mv-live
 npm.cmd run simulator:test:mv-live-webview2
 ```
 
-第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 11 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard；该guard同时要求selected Skin assembly先于Movie backend construction/prepare，并锁定两级失败分支的单次ownership释放。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，serialized-widget raster digest为`5253f7943b57bbe653ec767ac396b1e3f39d0ca6ffc96f11fc44e4fa5e105477`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
+第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖Schema 12 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard；该guard同时要求selected Skin assembly先于Movie backend construction/prepare，并锁定两级失败分支的单次ownership释放。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；含dark-cover的media digest为`34c345808fe455b337b43af44a32f214b9e79e595aca5c1c410176eb860c3db9`，serialized-widget raster digest为`538d21c3eb5f804fbea6f15620cc0ec34ba2a3b96ec1d3a4ac96bdd8fc66e7dd`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
 
 ## Garupa/ExGarupa product-extension leaves
 
@@ -68,7 +77,7 @@ npm.cmd run simulator:test:garupa-extensions-webview2
 npm.cmd run simulator:test:garupa-external -- HOST________/D_N_A.json HOST________/B.B.K.K.B.K.K..json
 ```
 
-第一项覆盖schema 11、无laneCount的Public边界、固定0..6七条场地线、任意有限continuous/outside lane、product profile/axis、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary。第二项用production Browser decoder和actual WebGL执行3 fresh process，锁定initial/negative/zero/restore digest `2d6c70ef1c2776ac89638b3ef0eff895b7a423aeace3643a2b8aa45277ddce06`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱的parser/profile/axis与Auto/Manual AP；外部文件不复制进fixture或production。
+第一项覆盖Schema 12、无laneCount的Public边界、固定0..6七条场地线、任意有限continuous/outside lane、product profile/axis、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary。第二项用production Browser decoder和actual WebGL执行3 fresh process，锁定initial/negative/zero/restore digest `a9fcc1b1fa0d25033a722ce273764f6f26eeb492b381758c0cb6f5967b73eb0f`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱的parser/profile/axis与Auto/Manual AP；外部文件不复制进fixture或production。
 
 ## Adaptive layout leaf
 

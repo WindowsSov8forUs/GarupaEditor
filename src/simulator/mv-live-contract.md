@@ -2,7 +2,7 @@
 
 ## Authority 与能力范围
 
-行为依据为已推送 Reverse `38802391fc6169e405c316e9a998f28c283961e3`：
+行为依据为已推送 Reverse `38802391fc6169e405c316e9a998f28c283961e3`，MvDarkness补充依据为`50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`的OLS-R06/OLS-P01：
 
 - `artifacts/investigations/mv-live-runtime-contract-10-1-4/`
 - `artifacts/investigations/mv-live-portable-media-profile-10-1-4/`
@@ -23,7 +23,7 @@
 - CRI Mana/USM codec、Android decoder、speaker onset或Unity/GPU framebuffer exact；
 - Stage 9主程序接入。
 
-## Public schema 11
+## Public Schema 12
 
 根请求仍精确为 `{ chartData, presentation, config }`。`presentation`必须显式携带：
 
@@ -47,7 +47,7 @@ interface SimulatorPresentationPackage {
 - simulator只接受严格结构且browser可解码的MP4或WebM，并内部派生全部身份与metadata；
 - stage backdrop仍是schema必填并严格校验；Reverse `d408d758`证明的空SD集合与缺语音SoundResource由simulator内部固定，Public不再携带对应null字段。MV路线不decode/附着standard stage，也不在MV故障时fallback；所选特殊Background同样不附着，其他Skin组件继续按各自谓词生效。
 
-`presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、shared-store、mount、scheduler和domain mutation前以`evidence-required / simulator.mv-live.unsupported-rehearsal-mode`拒绝。
+`config.mvDarkness`必填且只接受`0,10,...,70`；它不等于Movie alpha。`presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、shared-store、mount、scheduler和domain mutation前以`evidence-required / simulator.mv-live.unsupported-rehearsal-mode`拒绝。
 
 ## Signed delay 与状态
 
@@ -88,13 +88,19 @@ state 17 / pre-sound returns without Play
 
 实体Initial路线观察值为`-2180ms`。Gameplay先于movie出现是明确合同，不得用“等待视频首帧”阻塞Note/input/Score/Life。
 
+## MvDarkness dark cover
+
+所有gameplay MV signed-delay分支均在Movie Play前启动独立暗幕：from alpha为1，target为`mvDarkness/100`，duration为精确Float32 0.8秒。Pause冻结elapsed；PlayingSound后的negative delay仍推进movie和cover；finish、Stop、fault和dispose隐藏/释放cover。
+
+Pixi video Sprite alpha恒为1。暗度通过同一movie widget上的黑色`Graphics` sibling实现，位于video之后、gameplay/startup foreground之前。Standard路线不创建Movie或cover owner。调用方`mvAlphaPercent`是非法额外键，不得作为alias。
+
 ## Media 与 scene
 
 - local `Blob` + `HTMLVideoElement` + Pixi `VideoSource/Texture/Sprite`；
 - `muted=true`、`defaultMuted=true`、`playsInline=true`、`loop=false`、`autoplay=false`；
 - BGM是唯一可听音乐owner；视频内audio track永不进入mix；
 - scene geometry消费Reverse `9167dce7`恢复的InGameMovie prefab：authored UITexture `1334×750`、UIRoot FitWidth，并仅在high-aspect时乘`VerticalFitScreenRatio`后居中；1600×720约为`(159.68,0,1280.64,720)`，但production不存在该尺寸特判；
-- child order为MV movie后方，gameplay particle/ordinary Note/HUD和startup foreground在其上方；
+- child order为MV video、dark-cover，gameplay particle/ordinary Note/HUD和startup foreground在其上方；
 - MV路线startup scene只decode jacket，保留information/dark-cover/line foreground，不附着standard stage/SD；
 - `play()` rejection、media error/abort、decode、seek或Pixi source/upload错误均为terminal fault；不显示首帧占位、黑屏成功或standard stage。
 
@@ -113,7 +119,8 @@ Project-authored probe只验证adapter：
 - chart/BGM早于movie结束：自然完成等待movie finished后才进入terminal result；
 - user close/natural completion先Stop movie，再释放media/Pixi；
 - cleanup逐项尝试audio、movie、particle和renderer；首故障稳定，后续失败附加为secondary；
-- dispose移除listener、pause/clear/load video、destroy sprite/texture/source、revoke Blob URL，最终resource/stage count为0。
+- dispose移除listener、pause/clear/load video、destroy dark-cover/sprite/texture/source、revoke Blob URL，最终resource/stage count为0。
+- 当前三fresh WebView2含dark-cover的media/raster digest分别为`34c345808fe455b337b43af44a32f214b9e79e595aca5c1c410176eb860c3db9`与`538d21c3eb5f804fbea6f15620cc0ec34ba2a3b96ec1d3a4ac96bdd8fc66e7dd`；只作browser portable观察。
 
 ## Capability 回执
 

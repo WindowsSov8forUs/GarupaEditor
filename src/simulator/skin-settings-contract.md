@@ -4,7 +4,7 @@
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse resource baseline `977f5e7153257e5bb4cabb2904790408f5452aa7` plus Field/structural-stage reachability correction `4312a8ad5a755b28cb40366f6160771dbf79637e`.
 
-Public Schema 11 keeps the root request exactly `{ chartData, presentation, config }`. `config.skin` carries only original persisted normal settings, one aggregate special selection and seven component states. It never carries a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
+Public Schema 12 keeps the root request exactly `{ chartData, presentation, config }`. `config.skin` carries only original persisted normal settings, one aggregate special selection and seven component states. It never carries a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
 
 ## Public shape
 
@@ -40,6 +40,12 @@ The resolved recipe has a deterministic canonical identity. Retry and MoveTime f
 
 On the MV route, browser media derivation remains one pending immutable preflight resource, but production completes selected Skin whole-pack/embedded-file validation and the full render/audio/particle assembly before constructing or preparing `PixiMvLiveBackend`. A Skin assembly rejection releases only that pending media resource and cannot create a Movie backend, mount a scene or start the scheduler. A later Movie prepare rejection disposes every prepared assembly owner before releasing the still-untransferred media resource.
 
+## Interaction with original Live settings
+
+Schema 12 Live settings are frozen independently from the Skin recipe. NoteColor chooses normal/normal16 inside the selected Note atlas; SyncLine uses the selected simultaneous-line material and edge margin. The common four-Sprite GamePlayButton lane-effect pack is not the selected TapEffect particle pack: VisibleTapLaneEffect controls only that fixed lane Sprite owner, while selected TapEffect continues to control judgement particle resources. MvDarkness controls the movie black cover and never selects a Skin identity.
+
+All identities participate in the same pre-backend resource assembly. Retry/MoveTime compare both canonical Skin and original-Live-settings identities; Pause changes neither.
+
 ## Portable resource packs
 
 The full Reverse source profile contains 133 whole packs / 635 embedded files. The current Standard/MV simulator manifest deliberately removes the three Live2D-only structural-stage packs and pins exactly 130 reachable packs / 576 embedded PNG/MP3 files. Every launch, including `default-current`, loads its resolved 8–10 packs; there is no default-Skin assembly bypass. A whole pack is checked by byte length/SHA before JSON, metadata, base64 or backend decode, and every embedded file is checked again. Missing/tampered/extra packs reject before any renderer/audio/particle/Movie backend prepare, scene publication, mount or scheduler start; resource faults never fall back.
@@ -56,6 +62,6 @@ Garupa/ExGarupa directly consumes selected Note/Directional bindings and selecte
 
 CutIn, Fever, character skill, multiplayer, Stage 9 and runtime Skin hot-switch remain unauthorized. Production does not import editor `skinLoader`, Bestdori services, rip maps, React or Tauri.
 
-Actual Pixi consumes selected Note, Field, Judge and reachable special Background assets; default and Limited-3 production composition validates 54/55 static-store resources respectively. WebView2 executes three fresh processes for each of default and Limited-3 and hashes the complete RGBA output, rather than accepting non-null binding booleans.
+Actual Pixi consumes selected Note, Field, Judge and reachable special Background assets; default and Limited-3 production composition validates 58/59 static-store resources respectively. WebView2 executes three fresh processes for each of default and Limited-3 and hashes the complete RGBA output, rather than accepting non-null binding booleans.
 
 The selected TapEffect and Directional-effect packs construct dynamic ordinary/directional particle bundles with their original serialized systems, enabled modules, renderers, materials and textures. The portable backend derives each auto-random stream deterministically from canonical resource/system/profile identity; this is a named portable policy, not an original device-random or frame-parity claim.
