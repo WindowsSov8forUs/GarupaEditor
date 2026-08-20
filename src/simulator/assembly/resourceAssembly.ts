@@ -111,11 +111,10 @@ export async function assembleSimulatorResources(
   }
   const skinSelection = validateSkinResourceSelection(selection);
   if (skinSelection.status === "rejected") return skinSelection;
-  const skinPortablePacks = selection.skin.recipeIdentity.startsWith(
-    "skin-recipe-v1|default-current|",
-  )
-    ? accepted<readonly PreparedSkinPortablePack[]>(Object.freeze([]))
-    : await prepareSelectedSkinPortablePacks(selection.skin.resources, store);
+  const skinPortablePacks = await prepareSelectedSkinPortablePacks(
+    selection.skin.resources,
+    store,
+  );
   if (skinPortablePacks.status === "rejected") return skinPortablePacks;
 
   let renderPack: {

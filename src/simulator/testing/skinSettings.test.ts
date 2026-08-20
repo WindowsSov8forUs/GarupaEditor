@@ -41,6 +41,7 @@ async function main(): Promise<void> {
   testHabahiroAndMvPrecedence();
   testFailedClosedPackage();
   testResourceInventory();
+  await testDefaultPortablePackAndRenderOverlay();
   await testPortablePackAndRenderOverlay();
   testIdentityAndFreeze();
   console.log("Skin settings tests passed: current catalog, exact validation, per-component modes, HAB/MV, failed package, frozen identity");
@@ -256,6 +257,51 @@ function testResourceInventory(): void {
   "ingameskin/tapeffect/habahiro");
   assert.ok(Object.isFrozen(habInventory));
   assert.ok(Object.isFrozen(habInventory.resources));
+}
+
+async function testDefaultPortablePackAndRenderOverlay(): Promise<void> {
+  const recipe = requireOk(resolveOriginalSkinRecipe(
+    defaults(),
+    createSimulatorModeIdentity("live", "manual"),
+    "ordinary",
+    "standard",
+  ));
+  const selected = selectResolvedSkinResourceInventory(recipe);
+  assert.equal(selected.resources.length, 8);
+  const fixtureRoot = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/skin-settings/default",
+  );
+  const entries = selected.resources.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(
+      fixtureRoot,
+      `${resource.logicalResource.replace(/\//g, "__")}.json`,
+    ))),
+  }));
+  const store = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const packs = requireAccepted(await prepareSelectedSkinPortablePacks(
+    selected.resources,
+    store,
+  ));
+  assert.equal(packs.length, 8);
+  const overlay = requireAccepted(await prepareSkinRenderOverlay(
+    recipe,
+    packs,
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+  ));
+  assert.notEqual(overlay, null);
+  assert.match(overlay!.bindings.noteAtlasLogicalAssetId, /skin00/);
+  assert.match(overlay!.bindings.ordinaryVisible!.judgeLogicalAssetId, /skin00/);
+  assert.notEqual(overlay!.fieldBindings, null);
+  assert.match(overlay!.fieldBindings!.backgroundLineLogicalAssetId, /fieldskin%2Fskin00|fieldskin\/skin00/);
+  assert.equal(overlay!.backgroundLogicalAssetId, null);
+  const particleProvider = requireAccepted(prepareSkinParticleProvider(
+    recipe,
+    packs,
+    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+  ));
+  assert.equal(typeof particleProvider.readPreparedSkinPack, "function");
 }
 
 async function testPortablePackAndRenderOverlay(): Promise<void> {
