@@ -5,6 +5,7 @@ import type {
   ParticleInstanceIdentity,
   ParticleOperationResult,
   ParticlePortableProfile,
+  ParticlePreparedResourcePack,
   ParticleRootId,
   ParticleTextureManifest,
   ParticleTextureManifestEntry,
@@ -295,9 +296,44 @@ export function validateParticleProfileTextureRelations(
       }
     }
   }
-  return entries.size === 8
+  return entries.size === textures.logicalTextureCount
     ? particleAccepted(undefined)
-    : reject("particle.profile.texture-relation-incomplete", "Exactly eight logical current texture relations must close.");
+    : reject("particle.profile.texture-relation-incomplete", "Every selected logical texture relation must close exactly once.");
+}
+
+export function validateSelectedSkinParticlePack(
+  pack: ParticlePreparedResourcePack,
+): ParticleOperationResult<ParticlePreparedResourcePack> {
+  const profile = pack.profile;
+  const textures = pack.textures;
+  if (!profile.packIdentity.startsWith("particle-skin-current-10.1.4-") ||
+    profile.fidelity !== "current-static-portable" || profile.networkAllowed !== false ||
+    profile.automaticFallbackAllowed !== false || profile.bundles.length !== 2 ||
+    profile.systemCount !== profile.bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0) ||
+    profile.profileCount !== profile.bundles.reduce((sum, bundle) => sum + Object.keys(bundle.profiles).length, 0) ||
+    textures.status !== "selected-skin-portable-textures" ||
+    textures.logicalTextureCount !== textures.entries.length ||
+    textures.uniquePngCount !== pack.pngBytes.size) {
+    return reject("particle.skin-pack.invalid-root", "Selected Skin particle pack counts, fidelity, network and whole inventory must remain exact.");
+  }
+  const bundleKeys = new Set<string>();
+  for (const bundle of profile.bundles) {
+    if ((bundle.key !== "ordinary" && bundle.key !== "directional") || bundleKeys.has(bundle.key) ||
+      bundle.systems.length === 0 || Object.keys(bundle.profiles).length === 0 ||
+      Object.keys(bundle.rendererProfiles).length === 0 || bundle.materials.length === 0 ||
+      bundle.textures.length === 0) {
+      return reject("particle.skin-pack.invalid-bundle", "Selected Skin ordinary/directional particle bundles must each be complete and unique.");
+    }
+    bundleKeys.add(bundle.key);
+    for (const system of bundle.systems) {
+      if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
+        system.randomStateU32.length !== 4 || !system.randomStateU32.every(isUint32)) {
+        return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known semantic root, profile and deterministic random stream.");
+      }
+    }
+  }
+  const relations = validateParticleProfileTextureRelations(profile, textures);
+  return relations.status === "accepted" ? particleAccepted(deepFreeze(pack)) : relations;
 }
 
 export function validateParticleCommandShape(

@@ -14,7 +14,7 @@ const validation = read("engine/skin/originalSkinValidation.ts");
 const resolver = read("engine/skin/originalSkinResolver.ts");
 const derivation = read("assembly/sessionSkinDerivation.ts");
 const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
-const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts");
+const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
 const composition = read("platform/platformComposition.ts");
 const lifecycle = read("assembly/sessionRecipe.ts") + read("public/capabilities.ts");
 
@@ -72,6 +72,10 @@ for (const required of [
   "skinRecipeIdentity: assembly.value.skinRecipeIdentity",
   "fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity",
   "selectedSkinGate",
+  "prepareSkinParticleProvider",
+  "readPreparedSkinPack",
+  "validateSelectedSkinParticlePack",
+  "selected-skin-portable-textures",
 ]) if (!(selector + assembly + composition + lifecycle).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));

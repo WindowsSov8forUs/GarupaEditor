@@ -10,6 +10,7 @@ import {
   particleAccepted,
   particleRejected,
   validateParticleProfileTextureRelations,
+  validateSelectedSkinParticlePack,
 } from "../particleValidation";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./currentParticleResourceManifest";
 
@@ -26,6 +27,12 @@ export async function prepareCurrentParticleResources(
   provider: ParticleResourceProvider,
   preflight: ParticleResourcePreflightAdapter,
 ): Promise<ParticleOperationResult<ParticlePreparedResourcePack>> {
+  if (provider.readPreparedSkinPack !== undefined) {
+    const selected = await provider.readPreparedSkinPack();
+    return selected.status === "accepted"
+      ? validateSelectedSkinParticlePack(selected.value)
+      : selected;
+  }
   const loaded = new Map<string, Uint8Array>();
   for (const resource of CURRENT_PARTICLE_RESOURCE_MANIFEST.resources) {
     const read = await provider.read(resource.logicalAssetId);

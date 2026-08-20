@@ -356,12 +356,12 @@ export interface ParticleBundleProfile {
 export interface ParticlePortableProfile {
   readonly schemaVersion: 1;
   readonly sample: ParticleSampleIdentity;
-  readonly packIdentity: "particle-current-10.1.4-portable-v1";
+  readonly packIdentity: string;
   readonly fidelity: "current-static-portable";
   readonly networkAllowed: false;
   readonly automaticFallbackAllowed: false;
-  readonly systemCount: 120;
-  readonly profileCount: 100;
+  readonly systemCount: number;
+  readonly profileCount: number;
   readonly bundles: readonly ParticleBundleProfile[];
 }
 
@@ -421,9 +421,11 @@ export type ParticleTextureManifestEntry =
 
 export interface ParticleTextureManifest {
   readonly schemaVersion: 1;
-  readonly status: "eight-logical-textures-seven-unique-png-snapshots";
-  readonly logicalTextureCount: 8;
-  readonly uniquePngCount: 7;
+  readonly status:
+    | "eight-logical-textures-seven-unique-png-snapshots"
+    | "selected-skin-portable-textures";
+  readonly logicalTextureCount: number;
+  readonly uniquePngCount: number;
   readonly entries: readonly ParticleTextureManifestEntry[];
   readonly productionBoundary: string;
 }
@@ -436,6 +438,7 @@ export interface ParticlePreparedResourcePack {
 
 export interface ParticleResourceProvider {
   read(logicalAssetId: string): Promise<ParticleOperationResult<Uint8Array>>;
+  readPreparedSkinPack?(): Promise<ParticleOperationResult<ParticlePreparedResourcePack>>;
 }
 
 export interface ParticleDecodedResourceMetadata {

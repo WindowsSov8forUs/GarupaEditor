@@ -88,8 +88,8 @@ function stageFile(route, name, mime, bytes, allowlist) {
 }
 function verify(value) {
   if (value.status !== "accepted" || value.packCount !== 9 || value.assetCount < 10 ||
-      value.imageBitmapCount < 1 || value.fieldBindings !== true || value.background !== true ||
-      value.cleanup !== 0) {
+      value.imageBitmapCount < 1 || value.particleResources <= 2 || value.particleCleanup !== 0 ||
+      value.fieldBindings !== true || value.background !== true || value.cleanup !== 0) {
     throw new Error(`selected Skin WebView2 failed: ${JSON.stringify(value)}`);
   }
 }

@@ -54,4 +54,4 @@ Garupa/ExGarupa directly consumes selected Note/Directional bindings and selecte
 
 CutIn, Fever, character skill, multiplayer, Stage 9 and runtime Skin hot-switch remain unauthorized. Production does not import editor `skinLoader`, Bestdori services, rip maps, React or Tauri.
 
-The selected special ParticleSystem module graph is whole-pack validated. Until the dynamic module graph replaces the existing fixed deterministic particle simulation, the global capability row remains `open-evidence-required`; no partial “complete Skin” claim is permitted.
+The selected TapEffect and Directional-effect packs construct dynamic ordinary/directional particle bundles with their original serialized systems, enabled modules, renderers, materials and textures. The portable backend derives each auto-random stream deterministically from canonical resource/system/profile identity; this is a named portable policy, not an original device-random or frame-parity claim.

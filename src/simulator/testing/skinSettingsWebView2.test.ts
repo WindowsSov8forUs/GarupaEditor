@@ -11,6 +11,12 @@ import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticRes
 import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import { prepareSkinParticleProvider } from "../assembly/skinParticlePreparation";
+import { particleRejected } from "../backends/particleValidation";
+import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
+import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
+import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
+import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 
 declare global {
   interface Window { readonly ipc: { postMessage(value: string): void } }
@@ -43,6 +49,28 @@ async function main(): Promise<void> {
   const packs = requireAccepted(await prepareSelectedSkinPortablePacks(selected.resources, store));
   const overlay = requireAccepted(await prepareSkinRenderOverlay(recipe, packs, CURRENT_ORDINARY_RENDER_BINDINGS));
   if (overlay === null) throw new Error("selected overlay absent");
+  const particleProvider = requireAccepted(prepareSkinParticleProvider(
+    recipe,
+    packs,
+    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+  ));
+  const scene = requireOk(createSimulatorSceneLayout({
+    revision: 0, viewportWidth: 1600, viewportHeight: 720,
+    safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
+    origin: "bottom-left",
+  }, {
+    specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0,
+    habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: recipe.note.noteSyncEdgeMargin,
+  }, "ordinary", overlay.bindings, overlay.fieldBindings));
+  const particleRenderer = new PixiParticleRendererBackend(new BrowserPixiParticleTextureDecoder());
+  const particleReady = await particleRenderer.prepare(
+    "selected-skin-webview2", scene.particleScene, particleProvider,
+    new PortableParticleResourcePreflightAdapter(),
+  );
+  if (particleReady.status !== "accepted") throw new Error(particleReady.failure.capability);
+  const particleResources = particleRenderer.snapshot().resourceCount;
+  if (particleResources <= 2) throw new Error("selected particle resources were not decoded");
+  if (particleRenderer.dispose().status !== "accepted") throw new Error("selected particle renderer dispose");
   const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
   const profile: RenderResourceProfile = {
     ...base,
@@ -90,6 +118,8 @@ async function main(): Promise<void> {
     packCount: packs.length,
     assetCount: overlay.assets.length,
     imageBitmapCount,
+    particleResources,
+    particleCleanup: particleRenderer.snapshot().nodeCount,
     fieldBindings: overlay.fieldBindings !== null,
     background: overlay.backgroundLogicalAssetId !== null,
     cleanup: renderer.snapshot().objectCount,

@@ -105,8 +105,19 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       if (prepared.status !== "accepted") return this.abortPrepare(prepared);
       const decoded = new Map<string, Texture>();
       const identities = preparingTextures;
-      for (const resource of CURRENT_PARTICLE_RESOURCE_MANIFEST.resources) {
-        if (resource.mime !== "image/png") continue;
+      const textureResources = prepared.value.textures.status === "selected-skin-portable-textures"
+        ? prepared.value.textures.entries
+            .filter((entry): entry is Exclude<typeof entry, { readonly aliasOf: string }> => !("aliasOf" in entry))
+            .map((entry) => ({
+              logicalAssetId: entry.logicalAssetId,
+              byteLength: entry.bytes,
+              sha256: entry.sha256,
+              mime: "image/png" as const,
+              width: entry.width,
+              height: entry.height,
+            }))
+        : CURRENT_PARTICLE_RESOURCE_MANIFEST.resources.filter((resource) => resource.mime === "image/png");
+      for (const resource of textureResources) {
         const bytes = prepared.value.pngBytes.get(resource.logicalAssetId);
         if (bytes === undefined) return this.abortPrepare(this.reject(
           "particle.pixi.validated-png-unavailable",
@@ -133,15 +144,18 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       }
       const alias = prepared.value.textures.entries.find((entry) => "aliasOf" in entry);
       if (alias === undefined) {
-        destroyTextureSet(identities);
-        return this.abortPrepare(this.reject("particle.pixi.texture-alias-missing", "The exact directional effect_circle alias must be present."));
+        if (prepared.value.textures.status !== "selected-skin-portable-textures") {
+          destroyTextureSet(identities);
+          return this.abortPrepare(this.reject("particle.pixi.texture-alias-missing", "The exact current directional effect_circle alias must be present."));
+        }
+      } else {
+        const aliasedTexture = decoded.get(alias.aliasOf);
+        if (aliasedTexture === undefined) {
+          destroyTextureSet(identities);
+          return this.abortPrepare(this.reject("particle.pixi.texture-alias-target-missing", "The exact texture alias target must resolve before commit."));
+        }
+        decoded.set(alias.logicalAssetId, aliasedTexture);
       }
-      const aliasedTexture = decoded.get(alias.aliasOf);
-      if (aliasedTexture === undefined) {
-        destroyTextureSet(identities);
-        return this.abortPrepare(this.reject("particle.pixi.texture-alias-target-missing", "The exact texture alias target must resolve before commit."));
-      }
-      decoded.set(alias.logicalAssetId, aliasedTexture);
 
       const systemBindings = buildSystemBindings(prepared.value.profile);
       if (systemBindings.status !== "accepted") {

@@ -26,7 +26,7 @@ Reverse remains the only authority for original behavior.
 - Note and Directional fronts use the selected original atlas bindings directly at continuous authored coordinates. No lane clamp or nearest-Sprite fallback is introduced.
 - Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
 - Product judgement flash binds the selected TapEffect portable texture while retaining the documented product continuous-span mesh/lifetime. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes.
-- The selected special ParticleSystem module graph is not yet the product particle simulator owner; whole-pack preflight alone does not upgrade that open implementation gap.
+- The selected TapEffect/Directional whole-pack module graph is prepared by the shared deterministic particle backend. Product continuous-span flash geometry remains a product mapping and binds the selected TapEffect texture; it is not original fractional-lane evidence.
 
 ## Position and lane
 

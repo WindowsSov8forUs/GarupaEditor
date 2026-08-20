@@ -49,9 +49,7 @@ npm.cmd run simulator:test:skin-settings
 npm.cmd run simulator:test:skin-settings-webview2
 ```
 
-第一项覆盖Schema 11 exact shape、42 normal/34 aggregate catalog、四模式/HAB/MV逐组件resolver、Collabo 36包级失败、whole-pack/embedded-file双SHA、Limited-3实际render/audio pack、selected Note/Directional/Judge/Field/Background及WebAudio profile；`render-pixi`另执行actual Pixi selected atlas binding。第二项使用production `BrowserPixiTextureDecoder`执行3 fresh WebView2 process，观察9 packs、ImageBitmap-backed selected Note atlas、Field/Background bindings及dispose归零，当前digest为`d0b05c95a91e03a0b86a6528d3213c17b50a8a2f519325843297ebdfc5aa945d`。digest只属于当前browser observation。
-
-特殊ParticleSystem whole-pack虽已预检，动态模块图尚未替换fixed deterministic simulation；因此测试不升级全局Skin能力为closed。
+第一项覆盖Schema 11 exact shape、42 normal/34 aggregate catalog、四模式/HAB/MV逐组件resolver、Collabo 36包级失败、whole-pack/embedded-file双SHA、Limited-3实际render/audio pack、selected Note/Directional/Judge/Field/Background及WebAudio profile；`render-pixi`另执行actual Pixi selected atlas binding。第二项使用production `BrowserPixiTextureDecoder`执行3 fresh WebView2 process，观察9 packs、ImageBitmap-backed selected Note atlas、Field/Background bindings及dispose归零，当前digest为`38b026edee5f6f6b9e82ac53a13af9da6183926cc4b86ec4b2d128839bfe67c1`。同一WebView2门同时准备dynamic ordinary/directional ParticleSystem模块和production particle PNG decoder并检查cleanup；digest只属于当前browser observation，不是原设备随机流或framebuffer authority。
 
 ## MV Live leaves
 

@@ -27,6 +27,10 @@ import {
   audioRejected,
   validateAndFreezeAudioProfile,
 } from "../backends/audioValidation";
+import { prepareSkinParticleProvider } from "../assembly/skinParticlePreparation";
+import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
+import { particleRejected } from "../backends/particleValidation";
+import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 
 async function main(): Promise<void> {
   testCatalog();
@@ -307,6 +311,20 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   assert.equal(directional.logicalId, "sound/tapseskin/directionalflickskin00");
   assert.equal(validateAndFreezeAudioProfile(audio.profile).status, "accepted");
   assert.equal((await audio.provider.read(perfect)).status, "accepted");
+  const particleProvider = requireAccepted(prepareSkinParticleProvider(
+    recipe,
+    packs,
+    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+  ));
+  const particleBackend = new DeterministicSimulatorParticleBackend();
+  const particleReady = await particleBackend.prepare(
+    "selected-skin-particle",
+    particleProvider,
+    new PortableParticleResourcePreflightAdapter(),
+  );
+  assert.equal(particleReady.status, "accepted", JSON.stringify(particleReady));
+  assert.ok(particleBackend.snapshot().resourceCount > 2);
+  assert.equal(particleBackend.dispose().status, "accepted");
   const tampered = entries.map((entry) => ({ ...entry, bytes: Uint8Array.from(entry.bytes) }));
   tampered[0]!.bytes[0] ^= 0xff;
   const badStore = requireAccepted(ImmutableSharedStaticResourceStore.create(tampered));

@@ -20,7 +20,7 @@
 - Reverse最终提交`977f5e7153257e5bb4cabb2904790408f5452aa7`已push、远端`0 0`；`simulator-skin-settings-complete-contract-10-1-4/`冻结42 normal rows、30 Collaboration、4 Limited、16-row mode/HAB/MV矩阵、133 official UnityFS、133 whole portable packs/635 embedded files及十项zero-count closure。
 - 29 Collaboration与4 Limited包有完整resource profile；过期Collabo 36的六个`skinapril2019`路径不可得，必须包级`evidence-required`且禁止用`skin_april2019`替代。
 - Limited-3九包为最小隔离fixture，逐项登记来源提交、路径、字节和SHA。Production只从platform static store读取simulator-selected whole-pack key，不读取fixture、Reverse或网络。
-- 非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。当前特殊ParticleSystem动态模块图尚未成为backend consumer，因此全局Skin能力保持开放，不能用pack预检冒充完整表现。
+- 非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。特殊ParticleSystem动态模块图已由whole-pack profile成为deterministic backend/Pixi renderer consumer；auto-random stream是canonical identity派生portable policy，仍不升级非默认device/frame parity。
 
 ## 当前启动方向与音频证据
 
