@@ -16,7 +16,10 @@ import {
   type SkinSelection,
 } from "../../skinLoader";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
-import { createBestdoriNetworkResourceRef } from "../../resources/providers/bestdoriCatalogProvider";
+import {
+  createBestdoriNetworkMediaDescriptor,
+  createBestdoriNetworkResourceRef,
+} from "../../resources/providers/bestdoriCatalogProvider";
 import type { BestdoriAssetFamily, BestdoriAssetServer } from "../../services/bestdori/api";
 import {
   decodeAppliedSkinResources,
@@ -44,7 +47,6 @@ import {
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
-  fetchBestdoriFileBlob,
   fetchBestdoriCommunityPostDetails,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
@@ -149,6 +151,9 @@ export function useEditorIoAndShortcuts(params: any) {
     metadata,
     settings,
     appOptionSettings,
+    chartMediaResources,
+    setChartMediaResources,
+    chartMediaLease,
     skinSelection,
     bpmEvents,
     svEvents,
@@ -188,8 +193,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    setAudioObjectUrl,
-    formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
@@ -222,6 +225,15 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const resourceManager = useApplicationResourceManager();
   const appliedSkinResourcesRef = useRef<AppliedSkinResources | null>(null);
+  const installBestdoriMedia = async (input: Parameters<typeof createBestdoriNetworkMediaDescriptor>[0]) => {
+    const descriptor = createBestdoriNetworkMediaDescriptor(input);
+    if (descriptor.status === "rejected") throw new Error(`${descriptor.failure.capability}: ${descriptor.failure.boundary}`);
+    const registered = resourceManager.registerNetworkResource(descriptor.value);
+    if (registered.status === "rejected") throw new Error(`${registered.failure.capability}: ${registered.failure.boundary}`);
+    const installed = await resourceManager.ensureAvailable(descriptor.value.ref, { refresh: true });
+    if (installed.status === "rejected") throw new Error(`${installed.failure.capability}: ${installed.failure.boundary}`);
+    return descriptor.value.ref;
+  };
 
   useEffect(() => () => {
     const applied = appliedSkinResourcesRef.current;
@@ -1337,20 +1349,6 @@ export function useEditorIoAndShortcuts(params: any) {
     return value.trim();
   };
 
-  const readBlobAsDataUrl = (blob: Blob): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("blob to data url failed"));
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("blob to data url returned invalid result"));
-        }
-      };
-      reader.readAsDataURL(blob);
-    });
-
   const pushBlockingProgress = (operationId: string, percent: number, message: string) => {
     if (currentDownloadOperationIdRef.current !== operationId) {
       return;
@@ -1415,73 +1413,39 @@ export function useEditorIoAndShortcuts(params: any) {
       }
       pushImportProgress(58, "正在应用谱面内容…");
       const summary = applyParsedGarupaChartJson(converted);
-      let audioDecoded = false;
-      let importedBgmDataUrl: string | null = null;
-      try {
-        pushImportProgress(70, "正在下载歌曲音频…");
-        const audioBlob = await fetchBestdoriFileBlob(payload.resources.audioUrl, "audio/mpeg", "bestdori song audio");
-        if (audioBlob.size > 0) {
-          pushImportProgress(82, "正在处理音频数据…");
-          const audioObjectUrl = URL.createObjectURL(audioBlob);
-          importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return audioObjectUrl;
+      pushImportProgress(70, "正在安装歌曲媒体资源…");
+      const bgmRef = await installBestdoriMedia({
+        server: payload.resources.server,
+        purpose: "bgm",
+        nativeId: `song-${chartId}-bgm`,
+        title: payload.audioFileName,
+        url: payload.resources.audioUrl,
+      });
+      const coverRef = await installBestdoriMedia({
+        server: payload.resources.server,
+        purpose: "cover",
+        nativeId: `song-${chartId}-cover`,
+        title: `${payload.metadata.title} cover`,
+        url: payload.resources.jacketUrl,
+      });
+      const mvRef = payload.resources.mvUrl === null
+        ? null
+        : await installBestdoriMedia({
+            server: payload.resources.server,
+            purpose: "mv",
+            nativeId: `song-${chartId}-mv`,
+            title: `${payload.metadata.title} MV`,
+            url: payload.resources.mvUrl,
           });
-          setAudioFileName(payload.audioFileName);
-          setAudioDurationSec(0);
-          const probe = new Audio(audioObjectUrl);
-          probe.preload = "metadata";
-          probe.onloadedmetadata = () => {
-            if (Number.isFinite(probe.duration) && probe.duration > 0) {
-              setAudioDurationSec(probe.duration);
-            } else {
-              setAudioDurationSec(0);
-            }
-          };
-          probe.onerror = () => {
-            setAudioDurationSec(0);
-          };
-          audioDecoded = true;
-        }
-      } catch {
-        audioDecoded = false;
-      }
-      if (!audioDecoded) {
-        const fallbackAudioUrl = resolveTrimmedString(payload.resources.audioUrl);
-        if (fallbackAudioUrl) {
-          importedBgmDataUrl = fallbackAudioUrl;
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return fallbackAudioUrl;
-          });
-          setAudioFileName(payload.audioFileName);
-          setAudioDurationSec(0);
-        } else {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return null;
-          });
-          setAudioFileName("");
-          setAudioDurationSec(0);
-        }
-      }
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
+        ...current,
+        bgm: bgmRef,
+        cover: coverRef,
+        mv: mvRef,
+      }));
+      setAudioFileName(payload.audioFileName);
+      setAudioDurationSec(0);
       pushImportProgress(92, "正在写入谱面元信息…");
-      let importedCoverDataUrl = payload.resources.jacketUrl;
-      try {
-        const coverBlob = await fetchBestdoriFileBlob(payload.resources.jacketUrl, "image/png", "bestdori song jacket");
-        if (coverBlob.size > 0) {
-          importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
-        }
-      } catch {
-        // keep URL fallback when jacket download fails
-      }
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(payload.metadata.title),
@@ -1492,14 +1456,9 @@ export function useEditorIoAndShortcuts(params: any) {
         offsetMs: Number.isFinite(Number(payload.metadata.offsetMs))
           ? Math.round(Number(payload.metadata.offsetMs))
           : 0,
-        bgmDataUrl: importedBgmDataUrl,
-        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
-        mvDataUrl: resolveTrimmedString(payload.resources.mvUrl) || null,
         mvOffsetMs: 0,
       }));
-      const label = audioDecoded
-        ? `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`
-        : `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息（音频未载入）`;
+      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`;
       applyChartImportStatus(label, summary);
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
@@ -1538,13 +1497,17 @@ export function useEditorIoAndShortcuts(params: any) {
         return fallback;
       }
     };
-    const isBestdoriHostUrl = (value: string): boolean => {
+    const bestdoriServerFromUrl = (value: string): BestdoriAssetServer | null => {
       try {
         const parsed = new URL(value);
         const host = parsed.host.toLowerCase();
-        return host === "bestdori.com" || host === "www.bestdori.com";
+        if (host !== "bestdori.com" && host !== "www.bestdori.com") return null;
+        const server = parsed.pathname.split("/").filter(Boolean)[1];
+        return server === "jp" || server === "en" || server === "tw" || server === "cn" || server === "kr"
+          ? server
+          : "jp";
       } catch {
-        return false;
+        return null;
       }
     };
     const pushImportProgress = (percent: number, message: string) =>
@@ -1576,86 +1539,43 @@ export function useEditorIoAndShortcuts(params: any) {
       const summary = applyParsedGarupaChartJson(converted);
       const songResources = await resolveBestdoriCommunitySongResourceUrls(post.song);
 
-      let importedBgmDataUrl: string | null = null;
-      let importedCoverDataUrl: string | null = null;
-      let audioReadyForEditor = false;
       const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
       const coverUrl = typeof songResources?.coverUrl === "string" ? songResources.coverUrl.trim() : "";
-
-      if (audioUrl.length > 0) {
-        try {
-          if (isBestdoriHostUrl(audioUrl)) {
-            pushImportProgress(66, "正在下载社区歌曲音频…");
-            const audioBlob = await fetchBestdoriFileBlob(audioUrl, "audio/mpeg", "bestdori community song audio");
-            if (audioBlob.size > 0) {
-              const objectUrl = URL.createObjectURL(audioBlob);
-              importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
-              setAudioObjectUrl((current: string | null) => {
-                if (current) {
-                  URL.revokeObjectURL(current);
-                }
-                return objectUrl;
-              });
-              setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
-              setAudioDurationSec(0);
-              const probe = new Audio(objectUrl);
-              probe.preload = "metadata";
-              probe.onloadedmetadata = () => {
-                if (Number.isFinite(probe.duration) && probe.duration > 0) {
-                  setAudioDurationSec(probe.duration);
-                } else {
-                  setAudioDurationSec(0);
-                }
-              };
-              probe.onerror = () => {
-                setAudioDurationSec(0);
-              };
-              audioReadyForEditor = true;
-            }
-          }
-        } catch {
-          audioReadyForEditor = false;
-        }
+      const audioServer = audioUrl.length === 0 ? null : bestdoriServerFromUrl(audioUrl);
+      const coverServer = coverUrl.length === 0 ? null : bestdoriServerFromUrl(coverUrl);
+      if (audioUrl.length > 0 && audioServer === null) {
+        throw new Error("社区歌曲音频不属于已注册Bestdori资源源，不能保留裸URL。");
       }
-
-      if (!audioReadyForEditor) {
-        if (audioUrl.length > 0) {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return audioUrl;
+      if (coverUrl.length > 0 && coverServer === null) {
+        throw new Error("社区歌曲封面不属于已注册Bestdori资源源，不能保留裸URL。");
+      }
+      pushImportProgress(66, "正在安装社区歌曲媒体…");
+      const bgmRef = audioServer === null
+        ? null
+        : await installBestdoriMedia({
+            server: audioServer,
+            purpose: "bgm",
+            nativeId: `community-${postId}-bgm`,
+            title: resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`),
+            url: audioUrl,
           });
-          setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
-          setAudioDurationSec(0);
-          importedBgmDataUrl = audioUrl;
-        } else {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return null;
+      const coverRef = coverServer === null
+        ? null
+        : await installBestdoriMedia({
+            server: coverServer,
+            purpose: "cover",
+            nativeId: `community-${postId}-cover`,
+            title: `community-post-${postId}-cover`,
+            url: coverUrl,
           });
-          setAudioFileName("");
-          setAudioDurationSec(0);
-          importedBgmDataUrl = null;
-        }
-      }
-
-      if (coverUrl.length > 0) {
-        importedCoverDataUrl = coverUrl;
-        if (isBestdoriHostUrl(coverUrl)) {
-          try {
-            pushImportProgress(78, "正在下载社区歌曲封面…");
-            const coverBlob = await fetchBestdoriFileBlob(coverUrl, "image/png", "bestdori community song cover");
-            if (coverBlob.size > 0) {
-              importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
-            }
-          } catch {
-            // fallback to raw cover url
-          }
-        }
-      }
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
+        ...current,
+        bgm: bgmRef,
+        cover: coverRef,
+        mv: null,
+      }));
+      setAudioFileName(bgmRef === null ? "" : resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+      setAudioDurationSec(0);
 
       pushImportProgress(92, "正在写入谱面元信息…");
       setMetadata((current: ChartMetadata) => ({
@@ -1668,9 +1588,6 @@ export function useEditorIoAndShortcuts(params: any) {
           ? String(Math.round(Number(post.level)))
           : "",
         offsetMs: 0,
-        bgmDataUrl: importedBgmDataUrl,
-        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
-        mvDataUrl: null,
         mvOffsetMs: 0,
       }));
 
@@ -1709,14 +1626,21 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传社区谱面…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      const coverFileBytes = await chartMediaLease.readBytes("cover");
+      if (audioFileBytes === null || coverFileBytes === null) {
+        throw new Error("社区谱面上传需要已安装的歌曲音频和封面资源。");
+      }
       const parsedTags = uploadCommunityPostTags.length > 0 ? uploadCommunityPostTags : undefined;
       const result = await publishBestdoriCommunityChartFlow({
         garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
-        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
+        coverFileBytes,
+        coverFileName: "cover.png",
+        coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
         contentText: uploadCommunityPostContent,
         tags: parsedTags,
         onStage: (stage) => {
@@ -1772,7 +1696,11 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传至 NotGarupa 服务器…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      const coverFileBytes = await chartMediaLease.readBytes("cover");
+      if (audioFileBytes === null || coverFileBytes === null) {
+        throw new Error("NotGarupa上传需要已安装的歌曲音频和封面资源。");
+      }
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 1
         ? Math.trunc(difficultyValue)
@@ -1780,10 +1708,12 @@ export function useEditorIoAndShortcuts(params: any) {
       const result = await uploadNotGarupaLevelFlow({
         garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
-        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
+        coverFileBytes,
         coverFileName: "cover.png",
+        coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
         description: uploadCommunityPostContent,
         tags: uploadCommunityPostTags,
         difficulty: resolvedDifficulty,
@@ -1838,7 +1768,10 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传到测试服…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      if (audioFileBytes === null) {
+        throw new Error("测试服上传需要已安装的歌曲音频资源。");
+      }
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 0
         ? Math.trunc(difficultyValue)
@@ -1846,8 +1779,9 @@ export function useEditorIoAndShortcuts(params: any) {
       const result = await uploadSonolusLevelFlow({
         garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
         difficulty: resolvedDifficulty,
         onStage: (stage) => {
           const entry = progressByStage[stage];
@@ -1950,84 +1884,62 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsSkinSettingsOpen(true);
   };
 
+  const importUserMedia = async (
+    purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
+    file: File,
+  ) => {
+    const imported = await resourceManager.importUserMedia({
+      purpose,
+      fileName: file.name,
+      mediaType: file.type || "application/octet-stream",
+      bytes: new Uint8Array(await file.arrayBuffer()),
+    });
+    if (imported.status === "rejected") {
+      throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+    }
+    return imported.value.ref;
+  };
+
   const handleCoverUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMetadata((current: ChartMetadata) => ({ ...current, coverDataUrl: reader.result as string }));
-        setStatusMessage("封面已更新。");
-      }
-    };
-    reader.readAsDataURL(file);
+    if (!file) return;
+    void importUserMedia("cover", file).then((cover) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, cover }));
+      setStatusMessage("封面资源已导入。");
+    }).catch((error) => setStatusMessage(`封面导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const handleAudioUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
-
-    void (async () => {
-      let objectUrl: string | null = null;
-      try {
-        const dataUrl = await readBlobAsDataUrl(file);
-        objectUrl = URL.createObjectURL(file);
-        setMetadata((current: ChartMetadata) => ({ ...current, bgmDataUrl: dataUrl }));
-        setAudioObjectUrl((current: string | null) => {
-          if (current) {
-            URL.revokeObjectURL(current);
-          }
-          return objectUrl;
-        });
-        setAudioFileName(file.name);
-
-        const probe = new Audio(objectUrl);
-        probe.preload = "metadata";
-        probe.onloadedmetadata = () => {
-          if (Number.isFinite(probe.duration) && probe.duration > 0) {
-            setAudioDurationSec(probe.duration);
-            setStatusMessage(`Audio loaded: ${file.name} (${formatDuration(probe.duration)})`);
-          } else {
-            setAudioDurationSec(0);
-          }
-        };
-        probe.onerror = () => {
-          setStatusMessage("Audio read failed. Please check the file format.");
-        };
-      } catch {
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
-        setStatusMessage("Audio read failed. Please check the file format.");
-      }
-    })();
+    if (!file) return;
+    void importUserMedia("bgm", file).then((bgm) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, bgm }));
+      setAudioFileName(file.name);
+      setAudioDurationSec(0);
+      setStatusMessage(`音频资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`音频导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const handleMvUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
+    if (!file) return;
+    void importUserMedia("mv", file).then((mv) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, mv }));
+      setStatusMessage(`MV资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`MV导入失败：${error instanceof Error ? error.message : String(error)}`));
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMetadata((current: ChartMetadata) => ({ ...current, mvDataUrl: reader.result as string }));
-        setStatusMessage(`MV资源已更新：${file.name}`);
-      }
-    };
-    reader.onerror = () => {
-      setStatusMessage("MV读取失败，请确认文件格式。");
-    };
-    reader.readAsDataURL(file);
+  const handleStageBackdropUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    void importUserMedia("stage-backdrop", file).then((stageBackdrop) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, stageBackdrop }));
+      setStatusMessage(`舞台背景资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`舞台背景导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const applyWindowPresetById = async (
@@ -2304,6 +2216,7 @@ export function useEditorIoAndShortcuts(params: any) {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
+    handleStageBackdropUpload,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,

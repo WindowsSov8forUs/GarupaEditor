@@ -267,8 +267,14 @@ export class ApplicationResourceManager {
   async importUserMedia(
     input: ImportUserMediaRequest,
   ): Promise<ResourceResult<ResourceDescriptor>> {
+    const expectedMediaPrefix = input.purpose === "bgm"
+      ? "audio/"
+      : input.purpose === "mv"
+        ? "video/"
+        : "image/";
     if (
       !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
+      typeof input.mediaType !== "string" || !input.mediaType.toLowerCase().startsWith(expectedMediaPrefix) ||
       !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0
     ) {
       return invalid("resources.manager.invalid-user-media-bytes");

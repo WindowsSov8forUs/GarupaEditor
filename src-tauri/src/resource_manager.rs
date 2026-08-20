@@ -19,6 +19,14 @@ const INDEX_FILE: &str = "index.json";
 struct ResourceRuntimeState {
     initialized: bool,
     open_snapshots: HashMap<String, usize>,
+    pending_user_imports: HashMap<String, PendingUserImport>,
+}
+
+struct PendingUserImport {
+    purpose: String,
+    file_name: String,
+    media_type: String,
+    path: PathBuf,
 }
 
 #[derive(Default)]
@@ -111,6 +119,14 @@ pub struct ResourceImportUserMediaInput {
     pub file_name: String,
     pub media_type: String,
     pub base64_data: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResourceBeginUserMediaImportInput {
+    pub purpose: String,
+    pub file_name: String,
+    pub media_type: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -311,30 +327,11 @@ pub fn resource_import_user_media(
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
-    let purpose = match input.purpose.as_str() {
-        "bgm" | "cover" | "mv" | "stage-backdrop" => input.purpose,
-        _ => return Err("user media purpose is not allowed".to_string()),
-    };
+    let purpose = normalize_user_media_purpose(&input.purpose)?;
     let file_name = normalize_file_name(&input.file_name)?;
     let media_type = normalize_media_type(&input.media_type)?;
     let identity = next_identity(state.inner(), "user");
-    let resource_id = format!("user/media/{identity}");
-    let kind = match purpose.as_str() {
-        "bgm" => "audio",
-        "mv" => "video",
-        _ => "image",
-    };
-    let descriptor = serde_json::json!({
-        "ref": { "id": resource_id },
-        "origin": "user",
-        "kind": kind,
-        "title": file_name,
-        "availability": "installed",
-        "files": null,
-        "catalogObservedAt": null,
-        "purpose": purpose,
-        "fileName": file_name,
-    });
+    let descriptor = user_media_descriptor(&identity, &purpose, &file_name);
     let root = resource_root(&app)?;
     let record = commit_resource(
         &root,
@@ -347,6 +344,130 @@ pub fn resource_import_user_media(
         &identity,
     )?;
     Ok(record.dto())
+}
+
+#[tauri::command]
+pub fn resource_begin_user_media_import(
+    app: tauri::AppHandle,
+    input: ResourceBeginUserMediaImportInput,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<String, String> {
+    let purpose = normalize_user_media_purpose(&input.purpose)?;
+    let file_name = normalize_file_name(&input.file_name)?;
+    let media_type = normalize_media_type(&input.media_type)?;
+    let transaction_id = next_identity(state.inner(), "user-stream");
+    let root = resource_root(&app)?;
+    ensure_layout(&root)?;
+    let path = root
+        .join("transactions")
+        .join(&transaction_id)
+        .join("user-media.bin");
+    write_synced(&path, &[])?;
+    let mut runtime = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    runtime.pending_user_imports.insert(
+        transaction_id.clone(),
+        PendingUserImport {
+            purpose,
+            file_name,
+            media_type,
+            path,
+        },
+    );
+    Ok(transaction_id)
+}
+
+#[tauri::command]
+pub fn resource_append_user_media_chunk(
+    transaction_id: String,
+    chunk_base64: String,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<(), String> {
+    let chunk = base64::engine::general_purpose::STANDARD
+        .decode(chunk_base64)
+        .map_err(|error| format!("decode user media chunk failed: {error}"))?;
+    if chunk.is_empty() || chunk.len() > 512 * 1024 {
+        return Err("user media chunks must contain 1..524288 bytes".to_string());
+    }
+    let path = {
+        let runtime = state
+            .runtime
+            .lock()
+            .map_err(|error| format!("lock resource state failed: {error}"))?;
+        runtime
+            .pending_user_imports
+            .get(&transaction_id)
+            .map(|pending| pending.path.clone())
+            .ok_or_else(|| "user media import transaction is unavailable".to_string())?
+    };
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .open(path)
+        .map_err(|error| format!("open user media transaction failed: {error}"))?;
+    file.write_all(&chunk)
+        .map_err(|error| format!("append user media chunk failed: {error}"))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn resource_commit_user_media_import(
+    app: tauri::AppHandle,
+    transaction_id: String,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<StoredResourceRecordDto, String> {
+    let pending = {
+        let mut runtime = state
+            .runtime
+            .lock()
+            .map_err(|error| format!("lock resource state failed: {error}"))?;
+        runtime
+            .pending_user_imports
+            .remove(&transaction_id)
+            .ok_or_else(|| "user media import transaction is unavailable".to_string())?
+    };
+    let bytes = fs::read(&pending.path)
+        .map_err(|error| format!("read user media transaction failed: {error}"))?;
+    if bytes.is_empty() {
+        return Err("user media transaction is empty".to_string());
+    }
+    let identity = next_identity(state.inner(), "user");
+    let descriptor = user_media_descriptor(&identity, &pending.purpose, &pending.file_name);
+    let root = resource_root(&app)?;
+    let record = commit_resource(
+        &root,
+        descriptor,
+        vec![ResourceInstallFileInput {
+            logical_path: pending.file_name,
+            media_type: pending.media_type,
+            base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
+        }],
+        &identity,
+    )?;
+    if let Some(directory) = pending.path.parent() {
+        let _ = fs::remove_dir_all(directory);
+    }
+    Ok(record.dto())
+}
+
+#[tauri::command]
+pub fn resource_abort_user_media_import(
+    transaction_id: String,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<(), String> {
+    let pending = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?
+        .pending_user_imports
+        .remove(&transaction_id);
+    if let Some(pending) = pending {
+        if let Some(directory) = pending.path.parent() {
+            let _ = fs::remove_dir_all(directory);
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -954,6 +1075,33 @@ fn normalize_logical_path(value: &str) -> Result<String, String> {
         );
     }
     Ok(trimmed.replace('\\', "/"))
+}
+
+fn normalize_user_media_purpose(value: &str) -> Result<String, String> {
+    match value {
+        "bgm" | "cover" | "mv" | "stage-backdrop" => Ok(value.to_string()),
+        _ => Err("user media purpose is not allowed".to_string()),
+    }
+}
+
+fn user_media_descriptor(identity: &str, purpose: &str, file_name: &str) -> Value {
+    let resource_id = format!("user/media/{identity}");
+    let kind = match purpose {
+        "bgm" => "audio",
+        "mv" => "video",
+        _ => "image",
+    };
+    serde_json::json!({
+        "ref": { "id": resource_id },
+        "origin": "user",
+        "kind": kind,
+        "title": file_name,
+        "availability": "installed",
+        "files": null,
+        "catalogObservedAt": null,
+        "purpose": purpose,
+        "fileName": file_name,
+    })
 }
 
 fn normalize_file_name(value: &str) -> Result<String, String> {

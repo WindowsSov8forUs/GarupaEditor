@@ -142,6 +142,8 @@ import {
   useApplicationResourceManager,
   useApplicationResourceUrl,
 } from "../resources/applicationResourceContext";
+import type { ChartMediaResources } from "../resources/selections";
+import { useChartMediaLease } from "../resources/useChartMediaLease";
 import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/bestdori/catalog";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
@@ -180,15 +182,6 @@ function formatDurationPrecise(sec: number): string {
   const second = Math.floor((totalMs % 60000) / 1000);
   const millisecond = totalMs % 1000;
   return `${minute}:${second.toString().padStart(2, "0")}.${millisecond.toString().padStart(3, "0")}`;
-}
-
-async function dataUrlToBlobUrl(dataUrl: string): Promise<string> {
-  const response = await fetch(dataUrl);
-  if (!response.ok) {
-    throw new Error(`mv fetch failed: ${response.status}`);
-  }
-  const blob = await response.blob();
-  return URL.createObjectURL(blob);
 }
 
 function lowerBoundByTime<T>(
@@ -525,6 +518,13 @@ function ChartEditorController() {
   const pasteActionIcon = useApplicationResourceUrl("ui.icon.paste-action");
   const mirrorActionIcon = useApplicationResourceUrl("ui.icon.mirror-action");
   const [metadata, setMetadataState] = useState<ChartMetadata>(DEFAULT_METADATA);
+  const [chartMediaResources, setChartMediaResources] = useState<ChartMediaResources>(() => Object.freeze({
+    bgm: null,
+    cover: null,
+    mv: null,
+    stageBackdrop: null,
+  }));
+  const chartMediaLease = useChartMediaLease(resourceManager, chartMediaResources);
   const [settings, setSettingsState] = useState<ChartSettings>(DEFAULT_SETTINGS);
   const [appOptionSettings, setAppOptionSettings] = useState<EditorOptionSettings>(DEFAULT_EDITOR_OPTION_SETTINGS);
   const [notes, setNotesState] = useState<ChartNote[]>([]);
@@ -1159,7 +1159,7 @@ function ChartEditorController() {
 
   const [audioFileName, setAudioFileName] = useState("");
   const [audioDurationSec, setAudioDurationSec] = useState(0);
-  const [audioObjectUrl, setAudioObjectUrl] = useState<string | null>(null);
+  const audioObjectUrl = chartMediaLease.urls.bgm ?? null;
   const [isCoverLoadFailed, setIsCoverLoadFailed] = useState(false);
   const [beatInputText, setBeatInputText] = useState("");
   const [bpmInputText, setBpmInputText] = useState("");
@@ -1360,16 +1360,8 @@ function ChartEditorController() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (audioObjectUrl) {
-        URL.revokeObjectURL(audioObjectUrl);
-      }
-    };
-  }, [audioObjectUrl]);
-
-  useEffect(() => {
     setIsCoverLoadFailed(false);
-  }, [metadata.coverDataUrl]);
+  }, [chartMediaLease.urls.cover]);
 
   useEffect(() => {
     setMetadata((current) => {
@@ -1434,7 +1426,7 @@ function ChartEditorController() {
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
   const boardHeight = Math.max(1, totalDurationSec * timelinePixelsPerSecond);
-  const hasUploadedAudio = typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0;
+  const hasUploadedAudio = chartMediaResources.bgm !== null;
   const chartPlayableDurationSec = useMemo(
     () => Math.max(0, beatToSeconds(maxNoteBeat, bpmTimeline)),
     [bpmTimeline, maxNoteBeat],
@@ -2242,8 +2234,8 @@ function ChartEditorController() {
   const minSelectedLane = selectedNotes.length > 0
     ? selectedNotes.reduce((minValue, note) => Math.min(minValue, note.lane), selectedNotes[0].lane)
     : 0;
-  const coverImageSrc = metadata.coverDataUrl && !isCoverLoadFailed
-    ? metadata.coverDataUrl
+  const coverImageSrc = chartMediaLease.urls.cover && !isCoverLoadFailed
+    ? chartMediaLease.urls.cover
     : defaultCoverImage;
   const selectedBpmEvent = useMemo(
     () => {
@@ -3061,6 +3053,7 @@ function ChartEditorController() {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
+    handleStageBackdropUpload,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
@@ -3071,7 +3064,9 @@ function ChartEditorController() {
     settings,
     audioFileName,
     audioDurationSec,
-    audioObjectUrl,
+    chartMediaResources,
+    setChartMediaResources,
+    chartMediaLease,
     skinSelection,
     bpmEvents,
     svEvents,
@@ -3117,8 +3112,6 @@ function ChartEditorController() {
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    setAudioObjectUrl,
-    formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
@@ -3159,7 +3152,8 @@ function ChartEditorController() {
     svEvents,
     audioFileName,
     audioDurationSec,
-    audioObjectUrl,
+    chartMediaResources,
+    setChartMediaResources,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
     skinSelection,
@@ -3196,7 +3190,6 @@ function ChartEditorController() {
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
-    setAudioObjectUrl,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
     setWindowPresetId,
@@ -4915,7 +4908,11 @@ function ChartEditorController() {
       return;
     }
     const audio = new Audio(audioObjectUrl);
-    audio.preload = "auto";
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      setAudioDurationSec(Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0);
+    };
+    audio.onerror = () => setAudioDurationSec(0);
     audio.playbackRate = currentPlaybackSpeed;
     audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
     playbackAudioRef.current = audio;
@@ -5801,22 +5798,8 @@ function ChartEditorController() {
       const targetUrl = new URL(locationHref);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
 
-      const bgmDataUrl =
-        typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0
-          ? metadata.bgmDataUrl
-          : null;
-      let playbackMvDataUrl: string | null = metadata.mvDataUrl;
-      if (
-        typeof playbackMvDataUrl === "string"
-        && playbackMvDataUrl.startsWith("data:video/")
-      ) {
-        try {
-          playbackMvDataUrl = await dataUrlToBlobUrl(playbackMvDataUrl);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`播放器MV资源转换失败：${message}`);
-        }
-      }
+      const bgmDataUrl = chartMediaLease.urls.bgm ?? null;
+      const playbackMvDataUrl = chartMediaLease.urls.mv ?? null;
       const runtimeSe = appliedSkinResources?.se ?? null;
       const runtimeFieldSkin = appliedSkinResources?.field ?? null;
       const runtimeBgSkin = appliedSkinResources?.background ?? null;
@@ -5827,16 +5810,18 @@ function ChartEditorController() {
         bgmVolumePercent: simulatorBgmVolumePercent,
         seVolumePercent: simulatorBgmVolumePercent * noteSeVolumeScale,
       };
-      const simulatorMetadata: ChartMetadata = {
+      const simulatorMetadataWithFallback = {
         ...metadata,
         offsetMs: playbackOffsetMs,
         mvOffsetMs: playbackMvOffsetMs,
-        bgmDataUrl: bgmDataUrl ?? null,
+        bgmDataUrl,
         mvDataUrl: playbackMvDataUrl,
+        mvDataUrlFallback: null,
+      } as ChartMetadata & {
+        bgmDataUrl: string | null;
+        mvDataUrl: string | null;
+        mvDataUrlFallback: null;
       };
-      const simulatorMetadataWithFallback = simulatorMetadata as ChartMetadata & { mvDataUrlFallback?: string | null };
-      simulatorMetadataWithFallback.mvDataUrlFallback =
-        playbackMvDataUrl !== metadata.mvDataUrl ? metadata.mvDataUrl : null;
       const normalizedPlaybackNotes = notes.map((note) => ({
         ...note,
         timingGroup: normalizeTimingGroup(note.timingGroup, "#Global"),
@@ -5982,6 +5967,7 @@ function ChartEditorController() {
     appOptionSettings.colorAssistEnabled,
     appOptionSettings.mirrorEnabled,
     audioObjectUrl,
+    chartMediaLease,
     clamp,
     metadata,
     notes,
@@ -6067,6 +6053,13 @@ function ChartEditorController() {
         openAppSettings,
         openSkinSettings,
         metadata,
+        chartMediaSources: Object.freeze({
+          cover: chartMediaLease.urls.cover ?? null,
+          audio: chartMediaLease.urls.bgm ?? null,
+          mv: chartMediaLease.urls.mv ?? null,
+          stageBackdrop: chartMediaLease.urls.stageBackdrop ?? null,
+        }),
+        chartMediaError: chartMediaLease.error,
         coverImageSrc,
         audioDurationSec,
         visibleNoteCount,
@@ -6274,6 +6267,7 @@ function ChartEditorController() {
         handleCoverUpload,
         handleAudioUpload,
         handleMvUpload,
+        handleStageBackdropUpload,
         isAppSettingsOpen,
         setIsAppSettingsOpen,
         appOptionSettings,

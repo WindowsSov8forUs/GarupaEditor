@@ -45,6 +45,38 @@ interface BestdoriNames {
   readonly background: Record<string, BestdoriInfoEntry>;
 }
 
+export function createBestdoriNetworkMediaDescriptor(input: {
+  readonly server: BestdoriAssetServer;
+  readonly purpose: "bgm" | "cover" | "mv" | "stage-backdrop";
+  readonly nativeId: string;
+  readonly title: string;
+  readonly url: string;
+}): ResourceResult<NetworkResourceDescriptor> {
+  const encodedIdentity = encodeURIComponent(`${input.nativeId}:${input.url}`);
+  const reference = createResourceRef(
+    `bestdori/${input.server}/media-${input.purpose}/${encodedIdentity}`,
+  );
+  if (reference.status === "rejected") return reference;
+  const kind = input.purpose === "bgm" ? "audio" : input.purpose === "mv" ? "video" : "image";
+  return resourceAccepted(Object.freeze({
+    ref: reference.value,
+    origin: "network" as const,
+    kind,
+    title: input.title,
+    availability: "remote-only" as const,
+    files: null,
+    catalogObservedAt: new Date().toISOString(),
+    source: Object.freeze({
+      provider: "bestdori",
+      server: input.server,
+      family: `media-${input.purpose}`,
+      nativeId: input.nativeId,
+      manifestUrl: null,
+      assetBaseUrl: input.url,
+    }),
+  }));
+}
+
 export function createBestdoriNetworkResourceRef(
   server: BestdoriAssetServer,
   family: BestdoriAssetFamily,
@@ -97,7 +129,37 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
   async install(
     descriptor: NetworkResourceDescriptor,
   ): Promise<ResourceResult<ResourceInstallInput>> {
-    if (descriptor.source.provider !== this.provider || descriptor.source.manifestUrl === null) {
+    if (descriptor.source.provider !== this.provider) {
+      return resourceRejected(
+        "resource-unavailable",
+        "resources.bestdori.provider-mismatch",
+        "The selected network resource is not owned by the Bestdori provider.",
+      );
+    }
+    if (descriptor.source.family.startsWith("media-")) {
+      try {
+        const mediaType = mediaTypeForPath(new URL(descriptor.source.assetBaseUrl).pathname);
+        const blob = await fetchBestdoriFileBlob(
+          descriptor.source.assetBaseUrl,
+          mediaType,
+          `bestdori ${descriptor.source.family}`,
+        );
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        if (bytes.byteLength === 0) throw new Error("downloaded media is empty");
+        const logicalPath = basenameFromUrl(descriptor.source.assetBaseUrl, descriptor.source.nativeId);
+        return resourceAccepted(Object.freeze({
+          descriptor,
+          files: Object.freeze([{ logicalPath, mediaType, bytes }]),
+        }));
+      } catch (error) {
+        return resourceRejected(
+          "resource-transaction-failed",
+          "resources.bestdori.media-download-failed",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+    }
+    if (descriptor.source.manifestUrl === null) {
       return resourceRejected(
         "resource-unavailable",
         "resources.bestdori.dynamic-manifest-unavailable",
@@ -336,6 +398,13 @@ function invalidManifest<T>(): ResourceResult<T> {
 
 function encodeLogicalPath(value: string): string {
   return value.split("/").map(encodeURIComponent).join("/");
+}
+
+function basenameFromUrl(url: string, fallback: string): string {
+  const tail = new URL(url).pathname.split("/").filter(Boolean).pop();
+  const decoded = tail === undefined ? fallback : decodeURIComponent(tail);
+  const safe = decoded.replace(/[\\/:*?"<>|]+/g, "_").trim();
+  return safe.length === 0 ? fallback : safe;
 }
 
 function mediaTypeForPath(path: string): string {

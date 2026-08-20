@@ -12,8 +12,10 @@ use tauri::{Emitter, Manager};
 
 mod resource_manager;
 use resource_manager::{
-    resource_collect_garbage, resource_commit_catalog_snapshot, resource_create_snapshot,
-    resource_import_user_media, resource_initialize, resource_install_network_package,
+    resource_abort_user_media_import, resource_append_user_media_chunk,
+    resource_begin_user_media_import, resource_collect_garbage, resource_commit_catalog_snapshot,
+    resource_commit_user_media_import, resource_create_snapshot, resource_import_user_media,
+    resource_initialize, resource_install_network_package,
     resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
     resource_read_record, resource_read_snapshot_file, resource_release_snapshot, resource_remove,
     resource_verify, ApplicationResourceState,
@@ -38,6 +40,9 @@ const SESSION_COVER_FILE_NAME: &str = "cover.bin";
 const SESSION_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_RESOURCES_DIR_NAME: &str = "chart-resources";
 const CHART_RESOURCES_META_NAME: &str = "chart-resources.v2.json";
+const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v3.json";
+const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v3.bak.json";
+const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v3.tmp.json";
 const CHART_COVER_FILE_NAME: &str = "cover.bin";
 const CHART_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_MV_FILE_NAME: &str = "mv.bin";
@@ -1249,6 +1254,7 @@ struct SessionResourceInput {
 #[serde(rename_all = "camelCase")]
 struct SaveEditorChartCachePayload {
     chart_json: String,
+    resource_refs: Option<serde_json::Value>,
     cover: Option<SessionResourceInput>,
     audio: Option<SessionResourceInput>,
     mv: Option<SessionResourceInput>,
@@ -1279,6 +1285,7 @@ struct ChartResourcesMeta {
 #[serde(rename_all = "camelCase")]
 struct LoadedEditorChartCache {
     chart_json: String,
+    resource_refs: Option<serde_json::Value>,
     cover_data_url: Option<String>,
     audio_base64: Option<String>,
     audio_mime_type: Option<String>,
@@ -1717,6 +1724,7 @@ fn save_editor_chart_cache(
 ) -> Result<(), String> {
     let SaveEditorChartCachePayload {
         chart_json,
+        resource_refs,
         cover,
         audio,
         mv,
@@ -1740,6 +1748,21 @@ fn save_editor_chart_cache(
         &chart_temp_path,
         &chart_json,
     )?;
+
+    let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
+    if let Some(resource_refs) = resource_refs {
+        if !resource_refs.is_object() {
+            return Err("chart resource refs must be an object".to_string());
+        }
+        let refs_text = serde_json::to_string(&resource_refs)
+            .map_err(|error| format!("serialize chart resource refs failed: {error}"))?;
+        write_text_with_backup(
+            &refs_path,
+            &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
+            &resources_root.join(CHART_RESOURCE_REFS_TEMP_NAME),
+            &refs_text,
+        )?;
+    }
 
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let mut meta = read_chart_resources_meta(&meta_path)?;
@@ -1823,6 +1846,7 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
 
             return Ok(Some(LoadedEditorChartCache {
                 chart_json: legacy_json,
+                resource_refs: None,
                 cover_data_url,
                 audio_base64,
                 audio_mime_type: legacy_meta.audio_mime_type,
@@ -1834,6 +1858,15 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
     };
 
     let resources_root = resolve_chart_resources_root(&root)?;
+    let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
+    let resource_refs = match load_json_text_with_backup(
+        &refs_path,
+        &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
+    )? {
+        Some(text) => Some(serde_json::from_str(&text)
+            .map_err(|error| format!("parse chart resource refs failed: {error}"))?),
+        None => None,
+    };
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let meta = read_chart_resources_meta(&meta_path)?;
 
@@ -1858,6 +1891,7 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
 
     Ok(Some(LoadedEditorChartCache {
         chart_json,
+        resource_refs,
         cover_data_url,
         audio_base64,
         audio_mime_type: meta.audio_mime_type,
@@ -2033,6 +2067,10 @@ pub fn run() {
             resource_commit_catalog_snapshot,
             resource_install_network_package,
             resource_import_user_media,
+            resource_begin_user_media_import,
+            resource_append_user_media_chunk,
+            resource_commit_user_media_import,
+            resource_abort_user_media_import,
             resource_create_snapshot,
             resource_open_snapshot,
             resource_read_snapshot_file,

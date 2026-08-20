@@ -25,11 +25,19 @@ import { useModalTransition } from "./useModalTransition";
 type MetadataEditorModalProps = {
   open: boolean;
   metadata: ChartMetadata;
+  mediaSources: {
+    cover: string | null;
+    audio: string | null;
+    mv: string | null;
+    stageBackdrop: string | null;
+  };
+  mediaError: string | null;
   setMetadata: Dispatch<SetStateAction<ChartMetadata>>;
   onClose: () => void;
   onCoverUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onAudioUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onMvUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  onStageBackdropUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 };
 
 type MetadataEditorTab = "info" | "files";
@@ -46,37 +54,20 @@ function normalizeSource(value: string | null | undefined): string {
 }
 
 function formatSourceLabel(source: string): string {
-  const normalized = normalizeSource(source);
-  if (!normalized) {
-    return "";
-  }
-  if (normalized.startsWith("data:")) {
-    const commaIndex = normalized.indexOf(",");
-    const header = commaIndex >= 0 ? normalized.slice(0, commaIndex) : normalized;
-    return `${header},...`;
-  }
-  return normalized;
-}
-
-function isLikelyImageSource(source: string): boolean {
-  const trimmed = source.trim().toLowerCase();
-  if (trimmed.length <= 0) {
-    return false;
-  }
-  if (trimmed.startsWith("data:image/")) {
-    return true;
-  }
-  return /\.(png|jpe?g|gif|bmp|webp|svg)(?:[?#].*)?$/i.test(trimmed);
+  return normalizeSource(source).length > 0 ? "已由资源管理器加载" : "";
 }
 
 export function MetadataEditorModal({
   open,
   metadata,
+  mediaSources,
+  mediaError,
   setMetadata,
   onClose,
   onCoverUpload,
   onAudioUpload,
   onMvUpload,
+  onStageBackdropUpload,
 }: MetadataEditorModalProps) {
   const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
@@ -88,6 +79,7 @@ export function MetadataEditorModal({
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const mvInputRef = useRef<HTMLInputElement | null>(null);
+  const stageBackdropInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setLevelInput(metadata.difficultyLevel);
@@ -156,14 +148,19 @@ export function MetadataEditorModal({
     onMvUpload(event);
   };
 
+  const handleStageBackdropInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onStageBackdropUpload(event);
+  };
+
   if (!mounted) {
     return null;
   }
 
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
-  const coverSource = normalizeSource(metadata.coverDataUrl);
-  const audioSource = normalizeSource(metadata.bgmDataUrl);
-  const mvSource = normalizeSource(metadata.mvDataUrl);
+  const coverSource = normalizeSource(mediaSources.cover);
+  const audioSource = normalizeSource(mediaSources.audio);
+  const mvSource = normalizeSource(mediaSources.mv);
+  const stageBackdropSource = normalizeSource(mediaSources.stageBackdrop);
 
   return (
     <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
@@ -470,16 +467,12 @@ export function MetadataEditorModal({
                   <div className="metadata-upload-preview">
                     {mvSource.length > 0
                       ? (
-                        isLikelyImageSource(mvSource)
-                          ? <img src={mvSource} alt="MV预览" className="metadata-upload-preview-media metadata-upload-preview-image" />
-                          : (
-                            <video
-                              controls
-                              preload="metadata"
-                              src={mvSource}
-                              className="metadata-upload-preview-media metadata-upload-preview-video"
-                            />
-                          )
+                        <video
+                          controls
+                          preload="metadata"
+                          src={mvSource}
+                          className="metadata-upload-preview-media metadata-upload-preview-video"
+                        />
                       )
                       : null}
                   </div>
@@ -510,12 +503,43 @@ export function MetadataEditorModal({
                   <input
                     ref={mvInputRef}
                     type="file"
-                    accept="image/*,video/*"
+                    accept="video/*"
                     className="metadata-file-hidden"
                     onChange={handleMvInputChange}
                   />
                 </div>
               </section>
+
+              <section className="metadata-upload-group">
+                <SettingPrimaryTitle text="舞台背景" />
+                <div className="metadata-upload-block">
+                  <div className="metadata-upload-preview">
+                    {stageBackdropSource.length > 0
+                      ? <img src={stageBackdropSource} alt="舞台背景预览" className="metadata-upload-preview-media metadata-upload-preview-image" />
+                      : null}
+                  </div>
+                  <div className="metadata-upload-source-line">
+                    {stageBackdropSource.length > 0
+                      ? <span className="metadata-upload-source-link">{formatSourceLabel(stageBackdropSource)}</span>
+                      : <span className="metadata-upload-source-empty">文件未上传</span>}
+                  </div>
+                  <button
+                    type="button"
+                    className="metadata-file-trigger metadata-upload-action-button"
+                    onClick={() => stageBackdropInputRef.current?.click()}
+                  >
+                    <span className="btn-content">上传文件</span>
+                  </button>
+                  <input
+                    ref={stageBackdropInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="metadata-file-hidden"
+                    onChange={handleStageBackdropInputChange}
+                  />
+                </div>
+              </section>
+              {mediaError ? <p className="metadata-upload-source-empty" role="alert">{mediaError}</p> : null}
             </div>
           )}
 

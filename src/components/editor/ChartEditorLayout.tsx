@@ -79,6 +79,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriNickname,
     bestdoriUsername,
     metadata,
+    chartMediaSources,
+    chartMediaError,
     coverImageSrc,
     audioDurationSec,
     visibleNoteCount,
@@ -282,6 +284,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
+    handleStageBackdropUpload,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
@@ -2001,11 +2004,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       <MetadataEditorModal
         open={isMetadataEditorOpen}
         metadata={metadata}
+        mediaSources={chartMediaSources}
+        mediaError={chartMediaError}
         setMetadata={setMetadata}
         onClose={() => setIsMetadataEditorOpen(false)}
         onCoverUpload={handleCoverUpload}
         onAudioUpload={handleAudioUpload}
         onMvUpload={handleMvUpload}
+        onStageBackdropUpload={handleStageBackdropUpload}
       />
 
       <BestdoriLoginModal

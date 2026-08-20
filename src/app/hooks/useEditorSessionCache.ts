@@ -16,19 +16,15 @@ import {
 } from "../../chartCore";
 import type { SlideChain } from "../editorHelpers";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
+import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
+import { createResourceRef, type ResourceRef } from "../../resources/contracts";
+import type { ChartMediaResources } from "../../resources/selections";
 
 const SESSION_SCHEMA_VERSION = 1;
 const SESSION_AUTOSAVE_DELAY_MS = 1000;
-const CLEARED_RESOURCE_SIGNATURE = "__cleared__";
-
-type SessionResourcePayload = {
-  base64Data: string;
-  mimeType?: string | null;
-  fileName?: string | null;
-};
-
 type LoadedEditorChartCache = {
   chartJson: string;
+  resourceRefs?: unknown;
   coverDataUrl?: string | null;
   audioBase64?: string | null;
   audioMimeType?: string | null;
@@ -108,24 +104,28 @@ function decodeBase64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
+function parseChartMediaResources(value: unknown): ChartMediaResources | null {
+  if (!isRecord(value)) return null;
+  const parse = (item: unknown): ResourceRef | null | undefined => {
+    if (item === null) return null;
+    if (!isRecord(item)) return undefined;
+    const reference = createResourceRef(item.id);
+    return reference.status === "accepted" ? reference.value : undefined;
+  };
+  const bgm = parse(value.bgm);
+  const cover = parse(value.cover);
+  const mv = parse(value.mv);
+  const stageBackdrop = parse(value.stageBackdrop);
+  if (bgm === undefined || cover === undefined || mv === undefined || stageBackdrop === undefined) return null;
+  return Object.freeze({ bgm, cover, mv, stageBackdrop });
+}
+
 function normalizeOptionalText(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-}
-
-function buildResourceSignature(
-  base64Data: string,
-  mimeType: string | null | undefined,
-  fileName?: string | null,
-): string {
-  const safeMime = normalizeOptionalText(mimeType) ?? "-";
-  const safeFileName = normalizeOptionalText(fileName) ?? "-";
-  const head = base64Data.slice(0, 24);
-  const tail = base64Data.slice(-24);
-  return `${safeMime}|${safeFileName}|${base64Data.length}|${head}|${tail}`;
 }
 
 export function useEditorSessionCache(params: any) {
@@ -139,6 +139,8 @@ export function useEditorSessionCache(params: any) {
     timingGroups,
     audioFileName,
     audioDurationSec,
+    chartMediaResources,
+    setChartMediaResources,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
     skinSelection,
@@ -174,7 +176,6 @@ export function useEditorSessionCache(params: any) {
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
-    setAudioObjectUrl,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
     setWindowPresetId,
@@ -187,13 +188,11 @@ export function useEditorSessionCache(params: any) {
     clearAllSelections,
     setStatusMessage,
   } = params;
+  const resourceManager = useApplicationResourceManager();
 
   const [didRestoreAttemptFinish, setDidRestoreAttemptFinish] = useState(false);
   const lastSavedChartFingerprintRef = useRef<string | null>(null);
   const lastSavedSettingsFingerprintRef = useRef<string | null>(null);
-  const lastSavedCoverSignatureRef = useRef<string>(CLEARED_RESOURCE_SIGNATURE);
-  const lastSavedAudioSignatureRef = useRef<string>(CLEARED_RESOURCE_SIGNATURE);
-  const lastSavedMvSignatureRef = useRef<string>(CLEARED_RESOURCE_SIGNATURE);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,15 +330,7 @@ export function useEditorSessionCache(params: any) {
           const loadedMvDataUrl = normalizeOptionalText(loadedChart.mvDataUrl);
           const loadedAudioBase64 = normalizeOptionalText(loadedChart.audioBase64);
           const loadedAudioMimeType = normalizeOptionalText(loadedChart.audioMimeType) ?? "audio/mpeg";
-          const restoredBgmDataUrl = loadedAudioBase64
-            ? `data:${loadedAudioMimeType};base64,${loadedAudioBase64}`
-            : normalizeOptionalText(snapshotMetadata.bgmDataUrl);
-          const nextMetadataBase = normalizeMetadata({
-            ...snapshotMetadata,
-            bgmDataUrl: restoredBgmDataUrl,
-            coverDataUrl: loadedCoverDataUrl ?? snapshotMetadata.coverDataUrl ?? null,
-            mvDataUrl: loadedMvDataUrl ?? snapshotMetadata.mvDataUrl ?? null,
-          });
+          const nextMetadataBase = normalizeMetadata(snapshotMetadata);
 
           const normalizedNotes = (Array.isArray(snapshot.notes) ? snapshot.notes : [])
             .map((item) => (isRecord(item) ? normalizeNote(item as Partial<ChartNote>, nextSettings) : null))
@@ -469,57 +460,52 @@ export function useEditorSessionCache(params: any) {
             normalizeOptionalText(loadedChart.audioFileName) ?? normalizeOptionalText(snapshot.audioFileName) ?? "";
           setAudioFileName(restoredAudioFileName);
 
-          let restoredAudioSignature = CLEARED_RESOURCE_SIGNATURE;
-          if (loadedAudioBase64) {
-            const audioBlob = new Blob([decodeBase64ToBytes(loadedAudioBase64)], { type: loadedAudioMimeType });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            setAudioObjectUrl((current: string | null) => {
-              if (current) {
-                URL.revokeObjectURL(current);
-              }
-              return audioUrl;
-            });
-            restoredAudioSignature = buildResourceSignature(
-              loadedAudioBase64,
-              loadedAudioMimeType,
-              restoredAudioFileName || null,
+          let restoredMedia = parseChartMediaResources(loadedChart.resourceRefs);
+          if (restoredMedia === null) {
+            let bgm: ResourceRef | null = null;
+            let cover: ResourceRef | null = null;
+            let mv: ResourceRef | null = null;
+            if (loadedAudioBase64) {
+              const imported = await resourceManager.importUserMedia({
+                purpose: "bgm",
+                fileName: restoredAudioFileName || "legacy-audio.bin",
+                mediaType: loadedAudioMimeType,
+                bytes: decodeBase64ToBytes(loadedAudioBase64),
+              });
+              if (imported.status === "accepted") bgm = imported.value.ref;
+            }
+            const rawMetadata: Record<string, unknown> = isRecord(snapshot.metadata)
+              ? snapshot.metadata as Record<string, unknown>
+              : {};
+            const restoredCoverParsed = parseDataUrl(
+              loadedCoverDataUrl ?? normalizeOptionalText(rawMetadata.coverDataUrl),
             );
-          } else if (restoredBgmDataUrl) {
-            setAudioObjectUrl((current: string | null) => {
-              if (current) {
-                URL.revokeObjectURL(current);
-              }
-              return restoredBgmDataUrl;
-            });
-          } else {
-            setAudioObjectUrl((current: string | null) => {
-              if (current) {
-                URL.revokeObjectURL(current);
-              }
-              return null;
-            });
+            if (restoredCoverParsed !== null) {
+              const imported = await resourceManager.importUserMedia({
+                purpose: "cover",
+                fileName: "legacy-cover.bin",
+                mediaType: restoredCoverParsed.mimeType,
+                bytes: decodeBase64ToBytes(restoredCoverParsed.base64Data),
+              });
+              if (imported.status === "accepted") cover = imported.value.ref;
+            }
+            const restoredMvParsed = parseDataUrl(
+              loadedMvDataUrl ?? normalizeOptionalText(rawMetadata.mvDataUrl),
+            );
+            if (restoredMvParsed !== null) {
+              const imported = await resourceManager.importUserMedia({
+                purpose: "mv",
+                fileName: normalizeOptionalText(loadedChart.mvFileName) ?? "legacy-mv.bin",
+                mediaType: restoredMvParsed.mimeType,
+                bytes: decodeBase64ToBytes(restoredMvParsed.base64Data),
+              });
+              if (imported.status === "accepted") mv = imported.value.ref;
+            }
+            restoredMedia = Object.freeze({ bgm, cover, mv, stageBackdrop: null });
           }
+          setChartMediaResources(restoredMedia);
 
-          const restoredCoverParsed = parseDataUrl(
-            loadedCoverDataUrl ?? (snapshotMetadata.coverDataUrl as string | null | undefined),
-          );
-          const restoredMvParsed = parseDataUrl(
-            loadedMvDataUrl ?? (snapshotMetadata.mvDataUrl as string | null | undefined),
-          );
-          lastSavedCoverSignatureRef.current = restoredCoverParsed
-            ? buildResourceSignature(restoredCoverParsed.base64Data, restoredCoverParsed.mimeType)
-            : CLEARED_RESOURCE_SIGNATURE;
-          lastSavedAudioSignatureRef.current = restoredAudioSignature;
-          lastSavedMvSignatureRef.current = restoredMvParsed
-            ? buildResourceSignature(restoredMvParsed.base64Data, restoredMvParsed.mimeType, loadedChart.mvFileName)
-            : CLEARED_RESOURCE_SIGNATURE;
-
-          const restoredMetadataForChartCache = normalizeMetadata({
-            ...nextMetadata,
-            bgmDataUrl: loadedAudioBase64 ? null : nextMetadata.bgmDataUrl,
-            coverDataUrl: restoredCoverParsed ? null : nextMetadata.coverDataUrl,
-            mvDataUrl: restoredMvParsed ? null : nextMetadata.mvDataUrl,
-          });
+          const restoredMetadataForChartCache = nextMetadata;
           lastSavedChartFingerprintRef.current = JSON.stringify({
             schemaVersion: SESSION_SCHEMA_VERSION,
             metadata: restoredMetadataForChartCache,
@@ -577,18 +563,9 @@ export function useEditorSessionCache(params: any) {
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
-          const parsedCover = parseDataUrl(metadata.coverDataUrl);
-          const parsedAudio = parseDataUrl(metadata.bgmDataUrl);
-          const parsedMv = parseDataUrl(metadata.mvDataUrl);
-          const metadataForChart = normalizeMetadata({
-            ...metadata,
-            bgmDataUrl: parsedAudio ? null : metadata.bgmDataUrl,
-            coverDataUrl: parsedCover ? null : metadata.coverDataUrl,
-            mvDataUrl: parsedMv ? null : metadata.mvDataUrl,
-          });
+          const metadataForChart = normalizeMetadata(metadata);
           const safeAudioDuration =
             Number.isFinite(audioDurationSec) && audioDurationSec > 0 ? Number(audioDurationSec.toFixed(6)) : 0;
-
           const chartCore: Omit<ChartSnapshotV1, "savedAt"> = {
             schemaVersion: SESSION_SCHEMA_VERSION,
             metadata: metadataForChart,
@@ -600,117 +577,33 @@ export function useEditorSessionCache(params: any) {
             audioFileName,
             audioDurationSec: safeAudioDuration,
           };
-
           if (lastSavedChartFingerprintRef.current === null) {
             const defaultMetadata = normalizeMetadata({});
             const defaultSettings = normalizeSettings({});
             const metadataIsDefault = JSON.stringify(metadataForChart) === JSON.stringify(defaultMetadata);
             const settingsIsDefault = JSON.stringify(settings) === JSON.stringify(defaultSettings);
-            const hasAnyChartData =
-              notes.length > 0 ||
-              slideChains.length > 0 ||
-              bpmEvents.length > 0 ||
-              flattenTimingGroups(timingGroups).length > 0;
-            const hasAnyMediaData =
-              (typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0)
+            const hasAnyChartData = notes.length > 0 || slideChains.length > 0 || bpmEvents.length > 0 || flattenTimingGroups(timingGroups).length > 0;
+            const hasAnyMediaData = Object.values(chartMediaResources).some((reference) => reference !== null)
               || (typeof audioFileName === "string" && audioFileName.trim().length > 0)
-              || safeAudioDuration > 0
-              || (typeof metadata.coverDataUrl === "string" && metadata.coverDataUrl.trim().length > 0)
-              || (typeof metadata.mvDataUrl === "string" && metadata.mvDataUrl.trim().length > 0);
-            if (!hasAnyChartData && !hasAnyMediaData && metadataIsDefault && settingsIsDefault) {
-              return;
-            }
+              || safeAudioDuration > 0;
+            if (!hasAnyChartData && !hasAnyMediaData && metadataIsDefault && settingsIsDefault) return;
           }
-
-          const fingerprint = JSON.stringify(chartCore);
-          const isCoreUnchanged = lastSavedChartFingerprintRef.current === fingerprint;
-
-          const coverSignature = parsedCover
-            ? buildResourceSignature(parsedCover.base64Data, parsedCover.mimeType)
-            : CLEARED_RESOURCE_SIGNATURE;
-          const shouldWriteCover =
-            parsedCover !== null && lastSavedCoverSignatureRef.current !== coverSignature;
-          const shouldClearCover =
-            parsedCover === null && lastSavedCoverSignatureRef.current !== CLEARED_RESOURCE_SIGNATURE;
-
-          const audioPayload: SessionResourcePayload | null =
-            parsedAudio
-              ? {
-                  base64Data: parsedAudio.base64Data,
-                  mimeType: parsedAudio.mimeType,
-                  fileName: normalizeOptionalText(audioFileName),
-                }
-              : null;
-          const audioSignature = audioPayload
-            ? buildResourceSignature(
-                audioPayload.base64Data,
-                audioPayload.mimeType ?? null,
-                audioPayload.fileName ?? null,
-              )
-            : CLEARED_RESOURCE_SIGNATURE;
-          const shouldWriteAudio =
-            audioPayload !== null &&
-            lastSavedAudioSignatureRef.current !== audioSignature;
-          const shouldClearAudio =
-            audioPayload === null &&
-            lastSavedAudioSignatureRef.current !== CLEARED_RESOURCE_SIGNATURE;
-
-          const mvPayload: SessionResourcePayload | null = parsedMv
-            ? {
-                base64Data: parsedMv.base64Data,
-                mimeType: parsedMv.mimeType,
-                fileName: null,
-              }
-            : null;
-          const mvSignature = mvPayload
-            ? buildResourceSignature(mvPayload.base64Data, mvPayload.mimeType ?? null, mvPayload.fileName ?? null)
-            : CLEARED_RESOURCE_SIGNATURE;
-          const shouldWriteMv = mvPayload !== null && lastSavedMvSignatureRef.current !== mvSignature;
-          const shouldClearMv = mvPayload === null && lastSavedMvSignatureRef.current !== CLEARED_RESOURCE_SIGNATURE;
-
-          if (
-            isCoreUnchanged
-            && !shouldWriteCover && !shouldClearCover
-            && !shouldWriteAudio && !shouldClearAudio
-            && !shouldWriteMv && !shouldClearMv
-          ) {
-            return;
-          }
-
-          const chartJson = JSON.stringify({
-            ...chartCore,
-            savedAt: new Date().toISOString(),
-          });
-
-          const coverPayload: SessionResourcePayload | null = parsedCover
-            ? {
-                base64Data: parsedCover.base64Data,
-                mimeType: parsedCover.mimeType,
-              }
-            : null;
-
+          const fingerprint = JSON.stringify({ chartCore, chartMediaResources });
+          if (lastSavedChartFingerprintRef.current === fingerprint) return;
+          const chartJson = JSON.stringify({ ...chartCore, savedAt: new Date().toISOString() });
           await invoke("save_editor_chart_cache", {
             payload: {
               chartJson,
-              cover: shouldWriteCover ? coverPayload : null,
-              audio: shouldWriteAudio ? audioPayload : null,
-              mv: shouldWriteMv ? mvPayload : null,
-              coverCleared: shouldClearCover,
-              audioCleared: shouldClearAudio,
-              mvCleared: shouldClearMv,
+              resourceRefs: chartMediaResources,
+              cover: null,
+              audio: null,
+              mv: null,
+              coverCleared: true,
+              audioCleared: true,
+              mvCleared: true,
             },
           });
-
           lastSavedChartFingerprintRef.current = fingerprint;
-          if (shouldWriteCover || shouldClearCover) {
-            lastSavedCoverSignatureRef.current = coverSignature;
-          }
-          if (shouldWriteAudio || shouldClearAudio) {
-            lastSavedAudioSignatureRef.current = audioSignature;
-          }
-          if (shouldWriteMv || shouldClearMv) {
-            lastSavedMvSignatureRef.current = mvSignature;
-          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           setStatusMessage(`谱面缓存保存失败：${message}`);
@@ -725,6 +618,7 @@ export function useEditorSessionCache(params: any) {
     audioDurationSec,
     audioFileName,
     bpmEvents,
+    chartMediaResources,
     timingGroups,
     didRestoreAttemptFinish,
     metadata,
