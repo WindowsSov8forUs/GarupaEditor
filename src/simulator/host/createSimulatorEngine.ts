@@ -32,6 +32,7 @@ import {
 } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
+import { PrimaryJudgementAdjustmentOwner } from "../engine/managers/primaryJudgementAdjustmentOwner";
 import { InGameMovieManager, mapMovieResult } from "../engine/movie/inGameMovieManager";
 import { MvBackgroundModule } from "../engine/movie/mvBackgroundModule";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -222,7 +223,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const movieFault = this.pollMovieFault();
     if (movieFault.status !== "ok") return movieFault;
     const manager = this.inGameManager.snapshot();
-    if (!manager.playable) {
+    if (manager.startupDirection?.playable === false) {
       return evidenceRequired(
         "startup-direction.pause-during-opening",
         ["SD09"],
@@ -257,7 +258,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       return this.inGameManager.resume();
     }
     const manager = this.inGameManager.snapshot();
-    if (!manager.playable && !manager.paused) {
+    if (manager.startupDirection?.playable === false && !manager.paused) {
       return evidenceRequired(
         "startup-direction.resume-during-opening",
         ["SD09"],
@@ -743,6 +744,10 @@ export function createSimulatorEngine(
   const originalLiveSettings = originalLiveSettingsValidation.value;
   const modeValidation = validateSimulatorModeIdentity(input.runtime.mode);
   if (modeValidation.status !== "ok") return modeValidation;
+  const primaryJudgementAdjustment = new PrimaryJudgementAdjustmentOwner(
+    originalLiveSettings.core.judgementAdjustValue,
+    input.startupDirection?.purpose ?? "initial",
+  );
   const movieBackgroundResult = createMovieBackground(
     input,
     backends,
@@ -867,6 +872,7 @@ export function createSimulatorEngine(
         input.startupDirection.liveStartVoiceCue,
         input.startupDirection.purpose,
         movieBackgroundResult.value,
+        primaryJudgementAdjustment,
       );
   const inGameManager = new InGameManager(
     musicScoreController,
@@ -881,6 +887,7 @@ export function createSimulatorEngine(
     input.rendering?.ordinaryNoteScene ?? null,
     startupDirection,
     productTimeline,
+    primaryJudgementAdjustment,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

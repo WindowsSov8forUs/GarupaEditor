@@ -35,6 +35,10 @@ import type {
   GarupaProductTimelineManager,
   GarupaProductTimelineSnapshot,
 } from "../garupa/productTimelineManager";
+import type {
+  PrimaryJudgementAdjustmentOwner,
+  PrimaryJudgementAdjustmentSnapshot,
+} from "./primaryJudgementAdjustmentOwner";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -48,6 +52,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly particle: ReturnType<ParticleFrameCoordinator["producer"]["snapshot"]> | null;
   readonly startupDirection: StartupDirectionSnapshot | null;
   readonly garupaProduct: GarupaProductTimelineSnapshot | null;
+  readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentSnapshot | null;
   readonly playable: boolean;
 }
 
@@ -73,6 +78,7 @@ export class InGameManager {
     private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
     private readonly startupDirection: StartupDirectionController | null = null,
     private readonly garupaProduct: GarupaProductTimelineManager | null = null,
+    private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
   ) {
     this.currentGameStateValue = startupDirection === null
       ? GameState.PlayingSound
@@ -98,6 +104,10 @@ export class InGameManager {
       return ok(undefined);
     }
 
+    const primary = this.primaryJudgementAdjustment?.initialize(
+      this.startupDirection !== null,
+    ) ?? ok(undefined);
+    if (primary.status !== "ok") return primary;
     const startup = this.startupDirection?.initialize() ?? ok(undefined);
     if (startup.status !== "ok") return startup;
     const noteValidation = this.noteManager.validateSetup();
@@ -177,6 +187,9 @@ export class InGameManager {
     if (this.currentGameStateValue === GameState.PauseSound) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
+    const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
+    if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
+    if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
     this.audioProducer?.beginOuterFrame();
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
@@ -541,7 +554,9 @@ export class InGameManager {
       particle: this.particleCoordinator?.producer.snapshot() ?? null,
       startupDirection: this.startupDirection?.snapshot() ?? null,
       garupaProduct: this.garupaProduct?.snapshot() ?? null,
-      playable: this.startupDirection?.snapshot().playable ?? true,
+      primaryJudgementAdjustment: this.primaryJudgementAdjustment?.snapshot() ?? null,
+      playable: (this.startupDirection?.snapshot().playable ?? true) &&
+        this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
     };
   }
 }

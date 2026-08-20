@@ -8,6 +8,7 @@ import {
   type StartupAudioPurpose,
 } from "../audio/startupAudioOwner";
 import type { MvBackgroundModule } from "../movie/mvBackgroundModule";
+import type { PrimaryJudgementAdjustmentOwner } from "./primaryJudgementAdjustmentOwner";
 import {
   freezeStartupDirectionSceneState,
   INITIAL_STARTUP_DIRECTION_SCENE_STATE,
@@ -52,6 +53,7 @@ export interface StartupDirectionSnapshot {
   readonly liveVoiceRequired: boolean;
   readonly audio: StartupAudioOwnerSnapshot | null;
   readonly movie: ReturnType<MvBackgroundModule["snapshot"]> | null;
+  readonly primaryJudgementAdjustment: ReturnType<PrimaryJudgementAdjustmentOwner["snapshot"]> | null;
   readonly scene: StartupDirectionSceneState;
 }
 
@@ -73,6 +75,7 @@ export class StartupDirectionController {
     private readonly liveStartVoiceCue: string | null = null,
     private readonly purpose: StartupDirectionPurpose = "initial",
     private readonly mvBackground: MvBackgroundModule | null = null,
+    private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
   ) {
     this.startupAudio = audio === null
       ? null
@@ -243,6 +246,7 @@ export class StartupDirectionController {
       liveVoiceRequired: this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null,
       audio: this.startupAudio?.snapshot() ?? null,
       movie: this.mvBackground?.snapshot() ?? null,
+      primaryJudgementAdjustment: this.primaryJudgementAdjustment?.snapshot() ?? null,
       scene: this.sceneValue,
     });
   }
@@ -292,6 +296,9 @@ export class StartupDirectionController {
   }
 
   private enterPlayingNone(): SimulatorResult<void> {
+    const primaryGate = this.primaryJudgementAdjustment?.preflightMusicStart() ?? ok(true);
+    if (primaryGate.status !== "ok") return primaryGate;
+    if (!primaryGate.value) return ok(undefined);
     const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
     if (audioTransition?.status === "evidence-required") return audioTransition;
     if (this.mvBackground !== null) {
@@ -302,9 +309,11 @@ export class StartupDirectionController {
       }
     }
     this.enter("playing-none", GameState.PlayingNone);
-    return audioTransition?.status === "ok"
+    const committed = audioTransition?.status === "ok"
       ? audioTransition.value.commit()
       : ok(undefined);
+    if (committed.status !== "ok") return committed;
+    return this.primaryJudgementAdjustment?.commitMusicStarted() ?? committed;
   }
 
   private enter(phase: StartupDirectionPhase, state: GameStateValue): void {
