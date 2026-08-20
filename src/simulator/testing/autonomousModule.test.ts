@@ -515,7 +515,7 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   const missingResource = await missingResourceModule.launch(request());
   assert.equal(missingResource.status, "rejected");
   if (missingResource.status === "rejected") {
-    assert.equal(missingResource.failure.capability, "test.missing");
+    assert.equal(missingResource.failure.capability, "simulator.skin.pack-unavailable");
   }
   assert.equal(resourceReads, 1, "released portable composition reaches the explicit shared-resource boundary");
   assert.equal(mounts, 0, "missing resources reject before visual mount");
@@ -527,7 +527,7 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   (rehearsalRequest.config as { sessionMode: "live" | "rehearsal" }).sessionMode = "rehearsal";
   const launched = await module.launch(rehearsalRequest);
   assert.equal(launched.status, "rejected");
-  if (launched.status === "rejected") assert.equal(launched.failure.capability, "test.missing");
+  if (launched.status === "rejected") assert.equal(launched.failure.capability, "simulator.skin.pack-unavailable");
   assert.equal(resourceReads, 1, "Rehearsal reaches the same explicit resource construction boundary");
   assert.equal(mounts, 0);
 }

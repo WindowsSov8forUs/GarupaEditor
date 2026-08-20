@@ -17,10 +17,10 @@
 
 ## 当前原作 Skin 证据
 
-- Reverse最终提交`977f5e7153257e5bb4cabb2904790408f5452aa7`已push、远端`0 0`；`simulator-skin-settings-complete-contract-10-1-4/`冻结42 normal rows、30 Collaboration、4 Limited、16-row mode/HAB/MV矩阵、133 official UnityFS、133 whole portable packs/635 embedded files及十项zero-count closure。
+- Reverse资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与后验可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`均已push、远端`0 0`。完整证据profile冻结42 normal rows、30 Collaboration、4 Limited、16-row mode/HAB/MV矩阵、133 official UnityFS/133 whole packs/635 files；其中3个structural-stage pack只经未开放的Live2D owner可达，当前Standard/MV production manifest必须过滤为130 packs/576 files。
 - 29 Collaboration与4 Limited包有完整resource profile；过期Collabo 36的六个`skinapril2019`路径不可得，必须包级`evidence-required`且禁止用`skin_april2019`替代。
-- Limited-3九包为最小隔离fixture，逐项登记来源提交、路径、字节和SHA。Production只从platform static store读取simulator-selected whole-pack key，不读取fixture、Reverse或网络。
-- 非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。特殊ParticleSystem动态模块图已由whole-pack profile成为deterministic backend/Pixi renderer consumer；auto-random stream是canonical identity派生portable policy，仍不升级非默认device/frame parity。
+- Default八包与Limited-3九包为隔离fixture，逐项登记来源提交、路径、字节和SHA；production composition另登记九个existing current audio最小MP3快照。Production只从platform static store读取simulator-selected whole-pack key，不读取fixture、Reverse或网络；default-current同样必须装配并校验八包，不得旁路。
+- `4312a8ad`正向确认既有Field startup consumer；structural stage不属于当前Standard/MV recipe，禁止为了验收绘制Live2D/3D placeholder。非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。特殊ParticleSystem动态模块图已由whole-pack profile成为deterministic backend/Pixi renderer consumer；auto-random stream是canonical identity派生portable policy，仍不升级非默认device/frame parity。
 
 ## 当前启动方向与音频证据
 

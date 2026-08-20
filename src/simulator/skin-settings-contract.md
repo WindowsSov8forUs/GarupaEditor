@@ -2,7 +2,7 @@
 
 ## Scope
 
-This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse `977f5e7153257e5bb4cabb2904790408f5452aa7`.
+This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse resource baseline `977f5e7153257e5bb4cabb2904790408f5452aa7` plus Field/structural-stage reachability correction `4312a8ad5a755b28cb40366f6160771dbf79637e`.
 
 Public Schema 11 keeps the root request exactly `{ chartData, presentation, config }`. `config.skin` carries only original persisted normal settings, one aggregate special selection and seven component states. It never carries a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
 
@@ -34,15 +34,15 @@ Resolution is frozen before backend creation:
 - HAB: Note, Field, Judge and standard background use HAB resources. TapEffect, TapSE and Directional remain independently selected; HAB change-flash is an additional resource.
 - MV: video owns background; special/standard backdrop is still validated but is not attached or used as fallback.
 - Directional effect combines selected visual identity with normal/light. Directional SE remains fixed `directionalflickskin00`.
-- Structural stage is mode-derived and is `normal` for current SingleNormal/Practice.
+- Structural `stageskin/{key}` belongs exclusively to `BackgroundModuleType.Live2D -> Live2dBackgroundModule -> InGameV2StageController`. Current Public Standard-backdrop and MV routes do not create that owner, so structural stage is absent from the current recipe and store inventory; it is not silently drawn as a Standard background.
 
 The resolved recipe has a deterministic canonical identity. Retry and MoveTime fresh builds must match its identity/fidelity; Pause, MoveTime, GameOver and natural completion never change it. No gameplay hot-switch command exists.
 
 ## Portable resource packs
 
-The simulator selects internal static-store keys only. The current manifest pins 133 whole packs and 635 embedded PNG/MP3 files. A whole pack is checked by byte length/SHA before JSON, metadata, base64 or backend decode. Every embedded file is checked again. Missing/tampered/extra packs reject before scheduler start; resource faults never fall back.
+The full Reverse source profile contains 133 whole packs / 635 embedded files. The current Standard/MV simulator manifest deliberately removes the three Live2D-only structural-stage packs and pins exactly 130 reachable packs / 576 embedded PNG/MP3 files. Every launch, including `default-current`, loads its resolved 8–10 packs; there is no default-Skin assembly bypass. A whole pack is checked by byte length/SHA before JSON, metadata, base64 or backend decode, and every embedded file is checked again. Missing/tampered/extra packs reject before scheduler start; resource faults never fall back.
 
-Selected Note, Directional, Judge, Field and Background assets are converted to strict render profiles. Original Sprite bottom-left Rects are converted once to portable PNG top-left rows. Selected `noteSyncEdgeMargin` replaces the former fixed scene scalar. Special background replaces the already validated prepared stage backdrop only on the standard route.
+Selected Note, Directional, Judge, Field and reachable special Background assets are converted to strict render profiles. Original Sprite bottom-left Rects are converted once to portable PNG top-left rows. Selected `noteSyncEdgeMargin` replaces the former fixed scene scalar. Special background replaces the already validated prepared stage backdrop only on the standard route.
 
 Selected Tap/Judge SE replaces exactly six semantic cues. Directional SE replaces the same three fixed directional cues from its fixed pack. WebAudio still owns decoded metadata validation and all loop/one-shot lifecycle.
 
@@ -53,5 +53,7 @@ Garupa/ExGarupa directly consumes selected Note/Directional bindings and selecte
 `closed-static-portable` means static original selection/lifecycle plus current official UnityFS-derived portable bytes. It does not claim a non-default special device trace, original framebuffer, GPU, CRI/Android/speaker output or fixed-device exactness.
 
 CutIn, Fever, character skill, multiplayer, Stage 9 and runtime Skin hot-switch remain unauthorized. Production does not import editor `skinLoader`, Bestdori services, rip maps, React or Tauri.
+
+Actual Pixi consumes selected Note, Field, Judge and reachable special Background assets; default and Limited-3 production composition validates 54/55 static-store resources respectively. WebView2 executes three fresh processes for each of default and Limited-3 and hashes the complete RGBA output, rather than accepting non-null binding booleans.
 
 The selected TapEffect and Directional-effect packs construct dynamic ordinary/directional particle bundles with their original serialized systems, enabled modules, renderers, materials and textures. The portable backend derives each auto-random stream deterministically from canonical resource/system/profile identity; this is a named portable policy, not an original device-random or frame-parity claim.
