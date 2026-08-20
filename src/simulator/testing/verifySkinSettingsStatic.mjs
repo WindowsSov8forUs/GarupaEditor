@@ -14,7 +14,8 @@ const validation = read("engine/skin/originalSkinValidation.ts");
 const resolver = read("engine/skin/originalSkinResolver.ts");
 const derivation = read("assembly/sessionSkinDerivation.ts");
 const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
-const assembly = read("assembly/resourceAssembly.ts") + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
+const resourceAssembly = read("assembly/resourceAssembly.ts");
+const assembly = resourceAssembly + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
 const composition = read("platform/platformComposition.ts");
 const fieldOwner = read("engine/managers/inGameManager.ts");
 const skinManifest = read("backends/resources/currentSkinResourceManifest.ts");
@@ -58,8 +59,40 @@ for (const required of [
   "canonicalIdentity",
 ]) if (!resolver.includes(required)) throw new Error(`Skin resolver marker missing: ${required}`);
 if ((skinContracts + resolver + selector + skinManifest).includes("structuralStage") ||
-  (resolver + selector + skinManifest).includes("ingameskin/stageskin/")) {
-  throw new Error("Live2D-only structural stage leaked into current Standard/MV Skin recipe or manifest");
+  (skinContracts + resolver + selector + skinManifest).includes("ingameskin/stageskin/") ||
+  skinContracts.includes('"mode-stage"')) {
+  throw new Error("Live2D-only structural stage leaked into current Standard/MV Skin contracts, recipe or manifest");
+}
+const assemblyCallIndex = composition.indexOf("const assembly = await assembleSimulatorResources(");
+const movieConstructionIndex = composition.indexOf("new PixiMvLiveBackend(");
+const moviePrepareIndex = composition.indexOf("await movie.prepare(");
+if (assemblyCallIndex < 0 || movieConstructionIndex <= assemblyCallIndex || moviePrepareIndex <= movieConstructionIndex) {
+  throw new Error("MV Movie backend construction/prepare must follow selected Skin resource assembly");
+}
+const assemblyFailureIndex = composition.indexOf('if (assembly.status === "rejected")', assemblyCallIndex);
+const assemblyFailureBlock = composition.slice(assemblyFailureIndex, movieConstructionIndex);
+if (assemblyFailureIndex < 0 || !assemblyFailureBlock.includes("releasePendingMovie()") ||
+  assemblyFailureBlock.includes("movie.dispose")) {
+  throw new Error("Selected Skin assembly failure must release only the pending movie resource before any Movie backend exists");
+}
+const moviePrepareFailureEnd = composition.indexOf("pendingMovieOwned = false", moviePrepareIndex);
+const moviePrepareFailureBlock = composition.slice(moviePrepareIndex, moviePrepareFailureEnd);
+if (moviePrepareFailureEnd < 0 ||
+  !moviePrepareFailureBlock.includes("disposeAssembly(assembly.value, movie)") ||
+  !moviePrepareFailureBlock.includes("releasePendingMovie()")) {
+  throw new Error("MV Movie prepare failure must release assembly backends and the still-pending movie resource");
+}
+const selectedSkinPackIndex = resourceAssembly.indexOf("const skinPortablePacks = await prepareSelectedSkinPortablePacks(");
+for (const backendPrepare of [
+  "const renderReady = await targets.rendering.backend.prepare(",
+  "const audioReady = await targets.audio.backend.prepare(",
+  "const particleReady = await targets.particles.backend.prepare(",
+  "const particleRendererReady = await targets.particles.renderer.prepare(",
+]) {
+  const backendPrepareIndex = resourceAssembly.indexOf(backendPrepare);
+  if (selectedSkinPackIndex < 0 || backendPrepareIndex <= selectedSkinPackIndex) {
+    throw new Error(`selected Skin pack validation must precede backend mutation: ${backendPrepare}`);
+  }
 }
 for (const required of [
   "selectResolvedSkinResourceInventory",

@@ -247,19 +247,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const selection = selectSimulatorStaticResources(chart.value, skin.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
-    const movie = mvResource.value === null
-      ? null
-      : new PixiMvLiveBackend(false, originalLayout.value.movie);
-    if (movie !== null) {
-      const prepared = await movie.prepare(sessionId, mvResource.value!);
-      if (prepared.status !== "accepted") {
-        return rejectedWithCleanup(
-          fromMovieOperation(prepared),
-          releasePendingMovie(),
-        );
-      }
-      pendingMovieOwned = false;
-    }
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -300,11 +287,23 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       },
     );
     if (assembly.status === "rejected") {
-      const movieCleanup = movie === null
-        ? []
-        : [simulatorCleanupFailureFromResult("movie-after-resource-assembly-failure", movie.dispose())]
-            .filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-      return rejectedWithCleanup(assembly, movieCleanup);
+      return rejectedWithCleanup(assembly, releasePendingMovie());
+    }
+    const movie = mvResource.value === null
+      ? null
+      : new PixiMvLiveBackend(false, originalLayout.value.movie);
+    if (movie !== null) {
+      const prepared = await movie.prepare(sessionId, mvResource.value!);
+      if (prepared.status !== "accepted") {
+        return rejectedWithCleanup(
+          fromMovieOperation(prepared),
+          Object.freeze([
+            ...disposeAssembly(assembly.value, movie),
+            ...releasePendingMovie(),
+          ]),
+        );
+      }
+      pendingMovieOwned = false;
     }
     const surfaceBound = renderer.bindOriginalSurfaceLayout(
       assembly.value.sceneLayout.surfaceLayout,

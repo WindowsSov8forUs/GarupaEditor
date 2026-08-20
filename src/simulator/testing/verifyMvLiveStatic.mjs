@@ -61,6 +61,26 @@ for (const required of [
   "mvStageParentIsRoot",
   "movie?.stage",
 ]) if (!(combined + platform).includes(required)) throw new Error(`MV Pixi hierarchy missing: ${required}`);
+const resourceAssemblyIndex = platform.indexOf("const assembly = await assembleSimulatorResources(");
+const movieConstructionIndex = platform.indexOf("new PixiMvLiveBackend(");
+const moviePrepareIndex = platform.indexOf("await movie.prepare(");
+if (resourceAssemblyIndex < 0 || movieConstructionIndex <= resourceAssemblyIndex ||
+  moviePrepareIndex <= movieConstructionIndex) {
+  throw new Error("MV backend must not be constructed or prepared before selected Skin resource assembly succeeds");
+}
+const assemblyFailureIndex = platform.indexOf('if (assembly.status === "rejected")', resourceAssemblyIndex);
+const assemblyFailureBlock = platform.slice(assemblyFailureIndex, movieConstructionIndex);
+if (assemblyFailureIndex < 0 || !assemblyFailureBlock.includes("releasePendingMovie()") ||
+  assemblyFailureBlock.includes("movie.dispose")) {
+  throw new Error("MV resource-assembly rejection must release the pending browser resource without creating a Movie backend");
+}
+const moviePrepareFailureEnd = platform.indexOf("pendingMovieOwned = false", moviePrepareIndex);
+const moviePrepareFailureBlock = platform.slice(moviePrepareIndex, moviePrepareFailureEnd);
+if (moviePrepareFailureEnd < 0 ||
+  !moviePrepareFailureBlock.includes("disposeAssembly(assembly.value, movie)") ||
+  !moviePrepareFailureBlock.includes("releasePendingMovie()")) {
+  throw new Error("MV prepare rejection must roll back assembly owners and release the untransferred browser resource");
+}
 for (const forbidden of [
   /\bfetch\s*\(/,
   /\b(?:setTimeout|setInterval)\s*\(/,

@@ -47,8 +47,7 @@ export type OriginalSkinComponentRoute =
   | "habahiro"
   | "presentation-background"
   | "practice-background"
-  | "mv-video"
-  | "mode-stage";
+  | "mv-video";
 
 export interface ResolvedSkinComponent {
   readonly route: OriginalSkinComponentRoute;
