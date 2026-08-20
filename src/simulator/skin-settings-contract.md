@@ -38,9 +38,11 @@ Resolution is frozen before backend creation:
 
 The resolved recipe has a deterministic canonical identity. Retry and MoveTime fresh builds must match its identity/fidelity; Pause, MoveTime, GameOver and natural completion never change it. No gameplay hot-switch command exists.
 
+On the MV route, browser media derivation remains one pending immutable preflight resource, but production completes selected Skin whole-pack/embedded-file validation and the full render/audio/particle assembly before constructing or preparing `PixiMvLiveBackend`. A Skin assembly rejection releases only that pending media resource and cannot create a Movie backend, mount a scene or start the scheduler. A later Movie prepare rejection disposes every prepared assembly owner before releasing the still-untransferred media resource.
+
 ## Portable resource packs
 
-The full Reverse source profile contains 133 whole packs / 635 embedded files. The current Standard/MV simulator manifest deliberately removes the three Live2D-only structural-stage packs and pins exactly 130 reachable packs / 576 embedded PNG/MP3 files. Every launch, including `default-current`, loads its resolved 8–10 packs; there is no default-Skin assembly bypass. A whole pack is checked by byte length/SHA before JSON, metadata, base64 or backend decode, and every embedded file is checked again. Missing/tampered/extra packs reject before scheduler start; resource faults never fall back.
+The full Reverse source profile contains 133 whole packs / 635 embedded files. The current Standard/MV simulator manifest deliberately removes the three Live2D-only structural-stage packs and pins exactly 130 reachable packs / 576 embedded PNG/MP3 files. Every launch, including `default-current`, loads its resolved 8–10 packs; there is no default-Skin assembly bypass. A whole pack is checked by byte length/SHA before JSON, metadata, base64 or backend decode, and every embedded file is checked again. Missing/tampered/extra packs reject before any renderer/audio/particle/Movie backend prepare, scene publication, mount or scheduler start; resource faults never fall back.
 
 Selected Note, Directional, Judge, Field and reachable special Background assets are converted to strict render profiles. Original Sprite bottom-left Rects are converted once to portable PNG top-left rows. Selected `noteSyncEdgeMargin` replaces the former fixed scene scalar. Special background replaces the already validated prepared stage backdrop only on the standard route.
 
