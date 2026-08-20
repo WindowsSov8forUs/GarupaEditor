@@ -77,6 +77,7 @@ export interface RenderEngineResourceBindings {
     readonly judgeLogicalAssetId: string;
     readonly lifeAdditiveLogicalAssetId: string;
     readonly warningLogicalAssetId: string;
+    readonly tapLaneEffectLogicalAssetIds: readonly [string, string, string, string];
   };
   readonly scoreHud?: {
     readonly fontLogicalAssetId: string;
@@ -87,6 +88,16 @@ export interface RenderEngineResourceBindings {
     readonly highRankLongStarLogicalAssetId: string;
     readonly highRankOverlayLogicalAssetId: string;
   };
+}
+
+export interface TapLaneEffectRenderState {
+  readonly slot: number;
+  readonly textureIndex: 0 | 1 | 2 | 3;
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly active: boolean;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -780,6 +791,75 @@ export class RenderCommandProducer {
       });
     }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightTapLaneEffectSetup(
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const bindings = this.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds;
+    const expectedTextures = [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1, 0] as const;
+    if (bindings === undefined || bindings.length !== 4 || states.length !== 13 ||
+      states.some((state, index) => state.slot !== index ||
+        state.textureIndex !== expectedTextures[index] || state.active ||
+        !validateVector3(state.position) || !validateVector2(state.scale) ||
+        !validateColor(state.color) || !validateOrdering(state.ordering))) {
+      return evidenceRequired(
+        "render.tap-lane-effect.invalid-setup",
+        ["OLS-R05", "OLS-P01"],
+        "Tap lane effects require thirteen ordered full/half-button owners, the exact four current sprites and inactive initial states before renderer mutation.",
+      );
+    }
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    for (const state of states) {
+      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
+      created.push(renderObjectId);
+      commands.push({ ...base(commands.length), kind: "create-object", renderObjectId,
+        poolFamily: "tap-lane-effect", role: "tap-lane-effect", parentObjectId: null });
+      commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId,
+        binding: "sprite", logicalAssetId: bindings[state.textureIndex]!,
+        exactKey: `NoteLaneEffect_${state.textureIndex + 1}` });
+      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
+        color: state.color, ordering: state.ordering, maskObjectId: null });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
+    return this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightTapLaneEffectUpdate(
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Array.isArray(states) || states.some((state) =>
+      !Number.isInteger(state.slot) || state.slot < 0 || state.slot >= 13 ||
+      !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
+      !validateVector3(state.position) || !validateVector2(state.scale) ||
+      !validateColor(state.color) || !validateOrdering(state.ordering))) {
+      return evidenceRequired(
+        "render.tap-lane-effect.invalid-update",
+        ["OLS-R05", "OLS-P01"],
+        "Tap lane effect updates require setup-owned slots and finite serialized animation samples.",
+      );
+    }
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    for (const state of states) {
+      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
+      if (!state.active) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+        continue;
+      }
+      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
+        color: state.color, ordering: state.ordering, maskObjectId: null });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    }
+    return this.preflight(commands);
   }
 
   preflightPoolSetup(
@@ -2387,12 +2467,17 @@ export class RenderCommandProducer {
   }
 
   private validateOrdinaryVisibleBindings(): SimulatorResult<void> {
-    if (this.resources.ordinaryVisible === undefined ||
-      Object.values(this.resources.ordinaryVisible).some((value) => !isNonEmpty(value))) {
+    const visible = this.resources.ordinaryVisible;
+    if (visible === undefined ||
+      [visible.comboNumberLogicalAssetId, visible.judgeLogicalAssetId,
+        visible.lifeAdditiveLogicalAssetId, visible.warningLogicalAssetId]
+        .some((value) => !isNonEmpty(value)) ||
+      visible.tapLaneEffectLogicalAssetIds.length !== 4 ||
+      visible.tapLaneEffectLogicalAssetIds.some((value) => !isNonEmpty(value))) {
       return evidenceRequired(
         "render.producer.missing-ordinary-visible-bindings",
         ["PR22", "PR26", "PR27", "PR29", "PR30", "PR39"],
-        "Common single-player HUD setup requires exact Combo, Judge, Life and warning resources before domain mutation.",
+        "Common single-player setup requires exact Combo, Judge, Life, warning and four tap-lane-effect resources before domain mutation.",
       );
     }
     return ok(undefined);
@@ -2628,6 +2713,10 @@ export function slideChildRenderObjectId(poolObjectId: string, index: number): s
 
 export function slideMeshRenderObjectId(poolObjectId: string, index: number): string {
   return `render:${poolObjectId}:slide-mesh:${index}`;
+}
+
+export function tapLaneEffectRenderObjectId(slot: number): string {
+  return `render:tap-lane-effect:${slot}`;
 }
 
 export function syncLineRenderObjectId(poolIndex: number): string {
@@ -3224,6 +3313,10 @@ function gameTypeIsLeft(value: number): boolean {
     value === GameNoteType.LongDirectionalFlickLeftAdd ||
     value === GameNoteType.SlideADirectionalFlickLeftAdd ||
     value === GameNoteType.SlideBDirectionalFlickLeftAdd;
+}
+
+function zeroFloat(): RenderFloat32 {
+  return Object.freeze({ value: Math.fround(0), bits: "00000000" });
 }
 
 function validateVector2(value: RenderVector2): boolean {

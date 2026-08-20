@@ -1034,6 +1034,41 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 792,
       "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
+    },
+    {
+      "path": "reverse-snapshots/original-live-settings/artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "bytes": 9920,
+      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-1.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_1.png",
+      "bytes": 14137,
+      "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-2.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_2.png",
+      "bytes": 11402,
+      "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-3.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_3.png",
+      "bytes": 7630,
+      "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-4.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png",
+      "bytes": 5535,
+      "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48"
     }
   ]
 }

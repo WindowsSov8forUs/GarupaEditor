@@ -21,6 +21,11 @@ import {
   type ManualNoteTouchInput,
 } from "../notes/noteBase";
 import type { NoteManager } from "./noteManager";
+import type {
+  TapLaneEffectOwner,
+  TapLaneEffectTransaction,
+  TapLaneEffectInputEvent,
+} from "./tapLaneEffectOwner";
 
 const FINGER_OWNER_CAPACITY = 15;
 const GAME_PLAY_BUTTON_COUNT = 16;
@@ -33,7 +38,7 @@ export interface ManualInputDispatcher {
   preflight(
     frame: PreparedManualInputFrame,
   ): SimulatorResult<ManualInputDispatchPlan>;
-  commit(plan: ManualInputDispatchPlan): void;
+  commit(plan: ManualInputDispatchPlan): SimulatorResult<void>;
   snapshot?(): unknown;
   dispose?(): void;
 }
@@ -201,7 +206,8 @@ export class InputManager {
           "The owner that preflighted a non-empty frame must remain registered until the same outer-frame input dispatch.",
         );
       }
-      this.dispatcherValue.commit(pending.dispatchPlan);
+      const committed = this.dispatcherValue.commit(pending.dispatchPlan);
+      if (committed.status !== "ok") return committed;
     }
     this.pendingFrameValue = null;
     const snapshot = Object.freeze({
@@ -268,6 +274,7 @@ interface GamePlayInputOperation {
 interface GamePlayInputPlan extends ManualInputDispatchPlan {
   readonly operations: readonly GamePlayInputOperation[];
   readonly judgementTransaction: ManualJudgementTransaction;
+  readonly tapLaneEffectTransaction: TapLaneEffectTransaction | null;
 }
 
 export interface GamePlayButtonSnapshot {
@@ -294,7 +301,10 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     () => null,
   );
 
-  constructor(private readonly noteManager: NoteManager) {
+  constructor(
+    private readonly noteManager: NoteManager,
+    private readonly tapLaneEffectOwner: TapLaneEffectOwner | null = null,
+  ) {
     this.buttonsValue = Object.freeze(Array.from(
       { length: GAME_PLAY_BUTTON_COUNT },
       (_, buttonType) => new GamePlayButton(buttonType as ButtonTypeValue, noteManager),
@@ -357,6 +367,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     const projections = new Map<GamePlayButton, GamePlayButtonProjection>();
     const projectedFingerOwners = new Map<NoteBase, number>();
     const operations: GamePlayInputOperation[] = [];
+    const tapLaneEffectEvents: TapLaneEffectInputEvent[] = [];
 
     for (const touch of frame.touches) {
       let inputButton: GamePlayButton | null = null;
@@ -401,28 +412,42 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
           buttonPlan = planned.value;
         }
       }
+      if (inputButton !== null && touch.phase === ManualTouchPhase.Began) {
+        tapLaneEffectEvents.push(Object.freeze({ buttonType: inputButton.buttonType, kind: "on" as const }));
+      } else if (inputButton !== null && touch.phase === ManualTouchPhase.Ended) {
+        tapLaneEffectEvents.push(Object.freeze({ buttonType: inputButton.buttonType, kind: "animated-off" as const }));
+      }
       operations.push(Object.freeze({
         inputButton: touch.phase === ManualTouchPhase.Began ? inputButton : null,
         fingerId: touch.fingerId,
         buttonPlan,
       }));
     }
+    const tapLaneEffect = this.tapLaneEffectOwner?.preflightInputEvents(tapLaneEffectEvents) ?? ok(null);
+    if (tapLaneEffect.status !== "ok") return tapLaneEffect;
 
     const plan: GamePlayInputPlan = Object.freeze({
       touchCount: frame.touches.length,
       operations: Object.freeze(operations),
       judgementTransaction,
+      tapLaneEffectTransaction: tapLaneEffect.value,
     });
     this.ownedPlans.add(plan);
     return ok(plan);
   }
 
-  commit(plan: ManualInputDispatchPlan): void {
+  commit(plan: ManualInputDispatchPlan): SimulatorResult<void> {
     const ownedPlan = plan as GamePlayInputPlan;
     if (!this.ownedPlans.has(ownedPlan)) {
-      throw new Error("GamePlayInputDispatcher received a foreign dispatch plan");
+      return evidenceRequired(
+        "input.foreign-game-play-plan",
+        ["OLS-R05", "D14", "D15"],
+        "GamePlayInputDispatcher commits only its own single-use preflight plan.",
+      );
     }
     this.ownedPlans.delete(ownedPlan);
+    const laneEffect = ownedPlan.tapLaneEffectTransaction?.commit() ?? ok(undefined);
+    if (laneEffect.status !== "ok") return laneEffect;
     for (const operation of ownedPlan.operations) {
       if (operation.inputButton !== null) {
         this.buttonWithFingerId[operation.fingerId] = operation.inputButton;
@@ -434,6 +459,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       }
     }
     ownedPlan.judgementTransaction.finish();
+    return ok(undefined);
   }
 
   snapshot(): GamePlayInputDispatcherSnapshot {

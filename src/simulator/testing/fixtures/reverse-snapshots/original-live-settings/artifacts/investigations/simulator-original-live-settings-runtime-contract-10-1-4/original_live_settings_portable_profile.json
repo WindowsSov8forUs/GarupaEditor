@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-portable-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "owner": {
+    "scene": "level3",
+    "instanceCount": 13,
+    "instances": [
+      {
+        "button": "Button1",
+        "sprite": "NoteLaneEffect_1",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button1_5",
+        "sprite": "NoteLaneEffect_1",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button2",
+        "sprite": "NoteLaneEffect_2",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button2_5",
+        "sprite": "NoteLaneEffect_2",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button3",
+        "sprite": "NoteLaneEffect_3",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button3_5",
+        "sprite": "NoteLaneEffect_3",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button4",
+        "sprite": "NoteLaneEffect_4",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button4_5",
+        "sprite": "NoteLaneEffect_4",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button5",
+        "sprite": "NoteLaneEffect_3",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button5_5",
+        "sprite": "NoteLaneEffect_3",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button6",
+        "sprite": "NoteLaneEffect_2",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button6_5",
+        "sprite": "NoteLaneEffect_2",
+        "initialRendererEnabled": false,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      },
+      {
+        "button": "Button7",
+        "sprite": "NoteLaneEffect_1",
+        "initialRendererEnabled": true,
+        "initialAnimatorEnabled": false,
+        "sortingOrder": 0
+      }
+    ],
+    "controllerFile": "873250d94add64b86a80fa11dcbf580c",
+    "controllerBytes": 1244,
+    "controllerSha256": "A494F6C3E10F16F3CFFAFF7A9382971075F1DDF738BDD9E01483C44E4967C2FC",
+    "controllerName": "NoteLaneEffectAnimation"
+  },
+  "textures": [
+    {
+      "name": "NoteLaneEffect_1",
+      "sourceFile": "2d93a39353c29401e9d74baead0ee4f6",
+      "sourceBytes": 1549104,
+      "sourceSha256": "D498F3FC6C89E5A6BF270129F800803E873D0A218BEDF2C4E4E61A7F13FF424D",
+      "textureWidth": 774,
+      "textureHeight": 500,
+      "spriteRectF32": [
+        "439988EB",
+        "00000000",
+        "43E97715",
+        "43FA0000"
+      ],
+      "spritePixelsPerUnitF32": "428A0000",
+      "spritePivotF32": [
+        "3F000000",
+        "00000000"
+      ],
+      "portablePng": {
+        "path": "portable-assets/NoteLaneEffect_1.png",
+        "bytes": 14137,
+        "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
+        "width": 467,
+        "height": 500
+      }
+    },
+    {
+      "name": "NoteLaneEffect_2",
+      "sourceFile": "427cca15e588a402e95de70b00a443e0",
+      "sourceBytes": 1053104,
+      "sourceSha256": "FD4F9AF0EA4AAB37A87F4AD26B347BE2300BB055BFA8070DB72CF3BE397FD63A",
+      "textureWidth": 526,
+      "textureHeight": 500,
+      "spriteRectF32": [
+        "43383638",
+        "00000000",
+        "43AAE4E4",
+        "43FA0000"
+      ],
+      "spritePixelsPerUnitF32": "428A0000",
+      "spritePivotF32": [
+        "3F000000",
+        "00000000"
+      ],
+      "portablePng": {
+        "path": "portable-assets/NoteLaneEffect_2.png",
+        "bytes": 11402,
+        "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
+        "width": 342,
+        "height": 500
+      }
+    },
+    {
+      "name": "NoteLaneEffect_3",
+      "sourceFile": "03a0932a885754baa804975b120c8015",
+      "sourceBytes": 557072,
+      "sourceSha256": "5E406020F080C52C8FBCBCF9D65AD31354AE8D829AC6DF41B439F51A3D33123F",
+      "textureWidth": 278,
+      "textureHeight": 500,
+      "spriteRectF32": [
+        "4270F2AB",
+        "00000000",
+        "4359C355",
+        "43FA0000"
+      ],
+      "spritePixelsPerUnitF32": "428A0000",
+      "spritePivotF32": [
+        "3F000000",
+        "00000000"
+      ],
+      "portablePng": {
+        "path": "portable-assets/NoteLaneEffect_3.png",
+        "bytes": 7630,
+        "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
+        "width": 218,
+        "height": 500
+      }
+    },
+    {
+      "name": "NoteLaneEffect_4",
+      "sourceFile": "18cb136c2c5a344d5a696a66bc45a878",
+      "sourceBytes": 309104,
+      "sourceSha256": "888172CDA690D441DB70926609787DBE8F9F8D3F3FD551AEFF9884E49C9869B1",
+      "textureWidth": 154,
+      "textureHeight": 500,
+      "spriteRectF32": [
+        "00000000",
+        "00000000",
+        "431A0000",
+        "43FA0000"
+      ],
+      "spritePixelsPerUnitF32": "428A0000",
+      "spritePivotF32": [
+        "3F000000",
+        "00000000"
+      ],
+      "portablePng": {
+        "path": "portable-assets/NoteLaneEffect_4.png",
+        "bytes": 5535,
+        "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
+        "width": 154,
+        "height": 500
+      }
+    }
+  ],
+  "animations": [
+    {
+      "name": "NoteLaneEffectAnimationFadeOut",
+      "sourceFile": "ca481f406f6b64f15ad1845d13c9dceb",
+      "sourceBytes": 2980,
+      "sourceSha256": "BAE2ED2E21640A6678B774CC817B26CA7FE50BF5A6AEC7D733E936DDEB2A143A",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "3E2AAAAB",
+      "loop": false,
+      "denseFrameCount": 12,
+      "constantF32": [
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ],
+      "valueDeltaF32": [
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "bindings": [
+        [
+          3,
+          4
+        ],
+        [
+          304273561,
+          212
+        ],
+        [
+          3305885265,
+          212
+        ],
+        [
+          2526845255,
+          212
+        ],
+        [
+          4215373228,
+          212
+        ],
+        [
+          2334886179,
+          212
+        ]
+      ]
+    },
+    {
+      "name": "NoteLaneEffectAnimationDisabled",
+      "sourceFile": "d1ebd1b62beab4386a6a991583b56374",
+      "sourceBytes": 2504,
+      "sourceSha256": "7251B377EC6FBFA5FB7D7B2736B13DF64678810351D7D830BF3F9A5DA702BB4B",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "00000000",
+      "loop": true,
+      "denseFrameCount": 2,
+      "constantF32": [],
+      "valueDeltaF32": [
+        [
+          "00000000",
+          "00000000"
+        ]
+      ],
+      "bindings": [
+        [
+          3305885265,
+          212
+        ]
+      ]
+    },
+    {
+      "name": "NoteLaneEffectAnimationIdle",
+      "sourceFile": "e24f55481fb664d3e9a32ca1dcde4d4c",
+      "sourceBytes": 2724,
+      "sourceSha256": "2A2882167CD0D2DEC1FEE528CB2E5D9E865B1514ED45E81E0A8F5632DE006BC7",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "00000000",
+      "loop": true,
+      "denseFrameCount": 2,
+      "constantF32": [
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ],
+      "valueDeltaF32": [
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "bindings": [
+        [
+          3305885265,
+          212
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2526845255,
+          212
+        ],
+        [
+          4215373228,
+          212
+        ],
+        [
+          2334886179,
+          212
+        ],
+        [
+          304273561,
+          212
+        ]
+      ]
+    }
+  ],
+  "portableContract": {
+    "fixedButtonOwners": 13,
+    "discreteIntegerAndHalfButtons": true,
+    "onAnimation": "NoteLaneEffectAnimationIdle",
+    "animatedOffAnimation": "NoteLaneEffectAnimationFadeOut",
+    "offAnimation": "NoteLaneEffectAnimationDisabled",
+    "offReserveOuterUpdates": 2,
+    "fadeOutNominalFrames": 10,
+    "resourceFallbackAllowed": false
+  },
+  "unknownFields": [],
+  "unresolved": [],
+  "blocking": []
+}

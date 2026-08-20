@@ -2996,7 +2996,7 @@ function spriteChild(node: Container): Sprite | null {
 function spriteRole(role: string): boolean {
   return role === "note-root" || role === "note-head" || role === "note-icon" ||
     role === "note-intermediate" || role === "note-side-visual" ||
-    role === "field-line" || role === "judge-line";
+    role === "field-line" || role === "judge-line" || role === "tap-lane-effect";
 }
 
 function spriteKey(logicalAssetId: string, exactKey: string): string {

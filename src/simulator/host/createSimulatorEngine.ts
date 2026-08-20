@@ -33,6 +33,7 @@ import {
 import { InGameManager } from "../engine/managers/inGameManager";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { PrimaryJudgementAdjustmentOwner } from "../engine/managers/primaryJudgementAdjustmentOwner";
+import { TapLaneEffectOwner } from "../engine/managers/tapLaneEffectOwner";
 import { InGameMovieManager, mapMovieResult } from "../engine/movie/inGameMovieManager";
 import { MvBackgroundModule } from "../engine/movie/mvBackgroundModule";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -748,6 +749,14 @@ export function createSimulatorEngine(
     originalLiveSettings.core.judgementAdjustValue,
     input.startupDirection?.purpose ?? "initial",
   );
+  const tapLaneEffectOwner = renderProducer !== null && input.rendering !== undefined &&
+    input.rendering.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds.length === 4
+    ? new TapLaneEffectOwner(
+        renderProducer,
+        input.rendering.ordinaryNoteScene,
+        originalLiveSettings.visibleTapLaneEffect,
+      )
+    : null;
   const movieBackgroundResult = createMovieBackground(
     input,
     backends,
@@ -859,7 +868,7 @@ export function createSimulatorEngine(
     return manualJudgementOwner;
   }
   const inputManager = new InputManager(inGameCalculatedData.mode);
-  const inputDispatcher = new GamePlayInputDispatcher(noteManager);
+  const inputDispatcher = new GamePlayInputDispatcher(noteManager, tapLaneEffectOwner);
   const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
   if (inputDispatcherRegistration.status !== "ok") {
     return inputDispatcherRegistration;
@@ -889,6 +898,7 @@ export function createSimulatorEngine(
     startupDirection,
     productTimeline,
     primaryJudgementAdjustment,
+    tapLaneEffectOwner,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

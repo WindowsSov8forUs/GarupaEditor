@@ -1,4 +1,7 @@
-import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
+import {
+  DEFAULT_ORIGINAL_LIVE_SETTINGS,
+  originalLiveSettingsForTest,
+} from "./originalLiveSettingsTestProfile";
 import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
@@ -775,6 +778,7 @@ async function verifyActualPixiFullChart(
   let geometryViewportIntersectionCount = 0;
   let visibleNoteSampleCount = 0;
   let visibleNoteViewportCount = 0;
+  let tapLaneEffectVisibleSampleCount = 0;
   let frames = 0;
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
   for (; frames < 7200; frames += 1) {
@@ -798,6 +802,9 @@ async function verifyActualPixiFullChart(
             Math.max(...ys) >= 0 && Math.min(...ys) <= 720) {
           geometryViewportIntersectionCount += 1;
         }
+      }
+      if (row.visible && row.role === "tap-lane-effect") {
+        tapLaneEffectVisibleSampleCount += 1;
       }
       if (row.visible && ["note-root", "note-head", "note-intermediate", "note-side-visual"].includes(row.role)) {
         visibleNoteSampleCount += 1;
@@ -827,12 +834,50 @@ async function verifyActualPixiFullChart(
   const record = finalSnapshot.managers.scoreLifeState?.record;
   assert(record !== undefined, "full-chart Score/Life snapshot exists");
   assert(record.score > 0 && record.currentCombo > 0, "full-chart Auto Live updates Score and Combo");
+  assert(tapLaneEffectVisibleSampleCount > 0, "actual Pixi observes the recovered tap lane effect Sprite owner");
   equal(record.currentLife, 1000, "full-chart Auto Live preserves ordinary Life");
   const consumedBatches = finalSnapshot.managers.noteManager.nextBatchIndex;
   const totalScoringUnitCount = finalSnapshot.managers.scoreLifeState?.initialization.totalScoringUnitCount ?? 0;
   requireOk(engine.dispose(), "dispose actual Pixi full-chart engine");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi full-chart releases every owner");
   equal(renderer.stage.children.length, 0, "actual Pixi full-chart leaves an empty stage");
+
+  const disabledSessionId = `${sessionId}:tap-lane-disabled`;
+  const disabledProvider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "disabled tap lane provider");
+  const disabledRenderer = new PixiRendererBackend(decoder);
+  requireOk(await disabledRenderer.prepare(
+    disabledSessionId, profile, disabledProvider, new PortableRenderResourcePreflightAdapter(),
+  ), "disabled tap lane Pixi prepare");
+  requireOk(disabledRenderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "disabled tap lane bind surface");
+  const disabledEngine = requireOk(createSimulatorEngine({
+    chart,
+    runtime: {
+      originalLiveSettings: originalLiveSettingsForTest({ visibleTapLaneEffect: false }),
+      mode: LIVE_AUTO_MODE,
+    },
+    scoreLifeState: {
+      schemaVersion: 3,
+      sessionId: disabledSessionId,
+      life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+      mode: LIVE_AUTO_MODE,
+    },
+    rendering: {
+      sessionId: disabledSessionId,
+      resources: CURRENT_ORDINARY_RENDER_BINDINGS,
+      ordinaryNoteScene: scene,
+    },
+  }, createRecordingSimulatorBackends(disabledRenderer)), "disabled tap lane engine create");
+  requireOk(disabledEngine.initialize(), "disabled tap lane initialize");
+  for (let frame = 0; frame < 300; frame += 1) requireOk(disabledEngine.step(1 / 30), `disabled tap lane frame ${frame}`);
+  const disabledSnapshot = requireOk(disabledEngine.snapshot(), "disabled tap lane snapshot");
+  equal(disabledSnapshot.managers.tapLaneEffect?.visible, false, "setting false remains frozen in the owner");
+  equal(disabledSnapshot.managers.tapLaneEffect?.activeCount, 0, "setting false activates no lane effect");
+  equal(disabledRenderer.sceneSnapshot().filter((row) => row.role === "tap-lane-effect" && row.visible).length, 0,
+    "setting false publishes no visible tap lane Sprite");
+  assert((disabledSnapshot.managers.scoreLifeState?.record.score ?? 0) > 0,
+    "setting false does not suppress Auto judgement or Score");
+  requireOk(disabledEngine.dispose(), "disabled tap lane dispose");
+  equal(disabledRenderer.snapshot().objectCount, 0, "disabled tap lane owner cleanup");
   const routeList = Object.freeze([...routes].sort());
   console.log(`actual Pixi ordinary full-chart passed: batches=${chart.noteBatches.length} frames=${frames} score=${record.score} routes=${routeList.join("|")}`);
   return Object.freeze({

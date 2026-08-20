@@ -264,6 +264,7 @@ function resolveBindings(
       judgeLogicalAssetId: judge,
       lifeAdditiveLogicalAssetId: base.ordinaryVisible.lifeAdditiveLogicalAssetId,
       warningLogicalAssetId: base.ordinaryVisible.warningLogicalAssetId,
+      tapLaneEffectLogicalAssetIds: base.ordinaryVisible.tapLaneEffectLogicalAssetIds,
     });
   }
   return accepted(Object.freeze({

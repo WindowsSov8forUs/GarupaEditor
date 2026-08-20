@@ -39,6 +39,7 @@ import type {
   PrimaryJudgementAdjustmentOwner,
   PrimaryJudgementAdjustmentSnapshot,
 } from "./primaryJudgementAdjustmentOwner";
+import type { TapLaneEffectOwner, TapLaneEffectSnapshot } from "./tapLaneEffectOwner";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -53,6 +54,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly startupDirection: StartupDirectionSnapshot | null;
   readonly garupaProduct: GarupaProductTimelineSnapshot | null;
   readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentSnapshot | null;
+  readonly tapLaneEffect: TapLaneEffectSnapshot | null;
   readonly playable: boolean;
 }
 
@@ -79,6 +81,7 @@ export class InGameManager {
     private readonly startupDirection: StartupDirectionController | null = null,
     private readonly garupaProduct: GarupaProductTimelineManager | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
+    private readonly tapLaneEffect: TapLaneEffectOwner | null = null,
   ) {
     this.currentGameStateValue = startupDirection === null
       ? GameState.PlayingSound
@@ -129,6 +132,12 @@ export class InGameManager {
     if (fieldSetup?.status === "evidence-required") return fieldSetup;
     if (fieldSetup?.status === "ok") {
       const committed = fieldSetup.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    const tapLaneEffectSetup = this.tapLaneEffect?.preflightInitialize() ?? null;
+    if (tapLaneEffectSetup?.status === "evidence-required") return tapLaneEffectSetup;
+    if (tapLaneEffectSetup?.status === "ok") {
+      const committed = tapLaneEffectSetup.value.commit();
       if (committed.status !== "ok") return committed;
     }
     const hudSetup = this.scoreLifeStateManager !== null && this.renderProducer !== null
@@ -197,6 +206,14 @@ export class InGameManager {
     }
     const productUpdate = this.garupaProduct?.update() ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
+    const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
+    if (tapLaneEffectAdvance?.status === "evidence-required") {
+      return this.latchFault(tapLaneEffectAdvance);
+    }
+    if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
+      const committed = tapLaneEffectAdvance.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
     if (
       !this.degradedHabahiroLaneChanged &&
       this.renderProducer?.isDegradedHabahiro() === true &&
@@ -335,7 +352,7 @@ export class InGameManager {
             if (particlePlan?.status === "ok") particlePlan.value.discard();
             if (audioPlan?.status === "ok") audioPlan.value.discard();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
-            return this.latchFault(businessReflect);
+              return this.latchFault(businessReflect);
           }
         }
         if (particlePlan?.status === "ok") {
@@ -343,7 +360,7 @@ export class InGameManager {
           if (committed.status !== "ok") {
             if (audioPlan?.status === "ok") audioPlan.value.discard();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
-            return this.latchFault(committed);
+              return this.latchFault(committed);
           }
         }
         if (audioPlan?.status === "ok") {
@@ -351,11 +368,23 @@ export class InGameManager {
           if (committed.status !== "ok") {
             if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
-            return this.latchFault(committed);
+              return this.latchFault(committed);
           }
         }
         if (renderPlan?.status === "ok") {
           const committed = renderPlan.value.commit();
+          if (committed.status !== "ok") {
+            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
+              return this.latchFault(committed);
+          }
+        }
+        const tapLaneEffectPlan = this.tapLaneEffect?.preflightJudgement(batch) ?? null;
+        if (tapLaneEffectPlan?.status === "evidence-required") {
+          if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
+          return this.latchFault(tapLaneEffectPlan);
+        }
+        if (tapLaneEffectPlan?.status === "ok" && tapLaneEffectPlan.value !== null) {
+          const committed = tapLaneEffectPlan.value.commit();
           if (committed.status !== "ok") {
             if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
             return this.latchFault(committed);
@@ -423,6 +452,12 @@ export class InGameManager {
     if (this.isPaused()) return ok(undefined);
     const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
     if (movie.status !== "ok") return this.latchFault(movie);
+    const laneEffect = this.tapLaneEffect?.preflightAllOff() ?? null;
+    if (laneEffect?.status === "evidence-required") return this.latchFault(laneEffect);
+    if (laneEffect?.status === "ok" && laneEffect.value !== null) {
+      const committed = laneEffect.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
     this.currentGameStateValue = GameState.PauseSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);
@@ -470,6 +505,12 @@ export class InGameManager {
     }
     if (productDispose.value !== null) {
       const committed = productDispose.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    const tapLaneEffectDispose = this.tapLaneEffect?.preflightAllOff() ?? null;
+    if (tapLaneEffectDispose?.status === "evidence-required") return tapLaneEffectDispose;
+    if (tapLaneEffectDispose?.status === "ok" && tapLaneEffectDispose.value !== null) {
+      const committed = tapLaneEffectDispose.value.commit();
       if (committed.status !== "ok") return committed;
     }
     this.garupaProduct?.commitDispose();
@@ -555,6 +596,7 @@ export class InGameManager {
       startupDirection: this.startupDirection?.snapshot() ?? null,
       garupaProduct: this.garupaProduct?.snapshot() ?? null,
       primaryJudgementAdjustment: this.primaryJudgementAdjustment?.snapshot() ?? null,
+      tapLaneEffect: this.tapLaneEffect?.snapshot() ?? null,
       playable: (this.startupDirection?.snapshot().playable ?? true) &&
         this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
     };

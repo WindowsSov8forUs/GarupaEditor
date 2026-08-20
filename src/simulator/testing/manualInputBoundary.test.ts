@@ -41,8 +41,9 @@ class NoopManualInputDispatcher implements ManualInputDispatcher {
     return ok(Object.freeze({ touchCount: frame.touches.length }));
   }
 
-  commit(_plan: ManualInputDispatchPlan): void {
+  commit(_plan: ManualInputDispatchPlan): SimulatorResult<void> {
     this.commitCount += 1;
+    return ok(undefined);
   }
 }
 

@@ -47,7 +47,7 @@ interface PendingRenderBatch {
 const RENDER_OBJECT_ROLES = new Set([
   "note-root", "note-head", "note-icon", "note-intermediate",
   "note-side-visual", "note-mesh", "sync-line", "multiple-directional-line",
-  "field-line", "judge-line", "mask", "hud-score", "hud-combo",
+  "field-line", "judge-line", "tap-lane-effect", "mask", "hud-score", "hud-combo",
   "hud-result", "hud-life", "hud-add-score", "habahiro-flash", "fidelity-label",
 ]);
 

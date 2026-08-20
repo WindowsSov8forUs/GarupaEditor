@@ -29,6 +29,10 @@ export const CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES: readonly OrdinaryVisib
     textureSettings: ADDITIVE_TEXTURE, atlasRows: Object.freeze([row("hp_meter",474,535,17,26,[8, 8, 0, 0])]),
     materialRole: "hud", animationRole: "none", provenance: "current-apk",
   }),
+  entry("tap-lane-effect-1.png", laneEffectProfile(1, 14137, "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D", 467)),
+  entry("tap-lane-effect-2.png", laneEffectProfile(2, 11402, "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113", 342)),
+  entry("tap-lane-effect-3.png", laneEffectProfile(3, 7630, "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA", 218)),
+  entry("tap-lane-effect-4.png", laneEffectProfile(4, 5535, "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48", 154)),
   entry("ui-additive-effect.png", {
     logicalAssetId: "hud/ordinary/ui-additive-effect-atlas", role: "hud-atlas", byteLength: 20188,
     sha256: "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E", mime: "image/png", width: 256, height: 256,
@@ -42,10 +46,47 @@ export const CURRENT_ORDINARY_VISIBLE_BINDINGS = Object.freeze({
   judgeLogicalAssetId: "hud/ordinary/judge-atlas",
   lifeAdditiveLogicalAssetId: "hud/ordinary/rhythm-game-additive-atlas",
   warningLogicalAssetId: "hud/ordinary/ui-additive-effect-atlas",
+  tapLaneEffectLogicalAssetIds: Object.freeze([
+    "field/ordinary/tap-lane-effect-1",
+    "field/ordinary/tap-lane-effect-2",
+    "field/ordinary/tap-lane-effect-3",
+    "field/ordinary/tap-lane-effect-4",
+  ] as const),
 });
 
 function row(exactKey: string, x: number, y: number, width: number, height: number, border: readonly number[]): RenderAtlasRow {
   return Object.freeze({ exactKey, x, y, width, height, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: border[0]!, borderRight: border[1]!, borderTop: border[2]!, borderBottom: border[3]! });
+}
+
+function laneEffectProfile(
+  index: 1 | 2 | 3 | 4,
+  byteLength: number,
+  sha256: string,
+  width: number,
+): RenderResourceAssetProfile {
+  return Object.freeze({
+    logicalAssetId: `field/ordinary/tap-lane-effect-${index}`,
+    role: "lane-effect" as const,
+    byteLength,
+    sha256,
+    mime: "image/png" as const,
+    width,
+    height: 500,
+    textureSettings: ADDITIVE_TEXTURE,
+    atlasRows: Object.freeze([Object.freeze({
+      exactKey: `NoteLaneEffect_${index}`,
+      x: 0,
+      y: 0,
+      width,
+      height: 500,
+      pivotX: 0.5,
+      pivotY: 0,
+      pixelsPerUnit: 69,
+    })]),
+    materialRole: "sprite" as const,
+    animationRole: "none" as const,
+    provenance: "current-apk" as const,
+  });
 }
 
 function entry(resourceKeySuffix: string, profile: RenderResourceAssetProfile): OrdinaryVisiblePortableResourceEntry {

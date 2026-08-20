@@ -174,7 +174,7 @@ export function freezeTypedHudState<T extends SetHudCommand["state"]>(state: T):
 function spriteObjectRole(role: RenderObjectRole): boolean {
   return role === "note-root" || role === "note-head" || role === "note-icon" ||
     role === "note-intermediate" || role === "note-side-visual" ||
-    role === "field-line" || role === "judge-line";
+    role === "field-line" || role === "judge-line" || role === "tap-lane-effect";
 }
 
 function exactKeys(value: object, keys: readonly string[]): boolean {
