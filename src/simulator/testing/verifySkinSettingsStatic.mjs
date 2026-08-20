@@ -19,6 +19,8 @@ const composition = read("platform/platformComposition.ts");
 const fieldOwner = read("engine/managers/inGameManager.ts");
 const skinManifest = read("backends/resources/currentSkinResourceManifest.ts");
 const lifecycle = read("assembly/sessionRecipe.ts") + read("public/capabilities.ts");
+const actualAcceptance = read("testing/renderPixi.test.ts") + read("testing/skinSettingsWebView2.test.ts") +
+  read("testing/skinProductionComposition.test.ts") + read("testing/runSkinSettingsWebView2Tests.mjs");
 
 for (const symbol of [
   "SimulatorOriginalSkinSettings",
@@ -89,6 +91,20 @@ for (const required of [
   "this.renderScene.field.masks",
   "fieldSetup.value.commit()",
 ]) if (!fieldOwner.includes(required)) throw new Error(`selected Field runtime owner missing: ${required}`);
+for (const required of [
+  'roles=note/field/judge/background',
+  'producer.preflightFieldSetup(field.objects, field.masks)',
+  'app.renderer.extract.pixels',
+  'backgroundExpected ? ["note", "field", "judge", "background"]',
+  'fieldCleanup',
+  'rgbaSha256',
+  'runComposition("default")',
+  'runComposition("limited3")',
+  'resources=${entries.length}',
+]) if (!actualAcceptance.includes(required)) throw new Error(`selected Skin actual acceptance missing: ${required}`);
+for (const forbidden of ["value.fieldBindings !== true", "value.background !== true"]) {
+  if (actualAcceptance.includes(forbidden)) throw new Error(`boolean-only Skin acceptance survived: ${forbidden}`);
+}
 
 const production = collect(simulatorRoot).filter((path) => !path.includes(`${join("simulator", "testing")}`));
 for (const path of production) {

@@ -971,6 +971,69 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/8130c39c597d7615461cd9786f54c3916fb0bcda8f06111393c58193413a702b.json",
       "bytes": 128402,
       "sha256": "E31C3493979C7E37759D7E70B21ED75AF2E648BD201ED21DD5AAC2101F7FDA0E"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 36197,
+      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 37081,
+      "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 41143,
+      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 48550,
+      "sha256": "ABD069B4FADB057AAA9E48012D6DCB28DF3C3B0C7BDB55894B717FDE13C62776"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_SKILL.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 42310,
+      "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 16740,
+      "sha256": "084A1A8ED5255C61B63BFA1CE87F373DCEECDF7875321BF652EB3EE71395BC0F"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_TAP_SKILL.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 12046,
+      "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 504,
+      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 792,
+      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
     }
   ]
 }

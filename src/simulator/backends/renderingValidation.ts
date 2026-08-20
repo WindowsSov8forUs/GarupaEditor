@@ -20,7 +20,7 @@ const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const FLOAT32_BITS_PATTERN = /^[0-9A-F]{8}$/;
 const RESOURCE_ROLES = new Set([
   "note-atlas", "directional-atlas", "judge-atlas", "field-atlas",
-  "hud-atlas", "font", "material-texture", "animation-clip",
+  "hud-atlas", "font", "material-texture", "animation-clip", "startup-ui",
 ]);
 const MATERIAL_ROLES = new Set([
   "none", "sprite", "long-note", "curve-note", "sync-line",

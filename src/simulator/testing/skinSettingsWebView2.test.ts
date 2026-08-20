@@ -1,8 +1,10 @@
+import { Application, Rectangle } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceProfile } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
@@ -30,13 +32,16 @@ void main().catch((error) => window.ipc.postMessage(JSON.stringify({
 async function main(): Promise<void> {
   const map = await fetchJson<{ readonly packs: readonly { readonly logicalResource: string; readonly url: string }[] }>("/packs.json");
   const base = await fetchJson<RenderResourceProfile>("/render-profile.json");
+  const scenario = await fetchJson<{ readonly kind: "default" | "limited3" }>("/selection.json");
   const recipe = requireOk(resolveOriginalSkinRecipe({
     noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
     directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
-    special: { kind: "limited", limitedSkinId: 3, components: {
-      laneAndLine: "on", tapEffect: "on", rhythmIcon: "on", background: "on",
-      soundEffect: "on", judge: "on", directionalFlickIcon: "on",
-    } },
+    special: scenario.kind === "default"
+      ? { kind: "none" }
+      : { kind: "limited", limitedSkinId: 3, components: {
+          laneAndLine: "on", tapEffect: "on", rhythmIcon: "on", background: "on",
+          soundEffect: "on", judge: "on", directionalFlickIcon: "on",
+        } },
   }, createSimulatorModeIdentity("live", "manual"), "ordinary", "standard"));
   const selected = selectResolvedSkinResourceInventory(recipe);
   const urlByLogical = new Map(map.packs.map((row) => [row.logicalResource, row.url]));
@@ -87,42 +92,78 @@ async function main(): Promise<void> {
     origin: "bottom-left",
   }, Math.fround(100)));
   requireOk(renderer.bindOriginalSurfaceLayout(surface));
-  const commands: RenderCommand[] = [
-    { kind: "create-object", renderObjectId: "skin:web:note", poolFamily: "normal", role: "note-root", parentObjectId: null,
-      sessionId: "selected-skin-webview2", sequence: 0, frame: 0, substep: 0 },
-    { kind: "bind-resource", renderObjectId: "skin:web:note", binding: "sprite",
-      logicalAssetId: overlay.bindings.noteAtlasLogicalAssetId, exactKey: "note_normal_0",
-      sessionId: "selected-skin-webview2", sequence: 1, frame: 0, substep: 0 },
-    { kind: "set-transform", renderObjectId: "skin:web:note",
-      position: { x: f32(0), y: f32(0), z: f32(0) }, scale: { x: f32(1), y: f32(1) },
-      rotationDegrees: f32(0), color: { red: f32(1), green: f32(1), blue: f32(1), alpha: f32(1) },
-      ordering: { domainLayer: 3, sourceDepthOrSortingOrder: 0, sourceZ: f32(0), creationSequence: 0 }, maskObjectId: null,
-      sessionId: "selected-skin-webview2", sequence: 2, frame: 0, substep: 0 },
-    { kind: "activate-object", renderObjectId: "skin:web:note",
-      sessionId: "selected-skin-webview2", sequence: 3, frame: 0, substep: 0 },
-  ];
-  const batch = requireOk(renderer.preflight(commands));
-  requireOk(renderer.commit(batch));
-  const root = renderer.stage.getChildByLabel("skin:web:note") as any;
-  const resources: unknown[] = [];
-  const walk = (node: any) => {
-    if (node?.texture?.source?.resource !== undefined) resources.push(node.texture.source.resource);
-    for (const child of node?.children ?? []) walk(child);
-  };
-  walk(root);
-  const imageBitmapCount = resources.filter((value) => value instanceof ImageBitmap).length;
-  if (imageBitmapCount < 1) throw new Error("selected Skin did not bind an ImageBitmap-backed Pixi texture");
+  if (overlay.fieldBindings === null || overlay.bindings.ordinaryVisible === undefined) {
+    throw new Error("selected visible bindings absent");
+  }
+  let nextSequence = 0;
+  const baseCommand = () => ({
+    sessionId: "selected-skin-webview2", sequence: nextSequence++, frame: 0, substep: 0,
+  });
+  const transform = (domainLayer: number, creationSequence: number, scale = 1) => ({
+    position: { x: f32(0), y: f32(0), z: f32(0) },
+    scale: { x: f32(scale), y: f32(scale) }, rotationDegrees: f32(0),
+    color: { red: f32(1), green: f32(1), blue: f32(1), alpha: f32(1) },
+    ordering: { domainLayer, sourceDepthOrSortingOrder: 0, sourceZ: f32(0), creationSequence },
+    maskObjectId: null,
+  });
+  const commands: RenderCommand[] = [];
+  if (overlay.backgroundLogicalAssetId !== null) commands.push(
+    { ...baseCommand(), kind: "create-object", renderObjectId: "skin:web:background", poolFamily: "skin-background", role: "field-line", parentObjectId: null },
+    { ...baseCommand(), kind: "bind-resource", renderObjectId: "skin:web:background", binding: "sprite", logicalAssetId: overlay.backgroundLogicalAssetId, exactKey: "liveBG" },
+    { ...baseCommand(), kind: "set-transform", renderObjectId: "skin:web:background", ...transform(0, 0, 1.5) },
+    { ...baseCommand(), kind: "activate-object", renderObjectId: "skin:web:background" },
+  );
+  commands.push(
+    { ...baseCommand(), kind: "create-object", renderObjectId: "skin:web:note", poolFamily: "normal", role: "note-root", parentObjectId: null },
+    { ...baseCommand(), kind: "bind-resource", renderObjectId: "skin:web:note", binding: "sprite", logicalAssetId: overlay.bindings.noteAtlasLogicalAssetId, exactKey: "note_normal_0" },
+    { ...baseCommand(), kind: "set-transform", renderObjectId: "skin:web:note", ...transform(3, 1) },
+    { ...baseCommand(), kind: "activate-object", renderObjectId: "skin:web:note" },
+    { ...baseCommand(), kind: "create-object", renderObjectId: "skin:web:judge", poolFamily: "selected-judge", role: "judge-line", parentObjectId: null },
+    { ...baseCommand(), kind: "bind-resource", renderObjectId: "skin:web:judge", binding: "sprite", logicalAssetId: overlay.bindings.ordinaryVisible.judgeLogicalAssetId, exactKey: "judge_perfect" },
+    { ...baseCommand(), kind: "set-transform", renderObjectId: "skin:web:judge", ...transform(4, 2) },
+    { ...baseCommand(), kind: "activate-object", renderObjectId: "skin:web:judge" },
+  );
+  requireOk(renderer.commit(requireOk(renderer.preflight(commands))));
+  const producer = new RenderCommandProducer("selected-skin-webview2", renderer, overlay.bindings);
+  const fieldScene = scene.ordinaryNoteScene.field;
+  if (fieldScene === undefined) throw new Error("selected Field scene absent");
+  requireOk(requireOk(producer.preflightFieldSetup(fieldScene.objects, fieldScene.masks)).commit());
+  const app = new Application();
+  await app.init({ width: 1600, height: 720, preference: "webgl", antialias: false,
+    resolution: 1, backgroundAlpha: 0, preserveDrawingBuffer: true, autoStart: false, sharedTicker: false });
+  document.body.appendChild(app.canvas);
+  app.stage.addChild(renderer.stage);
+  app.render();
+  const output = app.renderer.extract.pixels({ target: app.stage,
+    frame: new Rectangle(0, 0, 1600, 720), resolution: 1, clearColor: [0, 0, 0, 0] });
+  const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const rgbaSha256 = await sha256(pixels);
+  const alphaPixels = alphaCount(pixels);
+  const snapshot = renderer.sceneSnapshot();
+  const fieldRows = snapshot.filter((row) => row.renderObjectId.startsWith("render:skin-field:"));
+  const judgeRow = snapshot.find((row) => row.renderObjectId === "skin:web:judge");
+  const backgroundRow = snapshot.find((row) => row.renderObjectId === "skin:web:background");
+  const backgroundExpected = scenario.kind === "limited3";
+  if (fieldRows.length !== 3 || !fieldRows.some((row) => row.role === "mask") ||
+    judgeRow?.spriteBindingKey?.endsWith("\u0000judge_perfect") !== true ||
+    (backgroundRow?.spriteBindingKey?.endsWith("\u0000liveBG") === true) !== backgroundExpected ||
+    alphaPixels <= 0) {
+    throw new Error("selected Note/Field/Judge/Background routes were not actually published and rasterized");
+  }
+  const released = requireOk(producer.preflightSessionRelease());
+  requireOk(released.commit());
+  const fieldCleanup = renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length;
+  renderer.stage.removeFromParent();
   requireOk(renderer.dispose());
+  const cleanup = renderer.snapshot().objectCount;
+  app.destroy(true, { children: true, texture: true, textureSource: true });
   window.ipc.postMessage(JSON.stringify({
-    status: "accepted",
-    packCount: packs.length,
-    assetCount: overlay.assets.length,
-    imageBitmapCount,
-    particleResources,
-    particleCleanup: particleRenderer.snapshot().nodeCount,
-    fieldBindings: overlay.fieldBindings !== null,
-    background: overlay.backgroundLogicalAssetId !== null,
-    cleanup: renderer.snapshot().objectCount,
+    status: "accepted", scenario: scenario.kind, packCount: packs.length, assetCount: overlay.assets.length,
+    actualDrawnRoles: backgroundExpected ? ["note", "field", "judge", "background"] : ["note", "field", "judge"],
+    fieldDrawCount: fieldRows.length, judgeDraw: true, backgroundDraw: backgroundExpected,
+    rgbaSha256, alphaPixels,
+    particleResources, particleCleanup: particleRenderer.snapshot().nodeCount,
+    fieldCleanup, cleanup,
   }));
 }
 
@@ -134,6 +175,15 @@ function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { r
 function requireAccepted<T>(result: { readonly status: "accepted"; readonly value: T } | { readonly status: "rejected"; readonly failure: { readonly capability: string } }): T {
   if (result.status !== "accepted") throw new Error(result.failure.capability);
   return result.value;
+}
+function alphaCount(bytes: Uint8Array): number {
+  let count = 0;
+  for (let index = 3; index < bytes.length; index += 4) if (bytes[index] !== 0) count += 1;
+  return count;
+}
+async function sha256(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(path, { cache: "no-store", credentials: "omit", redirect: "error" });

@@ -314,20 +314,27 @@ async function main(): Promise<void> {
 }
 
 async function testSelectedSkinWebAudio(): Promise<void> {
+  await runSelectedSkinWebAudio("default");
+  await runSelectedSkinWebAudio("limited3");
+}
+
+async function runSelectedSkinWebAudio(scenario: "default" | "limited3"): Promise<void> {
   const recipeResult = resolveOriginalSkinRecipe({
     noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
     directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
-    special: {
-      kind: "limited", limitedSkinId: 3,
-      components: {
-        laneAndLine: "on", tapEffect: "on", rhythmIcon: "on", background: "on",
-        soundEffect: "on", judge: "on", directionalFlickIcon: "on",
-      },
-    },
+    special: scenario === "default"
+      ? { kind: "none" }
+      : {
+          kind: "limited", limitedSkinId: 3,
+          components: {
+            laneAndLine: "on", tapEffect: "on", rhythmIcon: "on", background: "on",
+            soundEffect: "on", judge: "on", directionalFlickIcon: "on",
+          },
+        },
   }, LIVE_MANUAL_MODE, "ordinary", "standard");
   if (recipeResult.status !== "ok") throw new Error(recipeResult.capability);
   const selected = selectResolvedSkinResourceInventory(recipeResult.value);
-  const root = join(process.cwd(), "src/simulator/testing/fixtures/reverse-snapshots/skin-settings/limited3");
+  const root = join(process.cwd(), `src/simulator/testing/fixtures/reverse-snapshots/skin-settings/${scenario}`);
   const storeResult = ImmutableSharedStaticResourceStore.create(selected.resources.map((resource) => ({
     resourceKey: resource.resourceKey,
     bytes: new Uint8Array(readFileSync(join(root, `${resource.logicalResource.replace(/\//g, "__")}.json`))),
@@ -371,7 +378,7 @@ async function testSelectedSkinWebAudio(): Promise<void> {
   const context = new FakeAudioContext();
   const backend = new WebAudioSimulatorBackend(context as unknown as AudioContext);
   const prepared = await backend.prepare(
-    "selected-skin-web-audio", overlay.value.profile, overlay.value.provider, selectedPreflight,
+    `selected-skin-web-audio-${scenario}`, overlay.value.profile, overlay.value.provider, selectedPreflight,
   );
   assert.equal(prepared.status, "accepted", JSON.stringify(prepared));
   execute(backend, [
@@ -384,7 +391,7 @@ async function testSelectedSkinWebAudio(): Promise<void> {
   assert.equal(context.sources[context.sources.length - 2]!.loop, true);
   assert.equal(context.sources[context.sources.length - 1]!.loop, false);
   assert.equal(backend.dispose().status, "accepted");
-  console.log("WebAudio selected Skin passed: Tap SE replacement + fixed Directional pack + loop owner cleanup");
+  console.log(`WebAudio selected Skin ${scenario} passed: Tap SE replacement + fixed Directional pack + loop owner cleanup`);
 }
 
 function execute(backend: WebAudioSimulatorBackend, commands: readonly any[]): void {

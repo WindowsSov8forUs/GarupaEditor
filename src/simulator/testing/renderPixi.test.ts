@@ -537,18 +537,55 @@ async function verifyActualPixiSelectedSkin(
   ];
   const batch = requireOk(renderer.preflight(commands), "selected Skin bind preflight");
   requireOk(renderer.commit(batch), "selected Skin bind commit");
-  const sprite = renderer.stage.getChildByLabel("skin:note") as any;
+  if (overlay.value.backgroundLogicalAssetId === null || overlay.value.fieldBindings === null ||
+    overlay.value.bindings.ordinaryVisible === undefined) throw new Error("selected visible bindings absent");
+  const extra: RenderCommand[] = [
+    { kind: "create-object", renderObjectId: "skin:background", poolFamily: "skin-background", role: "field-line", parentObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 3, frame: 0, substep: 0 },
+    { kind: "bind-resource", renderObjectId: "skin:background", binding: "sprite", logicalAssetId: overlay.value.backgroundLogicalAssetId,
+      exactKey: "liveBG", sessionId: "actual-pixi-selected-skin", sequence: 4, frame: 0, substep: 0 },
+    { kind: "set-transform", renderObjectId: "skin:background", position: vector3(0, 0, 0), scale: vector2(1, 1), rotationDegrees: f32(0),
+      color: color(1, 1, 1, 1), ordering: ordering(0, 0), maskObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 5, frame: 0, substep: 0 },
+    { kind: "activate-object", renderObjectId: "skin:background", sessionId: "actual-pixi-selected-skin", sequence: 6, frame: 0, substep: 0 },
+    { kind: "create-object", renderObjectId: "skin:judge", poolFamily: "selected-judge", role: "judge-line", parentObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 7, frame: 0, substep: 0 },
+    { kind: "bind-resource", renderObjectId: "skin:judge", binding: "sprite", logicalAssetId: overlay.value.bindings.ordinaryVisible.judgeLogicalAssetId,
+      exactKey: "judge_perfect", sessionId: "actual-pixi-selected-skin", sequence: 8, frame: 0, substep: 0 },
+    { kind: "set-transform", renderObjectId: "skin:judge", position: vector3(0, 0, 0), scale: vector2(1, 1), rotationDegrees: f32(0),
+      color: color(1, 1, 1, 1), ordering: ordering(4, 2), maskObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 9, frame: 0, substep: 0 },
+    { kind: "activate-object", renderObjectId: "skin:judge", sessionId: "actual-pixi-selected-skin", sequence: 10, frame: 0, substep: 0 },
+  ];
+  requireOk(renderer.commit(requireOk(renderer.preflight(extra), "selected visible preflight")), "selected visible commit");
+  const scene = requireOk(createSimulatorSceneLayout(
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720,
+      safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0,
+      habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: recipe.note.noteSyncEdgeMargin },
+    "ordinary", overlay.value.bindings, overlay.value.fieldBindings,
+  ), "selected Field scene");
+  const field = scene.ordinaryNoteScene.field;
+  if (field === undefined) throw new Error("selected Field scene absent");
+  const producer = new RenderCommandProducer("actual-pixi-selected-skin", renderer, overlay.value.bindings);
+  requireOk(requireOk(producer.preflightFieldSetup(field.objects, field.masks), "selected Field preflight").commit(), "selected Field commit");
   const textureLabels: string[] = [];
   const collectTextures = (node: any) => {
     if (node?.texture?.label) textureLabels.push(String(node.texture.label));
     for (const child of node?.children ?? []) collectTextures(child);
   };
-  collectTextures(sprite);
-  assert(sprite !== null && textureLabels.some((label) => label.includes("skin_april2021")),
-    "actual Pixi consumes selected Note atlas texture");
+  collectTextures(renderer.stage);
+  const selectedRows = renderer.sceneSnapshot();
+  assert(textureLabels.some((label) => label.includes("noteskin%2Fskin_april2021")), "actual Pixi consumes selected Note atlas");
+  assert(textureLabels.some((label) => label.includes("fieldskin%2Fskin_april2021")), "actual Pixi consumes selected Field textures");
+  assert(textureLabels.some((label) => label.includes("judgeskin%2Fskinapril2021")), "actual Pixi consumes selected Judge atlas");
+  assert(textureLabels.some((label) => label.includes("bgskin%2Fskin_april2021")), "actual Pixi consumes selected Background texture");
+  equal(selectedRows.filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 3, "selected Field publishes mask/line/judge owners");
+  requireOk(requireOk(producer.preflightSessionRelease(), "selected Field release").commit(), "selected Field release commit");
+  equal(renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 0, "selected Field cleanup");
   requireOk(renderer.dispose(), "selected Skin renderer dispose");
   equal(renderer.snapshot().objectCount, 0, "selected Skin Pixi cleanup");
-  console.log(`actual Pixi selected Skin passed: assets=${overlay.value.assets.length} packs=${packs.value.length}`);
+  console.log(`actual Pixi selected Skin passed: roles=note/field/judge/background assets=${overlay.value.assets.length} packs=${packs.value.length}`);
 }
 
 async function verifyActualPixiGarupaProduct(
@@ -965,6 +1002,14 @@ function lifeState(currentLife: number, playerMaxLife: number, lifeUpperLimit: n
   });
 }
 
+function vector2(x: number, y: number) { return Object.freeze({ x: f32(x), y: f32(y) }); }
+function vector3(x: number, y: number, z: number) { return Object.freeze({ x: f32(x), y: f32(y), z: f32(z) }); }
+function color(red: number, green: number, blue: number, alpha: number) {
+  return Object.freeze({ red: f32(red), green: f32(green), blue: f32(blue), alpha: f32(alpha) });
+}
+function ordering(domainLayer: number, creationSequence: number) {
+  return Object.freeze({ domainLayer, sourceDepthOrSortingOrder: 0, sourceZ: f32(0), creationSequence });
+}
 function f32(value: number) { return requireOk(createRenderFloat32(Math.fround(value)), "Float32"); }
 function assert(condition: unknown, message: string): asserts condition { if (!condition) throw new Error(message); }
 function equal<T>(actual: T, expected: T, message: string): void { if (!Object.is(actual, expected)) throw new Error(`${message}: ${String(actual)} !== ${String(expected)}`); }
