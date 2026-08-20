@@ -87,6 +87,8 @@ async function main(): Promise<void> {
     layout.garupaProductScene,
     layout.ordinaryNoteScene.specificSpeed,
     true,
+    true,
+    false,
   );
   requireOk(producer.validate());
   const first = requireOk(producer.preflightFrame(0, []));
@@ -96,6 +98,7 @@ async function main(): Promise<void> {
   assert.ok(firstRows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible));
   assert.ok(firstRows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:3" && row.visible));
   assert.ok(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22));
+  assert.ok(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible));
   assert.ok(firstRows.every((row) => !row.renderObjectId.startsWith("render:garupa:node:garupa-slide:5")));
 
   const judged = product.visibleNodes[0]!;

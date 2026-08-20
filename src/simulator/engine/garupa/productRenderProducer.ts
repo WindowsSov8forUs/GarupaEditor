@@ -27,6 +27,8 @@ export interface GarupaProductRenderSnapshot {
   readonly createdObjectCount: number;
   readonly visibleObjectCount: number;
   readonly activeEffectCount: number;
+  readonly activeTapLaneEffectCount: number;
+  readonly syncPairCount: number;
 }
 
 export class GarupaProductRenderProducer {
@@ -34,6 +36,7 @@ export class GarupaProductRenderProducer {
   private readonly created = new Set<string>();
   private readonly visible = new Set<string>();
   private readonly effectFrames = new Map<string, number>();
+  private readonly tapLaneEffectFrames = new Map<string, number>();
 
   constructor(
     private readonly sessionId: string,
@@ -44,6 +47,8 @@ export class GarupaProductRenderProducer {
     private readonly scene: GarupaProductSceneLayout,
     private readonly specificSpeed: RenderFloat32,
     private readonly noteColor: boolean,
+    private readonly syncLine: boolean,
+    private readonly visibleTapLaneEffect: boolean,
   ) {}
 
   validate(): SimulatorResult<void> {
@@ -54,7 +59,11 @@ export class GarupaProductRenderProducer {
       this.scene.fieldLines.length !== 7 ||
       this.scene.fieldLines.some((line, index) => line.lane !== index) ||
       this.resources.curveNoteMaterialLogicalAssetId === undefined ||
-      typeof this.noteColor !== "boolean") {
+      typeof this.noteColor !== "boolean" || typeof this.syncLine !== "boolean" ||
+      typeof this.visibleTapLaneEffect !== "boolean" ||
+      (this.syncLine && this.resources.syncLineLogicalAssetId === undefined) ||
+      (this.visibleTapLaneEffect &&
+        this.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds.length !== 4)) {
       return rejected(
         "render.garupa-product.invalid-owner-binding",
         "Product rendering requires one ready matching renderer, the unchanged seven reference field lines and an explicit curve material binding.",
@@ -111,7 +120,11 @@ export class GarupaProductRenderProducer {
     const plannedCreated = new Set(this.created);
     const plannedVisible = new Set(this.visible);
     const plannedEffects = new Map(this.effectFrames);
-    for (const node of judgedNodes) plannedEffects.set(effectObjectId(node), 12);
+    const plannedTapLaneEffects = new Map(this.tapLaneEffectFrames);
+    for (const node of judgedNodes) {
+      plannedEffects.set(effectObjectId(node), 12);
+      if (this.visibleTapLaneEffect) plannedTapLaneEffects.set(tapLaneEffectObjectId(node), 12);
+    }
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
 
@@ -136,6 +149,37 @@ export class GarupaProductRenderProducer {
       commands.push(command(commands.length, productFieldMesh(objectId, fieldLine.start, fieldLine.goal)));
       plannedCreated.add(objectId);
       plannedVisible.add(objectId);
+    }
+
+    if (this.syncLine) {
+      for (const pair of this.chart.syncPairs) {
+        const first = samples.get(pair.firstNodeIdentity)!;
+        const second = samples.get(pair.secondNodeIdentity)!;
+        const objectId = syncPairObjectId(pair.identity);
+        const pairVisible = first.visible && second.visible;
+        if (!pairVisible) {
+          if (plannedVisible.delete(objectId)) {
+            commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
+          }
+          continue;
+        }
+        if (!plannedCreated.has(objectId)) {
+          commands.push(command(commands.length, {
+            kind: "create-object", renderObjectId: objectId,
+            poolFamily: "garupa-product-sync-line", role: "sync-line", parentObjectId: null,
+          }));
+          commands.push(command(commands.length, {
+            kind: "bind-resource", renderObjectId: objectId, binding: "material",
+            logicalAssetId: this.resources.syncLineLogicalAssetId!, exactKey: null,
+          }));
+          plannedCreated.add(objectId);
+        }
+        commands.push(command(commands.length, productSyncLine(objectId, first.position, second.position)));
+        if (!plannedVisible.has(objectId)) {
+          commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
+          plannedVisible.add(objectId);
+        }
+      }
     }
 
     for (const node of this.chart.visibleNodes) {
@@ -257,6 +301,42 @@ export class GarupaProductRenderProducer {
       plannedEffects.set(objectId, frames - 1);
     }
 
+    for (const [objectId, frames] of plannedTapLaneEffects) {
+      const node = this.chart.nodeByIdentity.get(objectId.slice("render:garupa:tap-lane:".length));
+      if (node === undefined || frames <= 0) {
+        if (plannedCreated.has(objectId)) {
+          commands.push(command(commands.length, { kind: "release-object", renderObjectId: objectId }));
+          plannedCreated.delete(objectId);
+          plannedVisible.delete(objectId);
+        }
+        plannedTapLaneEffects.delete(objectId);
+        continue;
+      }
+      const center = node.spanStart + (node.width - 1) / 2;
+      const projected = this.scene.projectLaneAtCurve(center, 1);
+      if (projected.status !== "ok") return projected;
+      if (!plannedCreated.has(objectId)) {
+        commands.push(command(commands.length, {
+          kind: "create-object", renderObjectId: objectId,
+          poolFamily: "garupa-product-tap-lane-effect", role: "tap-lane-effect", parentObjectId: null,
+        }));
+        commands.push(command(commands.length, {
+          kind: "bind-resource", renderObjectId: objectId, binding: "sprite",
+          logicalAssetId: this.resources.ordinaryVisible!.tapLaneEffectLogicalAssetIds[3],
+          exactKey: "NoteLaneEffect_4",
+        }));
+        plannedCreated.add(objectId);
+      }
+      commands.push(command(commands.length, productTapLaneTransform(
+        objectId, node, projected.value, frames,
+      )));
+      if (!plannedVisible.has(objectId)) {
+        commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
+        plannedVisible.add(objectId);
+      }
+      plannedTapLaneEffects.set(objectId, frames - 1);
+    }
+
     if (commands.length === 0) {
       this.frame += 1;
       return ok(null);
@@ -267,9 +347,11 @@ export class GarupaProductRenderProducer {
       this.created.clear();
       this.visible.clear();
       this.effectFrames.clear();
+      this.tapLaneEffectFrames.clear();
       for (const id of plannedCreated) this.created.add(id);
       for (const id of plannedVisible) this.visible.add(id);
       for (const [id, frames] of plannedEffects) this.effectFrames.set(id, frames);
+      for (const [id, frames] of plannedTapLaneEffects) this.tapLaneEffectFrames.set(id, frames);
       this.frame += 1;
     }));
   }
@@ -287,6 +369,7 @@ export class GarupaProductRenderProducer {
           this.created.clear();
           this.visible.clear();
           this.effectFrames.clear();
+          this.tapLaneEffectFrames.clear();
         }))
       : batch;
   }
@@ -297,6 +380,8 @@ export class GarupaProductRenderProducer {
       createdObjectCount: this.created.size,
       visibleObjectCount: this.visible.size,
       activeEffectCount: this.effectFrames.size,
+      activeTapLaneEffectCount: this.tapLaneEffectFrames.size,
+      syncPairCount: this.chart.syncPairs.length,
     });
   }
 }
@@ -395,6 +480,21 @@ function slideMesh(
   };
 }
 
+function productSyncLine(
+  renderObjectId: string,
+  start: RenderVector3,
+  end: RenderVector3,
+): Omit<Extract<RenderCommand, { kind: "set-line" }>, "sessionId" | "sequence" | "frame" | "substep"> {
+  return {
+    kind: "set-line",
+    renderObjectId,
+    start,
+    end,
+    width: f32(0.28),
+    materialRole: "sync-line",
+  };
+}
+
 function productFieldMesh(
   renderObjectId: string,
   start: RenderVector3,
@@ -467,6 +567,28 @@ function judgementFlashMesh(
   };
 }
 
+function productTapLaneTransform(
+  renderObjectId: string,
+  node: GarupaProductNode,
+  position: RenderVector3,
+  frames: number,
+): Omit<Extract<RenderCommand, { kind: "set-transform" }>, "sessionId" | "sequence" | "frame" | "substep"> {
+  const elapsed = 12 - frames;
+  const progress = elapsed < 2 ? 0 : Math.min(1, (elapsed - 2) / 10);
+  const scale = 1 - 0.3 * progress;
+  const channel = 1 - progress;
+  return {
+    kind: "set-transform",
+    renderObjectId,
+    position,
+    scale: vector2(scale * node.width, scale),
+    rotationDegrees: f32(0),
+    color: color(channel, channel, 1, 1),
+    ordering: ordering(3, node.authoredOrder, renderObjectId),
+    maskObjectId: null,
+  };
+}
+
 function segmentVisible(first: number, second: number): boolean {
   if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
   const minimum = Math.min(first, second);
@@ -482,6 +604,12 @@ function lineObjectId(chainIdentity: string, segmentIndex: number): string {
 }
 function effectObjectId(node: GarupaProductNode): string {
   return `render:garupa:effect:${node.identity}`;
+}
+function tapLaneEffectObjectId(node: GarupaProductNode): string {
+  return `render:garupa:tap-lane:${node.identity}`;
+}
+function syncPairObjectId(identity: string): string {
+  return `render:garupa:sync:${identity}`;
 }
 function ordering(domain: number, source: number, identity: string): RenderOrderingKey {
   let hash = 0;

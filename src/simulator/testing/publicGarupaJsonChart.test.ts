@@ -294,6 +294,14 @@ function testProductProfileAndProxyGraph(): void {
   assert.equal(profile.svEvents[0]!.value, -2.123457);
   assert.equal(profile.nodes.length, 7);
   assert.equal(profile.visibleNodes.length, 4);
+  assert.equal(profile.syncPairs.length, 1);
+  assert.deepEqual(profile.syncPairs[0], {
+    identity: "garupa-sync:96:garupa-note:2:garupa-note:3",
+    absolutePosition: 96,
+    firstNodeIdentity: "garupa-note:2",
+    secondNodeIdentity: "garupa-note:3",
+    authoredOrder: 1,
+  });
   assert.equal(profile.slideChains.length, 2);
   assert.deepEqual(profile.slideChains[0]!.visibleConnectionIdentities, [
     "garupa-slide:4:connection:1",
@@ -309,6 +317,7 @@ function testProductProfileAndProxyGraph(): void {
   assert.equal(profile.nodes.filter((node) => !node.visible).every((node) => node.scoringSource === null), true);
   assert.equal(Object.isFrozen(profile), true);
   assert.equal(Object.isFrozen(profile.nodes), true);
+  assert.equal(Object.isFrozen(profile.syncPairs), true);
   assert.equal(Object.isFrozen(profile.nodes[0]!.scoringSource), true);
   assert.equal(chart.noteBatches.flatMap((batch) => batch.informationList).filter((note) => note.buttonType >= 0).length, 0);
   const scoring = requireOk(createConstructedChartScoringPlan(chart));
@@ -769,6 +778,8 @@ function testProductRenderCommands(): void {
     scene.garupaProductScene,
     scene.ordinaryNoteScene.specificSpeed,
     true,
+    false,
+    false,
   );
   assert.equal(producer.validate().status, "ok");
   const first = requireOk(producer.preflightFrame(0, []));

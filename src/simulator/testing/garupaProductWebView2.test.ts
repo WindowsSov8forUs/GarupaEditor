@@ -77,7 +77,7 @@ async function main(): Promise<void> {
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
   const producer = new GarupaProductRenderProducer(
     SESSION, renderer, CURRENT_ORDINARY_RENDER_BINDINGS, product, axis,
-    layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true,
+    layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true, false,
   );
   requireOk(producer.validate());
   const captures = [];

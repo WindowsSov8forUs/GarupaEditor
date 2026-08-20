@@ -817,6 +817,8 @@ export function createSimulatorEngine(
           input.rendering.garupaProductScene!,
           input.rendering.ordinaryNoteScene.specificSpeed,
           originalLiveSettings.noteColor,
+          originalLiveSettings.syncLine,
+          originalLiveSettings.visibleTapLaneEffect,
         );
     productTimeline = new GarupaProductTimelineManager(
       productProfile,

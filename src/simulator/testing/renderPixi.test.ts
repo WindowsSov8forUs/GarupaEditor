@@ -609,7 +609,8 @@ async function verifyActualPixiGarupaProduct(
   const copied = requireOk(copyAndFreezeGarupaChartJson([
     { type: "BPM", beat: 0, value: 120 },
     { type: "SV", beat: 2, value: -1, timingGroup: "#1" },
-    { type: "Single", beat: 1, lane: 0.5, width: 2, timingGroup: "#1" },
+    { type: "Single", beat: 1.125, lane: 0.5, width: 2, timingGroup: "#1" },
+    { type: "Single", beat: 1.125, lane: 7, width: 1, timingGroup: "#1" },
     { type: "Slide", timingGroup: "#1", connections: [
       { type: "Hidden", beat: 1, lane: -1, width: 1 },
       { type: "Flick", beat: 2, lane: 2.25, width: 2 },
@@ -637,23 +638,33 @@ async function verifyActualPixiGarupaProduct(
     layout.garupaProductScene,
     layout.ordinaryNoteScene.specificSpeed,
     true,
+    true,
+    true,
   );
   requireOk(producer.validate(), "product producer validate");
   const first = requireOk(producer.preflightFrame(0, []), "product first frame");
   assert(first !== null, "product first frame has visible commands");
   requireOk(first!.commit(), "product first frame commit");
   const rows = renderer.sceneSnapshot();
-  assert(rows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible),
-    "actual Pixi has fractional product front");
+  assert(rows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible &&
+    row.spriteBindingKey?.endsWith("note_normal_16_3")),
+    "actual Pixi has the NoteColor normal16 binding on a fractional product front");
   assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22),
     "actual Pixi has product Slide mesh");
+  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible),
+    "actual Pixi has the continuous product SyncLine sidecar");
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]), "product effect frame");
   assert(effect !== null, "product effect frame has commands");
   requireOk(effect!.commit(), "product effect frame commit");
-  assert(renderer.sceneSnapshot().some((row) =>
+  const judgedRows = renderer.sceneSnapshot();
+  assert(judgedRows.some((row) =>
     row.renderObjectId === `render:garupa:effect:${judged.identity}` && row.geometryVertexCount === 22),
     "actual Pixi has continuous product judgement particle mesh");
+  assert(judgedRows.some((row) =>
+    row.renderObjectId === `render:garupa:tap-lane:${judged.identity}` && row.visible &&
+    row.spriteBindingKey?.endsWith("NoteLaneEffect_4")),
+    "actual Pixi has the recovered Sprite on the continuous product tap-lane sidecar");
   const released = requireOk(producer.preflightDispose(), "product render release");
   assert(released !== null, "product release owns objects");
   requireOk(released!.commit(), "product render release commit");
