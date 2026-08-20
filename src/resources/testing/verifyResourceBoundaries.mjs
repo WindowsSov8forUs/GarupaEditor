@@ -10,6 +10,7 @@ const runtimeFiles = walk(root).filter((path) =>
 const forbiddenRuntimeTokens = [
   "simulator-static/current-10.1.4",
   "fallbackMaps",
+  "current-10.1.4",
 ];
 
 for (const path of runtimeFiles) {
@@ -18,6 +19,9 @@ for (const path of runtimeFiles) {
     if (source.includes(token)) {
       throw new Error(`${relative(root, path)} contains forbidden resource-lock token: ${token}`);
     }
+  }
+  if (!path.includes(`${join("resources", "builtin")}`) && /["'`]\b[0-9A-F]{64}\b["'`]/.test(source)) {
+    throw new Error(`${relative(root, path)} contains a compiled SHA-256 resource allowlist`);
   }
 }
 
@@ -30,6 +34,32 @@ for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includ
   if (/from\s+["'][^"']*assets\//.test(source)) {
     throw new Error(`${relative(sourceRoot, path)} imports a physical builtin outside the application catalog`);
   }
+}
+const productionFiles = walk(sourceRoot).filter((candidate) =>
+  [".ts", ".tsx"].includes(extname(candidate)) && !candidate.includes(`${join("simulator", "testing")}`),
+);
+for (const path of productionFiles) {
+  const source = readFileSync(path, "utf8");
+  if (source.includes("fetchBestdoriFileBlob") && !path.endsWith(join("resources", "providers", "bestdoriCatalogProvider.ts")) && !path.endsWith(join("services", "bestdori", "api.ts"))) {
+    throw new Error(`${relative(sourceRoot, path)} bypasses the main-program network resource provider`);
+  }
+  if (/invoke(?:<[^>]+>)?\([^\n]*["']resource_/.test(source) && !path.endsWith(join("resources", "providers", "tauriResourceBackend.ts"))) {
+    throw new Error(`${relative(sourceRoot, path)} invokes a resource command outside the Tauri resource backend`);
+  }
+}
+for (const relativePath of ["skinLoader.ts", join("skin", "resourceSkinDecoder.ts"), "noteSkinAssetTool.ts"]) {
+  const source = readFileSync(join(sourceRoot, relativePath), "utf8");
+  for (const token of ["DataURL", "DataUrl", "toDataURL", "prepareBestdori", "localStorage", "getRuntimeSeAssets"]) {
+    if (source.includes(token)) throw new Error(`${relativePath} contains forbidden legacy Skin resource token: ${token}`);
+  }
+}
+const skinLoaderSource = readFileSync(join(sourceRoot, "skinLoader.ts"), "utf8");
+if (/from\s+["']\.\/data\/.*(?:type-rip|judge-rip)/.test(skinLoaderSource)) {
+  throw new Error("skinLoader imports a fixed network candidate map");
+}
+const chartCoreSource = readFileSync(join(sourceRoot, "chartCore.ts"), "utf8");
+for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {
+  if (chartCoreSource.includes(token)) throw new Error(`ChartMetadata still owns legacy URL field ${token}`);
 }
 const assetsRoot = join(sourceRoot, "assets");
 const manifest = JSON.parse(readFileSync(join(root, "builtin", "builtinResourceManifest.json"), "utf8"));

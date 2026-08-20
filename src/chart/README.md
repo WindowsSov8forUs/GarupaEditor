@@ -8,3 +8,5 @@
 - `index.ts`: the public module surface.
 
 This module must stay independent from React, Tauri, simulator runtime types, skin resources, and editor controller state. `src/chartCore.ts` retains the editor's internal `ChartNote` model and editor/display-oriented operations; serialized format types do not belong there.
+
+Chart metadata no longer embeds Data URLs or remote URLs. BGM, cover, MV and stage backdrop are main-program `ResourceRef` values persisted separately in `chart-resources.v3.json`; portable Garupa/Bestdori chart schemas remain resource-independent.

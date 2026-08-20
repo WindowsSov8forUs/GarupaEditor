@@ -15,7 +15,7 @@ export async function runUserMediaTests(): Promise<void> {
       purpose,
       fileName: `${purpose}.bin`,
       mediaType: purpose === "bgm" ? "audio/mpeg" : purpose === "mv" ? "video/mp4" : "image/png",
-      bytes: new TextEncoder().encode(purpose),
+      bytes: mediaBytes(purpose),
     });
     equal(imported.status, "accepted");
     if (imported.status === "accepted") refs.push(imported.value.ref);
@@ -48,15 +48,21 @@ export async function runUserMediaTests(): Promise<void> {
   equal(second.status, "accepted");
   if (first.status !== "accepted" || second.status !== "accepted") return;
   const bgmPath = first.value.listFiles("chart-media.bgm")[0]!.logicalPath;
-  equal(new TextDecoder().decode(await first.value.readBytes("chart-media.bgm", bgmPath)), "bgm");
+  equal(new TextDecoder().decode(await first.value.readBytes("chart-media.bgm", bgmPath)), "ID3-bgm");
   await first.value.release();
-  equal(new TextDecoder().decode(await second.value.readBytes("chart-media.bgm", bgmPath)), "bgm");
+  equal(new TextDecoder().decode(await second.value.readBytes("chart-media.bgm", bgmPath)), "ID3-bgm");
   await second.value.release();
 }
 
 class FakeUrls implements ResourceObjectUrlFactory {
   create(): string { return "memory://media"; }
   revoke(): void {}
+}
+
+function mediaBytes(purpose: UserMediaPurpose): Uint8Array {
+  if (purpose === "bgm") return new TextEncoder().encode("ID3-bgm");
+  if (purpose === "mv") return Uint8Array.from([0, 0, 0, 12, 0x66, 0x74, 0x79, 0x70, 1, 2, 3, 4]);
+  return Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 1]);
 }
 
 function equal(actual: unknown, expected: unknown): void {

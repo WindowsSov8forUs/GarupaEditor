@@ -1,11 +1,3 @@
-import directionalTypeRipMapJson from "./data/directional-type-rip-map.json";
-import directionalSeTypeRipMapJson from "./data/directional-se-type-rip-map.json";
-import bgTypeRipMapJson from "./data/bg-type-rip-map.json";
-import fieldTypeRipMapJson from "./data/field-type-rip-map.json";
-import judgeTypeRipMapJson from "./data/judge-type-rip-map.json";
-import habahiroTypeRipMapJson from "./data/habahiro-type-rip-map.json";
-import rhythmTypeRipMapJson from "./data/rhythm-type-rip-map.json";
-import rhythmSeTypeRipMapJson from "./data/rhythm-se-type-rip-map.json";
 import type {
   AssetManifest,
   BundleManifest,
@@ -19,105 +11,13 @@ import {
 export type { BestdoriCatalogKind, BestdoriSkinCatalogOptions } from "./services/bestdori/catalog";
 const RIP_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
-type TypeRipMapEntry = {
-  type: string;
-  ripName: string;
-};
-
-const RHYTHM_TYPE_RIP_ENTRIES = rhythmTypeRipMapJson as TypeRipMapEntry[];
-const DIRECTIONAL_TYPE_RIP_ENTRIES = directionalTypeRipMapJson as TypeRipMapEntry[];
-const RHYTHM_SE_TYPE_RIP_ENTRIES = rhythmSeTypeRipMapJson as TypeRipMapEntry[];
-const DIRECTIONAL_SE_TYPE_RIP_ENTRIES = directionalSeTypeRipMapJson as TypeRipMapEntry[];
-const HABAHIRO_TYPE_RIP_ENTRIES = habahiroTypeRipMapJson as TypeRipMapEntry[];
-const BG_TYPE_RIP_ENTRIES = bgTypeRipMapJson as TypeRipMapEntry[];
-const FIELD_TYPE_RIP_ENTRIES = fieldTypeRipMapJson as TypeRipMapEntry[];
-const JUDGE_TYPE_RIP_ENTRIES = judgeTypeRipMapJson as TypeRipMapEntry[];
-const DEFAULT_HABAHIRO_TYPE = HABAHIRO_TYPE_RIP_ENTRIES[0]?.type ?? "2026\u611A\u4EBA\u8282";
-const DEFAULT_HABAHIRO_RIP_NAME = HABAHIRO_TYPE_RIP_ENTRIES[0]?.ripName ?? "habahiro";
-export const HABAHIRO_RHYTHM_TYPE = DEFAULT_HABAHIRO_TYPE;
-export const HABAHIRO_RHYTHM_RIP_NAME = DEFAULT_HABAHIRO_RIP_NAME;
-
-export const RHYTHM_SKIN_TYPES: readonly string[] = Object.freeze(
-  RHYTHM_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const DIRECTIONAL_SKIN_TYPES: readonly string[] = Object.freeze(
-  DIRECTIONAL_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const RHYTHM_SE_SKIN_TYPES: readonly string[] = Object.freeze(
-  RHYTHM_SE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const DIRECTIONAL_SE_SKIN_TYPES: readonly string[] = Object.freeze(
-  DIRECTIONAL_SE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const BG_SKIN_TYPES: readonly string[] = Object.freeze(
-  BG_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const FIELD_SKIN_TYPES: readonly string[] = Object.freeze(
-  FIELD_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const JUDGE_SKIN_TYPES: readonly string[] = Object.freeze(
-  JUDGE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
-);
-export const HABAHIRO_RHYTHM_SKIN_TYPES: readonly string[] = Object.freeze(
-  HABAHIRO_TYPE_RIP_ENTRIES.length > 0
-    ? HABAHIRO_TYPE_RIP_ENTRIES.map((entry) => entry.type)
-    : [DEFAULT_HABAHIRO_TYPE],
-);
-
-const DEFAULT_RHYTHM_TYPE = RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_DIRECTIONAL_TYPE = DIRECTIONAL_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_RHYTHM_SE_TYPE = RHYTHM_SE_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_DIRECTIONAL_SE_TYPE = DIRECTIONAL_SE_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_BG_TYPE = BG_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_FIELD_TYPE = FIELD_SKIN_TYPES[0] ?? "TYPE1";
-const DEFAULT_JUDGE_TYPE = JUDGE_SKIN_TYPES[0] ?? "TYPE1";
-
-const RHYTHM_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    RHYTHM_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
-const DIRECTIONAL_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    DIRECTIONAL_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
-const RHYTHM_SE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    RHYTHM_SE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
-const DIRECTIONAL_SE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    DIRECTIONAL_SE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
-const BG_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    BG_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
-const HABAHIRO_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    HABAHIRO_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-const FIELD_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    FIELD_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-const JUDGE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(
-    JUDGE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
-  ),
-);
-
+const DEFAULT_RHYTHM_ID = "skin00";
+const DEFAULT_DIRECTIONAL_ID = "directionalflickskin00";
+const DEFAULT_RHYTHM_SE_ID = "skin00";
+const DEFAULT_DIRECTIONAL_SE_ID = "directionalflickskin00";
+const DEFAULT_BG_ID = "skin00";
+const DEFAULT_FIELD_ID = "skin00";
+const DEFAULT_JUDGE_ID = "skin00";
 export type SkinNoteType =
   | "single"
   | "single16"
@@ -391,137 +291,25 @@ export type CanvasRenderResourceRuntimeAssets = PlayfieldSpriteRuntimeAssets & {
   simultaneousLine: string;
 };
 
-export function resolveRhythmRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = RHYTHM_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveDirectionalRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = DIRECTIONAL_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveRhythmSeRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = RHYTHM_SE_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveDirectionalSeRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = DIRECTIONAL_SE_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveBgSkinRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = BG_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveFieldSkinRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = FIELD_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveJudgeSkinRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = JUDGE_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
-}
-
-export function resolveHabahiroRhythmRipNameFromType(
-  typeValue: string,
-): string | null {
-  const trimmed = typeValue.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const mappedRaw = HABAHIRO_TYPE_TO_RIP_NAME[trimmed];
-  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
-    return mappedRaw;
-  }
-  return null;
-}
-
 export function isHabahiroRhythmRipName(ripName: string): boolean {
-  return ripName.trim().toLowerCase() === HABAHIRO_RHYTHM_RIP_NAME;
+  return ripName.trim().toLowerCase() === "habahiro";
 }
 
 export const DEFAULT_SKIN_SELECTION: SkinSelection = {
-  rhythmType: DEFAULT_RHYTHM_TYPE,
-  directionalType: DEFAULT_DIRECTIONAL_TYPE,
-  rhythmSeType: DEFAULT_RHYTHM_SE_TYPE,
-  directionalSeType: DEFAULT_DIRECTIONAL_SE_TYPE,
-  bgType: DEFAULT_BG_TYPE,
-  fieldType: DEFAULT_FIELD_TYPE,
-  judgeType: DEFAULT_JUDGE_TYPE,
-  rhythmRipName: resolveRhythmRipNameFromType(DEFAULT_RHYTHM_TYPE) ?? "skin00",
-  directionalRipName: resolveDirectionalRipNameFromType(DEFAULT_DIRECTIONAL_TYPE) ?? "directionalflickskin00",
-  rhythmSeRipName: resolveRhythmSeRipNameFromType(DEFAULT_RHYTHM_SE_TYPE) ?? "skin00",
-  directionalSeRipName: resolveDirectionalSeRipNameFromType(DEFAULT_DIRECTIONAL_SE_TYPE) ?? "directionalflickskin00",
-  bgSkinRipName: resolveBgSkinRipNameFromType(DEFAULT_BG_TYPE) ?? "skin00",
-  fieldSkinRipName: resolveFieldSkinRipNameFromType(DEFAULT_FIELD_TYPE) ?? "skin00",
-  judgeSkinRipName: resolveJudgeSkinRipNameFromType(DEFAULT_JUDGE_TYPE) ?? "skin00",
+  rhythmType: DEFAULT_RHYTHM_ID,
+  directionalType: DEFAULT_DIRECTIONAL_ID,
+  rhythmSeType: DEFAULT_RHYTHM_SE_ID,
+  directionalSeType: DEFAULT_DIRECTIONAL_SE_ID,
+  bgType: DEFAULT_BG_ID,
+  fieldType: DEFAULT_FIELD_ID,
+  judgeType: DEFAULT_JUDGE_ID,
+  rhythmRipName: DEFAULT_RHYTHM_ID,
+  directionalRipName: DEFAULT_DIRECTIONAL_ID,
+  rhythmSeRipName: DEFAULT_RHYTHM_SE_ID,
+  directionalSeRipName: DEFAULT_DIRECTIONAL_SE_ID,
+  bgSkinRipName: DEFAULT_BG_ID,
+  fieldSkinRipName: DEFAULT_FIELD_ID,
+  judgeSkinRipName: DEFAULT_JUDGE_ID,
   rhythmServer: DEFAULT_BESTDORI_ASSET_SERVER,
   directionalServer: DEFAULT_BESTDORI_ASSET_SERVER,
   rhythmSeServer: DEFAULT_BESTDORI_ASSET_SERVER,
@@ -766,22 +554,13 @@ export function normalizeSkinSelection(
       ? input.judgeType.trim()
       : DEFAULT_SKIN_SELECTION.judgeType;
 
-  const rhythmFallbackRip =
-    resolveHabahiroRhythmRipNameFromType(rhythmType)
-    ?? resolveRhythmRipNameFromType(rhythmType)
-    ?? DEFAULT_SKIN_SELECTION.rhythmRipName;
-  const directionalFallbackRip =
-    resolveDirectionalRipNameFromType(directionalType) ?? DEFAULT_SKIN_SELECTION.directionalRipName;
-  const rhythmSeFallbackRip =
-    resolveRhythmSeRipNameFromType(rhythmSeType) ?? DEFAULT_SKIN_SELECTION.rhythmSeRipName;
-  const directionalSeFallbackRip =
-    resolveDirectionalSeRipNameFromType(directionalSeType) ?? DEFAULT_SKIN_SELECTION.directionalSeRipName;
-  const bgSkinFallbackRip =
-    resolveBgSkinRipNameFromType(bgType) ?? DEFAULT_SKIN_SELECTION.bgSkinRipName;
-  const fieldSkinFallbackRip =
-    resolveFieldSkinRipNameFromType(fieldType) ?? DEFAULT_SKIN_SELECTION.fieldSkinRipName;
-  const judgeSkinFallbackRip =
-    resolveJudgeSkinRipNameFromType(judgeType) ?? DEFAULT_SKIN_SELECTION.judgeSkinRipName;
+  const rhythmFallbackRip = RIP_NAME_PATTERN.test(rhythmType) ? rhythmType : DEFAULT_SKIN_SELECTION.rhythmRipName;
+  const directionalFallbackRip = RIP_NAME_PATTERN.test(directionalType) ? directionalType : DEFAULT_SKIN_SELECTION.directionalRipName;
+  const rhythmSeFallbackRip = RIP_NAME_PATTERN.test(rhythmSeType) ? rhythmSeType : DEFAULT_SKIN_SELECTION.rhythmSeRipName;
+  const directionalSeFallbackRip = RIP_NAME_PATTERN.test(directionalSeType) ? directionalSeType : DEFAULT_SKIN_SELECTION.directionalSeRipName;
+  const bgSkinFallbackRip = RIP_NAME_PATTERN.test(bgType) ? bgType : DEFAULT_SKIN_SELECTION.bgSkinRipName;
+  const fieldSkinFallbackRip = RIP_NAME_PATTERN.test(fieldType) ? fieldType : DEFAULT_SKIN_SELECTION.fieldSkinRipName;
+  const judgeSkinFallbackRip = RIP_NAME_PATTERN.test(judgeType) ? judgeType : DEFAULT_SKIN_SELECTION.judgeSkinRipName;
 
   const rhythmRipName =
     typeof input.rhythmRipName === "string" &&

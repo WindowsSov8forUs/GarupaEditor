@@ -275,7 +275,8 @@ export class ApplicationResourceManager {
     if (
       !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
       typeof input.mediaType !== "string" || !input.mediaType.toLowerCase().startsWith(expectedMediaPrefix) ||
-      !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0
+      !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
+      !hasCompatibleUserMediaMagic(input.purpose, input.mediaType, input.bytes)
     ) {
       return invalid("resources.manager.invalid-user-media-bytes");
     }
@@ -535,6 +536,38 @@ class ManagedBuiltinFile {
       ? resourceAccepted(Uint8Array.from(bytes))
       : integrityFailure("resources.manager.builtin-load-integrity");
   }
+}
+
+function hasCompatibleUserMediaMagic(
+  purpose: UserMediaPurpose,
+  mediaType: string,
+  bytes: Uint8Array,
+): boolean {
+  const type = mediaType.toLowerCase();
+  if (purpose === "cover" || purpose === "stage-backdrop") {
+    if (type === "image/png") return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
+    if (type === "image/jpeg" || type === "image/jpg") return bytes[0] === 0xff && bytes[1] === 0xd8;
+    if (type === "image/webp") return ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WEBP");
+    if (type === "image/gif") return ascii(bytes, 0, "GIF8");
+    return false;
+  }
+  if (purpose === "bgm") {
+    if (type === "audio/mpeg" || type === "audio/mp3") return ascii(bytes, 0, "ID3") || (bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0);
+    if (type === "audio/wav" || type === "audio/x-wav") return ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WAVE");
+    if (type === "audio/ogg") return ascii(bytes, 0, "OggS");
+    return false;
+  }
+  if (type === "video/mp4") return bytes.length >= 12 && ascii(bytes, 4, "ftyp");
+  if (type === "video/webm") return bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
+  return false;
+}
+
+function ascii(bytes: Uint8Array, offset: number, value: string): boolean {
+  if (bytes.length < offset + value.length) return false;
+  for (let index = 0; index < value.length; index += 1) {
+    if (bytes[offset + index] !== value.charCodeAt(index)) return false;
+  }
+  return true;
 }
 
 function freezeCatalog(snapshot: ResourceCatalogSnapshot): ResourceCatalogSnapshot {

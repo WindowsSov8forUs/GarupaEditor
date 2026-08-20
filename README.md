@@ -12,6 +12,18 @@
 - 无头/无尾 Slide 与无判定 Slide
 - 变速 SV 与 TimingGroup
 
+## 资源管理
+
+程序资源统一由主程序的 `ApplicationResourceManager` 管理：
+
+- 随程序发布的图标、字体和默认图片属于内置资源；
+- Bestdori Skin、音效和歌曲媒体来自实时资源站目录，可离线使用最后一次完整目录和已安装缓存；
+- 用户文件只作为当前谱面的音频、封面、MV或舞台背景导入。
+
+模块只消费主程序建立的不可变资源租约，不自行下载、读取路径或选择fallback。网络资源的SHA-256在下载完成后用于检查本地完整性，不作为固定版本或资源允许列表；资源站新增ID或更新同ID内容不要求应用预先登记。
+
+开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
+
 ## 安装
 
 目前 GarupaEditor 提供 Windows、macOS、Linux 与 Android 平台的安装包。桌面端优先推荐使用对应平台的安装器或软件包，Android 端目前提供未签名 APK。

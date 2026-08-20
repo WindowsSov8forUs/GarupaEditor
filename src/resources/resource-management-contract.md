@@ -35,7 +35,7 @@ Storage schema numbers only migrate the application's own persistence format and
 5. The consumer reads declared files or object URLs and validates how it can use them.
 6. The consumer releases the lease; object URLs are revoked and unreferenced obsolete blobs may be collected.
 
-Catalog refresh, downloads and selection changes never mutate an active snapshot. No consumer performs a hot switch.
+Catalog refresh, downloads and selection changes never mutate an active snapshot. No consumer performs a hot switch. Cross-window payloads carry only snapshot IDs and semantic resource keys.
 
 ## Integrity and failure policy
 
@@ -45,6 +45,8 @@ Consumers own compatibility checks such as image/audio/video decode, required sp
 
 ## Dependency boundary
 
-Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create resource object URLs. Domain consumers receive leases and must not import `ApplicationResourceManager`.
+Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create source-resource object URLs. Domain consumers receive leases and must not import `ApplicationResourceManager`; consumer-generated derivatives are owned and released with their lease.
+
+Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v3.json`; v2 bytes/Data URLs are accepted only by the one-time migration path.
 
 `src/simulator/**` is not migrated by this foundation stage. A separately authorized integration must replace the simulator-owned static store with an application-created snapshot without weakening consumer format/structure validation.

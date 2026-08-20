@@ -138,7 +138,14 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
     }
     if (descriptor.source.family.startsWith("media-")) {
       try {
-        const mediaType = mediaTypeForPath(new URL(descriptor.source.assetBaseUrl).pathname);
+        const inferredMediaType = mediaTypeForPath(new URL(descriptor.source.assetBaseUrl).pathname);
+        const mediaType = inferredMediaType !== "application/octet-stream"
+          ? inferredMediaType
+          : descriptor.source.family === "media-bgm"
+            ? "audio/mpeg"
+            : descriptor.source.family === "media-cover" || descriptor.source.family === "media-stage-backdrop"
+              ? "image/png"
+              : "video/mp4";
         const blob = await fetchBestdoriFileBlob(
           descriptor.source.assetBaseUrl,
           mediaType,

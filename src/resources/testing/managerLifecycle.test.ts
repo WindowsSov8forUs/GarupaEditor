@@ -76,7 +76,7 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
     purpose: "bgm",
     fileName: "song.mp3",
     mediaType: "audio/mpeg",
-    bytes: bytes("user-bgm"),
+    bytes: bytes("ID3-user-bgm"),
   });
   equal(imported.status, "accepted");
   if (imported.status !== "accepted") return;
