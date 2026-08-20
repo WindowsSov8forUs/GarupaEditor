@@ -21,6 +21,7 @@ async function main(): Promise<void> {
   testEvidenceClosure();
   await testNegativeDelayAndPause();
   await testZeroAndPositiveDelay();
+  await testMvDarknessCover();
   await testHostBinding();
   console.log("MV Live engine contracts passed: state17, signed delay branches, gameplay-before-negative-movie, Gaya exclusion and movie pause map");
 }
@@ -124,6 +125,30 @@ async function testZeroAndPositiveDelay(): Promise<void> {
   }
 }
 
+async function testMvDarknessCover(): Promise<void> {
+  for (const mvDarkness of [0, 20, 70]) {
+    const { owner, backend } = await controller(0, mvDarkness);
+    requireOk(owner.initialize());
+    const delta = Math.fround(0.1);
+    for (let frame = 0; frame < 100 && !owner.snapshot().playable; frame += 1) {
+      requireOk(owner.step(delta));
+    }
+    assert.equal(owner.snapshot().playable, true);
+    assert.equal(backend.snapshot().darkCoverVisible, true);
+    assert.equal(backend.snapshot().movieSpriteAlpha, 1);
+    for (let frame = 0; frame < 10; frame += 1) requireOk(owner.step(delta));
+    const snapshot = owner.snapshot().movie!.manager;
+    assert.equal(snapshot.darkCoverPhase, "steady");
+    assert.equal(snapshot.darkCoverAlpha, Math.fround(mvDarkness / 100));
+    assert.equal(snapshot.backend.darkCoverAlpha, Math.fround(mvDarkness / 100));
+    assert.equal(snapshot.backend.movieSpriteAlpha, 1);
+    requireOk(owner.stopMovie());
+    assert.equal(backend.snapshot().darkCoverVisible, false);
+    owner.dispose();
+    assert.equal(backend.dispose().status, "accepted");
+  }
+}
+
 async function testHostBinding(): Promise<void> {
   const sessionId = "movie:host";
   const movie = new RecordingSimulatorMovieBackend();
@@ -194,7 +219,7 @@ async function testHostBinding(): Promise<void> {
   assert.equal(cleanupMovie.snapshot().state, "disposed");
 }
 
-async function controller(delay: number): Promise<{
+async function controller(delay: number, mvDarkness = 20): Promise<{
   owner: StartupDirectionController;
   backend: RecordingSimulatorMovieBackend;
   gayaRequests: boolean[];
@@ -202,7 +227,7 @@ async function controller(delay: number): Promise<{
   const backend = new RecordingSimulatorMovieBackend();
   const resource = prepared(delay);
   assert.equal((await backend.prepare(`movie:${delay}`, resource)).status, "accepted");
-  const manager = new InGameMovieManager(`movie:${delay}`, backend);
+  const manager = new InGameMovieManager(`movie:${delay}`, backend, mvDarkness);
   const mv = new MvBackgroundModule(manager, delay);
   const gayaRequests: boolean[] = [];
   const transaction = (commit: () => void) => ({

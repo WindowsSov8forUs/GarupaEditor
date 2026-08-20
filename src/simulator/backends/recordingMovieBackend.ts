@@ -25,6 +25,8 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
   private currentTimeSeconds: number | null = null;
   private visible = false;
   private firstFramePresented = false;
+  private darkCoverVisible = false;
+  private darkCoverAlpha = Math.fround(0);
   private fault: MovieBackendFault | null = null;
   private suppressed: boolean;
 
@@ -126,6 +128,22 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
     return movieAccepted(undefined);
   }
 
+  setDarkCover(alpha: number, visible: boolean): MovieOperationResult<void> {
+    const terminal = this.terminal<void>();
+    if (terminal !== null) return terminal;
+    if (this.profile === null || typeof visible !== "boolean" ||
+      !Number.isFinite(alpha) || alpha < 0 || alpha > 1 ||
+      !Object.is(alpha, Math.fround(alpha))) {
+      return this.reject(
+        "movie.recording.invalid-dark-cover",
+        "Gameplay MV dark cover requires one prepared owner, exact Float32 unit alpha and explicit visibility.",
+      );
+    }
+    this.darkCoverAlpha = alpha;
+    this.darkCoverVisible = visible;
+    return movieAccepted(undefined);
+  }
+
   publishSuppressedOutput(seconds: number, playing: boolean): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
@@ -180,6 +198,9 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
       muted: this.profile?.muted ?? null,
       loop: this.profile?.loop ?? null,
       stageParentAttached: null,
+      movieSpriteAlpha: 1,
+      darkCoverVisible: this.darkCoverVisible,
+      darkCoverAlpha: this.darkCoverAlpha,
       fault: this.fault === null ? null : Object.freeze({ ...this.fault }),
     });
   }
@@ -199,6 +220,8 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
     this.sessionId = null;
     this.currentTimeSeconds = null;
     this.visible = false;
+    this.darkCoverVisible = false;
+    this.darkCoverAlpha = Math.fround(0);
     this.state = "disposed";
     return failure ?? movieAccepted(undefined);
   }

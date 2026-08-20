@@ -57,11 +57,14 @@ async function main(): Promise<void> {
     requireEqual(ready.state, "ready", `${container}: ready`);
     requireEqual(ready.muted, true, `${container}: muted`);
     requireEqual(ready.loop, false, `${container}: loop`);
+    requireEqual(ready.movieSpriteAlpha, 1, `${container}: movie alpha`);
+    requireEqual(backend.stage.children.length, 2, `${container}: video plus dark cover`);
     requireEqual(backend.stage.children[0]?.x, MOVIE_LAYOUT.x, `${container}: original widget x`);
     requireEqual(backend.stage.children[0]?.y, MOVIE_LAYOUT.y, `${container}: original widget y`);
     requireEqual(backend.stage.children[0]?.width, MOVIE_LAYOUT.width, `${container}: original widget width`);
     requireEqual(backend.stage.children[0]?.height, MOVIE_LAYOUT.height, `${container}: original widget height`);
 
+    requireMovie(backend.setDarkCover(Math.fround(1), true));
     requireMovie(backend.play());
     await waitForState(backend, "playing", 300);
     requireMovie(backend.setVisible(true));
@@ -70,17 +73,22 @@ async function main(): Promise<void> {
     requireMovie(backend.seek(1));
     await waitForState(backend, "paused", 300);
     requireMovie(backend.setVisible(true));
+    requireMovie(backend.setDarkCover(Math.fround(0.2), true));
     await nextFrames(3);
     app.render();
     const raster = await capture(app);
     const paused = backend.snapshot();
     requireEqual(paused.currentTimeSeconds, 1, `${container}: deterministic seek`);
     requireEqual(paused.visible, true, `${container}: visible`);
+    requireEqual(paused.darkCoverVisible, true, `${container}: dark cover visible`);
+    requireEqual(paused.darkCoverAlpha, Math.fround(0.2), `${container}: darkness target`);
+    requireEqual(paused.movieSpriteAlpha, 1, `${container}: movie alpha remains one`);
     if (raster.nonBlackPixels <= 0) throw new Error(`${container}: empty raster`);
 
     requireMovie(backend.resume());
     await waitForState(backend, "playing", 300);
     requireMovie(backend.pause());
+    requireMovie(backend.setDarkCover(Math.fround(0), false));
     requireMovie(backend.stop());
     const ended = backend.snapshot();
     requireEqual(ended.state, "ended", `${container}: ended`);
@@ -135,6 +143,9 @@ function projection(snapshot: any): unknown {
     muted: snapshot.muted,
     loop: snapshot.loop,
     stageParentAttached: snapshot.stageParentAttached,
+    movieSpriteAlpha: snapshot.movieSpriteAlpha,
+    darkCoverVisible: snapshot.darkCoverVisible,
+    darkCoverAlpha: snapshot.darkCoverAlpha,
     fault: snapshot.fault,
   };
 }

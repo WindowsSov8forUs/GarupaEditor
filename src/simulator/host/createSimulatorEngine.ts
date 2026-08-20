@@ -761,6 +761,7 @@ export function createSimulatorEngine(
     input,
     backends,
     modeValidation.value,
+    originalLiveSettings.core.mvDarkness,
   );
   if (movieBackgroundResult.status !== "ok") return movieBackgroundResult;
   const slideNoteManager = new SlideNoteManager();
@@ -924,6 +925,7 @@ function createMovieBackground(
   input: SimulatorEngineInput,
   backends: SimulatorBackends,
   mode: import("../engine/data/inGameCalculatedData").SimulatorModeIdentity,
+  mvDarkness: number,
 ): SimulatorResult<MvBackgroundModule | null> {
   const backend = backends.movie;
   if (input.movie === undefined) {
@@ -963,7 +965,7 @@ function createMovieBackground(
     );
   }
   return ok(new MvBackgroundModule(
-    new InGameMovieManager(input.movie.sessionId, backend),
+    new InGameMovieManager(input.movie.sessionId, backend, mvDarkness),
     input.movie.musicStartDelayMilliseconds,
   ));
 }

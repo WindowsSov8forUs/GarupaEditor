@@ -1,5 +1,6 @@
 import {
   Container,
+  Graphics,
   Sprite,
   Texture,
   VideoSource,
@@ -24,6 +25,7 @@ import type { OriginalMovieLayout } from "../../scene/originalSurfaceLayout";
 
 export const PIXI_MV_LIVE_STAGE_LABEL = "GarupaSimulatorMvLive";
 export const PIXI_MV_LIVE_SPRITE_LABEL = "GarupaSimulatorMvLiveVideo";
+export const PIXI_MV_LIVE_DARK_COVER_LABEL = "GarupaSimulatorMvLiveDarkCover";
 
 export class PixiMvLiveBackend implements SimulatorMovieBackend {
   readonly id = "pixi-mv-live";
@@ -37,7 +39,10 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   private source: VideoSource | null = null;
   private texture: Texture | null = null;
   private sprite: Sprite | null = null;
+  private darkCover: Graphics | null = null;
   private visible = false;
+  private darkCoverVisible = false;
+  private darkCoverAlpha = Math.fround(0);
   private firstFramePresented = false;
   private fault: MovieBackendFault | null = null;
   private suppressed: boolean;
@@ -101,6 +106,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     let source: VideoSource | null = null;
     let texture: Texture | null = null;
     let sprite: Sprite | null = null;
+    let darkCover: Graphics | null = null;
     try {
       source = new VideoSource({
         resource: video,
@@ -120,8 +126,16 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       sprite.height = this.movieLayout.height;
       sprite.eventMode = "none";
       sprite.visible = false;
-      this.stage.addChild(sprite);
+      sprite.alpha = 1;
+      darkCover = new Graphics({ label: PIXI_MV_LIVE_DARK_COVER_LABEL })
+        .rect(this.movieLayout.x, this.movieLayout.y, this.movieLayout.width, this.movieLayout.height)
+        .fill({ color: 0x000000 });
+      darkCover.eventMode = "none";
+      darkCover.visible = false;
+      darkCover.alpha = 0;
+      this.stage.addChild(sprite, darkCover);
     } catch {
+      try { darkCover?.destroy({ children: false }); } catch { /* prepare failure stays primary */ }
       try { sprite?.destroy({ children: false }); } catch { /* prepare failure stays primary */ }
       try { texture?.destroy(false); } catch { /* prepare failure stays primary */ }
       try { source?.destroy(); } catch { /* prepare failure stays primary */ }
@@ -137,6 +151,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     this.source = source;
     this.texture = texture;
     this.sprite = sprite;
+    this.darkCover = darkCover;
     this.installListeners(video);
     this.state = "ready";
     return movieAccepted(undefined);
@@ -216,6 +231,25 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     return movieAccepted(undefined);
   }
 
+  setDarkCover(alpha: number, visible: boolean): MovieOperationResult<void> {
+    const terminal = this.terminal<void>();
+    if (terminal !== null) return terminal;
+    if (this.darkCover === null || typeof visible !== "boolean" ||
+      !Number.isFinite(alpha) || alpha < 0 || alpha > 1 ||
+      !Object.is(alpha, Math.fround(alpha)) || this.state === "unprepared") {
+      return this.reject(
+        "movie.pixi.invalid-dark-cover",
+        "Gameplay MV dark cover requires its prepared Graphics owner, exact Float32 unit alpha and explicit visibility.",
+      );
+    }
+    this.darkCoverAlpha = alpha;
+    this.darkCoverVisible = visible;
+    this.darkCover.alpha = alpha;
+    this.darkCover.visible = visible;
+    this.refreshStageVisibility();
+    return movieAccepted(undefined);
+  }
+
   publishSuppressedOutput(seconds: number, playing: boolean): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
@@ -264,6 +298,9 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       muted: this.video?.muted ?? null,
       loop: this.video?.loop ?? null,
       stageParentAttached: this.stage.parent !== null,
+      movieSpriteAlpha: this.sprite?.alpha ?? null,
+      darkCoverVisible: this.darkCoverVisible,
+      darkCoverAlpha: this.darkCoverAlpha,
       fault: this.fault === null ? null : Object.freeze({ ...this.fault }),
     });
   }
@@ -283,8 +320,10 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     }
     capture("movie.pixi.dispose-stage-threw", "MV stage detach threw during cleanup; remaining owners were still released.", () => {
       this.stage.removeFromParent();
+      this.darkCover?.removeFromParent();
       this.sprite?.removeFromParent();
     });
+    capture("movie.pixi.dispose-dark-cover-threw", "MV dark-cover destroy threw during cleanup; remaining owners were still released.", () => this.darkCover?.destroy({ children: false }));
     capture("movie.pixi.dispose-sprite-threw", "MV sprite destroy threw during cleanup; remaining owners were still released.", () => this.sprite?.destroy({ children: false }));
     capture("movie.pixi.dispose-texture-threw", "MV texture destroy threw during cleanup; remaining owners were still released.", () => this.texture?.destroy(false));
     capture("movie.pixi.dispose-source-threw", "MV VideoSource destroy threw during cleanup; remaining owners were still released.", () => this.source?.destroy());
@@ -293,10 +332,13 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     this.source = null;
     this.texture = null;
     this.sprite = null;
+    this.darkCover = null;
     this.prepared = null;
     this.profile = null;
     this.sessionId = null;
     this.visible = false;
+    this.darkCoverVisible = false;
+    this.darkCoverAlpha = Math.fround(0);
     this.stage.visible = false;
     this.state = "disposed";
     return firstFailure ?? movieAccepted(undefined);
@@ -362,8 +404,11 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
 
   private applyVisibility(value: boolean): void {
     this.visible = value;
-    this.stage.visible = value;
     if (this.sprite !== null) this.sprite.visible = value;
+    this.refreshStageVisibility();
+  }
+  private refreshStageVisibility(): void {
+    this.stage.visible = this.visible || this.darkCoverVisible;
   }
   private terminal<T>(): MovieOperationResult<T> | null {
     if (this.state === "disposed") return this.disposed();
@@ -374,6 +419,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     if (this.fault === null) {
       this.fault = Object.freeze({ capability, boundary });
       this.state = "faulted";
+      this.darkCoverVisible = false;
+      if (this.darkCover !== null) this.darkCover.visible = false;
       this.applyVisibility(false);
     }
     return movieRejected("movie-backend-fault", this.fault.capability, this.fault.boundary);

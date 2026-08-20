@@ -196,6 +196,8 @@ export class InGameManager {
     if (this.currentGameStateValue === GameState.PauseSound) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
+    const movieUpdate = this.startupDirection?.stepPlayableMovie(deltaTimeSeconds) ?? ok(undefined);
+    if (movieUpdate.status !== "ok") return this.latchFault(movieUpdate);
     const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
     if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
     if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);

@@ -283,6 +283,16 @@ export class StartupDirectionController {
     });
   }
 
+  stepPlayableMovie(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.phaseValue !== "playing-sound") {
+      return rejected(
+        "startup-direction.movie-step-outside-playing",
+        "The post-start MV update owner runs only after PlayingSound and is frozen by PauseSound.",
+      );
+    }
+    return this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
+  }
+
   pauseMovie(): SimulatorResult<void> {
     return this.mvBackground?.pause() ?? ok(undefined);
   }

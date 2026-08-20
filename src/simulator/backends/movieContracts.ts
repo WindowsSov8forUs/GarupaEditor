@@ -97,6 +97,9 @@ export interface MovieBackendSnapshot {
   readonly muted: boolean | null;
   readonly loop: boolean | null;
   readonly stageParentAttached: boolean | null;
+  readonly movieSpriteAlpha: number | null;
+  readonly darkCoverVisible: boolean | null;
+  readonly darkCoverAlpha: number | null;
   readonly fault: MovieBackendFault | null;
 }
 
@@ -112,6 +115,7 @@ export interface SimulatorMovieBackend {
   stop(): MovieOperationResult<void>;
   seek(seconds: number): MovieOperationResult<void>;
   setVisible(visible: boolean): MovieOperationResult<void>;
+  setDarkCover(alpha: number, visible: boolean): MovieOperationResult<void>;
   publishSuppressedOutput(seconds: number, playing: boolean): MovieOperationResult<void>;
   observe(): MovieOperationResult<MovieBackendSnapshot>;
   recordTerminalFault(capability: string, boundary: string): MovieOperationResult<never>;

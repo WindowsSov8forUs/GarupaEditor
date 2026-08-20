@@ -19,8 +19,8 @@ const fixtureRoot = join(
 );
 const mp4 = join(fixtureRoot, "mv-probe.mp4");
 const webm = join(fixtureRoot, "mv-probe.webm");
-const EXPECTED_MEDIA_DIGEST = "f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234";
-const EXPECTED_RASTER_DIGEST = "5253f7943b57bbe653ec767ac396b1e3f39d0ca6ffc96f11fc44e4fa5e105477";
+const EXPECTED_MEDIA_DIGEST = "34c345808fe455b337b43af44a32f214b9e79e595aca5c1c410176eb860c3db9";
+const EXPECTED_RASTER_DIGEST = "538d21c3eb5f804fbea6f15620cc0ec34ba2a3b96ec1d3a4ac96bdd8fc66e7dd";
 
 try {
   if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });

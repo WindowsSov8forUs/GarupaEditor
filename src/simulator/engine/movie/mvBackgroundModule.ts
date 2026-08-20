@@ -61,6 +61,8 @@ export class MvBackgroundModule {
       !Object.is(deltaTimeSeconds, Math.fround(deltaTimeSeconds))) {
       return rejected("movie.background.invalid-before-sound-step", "The pre-sound MV wait consumes exact non-negative Float32 engine delta after MovieBeforeSound starts.");
     }
+    const cover = this.manager.advanceDarkCover(deltaTimeSeconds);
+    if (cover.status !== "ok") return cover;
     const observed = this.manager.observeAndPublishFirstFrame();
     if (observed.status !== "ok") return observed;
     if (this.beforeDone) return ok(true);
@@ -85,6 +87,8 @@ export class MvBackgroundModule {
       !Object.is(deltaTimeSeconds, Math.fround(deltaTimeSeconds))) {
       return rejected("movie.background.invalid-step", "MV background consumes only initialized exact non-negative Float32 engine delta.");
     }
+    const cover = this.manager.advanceDarkCover(deltaTimeSeconds);
+    if (cover.status !== "ok") return cover;
     if (this.afterStarted && this.musicStartDelayMilliseconds < 0 &&
       (this.manager.snapshot().state === InGameMusicVideoState.WaitingPlay ||
         this.manager.snapshot().state === InGameMusicVideoState.PauseOfWaitingPlay)) {

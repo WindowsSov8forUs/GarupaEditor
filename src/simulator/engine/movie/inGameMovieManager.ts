@@ -19,6 +19,10 @@ export type InGameMusicVideoStateValue =
 export interface InGameMovieManagerSnapshot {
   readonly state: InGameMusicVideoStateValue;
   readonly delayTimerSeconds: number;
+  readonly mvDarkness: number;
+  readonly darkCoverPhase: "hidden" | "fading" | "steady";
+  readonly darkCoverAlpha: number;
+  readonly darkCoverElapsedSeconds: number;
   readonly firstFramePresented: boolean;
   readonly visible: boolean;
   readonly finished: boolean;
@@ -30,14 +34,21 @@ export class InGameMovieManager {
   private timerValue = Math.fround(0);
   private initialized = false;
   private disposed = false;
+  private darkCoverPhaseValue: "hidden" | "fading" | "steady" = "hidden";
+  private darkCoverAlphaValue = Math.fround(0);
+  private darkCoverElapsedValue = Math.fround(0);
 
   constructor(
     private readonly sessionId: string,
     private readonly backend: SimulatorMovieBackend,
+    private readonly mvDarkness: number,
   ) {}
 
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("movie.manager.initialize-after-dispose", "A disposed movie manager cannot be reconstructed.");
+    if (!Number.isInteger(this.mvDarkness) || this.mvDarkness < 0 || this.mvDarkness > 70 || this.mvDarkness % 10 !== 0) {
+      return rejected("movie.manager.invalid-mv-darkness", "MvDarkness must remain one persisted setting value 0..70 in steps of ten.");
+    }
     if (this.initialized) return ok(undefined);
     const observed = mapMovieResult(this.backend.observe());
     if (observed.status !== "ok") return observed;
@@ -68,6 +79,8 @@ export class InGameMovieManager {
         this.stateValue !== InGameMusicVideoState.WaitingPlay)) {
       return rejected("movie.manager.invalid-play-transition", "MV Play is reached exactly from None for non-negative delay or WaitingPlay after a negative delay timer.");
     }
+    const cover = this.fadeInDarkCover();
+    if (cover.status !== "ok") return cover;
     const played = mapMovieResult(this.backend.play());
     if (played.status !== "ok") return played;
     this.stateValue = InGameMusicVideoState.Playing;
@@ -92,11 +105,31 @@ export class InGameMovieManager {
     return played.status === "ok" ? ok(true) : played;
   }
 
+  advanceDarkCover(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (!this.available() || !isExactNonNegativeFloat32(deltaTimeSeconds)) {
+      return rejected("movie.manager.invalid-dark-cover-step", "MV dark-cover tween consumes only initialized exact non-negative Float32 engine delta.");
+    }
+    if (this.darkCoverPhaseValue !== "fading") return ok(undefined);
+    const duration = Math.fround(0.8);
+    this.darkCoverElapsedValue = Math.fround(this.darkCoverElapsedValue + deltaTimeSeconds);
+    const ratio = Math.fround(Math.min(1, this.darkCoverElapsedValue / duration));
+    const target = Math.fround(this.mvDarkness / 100);
+    this.darkCoverAlphaValue = Math.fround(1 + (target - 1) * ratio);
+    const published = mapMovieResult(this.backend.setDarkCover(this.darkCoverAlphaValue, true));
+    if (published.status !== "ok") return published;
+    if (ratio === 1) this.darkCoverPhaseValue = "steady";
+    return ok(undefined);
+  }
+
   observeAndPublishFirstFrame(): SimulatorResult<MovieBackendSnapshot> {
     if (!this.available()) return rejected("movie.manager.observe-unavailable", "Movie observation requires one initialized live owner.");
     const observed = mapMovieResult(this.backend.observe());
     if (observed.status !== "ok") return observed;
     const snapshot = observed.value;
+    if (snapshot.ended && this.darkCoverPhaseValue !== "hidden") {
+      const hidden = this.hideDarkCover();
+      if (hidden.status !== "ok") return hidden;
+    }
     if (snapshot.firstFramePresented && !snapshot.visible && !snapshot.outputSuppressed &&
       this.stateValue === InGameMusicVideoState.Playing && !snapshot.ended) {
       const visible = mapMovieResult(this.backend.setVisible(true));
@@ -140,6 +173,8 @@ export class InGameMovieManager {
 
   stop(): SimulatorResult<void> {
     if (this.disposed) return ok(undefined);
+    const hidden = this.darkCoverPhaseValue === "hidden" ? ok(undefined) : this.hideDarkCover();
+    if (hidden.status !== "ok") return hidden;
     const stopped = mapMovieResult(this.backend.stop());
     return stopped.status === "ok" ? stopped : stopped;
   }
@@ -149,6 +184,10 @@ export class InGameMovieManager {
     return Object.freeze({
       state: this.stateValue,
       delayTimerSeconds: this.timerValue,
+      mvDarkness: this.mvDarkness,
+      darkCoverPhase: this.darkCoverPhaseValue,
+      darkCoverAlpha: this.darkCoverAlphaValue,
+      darkCoverElapsedSeconds: this.darkCoverElapsedValue,
       firstFramePresented: backend.firstFramePresented,
       visible: backend.visible,
       finished: backend.ended,
@@ -158,6 +197,25 @@ export class InGameMovieManager {
 
   dispose(): void {
     this.disposed = true;
+  }
+
+  private fadeInDarkCover(): SimulatorResult<void> {
+    if (!this.available() || this.darkCoverPhaseValue !== "hidden") {
+      return rejected("movie.manager.invalid-dark-cover-fade", "Gameplay MV starts its dark-cover tween exactly once before Movie Play.");
+    }
+    this.darkCoverPhaseValue = "fading";
+    this.darkCoverElapsedValue = Math.fround(0);
+    this.darkCoverAlphaValue = Math.fround(1);
+    return mapMovieResult(this.backend.setDarkCover(this.darkCoverAlphaValue, true));
+  }
+
+  private hideDarkCover(): SimulatorResult<void> {
+    const hidden = mapMovieResult(this.backend.setDarkCover(Math.fround(0), false));
+    if (hidden.status !== "ok") return hidden;
+    this.darkCoverPhaseValue = "hidden";
+    this.darkCoverElapsedValue = Math.fround(0);
+    this.darkCoverAlphaValue = Math.fround(0);
+    return ok(undefined);
   }
 
   private available(): boolean {
