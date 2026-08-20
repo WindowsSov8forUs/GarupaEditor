@@ -45,6 +45,17 @@ interface BestdoriNames {
   readonly background: Record<string, BestdoriInfoEntry>;
 }
 
+export function createBestdoriNetworkResourceRef(
+  server: BestdoriAssetServer,
+  family: BestdoriAssetFamily,
+  nativeId: string,
+): ResourceResult<NetworkResourceDescriptor["ref"]> {
+  const reference = createResourceRef(
+    `bestdori/${server}/${family}/${encodeURIComponent(nativeId)}`,
+  );
+  return reference.status === "rejected" ? reference : resourceAccepted(reference.value);
+}
+
 export class BestdoriApplicationResourceProvider implements ResourceCatalogProvider {
   readonly provider = "bestdori";
 
@@ -93,36 +104,59 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
         "The selected Bestdori package has no dynamically discoverable complete manifest; fixed filename fallback is forbidden.",
       );
     }
-    let manifest: unknown;
-    try {
-      manifest = await fetchBestdoriJson<unknown>(
-        descriptor.source.manifestUrl,
-        `bestdori ${descriptor.source.family}/${descriptor.source.nativeId} manifest`,
-      );
-    } catch (error) {
-      return resourceRejected(
-        "resource-unavailable",
-        "resources.bestdori.manifest-fetch-failed",
-        error instanceof Error ? error.message : String(error),
-      );
+    const sources = [descriptor.source];
+    if (descriptor.source.family === "noteskin" && !descriptor.source.nativeId.endsWith("sample")) {
+      const sampleId = descriptor.source.nativeId === "habahiro"
+        ? "habahiro_sample"
+        : `${descriptor.source.nativeId}sample`;
+      sources.push(sourceFor(
+        descriptor.source.server as BestdoriAssetServer,
+        "noteskin",
+        sampleId,
+      ));
     }
-    const filenames = normalizeManifest(manifest);
-    if (filenames.status === "rejected") return filenames;
     const files: ResourceInstallFile[] = [];
-    for (const logicalPath of filenames.value) {
-      const url = `${descriptor.source.assetBaseUrl}/${encodeLogicalPath(logicalPath)}`;
+    const seen = new Set<string>();
+    for (const source of sources) {
+      if (source.manifestUrl === null) continue;
+      let manifest: unknown;
       try {
-        const mediaType = mediaTypeForPath(logicalPath);
-        const blob = await fetchBestdoriFileBlob(url, mediaType, `bestdori ${logicalPath}`);
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        if (bytes.byteLength === 0) throw new Error("downloaded file is empty");
-        files.push(Object.freeze({ logicalPath, mediaType, bytes }));
+        manifest = await fetchBestdoriJson<unknown>(
+          source.manifestUrl,
+          `bestdori ${source.family}/${source.nativeId} manifest`,
+        );
       } catch (error) {
         return resourceRejected(
-          "resource-transaction-failed",
-          "resources.bestdori.package-download-failed",
-          `${logicalPath}: ${error instanceof Error ? error.message : String(error)}`,
+          "resource-unavailable",
+          "resources.bestdori.manifest-fetch-failed",
+          error instanceof Error ? error.message : String(error),
         );
+      }
+      const filenames = normalizeManifest(manifest);
+      if (filenames.status === "rejected") return filenames;
+      for (const logicalPath of filenames.value) {
+        if (seen.has(logicalPath)) {
+          return resourceRejected(
+            "resource-integrity",
+            "resources.bestdori.combined-package-duplicate-path",
+            `Combined Bestdori package duplicates ${logicalPath}.`,
+          );
+        }
+        seen.add(logicalPath);
+        const url = `${source.assetBaseUrl}/${encodeLogicalPath(logicalPath)}`;
+        try {
+          const mediaType = mediaTypeForPath(logicalPath);
+          const blob = await fetchBestdoriFileBlob(url, mediaType, `bestdori ${logicalPath}`);
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          if (bytes.byteLength === 0) throw new Error("downloaded file is empty");
+          files.push(Object.freeze({ logicalPath, mediaType, bytes }));
+        } catch (error) {
+          return resourceRejected(
+            "resource-transaction-failed",
+            "resources.bestdori.package-download-failed",
+            `${logicalPath}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
     }
     return resourceAccepted(Object.freeze({
@@ -151,6 +185,7 @@ export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly
     collect(resources, server, "bgskin", info.ingameskin?.bgskin, names, observedAt);
     collect(resources, server, "judgeskin", info.ingameskin?.judgeskin, names, observedAt);
     collect(resources, server, "tapseskin", info.sound?.tapseskin, names, observedAt);
+    resources.push(commonSoundDescriptor(server, observedAt));
   }
   const deduplicated = new Map<string, NetworkResourceDescriptor>();
   for (const resource of resources) deduplicated.set(resource.ref.id, resource);
@@ -190,12 +225,22 @@ function collect(
 
 function sourceFor(
   server: BestdoriAssetServer,
-  family: Exclude<BestdoriAssetFamily, "sound-common">,
+  family: BestdoriAssetFamily,
   nativeId: string,
 ) {
   const encoded = encodeURIComponent(nativeId);
   const explorerRoot = `https://bestdori.com/api/explorer/${server}/assets`;
   const assetRoot = `https://bestdori.com/assets/${server}`;
+  if (family === "sound-common") {
+    return {
+      provider: "bestdori",
+      server,
+      family,
+      nativeId,
+      manifestUrl: `${explorerRoot}/sound/common.json`,
+      assetBaseUrl: `${assetRoot}/sound/common_rip`,
+    };
+  }
   const section = family === "tapseskin" ? "sound" : "ingameskin";
   return {
     provider: "bestdori",
@@ -205,6 +250,24 @@ function sourceFor(
     manifestUrl: `${explorerRoot}/${section}/${family}/${encoded}.json`,
     assetBaseUrl: `${assetRoot}/${section}/${family}/${encoded}_rip`,
   };
+}
+
+function commonSoundDescriptor(
+  server: BestdoriAssetServer,
+  observedAt: string,
+): NetworkResourceDescriptor {
+  const reference = createResourceRef(`bestdori/${server}/sound-common/common`);
+  if (reference.status === "rejected") throw new Error("Bestdori common sound identity is invalid");
+  return Object.freeze({
+    ref: reference.value,
+    origin: "network" as const,
+    kind: "package" as const,
+    title: `${server.toUpperCase()} common sound`,
+    availability: "remote-only" as const,
+    files: null,
+    catalogObservedAt: observedAt,
+    source: Object.freeze(sourceFor(server, "sound-common", "common")),
+  });
 }
 
 async function loadNames(): Promise<BestdoriNames> {

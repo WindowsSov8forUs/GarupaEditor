@@ -1,5 +1,4 @@
 import type { ResourceRef } from "../../resources/contracts";
-import { loadBestdoriNetworkResourceDescriptors } from "../../resources/providers/bestdoriCatalogProvider";
 import type {
   BestdoriAssetFamily,
   BestdoriAssetServer,
@@ -49,8 +48,9 @@ export function buildEmptyBestdoriSkinCatalogOptions(): BestdoriSkinCatalogOptio
   });
 }
 
-export async function loadBestdoriSkinCatalogOptions(): Promise<BestdoriSkinCatalogOptions> {
-  const descriptors = await loadBestdoriNetworkResourceDescriptors();
+export function buildBestdoriSkinCatalogOptionsFromDescriptors(
+  descriptors: readonly import("../../resources/contracts").NetworkResourceDescriptor[],
+): BestdoriSkinCatalogOptions {
   const groups: Record<BestdoriCatalogKind, BestdoriCatalogResource[]> = {
     rhythm: [],
     habahiroRhythm: [],

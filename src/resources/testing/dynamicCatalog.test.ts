@@ -18,10 +18,17 @@ export async function runDynamicCatalogTests(): Promise<void> {
     }
     if (url.includes("/api/skin/")) return jsonResponse({});
     if (url.endsWith("/skin999.json")) return jsonResponse(["atlas.bin"]);
+    if (url.endsWith("/skin999sample.json")) return jsonResponse(["sample.bundle"]);
     if (url.endsWith("/skin999_rip/atlas.bin")) {
       return new Response(new TextEncoder().encode("dynamic-atlas"), {
         status: 200,
         headers: { "Content-Type": "application/octet-stream" },
+      });
+    }
+    if (url.endsWith("/skin999sample_rip/sample.bundle")) {
+      return new Response(new TextEncoder().encode("dynamic-sample"), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       });
     }
     return new Response("not found", { status: 404 });
@@ -37,8 +44,9 @@ export async function runDynamicCatalogTests(): Promise<void> {
     const installed = await provider.install(future);
     equal(installed.status, "accepted");
     if (installed.status !== "accepted") return;
-    equal(installed.value.files.length, 1);
+    equal(installed.value.files.length, 2);
     equal(new TextDecoder().decode(installed.value.files[0]!.bytes), "dynamic-atlas");
+    equal(new TextDecoder().decode(installed.value.files[1]!.bytes), "dynamic-sample");
 
     globalThis.fetch = async () => { throw new Error("offline"); };
     const offline = await provider.refresh(catalog.value);

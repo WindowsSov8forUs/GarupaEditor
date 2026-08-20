@@ -11,7 +11,16 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import { beatToSeconds, sanitizeFileName } from "../chartCore";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import {
+  useApplicationResourceManager,
+  useApplicationResourceUrl,
+} from "../resources/applicationResourceContext";
+import type { ResourceSnapshotId } from "../resources/contracts";
+import {
+  decodeAppliedSkinResources,
+  type AppliedSkinResources,
+} from "../skin/resourceSkinDecoder";
+import { projectSkinRuntimeResourceMap } from "../skin/resourceSkinProjection";
 import { DownloadProgressModal } from "../components/DownloadProgressModal";
 import { OverlayDialogModal, type OverlayDialogState } from "../components/OverlayDialogModal";
 import { StepperIcon } from "../components/StepperIcon";
@@ -222,10 +231,11 @@ function drawNoteVisual(
   note: StaticNoteVisual,
   laneWidth: number,
   noteVisualScale: number,
+  resourceUrls: Readonly<Record<string, string>>,
   getImage: (url: string | undefined | null) => HTMLImageElement | null,
 ) {
-  const baseImage = getImage(note.base);
-  const overlayImage = getImage(note.overlay);
+  const baseImage = getImage(note.baseResourceKey === null ? null : resourceUrls[note.baseResourceKey]);
+  const overlayImage = getImage(note.overlayResourceKey === null ? null : resourceUrls[note.overlayResourceKey]);
   if (!baseImage && !overlayImage) {
     return;
   }
@@ -405,6 +415,7 @@ function drawSegmentFrame(args: {
   zoom: number;
   orderedSegments: RenderConnectionSegment[];
   noteCountMilestones: NoteCountMilestone[];
+  resourceUrls: Readonly<Record<string, string>>;
   getImage: (url: string | undefined | null) => HTMLImageElement | null;
 }) {
   const {
@@ -418,6 +429,7 @@ function drawSegmentFrame(args: {
     zoom,
     orderedSegments,
     noteCountMilestones,
+    resourceUrls,
     getImage,
   } = args;
   const logicalBoardWidth = payload.boardWidth;
@@ -475,7 +487,7 @@ function drawSegmentFrame(args: {
     context.stroke();
   }
 
-  const simultaneousTexture = getImage(payload.runtimeSkin.simultaneousLine);
+  const simultaneousTexture = getImage(resourceUrls[payload.runtimeSkin.simultaneousLineResourceKey]);
   if (simultaneousTexture) {
     const lineHeight = Math.max(1, simultaneousTexture.naturalHeight / 3);
     const halfHeight = lineHeight * 0.5;
@@ -510,8 +522,8 @@ function drawSegmentFrame(args: {
     context.restore();
   }
 
-  const longLineTexture = getImage(payload.runtimeSkin.longLine);
-  const slideLineTexture = getImage(payload.runtimeSkin.longLineSpecial);
+  const longLineTexture = getImage(resourceUrls[payload.runtimeSkin.longLineResourceKey]);
+  const slideLineTexture = getImage(resourceUrls[payload.runtimeSkin.longLineSpecialResourceKey]);
   const chainTailById = new Map<string, { index: number; x: number }>();
   for (const segment of orderedSegments) {
     if (segment.maxY < segmentTop - 3 || segment.minY > segmentBottom + 3) {
@@ -579,6 +591,7 @@ function drawSegmentFrame(args: {
       },
       payload.laneWidth,
       payload.noteVisualScale,
+      resourceUrls,
       getImage,
     );
   }
@@ -679,6 +692,7 @@ function renderSegmentCanvas(args: {
   zoom: number;
   widthPx: number;
   heightPx: number;
+  resourceUrls: Readonly<Record<string, string>>;
   getImage: (url: string | undefined | null) => HTMLImageElement | null;
 }) {
   const {
@@ -694,6 +708,7 @@ function renderSegmentCanvas(args: {
     zoom,
     widthPx,
     heightPx,
+    resourceUrls,
     getImage,
   } = args;
   if (canvas.width !== widthPx) {
@@ -723,6 +738,7 @@ function renderSegmentCanvas(args: {
     windowWidth,
     boardXOffset,
     zoom,
+    resourceUrls,
     getImage,
     noteCountMilestones,
   });
@@ -730,11 +746,13 @@ function renderSegmentCanvas(args: {
 }
 
 export default function StaticChartRenderWindow() {
+  const resourceManager = useApplicationResourceManager();
   const backArrowIcon = useApplicationResourceUrl("ui.icon.back-arrow");
   const imageExportIcon = useApplicationResourceUrl("ui.icon.image-export");
   const routeParams = useMemo(() => parseStaticRenderRouteParams(), []);
   const { requestId, isMobileRoute } = routeParams;
   const [payload, setPayload] = useState<StaticRenderPayload | null>(null);
+  const [appliedSkinResources, setAppliedSkinResources] = useState<AppliedSkinResources | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [overlayDialog, setOverlayDialog] = useState<OverlayDialogState | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<PreviewLoadingState>({
@@ -864,6 +882,35 @@ export default function StaticChartRenderWindow() {
     };
   }, [clearLoadingHideTimer, completeLoadingProgress, isMobileRoute, requestId, updateLoadingProgress]);
 
+  useEffect(() => {
+    if (payload === null) return;
+    if (payload.schemaVersion !== 2) {
+      setErrorMessage("静态渲染请求使用了不受支持的资源合同。");
+      return;
+    }
+    let disposed = false;
+    let owned: AppliedSkinResources | null = null;
+    void (async () => {
+      const lease = await resourceManager.acquireSnapshot(payload.resourceSnapshotId as ResourceSnapshotId);
+      if (lease.status === "rejected") {
+        throw new Error(`${lease.failure.capability}: ${lease.failure.boundary}`);
+      }
+      owned = await decodeAppliedSkinResources(lease.value, payload.skinIdentities);
+      if (disposed) {
+        await owned.dispose();
+        return;
+      }
+      setAppliedSkinResources(owned);
+    })().catch((error) => {
+      if (!disposed) setErrorMessage(`静态渲染资源加载失败：${error instanceof Error ? error.message : String(error)}`);
+    });
+    return () => {
+      disposed = true;
+      if (owned !== null) void owned.dispose();
+      setAppliedSkinResources(null);
+    };
+  }, [payload, resourceManager]);
+
   const updateSliceHeight = useCallback(() => {
     const host = previewViewportRef.current;
     if (!host) {
@@ -891,26 +938,13 @@ export default function StaticChartRenderWindow() {
     };
   }, [updateSliceHeight]);
 
-  const imageUrls = useMemo(() => {
-    if (!payload) {
-      return [] as string[];
-    }
-    const urls = new Set<string>();
-    const push = (value: string | null | undefined) => {
-      if (typeof value === "string" && value.length > 0) {
-        urls.add(value);
-      }
-    };
-
-    push(payload.runtimeSkin.longLine);
-    push(payload.runtimeSkin.longLineSpecial);
-    push(payload.runtimeSkin.simultaneousLine);
-    for (const note of payload.noteVisuals) {
-      push(note.base);
-      push(note.overlay);
-    }
-    return Array.from(urls.values());
-  }, [payload]);
+  const resourceUrls = useMemo<Readonly<Record<string, string>>>(
+    () => appliedSkinResources === null
+      ? Object.freeze({})
+      : projectSkinRuntimeResourceMap(appliedSkinResources.note),
+    [appliedSkinResources],
+  );
+  const imageUrls = useMemo(() => Object.values(resourceUrls), [resourceUrls]);
 
   useEffect(() => {
     for (const url of imageUrls) {
@@ -939,6 +973,8 @@ export default function StaticChartRenderWindow() {
     },
     [imageVersion],
   );
+
+  const allResourceImagesReady = imageUrls.length > 0 && imageUrls.every((url) => getImage(url) !== null);
 
   const orderedSegments = useMemo(
     () => sortConnectionSegments(payload?.connectionSegments ?? []),
@@ -1059,7 +1095,7 @@ export default function StaticChartRenderWindow() {
   }, [segmentCount, totalCanvasWidthPx, updateSliceHeight, zoom]);
 
   useEffect(() => {
-    if (!payload || !bounds || segmentCount <= 0) {
+    if (!payload || appliedSkinResources === null || !allResourceImagesReady || !bounds || segmentCount <= 0) {
       return;
     }
 
@@ -1083,15 +1119,19 @@ export default function StaticChartRenderWindow() {
         zoom,
         widthPx: segmentWidthPx,
         heightPx: sliceHeightPx,
+        resourceUrls,
         getImage,
       });
     }
   }, [
+    allResourceImagesReady,
+    appliedSkinResources,
     bounds,
     getImage,
     noteCountMilestones,
     orderedSegments,
     payload,
+    resourceUrls,
     segmentCount,
     segmentIndices,
     segmentLogicalWidth,
@@ -1103,12 +1143,12 @@ export default function StaticChartRenderWindow() {
   ]);
 
   useEffect(() => {
-    if (!payload || segmentCount <= 0 || didCompleteRenderRef.current) {
+    if (!payload || appliedSkinResources === null || !allResourceImagesReady || segmentCount <= 0 || didCompleteRenderRef.current) {
       return;
     }
     didCompleteRenderRef.current = true;
     completeLoadingProgress("预览已就绪。");
-  }, [completeLoadingProgress, payload, segmentCount]);
+  }, [allResourceImagesReady, appliedSkinResources, completeLoadingProgress, payload, segmentCount]);
 
   useEffect(() => {
     setHoverStatusLine(null);

@@ -12,22 +12,16 @@ import {
   type NoteType,
 } from "../../chartCore";
 import {
-  combineSkinAssets,
-  ensureCommonTapSkillSeAsset,
   isHabahiroRhythmRipName,
-  setRuntimeBgSkinAssets,
-  setRuntimeFieldSkinAssets,
-  setRuntimeJudgeSkinAssets,
-  setRuntimeSeAssets,
-  type BGSkin,
-  type FieldSkinAssets,
-  type JudgeSkin,
-  type RhythmSeSkinAssets,
-  type DirectionalSeSkinAssets,
-  type DirectionalSkinAssets,
-  type AnyRhythmSkinAssets,
   type SkinSelection,
 } from "../../skinLoader";
+import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
+import { createBestdoriNetworkResourceRef } from "../../resources/providers/bestdoriCatalogProvider";
+import type { BestdoriAssetFamily, BestdoriAssetServer } from "../../services/bestdori/api";
+import {
+  decodeAppliedSkinResources,
+  type AppliedSkinResources,
+} from "../../skin/resourceSkinDecoder";
 import {
   convertBestdoriV2ToGarupaChartJson,
   convertGarupaChartJsonToBestdoriV2,
@@ -138,6 +132,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function requireBestdoriRef(
+  server: BestdoriAssetServer,
+  family: BestdoriAssetFamily,
+  nativeId: string,
+) {
+  const reference = createBestdoriNetworkResourceRef(server, family, nativeId);
+  if (reference.status === "rejected") {
+    throw new Error(`${reference.failure.capability}: ${reference.failure.boundary}`);
+  }
+  return reference.value;
+}
+
 export function useEditorIoAndShortcuts(params: any) {
   const {
     metadata,
@@ -191,18 +197,10 @@ export function useEditorIoAndShortcuts(params: any) {
     normalizeSkinSelection,
     skinApplySeqRef,
     setSkinAssets,
+    setAppliedSkinResources,
     setIsSkinApplying,
     formatTypeLabel,
-    downloadBestdoriRhythmSkinAssets,
-    downloadBestdoriDirectionalSkinAssets,
-    downloadBestdoriBgSkinAssets,
-    downloadBestdoriFieldSkinAssets,
-    downloadBestdoriJudgeSkinAssets,
-    downloadBestdoriRhythmSeSkinAssets,
-    downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
-    writeSkinSelectionToStorage,
-    readSkinSelectionFromStorage,
     didInitSkinRef,
     approxEq,
     selectedNoteIds,
@@ -222,14 +220,14 @@ export function useEditorIoAndShortcuts(params: any) {
     pasteAtMousePositionByShortcut,
   } = params;
 
-  const rhythmSkinAssetsRef = useRef<AnyRhythmSkinAssets | null>(null);
-  const directionalSkinAssetsRef = useRef<DirectionalSkinAssets | null>(null);
-  const rhythmSeSkinAssetsRef = useRef<RhythmSeSkinAssets | null>(null);
-  const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
-  const bgSkinAssetsRef = useRef<BGSkin | null>(null);
-  const fieldSkinAssetsRef = useRef<FieldSkinAssets | null>(null);
-  const judgeSkinAssetsRef = useRef<JudgeSkin | null>(null);
-  const commonTapSkillSeRef = useRef<string>("");
+  const resourceManager = useApplicationResourceManager();
+  const appliedSkinResourcesRef = useRef<AppliedSkinResources | null>(null);
+
+  useEffect(() => () => {
+    const applied = appliedSkinResourcesRef.current;
+    appliedSkinResourcesRef.current = null;
+    if (applied !== null) void applied.dispose();
+  }, []);
 
   const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
   const toLaneValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
@@ -2161,101 +2159,69 @@ export function useEditorIoAndShortcuts(params: any) {
     const normalized = normalizeSkinSelection(selection);
     const sequence = skinApplySeqRef.current + 1;
     skinApplySeqRef.current = sequence;
-    const downloadOperationId = `skin-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const downloadOperationId = `skin-resource-${sequence}`;
 
     setIsSkinApplying(true);
-    startDownloadProgress(downloadOperationId, "正在准备下载资源…");
-    const shouldReloadRhythm =
-      rhythmSkinAssetsRef.current === null ||
-      normalized.rhythmRipName !== skinSelection.rhythmRipName ||
-      normalized.rhythmServer !== skinSelection.rhythmServer;
-    const shouldReloadDirectional =
-      directionalSkinAssetsRef.current === null ||
-      normalized.directionalRipName !== skinSelection.directionalRipName ||
-      normalized.directionalServer !== skinSelection.directionalServer;
-    const shouldReloadRhythmSe =
-      rhythmSeSkinAssetsRef.current === null ||
-      normalized.rhythmSeRipName !== skinSelection.rhythmSeRipName ||
-      normalized.rhythmSeServer !== skinSelection.rhythmSeServer;
-    const shouldReloadDirectionalSe =
-      directionalSeSkinAssetsRef.current === null ||
-      normalized.directionalSeRipName !== skinSelection.directionalSeRipName ||
-      normalized.directionalSeServer !== skinSelection.directionalSeServer;
-    const shouldReloadBgSkin =
-      bgSkinAssetsRef.current === null ||
-      normalized.bgSkinRipName !== skinSelection.bgSkinRipName ||
-      normalized.bgSkinServer !== skinSelection.bgSkinServer;
-    const shouldReloadFieldSkin =
-      fieldSkinAssetsRef.current === null ||
-      normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName ||
-      normalized.fieldSkinServer !== skinSelection.fieldSkinServer;
-    const shouldReloadJudgeSkin =
-      judgeSkinAssetsRef.current === null ||
-      normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName ||
-      normalized.judgeSkinServer !== skinSelection.judgeSkinServer;
+    startDownloadProgress(downloadOperationId, "正在准备资源快照…");
     const rhythmCatalogKind = isHabahiroRhythmRipName(normalized.rhythmRipName) ? "habahiroRhythm" : "rhythm";
     setStatusMessage(
       `正在加载皮肤：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
     );
 
     try {
-      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextBgSkin, nextFieldSkin, nextJudgeSkin, commonTapSkillSe] = await Promise.all([
-        shouldReloadRhythm
-          ? downloadBestdoriRhythmSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(rhythmSkinAssetsRef.current),
-        shouldReloadDirectional
-          ? downloadBestdoriDirectionalSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(directionalSkinAssetsRef.current),
-        shouldReloadRhythmSe
-          ? downloadBestdoriRhythmSeSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(rhythmSeSkinAssetsRef.current),
-        shouldReloadDirectionalSe
-          ? downloadBestdoriDirectionalSeSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(directionalSeSkinAssetsRef.current),
-        shouldReloadBgSkin
-          ? downloadBestdoriBgSkinAssets(normalized.bgSkinRipName, { operationId: downloadOperationId }, normalized.bgSkinServer)
-          : Promise.resolve(bgSkinAssetsRef.current),
-        shouldReloadFieldSkin
-          ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId }, normalized.fieldSkinServer)
-          : Promise.resolve(fieldSkinAssetsRef.current),
-        shouldReloadJudgeSkin
-          ? downloadBestdoriJudgeSkinAssets(normalized.judgeSkinRipName, { operationId: downloadOperationId }, normalized.judgeSkinServer)
-          : Promise.resolve(judgeSkinAssetsRef.current),
-        commonTapSkillSeRef.current && !shouldReloadRhythmSe
-          ? Promise.resolve(commonTapSkillSeRef.current)
-          : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId, server: normalized.rhythmSeServer }),
+      const catalog = await resourceManager.refreshCatalog("bestdori");
+      if (catalog.status === "rejected") {
+        throw new Error(`${catalog.failure.capability}: ${catalog.failure.boundary}`);
+      }
+      const resourceRefs = {
+        "skin.rhythm": requireBestdoriRef(normalized.rhythmServer, "noteskin", normalized.rhythmRipName),
+        "skin.directional": requireBestdoriRef(normalized.directionalServer, "noteskin", normalized.directionalRipName),
+        "skin.rhythm-se": requireBestdoriRef(normalized.rhythmSeServer, "tapseskin", normalized.rhythmSeRipName),
+        "skin.directional-se": requireBestdoriRef(normalized.directionalSeServer, "tapseskin", normalized.directionalSeRipName),
+        "skin.field": requireBestdoriRef(normalized.fieldSkinServer, "fieldskin", normalized.fieldSkinRipName),
+        "skin.background": requireBestdoriRef(normalized.bgSkinServer, "bgskin", normalized.bgSkinRipName),
+        "skin.judge": requireBestdoriRef(normalized.judgeSkinServer, "judgeskin", normalized.judgeSkinRipName),
+        "skin.common-se": requireBestdoriRef(normalized.rhythmSeServer, "sound-common", "common"),
+      } as const;
+      const selected = resourceManager.replaceSelection(resourceRefs);
+      if (selected.status === "rejected") {
+        throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
+      }
+      const snapshot = await resourceManager.createSnapshot([
+        "skin.rhythm",
+        "skin.directional",
+        "skin.rhythm-se",
+        "skin.directional-se",
+        "skin.field",
+        "skin.background",
+        "skin.judge",
+        "skin.common-se",
       ]);
+      if (snapshot.status === "rejected") {
+        throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
+      }
+      const lease = await resourceManager.acquireSnapshot(snapshot.value.snapshotId);
+      if (lease.status === "rejected") {
+        throw new Error(`${lease.failure.capability}: ${lease.failure.boundary}`);
+      }
+      const nextApplied = await decodeAppliedSkinResources(lease.value, {
+        rhythm: normalized.rhythmRipName,
+        directional: normalized.directionalRipName,
+        judge: normalized.judgeSkinRipName,
+      });
       if (skinApplySeqRef.current !== sequence) {
+        await nextApplied.dispose();
         return;
       }
-
-      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextBgSkin || !nextFieldSkin || !nextJudgeSkin || !commonTapSkillSe) {
-        throw new Error("Skin assets incomplete after split loading.");
-      }
-
-      rhythmSkinAssetsRef.current = nextRhythm;
-      directionalSkinAssetsRef.current = nextDirectional;
-      rhythmSeSkinAssetsRef.current = nextRhythmSe;
-      directionalSeSkinAssetsRef.current = nextDirectionalSe;
-      bgSkinAssetsRef.current = nextBgSkin;
-      fieldSkinAssetsRef.current = nextFieldSkin;
-      judgeSkinAssetsRef.current = nextJudgeSkin;
-      commonTapSkillSeRef.current = commonTapSkillSe;
-      setRuntimeBgSkinAssets(nextBgSkin);
-      setRuntimeFieldSkinAssets(nextFieldSkin);
-      setRuntimeJudgeSkinAssets(nextJudgeSkin);
-      setRuntimeSeAssets({
-        rhythm: nextRhythmSe,
-        directional: nextDirectionalSe,
-        tapSkill: commonTapSkillSe,
-      });
-      setSkinAssets(combineSkinAssets(nextRhythm, nextDirectional));
+      const previousApplied = appliedSkinResourcesRef.current;
+      appliedSkinResourcesRef.current = nextApplied;
+      setAppliedSkinResources(nextApplied);
+      setSkinAssets(nextApplied.note);
       setSkinSelection(normalized);
       setPendingSkinSelection(normalized);
+      await previousApplied?.dispose();
 
-      if (persist) {
-        writeSkinSelectionToStorage(normalized);
-      }
+      void persist;
 
       completeDownloadProgress("资源下载完成。");
 
@@ -2289,9 +2255,8 @@ export function useEditorIoAndShortcuts(params: any) {
       return;
     }
     didInitSkinRef.current = true;
-    const initial = readSkinSelectionFromStorage();
-    void applyBestdoriSkinSelection(initial, true);
-  }, [applyBestdoriSkinSelection, didInitSkinRef, readSkinSelectionFromStorage]);
+    void applyBestdoriSkinSelection(skinSelection, false);
+  }, [applyBestdoriSkinSelection, didInitSkinRef, skinSelection]);
 
   return {
     garupaChartJson,

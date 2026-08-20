@@ -30,6 +30,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "skin.field",
   "skin.background",
   "skin.judge",
+  "skin.common-se",
   "chart-media.bgm",
   "chart-media.cover",
   "chart-media.mv",
@@ -57,6 +58,7 @@ export interface SkinResourceSelection {
   readonly field: ResourceRef | null;
   readonly background: ResourceRef | null;
   readonly judge: ResourceRef | null;
+  readonly commonSe: ResourceRef | null;
 }
 
 export function createEmptyApplicationResourceSelection(): ApplicationResourceSelection {
@@ -100,5 +102,6 @@ export function skinResourcesFromSelection(
     field: selection["skin.field"],
     background: selection["skin.background"],
     judge: selection["skin.judge"],
+    commonSe: selection["skin.common-se"],
   });
 }

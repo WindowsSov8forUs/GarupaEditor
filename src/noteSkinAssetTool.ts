@@ -1,5 +1,3 @@
-import { readSkinBinaryFileAsDataUrl } from "./services/bestdori/api";
-
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
 type JsonArray = JsonValue[];
@@ -377,7 +375,11 @@ async function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function cropSprite(image: HTMLImageElement, rect: SpriteRect): string {
+async function cropSprite(
+  image: HTMLImageElement,
+  rect: SpriteRect,
+  createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>,
+): Promise<string> {
   const canvas = document.createElement("canvas");
   canvas.width = rect.width;
   canvas.height = rect.height;
@@ -401,10 +403,14 @@ function cropSprite(image: HTMLImageElement, rect: SpriteRect): string {
     rect.height,
   );
 
-  return canvas.toDataURL("image/png");
+  return createImageUrl(canvas);
 }
 
-function cropSpriteTopLeft(image: HTMLImageElement, rect: SpriteRect): string {
+async function cropSpriteTopLeft(
+  image: HTMLImageElement,
+  rect: SpriteRect,
+  createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>,
+): Promise<string> {
   const canvas = document.createElement("canvas");
   canvas.width = rect.width;
   canvas.height = rect.height;
@@ -425,7 +431,7 @@ function cropSpriteTopLeft(image: HTMLImageElement, rect: SpriteRect): string {
     rect.height,
   );
 
-  return canvas.toDataURL("image/png");
+  return createImageUrl(canvas);
 }
 
 function getAssetFilename(path: string): string {
@@ -473,11 +479,10 @@ function isLoadableUrl(path: string): boolean {
 }
 
 async function loadImageFromMappedPath(path: string): Promise<HTMLImageElement> {
-  if (isLoadableUrl(path)) {
-    return loadImageFromUrl(path);
+  if (!isLoadableUrl(path)) {
+    throw new Error("skin consumer requires a main-program-leased image URL");
   }
-  const dataUrl = await readSkinBinaryFileAsDataUrl(path, path);
-  return loadImageFromUrl(dataUrl);
+  return loadImageFromUrl(path);
 }
 
 function resolveSpriteTexturePathId(entry: SpriteManifestEntry): string | null {
@@ -500,6 +505,7 @@ type ExtractNamedSpritesParams = {
   filePathByName: Record<string, string>;
   sprites: SpriteManifest;
   bundle: BundleManifest;
+  createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>;
 };
 
 export type AssetSpriteCoordinateOrigin = "top-left" | "bottom-left";
@@ -510,6 +516,7 @@ type ExtractNamedSpritesFromAssetParams = {
   bundle?: BundleManifest;
   atlasFileName?: string;
   coordinateOrigin?: AssetSpriteCoordinateOrigin;
+  createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>;
 };
 
 export async function extractNamedSprites(
@@ -519,6 +526,7 @@ export async function extractNamedSprites(
     filePathByName,
     sprites,
     bundle,
+    createImageUrl,
   } = params;
 
   const pathIdToAtlasFile = buildAtlasFileByPreloadRange(bundle);
@@ -554,7 +562,7 @@ export async function extractNamedSprites(
     }
 
     const image = await getImageForFile(atlasFile);
-    output[name] = cropSprite(image, rect);
+    output[name] = await cropSprite(image, rect, createImageUrl);
   }
 
   return output;
@@ -600,6 +608,7 @@ export async function extractNamedSpritesFromAsset(
     bundle,
     atlasFileName,
     coordinateOrigin = "top-left",
+    createImageUrl,
   } = params;
 
   const atlasFile = resolveAtlasFileNameForAssetExtraction(bundle, atlasFileName);
@@ -625,7 +634,7 @@ export async function extractNamedSpritesFromAsset(
       },
       `${sprite.name}.rect`,
     );
-    output[sprite.name] = cropSpriteTopLeft(image, normalizedRect);
+    output[sprite.name] = await cropSpriteTopLeft(image, normalizedRect, createImageUrl);
   }
 
   return output;

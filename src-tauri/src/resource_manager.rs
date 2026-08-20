@@ -462,12 +462,12 @@ pub fn resource_read_snapshot_file(
 
 #[tauri::command]
 pub fn resource_release_snapshot(
-    app: tauri::AppHandle,
+    _app: tauri::AppHandle,
     snapshot_id: String,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<(), String> {
     let snapshot_id = normalize_snapshot_id(&snapshot_id)?;
-    let remove = {
+    {
         let mut runtime = state
             .runtime
             .lock()
@@ -482,17 +482,6 @@ pub fn resource_release_snapshot(
         *count -= 1;
         if *count == 0 {
             runtime.open_snapshots.remove(&snapshot_id);
-            true
-        } else {
-            false
-        }
-    };
-    if remove {
-        let root = resource_root(&app)?;
-        let path = snapshot_path(&root, &snapshot_id);
-        if path.exists() {
-            fs::remove_file(path)
-                .map_err(|error| format!("remove resource snapshot failed: {error}"))?;
         }
     }
     Ok(())

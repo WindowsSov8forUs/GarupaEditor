@@ -301,29 +301,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     pendingSkinSelection,
     setPendingSkinSelection,
     normalizeSkinSelection,
-    resolveHabahiroRhythmRipNameFromType,
-    resolveRhythmRipNameFromType,
-    resolveDirectionalRipNameFromType,
-    resolveRhythmSeRipNameFromType,
-    resolveDirectionalSeRipNameFromType,
-    resolveBgSkinRipNameFromType,
-    resolveFieldSkinRipNameFromType,
-    resolveJudgeSkinRipNameFromType,
-    resolveRhythmServerFromType,
-    resolveDirectionalServerFromType,
-    resolveRhythmSeServerFromType,
-    resolveDirectionalSeServerFromType,
-    resolveBgSkinServerFromType,
-    resolveFieldSkinServerFromType,
     bestdoriSkinCatalogOptions,
-    HABAHIRO_RHYTHM_SKIN_TYPES,
-    RHYTHM_SKIN_TYPES,
-    DIRECTIONAL_SKIN_TYPES,
-    RHYTHM_SE_SKIN_TYPES,
-    DIRECTIONAL_SE_SKIN_TYPES,
-    BG_SKIN_TYPES,
-    FIELD_SKIN_TYPES,
-    JUDGE_SKIN_TYPES,
+    bestdoriCatalogStatus,
     formatTypeLabel,
     applyWindowPreset,
     applyAppOptionSettings,
@@ -339,13 +318,16 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [playfieldViewportWidth, setPlayfieldViewportWidth] = useState(0);
   const [playfieldScrollTop, setPlayfieldScrollTop] = useState(0);
   const [timelineLabelX, setTimelineLabelX] = useState(8);
-  const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? RHYTHM_SKIN_TYPES;
-  const habahiroRhythmSkinTypes = bestdoriSkinCatalogOptions?.habahiroRhythm ?? HABAHIRO_RHYTHM_SKIN_TYPES;
-  const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? DIRECTIONAL_SKIN_TYPES;
-  const rhythmSeSkinTypes = bestdoriSkinCatalogOptions?.rhythmSe ?? RHYTHM_SE_SKIN_TYPES;
-  const directionalSeSkinTypes = bestdoriSkinCatalogOptions?.directionalSe ?? DIRECTIONAL_SE_SKIN_TYPES;
-  const bgSkinTypes = bestdoriSkinCatalogOptions?.bg ?? BG_SKIN_TYPES;
-  const fieldSkinTypes = bestdoriSkinCatalogOptions?.field ?? FIELD_SKIN_TYPES;
+  const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? [];
+  const habahiroRhythmSkinTypes = bestdoriSkinCatalogOptions?.habahiroRhythm ?? [];
+  const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? [];
+  const rhythmSeSkinTypes = bestdoriSkinCatalogOptions?.rhythmSe ?? [];
+  const directionalSeSkinTypes = bestdoriSkinCatalogOptions?.directionalSe ?? [];
+  const bgSkinTypes = bestdoriSkinCatalogOptions?.bg ?? [];
+  const fieldSkinTypes = bestdoriSkinCatalogOptions?.field ?? [];
+  const judgeSkinTypes = bestdoriSkinCatalogOptions?.judge ?? [];
+  const catalogResource = (kind: keyof NonNullable<typeof bestdoriSkinCatalogOptions>["resources"], value: string) =>
+    bestdoriSkinCatalogOptions?.resources[kind]?.[value] ?? null;
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
@@ -2061,79 +2043,86 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         open={isSkinSettingsOpen}
         onClose={() => setIsSkinSettingsOpen(false)}
         pendingSkinSelection={pendingSkinSelection}
+        catalogStatus={bestdoriCatalogStatus}
         rhythmTypeTitle={appOptionSettings.habahiro ? "节奏图示样式（幅广）" : "节奏图示样式"}
         rhythmCatalogKind={appOptionSettings.habahiro ? "habahiroRhythm" : "rhythm"}
         onRhythmTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const kind = appOptionSettings.habahiro ? "habahiroRhythm" : "rhythm";
+            const resource = catalogResource(kind, value);
+            return normalizeSkinSelection({
               ...current,
               rhythmType: value,
-              rhythmRipName:
-                resolveHabahiroRhythmRipNameFromType(value)
-                ?? resolveRhythmRipNameFromType(value)
-                ?? current.rhythmRipName,
-              rhythmServer: resolveRhythmServerFromType(value) ?? current.rhythmServer,
-            }),
-          )
+              rhythmRipName: resource?.id ?? current.rhythmRipName,
+              rhythmServer: resource?.server ?? current.rhythmServer,
+            });
+          })
         }
         onDirectionalTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("directional", value);
+            return normalizeSkinSelection({
               ...current,
               directionalType: value,
-              directionalRipName: resolveDirectionalRipNameFromType(value) ?? current.directionalRipName,
-              directionalServer: resolveDirectionalServerFromType(value) ?? current.directionalServer,
-            }),
-          )
+              directionalRipName: resource?.id ?? current.directionalRipName,
+              directionalServer: resource?.server ?? current.directionalServer,
+            });
+          })
         }
         onRhythmSeTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("rhythmSe", value);
+            return normalizeSkinSelection({
               ...current,
               rhythmSeType: value,
-              rhythmSeRipName: resolveRhythmSeRipNameFromType(value) ?? current.rhythmSeRipName,
-              rhythmSeServer: resolveRhythmSeServerFromType(value) ?? current.rhythmSeServer,
-            }),
-          )
+              rhythmSeRipName: resource?.id ?? current.rhythmSeRipName,
+              rhythmSeServer: resource?.server ?? current.rhythmSeServer,
+            });
+          })
         }
         onDirectionalSeTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("directionalSe", value);
+            return normalizeSkinSelection({
               ...current,
               directionalSeType: value,
-              directionalSeRipName: resolveDirectionalSeRipNameFromType(value) ?? current.directionalSeRipName,
-              directionalSeServer: resolveDirectionalSeServerFromType(value) ?? current.directionalSeServer,
-            }),
-          )
+              directionalSeRipName: resource?.id ?? current.directionalSeRipName,
+              directionalSeServer: resource?.server ?? current.directionalSeServer,
+            });
+          })
         }
         onBgTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("bg", value);
+            return normalizeSkinSelection({
               ...current,
               bgType: value,
-              bgSkinRipName: resolveBgSkinRipNameFromType(value) ?? current.bgSkinRipName,
-              bgSkinServer: resolveBgSkinServerFromType(value) ?? current.bgSkinServer,
-            }),
-          )
+              bgSkinRipName: resource?.id ?? current.bgSkinRipName,
+              bgSkinServer: resource?.server ?? current.bgSkinServer,
+            });
+          })
         }
         onFieldTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("field", value);
+            return normalizeSkinSelection({
               ...current,
               fieldType: value,
-              fieldSkinRipName: resolveFieldSkinRipNameFromType(value) ?? current.fieldSkinRipName,
-              fieldSkinServer: resolveFieldSkinServerFromType(value) ?? current.fieldSkinServer,
-            }),
-          )
+              fieldSkinRipName: resource?.id ?? current.fieldSkinRipName,
+              fieldSkinServer: resource?.server ?? current.fieldSkinServer,
+            });
+          })
         }
         onJudgeTypeChange={(value) =>
-          setPendingSkinSelection((current: any) =>
-            normalizeSkinSelection({
+          setPendingSkinSelection((current: any) => {
+            const resource = catalogResource("judge", value);
+            return normalizeSkinSelection({
               ...current,
               judgeType: value,
-              judgeSkinRipName: resolveJudgeSkinRipNameFromType(value) ?? current.judgeSkinRipName,
-            }),
-          )
+              judgeSkinRipName: resource?.id ?? current.judgeSkinRipName,
+              judgeSkinServer: resource?.server ?? current.judgeSkinServer,
+            });
+          })
         }
         rhythmSkinTypes={appOptionSettings.habahiro ? habahiroRhythmSkinTypes : rhythmSkinTypes}
         directionalSkinTypes={directionalSkinTypes}
@@ -2141,7 +2130,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         directionalSeSkinTypes={directionalSeSkinTypes}
         bgSkinTypes={bgSkinTypes}
         fieldSkinTypes={fieldSkinTypes}
-        judgeSkinTypes={JUDGE_SKIN_TYPES}
+        judgeSkinTypes={judgeSkinTypes}
         formatTypeLabel={formatTypeLabel}
         isSkinApplying={isSkinApplying}
         onApplySkinSelection={() => void applyBestdoriSkinSelection(pendingSkinSelection, true)}

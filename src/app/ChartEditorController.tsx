@@ -69,53 +69,20 @@ import {
   inferPreferredHabahiroSlideWidths,
 } from "./habahiroSlideWidth";
 import {
-  BG_SKIN_TYPES,
-  FIELD_SKIN_TYPES,
-  JUDGE_SKIN_TYPES,
-  DIRECTIONAL_SKIN_TYPES,
-  DIRECTIONAL_SE_SKIN_TYPES,
-  HABAHIRO_RHYTHM_RIP_NAME,
-  HABAHIRO_RHYTHM_SKIN_TYPES,
-  HABAHIRO_RHYTHM_TYPE,
-  RHYTHM_SKIN_TYPES,
-  RHYTHM_SE_SKIN_TYPES,
-  downloadBestdoriBgSkinAssets,
-  downloadBestdoriFieldSkinAssets,
-  downloadBestdoriJudgeSkinAssets,
-  downloadBestdoriDirectionalSeSkinAssets,
-  downloadBestdoriDirectionalSkinAssets,
-  downloadBestdoriRhythmSeSkinAssets,
-  downloadBestdoriRhythmSkinAssets,
-  formatTypeLabel,
-  getRuntimeBgSkinAssets,
-  getRuntimeFieldSkinAssets,
-  getRuntimeJudgeSkinAssets,
-  getRuntimeSeAssets,
+  DEFAULT_SKIN_SELECTION,
   isHabahiroRhythmRipName,
-  loadBestdoriSkinCatalogOptions,
   normalizeSkinSelection,
-  projectCanvasRenderResourceRuntimeAssets,
-  readSkinSelectionFromStorage,
-  resolveHabahiroRhythmRipNameFromType,
-  resolveBgSkinServerFromType,
-  resolveBgSkinRipNameFromType,
-  resolveDirectionalSeServerFromType,
-  resolveDirectionalSeRipNameFromType,
-  resolveDirectionalServerFromType,
-  resolveDirectionalRipNameFromType,
-  resolveFieldSkinServerFromType,
-  resolveFieldSkinRipNameFromType,
-  resolveJudgeSkinRipNameFromType,
-  resolveRhythmSeServerFromType,
-  resolveRhythmSeRipNameFromType,
-  resolveRhythmServerFromType,
-  resolveRhythmRipNameFromType,
-  writeSkinSelectionToStorage,
+  type BestdoriCatalogKind,
   type BestdoriSkinCatalogOptions,
   type SeSkinAssets,
   type SkinAssets,
   type SkinSelection,
 } from "../skinLoader";
+import type { AppliedSkinResources } from "../skin/resourceSkinDecoder";
+import {
+  projectSkinRuntimeResourceMap,
+  reverseSkinRuntimeResourceMap,
+} from "../skin/resourceSkinProjection";
 import {
   BEAT_HEIGHT,
   DEFAULT_EDITOR_OPTION_SETTINGS,
@@ -171,7 +138,11 @@ import {
   type EditorTool,
   type NoteType,
 } from "../chartCore";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import {
+  useApplicationResourceManager,
+  useApplicationResourceUrl,
+} from "../resources/applicationResourceContext";
+import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/bestdori/catalog";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
@@ -545,6 +516,7 @@ function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSo
 }
 
 function ChartEditorController() {
+  const resourceManager = useApplicationResourceManager();
   const defaultCoverImage = useApplicationResourceUrl("ui.default-cover");
   const undoActionIcon = useApplicationResourceUrl("ui.icon.undo-action");
   const clearActionIcon = useApplicationResourceUrl("ui.icon.clear-action");
@@ -1214,25 +1186,44 @@ function ChartEditorController() {
   const [playbackFps, setPlaybackFps] = useState(60);
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
-  const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => readSkinSelectionFromStorage());
+  const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => normalizeSkinSelection(DEFAULT_SKIN_SELECTION));
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
-    readSkinSelectionFromStorage(),
+    normalizeSkinSelection(DEFAULT_SKIN_SELECTION),
   );
   const [bestdoriSkinCatalogOptions, setBestdoriSkinCatalogOptions] = useState<BestdoriSkinCatalogOptions | null>(null);
+  const [bestdoriCatalogStatus, setBestdoriCatalogStatus] = useState("正在加载资源站目录…");
+  const formatTypeLabel = useCallback((kind: BestdoriCatalogKind | null, type: string): string => {
+    const normalized = type.trim();
+    if (normalized.length === 0) return "TYPE?";
+    return kind === null
+      ? normalized
+      : bestdoriSkinCatalogOptions?.labels[kind]?.[normalized] ?? normalized;
+  }, [bestdoriSkinCatalogOptions]);
   const [skinAssets, setSkinAssets] = useState<SkinAssets | null>(null);
+  const [appliedSkinResources, setAppliedSkinResources] = useState<AppliedSkinResources | null>(null);
   const [isSkinApplying, setIsSkinApplying] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void loadBestdoriSkinCatalogOptions().then((options) => {
-      if (!cancelled) {
-        setBestdoriSkinCatalogOptions(options);
+    void (async () => {
+      const refreshed = await resourceManager.refreshCatalog("bestdori");
+      if (refreshed.status === "rejected" || cancelled) {
+        if (!cancelled) setBestdoriCatalogStatus("资源站目录不可用，且没有可用离线快照。");
+        return;
       }
-    });
+      setBestdoriCatalogStatus(refreshed.value.freshness === "offline-cached"
+        ? `离线目录快照：${refreshed.value.observedAt ?? "时间未知"}`
+        : `在线目录：${refreshed.value.observedAt ?? "刚刚"}`);
+      const listed = await resourceManager.listResources({ origin: "network", provider: "bestdori" });
+      if (listed.status === "rejected" || cancelled) return;
+      setBestdoriSkinCatalogOptions(buildBestdoriSkinCatalogOptionsFromDescriptors(
+        listed.value.filter((resource) => resource.origin === "network"),
+      ));
+    })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resourceManager]);
   const [spriteAspectRatios, setSpriteAspectRatios] = useState<Record<string, number>>({});
   const isSkinReady = skinAssets !== null;
 
@@ -3135,18 +3126,10 @@ function ChartEditorController() {
     normalizeSkinSelection,
     skinApplySeqRef,
     setSkinAssets,
+    setAppliedSkinResources,
     setIsSkinApplying,
     formatTypeLabel,
-    downloadBestdoriRhythmSkinAssets,
-    downloadBestdoriDirectionalSkinAssets,
-    downloadBestdoriBgSkinAssets,
-    downloadBestdoriFieldSkinAssets,
-    downloadBestdoriJudgeSkinAssets,
-    downloadBestdoriRhythmSeSkinAssets,
-    downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
-    writeSkinSelectionToStorage,
-    readSkinSelectionFromStorage,
     didInitSkinRef,
     approxEq,
     selectedNoteIds,
@@ -4086,7 +4069,7 @@ function ChartEditorController() {
     if (!(nextTimeSec > prevTimeSec)) {
       return;
     }
-    const runtimeSe = getRuntimeSeAssets();
+    const runtimeSe = appliedSkinResources?.se ?? null;
     if (!runtimeSe) {
       return;
     }
@@ -4341,6 +4324,7 @@ function ChartEditorController() {
       });
     }
   }, [
+    appliedSkinResources,
     clamp,
     decodePlaybackSeBuffer,
     ensurePlaybackSeAudioContext,
@@ -4417,7 +4401,7 @@ function ChartEditorController() {
     const audio = playbackAudioRef.current;
     const safeDuration = Math.max(0, playbackCeilingSec);
     let safeSeconds = clamp(seconds, 0, safeDuration);
-    const runtimeSe = getRuntimeSeAssets();
+    const runtimeSe = appliedSkinResources?.se ?? null;
     await preloadPlaybackSeBuffers(runtimeSe, { waitForReady: true, timeoutMs: 240 });
     if (!isStartCurrent()) {
       return;
@@ -4477,6 +4461,7 @@ function ChartEditorController() {
     }
     playbackTickRafRef.current = requestAnimationFrame(() => playbackTickHandlerRef.current());
   }, [
+    appliedSkinResources,
     clamp,
     clearPlaybackTick,
     currentPlaybackSpeed,
@@ -4632,25 +4617,37 @@ function ChartEditorController() {
   }, [skinSelection.rhythmRipName, skinSelection.rhythmServer, skinSelection.rhythmType]);
 
   const buildHabahiroSkinSelection = useCallback((): SkinSelection => {
+    const id = bestdoriSkinCatalogOptions?.habahiroRhythm[0];
+    const resource = id === undefined
+      ? null
+      : bestdoriSkinCatalogOptions?.resources.habahiroRhythm[id] ?? null;
+    if (resource === null) {
+      throw new Error("Bestdori HABAHIRO catalog is unavailable; no fixed network candidate is substituted.");
+    }
     return normalizeSkinSelection({
       ...skinSelection,
-      rhythmType: HABAHIRO_RHYTHM_TYPE,
-      rhythmRipName: HABAHIRO_RHYTHM_RIP_NAME,
-      rhythmServer: resolveRhythmServerFromType(HABAHIRO_RHYTHM_RIP_NAME) ?? skinSelection.rhythmServer,
+      rhythmType: resource.id,
+      rhythmRipName: resource.id,
+      rhythmServer: resource.server,
     });
-  }, [normalizeSkinSelection, resolveRhythmServerFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, skinSelection]);
 
   const buildStandardRhythmSkinSelection = useCallback((): SkinSelection => {
     const remembered = lastStandardRhythmSkinRef.current;
-    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0] ?? RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
-    const fallbackRip = resolveRhythmRipNameFromType(fallbackType) ?? "skin00";
+    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0];
+    if (!remembered && !fallbackType) {
+      throw new Error("Bestdori rhythm catalog is unavailable; no fixed network candidate is substituted.");
+    }
+    const fallbackResource = fallbackType === undefined
+      ? null
+      : bestdoriSkinCatalogOptions?.resources.rhythm[fallbackType] ?? null;
     return normalizeSkinSelection({
       ...skinSelection,
-      rhythmType: remembered?.rhythmType ?? fallbackType,
-      rhythmRipName: remembered?.rhythmRipName ?? fallbackRip,
-      rhythmServer: remembered?.rhythmServer ?? resolveRhythmServerFromType(fallbackType) ?? skinSelection.rhythmServer,
+      rhythmType: remembered?.rhythmType ?? fallbackResource!.id,
+      rhythmRipName: remembered?.rhythmRipName ?? fallbackResource!.id,
+      rhythmServer: remembered?.rhythmServer ?? fallbackResource!.server,
     });
-  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, resolveRhythmRipNameFromType, resolveRhythmServerFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, skinSelection]);
 
   const requestSpRhythmRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
@@ -4820,24 +4817,35 @@ function ChartEditorController() {
     }
     const skinIsHabahiro = isHabahiroRhythmRipName(skinSelection.rhythmRipName);
     if (isHabahiroEnabled && !skinIsHabahiro) {
-      syncingHabahiroSkinRef.current = true;
-      void applyBestdoriSkinSelectionRef.current(buildHabahiroSkinSelection(), true, false)
-        .finally(() => {
-          syncingHabahiroSkinRef.current = false;
-        });
+      try {
+        const next = buildHabahiroSkinSelection();
+        syncingHabahiroSkinRef.current = true;
+        void applyBestdoriSkinSelectionRef.current(next, true, false)
+          .finally(() => {
+            syncingHabahiroSkinRef.current = false;
+          });
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : String(error));
+      }
       return;
     }
     if (!isHabahiroEnabled && skinIsHabahiro) {
-      syncingHabahiroSkinRef.current = true;
-      void applyBestdoriSkinSelectionRef.current(buildStandardRhythmSkinSelection(), true, false)
-        .finally(() => {
-          syncingHabahiroSkinRef.current = false;
-        });
+      try {
+        const next = buildStandardRhythmSkinSelection();
+        syncingHabahiroSkinRef.current = true;
+        void applyBestdoriSkinSelectionRef.current(next, true, false)
+          .finally(() => {
+            syncingHabahiroSkinRef.current = false;
+          });
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : String(error));
+      }
     }
   }, [
     isHabahiroEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
+    setStatusMessage,
     skinSelection.rhythmRipName,
   ]);
 
@@ -4884,13 +4892,8 @@ function ChartEditorController() {
   }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
 
   useEffect(() => {
-    const runtimeSe = getRuntimeSeAssets();
-    void preloadPlaybackSeBuffers(runtimeSe);
-  }, [
-    preloadPlaybackSeBuffers,
-    skinSelection.rhythmSeRipName,
-    skinSelection.directionalSeRipName,
-  ]);
+    void preloadPlaybackSeBuffers(appliedSkinResources?.se ?? null);
+  }, [appliedSkinResources, preloadPlaybackSeBuffers]);
 
   useEffect(() => {
     stopPlayback(null);
@@ -5515,16 +5518,28 @@ function ChartEditorController() {
     resourcesVersion: canvasResourceVersion,
   });
 
-  const staticRenderRuntimeSkin = useMemo(
-    () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
-    [skinAssets],
+  const staticRenderResourceMap = useMemo(
+    () => appliedSkinResources === null ? null : projectSkinRuntimeResourceMap(appliedSkinResources.note),
+    [appliedSkinResources],
+  );
+  const staticRenderReverseResourceMap = useMemo(
+    () => staticRenderResourceMap === null ? null : reverseSkinRuntimeResourceMap(staticRenderResourceMap),
+    [staticRenderResourceMap],
   );
   const buildStaticRenderPayload = useCallback((): StaticRenderPayload | null => {
-    if (!staticRenderRuntimeSkin) {
+    if (appliedSkinResources === null || staticRenderResourceMap === null || staticRenderReverseResourceMap === null) {
       return null;
     }
+    const keyForUrl = (url: string | null): string | null => {
+      if (url === null) return null;
+      const key = staticRenderReverseResourceMap.get(url);
+      if (key === undefined) throw new Error("static render note references an unleased Skin derivative");
+      return key;
+    };
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
+      resourceSnapshotId: appliedSkinResources.snapshotId,
+      skinIdentities: appliedSkinResources.identities,
       chartTitle: metadata.title,
       boardWidth,
       boardHeight,
@@ -5562,18 +5577,19 @@ function ChartEditorController() {
         x: note.x,
         y: note.y,
         spanLanes: note.spanLanes,
-        base: note.base,
-        overlay: note.overlay,
+        baseResourceKey: keyForUrl(note.base),
+        overlayResourceKey: keyForUrl(note.overlay),
         overlayMode: note.overlayMode,
       })),
       runtimeSkin: {
-        longLine: staticRenderRuntimeSkin.longLine ?? null,
-        longLineSpecial: staticRenderRuntimeSkin.longLineSpecial ?? null,
-        simultaneousLine: staticRenderRuntimeSkin.simultaneousLine ?? null,
+        longLineResourceKey: "line.long",
+        longLineSpecialResourceKey: "line.long-special",
+        simultaneousLineResourceKey: "line.simultaneous",
       },
     };
   }, [
     LANE_WIDTH,
+    appliedSkinResources,
     beatDivision,
     beatsPerMeasure,
     boardHeight,
@@ -5586,7 +5602,8 @@ function ChartEditorController() {
     metadata.title,
     noteVisualScale,
     renderModel.connectionSegments,
-    staticRenderRuntimeSkin,
+    staticRenderResourceMap,
+    staticRenderReverseResourceMap,
     timelinePixelsPerSecond,
     totalDurationSec,
     totalSteps,
@@ -5800,10 +5817,10 @@ function ChartEditorController() {
           setStatusMessage(`播放器MV资源转换失败：${message}`);
         }
       }
-      const runtimeSe = getRuntimeSeAssets();
-      const runtimeFieldSkin = getRuntimeFieldSkinAssets();
-      const runtimeBgSkin = getRuntimeBgSkinAssets();
-      const runtimeJudgeSkin = getRuntimeJudgeSkinAssets();
+      const runtimeSe = appliedSkinResources?.se ?? null;
+      const runtimeFieldSkin = appliedSkinResources?.field ?? null;
+      const runtimeBgSkin = appliedSkinResources?.background ?? null;
+      const runtimeJudgeSkin = appliedSkinResources?.judge ?? null;
       const simulatorBgmVolumePercent = clamp(playbackVolumePercent, 0, 100);
       const audioPayload = {
         seRuntimeAssets: runtimeSe ?? null,
@@ -5957,6 +5974,7 @@ function ChartEditorController() {
     }
   }, [
     WINDOW_SIZE_PRESETS,
+    appliedSkinResources,
     appOptionSettings.rhythmNoteSizePercent,
     appOptionSettings.rhythmNoteSpeed,
     appOptionSettings.clickEffectEnabled,
@@ -6275,29 +6293,8 @@ function ChartEditorController() {
         pendingSkinSelection,
         setPendingSkinSelection,
         normalizeSkinSelection,
-        resolveHabahiroRhythmRipNameFromType,
-        resolveRhythmRipNameFromType,
-        resolveDirectionalRipNameFromType,
-        resolveRhythmSeRipNameFromType,
-        resolveDirectionalSeRipNameFromType,
-        resolveBgSkinRipNameFromType,
-        resolveFieldSkinRipNameFromType,
-        resolveJudgeSkinRipNameFromType,
-        resolveRhythmServerFromType,
-        resolveDirectionalServerFromType,
-        resolveRhythmSeServerFromType,
-        resolveDirectionalSeServerFromType,
-        resolveBgSkinServerFromType,
-        resolveFieldSkinServerFromType,
         bestdoriSkinCatalogOptions,
-        HABAHIRO_RHYTHM_SKIN_TYPES,
-        RHYTHM_SKIN_TYPES,
-        DIRECTIONAL_SKIN_TYPES,
-        RHYTHM_SE_SKIN_TYPES,
-        DIRECTIONAL_SE_SKIN_TYPES,
-        BG_SKIN_TYPES,
-        FIELD_SKIN_TYPES,
-        JUDGE_SKIN_TYPES,
+        bestdoriCatalogStatus,
         formatTypeLabel,
         skinAssets,
         applyWindowPreset,

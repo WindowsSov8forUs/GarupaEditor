@@ -8,8 +8,8 @@ export type StaticNoteVisual = {
   x: number;
   y: number;
   spanLanes: number;
-  base: string | null;
-  overlay: string | null;
+  baseResourceKey: string | null;
+  overlayResourceKey: string | null;
   overlayMode: StaticOverlayMode;
 };
 
@@ -33,13 +33,19 @@ export type StaticBpmTimelineNode = {
 };
 
 export type StaticRuntimeSkin = {
-  longLine: string | null;
-  longLineSpecial: string | null;
-  simultaneousLine: string | null;
+  longLineResourceKey: string;
+  longLineSpecialResourceKey: string;
+  simultaneousLineResourceKey: string;
 };
 
 export type StaticRenderPayload = {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  resourceSnapshotId: string;
+  skinIdentities: {
+    rhythm: string;
+    directional: string;
+    judge: string;
+  };
   chartTitle: string;
   boardWidth: number;
   boardHeight: number;
