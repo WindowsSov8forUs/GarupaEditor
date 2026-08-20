@@ -98,7 +98,12 @@ function visualProjection(value) {
     scene: {
       modes: value.scene.modes,
       captures: value.scene.captures.map((capture) => {
-        const { audio: _audio, movie: _movie, ...snapshot } = capture.snapshot;
+        const {
+          audio: _audio,
+          movie: _movie,
+          primaryJudgementAdjustment: _primaryJudgementAdjustment,
+          ...snapshot
+        } = capture.snapshot;
         return { ...capture, snapshot };
       }),
       adaptiveCaptures: value.scene.adaptiveCaptures,
