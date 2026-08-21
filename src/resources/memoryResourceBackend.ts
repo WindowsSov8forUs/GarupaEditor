@@ -15,6 +15,7 @@ import {
 } from "./contracts";
 import type {
   ApplicationResourceBackend,
+  BuiltinResourceInstallInput,
   OpenedResourceSnapshot,
   ResourceInstallFile,
   ResourceInstallInput,
@@ -60,6 +61,21 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     return verified.status === "rejected" ? verified : resourceAccepted(entry.record);
   }
 
+  async installBuiltinResource(
+    input: BuiltinResourceInstallInput,
+  ): Promise<ResourceResult<StoredResourceRecord>> {
+    if (input.descriptor.origin !== "builtin") {
+      return invalid("resources.memory.install-non-builtin");
+    }
+    const prepared = await prepareStoredResource(
+      Object.freeze({ ...input.descriptor, availability: "builtin-ready" as const }),
+      input.files,
+    );
+    if (prepared.status === "rejected") return prepared;
+    this.records.set(input.descriptor.ref.id, prepared.value);
+    return resourceAccepted(prepared.value.record);
+  }
+
   async installNetworkResource(
     input: ResourceInstallInput,
   ): Promise<ResourceResult<StoredResourceRecord>> {
@@ -98,6 +114,12 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
       catalogObservedAt: null,
       purpose: input.purpose,
       fileName: input.fileName.trim(),
+      logicalPlacement: Object.freeze({
+        provider: "user",
+        server: null,
+        canonicalPath: `${purposeDirectory(input.purpose)}/memory-${this.nextUser - 1}`,
+        identityClass: "user-media" as const,
+      }),
     });
     const prepared = await prepareStoredResource(descriptor, [Object.freeze({
       logicalPath: input.fileName.trim(),
@@ -128,6 +150,7 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
   ): Promise<ResourceResult<OpenedResourceSnapshot>> {
     const snapshotId = `snapshot/memory-${this.nextSnapshot++}` as ResourceSnapshotId;
     const filesBySlot: Record<string, readonly ResourceFileRecord[]> = {};
+    const revisions: Record<string, string> = {};
     const bytesBySlot = new Map<string, ReadonlyMap<string, Uint8Array>>();
     const copiedSlots: Record<string, ResourceRef> = {};
     for (const [slot, ref] of Object.entries(slots)) {
@@ -135,16 +158,12 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
         return invalid("resources.memory.invalid-snapshot-slot");
       }
       copiedSlots[slot] = Object.freeze({ id: ref.id });
-      if (ref.id.startsWith("builtin/")) {
-        filesBySlot[slot] = Object.freeze([]);
-        bytesBySlot.set(slot, new Map());
-        continue;
-      }
       const stored = this.records.get(ref.id);
       if (stored === undefined) return unavailable("resources.memory.snapshot-resource-unavailable");
       const verified = await verifyStored(stored);
       if (verified.status === "rejected") return verified;
       filesBySlot[slot] = stored.record.files;
+      revisions[slot] = stored.record.revision;
       bytesBySlot.set(slot, new Map(Array.from(
         stored.bytesByPath,
         ([path, bytes]) => [path, Uint8Array.from(bytes)] as const,
@@ -153,6 +172,7 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     const view: OpenedResourceSnapshot = Object.freeze({
       snapshotId,
       slots: Object.freeze(copiedSlots),
+      revisions: Object.freeze(revisions),
       filesBySlot: Object.freeze(filesBySlot),
     });
     this.snapshots.set(snapshotId, {
@@ -221,6 +241,9 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
   }
 
   async collectGarbage(): Promise<ResourceResult<void>> {
+    for (const [snapshotId, snapshot] of this.snapshots) {
+      if (snapshot.openCount === 0) this.snapshots.delete(snapshotId);
+    }
     return resourceAccepted(undefined);
   }
 
@@ -245,14 +268,17 @@ async function prepareStoredResource(
   if (!Array.isArray(files) || files.length === 0) return invalid("resources.memory.empty-package");
   const records: ResourceFileRecord[] = [];
   const bytesByPath = new Map<string, Uint8Array>();
+  const foldedPaths = new Set<string>();
   for (const file of files) {
+    const foldedPath = file.logicalPath.toLocaleLowerCase("en-US");
     if (
-      !safeLogicalPath(file.logicalPath) || bytesByPath.has(file.logicalPath) ||
+      !safeLogicalPath(file.logicalPath) || foldedPaths.has(foldedPath) ||
       typeof file.mediaType !== "string" || file.mediaType.trim().length === 0 ||
       !(file.bytes instanceof Uint8Array) || file.bytes.byteLength <= 0
     ) {
       return invalid("resources.memory.invalid-package-file");
     }
+    foldedPaths.add(foldedPath);
     const owned = Uint8Array.from(file.bytes);
     const integrity = await observeResourceIntegrity(owned);
     if (integrity.status === "rejected") return integrity;
@@ -263,7 +289,13 @@ async function prepareStoredResource(
     }));
     bytesByPath.set(file.logicalPath, owned);
   }
+  const revisionIntegrity = await observeResourceIntegrity(new TextEncoder().encode(JSON.stringify([
+    descriptor.ref.id,
+    records.map((file) => [file.logicalPath, file.mediaType, file.integrity.byteLength, file.integrity.sha256]),
+  ])));
+  if (revisionIntegrity.status === "rejected") return revisionIntegrity;
   const record: StoredResourceRecord = Object.freeze({
+    revision: `record/${revisionIntegrity.value.sha256}`,
     descriptor: Object.freeze({ ...descriptor, files: Object.freeze(records) }) as ApplicationResourceDescriptor,
     files: Object.freeze(records),
   });
@@ -295,15 +327,29 @@ function freezeCatalog(snapshot: ResourceCatalogSnapshot): ResourceCatalogSnapsh
       ...resource,
       ref: Object.freeze({ ...resource.ref }),
       source: Object.freeze({ ...resource.source }),
+      logicalPlacement: Object.freeze({ ...resource.logicalPlacement }),
       files: resource.files === null ? null : Object.freeze([...resource.files]),
     }) as NetworkResourceDescriptor)),
   });
 }
 
 function safeLogicalPath(value: string): boolean {
-  if (typeof value !== "string" || value.length === 0 || value.includes("\\")) return false;
+  if (
+    typeof value !== "string" || value.length === 0 || value.includes("\\") ||
+    value.startsWith("/") || value.normalize("NFC") !== value
+  ) return false;
+  const reserved = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i;
   const parts = value.split("/");
-  return parts.every((part) => part.length > 0 && part !== "." && part !== "..");
+  return parts.every((part) =>
+    part.length > 0 && part !== "." && part !== ".." &&
+    !part.endsWith(".") && !part.endsWith(" ") && !reserved.test(part));
+}
+
+function purposeDirectory(purpose: UserMediaImportInput["purpose"]): string {
+  if (purpose === "bgm") return "sound/custom";
+  if (purpose === "cover") return "musicjacket/custom";
+  if (purpose === "mv") return "movie/custom";
+  return "stage/custom";
 }
 
 function kindForUserPurpose(purpose: UserMediaImportInput["purpose"]): UserResourceDescriptor["kind"] {

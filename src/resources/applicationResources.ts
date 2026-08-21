@@ -1,6 +1,9 @@
 import { ApplicationResourceManager } from "./applicationResourceManager";
 import { BrowserResourceObjectUrlFactory } from "./browserObjectUrlFactory";
-import { registerApplicationBuiltinResources } from "./builtin/builtinResourceCatalog";
+import {
+  listApplicationBuiltinResourceSlots,
+  registerApplicationBuiltinResources,
+} from "./builtin/builtinResourceCatalog";
 import {
   resourceAccepted,
   type ResourceResult,
@@ -30,6 +33,8 @@ async function bootstrap(): Promise<ResourceResult<ApplicationResourceManager>> 
   if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
   if (builtins.status === "rejected") return builtins;
+  const builtinLease = await manager.prepareBuiltinDocumentLease(listApplicationBuiltinResourceSlots());
+  if (builtinLease.status === "rejected") return builtinLease;
   installBuiltinDocumentResources(manager);
   void manager.refreshCatalog("bestdori");
   return resourceAccepted(manager);

@@ -48,6 +48,7 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   const firstReceipt = await manager.createSnapshot(["skin.rhythm"]);
   equal(firstReceipt.status, "accepted");
   if (firstReceipt.status !== "accepted") return;
+  equal(firstReceipt.value.revisions["skin.rhythm"]?.startsWith("record/"), true);
   const firstLeaseResult = await manager.acquireSnapshot(firstReceipt.value.snapshotId);
   equal(firstLeaseResult.status, "accepted");
   if (firstLeaseResult.status !== "accepted") return;
@@ -62,6 +63,15 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   const secondReceipt = await manager.createSnapshot(["skin.rhythm"]);
   equal(secondReceipt.status, "accepted");
   if (secondReceipt.status !== "accepted") return;
+  equal(secondReceipt.value.revisions["skin.rhythm"] === firstReceipt.value.revisions["skin.rhythm"], false);
+  const explicitReceipt = await manager.createSnapshotFromRefs({ "simulator:skin": dynamicRef });
+  equal(explicitReceipt.status, "accepted");
+  if (explicitReceipt.status !== "accepted") return;
+  const explicitLease = await manager.acquireSnapshot(explicitReceipt.value.snapshotId);
+  equal(explicitLease.status, "accepted");
+  if (explicitLease.status !== "accepted") return;
+  equal(text(await explicitLease.value.readBytes("simulator:skin", "atlas.bin")), "network-two");
+  await explicitLease.value.release();
   const secondLeaseResult = await manager.acquireSnapshot(secondReceipt.value.snapshotId);
   equal(secondLeaseResult.status, "accepted");
   if (secondLeaseResult.status !== "accepted") return;
@@ -71,6 +81,8 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   await firstLease.release();
   equal(objectUrls.revoked.includes(firstUrl), true);
   await secondLeaseResult.value.release();
+  equal((await manager.collectGarbage()).status, "accepted");
+  equal((await manager.acquireSnapshot(secondReceipt.value.snapshotId)).status, "rejected");
 
   const imported = await manager.importUserMedia({
     purpose: "bgm",
@@ -111,6 +123,12 @@ class MutableCatalogProvider implements ResourceCatalogProvider {
       availability: "remote-only" as const,
       files: null,
       catalogObservedAt: "2026-01-01T00:00:00.000Z",
+      logicalPlacement: Object.freeze({
+        provider: "bestdori",
+        server: "jp",
+        canonicalPath: "ingameskin/noteskin/skin999",
+        identityClass: "provider-package" as const,
+      }),
       source: Object.freeze({
         provider: "bestdori",
         server: "jp",

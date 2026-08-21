@@ -66,6 +66,12 @@ export function createBestdoriNetworkMediaDescriptor(input: {
     availability: "remote-only" as const,
     files: null,
     catalogObservedAt: new Date().toISOString(),
+    logicalPlacement: Object.freeze({
+      provider: "bestdori",
+      server: input.server,
+      canonicalPath: mediaLogicalPath(input.purpose, input.nativeId),
+      identityClass: "provider-media" as const,
+    }),
     source: Object.freeze({
       provider: "bestdori",
       server: input.server,
@@ -287,6 +293,12 @@ function collect(
       availability: "remote-only" as const,
       files: null,
       catalogObservedAt: observedAt,
+      logicalPlacement: Object.freeze({
+        provider: "bestdori",
+        server,
+        canonicalPath: packageLogicalPath(family, nativeId),
+        identityClass: "provider-package" as const,
+      }),
       source: Object.freeze(source),
     }));
   }
@@ -335,6 +347,12 @@ function commonSoundDescriptor(
     availability: "remote-only" as const,
     files: null,
     catalogObservedAt: observedAt,
+    logicalPlacement: Object.freeze({
+      provider: "bestdori",
+      server,
+      canonicalPath: "sound/common",
+      identityClass: "provider-package" as const,
+    }),
     source: Object.freeze(sourceFor(server, "sound-common", "common")),
   });
 }
@@ -401,6 +419,23 @@ function invalidManifest<T>(): ResourceResult<T> {
     "resources.bestdori.invalid-manifest-path",
     "Bestdori package manifests require unique safe relative file paths and cannot be repaired.",
   );
+}
+
+function packageLogicalPath(family: BestdoriAssetFamily, nativeId: string): string {
+  if (family === "sound-common") return "sound/common";
+  return family === "tapseskin"
+    ? `sound/tapseskin/${nativeId}`
+    : `ingameskin/${family}/${nativeId}`;
+}
+
+function mediaLogicalPath(
+  purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
+  nativeId: string,
+): string {
+  if (purpose === "bgm") return `sound/${nativeId}`;
+  if (purpose === "cover") return `musicjacket/${nativeId}`;
+  if (purpose === "mv") return `movie/mv/${nativeId}`;
+  return `ingameskin/bgskin/${nativeId}`;
 }
 
 function encodeLogicalPath(value: string): string {

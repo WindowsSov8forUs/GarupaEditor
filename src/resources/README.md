@@ -12,9 +12,9 @@ Consumers receive `ResourceConsumerLease` and may only decide how to decode/use 
 
 ## Persistence
 
-The Tauri backend stores content-addressed blobs, records, catalog snapshots and cross-window snapshots under `app_data/resources/`. Chart sessions persist `ResourceRef` values in `cache/session/chart-resources/chart-resources.v3.json`; legacy v2 bytes/Data URLs are imported once into user resources.
+The Tauri backend uses storage schema 2 under `app_data/resources/`: content-addressed blobs, immutable record revisions, catalog snapshots, cross-window snapshots and a `library/` projection organized by original logical Bundle names. `library/` is auditable product indexing, not the byte authority and not an original Android-cache clone. Projection files are hard-linked when possible or copied and immediately reverified. Chart sessions currently persist `ResourceRef` values in `cache/session/chart-resources/chart-resources.v3.json`; the Stage 9 migration upgrades that cache separately.
 
-A SHA-256 value is an observation of already acquired bytes, never a compiled remote allowlist. Updating content under the same provider-native ID is accepted through a new complete transaction; existing leases keep their immutable old blob until release.
+A SHA-256 value is an observation of already acquired bytes, never a compiled remote allowlist. Updating content under the same provider-native ID creates a new immutable record revision and atomically advances `current.json`; existing snapshots retain their previous revision and blobs until final lease release.
 
 ## Verification
 
@@ -26,6 +26,6 @@ cargo test --manifest-path src-tauri/Cargo.toml resource_manager --lib --no-run
 npm.cmd run chart:test
 ```
 
-The current Windows environment compiles the Rust unit-test executable but cannot run it because the existing Tauri test binary exits with `STATUS_ENTRYPOINT_NOT_FOUND`; semantic resource lifecycle tests run through the isolated TypeScript memory backend.
+The current Windows environment compiles the Rust unit-test executable but cannot run it because the existing Tauri test binary exits with `STATUS_ENTRYPOINT_NOT_FOUND`; semantic resource lifecycle tests run through the isolated TypeScript memory backend. This environment limitation is recorded rather than treating `--no-run` as an executed Rust test pass.
 
 Simulator production resource integration is now separately authorized and governed by [`simulator-resource-integration-contract.md`](./simulator-resource-integration-contract.md). During the migration, the old isolated store is an implementation baseline only; completion requires its removal from production and a main-program-created Snapshot/Lease.

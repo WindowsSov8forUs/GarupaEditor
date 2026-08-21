@@ -1,5 +1,6 @@
 import type {
   ApplicationResourceDescriptor,
+  BuiltinResourceDescriptor,
   NetworkResourceDescriptor,
   ResourceCatalogSnapshot,
   ResourceDescriptor,
@@ -22,6 +23,11 @@ export interface ResourceInstallInput {
   readonly files: readonly ResourceInstallFile[];
 }
 
+export interface BuiltinResourceInstallInput {
+  readonly descriptor: BuiltinResourceDescriptor;
+  readonly files: readonly ResourceInstallFile[];
+}
+
 export interface UserMediaImportInput {
   readonly purpose: UserMediaPurpose;
   readonly fileName: string;
@@ -30,6 +36,7 @@ export interface UserMediaImportInput {
 }
 
 export interface StoredResourceRecord {
+  readonly revision: string;
   readonly descriptor: ApplicationResourceDescriptor;
   readonly files: readonly ResourceFileRecord[];
 }
@@ -42,6 +49,7 @@ export interface ApplicationResourceBackend {
   initialize(): Promise<ResourceResult<readonly StoredResourceRecord[]>>;
   listRecords(): Promise<ResourceResult<readonly StoredResourceRecord[]>>;
   readRecord(ref: ResourceRef): Promise<ResourceResult<StoredResourceRecord>>;
+  installBuiltinResource(input: BuiltinResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
   installNetworkResource(input: ResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
   importUserMedia(input: UserMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
   loadCatalogSnapshot(provider: string): Promise<ResourceResult<ResourceCatalogSnapshot | null>>;

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   ApplicationResourceBackend,
+  BuiltinResourceInstallInput,
   OpenedResourceSnapshot,
   ResourceInstallInput,
   StoredResourceRecord,
@@ -19,6 +20,7 @@ import {
 interface TauriOpenedSnapshot {
   readonly snapshotId: string;
   readonly slots: Readonly<Record<string, ResourceRef>>;
+  readonly revisions: Readonly<Record<string, string>>;
   readonly filesBySlot: OpenedResourceSnapshot["filesBySlot"];
 }
 
@@ -33,6 +35,19 @@ export class TauriApplicationResourceBackend implements ApplicationResourceBacke
 
   async readRecord(ref: ResourceRef): Promise<ResourceResult<StoredResourceRecord>> {
     return invokeResult("resource_read_record", { reference: ref });
+  }
+
+  async installBuiltinResource(input: BuiltinResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>> {
+    return invokeResult("resource_install_builtin_package", {
+      input: {
+        descriptor: input.descriptor,
+        files: input.files.map((file) => ({
+          logicalPath: file.logicalPath,
+          mediaType: file.mediaType,
+          base64Data: encodeBase64(file.bytes),
+        })),
+      },
+    });
   }
 
   async installNetworkResource(input: ResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>> {
@@ -158,6 +173,7 @@ function mapSnapshot(
     : resourceAccepted(Object.freeze({
         snapshotId: result.value.snapshotId as ResourceSnapshotId,
         slots: result.value.slots,
+        revisions: result.value.revisions,
         filesBySlot: result.value.filesBySlot,
       }));
 }

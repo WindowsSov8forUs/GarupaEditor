@@ -2,6 +2,7 @@ import {
   createResourceRef,
   parseResourceId,
   validateObservedIntegrity,
+  validateResourceLogicalPlacement,
 } from "../contracts";
 import {
   APPLICATION_RESOURCE_SLOTS,
@@ -24,6 +25,18 @@ export function runResourceContractTests(): void {
   equal(validateObservedIntegrity({
     byteLength: 0,
     sha256: "A".repeat(64),
+  }).status, "rejected");
+  equal(validateResourceLogicalPlacement({
+    provider: "bestdori",
+    server: "jp",
+    canonicalPath: "ingameskin/noteskin/skin00",
+    identityClass: "provider-package",
+  }).status, "accepted");
+  equal(validateResourceLogicalPlacement({
+    provider: "bestdori",
+    server: "jp",
+    canonicalPath: "../skin00",
+    identityClass: "provider-package",
   }).status, "rejected");
 
   const empty = createEmptyApplicationResourceSelection();

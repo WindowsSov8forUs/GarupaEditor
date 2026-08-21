@@ -10,8 +10,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::Manager;
+use unicode_normalization::UnicodeNormalization;
 
-const STORAGE_SCHEMA: u32 = 1;
+const STORAGE_SCHEMA: u32 = 2;
 const RESOURCE_DIRECTORY: &str = "resources";
 const INDEX_FILE: &str = "index.json";
 
@@ -59,6 +60,7 @@ pub struct ResourceFileRecordDto {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StoredResourceRecordDto {
+    pub revision: String,
     pub descriptor: Value,
     pub files: Vec<ResourceFileRecordDto>,
 }
@@ -76,6 +78,15 @@ struct StoredResourceFile {
 #[serde(rename_all = "camelCase")]
 struct StoredResourceRecord {
     storage_schema: u32,
+    revision: String,
+    descriptor: Value,
+    files: Vec<StoredResourceFile>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LegacyStoredResourceRecordV1 {
+    storage_schema: u32,
     descriptor: Value,
     files: Vec<StoredResourceFile>,
 }
@@ -83,6 +94,7 @@ struct StoredResourceRecord {
 impl StoredResourceRecord {
     fn dto(&self) -> StoredResourceRecordDto {
         StoredResourceRecordDto {
+            revision: self.revision.clone(),
             descriptor: self.descriptor.clone(),
             files: self
                 .files
@@ -134,6 +146,7 @@ pub struct ResourceBeginUserMediaImportInput {
 pub struct OpenedResourceSnapshotDto {
     pub snapshot_id: String,
     pub slots: HashMap<String, ResourceRefDto>,
+    pub revisions: HashMap<String, String>,
     pub files_by_slot: HashMap<String, Vec<ResourceFileRecordDto>>,
 }
 
@@ -143,6 +156,7 @@ struct StoredSnapshot {
     storage_schema: u32,
     snapshot_id: String,
     slots: HashMap<String, ResourceRefDto>,
+    revisions: HashMap<String, String>,
     files_by_slot: HashMap<String, Vec<StoredResourceFile>>,
 }
 
@@ -151,6 +165,7 @@ impl StoredSnapshot {
         OpenedResourceSnapshotDto {
             snapshot_id: self.snapshot_id.clone(),
             slots: self.slots.clone(),
+            revisions: self.revisions.clone(),
             files_by_slot: self
                 .files_by_slot
                 .iter()
@@ -199,10 +214,13 @@ pub fn resource_initialize(
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
     if !runtime.initialized {
-        ensure_layout(&root)?;
+        ensure_layout_without_index(&root)?;
         remove_directory_contents(&root.join("transactions"))?;
         remove_directory_contents(&root.join("snapshots"))?;
+        migrate_storage_schema_v1(&root, state.inner())?;
+        ensure_layout(&root)?;
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
+        recover_projections(&root, state.inner())?;
         runtime.open_snapshots.clear();
         runtime.initialized = true;
     }
@@ -292,6 +310,29 @@ pub fn resource_commit_catalog_snapshot(
         &bytes,
         &next_identity(state.inner(), "catalog"),
     )
+}
+
+#[tauri::command]
+pub fn resource_install_builtin_package(
+    app: tauri::AppHandle,
+    input: ResourceInstallNetworkInput,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<StoredResourceRecordDto, String> {
+    let _guard = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    if input.descriptor.get("origin").and_then(Value::as_str) != Some("builtin") {
+        return Err("builtin install descriptor origin must be builtin".to_string());
+    }
+    let root = resource_root(&app)?;
+    let record = commit_resource(
+        &root,
+        input.descriptor,
+        input.files,
+        &next_identity(state.inner(), "builtin"),
+    )?;
+    Ok(record.dto())
 }
 
 #[tauri::command]
@@ -486,6 +527,7 @@ pub fn resource_create_snapshot(
     let root = resource_root(&app)?;
     ensure_layout(&root)?;
     let mut normalized_slots = HashMap::new();
+    let mut revisions = HashMap::new();
     let mut files_by_slot = HashMap::new();
     for (slot, reference) in slots {
         let slot = normalize_slot(&slot)?;
@@ -496,12 +538,9 @@ pub fn resource_create_snapshot(
                 id: resource_id.clone(),
             },
         );
-        if resource_id.starts_with("builtin/") {
-            files_by_slot.insert(slot, Vec::new());
-            continue;
-        }
         let record = read_record(&root, &resource_id)?;
         verify_record(&root, &record)?;
+        revisions.insert(slot.clone(), record.revision);
         files_by_slot.insert(slot, record.files);
     }
     let snapshot_id = format!("snapshot/{}", next_identity(state.inner(), "snapshot"));
@@ -509,6 +548,7 @@ pub fn resource_create_snapshot(
         storage_schema: STORAGE_SCHEMA,
         snapshot_id: snapshot_id.clone(),
         slots: normalized_slots,
+        revisions,
         files_by_slot,
     };
     let bytes = serde_json::to_vec(&snapshot)
@@ -583,12 +623,12 @@ pub fn resource_read_snapshot_file(
 
 #[tauri::command]
 pub fn resource_release_snapshot(
-    _app: tauri::AppHandle,
+    app: tauri::AppHandle,
     snapshot_id: String,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<(), String> {
     let snapshot_id = normalize_snapshot_id(&snapshot_id)?;
-    {
+    let remove_snapshot = {
         let mut runtime = state
             .runtime
             .lock()
@@ -603,6 +643,17 @@ pub fn resource_release_snapshot(
         *count -= 1;
         if *count == 0 {
             runtime.open_snapshots.remove(&snapshot_id);
+            true
+        } else {
+            false
+        }
+    };
+    if remove_snapshot {
+        let root = resource_root(&app)?;
+        let path = snapshot_path(&root, &snapshot_id);
+        if path.exists() {
+            fs::remove_file(path)
+                .map_err(|error| format!("remove released resource snapshot failed: {error}"))?;
         }
     }
     Ok(())
@@ -631,9 +682,17 @@ pub fn resource_remove(
         return Err("builtin resources cannot be removed".to_string());
     }
     let root = resource_root(&app)?;
+    let record = read_record(&root, &resource_id).ok();
     let path = record_path(&root, &resource_id);
     if path.exists() {
         fs::remove_file(path).map_err(|error| format!("remove resource record failed: {error}"))?;
+    }
+    if let Some(record) = record {
+        let current = projection_resource_path(&root, &record.descriptor)?.join("current.json");
+        if current.exists() {
+            fs::remove_file(current)
+                .map_err(|error| format!("remove projection current pointer failed: {error}"))?;
+        }
     }
     let mut index = read_index(&root)?;
     index.resource_ids.retain(|id| id != &resource_id);
@@ -651,8 +710,12 @@ pub fn resource_collect_garbage(
         .map_err(|error| format!("lock resource state failed: {error}"))?;
     let root = resource_root(&app)?;
     let mut retained = HashSet::new();
+    let mut retained_revisions = HashSet::new();
     for resource_id in read_index(&root)?.resource_ids {
         if let Ok(record) = read_record(&root, &resource_id) {
+            if let Some(digest) = record.revision.strip_prefix("record/") {
+                retained_revisions.insert(digest.to_string());
+            }
             retained.extend(record.files.into_iter().map(|file| file.blob));
         }
     }
@@ -667,6 +730,11 @@ pub fn resource_collect_garbage(
         }
         if let Ok(bytes) = fs::read(&path) {
             if let Ok(snapshot) = serde_json::from_slice::<StoredSnapshot>(&bytes) {
+                for revision in snapshot.revisions.into_values() {
+                    if let Some(digest) = revision.strip_prefix("record/") {
+                        retained_revisions.insert(digest.to_string());
+                    }
+                }
                 for files in snapshot.files_by_slot.into_values() {
                     retained.extend(files.into_iter().map(|file| file.blob));
                 }
@@ -687,6 +755,47 @@ pub fn resource_collect_garbage(
                 .map_err(|error| format!("remove orphan resource blob failed: {error}"))?;
         }
     }
+    collect_projection_garbage(&root.join("library"), &retained_revisions)?;
+    Ok(())
+}
+
+fn collect_projection_garbage(
+    directory: &Path,
+    retained_revisions: &HashSet<String>,
+) -> Result<(), String> {
+    if !directory.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(directory)
+        .map_err(|error| format!("read projection directory failed: {error}"))?
+    {
+        let path = entry
+            .map_err(|error| format!("read projection entry failed: {error}"))?
+            .path();
+        if !path.is_dir() {
+            continue;
+        }
+        if path.file_name().and_then(|value| value.to_str()) == Some("revisions") {
+            for revision in fs::read_dir(&path)
+                .map_err(|error| format!("read projection revisions failed: {error}"))?
+            {
+                let revision_path = revision
+                    .map_err(|error| format!("read projection revision failed: {error}"))?
+                    .path();
+                let name = revision_path
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .unwrap_or_default();
+                if revision_path.is_dir() && !retained_revisions.contains(name) {
+                    fs::remove_dir_all(&revision_path).map_err(|error| {
+                        format!("remove obsolete projection revision failed: {error}")
+                    })?;
+                }
+            }
+        } else {
+            collect_projection_garbage(&path, retained_revisions)?;
+        }
+    }
     Ok(())
 }
 
@@ -698,6 +807,7 @@ fn commit_resource(
 ) -> Result<StoredResourceRecord, String> {
     ensure_layout(root)?;
     let resource_id = descriptor_resource_id(&descriptor)?;
+    let projection_root = projection_resource_path(root, &descriptor)?;
     if files.is_empty() {
         return Err("resource transaction requires at least one file".to_string());
     }
@@ -709,8 +819,11 @@ fn commit_resource(
         let mut stored_files = Vec::new();
         for (index, file) in files.into_iter().enumerate() {
             let logical_path = normalize_logical_path(&file.logical_path)?;
-            if !seen.insert(logical_path.clone()) {
-                return Err(format!("duplicate resource package path: {logical_path}"));
+            let collision_key = logical_path.to_lowercase();
+            if !seen.insert(collision_key) {
+                return Err(format!(
+                    "duplicate or case-colliding resource package path: {logical_path}"
+                ));
             }
             let media_type = normalize_media_type(&file.media_type)?;
             let bytes = base64::engine::general_purpose::STANDARD
@@ -739,6 +852,8 @@ fn commit_resource(
                 integrity,
             });
         }
+        stored_files.sort_by(|left, right| left.logical_path.cmp(&right.logical_path));
+        let revision = record_revision(&resource_id, &stored_files);
         let public_files: Vec<ResourceFileRecordDto> = stored_files
             .iter()
             .map(|file| ResourceFileRecordDto {
@@ -750,9 +865,15 @@ fn commit_resource(
         let descriptor_object = descriptor
             .as_object_mut()
             .ok_or_else(|| "resource descriptor must be an object".to_string())?;
+        let availability =
+            if descriptor_object.get("origin").and_then(Value::as_str) == Some("builtin") {
+                "builtin-ready"
+            } else {
+                "installed"
+            };
         descriptor_object.insert(
             "availability".to_string(),
-            Value::String("installed".to_string()),
+            Value::String(availability.to_string()),
         );
         descriptor_object.insert(
             "files".to_string(),
@@ -761,6 +882,7 @@ fn commit_resource(
         );
         let record = StoredResourceRecord {
             storage_schema: STORAGE_SCHEMA,
+            revision: revision.clone(),
             descriptor,
             files: stored_files,
         };
@@ -770,6 +892,14 @@ fn commit_resource(
             root,
             &record_path(root, &resource_id),
             &bytes,
+            transaction_id,
+        )?;
+        publish_projection(
+            root,
+            &projection_root,
+            &resource_id,
+            &revision,
+            &record.files,
             transaction_id,
         )?;
         let mut index = read_index(root)?;
@@ -791,6 +921,7 @@ fn read_record(root: &Path, resource_id: &str) -> Result<StoredResourceRecord, S
         .map_err(|error| format!("parse resource record failed: {error}"))?;
     if record.storage_schema != STORAGE_SCHEMA
         || descriptor_resource_id(&record.descriptor)? != resource_id
+        || record.revision != record_revision(resource_id, &record.files)
     {
         return Err("resource record identity or storage schema is invalid".to_string());
     }
@@ -801,10 +932,11 @@ fn verify_record(root: &Path, record: &StoredResourceRecord) -> Result<(), Strin
     if record.files.is_empty() {
         return Err("stored resource record has no files".to_string());
     }
+    projection_resource_path(root, &record.descriptor)?;
     let mut seen = HashSet::new();
     for file in &record.files {
         normalize_logical_path(&file.logical_path)?;
-        if !seen.insert(&file.logical_path) {
+        if !seen.insert(file.logical_path.to_lowercase()) {
             return Err(format!(
                 "stored resource record duplicates {}",
                 file.logical_path
@@ -864,6 +996,140 @@ fn observe_bytes(bytes: &[u8]) -> ObservedIntegrityDto {
     }
 }
 
+fn record_revision(resource_id: &str, files: &[StoredResourceFile]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(resource_id.as_bytes());
+    hasher.update([0]);
+    for file in files {
+        hasher.update(file.logical_path.as_bytes());
+        hasher.update([0]);
+        hasher.update(file.media_type.as_bytes());
+        hasher.update([0]);
+        hasher.update(file.integrity.byte_length.to_le_bytes());
+        hasher.update(file.integrity.sha256.as_bytes());
+        hasher.update([0]);
+    }
+    format!("record/{:X}", hasher.finalize())
+}
+
+fn projection_resource_path(root: &Path, descriptor: &Value) -> Result<PathBuf, String> {
+    let origin = descriptor
+        .get("origin")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "resource descriptor is missing origin".to_string())?;
+    let placement = descriptor
+        .get("logicalPlacement")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "resource descriptor is missing logicalPlacement".to_string())?;
+    let provider = normalize_segment(
+        placement
+            .get("provider")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+        "logical placement provider",
+    )?;
+    let server = match placement.get("server") {
+        Some(Value::String(value)) => Some(normalize_segment(value, "logical placement server")?),
+        Some(Value::Null) => None,
+        _ => return Err("logical placement server must be string or null".to_string()),
+    };
+    let canonical_path = normalize_logical_path(
+        placement
+            .get("canonicalPath")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+    )?;
+    let identity_class = placement
+        .get("identityClass")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "logical placement identityClass is missing".to_string())?;
+    let mut path = root.join("library");
+    match origin {
+        "builtin"
+            if provider == "application"
+                && server.is_none()
+                && identity_class == "application-builtin" =>
+        {
+            path.push("builtin");
+        }
+        "network" if identity_class == "provider-package" || identity_class == "provider-media" => {
+            let source = descriptor
+                .get("source")
+                .and_then(Value::as_object)
+                .ok_or_else(|| "network descriptor source is missing".to_string())?;
+            if source.get("provider").and_then(Value::as_str) != Some(provider.as_str())
+                || source.get("server").and_then(Value::as_str) != server.as_deref()
+            {
+                return Err("network source and logical placement disagree".to_string());
+            }
+            path.push(&provider);
+            path.push(
+                server.ok_or_else(|| "network logical placement requires server".to_string())?,
+            );
+        }
+        "user" if provider == "user" && server.is_none() && identity_class == "user-media" => {
+            path.push("user");
+        }
+        _ => return Err("resource origin and logical placement are incompatible".to_string()),
+    }
+    for part in canonical_path.split('/') {
+        path.push(part);
+    }
+    Ok(path)
+}
+
+fn publish_projection(
+    root: &Path,
+    projection_root: &Path,
+    resource_id: &str,
+    revision: &str,
+    files: &[StoredResourceFile],
+    transaction_id: &str,
+) -> Result<(), String> {
+    let digest = revision
+        .strip_prefix("record/")
+        .ok_or_else(|| "resource revision is invalid".to_string())?;
+    let revision_directory = projection_root.join("revisions").join(digest);
+    let revision_root = revision_directory.join("files");
+    if revision_root.exists() {
+        let valid = files.iter().all(|file| {
+            verify_blob_path(&revision_root.join(&file.logical_path), &file.integrity).is_ok()
+        });
+        if !valid {
+            fs::remove_dir_all(&revision_directory).map_err(|error| {
+                format!("remove incomplete projection revision failed: {error}")
+            })?;
+        }
+    }
+    if !revision_root.exists() {
+        for file in files {
+            let target = revision_root.join(&file.logical_path);
+            if let Some(parent) = target.parent() {
+                fs::create_dir_all(parent)
+                    .map_err(|error| format!("create projection parent failed: {error}"))?;
+            }
+            let blob = root.join("blobs").join(&file.blob);
+            if fs::hard_link(&blob, &target).is_err() {
+                fs::copy(&blob, &target)
+                    .map_err(|error| format!("copy projection file failed: {error}"))?;
+            }
+            verify_blob_path(&target, &file.integrity)?;
+        }
+    }
+    let pointer = serde_json::to_vec(&serde_json::json!({
+        "storageSchema": STORAGE_SCHEMA,
+        "resourceId": resource_id,
+        "revision": revision,
+    }))
+    .map_err(|error| format!("serialize projection current pointer failed: {error}"))?;
+    atomic_write(
+        root,
+        &projection_root.join("current.json"),
+        &pointer,
+        &format!("projection-{transaction_id}"),
+    )
+}
+
 fn resource_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let mut root = app
         .path()
@@ -875,7 +1141,14 @@ fn resource_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 
 fn ensure_layout(root: &Path) -> Result<(), String> {
     fs::create_dir_all(root).map_err(|error| format!("create resource root failed: {error}"))?;
-    for name in ["catalogs", "records", "blobs", "snapshots", "transactions"] {
+    for name in [
+        "catalogs",
+        "records",
+        "blobs",
+        "snapshots",
+        "transactions",
+        "library",
+    ] {
         fs::create_dir_all(root.join(name))
             .map_err(|error| format!("create resource {name} directory failed: {error}"))?;
     }
@@ -908,7 +1181,14 @@ fn write_index(root: &Path, index: &ResourceIndex, identity: &str) -> Result<(),
 
 fn ensure_layout_without_index(root: &Path) -> Result<(), String> {
     fs::create_dir_all(root).map_err(|error| format!("create resource root failed: {error}"))?;
-    for name in ["catalogs", "records", "blobs", "snapshots", "transactions"] {
+    for name in [
+        "catalogs",
+        "records",
+        "blobs",
+        "snapshots",
+        "transactions",
+        "library",
+    ] {
         fs::create_dir_all(root.join(name))
             .map_err(|error| format!("create resource {name} directory failed: {error}"))?;
     }
@@ -1052,7 +1332,7 @@ fn normalize_slot(value: &str) -> Result<String, String> {
         || trimmed.len() > 256
         || !trimmed
             .chars()
-            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-'))
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-' | ':' | '/'))
     {
         return Err("resource slot is invalid".to_string());
     }
@@ -1061,8 +1341,9 @@ fn normalize_slot(value: &str) -> Result<String, String> {
 
 fn normalize_logical_path(value: &str) -> Result<String, String> {
     let trimmed = value.trim();
-    if trimmed.is_empty() || trimmed.contains('\\') {
-        return Err("resource logical path is invalid".to_string());
+    if trimmed.is_empty() || trimmed.contains('\\') || trimmed.nfc().collect::<String>() != trimmed
+    {
+        return Err("resource logical path is invalid or not NFC-normalized".to_string());
     }
     let path = Path::new(trimmed);
     if path.is_absolute()
@@ -1074,7 +1355,26 @@ fn normalize_logical_path(value: &str) -> Result<String, String> {
             "resource logical path must contain only normal relative components".to_string(),
         );
     }
-    Ok(trimmed.replace('\\', "/"))
+    for part in trimmed.split('/') {
+        let upper = part
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_ascii_uppercase();
+        if part.is_empty()
+            || part.ends_with('.')
+            || part.ends_with(' ')
+            || matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+            || (upper.len() == 4
+                && (upper.starts_with("COM") || upper.starts_with("LPT"))
+                && upper[3..]
+                    .parse::<u8>()
+                    .is_ok_and(|number| (1..=9).contains(&number)))
+        {
+            return Err("resource logical path contains a reserved segment".to_string());
+        }
+    }
+    Ok(trimmed.to_string())
 }
 
 fn normalize_user_media_purpose(value: &str) -> Result<String, String> {
@@ -1101,7 +1401,22 @@ fn user_media_descriptor(identity: &str, purpose: &str, file_name: &str) -> Valu
         "catalogObservedAt": null,
         "purpose": purpose,
         "fileName": file_name,
+        "logicalPlacement": {
+            "provider": "user",
+            "server": null,
+            "canonicalPath": format!("{}/{}", user_purpose_directory(purpose), identity),
+            "identityClass": "user-media"
+        }
     })
+}
+
+fn user_purpose_directory(purpose: &str) -> &'static str {
+    match purpose {
+        "bgm" => "sound/custom",
+        "cover" => "musicjacket/custom",
+        "mv" => "movie/custom",
+        _ => "stage/custom",
+    }
 }
 
 fn normalize_file_name(value: &str) -> Result<String, String> {
@@ -1140,6 +1455,181 @@ fn next_identity(state: &ApplicationResourceState, label: &str) -> String {
     format!("{label}-{now:x}-{sequence:x}")
 }
 
+fn migrate_storage_schema_v1(root: &Path, state: &ApplicationResourceState) -> Result<(), String> {
+    let index_path = root.join(INDEX_FILE);
+    if !index_path.exists() {
+        write_index(
+            root,
+            &ResourceIndex::default(),
+            &next_identity(state, "schema-initialize"),
+        )?;
+        return Ok(());
+    }
+    let index_bytes = fs::read(&index_path)
+        .map_err(|error| format!("read legacy resource index failed: {error}"))?;
+    let index_value: Value = serde_json::from_slice(&index_bytes)
+        .map_err(|error| format!("parse legacy resource index failed: {error}"))?;
+    let schema = index_value
+        .get("storageSchema")
+        .and_then(Value::as_u64)
+        .unwrap_or(0);
+    if schema == STORAGE_SCHEMA as u64 {
+        return Ok(());
+    }
+    if schema != 1 {
+        return Err("unsupported resource storage schema".to_string());
+    }
+    let resource_ids = index_value
+        .get("resourceIds")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "legacy resource index has no resourceIds".to_string())?
+        .iter()
+        .map(|value| {
+            value
+                .as_str()
+                .ok_or_else(|| "legacy resource id is invalid".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    for resource_id in &resource_ids {
+        let resource_id = normalize_resource_id(resource_id)?;
+        let path = record_path(root, &resource_id);
+        let bytes = fs::read(&path)
+            .map_err(|error| format!("read legacy resource record failed: {error}"))?;
+        let legacy: LegacyStoredResourceRecordV1 = serde_json::from_slice(&bytes)
+            .map_err(|error| format!("parse legacy resource record failed: {error}"))?;
+        if legacy.storage_schema != 1 || descriptor_resource_id(&legacy.descriptor)? != resource_id
+        {
+            return Err("legacy resource record identity is invalid".to_string());
+        }
+        let mut descriptor = legacy.descriptor;
+        install_inferred_logical_placement(&mut descriptor, &resource_id)?;
+        let mut files = legacy.files;
+        files.sort_by(|left, right| left.logical_path.cmp(&right.logical_path));
+        let revision = record_revision(&resource_id, &files);
+        let record = StoredResourceRecord {
+            storage_schema: STORAGE_SCHEMA,
+            revision: revision.clone(),
+            descriptor,
+            files,
+        };
+        verify_record(root, &record)?;
+        let encoded = serde_json::to_vec(&record)
+            .map_err(|error| format!("serialize migrated resource record failed: {error}"))?;
+        atomic_write(
+            root,
+            &path,
+            &encoded,
+            &next_identity(state, "schema-record"),
+        )?;
+        let projection = projection_resource_path(root, &record.descriptor)?;
+        publish_projection(
+            root,
+            &projection,
+            &resource_id,
+            &revision,
+            &record.files,
+            &next_identity(state, "schema-projection"),
+        )?;
+    }
+    let migrated = ResourceIndex {
+        storage_schema: STORAGE_SCHEMA,
+        resource_ids: resource_ids.into_iter().map(str::to_string).collect(),
+    };
+    write_index(root, &migrated, &next_identity(state, "schema-index"))?;
+    let report = serde_json::to_vec(&serde_json::json!({
+        "fromStorageSchema": 1,
+        "toStorageSchema": STORAGE_SCHEMA,
+        "resourceCount": migrated.resource_ids.len(),
+    }))
+    .map_err(|error| format!("serialize schema migration report failed: {error}"))?;
+    atomic_write(
+        root,
+        &root.join("storage-migration.json"),
+        &report,
+        &next_identity(state, "schema-report"),
+    )
+}
+
+fn install_inferred_logical_placement(
+    descriptor: &mut Value,
+    resource_id: &str,
+) -> Result<(), String> {
+    let object = descriptor
+        .as_object_mut()
+        .ok_or_else(|| "legacy descriptor is not an object".to_string())?;
+    if object.contains_key("logicalPlacement") {
+        return Ok(());
+    }
+    let origin = object
+        .get("origin")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let placement = match origin {
+        "builtin" => serde_json::json!({
+            "provider": "application",
+            "server": null,
+            "canonicalPath": format!("application/{}", resource_id.trim_start_matches("builtin/")),
+            "identityClass": "application-builtin",
+        }),
+        "network" => {
+            let source = object
+                .get("source")
+                .and_then(Value::as_object)
+                .ok_or_else(|| "legacy network source is unavailable".to_string())?;
+            let provider = source
+                .get("provider")
+                .and_then(Value::as_str)
+                .unwrap_or("bestdori");
+            let server = source.get("server").and_then(Value::as_str).unwrap_or("jp");
+            let family = source
+                .get("family")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown");
+            let native_id = source
+                .get("nativeId")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown");
+            let canonical = legacy_network_canonical_path(family, native_id, resource_id);
+            serde_json::json!({
+                "provider": provider,
+                "server": server,
+                "canonicalPath": canonical,
+                "identityClass": if family.starts_with("media-") { "provider-media" } else { "provider-package" },
+            })
+        }
+        "user" => {
+            let purpose = object
+                .get("purpose")
+                .and_then(Value::as_str)
+                .unwrap_or("stage-backdrop");
+            serde_json::json!({
+                "provider": "user",
+                "server": null,
+                "canonicalPath": format!("{}/{}", user_purpose_directory(purpose), resource_id.trim_start_matches("user/media/")),
+                "identityClass": "user-media",
+            })
+        }
+        _ => return Err("legacy descriptor origin is invalid".to_string()),
+    };
+    object.insert("logicalPlacement".to_string(), placement);
+    Ok(())
+}
+
+fn legacy_network_canonical_path(family: &str, native_id: &str, resource_id: &str) -> String {
+    match family {
+        "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapeffect" | "stageskin" => {
+            format!("ingameskin/{family}/{native_id}")
+        }
+        "tapseskin" => format!("sound/tapseskin/{native_id}"),
+        "sound-common" => "sound/common".to_string(),
+        "media-bgm" => format!("legacy-media/bgm/{}", digest_text(resource_id)),
+        "media-cover" => format!("legacy-media/cover/{}", digest_text(resource_id)),
+        "media-mv" => format!("legacy-media/mv/{}", digest_text(resource_id)),
+        "media-stage-backdrop" => format!("legacy-media/stage/{}", digest_text(resource_id)),
+        _ => format!("legacy-package/{}/{}", family, digest_text(resource_id)),
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct LegacyMigrationReport {
@@ -1147,6 +1637,23 @@ struct LegacyMigrationReport {
     completed_at_unix_milliseconds: u128,
     imported: Vec<String>,
     skipped: Vec<String>,
+}
+
+fn recover_projections(root: &Path, state: &ApplicationResourceState) -> Result<(), String> {
+    for resource_id in read_index(root)?.resource_ids {
+        let record = read_record(root, &resource_id)?;
+        verify_record(root, &record)?;
+        let projection = projection_resource_path(root, &record.descriptor)?;
+        publish_projection(
+            root,
+            &projection,
+            &resource_id,
+            &record.revision,
+            &record.files,
+            &next_identity(state, "projection-recovery"),
+        )?;
+    }
+    Ok(())
 }
 
 fn migrate_legacy_bestdori_cache(
@@ -1292,6 +1799,7 @@ fn import_legacy_package(
     } else {
         native_id.to_string()
     };
+    let logical_path = legacy_network_canonical_path(family, native_id, resource_id);
     let descriptor = serde_json::json!({
         "ref": { "id": resource_id },
         "origin": "network",
@@ -1307,6 +1815,12 @@ fn import_legacy_package(
             "nativeId": native_id,
             "manifestUrl": format!("https://bestdori.com/api/explorer/{server}/assets/{manifest_section}/{remote_family}/{manifest_name}.json"),
             "assetBaseUrl": format!("https://bestdori.com/assets/{server}/{section}/{remote_family}/{asset_suffix}"),
+        },
+        "logicalPlacement": {
+            "provider": "bestdori",
+            "server": server,
+            "canonicalPath": logical_path,
+            "identityClass": "provider-package"
         }
     });
     commit_resource(resource_root, descriptor, files, transaction_id)?;
@@ -1459,5 +1973,115 @@ mod tests {
         );
         assert!(parse_legacy_package_name("skin00", "noteskin").is_none());
         assert!(parse_legacy_package_name("jp-fieldskin-skin00", "noteskin").is_none());
+    }
+
+    #[test]
+    fn logical_paths_reject_reserved_case_collisions_and_non_nfc() {
+        assert!(normalize_logical_path("CON/file.bin").is_err());
+        assert!(normalize_logical_path("folder/name. ").is_err());
+        assert!(normalize_logical_path("e\u{301}.bin").is_err());
+        let root = test_root("path-collision");
+        let descriptor = network_test_descriptor();
+        let result = commit_resource(
+            &root,
+            descriptor,
+            vec![
+                install_file("Atlas.bin", b"first"),
+                install_file("atlas.bin", b"second"),
+            ],
+            "collision",
+        );
+        assert!(result.is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn record_revisions_publish_original_logical_projection_without_replacing_old_revision() {
+        let root = test_root("projection");
+        let descriptor = network_test_descriptor();
+        let first = commit_resource(
+            &root,
+            descriptor.clone(),
+            vec![install_file("atlas.bin", b"first")],
+            "first",
+        )
+        .unwrap();
+        let projection = projection_resource_path(&root, &descriptor).unwrap();
+        let first_digest = first.revision.strip_prefix("record/").unwrap();
+        assert!(projection
+            .join("revisions")
+            .join(first_digest)
+            .join("files/atlas.bin")
+            .exists());
+        let second = commit_resource(
+            &root,
+            descriptor,
+            vec![install_file("atlas.bin", b"second")],
+            "second",
+        )
+        .unwrap();
+        assert_ne!(first.revision, second.revision);
+        assert!(projection
+            .join("revisions")
+            .join(first_digest)
+            .join("files/atlas.bin")
+            .exists());
+        let pointer: Value =
+            serde_json::from_slice(&fs::read(projection.join("current.json")).unwrap()).unwrap();
+        assert_eq!(
+            pointer.get("revision").and_then(Value::as_str),
+            Some(second.revision.as_str())
+        );
+        assert_eq!(
+            read_record(&root, "bestdori/jp/ingameskin/noteskin/skin00")
+                .unwrap()
+                .revision,
+            second.revision
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    fn network_test_descriptor() -> Value {
+        serde_json::json!({
+            "ref": { "id": "bestdori/jp/ingameskin/noteskin/skin00" },
+            "origin": "network",
+            "kind": "package",
+            "title": "skin00",
+            "availability": "remote-only",
+            "files": null,
+            "catalogObservedAt": null,
+            "source": {
+                "provider": "bestdori",
+                "server": "jp",
+                "family": "noteskin",
+                "nativeId": "skin00",
+                "manifestUrl": "https://bestdori.com/example.json",
+                "assetBaseUrl": "https://bestdori.com/example"
+            },
+            "logicalPlacement": {
+                "provider": "bestdori",
+                "server": "jp",
+                "canonicalPath": "ingameskin/noteskin/skin00",
+                "identityClass": "provider-package"
+            }
+        })
+    }
+
+    fn install_file(path: &str, bytes: &[u8]) -> ResourceInstallFileInput {
+        ResourceInstallFileInput {
+            logical_path: path.to_string(),
+            media_type: "application/octet-stream".to_string(),
+            base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
+        }
+    }
+
+    fn test_root(label: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "garupa-resource-{label}-{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        ))
     }
 }

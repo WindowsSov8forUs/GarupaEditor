@@ -31,10 +31,12 @@ export async function runBuiltinCatalogTests(): Promise<void> {
   });
   equal(registered.status, "accepted");
   if (registered.status !== "accepted") return;
-  equal(loads, 0);
+  equal(loads, 1);
   equal(manager.replaceSelection({ "ui.default-cover": registered.value.ref }).status, "accepted");
+  equal(manager.resolveBuiltinSlotUrl("ui.default-cover").status, "rejected");
+  equal((await manager.prepareBuiltinDocumentLease(["ui.default-cover"])).status, "accepted");
   equal(manager.resolveBuiltinSlotUrl("ui.default-cover").status, "accepted");
-  equal(loads, 0);
+  equal(loads, 1);
 
   const receipt = await manager.createSnapshot(["ui.default-cover"]);
   equal(receipt.status, "accepted");

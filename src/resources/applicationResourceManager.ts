@@ -1,12 +1,14 @@
 import type {
   ApplicationResourceBackend,
   ResourceCatalogProvider,
+  ResourceInstallFile,
   ResourceObjectUrlFactory,
   StoredResourceRecord,
 } from "./backend";
 import {
   createResourceRef,
   resourceAccepted,
+  validateResourceLogicalPlacement,
   resourceRejected,
   type ApplicationResourceDescriptor,
   type BuiltinResourceDescriptor,
@@ -18,6 +20,7 @@ import {
   type ResourceFileRecord,
   type ResourceLeaseFile,
   type ResourceLeaseId,
+  type ResourceLogicalPlacement,
   type ResourceRef,
   type ResourceResult,
   type ResourceSnapshotId,
@@ -46,6 +49,7 @@ export interface BuiltinResourceRegistration {
   readonly kind: BuiltinResourceDescriptor["kind"];
   readonly title: string;
   readonly sourceUrl: string;
+  readonly logicalPlacement?: ResourceLogicalPlacement;
   readonly files: readonly BuiltinResourceRegistrationFile[];
 }
 
@@ -75,6 +79,8 @@ export class ApplicationResourceManager {
   private readonly activeCatalogs = new Map<string, ResourceCatalogSnapshot>();
   private readonly registeredNetwork = new Map<string, NetworkResourceDescriptor>();
   private selection: ApplicationResourceSelection = createEmptyApplicationResourceSelection();
+  private builtinDocumentLease: ResourceConsumerLease | null = null;
+  private readonly builtinDocumentUrls = new Map<ApplicationResourceSlot, string>();
   private initialized = false;
 
   constructor(
@@ -122,6 +128,10 @@ export class ApplicationResourceManager {
     }
     const prepared = await prepareFiles(input.files);
     if (prepared.status === "rejected") return prepared;
+    const placement = validateResourceLogicalPlacement(
+      input.logicalPlacement ?? builtinPlacementFor(reference.value.id),
+    );
+    if (placement.status === "rejected") return placement;
     const descriptor: BuiltinResourceDescriptor = Object.freeze({
       ref: reference.value,
       origin: "builtin" as const,
@@ -131,12 +141,31 @@ export class ApplicationResourceManager {
       files: prepared.value.records,
       catalogObservedAt: null,
       sourceUrl: input.sourceUrl,
+      logicalPlacement: placement.value,
     });
-    this.builtins.set(reference.value.id, Object.freeze({
+    const installFiles: ResourceInstallFile[] = [];
+    for (const record of prepared.value.records) {
+      const owner = prepared.value.filesByPath.get(record.logicalPath);
+      if (owner === undefined) return integrityFailure("resources.manager.builtin-file-missing");
+      const loaded = await owner.read();
+      if (loaded.status === "rejected") return loaded;
+      installFiles.push(Object.freeze({
+        logicalPath: record.logicalPath,
+        mediaType: record.mediaType,
+        bytes: loaded.value,
+      }));
+    }
+    const committed = await this.backend.installBuiltinResource(Object.freeze({
       descriptor,
+      files: Object.freeze(installFiles),
+    }));
+    if (committed.status === "rejected") return committed;
+    this.installed.set(reference.value.id, committed.value);
+    this.builtins.set(reference.value.id, Object.freeze({
+      descriptor: committed.value.descriptor as BuiltinResourceDescriptor,
       filesByPath: prepared.value.filesByPath,
     }));
-    return resourceAccepted(descriptor);
+    return resourceAccepted(committed.value.descriptor);
   }
 
   registerNetworkResource(
@@ -158,12 +187,47 @@ export class ApplicationResourceManager {
   }
 
   resolveBuiltinSlotUrl(slot: ApplicationResourceSlot): ResourceResult<string> {
-    const ref = this.selection[slot];
-    if (ref === null) return invalid("resources.manager.unselected-builtin-slot");
-    const builtin = this.builtins.get(ref.id);
-    return builtin === undefined
-      ? invalid("resources.manager.selected-slot-is-not-builtin")
-      : resourceAccepted(builtin.descriptor.sourceUrl);
+    const url = this.builtinDocumentUrls.get(slot);
+    return url === undefined
+      ? invalid("resources.manager.builtin-slot-lease-not-prepared")
+      : resourceAccepted(url);
+  }
+
+  async prepareBuiltinDocumentLease(
+    slots: readonly ApplicationResourceSlot[],
+  ): Promise<ResourceResult<void>> {
+    if (this.builtinDocumentLease !== null || slots.length === 0) {
+      return invalid("resources.manager.invalid-builtin-document-lease-state");
+    }
+    const bindings: Record<string, ResourceRef> = {};
+    for (const slot of slots) {
+      const ref = this.selection[slot];
+      if (ref === null || !this.builtins.has(ref.id) || bindings[slot] !== undefined) {
+        return invalid("resources.manager.invalid-builtin-document-slot");
+      }
+      bindings[slot] = ref;
+    }
+    const receipt = await this.createSnapshotFromRefs(Object.freeze(bindings));
+    if (receipt.status === "rejected") return receipt;
+    const lease = await this.acquireSnapshot(receipt.value.snapshotId);
+    if (lease.status === "rejected") return lease;
+    try {
+      for (const slot of slots) {
+        const files = lease.value.listFiles(slot);
+        if (files.length !== 1) throw new Error("resources.manager.builtin-document-file-count");
+        this.builtinDocumentUrls.set(slot, await lease.value.openObjectUrl(slot, files[0]!.logicalPath));
+      }
+    } catch (error) {
+      await lease.value.release();
+      this.builtinDocumentUrls.clear();
+      return resourceRejected(
+        "resource-integrity",
+        "resources.manager.builtin-document-lease-failed",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    this.builtinDocumentLease = lease.value;
+    return resourceAccepted(undefined);
   }
 
   replaceSelection(
@@ -316,13 +380,30 @@ export class ApplicationResourceManager {
       if (available.status === "rejected") return available;
       slots[slot] = ref;
     }
+    return this.createSnapshotFromRefs(Object.freeze(slots));
+  }
+
+  async createSnapshotFromRefs(
+    bindings: Readonly<Record<string, ResourceRef>>,
+  ): Promise<ResourceResult<ResourceSnapshotReceipt>> {
+    const entries = Object.entries(bindings);
+    if (entries.length === 0) return invalid("resources.manager.empty-explicit-snapshot-request");
+    const slots: Record<string, ResourceRef> = {};
+    for (const [slot, ref] of entries) {
+      if (!safeSemanticSlot(slot) || slots[slot] !== undefined || createResourceRef(ref?.id).status === "rejected") {
+        return invalid("resources.manager.invalid-explicit-snapshot-binding");
+      }
+      const available = await this.ensureAvailable(ref);
+      if (available.status === "rejected") return available;
+      slots[slot] = ref;
+    }
     const created = await this.backend.createSnapshot(Object.freeze(slots));
-    return created.status === "rejected"
-      ? created
-      : resourceAccepted(Object.freeze({
-          snapshotId: created.value.snapshotId,
-          slots: created.value.slots,
-        }));
+    return created.status === "rejected" ? created : resourceAccepted(Object.freeze({
+      snapshotId: created.value.snapshotId,
+      slots: created.value.slots,
+      revisions: created.value.revisions,
+      filesBySlot: created.value.filesBySlot,
+    }));
   }
 
   async acquireSnapshot(
@@ -330,34 +411,17 @@ export class ApplicationResourceManager {
   ): Promise<ResourceResult<ResourceConsumerLease>> {
     const opened = await this.backend.openSnapshot(snapshotId);
     if (opened.status === "rejected") return opened;
-    const filesBySlot: Record<string, readonly ResourceFileRecord[]> = {
-      ...opened.value.filesBySlot,
-    };
-    for (const [slot, ref] of Object.entries(opened.value.slots)) {
-      const builtin = this.builtins.get(ref.id);
-      if (builtin !== undefined) filesBySlot[slot] = builtin.descriptor.files ?? Object.freeze([]);
-    }
     return resourceAccepted(new ManagedResourceConsumerLease(
       opened.value.snapshotId,
       opened.value.slots,
-      Object.freeze(filesBySlot),
-      this.builtins,
+      opened.value.revisions,
+      opened.value.filesBySlot,
       this.backend,
       this.objectUrls,
     ));
   }
 
   async verify(ref: ResourceRef): Promise<ResourceResult<ResourceDescriptor>> {
-    const builtin = this.builtins.get(ref.id);
-    if (builtin !== undefined) {
-      for (const file of builtin.descriptor.files ?? []) {
-        const owner = builtin.filesByPath.get(file.logicalPath);
-        if (owner === undefined) return integrityFailure("resources.manager.builtin-file-missing");
-        const loaded = await owner.read();
-        if (loaded.status === "rejected") return loaded;
-      }
-      return resourceAccepted(builtin.descriptor);
-    }
     return this.backend.verify(ref);
   }
 
@@ -391,8 +455,8 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
   constructor(
     readonly snapshotId: ResourceSnapshotId,
     readonly slots: Readonly<Record<string, ResourceRef>>,
+    readonly revisions: Readonly<Record<string, string>>,
     private readonly filesBySlot: Readonly<Record<string, readonly ResourceFileRecord[]>>,
-    private readonly builtins: ReadonlyMap<string, RegisteredBuiltinResource>,
     private readonly backend: ApplicationResourceBackend,
     private readonly objectUrls: ResourceObjectUrlFactory,
   ) {
@@ -408,14 +472,6 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     this.assertOpen();
     const ref = this.slots[slot];
     if (ref === undefined) throw new Error(`resource slot is not leased: ${slot}`);
-    const builtin = this.builtins.get(ref.id);
-    if (builtin !== undefined) {
-      const owner = builtin.filesByPath.get(logicalPath);
-      if (owner === undefined) throw new Error(`builtin resource file is not leased: ${slot}/${logicalPath}`);
-      const loaded = await owner.read();
-      if (loaded.status === "rejected") throw new Error(`${loaded.failure.capability}: ${loaded.failure.boundary}`);
-      return Uint8Array.from(loaded.value);
-    }
     const read = await this.backend.readSnapshotFile(this.snapshotId, slot, logicalPath);
     if (read.status === "rejected") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);
     return Uint8Array.from(read.value);
@@ -577,9 +633,24 @@ function freezeCatalog(snapshot: ResourceCatalogSnapshot): ResourceCatalogSnapsh
       ...resource,
       ref: Object.freeze({ ...resource.ref }),
       source: Object.freeze({ ...resource.source }),
+      logicalPlacement: Object.freeze({ ...resource.logicalPlacement }),
       files: resource.files === null ? null : Object.freeze([...resource.files]),
     }) as NetworkResourceDescriptor)),
   });
+}
+
+function builtinPlacementFor(resourceId: string): ResourceLogicalPlacement {
+  const tail = resourceId.slice("builtin/".length);
+  return Object.freeze({
+    provider: "application",
+    server: null,
+    canonicalPath: tail.startsWith("game/") ? tail : `application/${tail}`,
+    identityClass: "application-builtin" as const,
+  });
+}
+
+function safeSemanticSlot(value: string): boolean {
+  return value.length > 0 && value.length <= 512 && /^[A-Za-z0-9._:/-]+$/.test(value) && !value.includes("//");
 }
 
 function invalid<T>(capability: string): ResourceResult<T> {

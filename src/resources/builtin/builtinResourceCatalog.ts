@@ -140,6 +140,10 @@ export async function registerApplicationBuiltinResources(
   return selected.status === "rejected" ? selected : resourceAccepted(undefined);
 }
 
+export function listApplicationBuiltinResourceSlots(): readonly ApplicationResourceSlot[] {
+  return Object.freeze(DEFINITIONS.map(({ slot }) => slot));
+}
+
 export function listBuiltinDefinitionsForTesting(): readonly Readonly<{
   slot: ApplicationResourceSlot;
   id: string;

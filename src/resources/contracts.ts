@@ -21,6 +21,19 @@ export type ResourceCatalogFreshness = "fresh" | "not-modified" | "offline-cache
 
 export type UserMediaPurpose = "bgm" | "cover" | "mv" | "stage-backdrop";
 
+export type ResourcePlacementIdentityClass =
+  | "application-builtin"
+  | "provider-package"
+  | "provider-media"
+  | "user-media";
+
+export interface ResourceLogicalPlacement {
+  readonly provider: string;
+  readonly server: string | null;
+  readonly canonicalPath: string;
+  readonly identityClass: ResourcePlacementIdentityClass;
+}
+
 declare const resourceIdBrand: unique symbol;
 declare const resourceSnapshotIdBrand: unique symbol;
 declare const resourceLeaseIdBrand: unique symbol;
@@ -52,6 +65,7 @@ export interface ResourceDescriptor {
   readonly availability: ResourceAvailability;
   readonly files: readonly ResourceFileRecord[] | null;
   readonly catalogObservedAt: string | null;
+  readonly logicalPlacement: ResourceLogicalPlacement;
 }
 
 export interface NetworkResourceSource {
@@ -97,6 +111,8 @@ export interface ResourceCatalogSnapshot {
 export interface ResourceSnapshotReceipt {
   readonly snapshotId: ResourceSnapshotId;
   readonly slots: Readonly<Record<string, ResourceRef>>;
+  readonly revisions: Readonly<Record<string, string>>;
+  readonly filesBySlot: Readonly<Record<string, readonly ResourceFileRecord[]>>;
 }
 
 export interface ResourceLeaseFile {
@@ -109,6 +125,7 @@ export interface ResourceConsumerLease {
   readonly leaseId: ResourceLeaseId;
   readonly snapshotId: ResourceSnapshotId;
   readonly slots: Readonly<Record<string, ResourceRef>>;
+  readonly revisions: Readonly<Record<string, string>>;
   listFiles(slot: string): readonly ResourceLeaseFile[];
   readBytes(slot: string, logicalPath: string): Promise<Uint8Array>;
   openObjectUrl(slot: string, logicalPath: string): Promise<string>;
@@ -179,6 +196,41 @@ export function createResourceRef(value: unknown): ResourceResult<ResourceRef> {
     : accepted(Object.freeze({ id: parsed.value }));
 }
 
+export function validateResourceLogicalPlacement(value: unknown): ResourceResult<ResourceLogicalPlacement> {
+  if (
+    value === null || typeof value !== "object" || Array.isArray(value) ||
+    Object.keys(value).sort().join(",") !== "canonicalPath,identityClass,provider,server"
+  ) {
+    return rejected(
+      "invalid-resource-request",
+      "resources.contract.invalid-logical-placement-shape",
+      "Logical placement requires only provider, server, canonicalPath and identityClass.",
+    );
+  }
+  const candidate = value as Partial<ResourceLogicalPlacement>;
+  const classes: readonly ResourcePlacementIdentityClass[] = [
+    "application-builtin", "provider-package", "provider-media", "user-media",
+  ];
+  if (
+    typeof candidate.provider !== "string" || !safePlacementSegment(candidate.provider) ||
+    !(candidate.server === null || (typeof candidate.server === "string" && safePlacementSegment(candidate.server))) ||
+    typeof candidate.canonicalPath !== "string" || !safeCanonicalPath(candidate.canonicalPath) ||
+    !classes.includes(candidate.identityClass as ResourcePlacementIdentityClass)
+  ) {
+    return rejected(
+      "invalid-resource-request",
+      "resources.contract.invalid-logical-placement-value",
+      "Logical placement requires safe canonical product namespace segments and one known identity class.",
+    );
+  }
+  return accepted(Object.freeze({
+    provider: candidate.provider,
+    server: candidate.server,
+    canonicalPath: candidate.canonicalPath,
+    identityClass: candidate.identityClass as ResourcePlacementIdentityClass,
+  }));
+}
+
 export function validateObservedIntegrity(value: unknown): ResourceResult<ObservedIntegrity> {
   if (
     value === null || typeof value !== "object" || Array.isArray(value) ||
@@ -221,6 +273,19 @@ export function resourceRejected<T>(
 
 function accepted<T>(value: T): ResourceResult<T> {
   return Object.freeze({ status: "accepted" as const, value });
+}
+
+function safePlacementSegment(value: string): boolean {
+  return /^[A-Za-z0-9._-]+$/.test(value) && value !== "." && value !== "..";
+}
+
+function safeCanonicalPath(value: string): boolean {
+  if (value.length === 0 || value.startsWith("/") || value.includes("\\") || value.normalize("NFC") !== value) return false;
+  const reserved = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i;
+  for (const part of value.split("/")) {
+    if (!safePlacementSegment(part) || reserved.test(part) || part.endsWith(".") || part.endsWith(" ")) return false;
+  }
+  return true;
 }
 
 function rejected<T>(
