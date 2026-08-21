@@ -1417,14 +1417,16 @@ export function useEditorIoAndShortcuts(params: any) {
       const bgmRef = await installBestdoriMedia({
         server: payload.resources.server,
         purpose: "bgm",
-        nativeId: `song-${chartId}-bgm`,
+        nativeId: payload.resources.audioLogicalPath,
+        logicalPath: payload.resources.audioLogicalPath,
         title: payload.audioFileName,
         url: payload.resources.audioUrl,
       });
       const coverRef = await installBestdoriMedia({
         server: payload.resources.server,
         purpose: "cover",
-        nativeId: `song-${chartId}-cover`,
+        nativeId: payload.resources.jacketLogicalPath,
+        logicalPath: payload.resources.jacketLogicalPath,
         title: `${payload.metadata.title} cover`,
         url: payload.resources.jacketUrl,
       });
@@ -1433,7 +1435,8 @@ export function useEditorIoAndShortcuts(params: any) {
         : await installBestdoriMedia({
             server: payload.resources.server,
             purpose: "mv",
-            nativeId: `song-${chartId}-mv`,
+            nativeId: payload.resources.mvLogicalPath!,
+            logicalPath: payload.resources.mvLogicalPath!,
             title: `${payload.metadata.title} MV`,
             url: payload.resources.mvUrl,
           });

@@ -113,7 +113,7 @@ class MutableCatalogProvider implements ResourceCatalogProvider {
   readonly descriptor: NetworkResourceDescriptor;
 
   constructor() {
-    const ref = createResourceRef("bestdori/jp/noteskin/skin999");
+    const ref = createResourceRef("bestdori/jp/ingameskin/noteskin/skin999");
     if (ref.status === "rejected") throw new Error("test resource ref rejected");
     this.descriptor = Object.freeze({
       ref: ref.value,

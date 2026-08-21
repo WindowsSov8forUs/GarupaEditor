@@ -31,10 +31,22 @@ interface BestdoriAssetsInfo {
     readonly fieldskin?: Record<string, unknown>;
     readonly bgskin?: Record<string, unknown>;
     readonly judgeskin?: Record<string, unknown>;
+    readonly tapeffect?: Record<string, unknown>;
+    readonly stageskin?: Record<string, unknown>;
   };
-  readonly sound?: {
+  readonly sound?: Record<string, unknown> & {
     readonly tapseskin?: Record<string, unknown>;
+    readonly common?: unknown;
   };
+  readonly musicjacket?: Record<string, unknown>;
+  readonly movie?: {
+    readonly mv?: Record<string, unknown>;
+  };
+}
+
+interface BestdoriSongCatalogEntry {
+  readonly jacketImage?: unknown;
+  readonly musicTitle?: unknown;
 }
 
 interface BestdoriNames {
@@ -49,13 +61,19 @@ export function createBestdoriNetworkMediaDescriptor(input: {
   readonly server: BestdoriAssetServer;
   readonly purpose: "bgm" | "cover" | "mv" | "stage-backdrop";
   readonly nativeId: string;
+  readonly logicalPath?: string;
   readonly title: string;
   readonly url: string;
 }): ResourceResult<NetworkResourceDescriptor> {
-  const encodedIdentity = encodeURIComponent(`${input.nativeId}:${input.url}`);
-  const reference = createResourceRef(
-    `bestdori/${input.server}/media-${input.purpose}/${encodedIdentity}`,
-  );
+  const logicalPath = input.logicalPath ?? `media/${input.purpose}/${input.nativeId}`;
+  if (!safeProviderLogicalPath(logicalPath)) {
+    return resourceRejected(
+      "invalid-resource-request",
+      "resources.bestdori.invalid-media-logical-path",
+      "Bestdori media requires one stable safe provider-native logical path.",
+    );
+  }
+  const reference = createResourceRef(`bestdori/${input.server}/${logicalPath}`);
   if (reference.status === "rejected") return reference;
   const kind = input.purpose === "bgm" ? "audio" : input.purpose === "mv" ? "video" : "image";
   return resourceAccepted(Object.freeze({
@@ -69,7 +87,7 @@ export function createBestdoriNetworkMediaDescriptor(input: {
     logicalPlacement: Object.freeze({
       provider: "bestdori",
       server: input.server,
-      canonicalPath: mediaLogicalPath(input.purpose, input.nativeId),
+      canonicalPath: logicalPath,
       identityClass: "provider-media" as const,
     }),
     source: Object.freeze({
@@ -88,9 +106,7 @@ export function createBestdoriNetworkResourceRef(
   family: BestdoriAssetFamily,
   nativeId: string,
 ): ResourceResult<NetworkResourceDescriptor["ref"]> {
-  const reference = createResourceRef(
-    `bestdori/${server}/${family}/${encodeURIComponent(nativeId)}`,
-  );
+  const reference = createResourceRef(`bestdori/${server}/${packageLogicalPath(family, nativeId)}`);
   return reference.status === "rejected" ? reference : resourceAccepted(reference.value);
 }
 
@@ -242,13 +258,17 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
 }
 
 export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly NetworkResourceDescriptor[]> {
-  const [assets, names] = await Promise.all([
+  const [assets, names, songs] = await Promise.all([
     Promise.all(BESTDORI_ASSET_SERVERS.map((server) =>
       fetchBestdoriJson<BestdoriAssetsInfo>(
         `/api/explorer/${server}/assets/_info.json`,
         `bestdori ${server} assets info`,
       ))),
     loadNames(),
+    fetchBestdoriJson<Record<string, BestdoriSongCatalogEntry>>(
+      "/api/songs/all.8.json",
+      "bestdori complete song media catalog",
+    ),
   ]);
   const observedAt = new Date().toISOString();
   const resources: NetworkResourceDescriptor[] = [];
@@ -259,8 +279,14 @@ export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly
     collect(resources, server, "fieldskin", info.ingameskin?.fieldskin, names, observedAt);
     collect(resources, server, "bgskin", info.ingameskin?.bgskin, names, observedAt);
     collect(resources, server, "judgeskin", info.ingameskin?.judgeskin, names, observedAt);
+    collect(resources, server, "tapeffect", info.ingameskin?.tapeffect, names, observedAt);
+    collect(resources, server, "stageskin", info.ingameskin?.stageskin, names, observedAt);
     collect(resources, server, "tapseskin", info.sound?.tapseskin, names, observedAt);
-    resources.push(commonSoundDescriptor(server, observedAt));
+    collect(resources, server, "bgm", directBgmPackages(info.sound), names, observedAt);
+    collect(resources, server, "musicjacket", info.musicjacket, names, observedAt);
+    collect(resources, server, "movie-mv", info.movie?.mv, names, observedAt);
+    if (info.sound?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
+    collectSongMedia(resources, server, index, songs, info, observedAt);
   }
   const deduplicated = new Map<string, NetworkResourceDescriptor>();
   for (const resource of resources) deduplicated.set(resource.ref.id, resource);
@@ -280,9 +306,8 @@ function collect(
 ): void {
   if (values === undefined) return;
   for (const nativeId of Object.keys(values)) {
-    const reference = createResourceRef(
-      `bestdori/${server}/${family}/${encodeURIComponent(nativeId)}`,
-    );
+    const logicalPath = packageLogicalPath(family, nativeId);
+    const reference = createResourceRef(`bestdori/${server}/${logicalPath}`);
     if (reference.status === "rejected") continue;
     const source = sourceFor(server, family, nativeId);
     output.push(Object.freeze({
@@ -304,32 +329,87 @@ function collect(
   }
 }
 
+function collectSongMedia(
+  output: NetworkResourceDescriptor[],
+  server: BestdoriAssetServer,
+  serverIndex: number,
+  songs: Record<string, BestdoriSongCatalogEntry>,
+  info: BestdoriAssetsInfo,
+  observedAt: string,
+): void {
+  for (const [songIdText, song] of Object.entries(songs)) {
+    if (!/^\d+$/.test(songIdText)) continue;
+    const songId = Number(songIdText);
+    if (!Number.isSafeInteger(songId) || songId < 1) continue;
+    const title = localizedString(song.musicTitle, serverIndex) ?? `Song ${songId}`;
+    const bgmId = `bgm${String(songId).padStart(3, "0")}`;
+    if (info.sound?.[bgmId] !== undefined) {
+      const logicalPath = `sound/${bgmId}/${bgmId}.mp3`;
+      const descriptor = createBestdoriNetworkMediaDescriptor({
+        server,
+        purpose: "bgm",
+        nativeId: bgmId,
+        logicalPath,
+        title: `${title} BGM`,
+        url: `https://bestdori.com/assets/${server}/sound/${bgmId}_rip/${bgmId}.mp3`,
+      });
+      if (descriptor.status === "accepted") output.push(Object.freeze({ ...descriptor.value, catalogObservedAt: observedAt }));
+    }
+    const jacket = lastSafeAssetSegment(song.jacketImage);
+    if (jacket === null) continue;
+    const folder = `musicjacket${String(Math.ceil(songId / 10) * 10).padStart(2, "0")}`;
+    if (info.musicjacket?.[folder] === undefined) continue;
+    const file = `assets-star-forassetbundle-startapp-musicjacket-${folder}-${jacket}-jacket.png`;
+    const logicalPath = `musicjacket/${folder}/${file}`;
+    const descriptor = createBestdoriNetworkMediaDescriptor({
+      server,
+      purpose: "cover",
+      nativeId: `${folder}/${jacket}`,
+      logicalPath,
+      title: `${title} jacket`,
+      url: `https://bestdori.com/assets/${server}/musicjacket/${folder}_rip/${file}`,
+    });
+    if (descriptor.status === "accepted") output.push(Object.freeze({ ...descriptor.value, catalogObservedAt: observedAt }));
+  }
+}
+
+function localizedString(value: unknown, index: number): string | null {
+  if (!Array.isArray(value)) return null;
+  const candidate = value[index];
+  return typeof candidate === "string" && candidate.trim().length > 0 ? candidate.trim() : null;
+}
+
+function lastSafeAssetSegment(value: unknown): string | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const candidate = value[value.length - 1];
+  return typeof candidate === "string" && /^[A-Za-z0-9._-]+$/.test(candidate) ? candidate : null;
+}
+
+function directBgmPackages(sound: BestdoriAssetsInfo["sound"]): Record<string, unknown> | undefined {
+  if (sound === undefined) return undefined;
+  const output: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(sound)) {
+    if (/^bgm\d+$/.test(key)) output[key] = value;
+  }
+  return Object.keys(output).length === 0 ? undefined : output;
+}
+
 function sourceFor(
   server: BestdoriAssetServer,
   family: BestdoriAssetFamily,
   nativeId: string,
 ) {
-  const encoded = encodeURIComponent(nativeId);
+  const logicalPath = packageLogicalPath(family, nativeId);
+  const encodedLogicalPath = encodeLogicalPath(logicalPath);
   const explorerRoot = `https://bestdori.com/api/explorer/${server}/assets`;
   const assetRoot = `https://bestdori.com/assets/${server}`;
-  if (family === "sound-common") {
-    return {
-      provider: "bestdori",
-      server,
-      family,
-      nativeId,
-      manifestUrl: `${explorerRoot}/sound/common.json`,
-      assetBaseUrl: `${assetRoot}/sound/common_rip`,
-    };
-  }
-  const section = family === "tapseskin" ? "sound" : "ingameskin";
   return {
     provider: "bestdori",
     server,
     family,
     nativeId,
-    manifestUrl: `${explorerRoot}/${section}/${family}/${encoded}.json`,
-    assetBaseUrl: `${assetRoot}/${section}/${family}/${encoded}_rip`,
+    manifestUrl: `${explorerRoot}/${encodedLogicalPath}.json`,
+    assetBaseUrl: `${assetRoot}/${encodedLogicalPath}_rip`,
   };
 }
 
@@ -337,7 +417,7 @@ function commonSoundDescriptor(
   server: BestdoriAssetServer,
   observedAt: string,
 ): NetworkResourceDescriptor {
-  const reference = createResourceRef(`bestdori/${server}/sound-common/common`);
+  const reference = createResourceRef(`bestdori/${server}/sound/common`);
   if (reference.status === "rejected") throw new Error("Bestdori common sound identity is invalid");
   return Object.freeze({
     ref: reference.value,
@@ -400,14 +480,18 @@ function normalizeManifest(value: unknown): ResourceResult<readonly string[]> {
   }
   const seen = new Set<string>();
   const output: string[] = [];
+  const reserved = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i;
   for (const item of value) {
-    if (typeof item !== "string") return invalidManifest();
-    const path = item.trim().split("\\").join("/");
+    if (typeof item !== "string" || item !== item.trim() || item.includes("\\") || item.normalize("NFC") !== item) return invalidManifest();
+    const path = item;
     const parts = path.split("/");
-    if (path.length === 0 || path.startsWith("/") || parts.some((part) => part.length === 0 || part === "." || part === "..") || seen.has(path)) {
-      return invalidManifest();
-    }
-    seen.add(path);
+    const collisionKey = path.toLocaleLowerCase("en-US");
+    if (
+      path.length === 0 || path.startsWith("/") ||
+      parts.some((part) => part.length === 0 || part === "." || part === ".." || part.endsWith(".") || part.endsWith(" ") || reserved.test(part)) ||
+      seen.has(collisionKey)
+    ) return invalidManifest();
+    seen.add(collisionKey);
     output.push(path);
   }
   return resourceAccepted(Object.freeze(output));
@@ -422,20 +506,18 @@ function invalidManifest<T>(): ResourceResult<T> {
 }
 
 function packageLogicalPath(family: BestdoriAssetFamily, nativeId: string): string {
+  if (!/^[A-Za-z0-9._-]+$/.test(nativeId)) return `invalid/${nativeId}`;
   if (family === "sound-common") return "sound/common";
-  return family === "tapseskin"
-    ? `sound/tapseskin/${nativeId}`
-    : `ingameskin/${family}/${nativeId}`;
+  if (family === "tapseskin") return `sound/tapseskin/${nativeId}`;
+  if (family === "bgm") return `sound/${nativeId}`;
+  if (family === "musicjacket") return `musicjacket/${nativeId}`;
+  if (family === "movie-mv") return `movie/mv/${nativeId}`;
+  return `ingameskin/${family}/${nativeId}`;
 }
 
-function mediaLogicalPath(
-  purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
-  nativeId: string,
-): string {
-  if (purpose === "bgm") return `sound/${nativeId}`;
-  if (purpose === "cover") return `musicjacket/${nativeId}`;
-  if (purpose === "mv") return `movie/mv/${nativeId}`;
-  return `ingameskin/bgskin/${nativeId}`;
+function safeProviderLogicalPath(value: string): boolean {
+  return value.length > 0 && !value.startsWith("/") && !value.includes("\\") &&
+    value.normalize("NFC") === value && value.split("/").every((part) => /^[A-Za-z0-9._-]+$/.test(part) && part !== "." && part !== "..");
 }
 
 function encodeLogicalPath(value: string): string {

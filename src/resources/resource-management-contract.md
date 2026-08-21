@@ -20,7 +20,7 @@ Consumers do not branch on origin. Every selected resource enters a consumer thr
 
 ## Identity and no-version-lock rule
 
-A `ResourceId` is a stable source identity, not a content revision or game-version identity. Runtime IDs must not contain an application release, original-game release or `current-*` namespace. Network candidates are obtained from a live catalog or its last complete offline snapshot; hard-coded fallback candidate inventories are forbidden.
+A `ResourceId` is a stable source identity, not a content revision or game-version identity. Runtime IDs must not contain an application release, original-game release, `current-*` namespace or download URL. Bestdori IDs use the server plus original logical package/file path (`ingameskin`, `sound`, `musicjacket`, `movie/mv`). Network candidates are obtained from live `_info` plus the complete song master or their last complete offline snapshot; hard-coded fallback candidate inventories are forbidden.
 
 SHA-256 and byte length are **observed integrity** generated after builtin packaging, network download or user import. They detect incomplete or locally corrupted bytes. They are not compiled network allowlists. If a provider changes bytes under the same native ID, a complete new transaction becomes the current record and future snapshots may select it. Existing snapshots retain their already acquired blobs until release.
 

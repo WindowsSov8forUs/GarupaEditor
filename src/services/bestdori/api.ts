@@ -6,7 +6,18 @@ import {
 
 const BESTDORI_ROOT = "https://bestdori.com";
 export type BestdoriAssetServer = "jp" | "en" | "tw" | "cn" | "kr";
-export type BestdoriAssetFamily = "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapseskin" | "sound-common";
+export type BestdoriAssetFamily =
+  | "noteskin"
+  | "fieldskin"
+  | "bgskin"
+  | "judgeskin"
+  | "tapeffect"
+  | "stageskin"
+  | "tapseskin"
+  | "sound-common"
+  | "bgm"
+  | "musicjacket"
+  | "movie-mv";
 
 export const BESTDORI_ASSET_SERVERS: readonly BestdoriAssetServer[] = ["jp", "en", "tw", "cn", "kr"];
 export const DEFAULT_BESTDORI_ASSET_SERVER: BestdoriAssetServer = "jp";
@@ -32,11 +43,21 @@ export type BestdoriPerServerValue<T> = [T | null, T | null, T | null, T | null,
 export type BestdoriSongServerIndex = 0 | 1 | 2 | 3 | 4;
 export type BestdoriSongServerName = "jp" | "en" | "tw" | "cn" | "kr";
 
+export interface BestdoriSongMovieResource {
+  logicalPath: string;
+  url: string;
+  title: string | null;
+}
+
 export interface BestdoriSongResourceUrls {
   server: BestdoriSongServerName;
   audioUrl: string;
+  audioLogicalPath: string;
   jacketUrl: string;
+  jacketLogicalPath: string;
   mvUrl: string | null;
+  mvLogicalPath: string | null;
+  movies: readonly BestdoriSongMovieResource[];
 }
 
 export interface BestdoriBandsAll1Band {
@@ -602,6 +623,15 @@ function resolveBestdoriSongServerIndex(songInfo: BestdoriSongInfo): BestdoriSon
   throw new Error("unable to resolve song server from song info");
 }
 
+function normalizeBestdoriAssetSegment(value: unknown, label: string): string {
+  if (typeof value !== "string") throw new Error(`${label} is unavailable`);
+  const normalized = value.trim();
+  if (!/^[A-Za-z0-9._-]+$/.test(normalized) || normalized === "." || normalized === "..") {
+    throw new Error(`${label} is not a safe provider-native asset segment`);
+  }
+  return normalized;
+}
+
 function formatBestdoriSongId(songId: number): string {
   return String(songId).padStart(3, "0");
 }
@@ -678,7 +708,7 @@ function resolveBestdoriSongDifficultyLevel(
 
 function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
   const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const keys = Object.keys(videos);
+  const keys = Object.keys(videos).sort();
   if (keys.length === 0) {
     return 0;
   }
@@ -1247,35 +1277,55 @@ export function resolveBestdoriSongServerName(songInfo: BestdoriSongInfo): Bestd
   return BESTDORI_SONG_SERVER_NAME_MAP[resolveBestdoriSongServerIndex(songInfo)];
 }
 
-export function buildBestdoriSongAudioUrl(songId: number, songInfo: BestdoriSongInfo): string {
-  const normalizedSongId = normalizeBestdoriSongId(songId);
+export function buildBestdoriSongAudioLogicalPath(songInfo: BestdoriSongInfo): string {
+  const bgmId = normalizeBestdoriAssetSegment(songInfo.bgmId, "song bgmId");
+  return `sound/${bgmId}/${bgmId}.mp3`;
+}
+
+export function buildBestdoriSongAudioUrl(_songId: number, songInfo: BestdoriSongInfo): string {
   const server = resolveBestdoriSongServerName(songInfo);
-  const idPadded = formatBestdoriSongId(normalizedSongId);
-  return `${BESTDORI_ASSETS_ROOT}/${server}/sound/bgm${idPadded}_rip/bgm${idPadded}.mp3`;
+  const logicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
+  const [sound, bgmId, file] = logicalPath.split("/") as [string, string, string];
+  return `${BESTDORI_ASSETS_ROOT}/${server}/${sound}/${bgmId}_rip/${file}`;
+}
+
+export function buildBestdoriSongJacketLogicalPath(songId: number, songInfo: BestdoriSongInfo): string {
+  const normalizedSongId = normalizeBestdoriSongId(songId);
+  const jacketImage = normalizeBestdoriAssetSegment(resolveBestdoriSongJacketImageName(songInfo), "song jacket image");
+  const jacketFolder = `musicjacket${resolveBestdoriSongJacketFolderIndex(normalizedSongId)}`;
+  return `musicjacket/${jacketFolder}/assets-star-forassetbundle-startapp-musicjacket-${jacketFolder}-${jacketImage}-jacket.png`;
 }
 
 export function buildBestdoriSongJacketUrl(songId: number, songInfo: BestdoriSongInfo): string {
-  const normalizedSongId = normalizeBestdoriSongId(songId);
   const server = resolveBestdoriSongServerName(songInfo);
-  const jacketImage = resolveBestdoriSongJacketImageName(songInfo);
-  const jacketFolderIndex = resolveBestdoriSongJacketFolderIndex(normalizedSongId);
-  return `${BESTDORI_ASSETS_ROOT}/${server}/musicjacket/musicjacket${jacketFolderIndex}_rip/assets-star-forassetbundle-startapp-musicjacket-musicjacket${jacketFolderIndex}-${jacketImage}-jacket.png`;
+  const logicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
+  const [root, folder, file] = logicalPath.split("/") as [string, string, string];
+  return `${BESTDORI_ASSETS_ROOT}/${server}/${root}/${folder}_rip/${file}`;
+}
+
+export function buildBestdoriSongMovieResources(songInfo: BestdoriSongInfo): readonly BestdoriSongMovieResource[] {
+  const videos = resolveBestdoriSongMusicVideos(songInfo);
+  const server = resolveBestdoriSongServerName(songInfo);
+  const resources: BestdoriSongMovieResource[] = [];
+  for (const key of Object.keys(videos).sort()) {
+    const target = videos[key];
+    if (!target || typeof target.assetBundleName !== "string" || target.assetBundleName.trim().length === 0) continue;
+    const packageName = normalizeBestdoriAssetSegment(key.endsWith("_hq") ? key : `${key}_hq`, "song movie package");
+    const asset = normalizeBestdoriAssetSegment(target.assetBundleName.trim(), "song movie asset");
+    const fileName = asset.endsWith("_hq") ? `${asset}.mp4` : `${asset}_hq.mp4`;
+    const logicalPath = `movie/mv/${packageName}/${fileName}`;
+    resources.push(Object.freeze({
+      logicalPath,
+      url: `${BESTDORI_ASSETS_ROOT}/${server}/movie/mv/${packageName}_rip/${fileName}`,
+      title: resolveFirstNonEmptyPerServerValue(target.title),
+    }));
+  }
+  return Object.freeze(resources);
 }
 
 export function buildBestdoriSongMvUrl(songInfo: BestdoriSongInfo): string | null {
-  const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const keys = Object.keys(videos);
-  if (keys.length === 0) {
-    return null;
-  }
-  const musicVideo = keys[keys.length - 1];
-  const target = videos[musicVideo];
-  if (!target || typeof target.assetBundleName !== "string" || target.assetBundleName.trim().length === 0) {
-    return null;
-  }
-  const server = resolveBestdoriSongServerName(songInfo);
-  const assetBundleName = target.assetBundleName.trim();
-  return `${BESTDORI_ASSETS_ROOT}/${server}/movie/mv/${musicVideo}_hq_rip/${assetBundleName}_hq.mp4`;
+  const movies = buildBestdoriSongMovieResources(songInfo);
+  return movies.length === 0 ? null : movies[movies.length - 1]!.url;
 }
 
 export async function fetchBestdoriSongResourceUrls(
@@ -1285,13 +1335,20 @@ export async function fetchBestdoriSongResourceUrls(
   const songInfo = options?.songInfo ?? (await fetchBestdoriSongInfo(songId));
   const server = resolveBestdoriSongServerName(songInfo);
   const audioUrl = buildBestdoriSongAudioUrl(songId, songInfo);
+  const audioLogicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
   const jacketUrl = buildBestdoriSongJacketUrl(songId, songInfo);
-  const mvUrl = buildBestdoriSongMvUrl(songInfo);
+  const jacketLogicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
+  const movies = buildBestdoriSongMovieResources(songInfo);
+  const selectedMovie = movies.length === 0 ? null : movies[movies.length - 1]!;
   return {
     server,
     audioUrl,
+    audioLogicalPath,
     jacketUrl,
-    mvUrl,
+    jacketLogicalPath,
+    mvUrl: selectedMovie?.url ?? null,
+    mvLogicalPath: selectedMovie?.logicalPath ?? null,
+    movies,
   };
 }
 

@@ -5,7 +5,7 @@
 ## Source classes
 
 - `builtin`: the current 22 application files plus the separately registered minimal Simulator common pack, imported only by builtin catalog owners and verified against generated manifests.
-- `network`: resources discovered from the live Bestdori catalog or its last complete offline snapshot. Native IDs are open-ended; downloaded bytes receive observed length/SHA only after acquisition.
+- `network`: resources discovered from the live Bestdori `_info`, complete song master and their last complete offline snapshot. The catalog covers open-ended Note/Field/BG/Judge/TapEffect/Stage Skin packages, TapSE/common sound, BGM packages/files, music-jacket packages/files and every discoverable `movie/mv` package. Stage packages are catalogued even though current Simulator consumption remains excluded. Downloaded bytes receive observed length/SHA only after acquisition.
 - `user`: locally uploaded BGM, cover, MV or stage backdrop. Skin/SE/package upload is not exposed.
 
 Consumers receive `ResourceConsumerLease` and may only decide how to decode/use files. They do not fetch, choose a source, inspect app-data paths, persist bytes or select fallback content.
@@ -14,7 +14,7 @@ Consumers receive `ResourceConsumerLease` and may only decide how to decode/use 
 
 The Tauri backend uses storage schema 2 under `app_data/resources/`: content-addressed blobs, immutable record revisions, catalog snapshots, cross-window snapshots and a `library/` projection organized by original logical Bundle names. `library/` is auditable product indexing, not the byte authority and not an original Android-cache clone. Projection files are hard-linked when possible or copied and immediately reverified. Chart sessions currently persist `ResourceRef` values in `cache/session/chart-resources/chart-resources.v3.json`; the Stage 9 migration upgrades that cache separately.
 
-A SHA-256 value is an observation of already acquired bytes, never a compiled remote allowlist. Updating content under the same provider-native ID creates a new immutable record revision and atomically advances `current.json`; existing snapshots retain their previous revision and blobs until final lease release.
+A SHA-256 value is an observation of already acquired bytes, never a compiled remote allowlist. Network IDs use `bestdori/<server>/<original-logical-path>`; single official media append their provider-native file path, and never encode the download URL. Updating a URL or bytes under the same logical identity creates a new immutable record revision and atomically advances `current.json`; existing snapshots retain their previous revision and blobs until final lease release.
 
 ## Verification
 

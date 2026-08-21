@@ -12,11 +12,21 @@ export async function runDynamicCatalogTests(): Promise<void> {
           fieldskin: {},
           bgskin: {},
           judgeskin: {},
+          tapeffect: { skin999: {} },
+          stageskin: { normal: {} },
         },
-        sound: { tapseskin: {} },
+        sound: { tapseskin: {}, common: 1, bgm999: 4, bgm: { ignored: 1 } },
+        musicjacket: { musicjacket1000: 3 },
+        movie: { mv: { music_video_999_hq: 4 } },
       } : { ingameskin: {}, sound: {} });
     }
     if (url.includes("/api/skin/")) return jsonResponse({});
+    if (url.endsWith("/api/songs/all.8.json")) return jsonResponse({
+      "999": {
+        jacketImage: ["future_song"],
+        musicTitle: ["Future Song", null, null, null, null],
+      },
+    });
     if (url.endsWith("/skin999.json")) return jsonResponse(["atlas.bin"]);
     if (url.endsWith("/skin999sample.json")) return jsonResponse(["sample.bundle"]);
     if (url.endsWith("/skin999_rip/atlas.bin")) {
@@ -38,8 +48,16 @@ export async function runDynamicCatalogTests(): Promise<void> {
     const catalog = await provider.refresh(null);
     equal(catalog.status, "accepted");
     if (catalog.status !== "accepted") return;
-    const future = catalog.value.resources.find((resource) => resource.source.nativeId === "skin999");
-    equal(future?.ref.id, "bestdori/jp/noteskin/skin999");
+    const future = catalog.value.resources.find((resource) => resource.source.family === "noteskin" && resource.source.nativeId === "skin999");
+    equal(future?.ref.id, "bestdori/jp/ingameskin/noteskin/skin999");
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/ingameskin/tapeffect/skin999"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/ingameskin/stageskin/normal"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/sound/common"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/sound/bgm999"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/musicjacket/musicjacket1000"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/movie/mv/music_video_999_hq"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/sound/bgm999/bgm999.mp3"), true);
+    equal(catalog.value.resources.some((resource) => resource.ref.id.includes("-future_song-jacket.png")), true);
     if (future === undefined) return;
     const installed = await provider.install(future);
     equal(installed.status, "accepted");

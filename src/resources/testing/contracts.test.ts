@@ -11,7 +11,7 @@ import {
 } from "../selections";
 
 export function runResourceContractTests(): void {
-  const dynamic = parseResourceId("bestdori/jp/noteskin/skin999");
+  const dynamic = parseResourceId("bestdori/jp/ingameskin/noteskin/skin999");
   equal(dynamic.status, "accepted");
   equal(parseResourceId("bestdori//noteskin/skin00").status, "rejected");
   equal(parseResourceId("simulator-static/current-10.1.4/x").status, "rejected");
