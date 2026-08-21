@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "status": "application-builtin-simulator-common-portable-inventory",
+  "sourceEvidenceBoundary": "Copied production bytes; runtime never reads Reverse or testing fixtures. SHA records shipped builtin payload integrity only.",
+  "entries": [
+    {
+      "path": "game/atlas/bms/ui/iconcombonumber/combo-number.png",
+      "byteLength": 137053,
+      "sha256": "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png",
+      "byteLength": 464153,
+      "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/rhythm-game-additive.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/rhythmgameui/rhythm-game-ui.png",
+      "byteLength": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-1.png",
+      "byteLength": 14137,
+      "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_1.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-2.png",
+      "byteLength": 11402,
+      "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_2.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-3.png",
+      "byteLength": 7630,
+      "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_3.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-4.png",
+      "byteLength": 5535,
+      "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/ui-additive-effect/ui-additive-effect.png",
+      "byteLength": 20188,
+      "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png"
+    },
+    {
+      "path": "game/atlas/bms/ui/uicommon/ui-common.png",
+      "byteLength": 43935,
+      "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png"
+    },
+    {
+      "path": "game/fonts/score/score/score-font.png",
+      "byteLength": 48359,
+      "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png"
+    },
+    {
+      "path": "game/fonts/sgm/rank-label-font.ttf",
+      "byteLength": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf"
+    },
+    {
+      "path": "game/portable/profiles/ordinary-visible/profile.json",
+      "byteLength": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D",
+      "sourceReverseCommit": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json"
+    },
+    {
+      "path": "game/prefabs/bms/information/startup-line-star.png",
+      "byteLength": 10967,
+      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png",
+      "byteLength": 2002,
+      "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png",
+      "byteLength": 5658,
+      "sha256": "2F2BBA614FA19EA9D013D880687AF8F4EFC420A86B45E69412F41331671C2A4E",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png",
+      "byteLength": 908,
+      "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json",
+      "byteLength": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json"
+    }
+  ]
+}

@@ -1,0 +1,1170 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-ordinary-visible-rendering-portable-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "evidenceIds": [
+    "OVR-E01",
+    "OVR-E02",
+    "OVR-E03",
+    "OVR-E04",
+    "OVR-E05",
+    "OVR-E06",
+    "OVR-E07",
+    "OVR-E08"
+  ],
+  "noteAnimations": {
+    "iconOwnerKey": "note_flick_top",
+    "directionalSpriteKeys": {
+      "up": "note_flick_top",
+      "left": "note_flick_top_l",
+      "right": "note_flick_top_r"
+    },
+    "longFlashSpritePrefix": "note_long_flash_",
+    "clips": [
+      {
+        "clipId": "note-flick-up",
+        "owner": "note-icon",
+        "durationSeconds": 0.3333333432674408,
+        "loop": true,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "path_hash:1704208859.m_LocalPosition.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "path_hash:1704208859.m_LocalPosition.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  1.0728836059570312e-06,
+                  1.7999998331069946,
+                  0.699999988079071
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.2999999523162842
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "path_hash:1704208859.m_LocalPosition.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 4,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 5,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+            "storage": "constant",
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "clipId": "note-flick-left",
+        "owner": "note-icon",
+        "durationSeconds": 0.3333333432674408,
+        "loop": true,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "path_hash:1704208859.m_LocalPosition.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  -1.0728836059570312e-06,
+                  -2.0999996662139893,
+                  -1.600000023841858
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  -2.299999952316284
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "path_hash:1704208859.m_LocalPosition.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "path_hash:1704208859.m_LocalPosition.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 4,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 5,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+            "storage": "constant",
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "clipId": "note-flick-right",
+        "owner": "note-icon",
+        "durationSeconds": 0.3333333432674408,
+        "loop": true,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "path_hash:1704208859.m_LocalPosition.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  1.0728836059570312e-06,
+                  2.0999996662139893,
+                  1.600000023841858
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.299999952316284
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "path_hash:1704208859.m_LocalPosition.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "path_hash:1704208859.m_LocalPosition.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "time": 0.3333333432674408,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 4,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+            "storage": "constant",
+            "value": 0.0
+          },
+          {
+            "index": 5,
+            "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+            "storage": "constant",
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "clipId": "note-long-flash",
+        "owner": "long-flash-icon",
+        "durationSeconds": 0.8333333134651184,
+        "loop": true,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "path_hash:1735311026.attribute_hash:2526845255",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -5.529601097106934,
+                  2.303999900817871,
+                  0.9600000977516174,
+                  0.20000000298023224
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  5.529601097106934,
+                  -4.6080002784729,
+                  0.0,
+                  0.6000000238418579
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.20000000298023224
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "path_hash:1735311026.attribute_hash:4215373228",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -5.529601097106934,
+                  2.303999900817871,
+                  0.9600000977516174,
+                  0.20000000298023224
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  5.529601097106934,
+                  -4.6080002784729,
+                  0.0,
+                  0.6000000238418579
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.20000000298023224
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "path_hash:1735311026.attribute_hash:2334886179",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -5.529601097106934,
+                  2.303999900817871,
+                  0.9600000977516174,
+                  0.20000000298023224
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  5.529601097106934,
+                  -4.6080002784729,
+                  0.0,
+                  0.6000000238418579
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.20000000298023224
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "path_hash:1735311026.attribute_hash:304273561",
+            "storage": "constant",
+            "value": 1.0
+          }
+        ]
+      }
+    ],
+    "pausePolicy": "owner-clock-does-not-advance",
+    "resetPolicy": "child-first-reset-initial-channels-and-clock"
+  },
+  "combo": {
+    "rootPosition": [
+      434.70001220703125,
+      82.80000305175781,
+      0.0
+    ],
+    "maxDigits": 4,
+    "order": "least-significant-first",
+    "alignment": "center",
+    "padding": -12.0,
+    "digitSize": [
+      82,
+      116
+    ],
+    "digitStep": 70.0,
+    "numberLocalPosition": [
+      22.0,
+      0.0,
+      0.0
+    ],
+    "unit": {
+      "normal": "combo",
+      "allPerfect": "combo_AP",
+      "localPosition": [
+        -6.0,
+        -72.0,
+        0.0
+      ],
+      "size": [
+        150,
+        42
+      ]
+    },
+    "clips": [
+      {
+        "clipId": "combo-scale",
+        "owner": "combo-root",
+        "durationSeconds": 1.0,
+        "loop": false,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "m_LocalScale.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -1036.800048828125,
+                  129.60000610351562,
+                  0.0,
+                  0.800000011920929
+                ]
+              },
+              {
+                "time": 0.0833333358168602,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -1.200000286102295,
+                  1.100000023841858
+                ]
+              },
+              {
+                "time": 0.1666666716337204,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.5833333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 1.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "m_LocalScale.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -1036.800048828125,
+                  129.60000610351562,
+                  0.0,
+                  0.800000011920929
+                ]
+              },
+              {
+                "time": 0.0833333358168602,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -1.200000286102295,
+                  1.100000023841858
+                ]
+              },
+              {
+                "time": 0.1666666716337204,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.5833333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 1.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "m_LocalScale.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.0833333358168602,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.1666666716337204,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.5833333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 1.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "clipId": "combo-all-perfect",
+        "owner": "combo-ap-sprites",
+        "durationSeconds": 0.8333333134651184,
+        "loop": true,
+        "curves": [
+          {
+            "index": 0,
+            "channel": "combo_number/combo_unit.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  13.82400131225586,
+                  -8.640000343322754,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  -13.82400131225586,
+                  8.640000343322754,
+                  0.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "combo_number/combo_num_label/num.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  13.82400131225586,
+                  -8.640000343322754,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  -13.82400131225586,
+                  8.640000343322754,
+                  0.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "combo_number/combo_num_label/num (1).mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  13.82400131225586,
+                  -8.640000343322754,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  -13.82400131225586,
+                  8.640000343322754,
+                  0.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "combo_number/combo_num_label/num (2).mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  13.82400131225586,
+                  -8.640000343322754,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  -13.82400131225586,
+                  8.640000343322754,
+                  0.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "channel": "combo_number/combo_num_label/num (3).mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  13.82400131225586,
+                  -8.640000343322754,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.4166666567325592,
+                "coefficients": [
+                  -13.82400131225586,
+                  8.640000343322754,
+                  0.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 5,
+            "channel": "combo_number/combo_unit.mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 6,
+            "channel": "combo_number/combo_unit.mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 7,
+            "channel": "combo_number/combo_unit.mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 8,
+            "channel": "combo_number/combo_num_label/num.mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 9,
+            "channel": "combo_number/combo_num_label/num.mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 10,
+            "channel": "combo_number/combo_num_label/num.mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 11,
+            "channel": "combo_number/combo_num_label/num (1).mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 12,
+            "channel": "combo_number/combo_num_label/num (1).mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 13,
+            "channel": "combo_number/combo_num_label/num (1).mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 14,
+            "channel": "combo_number/combo_num_label/num (2).mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 15,
+            "channel": "combo_number/combo_num_label/num (2).mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 16,
+            "channel": "combo_number/combo_num_label/num (2).mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 17,
+            "channel": "combo_number/combo_num_label/num (3).mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 18,
+            "channel": "combo_number/combo_num_label/num (3).mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 19,
+            "channel": "combo_number/combo_num_label/num (3).mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          }
+        ]
+      }
+    ]
+  },
+  "addScore": {
+    "poolSize": 4,
+    "depthCycle": 8,
+    "selection": "round-robin-ready-owner",
+    "rootPosition": [
+      -411.0,
+      309.0,
+      0.0
+    ],
+    "scale": 0.6000000238418579,
+    "digits": {
+      "plus": "icon_number_plus",
+      "prefix": "icon_number_",
+      "size": [
+        47,
+        70
+      ],
+      "order": "least-significant-first",
+      "alignment": "center"
+    },
+    "start": {
+      "alpha": 0.6000000238418579,
+      "localY": -50.0
+    },
+    "phaseSeconds": 0.14000000059604645,
+    "phases": [
+      "alpha=0.2+0.8*progress,y+=8",
+      "alpha=1,y+=1",
+      "alpha=1-progress,y+=1"
+    ]
+  },
+  "result": {
+    "rootPosition": [
+      0.0,
+      -160.0,
+      0.0
+    ],
+    "judgeSize": [
+      288,
+      80
+    ],
+    "timingSize": [
+      80,
+      26
+    ],
+    "timingLocalPosition": [
+      4.0,
+      -38.0,
+      0.0
+    ],
+    "routes": {
+      "auto": "judge_auto",
+      "miss": "judge_miss",
+      "bad": "judge_bad",
+      "good": "judge_good",
+      "great": "judge_great",
+      "perfect": "judge_perfect"
+    },
+    "timingRoutes": {
+      "none": null,
+      "fast": "judge_fast",
+      "slow": "judge_slow"
+    },
+    "visibleSeconds": 1.0,
+    "alpha": 1.0,
+    "fadeAllowed": false
+  },
+  "life": {
+    "rootPosition": [
+      411.0,
+      309.0,
+      0.0
+    ],
+    "primaryFormula": "min(currentLife/1000,1)",
+    "secondaryFormula": "max(currentLife/1000-1,0)",
+    "dangerThreshold": 0.20000000298023224,
+    "warningThreshold": 0.25,
+    "colorsF32Bits": {
+      "normal": [
+        "3EDCDCDD",
+        "3F800000",
+        "3ED2D2D3",
+        "3F800000"
+      ],
+      "danger": [
+        "3F800000",
+        "3F19999A",
+        "3F19999A",
+        "3F800000"
+      ],
+      "gameOverBase": [
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ]
+    },
+    "warning": {
+      "visible": "primary<=0.25",
+      "spriteEnabled": "visible-and-no-damage-guard",
+      "damageGuardReachable": false
+    },
+    "label": {
+      "fontLogicalAssetId": "hud/score/rank-label-font",
+      "position": [
+        307.0000915527344,
+        235.0,
+        0.0
+      ],
+      "size": 24,
+      "depth": 42,
+      "format": "current/max"
+    },
+    "sprites": {
+      "gauge_base": {
+        "key": "bg_health",
+        "position": [
+          186.0,
+          252.0,
+          0.0
+        ],
+        "size": [
+          266,
+          62
+        ],
+        "depth": 4
+      },
+      "primary": {
+        "key": "hp_meter",
+        "position": [
+          200.0,
+          265.0,
+          0.0
+        ],
+        "size": [
+          224,
+          26
+        ],
+        "depth": 5
+      },
+      "second": {
+        "key": "hp_meter",
+        "position": [
+          200.0,
+          265.0,
+          0.0
+        ],
+        "size": [
+          224,
+          26
+        ],
+        "depth": 36
+      },
+      "warning_outline": {
+        "key": "effect_health_caution_outline",
+        "position": [
+          187.0,
+          251.0,
+          0.0
+        ],
+        "size": [
+          287,
+          83
+        ],
+        "depth": 44
+      },
+      "warning_body": {
+        "key": "effect_health_caution_inside",
+        "position": [
+          198.0,
+          263.0,
+          0.0
+        ],
+        "size": [
+          228,
+          27
+        ],
+        "depth": 44
+      },
+      "game_over_background": {
+        "key": "bg_no_health",
+        "position": [
+          191.0,
+          169.0,
+          0.0
+        ],
+        "size": [
+          264,
+          70
+        ],
+        "depth": 0
+      }
+    },
+    "gameOverOrder": [
+      "update-primary",
+      "update-secondary",
+      "update-label",
+      "update-color",
+      "show-bg-no-health",
+      "update-warning"
+    ]
+  },
+  "excluded": [
+    "character-skill-overlay",
+    "guard",
+    "never-die",
+    "character-heal",
+    "fever",
+    "multiplayer-hud"
+  ],
+  "habahiro": {
+    "commonHudAuthorized": true,
+    "commonNoteAnimationOnExternalAtlasAuthorized": false,
+    "directionalAlias": "portable-external-parser-disposition-only-not-original-sprite-identity",
+    "missingAnimationDisposition": "evidence-required"
+  },
+  "reserveTotalScore": {
+    "accessorCallersInCurrentManagedText": 0,
+    "portableConsumer": null,
+    "disposition": "remove-unconsumed-portable-field-not-original-absence-claim"
+  },
+  "unknownFields": [],
+  "blockingFindings": []
+}

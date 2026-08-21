@@ -27,9 +27,12 @@ for (const path of runtimeFiles) {
 
 const repositoryRoot = resolve(root, "..", "..");
 const sourceRoot = join(repositoryRoot, "src");
-const builtinCatalogPath = join(root, "builtin", "builtinResourceCatalog.ts");
+const builtinCatalogPaths = new Set([
+  join(root, "builtin", "builtinResourceCatalog.ts"),
+  join(root, "builtin", "simulatorBuiltinResourceCatalog.ts"),
+]);
 for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
-  if (path === builtinCatalogPath) continue;
+  if (builtinCatalogPaths.has(path)) continue;
   const source = readFileSync(path, "utf8");
   if (/from\s+["'][^"']*assets\//.test(source)) {
     throw new Error(`${relative(sourceRoot, path)} imports a physical builtin outside the application catalog`);
@@ -76,6 +79,25 @@ for (const path of actualAssets) {
   if (!entry || entry.byteLength !== bytes.length || entry.sha256 !== digest) {
     throw new Error(`builtin resource manifest mismatch: ${logicalPath}`);
   }
+}
+const simulatorManifest = JSON.parse(readFileSync(join(root, "builtin", "simulatorBuiltinResourceManifest.json"), "utf8"));
+const gameAssets = actualAssets.filter((path) => path.startsWith(join(assetsRoot, "game")));
+if (simulatorManifest.schemaVersion !== 1 || simulatorManifest.entries.length !== gameAssets.length) {
+  throw new Error("Simulator builtin provenance manifest does not cover the exact game asset inventory");
+}
+const simulatorByPath = new Map(simulatorManifest.entries.map((entry) => [entry.path, entry]));
+const simulatorBuiltinCatalogSource = readFileSync(join(root, "builtin", "simulatorBuiltinResourceCatalog.ts"), "utf8");
+for (const path of gameAssets) {
+  const logicalPath = relative(assetsRoot, path).replaceAll("\\", "/");
+  const bytes = readFileSync(path);
+  const digest = createHash("sha256").update(bytes).digest("hex").toUpperCase();
+  const entry = simulatorByPath.get(logicalPath);
+  if (
+    !entry || entry.byteLength !== bytes.length || entry.sha256 !== digest ||
+    !/^[0-9a-f]{40}$/.test(entry.sourceReverseCommit) ||
+    typeof entry.sourcePath !== "string" || !entry.sourcePath.startsWith("artifacts/investigations/") ||
+    !simulatorBuiltinCatalogSource.includes(entry.path)
+  ) throw new Error(`Simulator builtin provenance/catalog mismatch: ${logicalPath}`);
 }
 
 console.log(`resource boundaries: ok (${runtimeFiles.length} runtime files, ${actualAssets.length} builtins)`);

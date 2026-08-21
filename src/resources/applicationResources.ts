@@ -11,6 +11,7 @@ import {
 import { MemoryApplicationResourceBackend } from "./memoryResourceBackend";
 import { BestdoriApplicationResourceProvider } from "./providers/bestdoriCatalogProvider";
 import { TauriApplicationResourceBackend } from "./providers/tauriResourceBackend";
+import { registerSimulatorBuiltinResources } from "./builtin/simulatorBuiltinResourceCatalog";
 
 let bootstrapPromise: Promise<ResourceResult<ApplicationResourceManager>> | null = null;
 
@@ -33,6 +34,8 @@ async function bootstrap(): Promise<ResourceResult<ApplicationResourceManager>> 
   if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
   if (builtins.status === "rejected") return builtins;
+  const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);
+  if (simulatorBuiltins.status === "rejected") return simulatorBuiltins;
   const builtinLease = await manager.prepareBuiltinDocumentLease(listApplicationBuiltinResourceSlots());
   if (builtinLease.status === "rejected") return builtinLease;
   installBuiltinDocumentResources(manager);
