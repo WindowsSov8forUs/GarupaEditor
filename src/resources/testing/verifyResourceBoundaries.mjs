@@ -60,6 +60,20 @@ const skinLoaderSource = readFileSync(join(sourceRoot, "skinLoader.ts"), "utf8")
 if (/from\s+["']\.\/data\/.*(?:type-rip|judge-rip)/.test(skinLoaderSource)) {
   throw new Error("skinLoader imports a fixed network candidate map");
 }
+const simulatorWindowSource = readFileSync(join(sourceRoot, "app", "BuiltInSimulatorWindow.tsx"), "utf8");
+const browserPlatformSource = readFileSync(join(sourceRoot, "app", "simulator", "browserSimulatorPlatform.ts"), "utf8");
+const simulatorTransportSource = readFileSync(join(sourceRoot, "app", "simulator", "transportContracts.ts"), "utf8");
+for (const marker of [
+  "installProductionAutonomousSimulatorPlatform", "launchSimulatorModule", "buildSimulatorLaunchRequest",
+  "AudioContext", "mediaSnapshotId", "createSimulatorResourceCapability",
+]) if (!simulatorWindowSource.includes(marker)) throw new Error(`Stage 9 desktop window marker missing: ${marker}`);
+for (const marker of [
+  "canvas.width", "bottom-left", "PointerEvent", "ManualTouchPhase", "requestAnimationFrame",
+  "safeAreaPolicy", "resources:",
+]) if (!(browserPlatformSource + simulatorWindowSource).includes(marker)) throw new Error(`Stage 9 browser platform marker missing: ${marker}`);
+for (const forbidden of ["SimulatorAppController", "SimulatorLaunchPayload", "DataURL", "sourceUrl", "sha256", "provider"] ) {
+  if ((simulatorWindowSource + simulatorTransportSource).includes(forbidden)) throw new Error(`Stage 9 transport/window contains forbidden legacy/resource field: ${forbidden}`);
+}
 const chartCoreSource = readFileSync(join(sourceRoot, "chartCore.ts"), "utf8");
 for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {
   if (chartCoreSource.includes(token)) throw new Error(`ChartMetadata still owns legacy URL field ${token}`);

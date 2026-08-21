@@ -35,7 +35,7 @@ if (!/export interface SimulatorChartDataPackage \{\s*readonly chart: GarupaChar
 
 const publicCapabilities = read("public/capabilities.ts");
 if (!/isTotalRevalidationOpen\(\): boolean \{\s*return false;\s*\}/m.test(publicCapabilities) ||
-    !publicCapabilities.includes('mainProgramIntegration: "unauthorized-stage-9"')) {
+    !publicCapabilities.includes('mainProgramIntegration: "authorized-in-progress"')) {
   throw new Error("aggregate portable gate or Stage 9 boundary changed");
 }
 

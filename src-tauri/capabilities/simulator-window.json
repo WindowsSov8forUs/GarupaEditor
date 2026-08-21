@@ -4,6 +4,9 @@
   "description": "Capability for simulator windows",
   "windows": ["simulator-*"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-is-resizable",
+    "core:window:allow-set-resizable"
   ]
 }

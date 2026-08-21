@@ -162,6 +162,8 @@ export type SimulatorCapabilityGateStatus =
   | "open-device-exact"
   | "open-objective-environment-blocked"
   | "closed-original-unreachable"
+  | "authorized-in-progress"
+  | "closed-product-integration"
   | "unauthorized-stage-9";
 
 export interface SimulatorModuleCapabilitySummary {
@@ -193,7 +195,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly originalSkinSettings: "closed-static-portable";
   readonly originalLiveSettings: "closed-portable";
-  readonly mainProgramIntegration: "unauthorized-stage-9";
+  readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
   readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";

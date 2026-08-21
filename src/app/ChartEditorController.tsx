@@ -151,8 +151,10 @@ import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
 import { buildSimulatorLaunchDescriptor } from "./simulator/buildSimulatorLaunchDescriptor";
 import {
+  SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
+  type SimulatorWindowClosedPayload,
   type SimulatorWindowReadyPayload,
 } from "./simulator/transportContracts";
 import {
@@ -5760,6 +5762,7 @@ function ChartEditorController() {
 
   const openSimulatorWindow = useCallback(async () => {
     let readyUnlisten: UnlistenFn | null = null;
+    let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
     let pendingLease: ResourceConsumerLease | null = null;
     const clearReadySubscription = () => {
@@ -5770,6 +5773,12 @@ function ChartEditorController() {
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
         timeoutId = null;
+      }
+    };
+    const clearClosedSubscription = () => {
+      if (closedUnlisten) {
+        void closedUnlisten();
+        closedUnlisten = null;
       }
     };
     const releaseHandoff = (requestId: string) => {
@@ -5817,6 +5826,17 @@ function ChartEditorController() {
         return;
       }
 
+      closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
+        if (event.payload?.requestId !== requestId) return;
+        releaseHandoff(requestId);
+        if (event.payload.status === "rejected") {
+          setStatusMessage(`Simulator失败：${event.payload.capability ?? "未知错误"}`);
+        }
+        if (closedUnlisten) {
+          void closedUnlisten();
+          closedUnlisten = null;
+        }
+      });
       readyUnlisten = await listen<SimulatorWindowReadyPayload>(
         SIMULATOR_WINDOW_READY_EVENT,
         async (event) => {
@@ -5844,23 +5864,27 @@ function ChartEditorController() {
       });
       simulatorWindow.once("tauri://error", (event) => {
         clearReadySubscription();
+        clearClosedSubscription();
         releaseHandoff(requestId);
         const message = event?.payload ? JSON.stringify(event.payload) : "未知错误";
         setStatusMessage(`播放器窗口创建失败：${message}`);
       });
       simulatorWindow.once("tauri://destroyed", () => {
         clearReadySubscription();
+        clearClosedSubscription();
         releaseHandoff(requestId);
       });
       timeoutId = window.setTimeout(() => {
         if (!readyUnlisten) return;
         clearReadySubscription();
+        clearClosedSubscription();
         releaseHandoff(requestId);
         setStatusMessage("播放器窗口握手超时，请重试。");
       }, 15000);
       setStatusMessage("播放器窗口已打开。");
     } catch (error) {
       clearReadySubscription();
+      clearClosedSubscription();
       if (pendingLease !== null) void pendingLease.release();
       const message = error instanceof Error ? error.message : String(error);
       setStatusMessage(`播放器窗口启动失败：${message}`);

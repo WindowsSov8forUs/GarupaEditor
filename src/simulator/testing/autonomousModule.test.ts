@@ -429,7 +429,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.browserDecodeRaster, "closed-portable");
   assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded");
-  assert.equal(stepped.report.capabilities.mainProgramIntegration, "unauthorized-stage-9");
+  assert.equal(stepped.report.capabilities.mainProgramIntegration, "authorized-in-progress");
   assert.equal(disposals, 1);
 }
 
@@ -636,7 +636,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
     originalLiveSettings: "closed-portable",
-    mainProgramIntegration: "unauthorized-stage-9",
+    mainProgramIntegration: "authorized-in-progress",
     selectedRenderingGate: "open-evidence-required",
     selectedBackgroundGate: "closed-portable",
     selectedChartGate: "closed-portable",

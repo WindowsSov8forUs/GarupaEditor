@@ -48,7 +48,7 @@ const capabilities = read("public/capabilities.ts");
 for (const required of [
   'liveRehearsalFourModeMatrix: "closed-portable"',
   'rehearsalMoveTimeControls: "closed-portable"',
-  'mainProgramIntegration: "unauthorized-stage-9"',
+  'mainProgramIntegration: "authorized-in-progress"',
 ]) if (!capabilities.includes(required)) throw new Error(`mode capability missing: ${required}`);
 const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf8"));
 if (packageJson.scripts?.["simulator:test:live-rehearsal"] !==
