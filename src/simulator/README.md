@@ -64,11 +64,11 @@ src/simulator/
 ├─ host/        # engine host与whole-engine replay
 ├─ engine/      # chart、state、judgement、Note及command producers
 ├─ backends/    # Recording/Pixi/WebAudio/particle/resource adapters
-├─ resources/   # immutable shared store与selector
+├─ resources/   # 迁移中的semantic selector/decoder；生产字节权威已移交platform neutral resource capability
 └─ testing/     # 隔离测试与manifested fixture
 ```
 
-`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。Production不得读取testing fixture、Reverse工作树或本地忽略目录，不得隐式联网、选择默认资源、自动fallback、使用ambient random/wall clock或吞掉故障。缺少master、资源身份、长度/SHA、logical ID/exact key、typed state或证据时必须在最早可知点失败关闭。
+`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。Simulator整体不导入主程序`src/resources`；`platform/resourceContracts.ts`只接收logical requirement和source-blind lease，具体ResourceRef/Snapshot/provider由`src/app/simulator`适配。Production不得读取testing fixture、Reverse工作树或本地忽略目录，不得隐式联网、选择默认资源、自动fallback、使用ambient random/wall clock或吞掉故障。缺少master、资源身份、logical ID/exact key、typed state或证据时必须在最早可知点失败关闭；SHA只留在主程序完整性与测试oracle，不进入动态资源资格判断。
 
 ## Rendering验收分层
 

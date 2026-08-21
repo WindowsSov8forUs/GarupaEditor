@@ -96,6 +96,7 @@ import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
+import type { SimulatorResourceCapability } from "./resourceContracts";
 import {
   copyAndValidateInitialSimulatorSurface,
   validateUnchangedSimulatorSurface,
@@ -115,6 +116,7 @@ export interface SimulatorGraphicsSurface {
 }
 
 export interface AutonomousSimulatorPlatformCapabilities {
+  readonly resources: SimulatorResourceCapability;
   readonly staticResources: SharedStaticResourceStore;
   readonly audioContext: AudioContext;
   readonly graphics: SimulatorGraphicsSurface;
@@ -700,6 +702,7 @@ function validatePlatform(
 ): SimulatorAssemblyResult<void> {
   if (
     platform === null || typeof platform !== "object" ||
+    platform.resources == null || typeof platform.resources.acquire !== "function" ||
     platform.staticResources == null || typeof platform.staticResources.read !== "function" ||
     platform.audioContext == null || typeof platform.audioContext !== "object" ||
     platform.graphics == null || typeof platform.graphics.mount !== "function" ||
@@ -712,7 +715,7 @@ function validatePlatform(
     return rejected(
       "platform-unavailable",
       "simulator.composition.invalid-platform-capabilities",
-      "Production composition requires one neutral shared store, AudioContext, revisioned graphics surface reader, scheduler, input source and lifecycle/frame-rate sinks.",
+      "Production composition requires one application-owned neutral resource capability, the transitional shared store, AudioContext, revisioned graphics surface reader, scheduler, input source and lifecycle/frame-rate sinks.",
     );
   }
   return accepted(undefined);

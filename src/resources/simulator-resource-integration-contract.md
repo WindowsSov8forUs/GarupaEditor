@@ -29,7 +29,7 @@ A same-ID update commits a new immutable record revision. Existing snapshots con
 
 ## Consumer boundary
 
-Simulator production code must not import `src/resources`, React, Tauri or editor types. It requests neutral semantic requirements from an installed platform capability. The app adapter resolves those requirements, ensures records are available, creates one explicit immutable snapshot and exposes a neutral lease.
+Simulator production code must not import `src/resources`, React, Tauri or editor types. `src/simulator/platform/resourceContracts.ts` defines exact neutral semantic requirements and a source-blind lease. The app adapter requires an explicit main-program binding for every logical resource, ensures records are available, creates one operation-local immutable snapshot without mutating global selection, validates exact required files and exposes only logical file metadata/bytes.
 
 The Public business request remains exactly:
 

@@ -440,6 +440,16 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
   const platform = {
+    resources: {
+      acquire: async () => ({
+        status: "rejected" as const,
+        failure: {
+          code: "resource-unavailable" as const,
+          capability: "test.neutral-resource-not-yet-consumed",
+          boundary: "The transitional production-composition test still exercises the shared-store failure path.",
+        },
+      }),
+    },
     staticResources: {
       read: async () => {
         resourceReads += 1;
