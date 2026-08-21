@@ -342,12 +342,16 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   assert.notEqual(overlay!.fieldBindings, null);
   assert.match(overlay!.fieldBindings!.backgroundLineLogicalAssetId, /skin_april2021/);
   assert.match(overlay!.backgroundLogicalAssetId!, /skin_april2021/);
-  const audio = requireAccepted(prepareSkinAudioOverlay(
+  const audio = requireAccepted(await prepareSkinAudioOverlay(
     CURRENT_AUDIO_TEST_PROFILE,
     { read: async () => audioRejected("audio-resource-unavailable", "base", "base") },
     packs,
     recipe.tapSE.logicalResource!,
     recipe.directional.seLogicalResource,
+    {
+      async sha256() { throw new Error("static Skin audio does not request dynamic SHA preflight"); },
+      async inspect() { throw new Error("static Skin audio already carries exact container metadata"); },
+    },
   ));
   const perfect = audio.profile.resources.find((resource) => resource.cue === "perfect")!;
   const directional = audio.profile.resources.find((resource) => resource.cue === "directional_fl")!;

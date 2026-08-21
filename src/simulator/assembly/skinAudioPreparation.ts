@@ -1,5 +1,6 @@
 import type {
   AudioFixedSeResourceProfile,
+  AudioResourcePreflightAdapter,
   AudioResourceProfile,
   AudioResourceProfileSet,
   AudioResourceProvider,
@@ -13,13 +14,14 @@ export interface PreparedSkinAudioOverlay {
   readonly provider: AudioResourceProvider;
 }
 
-export function prepareSkinAudioOverlay(
+export async function prepareSkinAudioOverlay(
   baseProfile: AudioResourceProfileSet,
   baseProvider: AudioResourceProvider,
   packs: readonly PreparedSkinPortablePack[],
   tapSeLogicalResource: string,
   directionalSeLogicalResource: string,
-): SimulatorAssemblyResult<PreparedSkinAudioOverlay> {
+  preflight: AudioResourcePreflightAdapter,
+): Promise<SimulatorAssemblyResult<PreparedSkinAudioOverlay>> {
   if (packs.length === 0) return accepted(Object.freeze({ profile: baseProfile, provider: baseProvider }));
   const selectedPacks = packs.filter((pack) =>
     pack.logicalResource === tapSeLogicalResource || pack.logicalResource === directionalSeLogicalResource);
@@ -32,20 +34,31 @@ export function prepareSkinAudioOverlay(
     const portableAudio = pack.profile.portableAudio;
     if (!Array.isArray(portableAudio)) return invalid("simulator.skin.audio-profile-shape", "Selected Skin portableAudio must be one explicit array.");
     for (const item of portableAudio) {
-      if (!record(item) || typeof item.cue !== "string" || !record(item.container) ||
-        typeof item.sha256 !== "string" || typeof item.bytes !== "number" ||
-        typeof item.loop !== "boolean") {
-        return invalid("simulator.skin.audio-cue-shape", "Every selected Skin cue requires exact container, bytes, SHA and loop metadata.");
+      if (!record(item) || typeof item.cue !== "string" || typeof item.loop !== "boolean") {
+        return invalid("simulator.skin.audio-cue-shape", "Every selected Skin cue requires one exact cue identity and explicit loop state.");
       }
       const file = pack.files.find((candidate) =>
         candidate.mime === "audio/mpeg" && candidate.id === `cue:${item.cue}`);
-      if (file === undefined || file.sha256 !== item.sha256 || file.bytes.byteLength !== item.bytes) {
-        return invalid("simulator.skin.audio-cue-file", "Every selected Skin cue must bind its whole-pack-validated MP3 file.");
+      if (file === undefined) {
+        return invalid("simulator.skin.audio-cue-file", "Every selected Skin cue must bind its exact source-package MP3 file.");
       }
-      const sampleRate = integer(item.container.sample_rate);
-      const channels = integer(item.container.channels);
-      const durationSeconds = finiteNumber(item.container.duration ?? item.container.format_duration);
-      const sampleFrames = Math.round(durationSeconds * sampleRate);
+      const container = record(item.container) ? item.container : null;
+      const inspected = container === null ? await preflight.inspect(file.bytes) : null;
+      if (inspected !== null && inspected.status !== "accepted") {
+        return invalid(inspected.failure.capability, inspected.failure.boundary);
+      }
+      const sampleRate = container === null
+        ? inspected!.value.sampleRate
+        : integer(container.sample_rate);
+      const channels = container === null
+        ? inspected!.value.channels
+        : integer(container.channels);
+      const durationSeconds = container === null
+        ? inspected!.value.durationSeconds
+        : finiteNumber(container.duration ?? container.format_duration);
+      const sampleFrames = container === null
+        ? inspected!.value.sampleFrames
+        : Math.round(durationSeconds * sampleRate);
       if (![8000, 44100, 48000].includes(sampleRate) || (channels !== 1 && channels !== 2) ||
         durationSeconds <= 0 || sampleFrames <= 0) {
         return invalid("simulator.skin.audio-container", "Selected Skin MP3 metadata must map to supported exact sample rate/channels and positive frames.");

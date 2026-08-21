@@ -271,12 +271,13 @@ export async function assembleSimulatorResources(
     null,
   );
   if (audio.status === "rejected") return audio;
-  const skinAudio = prepareSkinAudioOverlay(
+  const skinAudio = await prepareSkinAudioOverlay(
     audio.value.profile,
     audio.value.provider,
     skinPortablePacks.value,
     selection.skin.resolved.tapSE.logicalResource!,
     selection.skin.resolved.directional.seLogicalResource,
+    targets.audio.preflight,
   );
   if (skinAudio.status === "rejected") return skinAudio;
   const particles = await prepareSharedParticleProvider(selection.particles, store);

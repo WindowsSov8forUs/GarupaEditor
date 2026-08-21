@@ -342,12 +342,16 @@ async function runSelectedSkinWebAudio(scenario: "default" | "limited3"): Promis
   if (storeResult.status !== "accepted") throw new Error(storeResult.failure.capability);
   const packs = await prepareSelectedSkinPortablePacks(selected.resources, storeResult.value);
   if (packs.status !== "accepted") throw new Error(packs.failure.capability);
-  const overlay = prepareSkinAudioOverlay(
+  const overlay = await prepareSkinAudioOverlay(
     CURRENT_AUDIO_TEST_PROFILE,
     provider,
     packs.value,
     recipeResult.value.tapSE.logicalResource!,
     recipeResult.value.directional.seLogicalResource,
+    {
+      async sha256() { throw new Error("static Skin audio does not request dynamic SHA preflight"); },
+      async inspect() { throw new Error("static Skin audio already carries exact container metadata"); },
+    },
   );
   if (overlay.status !== "accepted") throw new Error(overlay.failure.capability);
   const bySha = new Map(overlay.value.profile.resources.map((resource) => [resource.sha256, resource]));
