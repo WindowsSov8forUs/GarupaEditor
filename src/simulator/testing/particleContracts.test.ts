@@ -39,7 +39,8 @@ import {
   ImmutableLocalParticleResourceProvider,
   PortableParticleResourcePreflightAdapter,
 } from "../backends/resources/localParticleResourceProvider";
-import { prepareCurrentParticleResources } from "../backends/resources/particleResourcePreparation";
+import { prepareCurrentParticleResources } from "./legacyParticleResourcePreparation";
+import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
 import { GameNoteType } from "../engine/chart/types";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { NoteResultType } from "../engine/data/manualJudgement";
@@ -153,8 +154,9 @@ async function testResourcesAndPrepare() {
       : row.bytes,
   }));
   const corruptBackend = new RecordingSimulatorParticleBackend();
-  const corrupt = await corruptBackend.prepare("corrupt", localProvider(corruptRows), preflight);
-  assert.notEqual(corrupt.status, "accepted");
+  let corruptRejected = false;
+  try { await applicationLeaseParticleProviderForTesting(localProvider(corruptRows), preflight); } catch { corruptRejected = true; }
+  assert.equal(corruptRejected, true);
   assert.equal(corruptBackend.snapshot().state, "unprepared");
   assert.equal(corruptBackend.snapshot().resourceCount, 0);
   assert.equal(corruptBackend.snapshot().nextSequence, 0);
@@ -368,7 +370,7 @@ async function testPixiMapping(profile: any): Promise<void> {
     },
   };
   const renderer = new PixiParticleRendererBackend(decoder);
-  assert.equal((await renderer.prepare("pixi-particle", particleScene(), localProvider(), preflight)).status, "accepted");
+  assert.equal((await renderer.prepare("pixi-particle", particleScene(), await leasedProvider(), preflight)).status, "accepted");
   assert.equal(renderer.snapshot().resourceCount, 7);
   const backend = await readyDeterministic("pixi-particle");
   const frame = accepted(backend.preflightFrame({
@@ -858,14 +860,18 @@ function particleScene(): ParticlePixiSceneProfile {
 
 async function readyRecording(sessionId: string): Promise<RecordingSimulatorParticleBackend> {
   const backend = new RecordingSimulatorParticleBackend();
-  assert.equal((await backend.prepare(sessionId, localProvider(), preflight)).status, "accepted");
+  assert.equal((await backend.prepare(sessionId, await leasedProvider(), preflight)).status, "accepted");
   return backend;
 }
 
 async function readyDeterministic(sessionId: string): Promise<DeterministicSimulatorParticleBackend> {
   const backend = new DeterministicSimulatorParticleBackend();
-  assert.equal((await backend.prepare(sessionId, localProvider(), preflight)).status, "accepted");
+  assert.equal((await backend.prepare(sessionId, await leasedProvider(), preflight)).status, "accepted");
   return backend;
+}
+
+async function leasedProvider(rows = resourceRows): Promise<ParticleResourceProvider> {
+  return applicationLeaseParticleProviderForTesting(localProvider(rows), preflight);
 }
 
 function localProvider(rows = resourceRows): ParticleResourceProvider {

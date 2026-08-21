@@ -5,7 +5,7 @@ import {
   HABAHIRO_BESTDORI_PINNED_ASSETS,
   type HabahiroBestdoriPinnedAsset,
 } from "./legacyHabahiroBestdoriManifest";
-import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../backends/resources/currentParticleResourceManifest";
+import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./legacyCurrentParticleResourceManifest";
 import {
   CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE,
   CURRENT_SCORE_HUD_PORTABLE_RESOURCES,

@@ -49,6 +49,7 @@ import type { SimulatorEngine } from "../host/contracts";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorSceneLayout, type SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { observePixiWorld } from "./pixiWorldObserver";
+import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
 
 const WIDTH = 1600;
 const HEIGHT = 720;
@@ -374,7 +375,10 @@ async function createSession(
     180,
     layout.surfaceLayout,
   ));
-  const particleProvider = requireParticleProvider(ImmutableLocalParticleResourceProvider.create(inputs.particleResources));
+  const particleProvider = await applicationLeaseParticleProviderForTesting(
+    requireParticleProvider(ImmutableLocalParticleResourceProvider.create(inputs.particleResources)),
+    new PortableParticleResourcePreflightAdapter(),
+  );
   const particle = new DeterministicSimulatorParticleBackend();
   const particleRenderer = new PixiParticleRendererBackend(new BrowserPixiParticleTextureDecoder());
   const particlePreflight = new PortableParticleResourcePreflightAdapter();

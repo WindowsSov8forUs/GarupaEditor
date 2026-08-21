@@ -8,7 +8,7 @@ export type CurrentSkinResourceRole =
   | "tap-se"
   | "judge";
 
-export interface PreparedSkinPortableFile {
+export interface PreparedSkinSourceFile {
   readonly id: string;
   readonly mime: "image/png" | "audio/mpeg";
   readonly bytes: Uint8Array;
@@ -17,9 +17,9 @@ export interface PreparedSkinPortableFile {
   readonly height: number | null;
 }
 
-export interface PreparedSkinPortablePack {
+export interface PreparedSkinSourcePackage {
   readonly logicalResource: string;
   readonly role: CurrentSkinResourceRole;
   readonly profile: Readonly<Record<string, unknown>>;
-  readonly files: readonly PreparedSkinPortableFile[];
+  readonly files: readonly PreparedSkinSourceFile[];
 }

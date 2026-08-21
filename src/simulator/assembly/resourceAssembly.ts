@@ -26,7 +26,7 @@ import {
   prepareSelectedSkinSourcePackages,
   prepareSourceAudioPackage,
 } from "../resources/sourcePackageDecoder";
-import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 import { prepareLeasedAudioResources } from "./leasedAudioPreparation";
 import { prepareLeasedCommonRenderResources } from "./leasedCommonResourcePreparation";
@@ -63,7 +63,7 @@ export interface SimulatorResourceAssemblyTargets {
 export interface PreparedSimulatorResourceAssembly {
   readonly sessionId: string;
   readonly skinRecipeIdentity: string;
-  readonly skinPortablePacks: readonly PreparedSkinPortablePack[];
+  readonly skinSourcePackages: readonly PreparedSkinSourcePackage[];
   readonly resourceLease: SimulatorResourceLease;
   readonly fieldBindings: {
     readonly backgroundLineLogicalAssetId: string;
@@ -237,7 +237,7 @@ export async function assembleSimulatorResources(
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
     skinRecipeIdentity: selection.skin.recipeIdentity,
-    skinPortablePacks: skinPacks.value,
+    skinSourcePackages: skinPacks.value,
     resourceLease: lease,
     fieldBindings: skinRender.value.fieldBindings,
     backgroundLogicalAssetId: skinRender.value.backgroundLogicalAssetId,

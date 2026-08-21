@@ -9,7 +9,7 @@ import type {
 } from "../backends/renderingContracts";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
-import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 
 export interface PreparedSkinRenderOverlay {
@@ -30,7 +30,7 @@ export interface PreparedSkinRenderOverlay {
 
 export async function prepareSkinRenderOverlay(
   recipe: ResolvedOriginalSkinRecipe,
-  packs: readonly PreparedSkinPortablePack[],
+  packs: readonly PreparedSkinSourcePackage[],
   baseBindings: RenderEngineResourceBindings,
 ): Promise<SimulatorAssemblyResult<PreparedSkinRenderOverlay | null>> {
   if (packs.length === 0) return accepted(null);
@@ -98,7 +98,7 @@ export async function prepareSkinRenderOverlay(
   }));
 }
 
-function buildAssets(pack: PreparedSkinPortablePack): SimulatorAssemblyResult<{
+function buildAssets(pack: PreparedSkinSourcePackage): SimulatorAssemblyResult<{
   readonly assets: readonly RenderResourceAssetProfile[];
   readonly local: readonly LocalRenderResource[];
   readonly assetIdsByTextureName: Map<string, string>;
@@ -312,7 +312,7 @@ function resolveBindings(
   }));
 }
 
-function role(packRole: PreparedSkinPortablePack["role"], name: string): RenderResourceAssetProfile["role"] {
+function role(packRole: PreparedSkinSourcePackage["role"], name: string): RenderResourceAssetProfile["role"] {
   if (packRole === "notes") return name === "RhythmGameSprites" ? "note-atlas" : "material-texture";
   if (packRole === "directional-note") return name === "DirectionalFlickSprites" ? "directional-atlas" : "material-texture";
   if (packRole === "judge") return "judge-atlas";
@@ -321,7 +321,7 @@ function role(packRole: PreparedSkinPortablePack["role"], name: string): RenderR
 }
 
 function materialRole(
-  packRole: PreparedSkinPortablePack["role"],
+  packRole: PreparedSkinSourcePackage["role"],
   name: string,
 ): RenderResourceAssetProfile["materialRole"] {
   if (packRole === "tap-effect" || packRole === "directional-effect") return "curve-note";

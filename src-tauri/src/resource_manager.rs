@@ -218,6 +218,7 @@ pub fn resource_initialize(
         remove_directory_contents(&root.join("transactions"))?;
         remove_directory_contents(&root.join("snapshots"))?;
         migrate_storage_schema_v1(&root, state.inner())?;
+        migrate_resource_ids_to_logical(&root, state.inner())?;
         ensure_layout(&root)?;
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
         recover_projections(&root, state.inner())?;
@@ -1639,6 +1640,161 @@ struct LegacyMigrationReport {
     skipped: Vec<String>,
 }
 
+fn migrate_resource_ids_to_logical(
+    root: &Path,
+    state: &ApplicationResourceState,
+) -> Result<(), String> {
+    let mut index = read_index(root)?;
+    let mut migrated = Vec::new();
+    let mut skipped = Vec::new();
+    let old_ids = index.resource_ids.clone();
+    for old_id in old_ids {
+        let record = read_record(root, &old_id)?;
+        let Some(new_id) = canonical_record_resource_id(&record.descriptor, &old_id) else {
+            if old_id.starts_with("bestdori/") {
+                skipped.push(old_id);
+            }
+            continue;
+        };
+        if new_id == old_id {
+            continue;
+        }
+        if record_path(root, &new_id).exists() {
+            skipped.push(format!("{old_id}: target exists"));
+            continue;
+        }
+        let old_projection = projection_resource_path(root, &record.descriptor).ok();
+        let mut descriptor = record.descriptor;
+        descriptor["ref"]["id"] = Value::String(new_id.clone());
+        install_logical_placement_for_canonical_id(&mut descriptor, &new_id)?;
+        let revision = record_revision(&new_id, &record.files);
+        let migrated_record = StoredResourceRecord {
+            storage_schema: STORAGE_SCHEMA,
+            revision: revision.clone(),
+            descriptor,
+            files: record.files,
+        };
+        let encoded = serde_json::to_vec(&migrated_record)
+            .map_err(|error| format!("serialize identity-migrated record failed: {error}"))?;
+        atomic_write(
+            root,
+            &record_path(root, &new_id),
+            &encoded,
+            &next_identity(state, "identity-record"),
+        )?;
+        let projection = projection_resource_path(root, &migrated_record.descriptor)?;
+        publish_projection(
+            root,
+            &projection,
+            &new_id,
+            &revision,
+            &migrated_record.files,
+            &next_identity(state, "identity-projection"),
+        )?;
+        let old_path = record_path(root, &old_id);
+        if old_path.exists() {
+            fs::remove_file(old_path)
+                .map_err(|error| format!("remove old identity record failed: {error}"))?;
+        }
+        if let Some(old_projection) = old_projection {
+            let current = old_projection.join("current.json");
+            if current.exists() {
+                let _ = fs::remove_file(current);
+            }
+        }
+        index.resource_ids.retain(|id| id != &old_id);
+        index.resource_ids.push(new_id.clone());
+        migrated.push(format!("{old_id} -> {new_id}"));
+    }
+    index.resource_ids.sort();
+    index.resource_ids.dedup();
+    write_index(root, &index, &next_identity(state, "identity-index"))?;
+    let report = serde_json::to_vec(&serde_json::json!({
+        "storageSchema": STORAGE_SCHEMA,
+        "migrated": migrated,
+        "skipped": skipped,
+    }))
+    .map_err(|error| format!("serialize identity migration report failed: {error}"))?;
+    atomic_write(
+        root,
+        &root.join("identity-migration.json"),
+        &report,
+        &next_identity(state, "identity-report"),
+    )
+}
+
+fn canonical_record_resource_id(descriptor: &Value, old_id: &str) -> Option<String> {
+    if !old_id.starts_with("bestdori/") {
+        return Some(old_id.to_string());
+    }
+    let source = descriptor.get("source")?.as_object()?;
+    let provider = source.get("provider")?.as_str()?;
+    let server = source.get("server")?.as_str()?;
+    if provider != "bestdori" {
+        return None;
+    }
+    let family = source.get("family")?.as_str()?;
+    let native = source.get("nativeId")?.as_str()?;
+    let logical = match family {
+        "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapeffect" | "stageskin" => {
+            format!("ingameskin/{family}/{native}")
+        }
+        "tapseskin" => format!("sound/tapseskin/{native}"),
+        "sound-common" => "sound/common".to_string(),
+        value if value.starts_with("media-") => {
+            logical_path_from_bestdori_asset_url(source.get("assetBaseUrl")?.as_str()?, server)?
+        }
+        _ => return None,
+    };
+    Some(format!("bestdori/{server}/{logical}"))
+}
+
+fn logical_path_from_bestdori_asset_url(value: &str, server: &str) -> Option<String> {
+    let prefix = format!("https://bestdori.com/assets/{server}/");
+    let path = value.strip_prefix(&prefix)?.split(['?', '#']).next()?;
+    let mut parts: Vec<String> = path.split('/').map(str::to_string).collect();
+    if parts.len() < 2
+        || parts
+            .iter()
+            .any(|part| part.is_empty() || part == "." || part == "..")
+    {
+        return None;
+    }
+    let package = parts.len() - 2;
+    if let Some(value) = parts[package].strip_suffix("_rip") {
+        parts[package] = value.to_string();
+    }
+    Some(parts.join("/"))
+}
+
+fn install_logical_placement_for_canonical_id(
+    descriptor: &mut Value,
+    resource_id: &str,
+) -> Result<(), String> {
+    let object = descriptor
+        .as_object_mut()
+        .ok_or_else(|| "resource descriptor must be object".to_string())?;
+    let source = object
+        .get("source")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "network source missing".to_string())?;
+    let server = source
+        .get("server")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "network server missing".to_string())?;
+    let prefix = format!("bestdori/{server}/");
+    let canonical = resource_id
+        .strip_prefix(&prefix)
+        .ok_or_else(|| "canonical resource id/server mismatch".to_string())?;
+    object.insert("logicalPlacement".to_string(), serde_json::json!({
+        "provider": "bestdori",
+        "server": server,
+        "canonicalPath": canonical,
+        "identityClass": if source.get("family").and_then(Value::as_str).is_some_and(|value| value.starts_with("media-")) { "provider-media" } else { "provider-package" },
+    }));
+    Ok(())
+}
+
 fn recover_projections(root: &Path, state: &ApplicationResourceState) -> Result<(), String> {
     for resource_id in read_index(root)?.resource_ids {
         let record = read_record(root, &resource_id)?;
@@ -1718,7 +1874,8 @@ fn migrate_legacy_bestdori_cache(
                 ));
                 continue;
             };
-            let resource_id = format!("bestdori/{server}/{family}/{native_id}");
+            let logical_path = legacy_network_canonical_path(family, &native_id, "legacy-import");
+            let resource_id = format!("bestdori/{server}/{logical_path}");
             if record_path(resource_root, &resource_id).exists() {
                 continue;
             }
@@ -1960,9 +2117,35 @@ mod tests {
 
     #[test]
     fn resource_ids_are_dynamic_and_not_game_versioned() {
-        assert!(normalize_resource_id("bestdori/jp/noteskin/skin999").is_ok());
-        assert!(normalize_resource_id("bestdori/jp/noteskin/future_collaboration").is_ok());
+        assert!(normalize_resource_id("bestdori/jp/ingameskin/noteskin/skin999").is_ok());
+        assert!(
+            normalize_resource_id("bestdori/jp/ingameskin/noteskin/future_collaboration").is_ok()
+        );
         assert!(normalize_resource_id("simulator-static/current-10.1.4/x").is_err());
+    }
+
+    #[test]
+    fn legacy_record_ids_map_to_original_logical_paths_without_url_identity() {
+        let descriptor = serde_json::json!({
+            "source": {
+                "provider": "bestdori", "server": "jp", "family": "noteskin", "nativeId": "skin00",
+                "assetBaseUrl": "https://bestdori.com/assets/jp/ingameskin/noteskin/skin00_rip"
+            }
+        });
+        assert_eq!(
+            canonical_record_resource_id(&descriptor, "bestdori/jp/noteskin/skin00").as_deref(),
+            Some("bestdori/jp/ingameskin/noteskin/skin00"),
+        );
+        let media = serde_json::json!({
+            "source": {
+                "provider": "bestdori", "server": "jp", "family": "media-bgm", "nativeId": "old-url-id",
+                "assetBaseUrl": "https://bestdori.com/assets/jp/sound/bgm003_rip/bgm003.mp3"
+            }
+        });
+        assert_eq!(
+            canonical_record_resource_id(&media, "bestdori/jp/media-bgm/old").as_deref(),
+            Some("bestdori/jp/sound/bgm003/bgm003.mp3"),
+        );
     }
 
     #[test]

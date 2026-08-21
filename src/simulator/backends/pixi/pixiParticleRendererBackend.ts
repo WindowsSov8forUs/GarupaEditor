@@ -27,7 +27,6 @@ import {
   particleFloat32FromBits,
   particleRejected,
 } from "../particleValidation";
-import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../resources/currentParticleResourceManifest";
 import { prepareCurrentParticleResources } from "../resources/particleResourcePreparation";
 
 export interface ParticlePixiTextureDecoder {
@@ -105,18 +104,22 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       if (prepared.status !== "accepted") return this.abortPrepare(prepared);
       const decoded = new Map<string, Texture>();
       const identities = preparingTextures;
-      const textureResources = prepared.value.textures.status === "selected-skin-portable-textures"
-        ? prepared.value.textures.entries
-            .filter((entry): entry is Exclude<typeof entry, { readonly aliasOf: string }> => !("aliasOf" in entry))
-            .map((entry) => ({
-              logicalAssetId: entry.logicalAssetId,
-              byteLength: entry.bytes,
-              sha256: entry.sha256,
-              mime: "image/png" as const,
-              width: entry.width,
-              height: entry.height,
-            }))
-        : CURRENT_PARTICLE_RESOURCE_MANIFEST.resources.filter((resource) => resource.mime === "image/png");
+      if (prepared.value.textures.status !== "selected-skin-portable-textures") {
+        return this.abortPrepare(this.reject(
+          "particle.pixi.application-leased-textures-required",
+          "Production Pixi particles require selected application-leased Skin textures; fixed manifest fallback is removed.",
+        ));
+      }
+      const textureResources = prepared.value.textures.entries
+        .filter((entry): entry is Exclude<typeof entry, { readonly aliasOf: string }> => !("aliasOf" in entry))
+        .map((entry) => ({
+          logicalAssetId: entry.logicalAssetId,
+          byteLength: entry.bytes,
+          sha256: entry.sha256,
+          mime: "image/png" as const,
+          width: entry.width,
+          height: entry.height,
+        }));
       for (const resource of textureResources) {
         const bytes = prepared.value.pngBytes.get(resource.logicalAssetId);
         if (bytes === undefined) return this.abortPrepare(this.reject(

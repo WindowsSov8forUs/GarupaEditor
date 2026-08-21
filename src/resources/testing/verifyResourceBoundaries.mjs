@@ -38,6 +38,16 @@ for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includ
     throw new Error(`${relative(sourceRoot, path)} imports a physical builtin outside the application catalog`);
   }
 }
+const simulatorRoot = join(sourceRoot, "simulator");
+for (const path of walk(simulatorRoot).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)) && !candidate.includes(`${join("simulator", "testing")}`))) {
+  const source = readFileSync(path, "utf8");
+  for (const token of ["simulator-static/", "SharedStaticResourceStore", "staticResourceSelector", "skinResourceSelector", "skinPortablePack", "current-10.1.4"]) {
+    if (source.includes(token)) throw new Error(`${relative(simulatorRoot, path)} retains removed production resource authority: ${token}`);
+  }
+  if (/from\s+["'][^"']*resources\/(?:applicationResourceManager|contracts|providers)/.test(source)) {
+    throw new Error(`${relative(simulatorRoot, path)} imports the application resource manager instead of the neutral platform capability`);
+  }
+}
 const productionFiles = walk(sourceRoot).filter((candidate) =>
   [".ts", ".tsx"].includes(extname(candidate)) && !candidate.includes(`${join("simulator", "testing")}`),
 );
@@ -78,6 +88,16 @@ for (const marker of [
 ]) if (!(mobileSafeAreaSource + browserPlatformSource + simulatorWindowSource).includes(marker)) throw new Error(`Stage 9 mobile platform marker missing: ${marker}`);
 for (const forbidden of ["SimulatorAppController", "SimulatorLaunchPayload", "DataURL", "sourceUrl", "sha256", "provider"] ) {
   if ((simulatorWindowSource + simulatorTransportSource).includes(forbidden)) throw new Error(`Stage 9 transport/window contains forbidden legacy/resource field: ${forbidden}`);
+}
+for (const path of walk(join(sourceRoot, "app")).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
+  const source = readFileSync(path, "utf8");
+  if (/app_data[\\/]|resources[\\/]library|\.join\(["']library/.test(source)) {
+    throw new Error(`${relative(sourceRoot, path)} reads a physical resource library path`);
+  }
+}
+const tauriLibrarySource = readFileSync(join(repositoryRoot, "src-tauri", "src", "lib.rs"), "utf8");
+for (const marker of ["chart-resources.v4.json", "migrate_chart_resource_refs_v3", "migrate_resource_id_v3", "CHART_RESOURCE_REFS_MIGRATION_REPORT"]) {
+  if (!tauriLibrarySource.includes(marker)) throw new Error(`chart resource v4 migration marker missing: ${marker}`);
 }
 const chartCoreSource = readFileSync(join(sourceRoot, "chartCore.ts"), "utf8");
 for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {

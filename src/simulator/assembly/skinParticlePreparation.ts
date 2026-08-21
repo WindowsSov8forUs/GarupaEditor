@@ -11,7 +11,7 @@ import type {
 } from "../backends/particleContracts";
 import { particleAccepted } from "../backends/particleValidation";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
-import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 
 const ROOTS = new Set<string>([
@@ -24,7 +24,7 @@ const ROOTS = new Set<string>([
 
 export function prepareSkinParticleProvider(
   recipe: ResolvedOriginalSkinRecipe,
-  packs: readonly PreparedSkinPortablePack[],
+  packs: readonly PreparedSkinSourcePackage[],
   base: ParticleResourceProvider,
 ): SimulatorAssemblyResult<ParticleResourceProvider> {
   if (packs.length === 0) return accepted(base);
@@ -42,8 +42,8 @@ export function prepareSkinParticleProvider(
 }
 
 function buildPreparedPack(
-  ordinary: PreparedSkinPortablePack,
-  directional: PreparedSkinPortablePack,
+  ordinary: PreparedSkinSourcePackage,
+  directional: PreparedSkinSourcePackage,
 ): SimulatorAssemblyResult<ParticlePreparedResourcePack> {
   const first = convertBundle("ordinary", ordinary);
   if (first.status === "rejected") return first;
@@ -79,7 +79,7 @@ function buildPreparedPack(
 
 function convertBundle(
   key: "ordinary" | "directional",
-  pack: PreparedSkinPortablePack,
+  pack: PreparedSkinSourcePackage,
 ): SimulatorAssemblyResult<{
   readonly bundle: ParticleBundleProfile;
   readonly entries: ParticleTextureManifest["entries"];
@@ -131,7 +131,7 @@ function convertBundle(
   const unityTextures = unity !== null && Array.isArray(unity.textures)
     ? unity.textures.filter((value): value is Record<string, any> => record(value) !== null)
     : [];
-  const files = new Map<string, PreparedSkinPortablePack["files"][number]>();
+  const files = new Map<string, PreparedSkinSourcePackage["files"][number]>();
   for (const texture of unityTextures) {
     if (typeof texture.m_Name !== "string") continue;
     const id = pathId(texture.source_path_id);

@@ -1,7 +1,7 @@
 import type {
   ParticleCurrentResourceManifest,
   ParticleResourceAllowlistEntry,
-} from "../particleContracts";
+} from "../backends/particleContracts";
 
 const resources: readonly ParticleResourceAllowlistEntry[] = Object.freeze([
   Object.freeze({

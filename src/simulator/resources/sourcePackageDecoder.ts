@@ -7,8 +7,8 @@ import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 import { OriginalResourcePackageView } from "./originalResourcePackageView";
 import type {
-  PreparedSkinPortableFile,
-  PreparedSkinPortablePack,
+  PreparedSkinSourceFile,
+  PreparedSkinSourcePackage,
 } from "./sourcePackageContracts";
 import type {
   SelectedSkinResourceIdentity,
@@ -40,7 +40,7 @@ const particleCatalog = parseParticleCatalog(particleCatalogJson);
 export async function prepareSourceAudioPackage(
   logicalResource: string,
   lease: SimulatorResourceLease,
-): Promise<SimulatorAssemblyResult<PreparedSkinPortablePack>> {
+): Promise<SimulatorAssemblyResult<PreparedSkinSourcePackage>> {
   const opened = await OriginalResourcePackageView.open(lease, logicalResource);
   if (opened.status === "rejected") {
     return rejected(opened.failure.code === "resource-platform-unavailable" ? "platform-unavailable" : "resource-integrity", opened.failure.capability, opened.failure.boundary);
@@ -51,12 +51,12 @@ export async function prepareSourceAudioPackage(
 export async function prepareSelectedSkinSourcePackages(
   selected: readonly SelectedSkinResourceIdentity[],
   lease: SimulatorResourceLease,
-): Promise<SimulatorAssemblyResult<readonly PreparedSkinPortablePack[]>> {
+): Promise<SimulatorAssemblyResult<readonly PreparedSkinSourcePackage[]>> {
   if (!Array.isArray(selected) || selected.length === 0) {
     return invalid("simulator.skin.source-package-empty-selection", "Skin source-package preparation requires the complete non-empty resolved recipe inventory.");
   }
   const views = new Map<string, OriginalResourcePackageView>();
-  const output: PreparedSkinPortablePack[] = [];
+  const output: PreparedSkinSourcePackage[] = [];
   for (const identity of selected) {
     let view = views.get(identity.logicalResource);
     if (view === undefined) {
@@ -78,7 +78,7 @@ function decodeSourcePackage(
   selectedRole: SelectedSkinResourceRole,
   logicalResource: string,
   view: OriginalResourcePackageView,
-): SimulatorAssemblyResult<PreparedSkinPortablePack> {
+): SimulatorAssemblyResult<PreparedSkinSourcePackage> {
   const role = portableRole(selectedRole);
   const render = renderCatalog.get(logicalResource) ?? null;
   const particle = particleCatalog.resources.get(logicalResource) ?? null;
@@ -90,7 +90,7 @@ function decodeSourcePackage(
   if ((role === "tap-effect" || role === "directional-effect") && particle === null) {
     return invalid("simulator.skin.source-particle-recipe-missing", `No evidence-backed particle semantic recipe exists for ${logicalResource}.`);
   }
-  const files: PreparedSkinPortableFile[] = [];
+  const files: PreparedSkinSourceFile[] = [];
   const textureIds = new Map<string, number>();
   const unityTextures: Record<string, unknown>[] = [];
   if (render !== null) {

@@ -22,6 +22,7 @@ import { FrontNoteType, type ChartConstructionResult } from "../engine/chart/typ
 import { ParticleCommandProducer } from "../engine/particles/particleCommandProducer";
 import type { SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
+import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
 
 const fixtureBase = join(process.cwd(), "src", "simulator", "testing", "fixtures", "reverse-snapshots");
 const particleRoot = join(
@@ -44,7 +45,7 @@ const resources = Object.entries({
   logicalAssetId,
   bytes: new Uint8Array(readFileSync(join(particleRoot, relative))),
 }));
-const provider = accepted<ParticleResourceProvider>(
+const legacyProvider = accepted<ParticleResourceProvider>(
   ImmutableLocalParticleResourceProvider.create(resources),
   "particle provider",
 );
@@ -96,6 +97,7 @@ async function replay(
   deltaTimeSeconds: number,
 ): Promise<ProductionProjection> {
   const particle = new RecordingSimulatorParticleBackend();
+  const provider = await applicationLeaseParticleProviderForTesting(legacyProvider, preflight);
   assert.equal((await particle.prepare(sessionId, provider, preflight)).status, "accepted");
   const engine = requireOk(createSimulatorEngine({
     chart: chartData,

@@ -1984,9 +1984,14 @@ fn migrate_resource_id_v3(value: &str) -> Option<String> {
 }
 
 fn logical_path_from_bestdori_url(value: &str, expected_server: &str) -> Option<String> {
+    let url_start = value.find("https://")?;
+    let url = &value[url_start..];
+    if !url.starts_with("https://bestdori.com/") && !url.starts_with("https://www.bestdori.com/") {
+        return None;
+    }
     let marker = format!("/assets/{expected_server}/");
-    let start = value.find(&marker)? + marker.len();
-    let path = value[start..].split(['?', '#']).next()?;
+    let start = url.find(&marker)? + marker.len();
+    let path = url[start..].split(['?', '#']).next()?;
     let mut parts: Vec<String> = path.split('/').map(str::to_string).collect();
     if parts.len() < 2 || parts.iter().any(|part| part.is_empty() || part == "." || part == "..") {
         return None;
@@ -2196,4 +2201,37 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod resource_ref_migration_tests {
+    use super::*;
+
+    #[test]
+    fn migrates_legacy_package_ids_to_original_logical_paths() {
+        assert_eq!(
+            migrate_resource_id_v3("bestdori/jp/noteskin/skin00").as_deref(),
+            Some("bestdori/jp/ingameskin/noteskin/skin00"),
+        );
+        assert_eq!(
+            migrate_resource_id_v3("bestdori/jp/tapseskin/skin00").as_deref(),
+            Some("bestdori/jp/sound/tapseskin/skin00"),
+        );
+        assert_eq!(
+            migrate_resource_id_v3("bestdori/jp/sound-common/common").as_deref(),
+            Some("bestdori/jp/sound/common"),
+        );
+    }
+
+    #[test]
+    fn migrates_provable_url_media_and_rejects_ambiguous_hosts() {
+        let old = "bestdori/jp/media-bgm/song-3-bgm%3Ahttps%3A%2F%2Fbestdori.com%2Fassets%2Fjp%2Fsound%2Fbgm003_rip%2Fbgm003.mp3";
+        assert_eq!(
+            migrate_resource_id_v3(old).as_deref(),
+            Some("bestdori/jp/sound/bgm003/bgm003.mp3"),
+        );
+        assert!(migrate_resource_id_v3(
+            "bestdori/jp/media-bgm/song%3Ahttps%3A%2F%2Fexample.com%2Ffile.mp3",
+        ).is_none());
+    }
 }

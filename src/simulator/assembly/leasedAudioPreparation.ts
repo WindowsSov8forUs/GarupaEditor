@@ -6,7 +6,7 @@ import type {
   AudioResourceProvider,
 } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
-import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 
@@ -23,7 +23,7 @@ export interface PreparedLeasedAudioResources {
 
 export async function prepareLeasedAudioResources(
   chartAudio: PreparedSessionBgmResource,
-  packs: readonly PreparedSkinPortablePack[],
+  packs: readonly PreparedSkinSourcePackage[],
   preflight: AudioResourcePreflightAdapter,
 ): Promise<SimulatorAssemblyResult<PreparedLeasedAudioResources>> {
   const dynamic: AudioFixedSeResourceProfile[] = [];

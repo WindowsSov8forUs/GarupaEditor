@@ -10,7 +10,6 @@ import type {
   ParticleTextureManifest,
   ParticleTextureManifestEntry,
 } from "./particleContracts";
-import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./resources/currentParticleResourceManifest";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const FLOAT32_BITS_PATTERN = /^0x[0-9A-F]{8}$/;
@@ -73,7 +72,7 @@ export function parseAndFreezeParticleProfile(
       "automaticFallbackAllowed", "systemCount", "profileCount", "bundles",
     ]) ||
     value.schemaVersion !== 1 ||
-    value.packIdentity !== "particle-current-10.1.4-portable-v1" ||
+    !isNonEmpty(value.packIdentity) ||
     value.fidelity !== REVERSE_SERIALIZED_PARTICLE_FIDELITY ||
     value.networkAllowed !== false ||
     value.automaticFallbackAllowed !== false ||
@@ -218,7 +217,6 @@ export function parseAndFreezeParticleTextureManifest(
     !Array.isArray(value.entries) || value.entries.length !== 8 || !isNonEmpty(value.productionBoundary)) {
     return reject("particle.textures.invalid-manifest", "The current texture manifest is fixed at eight logical textures and seven unique PNG resources.");
   }
-  const allowlist = new Map(CURRENT_PARTICLE_RESOURCE_MANIFEST.resources.map((resource) => [resource.logicalAssetId, resource]));
   const ids = new Set<string>();
   let fileCount = 0;
   for (const entry of value.entries) {
@@ -236,12 +234,10 @@ export function parseAndFreezeParticleTextureManifest(
       }
       continue;
     }
-    const resource = allowlist.get(entry.logicalAssetId);
     if (!hasExactKeys(entry, [
       "logicalAssetId", "path", "bytes", "sha256", "width", "height", "rgbaBytes", "rgbaSha256",
-    ]) || resource === undefined || resource.mime !== "image/png" || entry.bytes !== resource.byteLength ||
-      entry.sha256 !== resource.sha256 || entry.width !== resource.width || entry.height !== resource.height) {
-      return reject("particle.textures.allowlist-mismatch", "Every unique PNG must match its exact current byte and metadata allowlist entry.");
+    ]) || !isPositiveInteger(entry.bytes) || typeof entry.sha256 !== "string" || !SHA256_PATTERN.test(entry.sha256)) {
+      return reject("particle.textures.invalid-observed-file", "Every unique PNG must declare positive observed bytes/SHA and decoded dimensions without consulting a compiled allowlist.");
     }
     fileCount += 1;
   }
