@@ -40,9 +40,12 @@ const SESSION_COVER_FILE_NAME: &str = "cover.bin";
 const SESSION_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_RESOURCES_DIR_NAME: &str = "chart-resources";
 const CHART_RESOURCES_META_NAME: &str = "chart-resources.v2.json";
-const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v3.json";
-const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v3.bak.json";
-const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v3.tmp.json";
+const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v4.json";
+const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v4.bak.json";
+const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v4.tmp.json";
+const LEGACY_CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v3.json";
+const LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v3.bak.json";
+const CHART_RESOURCE_REFS_MIGRATION_REPORT: &str = "chart-resources.v4.migration.json";
 const CHART_COVER_FILE_NAME: &str = "cover.bin";
 const CHART_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_MV_FILE_NAME: &str = "mv.bin";
@@ -1865,7 +1868,7 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
     )? {
         Some(text) => Some(serde_json::from_str(&text)
             .map_err(|error| format!("parse chart resource refs failed: {error}"))?),
-        None => None,
+        None => migrate_chart_resource_refs_v3(&resources_root)?,
     };
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let meta = read_chart_resources_meta(&meta_path)?;
@@ -1899,6 +1902,117 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
         mv_data_url,
         mv_file_name: meta.mv_file_name,
     }))
+}
+
+fn migrate_chart_resource_refs_v3(resources_root: &Path) -> Result<Option<serde_json::Value>, String> {
+    let legacy_path = resources_root.join(LEGACY_CHART_RESOURCE_REFS_META_NAME);
+    let Some(text) = load_json_text_with_backup(
+        &legacy_path,
+        &resources_root.join(LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME),
+    )? else {
+        return Ok(None);
+    };
+    let value: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|error| format!("parse legacy chart resource refs failed: {error}"))?;
+    let object = value.as_object().ok_or_else(|| "legacy chart resource refs root must be an object".to_string())?;
+    let mut migrated = serde_json::Map::new();
+    let mut skipped = Vec::new();
+    for (slot, raw) in object {
+        if raw.is_null() {
+            migrated.insert(slot.clone(), serde_json::Value::Null);
+            continue;
+        }
+        let id = raw.get("id").and_then(serde_json::Value::as_str);
+        let mapped = id.and_then(migrate_resource_id_v3);
+        match mapped {
+            Some(id) => {
+                migrated.insert(slot.clone(), serde_json::json!({ "id": id }));
+            }
+            None => {
+                skipped.push(format!("{slot}:{}", id.unwrap_or("invalid")));
+                migrated.insert(slot.clone(), serde_json::Value::Null);
+            }
+        }
+    }
+    let migrated_value = serde_json::Value::Object(migrated);
+    let encoded = serde_json::to_string(&migrated_value)
+        .map_err(|error| format!("serialize migrated chart resource refs failed: {error}"))?;
+    write_text_with_backup(
+        &resources_root.join(CHART_RESOURCE_REFS_META_NAME),
+        &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
+        &resources_root.join(CHART_RESOURCE_REFS_TEMP_NAME),
+        &encoded,
+    )?;
+    let report = serde_json::to_string(&serde_json::json!({
+        "fromSchema": 3,
+        "toSchema": 4,
+        "skipped": skipped,
+    })).map_err(|error| format!("serialize chart resource migration report failed: {error}"))?;
+    fs::write(resources_root.join(CHART_RESOURCE_REFS_MIGRATION_REPORT), report)
+        .map_err(|error| format!("write chart resource migration report failed: {error}"))?;
+    Ok(Some(migrated_value))
+}
+
+fn migrate_resource_id_v3(value: &str) -> Option<String> {
+    if value.starts_with("builtin/") || value.starts_with("user/") {
+        return Some(value.to_string());
+    }
+    let parts: Vec<&str> = value.split('/').collect();
+    if parts.len() < 4 || parts[0] != "bestdori" {
+        return None;
+    }
+    let server = parts[1];
+    if !matches!(server, "jp" | "en" | "tw" | "cn" | "kr") {
+        return None;
+    }
+    if matches!(parts[2], "ingameskin" | "sound" | "musicjacket" | "movie") {
+        return Some(value.to_string());
+    }
+    let family = parts[2];
+    let native = parts[3..].join("/");
+    let logical = match family {
+        "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapeffect" | "stageskin" => format!("ingameskin/{family}/{native}"),
+        "tapseskin" => format!("sound/tapseskin/{native}"),
+        "sound-common" => "sound/common".to_string(),
+        value if value.starts_with("media-") => {
+            let decoded = percent_decode(&native)?;
+            logical_path_from_bestdori_url(&decoded, server)?
+        }
+        _ => return None,
+    };
+    Some(format!("bestdori/{server}/{logical}"))
+}
+
+fn logical_path_from_bestdori_url(value: &str, expected_server: &str) -> Option<String> {
+    let marker = format!("/assets/{expected_server}/");
+    let start = value.find(&marker)? + marker.len();
+    let path = value[start..].split(['?', '#']).next()?;
+    let mut parts: Vec<String> = path.split('/').map(str::to_string).collect();
+    if parts.len() < 2 || parts.iter().any(|part| part.is_empty() || part == "." || part == "..") {
+        return None;
+    }
+    let package_index = parts.len() - 2;
+    parts[package_index] = parts[package_index].strip_suffix("_rip")?.to_string();
+    Some(parts.join("/"))
+}
+
+fn percent_decode(value: &str) -> Option<String> {
+    let bytes = value.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            if index + 2 >= bytes.len() { return None; }
+            let high = (bytes[index + 1] as char).to_digit(16)?;
+            let low = (bytes[index + 2] as char).to_digit(16)?;
+            output.push(((high << 4) | low) as u8);
+            index += 3;
+        } else {
+            output.push(bytes[index]);
+            index += 1;
+        }
+    }
+    String::from_utf8(output).ok()
 }
 
 #[tauri::command]

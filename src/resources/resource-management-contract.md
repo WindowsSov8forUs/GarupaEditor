@@ -47,6 +47,6 @@ Consumers own compatibility checks such as image/audio/video decode, required sp
 
 Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create source-resource object URLs. Builtins are materialized through the same backend transaction and application-lifetime Snapshot/Lease as other bytes; synchronous UI hooks expose only already-open lease Object URLs, not Vite source URLs. Domain consumers receive leases and must not import `ApplicationResourceManager`; consumer-generated derivatives are owned and released with their lease.
 
-Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v3.json`; v2 bytes/Data URLs are accepted only by the one-time migration path.
+Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v4.json`; v2 bytes/Data URLs and v3 URL-derived IDs are accepted only by one-time migration paths. A v3 identity that cannot be proven from its provider URL is cleared and reported, never retained as an alias.
 
 The authorized Simulator migration is governed by [`simulator-resource-integration-contract.md`](./simulator-resource-integration-contract.md). Until its assembly and Stage 9 acceptance gates close, the old static store remains an implementation baseline only and must not be described as already migrated.

@@ -142,23 +142,24 @@ import {
   useApplicationResourceManager,
   useApplicationResourceUrl,
 } from "../resources/applicationResourceContext";
+import type { ResourceConsumerLease } from "../resources/contracts";
 import type { ChartMediaResources } from "../resources/selections";
 import { useChartMediaLease } from "../resources/useChartMediaLease";
 import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/bestdori/catalog";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
+import { buildSimulatorLaunchDescriptor } from "./simulator/buildSimulatorLaunchDescriptor";
 import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
-  type SimulatorLaunchPayload,
   type SimulatorWindowReadyPayload,
-} from "../simulator/launchPayload";
+} from "./simulator/transportContracts";
 import {
   buildTimingGroupDefs,
   normalizeTimingGroupId,
   type TimingGroupDef,
-} from "../simulator/engine/timingGroup";
+} from "../chart";
 
 const TIMELINE_REFERENCE_BPM = 120;
 const RENDER_BACKEND_MODE =
@@ -1311,6 +1312,7 @@ function ChartEditorController() {
   const jsonImportRef = useRef<HTMLInputElement | null>(null);
   const bestdoriV2ImportRef = useRef<HTMLInputElement | null>(null);
   const skinApplySeqRef = useRef(0);
+  const simulatorHandoffLeasesRef = useRef<Map<string, ResourceConsumerLease>>(new Map());
   const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
   const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
@@ -1323,6 +1325,10 @@ function ChartEditorController() {
   useEffect(() => {
     activeToolRef.current = tool;
   }, [tool]);
+  useEffect(() => () => {
+    for (const lease of simulatorHandoffLeasesRef.current.values()) void lease.release();
+    simulatorHandoffLeasesRef.current.clear();
+  }, []);
   const setCursorPreview = useCallback((next: CursorPreviewState | null) => {
     canvasCursorPreviewRef.current = next;
     const shouldSyncCanvasState = activeToolRef.current === "paste";
@@ -5753,12 +5759,9 @@ function ChartEditorController() {
   ]);
 
   const openSimulatorWindow = useCallback(async () => {
-    if (!skinAssets) {
-      setStatusMessage("皮肤资源尚未就绪，无法打开播放器。");
-      return;
-    }
     let readyUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
+    let pendingLease: ResourceConsumerLease | null = null;
     const clearReadySubscription = () => {
       if (readyUnlisten) {
         void readyUnlisten();
@@ -5769,131 +5772,44 @@ function ChartEditorController() {
         timeoutId = null;
       }
     };
+    const releaseHandoff = (requestId: string) => {
+      const lease = simulatorHandoffLeasesRef.current.get(requestId);
+      if (lease === undefined) return;
+      simulatorHandoffLeasesRef.current.delete(requestId);
+      void lease.release();
+    };
 
     try {
-      const playbackPreset =
-        WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
-        ?? WINDOW_SIZE_PRESETS[0]
-        ?? WINDOW_SIZE_PRESETS[1];
-      const playbackWidth = Math.max(1, Math.floor(Number(playbackPreset?.width ?? 1366)));
-      const playbackHeight = Math.max(1, Math.floor(Number(playbackPreset?.height ?? 768)));
-      const playbackFpsValue = playbackFps === 120 ? 120 : 60;
-      const playbackNoteSizePercent = Math.max(
-        10,
-        Math.min(200, Math.round(appOptionSettings.rhythmNoteSizePercent)),
-      );
-      const playbackNoteSpeed = Number(
-        clamp(toFinite(appOptionSettings.rhythmNoteSpeed, 9.7), 1, 12).toFixed(2),
-      );
-      const playbackMvAlpha = Math.round(
-        clamp(toFinite(playbackMvAlphaPercent, 100), 30, 100) / 10,
-      ) * 10;
-      const playbackOffsetMs = Math.round(clamp(toFinite(metadata.offsetMs, 0), -5000, 5000));
-      const playbackMvOffsetMs = Math.round(clamp(toFinite(metadata.mvOffsetMs, 0), -5000, 5000));
-      const requestId = `simulator-launch-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      const windowLabel = requestId;
-      const locationHref = typeof window !== "undefined"
-        ? window.location.href
-        : "http://localhost/";
-      const targetUrl = new URL(locationHref);
+      const playbackPreset = WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
+        ?? WINDOW_SIZE_PRESETS[0] ?? WINDOW_SIZE_PRESETS[1];
+      const prepared = await buildSimulatorLaunchDescriptor({
+        manager: resourceManager,
+        chartJson: garupaChartJsonText,
+        media: chartMediaResources,
+        metadata,
+        mirror: appOptionSettings.mirrorEnabled,
+        mvEnabled: playbackMvMode,
+        fps: playbackFps === 120 ? 120 : 60,
+        noteSize: appOptionSettings.rhythmNoteSizePercent,
+        noteSpeed: appOptionSettings.rhythmNoteSpeed,
+        syncLine: appOptionSettings.simultaneousLineEnabled,
+        bgmGainPercent: playbackVolumePercent,
+        seGainPercent: playbackVolumePercent * noteSeVolumeScale,
+        requestedWindowWidth: Number(playbackPreset?.width ?? 1366),
+        requestedWindowHeight: Number(playbackPreset?.height ?? 768),
+      });
+      pendingLease = prepared.handoffLease;
+      const descriptor = prepared.descriptor;
+      const requestId = descriptor.requestId;
+      simulatorHandoffLeasesRef.current.set(requestId, pendingLease);
+      pendingLease = null;
+      const targetUrl = new URL(window.location.href);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
 
-      const bgmDataUrl = chartMediaLease.urls.bgm ?? null;
-      const playbackMvDataUrl = chartMediaLease.urls.mv ?? null;
-      const runtimeSe = appliedSkinResources?.se ?? null;
-      const runtimeFieldSkin = appliedSkinResources?.field ?? null;
-      const runtimeBgSkin = appliedSkinResources?.background ?? null;
-      const runtimeJudgeSkin = appliedSkinResources?.judge ?? null;
-      const simulatorBgmVolumePercent = clamp(playbackVolumePercent, 0, 100);
-      const audioPayload = {
-        seRuntimeAssets: runtimeSe ?? null,
-        bgmVolumePercent: simulatorBgmVolumePercent,
-        seVolumePercent: simulatorBgmVolumePercent * noteSeVolumeScale,
-      };
-      const simulatorMetadataWithFallback = {
-        ...metadata,
-        offsetMs: playbackOffsetMs,
-        mvOffsetMs: playbackMvOffsetMs,
-        bgmDataUrl,
-        mvDataUrl: playbackMvDataUrl,
-        mvDataUrlFallback: null,
-      } as ChartMetadata & {
-        bgmDataUrl: string | null;
-        mvDataUrl: string | null;
-        mvDataUrlFallback: null;
-      };
-      const normalizedPlaybackNotes = notes.map((note) => ({
-        ...note,
-        timingGroup: normalizeTimingGroup(note.timingGroup, "#Global"),
-      }));
-      const playbackNoteById = new Map(normalizedPlaybackNotes.map((note) => [note.id, note] as const));
-      const normalizedPlaybackSlideChains = slideChains
-        .map((chain) => {
-          const validNoteIds = chain.noteIds.filter((noteId) => playbackNoteById.has(noteId));
-          if (validNoteIds.length < 2) {
-            return null;
-          }
-          const headNote = playbackNoteById.get(validNoteIds[0]);
-          const timingGroup = normalizeTimingGroup(chain.timingGroup ?? headNote?.timingGroup ?? "#Global", "#Global");
-          return {
-            id: chain.id,
-            noteIds: validNoteIds,
-            timingGroup,
-          };
-        })
-        .filter((chain): chain is { id: string; noteIds: string[]; timingGroup: string } => chain !== null);
-
-      const launchPayload: SimulatorLaunchPayload = {
-        requestId,
-        playMode: "auto",
-        autoStart: true,
-        metadata: simulatorMetadataWithFallback,
-        settings: {
-          windowWidth: playbackWidth,
-          windowHeight: playbackHeight,
-          fps: playbackFpsValue,
-          noteSizePercent: playbackNoteSizePercent,
-          noteSpeed: playbackNoteSpeed,
-          offsetMs: playbackOffsetMs,
-          sameline: appOptionSettings.simultaneousLineEnabled,
-          colorAssist: appOptionSettings.colorAssistEnabled,
-          mirror: appOptionSettings.mirrorEnabled,
-          effectEnable: appOptionSettings.clickEffectEnabled,
-          mvMode: playbackMvMode,
-          mvAlphaPercent: playbackMvAlpha,
-          habahiro: isHabahiroEnabled,
-        },
-        audio: audioPayload,
-        skin: {
-          noteSkin: skinAssets,
-          fieldSkin: runtimeFieldSkin ?? null,
-          bgSkin: runtimeBgSkin ?? null,
-          judgeSkin: runtimeJudgeSkin ?? null,
-        },
-        chartData: {
-          baseBpm: metadata.bpm,
-          notes: normalizedPlaybackNotes,
-          slideChains: normalizedPlaybackSlideChains,
-          bpmEvents: sortBpmEvents(bpmEvents).map((event) => ({
-            id: event.id,
-            beat: event.beat,
-            bpm: event.bpm,
-          })),
-          svEvents: sortSvEvents(svEvents).map((event) => ({
-            id: event.id,
-            beat: event.beat,
-            value: event.value,
-            timingGroup: normalizeTimingGroup(event.timingGroup, "#Global"),
-          })),
-        },
-      };
-
       if (isMobileRuntime()) {
-        const wrotePayload = writeMobileRoutePayload(requestId, {
-          requestId,
-          payload: launchPayload,
-        });
+        const wrotePayload = writeMobileRoutePayload(requestId, { requestId, descriptor });
         if (!wrotePayload) {
+          releaseHandoff(requestId);
           throw new Error("移动端播放器数据写入失败。");
         }
         window.location.hash = targetUrl.hash;
@@ -5905,87 +5821,66 @@ function ChartEditorController() {
         SIMULATOR_WINDOW_READY_EVENT,
         async (event) => {
           const readyPayload = event.payload ?? {};
-          if (readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") {
-            return;
-          }
+          if (readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
           clearReadySubscription();
           try {
-            await emitTo(
-              readyPayload.label,
-              SIMULATOR_WINDOW_PAYLOAD_EVENT,
-              {
-                requestId,
-                payload: launchPayload,
-              },
-            );
-            setStatusMessage("播放器参数已同步。");
+            await emitTo(readyPayload.label, SIMULATOR_WINDOW_PAYLOAD_EVENT, { requestId, descriptor });
+            setStatusMessage("播放器参数与资源快照已同步。");
           } catch (error) {
+            releaseHandoff(requestId);
             const message = error instanceof Error ? error.message : String(error);
             setStatusMessage(`播放器参数发送失败：${message}`);
           }
         },
       );
 
-      const simulatorWindow = new WebviewWindow(windowLabel, {
+      const simulatorWindow = new WebviewWindow(requestId, {
         title: `${metadata.title} - playing`,
-        width: playbackWidth,
-        height: playbackHeight,
-        minWidth: 1100,
-        minHeight: 680,
+        width: descriptor.requestedWindow.width,
+        height: descriptor.requestedWindow.height,
         center: true,
-        resizable: true,
+        resizable: false,
         url: targetUrl.toString(),
       });
       simulatorWindow.once("tauri://error", (event) => {
         clearReadySubscription();
+        releaseHandoff(requestId);
         const message = event?.payload ? JSON.stringify(event.payload) : "未知错误";
         setStatusMessage(`播放器窗口创建失败：${message}`);
       });
       simulatorWindow.once("tauri://destroyed", () => {
         clearReadySubscription();
+        releaseHandoff(requestId);
       });
       timeoutId = window.setTimeout(() => {
-        if (!readyUnlisten) {
-          return;
-        }
+        if (!readyUnlisten) return;
         clearReadySubscription();
+        releaseHandoff(requestId);
         setStatusMessage("播放器窗口握手超时，请重试。");
       }, 15000);
       setStatusMessage("播放器窗口已打开。");
     } catch (error) {
       clearReadySubscription();
+      if (pendingLease !== null) void pendingLease.release();
       const message = error instanceof Error ? error.message : String(error);
       setStatusMessage(`播放器窗口启动失败：${message}`);
     }
   }, [
     WINDOW_SIZE_PRESETS,
-    appliedSkinResources,
+    appOptionSettings.mirrorEnabled,
     appOptionSettings.rhythmNoteSizePercent,
     appOptionSettings.rhythmNoteSpeed,
-    appOptionSettings.clickEffectEnabled,
     appOptionSettings.simultaneousLineEnabled,
-    appOptionSettings.colorAssistEnabled,
-    appOptionSettings.mirrorEnabled,
-    audioObjectUrl,
-    chartMediaLease,
-    clamp,
+    chartMediaResources,
+    garupaChartJsonText,
     metadata,
-    notes,
-    slideChains,
-    bpmEvents,
-    svEvents,
-    sortBpmEvents,
-    sortSvEvents,
-    normalizeTimingGroup,
     noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
-    playbackMvAlphaPercent,
     playbackVolumePercent,
     playbackWindowPresetId,
-    skinAssets,
+    resourceManager,
     setStatusMessage,
-    toFinite,
   ]);
 
   const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;

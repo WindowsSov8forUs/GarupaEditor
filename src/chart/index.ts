@@ -29,3 +29,16 @@ export {
   parseGarupaChartJson,
 } from "./conversion";
 export type { ChartFormatConversionOptions } from "./conversion";
+export {
+  axisAtMs,
+  buildTimingGroupDefs,
+  findVisibilityWindows,
+  normalizeSvValue,
+  normalizeTimingGroupId,
+} from "./timingGroup";
+export type {
+  TimingGroupChange,
+  TimingGroupDef,
+  TimingGroupSourceEvent,
+  VisibilityWindow,
+} from "./timingGroup";
