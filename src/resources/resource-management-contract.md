@@ -4,7 +4,7 @@
 
 `ApplicationResourceManager` is the only production authority for locating, acquiring, installing, importing, snapshotting and releasing application resources. A consumer may interpret bytes for its own rendering/audio/movie contract, but it may not select a physical resource, consult a network source, read a path, persist bytes or choose fallback content.
 
-This product contract is not Reverse evidence and does not change any original-game behavior claim. The current simulator integration remains excluded from this foundation stage.
+This product contract is not Reverse evidence and does not change any original-game behavior claim. Simulator integration is separately authorized by `simulator-resource-integration-contract.md`; it must replace the simulator-owned store without weakening the source-neutral lease or consumer validation boundaries.
 
 ## Source classes
 
@@ -49,4 +49,4 @@ Only resource provider/composition code may import Vite assets, invoke Tauri res
 
 Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v3.json`; v2 bytes/Data URLs are accepted only by the one-time migration path.
 
-`src/simulator/**` is not migrated by this foundation stage. A separately authorized integration must replace the simulator-owned static store with an application-created snapshot without weakening consumer format/structure validation.
+The authorized Simulator migration is governed by [`simulator-resource-integration-contract.md`](./simulator-resource-integration-contract.md). Until its assembly and Stage 9 acceptance gates close, the old static store remains an implementation baseline only and must not be described as already migrated.

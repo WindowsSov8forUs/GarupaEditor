@@ -36,7 +36,7 @@
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Original Skin settings / switching | `closed-static-portable` | Reverse资源基线`977f5e71`与Field/Stage可达性纠正`4312a8ad`：完整profile 133 packs中3个stageskin仅属未开放Live2D，当前Standard/MV manifest精确为130 packs/576 files；default不再绕过8-pack原子装配。Schema 12 aggregate resolver、Note/Directional/Judge/Field/可达Background、SE、动态ParticleSystem、Retry/MoveTime identity、default+Limited production composition、actual Pixi/WebAudio及各3-fresh WebView2 raster均关闭；MV路线由双静态门保证selected Skin assembly先于Movie backend construction/prepare并完整回滚两级failure owners；Collabo 36包级失败。非默认device/frame parity仍不声明 |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
-| Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
+| Main-program integration | `authorized-in-progress` | 统一资源迁移与桌面/移动Stage 9已由独立任务书授权；在B–L验收关闭前不得声明产品接入完成 |
 
 状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-static-portable`表示原作选择/生命周期由静态链关闭且portable资源/backend验收完成，但不伪称非默认特殊包实机帧；`closed-product-extension`表示GarupaEditor产品合同和产品验收已闭合，但不声明原作等价；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
 
@@ -88,4 +88,4 @@ Reverse Skin可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`确认既�
 
 日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以15个development groups覆盖既有compiled/static集合并新增Skin semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前40-semantic-leaf DAG包含startup-audio、MV、Skin contract、3-fresh ordinary/startup/Skin WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
-`mainProgramIntegrationAuthorization=false`。
+`mainProgramIntegrationAuthorization=true`；当前完成状态仍为`in-progress`，权威任务书为`tmp/simulator-unified-resource-stage9-task.md`。
