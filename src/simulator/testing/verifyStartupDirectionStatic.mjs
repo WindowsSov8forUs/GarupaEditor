@@ -43,8 +43,8 @@ for (const required of [
 for (const required of [
   "readonly sdCharacters: readonly [];", "Object.freeze([]) as readonly []",
 ]) if (!presentationDerivation.includes(required)) throw new Error(`empty SD collection mapping missing: ${required}`);
-if (!/selection\.audioSe,\s*store,\s*null,/m.test(resourceAssembly)) {
-  throw new Error("resource assembly does not force the live-start voice resource to null");
+if (!resourceAssembly.includes("prepareLeasedAudioResources") || /PreparedLiveStartVoice|liveStartVoice/.test(resourceAssembly)) {
+  throw new Error("resource assembly must build leased BGM/SE only and keep live-start voice absent");
 }
 for (const [source, forbidden] of [
   [contracts, ["SimulatorProductLaneCount", "liveStartVoiceMp3", "sdCharacterAtlases"]],

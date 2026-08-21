@@ -1,6 +1,6 @@
 import { sha256UpperHex } from "../backends/resources/sha256";
 import type { SimulatorPresentationPackage } from "../public/contracts";
-import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { SimulatorAssemblyResult } from "./result";
 import {
   inspectStrictRgbaPng,
   STARTUP_JACKET_SIZE,

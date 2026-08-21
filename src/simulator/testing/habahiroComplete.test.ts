@@ -1,11 +1,11 @@
 import {
   HABAHIRO_BESTDORI_PINNED_ASSETS,
-} from "../backends/resources/habahiroBestdoriManifest";
+} from "./legacyHabahiroBestdoriManifest";
 import {
   parseHabahiroAtlasRows,
   prepareHabahiroBestdoriPack,
   type HabahiroBestdoriTransport,
-} from "../backends/resources/habahiroBestdoriProvider";
+} from "./legacyHabahiroBestdoriProvider";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { getHabahiroMeshWidthRate } from "../engine/rendering/ordinaryNoteGeometry";

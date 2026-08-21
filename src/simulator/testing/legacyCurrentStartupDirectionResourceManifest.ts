@@ -1,4 +1,4 @@
-import type { RenderResourceAssetProfile } from "../renderingContracts";
+import type { RenderResourceAssetProfile } from "../backends/renderingContracts";
 
 export const CURRENT_STARTUP_DIRECTION_EVIDENCE_IDS = Object.freeze([
   "SD01", "SD02", "SD03", "SD04", "SD05", "SD06", "SD07", "SD08",

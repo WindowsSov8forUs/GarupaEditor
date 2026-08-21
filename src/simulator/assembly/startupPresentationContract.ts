@@ -5,7 +5,7 @@ import type {
 import {
   rejected,
   type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
+} from "./result";
 import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
 

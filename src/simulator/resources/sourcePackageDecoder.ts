@@ -2,18 +2,18 @@ import particleCatalogJson from "../engine/skin/currentParticleSemanticCatalog.j
 import renderCatalogJson from "../engine/skin/currentRenderSemanticCatalog.json";
 import { sha256UpperHex } from "../backends/resources/sha256";
 import { inspectMp3FirstFrame } from "../assembly/sessionBgmDerivation";
-import type { CurrentSkinResourceRole } from "../backends/resources/currentSkinResourceManifest";
+import type { CurrentSkinResourceRole } from "./sourcePackageContracts";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
-import { rejected, type SimulatorAssemblyResult } from "./sharedResourceAdapters";
+import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 import { OriginalResourcePackageView } from "./originalResourcePackageView";
 import type {
   PreparedSkinPortableFile,
   PreparedSkinPortablePack,
-} from "./skinPortablePack";
+} from "./sourcePackageContracts";
 import type {
   SelectedSkinResourceIdentity,
   SelectedSkinResourceRole,
-} from "./skinResourceSelector";
+} from "../assembly/resourceRequirements";
 
 interface RenderSemanticTexture {
   readonly name: string;
@@ -36,6 +36,17 @@ interface ParticleSemanticResource {
 
 const renderCatalog = parseRenderCatalog(renderCatalogJson);
 const particleCatalog = parseParticleCatalog(particleCatalogJson);
+
+export async function prepareSourceAudioPackage(
+  logicalResource: string,
+  lease: SimulatorResourceLease,
+): Promise<SimulatorAssemblyResult<PreparedSkinPortablePack>> {
+  const opened = await OriginalResourcePackageView.open(lease, logicalResource);
+  if (opened.status === "rejected") {
+    return rejected(opened.failure.code === "resource-platform-unavailable" ? "platform-unavailable" : "resource-integrity", opened.failure.capability, opened.failure.boundary);
+  }
+  return decodeSourcePackage("tap-se", logicalResource, opened.value);
+}
 
 export async function prepareSelectedSkinSourcePackages(
   selected: readonly SelectedSkinResourceIdentity[],

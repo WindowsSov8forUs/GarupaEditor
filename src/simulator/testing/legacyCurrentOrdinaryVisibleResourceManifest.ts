@@ -1,4 +1,4 @@
-import type { RenderAtlasRow, RenderResourceAssetProfile } from "../renderingContracts";
+import type { RenderAtlasRow, RenderResourceAssetProfile } from "../backends/renderingContracts";
 
 export interface OrdinaryVisiblePortableResourceEntry {
   readonly resourceKeySuffix: string;

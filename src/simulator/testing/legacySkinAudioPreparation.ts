@@ -6,8 +6,8 @@ import type {
   AudioResourceProvider,
 } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
-import type { PreparedSkinPortablePack } from "../resources/skinPortablePack";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 
 export interface PreparedSkinAudioOverlay {
   readonly profile: AudioResourceProfileSet;

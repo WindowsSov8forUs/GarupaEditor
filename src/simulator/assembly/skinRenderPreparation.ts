@@ -9,8 +9,8 @@ import type {
 } from "../backends/renderingContracts";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
-import type { PreparedSkinPortablePack } from "../resources/skinPortablePack";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import { rejected, type SimulatorAssemblyResult } from "./result";
 
 export interface PreparedSkinRenderOverlay {
   readonly assets: readonly RenderResourceAssetProfile[];
@@ -46,13 +46,7 @@ export async function prepareSkinRenderOverlay(
   const local: LocalRenderResource[] = [];
   const assetIdsByResource = new Map<string, Map<string, string>>();
   for (const pack of packs) {
-    if (!selected.has(pack.logicalResource) ||
-      (recipe.chartMode === "habahiro" &&
-        (pack.logicalResource === recipe.note.logicalResource ||
-          pack.logicalResource === recipe.field.logicalResource ||
-          pack.logicalResource === recipe.judge.logicalResource))) {
-      continue;
-    }
+    if (!selected.has(pack.logicalResource)) continue;
     const built = buildAssets(pack);
     if (built.status === "rejected") return built;
     assets.push(...built.value.assets);
@@ -73,7 +67,7 @@ export async function prepareSkinRenderOverlay(
           backgroundLineLogicalAssetId: field.get("bg_line_rhythm")!,
           judgeLineLogicalAssetId: field.get("game_play_line")!,
         });
-  if (recipe.chartMode === "ordinary" && fieldBindings === null) {
+  if (fieldBindings === null) {
     return invalid("simulator.skin.field-required-bindings");
   }
   const background = assetIdsByResource.get(recipe.background.logicalResource ?? "");
@@ -244,10 +238,10 @@ function resolveBindings(
     (typeof productJudgementEffectLogicalAssetId !== "string" || productJudgementEffectLogicalAssetId.length === 0)) {
     return invalid("simulator.skin.product-effect-binding");
   }
+  const noteAssets = assets.get(recipe.note.logicalResource!);
+  const directionalAssets = assets.get(recipe.directional.noteLogicalResource);
+  const judgeAssets = assets.get(recipe.judge.logicalResource!);
   if (recipe.chartMode === "ordinary") {
-    const noteAssets = assets.get(recipe.note.logicalResource!);
-    const directionalAssets = assets.get(recipe.directional.noteLogicalResource);
-    const judgeAssets = assets.get(recipe.judge.logicalResource!);
     note = noteAssets?.get("RhythmGameSprites") ?? "";
     sync = noteAssets?.get("simultaneous_line") ?? "";
     long = noteAssets?.get("longNoteLine") ?? "";
@@ -266,6 +260,41 @@ function resolveBindings(
       warningLogicalAssetId: base.ordinaryVisible.warningLogicalAssetId,
       tapLaneEffectLogicalAssetIds: base.ordinaryVisible.tapLaneEffectLogicalAssetIds,
     });
+  } else {
+    note = noteAssets?.get("RhythmGameSprites1") ?? "";
+    sync = noteAssets?.get("simultaneous_line") ?? "";
+    long = noteAssets?.get("longNoteLine") ?? "";
+    curve = noteAssets?.get("longNoteLine2") ?? "";
+    directional = directionalAssets?.get("DirectionalFlickSprites") ?? "";
+    left = directionalAssets?.get("FlickNoteLine_l") ?? "";
+    right = directionalAssets?.get("FlickNoteLine_r") ?? "";
+    const judge = judgeAssets?.get("Judge") ?? "";
+    const habahiro = {
+      normal: noteAssets?.get("RhythmGameSprites1") ?? "",
+      normal16: noteAssets?.get("RhythmGameSprites16") ?? "",
+      skill: noteAssets?.get("RhythmGameSprites2") ?? "",
+      flick: noteAssets?.get("RhythmGameSprites3") ?? "",
+      long: noteAssets?.get("RhythmGameSprites4") ?? "",
+      longFlash: noteAssets?.get("RhythmGameSprites5") ?? "",
+      slideAmong: noteAssets?.get("RhythmGameSprites1") ?? "",
+    };
+    if ([note, sync, long, curve, directional, left, right, judge, ...Object.values(habahiro)].some((value) => value.length === 0)) {
+      return invalid("simulator.skin.render-habahiro-required-binding");
+    }
+    ordinaryVisible = Object.freeze({ ...base.ordinaryVisible, judgeLogicalAssetId: judge });
+    return accepted(Object.freeze({
+      ...base,
+      noteAtlasLogicalAssetId: note,
+      syncLineLogicalAssetId: sync,
+      longNoteMaterialLogicalAssetId: long,
+      curveNoteMaterialLogicalAssetId: curve,
+      directionalAtlasLogicalAssetId: directional,
+      multipleDirectionalLineLeftLogicalAssetId: left,
+      multipleDirectionalLineRightLogicalAssetId: right,
+      ordinaryVisible,
+      habahiroAtlasLogicalAssetIds: Object.freeze(habahiro),
+      ...(productJudgementEffectLogicalAssetId === undefined ? {} : { productJudgementEffectLogicalAssetId }),
+    }));
   }
   return accepted(Object.freeze({
     ...base,

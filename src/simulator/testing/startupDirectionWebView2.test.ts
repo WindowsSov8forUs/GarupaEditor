@@ -1,8 +1,8 @@
 import { Application, Rectangle, Texture } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
-import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
-import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resources/currentStartupDirectionResourceManifest";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
+import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "./legacyCurrentStartupDirectionResourceManifest";
 import { deriveSessionPresentation } from "../assembly/sessionPresentationDerivation";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
@@ -17,7 +17,7 @@ import type {
 import {
   createAudioSessionResourceProfile,
   CURRENT_AUDIO_SE_RESOURCES,
-} from "../backends/resources/currentAudioResourceManifest";
+} from "./legacyCurrentAudioResourceManifest";
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
 import { StartupAudioOwner } from "../engine/audio/startupAudioOwner";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";

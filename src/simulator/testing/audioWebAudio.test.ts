@@ -16,13 +16,13 @@ import {
   CURRENT_AUDIO_TEST_PROFILE,
   CURRENT_BGM_REGRESSION_RESOURCE,
 } from "./audioSessionBgmTestProfile";
-import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
+import { createAudioSessionResourceProfile } from "./legacyCurrentAudioResourceManifest";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { LIVE_MANUAL_MODE } from "./modeFixtures";
-import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
-import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import { prepareSkinAudioOverlay } from "../assembly/skinAudioPreparation";
+import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
+import { prepareSkinAudioOverlay } from "./legacySkinAudioPreparation";
 
 const profileByLength = new Map(
   CURRENT_AUDIO_TEST_PROFILE.resources.map((resource) => [resource.byteLength, resource]),

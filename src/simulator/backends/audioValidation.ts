@@ -1,4 +1,3 @@
-import { CURRENT_AUDIO_SE_RESOURCES } from "./resources/currentAudioResourceManifest";
 import type {
   AudioCommand,
   AudioFailureCode,
@@ -31,6 +30,7 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
   perfect: "sound/tapseskin/skin00",
 } as const);
 
+const FIXED_SE_COUNT = Object.keys(FIXED_SE_LOGICAL_IDS).length;
 const FIXED_SE_LOGICAL_IDS_SET: ReadonlySet<string> = new Set(Object.values(FIXED_SE_LOGICAL_IDS));
 const SKIN_TAP_CUES: ReadonlySet<string> = new Set([
   "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect",
@@ -80,8 +80,8 @@ export function validateAndFreezeAudioProfile(
     profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false ||
     !Array.isArray(profile.resources) ||
-    (profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 1 &&
-      profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 2)
+    (profile.resources.length !== FIXED_SE_COUNT + 1 &&
+      profile.resources.length !== FIXED_SE_COUNT + 2)
   ) {
     return rejectProfile(
       "audio.profile.invalid-shape",
@@ -152,7 +152,7 @@ export function validateAndFreezeAudioProfile(
     if (validated.status !== "accepted") return validated;
     fixedSe.push(validated.value);
   }
-  if (bgm === null || seenSe.size !== CURRENT_AUDIO_SE_RESOURCES.length) {
+  if (bgm === null || seenSe.size !== FIXED_SE_COUNT) {
     return rejectProfile(
       "audio.profile.incomplete-session-inventory",
       "The profile must contain one session BGM and every exact current SE once; defaults and substitutions are forbidden.",
@@ -389,60 +389,32 @@ function validateFixedSeResource(
     );
   }
   const expectedLogicalId = FIXED_SE_LOGICAL_IDS[resource.cue as keyof typeof FIXED_SE_LOGICAL_IDS];
-  const expected = CURRENT_AUDIO_SE_RESOURCES.find((candidate) => candidate.cue === resource.cue);
   const dynamicTap = SKIN_TAP_CUES.has(resource.cue) &&
     typeof resource.logicalId === "string" && resource.logicalId.startsWith("sound/tapseskin/") &&
     resource.logicalId !== "sound/tapseskin/directionalflickskin00";
-  const dynamicDirectional = SKIN_DIRECTIONAL_CUES.has(resource.cue) &&
-    resource.logicalId === "sound/tapseskin/directionalflickskin00";
-  if (dynamicTap || dynamicDirectional) {
-    if (seen.has(resource.cue) || !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
-      !SHA256_PATTERN.test(resource.sha256) || resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
-      !Number.isSafeInteger(resource.sampleRate) || ![8000, 44100, 48000].includes(resource.sampleRate) ||
-      (resource.channels !== 1 && resource.channels !== 2) ||
-      !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
-      !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 ||
-      resource.identity !== "semantic-exact" || resource.signal !== "portable-equivalent-lossy") {
-      return rejectProfile("audio.profile.invalid-skin-se", "Selected Skin SE requires exact internally pinned MP3 bytes and positive decoded metadata.");
-    }
-    if (resource.cue === "SE_RHYTHM_TAP_LONG") {
-      if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
-        resource.loop.start !== 0 || !Number.isSafeInteger(resource.loop.end) ||
-        resource.loop.end <= 0 || resource.loop.end > resource.sampleFrames) {
-        return rejectProfile("audio.profile.invalid-skin-loop", "Selected Skin Long SE requires one explicit bounded whole-source portable loop.");
-      }
-    } else if (resource.loop !== null) {
-      return rejectProfile("audio.profile.unexpected-skin-loop", "Only selected Skin Long SE may loop.");
-    }
-    seen.add(resource.cue);
-    return audioAccepted(Object.freeze({
-      ...resource,
-      loop: resource.loop === null ? null : Object.freeze({ ...resource.loop }),
-    } as AudioFixedSeResourceProfile));
+  const dynamicDirectional = SKIN_DIRECTIONAL_CUES.has(resource.cue) && resource.logicalId === "sound/tapseskin/directionalflickskin00";
+  const logicalIdentityAccepted = dynamicTap || dynamicDirectional || resource.logicalId === expectedLogicalId;
+  const expectedSignal = resource.cue === "bad" || resource.cue === "miss"
+    ? "semantic-exact-silence"
+    : "portable-equivalent-lossy";
+  if (!logicalIdentityAccepted || seen.has(resource.cue) || !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
+    !SHA256_PATTERN.test(resource.sha256) || resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
+    !Number.isSafeInteger(resource.sampleRate) || ![8000, 44100, 48000].includes(resource.sampleRate) ||
+    (resource.channels !== 1 && resource.channels !== 2) || !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
+    !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 || resource.identity !== "semantic-exact" ||
+    resource.signal !== expectedSignal) {
+    return rejectProfile("audio.profile.invalid-leased-se", "Every leased SE requires one known cue/logical owner, observed bytes and positive decoded MP3 metadata without a fixed content hash allowlist.");
   }
-  if (
-    expectedLogicalId === undefined || expected === undefined || seen.has(resource.cue) ||
-    resource.logicalId !== expectedLogicalId || resource.byteLength !== expected.byteLength ||
-    resource.sha256 !== expected.sha256 || resource.mime !== expected.mime ||
-    resource.codec !== expected.codec || resource.sampleRate !== expected.sampleRate ||
-    resource.channels !== expected.channels || resource.durationSeconds !== expected.durationSeconds ||
-    resource.sampleFrames !== expected.sampleFrames ||
-    resource.identity !== expected.identity || resource.signal !== expected.signal
-  ) {
-    return rejectProfile(
-      "audio.profile.invalid-fixed-se",
-      "Every fixed SE must match the exact current cue, logical ID, bytes, metadata and fidelity without aliases.",
-    );
-  }
-  if (resource.cue === "SE_RHYTHM_TAP_LONG" || resource.cue === "SE_RHYTHM_GAYA") {
+  if (resource.cue === "SE_RHYTHM_TAP_LONG") {
     if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
-      resource.loop.start !== expected.loop?.start || resource.loop.end !== expected.loop.end) {
-      return rejectProfile(
-        "audio.profile.invalid-loop",
-        resource.cue === "SE_RHYTHM_GAYA"
-          ? "Startup Gaya loops the exact full decoded source range [0,310191)."
-          : "The current Long/Slide loop is the exact half-open source range [0,22997).",
-      );
+      resource.loop.start !== 0 ||
+      (resource.loop.end !== resource.sampleFrames && !(resource.logicalId === "sound/tapseskin/skin00" && resource.loop.end === 22997))) {
+      return rejectProfile("audio.profile.invalid-loop", "Selected Skin Long/Slide cues loop their complete decoded portable source; the isolated base profile retains the separately evidenced 22997-frame CRI loop." );
+    }
+  } else if (resource.cue === "SE_RHYTHM_GAYA") {
+    if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
+      resource.loop.start !== 0 || resource.loop.end !== resource.sampleFrames) {
+      return rejectProfile("audio.profile.invalid-loop", "Startup Gaya loops the full decoded leased source range.");
     }
   } else if (resource.loop !== null) {
     return rejectProfile(
@@ -452,9 +424,9 @@ function validateFixedSeResource(
   }
   seen.add(resource.cue);
   return audioAccepted(Object.freeze({
-    ...expected,
-    loop: expected.loop === null ? null : Object.freeze({ ...expected.loop }),
-  }));
+    ...resource,
+    loop: resource.loop === null ? null : Object.freeze({ ...resource.loop }),
+  } as AudioFixedSeResourceProfile));
 }
 
 function rejectProfile(capability: string, boundary: string) {

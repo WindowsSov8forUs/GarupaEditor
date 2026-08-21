@@ -5,12 +5,12 @@ import { PortableRenderResourcePreflightAdapter } from "../backends/resources/lo
 import type { RenderCommand, RenderResourceProfile } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
+import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelector";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
+import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { prepareSkinParticleProvider } from "../assembly/skinParticlePreparation";

@@ -47,7 +47,7 @@ for (const root of productionRoots) {
 if (/bgm003|sound\/bgm003|current-external-portable-v1/.test(productionSource)) {
   violations.push("production retains a chart-specific BGM literal or old fixed profile identity");
 }
-if (!productionSource.includes('cue: "SE_RHYTHM_TAP_SKILL"') ||
+if (!productionSource.includes('"SE_RHYTHM_TAP_SKILL"') ||
   !productionSource.includes('return ok("SE_RHYTHM_TAP_SKILL")')) {
   violations.push("Skill-note hit SE resource or chart-owned route was removed with the character skill effect system");
 }
@@ -83,23 +83,22 @@ if (/currentSampleFrames/.test(productionSource)) {
   violations.push("obsolete currentSampleFrames remains in production audio contracts");
 }
 const contracts = readFileSync(resolve(simulatorRoot, "backends", "audioContracts.ts"), "utf8");
-const audioManifest = readFileSync(resolve(
-  simulatorRoot, "backends", "resources", "currentAudioResourceManifest.ts",
-), "utf8");
+const leasedAudio = readFileSync(resolve(
+  simulatorRoot, "assembly", "leasedAudioPreparation.ts",
+), "utf8") + readFileSync(resolve(simulatorRoot, "backends", "audioValidation.ts"), "utf8");
 for (const required of [
-  'cue: "SE_RHYTHM_GAYA"',
-  'sha256: "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554"',
-  "start: 0, end: 310191",
+  '"SE_RHYTHM_GAYA"',
+  "resource.loop.end !== resource.sampleFrames",
   'kind: "se.start-owned-loop"',
   'kind: "se.fade-owned-loop"',
 ]) {
-  if (!(audioManifest + contracts + productionSource).includes(required)) {
+  if (!(leasedAudio + contracts + productionSource).includes(required)) {
     violations.push(`startup Gaya production contract missing: ${required}`);
   }
 }
-if ((audioManifest.match(/cue: "SE_RHYTHM_GAYA"/g) ?? []).length !== 1 ||
-  /cue:\s*"SE_RHYTHM_GAYA"[\s\S]{0,400}semantic-exact-silence/.test(audioManifest)) {
-  violations.push("Gaya must be one exact non-silent fixed resource");
+if (leasedAudio.includes("00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554") ||
+  /SE_RHYTHM_GAYA[\s\S]{0,400}semantic-exact-silence/.test(leasedAudio)) {
+  violations.push("Gaya must use leased non-silent bytes without a compiled content allowlist");
 }
 if (/hold\.start-loop[\s\S]{0,180}SE_RHYTHM_GAYA|se\.play-one-shot[\s\S]{0,180}SE_RHYTHM_GAYA/.test(productionSource)) {
   violations.push("Gaya is aliased to Hold or one-shot instead of its startup owned-loop contract");

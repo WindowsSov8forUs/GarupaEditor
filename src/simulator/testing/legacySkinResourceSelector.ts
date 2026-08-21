@@ -2,7 +2,7 @@ import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import {
   getCurrentSkinPortablePack,
   type CurrentSkinPortablePackEntry,
-} from "../backends/resources/currentSkinResourceManifest";
+} from "./legacyCurrentSkinResourceManifest";
 
 const SKIN_RESOURCE_NAMESPACE = "simulator-static/current-10.1.4/skin-portable" as const;
 

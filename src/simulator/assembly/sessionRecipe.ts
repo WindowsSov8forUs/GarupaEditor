@@ -30,7 +30,7 @@ import type {
 import {
   rejected,
   type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
+} from "./result";
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";

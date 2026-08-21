@@ -30,15 +30,17 @@ import {
   ORIGINAL_UI_HALF_WIDTH_BASE,
   type OriginalSurfaceLayout,
 } from "../../scene/originalSurfaceLayout";
-import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../resources/currentOrdinaryVisibleResourceManifest";
+import {
+  COMMON_ORDINARY_VISIBLE_BINDINGS as CURRENT_ORDINARY_VISIBLE_BINDINGS,
+  COMMON_SCORE_HUD_BINDINGS as CURRENT_SCORE_HUD_BINDINGS,
+  COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
+} from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
 import {
   CURRENT_SCORE_HUD_BITMAP_GLYPHS,
-  CURRENT_SCORE_HUD_BINDINGS,
   CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
-} from "../resources/currentScoreHudResourceManifest";
-import { CURRENT_STARTUP_DIRECTION_BINDINGS } from "../resources/currentStartupDirectionResourceManifest";
+} from "../../engine/rendering/currentScoreHudSemanticProfile";
 import {
   animationBindingMatchesProfile,
   animationRoleMatchesObject,

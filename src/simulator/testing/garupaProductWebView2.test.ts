@@ -1,7 +1,7 @@
 import { Application, Rectangle } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderResourceProfile } from "../backends/renderingContracts";
 import { copyAndFreezeGarupaChartJson } from "../assembly/garupaChartContract";

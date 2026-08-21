@@ -3,7 +3,7 @@ import type {
   AudioResourceProfileSet,
   AudioSessionBgmResourceProfile,
   AudioSessionVoiceResourceProfile,
-} from "../audioContracts";
+} from "../backends/audioContracts";
 
 const SE_RESOURCES_WITHOUT_ROLE: readonly Omit<AudioFixedSeResourceProfile, "role">[] = Object.freeze([
   Object.freeze({

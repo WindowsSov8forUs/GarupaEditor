@@ -4,7 +4,7 @@ import type {
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
-import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { SimulatorAssemblyResult } from "../assembly/result";
 import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type { RehearsalControlCommand } from "../scene/rehearsalControlScene";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";

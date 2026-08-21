@@ -1,4 +1,4 @@
-import rawManifest from "./currentSkinResourceManifest.json";
+import rawManifest from "./legacyCurrentSkinResourceManifest.json";
 
 export type CurrentSkinResourceRole =
   | "notes"

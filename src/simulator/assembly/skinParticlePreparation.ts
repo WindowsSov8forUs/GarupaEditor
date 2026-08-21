@@ -11,8 +11,8 @@ import type {
 } from "../backends/particleContracts";
 import { particleAccepted } from "../backends/particleValidation";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
-import type { PreparedSkinPortablePack } from "../resources/skinPortablePack";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import { rejected, type SimulatorAssemblyResult } from "./result";
 
 const ROOTS = new Set<string>([
   "effect_TapKeep", "effect_tap", "effect_tap_good", "effect_tap_great", "effect_tap_perfect",
@@ -58,7 +58,7 @@ function buildPreparedPack(
       package: "jp.co.craftegg.band", versionName: "10.1.4", versionCode: 230,
       abi: "arm64-v8a", unityVersion: "2022.3.62f1",
     }),
-    packIdentity: `particle-skin-current-10.1.4-${ordinary.logicalResource}+${directional.logicalResource}`,
+    packIdentity: `particle-skin-leased-semantic-v1-${ordinary.logicalResource}+${directional.logicalResource}`,
     fidelity: "current-static-portable",
     networkAllowed: false,
     automaticFallbackAllowed: false,
@@ -127,28 +127,38 @@ function convertBundle(
       blend: shader === "Mobile/Particles/Additive" ? "add" : "normal",
     }));
   }
-  const files = new Map(pack.files.filter((file) => file.mime === "image/png").map((file) => [file.id, file]));
+  const unity = record(pack.profile.unity);
+  const unityTextures = unity !== null && Array.isArray(unity.textures)
+    ? unity.textures.filter((value): value is Record<string, any> => record(value) !== null)
+    : [];
+  const files = new Map<string, PreparedSkinPortablePack["files"][number]>();
+  for (const texture of unityTextures) {
+    if (typeof texture.m_Name !== "string") continue;
+    const id = pathId(texture.source_path_id);
+    const file = id === null ? undefined : pack.files.find((candidate) => candidate.mime === "image/png" && candidate.id === `texture:${id}`);
+    if (file !== undefined) files.set(texture.m_Name, file);
+  }
   const textureProfiles: ParticleTextureProfile[] = [];
   const entries: Array<any> = [];
   const pngBytes = new Map<string, Uint8Array>();
   for (const item of raw.textures) {
     if (!record(item) || typeof item.m_Name !== "string" || !record(item.m_TextureSettings)) continue;
-    const id = pathId(item.source_path_id);
-    const file = id === null ? undefined : files.get(`texture:${id}`);
+    const file = files.get(item.m_Name);
     if (file === undefined || file.width === null || file.height === null ||
-      typeof item.rgba_bytes !== "number" || typeof item.rgba_sha256 !== "string") continue;
+      file.width !== item.m_Width || file.height !== item.m_Height) continue;
     const logicalAssetId = `particle-texture:${key}:${item.m_Name}`;
-    const rgbaSha256 = item.rgba_sha256.toUpperCase();
+    const rgbaSha256 = file.sha256;
+    const rgbaBytes = file.width * file.height * 4;
     textureProfiles.push(Object.freeze({
       name: item.m_Name, width: file.width, height: file.height,
-      rgbaBytes: item.rgba_bytes, rgbaSha256,
+      rgbaBytes, rgbaSha256,
       filterMode: 1,
       wrapU: item.m_TextureSettings.m_WrapU === 0 ? 0 : 1,
       wrapV: item.m_TextureSettings.m_WrapV === 0 ? 0 : 1,
     }));
     entries.push(Object.freeze({
       logicalAssetId, bytes: file.bytes.byteLength, sha256: file.sha256,
-      width: file.width, height: file.height, rgbaBytes: item.rgba_bytes, rgbaSha256,
+      width: file.width, height: file.height, rgbaBytes, rgbaSha256,
     }));
     pngBytes.set(logicalAssetId, file.bytes);
   }

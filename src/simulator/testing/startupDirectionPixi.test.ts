@@ -19,10 +19,10 @@ import {
 import { PIXI_MV_LIVE_STAGE_LABEL } from "../backends/pixi/pixiMvLiveBackend";
 import { INITIAL_STARTUP_DIRECTION_SCENE_STATE } from "../scene/startupDirectionScene";
 import { createTestPresentationPackage } from "./startupPresentationTestProfile";
-import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resources/currentStartupDirectionResourceManifest";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import { prepareSharedStartupDirectionRenderResources } from "../resources/sharedResourceAdapters";
-import { startupDirectionResourceKey } from "../resources/staticResourceSelector";
+import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "./legacyCurrentStartupDirectionResourceManifest";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
+import { prepareSharedStartupDirectionRenderResources } from "./legacySharedResourceAdapters";
+import { startupDirectionResourceKey } from "./legacyStaticResourceSelector";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 
 const SURFACE_LAYOUT = requireOk(createOriginalSurfaceLayout({

@@ -58,13 +58,13 @@ Public合同覆盖四种`sessionMode × inputMode` request；完整startup produ
 src/simulator/
 ├─ public/      # chart/full-length/config/launch/close合同与全局隔离
 ├─ runtime/     # scheduler/input/session生命周期
-├─ assembly/    # frozen recipe与原子resource assembly
+├─ assembly/    # frozen recipe、logical requirements与application-lease原子resource assembly
 ├─ platform/    # 中立production capability composition
 ├─ scene/       # scene owner
 ├─ host/        # engine host与whole-engine replay
 ├─ engine/      # chart、state、judgement、Note及command producers
 ├─ backends/    # Recording/Pixi/WebAudio/particle/resource adapters
-├─ resources/   # 迁移中的semantic selector/decoder；生产字节权威已移交platform neutral resource capability
+├─ resources/   # source-blind leased package view/decoder；无生产Store、selector或下载能力
 └─ testing/     # 隔离测试与manifested fixture
 ```
 

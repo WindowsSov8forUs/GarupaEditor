@@ -36,8 +36,8 @@ import type {
 import {
   ImmutableSharedStaticResourceStore,
   type SharedStaticResourceResult,
-} from "../resources/sharedStaticResourceStore";
-import { selectSimulatorStaticResources as selectStaticResourceInternal } from "../resources/staticResourceSelector";
+} from "./legacySharedStaticResourceStore";
+import { selectSimulatorStaticResources as selectStaticResourceInternal } from "./legacyStaticResourceSelector";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import {
   createSimulatorSessionRecipe,
@@ -49,7 +49,7 @@ import {
   prepareSharedOrdinaryRenderResources,
   prepareSharedScoreGaugeSsAnimationResource,
   prepareSharedScoreHudRenderResources,
-} from "../resources/sharedResourceAdapters";
+} from "./legacySharedResourceAdapters";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { createProductionAutonomousSimulatorModule } from "../platform/platformComposition";
@@ -57,7 +57,7 @@ import type {
   SimulatorModuleCloseReport,
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
-import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { SimulatorAssemblyResult } from "./legacySharedResourceAdapters";
 
 const TEST_SURFACE = Object.freeze({
   revision: 0,
@@ -441,17 +441,7 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   const input = new ControlledInput();
   const platform = {
     resources: {
-      acquire: async () => ({
-        status: "rejected" as const,
-        failure: {
-          code: "resource-unavailable" as const,
-          capability: "test.neutral-resource-not-yet-consumed",
-          boundary: "The transitional production-composition test still exercises the shared-store failure path.",
-        },
-      }),
-    },
-    staticResources: {
-      read: async () => {
+      acquire: async () => {
         resourceReads += 1;
         return {
           status: "rejected" as const,
@@ -520,16 +510,16 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   if (malformedBgmLaunch.status === "rejected") {
     assert.equal(malformedBgmLaunch.failure.capability, "simulator.audio.invalid-mp3-byte-structure");
   }
-  assert.equal(resourceReads, 0, "caller fields, full classification, Garupa JSON and MP3 bytes fail before shared resource reads");
+  assert.equal(resourceReads, 0, "caller fields, full classification, Garupa JSON and MP3 bytes fail before application resource acquisition");
   assert.equal(mounts, 0);
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const missingResource = await missingResourceModule.launch(request());
   assert.equal(missingResource.status, "rejected");
   if (missingResource.status === "rejected") {
-    assert.equal(missingResource.failure.capability, "simulator.skin.pack-unavailable");
+    assert.equal(missingResource.failure.capability, "test.missing");
   }
-  assert.equal(resourceReads, 1, "released portable composition reaches the explicit shared-resource boundary");
+  assert.equal(resourceReads, 1, "released portable composition reaches the explicit application resource boundary");
   assert.equal(mounts, 0, "missing resources reject before visual mount");
   assert.equal(scheduler.consumer, null, "missing resources reject before scheduler start");
   resourceReads = 0;
@@ -539,8 +529,8 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   (rehearsalRequest.config as { sessionMode: "live" | "rehearsal" }).sessionMode = "rehearsal";
   const launched = await module.launch(rehearsalRequest);
   assert.equal(launched.status, "rejected");
-  if (launched.status === "rejected") assert.equal(launched.failure.capability, "simulator.skin.pack-unavailable");
-  assert.equal(resourceReads, 1, "Rehearsal reaches the same explicit resource construction boundary");
+  if (launched.status === "rejected") assert.equal(launched.failure.capability, "test.missing");
+  assert.equal(resourceReads, 1, "Rehearsal reaches the same explicit application resource construction boundary");
   assert.equal(mounts, 0);
 }
 

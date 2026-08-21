@@ -19,7 +19,7 @@ import { DeterministicOfflineAudioBackend } from "../backends/audio/offlineAudio
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
 import { RecordingSimulatorAudioBackend } from "../backends/recordingAudioBackend";
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
-import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
+import { createAudioSessionResourceProfile } from "./legacyCurrentAudioResourceManifest";
 import {
   ALTERNATIVE_AUDIO_TEST_PROFILE,
   ALTERNATIVE_SESSION_BGM_RESOURCE,

@@ -10,11 +10,11 @@ const { join } = require("node:path");
 
 import { Container, Graphics, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
-import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
+import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../backends/resources/currentOrdinaryHudProfile";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
-import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
@@ -34,9 +34,9 @@ import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProdu
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
-import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
-import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
+import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand

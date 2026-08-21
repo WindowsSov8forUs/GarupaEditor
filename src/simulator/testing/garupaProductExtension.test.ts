@@ -9,7 +9,7 @@ import { copyAndFreezeGarupaChartJson } from "../assembly/garupaChartContract";
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import type { RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
 import { ok } from "../engine/evidence";
 import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";

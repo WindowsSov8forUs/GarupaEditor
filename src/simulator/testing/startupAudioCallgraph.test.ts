@@ -5,7 +5,7 @@ const { createHash } = require("node:crypto");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
-import { CURRENT_AUDIO_SE_RESOURCES } from "../backends/resources/currentAudioResourceManifest";
+import { CURRENT_AUDIO_SE_RESOURCES } from "./legacyCurrentAudioResourceManifest";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { StartupAudioOwner } from "../engine/audio/startupAudioOwner";
 import { evidenceRequired } from "../engine/evidence";

@@ -1,5 +1,5 @@
-import { CURRENT_SCORE_HUD_BINDINGS } from "./currentScoreHudResourceManifest";
-import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "./currentOrdinaryVisibleResourceManifest";
+import { CURRENT_SCORE_HUD_BINDINGS } from "./legacyCurrentScoreHudResourceManifest";
+import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 
 export interface OrdinaryPortableResourceEntry {
   readonly logicalAssetId: string;

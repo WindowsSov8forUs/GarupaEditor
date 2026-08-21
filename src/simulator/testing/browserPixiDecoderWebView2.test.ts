@@ -9,7 +9,7 @@ import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDe
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
-import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import {
   ImmutableLocalRenderResourceProvider,
   PortableRenderResourcePreflightAdapter,

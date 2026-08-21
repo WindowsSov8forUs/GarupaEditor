@@ -9,6 +9,7 @@ import uiAdditiveEffectUrl from "../../assets/game/atlas/bms/ui/ui-additive-effe
 import uiCommonUrl from "../../assets/game/atlas/bms/ui/uicommon/ui-common.png";
 import scoreFontUrl from "../../assets/game/fonts/score/score/score-font.png";
 import rankLabelFontUrl from "../../assets/game/fonts/sgm/rank-label-font.ttf";
+import ordinaryRenderProfileUrl from "../../assets/game/portable/profiles/ordinary-render/profile.json?url";
 import ordinaryVisibleProfileUrl from "../../assets/game/portable/profiles/ordinary-visible/profile.json?url";
 import startupLineStarUrl from "../../assets/game/prefabs/bms/information/startup-line-star.png";
 import highRankKiraUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png";
@@ -72,6 +73,9 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("fonts/sgm", "Rank label font", "font", [
     file("game/fonts/sgm/rank-label-font.ttf", "rank-label-font.ttf", "font/ttf", rankLabelFontUrl),
+  ]),
+  resource("portable/profiles/ordinary-render", "Ordinary render semantic profile", "json", [
+    file("game/portable/profiles/ordinary-render/profile.json", "profile.json", "application/json", ordinaryRenderProfileUrl),
   ]),
   resource("portable/profiles/ordinary-visible", "Ordinary visible semantic profile", "json", [
     file("game/portable/profiles/ordinary-visible/profile.json", "profile.json", "application/json", ordinaryVisibleProfileUrl),

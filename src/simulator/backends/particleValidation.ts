@@ -306,7 +306,7 @@ export function validateSelectedSkinParticlePack(
 ): ParticleOperationResult<ParticlePreparedResourcePack> {
   const profile = pack.profile;
   const textures = pack.textures;
-  if (!profile.packIdentity.startsWith("particle-skin-current-10.1.4-") ||
+  if (!profile.packIdentity.startsWith("particle-skin-leased-semantic-v1-") ||
     profile.fidelity !== "current-static-portable" || profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false || profile.bundles.length !== 2 ||
     profile.systemCount !== profile.bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0) ||

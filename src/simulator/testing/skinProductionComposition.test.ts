@@ -6,7 +6,7 @@ const { readFileSync, readdirSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { Texture, TextureSource } from "pixi.js";
-import { assembleSimulatorResources } from "../assembly/resourceAssembly";
+import { assembleSimulatorResources } from "./legacyStaticResourceAssembly";
 import { RecordingSimulatorAudioBackend } from "../backends/recordingAudioBackend";
 import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
@@ -20,8 +20,8 @@ import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData
 import { ok } from "../engine/evidence";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import { selectSimulatorStaticResources } from "../resources/staticResourceSelector";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
+import { selectSimulatorStaticResources } from "./legacyStaticResourceSelector";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 

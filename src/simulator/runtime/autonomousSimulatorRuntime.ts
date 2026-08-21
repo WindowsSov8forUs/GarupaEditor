@@ -11,7 +11,7 @@ import type {
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
 } from "../public/contracts";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 import { consumeRehearsalControlCommand } from "../scene/rehearsalControlScene";
 import type {
   AutonomousSimulatorEnvironment,

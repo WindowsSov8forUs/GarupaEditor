@@ -1,8 +1,8 @@
 import { sha256UpperHex } from "../backends/resources/sha256";
-import type { CurrentSkinPortablePackEntry } from "../backends/resources/currentSkinResourceManifest";
-import type { SelectedSkinResourceIdentity } from "./skinResourceSelector";
-import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
-import { rejected, type SimulatorAssemblyResult } from "./sharedResourceAdapters";
+import type { CurrentSkinPortablePackEntry } from "./legacyCurrentSkinResourceManifest";
+import type { SelectedSkinResourceIdentity } from "./legacySkinResourceSelector";
+import type { SharedStaticResourceStore } from "./legacySharedStaticResourceStore";
+import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 
 export interface PreparedSkinPortableFile {
   readonly id: string;

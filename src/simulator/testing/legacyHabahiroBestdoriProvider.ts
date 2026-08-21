@@ -3,13 +3,13 @@ import type {
   RenderResourceAssetProfile,
   RenderResourceProfile,
   SimulatorResourceProvider,
-} from "../renderingContracts";
-import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
-import { sha256UpperHex } from "./sha256";
+} from "../backends/renderingContracts";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { sha256UpperHex } from "../backends/resources/sha256";
 import {
   HABAHIRO_BESTDORI_PACK_IDENTITY,
   HABAHIRO_BESTDORI_PINNED_ASSETS,
-} from "./habahiroBestdoriManifest";
+} from "./legacyHabahiroBestdoriManifest";
 
 export interface HabahiroBestdoriTransport {
   read(url: string): Promise<SimulatorResult<Uint8Array>>;

@@ -8,7 +8,7 @@ import type {
   AudioResourceProfileSet,
   AudioSessionBgmResourceProfile,
 } from "../backends/audioContracts";
-import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
+import { createAudioSessionResourceProfile } from "./legacyCurrentAudioResourceManifest";
 
 const contractPath = join(
   process.cwd(),

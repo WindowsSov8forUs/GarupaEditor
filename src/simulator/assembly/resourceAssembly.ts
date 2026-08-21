@@ -12,40 +12,28 @@ import type {
   SimulatorRendererBackend,
   SimulatorResourceProvider,
 } from "../backends/renderingContracts";
-import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestdoriProvider";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
-import { CURRENT_SCORE_HUD_BINDINGS } from "../backends/resources/currentScoreHudResourceManifest";
-import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
+import { BASE_DYNAMIC_RENDER_BINDINGS } from "../engine/rendering/commonResourceBindings";
+import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import {
   appendSimulatorCleanupFailures,
   simulatorCleanupFailure,
   simulatorCleanupFailureFromResult,
 } from "../public/failures";
 import type { SimulatorModuleCleanupFailure } from "../public/contracts";
-import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
-import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
 import {
-  prepareSelectedSkinPortablePacks,
-  type PreparedSkinPortablePack,
-} from "../resources/skinPortablePack";
-import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
-import { prepareSkinAudioOverlay } from "./skinAudioPreparation";
+  prepareSelectedSkinSourcePackages,
+  prepareSourceAudioPackage,
+} from "../resources/sourcePackageDecoder";
+import type { PreparedSkinPortablePack } from "../resources/sourcePackageContracts";
+import { rejected, type SimulatorAssemblyResult } from "./result";
+import { prepareLeasedAudioResources } from "./leasedAudioPreparation";
+import { prepareLeasedCommonRenderResources } from "./leasedCommonResourcePreparation";
+import type { SimulatorResourceSelection } from "./resourceRequirements";
+import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 import { prepareSkinParticleProvider } from "./skinParticlePreparation";
-import {
-  createSharedHabahiroTransport,
-  prepareSharedAudioResources,
-  prepareSharedOrdinaryRenderResources,
-  prepareSharedOrdinaryVisibleRenderResources,
-  prepareSharedParticleProvider,
-  prepareSharedScoreGaugeSsAnimationResource,
-  prepareSharedScoreHudRenderResources,
-  prepareSharedStartupDirectionRenderResources,
-  rejected,
-  type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
+import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface SimulatorResourceAssemblyTargets {
   readonly sessionId: string;
@@ -76,6 +64,7 @@ export interface PreparedSimulatorResourceAssembly {
   readonly sessionId: string;
   readonly skinRecipeIdentity: string;
   readonly skinPortablePacks: readonly PreparedSkinPortablePack[];
+  readonly resourceLease: SimulatorResourceLease;
   readonly fieldBindings: {
     readonly backgroundLineLogicalAssetId: string;
     readonly judgeLineLogicalAssetId: string;
@@ -96,151 +85,55 @@ export interface PreparedSimulatorResourceAssembly {
 
 export async function assembleSimulatorResources(
   chartAudio: PreparedSessionBgmResource,
-  selection: SimulatorStaticResourceSelection,
-  store: SharedStaticResourceStore,
+  selection: SimulatorResourceSelection,
+  lease: SimulatorResourceLease,
   targets: SimulatorResourceAssemblyTargets,
 ): Promise<SimulatorAssemblyResult<PreparedSimulatorResourceAssembly>> {
-  if (
-    typeof targets.sessionId !== "string" || targets.sessionId.length === 0
-  ) {
-    return rejected(
-      "launch-failed",
-      "simulator.assembly.invalid-session",
-      "Autonomous resource assembly requires one internally generated non-empty session identity.",
-    );
+  if (typeof targets.sessionId !== "string" || targets.sessionId.length === 0) {
+    return rejected("launch-failed", "simulator.assembly.invalid-session", "Autonomous resource assembly requires one internally generated non-empty session identity.");
   }
   const skinSelection = validateSkinResourceSelection(selection);
   if (skinSelection.status === "rejected") return skinSelection;
-  const skinPortablePacks = await prepareSelectedSkinPortablePacks(
-    selection.skin.resources,
-    store,
-  );
-  if (skinPortablePacks.status === "rejected") return skinPortablePacks;
-
-  let renderPack: {
-    readonly profile: Parameters<SimulatorRendererBackend["prepare"]>[1];
-    readonly provider: Parameters<SimulatorRendererBackend["prepare"]>[2];
-    readonly bindings: RenderEngineResourceBindings;
-  };
-  if (selection.rendering.kind === "ordinary") {
-    const ordinary = await prepareSharedOrdinaryRenderResources(
-      selection.rendering.profileResource,
-      selection.rendering.resources,
-      store,
-    );
-    if (ordinary.status === "rejected") return ordinary;
-    renderPack = Object.freeze({
-      profile: ordinary.value.profile,
-      provider: ordinary.value.provider,
-      bindings: CURRENT_ORDINARY_RENDER_BINDINGS,
-    });
-  } else {
-    const habahiro = await prepareHabahiroBestdoriPack(
-      createSharedHabahiroTransport(selection.rendering.resources, store),
-    );
-    if (habahiro.status !== "ok") {
-      return rejected("resource-unavailable", habahiro.capability, habahiro.boundary);
-    }
-    renderPack = Object.freeze({
-      profile: habahiro.value.profile,
-      provider: habahiro.value.provider,
-      bindings: Object.freeze({
-        noteAtlasLogicalAssetId: habahiro.value.bindings.normalAtlasLogicalAssetId,
-        directionalAtlasLogicalAssetId: habahiro.value.bindings.flickAtlasLogicalAssetId,
-        syncLineLogicalAssetId: habahiro.value.bindings.syncLineLogicalAssetId,
-        multipleDirectionalLineLeftLogicalAssetId: habahiro.value.bindings.multipleDirectionalLineLeftLogicalAssetId,
-        multipleDirectionalLineRightLogicalAssetId: habahiro.value.bindings.multipleDirectionalLineRightLogicalAssetId,
-        longNoteMaterialLogicalAssetId: habahiro.value.bindings.longNoteMaterialLogicalAssetId,
-        curveNoteMaterialLogicalAssetId: habahiro.value.bindings.curveNoteMaterialLogicalAssetId,
-        scoreHud: CURRENT_SCORE_HUD_BINDINGS,
-        ordinaryVisible: CURRENT_ORDINARY_VISIBLE_BINDINGS,
-        habahiroAtlasLogicalAssetIds: Object.freeze({
-          normal: habahiro.value.bindings.normalAtlasLogicalAssetId,
-          normal16: habahiro.value.bindings.normal16AtlasLogicalAssetId,
-          skill: habahiro.value.bindings.skillAtlasLogicalAssetId,
-          flick: habahiro.value.bindings.flickAtlasLogicalAssetId,
-          long: habahiro.value.bindings.longAtlasLogicalAssetId,
-          longFlash: habahiro.value.bindings.longFlashAtlasLogicalAssetId,
-          slideAmong: habahiro.value.bindings.slideAmongAtlasLogicalAssetId,
-        }),
-      }),
-    });
-  }
+  const skinPacks = await prepareSelectedSkinSourcePackages(selection.skin.resources, lease);
+  if (skinPacks.status === "rejected") return skinPacks;
+  const commonAudio = await prepareSourceAudioPackage("sound/common", lease);
+  if (commonAudio.status === "rejected") return commonAudio;
+  const commonRender = await prepareLeasedCommonRenderResources(lease);
+  if (commonRender.status === "rejected") return commonRender;
   const skinRender = await prepareSkinRenderOverlay(
     selection.skin.resolved,
-    skinPortablePacks.value,
-    renderPack.bindings,
+    skinPacks.value,
+    BASE_DYNAMIC_RENDER_BINDINGS,
   );
-  if (skinRender.status === "rejected") return skinRender;
-  if (skinRender.value !== null) {
-    renderPack = Object.freeze({
-      ...renderPack,
-      profile: Object.freeze({
-        ...renderPack.profile,
-        packIdentity: `${renderPack.profile.packIdentity}+skin-current-10.1.4-static-portable-v1`,
-        assets: Object.freeze([...renderPack.profile.assets, ...skinRender.value.assets]),
-      }),
-      provider: mergeRenderProviders(
-        renderPack.provider,
-        skinRender.value.provider,
-        skinRender.value.assets.map((asset) => asset.logicalAssetId),
-      ),
-      bindings: skinRender.value.bindings,
-    });
+  if (skinRender.status === "rejected" || skinRender.value === null) {
+    return skinRender.status === "rejected"
+      ? skinRender
+      : rejected("resource-integrity", "simulator.assembly.skin-render-empty", "Every current resolved Skin recipe must publish its exact leased render overlay.");
   }
-  const ordinaryVisible = await prepareSharedOrdinaryVisibleRenderResources(
-    selection.ordinaryVisibleProfile,
-    selection.ordinaryVisible,
-    store,
-  );
-  if (ordinaryVisible.status === "rejected") return ordinaryVisible;
-  const scoreHud = await prepareSharedScoreHudRenderResources(selection.scoreHud, store);
-  if (scoreHud.status === "rejected") return scoreHud;
-  const startupDirection = await prepareSharedStartupDirectionRenderResources(selection.startupDirection, store);
-  if (startupDirection.status === "rejected") return startupDirection;
-  const scoreGaugeSsAnimation = await prepareSharedScoreGaugeSsAnimationResource(
-    selection.scoreGaugeSsAnimation,
-    store,
-  );
-  if (scoreGaugeSsAnimation.status === "rejected") return scoreGaugeSsAnimation;
-  const combinedAssets = [
-    ...renderPack.profile.assets,
-    ...ordinaryVisible.value.assets,
-    ...scoreHud.value.assets,
-    ...startupDirection.value.assets,
-  ];
+  const combinedAssets = Object.freeze([
+    ...commonRender.value.profile.assets,
+    ...skinRender.value.assets,
+  ]);
   if (new Set(combinedAssets.map((asset) => asset.logicalAssetId)).size !== combinedAssets.length) {
-    return rejected(
-      "resource-integrity",
-      "simulator.assembly.duplicate-render-logical-id",
-      "Ordinary, visible HUD and Score resource manifests must be disjoint before renderer preparation.",
-    );
+    return rejected("resource-integrity", "simulator.assembly.duplicate-render-logical-id", "Leased common and Skin render assets must be disjoint before renderer preparation.");
   }
-  renderPack = Object.freeze({
-    ...renderPack,
+  let renderPack = Object.freeze({
     profile: Object.freeze({
-      ...renderPack.profile,
-      packIdentity: `${renderPack.profile.packIdentity}+ordinary-visible-current-10.1.4-v1+score-hud-current-10.1.4-v1+startup-direction-current-10.1.4-v1`,
-      assets: Object.freeze(combinedAssets),
-      ordinaryVisibleProfile: ordinaryVisible.value.profile,
-      scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
+      ...commonRender.value.profile,
+      packIdentity: `application-leased-render-v1+${selection.skin.recipeIdentity}`,
+      assets: combinedAssets,
     }),
     provider: mergeRenderProviders(
-      mergeRenderProviders(
-        mergeRenderProviders(renderPack.provider, ordinaryVisible.value.provider, ordinaryVisible.value.assets.map(
-          (asset) => asset.logicalAssetId,
-        )),
-        scoreHud.value.provider,
-        scoreHud.value.assets.map((asset) => asset.logicalAssetId),
-      ),
-      startupDirection.value.provider,
-      startupDirection.value.assets.map((asset) => asset.logicalAssetId),
+      commonRender.value.provider,
+      skinRender.value.provider,
+      skinRender.value.assets.map((asset) => asset.logicalAssetId),
     ),
+    bindings: skinRender.value.bindings,
   });
   const scene = targets.createSceneLayout(
-    selection.rendering.kind,
+    selection.renderingKind,
     renderPack.bindings,
-    skinRender.value?.fieldBindings ?? null,
+    skinRender.value.fieldBindings,
   );
   if (scene.status === "rejected") return scene;
   const projection = scene.value.surfaceLayout.camera;
@@ -264,42 +157,36 @@ export async function assembleSimulatorResources(
       }),
     }),
   });
-  const audio = await prepareSharedAudioResources(
+  const audio = await prepareLeasedAudioResources(
     chartAudio,
-    selection.audioSe,
-    store,
-    null,
-  );
-  if (audio.status === "rejected") return audio;
-  const skinAudio = await prepareSkinAudioOverlay(
-    audio.value.profile,
-    audio.value.provider,
-    skinPortablePacks.value,
-    selection.skin.resolved.tapSE.logicalResource!,
-    selection.skin.resolved.directional.seLogicalResource,
+    Object.freeze([...skinPacks.value, commonAudio.value]),
     targets.audio.preflight,
   );
-  if (skinAudio.status === "rejected") return skinAudio;
-  const particles = await prepareSharedParticleProvider(selection.particles, store);
-  if (particles.status === "rejected") return particles;
-  const skinParticles = prepareSkinParticleProvider(
+  if (audio.status === "rejected") return audio;
+  const unavailableBaseParticle = Object.freeze({
+    read: async () => ({
+      status: "particle-resource-unavailable" as const,
+      failure: Object.freeze({
+        code: "particle-resource-unavailable" as const,
+        capability: "simulator.particle.no-static-base-provider",
+        boundary: "All production particle bytes must come from selected leased TapEffect packages.",
+      }),
+    }),
+  });
+  const particles = prepareSkinParticleProvider(
     selection.skin.resolved,
-    skinPortablePacks.value,
-    particles.value,
+    skinPacks.value,
+    unavailableBaseParticle,
   );
-  if (skinParticles.status === "rejected") return skinParticles;
+  if (particles.status === "rejected") return particles;
 
-  const prepared: Array<{
-    readonly identity: string;
-    readonly dispose: () => unknown;
-  }> = [];
+  const prepared: Array<{ readonly identity: string; readonly dispose: () => unknown }> = [];
   const rollback = (): readonly SimulatorModuleCleanupFailure[] => {
     const failures: SimulatorModuleCleanupFailure[] = [];
     for (let index = prepared.length - 1; index >= 0; index -= 1) {
       const owner = prepared[index]!;
       try {
-        const result = owner.dispose();
-        const failure = simulatorCleanupFailureFromResult(owner.identity, result);
+        const failure = simulatorCleanupFailureFromResult(owner.identity, owner.dispose());
         if (failure !== null) failures.push(failure);
       } catch {
         failures.push(simulatorCleanupFailure(
@@ -317,79 +204,44 @@ export async function assembleSimulatorResources(
     renderPack.provider,
     targets.rendering.preflight,
   );
-  if (renderReady.status !== "ok") {
-    return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
-  }
-  prepared.push({
-    identity: "renderer",
-    dispose: () => targets.rendering.backend.dispose(),
-  });
-
+  if (renderReady.status !== "ok") return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
+  prepared.push({ identity: "renderer", dispose: () => targets.rendering.backend.dispose() });
   const audioReady = await targets.audio.backend.prepare(
     targets.sessionId,
-    skinAudio.value.profile,
-    skinAudio.value.provider,
+    audio.value.profile,
+    audio.value.provider,
     targets.audio.preflight,
   );
   if (audioReady.status !== "accepted") {
-    return rejectedWithCleanup(
-      rejected(
-        mapAudioFailure(audioReady.status),
-        audioReady.failure.capability,
-        audioReady.failure.boundary,
-      ),
-      rollback(),
-    );
+    return rejectedWithCleanup(rejected(mapAudioFailure(audioReady.status), audioReady.failure.capability, audioReady.failure.boundary), rollback());
   }
-  prepared.push({
-    identity: "audio",
-    dispose: () => targets.audio.backend.dispose(),
-  });
-
+  prepared.push({ identity: "audio", dispose: () => targets.audio.backend.dispose() });
   const particleReady = await targets.particles.backend.prepare(
     targets.sessionId,
-    skinParticles.value,
+    particles.value,
     targets.particles.preflight,
   );
   if (particleReady.status !== "accepted") {
-    return rejectedWithCleanup(
-      rejected(
-        mapParticleFailure(particleReady.status),
-        particleReady.failure.capability,
-        particleReady.failure.boundary,
-      ),
-      rollback(),
-    );
+    return rejectedWithCleanup(rejected(mapParticleFailure(particleReady.status), particleReady.failure.capability, particleReady.failure.boundary), rollback());
   }
-  prepared.push({
-    identity: "particle-backend",
-    dispose: () => targets.particles.backend.dispose(),
-  });
-
+  prepared.push({ identity: "particle-backend", dispose: () => targets.particles.backend.dispose() });
   const particleRendererReady = await targets.particles.renderer.prepare(
     targets.sessionId,
     scene.value.particleScene,
-    skinParticles.value,
+    particles.value,
     targets.particles.preflight,
   );
   if (particleRendererReady.status !== "accepted") {
-    return rejectedWithCleanup(
-      rejected(
-        mapParticleFailure(particleRendererReady.status),
-        particleRendererReady.failure.capability,
-        particleRendererReady.failure.boundary,
-      ),
-      rollback(),
-    );
+    return rejectedWithCleanup(rejected(mapParticleFailure(particleRendererReady.status), particleRendererReady.failure.capability, particleRendererReady.failure.boundary), rollback());
   }
-
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
     skinRecipeIdentity: selection.skin.recipeIdentity,
-    skinPortablePacks: skinPortablePacks.value,
-    fieldBindings: skinRender.value?.fieldBindings ?? null,
-    backgroundLogicalAssetId: skinRender.value?.backgroundLogicalAssetId ?? null,
-    backgroundImage: skinRender.value?.backgroundImage ?? null,
+    skinPortablePacks: skinPacks.value,
+    resourceLease: lease,
+    fieldBindings: skinRender.value.fieldBindings,
+    backgroundLogicalAssetId: skinRender.value.backgroundLogicalAssetId,
+    backgroundImage: skinRender.value.backgroundImage,
     renderBindings: renderPack.bindings,
     audioBackend: targets.audio.backend,
     rendererBackend: targets.rendering.backend,
@@ -399,30 +251,18 @@ export async function assembleSimulatorResources(
   }));
 }
 
-function validateSkinResourceSelection(
-  selection: SimulatorStaticResourceSelection,
-): SimulatorAssemblyResult<void> {
-  if (typeof selection.skin.recipeIdentity !== "string" ||
+function validateSkinResourceSelection(selection: SimulatorResourceSelection): SimulatorAssemblyResult<void> {
+  if (selection.schemaVersion !== 1 || typeof selection.skin.recipeIdentity !== "string" ||
     !selection.skin.recipeIdentity.startsWith("skin-recipe-v1|") ||
-    !Array.isArray(selection.skin.resources) || selection.skin.resources.length < 8) {
-    return rejected(
-      "resource-integrity",
-      "simulator.assembly.invalid-skin-resource-selection",
-      "Resolved Skin assembly requires one canonical recipe identity and the complete internally selected component inventory.",
-    );
+    !Array.isArray(selection.skin.resources) || selection.skin.resources.length < 8 ||
+    !Array.isArray(selection.requirements) || selection.requirements.length < selection.skin.resources.length) {
+    return rejected("resource-integrity", "simulator.assembly.invalid-skin-resource-selection", "Resolved Skin assembly requires one canonical recipe identity and complete application-leased requirements.");
   }
   const identities = new Set<string>();
   for (const resource of selection.skin.resources) {
     const identity = `${resource.role}\u0000${resource.logicalResource}`;
-    if (identities.has(identity) || !resource.resourceKey.startsWith(
-      "simulator-static/current-10.1.4/skin-portable/",
-    ) || resource.profile === null ||
-      resource.profile.logicalResource !== resource.logicalResource) {
-      return rejected(
-        "resource-integrity",
-        "simulator.assembly.duplicate-or-external-skin-resource",
-        "Skin resources require unique simulator-owned role/identity pairs, one exact current portable-pack profile and internal static-store keys; URL and alias keys are forbidden.",
-      );
+    if (identities.has(identity) || typeof resource.logicalResource !== "string" || resource.logicalResource.length === 0) {
+      return rejected("resource-integrity", "simulator.assembly.duplicate-skin-resource", "Skin source resources require unique role/logical-resource pairs without keys, URLs, profiles or aliases.");
     }
     identities.add(identity);
   }
@@ -431,53 +271,34 @@ function validateSkinResourceSelection(
 
 function mergeRenderProviders(
   base: SimulatorResourceProvider,
-  scoreHud: SimulatorResourceProvider,
-  scoreHudLogicalAssetIds: readonly string[],
+  overlay: SimulatorResourceProvider,
+  overlayLogicalAssetIds: readonly string[],
 ): SimulatorResourceProvider {
-  const scoreHudIds = new Set(scoreHudLogicalAssetIds);
+  const ids = new Set(overlayLogicalAssetIds);
   return Object.freeze({
     read(logicalAssetId: string) {
-      return scoreHudIds.has(logicalAssetId)
-        ? scoreHud.read(logicalAssetId)
-        : base.read(logicalAssetId);
+      return ids.has(logicalAssetId) ? overlay.read(logicalAssetId) : base.read(logicalAssetId);
     },
   });
 }
 
-function mapAudioFailure(
-  code: Exclude<Awaited<ReturnType<SimulatorAudioBackend["prepare"]>>, { status: "accepted" }>["status"],
-): "evidence-required" | "resource-unavailable" | "resource-integrity" |
-  "resource-decode" | "platform-unavailable" | "launch-failed" {
+function mapAudioFailure(code: Exclude<Awaited<ReturnType<SimulatorAudioBackend["prepare"]>>, { status: "accepted" }>["status"]): "evidence-required" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "platform-unavailable" | "launch-failed" {
   if (code === "audio-resource-unavailable") return "resource-unavailable";
   if (code === "audio-resource-integrity") return "resource-integrity";
   if (code === "audio-resource-decode") return "resource-decode";
   if (code === "audio-context-unavailable") return "platform-unavailable";
   return code === "evidence-required" ? "evidence-required" : "launch-failed";
 }
-
-function mapParticleFailure(
-  code: "evidence-required" | "particle-resource-unavailable" |
-    "particle-resource-integrity" | "particle-resource-decode" |
-    "particle-backend-fault" | "terminal-disposed",
-): "evidence-required" | "resource-unavailable" | "resource-integrity" |
-  "resource-decode" | "launch-failed" {
+function mapParticleFailure(code: "evidence-required" | "particle-resource-unavailable" | "particle-resource-integrity" | "particle-resource-decode" | "particle-backend-fault" | "terminal-disposed"): "evidence-required" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "launch-failed" {
   if (code === "particle-resource-unavailable") return "resource-unavailable";
   if (code === "particle-resource-integrity") return "resource-integrity";
   if (code === "particle-resource-decode") return "resource-decode";
   return code === "evidence-required" ? "evidence-required" : "launch-failed";
 }
-
-function rejectedWithCleanup<T>(
-  primary: SimulatorAssemblyResult<T>,
-  cleanupFailures: readonly SimulatorModuleCleanupFailure[],
-): SimulatorAssemblyResult<T> {
+function rejectedWithCleanup<T>(primary: SimulatorAssemblyResult<T>, cleanupFailures: readonly SimulatorModuleCleanupFailure[]): SimulatorAssemblyResult<T> {
   if (primary.status === "accepted" || cleanupFailures.length === 0) return primary;
-  return Object.freeze({
-    status: "rejected" as const,
-    failure: appendSimulatorCleanupFailures(primary.failure, cleanupFailures),
-  });
+  return Object.freeze({ status: "rejected" as const, failure: appendSimulatorCleanupFailures(primary.failure, cleanupFailures) });
 }
-
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {
   return Object.freeze({ status: "accepted" as const, value });
 }

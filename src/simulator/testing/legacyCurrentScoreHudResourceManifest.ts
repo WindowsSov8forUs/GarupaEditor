@@ -1,7 +1,7 @@
 import type {
   RenderAtlasRow,
   RenderResourceAssetProfile,
-} from "../renderingContracts";
+} from "../backends/renderingContracts";
 
 export interface ScoreHudPortableResourceEntry {
   readonly resourceKeySuffix: string;

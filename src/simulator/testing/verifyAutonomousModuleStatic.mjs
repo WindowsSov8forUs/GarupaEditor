@@ -7,7 +7,8 @@ const simulatorRoot = resolve(testingRoot, "..");
 const rootIndex = readFileSync(join(simulatorRoot, "index.ts"), "utf8");
 const publicContracts = readFileSync(join(simulatorRoot, "public", "contracts.ts"), "utf8");
 const publicIndex = readFileSync(join(simulatorRoot, "public", "index.ts"), "utf8");
-const selector = readFileSync(join(simulatorRoot, "resources", "staticResourceSelector.ts"), "utf8");
+const selector = readFileSync(join(simulatorRoot, "assembly", "resourceRequirements.ts"), "utf8") +
+  readFileSync(join(simulatorRoot, "resources", "sourcePackageDecoder.ts"), "utf8");
 
 for (const forbidden of [
   "createSimulatorEngine", "SimulatorEngine", "SimulatorBackends",
@@ -33,11 +34,11 @@ for (const required of [
   }
 }
 for (const required of [
-  "CURRENT_AUDIO_SE_RESOURCES", "CURRENT_PARTICLE_RESOURCE_MANIFEST",
-  "HABAHIRO_BESTDORI_PINNED_ASSETS", "habahiroChangeAbsolutePos >= 0",
-  "CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE", "CURRENT_ORDINARY_PORTABLE_RESOURCES",
+  "selectSimulatorResourceRequirements", "portable/profiles/ordinary-render",
+  "atlas/bms/ui/iconcombonumber", "sound/common", "habahiroChangeAbsolutePos >= 0",
+  "prepareSelectedSkinSourcePackages", "OriginalResourcePackageView",
 ]) {
-  if (!selector.includes(required)) throw new Error(`static selector missing fixed owner: ${required}`);
+  if (!selector.includes(required)) throw new Error(`application-leased selector missing owner: ${required}`);
 }
 
 const productionRoots = ["public", "runtime", "assembly", "resources", "scene"].map((name) =>
@@ -51,6 +52,7 @@ const forbiddenProduction = [
   [/\b(?:fetch|XMLHttpRequest|WebSocket)\s*\(/, "implicit network"],
   [/\b(?:setTimeout|setInterval)\s*\(/, "wall-clock timer"],
   [/\b(?:document|window)\s*\./, "DOM owner outside platform"],
+  [/simulator-static\/current-10\.1\.4|SharedStaticResourceStore/, "removed static resource authority"],
   [/from\s+["'](?:react|pixi\.js|@tauri-apps)/, "UI/platform package outside platform"],
 ];
 for (const root of productionRoots) {

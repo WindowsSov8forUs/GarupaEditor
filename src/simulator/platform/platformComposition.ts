@@ -54,9 +54,8 @@ import type {
 import {
   rejected,
   type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
-import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
-import { selectSimulatorStaticResources } from "../resources/staticResourceSelector";
+} from "../assembly/result";
+import { selectSimulatorResourceRequirements } from "../assembly/resourceRequirements";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
 import type {
   AutonomousSimulatorEnvironment,
@@ -96,7 +95,7 @@ import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
-import type { SimulatorResourceCapability } from "./resourceContracts";
+import type { SimulatorResourceCapability, SimulatorResourceLease } from "./resourceContracts";
 import {
   copyAndValidateInitialSimulatorSurface,
   validateUnchangedSimulatorSurface,
@@ -117,7 +116,6 @@ export interface SimulatorGraphicsSurface {
 
 export interface AutonomousSimulatorPlatformCapabilities {
   readonly resources: SimulatorResourceCapability;
-  readonly staticResources: SharedStaticResourceStore;
   readonly audioContext: AudioContext;
   readonly graphics: SimulatorGraphicsSurface;
   readonly scheduler: SimulatorFrameScheduler;
@@ -262,7 +260,20 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (skin.status === "rejected") {
       return rejectedWithCleanup(skin, releasePendingMovie());
     }
-    const selection = selectSimulatorStaticResources(chart.value, skin.value);
+    const selection = selectSimulatorResourceRequirements(chart.value, skin.value);
+    const resourceLease = await this.platform.resources.acquire(selection.requirements);
+    if (resourceLease.status === "rejected") {
+      return rejectedWithCleanup(
+        rejected(
+          resourceLease.failure.code === "resource-platform-unavailable" ? "platform-unavailable" :
+            resourceLease.failure.code === "resource-unavailable" || resourceLease.failure.code === "resource-not-installed" || resourceLease.failure.code === "catalog-unavailable" ? "resource-unavailable" :
+              "resource-integrity",
+          resourceLease.failure.capability,
+          resourceLease.failure.boundary,
+        ),
+        releasePendingMovie(),
+      );
+    }
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
     const particles = new DeterministicSimulatorParticleBackend();
@@ -272,7 +283,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const assembly = await assembleSimulatorResources(
       bgm.value,
       selection,
-      this.platform.staticResources,
+      resourceLease.value,
       {
         sessionId,
         rendering: {
@@ -305,6 +316,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       },
     );
     if (assembly.status === "rejected") {
+      await resourceLease.value.release();
       return rejectedWithCleanup(assembly, releasePendingMovie());
     }
     const movie = mvResource.value === null
@@ -318,6 +330,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           Object.freeze([
             ...disposeAssembly(assembly.value, movie),
             ...releasePendingMovie(),
+            ...await releaseResourceLeaseCleanup(resourceLease.value),
           ]),
         );
       }
@@ -329,7 +342,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (surfaceBound.status !== "ok") {
       return rejectedWithCleanup(
         fromEvidence(surfaceBound),
-        disposeAssembly(assembly.value, movie),
+        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
     const effectivePresentation = replacePreparedSessionStageBackdrop(
@@ -339,14 +352,14 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (effectivePresentation.status === "rejected") {
       return rejectedWithCleanup(
         effectivePresentation,
-        disposeAssembly(assembly.value, movie),
+        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
     const commonStartup = renderer.getStartupDirectionCommonResources();
     if (commonStartup.status !== "ok") {
       return rejectedWithCleanup(
         fromEvidence(commonStartup),
-        disposeAssembly(assembly.value, movie),
+        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
     const startupScene = await createPixiStartupDirectionScene(
@@ -360,13 +373,16 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (startupScene.status !== "ok") {
       return rejectedWithCleanup(
         fromEvidence(startupScene),
-        disposeAssembly(assembly.value, movie),
+        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
     const gains = gainBits(recipe.request);
     if (gains.status === "rejected") {
       startupScene.value.dispose();
-      return rejectedWithCleanup(gains, disposeAssembly(assembly.value, movie));
+      return rejectedWithCleanup(gains, Object.freeze([
+        ...disposeAssembly(assembly.value, movie),
+        ...await releaseResourceLeaseCleanup(resourceLease.value),
+      ]));
     }
     const tracing = createRecordingSimulatorBackends();
     const backends: SimulatorBackends = Object.freeze({
@@ -432,7 +448,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       startupScene.value.dispose();
       return rejectedWithCleanup(
         fromEvidence(engine),
-        disposeAssembly(assembly.value, movie),
+        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
     const controlOverlay = renderer.createRehearsalControlOverlay(
@@ -447,7 +463,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       );
       return rejectedWithCleanup(
         fromEvidence(controlOverlay),
-        cleanup === null ? [] : [cleanup],
+        Object.freeze([
+          ...(cleanup === null ? [] : [cleanup]),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ]),
       );
     }
     renderer.stage.visible = false;
@@ -462,6 +481,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       const cleanups = [
         simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
         simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose()),
+        ...await releaseResourceLeaseCleanup(resourceLease.value),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(fromEvidence(combinedScene), cleanups);
     }
@@ -472,6 +492,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
         simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
         simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+        ...await releaseResourceLeaseCleanup(resourceLease.value),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(mounted, cleanups);
     }
@@ -480,6 +501,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       mounted.value,
       combinedScene.value,
       controlOverlay.value,
+      resourceLease.value,
     );
     const registered = registerSimulatorEngineMoveTimeWrapper(
       mountedEngine,
@@ -570,6 +592,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
     mount: SimulatorGraphicsMount | null,
     private readonly combinedScene: PixiCombinedScene,
     private readonly controlOverlay: PixiRehearsalControlOverlay | null,
+    private readonly resourceLease: SimulatorResourceLease,
   ) {
     this.mount = mount;
   }
@@ -648,6 +671,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
             `${result.boundary} Secondary cleanup failure: simulator.composition.visual-unmount-threw.`,
           );
     }
+    void this.resourceLease.release().catch(() => {});
     const combinedDisposed = this.combinedScene.dispose();
     if (combinedDisposed.status === "evidence-required") {
       return result.status === "ok"
@@ -703,7 +727,6 @@ function validatePlatform(
   if (
     platform === null || typeof platform !== "object" ||
     platform.resources == null || typeof platform.resources.acquire !== "function" ||
-    platform.staticResources == null || typeof platform.staticResources.read !== "function" ||
     platform.audioContext == null || typeof platform.audioContext !== "object" ||
     platform.graphics == null || typeof platform.graphics.mount !== "function" ||
     typeof platform.graphics.readSurfaceState !== "function" ||
@@ -715,7 +738,7 @@ function validatePlatform(
     return rejected(
       "platform-unavailable",
       "simulator.composition.invalid-platform-capabilities",
-      "Production composition requires one application-owned neutral resource capability, the transitional shared store, AudioContext, revisioned graphics surface reader, scheduler, input source and lifecycle/frame-rate sinks.",
+      "Production composition requires one application-owned neutral resource capability, AudioContext, revisioned graphics surface reader, scheduler, input source and lifecycle/frame-rate sinks.",
     );
   }
   return accepted(undefined);
@@ -749,6 +772,20 @@ function validateCurrentPlatformSurface(
       "simulator.composition.surface-reread-threw",
       "The platform surface reader threw before command/input consumption; the session terminates without continuing stale geometry.",
     );
+  }
+}
+
+async function releaseResourceLeaseCleanup(
+  lease: SimulatorResourceLease,
+): Promise<readonly SimulatorModuleCleanupFailure[]> {
+  try {
+    await lease.release();
+    return Object.freeze([]);
+  } catch {
+    return Object.freeze([simulatorCleanupFailure(
+      "simulator.composition.resource-lease-release-threw",
+      "The application-owned resource lease threw during composition rollback after all synchronous owners were still released.",
+    )]);
   }
 }
 

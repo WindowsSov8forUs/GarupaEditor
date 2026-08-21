@@ -6,7 +6,7 @@ import { sha256UpperHex } from "../backends/resources/sha256";
 import {
   rejected,
   type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
+} from "./result";
 
 export interface PreparedSessionBgmResource {
   readonly profile: AudioSessionBgmResourceProfile;

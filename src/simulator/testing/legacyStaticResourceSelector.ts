@@ -1,38 +1,38 @@
 import type { AudioFixedSeResourceProfile } from "../backends/audioContracts";
-import { CURRENT_AUDIO_SE_RESOURCES } from "../backends/resources/currentAudioResourceManifest";
+import { CURRENT_AUDIO_SE_RESOURCES } from "./legacyCurrentAudioResourceManifest";
 import {
   HABAHIRO_BESTDORI_PACK_IDENTITY,
   HABAHIRO_BESTDORI_PINNED_ASSETS,
   type HabahiroBestdoriPinnedAsset,
-} from "../backends/resources/habahiroBestdoriManifest";
+} from "./legacyHabahiroBestdoriManifest";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../backends/resources/currentParticleResourceManifest";
 import {
   CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE,
   CURRENT_SCORE_HUD_PORTABLE_RESOURCES,
   type ScoreHudPortableResourceEntry,
-} from "../backends/resources/currentScoreHudResourceManifest";
+} from "./legacyCurrentScoreHudResourceManifest";
 import {
   CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY,
   CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE,
   CURRENT_ORDINARY_PORTABLE_RESOURCES,
   type OrdinaryPortableResourceEntry,
-} from "../backends/resources/currentOrdinaryResourceManifest";
+} from "./legacyCurrentOrdinaryResourceManifest";
 import {
   CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES,
   CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE,
   type OrdinaryVisiblePortableResourceEntry,
-} from "../backends/resources/currentOrdinaryVisibleResourceManifest";
+} from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import {
   CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES,
   type StartupDirectionPortableResourceEntry,
-} from "../backends/resources/currentStartupDirectionResourceManifest";
+} from "./legacyCurrentStartupDirectionResourceManifest";
 import type { ParticleResourceAllowlistEntry } from "../backends/particleContracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import {
   selectResolvedSkinResourceInventory,
   type SelectedSkinResourceInventory,
-} from "./skinResourceSelector";
+} from "./legacySkinResourceSelector";
 
 const STATIC_RESOURCE_NAMESPACE = "simulator-static/current-10.1.4" as const;
 

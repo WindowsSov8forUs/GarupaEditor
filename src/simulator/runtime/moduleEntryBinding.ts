@@ -7,7 +7,7 @@ import {
   isTotalRevalidationOpen,
   totalRevalidationFailure,
 } from "../public/capabilities";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 
 let installedLauncher: LaunchSimulatorModule | null = null;
 
@@ -43,7 +43,7 @@ export async function launchInstalledSimulatorModule(
       failure: Object.freeze({
         code: "platform-unavailable" as const,
         capability: "simulator.entry.platform-not-installed",
-        boundary: "The autonomous simulator platform and shared static store must be installed before the main entry transfers chart/config ownership.",
+        boundary: "The autonomous simulator platform and application-owned resource capability must be installed before the main entry transfers chart/config ownership.",
       }),
     });
   }

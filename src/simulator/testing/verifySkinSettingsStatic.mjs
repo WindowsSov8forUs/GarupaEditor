@@ -13,12 +13,12 @@ const catalog = read("engine/skin/currentMasterCatalog.ts");
 const validation = read("engine/skin/originalSkinValidation.ts");
 const resolver = read("engine/skin/originalSkinResolver.ts");
 const derivation = read("assembly/sessionSkinDerivation.ts");
-const selector = read("resources/skinResourceSelector.ts") + read("resources/staticResourceSelector.ts");
+const selector = read("assembly/resourceRequirements.ts") + read("resources/sourcePackageDecoder.ts");
 const resourceAssembly = read("assembly/resourceAssembly.ts");
-const assembly = resourceAssembly + read("assembly/skinRenderPreparation.ts") + read("assembly/skinAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
+const assembly = resourceAssembly + read("assembly/skinRenderPreparation.ts") + read("assembly/leasedAudioPreparation.ts") + read("assembly/skinParticlePreparation.ts") + read("backends/resources/particleResourcePreparation.ts");
 const composition = read("platform/platformComposition.ts");
 const fieldOwner = read("engine/managers/inGameManager.ts");
-const skinManifest = read("backends/resources/currentSkinResourceManifest.ts");
+const skinManifest = read("engine/skin/currentRenderSemanticCatalog.json") + read("engine/skin/currentParticleSemanticCatalog.json");
 const lifecycle = read("assembly/sessionRecipe.ts") + read("public/capabilities.ts");
 const actualAcceptance = read("testing/renderPixi.test.ts") + read("testing/skinSettingsWebView2.test.ts") +
   read("testing/skinProductionComposition.test.ts") + read("testing/runSkinSettingsWebView2Tests.mjs");
@@ -82,7 +82,7 @@ if (moviePrepareFailureEnd < 0 ||
   !moviePrepareFailureBlock.includes("releasePendingMovie()")) {
   throw new Error("MV Movie prepare failure must release assembly backends and the still-pending movie resource");
 }
-const selectedSkinPackIndex = resourceAssembly.indexOf("const skinPortablePacks = await prepareSelectedSkinPortablePacks(");
+const selectedSkinPackIndex = resourceAssembly.indexOf("const skinPacks = await prepareSelectedSkinSourcePackages(");
 for (const backendPrepare of [
   "const renderReady = await targets.rendering.backend.prepare(",
   "const audioReady = await targets.audio.backend.prepare(",
@@ -96,18 +96,15 @@ for (const backendPrepare of [
 }
 for (const required of [
   "selectResolvedSkinResourceInventory",
-  "skinPortableResourceKey",
   "habahiro-change-flash",
-  "skin: selectResolvedSkinResourceInventory(skinRecipe)",
+  "selectSimulatorResourceRequirements",
   "validateSkinResourceSelection",
   "deriveSessionSkinRecipe",
-  "selectSimulatorStaticResources(chart.value, skin.value)",
-  "prepareSelectedSkinPortablePacks",
+  "prepareSelectedSkinSourcePackages",
   "prepareSkinRenderOverlay",
   "current-official-portable",
   "syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin",
-  "prepareSkinAudioOverlay",
-  "replacement.size !== 9",
+  "prepareLeasedAudioResources",
   "skinByRecipe",
   "skinRecipeIdentity: assembly.value.skinRecipeIdentity",
   "fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity",
@@ -116,6 +113,7 @@ for (const required of [
   "readPreparedSkinPack",
   "validateSelectedSkinParticlePack",
   "selected-skin-portable-textures",
+  "this.platform.resources.acquire(selection.requirements)",
 ]) if (!(selector + assembly + composition + lifecycle).includes(required)) throw new Error(`Skin selection/assembly marker missing: ${required}`);
 for (const required of [
   "this.renderScene?.field !== undefined",

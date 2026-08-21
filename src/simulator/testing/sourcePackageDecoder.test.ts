@@ -6,7 +6,8 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 import type { SimulatorResourceFile, SimulatorResourceLease } from "../platform/resourceContracts";
 import { prepareSelectedSkinSourcePackages } from "../resources/sourcePackageDecoder";
-import type { SelectedSkinResourceIdentity } from "../resources/skinResourceSelector";
+import { prepareLeasedCommonRenderResources } from "../assembly/leasedCommonResourcePreparation";
+import type { SelectedSkinResourceIdentity } from "../assembly/resourceRequirements";
 
 const ORDINARY_ROOTS = [
   "effect_TapKeep", "effect_tap", "effect_tap_good", "effect_tap_great", "effect_tap_perfect",
@@ -19,10 +20,42 @@ const DIRECTIONAL_ROOTS = [
 ] as const;
 
 async function main(): Promise<void> {
+  await testCommonRenderPackages();
   await testNoteSourcePackage();
   await testParticleSourcePackages();
   await testAudioSourcePackage();
   console.log("source package decoder tests passed: leased render rows + 17 semantic particle roots + MP3 cues");
+}
+
+async function testCommonRenderPackages(): Promise<void> {
+  const root = join(process.cwd(), "src/assets/game");
+  const packages = new Map<string, Map<string, Uint8Array>>();
+  const add = (logicalResource: string, files: readonly (readonly [string, string])[]) => {
+    packages.set(logicalResource, new Map(files.map(([logicalPath, physical]) => [logicalPath, bytes(join(root, physical))])));
+  };
+  add("portable/profiles/ordinary-render", [["profile.json", "portable/profiles/ordinary-render/profile.json"]]);
+  add("portable/profiles/ordinary-visible", [["profile.json", "portable/profiles/ordinary-visible/profile.json"]]);
+  add("atlas/bms/ui/iconcombonumber", [["combo-number.png", "atlas/bms/ui/iconcombonumber/combo-number.png"]]);
+  add("atlas/bms/ui/rhythmgameui", [["rhythm-game-additive.png", "atlas/bms/ui/rhythmgameui/rhythm-game-additive.png"], ["rhythm-game-ui.png", "atlas/bms/ui/rhythmgameui/rhythm-game-ui.png"]]);
+  add("atlas/bms/ui/tap-lane-effect", [1, 2, 3, 4].map((index) => [`tap-lane-effect-${index}.png`, `atlas/bms/ui/tap-lane-effect/tap-lane-effect-${index}.png`] as const));
+  add("atlas/bms/ui/ui-additive-effect", [["ui-additive-effect.png", "atlas/bms/ui/ui-additive-effect/ui-additive-effect.png"]]);
+  add("atlas/bms/ui/uicommon", [["ui-common.png", "atlas/bms/ui/uicommon/ui-common.png"]]);
+  add("fonts/score/score", [["score-font.png", "fonts/score/score/score-font.png"]]);
+  add("fonts/sgm", [["rank-label-font.ttf", "fonts/sgm/rank-label-font.ttf"]]);
+  add("prefabs/bms/information", [["startup-line-star.png", "prefabs/bms/information/startup-line-star.png"]]);
+  add("prefabs/bms/rhythmgamegauge/score", [
+    ["high-rank-kira.png", "prefabs/bms/rhythmgamegauge/score/high-rank-kira.png"],
+    ["high-rank-long-star.png", "prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png"],
+    ["high-rank-overlay.png", "prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png"],
+    ["score-gauge-ss-animation-profile.json", "prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json"],
+  ]);
+  const prepared = await prepareLeasedCommonRenderResources(new MemoryLease(packages));
+  assert.equal(prepared.status, "accepted", prepared.status === "rejected" ? prepared.failure.capability : "");
+  if (prepared.status === "rejected") return;
+  assert.equal(prepared.value.profile.assets.length, 15);
+  assert.equal(prepared.value.profile.packIdentity, "application-leased-semantic-render-v1");
+  assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
+  assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
 }
 
 async function testNoteSourcePackage(): Promise<void> {
@@ -161,7 +194,7 @@ class MemoryLease implements SimulatorResourceLease {
 }
 
 function identity(role: SelectedSkinResourceIdentity["role"], logicalResource: string): SelectedSkinResourceIdentity {
-  return Object.freeze({ role, logicalResource, resourceKey: logicalResource, profile: null });
+  return Object.freeze({ role, logicalResource });
 }
 function bytes(path: string): Uint8Array { return new Uint8Array(readFileSync(path)); }
 function json(value: unknown): Uint8Array { return new TextEncoder().encode(JSON.stringify(value)); }

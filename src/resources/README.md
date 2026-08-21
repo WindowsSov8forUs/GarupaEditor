@@ -4,7 +4,7 @@
 
 ## Source classes
 
-- `builtin`: 22 application UI files plus 17 minimal Simulator common files (39 total), imported only by the two builtin catalog owners and verified against generated integrity/provenance manifests. The Simulator pack contains common Combo/Life/Score/Rank/Startup assets and semantic profiles; Skin, SE and particle source packages remain network resources.
+- `builtin`: 22 application UI files plus 18 minimal Simulator common files (40 total), imported only by the two builtin catalog owners and verified against generated integrity/provenance manifests. The Simulator pack contains common Combo/Life/Score/Rank/Startup assets and semantic profiles; Skin, SE and particle source packages remain network resources.
 - `network`: resources discovered from the live Bestdori `_info`, complete song master and their last complete offline snapshot. The catalog covers open-ended Note/Field/BG/Judge/TapEffect/Stage Skin packages, TapSE/common sound, BGM packages/files, music-jacket packages/files and every discoverable `movie/mv` package. Stage packages are catalogued even though current Simulator consumption remains excluded. Downloaded bytes receive observed length/SHA only after acquisition.
 - `user`: locally uploaded BGM, cover, MV or stage backdrop. Skin/SE/package upload is not exposed.
 

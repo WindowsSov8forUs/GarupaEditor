@@ -6,7 +6,7 @@ import type {
 import {
   createAudioSessionResourceProfile,
   CURRENT_AUDIO_SE_RESOURCES,
-} from "../backends/resources/currentAudioResourceManifest";
+} from "./legacyCurrentAudioResourceManifest";
 import {
   ImmutableLocalAudioResourceProvider,
   type LocalAudioResource,
@@ -15,7 +15,7 @@ import {
   ImmutableLocalParticleResourceProvider,
   type LocalParticleResource,
 } from "../backends/resources/localParticleResourceProvider";
-import type { HabahiroBestdoriTransport } from "../backends/resources/habahiroBestdoriProvider";
+import type { HabahiroBestdoriTransport } from "./legacyHabahiroBestdoriProvider";
 import type { SimulatorModuleFailure } from "../public/contracts";
 import type { RenderResourceProfile, SimulatorResourceProvider } from "../backends/renderingContracts";
 import { validateAndFreezeRenderProfile } from "../backends/renderingValidation";
@@ -24,12 +24,12 @@ import {
   ImmutableLocalRenderResourceProvider,
   type LocalRenderResource,
 } from "../backends/resources/localResourceProvider";
-import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "../backends/resources/currentOrdinaryResourceManifest";
+import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "./legacyCurrentOrdinaryResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
-import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
-import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resources/currentStartupDirectionResourceManifest";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
+import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "./legacyCurrentStartupDirectionResourceManifest";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
-import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
+import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
 import type { AudioResourceProvider } from "../backends/audioContracts";
 import { evidenceRequired, ok } from "../engine/evidence";
@@ -43,8 +43,8 @@ import type {
   SelectedScoreGaugeSsAnimationResource,
   SelectedScoreHudResource,
   SelectedStartupDirectionResource,
-} from "./staticResourceSelector";
-import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
+} from "./legacyStaticResourceSelector";
+import type { SharedStaticResourceStore } from "./legacySharedStaticResourceStore";
 
 export type SimulatorAssemblyResult<T> =
   | { readonly status: "accepted"; readonly value: T }

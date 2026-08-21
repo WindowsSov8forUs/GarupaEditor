@@ -4,7 +4,7 @@ import {
   type NoteInformation,
 } from "../engine/chart/types";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
-import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import { rejected, type SimulatorAssemblyResult } from "./result";
 
 export function validateConstructedChartCapabilities(
   chart: ChartConstructionResult,

@@ -72,6 +72,11 @@
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
     },
     {
+      "path": "game/portable/profiles/ordinary-render/profile.json",
+      "byteLength": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
+    },
+    {
       "path": "game/portable/profiles/ordinary-visible/profile.json",
       "byteLength": 28809,
       "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"

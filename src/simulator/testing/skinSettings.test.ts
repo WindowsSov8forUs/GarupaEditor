@@ -16,12 +16,12 @@ import {
 } from "../engine/skin/currentMasterCatalog";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
-import { selectResolvedSkinResourceInventory } from "../resources/skinResourceSelector";
-import { prepareSelectedSkinPortablePacks } from "../resources/skinPortablePack";
-import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
+import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelector";
+import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
+import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
-import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
-import { prepareSkinAudioOverlay } from "../assembly/skinAudioPreparation";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
+import { prepareSkinAudioOverlay } from "./legacySkinAudioPreparation";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 import {
   audioRejected,
@@ -357,7 +357,8 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   const directional = audio.profile.resources.find((resource) => resource.cue === "directional_fl")!;
   assert.equal(perfect.logicalId, "sound/tapseskin/skinapril2021");
   assert.equal(directional.logicalId, "sound/tapseskin/directionalflickskin00");
-  assert.equal(validateAndFreezeAudioProfile(audio.profile).status, "accepted");
+  const validatedAudio = validateAndFreezeAudioProfile(audio.profile);
+  assert.equal(validatedAudio.status, "accepted", JSON.stringify(validatedAudio));
   assert.equal((await audio.provider.read(perfect)).status, "accepted");
   const particleProvider = requireAccepted(prepareSkinParticleProvider(
     recipe,

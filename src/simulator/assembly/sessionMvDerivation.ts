@@ -12,7 +12,7 @@ import type { SimulatorPresentationMvPackage } from "../public/contracts";
 import {
   rejected,
   type SimulatorAssemblyResult,
-} from "../resources/sharedResourceAdapters";
+} from "./result";
 
 export async function deriveSessionMvResource(
   source: SimulatorPresentationMvPackage,

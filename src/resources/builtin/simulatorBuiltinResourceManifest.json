@@ -81,6 +81,13 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf"
     },
     {
+      "path": "game/portable/profiles/ordinary-render/profile.json",
+      "byteLength": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json"
+    },
+    {
       "path": "game/portable/profiles/ordinary-visible/profile.json",
       "byteLength": 28809,
       "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D",
