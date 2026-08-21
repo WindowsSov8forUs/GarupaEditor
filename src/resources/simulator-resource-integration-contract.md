@@ -71,7 +71,7 @@ Snapshot reads always resolve stored blob refs, never projection paths. Garbage 
 
 ## Failure and lifecycle
 
-All required resources are acquired and decoded before backend, scene or engine mutation. Production assembly consumes `selectSimulatorResourceRequirements()` and a neutral lease; the former Store/`simulator-static` selector/portable-pack authority exists only in isolated legacy regression helpers under `testing/`. A launch failure releases its snapshot exactly once. An accepted session retains it across Retry/MoveTime and invokes release during terminal engine cleanup; Stage 9 acceptance additionally verifies the cross-window backend release receipt.
+All required resources are acquired and decoded before backend, scene or engine mutation. Production assembly consumes `selectSimulatorResourceRequirements()` and a neutral lease; the former Store/`simulator-static` selector/portable-pack authority exists only in isolated legacy regression helpers under `testing/`. A launch failure releases its snapshot exactly once. An accepted session retains it across Retry/MoveTime and invokes release during terminal engine cleanup. Desktop ready/payload/closed and mobile route/closed protocols retain a handoff lease until the child has acquired the same snapshot, then release it on closed, rejection or window/route destruction. Interactive device acceptance remains an environment gate, not an excuse for fallback ownership.
 
 Missing, offline-without-cache, partial, corrupt, unsafe, ambiguous or incompatible resources fail closed. Forbidden replacements include default Skin, stale revision, silent audio, white texture, nearest-name aliases, image MV and standard-stage-on-movie-fault.
 

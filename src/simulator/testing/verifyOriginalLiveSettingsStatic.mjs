@@ -11,7 +11,7 @@ const manager = read("src/simulator/engine/managers/inGameManager.ts");
 const noteManager = read("src/simulator/engine/managers/noteManager.ts");
 const render = read("src/simulator/engine/rendering/renderCommandProducer.ts");
 const tap = read("src/simulator/engine/managers/tapLaneEffectOwner.ts");
-const visibleManifest = read("src/simulator/backends/resources/currentOrdinaryVisibleResourceManifest.ts");
+const visibleManifest = read("src/simulator/assembly/resourceRequirements.ts") + read("src/simulator/engine/skin/commonRenderSemanticCatalog.json");
 const productProfile = read("src/simulator/engine/garupa/productChartProfile.ts");
 const productRender = read("src/simulator/engine/garupa/productRenderProducer.ts");
 const movie = read("src/simulator/engine/movie/inGameMovieManager.ts");
@@ -55,12 +55,9 @@ for (const required of [
   "const SLOT_COUNT = 13", "const OFF_RESERVE_UPDATES = 2", "const FADE_FRAMES = 10",
   "[0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1, 0]", "preflightInputEvents", "preflightJudgement", "preflightAllOff",
 ]) if (!tap.includes(required)) throw new Error(`tap lane owner missing: ${required}`);
-for (const hash of [
-  "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
-  "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
-  "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
-  "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
-]) if (!visibleManifest.includes(hash)) throw new Error(`tap lane resource hash missing: ${hash}`);
+for (const file of [
+  "tap-lane-effect-1.png", "tap-lane-effect-2.png", "tap-lane-effect-3.png", "tap-lane-effect-4.png",
+]) if (!visibleManifest.includes(file)) throw new Error(`tap lane leased resource identity missing: ${file}`);
 for (const required of ["syncPairs", "freezeProductSyncPairs", "shortRhythmUnder8beat"]) {
   if (!productProfile.includes(required)) throw new Error(`product sidecar identity missing: ${required}`);
 }

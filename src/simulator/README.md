@@ -10,6 +10,8 @@
 
 原作Live设置另以Reverse `aae7e4fe`和Primary MoveNext纠正`50bc40b6`关闭：Public破坏性升级为Schema 12，恢复Primary/Secondary判定调整、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness。逐字段行为、资源、产品投影和排除项见[`original-live-settings-contract.md`](./original-live-settings-contract.md)。
 
+主程序统一资源迁移与Stage 9基于Reverse `f461b287`实施：production不再有Shared Store、`simulator-static`或固定网络资源SHA资格门；桌面独立窗口和移动route均经Schema 12、application Snapshot/Lease、Pixi/WebAudio/browser input/surface composition调用唯一Public入口。Windows/Vite、desktop bundle、Android release/debug build及Android主Activity启动已通过；锁屏PIN阻断了当前设备上的Simulator route点击/触摸/扬声器验收，因此capability仍诚实保持`authorized-in-progress`。
+
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
@@ -33,7 +35,7 @@
 | ExGarupa Slide graph / Manual | `closed-product-extension` | singleton、Hidden head/tail、all-Hidden、same-position、任意schema合法visible类型、Auto和chain-finger Manual均按authored graph闭合 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；该结论只限定original-compatible图。产品任意continuous/outside lane由sidecar拥有，不伪造成Button 07 |
 | WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.93（与锁定`.78`同属151.0.4129 patch line，仅作当前portable观察）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
-| Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
+| Fixed-device physical exact | `open-objective-environment-blocked` | Reverse取证时锁定panel只有60 Hz且candidate/Stage 9尚不存在；当前产品包接入不提供校准光学/声学比较路径，四项客观exact阻断仍不升级 |
 | Original Skin settings / switching | `closed-static-portable` | Reverse资源基线`977f5e71`与Field/Stage可达性纠正`4312a8ad`：完整profile 133 packs中3个stageskin仅属未开放Live2D，当前Standard/MV manifest精确为130 packs/576 files；default不再绕过8-pack原子装配。Schema 12 aggregate resolver、Note/Directional/Judge/Field/可达Background、SE、动态ParticleSystem、Retry/MoveTime identity、default+Limited production composition、actual Pixi/WebAudio及各3-fresh WebView2 raster均关闭；MV路线由双静态门保证selected Skin assembly先于Movie backend construction/prepare并完整回滚两级failure owners；Collabo 36包级失败。非默认device/frame parity仍不声明 |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `authorized-in-progress` | 统一资源迁移与桌面/移动Stage 9已由独立任务书授权；在B–L验收关闭前不得声明产品接入完成 |
