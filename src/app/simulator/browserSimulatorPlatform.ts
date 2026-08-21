@@ -14,6 +14,7 @@ import type {
   SimulatorGraphicsSurface,
 } from "../../simulator/platform/platformComposition";
 import type { SimulatorSurfaceState } from "../../simulator/platform/surfaceContracts";
+import { measureCssSafeArea } from "./mobileSafeArea";
 import type {
   SimulatorFrameScheduler,
   SimulatorFrameSubscription,
@@ -32,7 +33,7 @@ export async function createBrowserSimulatorPlatform(input: {
   readonly host: HTMLElement;
   readonly audioContext: AudioContext;
   readonly resources: SimulatorResourceCapability;
-  readonly safeArea: "full-surface" | SimulatorSurfaceState["safeArea"];
+  readonly safeArea: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"];
   readonly onLifecycleState: (state: SimulatorLifecycleBackendState) => void;
 }): Promise<BrowserSimulatorPlatformOwner> {
   const graphics = await BrowserPixiGraphicsSurface.create(input.host, input.safeArea);
@@ -62,6 +63,8 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   private revision = 0;
   private readonly initialWidth: number;
   private readonly initialHeight: number;
+  private readonly initialClientWidth: number;
+  private readonly initialClientHeight: number;
   private mountOwner: Container | null = null;
   private readonly resizeObserver: ResizeObserver | null;
 
@@ -69,22 +72,26 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     private readonly app: Application,
     readonly canvas: HTMLCanvasElement,
     host: HTMLElement,
-    private readonly safeAreaPolicy: "full-surface" | SimulatorSurfaceState["safeArea"],
+    private readonly safeAreaPolicy: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"],
   ) {
     this.initialWidth = canvas.width;
     this.initialHeight = canvas.height;
+    this.initialClientWidth = host.clientWidth;
+    this.initialClientHeight = host.clientHeight;
     this.resizeObserver = typeof ResizeObserver === "function"
       ? new ResizeObserver(() => {
-          if (host.clientWidth !== canvas.clientWidth || host.clientHeight !== canvas.clientHeight ||
+          if (host.clientWidth !== this.initialClientWidth || host.clientHeight !== this.initialClientHeight ||
             canvas.width !== this.initialWidth || canvas.height !== this.initialHeight) this.revision += 1;
         })
       : null;
     this.resizeObserver?.observe(host);
+    window.addEventListener("orientationchange", this.onSurfaceEnvironmentChange);
+    window.visualViewport?.addEventListener("resize", this.onSurfaceEnvironmentChange);
   }
 
   static async create(
     host: HTMLElement,
-    safeArea: "full-surface" | SimulatorSurfaceState["safeArea"],
+    safeArea: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"],
   ): Promise<BrowserPixiGraphicsSurface> {
     const app = new Application();
     await app.init({
@@ -110,7 +117,9 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     const height = this.canvas.height;
     const safeArea = this.safeAreaPolicy === "full-surface"
       ? Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(width), height: Math.fround(height) })
-      : this.safeAreaPolicy;
+      : this.safeAreaPolicy === "css-safe-area"
+        ? measureCssSafeArea(this.canvas, width, height)
+        : this.safeAreaPolicy;
     return Object.freeze({
       revision: this.revision,
       viewportWidth: width,
@@ -138,9 +147,12 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     }));
   }
 
+  private readonly onSurfaceEnvironmentChange = () => { this.revision += 1; };
   render(): void { this.app.render(); }
   dispose(): void {
     this.resizeObserver?.disconnect();
+    window.removeEventListener("orientationchange", this.onSurfaceEnvironmentChange);
+    window.visualViewport?.removeEventListener("resize", this.onSurfaceEnvironmentChange);
     this.mountOwner = null;
     this.app.destroy({ removeView: true }, { children: false, texture: false, textureSource: false });
   }
@@ -206,6 +218,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     canvas.addEventListener("pointerup", this.onPointerUp);
     canvas.addEventListener("pointercancel", this.onPointerUp);
     document.addEventListener("visibilitychange", this.onVisibilityChange);
+    window.addEventListener("pagehide", this.onPageHide);
     canvas.addEventListener("webglcontextlost", this.onContextLost);
   }
 
@@ -255,6 +268,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     pointer.terminal = true;
   };
   private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "pause" : "resume" }); };
+  private readonly onPageHide = () => { this.enqueue({ kind: "user-close" }); };
   private readonly onContextLost = (event: Event) => { event.preventDefault(); this.enqueue({ kind: "abort" }); };
 
   private position(event: PointerEvent): { x: number; y: number } {
@@ -278,6 +292,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
     this.canvas.removeEventListener("pointercancel", this.onPointerUp);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    window.removeEventListener("pagehide", this.onPageHide);
     this.canvas.removeEventListener("webglcontextlost", this.onContextLost);
     this.pointers.clear();
     this.fingerByPointer.clear();

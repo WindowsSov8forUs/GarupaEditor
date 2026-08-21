@@ -63,6 +63,7 @@ if (/from\s+["']\.\/data\/.*(?:type-rip|judge-rip)/.test(skinLoaderSource)) {
 const simulatorWindowSource = readFileSync(join(sourceRoot, "app", "BuiltInSimulatorWindow.tsx"), "utf8");
 const browserPlatformSource = readFileSync(join(sourceRoot, "app", "simulator", "browserSimulatorPlatform.ts"), "utf8");
 const simulatorTransportSource = readFileSync(join(sourceRoot, "app", "simulator", "transportContracts.ts"), "utf8");
+const mobileSafeAreaSource = readFileSync(join(sourceRoot, "app", "simulator", "mobileSafeArea.ts"), "utf8");
 for (const marker of [
   "installProductionAutonomousSimulatorPlatform", "launchSimulatorModule", "buildSimulatorLaunchRequest",
   "AudioContext", "mediaSnapshotId", "createSimulatorResourceCapability",
@@ -71,6 +72,10 @@ for (const marker of [
   "canvas.width", "bottom-left", "PointerEvent", "ManualTouchPhase", "requestAnimationFrame",
   "safeAreaPolicy", "resources:",
 ]) if (!(browserPlatformSource + simulatorWindowSource).includes(marker)) throw new Error(`Stage 9 browser platform marker missing: ${marker}`);
+for (const marker of [
+  "env(safe-area-inset-left,0px)", "calculateMobileSafeArea", "css-safe-area",
+  "orientationchange", "visualViewport", "pagehide", "初始横屏backing store",
+]) if (!(mobileSafeAreaSource + browserPlatformSource + simulatorWindowSource).includes(marker)) throw new Error(`Stage 9 mobile platform marker missing: ${marker}`);
 for (const forbidden of ["SimulatorAppController", "SimulatorLaunchPayload", "DataURL", "sourceUrl", "sha256", "provider"] ) {
   if ((simulatorWindowSource + simulatorTransportSource).includes(forbidden)) throw new Error(`Stage 9 transport/window contains forbidden legacy/resource field: ${forbidden}`);
 }

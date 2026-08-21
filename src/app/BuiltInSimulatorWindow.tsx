@@ -107,10 +107,14 @@ function BuiltInSimulatorWindow() {
         host: hostRef.current,
         audioContext,
         resources: createSimulatorResourceCapability(manager, "jp"),
-        safeArea: "full-surface",
+        safeArea: mobile ? "css-safe-area" : "full-surface",
         onLifecycleState: (state) => setStatus(`Simulator: ${state}`),
       });
       platformRef.current = platform;
+      const initialSurface = platform.platform.graphics.readSurfaceState();
+      if (mobile && initialSurface.viewportWidth < initialSurface.viewportHeight) {
+        throw new Error("移动端Simulator只接受初始横屏backing store，禁止portrait默认或旋转修复。");
+      }
       const installed = installProductionAutonomousSimulatorPlatform(platform.platform);
       if (installed.status === "rejected") throw new Error(`${installed.failure.capability}: ${installed.failure.boundary}`);
       const launched = await launchSimulatorModule(request);
@@ -147,14 +151,19 @@ function BuiltInSimulatorWindow() {
     }
   }, [descriptor, manager, mobile, requestId, started]);
 
-  const close = useCallback(() => {
+  const close = useCallback(async () => {
     if (platformRef.current !== null) {
       platformRef.current.requestClose();
       return;
     }
+    await emit(SIMULATOR_WINDOW_CLOSED_EVENT, {
+      requestId,
+      status: "closed",
+      capability: null,
+    });
     if (mobile) navigateBackToEditor();
-    else void getCurrentWebviewWindow().close();
-  }, [mobile]);
+    else await getCurrentWebviewWindow().close();
+  }, [mobile, requestId]);
 
   return (
     <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
@@ -164,12 +173,12 @@ function BuiltInSimulatorWindow() {
           <div style={{ textAlign: "center", maxWidth: 560, padding: 24 }}>
             <p>{descriptor === null ? status : "点击开始以解锁音频并启动Simulator。"}</p>
             <button type="button" disabled={descriptor === null} onClick={() => void start()}>开始</button>
-            <button type="button" onClick={close}>返回</button>
+            <button type="button" onClick={() => void close()}>返回</button>
           </div>
         </section>
       ) : null}
       <div style={{ position: "absolute", left: 8, top: 8, color: "white", zIndex: 10, pointerEvents: "none" }}>{status}</div>
-      {started ? <button type="button" onClick={close} style={{ position: "absolute", right: 8, top: 8, zIndex: 12 }}>关闭</button> : null}
+      {started ? <button type="button" onClick={() => void close()} style={{ position: "absolute", right: 8, top: 8, zIndex: 12 }}>关闭</button> : null}
     </main>
   );
 }

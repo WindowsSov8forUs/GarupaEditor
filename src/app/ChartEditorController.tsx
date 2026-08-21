@@ -5815,17 +5815,6 @@ function ChartEditorController() {
       const targetUrl = new URL(window.location.href);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
 
-      if (isMobileRuntime()) {
-        const wrotePayload = writeMobileRoutePayload(requestId, { requestId, descriptor });
-        if (!wrotePayload) {
-          releaseHandoff(requestId);
-          throw new Error("移动端播放器数据写入失败。");
-        }
-        window.location.hash = targetUrl.hash;
-        setStatusMessage("已切换到移动端播放器。");
-        return;
-      }
-
       closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
         if (event.payload?.requestId !== requestId) return;
         releaseHandoff(requestId);
@@ -5837,6 +5826,18 @@ function ChartEditorController() {
           closedUnlisten = null;
         }
       });
+      if (isMobileRuntime()) {
+        const wrotePayload = writeMobileRoutePayload(requestId, { requestId, descriptor });
+        if (!wrotePayload) {
+          clearClosedSubscription();
+          releaseHandoff(requestId);
+          throw new Error("移动端播放器数据写入失败。");
+        }
+        window.location.hash = targetUrl.hash;
+        setStatusMessage("已切换到移动端播放器。");
+        return;
+      }
+
       readyUnlisten = await listen<SimulatorWindowReadyPayload>(
         SIMULATOR_WINDOW_READY_EVENT,
         async (event) => {

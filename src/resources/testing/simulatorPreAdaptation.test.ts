@@ -1,6 +1,7 @@
 import { buildSimulatorLaunchDescriptor } from "../../app/simulator/buildSimulatorLaunchDescriptor";
 import { buildSimulatorLaunchRequest } from "../../app/simulator/buildSimulatorLaunchRequest";
 import { buildSimulatorPreAdaptedConfig } from "../../app/simulator/preAdaptationContract";
+import { calculateMobileSafeArea } from "../../app/simulator/mobileSafeArea";
 import { ApplicationResourceManager } from "../applicationResourceManager";
 import type { ResourceObjectUrlFactory } from "../backend";
 import { MemoryApplicationResourceBackend } from "../memoryResourceBackend";
@@ -66,6 +67,11 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(request.presentation.mv, null);
   await prepared.handoffLease.release();
 
+  const safeArea = calculateMobileSafeArea({ left: 20, right: 10, top: 4, bottom: 6 }, 800, 360, 1600, 720);
+  equal(safeArea.x, Math.fround(40));
+  equal(safeArea.y, Math.fround(12));
+  equal(safeArea.width, Math.fround(1540));
+  equal(safeArea.height, Math.fround(700));
   let rejected = false;
   try {
     buildSimulatorPreAdaptedConfig({ fps: 60, noteSize: 151, noteSpeed: 9, syncLine: true, bgmGainPercent: 100, seGainPercent: 100 });
