@@ -16,8 +16,9 @@ export function runResourceContractTests(): void {
   equal(parseResourceId("bestdori//noteskin/skin00").status, "rejected");
   equal(parseResourceId("simulator-static/current-10.1.4/x").status, "rejected");
 
-  const reference = createResourceRef("user/media/f0c3c1fd-0e1d-4fd2-9e3c-d86b384733ea");
+  const reference = createResourceRef("workspace/current/chart-media/bgm/" + "a".repeat(64));
   equal(reference.status, "accepted");
+  equal(createResourceRef("user/media/legacy-migration-only").status, "accepted");
   equal(validateObservedIntegrity({
     byteLength: 3,
     sha256: "A".repeat(64),

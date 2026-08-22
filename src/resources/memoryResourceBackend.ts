@@ -11,7 +11,6 @@ import {
   type ResourceRef,
   type ResourceResult,
   type ResourceSnapshotId,
-  type UserResourceDescriptor,
   type WorkspaceMediaDescriptor,
 } from "./contracts";
 import type {
@@ -42,7 +41,6 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
   private readonly catalogs = new Map<string, ResourceCatalogSnapshot>();
   private readonly snapshots = new Map<string, MemorySnapshot>();
   private nextSnapshot = 1;
-  private nextUser = 1;
 
   async initialize(): Promise<ResourceResult<readonly StoredResourceRecord[]>> {
     return this.listRecords();
@@ -91,46 +89,6 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     );
     if (prepared.status === "rejected") return prepared;
     this.records.set(input.descriptor.ref.id, prepared.value);
-    return resourceAccepted(prepared.value.record);
-  }
-
-  async importUserMedia(
-    input: UserMediaImportInput,
-  ): Promise<ResourceResult<StoredResourceRecord>> {
-    if (
-      typeof input.fileName !== "string" || input.fileName.trim().length === 0 ||
-      typeof input.mediaType !== "string" || input.mediaType.trim().length === 0 ||
-      !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0
-    ) {
-      return invalid("resources.memory.invalid-user-media");
-    }
-    const id = `user/media/memory-${this.nextUser++}`;
-    const reference = createResourceRef(id);
-    if (reference.status === "rejected") return reference;
-    const descriptor: UserResourceDescriptor = Object.freeze({
-      ref: reference.value,
-      origin: "user" as const,
-      kind: kindForUserPurpose(input.purpose),
-      title: input.fileName.trim(),
-      availability: "installed" as const,
-      files: null,
-      catalogObservedAt: null,
-      purpose: input.purpose,
-      fileName: input.fileName.trim(),
-      logicalPlacement: Object.freeze({
-        provider: "user",
-        server: null,
-        canonicalPath: `${purposeDirectory(input.purpose)}/memory-${this.nextUser - 1}`,
-        identityClass: "user-media" as const,
-      }),
-    });
-    const prepared = await prepareStoredResource(descriptor, [Object.freeze({
-      logicalPath: input.fileName.trim(),
-      mediaType: input.mediaType.trim().toLowerCase(),
-      bytes: Uint8Array.from(input.bytes),
-    })]);
-    if (prepared.status === "rejected") return prepared;
-    this.records.set(reference.value.id, prepared.value);
     return resourceAccepted(prepared.value.record);
   }
 
@@ -449,14 +407,7 @@ function freezeWorkspaceProvenance(
     : Object.freeze({ kind: "network" as const, sourceRef: Object.freeze({ id: value.sourceRef.id }) });
 }
 
-function purposeDirectory(purpose: UserMediaImportInput["purpose"]): string {
-  if (purpose === "bgm") return "sound/custom";
-  if (purpose === "cover") return "musicjacket/custom";
-  if (purpose === "mv") return "movie/custom";
-  return "stage/custom";
-}
-
-function kindForUserPurpose(purpose: UserMediaImportInput["purpose"]): UserResourceDescriptor["kind"] {
+function kindForUserPurpose(purpose: UserMediaImportInput["purpose"]): WorkspaceMediaDescriptor["kind"] {
   if (purpose === "bgm") return "audio";
   if (purpose === "mv") return "video";
   return "image";

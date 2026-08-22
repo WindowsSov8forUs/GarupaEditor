@@ -64,8 +64,6 @@ export interface ApplicationResourceBackend {
   readRecord(ref: ResourceRef): Promise<ResourceResult<StoredResourceRecord>>;
   installBuiltinResource(input: BuiltinResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
   installNetworkResource(input: ResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
-  /** Migration-only legacy global user import. */
-  importUserMedia(input: UserMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
   importWorkspaceMedia(input: WorkspaceMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
   reconcileWorkspaceMedia(refs: readonly ResourceRef[]): Promise<ResourceResult<void>>;
   finalizeLegacyMediaMigration(

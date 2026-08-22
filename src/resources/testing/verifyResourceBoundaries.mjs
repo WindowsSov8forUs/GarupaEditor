@@ -96,9 +96,31 @@ for (const path of walk(join(sourceRoot, "app")).filter((candidate) => [".ts", "
   }
 }
 const tauriLibrarySource = readFileSync(join(repositoryRoot, "src-tauri", "src", "lib.rs"), "utf8");
-for (const marker of ["chart-resources.v4.json", "migrate_chart_resource_refs_v3", "migrate_resource_id_v3", "CHART_RESOURCE_REFS_MIGRATION_REPORT"]) {
+for (const marker of ["chart-resources.v5.json", "chart-resources.v4.json", "migrate_chart_resource_refs_v3", "migrate_resource_id_v3", "CHART_RESOURCE_REFS_MIGRATION_REPORT"]) {
   if (!tauriLibrarySource.includes(marker)) throw new Error(`chart resource v4 migration marker missing: ${marker}`);
 }
+const editorIoSource = readFileSync(join(sourceRoot, "app", "hooks", "useEditorIoAndShortcuts.ts"), "utf8");
+const editorCacheSource = readFileSync(join(sourceRoot, "app", "hooks", "useEditorSessionCache.ts"), "utf8");
+for (const marker of [
+  "importWorkspaceMedia", "materializeNetworkMediaInWorkspace", "reconcileCurrentChartMedia",
+]) if (!(editorIoSource + editorCacheSource).includes(marker)) throw new Error(`current-session chart media marker missing: ${marker}`);
+for (const forbidden of [".importUserMedia(", "installBestdoriMedia("]) {
+  if ((editorIoSource + editorCacheSource).includes(forbidden)) throw new Error(`app chart media retains global legacy import: ${forbidden}`);
+}
+for (const marker of [
+  "WORKSPACE_STORAGE_SCHEMA", "project-media", "resource_commit_workspace_media_import",
+  "resource_reconcile_workspace_media", "legacy-user-media-v1", "library/user",
+]) if (!tauriLibrarySource.includes(marker) && !readFileSync(join(repositoryRoot, "src-tauri", "src", "resource_manager.rs"), "utf8").includes(marker)) {
+  throw new Error(`Tauri workspace/recovery marker missing: ${marker}`);
+}
+const resourceManagerRust = readFileSync(join(repositoryRoot, "src-tauri", "src", "resource_manager.rs"), "utf8");
+if (!resourceManagerRust.includes("chart media cannot be installed as a global network record")) {
+  throw new Error("global provider-media installation rejection is missing");
+}
+for (const token of [
+  "pub fn resource_import_user_media", "pub fn resource_begin_user_media_import",
+  "pub fn resource_commit_user_media_import",
+]) if (resourceManagerRust.includes(token)) throw new Error(`legacy global user-media creation command remains: ${token}`);
 const chartCoreSource = readFileSync(join(sourceRoot, "chartCore.ts"), "utf8");
 for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {
   if (chartCoreSource.includes(token)) throw new Error(`ChartMetadata still owns legacy URL field ${token}`);

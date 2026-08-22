@@ -342,18 +342,6 @@ export class ApplicationResourceManager {
     return resourceAccepted(committed.value.descriptor);
   }
 
-  /** Migration-only compatibility path. New product imports use importWorkspaceMedia. */
-  async importUserMedia(
-    input: ImportUserMediaRequest,
-  ): Promise<ResourceResult<ResourceDescriptor>> {
-    const validated = validateChartMediaImport(input);
-    if (validated.status === "rejected") return validated;
-    const imported = await this.backend.importUserMedia(validated.value);
-    if (imported.status === "rejected") return imported;
-    this.installed.set(imported.value.descriptor.ref.id, imported.value);
-    return resourceAccepted(imported.value.descriptor);
-  }
-
   async importWorkspaceMedia(
     input: ImportUserMediaRequest & { readonly provenance?: WorkspaceMediaProvenance },
   ): Promise<ResourceResult<ResourceDescriptor>> {

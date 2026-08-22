@@ -10,7 +10,7 @@ This is a GarupaEditor product architecture contract. Original logical resource 
 
 The observed original Android cache stores `AssetBundleInfo` and hash-named payloads under `files/data`. Names such as `ingameskin/noteskin/skin00`, `sound/common`, `sound/bgm003`, `musicjacket/...` and `movie/mv/...` are logical Bundle names.
 
-GarupaEditor keeps `resources/blobs/` as its only byte authority. It may expose an auditable `resources/library/` projection organized by those logical names, with immutable revisions and an atomic `current.json` pointer. That projection is a product index, not a clone of the original physical cache. Consumers never read it by path; they read only frozen Snapshot/Lease bytes.
+GarupaEditor keeps `resources/blobs/` as its only byte authority. Reusable Builtin/Network packages may expose an auditable `resources/library/` projection organized by those logical names, with immutable revisions and an atomic `current.json` pointer. Current chart media instead has recoverable session ownership under `cache/session/project-media/` and creates no library projection. Shared CAS does not turn chart media into a permanent library. Consumers never read either store by path; they read only frozen Snapshot/Lease bytes.
 
 ## Identity
 
@@ -20,10 +20,10 @@ Resource IDs are stable source-native identities:
 builtin/application/...
 builtin/game/<original-logical-path>
 bestdori/<server>/<original-logical-path>
-user/media/<opaque-id>
+workspace/current/chart-media/<purpose>/<content-digest>
 ```
 
-An ID must not contain an application version, game version, `current-*`, a download URL or an observed digest. Provider URLs are acquisition metadata only. SHA-256 and byte length describe acquired bytes and record revisions; they are not network eligibility allowlists.
+Global source IDs must not contain an application version, game version, `current-*`, download URL or observed digest. A workspace chart-media ID is deliberately content-addressed after bytes have been acquired so repeated imports in the same purpose deduplicate; that digest is not a remote eligibility allowlist. Provider URLs remain acquisition metadata only. Legacy `user/media/*` is migration input and cannot be created by current app flows.
 
 A same-ID update commits a new immutable record revision. Existing snapshots continue to reference their previous revision and blobs. Only a later snapshot observes the new record.
 
@@ -49,13 +49,7 @@ All source files in selected SE and particle packages may be installed. Simulato
 
 ## Storage and projection
 
-Each record stores:
-
-- a stable ResourceRef;
-- one immutable record revision;
-- a canonical logical placement;
-- file media types and observed integrity;
-- blob references.
+Each global record stores a stable ResourceRef, immutable revision, canonical logical placement, file media types/integrity and blob refs. A workspace record stores purpose, filename, source-neutral provenance, immutable revision and blob refs but no logical placement or provider URL.
 
 The library projection uses:
 
@@ -67,7 +61,7 @@ library/<origin-and-provider>/<logical-resource>/
 
 Projection files prefer hard links to authoritative blobs. A platform that cannot hard-link may copy and immediately verify byte length and SHA-256. Path segments must reject traversal, absolute paths, reserved names, case collisions and Unicode-normalization collisions.
 
-Snapshot reads always resolve stored blob refs, never projection paths. Garbage collection retains current records, persistent snapshots and open leases, and deletes only unreachable blobs and projection revisions.
+Snapshot reads always resolve stored blob refs, never projection paths. Garbage collection retains global records, the persisted current-workspace index and active snapshots; retired workspace bytes survive replacement only until the final lease release. One-time legacy recovery files are outside catalog/snapshot resolution and are never fallback candidates.
 
 ## Failure and lifecycle
 

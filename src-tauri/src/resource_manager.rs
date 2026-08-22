@@ -22,10 +22,10 @@ const WORKSPACE_MEDIA_DIRECTORY: &str = "project-media";
 struct ResourceRuntimeState {
     initialized: bool,
     open_snapshots: HashMap<String, usize>,
-    pending_user_imports: HashMap<String, PendingUserImport>,
+    pending_workspace_imports: HashMap<String, PendingWorkspaceMediaImport>,
 }
 
-struct PendingUserImport {
+struct PendingWorkspaceMediaImport {
     purpose: String,
     file_name: String,
     media_type: String,
@@ -125,23 +125,6 @@ pub struct ResourceInstallFileInput {
 pub struct ResourceInstallNetworkInput {
     pub descriptor: Value,
     pub files: Vec<ResourceInstallFileInput>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ResourceImportUserMediaInput {
-    pub purpose: String,
-    pub file_name: String,
-    pub media_type: String,
-    pub base64_data: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ResourceBeginUserMediaImportInput {
-    pub purpose: String,
-    pub file_name: String,
-    pub media_type: String,
 }
 
 #[derive(Deserialize)]
@@ -262,6 +245,7 @@ pub fn resource_initialize(
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
         recover_projections(&root, state.inner())?;
         runtime.open_snapshots.clear();
+        runtime.pending_workspace_imports.clear();
         runtime.initialized = true;
     }
     let index = read_index(&root)?;
@@ -411,69 +395,6 @@ pub fn resource_install_network_package(
 }
 
 #[tauri::command]
-pub fn resource_import_user_media(
-    app: tauri::AppHandle,
-    input: ResourceImportUserMediaInput,
-    state: tauri::State<'_, ApplicationResourceState>,
-) -> Result<StoredResourceRecordDto, String> {
-    let _guard = state
-        .runtime
-        .lock()
-        .map_err(|error| format!("lock resource state failed: {error}"))?;
-    let purpose = normalize_user_media_purpose(&input.purpose)?;
-    let file_name = normalize_file_name(&input.file_name)?;
-    let media_type = normalize_media_type(&input.media_type)?;
-    let identity = next_identity(state.inner(), "user");
-    let descriptor = user_media_descriptor(&identity, &purpose, &file_name);
-    let root = resource_root(&app)?;
-    let record = commit_resource(
-        &root,
-        descriptor,
-        vec![ResourceInstallFileInput {
-            logical_path: file_name,
-            media_type,
-            base64_data: input.base64_data,
-        }],
-        &identity,
-    )?;
-    Ok(record.dto())
-}
-
-#[tauri::command]
-pub fn resource_begin_user_media_import(
-    app: tauri::AppHandle,
-    input: ResourceBeginUserMediaImportInput,
-    state: tauri::State<'_, ApplicationResourceState>,
-) -> Result<String, String> {
-    let purpose = normalize_user_media_purpose(&input.purpose)?;
-    let file_name = normalize_file_name(&input.file_name)?;
-    let media_type = normalize_media_type(&input.media_type)?;
-    let transaction_id = next_identity(state.inner(), "user-stream");
-    let root = resource_root(&app)?;
-    ensure_layout(&root)?;
-    let path = root
-        .join("transactions")
-        .join(&transaction_id)
-        .join("user-media.bin");
-    write_synced(&path, &[])?;
-    let mut runtime = state
-        .runtime
-        .lock()
-        .map_err(|error| format!("lock resource state failed: {error}"))?;
-    runtime.pending_user_imports.insert(
-        transaction_id.clone(),
-        PendingUserImport {
-            purpose,
-            file_name,
-            media_type,
-            path,
-            workspace_provenance: None,
-        },
-    );
-    Ok(transaction_id)
-}
-
-#[tauri::command]
 pub fn resource_begin_workspace_media_import(
     app: tauri::AppHandle,
     input: ResourceBeginWorkspaceMediaImportInput,
@@ -495,9 +416,9 @@ pub fn resource_begin_workspace_media_import(
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
-    runtime.pending_user_imports.insert(
+    runtime.pending_workspace_imports.insert(
         transaction_id.clone(),
-        PendingUserImport {
+        PendingWorkspaceMediaImport {
             purpose,
             file_name,
             media_type,
@@ -509,16 +430,16 @@ pub fn resource_begin_workspace_media_import(
 }
 
 #[tauri::command]
-pub fn resource_append_user_media_chunk(
+pub fn resource_append_workspace_media_chunk(
     transaction_id: String,
     chunk_base64: String,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<(), String> {
     let chunk = base64::engine::general_purpose::STANDARD
         .decode(chunk_base64)
-        .map_err(|error| format!("decode user media chunk failed: {error}"))?;
+        .map_err(|error| format!("decode workspace media chunk failed: {error}"))?;
     if chunk.is_empty() || chunk.len() > 512 * 1024 {
-        return Err("user media chunks must contain 1..524288 bytes".to_string());
+        return Err("workspace media chunks must contain 1..524288 bytes".to_string());
     }
     let path = {
         let runtime = state
@@ -526,61 +447,18 @@ pub fn resource_append_user_media_chunk(
             .lock()
             .map_err(|error| format!("lock resource state failed: {error}"))?;
         runtime
-            .pending_user_imports
+            .pending_workspace_imports
             .get(&transaction_id)
             .map(|pending| pending.path.clone())
-            .ok_or_else(|| "user media import transaction is unavailable".to_string())?
+            .ok_or_else(|| "workspace media import transaction is unavailable".to_string())?
     };
     let mut file = fs::OpenOptions::new()
         .append(true)
         .open(path)
-        .map_err(|error| format!("open user media transaction failed: {error}"))?;
+        .map_err(|error| format!("open workspace media transaction failed: {error}"))?;
     file.write_all(&chunk)
-        .map_err(|error| format!("append user media chunk failed: {error}"))?;
+        .map_err(|error| format!("append workspace media chunk failed: {error}"))?;
     Ok(())
-}
-
-#[tauri::command]
-pub fn resource_commit_user_media_import(
-    app: tauri::AppHandle,
-    transaction_id: String,
-    state: tauri::State<'_, ApplicationResourceState>,
-) -> Result<StoredResourceRecordDto, String> {
-    let pending = {
-        let mut runtime = state
-            .runtime
-            .lock()
-            .map_err(|error| format!("lock resource state failed: {error}"))?;
-        runtime
-            .pending_user_imports
-            .remove(&transaction_id)
-            .ok_or_else(|| "user media import transaction is unavailable".to_string())?
-    };
-    if pending.workspace_provenance.is_some() {
-        return Err("workspace transaction cannot commit as legacy user media".to_string());
-    }
-    let bytes = fs::read(&pending.path)
-        .map_err(|error| format!("read user media transaction failed: {error}"))?;
-    if bytes.is_empty() {
-        return Err("user media transaction is empty".to_string());
-    }
-    let identity = next_identity(state.inner(), "user");
-    let descriptor = user_media_descriptor(&identity, &pending.purpose, &pending.file_name);
-    let root = resource_root(&app)?;
-    let record = commit_resource(
-        &root,
-        descriptor,
-        vec![ResourceInstallFileInput {
-            logical_path: pending.file_name,
-            media_type: pending.media_type,
-            base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
-        }],
-        &identity,
-    )?;
-    if let Some(directory) = pending.path.parent() {
-        let _ = fs::remove_dir_all(directory);
-    }
-    Ok(record.dto())
 }
 
 #[tauri::command]
@@ -595,7 +473,7 @@ pub fn resource_commit_workspace_media_import(
             .lock()
             .map_err(|error| format!("lock resource state failed: {error}"))?;
         runtime
-            .pending_user_imports
+            .pending_workspace_imports
             .remove(&transaction_id)
             .ok_or_else(|| "workspace media import transaction is unavailable".to_string())?
     };
@@ -639,7 +517,7 @@ pub fn resource_commit_workspace_media_import(
 }
 
 #[tauri::command]
-pub fn resource_abort_user_media_import(
+pub fn resource_abort_workspace_media_import(
     transaction_id: String,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<(), String> {
@@ -647,7 +525,7 @@ pub fn resource_abort_user_media_import(
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?
-        .pending_user_imports
+        .pending_workspace_imports
         .remove(&transaction_id);
     if let Some(pending) = pending {
         if let Some(directory) = pending.path.parent() {
@@ -2067,6 +1945,7 @@ fn workspace_media_descriptor(
     }))
 }
 
+#[cfg(test)]
 fn user_media_descriptor(identity: &str, purpose: &str, file_name: &str) -> Value {
     let resource_id = format!("user/media/{identity}");
     let kind = match purpose {

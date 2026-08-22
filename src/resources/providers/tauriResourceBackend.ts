@@ -6,7 +6,6 @@ import type {
   OpenedResourceSnapshot,
   ResourceInstallInput,
   StoredResourceRecord,
-  UserMediaImportInput,
   WorkspaceMediaImportInput,
 } from "../backend";
 import {
@@ -65,31 +64,6 @@ export class TauriApplicationResourceBackend implements ApplicationResourceBacke
     });
   }
 
-  async importUserMedia(input: UserMediaImportInput): Promise<ResourceResult<StoredResourceRecord>> {
-    const begun = await invokeResult<string>("resource_begin_user_media_import", {
-      input: {
-        purpose: input.purpose,
-        fileName: input.fileName,
-        mediaType: input.mediaType,
-      },
-    });
-    if (begun.status === "rejected") return begun;
-    const transactionId = begun.value;
-    try {
-      const chunkSize = 512 * 1024;
-      for (let offset = 0; offset < input.bytes.byteLength; offset += chunkSize) {
-        const appended = await invokeResult<void>("resource_append_user_media_chunk", {
-          transactionId,
-          chunkBase64: encodeBase64(input.bytes.subarray(offset, Math.min(input.bytes.byteLength, offset + chunkSize))),
-        });
-        if (appended.status === "rejected") return appended;
-      }
-      return await invokeResult("resource_commit_user_media_import", { transactionId });
-    } finally {
-      await invokeResult<void>("resource_abort_user_media_import", { transactionId });
-    }
-  }
-
   async importWorkspaceMedia(input: WorkspaceMediaImportInput): Promise<ResourceResult<StoredResourceRecord>> {
     const begun = await invokeResult<string>("resource_begin_workspace_media_import", {
       input: {
@@ -104,7 +78,7 @@ export class TauriApplicationResourceBackend implements ApplicationResourceBacke
     try {
       const chunkSize = 512 * 1024;
       for (let offset = 0; offset < input.bytes.byteLength; offset += chunkSize) {
-        const appended = await invokeResult<void>("resource_append_user_media_chunk", {
+        const appended = await invokeResult<void>("resource_append_workspace_media_chunk", {
           transactionId,
           chunkBase64: encodeBase64(input.bytes.subarray(offset, Math.min(input.bytes.byteLength, offset + chunkSize))),
         });
@@ -112,7 +86,7 @@ export class TauriApplicationResourceBackend implements ApplicationResourceBacke
       }
       return await invokeResult("resource_commit_workspace_media_import", { transactionId });
     } finally {
-      await invokeResult<void>("resource_abort_user_media_import", { transactionId });
+      await invokeResult<void>("resource_abort_workspace_media_import", { transactionId });
     }
   }
 
