@@ -9,9 +9,9 @@ import { MemoryApplicationResourceBackend } from "../memoryResourceBackend";
 export async function runSimulatorPreAdaptationTests(): Promise<void> {
   const manager = new ApplicationResourceManager(new MemoryApplicationResourceBackend(), new NoopObjectUrls());
   equal((await manager.initialize()).status, "accepted");
-  const bgm = await manager.importUserMedia({ purpose: "bgm", fileName: "song.mp3", mediaType: "audio/mpeg", bytes: id3() });
-  const cover = await manager.importUserMedia({ purpose: "cover", fileName: "cover.png", mediaType: "image/png", bytes: png(360, 360) });
-  const stage = await manager.importUserMedia({ purpose: "stage-backdrop", fileName: "stage.png", mediaType: "image/png", bytes: png(1600, 720) });
+  const bgm = await manager.importWorkspaceMedia({ purpose: "bgm", fileName: "song.mp3", mediaType: "audio/mpeg", bytes: id3() });
+  const cover = await manager.importWorkspaceMedia({ purpose: "cover", fileName: "cover.png", mediaType: "image/png", bytes: png(360, 360) });
+  const stage = await manager.importWorkspaceMedia({ purpose: "stage-backdrop", fileName: "stage.png", mediaType: "image/png", bytes: png(1600, 720) });
   if (bgm.status === "rejected" || cover.status === "rejected" || stage.status === "rejected") throw new Error("test media import failed");
   const prepared = await buildSimulatorLaunchDescriptor({
     manager,

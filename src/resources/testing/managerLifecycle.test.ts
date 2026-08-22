@@ -84,7 +84,7 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   equal((await manager.collectGarbage()).status, "accepted");
   equal((await manager.acquireSnapshot(secondReceipt.value.snapshotId)).status, "rejected");
 
-  const imported = await manager.importUserMedia({
+  const imported = await manager.importWorkspaceMedia({
     purpose: "bgm",
     fileName: "song.mp3",
     mediaType: "audio/mpeg",
@@ -92,7 +92,7 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   });
   equal(imported.status, "accepted");
   if (imported.status !== "accepted") return;
-  equal(imported.value.origin, "user");
+  equal(imported.value.origin, "workspace");
   equal(imported.value.kind, "audio");
 
   provider.offline = true;

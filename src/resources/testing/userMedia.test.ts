@@ -11,7 +11,7 @@ export async function runUserMediaTests(): Promise<void> {
   const purposes: readonly UserMediaPurpose[] = ["bgm", "cover", "mv", "stage-backdrop"];
   const refs = [];
   for (const purpose of purposes) {
-    const imported = await manager.importUserMedia({
+    const imported = await manager.importWorkspaceMedia({
       purpose,
       fileName: `${purpose}.bin`,
       mediaType: purpose === "bgm" ? "audio/mpeg" : purpose === "mv" ? "video/mp4" : "image/png",
@@ -20,7 +20,7 @@ export async function runUserMediaTests(): Promise<void> {
     equal(imported.status, "accepted");
     if (imported.status === "accepted") refs.push(imported.value.ref);
   }
-  equal((await manager.importUserMedia({
+  equal((await manager.importWorkspaceMedia({
     purpose: "skin" as UserMediaPurpose,
     fileName: "forbidden.bin",
     mediaType: "application/octet-stream",

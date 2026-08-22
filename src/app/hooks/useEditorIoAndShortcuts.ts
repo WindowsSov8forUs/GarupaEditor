@@ -225,14 +225,12 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const resourceManager = useApplicationResourceManager();
   const appliedSkinResourcesRef = useRef<AppliedSkinResources | null>(null);
-  const installBestdoriMedia = async (input: Parameters<typeof createBestdoriNetworkMediaDescriptor>[0]) => {
+  const materializeBestdoriMediaInWorkspace = async (input: Parameters<typeof createBestdoriNetworkMediaDescriptor>[0]) => {
     const descriptor = createBestdoriNetworkMediaDescriptor(input);
     if (descriptor.status === "rejected") throw new Error(`${descriptor.failure.capability}: ${descriptor.failure.boundary}`);
-    const registered = resourceManager.registerNetworkResource(descriptor.value);
-    if (registered.status === "rejected") throw new Error(`${registered.failure.capability}: ${registered.failure.boundary}`);
-    const installed = await resourceManager.ensureAvailable(descriptor.value.ref, { refresh: true });
-    if (installed.status === "rejected") throw new Error(`${installed.failure.capability}: ${installed.failure.boundary}`);
-    return descriptor.value.ref;
+    const materialized = await resourceManager.materializeNetworkMediaInWorkspace(descriptor.value, input.purpose);
+    if (materialized.status === "rejected") throw new Error(`${materialized.failure.capability}: ${materialized.failure.boundary}`);
+    return materialized.value.ref;
   };
 
   useEffect(() => () => {
@@ -1411,10 +1409,8 @@ export function useEditorIoAndShortcuts(params: any) {
       if (!hasVisibleNote) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
       }
-      pushImportProgress(58, "正在应用谱面内容…");
-      const summary = applyParsedGarupaChartJson(converted);
-      pushImportProgress(70, "正在安装歌曲媒体资源…");
-      const bgmRef = await installBestdoriMedia({
+      pushImportProgress(58, "正在准备当前工程媒体…");
+      const bgmRef = await materializeBestdoriMediaInWorkspace({
         server: payload.resources.server,
         purpose: "bgm",
         nativeId: payload.resources.audioLogicalPath,
@@ -1422,7 +1418,7 @@ export function useEditorIoAndShortcuts(params: any) {
         title: payload.audioFileName,
         url: payload.resources.audioUrl,
       });
-      const coverRef = await installBestdoriMedia({
+      const coverRef = await materializeBestdoriMediaInWorkspace({
         server: payload.resources.server,
         purpose: "cover",
         nativeId: payload.resources.jacketLogicalPath,
@@ -1432,7 +1428,7 @@ export function useEditorIoAndShortcuts(params: any) {
       });
       const mvRef = payload.resources.mvUrl === null
         ? null
-        : await installBestdoriMedia({
+        : await materializeBestdoriMediaInWorkspace({
             server: payload.resources.server,
             purpose: "mv",
             nativeId: payload.resources.mvLogicalPath!,
@@ -1440,6 +1436,8 @@ export function useEditorIoAndShortcuts(params: any) {
             title: `${payload.metadata.title} MV`,
             url: payload.resources.mvUrl,
           });
+      pushImportProgress(82, "正在应用谱面与工程媒体…");
+      const summary = applyParsedGarupaChartJson(converted);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
         ...current,
         bgm: bgmRef,
@@ -1467,6 +1465,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
+      await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = error instanceof Error ? error.message : String(error);
       completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
       setStatusMessage(`官方谱面导入失败：${message}`);
@@ -1538,8 +1537,7 @@ export function useEditorIoAndShortcuts(params: any) {
         throw new Error("社区谱面解析成功，但未解析到可见音符。");
       }
 
-      pushImportProgress(54, "正在应用谱面内容…");
-      const summary = applyParsedGarupaChartJson(converted);
+      pushImportProgress(54, "正在解析社区歌曲媒体…");
       const songResources = await resolveBestdoriCommunitySongResourceUrls(post.song);
 
       const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
@@ -1555,7 +1553,7 @@ export function useEditorIoAndShortcuts(params: any) {
       pushImportProgress(66, "正在安装社区歌曲媒体…");
       const bgmRef = audioServer === null
         ? null
-        : await installBestdoriMedia({
+        : await materializeBestdoriMediaInWorkspace({
             server: audioServer,
             purpose: "bgm",
             nativeId: `community-${postId}-bgm`,
@@ -1564,13 +1562,15 @@ export function useEditorIoAndShortcuts(params: any) {
           });
       const coverRef = coverServer === null
         ? null
-        : await installBestdoriMedia({
+        : await materializeBestdoriMediaInWorkspace({
             server: coverServer,
             purpose: "cover",
             nativeId: `community-${postId}-cover`,
             title: `community-post-${postId}-cover`,
             url: coverUrl,
           });
+      pushImportProgress(82, "正在应用谱面与工程媒体…");
+      const summary = applyParsedGarupaChartJson(converted);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
         ...current,
         bgm: bgmRef,
@@ -1602,6 +1602,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
+      await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = error instanceof Error ? error.message : String(error);
       completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
       setStatusMessage(`社区谱面导入失败：${message}`);
@@ -1887,11 +1888,11 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsSkinSettingsOpen(true);
   };
 
-  const importUserMedia = async (
+  const importWorkspaceMedia = async (
     purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
     file: File,
   ) => {
-    const imported = await resourceManager.importUserMedia({
+    const imported = await resourceManager.importWorkspaceMedia({
       purpose,
       fileName: file.name,
       mediaType: file.type || "application/octet-stream",
@@ -1907,7 +1908,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    void importUserMedia("cover", file).then((cover) => {
+    void importWorkspaceMedia("cover", file).then((cover) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, cover }));
       setStatusMessage("封面资源已导入。");
     }).catch((error) => setStatusMessage(`封面导入失败：${error instanceof Error ? error.message : String(error)}`));
@@ -1917,7 +1918,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    void importUserMedia("bgm", file).then((bgm) => {
+    void importWorkspaceMedia("bgm", file).then((bgm) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, bgm }));
       setAudioFileName(file.name);
       setAudioDurationSec(0);
@@ -1929,7 +1930,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    void importUserMedia("mv", file).then((mv) => {
+    void importWorkspaceMedia("mv", file).then((mv) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, mv }));
       setStatusMessage(`MV资源已导入：${file.name}`);
     }).catch((error) => setStatusMessage(`MV导入失败：${error instanceof Error ? error.message : String(error)}`));
@@ -1939,7 +1940,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    void importUserMedia("stage-backdrop", file).then((stageBackdrop) => {
+    void importWorkspaceMedia("stage-backdrop", file).then((stageBackdrop) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, stageBackdrop }));
       setStatusMessage(`舞台背景资源已导入：${file.name}`);
     }).catch((error) => setStatusMessage(`舞台背景导入失败：${error instanceof Error ? error.message : String(error)}`));
