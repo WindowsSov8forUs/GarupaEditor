@@ -40,6 +40,14 @@ export interface WorkspaceMediaImportInput extends UserMediaImportInput {
   readonly provenance: WorkspaceMediaProvenance;
 }
 
+export interface LegacyMediaRecoveryStatus {
+  readonly completed: boolean;
+  readonly migratedActiveCount: number;
+  readonly archivedUserCount: number;
+  readonly removedProviderMediaCount: number;
+  readonly blockedCount: number;
+}
+
 export interface StoredResourceRecord {
   readonly revision: string;
   readonly descriptor: ApplicationResourceDescriptor;
@@ -60,6 +68,9 @@ export interface ApplicationResourceBackend {
   importUserMedia(input: UserMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
   importWorkspaceMedia(input: WorkspaceMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
   reconcileWorkspaceMedia(refs: readonly ResourceRef[]): Promise<ResourceResult<void>>;
+  finalizeLegacyMediaMigration(
+    migratedActiveRefs: readonly ResourceRef[],
+  ): Promise<ResourceResult<LegacyMediaRecoveryStatus>>;
   loadCatalogSnapshot(provider: string): Promise<ResourceResult<ResourceCatalogSnapshot | null>>;
   commitCatalogSnapshot(snapshot: ResourceCatalogSnapshot): Promise<ResourceResult<void>>;
   createSnapshot(

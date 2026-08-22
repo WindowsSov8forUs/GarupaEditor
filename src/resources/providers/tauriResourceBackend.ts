@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   ApplicationResourceBackend,
   BuiltinResourceInstallInput,
+  LegacyMediaRecoveryStatus,
   OpenedResourceSnapshot,
   ResourceInstallInput,
   StoredResourceRecord,
@@ -117,6 +118,12 @@ export class TauriApplicationResourceBackend implements ApplicationResourceBacke
 
   async reconcileWorkspaceMedia(refs: readonly ResourceRef[]): Promise<ResourceResult<void>> {
     return invokeResult("resource_reconcile_workspace_media", { refs });
+  }
+
+  async finalizeLegacyMediaMigration(
+    migratedActiveRefs: readonly ResourceRef[],
+  ): Promise<ResourceResult<LegacyMediaRecoveryStatus>> {
+    return invokeResult("resource_finalize_legacy_media_migration", { migratedActiveRefs });
   }
 
   async loadCatalogSnapshot(provider: string): Promise<ResourceResult<ResourceCatalogSnapshot | null>> {

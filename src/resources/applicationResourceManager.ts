@@ -74,6 +74,11 @@ export interface ImportUserMediaRequest {
   readonly bytes: Uint8Array;
 }
 
+export interface AdoptedLegacyChartMedia {
+  readonly media: ChartMediaResources;
+  readonly migratedActiveRefs: readonly ResourceRef[];
+}
+
 export class ApplicationResourceManager {
   private readonly builtins = new Map<string, RegisteredBuiltinResource>();
   private readonly installed = new Map<string, StoredResourceRecord>();
@@ -399,6 +404,97 @@ export class ApplicationResourceManager {
       refs.push(ref);
     }
     return this.backend.reconcileWorkspaceMedia(Object.freeze(refs));
+  }
+
+  async adoptLegacyChartMedia(
+    media: ChartMediaResources,
+  ): Promise<ResourceResult<AdoptedLegacyChartMedia>> {
+    const migratedActiveRefs: ResourceRef[] = [];
+    const output: Record<keyof ChartMediaResources, ResourceRef | null> = {
+      bgm: null,
+      cover: null,
+      mv: null,
+      stageBackdrop: null,
+    };
+    const purposes: Readonly<Record<keyof ChartMediaResources, UserMediaPurpose>> = Object.freeze({
+      bgm: "bgm",
+      cover: "cover",
+      mv: "mv",
+      stageBackdrop: "stage-backdrop",
+    });
+    for (const key of Object.keys(output) as Array<keyof ChartMediaResources>) {
+      const ref = media[key];
+      if (ref === null || ref.id.startsWith("workspace/") || ref.id.startsWith("builtin/")) {
+        output[key] = ref;
+        continue;
+      }
+      if (
+        key === "stageBackdrop" && ref.id.startsWith("bestdori/") &&
+        ref.id.includes("/ingameskin/bgskin/")
+      ) {
+        output[key] = ref;
+        continue;
+      }
+      if (!ref.id.startsWith("user/media/") && !ref.id.startsWith("bestdori/")) {
+        return invalid("resources.manager.legacy-chart-media-scope");
+      }
+      const purpose = purposes[key];
+      let record = await this.backend.readRecord(ref);
+      if (record.status === "rejected" && ref.id.startsWith("bestdori/")) {
+        let descriptor = this.findNetworkDescriptor(ref.id);
+        if (descriptor === null) {
+          const refreshed = await this.refreshCatalog("bestdori");
+          if (refreshed.status === "rejected") return refreshed;
+          descriptor = this.findNetworkDescriptor(ref.id);
+        }
+        if (descriptor === null) {
+          return resourceRejected(
+            "resource-unavailable",
+            "resources.manager.legacy-network-media-unavailable",
+            "Legacy chart media has neither committed bytes nor one current provider descriptor; it cannot be aliased or defaulted.",
+          );
+        }
+        const materialized = await this.materializeNetworkMediaInWorkspace(descriptor, purpose);
+        if (materialized.status === "rejected") return materialized;
+        output[key] = materialized.value.ref;
+        migratedActiveRefs.push(ref);
+        continue;
+      }
+      if (record.status === "rejected") return record;
+      if (record.value.files.length !== 1) return invalid("resources.manager.legacy-chart-media-file-count");
+      const receipt = await this.createSnapshotFromRefs({ "legacy-chart-media": ref });
+      if (receipt.status === "rejected") return receipt;
+      const lease = await this.acquireSnapshot(receipt.value.snapshotId);
+      if (lease.status === "rejected") return lease;
+      try {
+        const file = lease.value.listFiles("legacy-chart-media")[0]!;
+        const bytes = await lease.value.readBytes("legacy-chart-media", file.logicalPath);
+        const imported = await this.importWorkspaceMedia({
+          purpose,
+          fileName: record.value.descriptor.origin === "user"
+            ? record.value.descriptor.fileName
+            : file.logicalPath,
+          mediaType: file.mediaType,
+          bytes,
+          provenance: ref.id.startsWith("bestdori/")
+            ? Object.freeze({ kind: "network" as const, sourceRef: ref })
+            : Object.freeze({ kind: "user-upload" as const }),
+        });
+        if (imported.status === "rejected") return imported;
+        output[key] = imported.value.ref;
+        migratedActiveRefs.push(ref);
+      } finally {
+        await lease.value.release();
+      }
+    }
+    return resourceAccepted(Object.freeze({
+      media: Object.freeze(output) as ChartMediaResources,
+      migratedActiveRefs: Object.freeze(migratedActiveRefs),
+    }));
+  }
+
+  finalizeLegacyMediaMigration(migratedActiveRefs: readonly ResourceRef[]) {
+    return this.backend.finalizeLegacyMediaMigration(migratedActiveRefs);
   }
 
   async createSnapshot(

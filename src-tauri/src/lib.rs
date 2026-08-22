@@ -14,7 +14,8 @@ mod resource_manager;
 use resource_manager::{
     resource_abort_user_media_import, resource_append_user_media_chunk,
     resource_begin_user_media_import, resource_begin_workspace_media_import,
-    resource_collect_garbage, resource_commit_catalog_snapshot, resource_commit_user_media_import,
+    resource_collect_garbage, resource_commit_catalog_snapshot,
+    resource_commit_user_media_import, resource_finalize_legacy_media_migration,
     resource_commit_workspace_media_import, resource_create_snapshot, resource_import_user_media,
     resource_initialize, resource_install_builtin_package, resource_install_network_package,
     resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
@@ -41,12 +42,14 @@ const SESSION_COVER_FILE_NAME: &str = "cover.bin";
 const SESSION_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_RESOURCES_DIR_NAME: &str = "chart-resources";
 const CHART_RESOURCES_META_NAME: &str = "chart-resources.v2.json";
-const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v4.json";
-const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v4.bak.json";
-const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v4.tmp.json";
+const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v5.json";
+const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v5.bak.json";
+const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v5.tmp.json";
+const LEGACY_V4_CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v4.json";
+const LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v4.bak.json";
 const LEGACY_CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v3.json";
 const LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v3.bak.json";
-const CHART_RESOURCE_REFS_MIGRATION_REPORT: &str = "chart-resources.v4.migration.json";
+const CHART_RESOURCE_REFS_MIGRATION_REPORT: &str = "chart-resources.v5.migration.json";
 const CHART_COVER_FILE_NAME: &str = "cover.bin";
 const CHART_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_MV_FILE_NAME: &str = "mv.bin";
@@ -1290,6 +1293,7 @@ struct ChartResourcesMeta {
 struct LoadedEditorChartCache {
     chart_json: String,
     resource_refs: Option<serde_json::Value>,
+    resource_refs_schema_version: Option<u32>,
     cover_data_url: Option<String>,
     audio_base64: Option<String>,
     audio_mime_type: Option<String>,
@@ -1766,6 +1770,14 @@ fn save_editor_chart_cache(
             &resources_root.join(CHART_RESOURCE_REFS_TEMP_NAME),
             &refs_text,
         )?;
+        for legacy in [
+            LEGACY_V4_CHART_RESOURCE_REFS_META_NAME,
+            LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME,
+            LEGACY_CHART_RESOURCE_REFS_META_NAME,
+            LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME,
+        ] {
+            remove_file_if_exists(&resources_root.join(legacy))?;
+        }
     }
 
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
@@ -1851,6 +1863,7 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
             return Ok(Some(LoadedEditorChartCache {
                 chart_json: legacy_json,
                 resource_refs: None,
+                resource_refs_schema_version: Some(2),
                 cover_data_url,
                 audio_base64,
                 audio_mime_type: legacy_meta.audio_mime_type,
@@ -1863,13 +1876,23 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
 
     let resources_root = resolve_chart_resources_root(&root)?;
     let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
-    let resource_refs = match load_json_text_with_backup(
+    let (resource_refs, resource_refs_schema_version) = match load_json_text_with_backup(
         &refs_path,
         &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
     )? {
-        Some(text) => Some(serde_json::from_str(&text)
-            .map_err(|error| format!("parse chart resource refs failed: {error}"))?),
-        None => migrate_chart_resource_refs_v3(&resources_root)?,
+        Some(text) => (Some(serde_json::from_str(&text)
+            .map_err(|error| format!("parse chart resource refs failed: {error}"))?), Some(5)),
+        None => {
+            let legacy_v4 = load_json_text_with_backup(
+                &resources_root.join(LEGACY_V4_CHART_RESOURCE_REFS_META_NAME),
+                &resources_root.join(LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME),
+            )?;
+            match legacy_v4 {
+                Some(text) => (Some(serde_json::from_str(&text)
+                    .map_err(|error| format!("parse v4 chart resource refs failed: {error}"))?), Some(4)),
+                None => (migrate_chart_resource_refs_v3(&resources_root)?, Some(3)),
+            }
+        }
     };
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let meta = read_chart_resources_meta(&meta_path)?;
@@ -1896,6 +1919,7 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
     Ok(Some(LoadedEditorChartCache {
         chart_json,
         resource_refs,
+        resource_refs_schema_version,
         cover_data_url,
         audio_base64,
         audio_mime_type: meta.audio_mime_type,
@@ -1936,17 +1960,10 @@ fn migrate_chart_resource_refs_v3(resources_root: &Path) -> Result<Option<serde_
         }
     }
     let migrated_value = serde_json::Value::Object(migrated);
-    let encoded = serde_json::to_string(&migrated_value)
-        .map_err(|error| format!("serialize migrated chart resource refs failed: {error}"))?;
-    write_text_with_backup(
-        &resources_root.join(CHART_RESOURCE_REFS_META_NAME),
-        &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
-        &resources_root.join(CHART_RESOURCE_REFS_TEMP_NAME),
-        &encoded,
-    )?;
     let report = serde_json::to_string(&serde_json::json!({
         "fromSchema": 3,
-        "toSchema": 4,
+        "targetSchema": 5,
+        "status": "pending-workspace-adoption",
         "skipped": skipped,
     })).map_err(|error| format!("serialize chart resource migration report failed: {error}"))?;
     fs::write(resources_root.join(CHART_RESOURCE_REFS_MIGRATION_REPORT), report)
@@ -2194,6 +2211,7 @@ pub fn run() {
             resource_commit_user_media_import,
             resource_commit_workspace_media_import,
             resource_reconcile_workspace_media,
+            resource_finalize_legacy_media_migration,
             resource_abort_user_media_import,
             resource_create_snapshot,
             resource_open_snapshot,

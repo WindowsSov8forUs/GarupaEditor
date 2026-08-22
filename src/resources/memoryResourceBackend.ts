@@ -192,6 +192,33 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     return resourceAccepted(undefined);
   }
 
+  async finalizeLegacyMediaMigration(
+    migratedActiveRefs: readonly ResourceRef[],
+  ) {
+    const active = new Set<string>(migratedActiveRefs.map((ref) => ref.id));
+    let migratedActiveCount = 0;
+    let archivedUserCount = 0;
+    let removedProviderMediaCount = 0;
+    for (const [id, stored] of this.records) {
+      const descriptor = stored.record.descriptor;
+      if (descriptor.origin === "user") {
+        if (active.has(id)) migratedActiveCount += 1;
+        else archivedUserCount += 1;
+        this.records.delete(id);
+      } else if (descriptor.origin === "network" && descriptor.source.family.startsWith("media-")) {
+        removedProviderMediaCount += 1;
+        this.records.delete(id);
+      }
+    }
+    return resourceAccepted(Object.freeze({
+      completed: true,
+      migratedActiveCount,
+      archivedUserCount,
+      removedProviderMediaCount,
+      blockedCount: 0,
+    }));
+  }
+
   async loadCatalogSnapshot(
     provider: string,
   ): Promise<ResourceResult<ResourceCatalogSnapshot | null>> {

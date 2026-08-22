@@ -25,6 +25,7 @@ const SESSION_AUTOSAVE_DELAY_MS = 1000;
 type LoadedEditorChartCache = {
   chartJson: string;
   resourceRefs?: unknown;
+  resourceRefsSchemaVersion?: number | null;
   coverDataUrl?: string | null;
   audioBase64?: string | null;
   audioMimeType?: string | null;
@@ -193,6 +194,8 @@ export function useEditorSessionCache(params: any) {
   const [didRestoreAttemptFinish, setDidRestoreAttemptFinish] = useState(false);
   const lastSavedChartFingerprintRef = useRef<string | null>(null);
   const lastSavedSettingsFingerprintRef = useRef<string | null>(null);
+  const migratedLegacyMediaRefsRef = useRef<readonly ResourceRef[]>(Object.freeze([]));
+  const legacyMediaFinalizedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -461,12 +464,27 @@ export function useEditorSessionCache(params: any) {
           setAudioFileName(restoredAudioFileName);
 
           let restoredMedia = parseChartMediaResources(loadedChart.resourceRefs);
+          const loadedResourceSchema = Number(loadedChart.resourceRefsSchemaVersion);
+          const hasLegacyMediaRef = restoredMedia !== null && (
+            restoredMedia.bgm?.id.startsWith("user/") === true || restoredMedia.bgm?.id.startsWith("bestdori/") === true ||
+            restoredMedia.cover?.id.startsWith("user/") === true || restoredMedia.cover?.id.startsWith("bestdori/") === true ||
+            restoredMedia.mv?.id.startsWith("user/") === true || restoredMedia.mv?.id.startsWith("bestdori/") === true ||
+            restoredMedia.stageBackdrop?.id.startsWith("user/") === true
+          );
+          if (restoredMedia !== null && (loadedResourceSchema !== 5 || hasLegacyMediaRef)) {
+            const adopted = await resourceManager.adoptLegacyChartMedia(restoredMedia);
+            if (adopted.status === "rejected") {
+              throw new Error(`${adopted.failure.capability}: ${adopted.failure.boundary}`);
+            }
+            restoredMedia = adopted.value.media;
+            migratedLegacyMediaRefsRef.current = adopted.value.migratedActiveRefs;
+          }
           if (restoredMedia === null) {
             let bgm: ResourceRef | null = null;
             let cover: ResourceRef | null = null;
             let mv: ResourceRef | null = null;
             if (loadedAudioBase64) {
-              const imported = await resourceManager.importUserMedia({
+              const imported = await resourceManager.importWorkspaceMedia({
                 purpose: "bgm",
                 fileName: restoredAudioFileName || "legacy-audio.bin",
                 mediaType: loadedAudioMimeType,
@@ -481,7 +499,7 @@ export function useEditorSessionCache(params: any) {
               loadedCoverDataUrl ?? normalizeOptionalText(rawMetadata.coverDataUrl),
             );
             if (restoredCoverParsed !== null) {
-              const imported = await resourceManager.importUserMedia({
+              const imported = await resourceManager.importWorkspaceMedia({
                 purpose: "cover",
                 fileName: "legacy-cover.bin",
                 mediaType: restoredCoverParsed.mimeType,
@@ -493,7 +511,7 @@ export function useEditorSessionCache(params: any) {
               loadedMvDataUrl ?? normalizeOptionalText(rawMetadata.mvDataUrl),
             );
             if (restoredMvParsed !== null) {
-              const imported = await resourceManager.importUserMedia({
+              const imported = await resourceManager.importWorkspaceMedia({
                 purpose: "mv",
                 fileName: normalizeOptionalText(loadedChart.mvFileName) ?? "legacy-mv.bin",
                 mediaType: restoredMvParsed.mimeType,
@@ -502,6 +520,10 @@ export function useEditorSessionCache(params: any) {
               if (imported.status === "accepted") mv = imported.value.ref;
             }
             restoredMedia = Object.freeze({ bgm, cover, mv, stageBackdrop: null });
+          }
+          const reconciled = await resourceManager.reconcileCurrentChartMedia(restoredMedia);
+          if (reconciled.status === "rejected") {
+            throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);
           }
           setChartMediaResources(restoredMedia);
 
@@ -603,6 +625,23 @@ export function useEditorSessionCache(params: any) {
               mvCleared: true,
             },
           });
+          const reconciled = await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
+          if (reconciled.status === "rejected") {
+            throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);
+          }
+          if (!legacyMediaFinalizedRef.current) {
+            const finalized = await resourceManager.finalizeLegacyMediaMigration(
+              migratedLegacyMediaRefsRef.current,
+            );
+            if (finalized.status === "rejected") {
+              throw new Error(`${finalized.failure.capability}: ${finalized.failure.boundary}`);
+            }
+            legacyMediaFinalizedRef.current = true;
+            migratedLegacyMediaRefsRef.current = Object.freeze([]);
+            if (!finalized.value.completed) {
+              setStatusMessage(`旧媒体迁移有 ${finalized.value.blockedCount} 项无法安全归档，已保留原记录。`);
+            }
+          }
           lastSavedChartFingerprintRef.current = fingerprint;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);

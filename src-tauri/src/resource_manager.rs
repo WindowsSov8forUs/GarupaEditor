@@ -155,6 +155,16 @@ pub struct ResourceBeginWorkspaceMediaImportInput {
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct LegacyMediaRecoveryStatusDto {
+    pub completed: bool,
+    pub migrated_active_count: usize,
+    pub archived_user_count: usize,
+    pub removed_provider_media_count: usize,
+    pub blocked_count: usize,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OpenedResourceSnapshotDto {
     pub snapshot_id: String,
     pub slots: HashMap<String, ResourceRefDto>,
@@ -700,6 +710,135 @@ pub fn resource_reconcile_workspace_media(
 }
 
 #[tauri::command]
+pub fn resource_finalize_legacy_media_migration(
+    app: tauri::AppHandle,
+    migrated_active_refs: Vec<ResourceRefDto>,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<LegacyMediaRecoveryStatusDto, String> {
+    let _guard = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    let root = resource_root(&app)?;
+    let workspace = workspace_media_root(&app)?;
+    let recovery = legacy_user_media_recovery_root(&app)?;
+    ensure_layout(&root)?;
+    ensure_workspace_layout(&workspace)?;
+    fs::create_dir_all(recovery.join("files"))
+        .map_err(|error| format!("create legacy media recovery failed: {error}"))?;
+    let manifest_path = recovery.join("manifest.json");
+    if manifest_path.exists() {
+        let bytes = fs::read(&manifest_path)
+            .map_err(|error| format!("read legacy media recovery manifest failed: {error}"))?;
+        let value: Value = serde_json::from_slice(&bytes)
+            .map_err(|error| format!("parse legacy media recovery manifest failed: {error}"))?;
+        return serde_json::from_value(
+            value
+                .get("status")
+                .cloned()
+                .ok_or_else(|| "legacy media recovery status is missing".to_string())?,
+        )
+        .map_err(|error| format!("parse legacy media recovery status failed: {error}"));
+    }
+    let active: HashSet<String> = migrated_active_refs
+        .into_iter()
+        .map(|reference| normalize_resource_id(&reference.id))
+        .collect::<Result<_, _>>()?;
+    let mut index = read_index(&root)?;
+    let mut retained_ids = Vec::new();
+    let mut removable_ids = Vec::new();
+    let mut archived = Vec::new();
+    let mut blocked = Vec::new();
+    let mut migrated_active_count = 0;
+    let mut removed_provider_media_count = 0;
+    for resource_id in &index.resource_ids {
+        let record = read_record(&root, resource_id)?;
+        let origin = record.descriptor.get("origin").and_then(Value::as_str);
+        let provider_media = origin == Some("network")
+            && record
+                .descriptor
+                .get("source")
+                .and_then(Value::as_object)
+                .and_then(|source| source.get("family"))
+                .and_then(Value::as_str)
+                .is_some_and(|family| family.starts_with("media-"));
+        if origin == Some("user") {
+            if active.contains(resource_id) {
+                migrated_active_count += 1;
+                removable_ids.push(resource_id.clone());
+                continue;
+            }
+            match archive_legacy_user_record(&root, &recovery, resource_id, &record) {
+                Ok(entry) => {
+                    archived.push(entry);
+                    removable_ids.push(resource_id.clone());
+                }
+                Err(error) => {
+                    blocked.push(serde_json::json!({ "resourceId": resource_id, "error": error }));
+                    retained_ids.push(resource_id.clone());
+                }
+            }
+        } else if provider_media {
+            removed_provider_media_count += 1;
+            removable_ids.push(resource_id.clone());
+        } else {
+            retained_ids.push(resource_id.clone());
+        }
+    }
+    index.resource_ids = retained_ids;
+    write_index(
+        &root,
+        &index,
+        &next_identity(state.inner(), "legacy-media-index"),
+    )?;
+    for resource_id in removable_ids {
+        if let Ok(record) = read_record(&root, &resource_id) {
+            if let Ok(projection) = projection_resource_path(&root, &record.descriptor) {
+                let current = projection.join("current.json");
+                if current.exists() {
+                    let _ = fs::remove_file(current);
+                }
+            }
+        }
+        let path = record_path(&root, &resource_id);
+        if path.exists() {
+            fs::remove_file(path)
+                .map_err(|error| format!("remove migrated legacy media record failed: {error}"))?;
+        }
+    }
+    if blocked.is_empty() {
+        let user_library = root.join("library/user");
+        if user_library.exists() {
+            fs::remove_dir_all(user_library).map_err(|error| {
+                format!("remove legacy user library projection failed: {error}")
+            })?;
+        }
+    }
+    let status = LegacyMediaRecoveryStatusDto {
+        completed: blocked.is_empty(),
+        migrated_active_count,
+        archived_user_count: archived.len(),
+        removed_provider_media_count,
+        blocked_count: blocked.len(),
+    };
+    let manifest = serde_json::to_vec(&serde_json::json!({
+        "schemaVersion": 1,
+        "status": status,
+        "archived": archived,
+        "blocked": blocked,
+    }))
+    .map_err(|error| format!("serialize legacy media recovery manifest failed: {error}"))?;
+    atomic_write(
+        &root,
+        &manifest_path,
+        &manifest,
+        &next_identity(state.inner(), "legacy-media-recovery"),
+    )?;
+    collect_garbage_paths(&root, &workspace)?;
+    Ok(status)
+}
+
+#[tauri::command]
 pub fn resource_create_snapshot(
     app: tauri::AppHandle,
     slots: HashMap<String, ResourceRefDto>,
@@ -920,6 +1059,43 @@ pub fn resource_collect_garbage(
     let root = resource_root(&app)?;
     let workspace = workspace_media_root(&app)?;
     collect_garbage_paths(&root, &workspace)
+}
+
+fn archive_legacy_user_record(
+    root: &Path,
+    recovery: &Path,
+    resource_id: &str,
+    record: &StoredResourceRecord,
+) -> Result<Value, String> {
+    verify_record(root, record)?;
+    let target_root = recovery.join("files").join(digest_text(resource_id));
+    for file in &record.files {
+        let target = target_root.join(&file.logical_path);
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("create legacy recovery parent failed: {error}"))?;
+        }
+        if target.exists() {
+            verify_blob_path(&target, &file.integrity)?;
+            continue;
+        }
+        let blob = root.join("blobs").join(&file.blob);
+        if fs::hard_link(&blob, &target).is_err() {
+            fs::copy(&blob, &target)
+                .map_err(|error| format!("copy legacy recovery media failed: {error}"))?;
+        }
+        verify_blob_path(&target, &file.integrity)?;
+    }
+    Ok(serde_json::json!({
+        "resourceId": resource_id,
+        "purpose": record.descriptor.get("purpose").cloned().unwrap_or(Value::Null),
+        "fileName": record.descriptor.get("fileName").cloned().unwrap_or(Value::Null),
+        "files": record.files.iter().map(|file| serde_json::json!({
+            "logicalPath": file.logical_path,
+            "byteLength": file.integrity.byte_length,
+            "sha256": file.integrity.sha256,
+        })).collect::<Vec<_>>(),
+    }))
 }
 
 fn collect_garbage_paths(root: &Path, workspace: &Path) -> Result<(), String> {
@@ -1530,6 +1706,16 @@ fn resource_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|error| format!("resolve app data directory failed: {error}"))?;
     root.push(RESOURCE_DIRECTORY);
+    Ok(root)
+}
+
+fn legacy_user_media_recovery_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut root = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("resolve recovery app data directory failed: {error}"))?;
+    root.push("recovery");
+    root.push("legacy-user-media-v1");
     Ok(root)
 }
 
@@ -2765,6 +2951,34 @@ mod tests {
         fs::remove_file(snapshot_path(&root, &snapshot_id)).unwrap();
         collect_garbage_paths(&root, &workspace).unwrap();
         assert!(!root.join("blobs").join(&first_digest).exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn legacy_user_recovery_copies_verified_bytes_outside_active_library() {
+        let root = test_root("legacy-user-recovery");
+        let recovery = root.join("recovery/legacy-user-media-v1");
+        let identity = "legacy-user";
+        let descriptor = user_media_descriptor(identity, "cover", "cover.png");
+        let record = commit_resource(
+            &root,
+            descriptor,
+            vec![install_file("cover.png", b"legacy-cover")],
+            identity,
+        )
+        .unwrap();
+        let resource_id = descriptor_resource_id(&record.descriptor).unwrap();
+        let entry = archive_legacy_user_record(&root, &recovery, &resource_id, &record).unwrap();
+        assert_eq!(
+            entry.get("resourceId").and_then(Value::as_str),
+            Some(resource_id.as_str())
+        );
+        assert!(recovery
+            .join("files")
+            .join(digest_text(&resource_id))
+            .join("cover.png")
+            .exists());
+        assert!(read_record(&root, &resource_id).is_ok());
         let _ = fs::remove_dir_all(root);
     }
 

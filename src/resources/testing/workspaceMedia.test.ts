@@ -65,6 +65,27 @@ export async function runWorkspaceMediaTests(): Promise<void> {
   equal(network.value.origin, "workspace");
   equal((await backend.readRecord(provider.descriptor.ref)).status, "rejected");
   equal((await manager.ensureAvailable(provider.descriptor.ref, { refresh: true })).status, "rejected");
+
+  const legacy = await backend.importUserMedia({
+    purpose: "mv",
+    fileName: "legacy.mp4",
+    mediaType: "video/mp4",
+    bytes: mp4(),
+  });
+  if (legacy.status === "rejected") throw new Error("legacy setup rejected");
+  const adopted = await manager.adoptLegacyChartMedia(Object.freeze({
+    bgm: null,
+    cover: null,
+    mv: legacy.value.descriptor.ref,
+    stageBackdrop: null,
+  }));
+  if (adopted.status === "rejected") throw new Error("legacy adoption rejected");
+  equal(adopted.value.media.mv?.id.startsWith("workspace/current/chart-media/mv/"), true);
+  equal(adopted.value.migratedActiveRefs[0]?.id, legacy.value.descriptor.ref.id);
+  const finalized = await manager.finalizeLegacyMediaMigration(adopted.value.migratedActiveRefs);
+  if (finalized.status === "rejected") throw new Error("legacy finalization rejected");
+  equal(finalized.value.migratedActiveCount, 1);
+  equal((await backend.readRecord(legacy.value.descriptor.ref)).status, "rejected");
 }
 
 class MediaProvider implements ResourceCatalogProvider {
@@ -132,6 +153,9 @@ class NoopUrls implements ResourceObjectUrlFactory {
 
 function id3(label: string): Uint8Array {
   return new TextEncoder().encode(`ID3-${label}`);
+}
+function mp4(): Uint8Array {
+  return Uint8Array.from([0, 0, 0, 12, 0x66, 0x74, 0x79, 0x70, 1, 2, 3, 4]);
 }
 function png(): Uint8Array {
   return Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 1]);
