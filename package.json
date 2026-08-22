@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && npm run resources:verify-production-assets",
     "preview": "vite preview",
     "chart:test": "node src/chart/testing/runTests.mjs",
     "resources:test": "node src/resources/testing/runTests.mjs",
     "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
+    "resources:verify-production-assets": "node scripts/verify-builtin-production-assets.mjs",
     "simulator:test:first-slice": "node src/simulator/testing/runFirstSliceTests.mjs",
     "simulator:test:chart-boundary": "node src/simulator/testing/runChartConstructionBoundaryTests.mjs",
     "simulator:test:chart-parsing": "node src/simulator/testing/runChartConstructionParsingTests.mjs",

@@ -27,10 +27,34 @@ for (const path of runtimeFiles) {
 
 const repositoryRoot = resolve(root, "..", "..");
 const sourceRoot = join(repositoryRoot, "src");
+const applicationBuiltinCatalogPath = join(root, "builtin", "builtinResourceCatalog.ts");
+const simulatorBuiltinCatalogPath = join(root, "builtin", "simulatorBuiltinResourceCatalog.ts");
 const builtinCatalogPaths = new Set([
-  join(root, "builtin", "builtinResourceCatalog.ts"),
-  join(root, "builtin", "simulatorBuiltinResourceCatalog.ts"),
+  applicationBuiltinCatalogPath,
+  simulatorBuiltinCatalogPath,
 ]);
+const importedBuiltinAssets = new Set();
+for (const [catalogPath, expectedCount] of [
+  [applicationBuiltinCatalogPath, 22],
+  [simulatorBuiltinCatalogPath, 18],
+]) {
+  const source = readFileSync(catalogPath, "utf8");
+  const imports = Array.from(source.matchAll(/^import\s+\w+\s+from\s+["']([^"']*assets\/[^"']+)["'];$/gm));
+  if (imports.length !== expectedCount) {
+    throw new Error(`${relative(root, catalogPath)} must import exactly ${expectedCount} physical builtins, got ${imports.length}`);
+  }
+  for (const match of imports) {
+    const specifier = match[1];
+    if (specifier === undefined || !specifier.endsWith("?url&no-inline")) {
+      throw new Error(`${relative(root, catalogPath)} must force every physical builtin through ?url&no-inline: ${specifier}`);
+    }
+    const physicalSpecifier = specifier.slice(0, -"?url&no-inline".length);
+    importedBuiltinAssets.add(resolve(dirname(catalogPath), physicalSpecifier));
+  }
+}
+if (importedBuiltinAssets.size !== 40) {
+  throw new Error(`builtin catalogs must own exactly 40 distinct physical assets, got ${importedBuiltinAssets.size}`);
+}
 for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
   if (builtinCatalogPaths.has(path)) continue;
   const source = readFileSync(path, "utf8");
@@ -109,11 +133,14 @@ for (const forbidden of [".importUserMedia(", "installBestdoriMedia("]) {
 }
 for (const marker of [
   "WORKSPACE_STORAGE_SCHEMA", "project-media", "resource_commit_workspace_media_import",
-  "resource_reconcile_workspace_media", "legacy-user-media-v1", "library/user",
+  "resource_reconcile_workspace_media", "resource_shutdown", "legacy-user-media-v1", "library/user",
 ]) if (!tauriLibrarySource.includes(marker) && !readFileSync(join(repositoryRoot, "src-tauri", "src", "resource_manager.rs"), "utf8").includes(marker)) {
   throw new Error(`Tauri workspace/recovery marker missing: ${marker}`);
 }
 const resourceManagerRust = readFileSync(join(repositoryRoot, "src-tauri", "src", "resource_manager.rs"), "utf8");
+if (!tauriLibrarySource.includes("tauri::RunEvent::Exit") || !resourceManagerRust.includes("collect_garbage_paths(&root, &workspace)")) {
+  throw new Error("graceful resource runtime cleanup is not bound to application exit");
+}
 if (!resourceManagerRust.includes("chart media cannot be installed as a global network record")) {
   throw new Error("global provider-media installation rejection is missing");
 }
@@ -128,6 +155,12 @@ for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {
 const assetsRoot = join(sourceRoot, "assets");
 const manifest = JSON.parse(readFileSync(join(root, "builtin", "builtinResourceManifest.json"), "utf8"));
 const actualAssets = walk(assetsRoot).filter((path) => statSync(path).isFile());
+if (
+  actualAssets.length !== importedBuiltinAssets.size ||
+  actualAssets.some((path) => !importedBuiltinAssets.has(resolve(path)))
+) {
+  throw new Error("builtin catalogs do not import the exact source asset inventory through no-inline URLs");
+}
 if (manifest.storageSchema !== 1 || manifest.entries.length !== actualAssets.length) {
   throw new Error("builtin resource manifest does not cover the exact source asset inventory");
 }

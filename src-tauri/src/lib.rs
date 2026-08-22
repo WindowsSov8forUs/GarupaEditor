@@ -19,7 +19,8 @@ use resource_manager::{
     resource_initialize, resource_install_builtin_package, resource_install_network_package,
     resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
     resource_read_record, resource_read_snapshot_file, resource_reconcile_workspace_media,
-    resource_release_snapshot, resource_remove, resource_verify, ApplicationResourceState,
+    resource_release_snapshot, resource_remove, resource_shutdown, resource_verify,
+    ApplicationResourceState,
 };
 
 const DOWNLOAD_PROGRESS_EVENT: &str = "download-progress";
@@ -2217,8 +2218,16 @@ pub fn run() {
             resource_remove,
             resource_collect_garbage
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                let state = app_handle.state::<ApplicationResourceState>();
+                if let Err(error) = resource_shutdown(app_handle, state.inner()) {
+                    eprintln!("clean resource runtime state on exit failed: {error}");
+                }
+            }
+        });
 }
 
 #[cfg(test)]

@@ -48,6 +48,40 @@ export async function runBuiltinCatalogTests(): Promise<void> {
   equal(new TextDecoder().decode(await lease.value.readBytes("ui.default-cover", "lazy-test.png")), "lazy-builtin");
   equal(loads, 1);
   await lease.value.release();
+
+  const rejectedBackend = new MemoryApplicationResourceBackend();
+  const rejectedManager = new ApplicationResourceManager(rejectedBackend, new NoopObjectUrls());
+  equal((await rejectedManager.initialize()).status, "accepted");
+  const declaredBytes = new TextEncoder().encode("source-controlled-builtin");
+  const transformedBytes = new TextEncoder().encode("source-controlled-builtin-transformed");
+  const declaredIntegrity = await observeResourceIntegrity(declaredBytes);
+  const transformedIntegrity = await observeResourceIntegrity(transformedBytes);
+  equal(declaredIntegrity.status, "accepted");
+  equal(transformedIntegrity.status, "accepted");
+  if (declaredIntegrity.status !== "accepted" || transformedIntegrity.status !== "accepted") return;
+  const rejected = await rejectedManager.registerBuiltin({
+    id: "builtin/ui/transformed-test",
+    kind: "image",
+    title: "Transformed test",
+    sourceUrl: "/assets/transformed-test.svg",
+    files: [{
+      logicalPath: "icons/transformed-test.svg",
+      mediaType: "image/svg+xml",
+      integrity: declaredIntegrity.value,
+      loadBytes: async () => Uint8Array.from(transformedBytes),
+    }],
+  });
+  equal(rejected.status, "rejected");
+  if (rejected.status !== "rejected") return;
+  equal(rejected.failure.code, "resource-integrity");
+  equal(rejected.failure.capability, "resources.manager.builtin-load-integrity");
+  contains(rejected.failure.boundary, "icons/transformed-test.svg");
+  contains(rejected.failure.boundary, `${declaredIntegrity.value.byteLength} bytes / SHA-256 ${declaredIntegrity.value.sha256}`);
+  contains(rejected.failure.boundary, `${transformedIntegrity.value.byteLength} bytes / SHA-256 ${transformedIntegrity.value.sha256}`);
+  const rejectedRecords = await rejectedBackend.listRecords();
+  equal(rejectedRecords.status, "accepted");
+  if (rejectedRecords.status === "accepted") equal(rejectedRecords.value.length, 0);
+  equal(rejectedManager.resolveBuiltinSlotUrl("ui.default-cover").status, "rejected");
 }
 
 class NoopObjectUrls implements ResourceObjectUrlFactory {
@@ -60,5 +94,11 @@ class NoopObjectUrls implements ResourceObjectUrlFactory {
 function equal(actual: unknown, expected: unknown): void {
   if (!Object.is(actual, expected)) {
     throw new Error(`assertion failed: expected ${String(expected)}, got ${String(actual)}`);
+  }
+}
+
+function contains(actual: string, expected: string): void {
+  if (!actual.includes(expected)) {
+    throw new Error(`assertion failed: expected ${JSON.stringify(actual)} to contain ${JSON.stringify(expected)}`);
   }
 }

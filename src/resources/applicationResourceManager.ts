@@ -717,10 +717,15 @@ class ManagedBuiltinFile {
     }
     const observed = await observeResourceIntegrity(bytes);
     if (observed.status === "rejected") return observed;
-    return observed.value.byteLength === this.record.integrity.byteLength &&
+    if (
+      observed.value.byteLength === this.record.integrity.byteLength &&
       observed.value.sha256 === this.record.integrity.sha256
-      ? resourceAccepted(Uint8Array.from(bytes))
-      : integrityFailure("resources.manager.builtin-load-integrity");
+    ) return resourceAccepted(Uint8Array.from(bytes));
+    return resourceRejected(
+      "resource-integrity",
+      "resources.manager.builtin-load-integrity",
+      `Builtin logical resource ${this.record.logicalPath} expected ${this.record.integrity.byteLength} bytes / SHA-256 ${this.record.integrity.sha256}, but the application payload supplied ${observed.value.byteLength} bytes / SHA-256 ${observed.value.sha256}.`,
+    );
   }
 }
 

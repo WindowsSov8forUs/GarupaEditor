@@ -259,6 +259,28 @@ pub fn resource_initialize(
     Ok(records)
 }
 
+pub fn resource_shutdown(
+    app: &tauri::AppHandle,
+    state: &ApplicationResourceState,
+) -> Result<(), String> {
+    let root = resource_root(app)?;
+    let workspace = workspace_media_root(app)?;
+    let mut runtime = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state for shutdown failed: {error}"))?;
+    if !runtime.initialized {
+        return Ok(());
+    }
+    runtime.open_snapshots.clear();
+    runtime.pending_workspace_imports.clear();
+    runtime.initialized = false;
+    remove_directory_contents(&root.join("snapshots"))?;
+    remove_directory_contents(&root.join("transactions"))?;
+    drop(runtime);
+    collect_garbage_paths(&root, &workspace)
+}
+
 #[tauri::command]
 pub fn resource_list_records(
     app: tauri::AppHandle,
