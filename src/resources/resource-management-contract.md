@@ -8,15 +8,15 @@ This product contract is not Reverse evidence and does not change any original-g
 
 ## Source classes
 
-| Origin | Identity owner | Persistence | Update rule |
+| Scope/origin | Identity owner | Persistence | Update rule |
 | --- | --- | --- | --- |
-| `builtin` | application builtin catalog | shipped frontend resource | generated integrity describes the current application payload |
-| `network` | live provider catalog | verified app-data package/blob | same source-native ID may publish new observed bytes without code changes |
-| `user` | application import transaction | verified app-data blob | immutable imported media identity |
+| global `builtin` | application builtin catalog | shipped frontend resource | generated integrity describes the current application payload |
+| global `network` | live provider catalog | verified app-data package/blob | same source-native ID may publish new observed bytes without code changes |
+| current-session `workspace` | current chart-media workspace | recoverable session record backed by the shared CAS | replacement retires the old record after the persisted binding and final lease release |
 
-User imports are limited to BGM, cover, MV and stage backdrop. Skin, SE, HUD, particle and font imports are not exposed.
+User uploads are limited to BGM, cover, MV and stage backdrop and always enter the current-session workspace. Bestdori BGM, jacket and MV selected for a chart are downloaded into the same workspace rather than installed as global media records. Skin, SE, HUD, particle, font and other reusable packages remain global; user upload for them is not exposed. Legacy `user/media/*` is migration input only.
 
-Consumers do not branch on origin. Every selected resource enters a consumer through a resource snapshot and lease.
+Consumers do not branch on scope or provenance. Every selected resource enters a consumer through a resource snapshot and lease.
 
 ## Identity and no-version-lock rule
 
@@ -24,7 +24,7 @@ A `ResourceId` is a stable source identity, not a content revision or game-versi
 
 SHA-256 and byte length are **observed integrity** generated after builtin packaging, network download or user import. They detect incomplete or locally corrupted bytes. They are not compiled network allowlists. If a provider changes bytes under the same native ID, a complete new transaction becomes the current record and future snapshots may select it. Existing snapshots retain their already acquired blobs until release.
 
-Storage schema numbers only migrate the application's own persistence format and do not limit resource eligibility. Schema 2 records a deterministic record revision and manager-owned logical placement; it maintains `library/<origin>/<logical-resource>/revisions/<digest>/files` plus an atomic `current.json` projection while snapshots continue to read authoritative blobs.
+Storage schema numbers only migrate the application's own persistence format and do not limit resource eligibility. Global schema 2 records deterministic revisions and manager-owned logical placement; it maintains `library/<origin>/<logical-resource>/revisions/<digest>/files` plus an atomic `current.json` projection for reusable Builtin/Network packages. Current-session workspace schema 1 stores reachability under `cache/session/project-media/`, shares the content-addressed `resources/blobs/` byte pool, and creates no `library/user` or chart-media projection. A shared CAS is an implementation detail, not a permanent media-library ownership claim.
 
 ## Selection and lifecycle
 
@@ -33,7 +33,7 @@ Storage schema numbers only migrate the application's own persistence format and
 3. Main program creates an immutable snapshot frozen to record revisions and file integrities.
 4. A consumer receives only a `ResourceConsumerLease` for that snapshot.
 5. The consumer reads declared files or object URLs and validates how it can use them.
-6. The consumer releases the lease; object URLs are revoked and unreferenced obsolete blobs may be collected.
+6. The consumer releases the lease; object URLs are revoked and unreferenced obsolete blobs may be collected. Workspace reconciliation happens only after chart-media bindings are persisted, so a crash may leave an orphan for later cleanup but may not leave a persisted dangling ref.
 
 Catalog refresh, downloads and selection changes never mutate an active snapshot. No consumer performs a hot switch. Cross-window payloads carry only snapshot IDs and semantic resource keys.
 
@@ -47,6 +47,6 @@ Consumers own compatibility checks such as image/audio/video decode, required sp
 
 Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create source-resource object URLs. Builtins are materialized through the same backend transaction and application-lifetime Snapshot/Lease as other bytes; synchronous UI hooks expose only already-open lease Object URLs, not Vite source URLs. Domain consumers receive leases and must not import `ApplicationResourceManager`; consumer-generated derivatives are owned and released with their lease.
 
-Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v4.json`; v2 bytes/Data URLs and v3 URL-derived IDs are accepted only by one-time migration paths. A v3 identity that cannot be proven from its provider URL is cleared and reported, never retained as an alias.
+Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v5.json`; v2 raw bytes and v3/v4 global refs are accepted only by one-time migration paths. A legacy identity that cannot be proved from committed bytes or its provider descriptor fails closed and is reported, never retained as an alias or replaced with a default.
 
-The authorized Simulator migration is governed by [`simulator-resource-integration-contract.md`](./simulator-resource-integration-contract.md). Until its assembly and Stage 9 acceptance gates close, the old static store remains an implementation baseline only and must not be described as already migrated.
+The authorized Simulator migration is governed by [`simulator-resource-integration-contract.md`](./simulator-resource-integration-contract.md). Simulator continues to consume source-neutral Snapshot/Lease bytes; current-session ownership does not change Public Schema 12, original behavior, resource resolver or compatibility validation.

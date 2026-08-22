@@ -1,4 +1,4 @@
-export type ResourceOrigin = "builtin" | "network" | "user";
+export type ResourceOrigin = "builtin" | "network" | "workspace" | "user";
 
 export type ResourceKind =
   | "image"
@@ -87,6 +87,27 @@ export interface BuiltinResourceDescriptor extends ResourceDescriptor {
   readonly sourceUrl: string;
 }
 
+export interface WorkspaceMediaUserUploadProvenance {
+  readonly kind: "user-upload";
+}
+
+export interface WorkspaceMediaNetworkProvenance {
+  readonly kind: "network";
+  readonly sourceRef: ResourceRef;
+}
+
+export type WorkspaceMediaProvenance =
+  | WorkspaceMediaUserUploadProvenance
+  | WorkspaceMediaNetworkProvenance;
+
+export interface WorkspaceMediaDescriptor extends Omit<ResourceDescriptor, "logicalPlacement"> {
+  readonly origin: "workspace";
+  readonly purpose: UserMediaPurpose;
+  readonly fileName: string;
+  readonly provenance: WorkspaceMediaProvenance;
+}
+
+/** Migration-only legacy descriptor. New production imports must create WorkspaceMediaDescriptor. */
 export interface UserResourceDescriptor extends ResourceDescriptor {
   readonly origin: "user";
   readonly purpose: UserMediaPurpose;
@@ -153,7 +174,7 @@ export type ResourceResult<T> =
   | { readonly status: "accepted"; readonly value: T }
   | { readonly status: "rejected"; readonly failure: ResourceFailure };
 
-const RESOURCE_ID_PATTERN = /^(?:builtin|bestdori|user)\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$/;
+const RESOURCE_ID_PATTERN = /^(?:builtin|bestdori|workspace|user)\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$/;
 const SNAPSHOT_ID_PATTERN = /^snapshot\/[A-Za-z0-9_-]+$/;
 const LEASE_ID_PATTERN = /^lease\/[A-Za-z0-9_-]+$/;
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
