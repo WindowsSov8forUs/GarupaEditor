@@ -110,6 +110,10 @@ export function createBestdoriNetworkResourceRef(
   return reference.status === "rejected" ? reference : resourceAccepted(reference.value);
 }
 
+export function bestdoriNoteskinSampleNativeId(nativeId: string): string {
+  return nativeId === "habahiro" ? "habahiro_sample" : `${nativeId}sample`;
+}
+
 export class BestdoriApplicationResourceProvider implements ResourceCatalogProvider {
   readonly provider = "bestdori";
 
@@ -188,66 +192,45 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
         );
       }
     }
-    if (descriptor.source.manifestUrl === null) {
+    const manifestUrl = descriptor.source.manifestUrl;
+    if (manifestUrl === null) {
       return resourceRejected(
         "resource-unavailable",
         "resources.bestdori.dynamic-manifest-unavailable",
         "The selected Bestdori package has no dynamically discoverable complete manifest; fixed filename fallback is forbidden.",
       );
     }
-    const sources = [descriptor.source];
-    if (descriptor.source.family === "noteskin" && !descriptor.source.nativeId.endsWith("sample")) {
-      const sampleId = descriptor.source.nativeId === "habahiro"
-        ? "habahiro_sample"
-        : `${descriptor.source.nativeId}sample`;
-      sources.push(sourceFor(
-        descriptor.source.server as BestdoriAssetServer,
-        "noteskin",
-        sampleId,
-      ));
+    const source = descriptor.source;
+    let manifest: unknown;
+    try {
+      manifest = await fetchBestdoriJson<unknown>(
+        manifestUrl,
+        `bestdori ${source.family}/${source.nativeId} manifest`,
+      );
+    } catch (error) {
+      return resourceRejected(
+        "resource-unavailable",
+        "resources.bestdori.manifest-fetch-failed",
+        error instanceof Error ? error.message : String(error),
+      );
     }
+    const filenames = normalizeManifest(manifest);
+    if (filenames.status === "rejected") return filenames;
     const files: ResourceInstallFile[] = [];
-    const seen = new Set<string>();
-    for (const source of sources) {
-      if (source.manifestUrl === null) continue;
-      let manifest: unknown;
+    for (const logicalPath of filenames.value) {
+      const url = `${source.assetBaseUrl}/${encodeLogicalPath(logicalPath)}`;
       try {
-        manifest = await fetchBestdoriJson<unknown>(
-          source.manifestUrl,
-          `bestdori ${source.family}/${source.nativeId} manifest`,
-        );
+        const mediaType = mediaTypeForPath(logicalPath);
+        const blob = await fetchBestdoriFileBlob(url, mediaType, `bestdori ${logicalPath}`);
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        if (bytes.byteLength === 0) throw new Error("downloaded file is empty");
+        files.push(Object.freeze({ logicalPath, mediaType, bytes }));
       } catch (error) {
         return resourceRejected(
-          "resource-unavailable",
-          "resources.bestdori.manifest-fetch-failed",
-          error instanceof Error ? error.message : String(error),
+          "resource-transaction-failed",
+          "resources.bestdori.package-download-failed",
+          `${logicalPath}: ${error instanceof Error ? error.message : String(error)}`,
         );
-      }
-      const filenames = normalizeManifest(manifest);
-      if (filenames.status === "rejected") return filenames;
-      for (const logicalPath of filenames.value) {
-        if (seen.has(logicalPath)) {
-          return resourceRejected(
-            "resource-integrity",
-            "resources.bestdori.combined-package-duplicate-path",
-            `Combined Bestdori package duplicates ${logicalPath}.`,
-          );
-        }
-        seen.add(logicalPath);
-        const url = `${source.assetBaseUrl}/${encodeLogicalPath(logicalPath)}`;
-        try {
-          const mediaType = mediaTypeForPath(logicalPath);
-          const blob = await fetchBestdoriFileBlob(url, mediaType, `bestdori ${logicalPath}`);
-          const bytes = new Uint8Array(await blob.arrayBuffer());
-          if (bytes.byteLength === 0) throw new Error("downloaded file is empty");
-          files.push(Object.freeze({ logicalPath, mediaType, bytes }));
-        } catch (error) {
-          return resourceRejected(
-            "resource-transaction-failed",
-            "resources.bestdori.package-download-failed",
-            `${logicalPath}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
       }
     }
     return resourceAccepted(Object.freeze({

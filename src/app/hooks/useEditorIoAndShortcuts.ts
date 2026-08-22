@@ -17,6 +17,7 @@ import {
 } from "../../skinLoader";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import {
+  bestdoriNoteskinSampleNativeId,
   createBestdoriNetworkMediaDescriptor,
   createBestdoriNetworkResourceRef,
 } from "../../resources/providers/bestdoriCatalogProvider";
@@ -2099,20 +2100,22 @@ export function useEditorIoAndShortcuts(params: any) {
         "skin.judge": requireBestdoriRef(normalized.judgeSkinServer, "judgeskin", normalized.judgeSkinRipName),
         "skin.common-se": requireBestdoriRef(normalized.rhythmSeServer, "sound-common", "common"),
       } as const;
-      const selected = resourceManager.replaceSelection(resourceRefs);
-      if (selected.status === "rejected") {
-        throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
-      }
-      const snapshot = await resourceManager.createSnapshot([
-        "skin.rhythm",
-        "skin.directional",
-        "skin.rhythm-se",
-        "skin.directional-se",
-        "skin.field",
-        "skin.background",
-        "skin.judge",
-        "skin.common-se",
-      ]);
+      const sampleResourceRefs = {
+        "skin.rhythm-sample": requireBestdoriRef(
+          normalized.rhythmServer,
+          "noteskin",
+          bestdoriNoteskinSampleNativeId(normalized.rhythmRipName),
+        ),
+        "skin.directional-sample": requireBestdoriRef(
+          normalized.directionalServer,
+          "noteskin",
+          bestdoriNoteskinSampleNativeId(normalized.directionalRipName),
+        ),
+      } as const;
+      const snapshot = await resourceManager.createSnapshotFromRefs(Object.freeze({
+        ...resourceRefs,
+        ...sampleResourceRefs,
+      }));
       if (snapshot.status === "rejected") {
         throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
       }
@@ -2128,6 +2131,11 @@ export function useEditorIoAndShortcuts(params: any) {
       if (skinApplySeqRef.current !== sequence) {
         await nextApplied.dispose();
         return;
+      }
+      const selected = resourceManager.replaceSelection(resourceRefs);
+      if (selected.status === "rejected") {
+        await nextApplied.dispose();
+        throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
       }
       const previousApplied = appliedSkinResourcesRef.current;
       appliedSkinResourcesRef.current = nextApplied;

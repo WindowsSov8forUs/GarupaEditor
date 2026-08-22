@@ -1,4 +1,7 @@
-import { BestdoriApplicationResourceProvider } from "../providers/bestdoriCatalogProvider";
+import {
+  bestdoriNoteskinSampleNativeId,
+  BestdoriApplicationResourceProvider,
+} from "../providers/bestdoriCatalogProvider";
 
 export async function runDynamicCatalogTests(): Promise<void> {
   const originalFetch = globalThis.fetch;
@@ -8,7 +11,7 @@ export async function runDynamicCatalogTests(): Promise<void> {
       const jp = url.includes("/jp/");
       return jsonResponse(jp ? {
         ingameskin: {
-          noteskin: { skin999: {} },
+          noteskin: { skin999: {}, skin999sample: {} },
           fieldskin: {},
           bgskin: {},
           judgeskin: {},
@@ -49,7 +52,13 @@ export async function runDynamicCatalogTests(): Promise<void> {
     equal(catalog.status, "accepted");
     if (catalog.status !== "accepted") return;
     const future = catalog.value.resources.find((resource) => resource.source.family === "noteskin" && resource.source.nativeId === "skin999");
+    const futureSample = catalog.value.resources.find((resource) =>
+      resource.source.family === "noteskin" &&
+      resource.source.nativeId === bestdoriNoteskinSampleNativeId("skin999")
+    );
     equal(future?.ref.id, "bestdori/jp/ingameskin/noteskin/skin999");
+    equal(futureSample?.ref.id, "bestdori/jp/ingameskin/noteskin/skin999sample");
+    equal(bestdoriNoteskinSampleNativeId("habahiro"), "habahiro_sample");
     equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/ingameskin/tapeffect/skin999"), true);
     equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/ingameskin/stageskin/normal"), true);
     equal(catalog.value.resources.some((resource) => resource.ref.id === "bestdori/jp/sound/common"), true);
@@ -62,9 +71,14 @@ export async function runDynamicCatalogTests(): Promise<void> {
     const installed = await provider.install(future);
     equal(installed.status, "accepted");
     if (installed.status !== "accepted") return;
-    equal(installed.value.files.length, 2);
+    equal(installed.value.files.length, 1);
     equal(new TextDecoder().decode(installed.value.files[0]!.bytes), "dynamic-atlas");
-    equal(new TextDecoder().decode(installed.value.files[1]!.bytes), "dynamic-sample");
+    if (futureSample === undefined) return;
+    const installedSample = await provider.install(futureSample);
+    equal(installedSample.status, "accepted");
+    if (installedSample.status !== "accepted") return;
+    equal(installedSample.value.files.length, 1);
+    equal(new TextDecoder().decode(installedSample.value.files[0]!.bytes), "dynamic-sample");
 
     globalThis.fetch = async () => { throw new Error("offline"); };
     const offline = await provider.refresh(catalog.value);

@@ -128,6 +128,26 @@ const editorCacheSource = readFileSync(join(sourceRoot, "app", "hooks", "useEdit
 for (const marker of [
   "importWorkspaceMedia", "materializeNetworkMediaInWorkspace", "reconcileCurrentChartMedia",
 ]) if (!(editorIoSource + editorCacheSource).includes(marker)) throw new Error(`current-session chart media marker missing: ${marker}`);
+for (const marker of [
+  '"skin.rhythm-sample"', '"skin.directional-sample"', "createSnapshotFromRefs",
+  "bestdoriNoteskinSampleNativeId(normalized.rhythmRipName)",
+  "bestdoriNoteskinSampleNativeId(normalized.directionalRipName)",
+]) if (!editorIoSource.includes(marker)) throw new Error(`Skin snapshot is missing an explicit original sample-package binding: ${marker}`);
+const skinSnapshotIndex = editorIoSource.indexOf("const snapshot = await resourceManager.createSnapshotFromRefs");
+const skinSelectionIndex = editorIoSource.indexOf("const selected = resourceManager.replaceSelection(resourceRefs)");
+if (skinSnapshotIndex < 0 || skinSelectionIndex < skinSnapshotIndex) {
+  throw new Error("Skin selection mutates before the explicit primary/sample snapshot is decoded");
+}
+const resourceSkinDecoderSource = readFileSync(join(sourceRoot, "skin", "resourceSkinDecoder.ts"), "utf8");
+for (const marker of [
+  'openPackage(lease, RHYTHM_SAMPLE_SLOT)', 'openPackage(lease, DIRECTIONAL_SAMPLE_SLOT)',
+  "requireText(sampleSource, sampleBundleName)", 'requireUrl(sampleSource, "note_normal_3.png")',
+  'requireUrl(sampleSource, "note_flick_l_3.png")',
+]) if (!resourceSkinDecoderSource.includes(marker)) throw new Error(`Skin decoder no longer consumes the explicit sample package: ${marker}`);
+const bestdoriProviderSource = readFileSync(join(root, "providers", "bestdoriCatalogProvider.ts"), "utf8");
+if (bestdoriProviderSource.includes("sources.push(sourceFor")) {
+  throw new Error("Bestdori provider silently combines distinct primary/sample logical packages");
+}
 for (const forbidden of [".importUserMedia(", "installBestdoriMedia("]) {
   if ((editorIoSource + editorCacheSource).includes(forbidden)) throw new Error(`app chart media retains global legacy import: ${forbidden}`);
 }

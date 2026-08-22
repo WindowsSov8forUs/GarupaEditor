@@ -57,6 +57,9 @@ interface PackageView {
   readonly paths: readonly string[];
 }
 
+const RHYTHM_SAMPLE_SLOT = "skin.rhythm-sample";
+const DIRECTIONAL_SAMPLE_SLOT = "skin.directional-sample";
+
 export async function decodeAppliedSkinResources(
   lease: ResourceConsumerLease,
   identities: {
@@ -73,9 +76,22 @@ export async function decodeAppliedSkinResources(
     return url;
   };
   try {
-    const [rhythmPackage, directionalPackage, rhythmSePackage, directionalSePackage, fieldPackage, backgroundPackage, judgePackage, commonPackage] = await Promise.all([
+    const [
+      rhythmPackage,
+      rhythmSamplePackage,
+      directionalPackage,
+      directionalSamplePackage,
+      rhythmSePackage,
+      directionalSePackage,
+      fieldPackage,
+      backgroundPackage,
+      judgePackage,
+      commonPackage,
+    ] = await Promise.all([
       openPackage(lease, "skin.rhythm"),
+      openPackage(lease, RHYTHM_SAMPLE_SLOT),
       openPackage(lease, "skin.directional"),
+      openPackage(lease, DIRECTIONAL_SAMPLE_SLOT),
       openPackage(lease, "skin.rhythm-se"),
       openPackage(lease, "skin.directional-se"),
       openPackage(lease, "skin.field"),
@@ -84,8 +100,8 @@ export async function decodeAppliedSkinResources(
       openPackage(lease, "skin.common-se"),
     ]);
     const [rhythm, directional, judge] = await Promise.all([
-      decodeRhythm(rhythmPackage, identities.rhythm, createImageUrl),
-      decodeDirectional(directionalPackage, identities.directional, createImageUrl),
+      decodeRhythm(rhythmPackage, rhythmSamplePackage, identities.rhythm, createImageUrl),
+      decodeDirectional(directionalPackage, directionalSamplePackage, identities.directional, createImageUrl),
       decodeJudge(judgePackage, identities.judge, createImageUrl),
     ]);
     const se: SeSkinAssets = Object.freeze({
@@ -117,7 +133,7 @@ export async function decodeAppliedSkinResources(
 
 async function openPackage(
   lease: ResourceConsumerLease,
-  slot: ApplicationResourceSlot,
+  slot: ApplicationResourceSlot | typeof RHYTHM_SAMPLE_SLOT | typeof DIRECTIONAL_SAMPLE_SLOT,
 ): Promise<PackageView> {
   const files = lease.listFiles(slot);
   if (files.length === 0) throw new Error(`selected resource package is empty: ${slot}`);
@@ -143,6 +159,7 @@ async function openPackage(
 
 async function decodeRhythm(
   source: PackageView,
+  sampleSource: PackageView,
   identity: string,
   createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>,
 ): Promise<AnyRhythmSkinAssets> {
@@ -151,7 +168,7 @@ async function decodeRhythm(
   const sampleId = identity === "habahiro" ? "habahiro_sample" : `${identity}sample`;
   const sampleBundleName = `ingameskin-noteskin-${sampleId}.bundle`;
   const bundle = parseBundleJsonOrThrow(requireText(source, bundleName), `${identity} bundle`);
-  const sampleBundle = parseBundleJsonOrThrow(requireText(source, sampleBundleName), `${identity} sample bundle`);
+  const sampleBundle = parseBundleJsonOrThrow(requireText(sampleSource, sampleBundleName), `${identity} sample bundle`);
   const named = await extractNamedSprites({
     filePathByName: Object.fromEntries(source.urls),
     sprites,
@@ -159,12 +176,12 @@ async function decodeRhythm(
     createImageUrl,
   });
   const sample: RhythmSampleAssets = Object.freeze({
-    NoteNormal3: requireUrl(source, "note_normal_3.png"),
-    NoteSkill3: requireUrl(source, "note_skill_3.png"),
-    NoteFlick3: requireUrl(source, "note_flick_3.png"),
-    NoteFlickTop: requireUrl(source, "note_flick_top.png"),
-    NoteLong3: requireUrl(source, "note_long_3.png"),
-    NoteSlideAmong: requireUrl(source, "note_slide_among.png"),
+    NoteNormal3: requireUrl(sampleSource, "note_normal_3.png"),
+    NoteSkill3: requireUrl(sampleSource, "note_skill_3.png"),
+    NoteFlick3: requireUrl(sampleSource, "note_flick_3.png"),
+    NoteFlickTop: requireUrl(sampleSource, "note_flick_top.png"),
+    NoteLong3: requireUrl(sampleSource, "note_long_3.png"),
+    NoteSlideAmong: requireUrl(sampleSource, "note_slide_among.png"),
   });
   const lines = {
     longNoteLine: requireUrl(source, "longNoteLine.png"),
@@ -217,6 +234,7 @@ async function decodeRhythm(
 
 async function decodeDirectional(
   source: PackageView,
+  sampleSource: PackageView,
   identity: string,
   createImageUrl: (canvas: HTMLCanvasElement) => Promise<string>,
 ): Promise<DirectionalSkinAssets> {
@@ -226,7 +244,7 @@ async function decodeDirectional(
     `${identity} bundle`,
   );
   const sampleBundle = parseBundleJsonOrThrow(
-    requireText(source, `ingameskin-noteskin-${identity}sample.bundle`),
+    requireText(sampleSource, `ingameskin-noteskin-${identity}sample.bundle`),
     `${identity} sample bundle`,
   );
   const named = await extractNamedSprites({
@@ -244,8 +262,8 @@ async function decodeDirectional(
     flickNoteLineR: requireUrl(source, "FlickNoteLine_r.png"),
   });
   const sample: DirectionalSampleAssets = Object.freeze({
-    NoteFlickL3: requireUrl(source, "note_flick_l_3.png"),
-    NoteFlickR3: requireUrl(source, "note_flick_r_3.png"),
+    NoteFlickL3: requireUrl(sampleSource, "note_flick_l_3.png"),
+    NoteFlickR3: requireUrl(sampleSource, "note_flick_r_3.png"),
   });
   return Object.freeze({
     assets: Object.freeze({ sprites, bundle, assets }),
