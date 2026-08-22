@@ -26,6 +26,7 @@ import {
   type ResourceSnapshotId,
   type ResourceSnapshotReceipt,
   type UserMediaPurpose,
+  type WorkspaceMediaProvenance,
 } from "./contracts";
 import {
   APPLICATION_RESOURCE_SLOTS,
@@ -33,6 +34,7 @@ import {
   replaceApplicationResourceSelection,
   type ApplicationResourceSelection,
   type ApplicationResourceSlot,
+  type ChartMediaResources,
 } from "./selections";
 import { observeResourceIntegrity } from "./sha256";
 
@@ -318,6 +320,13 @@ export class ApplicationResourceManager {
         "The main program has no builtin, installed or current catalog identity for the selected resource.",
       );
     }
+    if (descriptor.source.family.startsWith("media-")) {
+      return resourceRejected(
+        "invalid-resource-request",
+        "resources.manager.chart-media-requires-workspace",
+        "Chart media must be materialized in the recoverable current-session workspace rather than installed as a global provider record.",
+      );
+    }
     const provider = this.providers.get(descriptor.source.provider);
     if (provider === undefined) return invalid("resources.manager.network-provider-missing");
     const installed = await provider.install(descriptor);
@@ -328,31 +337,68 @@ export class ApplicationResourceManager {
     return resourceAccepted(committed.value.descriptor);
   }
 
+  /** Migration-only compatibility path. New product imports use importWorkspaceMedia. */
   async importUserMedia(
     input: ImportUserMediaRequest,
   ): Promise<ResourceResult<ResourceDescriptor>> {
-    const expectedMediaPrefix = input.purpose === "bgm"
-      ? "audio/"
-      : input.purpose === "mv"
-        ? "video/"
-        : "image/";
-    if (
-      !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
-      typeof input.mediaType !== "string" || !input.mediaType.toLowerCase().startsWith(expectedMediaPrefix) ||
-      !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
-      !hasCompatibleUserMediaMagic(input.purpose, input.mediaType, input.bytes)
-    ) {
-      return invalid("resources.manager.invalid-user-media-bytes");
-    }
-    const imported = await this.backend.importUserMedia({
-      purpose: input.purpose,
-      fileName: input.fileName,
-      mediaType: input.mediaType,
-      bytes: Uint8Array.from(input.bytes),
-    });
+    const validated = validateChartMediaImport(input);
+    if (validated.status === "rejected") return validated;
+    const imported = await this.backend.importUserMedia(validated.value);
     if (imported.status === "rejected") return imported;
     this.installed.set(imported.value.descriptor.ref.id, imported.value);
     return resourceAccepted(imported.value.descriptor);
+  }
+
+  async importWorkspaceMedia(
+    input: ImportUserMediaRequest & { readonly provenance?: WorkspaceMediaProvenance },
+  ): Promise<ResourceResult<ResourceDescriptor>> {
+    const validated = validateChartMediaImport(input);
+    if (validated.status === "rejected") return validated;
+    const provenance = input.provenance ?? Object.freeze({ kind: "user-upload" as const });
+    if (provenance.kind === "network" && !provenance.sourceRef.id.startsWith("bestdori/")) {
+      return invalid("resources.manager.invalid-workspace-network-provenance");
+    }
+    const imported = await this.backend.importWorkspaceMedia({ ...validated.value, provenance });
+    return imported.status === "rejected"
+      ? imported
+      : resourceAccepted(imported.value.descriptor);
+  }
+
+  async materializeNetworkMediaInWorkspace(
+    descriptor: NetworkResourceDescriptor,
+    purpose: UserMediaPurpose,
+  ): Promise<ResourceResult<ResourceDescriptor>> {
+    if (
+      descriptor.origin !== "network" || descriptor.source.family !== `media-${purpose}` ||
+      !descriptor.ref.id.startsWith(`${descriptor.source.provider}/`)
+    ) return invalid("resources.manager.invalid-workspace-network-media");
+    const provider = this.providers.get(descriptor.source.provider);
+    if (provider === undefined) return invalid("resources.manager.network-provider-missing");
+    const installed = await provider.install(descriptor);
+    if (installed.status === "rejected") return installed;
+    if (installed.value.files.length !== 1) {
+      return invalid("resources.manager.workspace-network-media-file-count");
+    }
+    const file = installed.value.files[0]!;
+    return this.importWorkspaceMedia({
+      purpose,
+      fileName: file.logicalPath,
+      mediaType: file.mediaType,
+      bytes: file.bytes,
+      provenance: Object.freeze({ kind: "network" as const, sourceRef: descriptor.ref }),
+    });
+  }
+
+  async reconcileCurrentChartMedia(media: ChartMediaResources): Promise<ResourceResult<void>> {
+    const refs: ResourceRef[] = [];
+    const seen = new Set<string>();
+    for (const ref of Object.values(media)) {
+      if (ref === null || !ref.id.startsWith("workspace/")) continue;
+      if (seen.has(ref.id)) continue;
+      seen.add(ref.id);
+      refs.push(ref);
+    }
+    return this.backend.reconcileWorkspaceMedia(Object.freeze(refs));
   }
 
   async createSnapshot(
@@ -592,6 +638,29 @@ class ManagedBuiltinFile {
       ? resourceAccepted(Uint8Array.from(bytes))
       : integrityFailure("resources.manager.builtin-load-integrity");
   }
+}
+
+function validateChartMediaImport(
+  input: ImportUserMediaRequest,
+): ResourceResult<ImportUserMediaRequest> {
+  const expectedMediaPrefix = input.purpose === "bgm"
+    ? "audio/"
+    : input.purpose === "mv"
+      ? "video/"
+      : "image/";
+  if (
+    !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
+    typeof input.fileName !== "string" || input.fileName.trim().length === 0 ||
+    typeof input.mediaType !== "string" || !input.mediaType.toLowerCase().startsWith(expectedMediaPrefix) ||
+    !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
+    !hasCompatibleUserMediaMagic(input.purpose, input.mediaType, input.bytes)
+  ) return invalid("resources.manager.invalid-user-media-bytes");
+  return resourceAccepted(Object.freeze({
+    purpose: input.purpose,
+    fileName: input.fileName,
+    mediaType: input.mediaType,
+    bytes: Uint8Array.from(input.bytes),
+  }));
 }
 
 function hasCompatibleUserMediaMagic(

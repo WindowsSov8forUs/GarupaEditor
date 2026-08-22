@@ -12,6 +12,7 @@ import {
   type ResourceResult,
   type ResourceSnapshotId,
   type UserResourceDescriptor,
+  type WorkspaceMediaDescriptor,
 } from "./contracts";
 import type {
   ApplicationResourceBackend,
@@ -21,6 +22,7 @@ import type {
   ResourceInstallInput,
   StoredResourceRecord,
   UserMediaImportInput,
+  WorkspaceMediaImportInput,
 } from "./backend";
 import { observeResourceIntegrity } from "./sha256";
 
@@ -48,7 +50,8 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
 
   async listRecords(): Promise<ResourceResult<readonly StoredResourceRecord[]>> {
     return resourceAccepted(Object.freeze(
-      Array.from(this.records.values(), (entry) => entry.record),
+      Array.from(this.records.values(), (entry) => entry.record)
+        .filter((record) => record.descriptor.origin !== "workspace"),
     ));
   }
 
@@ -129,6 +132,64 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     if (prepared.status === "rejected") return prepared;
     this.records.set(reference.value.id, prepared.value);
     return resourceAccepted(prepared.value.record);
+  }
+
+  async importWorkspaceMedia(
+    input: WorkspaceMediaImportInput,
+  ): Promise<ResourceResult<StoredResourceRecord>> {
+    if (
+      typeof input.fileName !== "string" || input.fileName.trim().length === 0 ||
+      typeof input.mediaType !== "string" || input.mediaType.trim().length === 0 ||
+      !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
+      !validWorkspaceProvenance(input.provenance)
+    ) {
+      return invalid("resources.memory.invalid-workspace-media");
+    }
+    const integrity = await observeResourceIntegrity(input.bytes);
+    if (integrity.status === "rejected") return integrity;
+    const id = `workspace/current/chart-media/${input.purpose}/${integrity.value.sha256.toLowerCase()}`;
+    const reference = createResourceRef(id);
+    if (reference.status === "rejected") return reference;
+    const descriptor: WorkspaceMediaDescriptor = Object.freeze({
+      ref: reference.value,
+      origin: "workspace" as const,
+      kind: kindForUserPurpose(input.purpose),
+      title: input.fileName.trim(),
+      availability: "installed" as const,
+      files: null,
+      catalogObservedAt: null,
+      purpose: input.purpose,
+      fileName: input.fileName.trim(),
+      provenance: freezeWorkspaceProvenance(input.provenance),
+    });
+    const prepared = await prepareStoredResource(descriptor, [Object.freeze({
+      logicalPath: "workspace-media.bin",
+      mediaType: input.mediaType.trim().toLowerCase(),
+      bytes: Uint8Array.from(input.bytes),
+    })]);
+    if (prepared.status === "rejected") return prepared;
+    this.records.set(reference.value.id, prepared.value);
+    return resourceAccepted(prepared.value.record);
+  }
+
+  async reconcileWorkspaceMedia(refs: readonly ResourceRef[]): Promise<ResourceResult<void>> {
+    const retained = new Set<string>();
+    for (const ref of refs) {
+      if (!ref.id.startsWith("workspace/current/chart-media/") || retained.has(ref.id)) {
+        return invalid("resources.memory.invalid-workspace-reconcile-ref");
+      }
+      const stored = this.records.get(ref.id);
+      if (stored === undefined || stored.record.descriptor.origin !== "workspace") {
+        return unavailable("resources.memory.workspace-reconcile-record-unavailable");
+      }
+      const verified = await verifyStored(stored);
+      if (verified.status === "rejected") return verified;
+      retained.add(ref.id);
+    }
+    for (const [id, stored] of this.records) {
+      if (stored.record.descriptor.origin === "workspace" && !retained.has(id)) this.records.delete(id);
+    }
+    return resourceAccepted(undefined);
   }
 
   async loadCatalogSnapshot(
@@ -343,6 +404,22 @@ function safeLogicalPath(value: string): boolean {
   return parts.every((part) =>
     part.length > 0 && part !== "." && part !== ".." &&
     !part.endsWith(".") && !part.endsWith(" ") && !reserved.test(part));
+}
+
+function validWorkspaceProvenance(
+  value: WorkspaceMediaImportInput["provenance"],
+): boolean {
+  if (value.kind === "user-upload") return Object.keys(value).length === 1;
+  return value.kind === "network" && Object.keys(value).sort().join(",") === "kind,sourceRef" &&
+    value.sourceRef.id.startsWith("bestdori/");
+}
+
+function freezeWorkspaceProvenance(
+  value: WorkspaceMediaImportInput["provenance"],
+): WorkspaceMediaImportInput["provenance"] {
+  return value.kind === "user-upload"
+    ? Object.freeze({ kind: "user-upload" as const })
+    : Object.freeze({ kind: "network" as const, sourceRef: Object.freeze({ id: value.sourceRef.id }) });
 }
 
 function purposeDirectory(purpose: UserMediaImportInput["purpose"]): string {

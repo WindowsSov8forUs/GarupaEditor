@@ -6,6 +6,7 @@ import { runResourceManagerLifecycleTests } from "./managerLifecycle.test";
 import { runUserMediaTests } from "./userMedia.test";
 import { runSimulatorResourceCapabilityTests } from "./simulatorCapability.test";
 import { runSimulatorPreAdaptationTests } from "./simulatorPreAdaptation.test";
+import { runWorkspaceMediaTests } from "./workspaceMedia.test";
 
 async function main(): Promise<void> {
   runResourceContractTests();
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
   await runDynamicCatalogTests();
   await runResourceManagerLifecycleTests();
   await runUserMediaTests();
+  await runWorkspaceMediaTests();
   await runSimulatorResourceCapabilityTests();
   await runSimulatorPreAdaptationTests();
   console.log("resource manager core: ok");

@@ -65,6 +65,9 @@ export interface ResourceDescriptor {
   readonly availability: ResourceAvailability;
   readonly files: readonly ResourceFileRecord[] | null;
   readonly catalogObservedAt: string | null;
+}
+
+export interface GlobalResourceDescriptor extends ResourceDescriptor {
   readonly logicalPlacement: ResourceLogicalPlacement;
 }
 
@@ -77,12 +80,12 @@ export interface NetworkResourceSource {
   readonly assetBaseUrl: string;
 }
 
-export interface NetworkResourceDescriptor extends ResourceDescriptor {
+export interface NetworkResourceDescriptor extends GlobalResourceDescriptor {
   readonly origin: "network";
   readonly source: NetworkResourceSource;
 }
 
-export interface BuiltinResourceDescriptor extends ResourceDescriptor {
+export interface BuiltinResourceDescriptor extends GlobalResourceDescriptor {
   readonly origin: "builtin";
   readonly sourceUrl: string;
 }
@@ -100,7 +103,7 @@ export type WorkspaceMediaProvenance =
   | WorkspaceMediaUserUploadProvenance
   | WorkspaceMediaNetworkProvenance;
 
-export interface WorkspaceMediaDescriptor extends Omit<ResourceDescriptor, "logicalPlacement"> {
+export interface WorkspaceMediaDescriptor extends ResourceDescriptor {
   readonly origin: "workspace";
   readonly purpose: UserMediaPurpose;
   readonly fileName: string;
@@ -108,7 +111,7 @@ export interface WorkspaceMediaDescriptor extends Omit<ResourceDescriptor, "logi
 }
 
 /** Migration-only legacy descriptor. New production imports must create WorkspaceMediaDescriptor. */
-export interface UserResourceDescriptor extends ResourceDescriptor {
+export interface UserResourceDescriptor extends GlobalResourceDescriptor {
   readonly origin: "user";
   readonly purpose: UserMediaPurpose;
   readonly fileName: string;
@@ -117,6 +120,7 @@ export interface UserResourceDescriptor extends ResourceDescriptor {
 export type ApplicationResourceDescriptor =
   | BuiltinResourceDescriptor
   | NetworkResourceDescriptor
+  | WorkspaceMediaDescriptor
   | UserResourceDescriptor;
 
 export interface ResourceCatalogSnapshot {

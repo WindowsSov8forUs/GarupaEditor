@@ -10,6 +10,7 @@ import type {
   ResourceSnapshotId,
   ResourceSnapshotReceipt,
   UserMediaPurpose,
+  WorkspaceMediaProvenance,
 } from "./contracts";
 
 export interface ResourceInstallFile {
@@ -35,6 +36,10 @@ export interface UserMediaImportInput {
   readonly bytes: Uint8Array;
 }
 
+export interface WorkspaceMediaImportInput extends UserMediaImportInput {
+  readonly provenance: WorkspaceMediaProvenance;
+}
+
 export interface StoredResourceRecord {
   readonly revision: string;
   readonly descriptor: ApplicationResourceDescriptor;
@@ -51,7 +56,10 @@ export interface ApplicationResourceBackend {
   readRecord(ref: ResourceRef): Promise<ResourceResult<StoredResourceRecord>>;
   installBuiltinResource(input: BuiltinResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
   installNetworkResource(input: ResourceInstallInput): Promise<ResourceResult<StoredResourceRecord>>;
+  /** Migration-only legacy global user import. */
   importUserMedia(input: UserMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
+  importWorkspaceMedia(input: WorkspaceMediaImportInput): Promise<ResourceResult<StoredResourceRecord>>;
+  reconcileWorkspaceMedia(refs: readonly ResourceRef[]): Promise<ResourceResult<void>>;
   loadCatalogSnapshot(provider: string): Promise<ResourceResult<ResourceCatalogSnapshot | null>>;
   commitCatalogSnapshot(snapshot: ResourceCatalogSnapshot): Promise<ResourceResult<void>>;
   createSnapshot(
