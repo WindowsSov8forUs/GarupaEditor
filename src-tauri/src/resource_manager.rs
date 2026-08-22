@@ -13,8 +13,10 @@ use tauri::Manager;
 use unicode_normalization::UnicodeNormalization;
 
 const STORAGE_SCHEMA: u32 = 2;
+const WORKSPACE_STORAGE_SCHEMA: u32 = 1;
 const RESOURCE_DIRECTORY: &str = "resources";
 const INDEX_FILE: &str = "index.json";
+const WORKSPACE_MEDIA_DIRECTORY: &str = "project-media";
 
 #[derive(Default)]
 struct ResourceRuntimeState {
@@ -28,6 +30,7 @@ struct PendingUserImport {
     file_name: String,
     media_type: String,
     path: PathBuf,
+    workspace_provenance: Option<Value>,
 }
 
 #[derive(Default)]
@@ -141,6 +144,15 @@ pub struct ResourceBeginUserMediaImportInput {
     pub media_type: String,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResourceBeginWorkspaceMediaImportInput {
+    pub purpose: String,
+    pub file_name: String,
+    pub media_type: String,
+    pub provenance: Value,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenedResourceSnapshotDto {
@@ -203,6 +215,22 @@ impl Default for ResourceIndex {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct WorkspaceMediaIndex {
+    storage_schema: u32,
+    resource_ids: Vec<String>,
+}
+
+impl Default for WorkspaceMediaIndex {
+    fn default() -> Self {
+        Self {
+            storage_schema: WORKSPACE_STORAGE_SCHEMA,
+            resource_ids: Vec::new(),
+        }
+    }
+}
+
 #[tauri::command]
 pub fn resource_initialize(
     app: tauri::AppHandle,
@@ -220,6 +248,7 @@ pub fn resource_initialize(
         migrate_storage_schema_v1(&root, state.inner())?;
         migrate_resource_ids_to_logical(&root, state.inner())?;
         ensure_layout(&root)?;
+        ensure_workspace_layout(&workspace_media_root(&app)?)?;
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
         recover_projections(&root, state.inner())?;
         runtime.open_snapshots.clear();
@@ -256,8 +285,10 @@ pub fn resource_read_record(
     reference: ResourceRefDto,
 ) -> Result<StoredResourceRecordDto, String> {
     let root = resource_root(&app)?;
-    let record = read_record(&root, &normalize_resource_id(&reference.id)?)?;
-    verify_record(&root, &record)?;
+    let workspace = workspace_media_root(&app)?;
+    let resource_id = normalize_resource_id(&reference.id)?;
+    let record = read_any_record(&root, &workspace, &resource_id)?;
+    verify_any_record(&root, &record)?;
     Ok(record.dto())
 }
 
@@ -349,6 +380,16 @@ pub fn resource_install_network_package(
     if input.descriptor.get("origin").and_then(Value::as_str) != Some("network") {
         return Err("network install descriptor origin must be network".to_string());
     }
+    if input
+        .descriptor
+        .get("source")
+        .and_then(Value::as_object)
+        .and_then(|source| source.get("family"))
+        .and_then(Value::as_str)
+        .is_some_and(|family| family.starts_with("media-"))
+    {
+        return Err("chart media cannot be installed as a global network record".to_string());
+    }
     let root = resource_root(&app)?;
     let record = commit_resource(
         &root,
@@ -416,6 +457,42 @@ pub fn resource_begin_user_media_import(
             file_name,
             media_type,
             path,
+            workspace_provenance: None,
+        },
+    );
+    Ok(transaction_id)
+}
+
+#[tauri::command]
+pub fn resource_begin_workspace_media_import(
+    app: tauri::AppHandle,
+    input: ResourceBeginWorkspaceMediaImportInput,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<String, String> {
+    let purpose = normalize_user_media_purpose(&input.purpose)?;
+    let file_name = normalize_file_name(&input.file_name)?;
+    let media_type = normalize_media_type(&input.media_type)?;
+    let provenance = normalize_workspace_provenance(&input.provenance)?;
+    let transaction_id = next_identity(state.inner(), "workspace-stream");
+    let root = resource_root(&app)?;
+    ensure_layout(&root)?;
+    let path = root
+        .join("transactions")
+        .join(&transaction_id)
+        .join("workspace-media.bin");
+    write_synced(&path, &[])?;
+    let mut runtime = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    runtime.pending_user_imports.insert(
+        transaction_id.clone(),
+        PendingUserImport {
+            purpose,
+            file_name,
+            media_type,
+            path,
+            workspace_provenance: Some(provenance),
         },
     );
     Ok(transaction_id)
@@ -469,6 +546,9 @@ pub fn resource_commit_user_media_import(
             .remove(&transaction_id)
             .ok_or_else(|| "user media import transaction is unavailable".to_string())?
     };
+    if pending.workspace_provenance.is_some() {
+        return Err("workspace transaction cannot commit as legacy user media".to_string());
+    }
     let bytes = fs::read(&pending.path)
         .map_err(|error| format!("read user media transaction failed: {error}"))?;
     if bytes.is_empty() {
@@ -494,6 +574,61 @@ pub fn resource_commit_user_media_import(
 }
 
 #[tauri::command]
+pub fn resource_commit_workspace_media_import(
+    app: tauri::AppHandle,
+    transaction_id: String,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<StoredResourceRecordDto, String> {
+    let pending = {
+        let mut runtime = state
+            .runtime
+            .lock()
+            .map_err(|error| format!("lock resource state failed: {error}"))?;
+        runtime
+            .pending_user_imports
+            .remove(&transaction_id)
+            .ok_or_else(|| "workspace media import transaction is unavailable".to_string())?
+    };
+    let provenance = pending
+        .workspace_provenance
+        .ok_or_else(|| "workspace media transaction has no provenance".to_string())?;
+    let bytes = fs::read(&pending.path)
+        .map_err(|error| format!("read workspace media transaction failed: {error}"))?;
+    if bytes.is_empty() {
+        return Err("workspace media transaction is empty".to_string());
+    }
+    let integrity = observe_bytes(&bytes);
+    let resource_id = format!(
+        "workspace/current/chart-media/{}/{}",
+        pending.purpose,
+        integrity.sha256.to_ascii_lowercase()
+    );
+    let descriptor = workspace_media_descriptor(
+        &resource_id,
+        &pending.purpose,
+        &pending.file_name,
+        provenance,
+    )?;
+    let root = resource_root(&app)?;
+    let workspace = workspace_media_root(&app)?;
+    let record = commit_workspace_resource(
+        &root,
+        &workspace,
+        descriptor,
+        vec![ResourceInstallFileInput {
+            logical_path: "workspace-media.bin".to_string(),
+            media_type: pending.media_type,
+            base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
+        }],
+        &transaction_id,
+    )?;
+    if let Some(directory) = pending.path.parent() {
+        let _ = fs::remove_dir_all(directory);
+    }
+    Ok(record.dto())
+}
+
+#[tauri::command]
 pub fn resource_abort_user_media_import(
     transaction_id: String,
     state: tauri::State<'_, ApplicationResourceState>,
@@ -510,6 +645,58 @@ pub fn resource_abort_user_media_import(
         }
     }
     Ok(())
+}
+
+#[tauri::command]
+pub fn resource_reconcile_workspace_media(
+    app: tauri::AppHandle,
+    refs: Vec<ResourceRefDto>,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<(), String> {
+    let _guard = state
+        .runtime
+        .lock()
+        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    let root = resource_root(&app)?;
+    let workspace = workspace_media_root(&app)?;
+    ensure_layout(&root)?;
+    ensure_workspace_layout(&workspace)?;
+    let mut retained = HashSet::new();
+    for reference in refs {
+        let resource_id = normalize_resource_id(&reference.id)?;
+        if !resource_id.starts_with("workspace/current/chart-media/")
+            || !retained.insert(resource_id.clone())
+        {
+            return Err(
+                "workspace reconciliation requires unique current chart-media refs".to_string(),
+            );
+        }
+        let record = read_workspace_record(&workspace, &resource_id)?;
+        verify_workspace_record(&root, &record)?;
+    }
+    let previous = read_workspace_index(&workspace)?;
+    let mut resource_ids: Vec<String> = retained.into_iter().collect();
+    resource_ids.sort();
+    write_workspace_index(
+        &root,
+        &workspace,
+        &WorkspaceMediaIndex {
+            storage_schema: WORKSPACE_STORAGE_SCHEMA,
+            resource_ids: resource_ids.clone(),
+        },
+        &next_identity(state.inner(), "workspace-reconcile"),
+    )?;
+    for resource_id in previous.resource_ids {
+        if !resource_ids.contains(&resource_id) {
+            let path = workspace_record_path(&workspace, &resource_id);
+            if path.exists() {
+                fs::remove_file(path).map_err(|error| {
+                    format!("remove unreachable workspace record failed: {error}")
+                })?;
+            }
+        }
+    }
+    collect_garbage_paths(&root, &workspace)
 }
 
 #[tauri::command]
@@ -539,8 +726,9 @@ pub fn resource_create_snapshot(
                 id: resource_id.clone(),
             },
         );
-        let record = read_record(&root, &resource_id)?;
-        verify_record(&root, &record)?;
+        let workspace = workspace_media_root(&app)?;
+        let record = read_any_record(&root, &workspace, &resource_id)?;
+        verify_any_record(&root, &record)?;
         revisions.insert(slot.clone(), record.revision);
         files_by_slot.insert(slot, record.files);
     }
@@ -656,6 +844,7 @@ pub fn resource_release_snapshot(
             fs::remove_file(path)
                 .map_err(|error| format!("remove released resource snapshot failed: {error}"))?;
         }
+        collect_garbage_paths(&root, &workspace_media_root(&app)?)?;
     }
     Ok(())
 }
@@ -663,8 +852,10 @@ pub fn resource_release_snapshot(
 #[tauri::command]
 pub fn resource_verify(app: tauri::AppHandle, reference: ResourceRefDto) -> Result<Value, String> {
     let root = resource_root(&app)?;
-    let record = read_record(&root, &normalize_resource_id(&reference.id)?)?;
-    verify_record(&root, &record)?;
+    let workspace = workspace_media_root(&app)?;
+    let resource_id = normalize_resource_id(&reference.id)?;
+    let record = read_any_record(&root, &workspace, &resource_id)?;
+    verify_any_record(&root, &record)?;
     Ok(record.descriptor)
 }
 
@@ -683,6 +874,23 @@ pub fn resource_remove(
         return Err("builtin resources cannot be removed".to_string());
     }
     let root = resource_root(&app)?;
+    if resource_id.starts_with("workspace/current/chart-media/") {
+        let workspace = workspace_media_root(&app)?;
+        let path = workspace_record_path(&workspace, &resource_id);
+        if path.exists() {
+            fs::remove_file(path)
+                .map_err(|error| format!("remove workspace media record failed: {error}"))?;
+        }
+        let mut index = read_workspace_index(&workspace)?;
+        index.resource_ids.retain(|id| id != &resource_id);
+        write_workspace_index(
+            &root,
+            &workspace,
+            &index,
+            &next_identity(state.inner(), "workspace-remove"),
+        )?;
+        return collect_garbage_paths(&root, &workspace);
+    }
     let record = read_record(&root, &resource_id).ok();
     let path = record_path(&root, &resource_id);
     if path.exists() {
@@ -710,13 +918,25 @@ pub fn resource_collect_garbage(
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
     let root = resource_root(&app)?;
+    let workspace = workspace_media_root(&app)?;
+    collect_garbage_paths(&root, &workspace)
+}
+
+fn collect_garbage_paths(root: &Path, workspace: &Path) -> Result<(), String> {
+    ensure_layout(root)?;
+    ensure_workspace_layout(workspace)?;
     let mut retained = HashSet::new();
     let mut retained_revisions = HashSet::new();
-    for resource_id in read_index(&root)?.resource_ids {
-        if let Ok(record) = read_record(&root, &resource_id) {
+    for resource_id in read_index(root)?.resource_ids {
+        if let Ok(record) = read_record(root, &resource_id) {
             if let Some(digest) = record.revision.strip_prefix("record/") {
                 retained_revisions.insert(digest.to_string());
             }
+            retained.extend(record.files.into_iter().map(|file| file.blob));
+        }
+    }
+    for resource_id in read_workspace_index(workspace)?.resource_ids {
+        if let Ok(record) = read_workspace_record(workspace, &resource_id) {
             retained.extend(record.files.into_iter().map(|file| file.blob));
         }
     }
@@ -756,8 +976,7 @@ pub fn resource_collect_garbage(
                 .map_err(|error| format!("remove orphan resource blob failed: {error}"))?;
         }
     }
-    collect_projection_garbage(&root.join("library"), &retained_revisions)?;
-    Ok(())
+    collect_projection_garbage(&root.join("library"), &retained_revisions)
 }
 
 fn collect_projection_garbage(
@@ -798,6 +1017,108 @@ fn collect_projection_garbage(
         }
     }
     Ok(())
+}
+
+fn commit_workspace_resource(
+    root: &Path,
+    workspace: &Path,
+    mut descriptor: Value,
+    files: Vec<ResourceInstallFileInput>,
+    transaction_id: &str,
+) -> Result<StoredResourceRecord, String> {
+    ensure_layout(root)?;
+    ensure_workspace_layout(workspace)?;
+    let resource_id = descriptor_resource_id(&descriptor)?;
+    if !resource_id.starts_with("workspace/current/chart-media/") || files.is_empty() {
+        return Err(
+            "workspace media transaction requires one current chart-media identity and file"
+                .to_string(),
+        );
+    }
+    let transaction = root.join("transactions").join(transaction_id);
+    fs::create_dir_all(&transaction)
+        .map_err(|error| format!("create workspace transaction failed: {error}"))?;
+    let result = (|| {
+        let mut seen = HashSet::new();
+        let mut stored_files = Vec::new();
+        for (index, file) in files.into_iter().enumerate() {
+            let logical_path = normalize_logical_path(&file.logical_path)?;
+            if !seen.insert(logical_path.to_lowercase()) {
+                return Err("duplicate workspace media path".to_string());
+            }
+            let media_type = normalize_media_type(&file.media_type)?;
+            let bytes = base64::engine::general_purpose::STANDARD
+                .decode(file.base64_data)
+                .map_err(|error| format!("decode workspace media failed: {error}"))?;
+            if bytes.is_empty() {
+                return Err("workspace media file is empty".to_string());
+            }
+            let integrity = observe_bytes(&bytes);
+            let temp_path = transaction.join(format!("file-{index}"));
+            write_synced(&temp_path, &bytes)?;
+            let blob_path = root.join("blobs").join(&integrity.sha256);
+            if blob_path.exists() {
+                verify_blob_path(&blob_path, &integrity)?;
+                fs::remove_file(&temp_path)
+                    .map_err(|error| format!("remove duplicate workspace blob failed: {error}"))?;
+            } else {
+                fs::rename(&temp_path, &blob_path)
+                    .map_err(|error| format!("publish workspace blob failed: {error}"))?;
+            }
+            stored_files.push(StoredResourceFile {
+                logical_path,
+                media_type,
+                blob: integrity.sha256.clone(),
+                integrity,
+            });
+        }
+        stored_files.sort_by(|left, right| left.logical_path.cmp(&right.logical_path));
+        let revision = record_revision(&resource_id, &stored_files);
+        let public_files: Vec<ResourceFileRecordDto> = stored_files
+            .iter()
+            .map(|file| ResourceFileRecordDto {
+                logical_path: file.logical_path.clone(),
+                media_type: file.media_type.clone(),
+                integrity: file.integrity.clone(),
+            })
+            .collect();
+        let descriptor_object = descriptor
+            .as_object_mut()
+            .ok_or_else(|| "workspace descriptor must be an object".to_string())?;
+        descriptor_object.insert(
+            "availability".to_string(),
+            Value::String("installed".to_string()),
+        );
+        descriptor_object.insert(
+            "files".to_string(),
+            serde_json::to_value(&public_files)
+                .map_err(|error| format!("serialize workspace file records failed: {error}"))?,
+        );
+        let record = StoredResourceRecord {
+            storage_schema: WORKSPACE_STORAGE_SCHEMA,
+            revision,
+            descriptor,
+            files: stored_files,
+        };
+        verify_workspace_record(root, &record)?;
+        let encoded = serde_json::to_vec(&record)
+            .map_err(|error| format!("serialize workspace record failed: {error}"))?;
+        atomic_write(
+            root,
+            &workspace_record_path(workspace, &resource_id),
+            &encoded,
+            transaction_id,
+        )?;
+        let mut index = read_workspace_index(workspace)?;
+        if !index.resource_ids.iter().any(|id| id == &resource_id) {
+            index.resource_ids.push(resource_id);
+            index.resource_ids.sort();
+        }
+        write_workspace_index(root, workspace, &index, transaction_id)?;
+        Ok(record)
+    })();
+    let _ = fs::remove_dir_all(&transaction);
+    result
 }
 
 fn commit_resource(
@@ -929,11 +1250,83 @@ fn read_record(root: &Path, resource_id: &str) -> Result<StoredResourceRecord, S
     Ok(record)
 }
 
+fn read_workspace_record(
+    workspace: &Path,
+    resource_id: &str,
+) -> Result<StoredResourceRecord, String> {
+    let bytes = fs::read(workspace_record_path(workspace, resource_id))
+        .map_err(|error| format!("read workspace media record failed: {error}"))?;
+    let record: StoredResourceRecord = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse workspace media record failed: {error}"))?;
+    if record.storage_schema != WORKSPACE_STORAGE_SCHEMA
+        || descriptor_resource_id(&record.descriptor)? != resource_id
+        || record.revision != record_revision(resource_id, &record.files)
+    {
+        return Err("workspace media record identity or schema is invalid".to_string());
+    }
+    Ok(record)
+}
+
+fn read_any_record(
+    root: &Path,
+    workspace: &Path,
+    resource_id: &str,
+) -> Result<StoredResourceRecord, String> {
+    if resource_id.starts_with("workspace/current/chart-media/") {
+        read_workspace_record(workspace, resource_id)
+    } else {
+        read_record(root, resource_id)
+    }
+}
+
+fn verify_any_record(root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
+    if record.descriptor.get("origin").and_then(Value::as_str) == Some("workspace") {
+        verify_workspace_record(root, record)
+    } else {
+        verify_record(root, record)
+    }
+}
+
+fn verify_workspace_record(root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
+    if record.storage_schema != WORKSPACE_STORAGE_SCHEMA
+        || record.descriptor.get("origin").and_then(Value::as_str) != Some("workspace")
+        || record.descriptor.get("logicalPlacement").is_some()
+        || record.files.len() != 1
+    {
+        return Err("workspace media record shape is invalid".to_string());
+    }
+    let resource_id = descriptor_resource_id(&record.descriptor)?;
+    let purpose = record
+        .descriptor
+        .get("purpose")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "workspace media purpose is missing".to_string())?;
+    normalize_user_media_purpose(purpose)?;
+    normalize_workspace_provenance(
+        record
+            .descriptor
+            .get("provenance")
+            .ok_or_else(|| "workspace media provenance is missing".to_string())?,
+    )?;
+    let expected_prefix = format!("workspace/current/chart-media/{purpose}/");
+    let digest = resource_id
+        .strip_prefix(&expected_prefix)
+        .ok_or_else(|| "workspace media record identity is invalid".to_string())?;
+    if digest != record.files[0].integrity.sha256.to_ascii_lowercase() {
+        return Err("workspace media identity does not match content digest".to_string());
+    }
+    verify_record_files(root, record)
+}
+
 fn verify_record(root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
     if record.files.is_empty() {
         return Err("stored resource record has no files".to_string());
     }
     projection_resource_path(root, &record.descriptor)?;
+    verify_record_files(root, record)
+}
+
+fn verify_record_files(root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
     let mut seen = HashSet::new();
     for file in &record.files {
         normalize_logical_path(&file.logical_path)?;
@@ -1140,6 +1533,28 @@ fn resource_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(root)
 }
 
+fn workspace_media_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut root = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("resolve workspace app data directory failed: {error}"))?;
+    root.push("cache");
+    root.push("session");
+    root.push(WORKSPACE_MEDIA_DIRECTORY);
+    Ok(root)
+}
+
+fn ensure_workspace_layout(workspace: &Path) -> Result<(), String> {
+    fs::create_dir_all(workspace.join("records"))
+        .map_err(|error| format!("create workspace media layout failed: {error}"))?;
+    if !workspace.join(INDEX_FILE).exists() {
+        let bytes = serde_json::to_vec(&WorkspaceMediaIndex::default())
+            .map_err(|error| format!("serialize workspace index failed: {error}"))?;
+        write_synced(&workspace.join(INDEX_FILE), &bytes)?;
+    }
+    Ok(())
+}
+
 fn ensure_layout(root: &Path) -> Result<(), String> {
     fs::create_dir_all(root).map_err(|error| format!("create resource root failed: {error}"))?;
     for name in [
@@ -1172,6 +1587,29 @@ fn read_index(root: &Path) -> Result<ResourceIndex, String> {
         return Err("unsupported resource storage schema".to_string());
     }
     Ok(index)
+}
+
+fn read_workspace_index(workspace: &Path) -> Result<WorkspaceMediaIndex, String> {
+    ensure_workspace_layout(workspace)?;
+    let bytes = fs::read(workspace.join(INDEX_FILE))
+        .map_err(|error| format!("read workspace media index failed: {error}"))?;
+    let index: WorkspaceMediaIndex = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse workspace media index failed: {error}"))?;
+    if index.storage_schema != WORKSPACE_STORAGE_SCHEMA {
+        return Err("unsupported workspace media schema".to_string());
+    }
+    Ok(index)
+}
+
+fn write_workspace_index(
+    root: &Path,
+    workspace: &Path,
+    index: &WorkspaceMediaIndex,
+    identity: &str,
+) -> Result<(), String> {
+    let bytes = serde_json::to_vec(index)
+        .map_err(|error| format!("serialize workspace media index failed: {error}"))?;
+    atomic_write(root, &workspace.join(INDEX_FILE), &bytes, identity)
 }
 
 fn write_index(root: &Path, index: &ResourceIndex, identity: &str) -> Result<(), String> {
@@ -1239,6 +1677,12 @@ fn record_path(root: &Path, resource_id: &str) -> PathBuf {
         .join(format!("{}.json", digest_text(resource_id)))
 }
 
+fn workspace_record_path(workspace: &Path, resource_id: &str) -> PathBuf {
+    workspace
+        .join("records")
+        .join(format!("{}.json", digest_text(resource_id)))
+}
+
 fn snapshot_path(root: &Path, snapshot_id: &str) -> PathBuf {
     root.join("snapshots")
         .join(format!("{}.json", digest_text(snapshot_id)))
@@ -1269,6 +1713,7 @@ fn normalize_resource_id(value: &str) -> Result<String, String> {
     let trimmed = value.trim();
     let valid_prefix = trimmed.starts_with("builtin/")
         || trimmed.starts_with("bestdori/")
+        || trimmed.starts_with("workspace/")
         || trimmed.starts_with("user/");
     if !valid_prefix || trimmed.contains("//") || trimmed.len() > 1024 {
         return Err("resource id is invalid".to_string());
@@ -1383,6 +1828,57 @@ fn normalize_user_media_purpose(value: &str) -> Result<String, String> {
         "bgm" | "cover" | "mv" | "stage-backdrop" => Ok(value.to_string()),
         _ => Err("user media purpose is not allowed".to_string()),
     }
+}
+
+fn normalize_workspace_provenance(value: &Value) -> Result<Value, String> {
+    let object = value
+        .as_object()
+        .ok_or_else(|| "workspace provenance must be an object".to_string())?;
+    match object.get("kind").and_then(Value::as_str) {
+        Some("user-upload") if object.len() == 1 => {
+            Ok(serde_json::json!({ "kind": "user-upload" }))
+        }
+        Some("network") if object.len() == 2 => {
+            let source_id = object
+                .get("sourceRef")
+                .and_then(Value::as_object)
+                .and_then(|reference| reference.get("id"))
+                .and_then(Value::as_str)
+                .ok_or_else(|| "workspace network provenance requires sourceRef.id".to_string())?;
+            let source_id = normalize_resource_id(source_id)?;
+            if !source_id.starts_with("bestdori/") {
+                return Err("workspace network provenance must identify Bestdori".to_string());
+            }
+            Ok(serde_json::json!({ "kind": "network", "sourceRef": { "id": source_id } }))
+        }
+        _ => Err("workspace provenance shape is invalid".to_string()),
+    }
+}
+
+fn workspace_media_descriptor(
+    resource_id: &str,
+    purpose: &str,
+    file_name: &str,
+    provenance: Value,
+) -> Result<Value, String> {
+    let kind = match purpose {
+        "bgm" => "audio",
+        "mv" => "video",
+        "cover" | "stage-backdrop" => "image",
+        _ => return Err("workspace media purpose is invalid".to_string()),
+    };
+    Ok(serde_json::json!({
+        "ref": { "id": normalize_resource_id(resource_id)? },
+        "origin": "workspace",
+        "kind": kind,
+        "title": file_name,
+        "availability": "installed",
+        "files": null,
+        "catalogObservedAt": null,
+        "purpose": purpose,
+        "fileName": file_name,
+        "provenance": normalize_workspace_provenance(&provenance)?,
+    }))
 }
 
 fn user_media_descriptor(identity: &str, purpose: &str, file_name: &str) -> Value {
@@ -2175,6 +2671,100 @@ mod tests {
             "collision",
         );
         assert!(result.is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn workspace_media_uses_session_index_without_global_library_projection() {
+        let root = test_root("workspace-media");
+        let workspace = root.join("cache/session/project-media");
+        ensure_layout(&root).unwrap();
+        ensure_workspace_layout(&workspace).unwrap();
+        let bytes = b"ID3-workspace";
+        let digest = observe_bytes(bytes).sha256.to_ascii_lowercase();
+        let resource_id = format!("workspace/current/chart-media/bgm/{digest}");
+        let descriptor = workspace_media_descriptor(
+            &resource_id,
+            "bgm",
+            "song.mp3",
+            serde_json::json!({"kind":"user-upload"}),
+        )
+        .unwrap();
+        let record = commit_workspace_resource(
+            &root,
+            &workspace,
+            descriptor,
+            vec![install_file("workspace-media.bin", bytes)],
+            "workspace-test",
+        )
+        .unwrap();
+        verify_workspace_record(&root, &record).unwrap();
+        assert!(read_index(&root).unwrap().resource_ids.is_empty());
+        assert_eq!(
+            read_workspace_index(&workspace).unwrap().resource_ids,
+            vec![resource_id]
+        );
+        assert!(!root.join("library/user").exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn workspace_retirement_keeps_snapshot_blob_until_snapshot_is_removed() {
+        let root = test_root("workspace-snapshot-gc");
+        let workspace = root.join("cache/session/project-media");
+        ensure_layout(&root).unwrap();
+        ensure_workspace_layout(&workspace).unwrap();
+        let first_bytes = b"ID3-first";
+        let first_digest = observe_bytes(first_bytes).sha256;
+        let first_id = format!(
+            "workspace/current/chart-media/bgm/{}",
+            first_digest.to_ascii_lowercase()
+        );
+        let first = commit_workspace_resource(
+            &root,
+            &workspace,
+            workspace_media_descriptor(
+                &first_id,
+                "bgm",
+                "first.mp3",
+                serde_json::json!({"kind":"user-upload"}),
+            )
+            .unwrap(),
+            vec![install_file("workspace-media.bin", first_bytes)],
+            "first-workspace",
+        )
+        .unwrap();
+        let snapshot_id = "snapshot/workspace-gc".to_string();
+        let snapshot = StoredSnapshot {
+            storage_schema: STORAGE_SCHEMA,
+            snapshot_id: snapshot_id.clone(),
+            slots: HashMap::from([(
+                "chart-media.bgm".to_string(),
+                ResourceRefDto {
+                    id: first_id.clone(),
+                },
+            )]),
+            revisions: HashMap::from([("chart-media.bgm".to_string(), first.revision.clone())]),
+            files_by_slot: HashMap::from([("chart-media.bgm".to_string(), first.files.clone())]),
+        };
+        fs::write(
+            snapshot_path(&root, &snapshot_id),
+            serde_json::to_vec(&snapshot).unwrap(),
+        )
+        .unwrap();
+        write_workspace_index(
+            &root,
+            &workspace,
+            &WorkspaceMediaIndex::default(),
+            "retire-workspace",
+        )
+        .unwrap();
+        fs::remove_file(workspace_record_path(&workspace, &first_id)).unwrap();
+        collect_garbage_paths(&root, &workspace).unwrap();
+        assert!(root.join("blobs").join(&first_digest).exists());
+        fs::remove_file(snapshot_path(&root, &snapshot_id)).unwrap();
+        collect_garbage_paths(&root, &workspace).unwrap();
+        assert!(!root.join("blobs").join(&first_digest).exists());
         let _ = fs::remove_dir_all(root);
     }
 

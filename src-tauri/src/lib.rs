@@ -13,12 +13,13 @@ use tauri::{Emitter, Manager};
 mod resource_manager;
 use resource_manager::{
     resource_abort_user_media_import, resource_append_user_media_chunk,
-    resource_begin_user_media_import, resource_collect_garbage, resource_commit_catalog_snapshot,
-    resource_commit_user_media_import, resource_create_snapshot, resource_import_user_media,
+    resource_begin_user_media_import, resource_begin_workspace_media_import,
+    resource_collect_garbage, resource_commit_catalog_snapshot, resource_commit_user_media_import,
+    resource_commit_workspace_media_import, resource_create_snapshot, resource_import_user_media,
     resource_initialize, resource_install_builtin_package, resource_install_network_package,
     resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
-    resource_read_record, resource_read_snapshot_file, resource_release_snapshot, resource_remove,
-    resource_verify, ApplicationResourceState,
+    resource_read_record, resource_read_snapshot_file, resource_reconcile_workspace_media,
+    resource_release_snapshot, resource_remove, resource_verify, ApplicationResourceState,
 };
 
 const DOWNLOAD_PROGRESS_EVENT: &str = "download-progress";
@@ -2188,8 +2189,11 @@ pub fn run() {
             resource_install_network_package,
             resource_import_user_media,
             resource_begin_user_media_import,
+            resource_begin_workspace_media_import,
             resource_append_user_media_chunk,
             resource_commit_user_media_import,
+            resource_commit_workspace_media_import,
+            resource_reconcile_workspace_media,
             resource_abort_user_media_import,
             resource_create_snapshot,
             resource_open_snapshot,
