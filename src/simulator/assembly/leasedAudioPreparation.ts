@@ -33,10 +33,11 @@ export async function prepareLeasedAudioResources(
     const portableAudio = pack.profile.portableAudio;
     if (!Array.isArray(portableAudio)) continue;
     for (const value of portableAudio) {
-      if (!record(value) || typeof value.cue !== "string" || typeof value.loop !== "boolean" ||
-        !EXPECTED_CUES.has(value.cue) || cues.has(value.cue)) {
+      if (!record(value) || typeof value.cue !== "string" || typeof value.loop !== "boolean") {
         return invalid("simulator.audio.leased-cue-identity");
       }
+      if (!EXPECTED_CUES.has(value.cue)) continue;
+      if (cues.has(value.cue)) return invalid("simulator.audio.leased-cue-identity");
       const file = pack.files.find((candidate) => candidate.mime === "audio/mpeg" && candidate.id === `cue:${value.cue}`);
       if (file === undefined) return invalid("simulator.audio.leased-cue-file");
       const inspected = await preflight.inspect(file.bytes);

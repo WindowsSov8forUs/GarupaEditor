@@ -7,6 +7,8 @@ const { join } = require("node:path");
 import type { SimulatorResourceFile, SimulatorResourceLease } from "../platform/resourceContracts";
 import { prepareSelectedSkinSourcePackages } from "../resources/sourcePackageDecoder";
 import { prepareLeasedCommonRenderResources } from "../assembly/leasedCommonResourcePreparation";
+import { prepareLeasedAudioResources } from "../assembly/leasedAudioPreparation";
+import { audioAccepted } from "../backends/audioValidation";
 import type { SelectedSkinResourceIdentity } from "../assembly/resourceRequirements";
 
 const ORDINARY_ROOTS = [
@@ -24,7 +26,8 @@ async function main(): Promise<void> {
   await testNoteSourcePackage();
   await testParticleSourcePackages();
   await testAudioSourcePackage();
-  console.log("source package decoder tests passed: leased render rows + 17 semantic particle roots + MP3 cues");
+  await testLeasedAudioIgnoresUnselectedCommonMembers();
+  console.log("source package decoder tests passed: leased render rows + 17 semantic particle roots + selected MP3 cues");
 }
 
 async function testCommonRenderPackages(): Promise<void> {
@@ -112,6 +115,65 @@ async function testAudioSourcePackage(): Promise<void> {
   const portableAudio = decoded.value[0]!.profile.portableAudio as any[];
   assert.equal(portableAudio.find((item) => item.cue === "SE_RHYTHM_TAP_LONG").loop, true);
   assert.equal(portableAudio.find((item) => item.cue === "perfect").loop, false);
+}
+
+async function testLeasedAudioIgnoresUnselectedCommonMembers(): Promise<void> {
+  const expected = [
+    "directional_fl", "directional_fl_2", "directional_fl_3",
+    "SE_RHYTHM_CLEAR", "SE_RHYTHM_FULLCOMBO", "SE_RHYTHM_GAYA", "SE_RHYTHM_TAP_SKILL", "bad", "miss",
+    "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect",
+  ];
+  const pack = {
+    logicalResource: "sound/common",
+    profile: {
+      portableAudio: [
+        { cue: "SE_AREA_CHANGE", loop: false },
+        ...expected.map((cue) => ({ cue, loop: cue === "SE_RHYTHM_GAYA" || cue === "SE_RHYTHM_TAP_LONG" })),
+      ],
+    },
+    files: expected.map((cue, index) => ({
+      id: `cue:${cue}`,
+      mime: "audio/mpeg",
+      bytes: Uint8Array.of(index + 1),
+      sha256: "A".repeat(64),
+    })),
+  } as any;
+  const prepared = await prepareLeasedAudioResources({
+    profile: {
+      role: "bgm", logicalId: "session/test-bgm", cue: "test_bgm", byteLength: 1,
+      sha256: "B".repeat(64), mime: "audio/mpeg", codec: "mp3", sampleRate: 44100,
+      channels: 2, durationSeconds: 1, sampleFrames: 44100, loop: null,
+      identity: "session-explicit", signal: "host-supplied-portable",
+    },
+    bytes: Uint8Array.of(1),
+  } as any, [pack], {
+    async inspect() {
+      return audioAccepted({ codec: "mp3", sampleRate: 44100, channels: 2, durationSeconds: 1, sampleFrames: 44100 });
+    },
+  } as any);
+  assert.equal(prepared.status, "accepted", prepared.status === "rejected" ? prepared.failure.capability : "");
+  if (prepared.status === "accepted") assert.equal(prepared.value.profile.resources.length, 16);
+
+  const duplicate = await prepareLeasedAudioResources({
+    profile: {
+      role: "bgm", logicalId: "session/test-bgm", cue: "test_bgm", byteLength: 1,
+      sha256: "B".repeat(64), mime: "audio/mpeg", codec: "mp3", sampleRate: 44100,
+      channels: 2, durationSeconds: 1, sampleFrames: 44100, loop: null,
+      identity: "session-explicit", signal: "host-supplied-portable",
+    },
+    bytes: Uint8Array.of(1),
+  } as any, [pack, {
+    ...pack,
+    logicalResource: "sound/duplicate",
+    profile: { portableAudio: [{ cue: "perfect", loop: false }] },
+    files: [{ id: "cue:perfect", mime: "audio/mpeg", bytes: Uint8Array.of(1), sha256: "C".repeat(64) }],
+  } as any], {
+    async inspect() {
+      return audioAccepted({ codec: "mp3", sampleRate: 44100, channels: 2, durationSeconds: 1, sampleFrames: 44100 });
+    },
+  } as any);
+  assert.equal(duplicate.status, "rejected");
+  if (duplicate.status === "rejected") assert.equal(duplicate.failure.capability, "simulator.audio.leased-cue-identity");
 }
 
 async function testParticleSourcePackages(): Promise<void> {
