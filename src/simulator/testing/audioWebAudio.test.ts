@@ -82,6 +82,31 @@ async function main(): Promise<void> {
   assert.equal(context.sources[0]!.stopCount, 1);
   assert.equal(context.sources[1]!.startOffset, 1.234);
 
+  const startupContext = new FakeAudioContext();
+  const startupBackend = new WebAudioSimulatorBackend(startupContext as unknown as AudioContext);
+  assert.equal((await startupBackend.prepare(
+    "web-startup-bgm-resume",
+    CURRENT_AUDIO_TEST_PROFILE,
+    provider,
+    preflight,
+  )).status, "accepted");
+  execute(startupBackend, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "gain.set", bgm_bits: "0x3F800000", se_bits: "0x3F800000" },
+    { kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 0, priority: 255, fade_bits: "0x00000000" },
+    { kind: "bgm.pause" },
+  ]);
+  const startupBgmVoiceGain = startupContext.gains[2]!.gain;
+  assert.deepEqual(startupBgmVoiceGain.events[startupBgmVoiceGain.events.length - 1], ["set", 0, startupContext.currentTime]);
+  startupBgmVoiceGain.value = 1;
+  execute(startupBackend, [{ kind: "bgm.resume" }]);
+  assert.deepEqual(
+    startupBgmVoiceGain.events[startupBgmVoiceGain.events.length - 1],
+    ["set", 1, startupContext.currentTime],
+    "BGM resume must publish gain 1 even when AudioParam.value exposes a stale base value over scheduled zero automation",
+  );
+  assert.equal(startupBackend.dispose().status, "accepted");
+
   execute(backend, [{
     kind: "hold.start-loop",
     cue: "SE_RHYTHM_TAP_LONG",

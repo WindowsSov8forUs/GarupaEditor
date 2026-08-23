@@ -159,7 +159,15 @@ function testInputPriorityAndFailureClosure(): void {
   const owner = new PauseControlSceneOwner();
   let routed = requireOk(owner.route(1 / 60, frame(1, ManualTouchPhase.Ended, ...LAYOUT.pause.centerBottomLeft), state(mode, true, false), LAYOUT));
   assert.equal(routed.commands.length, 0, "Pause moved/ended routes are no-op without began");
-  assert.equal(routed.manualFrame?.touches.length, 1);
+  assert.equal(routed.manualFrame?.touches.length, 0, "Auto consumes non-control raw touches before the judgement owner");
+  const manualMode = createSimulatorModeIdentity("live", "manual");
+  const manual = requireOk(new PauseControlSceneOwner().route(
+    1 / 60,
+    frame(9, ManualTouchPhase.Began, 800, 100),
+    state(manualMode, true, false),
+    LAYOUT,
+  ));
+  assert.equal(manual.manualFrame?.touches.length, 1, "Manual forwards non-control touches to gameplay");
   const returnCenter = LAYOUT.rehearsal.returnFive.centerBottomLeft;
   routed = requireOk(owner.route(1 / 60, frame(2, ManualTouchPhase.Began, ...returnCenter), state(mode, true, false), LAYOUT));
   assert.equal(routed.manualFrame?.touches.length, 0, "MoveTime is resolved before gameplay");

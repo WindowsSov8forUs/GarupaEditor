@@ -189,7 +189,7 @@ export class PauseControlSceneOwner {
         commands.push(rehearsal.value);
         continue;
       }
-      gameplay.push(touch);
+      if (controlState.mode.inputMode === "manual") gameplay.push(touch);
     }
 
     const filtered = manualFrame === null

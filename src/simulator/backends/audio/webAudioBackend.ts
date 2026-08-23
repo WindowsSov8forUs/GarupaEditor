@@ -393,7 +393,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           break;
         case "bgm.resume": {
           const bgm = this.voices.get("bgm");
-          if (bgm !== undefined && bgm.gain.gain.value === 0) {
+          if (bgm !== undefined) {
             bgm.gain.gain.setValueAtTime(1, this.context.currentTime);
           }
           this.resumeVoice(bgm);
