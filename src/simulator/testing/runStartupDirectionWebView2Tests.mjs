@@ -53,7 +53,7 @@ try {
   if (visualDigest !== "dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f") {
     throw new Error(`startup visual digest changed: ${visualDigest}`);
   }
-  if (audioDigest !== "88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268") {
+  if (audioDigest !== "7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc") {
     throw new Error(`startup audio digest changed: ${audioDigest}`);
   }
   console.log(`startup direction production WebView2 passed: fresh=3 modes=4 captures=${captures[0].scene.captures.length} visualDigest=${visualDigest} audioDigest=${audioDigest}`);
@@ -62,7 +62,7 @@ try {
   for (let index = 1; index <= 3; index += 1) rmSync(join(harnessRoot, `startup-capture-${index}.json`), { force: true });
 }
 function verify(value) {
-  if (value.schema !== "garupa-startup-direction-webview2-v3" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.sdCharacterVisuals !== 0 || value.scene?.captures?.length !== 28 || value.scene?.adaptiveCaptures?.length !== 2 || value.cleanup?.stageChildren !== 0 || value.cleanup?.audioDisposed !== true) {
+  if (value.schema !== "garupa-startup-direction-webview2-v4" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.sdCharacterVisuals !== 0 || value.scene?.captures?.length !== 28 || value.scene?.adaptiveCaptures?.length !== 2 || value.cleanup?.stageChildren !== 0 || value.cleanup?.audioDisposed !== true) {
     throw new Error(`startup WebView2 failure: ${JSON.stringify(value)}`);
   }
   if ([...value.scene.captures, ...value.scene.adaptiveCaptures].some(
@@ -74,6 +74,13 @@ function verify(value) {
   }
   for (const mode of ["live-manual", "live-auto", "rehearsal-manual", "rehearsal-auto"]) {
     if (!value.scene.captures.some((row) => row.label === `${mode}-playing-sound`)) throw new Error(`startup mode missing ${mode}`);
+  }
+  if (value.audio?.host?.userActivation?.isActive !== false ||
+    value.audio?.host?.userActivation?.hasBeenActive !== false ||
+    value.audio?.host?.initialContextState !== "running" ||
+    value.audio?.host?.currentTimeAdvancedWithoutActivation !== true ||
+    value.audio?.host?.resumeCalledByTest !== false) {
+    throw new Error(`startup WebView2 autoplay host boundary mismatch: ${JSON.stringify(value.audio?.host)}`);
   }
   if (value.audio?.resource?.cue !== "SE_RHYTHM_GAYA" || value.audio.resource.bytes !== 151033 ||
     value.audio.resource.sha256 !== "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554" ||

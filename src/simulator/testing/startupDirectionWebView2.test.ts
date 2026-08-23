@@ -151,7 +151,7 @@ async function main(): Promise<void> {
   app.renderer.resize(WIDTH, HEIGHT);
   const audio = await runStartupAudioObservation();
   const result = Object.freeze({
-    schema: "garupa-startup-direction-webview2-v3",
+    schema: "garupa-startup-direction-webview2-v4",
     status: "ok",
     runtime: { userAgent: navigator.userAgent, pixiVersion: (await import("pixi.js")).VERSION, rendererName: app.renderer.name },
     scene: { modes: 4, sdCharacterVisuals, captures, adaptiveCaptures },
@@ -166,9 +166,19 @@ async function main(): Promise<void> {
 }
 
 async function runStartupAudioObservation(): Promise<any> {
+  const userActivation = Object.freeze({
+    isActive: navigator.userActivation.isActive,
+    hasBeenActive: navigator.userActivation.hasBeenActive,
+  });
+  if (userActivation.isActive || userActivation.hasBeenActive) {
+    throw new Error(`startup harness unexpectedly received user activation: ${JSON.stringify(userActivation)}`);
+  }
   const context = new AudioContext();
-  if (context.state === "suspended") await context.resume();
-  if (context.state !== "running") throw new Error(`startup AudioContext is ${context.state}`);
+  const initialContextState = context.state;
+  const initialContextTime = context.currentTime;
+  if (initialContextState !== "running") {
+    throw new Error(`startup AudioContext initial state is ${initialContextState}; the supported Wry autoplay host must not need a test-side resume`);
+  }
   const gayaBytes = await fetchBytes("/assets/SE_RHYTHM_GAYA.mp3");
   const gaya = CURRENT_AUDIO_SE_RESOURCES.find((resource) => resource.cue === "SE_RHYTHM_GAYA");
   if (gaya === undefined) throw new Error("startup Gaya profile missing");
@@ -278,6 +288,7 @@ async function runStartupAudioObservation(): Promise<any> {
   while (context.currentTime < fadeInEnd) {
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   }
+  if (context.currentTime <= initialContextTime) throw new Error("startup AudioContext currentTime did not advance without user activation");
   const transition = requireOk<any>(owner.preflightEnterPlaying());
   const entered = transition.commit();
   if (entered.status !== "ok") throw new Error(`startup playing: ${entered.capability}: ${entered.boundary}`);
@@ -293,6 +304,12 @@ async function runStartupAudioObservation(): Promise<any> {
     throw new Error("startup Gaya browser digest mismatch");
   }
   return Object.freeze({
+    host: {
+      userActivation,
+      initialContextState,
+      currentTimeAdvancedWithoutActivation: true,
+      resumeCalledByTest: false,
+    },
     resource: {
       cue: gaya.cue,
       bytes: gayaBytes.byteLength,
