@@ -67,6 +67,62 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(request.presentation.mv, null);
   await prepared.handoffLease.release();
 
+  const originalStage = await manager.registerBuiltin({
+    id: "builtin/test/stage-original",
+    kind: "package",
+    title: "Original stage package",
+    sourceUrl: "memory:stage-original",
+    files: [
+      { logicalPath: "ingameskin-bgskin-skin00.bundle", mediaType: "application/json", bytes: Uint8Array.of(1) },
+      { logicalPath: "liveBG_fever.png", mediaType: "image/png", bytes: png(1600, 720) },
+      { logicalPath: "liveBG_normal.png", mediaType: "image/png", bytes: png(1600, 720) },
+    ],
+  });
+  if (originalStage.status === "rejected") throw new Error(originalStage.failure.capability);
+  const originalSnapshot = await manager.createSnapshotFromRefs(Object.freeze({
+    "simulator.media.bgm": bgm.value.ref,
+    "simulator.media.jacket": cover.value.ref,
+    "simulator.media.stage": originalStage.value.ref,
+  }));
+  if (originalSnapshot.status === "rejected") throw new Error(originalSnapshot.failure.capability);
+  const originalLease = await manager.acquireSnapshot(originalSnapshot.value.snapshotId);
+  if (originalLease.status === "rejected") throw new Error(originalLease.failure.capability);
+  const originalRequest = await buildSimulatorLaunchRequest(Object.freeze({
+    ...descriptor,
+    mediaSnapshotId: originalSnapshot.value.snapshotId,
+  }), originalLease.value);
+  equal(originalRequest.presentation.stage.backdropPng.byteLength, 29);
+  await originalLease.value.release();
+
+  const ambiguousStage = await manager.registerBuiltin({
+    id: "builtin/test/stage-ambiguous",
+    kind: "package",
+    title: "Ambiguous stage package",
+    sourceUrl: "memory:stage-ambiguous",
+    files: [
+      { logicalPath: "liveBG.png", mediaType: "image/png", bytes: png(1600, 720) },
+      { logicalPath: "liveBG_normal.png", mediaType: "image/png", bytes: png(1600, 720) },
+    ],
+  });
+  if (ambiguousStage.status === "rejected") throw new Error(ambiguousStage.failure.capability);
+  const ambiguousSnapshot = await manager.createSnapshotFromRefs(Object.freeze({
+    "simulator.media.bgm": bgm.value.ref,
+    "simulator.media.jacket": cover.value.ref,
+    "simulator.media.stage": ambiguousStage.value.ref,
+  }));
+  if (ambiguousSnapshot.status === "rejected") throw new Error(ambiguousSnapshot.failure.capability);
+  const ambiguousLease = await manager.acquireSnapshot(ambiguousSnapshot.value.snapshotId);
+  if (ambiguousLease.status === "rejected") throw new Error(ambiguousLease.failure.capability);
+  let ambiguousRejected = false;
+  try {
+    await buildSimulatorLaunchRequest(Object.freeze({
+      ...descriptor,
+      mediaSnapshotId: ambiguousSnapshot.value.snapshotId,
+    }), ambiguousLease.value);
+  } catch { ambiguousRejected = true; }
+  equal(ambiguousRejected, true);
+  await ambiguousLease.value.release();
+
   const safeArea = calculateMobileSafeArea({ left: 20, right: 10, top: 4, bottom: 6 }, 800, 360, 1600, 720);
   equal(safeArea.x, Math.fround(40));
   equal(safeArea.y, Math.fround(12));

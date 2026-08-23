@@ -54,11 +54,12 @@ async function readStageBackdrop(lease: ResourceConsumerLease): Promise<Uint8Arr
     return lease.readBytes(SIMULATOR_MEDIA_SLOTS.stage, files[0]!.logicalPath);
   }
   const liveBg = files.filter((file) => {
+    if (!file.mediaType.startsWith("image/")) return false;
     const name = basename(file.logicalPath).toLocaleLowerCase("en-US");
-    return name === "livebg.png";
+    return name === "livebg.png" || name === "livebg_normal.png";
   });
   if (liveBg.length !== 1) {
-    throw new Error("Default stage package requires exactly one liveBG.png; aliases and nearest-name fallback are forbidden.");
+    throw new Error("Default stage package requires exactly one evidenced provider liveBG.png or original liveBG_normal.png identity; ambiguous sets, aliases and nearest-name fallback are forbidden.");
   }
   return lease.readBytes(SIMULATOR_MEDIA_SLOTS.stage, liveBg[0]!.logicalPath);
 }
