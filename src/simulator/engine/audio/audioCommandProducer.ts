@@ -14,6 +14,7 @@ import {
   type NoteInformation,
 } from "../chart/types";
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
+import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 export interface SimulatorAudioSessionInput {
@@ -94,6 +95,12 @@ export class AudioCommandProducer {
   ) {
     for (const batch of chart.noteBatches) {
       for (const note of batch.informationList) this.registerNote(note);
+    }
+    const product = getGarupaProductChartProfile(chart);
+    if (product?.route === "product-extension") {
+      for (const node of product.visibleNodes) {
+        if (node.scoringSource !== null) this.registerNote(node.scoringSource);
+      }
     }
   }
 
