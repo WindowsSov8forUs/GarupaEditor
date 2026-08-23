@@ -144,7 +144,7 @@ export class ParticleCommandProducer {
     if (!isJudgementBatchShape(batch)) {
       return rejected(
         "particle.producer.invalid-judgement-batch",
-        "Judgement particle routing consumes one immutable owner-produced OneFrame batch.",
+        `Judgement particle routing consumes one immutable owner-produced OneFrame batch. ${describeInvalidJudgementBatch(batch)}`,
       );
     }
     const projected = cloneState(this.state);
@@ -770,6 +770,28 @@ function isJudgementBatchShape(batch: OneFrameJudgementBatch): boolean {
       Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
       Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
       entry.multipleDirectionalFlickNoteCount >= 0);
+}
+
+function describeInvalidJudgementBatch(batch: OneFrameJudgementBatch): string {
+  if (batch === null || typeof batch !== "object") return "The batch root is null or non-object.";
+  if (!Number.isSafeInteger(batch.batchIndex) || batch.batchIndex < 0) {
+    return `batchIndex=${String(batch.batchIndex)} is not a non-negative safe integer.`;
+  }
+  if (!Array.isArray(batch.entries) || batch.entries.length < 1 || batch.entries.length > 5 ||
+    batch.entryCount !== batch.entries.length) {
+    return `entryCount=${String(batch.entryCount)} entries=${Array.isArray(batch.entries) ? batch.entries.length : "non-array"}.`;
+  }
+  const index = batch.entries.findIndex((entry) => !(entry !== null && typeof entry === "object" &&
+    Number.isSafeInteger(entry.noteIndex) && entry.noteIndex >= 0 &&
+    Number.isInteger(entry.noteType) && entry.noteType >= 0 && entry.noteType <= 10 &&
+    Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
+    Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
+    (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
+    Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
+    Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
+    entry.multipleDirectionalFlickNoteCount >= 0));
+  const entry = batch.entries[index];
+  return `Invalid entry ${index}: ${JSON.stringify(entry)}.`;
 }
 
 function createEmptyState(): MutableParticleOwnerState {
