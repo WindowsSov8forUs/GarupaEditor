@@ -820,10 +820,10 @@
     },
     {
       "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
-      "sourceReverseCommit": "b17e64e98423bed3718ac2e76a43cde5c451ee1f",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
       "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
-      "bytes": 71539,
-      "sha256": "04FA486D485FAE2EDDE6763BB3FAC6060381B5F316FC45DDE2C8EDE4F913CE02"
+      "bytes": 73542,
+      "sha256": "79B346D0A0EA48AD0FB6124C8F9919962DCC2257854143100C64A3B1FF07F4EC"
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
@@ -848,10 +848,17 @@
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
-      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
       "sourcePath": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
-      "bytes": 15209,
-      "sha256": "617B154830A78170CC8DF380D8A7214D42278A78A1048195E8E46B227621C356"
+      "bytes": 17501,
+      "sha256": "7DC13FE97466219744D3921A35A7DB8BCB5B6FF33CBBC32501855C91D12D7452"
+    },
+    {
+      "path": "reverse-snapshots/startup-live-tutorial-gate/artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
+      "sourcePath": "artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+      "bytes": 29804,
+      "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__bgskin__skin_april2021.json",

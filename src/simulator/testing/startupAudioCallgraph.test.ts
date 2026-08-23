@@ -16,19 +16,26 @@ const fixtureRoot = join(
   "artifacts", "investigations", "startup-audio-callgraph-10-1-4",
 );
 const callgraph = JSON.parse(readFileSync(join(fixtureRoot, "startup_audio_callgraph.json"), "utf8")) as any;
+const tutorialGate = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots", "startup-live-tutorial-gate",
+  "artifacts", "investigations", "startup-live-tutorial-gate-10-1-4",
+  "startup_live_tutorial_gate_contract.json",
+), "utf8")) as any;
 const gayaBytes = new Uint8Array(readFileSync(join(fixtureRoot, "portable-assets", "SE_RHYTHM_GAYA.mp3")));
 
 function main(): void {
   verifyClosureAndCallgraph();
   verifyFourModePredicates();
+  verifyOrdinaryAutomaticRouteAndTutorialBoundary();
   verifyGayaResource();
   verifyFaultLatching();
-  console.log("startup audio callgraph tests passed: closure=0 four-mode predicates/resource/timeline/fault lifecycle");
+  console.log("startup audio callgraph tests passed: ordinary gate-not-taken route/tutorial boundary/four-mode audio/fault lifecycle");
 }
 
 function verifyClosureAndCallgraph(): void {
   assert.equal(callgraph.schema_version, 1);
-  assert.equal(callgraph.status, "confirmed-current-four-mode-complete-startup-audio-portable-contract");
+  assert.equal(callgraph.status, "confirmed-current-four-mode-ordinary-route-complete-startup-audio-portable-contract");
   assert.deepEqual(callgraph.sample, {
     package: "jp.co.craftegg.band",
     version_name: "10.1.4",
@@ -49,6 +56,8 @@ function verifyClosureAndCallgraph(): void {
     fixed_device_speaker_exact: "open-not-claimed",
     mv_star3d_multi: "excluded-from-positive-scope",
     production_authorization: true,
+    production_authorization_scope: "ordinary tutorial-gate-not-taken route only",
+    first_live_tutorial_production_authorization: false,
   });
   assert.equal(callgraph.methods.length, 44);
   assert.equal(callgraph.runtime_traces.length, 10);
@@ -64,8 +73,9 @@ function verifyClosureAndCallgraph(): void {
     "Gaya starts as an owned loop at caller volume 1.0 with 0.5-second fade-in",
     "Live requests and waits for optional live-start voice; Practice bypasses it",
     "Standard OnStartMusic/Stage StartAnimation is followed by the evidenced one-second wait",
-    "fadeOutGayaSound fades from current effective resource volume to zero over 1.5 seconds and stops at zero",
-    "PlayingNone(4) is published before MusicManager.PlayMusic unpauses prepared BGM; updatePlayingSound publishes PlayingSound(5)",
+    "The account tutorial gate is then tested: all accepted ordinary traces take the false route; the true first-Live route opens tutorial_B1..B4 and suspends before fade/music",
+    "On the ordinary route fadeOutGayaSound fades from current effective resource volume to zero over 1.5 seconds and stops at zero; on the tutorial route the final Close callback starts that same fade",
+    "PlayingNone(4) is published before updatePlayingSound starts judgeAdjustFastProcess and MusicManager.PlayMusic; updatePlayingSound publishes PlayingSound(5)",
   ]);
 }
 
@@ -94,20 +104,45 @@ function verifyFourModePredicates(): void {
   }
   assert.deepEqual(callgraph.mode_matrix["live-manual"], {
     in_game_mode: 1, practice: false, demo: false, auto_live: false,
-    gaya_loop: true, live_voice: true,
+    gaya_loop: true, live_voice: true, tutorial_route: "accepted-ordinary-gate-not-taken",
   });
   assert.deepEqual(callgraph.mode_matrix["live-auto"], {
     in_game_mode: 1, practice: false, demo: false, auto_live: true,
-    gaya_loop: true, live_voice: true,
+    gaya_loop: true, live_voice: true, tutorial_route: "accepted-ordinary-gate-not-taken",
   });
   assert.deepEqual(callgraph.mode_matrix["rehearsal-manual"], {
     in_game_mode: 10, practice: true, demo: false, auto_live: false,
-    gaya_loop: false, live_voice: false,
+    gaya_loop: false, live_voice: false, tutorial_route: "accepted-ordinary-gate-not-taken",
   });
   assert.deepEqual(callgraph.mode_matrix["rehearsal-auto"], {
     in_game_mode: 10, practice: true, demo: true, auto_live: false,
-    gaya_loop: false, live_voice: false,
+    gaya_loop: false, live_voice: false, tutorial_route: "accepted-ordinary-gate-not-taken",
   });
+}
+
+function verifyOrdinaryAutomaticRouteAndTutorialBoundary(): void {
+  assert.equal(tutorialGate.schema_version, 1);
+  assert.equal(tutorialGate.status, "confirmed-current-static-first-live-tutorial-gate-correction");
+  assert.deepEqual(tutorialGate.branch_contract.predicate.all, [
+    "TutorialManager.IsComplete == false",
+    "TutorialManager.CurrentTutorialState == TutorialState.live (2)",
+  ]);
+  assert.equal(tutorialGate.branch_contract.not_taken.second_click_required, false);
+  assert.deepEqual(tutorialGate.branch_contract.taken.pages_in_order, [
+    "tutorial_B1", "tutorial_B2", "tutorial_B3", "tutorial_B4",
+  ]);
+  assert.equal(tutorialGate.interaction_contract.classification,
+    "four-page first-Live tutorial window, not a generic tap-anywhere start gate and not the jacket/title RhythmGameStartAnimation owner");
+  assert.equal(tutorialGate.ordinary_route_runtime.length, 4);
+  for (const row of tutorialGate.ordinary_route_runtime) {
+    assert.deepEqual(row.os_ui_actions.map((action: any) => action.name), ["tap-session-start"]);
+    assert.deepEqual(row.reached_states, [4, 5]);
+    assert.match(row.predicate_outcome, /^tutorial-gate-not-taken/);
+  }
+  assert.equal(tutorialGate.closure.ordinary_route_second_click_excluded_by_runtime, true);
+  assert.equal(tutorialGate.closure.first_tutorial_runtime_capture, "open-not-claimed");
+  assert.equal(tutorialGate.closure.tutorial_visual_resource_pack, "open-not-claimed");
+  assert.equal(tutorialGate.closure.production_authorization, false);
 }
 
 function verifyGayaResource(): void {

@@ -28,7 +28,7 @@ for (const required of [
 for (const state of ["Prepare: 0", "OPFirstAnimStart: 1", "OPFirstAnimEnd: 2", "OPLastAnimStart: 3", "PlayingNone: 4", "PlayingSound: 5"]) {
   if (!read("engine/data/inGameState.ts").includes(state)) throw new Error(`startup state missing: ${state}`);
 }
-for (const evidence of ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD13", "SD14", "SD15", "SD16", "SDN01", "SDN02", "SDN03", "SDN04"]) {
+for (const evidence of ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD13", "SD14", "SD15", "SD16", "SD17", "SDN01", "SDN02", "SDN03", "SDN04"]) {
   if (!joined.includes(evidence)) throw new Error(`startup evidence consumption missing: ${evidence}`);
 }
 for (const required of [
@@ -79,8 +79,30 @@ if (publicBarrel.includes("SimulatorEngineBuildPurpose") || publicBarrel.include
 const fixture = JSON.parse(readFileSync(join(
   testingRoot, "fixtures/reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
 ), "utf8"));
-if (fixture.schema_version !== 2 || fixture.evidence.filter((row) => /^SD/.test(row.id)).length !== 16) {
-  throw new Error("startup SD01-SD16 fixture contract changed");
+if (fixture.schema_version !== 2 || fixture.evidence.filter((row) => /^SD/.test(row.id)).length !== 17 ||
+  fixture.tutorial_branch_contract?.ordinary_second_click !== false ||
+  fixture.tutorial_branch_contract?.production_authorization !== false ||
+  fixture.portable_implementation_contract?.tutorial_route_policy !==
+    "The current portable authorization covers only the predicate-false ordinary route. The first-Live tutorial branch requires its own resource/geometry and dynamic interaction closure; TutorialManager account state is not a Live setting.") {
+  throw new Error("startup SD01-SD17 ordinary-route/tutorial fixture contract changed");
+}
+const tutorialGate = JSON.parse(readFileSync(join(
+  testingRoot, "fixtures/reverse-snapshots/startup-live-tutorial-gate/artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+), "utf8"));
+if (tutorialGate.status !== "confirmed-current-static-first-live-tutorial-gate-correction" ||
+  tutorialGate.branch_contract?.not_taken?.second_click_required !== false ||
+  tutorialGate.interaction_contract?.classification !==
+    "four-page first-Live tutorial window, not a generic tap-anywhere start gate and not the jacket/title RhythmGameStartAnimation owner" ||
+  tutorialGate.ordinary_route_runtime?.length !== 4 ||
+  tutorialGate.ordinary_route_runtime.some((row) =>
+    row.os_ui_actions?.length !== 1 || row.os_ui_actions[0]?.name !== "tap-session-start" ||
+    row.reached_states?.join(",") !== "4,5") ||
+  tutorialGate.closure?.ordinary_route_second_click_excluded_by_runtime !== true ||
+  tutorialGate.closure?.production_authorization !== false) {
+  throw new Error("first-Live tutorial gate correction fixture changed");
+}
+for (const forbidden of ["TutorialManager", "TutorialSlideWindow", "tutorial_B1", "tap-to-start"]) {
+  if (joined.includes(forbidden)) throw new Error(`unauthorized first-Live tutorial path entered production: ${forbidden}`);
 }
 const nullAssets = JSON.parse(readFileSync(join(
   testingRoot, "fixtures/reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
@@ -107,9 +129,11 @@ const closed = contracts.includes('readonly startupDirectionPortable: "closed-po
 if (closed && (
   closure.reachable_unclassified_count !== 0 || closure.unknown_predicate_count !== 0 ||
   closure.missing_resource_count !== 0 || closure.runtime_hook_failure_count !== 0 ||
-  closure.production_authorization !== true
-)) throw new Error("startup capability closed without zero-count authorized complete callgraph");
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 SDN=4 schema=12 caller-startup-assets=0 callgraph=${closed ? "closed-authorized" : "open"}`);
+  closure.production_authorization !== true ||
+  closure.production_authorization_scope !== "ordinary tutorial-gate-not-taken route only" ||
+  closure.first_live_tutorial_production_authorization !== false
+)) throw new Error("startup capability closed without zero-count authorized ordinary-route callgraph");
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=17 SDN=4 STG=8 schema=12 ordinary-second-click=false tutorial-production=false callgraph=${closed ? "closed-authorized-ordinary" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

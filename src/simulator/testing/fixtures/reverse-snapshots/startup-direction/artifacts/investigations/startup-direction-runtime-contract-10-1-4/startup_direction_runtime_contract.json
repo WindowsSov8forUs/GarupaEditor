@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "status": "confirmed-current-sample-static-portable-pack-and-rehearsal-runtime-r1",
+  "status": "confirmed-current-sample-tutorial-gate-classified-static-portable-pack-and-rehearsal-runtime-r1",
   "sample": {
     "package": "jp.co.craftegg.band",
     "version_name": "10.1.4",
@@ -14,14 +14,15 @@
   "scope": {
     "positive": [
       "common rhythm-game startup information owner and fields",
-      "SingleNormal and Practice startup call order",
+      "SingleNormal and Practice startup call order when the account tutorial gate is not taken",
       "standard background, HUD and line-UI intro scheduling",
       "game-state gate before playable sound state",
       "Practice runtime timeline on a naturally selected chart",
       "Practice retry visual phase sequence",
       "serialized startup information prefab and current portable resource identities",
       "explicit missing-live-start-voice path and Practice voice bypass",
-      "Retry whole-scene restart and MoveTime startup bypass"
+      "Retry whole-scene restart and MoveTime startup bypass",
+      "first-Live four-page tutorial predicate, interaction owner and callback handoff"
     ],
     "negative": [
       "MVView and Star3DLiveView exact intro equivalence",
@@ -123,7 +124,7 @@
     {
       "id": "SD09",
       "kind": "static-arm64",
-      "finding": "SingleNormal and Practice are both in the direct start-music mode mask. The music sequence calls background OnStartMusic, waits 1.0 s, handles optional movie delays, then publishes PlayingNone; updatePlayingSound advances PlayingNone to PlayingSound. ExecUpdate runs gameplay update only for states 4 and 5, so notes, input, score and life are gated before that point.",
+      "finding": "SingleNormal and Practice are both in the direct start-music mode mask. The music sequence calls background OnStartMusic, waits 1.0 s and handles optional movie delays before testing the account tutorial gate. When that gate is not taken, it publishes PlayingNone; updatePlayingSound advances PlayingNone to PlayingSound. ExecUpdate runs gameplay update only for states 4 and 5, so notes, input, score and life are gated before that point.",
       "files": [
         "arm64/032f7da8__InGameManager__ExecUpdate.arm64.tsv",
         "arm64/032fe7a0__InGameManager__executeStartGameProcess_MoveNext.arm64.tsv",
@@ -197,6 +198,14 @@
       ]
     },
     {
+      "id": "SD17",
+      "kind": "static-correction",
+      "finding": "When TutorialManager.IsComplete is false and CurrentTutorialState is live (2), startMusicCoroutine creates the InGame tutorial window with tutorial_B1 through tutorial_B4, binds onFinishTutorialSlide, disables Pause and returns before the ordinary fade/state handoff. Final Close invokes the callback, which fades Gaya and publishes PlayingNone. The jacket/title owner itself has no input wait, and first-Live tutorial portable resources remain unauthorized.",
+      "files": [
+        "../startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json"
+      ]
+    },
+    {
       "id": "RD01",
       "kind": "device-runtime",
       "finding": "A natural Practice start confirmed the static order without hooks mutating memory or return values. Relative to start-information Play: HUD intro at +1904 ms; line fade request at +1921 ms; stage intro start at +2414 ms; stage wait complete and music sequence start at +3923 ms; line fade begins at +4415 ms; PlayingNone at +4939 ms; PlayingSound at +4956 ms; line fade runs through approximately +5416 ms.",
@@ -227,7 +236,8 @@
       "background_branch": "standard for the covered 2D gameplay route",
       "direct_music_sequence": true,
       "wait_live_start_voice": true,
-      "live_start_voice_null": "original missing-SoundResource path; wait observes false"
+      "live_start_voice_null": "original missing-SoundResource path; wait observes false",
+      "tutorial_gate": "same account-state predicate; accepted ordinary Live traces take the automatic not-taken route"
     },
     "Practice": {
       "in_game_mode": 10,
@@ -235,7 +245,8 @@
       "background_branch": "standard for the captured route",
       "direct_music_sequence": true,
       "wait_live_start_voice": false,
-      "live_start_voice_null": "no command and immediate wait return"
+      "live_start_voice_null": "no command and immediate wait return",
+      "tutorial_gate": "same account-state predicate; captured Practice route takes the automatic not-taken route"
     },
     "MVView": {
       "in_game_mode": 8,
@@ -257,17 +268,34 @@
       "stage-and-character-intro",
       "optional-live-start-voice-wait",
       "background-on-start-music-and-one-second-pre-play-wait",
+      "account-tutorial-gate; ordinary route continues automatically, first-Live live-state route waits on four-page tutorial callback",
       "PlayingNone-to-PlayingSound gameplay gate",
       "line-ui-fade-may-finish after PlayingSound"
     ],
     "failure_policy": "Missing or invalid caller jacket, localized music metadata, stage/SD PNG, optional Live MP3, common startup resource, glyph or owner must return evidence-required; do not substitute generic READY/GO artwork or infer identity from BGM bytes.",
     "retry_policy": "Retry replays the startup direction chain; it is not a direct jump to PlayingSound.",
     "move_time_policy": "MoveTime remains unavailable before the gameplay gate and does not replace startup direction. Its existing fixed-step transaction starts from an already playing Practice session.",
-    "resource_profile": "../startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json"
+    "resource_profile": "../startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+    "tutorial_route_policy": "The current portable authorization covers only the predicate-false ordinary route. The first-Live tutorial branch requires its own resource/geometry and dynamic interaction closure; TutorialManager account state is not a Live setting."
+  },
+  "tutorial_branch_contract": {
+    "source": "../startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+    "source_sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D",
+    "predicate": "TutorialManager.IsComplete == false && CurrentTutorialState == live (2)",
+    "pages": [
+      "tutorial_B1",
+      "tutorial_B2",
+      "tutorial_B3",
+      "tutorial_B4"
+    ],
+    "continuation": "final Close -> InGameManager.onFinishTutorialSlide -> fadeOutGayaSound -> PlayingNone(4) -> PlayingSound(5)",
+    "ordinary_second_click": false,
+    "production_authorization": false
   },
   "open_items": [
     "The current device capture covers Practice auto; a corresponding SingleNormal visual/audio trace is still required for fixed-device audiovisual equivalence.",
     "Audible speaker onset and GPU framebuffer onset remain fixed-device exact questions.",
-    "MVView, Star3DLiveView and MultiNormal score-target presentation remain mode-specific evidence work."
+    "MVView, Star3DLiveView and MultiNormal score-target presentation remain mode-specific evidence work.",
+    "The first-Live tutorial branch still lacks a current incomplete-account runtime trace and a portable tutorial visual-resource pack."
   ]
 }

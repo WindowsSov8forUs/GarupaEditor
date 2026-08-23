@@ -1,0 +1,858 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-static-first-live-tutorial-gate-correction",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_bytes": 119816840,
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json_bytes": 139657741,
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump_cs_bytes": 53099861,
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "question": "Does ordinary rhythm-game startup require a second click after jacket/title presentation, and which original branch can wait for interaction?",
+  "scope": {
+    "positive": [
+      "first-Live tutorial predicate inside InGameManager.startMusicCoroutine",
+      "InGame tutorial slide-window identity and B1-B4 logical pages",
+      "next/final-close interaction and callback handoff to PlayingNone",
+      "ordinary Live/Practice accepted traces reaching PlayingSound without a second OS UI action"
+    ],
+    "negative": [
+      "runtime capture of an account whose first-Live tutorial is incomplete",
+      "tutorial PNG/prefab serialized geometry and localized rendered text",
+      "NewMusicIntroductionAnimator and all non-InGame introduction screens",
+      "portable implementation or production authorization"
+    ]
+  },
+  "sources": {
+    "managed_declarations": {
+      "path": "managed_declarations.tsv",
+      "sha256": "AC301988B24F301181955A2D3007E380224C30224D506A58D9E260BC9B28A6E6"
+    },
+    "metadata_bindings": {
+      "path": "metadata_bindings.tsv",
+      "sha256": "45EED1BB1027A16E93BB7A57776DFDACCD53B1AA629BF3C1554B50DD5B6BE543"
+    },
+    "targets": {
+      "path": "targets.tsv",
+      "sha256": "E3AABB278858874BC4AEF03132806E11E1D8BA32AA67E99CF55433725A8F24F9"
+    }
+  },
+  "managed_declarations": [
+    {
+      "identity": "tutorial-state-live",
+      "declaration": "public const TutorialState live = 2;"
+    },
+    {
+      "identity": "tutorial-state-end",
+      "declaration": "public const TutorialState end = 6;"
+    },
+    {
+      "identity": "tutorial-page-field-b1",
+      "declaration": "public readonly string TUTORIAL_SLIDE_TUTORIAL_B1; // 0x30"
+    },
+    {
+      "identity": "tutorial-page-field-b2",
+      "declaration": "public readonly string TUTORIAL_SLIDE_TUTORIAL_B2; // 0x38"
+    },
+    {
+      "identity": "tutorial-page-field-b3",
+      "declaration": "public readonly string TUTORIAL_SLIDE_TUTORIAL_B3; // 0x40"
+    },
+    {
+      "identity": "tutorial-page-field-b4",
+      "declaration": "public readonly string TUTORIAL_SLIDE_TUTORIAL_B4; // 0x48"
+    },
+    {
+      "identity": "slide-button-next",
+      "declaration": "private GameObject buttonNext; // 0x38"
+    },
+    {
+      "identity": "slide-button-prev",
+      "declaration": "private GameObject buttonPrev; // 0x40"
+    },
+    {
+      "identity": "slide-button-close",
+      "declaration": "private GameObject buttonClose; // 0x48"
+    },
+    {
+      "identity": "slide-on-finish",
+      "declaration": "protected Action onFinish; // 0x70"
+    },
+    {
+      "identity": "slide-click-close",
+      "declaration": "public virtual void OnClickCloseButton() { }"
+    },
+    {
+      "identity": "slide-click-next",
+      "declaration": "public void OnClickNext() { }"
+    },
+    {
+      "identity": "slide-update-button",
+      "declaration": "protected virtual void updateButton() { }"
+    },
+    {
+      "identity": "window-type-in-game",
+      "declaration": "public const TutorialUtility.TutorialWindowType InGame = 4;"
+    },
+    {
+      "identity": "window-prefab-in-game",
+      "declaration": "private const string InGameTutorialSlidePrefabPath = \"Prefabs/Tutorial/InGameTutorialSlideWindow\";"
+    },
+    {
+      "identity": "finish-callback-declaration",
+      "declaration": "private void onFinishTutorialSlide() { }"
+    }
+  ],
+  "metadata_bindings": [
+    {
+      "identity": "callback",
+      "relocation_slot": "0x6C9E4E8",
+      "metadata_address": "0x6F48B68",
+      "kind": "method",
+      "value": "Method$InGameManager.onFinishTutorialSlide()",
+      "method_address": "0x32FD450"
+    },
+    {
+      "identity": "title-wording-key",
+      "relocation_slot": "0x6C9E4F0",
+      "metadata_address": "0x6FA5A80",
+      "kind": "string",
+      "value": "tutorial_slideTitle_b",
+      "method_address": "-"
+    },
+    {
+      "identity": "page-b1",
+      "relocation_slot": "0x6CDE940",
+      "metadata_address": "0x6FA5848",
+      "kind": "string",
+      "value": "tutorial_B1",
+      "method_address": "-"
+    },
+    {
+      "identity": "page-b2",
+      "relocation_slot": "0x6CDE948",
+      "metadata_address": "0x6FA5850",
+      "kind": "string",
+      "value": "tutorial_B2",
+      "method_address": "-"
+    },
+    {
+      "identity": "page-b3",
+      "relocation_slot": "0x6CDE950",
+      "metadata_address": "0x6FA5858",
+      "kind": "string",
+      "value": "tutorial_B3",
+      "method_address": "-"
+    },
+    {
+      "identity": "page-b4",
+      "relocation_slot": "0x6CDE958",
+      "metadata_address": "0x6FA5860",
+      "kind": "string",
+      "value": "tutorial_B4",
+      "method_address": "-"
+    },
+    {
+      "identity": "in-game-prefab",
+      "relocation_slot": "0x6CDEC70",
+      "metadata_address": "0x6F87E40",
+      "kind": "string",
+      "value": "Prefabs/Tutorial/InGameTutorialSlideWindow",
+      "method_address": "-"
+    }
+  ],
+  "methods": [
+    {
+      "evidence_id": "STG-E01",
+      "owner_method": "InGameManager$$updatePlayingSound",
+      "rva": "0x32FCD00",
+      "end_rva": "0x32FCD80",
+      "code_bytes": 128,
+      "code_sha256": "1282089FE90782448B2E3520E581E74DACBBBF6C0D07E8544581A9BFD88711FF",
+      "arm64": "arm64/032fcd00__InGameManager_updatePlayingSound.arm64.tsv",
+      "arm64_bytes": 1352,
+      "arm64_sha256": "A1F5AB6B41BD32671D7003FAFA9E02494A2AC8F6399FCAE82F73E29B4A2A0449",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FCD1C",
+          "kind": "bl",
+          "target": "InGameManager$$get_isOnMoveTime"
+        },
+        {
+          "at": "0x32FCD30",
+          "kind": "bl",
+          "target": "InGameManager$$judgeAdjustFastProcess"
+        },
+        {
+          "at": "0x32FCD50",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E02",
+      "owner_method": "InGameManager$$onFinishTutorialSlide",
+      "rva": "0x32FD450",
+      "end_rva": "0x32FD478",
+      "code_bytes": 40,
+      "code_sha256": "547747961402EF16DB285C3952BE8797A97E0825C4B210E125463797990B5C52",
+      "arm64": "arm64/032fd450__InGameManager_onFinishTutorialSlide.arm64.tsv",
+      "arm64_bytes": 451,
+      "arm64_sha256": "0791EA458FE7BB0F7867062A01ED2F1CACB48AB494C6B196086438D704A43087",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FD458",
+          "kind": "bl",
+          "target": "InGameManager$$fadeOutGayaSound"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E03",
+      "owner_method": "InGameManager.<startMusicCoroutine>d__128$$MoveNext",
+      "rva": "0x33001F0",
+      "end_rva": "0x3300840",
+      "code_bytes": 1616,
+      "code_sha256": "DABA96C125985FAA18C7C39E3F5E372E9D93C5EF37ED9E7AD38893048EA91AEE",
+      "arm64": "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv",
+      "arm64_bytes": 15996,
+      "arm64_sha256": "871B032CD21134B1B2BE5B412203ECEF69D146F9CB36214D94575EED67E1E866",
+      "resolved_direct_calls": [
+        {
+          "at": "0x33002E8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300304",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x3300408",
+          "kind": "bl",
+          "target": "ButtonManager$$EnablePauseButton"
+        },
+        {
+          "at": "0x3300448",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x33004F4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300500",
+          "kind": "bl",
+          "target": "TutorialManager$$get_IsComplete"
+        },
+        {
+          "at": "0x330050C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300518",
+          "kind": "bl",
+          "target": "TutorialManager$$get_CurrentTutorialState"
+        },
+        {
+          "at": "0x3300558",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x330058C",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x33005AC",
+          "kind": "bl",
+          "target": "TutorialUtility$$CreateSlideWindow"
+        },
+        {
+          "at": "0x33005BC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005D4",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005DC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005F0",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005F8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330060C",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x3300614",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300628",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x330063C",
+          "kind": "bl",
+          "target": "ButtonManager$$DisablePauseButton"
+        },
+        {
+          "at": "0x3300668",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330069C",
+          "kind": "bl",
+          "target": "System.Enum$$ToString"
+        },
+        {
+          "at": "0x33006C4",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x33006DC",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x33006E4",
+          "kind": "bl",
+          "target": "InGameManager$$fadeOutGayaSound"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E04",
+      "owner_method": "ButtonManager$$DisablePauseButton",
+      "rva": "0x3872290",
+      "end_rva": "0x38722A8",
+      "code_bytes": 24,
+      "code_sha256": "C3D20662740AC1496977363B3515B9FB427DEA8C454AA6BBB840560F2CA23975",
+      "arm64": "arm64/03872290__ButtonManager_DisablePauseButton.arm64.tsv",
+      "arm64_bytes": 303,
+      "arm64_sha256": "BA6CC94F598B834982E85D9B497DBD748EBE5FD2365193CF364BB9B606C3050F",
+      "resolved_direct_calls": [
+        {
+          "at": "0x38722A0",
+          "kind": "b",
+          "target": "PauseButton$$DisableButton"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E05",
+      "owner_method": "TutorialManager$$get_IsComplete",
+      "rva": "0x3AA3554",
+      "end_rva": "0x3AA3574",
+      "code_bytes": 32,
+      "code_sha256": "D1417C529DD683C0A547D345EBE444B3726A58B8A76EB33ED5B8AE44F38B3DEB",
+      "arm64": "arm64/03aa3554__TutorialManager_get_IsComplete.arm64.tsv",
+      "arm64_bytes": 313,
+      "arm64_sha256": "12989DFDDE5CFE97068F5690BC342A70D1AF064F198BBF215A51D587B92F9EDA",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "STG-E06",
+      "owner_method": "TutorialManager$$get_CurrentTutorialState",
+      "rva": "0x3AADB38",
+      "end_rva": "0x3AADB50",
+      "code_bytes": 24,
+      "code_sha256": "16607083B1F52D8750B568A91F6ABDADC1C2F5C0EAAB4FAE21C9B4E0CCE35D3B",
+      "arm64": "arm64/03aadb38__TutorialManager_get_CurrentTutorialState.arm64.tsv",
+      "arm64_bytes": 248,
+      "arm64_sha256": "FBF33B7F245C6C806F4E6CA7A46E21EC12AE368F092B88321CDAE32A75BB0DE0",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "STG-E07",
+      "owner_method": "TutorialManager$$.ctor",
+      "rva": "0x3AB1AF0",
+      "end_rva": "0x3AB2580",
+      "code_bytes": 2704,
+      "code_sha256": "51977AF895D242005FDEFCF4182B35467B0472313C9C6379A9D1D0F9E49597E3",
+      "arm64": "arm64/03ab1af0__TutorialManager_ctor.arm64.tsv",
+      "arm64_bytes": 26535,
+      "arm64_sha256": "EB7096277BFDCA07A78474AAC7C97E238DC6D41199CC55C74E6C6F79C1D33A7E",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB257C",
+          "kind": "b",
+          "target": "SingletonMonoBehaviour<object>$$.ctor"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E08",
+      "owner_method": "TutorialSlideWindow$$OnClickCloseButton",
+      "rva": "0x3AB466C",
+      "end_rva": "0x3AB4730",
+      "code_bytes": 196,
+      "code_sha256": "FF8470CF0127CBEBE62E1067C6D96B2E5987820A126916B9D4502CFA2DE4C0A0",
+      "arm64": "arm64/03ab466c__TutorialSlideWindow_OnClickCloseButton.arm64.tsv",
+      "arm64_bytes": 2096,
+      "arm64_sha256": "7B8CAF7B617F7E55AD7B5AE352FA35028A347890B0B4708F4BB30DE59DB525B7",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB46B0",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3AB46D0",
+          "kind": "bl",
+          "target": "TutorialSlideScrollViewController$$Unload"
+        },
+        {
+          "at": "0x3AB46FC",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_gameObject"
+        },
+        {
+          "at": "0x3AB4728",
+          "kind": "b",
+          "target": "UnityEngine.Object$$Destroy"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E09",
+      "owner_method": "TutorialSlideWindow$$activateCloseOrNextButton",
+      "rva": "0x3AB4734",
+      "end_rva": "0x3AB477C",
+      "code_bytes": 72,
+      "code_sha256": "17E316D658ED3AE4A00434178B57784BACFA28754F30A21464A27AC592A851E4",
+      "arm64": "arm64/03ab4734__TutorialSlideWindow_activateCloseOrNextButton.arm64.tsv",
+      "arm64_bytes": 790,
+      "arm64_sha256": "ECFAF9F7E06F67A09B6EF03A20875C92E09A22756494A3CF7E0F4C9C610569EC",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB4754",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$SetActive"
+        },
+        {
+          "at": "0x3AB4774",
+          "kind": "b",
+          "target": "UnityEngine.GameObject$$SetActive"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E10",
+      "owner_method": "TutorialSlideWindow$$AddPage",
+      "rva": "0x3AB4B58",
+      "end_rva": "0x3AB4BFC",
+      "code_bytes": 164,
+      "code_sha256": "950A1677F929E2822AED690A1EFD28F0033D660BD1802BB423912933F4BC9377",
+      "arm64": "arm64/03ab4b58__TutorialSlideWindow_AddPage.arm64.tsv",
+      "arm64_bytes": 1750,
+      "arm64_sha256": "569558A61113CAC6BE046E12E398165A1AD3AB61941A82D530B6E2EBE424F8B2",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB4BA8",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetTutorialSlideResourceBundleName"
+        },
+        {
+          "at": "0x3AB4BC4",
+          "kind": "bl",
+          "target": "TutorialSlideScrollViewController$$AddPage"
+        },
+        {
+          "at": "0x3AB4BD8",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$setPageNumber"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E11",
+      "owner_method": "TutorialSlideWindow$$OnClickNext",
+      "rva": "0x3AB5080",
+      "end_rva": "0x3AB50C4",
+      "code_bytes": 68,
+      "code_sha256": "E010790F952F8E3FE0174F2FEFFD4E3BC6326E9708B61AC72605AFB8CF04CB67",
+      "arm64": "arm64/03ab5080__TutorialSlideWindow_OnClickNext.arm64.tsv",
+      "arm64_bytes": 762,
+      "arm64_sha256": "C8A5E2AF3461708C251EDBBEF3D9E7490DEB65F5BEBE5BE4C360871F6A5973C4",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB5094",
+          "kind": "bl",
+          "target": "TutorialSlideScrollViewController$$NextPage"
+        },
+        {
+          "at": "0x3AB50A8",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$setPageNumber"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E12",
+      "owner_method": "TutorialSlideWindow$$updateButton",
+      "rva": "0x3AB52E0",
+      "end_rva": "0x3AB5344",
+      "code_bytes": 100,
+      "code_sha256": "FF22F403AA82EBB34193B2CAF24ACB785CCD8B2BAAF482AF4AA38C9184BB0D60",
+      "arm64": "arm64/03ab52e0__TutorialSlideWindow_updateButton.arm64.tsv",
+      "arm64_bytes": 1056,
+      "arm64_sha256": "5EB40AF63A5190F771EE990C7CF63A323B08DD7700CF1CF844EE9445145B262D",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB52FC",
+          "kind": "bl",
+          "target": "TutorialSlideScrollViewController$$GetMaxPage"
+        },
+        {
+          "at": "0x3AB531C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$SetActive"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E13",
+      "owner_method": "TutorialUtility$$CreateSlideWindow",
+      "rva": "0x3AB54DC",
+      "end_rva": "0x3AB55CC",
+      "code_bytes": 240,
+      "code_sha256": "2D8FBF78C11B2C1D7F89C232A55C7B8661764557ECC05ADB3BB5C05452F13C48",
+      "arm64": "arm64/03ab54dc__TutorialUtility_CreateSlideWindow.arm64.tsv",
+      "arm64_bytes": 2564,
+      "arm64_sha256": "9C6D51E34C3AA212FB9CB2D54E01E2739C0249A7EF07C99AD54472014BB7CF51",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB554C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_IsExistInstance"
+        },
+        {
+          "at": "0x3AB5560",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3AB5570",
+          "kind": "bl",
+          "target": "ScreenManager$$GetLayerObject"
+        },
+        {
+          "at": "0x3AB5588",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$Find"
+        },
+        {
+          "at": "0x3AB5594",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x3AB55C4",
+          "kind": "b",
+          "target": "TutorialUtility$$createSlideWindow"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E14",
+      "owner_method": "TutorialUtility$$createSlideWindow",
+      "rva": "0x3AB55CC",
+      "end_rva": "0x3AB56B4",
+      "code_bytes": 232,
+      "code_sha256": "858605135022CE2134C1A306F4B196370A7E6586783780E1069F3DED9A593DDE",
+      "arm64": "arm64/03ab55cc__TutorialUtility_createSlideWindow.arm64.tsv",
+      "arm64_bytes": 2434,
+      "arm64_sha256": "A353DEE7BC36D52A8A86634672D706700E536F7344EFD1D246A0122A8F0293A4",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB5644",
+          "kind": "bl",
+          "target": "TutorialUtility$$getPrefabPath"
+        },
+        {
+          "at": "0x3AB564C",
+          "kind": "bl",
+          "target": "UnityEngine.Resources$$Load<object>"
+        },
+        {
+          "at": "0x3AB565C",
+          "kind": "bl",
+          "target": "CE.NGUIUtil$$InstantiatePrefab"
+        },
+        {
+          "at": "0x3AB5670",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$GetComponent<object>"
+        },
+        {
+          "at": "0x3AB5690",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$Init"
+        }
+      ]
+    },
+    {
+      "evidence_id": "STG-E15",
+      "owner_method": "TutorialUtility$$getPrefabPath",
+      "rva": "0x3AB56B4",
+      "end_rva": "0x3AB5818",
+      "code_bytes": 356,
+      "code_sha256": "4FF50D2CA6DFAA247BA7C03936C4FA716CC26D710A06D34E704A03A51E229BFD",
+      "arm64": "arm64/03ab56b4__TutorialUtility_getPrefabPath.arm64.tsv",
+      "arm64_bytes": 3503,
+      "arm64_sha256": "5D2456D52C9888CA9F567FA1A43B4DD03D0857DDECD6AE41789F82798F4BA444",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3AB57A0",
+          "kind": "bl",
+          "target": "System.String$$Format"
+        },
+        {
+          "at": "0x3AB57CC",
+          "kind": "bl",
+          "target": "Debug$$LogError"
+        }
+      ]
+    }
+  ],
+  "branch_contract": {
+    "position": "after background OnStartMusic, the confirmed one-second wait, and any pre-enable-pause movie delay; before fadeOutGayaSound and PlayingNone",
+    "predicate": {
+      "all": [
+        "TutorialManager.IsComplete == false",
+        "TutorialManager.CurrentTutorialState == TutorialState.live (2)"
+      ],
+      "is_complete_definition": "TutorialManager current state equals TutorialState.end (6); a null state holder returns false",
+      "current_state_definition": "TutorialManager current state field; a null state holder returns TutorialState.none (0)",
+      "not_a_live_setting": true
+    },
+    "taken": {
+      "title_wording_key": "tutorial_slideTitle_b",
+      "window_type": "TutorialUtility.TutorialWindowType.InGame (4)",
+      "display_layer": 4,
+      "prefab_path": "Prefabs/Tutorial/InGameTutorialSlideWindow",
+      "callback": "InGameManager.onFinishTutorialSlide",
+      "pages_in_order": [
+        "tutorial_B1",
+        "tutorial_B2",
+        "tutorial_B3",
+        "tutorial_B4"
+      ],
+      "page_owner_fields": [
+        "0x30",
+        "0x38",
+        "0x40",
+        "0x48"
+      ],
+      "pause_button": "DisablePauseButton",
+      "coroutine_disposition": "returns without fadeOutGayaSound, PlayingNone, MusicManager.PlayMusic or PlayingSound; the slide callback owns continuation"
+    },
+    "not_taken": {
+      "disposition": "continues the ordinary automatic route to fadeOutGayaSound and PlayingNone; updatePlayingSound then starts the state-4 audio adjustment owner and publishes PlayingSound",
+      "second_click_required": false
+    }
+  },
+  "interaction_contract": {
+    "page_count": 4,
+    "next": "OnClickNext calls TutorialSlideScrollViewController.NextPage, refreshes the page number and updates buttons",
+    "button_visibility": "updateButton compares current page with maximum page; activateCloseOrNextButton shows Close only on equality and Next otherwise; Prev is shown after page 1",
+    "finish": "OnClickCloseButton clears TutorialManager.IsTutorialSlideOpened, invokes onFinish, optionally unloads pages and destroys the window",
+    "continuation": "onFinishTutorialSlide calls fadeOutGayaSound and writes GameState.PlayingNone (4); updatePlayingSound advances state 4 to PlayingSound (5)",
+    "classification": "four-page first-Live tutorial window, not a generic tap-anywhere start gate and not the jacket/title RhythmGameStartAnimation owner"
+  },
+  "ordinary_route_runtime": [
+    {
+      "identity": "live-manual",
+      "path": "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/live-manual-natural-startup-audio-r1.json.gz",
+      "bytes": 1054,
+      "sha256": "77B0D57282E74AEA221FE9B0005CCCF69743DBB9BD21B6C3196CC8F5708969E9",
+      "os_ui_actions": [
+        {
+          "name": "tap-session-start",
+          "x": 1240,
+          "y": 590
+        }
+      ],
+      "reached_states": [
+        4,
+        5
+      ],
+      "predicate_outcome": "tutorial-gate-not-taken; exact IsComplete/CurrentTutorialState return values were not hooked"
+    },
+    {
+      "identity": "live-auto",
+      "path": "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/live-auto-natural-startup-audio-r1.json.gz",
+      "bytes": 1050,
+      "sha256": "BD7A42E3A6B555DC3A5E49D78AB62BD469134D47C9BFD04F28B927739BE9D7A9",
+      "os_ui_actions": [
+        {
+          "name": "tap-session-start",
+          "x": 1240,
+          "y": 590
+        }
+      ],
+      "reached_states": [
+        4,
+        5
+      ],
+      "predicate_outcome": "tutorial-gate-not-taken; exact IsComplete/CurrentTutorialState return values were not hooked"
+    },
+    {
+      "identity": "rehearsal-manual",
+      "path": "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/rehearsal-manual-natural-startup-audio-r1.json.gz",
+      "bytes": 915,
+      "sha256": "C02E99A946B3AD773C79E3488F186A5227B87DF464AEAEAEC2B7A91E5153BC08",
+      "os_ui_actions": [
+        {
+          "name": "tap-session-start",
+          "x": 1240,
+          "y": 590
+        }
+      ],
+      "reached_states": [
+        4,
+        5
+      ],
+      "predicate_outcome": "tutorial-gate-not-taken; exact IsComplete/CurrentTutorialState return values were not hooked"
+    },
+    {
+      "identity": "rehearsal-auto",
+      "path": "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/rehearsal-auto-natural-startup-audio-r1.json.gz",
+      "bytes": 912,
+      "sha256": "2AED102C369AA8FCC84451EE6F54101959C8ACEC7B15F82E99E4DED2F2899439",
+      "os_ui_actions": [
+        {
+          "name": "tap-session-start",
+          "x": 1240,
+          "y": 590
+        }
+      ],
+      "reached_states": [
+        4,
+        5
+      ],
+      "predicate_outcome": "tutorial-gate-not-taken; exact IsComplete/CurrentTutorialState return values were not hooked"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "STG01",
+      "finding": "The standard jacket/title animation has no input wait; startMusicCoroutine reaches a separate tutorial predicate only after the opening and one-second music wait.",
+      "files": [
+        "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "STG02",
+      "finding": "The tutorial branch is taken only when IsComplete is false and CurrentTutorialState is live (2); IsComplete itself means current state end (6).",
+      "files": [
+        "arm64/03aa3554__TutorialManager_get_IsComplete.arm64.tsv",
+        "arm64/03aadb38__TutorialManager_get_CurrentTutorialState.arm64.tsv",
+        "managed_declarations.tsv"
+      ]
+    },
+    {
+      "id": "STG03",
+      "finding": "The branch creates TutorialWindowType.InGame on display layer 4 with wording key tutorial_slideTitle_b and prefab Prefabs/Tutorial/InGameTutorialSlideWindow.",
+      "files": [
+        "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv",
+        "arm64/03ab54dc__TutorialUtility_CreateSlideWindow.arm64.tsv",
+        "arm64/03ab55cc__TutorialUtility_createSlideWindow.arm64.tsv",
+        "arm64/03ab56b4__TutorialUtility_getPrefabPath.arm64.tsv",
+        "metadata_bindings.tsv"
+      ]
+    },
+    {
+      "id": "STG04",
+      "finding": "TutorialManager constructs B1-B4 fields as tutorial_B1 through tutorial_B4 and startMusicCoroutine adds those four fields in order.",
+      "files": [
+        "arm64/03ab1af0__TutorialManager_ctor.arm64.tsv",
+        "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv",
+        "metadata_bindings.tsv"
+      ]
+    },
+    {
+      "id": "STG05",
+      "finding": "The branch disables Pause and returns before the ordinary fade/state publication, so continuation is callback-owned rather than timer-owned.",
+      "files": [
+        "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv",
+        "arm64/03872290__ButtonManager_DisablePauseButton.arm64.tsv"
+      ]
+    },
+    {
+      "id": "STG06",
+      "finding": "Next advances the slide controller; button state exposes Close only on the maximum page, while Close invokes the stored onFinish callback.",
+      "files": [
+        "arm64/03ab466c__TutorialSlideWindow_OnClickCloseButton.arm64.tsv",
+        "arm64/03ab4734__TutorialSlideWindow_activateCloseOrNextButton.arm64.tsv",
+        "arm64/03ab5080__TutorialSlideWindow_OnClickNext.arm64.tsv",
+        "arm64/03ab52e0__TutorialSlideWindow_updateButton.arm64.tsv"
+      ]
+    },
+    {
+      "id": "STG07",
+      "finding": "The delegate metadata is exactly InGameManager.onFinishTutorialSlide; that method fades Gaya and publishes PlayingNone, after which updatePlayingSound publishes PlayingSound.",
+      "files": [
+        "metadata_bindings.tsv",
+        "arm64/032fd450__InGameManager_onFinishTutorialSlide.arm64.tsv",
+        "arm64/032fcd00__InGameManager_updatePlayingSound.arm64.tsv"
+      ]
+    },
+    {
+      "id": "STG08",
+      "finding": "Each accepted ordinary Live/Practice trace records only the initial session-start tap and still reaches PlayingNone then PlayingSound; no second OS UI action is present.",
+      "files": [
+        "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/live-manual-natural-startup-audio-r1.json.gz",
+        "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/live-auto-natural-startup-audio-r1.json.gz",
+        "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/rehearsal-manual-natural-startup-audio-r1.json.gz",
+        "artifacts/investigations/startup-audio-callgraph-10-1-4/runtime/rehearsal-auto-natural-startup-audio-r1.json.gz"
+      ]
+    }
+  ],
+  "closure": {
+    "branch_predicate_classified": true,
+    "callback_identity_classified": true,
+    "logical_page_sequence_classified": true,
+    "button_transition_classified": true,
+    "ordinary_route_second_click_excluded_by_runtime": true,
+    "first_tutorial_runtime_capture": "open-not-claimed",
+    "tutorial_visual_resource_pack": "open-not-claimed",
+    "production_authorization": false,
+    "correction_targets": [
+      "startup-direction-runtime-contract-10-1-4",
+      "startup-audio-callgraph-10-1-4",
+      "mv-live-runtime-contract-10-1-4"
+    ]
+  }
+}

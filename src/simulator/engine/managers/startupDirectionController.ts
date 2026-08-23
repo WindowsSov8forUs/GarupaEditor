@@ -350,5 +350,5 @@ function advance(elapsed: number, duration: number, delta: number): Readonly<{ e
 }
 function unit(elapsed: number, duration: number): number { return Math.fround(Math.min(1, elapsed / duration)); }
 function rejected(capability: string, boundary: string) {
-  return evidenceRequired(capability, ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12"], boundary);
+  return evidenceRequired(capability, ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD17"], boundary);
 }

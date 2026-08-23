@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "confirmed-current-four-mode-complete-startup-audio-portable-contract",
+  "status": "confirmed-current-four-mode-ordinary-route-complete-startup-audio-portable-contract",
   "sample": {
     "package": "jp.co.craftegg.band",
     "version_name": "10.1.4",
@@ -32,11 +32,15 @@
     },
     "startup_direction_contract": {
       "path": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
-      "sha256": "617B154830A78170CC8DF380D8A7214D42278A78A1048195E8E46B227621C356"
+      "sha256": "7DC13FE97466219744D3921A35A7DB8BCB5B6FF33CBBC32501855C91D12D7452"
     },
     "startup_serialized_portable_profile": {
       "path": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
       "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480"
+    },
+    "startup_live_tutorial_gate_correction": {
+      "path": "artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+      "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D"
     },
     "live_rehearsal_contract": {
       "path": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
@@ -1744,6 +1748,7 @@
     "roots": [
       "InGameManager.<ExecStart>d__54.MoveNext",
       "InGameManager.startMusicCoroutine",
+      "TutorialSlideWindow final Close callback",
       "InGameManager.ExecUpdate",
       "Rehearsal Retry",
       "Rehearsal MoveTime",
@@ -1835,10 +1840,34 @@
         "disposition": "confirmed-no-audio-side-effect"
       },
       {
-        "from": "startMusicCoroutine.MoveNext",
-        "to": "fadeOutGayaSound",
-        "kind": "direct",
+        "from": "startMusicCoroutine after one-second/pre-delay",
+        "to": "TutorialManager.IsComplete and CurrentTutorialState==live(2)",
+        "kind": "account-state-predicate",
         "disposition": "confirmed"
+      },
+      {
+        "from": "tutorial predicate false",
+        "to": "fadeOutGayaSound then PlayingNone(4)",
+        "kind": "ordinary-route",
+        "disposition": "confirmed-four-accepted-mode-traces"
+      },
+      {
+        "from": "tutorial predicate true",
+        "to": "InGame tutorial_B1..B4 window, DisablePauseButton, suspend before fade/music",
+        "kind": "first-live-tutorial-route",
+        "disposition": "confirmed-static-outside-portable-authorization"
+      },
+      {
+        "from": "TutorialSlideWindow final Close",
+        "to": "InGameManager.onFinishTutorialSlide",
+        "kind": "stored-action-callback",
+        "disposition": "confirmed-static"
+      },
+      {
+        "from": "InGameManager.onFinishTutorialSlide",
+        "to": "fadeOutGayaSound then PlayingNone(4)",
+        "kind": "callback-continuation",
+        "disposition": "confirmed-static"
       },
       {
         "from": "fadeOutGayaSound",
@@ -1847,10 +1876,10 @@
         "disposition": "confirmed-null-safe"
       },
       {
-        "from": "startMusicCoroutine.MoveNext",
-        "to": "PlayingNone(4) then MusicManager.PlayMusic",
-        "kind": "state-and-direct",
-        "disposition": "confirmed"
+        "from": "updatePlayingSound at PlayingNone(4)",
+        "to": "judgeAdjustFastProcess then MusicManager.PlayMusic",
+        "kind": "coroutine",
+        "disposition": "confirmed-static-and-r1"
       },
       {
         "from": "MusicManager.PlayMusic",
@@ -1924,7 +1953,8 @@
       "demo": false,
       "auto_live": false,
       "gaya_loop": true,
-      "live_voice": true
+      "live_voice": true,
+      "tutorial_route": "accepted-ordinary-gate-not-taken"
     },
     "live-auto": {
       "in_game_mode": 1,
@@ -1932,7 +1962,8 @@
       "demo": false,
       "auto_live": true,
       "gaya_loop": true,
-      "live_voice": true
+      "live_voice": true,
+      "tutorial_route": "accepted-ordinary-gate-not-taken"
     },
     "rehearsal-manual": {
       "in_game_mode": 10,
@@ -1940,7 +1971,8 @@
       "demo": false,
       "auto_live": false,
       "gaya_loop": false,
-      "live_voice": false
+      "live_voice": false,
+      "tutorial_route": "accepted-ordinary-gate-not-taken"
     },
     "rehearsal-auto": {
       "in_game_mode": 10,
@@ -1948,7 +1980,8 @@
       "demo": true,
       "auto_live": false,
       "gaya_loop": false,
-      "live_voice": false
+      "live_voice": false,
+      "tutorial_route": "accepted-ordinary-gate-not-taken"
     }
   },
   "startup_timeline": [
@@ -1957,8 +1990,9 @@
     "Gaya starts as an owned loop at caller volume 1.0 with 0.5-second fade-in",
     "Live requests and waits for optional live-start voice; Practice bypasses it",
     "Standard OnStartMusic/Stage StartAnimation is followed by the evidenced one-second wait",
-    "fadeOutGayaSound fades from current effective resource volume to zero over 1.5 seconds and stops at zero",
-    "PlayingNone(4) is published before MusicManager.PlayMusic unpauses prepared BGM; updatePlayingSound publishes PlayingSound(5)"
+    "The account tutorial gate is then tested: all accepted ordinary traces take the false route; the true first-Live route opens tutorial_B1..B4 and suspends before fade/music",
+    "On the ordinary route fadeOutGayaSound fades from current effective resource volume to zero over 1.5 seconds and stops at zero; on the tutorial route the final Close callback starts that same fade",
+    "PlayingNone(4) is published before updatePlayingSound starts judgeAdjustFastProcess and MusicManager.PlayMusic; updatePlayingSound publishes PlayingSound(5)"
   ],
   "gaya_resource": {
     "logical_id": "sound/common",
@@ -2265,6 +2299,8 @@
     "r2_used": false,
     "fixed_device_speaker_exact": "open-not-claimed",
     "mv_star3d_multi": "excluded-from-positive-scope",
-    "production_authorization": true
+    "production_authorization": true,
+    "production_authorization_scope": "ordinary tutorial-gate-not-taken route only",
+    "first_live_tutorial_production_authorization": false
   }
 }
