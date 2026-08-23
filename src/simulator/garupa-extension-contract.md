@@ -15,8 +15,7 @@ Reverse remains the only authority for original behavior.
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.
-- Invalid fields, non-finite values, unsupported keys and malformed group IDs
-  fail closed. They are not coerced, clamped or routed to Global.
+- Missing/invalid required fields, non-finite values and malformed group IDs reject the current chart action. Additional metadata keys are ignored by the owned semantic copy and never become gameplay fields; values are not coerced, clamped or routed to Global.
 - Product data is copied, deeply frozen and bound to a constructed chart through
   simulator-owned metadata. It is not encoded as an invented original
   `ButtonType`, CC value, fixture identity or evidence identity.

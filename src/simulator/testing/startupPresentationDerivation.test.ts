@@ -70,17 +70,21 @@ function testExactShapeAndOwnership(): void {
 function testMalformedPresentationFailsClosed(): void {
   const oldShape: any = request();
   delete oldShape.presentation;
-  assertInvalid(oldShape, "simulator.recipe.invalid-public-request");
+  assertInvalid(oldShape, "simulator.presentation.invalid-public-package");
   const legacyMissingMv: any = request();
   delete legacyMissingMv.presentation.mv;
   assertInvalid(legacyMissingMv, "simulator.presentation.invalid-public-package");
   const extra: any = request();
   extra.presentation.defaultJacket = true;
-  assertInvalid(extra, "simulator.presentation.invalid-public-package");
-  for (const forbiddenSdCharacters of [null, [], [Uint8Array.of(1)], createTestPresentationPackage().stage.backdropPng]) {
+  const extraRecipe = createSimulatorSessionRecipe(extra);
+  assert.equal(extraRecipe.status, "accepted");
+  if (extraRecipe.status === "accepted") assert.equal("defaultJacket" in extraRecipe.value.request.presentation, false);
+  for (const ignoredSdCharacters of [null, [], [Uint8Array.of(1)], createTestPresentationPackage().stage.backdropPng]) {
     const suppliedCharacters: any = request();
-    suppliedCharacters.presentation.stage.sdCharacterAtlases = forbiddenSdCharacters;
-    assertInvalid(suppliedCharacters, "simulator.presentation.invalid-public-package");
+    suppliedCharacters.presentation.stage.sdCharacterAtlases = ignoredSdCharacters;
+    const semantic = createSimulatorSessionRecipe(suppliedCharacters);
+    assert.equal(semantic.status, "accepted");
+    if (semantic.status === "accepted") assert.equal("sdCharacterAtlases" in semantic.value.request.presentation.stage, false);
   }
   const intrinsicStageSize: any = request();
   intrinsicStageSize.presentation.stage.backdropPng = Uint8Array.from(intrinsicStageSize.presentation.jacketPng);
@@ -94,14 +98,22 @@ function testMalformedPresentationFailsClosed(): void {
   const missingGlyph: any = request();
   missingGlyph.presentation.song.title = "😀";
   assertInvalid(missingGlyph, "simulator.presentation.missing-font-glyph");
-  for (const forbiddenVoice of [null, Uint8Array.of(0xff, 0xfb, 0x90, 0), new Uint16Array([1])]) {
+  for (const ignoredVoice of [null, Uint8Array.of(0xff, 0xfb, 0x90, 0), new Uint16Array([1])]) {
     const suppliedVoice: any = request();
-    suppliedVoice.presentation.liveStartVoiceMp3 = forbiddenVoice;
-    assertInvalid(suppliedVoice, "simulator.presentation.invalid-public-package");
+    suppliedVoice.presentation.liveStartVoiceMp3 = ignoredVoice;
+    const semantic = createSimulatorSessionRecipe(suppliedVoice);
+    assert.equal(semantic.status, "accepted");
+    if (semantic.status === "accepted") assert.equal("liveStartVoiceMp3" in semantic.value.request.presentation, false);
+  }
+  const mvWithMetadata: any = request();
+  mvWithMetadata.presentation.mv = { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 0, mime: "video/mp4" };
+  const semanticMv = createSimulatorSessionRecipe(mvWithMetadata);
+  assert.equal(semanticMv.status, "accepted");
+  if (semanticMv.status === "accepted" && semanticMv.value.request.presentation.mv !== null) {
+    assert.equal("mime" in semanticMv.value.request.presentation.mv, false);
   }
   for (const mv of [
     {},
-    { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 0, mime: "video/mp4" },
     { bytes: new Uint16Array([1]), musicStartDelayMilliseconds: 0 },
     { bytes: new Uint8Array(), musicStartDelayMilliseconds: 0 },
     { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 1.5 },

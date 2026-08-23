@@ -125,7 +125,6 @@ export function consumeRehearsalControlCommand(
   }>,
 ): SimulatorResult<RehearsalControlIntent> {
   if (command === null || typeof command !== "object" ||
-    Object.keys(command).sort().join(",") !== "capability,kind" ||
     (command.kind !== "return-five-seconds" && command.kind !== "advance-five-seconds") ||
     command.capability === null || typeof command.capability !== "object") {
     return integrityFailure(
@@ -235,8 +234,7 @@ function minutesSeconds(value: number): string {
 function validPosition(value: unknown): value is Readonly<{ x: number; y: number }> {
   if (value === null || typeof value !== "object") return false;
   const point = value as Record<string, unknown>;
-  return Object.keys(point).sort().join(",") === "x,y" &&
-    typeof point.x === "number" && Number.isFinite(point.x) &&
+  return typeof point.x === "number" && Number.isFinite(point.x) &&
     typeof point.y === "number" && Number.isFinite(point.y);
 }
 

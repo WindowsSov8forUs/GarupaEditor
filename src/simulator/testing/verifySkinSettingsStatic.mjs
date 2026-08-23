@@ -31,7 +31,7 @@ for (const symbol of [
 ]) if (!contracts.includes(symbol)) throw new Error(`Skin Public symbol missing: ${symbol}`);
 for (const required of [
   "readonly schemaVersion: 12;",
-  '"audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual"',
+  "skin: skin.value",
   "validateAndFreezeOriginalSkinSettings",
 ]) if (!recipe.includes(required)) throw new Error(`Schema 12 Skin recipe boundary missing: ${required}`);
 for (const forbidden of ["judgeSkinId", "judgeType", "ripName", "http://", "https://"]) {

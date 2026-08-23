@@ -12,7 +12,7 @@ Evidence lives only in `artifacts/investigations/simulator-original-live-setting
 
 ## Public Schema 12
 
-The root remains exactly `{ chartData, presentation, config }`. These `config` fields are mandatory:
+The owned root projection remains `{ chartData, presentation, config }`. Field order, plain/frozen prototype and unrelated host metadata do not affect validation; the copy reads only the following mandatory `config` semantics and drops additional fields:
 
 ```ts
 judgementAdjustValue: number;      // integer -30..30

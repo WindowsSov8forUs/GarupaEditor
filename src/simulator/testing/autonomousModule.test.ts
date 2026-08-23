@@ -278,43 +278,53 @@ function testRecipeOwnership(): void {
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
-  assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
+  const extraRecipe = requireAccepted(createSimulatorSessionRecipe(extra));
+  assert.equal("extra" in extraRecipe.request, false);
   const legacyBms: any = request();
   legacyBms.chartData = { bmsText: "#BPM 120", bgm: legacyBms.chartData.bgm, isFullLength: false };
-  assert.equal(createSimulatorSessionRecipe(legacyBms).status, "rejected");
+  assert.equal(createSimulatorSessionRecipe(legacyBms).status, "rejected", "required chart remains mandatory");
+  const semanticExtras: any[] = [];
   const inventedLaneCount: any = request();
   inventedLaneCount.chartData.laneCount = 7;
-  assert.equal(createSimulatorSessionRecipe(inventedLaneCount).status, "rejected");
+  semanticExtras.push(inventedLaneCount);
   const malformedChart: any = request();
   malformedChart.chartData.chart[0].extra = true;
-  assert.equal(createSimulatorSessionRecipe(malformedChart).status, "rejected");
+  semanticExtras.push(malformedChart);
   const legacyScore: any = request();
   legacyScore.chartData.gameplay = { score: { level: 27 } };
-  assert.equal(createSimulatorSessionRecipe(legacyScore).status, "rejected");
+  semanticExtras.push(legacyScore);
   const callerRuleSet: any = request();
   callerRuleSet.chartData.gameplay = { ruleSet: "garupa-editor-normalized-10m-v1" };
-  assert.equal(createSimulatorSessionRecipe(callerRuleSet).status, "rejected");
+  semanticExtras.push(callerRuleSet);
   const callerCount: any = request();
   callerCount.chartData.gameplay = { totalScoringUnitCount: 1 };
-  assert.equal(createSimulatorSessionRecipe(callerCount).status, "rejected");
+  semanticExtras.push(callerCount);
   const callerLife: any = request();
-  callerLife.chartData.gameplay = {
-    life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
-  };
-  assert.equal(createSimulatorSessionRecipe(callerLife).status, "rejected");
+  callerLife.chartData.gameplay = { life: { initialLife: 1000 } };
+  semanticExtras.push(callerLife);
   const legacyModes: any = request();
   legacyModes.config.playMode = "auto-live";
   legacyModes.config.practice = { enabled: true, startMilliseconds: 1 };
-  assert.equal(createSimulatorSessionRecipe(legacyModes).status, "rejected");
+  semanticExtras.push(legacyModes);
   const callerDerived: any = request();
   callerDerived.config.isAutoPlay = true;
-  assert.equal(createSimulatorSessionRecipe(callerDerived).status, "rejected");
+  semanticExtras.push(callerDerived);
   const callerHighAspect: any = request();
   callerHighAspect.config.visual.highAspectRatio = 1;
-  assert.equal(createSimulatorSessionRecipe(callerHighAspect).status, "rejected");
+  semanticExtras.push(callerHighAspect);
   const independentJudge: any = request();
   independentJudge.config.skin.judgeSkinId = "skin_april2019";
-  assert.equal(createSimulatorSessionRecipe(independentJudge).status, "rejected");
+  semanticExtras.push(independentJudge);
+  for (const candidate of semanticExtras) {
+    const semantic = requireAccepted(createSimulatorSessionRecipe(candidate));
+    assert.equal("laneCount" in semantic.request.chartData, false);
+    assert.equal("gameplay" in semantic.request.chartData, false);
+    assert.equal("playMode" in semantic.request.config, false);
+    assert.equal("isAutoPlay" in semantic.request.config, false);
+    assert.equal("highAspectRatio" in semantic.request.config.visual, false);
+    assert.equal("judgeSkinId" in semantic.request.config.skin, false);
+    assert.equal("extra" in semantic.request.chartData.chart[0]!, false);
+  }
   const invalidNormalSkin: any = request();
   invalidNormalSkin.config.skin.noteSkin = 7;
   assert.equal(createSimulatorSessionRecipe(invalidNormalSkin).status, "rejected");
@@ -478,15 +488,20 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     requestTargetFrameRate: () => {},
     publishLifecycleState: () => {},
   };
-  const invalidRequests: any[] = [];
-  const invalidScoreRequest: any = request();
-  invalidScoreRequest.chartData.gameplay = { score: { totalParameter: 100000 } };
-  invalidRequests.push(invalidScoreRequest);
-  const callerLifeRequest: any = request();
-  callerLifeRequest.chartData.gameplay = {
-    life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+  const semanticExtraRequest: any = request();
+  semanticExtraRequest.chartData.gameplay = {
+    score: { totalParameter: 100000 },
+    life: { initialLife: 999999 },
   };
-  invalidRequests.push(callerLifeRequest);
+  const semanticExtraModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const semanticExtraLaunch = await semanticExtraModule.launch(semanticExtraRequest);
+  assert.equal(semanticExtraLaunch.status, "rejected");
+  if (semanticExtraLaunch.status === "rejected") {
+    assert.equal(semanticExtraLaunch.failure.capability, "test.missing",
+      "unknown caller gameplay metadata is ignored rather than promoted into Simulator behavior");
+  }
+
+  const invalidRequests: any[] = [];
   const missingFullRequest: any = request();
   delete missingFullRequest.chartData.isFullLength;
   invalidRequests.push(missingFullRequest);
@@ -517,8 +532,9 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   if (malformedBgmLaunch.status === "rejected") {
     assert.equal(malformedBgmLaunch.failure.capability, "simulator.audio.invalid-mp3-byte-structure");
   }
-  assert.equal(resourceReads, 0, "caller fields, full classification, Garupa JSON and MP3 bytes fail before application resource acquisition");
+  assert.equal(resourceReads, 1, "semantic caller extras are ignored and reach the normal resource boundary; malformed required data still rejects earlier");
   assert.equal(mounts, 0);
+  resourceReads = 0;
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const missingResource = await missingResourceModule.launch(request());

@@ -456,9 +456,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function hasExactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
-  const actual = Object.keys(value).sort();
-  const required = [...expected].sort();
-  return actual.length === required.length && actual.every((key, index) => key === required[index]);
+  return expected.every((key) => Object.prototype.hasOwnProperty.call(value, key));
 }
 
 function isNonEmpty(value: unknown): value is string {

@@ -19,7 +19,7 @@ for (const [source, symbols] of [
   [timeline, ["garupa-visible-node", "screenToContinuousLane", "isInsideContinuousSpan", "pendingGesture", "missedNodeCount"]],
   [render, ["garupa-product-front", "garupa-product-slide-line", "garupa-product-particle", "set-mesh"]],
   [scene, ["for (let lane = 0; lane < 7; lane += 1)", "projectLaneAtCurve", "screenToContinuousLane"]],
-  [recipe, ["readonly schemaVersion: 12", '"bgm,chart,isFullLength"']],
+  [recipe, ["readonly schemaVersion: 12", "isFullLength: request.chartData.isFullLength"]],
   [contracts, ["readonly chart: GarupaChartJson", "readonly isFullLength: boolean"]],
   [composition, ["constructChartFromGarupaChartJson", "garupaProductScene", "chartFidelity"]],
   [capabilities, ["garupaSvTimingGroup", "garupaContinuousLaneOutside", "garupaExtendedSlideGraph", "garupaExtendedManualInput", "closed-product-extension"]],

@@ -417,28 +417,20 @@ function copyLaunchRequest(
       });
   if (
     request === null || typeof request !== "object" || Array.isArray(request) ||
-    Object.keys(request).sort().join(",") !== "chartData,config,presentation" ||
-    request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !== "bgm,chart,isFullLength" ||
+    request.chartData === null || typeof request.chartData !== "object" || Array.isArray(request.chartData) ||
     typeof request.chartData.isFullLength !== "boolean" ||
-    request.config === null || typeof request.config !== "object" ||
-    Object.keys(request.config).sort().join(",") !==
-      "audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual" ||
+    request.config === null || typeof request.config !== "object" || Array.isArray(request.config) ||
     (request.config.sessionMode !== "live" && request.config.sessionMode !== "rehearsal") ||
     (request.config.inputMode !== "manual" && request.config.inputMode !== "auto") ||
     originalLiveSettings === null || originalLiveSettings.status !== "ok" ||
     skin === null || skin.status !== "ok" ||
-    request.config.visual === null || typeof request.config.visual !== "object" ||
-    Object.keys(request.config.visual).sort().join(",") !==
-      "habahiroMeshWidthSetting,noteSize,specificSpeed" ||
-    !isExactPositiveFloat32(request.config.visual.specificSpeed) ||
-    !isExactFloat32(request.config.visual.noteSize) ||
+    request.config.visual === null || typeof request.config.visual !== "object" || Array.isArray(request.config.visual) ||
+    !isPositiveFinite(request.config.visual.specificSpeed) ||
+    !isFiniteNumber(request.config.visual.noteSize) ||
     request.config.visual.noteSize < 80 || request.config.visual.noteSize > 150 ||
-    !isExactFloat32(request.config.visual.habahiroMeshWidthSetting) ||
-    request.config.audio === null || typeof request.config.audio !== "object" ||
-    Object.keys(request.config.audio).sort().join(",") !==
-      "bgmGain,masterGain,seGain" ||
-    !Object.values(request.config.audio).every(isUnitGain)
+    !isFiniteNumber(request.config.visual.habahiroMeshWidthSetting) ||
+    request.config.audio === null || typeof request.config.audio !== "object" || Array.isArray(request.config.audio) ||
+    ![request.config.audio.masterGain, request.config.audio.bgmGain, request.config.audio.seGain].every(isUnitGain)
   ) {
     return rejected(
       "integrity-failure",
@@ -451,8 +443,7 @@ function copyLaunchRequest(
   const copiedPresentation = copyAndFreezeSimulatorPresentation(request.presentation);
   if (copiedPresentation.status === "rejected") return copiedPresentation;
   const bgm = request.chartData.bgm;
-  if (!(bgm instanceof Uint8Array) || bgm.byteLength === 0 ||
-    Object.getPrototypeOf(bgm) !== Uint8Array.prototype) {
+  if (!(bgm instanceof Uint8Array) || bgm.byteLength === 0) {
     return rejected(
       "integrity-failure",
       "simulator.recipe.invalid-chart-bgm",
@@ -477,8 +468,16 @@ function copyLaunchRequest(
       noteColor: originalLiveSettings.value.noteColor,
       visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect,
       skin: skin.value,
-      visual: Object.freeze({ ...request.config.visual }),
-      audio: Object.freeze({ ...request.config.audio }),
+      visual: Object.freeze({
+        specificSpeed: Math.fround(request.config.visual.specificSpeed),
+        noteSize: Math.fround(request.config.visual.noteSize),
+        habahiroMeshWidthSetting: Math.fround(request.config.visual.habahiroMeshWidthSetting),
+      }),
+      audio: Object.freeze({
+        masterGain: Math.fround(request.config.audio.masterGain),
+        bgmGain: Math.fround(request.config.audio.bgmGain),
+        seGain: Math.fround(request.config.audio.seGain),
+      }),
     }),
   }));
 }
@@ -513,12 +512,12 @@ function clearStatusFromSnapshot(
   return perfect + state.record.resultCounts[3] === state.initialization.totalScoringUnitCount ? 2 : 1;
 }
 
-function isExactFloat32(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && Object.is(value, Math.fround(value));
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
 }
 
-function isExactPositiveFloat32(value: unknown): value is number {
-  return isExactFloat32(value) && value > 0;
+function isPositiveFinite(value: unknown): value is number {
+  return isFiniteNumber(value) && value > 0;
 }
 
 function isUnitGain(value: unknown): boolean {

@@ -28,8 +28,15 @@ export function deepFreezeScoreLifeProfile(
   profile: ScoreLifeStateProfile,
 ): ScoreLifeStateProfile {
   return Object.freeze({
-    ...profile,
-    life: Object.freeze({ ...profile.life }),
+    schemaVersion: 3 as const,
+    sessionId: profile.sessionId,
+    life: Object.freeze({
+      initialLife: profile.life.initialLife,
+      playerMaxLife: profile.life.playerMaxLife,
+      lifeUpperLimit: profile.life.lifeUpperLimit,
+      missDamage: profile.life.missDamage,
+      badDamage: profile.life.badDamage,
+    }),
     mode: profile.mode,
   });
 }

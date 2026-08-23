@@ -27,7 +27,6 @@ export class ImmutableLocalAudioResourceProvider implements AudioResourceProvide
     for (const resource of resources) {
       if (
         resource === null || typeof resource !== "object" || Array.isArray(resource) ||
-        Object.keys(resource).sort().join(",") !== "bytes,cue,logicalId" ||
         !(resource.bytes instanceof Uint8Array)
       ) {
         return reject(

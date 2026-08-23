@@ -48,7 +48,9 @@ function testSchema12ExactShapeAndFreeze(): void {
   ] as const) {
     const legacy = cloneRequest(request) as any;
     legacy.config[key] = value;
-    assert.equal(createSimulatorSessionRecipe(legacy).status, "rejected", `legacy ${key}`);
+    const semantic = createSimulatorSessionRecipe(legacy);
+    assert.equal(semantic.status, "accepted", `legacy metadata ${key} is ignored`);
+    if (semantic.status === "accepted") assert.equal(key in semantic.value.request.config, false);
   }
   const oldOnly = cloneRequest(request) as any;
   delete oldOnly.config.judgementAdjustValueB;

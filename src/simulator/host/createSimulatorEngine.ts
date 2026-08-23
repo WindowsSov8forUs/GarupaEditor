@@ -953,7 +953,6 @@ function createMovieBackground(
       : ok(null);
   }
   if (input.movie === null || typeof input.movie !== "object" ||
-    Object.keys(input.movie).sort().join(",") !== "musicStartDelayMilliseconds,sessionId" ||
     typeof input.movie.sessionId !== "string" || input.movie.sessionId.length === 0 ||
     !Number.isInteger(input.movie.musicStartDelayMilliseconds) ||
     input.movie.musicStartDelayMilliseconds < -0x80000000 ||

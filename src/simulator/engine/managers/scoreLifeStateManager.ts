@@ -335,7 +335,6 @@ function validateProfile(
     );
   if (
     profile === null || typeof profile !== "object" ||
-    Object.keys(profile).sort().join(",") !== "life,mode,schemaVersion,sessionId" ||
     profile.schemaVersion !== 3 ||
     typeof profile.sessionId !== "string" || profile.sessionId.length === 0 ||
     !validLife(profile.life) || !modeMatches
@@ -360,8 +359,6 @@ function validScoringPlan(plan: SimulatorScoringPlan): boolean {
 
 function validLife(life: ScoreLifeStateProfile["life"]): boolean {
   return life !== null && typeof life === "object" &&
-    Object.keys(life).sort().join(",") ===
-      "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
     [life.initialLife, life.playerMaxLife, life.lifeUpperLimit, life.missDamage, life.badDamage]
       .every(isInt32) &&
     life.initialLife >= 0 && life.playerMaxLife > 0 &&

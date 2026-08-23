@@ -19,11 +19,11 @@ export interface ValidatedPngStructure {
 export function copyAndFreezeSimulatorPresentation(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationPackage> {
-  if (!isExactObject(value, "difficulty,jacketPng,mv,song,stage")) {
+  if (!isSemanticObject(value, "difficulty,jacketPng,mv,song,stage")) {
     return invalid("The presentation package requires exact song, difficulty, jacketPng, stage and nullable mv keys; startup characters and live-start voice are simulator-owned absent resources.");
   }
   const presentation = value as unknown as SimulatorPresentationPackage;
-  if (!isExactObject(presentation.song, "arranger,bandName,composer,lyricist,title") ||
+  if (!isSemanticObject(presentation.song, "arranger,bandName,composer,lyricist,title") ||
     !isRequiredText(presentation.song.title) || !isRequiredText(presentation.song.bandName) ||
     !isNullableText(presentation.song.lyricist) || !isNullableText(presentation.song.composer) ||
     !isNullableText(presentation.song.arranger)) {
@@ -43,12 +43,12 @@ export function copyAndFreezeSimulatorPresentation(
       "Every caller-selected localized scalar must exist in the hash-locked current sgm cmap; browser or system-font fallback is forbidden.",
     );
   }
-  if (!isExactObject(presentation.difficulty, "level,type") ||
+  if (!isSemanticObject(presentation.difficulty, "level,type") ||
     !["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"].includes(presentation.difficulty.type) ||
     !Number.isSafeInteger(presentation.difficulty.level) || presentation.difficulty.level <= 0) {
     return invalid("Difficulty requires one confirmed uppercase type and one positive integer level.");
   }
-  if (!isExactObject(presentation.stage, "backdropPng")) {
+  if (!isSemanticObject(presentation.stage, "backdropPng")) {
     return invalid("The standard 2D stage requires exactly one backdrop; startup characters and live-start voice are absent simulator-owned resources, so caller keys or placeholders are forbidden by SDN01/SDN02/SDN03/SDN04.");
   }
   const jacket = copyPng(presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height, "jacket");
@@ -81,12 +81,11 @@ function copyMvPackage(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationMvPackage | null> {
   if (value === null) return accepted(null);
-  if (!isExactObject(value, "bytes,musicStartDelayMilliseconds")) {
+  if (!isSemanticObject(value, "bytes,musicStartDelayMilliseconds")) {
     return invalid("mv is null or one exact { bytes, musicStartDelayMilliseconds } object with no caller metadata.");
   }
   const mv = value as SimulatorPresentationMvPackage;
   if (!(mv.bytes instanceof Uint8Array) ||
-    Object.getPrototypeOf(mv.bytes) !== Uint8Array.prototype ||
     mv.bytes.byteLength === 0 ||
     !Number.isInteger(mv.musicStartDelayMilliseconds) ||
     mv.musicStartDelayMilliseconds < -0x80000000 ||
@@ -104,7 +103,7 @@ export function inspectStrictRgbaPng(
   expectedWidth: number | null,
   expectedHeight: number | null,
 ): SimulatorAssemblyResult<ValidatedPngStructure> {
-  if (!(bytes instanceof Uint8Array) || Object.getPrototypeOf(bytes) !== Uint8Array.prototype || bytes.byteLength < 57 ||
+  if (!(bytes instanceof Uint8Array) || bytes.byteLength < 57 ||
     !equalsAt(bytes, 0, [137, 80, 78, 71, 13, 10, 26, 10])) {
     return invalidPng("A presentation visual must begin with the complete PNG signature and contain IHDR, IDAT and IEND chunks.");
   }
@@ -162,7 +161,7 @@ function copyPng(
   height: number | null,
   role: string,
 ): SimulatorAssemblyResult<Uint8Array> {
-  if (!(value instanceof Uint8Array) || Object.getPrototypeOf(value) !== Uint8Array.prototype || value.byteLength === 0) {
+  if (!(value instanceof Uint8Array) || value.byteLength === 0) {
     return invalid(`${role} must be one direct non-empty Uint8Array PNG resource.`);
   }
   const copied = Uint8Array.from(value);
@@ -170,9 +169,10 @@ function copyPng(
   return inspected.status === "rejected" ? inspected : accepted(copied);
 }
 
-function isExactObject(value: unknown, keys: string): boolean {
-  return value !== null && typeof value === "object" && !Array.isArray(value) &&
-    Object.getPrototypeOf(value) === Object.prototype && Object.keys(value).sort().join(",") === keys.split(",").sort().join(",");
+function isSemanticObject(value: unknown, keys: string): boolean {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return keys.split(",").every((key) => Object.prototype.hasOwnProperty.call(record, key));
 }
 function isRequiredText(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.trim() === value && isScalarText(value);

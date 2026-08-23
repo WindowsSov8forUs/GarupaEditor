@@ -8,7 +8,7 @@ Reverse owns original Skin selection claims. A valid but unavailable selection m
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse resource baseline `977f5e7153257e5bb4cabb2904790408f5452aa7` plus Field/structural-stage reachability correction `4312a8ad5a755b28cb40366f6160771dbf79637e`.
 
-Public Schema 12 keeps the root request exactly `{ chartData, presentation, config }`. `config.skin` carries only original persisted normal settings, one aggregate special selection and seven component states. It never carries a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
+Public Schema 12 owns the semantic projection `{ chartData, presentation, config }`. `config.skin` copies only original persisted normal settings, one aggregate special selection and seven component states. Caller metadata outside that projection is discarded rather than rejected or consumed; it never becomes a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
 
 ## Public shape
 

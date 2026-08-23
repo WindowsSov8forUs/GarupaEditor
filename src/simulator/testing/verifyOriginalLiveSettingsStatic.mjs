@@ -25,7 +25,7 @@ for (const required of [
 ]) if (!contracts.includes(required)) throw new Error(`Schema 12 Public setting missing: ${required}`);
 for (const required of [
   "readonly schemaVersion: 12;", "schemaVersion: 12 as const",
-  '"audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual"',
+  "visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect",
   "originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity",
 ]) if (!recipe.includes(required)) throw new Error(`Schema 12 recipe gate missing: ${required}`);
 for (const forbidden of ["judgeOffsetFrames", "offsetMs", "effectEnable", "mvAlphaPercent"]) {

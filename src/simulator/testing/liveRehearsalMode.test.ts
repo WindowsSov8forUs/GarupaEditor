@@ -45,7 +45,7 @@ const chart = requireOk(createNoteBatchInformationList({ musicScoreData: chartTe
 
 async function main(): Promise<void> {
   testFourCanonicalModes();
-  testLegacyPublicShapesFailClosed();
+  testPublicSemanticShapeCompatibility();
   await testRehearsalLifeZeroContinuesAndLiveCloses();
   await testTransactionalMoveTimeScoreRestore();
   await testLiveRetryFreshGeneration();
@@ -88,7 +88,7 @@ function testFourCanonicalModes(): void {
   }
 }
 
-function testLegacyPublicShapesFailClosed(): void {
+function testPublicSemanticShapeCompatibility(): void {
   const current = request("live", "manual");
   const legacy = structuredCloneRequest(current) as any;
   delete legacy.config.sessionMode;
@@ -101,8 +101,20 @@ function testLegacyPublicShapesFailClosed(): void {
     assert.equal(rejected.failure.capability, "simulator.recipe.invalid-public-request");
   }
   const extra = structuredCloneRequest(current) as any;
+  extra.hostMetadata = { requestSource: "editor" };
+  extra.chartData.transportMetadata = "ignored";
   extra.config.startMilliseconds = 5000;
-  assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
+  extra.config.visual.transportScale = 1;
+  extra.config.audio.deviceLabel = "ignored";
+  const acceptedExtra = createSimulatorSessionRecipe(extra);
+  assert.equal(acceptedExtra.status, "accepted", JSON.stringify(acceptedExtra));
+  if (acceptedExtra.status === "accepted") {
+    assert.equal("hostMetadata" in acceptedExtra.value.request, false);
+    assert.equal("transportMetadata" in acceptedExtra.value.request.chartData, false);
+    assert.equal("startMilliseconds" in acceptedExtra.value.request.config, false);
+    assert.equal("transportScale" in acceptedExtra.value.request.config.visual, false);
+    assert.equal("deviceLabel" in acceptedExtra.value.request.config.audio, false);
+  }
 }
 
 async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {

@@ -20,10 +20,13 @@ const publicBarrel = read("public/index.ts") + read("index.ts");
 for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
   "readonly schemaVersion: 12;",
-  'Object.keys(request).sort().join(\",\") !== \"chartData,config,presentation\"',
+  'specificSpeed: Math.fround(request.config.visual.specificSpeed)',
   '"move-time-reconstruction"',
 ]) {
   if (!(contracts + recipe + controller).includes(required)) throw new Error(`startup required boundary missing: ${required}`);
+}
+if (/Object\.keys\([^\n]*sort\(\)\.join/.test(recipe + presentationContract)) {
+  throw new Error("startup/Public copy restored order-sensitive exact-key rejection");
 }
 for (const state of ["Prepare: 0", "OPFirstAnimStart: 1", "OPFirstAnimEnd: 2", "OPLastAnimStart: 3", "PlayingNone: 4", "PlayingSound: 5"]) {
   if (!read("engine/data/inGameState.ts").includes(state)) throw new Error(`startup state missing: ${state}`);
@@ -36,8 +39,8 @@ for (const required of [
   "createPixiStartupDirectionScene", "liveStartVoiceCue: null", "purpose",
 ]) if (!platform.includes(required)) throw new Error(`production startup composition missing: ${required}`);
 for (const required of [
-  'isExactObject(value, "difficulty,jacketPng,mv,song,stage")',
-  'isExactObject(presentation.stage, "backdropPng")',
+  'isSemanticObject(value, "difficulty,jacketPng,mv,song,stage")',
+  'isSemanticObject(presentation.stage, "backdropPng")',
   "startup characters and live-start voice are absent simulator-owned resources",
 ]) if (!presentationContract.includes(required)) throw new Error(`caller-free absent-startup-asset boundary missing: ${required}`);
 for (const required of [

@@ -25,7 +25,6 @@ export function inspectMovieContainer(
   bytes: Uint8Array,
 ): MovieOperationResult<MovieContainer> {
   if (!(bytes instanceof Uint8Array) ||
-    Object.getPrototypeOf(bytes) !== Uint8Array.prototype ||
     bytes.byteLength < 16) {
     return movieRejected(
       "movie-resource-decode",
@@ -88,13 +87,7 @@ export function validateMovieResourceProfile(
 ): MovieOperationResult<MovieResourceProfile> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return invalidProfile();
   const profile = value as MovieResourceProfile;
-  const keys = Object.keys(profile).sort().join(",");
-  if (keys !== [
-    "byteLength", "container", "durationSeconds", "fit", "height", "identity",
-    "logicalId", "loop", "mime", "musicStartDelayMilliseconds", "muted", "role",
-    "sha256", "signal", "width",
-  ].sort().join(",") ||
-    profile.role !== "mv-live" || typeof profile.logicalId !== "string" || profile.logicalId.length === 0 ||
+  if (profile.role !== "mv-live" || typeof profile.logicalId !== "string" || profile.logicalId.length === 0 ||
     !Number.isSafeInteger(profile.byteLength) || profile.byteLength <= 0 ||
     !/^[0-9A-F]{64}$/.test(profile.sha256) ||
     (profile.container !== "mp4" && profile.container !== "webm") ||
@@ -109,7 +102,23 @@ export function validateMovieResourceProfile(
     profile.identity !== "session-explicit" || profile.signal !== "host-supplied-portable") {
     return invalidProfile();
   }
-  return movieAccepted(Object.freeze({ ...profile }));
+  return movieAccepted(Object.freeze({
+    role: "mv-live" as const,
+    logicalId: profile.logicalId,
+    byteLength: profile.byteLength,
+    sha256: profile.sha256,
+    container: profile.container,
+    mime: profile.mime,
+    durationSeconds: profile.durationSeconds,
+    width: profile.width,
+    height: profile.height,
+    musicStartDelayMilliseconds: profile.musicStartDelayMilliseconds,
+    fit: "contain-center-no-crop" as const,
+    muted: true as const,
+    loop: false as const,
+    identity: "session-explicit" as const,
+    signal: "host-supplied-portable" as const,
+  }));
 }
 
 function isStrictMp4(bytes: Uint8Array): boolean {

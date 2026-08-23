@@ -20,7 +20,6 @@ export async function deriveSessionMvResource(
 ): Promise<SimulatorAssemblyResult<PreparedSessionMovieResource>> {
   if (source === null || typeof source !== "object" ||
     !(source.bytes instanceof Uint8Array) ||
-    Object.getPrototypeOf(source.bytes) !== Uint8Array.prototype ||
     source.bytes.byteLength === 0 ||
     !Number.isInteger(source.musicStartDelayMilliseconds) ||
     source.musicStartDelayMilliseconds < -0x80000000 ||

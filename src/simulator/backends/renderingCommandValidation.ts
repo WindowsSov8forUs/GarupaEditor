@@ -162,13 +162,35 @@ export function animationRoleMatchesObject(
 }
 
 export function freezeTypedHudState<T extends SetHudCommand["state"]>(state: T): T {
+  const keys = hudSemanticKeys(state as unknown as Record<string, unknown>);
   const frozen: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(state)) {
+  for (const key of keys) {
+    const value = (state as unknown as Record<string, unknown>)[key];
     frozen[key] = value !== null && typeof value === "object"
-      ? Object.freeze({ ...value })
+      ? Object.freeze({ ...(value as Record<string, unknown>) })
       : value;
   }
   return Object.freeze(frozen) as unknown as T;
+}
+
+function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
+  if ("ruleSetId" in state) return [
+    "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
+    "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX", "rankMarkerCLocalX",
+    "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "ruleSetId", "score", "scoreMax", "scoreText",
+    "sliderValue", "totalScoringUnitCount",
+  ];
+  if ("combo" in state) return ["allPerfect", "combo"];
+  if ("judgeKey" in state) return ["judgeKey", "timingKey"];
+  if ("currentLife" in state) return [
+    "color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife", "primaryFill", "secondaryFill",
+    "singleGameOver", "warning",
+  ];
+  if ("poolIndex" in state) return ["depth", "poolIndex", "value"];
+  if ("phase" in state) return ["phase", "progress"];
+  return "laneChangePhase" in state
+    ? ["absolutePosition", "label", "laneChangePhase", "visible"]
+    : ["label", "visible"];
 }
 
 function spriteObjectRole(role: RenderObjectRole): boolean {
@@ -178,7 +200,7 @@ function spriteObjectRole(role: RenderObjectRole): boolean {
 }
 
 function exactKeys(value: object, keys: readonly string[]): boolean {
-  return Object.keys(value).sort().join(",") === [...keys].sort().join(",");
+  return keys.every((key) => Object.prototype.hasOwnProperty.call(value, key));
 }
 
 function isUInt32(value: unknown): value is number {

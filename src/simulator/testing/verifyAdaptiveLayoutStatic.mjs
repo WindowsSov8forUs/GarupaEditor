@@ -33,7 +33,7 @@ if (publicContract.includes("highAspectRatio") || recipe.includes("config.visual
 }
 for (const required of [
   "readonly schemaVersion: 12",
-  '"habahiroMeshWidthSetting,noteSize,specificSpeed"',
+  "habahiroMeshWidthSetting: Math.fround(request.config.visual.habahiroMeshWidthSetting)",
 ]) if (!recipe.includes(required)) throw new Error(`Schema 12 adaptive boundary missing ${required}`);
 
 const surface = read("platform/surfaceContracts.ts");

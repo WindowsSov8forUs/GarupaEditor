@@ -42,8 +42,7 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
     if (terminal !== null) return terminal;
     if (this.state !== "unprepared" || typeof sessionId !== "string" || sessionId.length === 0 ||
       resource === null || typeof resource !== "object" ||
-      !(resource.bytes instanceof Uint8Array) ||
-      Object.getPrototypeOf(resource.bytes) !== Uint8Array.prototype) {
+      !(resource.bytes instanceof Uint8Array)) {
       return this.reject("movie.recording.invalid-prepare", "Recording movie preparation requires one fresh session, owned bytes and exact derived resource.");
     }
     const profile = validateMovieResourceProfile(resource.profile);

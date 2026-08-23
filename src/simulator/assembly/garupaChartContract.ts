@@ -173,7 +173,7 @@ function copied(
 }
 
 function hasExactKeys(input: Record<string, unknown>, keys: readonly string[]): boolean {
-  return Object.keys(input).sort().join(",") === [...keys].sort().join(",");
+  return keys.every((key) => Object.prototype.hasOwnProperty.call(input, key));
 }
 
 function hasExactOptionalTimingKeys(

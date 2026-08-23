@@ -195,7 +195,9 @@ function deepFreeze<T>(value: T): T {
 }
 
 function record(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
-function exactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean { return Object.keys(value).sort().join(",") === [...expected].sort().join(","); }
+function exactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
+  return expected.every((key) => Object.prototype.hasOwnProperty.call(value, key));
+}
 function exactF32(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) && Math.fround(value) === value; }
 function finiteTuple(value: unknown, length: number): value is readonly number[] { return Array.isArray(value) && value.length === length && value.every((item) => typeof item === "number" && Number.isFinite(item)); }
 function tuple(value: unknown, expected: readonly unknown[]): boolean { return Array.isArray(value) && value.length === expected.length && value.every((item, index) => item === expected[index]); }

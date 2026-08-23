@@ -45,6 +45,8 @@
 
 ## Public合同
 
+Schema 12描述Simulator建立的**owned业务投影**，不再要求caller对象的prototype、键顺序或“只能有这些键”。入口只读取并复制下列语义字段；宿主/迁移遗留的额外metadata会被丢弃，绝不成为Life、Score、laneCount、Skin或其他Simulator行为。缺失/非法必需字段、损坏媒体和不一致图仍拒绝当前launch动作。TypedArray子类按其Uint8字节语义复制，不因prototype身份被拒绝。
+
 唯一业务入口仍是：
 
 ```ts

@@ -85,10 +85,12 @@ function testPublicExactShape(): void {
   legacyGameplay.chartData.gameplay = {
     life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
   };
-  assertInvalid(legacyGameplay);
+  const legacySemantic = requireAccepted(createSimulatorSessionRecipe(legacyGameplay));
+  assert.equal("gameplay" in legacySemantic.request.chartData, false);
   const directLife: any = request(false);
   directLife.chartData.initialLife = 1000;
-  assertInvalid(directLife);
+  const directSemantic = requireAccepted(createSimulatorSessionRecipe(directLife));
+  assert.equal("initialLife" in directSemantic.request.chartData, false);
   for (const bgm of [
     null,
     new Uint8Array(),

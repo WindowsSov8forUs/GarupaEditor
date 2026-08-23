@@ -366,7 +366,6 @@ export function consumePauseControlCommand(
   surface: SimulatorSurfaceState,
 ): SimulatorResult<PauseControlCommandKind> {
   if (command === null || typeof command !== "object" ||
-    Object.keys(command).sort().join(",") !== "capability,kind" ||
     !["pause", "resume", "retry", "abort"].includes(command.kind) ||
     command.capability === null || typeof command.capability !== "object") {
     return integrityFailure("pause.control.invalid-command", ["PAU-B01", "PAU-B04"], "Only opaque one-use Pause scene commands are accepted.");

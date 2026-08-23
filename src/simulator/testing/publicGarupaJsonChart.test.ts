@@ -84,10 +84,14 @@ function testContractCopyAndExactShape(): void {
   assert.equal((copied.chart[0] as any).value, 120);
   assert.equal((copied.chart[3] as any).connections[0].lane, 1);
 
+  const semanticExtra = requireOk(copyAndFreezeGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120, extra: true },
+  ]));
+  assert.equal("extra" in semanticExtra.chart[0]!, false);
+
   for (const invalid of [
     null,
     {},
-    [{ type: "BPM", beat: 0, value: 120, extra: true }],
     [{ type: "BPM", beat: Number.NaN, value: 120 }],
     [{ type: "SV", beat: 0, value: 1, timingGroup: 2 }],
     [{ type: "Single", beat: 1, lane: 1, width: 0 }],

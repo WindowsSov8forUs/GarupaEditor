@@ -40,8 +40,6 @@ export function createOriginalLiveSettings(
   }
   const input = value as Record<string, unknown>;
   if (
-    Object.keys(input).sort().join(",") !==
-      "highFrequencyMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,syncLine,visibleTapLaneEffect" ||
     typeof input.highFrequencyMode !== "boolean" ||
     !integerIn(input.judgementAdjustValue, JUDGEMENT_ADJUST_VALUE_MIN, JUDGEMENT_ADJUST_VALUE_MAX) ||
     !integerIn(input.judgementAdjustValueB, JUDGEMENT_ADJUST_VALUE_B_MIN, JUDGEMENT_ADJUST_VALUE_B_MAX) ||
@@ -68,14 +66,11 @@ export function createOriginalLiveSettings(
 export function validateOriginalLiveSettings(
   value: unknown,
 ): SimulatorResult<OriginalLiveSettings> {
-  if (value === null || typeof value !== "object" || Array.isArray(value) ||
-    Object.keys(value).sort().join(",") !== "core,noteColor,syncLine,visibleTapLaneEffect") {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return invalid();
   }
   const settings = value as Record<string, unknown>;
-  if (settings.core === null || typeof settings.core !== "object" || Array.isArray(settings.core) ||
-    Object.keys(settings.core).sort().join(",") !==
-      "highFrequencyMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness") {
+  if (settings.core === null || typeof settings.core !== "object" || Array.isArray(settings.core)) {
     return invalid();
   }
   const core = settings.core as Record<string, unknown>;

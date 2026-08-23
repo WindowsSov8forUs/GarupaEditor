@@ -68,7 +68,6 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     if (this.state !== "unprepared" || typeof sessionId !== "string" || sessionId.length === 0 ||
       resource === null || typeof resource !== "object" ||
       !(resource.bytes instanceof Uint8Array) ||
-      Object.getPrototypeOf(resource.bytes) !== Uint8Array.prototype ||
       !Number.isFinite(this.movieLayout.x) || !Number.isFinite(this.movieLayout.y) ||
       !Number.isFinite(this.movieLayout.width) || this.movieLayout.width <= 0 ||
       !Number.isFinite(this.movieLayout.height) || this.movieLayout.height <= 0) {

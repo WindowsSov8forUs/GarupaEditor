@@ -151,6 +151,13 @@ function authority(marker) {
   return "integrity-product-or-internal-review";
 }
 function classify(entry) {
+  if (entry.marker === "integrity-failure-call" || entry.marker === "integrity-failure-string") return {
+    trigger: "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+    userReachability: "typed action-or-session integrity boundary",
+    disposition: "integrity-failure",
+    productSemanticsId: null,
+    regression: "module integrity and atomicity regression",
+  };
   if (entry.marker === "product-semantic-call") return {
     trigger: "registered valid product action",
     userReachability: "runtime-product-path",

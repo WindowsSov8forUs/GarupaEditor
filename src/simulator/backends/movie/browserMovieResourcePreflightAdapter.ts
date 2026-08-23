@@ -17,7 +17,6 @@ export class BrowserMovieResourcePreflightAdapter
 
   async sha256(bytes: Uint8Array): Promise<MovieOperationResult<string>> {
     if (!(bytes instanceof Uint8Array) ||
-      Object.getPrototypeOf(bytes) !== Uint8Array.prototype ||
       bytes.byteLength === 0) {
       return movieRejected(
         "integrity-failure",
@@ -33,7 +32,6 @@ export class BrowserMovieResourcePreflightAdapter
     container: MovieContainer,
   ): Promise<MovieOperationResult<MoviePreparedResource>> {
     if (!(bytes instanceof Uint8Array) ||
-      Object.getPrototypeOf(bytes) !== Uint8Array.prototype ||
       bytes.byteLength === 0 || (container !== "mp4" && container !== "webm")) {
       return movieRejected(
         "movie-resource-decode",

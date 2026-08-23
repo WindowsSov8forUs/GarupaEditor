@@ -107,8 +107,6 @@ export class AudioCommandProducer {
   validate(): SimulatorResult<void> {
     if (
       this.input === null || typeof this.input !== "object" ||
-      Object.keys(this.input).sort().join(",") !==
-        "bgmCue,bgmGainBits,masterGainBits,seGainBits,seekMilliseconds,sessionId" ||
       typeof this.input.sessionId !== "string" || this.input.sessionId.length === 0 ||
       typeof this.input.bgmCue !== "string" || this.input.bgmCue.length === 0 ||
       !Number.isSafeInteger(this.input.seekMilliseconds) || this.input.seekMilliseconds < 0 ||

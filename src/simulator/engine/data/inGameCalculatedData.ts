@@ -51,8 +51,6 @@ export function validateSimulatorModeIdentity(
   }
   const mode = value as Record<string, unknown>;
   if (
-    Object.keys(mode).sort().join(",") !==
-      "inGameMode,inputMode,isAutoLive,isAutoPlay,isDemoPlayMode,isEnablePractice,sessionMode" ||
     (mode.sessionMode !== "live" && mode.sessionMode !== "rehearsal") ||
     (mode.inputMode !== "manual" && mode.inputMode !== "auto")
   ) {

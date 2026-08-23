@@ -57,7 +57,6 @@ export function validateSimulatorResourceRequirements(
   for (const requirement of value) {
     if (
       requirement === null || typeof requirement !== "object" || Array.isArray(requirement) ||
-      Object.keys(requirement).sort().join(",") !== "logicalResource,requiredFiles,semanticRole" ||
       !safeIdentity(requirement.semanticRole) || !safeLogicalPath(requirement.logicalResource) ||
       roles.has(requirement.semanticRole)
     ) return invalidRequirements();

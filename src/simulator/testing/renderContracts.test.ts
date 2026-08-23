@@ -1313,8 +1313,23 @@ async function testSharedTypedHudValidation(): Promise<void> {
       state: route.valid,
     } as unknown as RenderCommand), `${route.hudRole} valid state`);
     requireOk(validRenderer.dispose(), `${route.hudRole} valid dispose`);
+    const extraRenderer = new RecordingSimulatorRendererBackend();
+    requireOk(await extraRenderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} extra prepare`);
+    requireOk(extraRenderer.execute({
+      kind: "create-object", sessionId: SESSION, sequence: 0, frame: 0, substep: 0,
+      renderObjectId: `hud:${route.hudRole}:extra`, poolFamily: `hud:${route.hudRole}`,
+      role: route.objectRole, parentObjectId: null,
+    }), `${route.hudRole} extra owner`);
+    requireOk(extraRenderer.execute({
+      kind: "set-hud", sessionId: SESSION, sequence: 1, frame: 0, substep: 0,
+      renderObjectId: `hud:${route.hudRole}:extra`, hudRole: route.hudRole,
+      state: { ...route.valid, unsupportedExtra: true },
+    } as unknown as RenderCommand), `${route.hudRole} semantic extra accepted`);
+    const frozenExtra = extraRenderer.commandSnapshot()[1] as Extract<RenderCommand, { kind: "set-hud" }>;
+    equal("unsupportedExtra" in frozenExtra.state, false, `${route.hudRole} semantic copy drops extra state`);
+    requireOk(extraRenderer.dispose(), `${route.hudRole} extra dispose`);
+
     const malformedStates = [
-      { label: "extra", state: { ...route.valid, unsupportedExtra: true } },
       { label: "missing", state: route.missing },
       { label: "tampered", state: route.tampered },
     ];
@@ -1348,7 +1363,7 @@ async function testSharedTypedHudValidation(): Promise<void> {
       requireOk(renderer.dispose(), `${route.hudRole} ${malformed.label} dispose`);
     }
   }
-  console.log("ok 10 - shared typed HUD validator rejects extra/missing/tampered state before mutation");
+  console.log("ok 10 - shared typed HUD validator accepts semantic extras while rejecting missing/tampered state");
 }
 
 async function main(): Promise<void> {

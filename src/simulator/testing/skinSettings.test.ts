@@ -76,15 +76,19 @@ function testValidation(): void {
     (value: any) => { value.noteSkin = 7; },
     (value: any) => { value.fieldSkin = -1; },
     (value: any) => { value.directionalFlickEffect = 2; },
-    (value: any) => { value.judgeSkinId = "skin_bike"; },
     (value: any) => { value.special = { kind: "collabo", seasonSpecialId: 37, components: states("on") }; },
     (value: any) => { value.special = { kind: "limited", limitedSkinId: 2, components: { ...states("on"), judge: true } }; },
-    (value: any) => { value.special = { kind: "none", components: states("off") }; },
   ]) {
     const value: any = defaults();
     mutation(value);
     assert.equal(validateAndFreezeOriginalSkinSettings(value).status, "integrity-failure");
   }
+  const semanticExtra: any = defaults();
+  semanticExtra.judgeSkinId = "skin_bike";
+  semanticExtra.special = { kind: "none", components: states("off") };
+  const copied = requireOk(validateAndFreezeOriginalSkinSettings(semanticExtra));
+  assert.equal("judgeSkinId" in copied, false);
+  assert.deepEqual(copied.special, { kind: "none" });
 }
 
 function testNormalRoutes(): void {

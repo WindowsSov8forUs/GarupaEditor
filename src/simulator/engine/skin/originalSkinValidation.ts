@@ -14,7 +14,7 @@ const COMPONENT_KEYS =
 export function validateAndFreezeOriginalSkinSettings(
   value: unknown,
 ): SimulatorResult<OriginalSkinSettings> {
-  if (!record(value) || Object.keys(value).sort().join(",") !== ROOT_KEYS ||
+  if (!record(value) || !hasRequiredKeys(value, ROOT_KEYS) ||
     !integerRange(value.noteSkin, 0, 6) ||
     !integerRange(value.fieldSkin, 0, 14) ||
     !integerRange(value.tapEffect, 0, 4) ||
@@ -40,18 +40,14 @@ export function validateAndFreezeOriginalSkinSettings(
 
 function validateSpecial(value: unknown): OriginalSkinSpecialSelection | null {
   if (!record(value)) return null;
-  if (value.kind === "none") {
-    return Object.keys(value).join(",") === "kind"
-      ? Object.freeze({ kind: "none" as const })
-      : null;
-  }
+  if (value.kind === "none") return Object.freeze({ kind: "none" as const });
   const kind = value.kind === "collabo" || value.kind === "limited"
     ? value.kind
     : null;
   if (kind === null) return null;
   const idKey = kind === "collabo" ? "seasonSpecialId" : "limitedSkinId";
   const selectionId = value[idKey];
-  if (Object.keys(value).sort().join(",") !== `components,kind,${idKey}` ||
+  if (!hasRequiredKeys(value, `components,kind,${idKey}`) ||
     !Number.isSafeInteger(selectionId) ||
     findCurrentSpecialSkin(kind, selectionId as number) === null) {
     return null;
@@ -64,8 +60,8 @@ function validateSpecial(value: unknown): OriginalSkinSpecialSelection | null {
 }
 
 function validateComponents(value: unknown): OriginalSkinSpecialComponentStates | null {
-  if (!record(value) || Object.keys(value).sort().join(",") !== COMPONENT_KEYS ||
-    !Object.values(value).every((state) => state === "on" || state === "off")) {
+  if (!record(value) || !hasRequiredKeys(value, COMPONENT_KEYS) ||
+    !COMPONENT_KEYS.split(",").every((key) => value[key] === "on" || value[key] === "off")) {
     return null;
   }
   return Object.freeze({
@@ -81,6 +77,10 @@ function validateComponents(value: unknown): OriginalSkinSpecialComponentStates 
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasRequiredKeys(value: Record<string, unknown>, keys: string): boolean {
+  return keys.split(",").every((key) => Object.prototype.hasOwnProperty.call(value, key));
 }
 
 function integerRange(value: unknown, minimum: number, maximum: number): value is number {
