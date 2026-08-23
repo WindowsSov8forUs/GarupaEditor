@@ -1,3 +1,5 @@
+import { runBrowserAudioContextCapabilityTests } from "./browserAudioContextCapability.test";
+import { runBrowserSimulatorLaunchOwnerTests } from "./browserSimulatorLaunchOwner.test";
 import { runBuiltinCatalogTests } from "./builtinCatalog.test";
 import { runResourceContractTests } from "./contracts.test";
 import { runDynamicCatalogTests } from "./dynamicCatalog.test";
@@ -11,6 +13,8 @@ import { runWorkspaceMediaTests } from "./workspaceMedia.test";
 async function main(): Promise<void> {
   runResourceContractTests();
   runNoVersionLockTests();
+  await runBrowserAudioContextCapabilityTests();
+  await runBrowserSimulatorLaunchOwnerTests();
   await runBuiltinCatalogTests();
   await runDynamicCatalogTests();
   await runResourceManagerLifecycleTests();
