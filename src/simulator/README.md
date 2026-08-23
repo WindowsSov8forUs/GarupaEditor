@@ -29,6 +29,7 @@
 | Initial adaptive landscape layout | `closed-portable` | Reverse `9167dce7`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
 | Dynamic surface resize | `open-evidence-required` | 10.1.4不存在完整局中刷新路由：arbitrary setScreenSize不重跑ButtonManager/particle，RefreshSafeArea不含VerticalFit；任何post-initial revision在command/input前失败关闭 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布；控件由current serialized Left/Right anchor、±72 child、104×104 widget与world-circle radius 0.12共同派生，不再消费截图bbox或人工100×100 hit region |
+| Original in-game Pause UI | `open-evidence-required` | Reverse `41f4ecfe`已冻结38个current Pause owner/router/callback ARM64 anchors，并确认Rehearsal截图三按钮不能外推四模式；锁定ARM64设备当前ADB缺席，四模式runtime、serialized prefab/resource pack和参数化多比例布局均未关闭，五项blocking使portable/production authorization保持false。不得用HTML或近似Pixi替代 |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
 | Garupa SV / TimingGroup | `closed-product-extension` | 独立group axis、Global继承、同position优先级、负向/停止/极值、stateless visibility及Pause/Retry/MoveTime闭合；只声明产品行为，不升级原作等价 |
 | Continuous / outside lane | `closed-product-extension` | Garupa任意有限lane在固定七轨参考坐标上执行fractional/outside Float32 affine scene、front/mesh/particle及raw Manual span；场地线恒为0..6七条，不round/clamp到原Button |

@@ -52,7 +52,7 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 
 - Live Life归零：走现有terminal Game Over链并关闭会话。
 - Rehearsal Life归零：Record保留`singleGameOver`事实，但不关闭会话。LR-R01实测本轮69次Life0/GameOver后的`ExecUpdate`；此前已提交R1另有1216次。
-- Rehearsal pause menu为Abort、Retry、Resume；premium Continue排除。
+- Rehearsal pause screenshot观察菜单为Abort、Retry、Resume；premium Continue排除。Reverse `41f4ecfe`进一步确认Pause静态owner存在多种mode-dependent dialog/Retire分支，但四模式runtime、serialized prefab/resource与参数化布局仍阻断，故该观察不得授权当前production Pause UI或外推Live。
 - 自然结束仍进入Rehearsal结果；使用MoveTime后的原作结果语义不得被当作普通Live结果。
 
 依据：PLP-E01–PLP-E07、LR-R01、LR-C02与current committed Live no-input Game Over证据。Medley继承与premium Continue仍排除。
