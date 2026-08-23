@@ -22,6 +22,7 @@ const WORKSPACE_MEDIA_DIRECTORY: &str = "project-media";
 struct ResourceRuntimeState {
     initialized: bool,
     open_snapshots: HashMap<String, usize>,
+    released_snapshots: HashSet<String>,
     pending_workspace_imports: HashMap<String, PendingWorkspaceMediaImport>,
 }
 
@@ -245,6 +246,7 @@ pub fn resource_initialize(
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
         recover_projections(&root, state.inner())?;
         runtime.open_snapshots.clear();
+        runtime.released_snapshots.clear();
         runtime.pending_workspace_imports.clear();
         runtime.initialized = true;
     }
@@ -273,6 +275,7 @@ pub fn resource_shutdown(
         return Ok(());
     }
     runtime.open_snapshots.clear();
+    runtime.released_snapshots.clear();
     runtime.pending_workspace_imports.clear();
     runtime.initialized = false;
     remove_directory_contents(&root.join("snapshots"))?;
@@ -808,6 +811,7 @@ pub fn resource_open_snapshot(
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
+    runtime.released_snapshots.remove(&snapshot_id);
     *runtime.open_snapshots.entry(snapshot_id).or_insert(0) += 1;
     Ok(snapshot.dto())
 }
@@ -861,20 +865,7 @@ pub fn resource_release_snapshot(
             .runtime
             .lock()
             .map_err(|error| format!("lock resource state failed: {error}"))?;
-        let count = runtime
-            .open_snapshots
-            .get_mut(&snapshot_id)
-            .ok_or_else(|| "resource snapshot was not opened".to_string())?;
-        if *count == 0 {
-            return Err("resource snapshot was already released".to_string());
-        }
-        *count -= 1;
-        if *count == 0 {
-            runtime.open_snapshots.remove(&snapshot_id);
-            true
-        } else {
-            false
-        }
+        release_snapshot_runtime(&mut runtime, &snapshot_id)?
     };
     if remove_snapshot {
         let root = resource_root(&app)?;
@@ -886,6 +877,27 @@ pub fn resource_release_snapshot(
         collect_garbage_paths(&root, &workspace_media_root(&app)?)?;
     }
     Ok(())
+}
+
+fn release_snapshot_runtime(
+    runtime: &mut ResourceRuntimeState,
+    snapshot_id: &str,
+) -> Result<bool, String> {
+    let Some(count) = runtime.open_snapshots.get_mut(snapshot_id) else {
+        return if runtime.released_snapshots.contains(snapshot_id) {
+            Ok(false)
+        } else {
+            Err("resource snapshot was not opened".to_string())
+        };
+    };
+    *count -= 1;
+    if *count == 0 {
+        runtime.open_snapshots.remove(snapshot_id);
+        runtime.released_snapshots.insert(snapshot_id.to_string());
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -2667,6 +2679,23 @@ mod tests {
         assert!(normalize_logical_path("../image.png").is_err());
         assert!(normalize_logical_path("atlas\\image.png").is_err());
         assert!(normalize_logical_path("/absolute.png").is_err());
+    }
+
+    #[test]
+    fn snapshot_release_is_idempotent_for_the_same_owned_identity() {
+        let mut runtime = ResourceRuntimeState::default();
+        runtime
+            .open_snapshots
+            .insert("snapshot/test".to_string(), 1);
+        assert_eq!(
+            release_snapshot_runtime(&mut runtime, "snapshot/test"),
+            Ok(true)
+        );
+        assert_eq!(
+            release_snapshot_runtime(&mut runtime, "snapshot/test"),
+            Ok(false)
+        );
+        assert!(release_snapshot_runtime(&mut runtime, "snapshot/foreign").is_err());
     }
 
     #[test]

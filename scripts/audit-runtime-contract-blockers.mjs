@@ -18,6 +18,8 @@ const MARKERS = [
   ["exact-key-order", ".sort().join("],
   ["rejected-call", "rejected("],
   ["throw-error", "throw new Error("],
+  ["rust-error-return", "return Err("],
+  ["rust-result-error", ".ok_or_else("],
 ];
 
 const files = [];
@@ -140,6 +142,7 @@ function effect(marker) {
   if (marker.startsWith("integrity-failure")) return "typed-integrity-result-candidate";
   if (marker === "observational-gap-string") return "nonblocking-capability-notice";
   if (marker === "product-semantic-call") return "nonblocking-product-continuation";
+  if (marker === "rust-error-return" || marker === "rust-result-error") return "native-typed-result-boundary";
   if (marker.startsWith("exact-")) return "overexact-input-gate-candidate";
   if (marker === "throw-error") return "exception-candidate";
   return "typed-rejection-candidate";
@@ -149,10 +152,23 @@ function authority(marker) {
   if (marker.startsWith("integrity-failure")) return "integrity-or-internal-assertion-review";
   if (marker === "observational-gap-string") return "internal-capability-metadata";
   if (marker === "product-semantic-call") return "registered-product-semantics";
+  if (marker === "rust-error-return" || marker === "rust-result-error") return "native-integrity-or-action-policy";
   if (marker.startsWith("exact-")) return "semantic-necessity-review";
   return "integrity-product-or-internal-review";
 }
 function classify(entry) {
+  if (entry.marker === "rust-error-return" || entry.marker === "rust-result-error") {
+    const unavailable = /unavailable|not open|not opened|missing|required/.test(entry.source);
+    return {
+      trigger: unavailable
+        ? "native action dependency unavailable before publication"
+        : "native path, byte, transaction, identity, or persistence integrity rejection",
+      userReachability: unavailable ? "native action-level boundary" : "native integrity boundary",
+      disposition: unavailable ? "action-unavailable" : "integrity-failure",
+      productSemanticsId: null,
+      regression: "Cargo check plus native resource/path transaction test",
+    };
+  }
   if (entry.marker === "terminal-close") return {
     trigger: "runtime detected an unrecoverable consistency failure after ownership transfer",
     userReachability: "session-internal terminal boundary",

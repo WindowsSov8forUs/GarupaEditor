@@ -34,7 +34,7 @@ Storage schema numbers only migrate the application's own persistence format and
 4. A consumer receives only a `ResourceConsumerLease` for that snapshot.
 5. The consumer reads declared files or object URLs and validates how it can use them.
 6. The consumer releases the lease; object URLs are revoked and unreferenced obsolete blobs may be collected. Workspace reconciliation happens only after chart-media bindings are persisted, so a crash may leave an orphan for later cleanup but may not leave a persisted dangling ref.
-7. Graceful process exit clears process-owned snapshot/transaction files and performs final CAS collection. Initialization clears the same transient directories after a crash; neither route changes global/workspace record ownership.
+7. Graceful process exit clears process-owned snapshot/transaction files and performs final CAS collection. Initialization clears the same transient directories after a crash; neither route changes global/workspace record ownership. Native snapshot release keeps a process-local released-identity tombstone: a repeated release of the same owned snapshot is idempotent, while an identity never opened by this process remains rejected.
 
 Catalog refresh, downloads and selection changes never mutate an active snapshot. No consumer performs a hot switch. Cross-window payloads carry only snapshot IDs and semantic resource keys.
 
