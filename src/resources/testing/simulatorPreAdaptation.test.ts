@@ -2,6 +2,10 @@ import { buildSimulatorLaunchDescriptor } from "../../app/simulator/buildSimulat
 import { buildSimulatorLaunchRequest } from "../../app/simulator/buildSimulatorLaunchRequest";
 import { buildSimulatorPreAdaptedConfig } from "../../app/simulator/preAdaptationContract";
 import { calculateMobileSafeArea } from "../../app/simulator/mobileSafeArea";
+import {
+  decodeSimulatorLaunchTransportConfig,
+  encodeSimulatorLaunchTransportConfig,
+} from "../../app/simulator/transportContracts";
 import { createSimulatorSessionRecipe } from "../../simulator/assembly/sessionRecipe";
 import { ApplicationResourceManager } from "../applicationResourceManager";
 import type { ResourceObjectUrlFactory } from "../backend";
@@ -75,6 +79,20 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(request.config.visual.specificSpeed, Math.fround(9.7));
   equal(request.config.audio.bgmGain, Math.fround(0.8));
   equal(request.config.audio.seGain, Math.fround(0.6));
+  const tolerantTransport = decodeSimulatorLaunchTransportConfig({
+    ...descriptor.config,
+    transportMetadata: "ignored",
+    visual: { ...descriptor.config.visual, specificSpeed: descriptor.config.visual.specificSpeed.toLowerCase(), extra: true },
+    audio: { ...descriptor.config.audio, extra: true },
+  } as any);
+  equal(tolerantTransport.visual.specificSpeed, Math.fround(9.7));
+  equal("transportMetadata" in tolerantTransport, false);
+  equal("extra" in tolerantTransport.visual, false);
+  const normalizedTransport = encodeSimulatorLaunchTransportConfig({
+    ...request.config,
+    visual: { ...request.config.visual, specificSpeed: 9.7 },
+  });
+  equal(normalizedTransport.visual.specificSpeed, "0x411B3333");
   const recipe = createSimulatorSessionRecipe(request);
   equal(recipe.status, "rejected");
   if (recipe.status === "rejected") equal(recipe.failure.capability, "simulator.presentation.invalid-png");

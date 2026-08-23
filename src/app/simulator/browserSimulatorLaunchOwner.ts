@@ -59,6 +59,7 @@ export interface BrowserSimulatorLaunchOwnerDependencies {
   publishClosed(input: {
     readonly status: "closed" | "rejected";
     readonly capability: string | null;
+    readonly boundary: string | null;
   }): Promise<void>;
   leaveHost(): Promise<void>;
 }
@@ -252,15 +253,20 @@ export class BrowserSimulatorLaunchOwner {
     this.terminal = true;
     this.publish("closing", null);
     if (report.failure !== null) {
-      await this.publishClosedOnce({ status: "rejected", capability: report.failure.capability });
+      await this.publishClosedOnce({
+        status: "rejected",
+        capability: report.failure.capability,
+        boundary: report.failure.boundary,
+      });
       await this.cleanup();
       this.publish("rejected", Object.freeze({
         capability: report.failure.capability,
         boundary: report.failure.boundary,
       }));
+      await this.leaveHostOnce();
       return;
     }
-    await this.publishClosedOnce({ status: "closed", capability: null });
+    await this.publishClosedOnce({ status: "closed", capability: null, boundary: null });
     await this.cleanup();
     this.publish("closed", null);
     await this.leaveHostOnce();
@@ -270,7 +276,7 @@ export class BrowserSimulatorLaunchOwner {
     if (this.terminal) return;
     this.terminal = true;
     this.publish("closing", null);
-    await this.publishClosedOnce({ status: "closed", capability: null });
+    await this.publishClosedOnce({ status: "closed", capability: null, boundary: null });
     await this.cleanup();
     this.publish("closed", null);
     await this.leaveHostOnce();
@@ -280,14 +286,20 @@ export class BrowserSimulatorLaunchOwner {
     if (this.terminal) return;
     this.terminal = true;
     const failure = normalizeFailure(error);
-    await this.publishClosedOnce({ status: "rejected", capability: failure.capability });
+    await this.publishClosedOnce({
+      status: "rejected",
+      capability: failure.capability,
+      boundary: failure.boundary,
+    });
     await this.cleanup();
     if (!this.disposed) this.publish("rejected", failure);
+    await this.leaveHostOnce();
   }
 
   private async publishClosedOnce(input: {
     readonly status: "closed" | "rejected";
     readonly capability: string | null;
+    readonly boundary: string | null;
   }): Promise<void> {
     if (this.closedPublished) return;
     this.closedPublished = true;

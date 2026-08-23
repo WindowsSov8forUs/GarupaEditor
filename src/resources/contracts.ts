@@ -223,8 +223,7 @@ export function createResourceRef(value: unknown): ResourceResult<ResourceRef> {
 
 export function validateResourceLogicalPlacement(value: unknown): ResourceResult<ResourceLogicalPlacement> {
   if (
-    value === null || typeof value !== "object" || Array.isArray(value) ||
-    Object.keys(value).sort().join(",") !== "canonicalPath,identityClass,provider,server"
+    value === null || typeof value !== "object" || Array.isArray(value)
   ) {
     return rejected(
       "invalid-resource-request",
@@ -258,8 +257,7 @@ export function validateResourceLogicalPlacement(value: unknown): ResourceResult
 
 export function validateObservedIntegrity(value: unknown): ResourceResult<ObservedIntegrity> {
   if (
-    value === null || typeof value !== "object" || Array.isArray(value) ||
-    Object.keys(value).sort().join(",") !== "byteLength,sha256"
+    value === null || typeof value !== "object" || Array.isArray(value)
   ) {
     return rejected(
       "invalid-resource-request",
@@ -270,7 +268,7 @@ export function validateObservedIntegrity(value: unknown): ResourceResult<Observ
   const candidate = value as { byteLength?: unknown; sha256?: unknown };
   if (
     !Number.isSafeInteger(candidate.byteLength) || (candidate.byteLength as number) <= 0 ||
-    typeof candidate.sha256 !== "string" || !SHA256_PATTERN.test(candidate.sha256)
+    typeof candidate.sha256 !== "string" || !SHA256_PATTERN.test(candidate.sha256.toUpperCase())
   ) {
     return rejected(
       "invalid-resource-request",
@@ -280,7 +278,7 @@ export function validateObservedIntegrity(value: unknown): ResourceResult<Observ
   }
   return accepted(Object.freeze({
     byteLength: candidate.byteLength as number,
-    sha256: candidate.sha256,
+    sha256: (candidate.sha256 as string).toUpperCase(),
   }));
 }
 

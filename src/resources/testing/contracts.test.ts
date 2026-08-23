@@ -23,16 +23,29 @@ export function runResourceContractTests(): void {
     byteLength: 3,
     sha256: "A".repeat(64),
   }).status, "accepted");
+  const semanticIntegrity = validateObservedIntegrity({
+    byteLength: 3,
+    sha256: "a".repeat(64),
+    transportMetadata: true,
+  });
+  equal(semanticIntegrity.status, "accepted");
+  if (semanticIntegrity.status === "accepted") {
+    equal(semanticIntegrity.value.sha256, "A".repeat(64));
+    equal("transportMetadata" in semanticIntegrity.value, false);
+  }
   equal(validateObservedIntegrity({
     byteLength: 0,
     sha256: "A".repeat(64),
   }).status, "rejected");
-  equal(validateResourceLogicalPlacement({
+  const semanticPlacement = validateResourceLogicalPlacement({
     provider: "bestdori",
     server: "jp",
     canonicalPath: "ingameskin/noteskin/skin00",
     identityClass: "provider-package",
-  }).status, "accepted");
+    catalogMetadata: "ignored",
+  });
+  equal(semanticPlacement.status, "accepted");
+  if (semanticPlacement.status === "accepted") equal("catalogMetadata" in semanticPlacement.value, false);
   equal(validateResourceLogicalPlacement({
     provider: "bestdori",
     server: "jp",

@@ -203,8 +203,11 @@ export class ApplicationResourceManager {
   async prepareBuiltinDocumentLease(
     slots: readonly ApplicationResourceSlot[],
   ): Promise<ResourceResult<void>> {
-    if (this.builtinDocumentLease !== null || slots.length === 0) {
-      return invalid("resources.manager.invalid-builtin-document-lease-state");
+    if (slots.length === 0) return invalid("resources.manager.invalid-builtin-document-lease-state");
+    if (this.builtinDocumentLease !== null) {
+      return slots.every((slot) => this.builtinDocumentUrls.has(slot))
+        ? resourceAccepted(undefined)
+        : invalid("resources.manager.builtin-document-lease-does-not-cover-slot");
     }
     const bindings: Record<string, ResourceRef> = {};
     for (const slot of slots) {
@@ -737,19 +740,26 @@ function validateChartMediaImport(
     : input.purpose === "mv"
       ? "video/"
       : "image/";
+  const mediaType = normalizeMediaType(input.mediaType);
   if (
     !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
     typeof input.fileName !== "string" || input.fileName.trim().length === 0 ||
-    typeof input.mediaType !== "string" || !input.mediaType.toLowerCase().startsWith(expectedMediaPrefix) ||
+    mediaType === null || !mediaType.startsWith(expectedMediaPrefix) ||
     !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
-    !hasCompatibleUserMediaMagic(input.purpose, input.mediaType, input.bytes)
+    !hasCompatibleUserMediaMagic(input.purpose, mediaType, input.bytes)
   ) return invalid("resources.manager.invalid-user-media-bytes");
   return resourceAccepted(Object.freeze({
     purpose: input.purpose,
-    fileName: input.fileName,
-    mediaType: input.mediaType,
+    fileName: input.fileName.trim(),
+    mediaType,
     bytes: Uint8Array.from(input.bytes),
   }));
+}
+
+function normalizeMediaType(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.split(";", 1)[0]!.trim().toLowerCase();
+  return /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(normalized) ? normalized : null;
 }
 
 function hasCompatibleUserMediaMagic(
@@ -757,7 +767,8 @@ function hasCompatibleUserMediaMagic(
   mediaType: string,
   bytes: Uint8Array,
 ): boolean {
-  const type = mediaType.toLowerCase();
+  const type = normalizeMediaType(mediaType);
+  if (type === null) return false;
   if (purpose === "cover" || purpose === "stage-backdrop") {
     if (type === "image/png") return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
     if (type === "image/jpeg" || type === "image/jpg") return bytes[0] === 0xff && bytes[1] === 0xd8;

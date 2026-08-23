@@ -194,7 +194,8 @@ function BuiltInSimulatorWindow() {
     await emit(SIMULATOR_WINDOW_CLOSED_EVENT, {
       requestId,
       status: transportFailure === null ? "closed" : "rejected",
-      capability: transportFailure,
+      capability: transportFailure === null ? null : "app.simulator.transport-failed",
+      boundary: transportFailure,
     });
     if (mobile) navigateBackToEditor();
     else await getCurrentWebviewWindow().close();

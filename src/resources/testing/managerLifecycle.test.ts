@@ -72,6 +72,7 @@ export async function runResourceManagerLifecycleTests(): Promise<void> {
   if (explicitLease.status !== "accepted") return;
   equal(text(await explicitLease.value.readBytes("simulator:skin", "atlas.bin")), "network-two");
   await explicitLease.value.release();
+  await explicitLease.value.release();
   const secondLeaseResult = await manager.acquireSnapshot(secondReceipt.value.snapshotId);
   equal(secondLeaseResult.status, "accepted");
   if (secondLeaseResult.status !== "accepted") return;

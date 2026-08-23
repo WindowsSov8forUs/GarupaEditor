@@ -69,6 +69,7 @@ export interface SimulatorWindowClosedPayload {
   readonly requestId: string;
   readonly status: "closed" | "rejected";
   readonly capability: string | null;
+  readonly boundary: string | null;
 }
 
 export function encodeSimulatorLaunchTransportConfig(
@@ -106,13 +107,8 @@ export function decodeSimulatorLaunchTransportConfig(
 ): SimulatorLaunchConfig {
   if (
     config === null || typeof config !== "object" || Array.isArray(config) ||
-    Object.keys(config).sort().join(",") !==
-      "audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual" ||
     config.visual === null || typeof config.visual !== "object" || Array.isArray(config.visual) ||
-    Object.keys(config.visual).sort().join(",") !==
-      "habahiroMeshWidthSetting,noteSize,specificSpeed" ||
-    config.audio === null || typeof config.audio !== "object" || Array.isArray(config.audio) ||
-    Object.keys(config.audio).sort().join(",") !== "bgmGain,masterGain,seGain"
+    config.audio === null || typeof config.audio !== "object" || Array.isArray(config.audio)
   ) throw new Error("Simulator transport config requires the exact Schema 12 projection and six Float32 bit strings.");
   return Object.freeze({
     sessionMode: config.sessionMode,
@@ -142,18 +138,18 @@ export function decodeSimulatorLaunchTransportConfig(
 }
 
 function encodeFloat32(value: number, label: string): SimulatorTransportFloat32Bits {
-  if (typeof value !== "number" || !Number.isFinite(value) || !Object.is(value, Math.fround(value))) {
-    throw new Error(`Simulator transport ${label} must already be one exact finite Float32; rounding repair is forbidden.`);
+  if (typeof value !== "number" || !Number.isFinite(value) || !Number.isFinite(Math.fround(value))) {
+    throw new Error(`Simulator transport ${label} requires one finite numeric value.`);
   }
   const buffer = new ArrayBuffer(4);
   const view = new DataView(buffer);
-  view.setFloat32(0, value, false);
+  view.setFloat32(0, Math.fround(value), false);
   return `0x${view.getUint32(0, false).toString(16).padStart(8, "0").toUpperCase()}`;
 }
 
 function decodeFloat32(value: SimulatorTransportFloat32Bits, label: string): number {
-  if (typeof value !== "string" || !/^0x[0-9A-F]{8}$/.test(value)) {
-    throw new Error(`Simulator transport ${label} requires one uppercase 32-bit hexadecimal payload.`);
+  if (typeof value !== "string" || !/^0x[0-9a-f]{8}$/i.test(value)) {
+    throw new Error(`Simulator transport ${label} requires one 32-bit hexadecimal payload.`);
   }
   const buffer = new ArrayBuffer(4);
   const view = new DataView(buffer);

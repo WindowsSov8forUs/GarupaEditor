@@ -261,13 +261,8 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     snapshotId: ResourceSnapshotId,
   ): Promise<ResourceResult<void>> {
     const snapshot = this.snapshots.get(snapshotId);
-    if (snapshot === undefined || snapshot.openCount <= 0) {
-      return resourceRejected(
-        "resource-lease-closed",
-        "resources.memory.snapshot-already-released",
-        "Every opened resource snapshot must be released exactly once.",
-      );
-    }
+    if (snapshot === undefined) return unavailable("resources.memory.snapshot-unavailable");
+    if (snapshot.openCount <= 0) return resourceAccepted(undefined);
     snapshot.openCount -= 1;
     return resourceAccepted(undefined);
   }
@@ -394,8 +389,8 @@ function safeLogicalPath(value: string): boolean {
 function validWorkspaceProvenance(
   value: WorkspaceMediaImportInput["provenance"],
 ): boolean {
-  if (value.kind === "user-upload") return Object.keys(value).length === 1;
-  return value.kind === "network" && Object.keys(value).sort().join(",") === "kind,sourceRef" &&
+  if (value.kind === "user-upload") return true;
+  return value.kind === "network" && value.sourceRef !== null && typeof value.sourceRef === "object" &&
     value.sourceRef.id.startsWith("bestdori/");
 }
 

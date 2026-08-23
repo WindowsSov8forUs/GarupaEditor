@@ -19,8 +19,8 @@ export async function runWorkspaceMediaTests(): Promise<void> {
 
   const first = await manager.importWorkspaceMedia({
     purpose: "bgm",
-    fileName: "first.mp3",
-    mediaType: "audio/mpeg",
+    fileName: "  first.mp3  ",
+    mediaType: " Audio/MPEG; charset=binary ",
     bytes: id3("first"),
   });
   const duplicate = await manager.importWorkspaceMedia({
@@ -31,6 +31,8 @@ export async function runWorkspaceMediaTests(): Promise<void> {
   });
   if (first.status === "rejected" || duplicate.status === "rejected") throw new Error("workspace import rejected");
   equal(first.value.ref.id.startsWith("workspace/current/chart-media/bgm/"), true);
+  equal(first.value.files?.[0]?.mediaType, "audio/mpeg");
+  equal(first.value.title, "first.mp3");
   equal(duplicate.value.ref.id, first.value.ref.id);
   const listed = await manager.listResources({ origin: "workspace" });
   if (listed.status === "rejected") throw new Error("workspace list rejected");

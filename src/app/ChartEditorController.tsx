@@ -5819,7 +5819,9 @@ function ChartEditorController() {
         if (event.payload?.requestId !== requestId) return;
         releaseHandoff(requestId);
         if (event.payload.status === "rejected") {
-          setStatusMessage(`Simulator失败：${event.payload.capability ?? "未知错误"}`);
+          const capability = event.payload.capability ?? "app.simulator.action-unavailable";
+          const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
+          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
         }
         if (closedUnlisten) {
           void closedUnlisten();

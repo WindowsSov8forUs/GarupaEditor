@@ -35,6 +35,7 @@ export async function runBuiltinCatalogTests(): Promise<void> {
   equal(manager.replaceSelection({ "ui.default-cover": registered.value.ref }).status, "accepted");
   equal(manager.resolveBuiltinSlotUrl("ui.default-cover").status, "rejected");
   equal((await manager.prepareBuiltinDocumentLease(["ui.default-cover"])).status, "accepted");
+  equal((await manager.prepareBuiltinDocumentLease(["ui.default-cover"])).status, "accepted");
   equal(manager.resolveBuiltinSlotUrl("ui.default-cover").status, "accepted");
   equal(loads, 1);
 

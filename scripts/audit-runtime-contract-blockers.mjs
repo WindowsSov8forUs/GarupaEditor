@@ -84,7 +84,9 @@ const audit = {
   schemaVersion: 1,
   policy: "src/runtime-contract-policy.md",
   scope: "production TypeScript/JavaScript, Rust and Android host sources; tests summarized separately",
-  status: entries.length === 0 ? "classified" : "inventory-pending-classification",
+  status: entries.some((entry) => entry.disposition === "pending-classification")
+    ? "inventory-pending-classification"
+    : "classified",
   classificationRule: "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault, or test-only-assertion before final acceptance.",
   summary: {
     productionEntryCount: entries.length,
@@ -151,6 +153,40 @@ function authority(marker) {
   return "integrity-product-or-internal-review";
 }
 function classify(entry) {
+  if (entry.marker === "terminal-close") return {
+    trigger: "runtime detected an unrecoverable consistency failure after ownership transfer",
+    userReachability: "session-internal terminal boundary",
+    disposition: "terminal-fault",
+    productSemanticsId: null,
+    regression: "autonomousModule.test.ts cleanup and single-close assertions",
+  };
+  if (entry.marker === "throw-error") return entry.file.startsWith("src/simulator/")
+    ? {
+        trigger: "internal invariant or backend exception that cannot return a typed partial result",
+        userReachability: "caught internal exception boundary",
+        disposition: "terminal-fault",
+        productSemanticsId: null,
+        regression: "module targeted exception/atomic-cleanup test",
+      }
+    : {
+        trigger: "invalid user file/action or recoverable application dependency failure",
+        userReachability: "action-level host boundary",
+        disposition: "action-unavailable",
+        productSemanticsId: null,
+        regression: "resources/app action-state regression",
+      };
+  if (entry.marker === "rejected-call") {
+    const unavailable = /resource-unavailable|platform-unavailable|catalog-unavailable/.test(entry.source);
+    return {
+      trigger: unavailable
+        ? "required resource/platform capability unavailable before atomic action publication"
+        : "typed invalid input, integrity, ownership, or internal transition rejection",
+      userReachability: unavailable ? "action-level boundary" : "typed internal boundary",
+      disposition: unavailable ? "action-unavailable" : "integrity-failure",
+      productSemanticsId: null,
+      regression: unavailable ? "action remains on stable host test" : "module integrity/atomicity test",
+    };
+  }
   if (entry.marker === "integrity-failure-call" || entry.marker === "integrity-failure-string") return {
     trigger: "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
     userReachability: "typed action-or-session integrity boundary",

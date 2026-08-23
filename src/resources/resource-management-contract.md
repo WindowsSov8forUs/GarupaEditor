@@ -44,7 +44,7 @@ The project-wide runtime policy is [`../runtime-contract-policy.md`](../runtime-
 
 All 43 physical Builtins are explicit non-inlined Vite URL assets. The source manifest remains authoritative across development and production: the bundler may emit a content-hashed filename, but the bytes returned by that URL must retain the manifest length and SHA-256. Production build acceptance hashes `dist/assets` after Vite completes; successful compilation without that post-build byte gate is not a releasable resource payload. A runtime mismatch remains fail-closed and reports the logical path plus expected/observed integrity; the manifest must never be regenerated from transformed output merely to silence the failure.
 
-Consumers own compatibility checks such as image/audio/video decode, required sprite/cue names and package structure. A compatibility rejection does not remove the resource globally or turn its observed digest into a future allowlist. The main program reports the incompatibility and requires another explicit selection.
+Consumers own compatibility checks such as image/audio/video decode, required sprite/cue names and package structure. A compatibility rejection does not remove the resource globally or turn its observed digest into a future allowlist. The main program reports the incompatibility and requires another explicit selection. Object field order, unrelated metadata and lowercase integrity text are normalized into an owned semantic copy; MIME type casing and parameters are normalized before magic/codec validation. Duplicate lease/document-lease release or preparation is idempotent when it names the same already-owned operation, while foreign identities and digest/path mismatches remain rejected.
 
 ## Dependency boundary
 

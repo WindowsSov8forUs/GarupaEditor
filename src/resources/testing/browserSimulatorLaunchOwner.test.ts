@@ -20,7 +20,7 @@ import type { SimulatorLaunchTransportDescriptor } from "../../app/simulator/tra
 export async function runBrowserSimulatorLaunchOwnerTests(): Promise<void> {
   await testAutomaticRunningRouteAndDuplicateBegin();
   await testSuspendedRouteWaitsForOneSynchronousActivation();
-  await testRejectedLaunchAndTerminalFailureRetainHost();
+  await testRejectedLaunchAndTerminalFailureReturnHost();
   await testCancellationBeforeAndDuringAcquisition();
 }
 
@@ -43,7 +43,7 @@ async function testAutomaticRunningRouteAndDuplicateBegin(): Promise<void> {
   assert.equal(harness.platform.disposeCalls, 1);
   assert.equal(harness.audio.closeCalls, 1);
   assert.equal(harness.published.length, 1);
-  assert.deepEqual(harness.published[0], { status: "closed", capability: null });
+  assert.deepEqual(harness.published[0], { status: "closed", capability: null, boundary: null });
   assert.equal(harness.leaveCalls, 1);
 }
 
@@ -71,14 +71,14 @@ async function testSuspendedRouteWaitsForOneSynchronousActivation(): Promise<voi
   await running;
 }
 
-async function testRejectedLaunchAndTerminalFailureRetainHost(): Promise<void> {
+async function testRejectedLaunchAndTerminalFailureReturnHost(): Promise<void> {
   const rejected = createHarness("running", undefined, "launch-rejected");
   await rejected.owner.begin();
   assert.equal(rejected.owner.state.phase, "rejected");
   assert.equal(rejected.owner.state.failure?.capability, "simulator.test.launch-rejected");
   assert.equal(rejected.published.length, 1);
   assert.equal(rejected.published[0]?.status, "rejected");
-  assert.equal(rejected.leaveCalls, 0);
+  assert.equal(rejected.leaveCalls, 1);
   assert.equal(rejected.media.releaseCalls, 1);
   assert.equal(rejected.platform.disposeCalls, 1);
   assert.equal(rejected.audio.closeCalls, 1);
@@ -95,7 +95,7 @@ async function testRejectedLaunchAndTerminalFailureRetainHost(): Promise<void> {
   }));
   await pending;
   assert.equal(terminal.owner.state.phase, "rejected");
-  assert.equal(terminal.leaveCalls, 0);
+  assert.equal(terminal.leaveCalls, 1);
   await terminal.owner.requestExit();
   assert.equal(terminal.leaveCalls, 1);
 }
@@ -137,7 +137,11 @@ function createHarness(
 ) {
   const events: string[] = [];
   const states: BrowserSimulatorLaunchPhase[] = [];
-  const published: Array<{ status: "closed" | "rejected"; capability: string | null }> = [];
+  const published: Array<{
+    status: "closed" | "rejected";
+    capability: string | null;
+    boundary: string | null;
+  }> = [];
   const audio = new FakeAudioContext(audioState, resumeImplementation);
   const media = new FakeMediaLease();
   const platform = new FakePlatformOwner();
