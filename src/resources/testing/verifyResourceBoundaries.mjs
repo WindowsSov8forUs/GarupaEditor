@@ -120,7 +120,7 @@ if (!audioCapabilitySource.includes("pending = this.context.resume()") ||
 }
 for (const marker of [
   "canvas.width", "bottom-left", "PointerEvent", "ManualTouchPhase", "requestAnimationFrame",
-  "safeAreaPolicy", "resources:",
+  "safeAreaPolicy", "backingToPixiX", "app.stage.scale.set", "resources:",
 ]) if (!(browserPlatformSource + simulatorWindowSource).includes(marker)) throw new Error(`Stage 9 browser platform marker missing: ${marker}`);
 for (const marker of [
   "env(safe-area-inset-left,0px)", "calculateMobileSafeArea", "css-safe-area",

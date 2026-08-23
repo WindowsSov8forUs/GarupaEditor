@@ -104,6 +104,13 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
       roundPixels: false,
     });
     const canvas = app.canvas;
+    const backingToPixiX = app.screen.width / canvas.width;
+    const backingToPixiY = app.screen.height / canvas.height;
+    if (
+      !Number.isFinite(backingToPixiX) || !Number.isFinite(backingToPixiY) ||
+      !(backingToPixiX > 0) || !(backingToPixiY > 0)
+    ) throw new Error("Browser Pixi surface cannot map its backing-store viewport to renderer logical coordinates.");
+    app.stage.scale.set(backingToPixiX, backingToPixiY);
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
