@@ -17,8 +17,7 @@ export async function buildSimulatorLaunchRequest(
   const bgm = await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.bgm);
   const jacketSource = await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.jacket);
   const jacketPng = await normalizeJacketPng(jacketSource);
-  const stagePng = await readStageBackdrop(mediaLease);
-  requireRgbaPng(stagePng, "stage backdrop", false);
+  const stagePng = await normalizeStagePng(await readStageBackdrop(mediaLease));
   const mv = descriptor.presentation.mvEnabled
     ? Object.freeze({
         bytes: await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.mv),
@@ -65,12 +64,26 @@ async function readStageBackdrop(lease: ResourceConsumerLease): Promise<Uint8Arr
 }
 
 async function normalizeJacketPng(bytes: Uint8Array): Promise<Uint8Array> {
+  return normalizeSourcePng(bytes, "jacket", Object.freeze({ width: 360, height: 360 }));
+}
+
+async function normalizeStagePng(bytes: Uint8Array): Promise<Uint8Array> {
+  return normalizeSourcePng(bytes, "stage backdrop", null);
+}
+
+async function normalizeSourcePng(
+  bytes: Uint8Array,
+  label: string,
+  fixedSize: Readonly<{ width: number; height: number }> | null,
+): Promise<Uint8Array> {
   const source = inspectPng(bytes);
-  if (source !== null && source.width === 360 && source.height === 360 && source.bitDepth === 8 && source.colorType === 6 && source.interlace === 0) {
-    return Uint8Array.from(bytes);
-  }
+  const sizeMatches = fixedSize === null ||
+    (source?.width === fixedSize.width && source.height === fixedSize.height);
+  if (
+    source !== null && sizeMatches && source.bitDepth === 8 && source.colorType === 6 && source.interlace === 0
+  ) return Uint8Array.from(bytes);
   if (typeof createImageBitmap !== "function") {
-    throw new Error("Jacket conversion requires createImageBitmap; unsupported source images are not passed through.");
+    throw new Error(`Simulator ${label} conversion requires createImageBitmap; unsupported source images are not passed through.`);
   }
   const bitmap = await createImageBitmap(new Blob([Uint8Array.from(bytes)], { type: "image/png" }), {
     imageOrientation: "none",
@@ -78,35 +91,40 @@ async function normalizeJacketPng(bytes: Uint8Array): Promise<Uint8Array> {
     colorSpaceConversion: "none",
   });
   try {
+    const width = fixedSize?.width ?? bitmap.width;
+    const height = fixedSize?.height ?? bitmap.height;
+    if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width <= 0 || height <= 0) {
+      throw new Error(`Simulator ${label} decoded dimensions are invalid.`);
+    }
     let blob: Blob;
     if (typeof OffscreenCanvas === "function") {
-      const canvas = new OffscreenCanvas(360, 360);
+      const canvas = new OffscreenCanvas(width, height);
       const context = canvas.getContext("2d", { alpha: true });
-      if (context === null) throw new Error("Offscreen jacket conversion 2D context is unavailable.");
+      if (context === null) throw new Error(`Offscreen ${label} conversion 2D context is unavailable.`);
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
-      context.clearRect(0, 0, 360, 360);
-      context.drawImage(bitmap, 0, 0, 360, 360);
+      context.clearRect(0, 0, width, height);
+      context.drawImage(bitmap, 0, 0, width, height);
       blob = await canvas.convertToBlob({ type: "image/png" });
     } else if (typeof document !== "undefined") {
       const canvas = document.createElement("canvas");
-      canvas.width = 360;
-      canvas.height = 360;
+      canvas.width = width;
+      canvas.height = height;
       const context = canvas.getContext("2d", { alpha: true });
-      if (context === null) throw new Error("Jacket conversion 2D context is unavailable.");
+      if (context === null) throw new Error(`${label} conversion 2D context is unavailable.`);
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
-      context.clearRect(0, 0, 360, 360);
-      context.drawImage(bitmap, 0, 0, 360, 360);
+      context.clearRect(0, 0, width, height);
+      context.drawImage(bitmap, 0, 0, width, height);
       blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => {
-        if (value === null || value.size === 0) reject(new Error("Jacket PNG encoding failed."));
+        if (value === null || value.size === 0) reject(new Error(`${label} PNG encoding failed.`));
         else resolve(value);
       }, "image/png"));
     } else {
-      throw new Error("No deterministic jacket conversion surface is available.");
+      throw new Error(`No deterministic ${label} conversion surface is available.`);
     }
     const converted = new Uint8Array(await blob.arrayBuffer());
-    requireRgbaPng(converted, "converted jacket", true);
+    requireRgbaPng(converted, `converted ${label}`, fixedSize !== null);
     return converted;
   } finally {
     bitmap.close();
