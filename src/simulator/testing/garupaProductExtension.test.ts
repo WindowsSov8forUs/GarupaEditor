@@ -77,6 +77,11 @@ async function main(): Promise<void> {
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
+  const overflowProjection = layout.garupaProductScene.projectLaneAtCurve(0, Number.MAX_VALUE);
+  assert.equal(overflowProjection.status, "evidence-required");
+  if (overflowProjection.status === "evidence-required") {
+    assert.equal(overflowProjection.capability, "scene.invalid-product-projection");
+  }
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
   const producer = new GarupaProductRenderProducer(
     SESSION,

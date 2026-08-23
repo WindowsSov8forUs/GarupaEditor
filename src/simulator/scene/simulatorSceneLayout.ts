@@ -232,11 +232,15 @@ function createGarupaProductScene(
     const goalY = scene.targetCenterY.value;
     if (curve === 0 && originalLane !== null) return ok(scene.noteStartPositions[originalLane]!);
     if (curve === 1 && originalLane !== null) return ok(scene.goalPositions[originalLane]!);
-    return ok(vector3(
-      Math.fround(startX + Math.fround(curve * Math.fround(goalX - startX))),
-      Math.fround(startY + Math.fround(curve * Math.fround(goalY - startY))),
-      NOTE_WORLD_Z,
-    ));
+    const projectedX = Math.fround(startX + Math.fround(curve * Math.fround(goalX - startX)));
+    const projectedY = Math.fround(startY + Math.fround(curve * Math.fround(goalY - startY)));
+    if (!Number.isFinite(projectedX) || !Number.isFinite(projectedY)) {
+      return reject(
+        "scene.invalid-product-projection",
+        "A finite authored product curve that overflows portable Float32 scene coordinates cannot publish geometry or be clamped.",
+      );
+    }
+    return ok(vector3(projectedX, projectedY, NOTE_WORLD_Z));
   };
   const screenToContinuousLane = (
     position: ManualInputPosition,

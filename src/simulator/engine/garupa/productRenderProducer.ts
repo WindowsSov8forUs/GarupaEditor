@@ -110,8 +110,9 @@ export class GarupaProductRenderProducer {
           node.spanStart + (node.width - 1) / 2,
           curve,
         );
-        if (projected.status !== "ok") return projected;
-        position = projected.value;
+        if (projected.status !== "ok") {
+          if (curve >= 0.002 && curve <= 1.55) return projected;
+        } else position = projected.value;
       }
       samples.set(node.identity, Object.freeze({
         node,
@@ -232,7 +233,8 @@ export class GarupaProductRenderProducer {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;
         const to = samples.get(chain.connectionIdentities[index]!)!;
         const objectId = lineObjectId(chain.identity, index - 1);
-        const lineVisible = segmentVisible(from.curve, to.curve);
+        const lineVisible = from.position !== null && to.position !== null &&
+          segmentVisible(from.curve, to.curve);
         if (lineVisible) {
           if (!plannedCreated.has(objectId)) {
             commands.push(command(commands.length, {
