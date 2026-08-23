@@ -95,13 +95,29 @@ if (/from\s+["']\.\/data\/.*(?:type-rip|judge-rip)/.test(skinLoaderSource)) {
   throw new Error("skinLoader imports a fixed network candidate map");
 }
 const simulatorWindowSource = readFileSync(join(sourceRoot, "app", "BuiltInSimulatorWindow.tsx"), "utf8");
+const audioCapabilitySource = readFileSync(join(sourceRoot, "app", "simulator", "browserAudioContextCapability.ts"), "utf8");
+const launchOwnerSource = readFileSync(join(sourceRoot, "app", "simulator", "browserSimulatorLaunchOwner.ts"), "utf8");
 const browserPlatformSource = readFileSync(join(sourceRoot, "app", "simulator", "browserSimulatorPlatform.ts"), "utf8");
 const simulatorTransportSource = readFileSync(join(sourceRoot, "app", "simulator", "transportContracts.ts"), "utf8");
 const mobileSafeAreaSource = readFileSync(join(sourceRoot, "app", "simulator", "mobileSafeArea.ts"), "utf8");
 for (const marker of [
   "installProductionAutonomousSimulatorPlatform", "launchSimulatorModule", "buildSimulatorLaunchRequest",
-  "AudioContext", "mediaSnapshotId", "createSimulatorResourceCapability",
-]) if (!simulatorWindowSource.includes(marker)) throw new Error(`Stage 9 desktop window marker missing: ${marker}`);
+  "createBrowserAudioContextCapability", "BrowserSimulatorLaunchOwner", "mediaSnapshotId",
+  "createSimulatorResourceCapability", "awaiting-host-activation", "activateFromPointer",
+]) if (!(simulatorWindowSource + launchOwnerSource + audioCapabilitySource).includes(marker)) {
+  throw new Error(`Stage 9 automatic desktop window marker missing: ${marker}`);
+}
+for (const forbidden of [
+  "点击开始以解锁音频", "正在解锁音频并验证资源", "setStarted(", "const [started",
+  "audioContext.resume()", ">开始</button>", "Simulator运行中", ">关闭</button>",
+]) if (simulatorWindowSource.includes(forbidden)) {
+  throw new Error(`Stage 9 window retains a non-original ordinary start/running overlay: ${forbidden}`);
+}
+if (!audioCapabilitySource.includes("pending = this.context.resume()") ||
+  !audioCapabilitySource.includes('context.state === "running" ? "running" : "user-activation-required"') ||
+  /(?:createOscillator\(|HTMLAudioElement|new Audio\(|dispatchEvent\(|silent\.mp3)/.test(audioCapabilitySource)) {
+  throw new Error("AudioContext capability no longer provides the narrow initial-suspended synchronous pointer gate");
+}
 for (const marker of [
   "canvas.width", "bottom-left", "PointerEvent", "ManualTouchPhase", "requestAnimationFrame",
   "safeAreaPolicy", "resources:",
