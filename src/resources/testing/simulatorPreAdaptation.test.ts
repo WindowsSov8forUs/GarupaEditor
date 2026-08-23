@@ -2,6 +2,7 @@ import { buildSimulatorLaunchDescriptor } from "../../app/simulator/buildSimulat
 import { buildSimulatorLaunchRequest } from "../../app/simulator/buildSimulatorLaunchRequest";
 import { buildSimulatorPreAdaptedConfig } from "../../app/simulator/preAdaptationContract";
 import { calculateMobileSafeArea } from "../../app/simulator/mobileSafeArea";
+import { createSimulatorSessionRecipe } from "../../simulator/assembly/sessionRecipe";
 import { ApplicationResourceManager } from "../applicationResourceManager";
 import type { ResourceObjectUrlFactory } from "../backend";
 import { MemoryApplicationResourceBackend } from "../memoryResourceBackend";
@@ -40,7 +41,7 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
     requestedWindowHeight: 720,
   });
   const descriptor = prepared.descriptor;
-  equal(descriptor.schemaVersion, 1);
+  equal(descriptor.schemaVersion, 2);
   equal(descriptor.isFullLength, false);
   equal(descriptor.config.sessionMode, "live");
   equal(descriptor.config.inputMode, "auto");
@@ -50,6 +51,12 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(descriptor.config.visibleTapLaneEffect, true);
   equal(descriptor.config.mvDarkness, 20);
   equal(Object.keys(descriptor.config).sort().join(","), "audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual");
+  equal(descriptor.config.visual.specificSpeed, "0x411B3333");
+  equal(descriptor.config.visual.noteSize, "0x42C80000");
+  equal(descriptor.config.visual.habahiroMeshWidthSetting, "0x3F800000");
+  equal(descriptor.config.audio.masterGain, "0x3F800000");
+  equal(descriptor.config.audio.bgmGain, "0x3F4CCCCD");
+  equal(descriptor.config.audio.seGain, "0x3F19999A");
   const serialized = JSON.stringify(descriptor);
   for (const forbidden of ["http://", "https://", "DataURL", "sha256", "offsetMs", "mvAlphaPercent", "effectEnable", "colorAssist", "autoStart"]) {
     equal(serialized.includes(forbidden), false);
@@ -65,6 +72,12 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(request.presentation.jacketPng.byteLength, 29);
   equal(request.presentation.stage.backdropPng.byteLength, 29);
   equal(request.presentation.mv, null);
+  equal(request.config.visual.specificSpeed, Math.fround(9.7));
+  equal(request.config.audio.bgmGain, Math.fround(0.8));
+  equal(request.config.audio.seGain, Math.fround(0.6));
+  const recipe = createSimulatorSessionRecipe(request);
+  equal(recipe.status, "rejected");
+  if (recipe.status === "rejected") equal(recipe.failure.capability, "simulator.presentation.invalid-png");
   await prepared.handoffLease.release();
 
   const originalStage = await manager.registerBuiltin({

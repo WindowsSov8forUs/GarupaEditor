@@ -2,6 +2,7 @@ import { parseGarupaChartJson } from "../../chart";
 import type { ResourceConsumerLease } from "../../resources/contracts";
 import type { SimulatorModuleLaunchRequest } from "../../simulator/public/contracts";
 import {
+  decodeSimulatorLaunchTransportConfig,
   SIMULATOR_MEDIA_SLOTS,
   type SimulatorLaunchTransportDescriptor,
 } from "./transportContracts";
@@ -37,7 +38,7 @@ export async function buildSimulatorLaunchRequest(
       stage: Object.freeze({ backdropPng: stagePng }),
       mv,
     }),
-    config: descriptor.config,
+    config: decodeSimulatorLaunchTransportConfig(descriptor.config),
   });
 }
 

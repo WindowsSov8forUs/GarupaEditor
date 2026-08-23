@@ -10,7 +10,7 @@
 
 原作Live设置另以Reverse `aae7e4fe`和Primary MoveNext纠正`50bc40b6`关闭：Public破坏性升级为Schema 12，恢复Primary/Secondary判定调整、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness。逐字段行为、资源、产品投影和排除项见[`original-live-settings-contract.md`](./original-live-settings-contract.md)。
 
-主程序统一资源迁移与Stage 9基于Reverse `f461b287`实施：production不再有Shared Store、`simulator-static`或固定网络资源SHA资格门；桌面独立窗口和移动route均经Schema 12、application Snapshot/Lease、Pixi/WebAudio/browser input/surface composition调用唯一Public入口。Windows/Vite、desktop bundle、Android release/debug build及Android主Activity启动已通过；锁屏PIN阻断了当前设备上的Simulator route点击/触摸/扬声器验收，因此capability仍诚实保持`authorized-in-progress`。
+主程序统一资源迁移与Stage 9基于Reverse `f461b287`实施：production不再有Shared Store、`simulator-static`或固定网络资源SHA资格门；桌面独立窗口和移动route均经Schema 12、application Snapshot/Lease、Pixi/WebAudio/browser input/surface composition调用唯一Public入口。应用内部transport Schema 2仅把六个已验证Float32编码为大端bits字符串以避开Tauri event JSON数值扰动，播放器按位还原后才构建不变的Public Schema 12；不执行round/clamp或增加Public字段。Windows/Vite、desktop bundle、Android release/debug build及Android主Activity启动已通过；锁屏PIN阻断了当前设备上的Simulator route点击/触摸/扬声器验收，因此capability仍诚实保持`authorized-in-progress`。
 
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |

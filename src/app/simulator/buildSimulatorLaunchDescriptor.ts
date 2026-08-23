@@ -9,6 +9,7 @@ import type { ChartMediaResources } from "../../resources/selections";
 import { buildSimulatorGarupaChart } from "./chartAdapter";
 import { buildSimulatorPreAdaptedConfig } from "./preAdaptationContract";
 import {
+  encodeSimulatorLaunchTransportConfig,
   SIMULATOR_MEDIA_SLOTS,
   type SimulatorLaunchTransportDescriptor,
 } from "./transportContracts";
@@ -81,7 +82,7 @@ export async function buildSimulatorLaunchDescriptor(
     throw new Error(`${handoff.failure.capability}: ${handoff.failure.boundary}`);
   }
   const descriptor: SimulatorLaunchTransportDescriptor = Object.freeze({
-    schemaVersion: 1,
+    schemaVersion: 2,
     requestId: requestIdentity(),
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),
@@ -98,7 +99,7 @@ export async function buildSimulatorLaunchDescriptor(
       mvEnabled: input.mvEnabled,
       mvMusicStartDelayMilliseconds: mvDelay,
     }),
-    config,
+    config: encodeSimulatorLaunchTransportConfig(config),
     requestedWindow: Object.freeze({ width, height }),
   });
   return Object.freeze({ descriptor, handoffLease: handoff.value });

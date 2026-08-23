@@ -129,6 +129,18 @@ for (const marker of [
 for (const forbidden of ["SimulatorAppController", "SimulatorLaunchPayload", "DataURL", "sourceUrl", "sha256", "provider"] ) {
   if ((simulatorWindowSource + simulatorTransportSource).includes(forbidden)) throw new Error(`Stage 9 transport/window contains forbidden legacy/resource field: ${forbidden}`);
 }
+for (const marker of [
+  "readonly schemaVersion: 2;", "encodeSimulatorLaunchTransportConfig",
+  "decodeSimulatorLaunchTransportConfig", "SimulatorTransportFloat32Bits", "view.getFloat32",
+]) if (!simulatorTransportSource.includes(marker)) {
+  throw new Error(`Stage 9 Float32-stable transport marker missing: ${marker}`);
+}
+const decodeTransportStart = simulatorTransportSource.indexOf("export function decodeSimulatorLaunchTransportConfig");
+const encodeTransportStart = simulatorTransportSource.indexOf("function encodeFloat32");
+if (decodeTransportStart < 0 || encodeTransportStart < decodeTransportStart ||
+  simulatorTransportSource.slice(decodeTransportStart, encodeTransportStart).includes("Math.fround")) {
+  throw new Error("Stage 9 transport decodes exact Float32 bits without rounding repair");
+}
 for (const path of walk(join(sourceRoot, "app")).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
   const source = readFileSync(path, "utf8");
   if (/app_data[\\/]|resources[\\/]library|\.join\(["']library/.test(source)) {
