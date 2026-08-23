@@ -180,7 +180,7 @@ function testCommandOracle(): void {
         multipleDirectionalFlickNoteCount: 0,
         rangeLength: 1,
       });
-      actual.push({ case: input, expected: { error: result.status } });
+      actual.push({ case: input, expected: { error: oracleFailureName(result.status) } });
       continue;
     }
     const resultName = input.result as keyof typeof NoteResultType;
@@ -197,7 +197,7 @@ function testCommandOracle(): void {
       rangeLength: input.rangeLength ?? 1,
     });
     if (routed.status !== "ok") {
-      actual.push({ case: input, expected: { error: routed.status } });
+      actual.push({ case: input, expected: { error: oracleFailureName(routed.status) } });
     } else {
       actual.push({
         case: input,
@@ -211,6 +211,10 @@ function testCommandOracle(): void {
   }
   assert.deepEqual(actual, commandOracle.cases);
   assert.equal(sha256Canonical(actual), commandOracle.projectionSha256);
+}
+
+function oracleFailureName(status: string): string {
+  return status === "integrity-failure" ? "evidence-required" : status;
 }
 
 function producerExpected(input: any): unknown {
@@ -571,7 +575,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
     backend.snapshot().frames[1]?.commands.map((command) => command.kind),
     ["clear-all", "suppress-until-replay"],
   );
-  assert.equal(coordinator.rejectParticleOnlyReturnTime().status, "evidence-required");
+  assert.equal(coordinator.rejectParticleOnlyReturnTime().status, "integrity-failure");
   frame = requireOk(coordinator.preflightAdvance(1 / 60, false), "suppressed empty advance");
   assert.equal(frame.commitDomain().status, "ok");
   assert.equal(frame.commitRender().status, "ok");
@@ -590,7 +594,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
   }, backends);
   const engine = requireOk(created, "later-failure engine");
   requireOk(engine.initialize(), "later-failure initialize");
-  assert.equal(engine.step(1 / 60).status, "evidence-required");
+  assert.equal(engine.step(1 / 60).status, "integrity-failure");
   assert.equal(failingBackend.snapshot().frames.length, 0);
   assert.equal(requireOk(engine.snapshot(), "later-failure snapshot").managers.state, "faulted");
   assert.equal(engine.dispose().status, "ok");
@@ -630,8 +634,8 @@ async function testWholeEngineReplay(): Promise<void> {
   for (let frame = 0; frame < 300; frame += 1) requireOk(replay.step(1 / 60), `replay future ${frame}`);
   assert.equal(requireOk(replay.snapshot(), "future snapshot").particleBackend?.frames.length, 480);
   const returned = await replay.moveTime("return-five");
-  assert.equal(returned.status, "evidence-required");
-  if (returned.status === "evidence-required") {
+  assert.equal(returned.status, "integrity-failure");
+  if (returned.status === "integrity-failure") {
     assert.equal(returned.capability, "score-life.move-time-without-record-owner");
   }
   const unchanged = requireOk(replay.snapshot(), "unchanged snapshot");
@@ -640,8 +644,8 @@ async function testWholeEngineReplay(): Promise<void> {
   assert.equal(replay.dispose().status, "ok");
   assert.equal(replay.dispose().status, "ok");
   const afterDispose = replay.step(1 / 60);
-  assert.equal(afterDispose.status, "evidence-required");
-  if (afterDispose.status === "evidence-required") {
+  assert.equal(afterDispose.status, "integrity-failure");
+  if (afterDispose.status === "integrity-failure") {
     assert.equal(afterDispose.capability, "timeline.replay.after-dispose");
   }
 }
@@ -660,16 +664,16 @@ class TraceParticleRenderer implements SimulatorParticleRendererBackend {
   ) {}
 
   async prepare(): Promise<ParticleOperationResult<void>> {
-    return particleRejected("evidence-required", "test.already-ready", "test renderer is already ready");
+    return particleRejected("integrity-failure", "test.already-ready", "test renderer is already ready");
   }
 
   preflightFrame(request: ParticleRendererFrameRequest): ParticleOperationResult<ParticleRendererFrameBatch> {
     if (request.frame === this.failFrame) {
-      return particleRejected("evidence-required", "test.later-render-preflight", "fixed later renderer preflight fault");
+      return particleRejected("integrity-failure", "test.later-render-preflight", "fixed later renderer preflight fault");
     }
     if (this.state !== "ready" || request.sessionId !== this.sessionId || this.pending !== null ||
       (this.nextFrame !== null && request.frame !== this.nextFrame)) {
-      return particleRejected("evidence-required", "test.invalid-render-frame", "invalid test render frame");
+      return particleRejected("integrity-failure", "test.invalid-render-frame", "invalid test render frame");
     }
     this.pending = Object.freeze({
       sessionId: this.sessionId,
@@ -680,7 +684,7 @@ class TraceParticleRenderer implements SimulatorParticleRendererBackend {
   }
 
   commitFrame(batch: ParticleRendererFrameBatch): ParticleOperationResult<void> {
-    if (batch !== this.pending) return particleRejected("evidence-required", "test.foreign-render-batch", "foreign render batch");
+    if (batch !== this.pending) return particleRejected("integrity-failure", "test.foreign-render-batch", "foreign render batch");
     this.pending = null;
     this.nextFrame = batch.frame + 1;
     this.lastSampleCount = batch.sampleCount;
@@ -688,7 +692,7 @@ class TraceParticleRenderer implements SimulatorParticleRendererBackend {
   }
 
   discardFrame(batch: ParticleRendererFrameBatch): ParticleOperationResult<void> {
-    if (batch !== this.pending) return particleRejected("evidence-required", "test.foreign-render-discard", "foreign render discard");
+    if (batch !== this.pending) return particleRejected("integrity-failure", "test.foreign-render-discard", "foreign render discard");
     this.pending = null;
     return particleAccepted(undefined);
   }

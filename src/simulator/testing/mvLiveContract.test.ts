@@ -195,8 +195,8 @@ async function testHostBinding(): Promise<void> {
     movie: { sessionId: "movie:rehearsal", musicStartDelayMilliseconds: -2180 },
     startupDirection: { scene: null, liveStartVoiceCue: null, purpose: "initial" },
   }, createRecordingSimulatorBackends(undefined, undefined, undefined, rehearsalMovie));
-  assert.equal(rejected.status, "evidence-required");
-  if (rejected.status === "evidence-required") assert.equal(rejected.capability, "movie.session.invalid-host-binding");
+  assert.equal(rejected.status, "integrity-failure");
+  if (rejected.status === "integrity-failure") assert.equal(rejected.capability, "movie.session.invalid-host-binding");
   assert.equal(rehearsalMovie.dispose().status, "accepted");
 
   let releaseAttempted = false;
@@ -214,7 +214,7 @@ async function testHostBinding(): Promise<void> {
   }, createRecordingSimulatorBackends(undefined, undefined, undefined, cleanupMovie)));
   requireOk(cleanupEngine.initialize());
   const disposed = cleanupEngine.dispose();
-  assert.equal(disposed.status, "evidence-required");
+  assert.equal(disposed.status, "integrity-failure");
   assert.equal(releaseAttempted, true);
   assert.equal(cleanupMovie.snapshot().state, "disposed");
 }

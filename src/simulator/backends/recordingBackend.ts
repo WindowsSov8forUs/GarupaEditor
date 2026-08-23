@@ -1,4 +1,4 @@
-import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, type SimulatorResult } from "../engine/evidence";
 import type { ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorRendererBackend } from "./renderingContracts";
@@ -54,7 +54,7 @@ class UnavailableManualInputGeometryPort implements SimulatorManualInputGeometry
   resolveButton(
     _position: ManualInputPosition,
   ): SimulatorResult<ButtonTypeValue | null> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual-input.geometry-resolver-unavailable",
       ["D03", "D04", "D15", "MJ03", "MJ26"],
       "The recording backend does not invent a lane from a raw screen position.",
@@ -64,7 +64,7 @@ class UnavailableManualInputGeometryPort implements SimulatorManualInputGeometry
   screenToWorld(
     _position: ManualInputPosition,
   ): SimulatorResult<ManualInputWorldPosition> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual-input.screen-to-world-unavailable",
       ["D07", "MJ08", "MJ09"],
       "The recording backend does not invent a Unity Camera projection.",
@@ -75,7 +75,7 @@ class UnavailableManualInputGeometryPort implements SimulatorManualInputGeometry
     readonly cameraScale: number;
     readonly gameplayScale: number;
   }> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual-input.distance-normalization-unavailable",
       ["D07", "MJ08", "MJ09"],
       "The recording backend does not invent the original camera and gameplay scales.",
@@ -86,7 +86,7 @@ class UnavailableManualInputGeometryPort implements SimulatorManualInputGeometry
     _position: ManualInputPosition,
     _buttonTypes: readonly ButtonTypeValue[],
   ): SimulatorResult<boolean> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual-input.target-containment-unavailable",
       ["D09", "D10", "MJ14", "MJ20"],
       "The recording backend does not invent target-button collision geometry.",

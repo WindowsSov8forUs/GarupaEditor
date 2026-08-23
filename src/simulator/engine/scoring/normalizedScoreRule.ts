@@ -1,5 +1,5 @@
 import type { NoteResultTypeValue } from "../data/manualJudgement";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { SimulatorScoringUnit } from "./contracts";
 
 export const NORMALIZED_SCORE_BASE = 10_000_000;
@@ -60,7 +60,7 @@ export function calculateNormalizedScoreContribution(
   autoLive: boolean,
 ): SimulatorResult<number> {
   if (!validUnit(unit) || !Number.isInteger(result) || result < 0 || result > 4) {
-    return evidenceRequired(
+    return integrityFailure(
       "score.normalized.invalid-contribution-input",
       [],
       "CS-V1 contribution requires one plan-owned positive quota, ordinal and represented judgement result.",
@@ -72,7 +72,7 @@ export function calculateNormalizedScoreContribution(
   ));
   return isUInt32(contribution) && contribution <= unit.perfectQuota
     ? ok(contribution)
-    : evidenceRequired(
+    : integrityFailure(
         "score.normalized.contribution-out-of-range",
         [],
         "CS-V1 normalized judgement contribution must remain an unsigned integer no greater than its plan-owned Perfect quota.",

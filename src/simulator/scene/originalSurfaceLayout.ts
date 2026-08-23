@@ -1,5 +1,5 @@
 import type { SimulatorSurfaceRect, SimulatorSurfaceState } from "../platform/surfaceContracts";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 
 export const ORIGINAL_SCREEN_WIDTH_BASE = 1334;
 export const ORIGINAL_SCREEN_HEIGHT_BASE = 750;
@@ -342,5 +342,5 @@ function exactFloat32(value: unknown): value is number {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(capability, ["ML-E01", "ML-E02", "ML-E03", "ML-E04"], boundary);
+  return integrityFailure(capability, ["ML-E01", "ML-E02", "ML-E03", "ML-E04"], boundary);
 }

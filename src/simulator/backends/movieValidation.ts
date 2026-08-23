@@ -182,7 +182,7 @@ function invalidMetadata(): MovieOperationResult<never> {
 }
 function invalidProfile(): MovieOperationResult<never> {
   return movieRejected(
-    "evidence-required",
+    "integrity-failure",
     "movie.validation.invalid-profile",
     "Movie backend preparation requires one exact immutable simulator-derived profile with no caller codec, MIME, duration, dimensions or identity fields.",
   );

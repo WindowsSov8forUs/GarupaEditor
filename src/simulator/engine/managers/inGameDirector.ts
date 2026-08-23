@@ -1,4 +1,4 @@
-import { evidenceRequired, type SimulatorResult } from "../evidence";
+import { integrityFailure, type SimulatorResult } from "../evidence";
 import { ok } from "../evidence";
 import type { SimulatorFrameRateBackend } from "../../backends/contracts";
 import { InGameManager } from "./inGameManager";
@@ -55,7 +55,7 @@ export function validateDirectorDeltaTime(
   deltaTimeSeconds: number,
 ): SimulatorResult<void> {
   if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
-    return evidenceRequired(
+    return integrityFailure(
       "director.invalid-delta-time",
       ["E22", "E25"],
       "The portable frame trigger must provide a finite non-negative delta to the recovered InGameDirector.Update boundary.",

@@ -87,7 +87,7 @@ function testCurrentDomainsAndIdentity(): void {
       highFrequencyMode: false,
       ...DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS,
       ...invalid,
-    }).status, "evidence-required");
+    }).status, "integrity-failure");
   }
 }
 

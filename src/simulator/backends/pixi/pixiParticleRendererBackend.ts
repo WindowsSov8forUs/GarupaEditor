@@ -567,7 +567,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   }
 
   private reject(capability: string, boundary: string): ParticleOperationResult<never> {
-    return particleRejected("evidence-required", capability, boundary);
+    return particleRejected("integrity-failure", capability, boundary);
   }
 }
 
@@ -581,13 +581,13 @@ function buildSystemBindings(
       const definition = bundle.profiles[system.profile];
       const renderer = definition === undefined ? undefined : bundle.rendererProfiles[definition.renderer];
       if (definition === undefined || renderer === undefined) {
-        return particleRejected("evidence-required", "particle.pixi.missing-system-renderer", "Every system must resolve its current profile and renderer.");
+        return particleRejected("integrity-failure", "particle.pixi.missing-system-renderer", "Every system must resolve its current profile and renderer.");
       }
       if (!renderer.m_Enabled) continue;
       const reference = renderer.m_Materials.find((material) => material !== null);
       const material = reference === null || reference === undefined ? undefined : materials.get(reference.name);
       if (material === undefined || material.texture === null) {
-        return particleRejected("evidence-required", "particle.pixi.missing-visible-material", "Every enabled current renderer requires its exact material and texture.");
+        return particleRejected("integrity-failure", "particle.pixi.missing-visible-material", "Every enabled current renderer requires its exact material and texture.");
       }
       const uvKey = definition.modules.UVModule;
       const uv = uvKey === undefined ? null : bundle.moduleProfiles.UVModule?.[uvKey] ?? null;
@@ -605,7 +605,7 @@ function buildSystemBindings(
   }
   return bindings.size === 104
     ? particleAccepted(bindings)
-    : particleRejected("evidence-required", "particle.pixi.renderer-binding-count-mismatch", "Exactly 104 of the 120 current systems have enabled renderer bindings.");
+    : particleRejected("integrity-failure", "particle.pixi.renderer-binding-count-mismatch", "Exactly 104 of the 120 current systems have enabled renderer bindings.");
 }
 
 function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult<ParticlePixiSceneProfile> {
@@ -625,7 +625,7 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
       particleFloat32FromBits(anchor.position.yBits) === null ||
       particleFloat32FromBits(anchor.position.zBits) === null)) {
     return particleRejected(
-      "evidence-required",
+      "integrity-failure",
       "particle.pixi.invalid-scene-profile",
       "Particle projection requires the current landscape orthographic height/2 PPU and the 15 ordered engine-authored anchors; unsupported Button_07 fails closed without a fixed-device viewport fallback.",
     );

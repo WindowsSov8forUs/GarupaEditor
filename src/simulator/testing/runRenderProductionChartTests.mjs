@@ -169,7 +169,7 @@ async function verifyHabahiroCompleteReplay() {
   let frames = 0;
   for (; frames<12000 && failure===null; frames++) {
     const result = engine.step(1/60);
-    if (result.status === "evidence-required") failure = result;
+    if (result.status === "integrity-failure") failure = result;
     const commands = renderer.drainCommandSnapshot();
     commandCount += commands.length;
     for (const [localIndex, command] of commands.entries()) {
@@ -269,8 +269,8 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     }) },
     rendering: { sessionId: "habahiro-production-replay", resources: { noteAtlasLogicalAssetId: assetId, directionalAtlasLogicalAssetId: assetId }, ordinaryNoteScene: scene },
   }, createRecordingSimulatorBackends(renderer));
-  equal(legacyCreation.status, "evidence-required", "legacy degraded profile is not a production engine mode");
-  equal(legacyCreation.status === "evidence-required" ? legacyCreation.capability : null,
+  equal(legacyCreation.status, "integrity-failure", "legacy degraded profile is not a production engine mode");
+  equal(legacyCreation.status === "integrity-failure" ? legacyCreation.capability : null,
     "render.note.non-ordinary-scene-lifecycle-unimplemented", "legacy rejection capability");
   equal(renderer.snapshot().objectCount, 0, "legacy rejection creates no render owner");
   ok(renderer.dispose(), "dispose rejected legacy renderer");
@@ -329,7 +329,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   const ordinaryCommandDigest = createHash("sha256");
   for (let frame=0; frame<7200 && ordinaryFailure===null; frame++) {
     const result = ordinaryEngine.step(1/30);
-    if (result.status === "evidence-required") ordinaryFailure = result;
+    if (result.status === "integrity-failure") ordinaryFailure = result;
     const frameCommands = ordinaryRenderer.drainCommandSnapshot();
     ordinaryCommandCount += frameCommands.length;
     for (const command of frameCommands) {

@@ -105,7 +105,7 @@ assert.equal(ordinary.snapshot().initialization.consumedScoringUnitCount, 0);
 const committedMiss = requireOk(ordinary.preflightReflect(batch(1, miss, 0, -1)));
 assert.equal(ordinary.commitReflect(committedMiss).status, "ok");
 assert.equal(ordinary.snapshot().initialization.consumedScoringUnitCount, 1);
-assert.equal(ordinary.preflightReflect(batch(2, miss, 0, -1)).status, "evidence-required");
+assert.equal(ordinary.preflightReflect(batch(2, miss, 0, -1)).status, "integrity-failure");
 assert.equal(ordinary.snapshot().record.score, 0, "duplicate rejection precedes mutation");
 
 const great = requireOk(ordinary.freezeOneFrame(judgement(sources[1]!, 3), sources[1]!));
@@ -141,7 +141,7 @@ for (const [score, rank] of [
   [6_749_999, LiveClearRank.A], [6_750_000, LiveClearRank.S],
   [8_999_999, LiveClearRank.S], [9_000_000, LiveClearRank.SS],
 ] as const) assert.equal(requireOk(gauge.update(score)).currentGaugeColorRank, rank);
-assert.equal(gauge.update(BASE + 4).status, "evidence-required");
+assert.equal(gauge.update(BASE + 4).status, "integrity-failure");
 assert.equal(calculateNormalizedScoreMaximum(0), null);
 
 testFullChartAutoMaximum();
@@ -195,9 +195,9 @@ function testConstructedChartScoringAdapterFamilies(): void {
   const multipleId = requireOk(adapterPlan.resolve(multiple[0]!, "head")).id;
   assert.equal(requireOk(adapterPlan.resolve(multiple[1]!, "head")).id, multipleId);
   assert.equal(requireOk(adapterPlan.resolve(multiple[2]!, "head")).id, multipleId);
-  assert.equal(adapterPlan.resolve(hidden, "intermediate").status, "evidence-required");
-  assert.equal(adapterPlan.resolve(visual, "head").status, "evidence-required");
-  assert.equal(adapterPlan.resolve(laneChange, "head").status, "evidence-required");
+  assert.equal(adapterPlan.resolve(hidden, "intermediate").status, "integrity-failure");
+  assert.equal(adapterPlan.resolve(visual, "head").status, "integrity-failure");
+  assert.equal(adapterPlan.resolve(laneChange, "head").status, "integrity-failure");
 }
 
 function testFullChartAutoMaximum(): void {
@@ -344,7 +344,7 @@ function batch(
   });
 }
 
-function requireOk<T>(value: { status: "ok"; value: T } | { status: "evidence-required"; capability: string }): T {
+function requireOk<T>(value: { status: "ok"; value: T } | { status: "integrity-failure"; capability: string }): T {
   if (value.status !== "ok") throw new Error(value.capability);
   return value.value;
 }

@@ -168,7 +168,7 @@ async function main(): Promise<void> {
 }
 
 function f32(value: number) { return requireOk(createRenderFloat32(Math.fround(value))); }
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly capability: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly capability: string }): T {
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }

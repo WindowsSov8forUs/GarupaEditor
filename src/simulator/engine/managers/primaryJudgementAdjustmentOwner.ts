@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { StartupAudioPurpose } from "../audio/startupAudioOwner";
 
 export type PrimaryJudgementAdjustmentPhase =
@@ -126,8 +126,8 @@ export class PrimaryJudgementAdjustmentOwner {
     });
   }
 
-  private fault(capability: string, boundary: string): ReturnType<typeof evidenceRequired> {
+  private fault(capability: string, boundary: string): ReturnType<typeof integrityFailure> {
     this.phaseValue = "faulted";
-    return evidenceRequired(capability, ["OLS-R01", "OLS-R02"], boundary);
+    return integrityFailure(capability, ["OLS-R01", "OLS-R02"], boundary);
   }
 }

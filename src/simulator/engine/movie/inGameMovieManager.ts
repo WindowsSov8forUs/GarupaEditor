@@ -3,7 +3,7 @@ import type {
   MovieOperationResult,
   SimulatorMovieBackend,
 } from "../../backends/movieContracts";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export const InGameMusicVideoState = {
   None: 0,
@@ -228,7 +228,7 @@ export function mapMovieResult<T>(
 ): SimulatorResult<T> {
   return result.status === "accepted"
     ? ok(result.value)
-    : evidenceRequired(
+    : integrityFailure(
         result.failure.capability,
         ["MVL-E41", "MVL-E42", "MVL-R01", "MVL-R02", "MVL-P01", "MVL-P02"],
         result.failure.boundary,
@@ -239,8 +239,8 @@ function isExactNonNegativeFloat32(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && Object.is(value, Math.fround(value));
 }
 
-function rejected(capability: string, boundary: string): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+function rejected(capability: string, boundary: string): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     capability,
     ["MVL-E41", "MVL-E42", "MVL-E65", "MVL-E66", "MVL-R01", "MVL-R03", "MVL-R04"],
     boundary,

@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { OriginalLiveSettings } from "./originalLiveSettings";
 
 export type SimulatorSessionMode = "live" | "rehearsal";
@@ -95,8 +95,8 @@ export class InGameCalculatedData {
   }
 }
 
-function invalidMode(): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+function invalidMode(): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     "runtime.invalid-mode-identity",
     ["LR-E01", "LR-E02", "LR-R01", "LR-R02"],
     "Runtime mode identity must be the exact immutable derivation of independent Live/Rehearsal and Manual/Auto axes; no axis may infer or overwrite the other.",

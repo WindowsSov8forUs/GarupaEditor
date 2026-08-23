@@ -94,7 +94,7 @@ function validateJudgement(judgement) {
     judgement.getSecondsWithDistance(Math.fround(1), Math.fround(0)),
     judgement.judgeManualNote(0, Number.NaN, Math.fround(0), bpm),
   ]) {
-    assert.equal(invalid.status, "evidence-required");
+    assert.equal(invalid.status, "integrity-failure");
   }
   console.log(`manual judgement tests passed: MJ02=${mj02.steps.length} invalid=3`);
 }

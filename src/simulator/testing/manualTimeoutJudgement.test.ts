@@ -8,7 +8,7 @@ import {
 import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import { JudgeTiming, NoteResultType, type ManualJudgementRequest } from "../engine/data/manualJudgement";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 import { NoteState, type ManualNoteTouchInput } from "../engine/notes/noteBase";
@@ -36,7 +36,7 @@ function floatFromBits(bits: number): number {
   view.setUint32(0, bits, true); return view.getFloat32(0, true);
 }
 class Geometry implements SimulatorManualInputGeometryBackend {
-  resolveButton() { return evidenceRequired("test.unused", ["MJ23"], "unused") }
+  resolveButton() { return integrityFailure("test.unused", ["MJ23"], "unused") }
   screenToWorld(position: ManualInputPosition) {
     return ok(Object.freeze({ x: position.x, y: position.y, z: Math.fround(0) }));
   }
@@ -90,11 +90,11 @@ function createLong() {
   note.setLifecycleCallbacks({ onActivate() {}, onDeactivate() {} });
   note.registerAutoLiveRuntime({ isAutoPlay: () => manualMode.isAutoPlay,
     getAdjustedMusicPosition: () => adjusted,
-    submitJudgement: () => evidenceRequired("test.auto", ["MJ16"], "unused") });
+    submitJudgement: () => integrityFailure("test.auto", ["MJ16"], "unused") });
   note.registerManualRuntime({
     getAdjustedMusicPosition: () => adjusted, getCurrentBpm: () => Math.fround(120),
     getJudgementAdjustValueB: () => 0,
-    judgeSlide: () => evidenceRequired("test.slide", ["MJ16"], "unused"),
+    judgeSlide: () => integrityFailure("test.slide", ["MJ16"], "unused"),
     geometry: new Geometry(), beginJudgementTransaction: () => controller.createManualJudgementTransaction(),
     submitJudgement: (request) => immediate(controller, request),
   });
@@ -148,7 +148,7 @@ function createSlide() {
   note.setLifecycleCallbacks({ onActivate() {}, onDeactivate() {} });
   note.registerAutoLiveRuntime({ isAutoPlay: () => manualMode.isAutoPlay,
     getAdjustedMusicPosition: () => adjusted,
-    submitJudgement: () => evidenceRequired("test.auto", ["MJ23"], "unused") });
+    submitJudgement: () => integrityFailure("test.auto", ["MJ23"], "unused") });
   note.registerManualRuntime({
     getAdjustedMusicPosition: () => adjusted, getCurrentBpm: () => Math.fround(120),
     getJudgementAdjustValueB: () => 0, judgeSlide: (child, music) => slideManager.judge(child, music),
@@ -234,7 +234,7 @@ test("MJ24 transaction最多五槽且第六preflight不留下partial mutation", 
   const sixth = transaction.preflight({ noteInformation: sources[5]!, noteType: 0,
     rawResult: NoteResultType.Perfect, rawTiming: JudgeTiming.None,
     absolutePosition: sources[5]!.absolutePos });
-  assert(sixth.status === "evidence-required" && sixth.capability === "one-frame.pool-exhausted",
+  assert(sixth.status === "integrity-failure" && sixth.capability === "one-frame.pool-exhausted",
     "sixth manual reservation fails closed");
   equal(controller.snapshot().inUseContainerIds.length, 0, "all reservations remain mutation-free");
   transaction.abort();

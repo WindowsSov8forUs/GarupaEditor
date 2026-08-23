@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -128,7 +128,7 @@ export class NoteDataBMSBuilder {
       this.sortResultDictionary();
       return ok(undefined);
     } catch (error) {
-      return evidenceRequired(
+      return integrityFailure(
         "chart-construction.invalid-bms",
         [
           ChartConstructionEvidence.E01,

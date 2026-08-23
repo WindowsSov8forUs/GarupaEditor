@@ -3,7 +3,7 @@ export type MovieMime = "video/mp4" | "video/webm";
 
 export type MovieOperationStatus =
   | "accepted"
-  | "evidence-required"
+  | "integrity-failure"
   | "movie-resource-integrity"
   | "movie-resource-decode"
   | "movie-platform-unavailable"

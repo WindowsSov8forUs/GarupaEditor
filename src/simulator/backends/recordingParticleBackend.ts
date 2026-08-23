@@ -258,7 +258,7 @@ export class RecordingSimulatorParticleBackend implements SimulatorParticleBacke
   }
 
   private reject(capability: string, boundary: string): ParticleOperationResult<never> {
-    return particleRejected("evidence-required", capability, boundary);
+    return particleRejected("integrity-failure", capability, boundary);
   }
 }
 
@@ -357,5 +357,5 @@ function freezeFrameSnapshot(frame: ParticleFrameSnapshot): ParticleFrameSnapsho
 }
 
 function transitionRejected(capability: string, boundary: string): ParticleOperationResult<never> {
-  return particleRejected("evidence-required", capability, boundary);
+  return particleRejected("integrity-failure", capability, boundary);
 }

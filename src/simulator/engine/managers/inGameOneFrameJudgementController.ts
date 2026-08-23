@@ -27,7 +27,7 @@ import {
   type ManualJudgementTransaction,
 } from "../data/manualJudgement";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -139,7 +139,7 @@ export class InGameOneFrameJudgementController {
 
   getUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
     if (!this.initializedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.get-before-initialize",
         ["R02", "R03"],
         "InitOneFrameDataList must establish the fixed five controller-owned slots before acquisition.",
@@ -147,7 +147,7 @@ export class InGameOneFrameJudgementController {
     }
     const container = this.containers.find((candidate) => !candidate.inUse);
     if (container === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.pool-exhausted",
         ["R02", "R03"],
         "All five native OneFrameData slots are in use; the sixth entry cannot resize, overwrite, or clamp the pool.",
@@ -164,14 +164,14 @@ export class InGameOneFrameJudgementController {
     owner: AutoLiveJudgementOwner,
   ): SimulatorResult<void> {
     if (typeof owner !== "function") {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-judgement-owner",
         ["R02", "R03", "R10", "R12", "R16"],
         "The judgement owner must be the NoteManager-owned source resolver.",
       );
     }
     if (this.autoLiveJudgementOwner !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.judgement-owner-already-registered",
         ["R02", "R03", "R10", "R12", "R16"],
         "The controller accepts one NoteManager-owned judgement source and Multiple count resolver.",
@@ -185,7 +185,7 @@ export class InGameOneFrameJudgementController {
     owner: ManualJudgementOwner,
   ): SimulatorResult<void> {
     if (typeof owner !== "function" || this.manualJudgementOwner !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-or-duplicate-manual-owner",
         ["D05", "D14", "D15", "MJ02", "MJ26"],
         "The controller accepts exactly one NoteManager-owned manual judgement source resolver.",
@@ -197,7 +197,7 @@ export class InGameOneFrameJudgementController {
 
   registerBusinessOwner(owner: OneFrameBusinessOwner): SimulatorResult<void> {
     if (typeof owner !== "function" || this.businessOwner !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-or-duplicate-business-owner",
         ["SLS-D02", "SLS-D18"],
         "The controller accepts one session-bound Score/Life business projection owner.",
@@ -219,7 +219,7 @@ export class InGameOneFrameJudgementController {
     return {
       preflight: (request) => {
         if (aborted || finished) {
-          return evidenceRequired(
+          return integrityFailure(
             "one-frame.manual-transaction-closed",
             ["D14", "D15", "MJ25", "MJ26"],
             "A manual OneFrame preflight transaction cannot be reused after abort or finish.",
@@ -233,7 +233,7 @@ export class InGameOneFrameJudgementController {
         if (payload.status !== "ok") return payload;
         const container = available[plans.size];
         if (container === undefined) {
-          return evidenceRequired(
+          return integrityFailure(
             "one-frame.pool-exhausted",
             ["R02", "R03", "D15"],
             "Manual preflight cannot reserve beyond the fixed five native OneFrameData slots.",
@@ -292,7 +292,7 @@ export class InGameOneFrameJudgementController {
       ? this.ownedHandles.get(handle)
       : undefined;
     if (container === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.foreign-container",
         ["R02", "R03"],
         `Container ${String(handle?.containerId)} is not owned by this controller.`,
@@ -302,7 +302,7 @@ export class InGameOneFrameJudgementController {
   }
 
   setupBusinessData(): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       "one-frame.setup-business-data",
       ["E21", "E24", "R02"],
       "Gameplay projection is supplied only by the registered session owner during judgement setup; callers cannot inject a second payload.",
@@ -321,14 +321,14 @@ export class InGameOneFrameJudgementController {
 
   preflightReflectOneFrameData(): SimulatorResult<OneFrameReflectPlan | null> {
     if (!this.initializedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.reflect-before-initialize",
         ["R02", "R03"],
         "ReflectOneFrameData requires the initialized fixed five-slot pool.",
       );
     }
     if (this.pendingReflectPlan !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.reflect-plan-already-pending",
         ["R02", "R03", "D15"],
         "Only one OneFrame reflection capability may be pending for the current container state.",
@@ -340,7 +340,7 @@ export class InGameOneFrameJudgementController {
     for (const container of this.containers) {
       if (!container.inUse) continue;
       if (container.payload === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "one-frame.in-use-without-payload",
           ["R02", "R03"],
           `Slot ${container.slot} is marked IsUse without a confirmed Setup payload.`,
@@ -356,7 +356,7 @@ export class InGameOneFrameJudgementController {
 
     const firstEntry = entries[0];
     if (firstEntry === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.exists-without-entry",
         ["R02", "R03", "D15"],
         "ExistsOneFrameData cannot be true without at least one committed payload.",
@@ -380,7 +380,7 @@ export class InGameOneFrameJudgementController {
     plan: OneFrameReflectPlan,
   ): SimulatorResult<OneFrameJudgementBatch> {
     if (this.pendingReflectPlan !== plan) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-reflect-capability",
         ["R02", "R03", "D15"],
         "Only the exact pending OneFrame reflection capability may commit.",
@@ -390,7 +390,7 @@ export class InGameOneFrameJudgementController {
       const container = this.containers[entry.slot];
       if (container?.containerId !== entry.containerId ||
           !container.inUse || container.payload === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "one-frame.reflect-source-changed",
           ["R02", "R03", "D15"],
           "Every reserved OneFrame container must remain committed and unchanged until reflection commit.",
@@ -417,7 +417,7 @@ export class InGameOneFrameJudgementController {
 
   discardReflectOneFrameData(plan: OneFrameReflectPlan): SimulatorResult<void> {
     if (this.pendingReflectPlan !== plan) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-reflect-discard-capability",
         ["R02", "R03", "D15"],
         "Only the exact pending OneFrame reflection capability may be discarded.",
@@ -492,7 +492,7 @@ export class InGameOneFrameJudgementController {
       multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
     const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
-    if (business?.status === "evidence-required") return business;
+    if (business?.status === "integrity-failure") return business;
     const adjustedResult = business?.value.adjustedResult ?? judgement.adjustedResult;
     return ok(Object.freeze({
       ...judgement,
@@ -508,7 +508,7 @@ export class InGameOneFrameJudgementController {
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
     if (container.inUse || container.payload !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.container-already-staged",
         ["R02", "R03"],
         `Container ${container.containerId} already contains a committed OneFrameData payload.`,
@@ -531,7 +531,7 @@ export class InGameOneFrameJudgementController {
   ): SimulatorResult<OneFrameDataPayload> {
     const ownership = this.manualJudgementOwner?.(request.noteInformation) ?? null;
     if (ownership === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.manual-source-ownership-lost",
         ["D14", "D15", "MJ25", "MJ26"],
         "Manual business preflight requires the same NoteManager-owned source used by request validation.",
@@ -561,7 +561,7 @@ export class InGameOneFrameJudgementController {
         request.multipleDirectionalFlickNoteCount ?? 0,
     });
     const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
-    if (business?.status === "evidence-required") return business;
+    if (business?.status === "integrity-failure") return business;
     const projectedResult = business?.value.adjustedResult ?? judgement.adjustedResult;
     return ok(Object.freeze({
       ...judgement,
@@ -621,7 +621,7 @@ export class InGameOneFrameJudgementController {
       !Array.isArray(source.buttonTypesArray) ||
       source.buttonTypesArray.length === 0
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "one-frame.invalid-manual-payload",
         ["D05", "D07", "D08", "D14", "D15", "MJ02", "MJ08", "MJ09", "MJ10", "MJ26"],
         "Manual Setup accepts only the NoteManager-owned source and its family-derived result, timing, note type, position and Multiple count projection.",
@@ -781,7 +781,7 @@ function validateAutoLiveJudgementRequest(
   ownership: AutoLiveJudgementOwnership | null,
 ): SimulatorResult<void> {
   if (!isClosedAutoLiveJudgementRequest(request, ownership)) {
-    return evidenceRequired(
+    return integrityFailure(
       "one-frame.invalid-auto-live-payload",
       ["R02", "R03", "R04"],
       "Auto Live Setup accepts only the closed owner-generated note identity, phase, note type, position and Multiple callback-count combinations before committing IsUse and payload state.",

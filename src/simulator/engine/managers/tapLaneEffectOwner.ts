@@ -1,7 +1,7 @@
 import type { RenderColor, RenderFloat32, RenderOrderingKey, RenderVector2, RenderVector3 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { OneFrameJudgementBatch } from "../data/oneFrameData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import {
   RenderCommandProducer,
   RenderOwnerTransaction,
@@ -229,12 +229,12 @@ function f32(value: number): RenderFloat32 {
   if (result.status !== "ok") throw new Error(`${result.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);
   return result.value;
 }
-function unavailable(): ReturnType<typeof evidenceRequired> {
+function unavailable(): ReturnType<typeof integrityFailure> {
   return rejected("render.tap-lane-effect.owner-unavailable", "Tap lane effect transactions require one initialized fixed owner.");
 }
-function repeated(state: string): ReturnType<typeof evidenceRequired> {
+function repeated(state: string): ReturnType<typeof integrityFailure> {
   return rejected("render.tap-lane-effect.repeated-transaction", `Tap lane effect transaction cannot commit or discard from ${state}.`);
 }
-function rejected(capability: string, boundary: string): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(capability, ["OLS-R05", "OLS-P01"], boundary);
+function rejected(capability: string, boundary: string): ReturnType<typeof integrityFailure> {
+  return integrityFailure(capability, ["OLS-R05", "OLS-P01"], boundary);
 }

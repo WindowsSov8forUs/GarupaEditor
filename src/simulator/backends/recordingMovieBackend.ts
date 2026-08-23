@@ -238,6 +238,6 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
     return this.reject(`movie.recording.invalid-${operation}-state`, `Movie ${operation} requires ${expected} state and has no implicit correction.`);
   }
   private reject(capability: string, boundary: string): MovieOperationResult<never> {
-    return movieRejected("evidence-required", capability, boundary);
+    return movieRejected("integrity-failure", capability, boundary);
   }
 }

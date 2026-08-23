@@ -6,7 +6,7 @@ import type {
   GarupaChartJsonSimpleNote,
   GarupaChartJsonSlideConnection,
 } from "../../chart";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface GarupaChartExtensionSummary {
   readonly svItemCount: number;
@@ -197,7 +197,7 @@ function isFiniteNonnegative(value: unknown): value is number {
 }
 
 function invalid<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired(
+  return integrityFailure(
     "simulator.garupa-json.invalid-chart",
     ["GJP-D01"],
     boundary,

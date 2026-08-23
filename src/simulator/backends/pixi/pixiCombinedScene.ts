@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import { PIXI_MV_LIVE_STAGE_LABEL } from "./pixiMvLiveBackend";
-import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../../engine/evidence";
 import type { PixiStartupDirectionScene } from "./pixiStartupDirectionScene";
 import type { StartupDirectionSceneState } from "../../scene/startupDirectionScene";
 
@@ -48,7 +48,7 @@ export function createPixiCombinedScene(
       startupScene.backgroundRoot.destroyed || startupScene.foregroundRoot.destroyed
     ))
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.pixi.invalid-combined-scene-stages",
       ["OSR-GAP-01", "OSR-E12340", "OSR-E12341", "OSR-E12342", "OSR-E12343", "OSR-E12344"],
       "The current ordinary scene accepts exactly one live unparented particle stage followed by one live unparented Note/HUD stage; labels, identity or ownership cannot be inferred or repaired.",
@@ -69,7 +69,7 @@ export function createPixiCombinedScene(
     ordinaryStage.removeFromParent();
     startupScene?.foregroundRoot.removeFromParent();
     root.destroy({ children: false });
-    return evidenceRequired(
+    return integrityFailure(
       "render.pixi.combined-scene-attach-failed",
       ["OSR-GAP-01"],
       "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
@@ -91,7 +91,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
 
   applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void> {
     if (this.disposed || this.startupScene === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.pixi.startup-state-without-scene",
         ["SD05", "SD08", "SD09"],
         "Startup visibility can be applied only while the combined scene owns the startup roots.",
@@ -134,7 +134,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       this.root.destroy({ children: false });
       return ok(undefined);
     } catch {
-      return evidenceRequired(
+      return integrityFailure(
         "render.pixi.combined-scene-dispose-threw",
         ["OSR-GAP-01", "OSR-E12343", "OSR-E12344"],
         "Combined-scene disposal releases the root and both stage parent relations exactly once without destroying backend-owned stages.",

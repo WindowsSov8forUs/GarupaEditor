@@ -94,7 +94,7 @@ function testContractCopyAndExactShape(): void {
     [{ type: "Directional", beat: 1, lane: 1, width: 1, direction: "Up" }],
     [{ type: "Hidden", beat: 1, lane: 1, width: 1 }],
   ]) {
-    assert.equal(copyAndFreezeGarupaChartJson(invalid).status, "evidence-required");
+    assert.equal(copyAndFreezeGarupaChartJson(invalid).status, "integrity-failure");
   }
 }
 
@@ -128,7 +128,7 @@ function testPositionBridge(): void {
   assert.equal(requireOk(garupaBeatToAbsolutePosition(4)), 192);
   assert.equal(requireOk(garupaBeatToAbsolutePosition(8)), 384);
   for (const invalid of [-1, Number.NaN, Number.POSITIVE_INFINITY, (0x80000000 + 1) / 48]) {
-    assert.equal(garupaBeatToAbsolutePosition(invalid).status, "evidence-required");
+    assert.equal(garupaBeatToAbsolutePosition(invalid).status, "integrity-failure");
   }
 }
 
@@ -370,8 +370,8 @@ function testTimingGroupAxis(): void {
   const windows = requireOk(axis.findVisibilityWindows("#1", 192, 600, 200, 0, 3000));
   assert.ok(windows.length >= 1);
   assert.ok(windows.some((window) => window.fromMilliseconds <= 1500 && window.toMilliseconds >= 1500));
-  assert.equal(axis.axisAtMilliseconds("#missing", 0).status, "evidence-required");
-  assert.equal(axis.positionToMilliseconds(Number.NaN).status, "evidence-required");
+  assert.equal(axis.axisAtMilliseconds("#missing", 0).status, "integrity-failure");
+  assert.equal(axis.positionToMilliseconds(Number.NaN).status, "integrity-failure");
 }
 
 function testFailureClosure(): void {
@@ -383,12 +383,12 @@ function testFailureClosure(): void {
   for (const candidate of constructFailures) {
     const copied = copyAndFreezeGarupaChartJson(candidate);
     if (copied.status !== "ok") continue;
-    assert.equal(constructChartFromGarupaChartJson(copied.value.chart).status, "evidence-required");
+    assert.equal(constructChartFromGarupaChartJson(copied.value.chart).status, "integrity-failure");
   }
   assert.equal(copyAndFreezeGarupaChartJson([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Slide", connections: [] },
-  ]).status, "evidence-required");
+  ]).status, "integrity-failure");
 }
 
 function testCanonicalBmsDifferentialProjection(): void {
@@ -875,7 +875,7 @@ function parse(input: unknown): GarupaChartJson {
   return requireOk(copyAndFreezeGarupaChartJson(input)).chart;
 }
 
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly boundary: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly boundary: string }): T {
   if (result.status !== "ok") throw new Error(result.boundary);
   return result.value;
 }

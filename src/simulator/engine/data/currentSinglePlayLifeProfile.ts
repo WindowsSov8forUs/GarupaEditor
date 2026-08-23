@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { ScoreLifeStateProfile } from "./scoreLifeState";
 
 const ORDINARY_SINGLE_PLAY_INITIAL_LIFE = 1000;
@@ -9,7 +9,7 @@ export function createCurrentSinglePlayLifeProfile(
   isFullLength: unknown,
 ): SimulatorResult<ScoreLifeStateProfile["life"]> {
   if (typeof isFullLength !== "boolean") {
-    return evidenceRequired(
+    return integrityFailure(
       "score-life.invalid-full-length-classification",
       ["PLP-E03", "PLP-E04"],
       "The ordinary single-song Life owner requires the explicit resolved musicDataType == full boolean and never infers it from duration, BMS, filename or play mode.",

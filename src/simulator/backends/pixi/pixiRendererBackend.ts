@@ -11,7 +11,7 @@ import {
   type DestroyOptions,
 } from "pixi.js";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../../engine/evidence";
@@ -207,7 +207,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       layout.surface.viewportHeight !== projection.viewportHeight ||
       layout.camera.pixelsPerWorldUnit !== projection.pixelsPerWorldUnit
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.pixi.invalid-surface-layout-binding",
         ["ML-E01", "ML-E03"],
         "The renderer binds exactly one original surface layout after resource prepare and before any scene object, command batch or overlay.",
@@ -237,7 +237,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     });
     if (lineStar === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
       Object.values(difficultyFrames).some((texture) => texture === undefined)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.startup-direction.common-resources-unavailable",
         ["SD02", "SD16"],
         "The startup scene requires the hash-validated line-star, current UICommon rows and current sgm font without a texture or system-font fallback.",
@@ -258,14 +258,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     surfaceLayout: OriginalSurfaceLayout,
   ): SimulatorResult<PixiInGameControlOverlay> {
     if (this.surfaceLayout !== surfaceLayout) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.rehearsal-control.surface-layout-mismatch",
         ["ML-E03"],
         "Rehearsal controls must consume the exact original surface layout already bound to the renderer session.",
       );
     }
     if (this.controlOverlayRoot !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.rehearsal-control.duplicate-owner",
         ["LR-E03"],
         "One renderer session owns at most one Rehearsal control overlay.",
@@ -301,7 +301,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.rehearsal-control.resources-unavailable",
         ["LR-E03", "LR-E04", "LR-E05"],
         "Rehearsal controls require the ready current rhythm-game-ui atlas, exact sgm font and positive session duration; no fallback is rendered.",
@@ -449,7 +449,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
     if (this.surfaceLayout === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.pixi.surface-layout-unbound",
         ["ML-E01", "ML-E03"],
         "Pixi commands cannot mutate scene objects before the session-owned original surface layout is bound.",
@@ -921,7 +921,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       if (object === undefined) continue;
       if (command.kind === "bind-resource") {
         if (!validateTypedRenderResourceBinding(command, object.role, this.profile)) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.pixi.invalid-typed-resource-binding",
             ["RPR-D14", "RPR-D17", "PR35"],
             "Pixi rejects a mismatched logical asset, exact atlas key or object role before backend preflight or scene mutation.",
@@ -930,7 +930,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         if (command.binding === "sprite") object.spriteExactKey = command.exactKey;
       } else if (command.kind === "set-hud") {
         if (!validateTypedRenderHudCommand(command, object.role)) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.pixi.invalid-typed-hud-state",
             ["RPR-D14", "RPR-D17", "PR35"],
             "Pixi rejects a malformed discriminated HUD payload before backend preflight or scene mutation.",
@@ -946,7 +946,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             object.spriteExactKey,
             this.profile.ordinaryVisibleProfile,
           )) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.pixi.invalid-typed-animation-route",
             ["RPR-D14", "RPR-D17", "PR35"],
             "Pixi rejects a mismatched animation owner or Sprite binding before backend preflight or scene mutation.",
@@ -1637,7 +1637,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   }
 
   updateTimeline(timelineSeconds: number): SimulatorResult<void> {
-    if (this.disposed) return evidenceRequired("render.in-game-control.after-dispose", ["LR-C03", "PAU-B01"], "Disposed InGame controls reject timeline publication.");
+    if (this.disposed) return integrityFailure("render.in-game-control.after-dispose", ["LR-C03", "PAU-B01"], "Disposed InGame controls reject timeline publication.");
     if (this.timeText === null) return ok(undefined);
     const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
     if (formatted.status !== "ok") return formatted;
@@ -1648,7 +1648,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   }
 
   setMoveTimeInProgress(active: boolean): SimulatorResult<void> {
-    if (this.disposed || typeof active !== "boolean") return evidenceRequired("render.in-game-control.invalid-move-state", ["LR-E11"], "Only the live control owner may publish an explicit MoveTime availability state.");
+    if (this.disposed || typeof active !== "boolean") return integrityFailure("render.in-game-control.invalid-move-state", ["LR-E11"], "Only the live control owner may publish an explicit MoveTime availability state.");
     this.moveTimeInProgress = active;
     this.applyAvailability();
     return ok(undefined);
@@ -1656,7 +1656,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
 
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void> {
     if (this.disposed || snapshot.surfaceRevision !== this.surfaceRevision || snapshot.surfaceRevision !== snapshot.layout.surfaceRevision) {
-      return evidenceRequired("render.pause-control.invalid-state", ["PAU-B01", "PAU-B05"], "Pause visuals consume one live scene snapshot bound to the exact initial surface revision.");
+      return integrityFailure("render.pause-control.invalid-state", ["PAU-B01", "PAU-B05"], "Pause visuals consume one live scene snapshot bound to the exact initial surface revision.");
     }
     applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
     this.pauseButton.visible = snapshot.playable && snapshot.state === "playing";
@@ -3255,7 +3255,7 @@ function copyPixiCommand(command: RenderCommand): RenderCommand {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["RPR-D14", "RPR-D15", "RPR-D17", "PR35", "PR36", "PR37"],
     boundary,

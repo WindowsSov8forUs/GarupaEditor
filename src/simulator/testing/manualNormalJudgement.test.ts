@@ -10,7 +10,7 @@ import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import { GameState } from "../engine/data/inGameState";
 import { JudgeTiming, NoteResultType } from "../engine/data/manualJudgement";
 import { ManualTouchPhase, type ManualInputButtonResolution } from "../engine/data/manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -114,7 +114,7 @@ function createNormalGraph(sources: readonly NoteInformation[]): NormalGraph {
     0,
     new InGameCalculatedData(manualPlayMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
-    () => evidenceRequired("test.auto-live-not-used", ["D05"], "not used"),
+    () => integrityFailure("test.auto-live-not-used", ["D05"], "not used"),
     undefined,
     () => oneFrame.createManualJudgementTransaction(),
   );

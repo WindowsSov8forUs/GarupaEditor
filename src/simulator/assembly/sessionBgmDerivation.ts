@@ -29,7 +29,7 @@ export async function deriveSessionBgmResource(
     preflight === null || typeof preflight !== "object" ||
     typeof preflight.inspect !== "function") {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.audio.invalid-bgm-byte-derivation-input",
       "Session BGM derivation requires one non-empty Uint8Array and one explicit audio inspection capability.",
     );
@@ -166,16 +166,16 @@ function invalidMp3(boundary: string): SimulatorAssemblyResult<never> {
 }
 
 function mapAudioFailure(
-  status: "evidence-required" | "audio-resource-unavailable" |
+  status: "integrity-failure" | "audio-resource-unavailable" |
     "audio-resource-integrity" | "audio-resource-decode" |
     "audio-context-unavailable" | "audio-backend-fault" | "terminal-disposed",
-): "evidence-required" | "resource-unavailable" | "resource-integrity" |
+): "integrity-failure" | "resource-unavailable" | "resource-integrity" |
   "resource-decode" | "platform-unavailable" | "launch-failed" {
   if (status === "audio-resource-unavailable") return "resource-unavailable";
   if (status === "audio-resource-integrity") return "resource-integrity";
   if (status === "audio-resource-decode") return "resource-decode";
   if (status === "audio-context-unavailable") return "platform-unavailable";
-  return status === "evidence-required" ? "evidence-required" : "launch-failed";
+  return status === "integrity-failure" ? "integrity-failure" : "launch-failed";
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

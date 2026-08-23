@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSurfaceRect {
   readonly x: number;
@@ -91,5 +91,5 @@ function exactPositiveFloat32(value: unknown): value is number {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(capability, ["ML-E01", "ML-R05"], boundary);
+  return integrityFailure(capability, ["ML-E01", "ML-R05"], boundary);
 }

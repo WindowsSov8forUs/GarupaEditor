@@ -15,7 +15,7 @@ import {
 } from "../chart/types";
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
 import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export interface SimulatorAudioSessionInput {
   readonly sessionId: string;
@@ -134,7 +134,7 @@ export class AudioCommandProducer {
   pollBackendFault(): SimulatorResult<void> {
     const snapshot = this.backend.snapshot();
     if (snapshot.fault !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         `audio.audio-backend-fault.${snapshot.fault.capability}`,
         [],
         snapshot.fault.boundary,
@@ -435,7 +435,7 @@ export class AudioCommandProducer {
   pollBgmNaturalEnd(): SimulatorResult<boolean> {
     const readState = this.backend.getBgmPlaybackState;
     if (readState === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "audio.bgm-natural-end-observer-missing",
         [],
         "Natural live completion requires a backend-owned BGM end observer; chart duration inference and silent fallback are forbidden.",
@@ -519,7 +519,7 @@ export class AudioCommandProducer {
 export function mapAudioResult<T>(result: AudioOperationResult<T>): SimulatorResult<T> {
   return result.status === "accepted"
     ? ok(result.value)
-    : evidenceRequired(
+    : integrityFailure(
         `audio.${result.status}.${result.failure.capability}`,
         [],
         result.failure.boundary,
@@ -631,5 +631,5 @@ function isUnitGain(bits: string): boolean {
 }
 
 function rejected<T = never>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

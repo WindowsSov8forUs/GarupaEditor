@@ -23,7 +23,7 @@ import {
   type NoteBatchInformation,
   type NoteInformation,
 } from "../engine/chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { registerConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
 import {
   freezeGarupaProductChartProfile,
@@ -778,14 +778,14 @@ function isRuntimeBpm(value: number): boolean {
 }
 
 function invalidPosition<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired("simulator.garupa-json.invalid-position", ["GJP-E01", "GJP-E02", "GJP-D01"], boundary);
+  return integrityFailure("simulator.garupa-json.invalid-position", ["GJP-E01", "GJP-E02", "GJP-D01"], boundary);
 }
 function invalidBpm<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired("simulator.garupa-json.invalid-bpm", ["GJP-E05", "GJP-E06", "GJP-E07"], boundary);
+  return integrityFailure("simulator.garupa-json.invalid-bpm", ["GJP-E05", "GJP-E06", "GJP-E07"], boundary);
 }
 function invalidLane<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired("simulator.garupa-json.invalid-lane-span", [], boundary);
+  return integrityFailure("simulator.garupa-json.invalid-lane-span", [], boundary);
 }
 function unsupportedSlide<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired("simulator.garupa-json.unsupported-slide-shape", [], boundary);
+  return integrityFailure("simulator.garupa-json.unsupported-slide-shape", [], boundary);
 }

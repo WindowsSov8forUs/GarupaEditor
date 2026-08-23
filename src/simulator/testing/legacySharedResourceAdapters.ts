@@ -32,7 +32,7 @@ import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/curren
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
 import type { AudioResourceProvider } from "../backends/audioContracts";
-import { evidenceRequired, ok } from "../engine/evidence";
+import { integrityFailure, ok } from "../engine/evidence";
 import type {
   SelectedAudioSeResource,
   SelectedHabahiroResource,
@@ -85,7 +85,7 @@ export async function prepareSharedOrdinaryRenderResources(
   }
   const validated = validateAndFreezeRenderProfile(parsed as RenderResourceProfile);
   if (validated.status !== "ok") {
-    return rejected("evidence-required", validated.capability, validated.boundary);
+    return rejected("integrity-failure", validated.capability, validated.boundary);
   }
   if (validated.value.packIdentity !== CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY ||
     validated.value.fidelity.mode !== "ordinary" ||
@@ -398,7 +398,7 @@ export function createSharedHabahiroTransport(
     async read(url: string) {
       const resourceKey = byUrl.get(url);
       if (resourceKey === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.habahiro.shared-store-url-not-selected",
           ["HAB-A01", "HAB-A02"],
           "The autonomous HAB transport accepts only URLs mapped by the internal pinned selection.",
@@ -408,7 +408,7 @@ export function createSharedHabahiroTransport(
       try {
         read = await store.read(resourceKey);
       } catch {
-        return evidenceRequired(
+        return integrityFailure(
           "render.habahiro.shared-store-threw",
           ["HAB-A01", "HAB-A02"],
           "A shared static store exception fails the explicit HAB read without network fallback.",
@@ -416,7 +416,7 @@ export function createSharedHabahiroTransport(
       }
       return read.status === "accepted"
         ? ok(Uint8Array.from(read.value))
-        : evidenceRequired(
+        : integrityFailure(
             `render.habahiro.${read.failure.capability}`,
             ["HAB-A01", "HAB-A02"],
             read.failure.boundary,
@@ -450,13 +450,13 @@ async function readStatic(
 }
 
 function mapParticleFailureCode(
-  code: "evidence-required" | "particle-resource-unavailable" | "particle-resource-integrity" |
+  code: "integrity-failure" | "particle-resource-unavailable" | "particle-resource-integrity" |
     "particle-resource-decode" | "particle-backend-fault" | "terminal-disposed",
 ): SimulatorModuleFailure["code"] {
   if (code === "particle-resource-unavailable") return "resource-unavailable";
   if (code === "particle-resource-integrity") return "resource-integrity";
   if (code === "particle-resource-decode") return "resource-decode";
-  return code === "evidence-required" ? "evidence-required" : "launch-failed";
+  return code === "integrity-failure" ? "integrity-failure" : "launch-failed";
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

@@ -8,7 +8,7 @@ const { join } = require("node:path");
 import { CURRENT_AUDIO_SE_RESOURCES } from "./legacyCurrentAudioResourceManifest";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { StartupAudioOwner } from "../engine/audio/startupAudioOwner";
-import { evidenceRequired } from "../engine/evidence";
+import { integrityFailure } from "../engine/evidence";
 
 const fixtureRoot = join(
   process.cwd(),
@@ -175,7 +175,7 @@ function verifyFaultLatching(): void {
     producerFailure("opening-preflight"),
     null,
   );
-  assert.equal(failedOpening.initialize().status, "evidence-required");
+  assert.equal(failedOpening.initialize().status, "integrity-failure");
   assert.equal(failedOpening.snapshot().phase, "faulted");
   failedOpening.dispose();
   failedOpening.dispose();
@@ -191,7 +191,7 @@ function verifyFaultLatching(): void {
   const transition = failedPlaying.preflightEnterPlaying();
   assert.equal(transition.status, "ok");
   if (transition.status !== "ok") throw new Error(transition.capability);
-  assert.equal(transition.value.commit().status, "evidence-required");
+  assert.equal(transition.value.commit().status, "integrity-failure");
   assert.equal(failedPlaying.snapshot().phase, "faulted");
 
   const voiceObserver = new StartupAudioOwner(
@@ -201,7 +201,7 @@ function verifyFaultLatching(): void {
     `session_live_start_voice_${"C".repeat(64)}`,
   );
   assert.equal(voiceObserver.initialize().status, "ok");
-  assert.equal(voiceObserver.isLiveStartVoicePlaying().status, "evidence-required");
+  assert.equal(voiceObserver.isLiveStartVoicePlaying().status, "integrity-failure");
   assert.equal(voiceObserver.snapshot().phase, "opening");
 }
 
@@ -209,7 +209,7 @@ function producerFailure(point: "opening-preflight" | "playing-commit" | "voice-
   const transaction = (failure: boolean) => ({
     commit() {
       return failure
-        ? evidenceRequired("startup-audio.test-injected", ["SRA-CG01"], "injected first fault")
+        ? integrityFailure("startup-audio.test-injected", ["SRA-CG01"], "injected first fault")
         : { status: "ok" as const, value: undefined };
     },
     discard() { return { status: "ok" as const, value: undefined }; },
@@ -217,7 +217,7 @@ function producerFailure(point: "opening-preflight" | "playing-commit" | "voice-
   return {
     preflightStartupOpening() {
       return point === "opening-preflight"
-        ? evidenceRequired("startup-audio.test-opening", ["SRA-CG01"], "injected opening fault")
+        ? integrityFailure("startup-audio.test-opening", ["SRA-CG01"], "injected opening fault")
         : { status: "ok" as const, value: transaction(false) };
     },
     preflightMoveTimeReconstructionBgm() {
@@ -228,7 +228,7 @@ function producerFailure(point: "opening-preflight" | "playing-commit" | "voice-
     },
     isLiveStartVoicePlaying() {
       return point === "voice-observer"
-        ? evidenceRequired("startup-audio.test-voice", ["SRA-CG01"], "injected observer fault")
+        ? integrityFailure("startup-audio.test-voice", ["SRA-CG01"], "injected observer fault")
         : { status: "ok" as const, value: false };
     },
   };

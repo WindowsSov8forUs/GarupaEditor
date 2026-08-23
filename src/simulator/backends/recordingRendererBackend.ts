@@ -1,7 +1,7 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
-  type EvidenceRequired,
+  type SimulatorIntegrityFailure,
   type SimulatorResult,
 } from "../engine/evidence";
 import {
@@ -260,7 +260,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return snapshot;
   }
 
-  recordTerminalFault(capability: string, boundary: string): EvidenceRequired {
+  recordTerminalFault(capability: string, boundary: string): SimulatorIntegrityFailure {
     return this.latchFault(capability, boundary);
   }
 
@@ -507,7 +507,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return result.status === "ok" ? ok(undefined) : result;
   }
 
-  private latchFault(capability: string, boundary: string): EvidenceRequired {
+  private latchFault(capability: string, boundary: string): SimulatorIntegrityFailure {
     if (this.fault !== null) {
       return this.reject(this.fault.capability, this.fault.boundary);
     }
@@ -517,8 +517,8 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return rejected;
   }
 
-  private reject(capability: string, boundary: string): EvidenceRequired {
-    return evidenceRequired(
+  private reject(capability: string, boundary: string): SimulatorIntegrityFailure {
+    return integrityFailure(
       capability,
       ["RPR-D14", "RPR-D17", "PR35", "PR36", "PR37", "PR38"],
       boundary,
@@ -552,7 +552,7 @@ function validateResourceProvenance(
       asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
   });
   return invalid
-    ? evidenceRequired(
+    ? integrityFailure(
         "render.profile.provenance-fidelity-mismatch",
         ["RPR-D02", "RPR-D14", "PR01", "PR04"],
         "Resource provenance must match the explicitly selected fidelity and cannot upgrade external or proxy bytes to exact parity.",

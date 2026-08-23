@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export const JUDGEMENT_ADJUST_VALUE_MIN = -30 as const;
 export const JUDGEMENT_ADJUST_VALUE_MAX = 30 as const;
@@ -117,8 +117,8 @@ function integerIn(value: unknown, minimum: number, maximum: number): value is n
   return Number.isInteger(value) && (value as number) >= minimum && (value as number) <= maximum;
 }
 
-function invalid(): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+function invalid(): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     "runtime.invalid-original-live-settings",
     ["OLS-R01", "OLS-R03", "OLS-R04", "OLS-R05", "OLS-R06"],
     "Original Live settings require exact booleans, Primary -30..30, Secondary -5..5 and one persisted MV darkness value 0..70 in steps of ten; aliases, defaults, clamp and rounding are forbidden.",

@@ -9,7 +9,7 @@ import {
   PauseState,
   type GameStateValue,
 } from "../engine/data/inGameState";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -163,7 +163,7 @@ function createTestGraph(
     0,
     new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => controller.getUsableOneFrameData(),
-    () => evidenceRequired("test.auto-live-not-used", ["R04"], "not used"),
+    () => integrityFailure("test.auto-live-not-used", ["R04"], "not used"),
     (_family, poolObjectId) => {
       const note = new TraceNote(poolObjectId, calls, deactivateOnUpdate);
       notes.push(note);
@@ -357,7 +357,7 @@ test("OneFrame 容器统一获取 Reflect 与回收", () => {
       multipleDirectionalFlickNoteCount: 0,
     }), `setup ${index}`);
   }
-  assertEqual(controller.getUsableOneFrameData().status, "evidence-required", "pool exhaustion");
+  assertEqual(controller.getUsableOneFrameData().status, "integrity-failure", "pool exhaustion");
   const batch = requireOk(controller.reflectOneFrameData(), "reflect");
   assert(batch !== null, "non-empty reflect batch");
   assertDeepEqual(batch.entries.map((entry) => entry.containerId),
@@ -370,14 +370,14 @@ test("Note 只通过 SetupNotes 安装的回调请求 OneFrame 容器", () => {
   const handle: OneFrameDataHandle = requireOk(graph.notes[0]!.requestUsableOneFrameData(), "callback");
   assertEqual(handle.containerId, "one-frame:0", "container");
   assertEqual(new TraceNote("detached", [], new Set()).requestUsableOneFrameData().status,
-    "evidence-required", "unregistered callback");
+    "integrity-failure", "unregistered callback");
 });
 
 test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制判定", () => {
   const valid = engineInput();
   const cloned = { ...valid, chart: { ...valid.chart } };
   assertEqual(createSimulatorEngine(cloned, createRecordingSimulatorBackends()).status,
-    "evidence-required", "cloned chart");
+    "integrity-failure", "cloned chart");
   const invalidOffset = {
     ...valid,
     runtime: {
@@ -389,10 +389,10 @@ test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制�
     },
   };
   assertEqual(createSimulatorEngine(invalidOffset, createRecordingSimulatorBackends()).status,
-    "evidence-required", "offset range");
+    "integrity-failure", "offset range");
   assertEqual(
     new GamePlayButton(ButtonType.Button_01_BMS_1P_01).execTouchBegan().status,
-    "evidence-required",
+    "integrity-failure",
     "touch boundary",
   );
 

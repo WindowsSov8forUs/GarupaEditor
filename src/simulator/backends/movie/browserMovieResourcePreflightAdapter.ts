@@ -20,7 +20,7 @@ export class BrowserMovieResourcePreflightAdapter
       Object.getPrototypeOf(bytes) !== Uint8Array.prototype ||
       bytes.byteLength === 0) {
       return movieRejected(
-        "evidence-required",
+        "integrity-failure",
         "movie.preflight.invalid-hash-input",
         "Browser movie SHA-256 accepts only one non-empty simulator-owned direct Uint8Array.",
       );

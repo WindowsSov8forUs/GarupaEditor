@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -276,7 +276,7 @@ export class MusicScoreBezierConverter {
       }
       return ok([...reparseResult.value, ...convertedLines].join("\n") + "\n");
     } catch (error) {
-      return evidenceRequired(
+      return integrityFailure(
         "chart-construction.invalid-bezier-score",
         [
           ChartConstructionEvidence.E05,
@@ -293,8 +293,8 @@ export class MusicScoreBezierConverter {
 function headerFailure(
   capability: string,
   error: unknown,
-): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     capability,
     [
       ChartConstructionEvidence.E05,

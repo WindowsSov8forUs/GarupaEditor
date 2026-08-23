@@ -9,7 +9,7 @@ import {
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -618,7 +618,7 @@ function copyColor(value: RenderColor): RenderColor {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["RPR-D05", "RPR-D06", "RPR-D07", "RPR-D14", "RPR-R4-010", "RPR-R4-013", "PR09", "PR11", "PR13", "PR16", "PR17"],
     boundary,

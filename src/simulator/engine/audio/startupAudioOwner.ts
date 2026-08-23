@@ -1,5 +1,5 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   AudioCommandProducer,
   AudioOwnerTransaction,
@@ -200,7 +200,7 @@ export class StartupAudioOwner {
 }
 
 function rejected(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["SRA-CG01", "SRA-R01", "SD09"],
     boundary,

@@ -34,9 +34,13 @@ if (!/export interface SimulatorChartDataPackage \{\s*readonly chart: GarupaChar
 }
 
 const publicCapabilities = read("public/capabilities.ts");
-if (!/isTotalRevalidationOpen\(\): boolean \{\s*return false;\s*\}/m.test(publicCapabilities) ||
-    !publicCapabilities.includes('mainProgramIntegration: "closed-product-integration"')) {
-  throw new Error("aggregate portable gate or completed Stage 9 product boundary changed");
+if (/isTotalRevalidationOpen|totalRevalidationFailure|TOTAL_REVALIDATION_(?:CAPABILITY|BOUNDARY)/.test(publicCapabilities) ||
+    !publicCapabilities.includes('mainProgramIntegration: "closed-product-integration"') ||
+    !publicCapabilities.includes('dynamicSurfaceResize: "observational-gap"')) {
+  throw new Error("nonblocking capability metadata or completed Stage 9 product boundary changed");
+}
+if (publicContracts.includes('"evidence-required"')) {
+  throw new Error("Public runtime failure taxonomy restored evidence-required as a blocking code");
 }
 
 const productionRoots = new Set([

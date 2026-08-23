@@ -374,7 +374,7 @@ async function main(): Promise<void> {
     kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
     state: scoreState(10_001_001, 5, 5, false, "none", true),
   };
-  equal(renderer.preflight([overMaximumCommand]).status, "evidence-required", "Score over scoreMaximum rejects before Pixi mutation");
+  equal(renderer.preflight([overMaximumCommand]).status, "integrity-failure", "Score over scoreMaximum rejects before Pixi mutation");
 
   const invalidScoreCommand: RenderCommand = {
     sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
@@ -383,7 +383,7 @@ async function main(): Promise<void> {
   };
   const invalidScoreBefore = JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix"));
   const invalidScore = renderer.preflight([invalidScoreCommand]);
-  equal(invalidScore.status, "evidence-required", "derived Score marker tamper rejects before Pixi mutation");
+  equal(invalidScore.status, "integrity-failure", "derived Score marker tamper rejects before Pixi mutation");
   equal(JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix")), invalidScoreBefore, "derived Score marker failure leaves scene unchanged");
 
   const invalidCommand: RenderCommand = {
@@ -393,7 +393,7 @@ async function main(): Promise<void> {
   };
   const preInvalidObjectCount = renderer.snapshot().objectCount;
   const invalid = renderer.preflight([invalidCommand]);
-  equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
+  equal(invalid.status, "integrity-failure", "Life threshold mismatch fails before Pixi mutation");
   equal(renderer.snapshot().objectCount, 12, "failed typed Pixi HUD input preserves owner count");
   const invalidLifeLabelAfter = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText ?? null;
   equal(invalidLifeLabelAfter, "200/1000", "failed batch leaves Pixi HUD unchanged");
@@ -452,7 +452,7 @@ async function main(): Promise<void> {
 
   const resourcePreparation = renderer.resourceSnapshot();
   const invalidObservation = Object.freeze({
-    capability: invalid.status === "evidence-required" ? invalid.capability : null,
+    capability: invalid.status === "integrity-failure" ? invalid.capability : null,
     beforeObjectCount: preInvalidObjectCount,
     afterObjectCount: renderer.snapshot().objectCount,
     lifeLabelAfter: invalidLifeLabelAfter,
@@ -471,7 +471,7 @@ async function main(): Promise<void> {
     scoreHalf: pickSceneObservation(scoreAtHalf),
     scoreContinued: pickSceneObservation(scoreContinued),
     scoreMatrix: Object.freeze(scoreMatrix),
-    invalidScore: Object.freeze({ capability: invalidScore.status === "evidence-required" ? invalidScore.capability : null }),
+    invalidScore: Object.freeze({ capability: invalidScore.status === "integrity-failure" ? invalidScore.capability : null }),
   });
   const worldObservation = observePixiWorld(renderer.stage);
   requireOk(renderer.dispose(), "actual Pixi dispose");

@@ -10,9 +10,9 @@ import {
   type SimulatorModeIdentity,
 } from "../engine/data/inGameCalculatedData";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
-  type EvidenceRequired,
+  type SimulatorIntegrityFailure,
   type SimulatorResult,
 } from "../engine/evidence";
 import type {
@@ -150,7 +150,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   private timelineRevisionValue = 0;
   private moveTimeCountValue = 0;
   private state: "ready" | "replaying" | "faulted" | "disposed" = "ready";
-  private fault: EvidenceRequired | null = null;
+  private fault: SimulatorIntegrityFailure | null = null;
   private readonly controlMode: SimulatorTimelineControlState["mode"];
 
   constructor(
@@ -498,7 +498,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return ok(fresh);
   }
 
-  private rejectCandidate<T>(fresh: SimulatorEngine, failure: EvidenceRequired): SimulatorResult<T> {
+  private rejectCandidate<T>(fresh: SimulatorEngine, failure: SimulatorIntegrityFailure): SimulatorResult<T> {
     fresh.dispose();
     setMoveTimeVisualState(this.active, false);
     this.state = "ready";
@@ -599,7 +599,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (this.state === "replaying") return rejected("timeline.replay.concurrent-operation", "No host operation may interleave with MoveTime reconstruction.");
     return null;
   }
-  private latchReplayFault<T>(fault: EvidenceRequired): SimulatorResult<T> {
+  private latchReplayFault<T>(fault: SimulatorIntegrityFailure): SimulatorResult<T> {
     this.fault ??= Object.freeze({ ...fault, requiredEvidence: Object.freeze([...fault.requiredEvidence]) });
     this.state = "faulted";
     return this.fault;
@@ -615,9 +615,9 @@ function isSimulatorResult(value: unknown): value is SimulatorResult<unknown> {
   if (value === null || typeof value !== "object" || !("status" in value)) return false;
   const candidate = value as Record<string, unknown>;
   if (candidate.status === "ok") return "value" in candidate;
-  return candidate.status === "evidence-required" && typeof candidate.capability === "string" &&
+  return candidate.status === "integrity-failure" && typeof candidate.capability === "string" &&
     typeof candidate.boundary === "string" && Array.isArray(candidate.requiredEvidence);
 }
-function rejected(capability: string, boundary: string): EvidenceRequired {
-  return evidenceRequired(capability, [], boundary);
+function rejected(capability: string, boundary: string): SimulatorIntegrityFailure {
+  return integrityFailure(capability, [], boundary);
 }

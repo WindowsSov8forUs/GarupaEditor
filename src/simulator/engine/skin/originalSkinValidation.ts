@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   OriginalSkinSettings,
   OriginalSkinSpecialComponentStates,
@@ -87,8 +87,8 @@ function integerRange(value: unknown, minimum: number, maximum: number): value i
   return Number.isSafeInteger(value) && (value as number) >= minimum && (value as number) <= maximum;
 }
 
-function invalid(): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+function invalid(): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     "skin.invalid-original-settings",
     [],
     "Original Skin settings require the exact current persisted normal domains, one current aggregate identity and seven explicit On/Off states; independent Judge/resource identities are forbidden.",

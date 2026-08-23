@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../engine/evidence";
@@ -441,7 +441,7 @@ function isExactFloat32(value: unknown): value is number {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["RPR-D14", "PR01", "PR05", "PR35"],
     boundary,

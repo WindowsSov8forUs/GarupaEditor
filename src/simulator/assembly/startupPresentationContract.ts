@@ -38,7 +38,7 @@ export function copyAndFreezeSimulatorPresentation(
   ].filter((text): text is string => text !== null);
   if (localizedText.some((text) => [...text].some((scalar) => !currentStartupFontSupports(scalar.codePointAt(0)!)))) {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.presentation.missing-font-glyph",
       "Every caller-selected localized scalar must exist in the hash-locked current sgm cmap; browser or system-font fallback is forbidden.",
     );
@@ -202,7 +202,7 @@ function crc32(bytes: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 function invalid(boundary: string): SimulatorAssemblyResult<never> {
-  return rejected("evidence-required", "simulator.presentation.invalid-public-package", boundary);
+  return rejected("integrity-failure", "simulator.presentation.invalid-public-package", boundary);
 }
 function invalidPng(boundary: string): SimulatorAssemblyResult<never> {
   return rejected("resource-decode", "simulator.presentation.invalid-png", boundary);

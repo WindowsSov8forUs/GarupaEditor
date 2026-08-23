@@ -1,5 +1,5 @@
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import type { OriginalSurfaceLayout } from "./originalSurfaceLayout";
 
 export type RehearsalControlIntent = "return-five-seconds" | "advance-five-seconds";
@@ -83,7 +83,7 @@ export function resolveRehearsalControlTouch(
     state.timelineSeconds < 0 || typeof state.paused !== "boolean" ||
     typeof state.moveTimeInProgress !== "boolean" ||
     !validLayout(layout)) {
-    return evidenceRequired(
+    return integrityFailure(
       "rehearsal.control.invalid-touch-state",
       ["LR-E06", "LR-E11", "ML-E03"],
       "The control owner requires one finite bottom-left touch, explicit Rehearsal playing state and one original prefab-derived surface layout.",
@@ -128,7 +128,7 @@ export function consumeRehearsalControlCommand(
     Object.keys(command).sort().join(",") !== "capability,kind" ||
     (command.kind !== "return-five-seconds" && command.kind !== "advance-five-seconds") ||
     command.capability === null || typeof command.capability !== "object") {
-    return evidenceRequired(
+    return integrityFailure(
       "rehearsal.control.invalid-command-capability",
       ["LR-E06", "LR-E09", "LR-E10"],
       "Runtime accepts only an opaque one-use command issued by the simulator-owned Rehearsal hit router.",
@@ -140,7 +140,7 @@ export function consumeRehearsalControlCommand(
     Math.floor(state.timelineSeconds) !== issued.timelineWholeSecond ||
     (state.surfaceRevision !== undefined && state.surfaceRevision !== issued.surfaceRevision) ||
     state.paused || state.moveTimeInProgress) {
-    return evidenceRequired(
+    return integrityFailure(
       "rehearsal.control.foreign-stale-or-state-mismatched-command",
       ["LR-E06", "LR-E11", "LR-C03", "ML-R05"],
       "MoveTime command identity, canonical mode, integer timeline, initial surface revision and active playing state must still match at consumption.",
@@ -156,7 +156,7 @@ export function formatRehearsalTimeLabel(
 ): SimulatorResult<string> {
   if (!Number.isFinite(currentSeconds) || currentSeconds < 0 ||
     !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-    return evidenceRequired(
+    return integrityFailure(
       "rehearsal.control.invalid-time-label-owner",
       ["LR-E12", "LR-R04"],
       "The Rehearsal label consumes only engine timeline seconds and the exact positive session BGM duration.",

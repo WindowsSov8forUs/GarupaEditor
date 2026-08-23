@@ -1,7 +1,7 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
-  type EvidenceRequired,
+  type SimulatorIntegrityFailure,
   type SimulatorResult,
 } from "../evidence";
 import {
@@ -42,7 +42,7 @@ import type {
 import type { TapLaneEffectOwner, TapLaneEffectSnapshot } from "./tapLaneEffectOwner";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
-  readonly fault: EvidenceRequired | null;
+  readonly fault: SimulatorIntegrityFailure | null;
   readonly currentGameState: GameStateValue;
   readonly pauseState: PauseStateValue;
   readonly musicScore: ReturnType<InGameMusicScoreController["snapshot"]>;
@@ -62,7 +62,7 @@ export class InGameManager {
   private lifecycleState: EngineLifecycleState = "created";
   private currentGameStateValue: GameStateValue;
   private pauseStateValue: PauseStateValue = PauseState.None;
-  private faultValue: EvidenceRequired | null = null;
+  private faultValue: SimulatorIntegrityFailure | null = null;
   private degradedHabahiroLaneChanged = false;
   private habahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
   private habahiroFlashElapsed = Math.fround(0);
@@ -97,7 +97,7 @@ export class InGameManager {
       return this.faultValue;
     }
     if (this.lifecycleState === "disposed") {
-      return evidenceRequired(
+      return integrityFailure(
         "host.initialize-after-dispose",
         [],
         "The portable host does not reconstruct an engine after disposal.",
@@ -129,13 +129,13 @@ export class InGameManager {
             this.renderScene.habahiro.fieldMasks,
           )
         : null;
-    if (fieldSetup?.status === "evidence-required") return fieldSetup;
+    if (fieldSetup?.status === "integrity-failure") return fieldSetup;
     if (fieldSetup?.status === "ok") {
       const committed = fieldSetup.value.commit();
       if (committed.status !== "ok") return committed;
     }
     const tapLaneEffectSetup = this.tapLaneEffect?.preflightInitialize() ?? null;
-    if (tapLaneEffectSetup?.status === "evidence-required") return tapLaneEffectSetup;
+    if (tapLaneEffectSetup?.status === "integrity-failure") return tapLaneEffectSetup;
     if (tapLaneEffectSetup?.status === "ok") {
       const committed = tapLaneEffectSetup.value.commit();
       if (committed.status !== "ok") return committed;
@@ -146,7 +146,7 @@ export class InGameManager {
           this.scoreLifeStateManager.scoreGauge.snapshot(),
         )
       : null;
-    if (hudSetup?.status === "evidence-required") return hudSetup;
+    if (hudSetup?.status === "integrity-failure") return hudSetup;
     if (hudSetup?.status === "ok") {
       const committed = hudSetup.value.commit();
       if (committed.status !== "ok") return committed;
@@ -174,7 +174,7 @@ export class InGameManager {
       return this.faultValue;
     }
     if (this.lifecycleState !== "initialized") {
-      return evidenceRequired(
+      return integrityFailure(
         "ingame.update-outside-initialized-lifecycle",
         [],
         "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
@@ -209,7 +209,7 @@ export class InGameManager {
     const productUpdate = this.garupaProduct?.update() ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
     const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
-    if (tapLaneEffectAdvance?.status === "evidence-required") {
+    if (tapLaneEffectAdvance?.status === "integrity-failure") {
       return this.latchFault(tapLaneEffectAdvance);
     }
     if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
@@ -272,7 +272,7 @@ export class InGameManager {
       }
     }
     const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
-    if (hudAnimation?.status === "evidence-required") {
+    if (hudAnimation?.status === "integrity-failure") {
       return this.latchFault(hudAnimation);
     }
     if (hudAnimation?.status === "ok") {
@@ -288,7 +288,7 @@ export class InGameManager {
         const batch = reflectPlan.value.batch;
         const lifeBefore = this.scoreLifeStateManager?.record.currentLife ?? null;
         const businessPlan = this.scoreLifeStateManager?.preflightReflect(batch) ?? null;
-        if (businessPlan?.status === "evidence-required") {
+        if (businessPlan?.status === "integrity-failure") {
           this.oneFrameJudgementController.discardReflectOneFrameData(
             reflectPlan.value,
           );
@@ -303,7 +303,7 @@ export class InGameManager {
           batch,
           terminalGameOver,
         ) ?? null;
-        if (particlePlan?.status === "evidence-required") {
+        if (particlePlan?.status === "integrity-failure") {
           if (businessPlan?.status === "ok") {
             this.scoreLifeStateManager!.discardReflect(businessPlan.value);
           }
@@ -311,7 +311,7 @@ export class InGameManager {
           return this.latchFault(particlePlan);
         }
         const audioPlan = this.audioProducer?.preflightJudgement(batch, terminalGameOver) ?? null;
-        if (audioPlan?.status === "evidence-required") {
+        if (audioPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (businessPlan?.status === "ok") {
             this.scoreLifeStateManager!.discardReflect(businessPlan.value);
@@ -324,7 +324,7 @@ export class InGameManager {
         const renderPlan = businessPlan?.status === "ok"
           ? this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null
           : null;
-        if (renderPlan?.status === "evidence-required") {
+        if (renderPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
           this.scoreLifeStateManager!.discardReflect(businessPlan!.value);
@@ -381,7 +381,7 @@ export class InGameManager {
           }
         }
         const tapLaneEffectPlan = this.tapLaneEffect?.preflightJudgement(batch) ?? null;
-        if (tapLaneEffectPlan?.status === "evidence-required") {
+        if (tapLaneEffectPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
           return this.latchFault(tapLaneEffectPlan);
         }
@@ -409,7 +409,7 @@ export class InGameManager {
   continueLive(): SimulatorResult<void> {
     if (this.faultValue !== null) return this.faultValue;
     if (this.scoreLifeStateManager === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.continue-without-profile",
         ["SLS-D22", "SLS-D24", "BS36"],
         "Continue is unavailable without a Score/Life session and remains excluded with one.",
@@ -423,7 +423,7 @@ export class InGameManager {
       return this.faultValue;
     }
     if (this.lifecycleState !== "initialized") {
-      return evidenceRequired(
+      return integrityFailure(
         "ingame.adjusted-position-outside-initialized-lifecycle",
         [],
         "The recovered adjusted-position owner is only available for an initialized live.",
@@ -437,7 +437,7 @@ export class InGameManager {
       return this.faultValue;
     }
     if (this.lifecycleState !== "initialized") {
-      return evidenceRequired(
+      return integrityFailure(
         "ingame.pause-outside-initialized-lifecycle",
         [],
         "The recovered scheduling freeze is only represented for an initialized live.",
@@ -445,7 +445,7 @@ export class InGameManager {
     }
     if (this.currentGameStateValue === GameState.PauseSound) return ok(undefined);
     if (this.currentGameStateValue !== GameState.PlayingSound) {
-      return evidenceRequired(
+      return integrityFailure(
         "startup-direction.pause-outside-playing-sound",
         ["SD09", "MVL-R03"],
         "Pause is available only from PlayingSound; MovieBeforeSound and every other opening/terminal state fail closed.",
@@ -455,7 +455,7 @@ export class InGameManager {
     const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
     if (movie.status !== "ok") return this.latchFault(movie);
     const laneEffect = this.tapLaneEffect?.preflightAllOff() ?? null;
-    if (laneEffect?.status === "evidence-required") return this.latchFault(laneEffect);
+    if (laneEffect?.status === "integrity-failure") return this.latchFault(laneEffect);
     if (laneEffect?.status === "ok" && laneEffect.value !== null) {
       const committed = laneEffect.value.commit();
       if (committed.status !== "ok") return this.latchFault(committed);
@@ -470,7 +470,7 @@ export class InGameManager {
       return this.faultValue;
     }
     if (this.lifecycleState !== "initialized") {
-      return evidenceRequired(
+      return integrityFailure(
         "ingame.resume-outside-initialized-lifecycle",
         [],
         "The recovered resume path is only represented for an initialized live.",
@@ -478,7 +478,7 @@ export class InGameManager {
     }
     if (this.currentGameStateValue === GameState.PlayingSound) return ok(undefined);
     if (this.currentGameStateValue !== GameState.PauseSound) {
-      return evidenceRequired(
+      return integrityFailure(
         "startup-direction.resume-outside-pause-sound",
         ["SD09", "MVL-R04"],
         "Resume is available only from PauseSound; MovieBeforeSound and every other opening/terminal state fail closed.",
@@ -510,7 +510,7 @@ export class InGameManager {
       if (committed.status !== "ok") return committed;
     }
     const tapLaneEffectDispose = this.tapLaneEffect?.preflightAllOff() ?? null;
-    if (tapLaneEffectDispose?.status === "evidence-required") return tapLaneEffectDispose;
+    if (tapLaneEffectDispose?.status === "integrity-failure") return tapLaneEffectDispose;
     if (tapLaneEffectDispose?.status === "ok" && tapLaneEffectDispose.value !== null) {
       const committed = tapLaneEffectDispose.value.commit();
       if (committed.status !== "ok") return committed;
@@ -561,17 +561,17 @@ export class InGameManager {
     return isPausedState(this.currentGameStateValue, this.pauseStateValue);
   }
 
-  get fault(): EvidenceRequired | null {
+  get fault(): SimulatorIntegrityFailure | null {
     return this.faultValue === null
       ? null
       : { ...this.faultValue, requiredEvidence: [...this.faultValue.requiredEvidence] };
   }
 
-  latchExternalFault(fault: EvidenceRequired): EvidenceRequired {
+  latchExternalFault(fault: SimulatorIntegrityFailure): SimulatorIntegrityFailure {
     return this.latchFault(fault);
   }
 
-  private latchFault(fault: EvidenceRequired): EvidenceRequired {
+  private latchFault(fault: SimulatorIntegrityFailure): SimulatorIntegrityFailure {
     if (this.faultValue !== null) return this.faultValue;
     const latched = {
       ...fault,

@@ -6,7 +6,7 @@ export type ParticleBackendState =
   | "disposed";
 
 export type ParticleFailureCode =
-  | "evidence-required"
+  | "integrity-failure"
   | "particle-resource-unavailable"
   | "particle-resource-integrity"
   | "particle-resource-decode"

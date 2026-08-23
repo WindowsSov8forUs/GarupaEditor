@@ -6,7 +6,7 @@ export type AudioBackendState =
   | "disposed";
 
 export type AudioFailureCode =
-  | "evidence-required"
+  | "integrity-failure"
   | "audio-resource-unavailable"
   | "audio-resource-integrity"
   | "audio-resource-decode"

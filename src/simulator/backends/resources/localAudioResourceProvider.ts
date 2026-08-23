@@ -79,5 +79,5 @@ function resourceKey(logicalId: string, cue: string): string {
 }
 
 function reject(capability: string, boundary: string) {
-  return audioRejected("evidence-required", capability, boundary);
+  return audioRejected("integrity-failure", capability, boundary);
 }

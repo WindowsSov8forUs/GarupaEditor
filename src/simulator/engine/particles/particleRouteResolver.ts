@@ -5,7 +5,7 @@ import {
   type AfterNoteTypeValue,
   type GameNoteTypeValue,
 } from "../chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import { NoteResultType, type NoteResultTypeValue } from "../data/manualJudgement";
 
 export interface ParticleJudgementRouteInput {
@@ -165,5 +165,5 @@ function isClosedJudgementRouteInput(
 }
 
 function rejected<T = never>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

@@ -377,7 +377,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
 
   private reject(capability: string, boundary: string): AudioOperationResult<never> {
     return audioRejected(
-      "evidence-required",
+      "integrity-failure",
       capability,
       boundary,
     );
@@ -556,7 +556,7 @@ function freezeSemanticSnapshot(source: MutableAudioSemanticState): AudioSemanti
 
 function transitionRejected(capability: string, boundary: string): AudioOperationResult<never> {
   return audioRejected(
-    "evidence-required",
+    "integrity-failure",
     capability,
     boundary,
   );

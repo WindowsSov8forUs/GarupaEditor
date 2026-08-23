@@ -155,10 +155,10 @@ try {
 
   test("malformed cells and missing BPM headers fail closed", () => {
     const malformed = new NoteDataBMSBuilder().initialize("#00011:0\n", false);
-    assertEqual(malformed.status, "evidence-required", "odd cell status");
+    assertEqual(malformed.status, "integrity-failure", "odd cell status");
     assertEqual(malformed.capability, "chart-construction.invalid-bms", "odd cell boundary");
     const missingBpm = new NoteDataBMSBuilder().initialize("#00008:01\n", false);
-    assertEqual(missingBpm.status, "evidence-required", "missing BPM status");
+    assertEqual(missingBpm.status, "integrity-failure", "missing BPM status");
   });
 
   console.log(`chart-construction parsing tests passed: ${testCount}`);

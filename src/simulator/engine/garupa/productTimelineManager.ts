@@ -19,7 +19,7 @@ import type { NoteInformation } from "../chart/types";
 import type { InGameMusicScoreController } from "../managers/inGameMusicScoreController";
 import type { InGameOneFrameJudgementController } from "../managers/inGameOneFrameJudgementController";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaProductRenderProducer } from "./productRenderProducer";
 
@@ -548,5 +548,5 @@ function gestureSucceeded(pending: PendingGesture, current: ManualInputPosition)
 }
 
 function rejected<T>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

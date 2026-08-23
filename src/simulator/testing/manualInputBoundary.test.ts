@@ -74,7 +74,7 @@ function requireEvidence<T>(
   result: SimulatorResult<T>,
   capability: string,
 ): void {
-  assert(result.status === "evidence-required", `${capability}: ${result.status}`);
+  assert(result.status === "integrity-failure", `${capability}: ${result.status}`);
   assertEqual(result.capability, capability, "failure capability");
 }
 
@@ -225,7 +225,7 @@ test("MJ25 pause不解析输入且fault dispose优先于delta和shape", () => {
   requireOk(faultedEngine.initialize(), "initialize fault engine");
   requireOk(faultedEngine.step(0.01, { touches: [] }), "activate fault note");
   const fault = faultedEngine.step(0.01, { touches: [] });
-  assert(fault.status === "evidence-required", "fault must latch");
+  assert(fault.status === "integrity-failure", "fault must latch");
   assertDeepEqual(
     faultedEngine.step(Number.NaN, null as unknown as ManualInputFrame),
     fault,
@@ -291,7 +291,7 @@ test("MJ26 malformed foreign forged和later-invalid整帧零mutation", () => {
     const invalidOwner = new ManualInputResolutionOwner();
     requireOk(invalidOwner.initialize(), "initialize invalid owner");
     const invalidBefore = invalidOwner.snapshot();
-    assert(invalidOwner.preflight(invalidFrame).status === "evidence-required",
+    assert(invalidOwner.preflight(invalidFrame).status === "integrity-failure",
       "invalid frame fails closed");
     assertDeepEqual(invalidOwner.snapshot(), invalidBefore, "invalid frame owner zero mutation");
   }

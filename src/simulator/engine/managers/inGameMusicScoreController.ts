@@ -5,7 +5,7 @@ import type {
 } from "../chart/types";
 import { ButtonType } from "../chart/types";
 import type { MusicPosition } from "../data/noteData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export const MUSIC_BAR_DIVISION_COUNT = 192;
 const LAUNCHER_LEAD_SECONDS = Math.fround(0.8);
@@ -84,7 +84,7 @@ export class InGameMusicScoreController {
       substepCount < 1 ||
       substepCount > 4
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "music-score.non-finite-advance",
         ["U03", "U04", "R04"],
         "The portable scheduler must reject an advance sequence that cannot retain finite recovered Float32 music positions.",
@@ -114,7 +114,7 @@ export class InGameMusicScoreController {
         !Number.isFinite(absolutePosition(musicAdvance)) ||
         !Number.isFinite(absolutePosition(launcherAdvance))
       ) {
-        return evidenceRequired(
+        return integrityFailure(
           "music-score.non-finite-advance",
           ["U03", "U04", "R04"],
           "The portable scheduler must reject an advance sequence before it writes a non-finite recovered Float32 music position.",

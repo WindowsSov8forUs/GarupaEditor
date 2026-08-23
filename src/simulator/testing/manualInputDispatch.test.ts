@@ -9,7 +9,7 @@ import {
 import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import { GameState } from "../engine/data/inGameState";
 import { ManualTouchPhase, type ManualInputButtonResolution } from "../engine/data/manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -61,7 +61,7 @@ function requireOk<T>(result: SimulatorResult<T>, message: string): T {
 }
 
 function requireEvidence<T>(result: SimulatorResult<T>, capability: string): void {
-  assert(result.status === "evidence-required", `${capability}: ${result.status}`);
+  assert(result.status === "integrity-failure", `${capability}: ${result.status}`);
   assertEqual(result.capability, capability, "failure capability");
 }
 
@@ -97,7 +97,7 @@ class ManualDispatchNote extends NoteBase {
   override preflightManualTouchBegan(input: ManualNoteTouchInput) {
     this.preflightPhases.push(input.phase);
     return this.beganDecision === "reject"
-      ? evidenceRequired(
+      ? integrityFailure(
           "test.manual-family-rejected",
           ["D15", "MJ26"],
           "later family rejection",
@@ -185,7 +185,7 @@ function createDispatchGraph(
     0,
     new InGameCalculatedData(manualPlayMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
-    () => evidenceRequired("test.auto-live-not-used", ["D04"], "not used"),
+    () => integrityFailure("test.auto-live-not-used", ["D04"], "not used"),
     (_family, poolObjectId) => {
       const decision = decisions[notes.length] ?? "bind";
       const note = new ManualDispatchNote(poolObjectId, decision);

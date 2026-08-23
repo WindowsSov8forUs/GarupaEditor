@@ -78,8 +78,8 @@ async function main(): Promise<void> {
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
   const overflowProjection = layout.garupaProductScene.projectLaneAtCurve(0, Number.MAX_VALUE);
-  assert.equal(overflowProjection.status, "evidence-required");
-  if (overflowProjection.status === "evidence-required") {
+  assert.equal(overflowProjection.status, "integrity-failure");
+  if (overflowProjection.status === "integrity-failure") {
     assert.equal(overflowProjection.capability, "scene.invalid-product-projection");
   }
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
@@ -138,7 +138,7 @@ function resourcePath(asset: RenderResourceAssetProfile): string {
   return join(fixtureRoot, relative);
 }
 
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly boundary: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly boundary: string }): T {
   if (result.status !== "ok") throw new Error(result.boundary);
   return result.value;
 }

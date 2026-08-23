@@ -6,7 +6,7 @@ import {
   Texture,
 } from "pixi.js";
 import type { PreparedSessionPresentation } from "../../assembly/sessionPresentationDerivation";
-import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../../engine/evidence";
 import type {
   StartupDirectionSceneBackend,
   StartupDirectionSceneState,
@@ -51,7 +51,7 @@ export async function createPixiStartupDirectionScene(
   includeStandardStage = true,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
   if (presentation.sdCharacters.length !== 0) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.startup-direction.non-empty-sd-character-assets",
       ["SDN01", "SDN02", "SDN04"],
       "The portable host maps literal-null SD-character input to one owned empty collection; character placeholders or caller overlays are forbidden.",
@@ -95,7 +95,7 @@ export async function createPixiStartupDirectionScene(
     ));
   } catch {
     for (const texture of prepared) texture.destroy(true);
-    return evidenceRequired(
+    return integrityFailure(
       "render.startup-direction.scene-construction-threw",
       ["SD02", "SD05", "SD07", "SD08", "SD16"],
       "Startup scene construction is atomic and has no generic artwork, system-font or missing-texture fallback.",

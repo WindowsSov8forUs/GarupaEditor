@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -138,7 +138,7 @@ export class NoteBase {
 
   requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
     if (this.getUsableOneFrameData === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "note.one-frame-callback-unregistered",
         ["E02", "E08"],
         "NoteBase.RegisterCallbackGetUsableOneFrameData must be installed during SetupNotes.",
@@ -167,7 +167,7 @@ export class NoteBase {
       previousState !== NoteState.Deactive && nextState === NoteState.Deactive
         ? this.preflightRenderDeactivation?.() ?? null
         : null;
-    if (renderDeactivation?.status === "evidence-required") {
+    if (renderDeactivation?.status === "integrity-failure") {
       return renderDeactivation;
     }
 
@@ -240,7 +240,7 @@ export class NoteBase {
   preflightManualTouchBegan(
     _input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteBeganPlan> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.note-touch-began-unimplemented",
       ["D04", "D05", "MJ03", "MJ08"],
       "The InputManager/GamePlayButton owner path is represented, but the concrete note family must close its manual Began judgement before owner mutation.",
@@ -262,7 +262,7 @@ export class NoteBase {
   preflightManualTouchMoved(
     _input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.note-touch-moved-unimplemented",
       ["D07", "D08", "D09", "D10", "MJ13", "MJ14", "MJ15"],
       "The concrete Flick, Multiple, Long or Slide owner must close movement judgement before owner mutation.",
@@ -277,7 +277,7 @@ export class NoteBase {
   preflightManualTouchEnded(
     _input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.note-touch-ended-unimplemented",
       ["D09", "D10", "D12", "MJ19", "MJ21"],
       "The concrete Long or Slide owner must close release judgement before owner mutation.",
@@ -312,7 +312,7 @@ export class NoteBase {
   }
 
   protected onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       "note.on-update",
       ["E03", "E12", "E13"],
       "The original OnUpdate dispatch is confirmed; note-family behavior belongs to later slices.",
@@ -327,7 +327,7 @@ export class NoteBase {
     noteInformation: NoteInformation,
   ): SimulatorResult<void> {
     if (this.stateValue !== NoteState.Deactive) {
-      return evidenceRequired(
+      return integrityFailure(
         "note-pool.activate-active-object",
         ["E04", "E06", "R04"],
         `Pool object ${this.poolObjectId} cannot bind note ${noteInformation.index} while active.`,
@@ -338,7 +338,7 @@ export class NoteBase {
 
   protected get manualRuntime(): SimulatorResult<ManualNoteRuntime> {
     if (this.manualRuntimeValue === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.note-runtime-unregistered",
         ["D05", "D14", "MJ02", "MJ26"],
         "SetupNotes must install the adjusted-position and current-BPM manual judgement owner.",
@@ -349,7 +349,7 @@ export class NoteBase {
 
   protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
     if (this.autoLiveRuntimeValue === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.note-runtime-unregistered",
         ["R01", "R02", "R04"],
         "SetupNotes must install the shared Auto Live calculated-data and judgement callbacks.",
@@ -372,7 +372,7 @@ export class NoteBase {
   }
 
   private unimplementedStatePhase(phase: string): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       `note.state.${phase}`,
       ["E03", "E12", "E13"],
       `NoteState ${phase} dispatch is confirmed, but the concrete note-family behavior is not part of the first framework batch.`,

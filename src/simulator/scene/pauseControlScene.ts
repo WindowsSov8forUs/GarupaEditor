@@ -1,5 +1,5 @@
 import { ManualTouchPhase, type ManualInputFrame, type ManualInputTouch } from "../engine/data/manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import type { OriginalSurfaceLayout } from "./originalSurfaceLayout";
@@ -128,7 +128,7 @@ export class PauseControlSceneOwner {
       !Number.isFinite(deltaTimeSeconds) || Math.fround(deltaTimeSeconds) < 0 ||
       typeof hardwareBack !== "boolean" ||
       (manualFrame !== null && (typeof manualFrame !== "object" || !Array.isArray(manualFrame.touches)))) {
-      return evidenceRequired(
+      return integrityFailure(
         "pause.control.invalid-route-state",
         ["PAU-B01", "PAU-B02", "PAU-B04", "PAU-B05"],
         "The Pause owner consumes one live owner, exact four-mode state, initial-surface layout, finite non-negative Float32 frame and explicit raw touch array.",
@@ -280,14 +280,14 @@ export class PauseControlSceneOwner {
   }
 
   private reject<T>(capability: string, boundary: string): SimulatorResult<T> {
-    return evidenceRequired(capability, ["PAU-B01", "PAU-B04"], boundary);
+    return integrityFailure(capability, ["PAU-B01", "PAU-B04"], boundary);
   }
 }
 
 export function createPauseControlLayout(layout: OriginalSurfaceLayout): SimulatorResult<PauseControlLayout> {
   if (layout === null || typeof layout !== "object" || layout.surface?.origin !== "bottom-left" ||
     !Number.isFinite(layout.ui.screenToSafeChildScale) || layout.ui.screenToSafeChildScale <= 0) {
-    return evidenceRequired(
+    return integrityFailure(
       "pause.control.invalid-surface-layout",
       ["PAU-B02", "PAU-B05"],
       "Pause layout requires the exact initial-landscape StarUI/FitWidth/ScreenToSafeArea owner and never derives geometry from a screenshot.",
@@ -353,13 +353,13 @@ export function consumePauseControlCommand(
     Object.keys(command).sort().join(",") !== "capability,kind" ||
     !["pause", "resume", "retry", "abort"].includes(command.kind) ||
     command.capability === null || typeof command.capability !== "object") {
-    return evidenceRequired("pause.control.invalid-command", ["PAU-B01", "PAU-B04"], "Only opaque one-use Pause scene commands are accepted.");
+    return integrityFailure("pause.control.invalid-command", ["PAU-B01", "PAU-B04"], "Only opaque one-use Pause scene commands are accepted.");
   }
   const issued = issuedCommands.get(command.capability);
   const expectedPaused = command.kind !== "pause";
   if (issued === undefined || issued.consumed || issued.kind !== command.kind || issued.mode !== state.mode ||
     issued.surfaceRevision !== surface.revision || !state.playable || state.paused !== expectedPaused || state.moveTimeInProgress) {
-    return evidenceRequired(
+    return integrityFailure(
       "pause.control.foreign-stale-or-state-mismatched-command",
       ["PAU-B01", "PAU-B04", "PAU-B05"],
       "Pause command identity, canonical mode, initial surface, playable state and paused transition must still match at consumption.",

@@ -83,7 +83,7 @@ function testValidation(): void {
   ]) {
     const value: any = defaults();
     mutation(value);
-    assert.equal(validateAndFreezeOriginalSkinSettings(value).status, "evidence-required");
+    assert.equal(validateAndFreezeOriginalSkinSettings(value).status, "integrity-failure");
   }
 }
 
@@ -216,8 +216,8 @@ function testHabahiroAndMvPrecedence(): void {
   const unsupported = resolveOriginalSkinRecipe(
     selected, createSimulatorModeIdentity("rehearsal", "manual"), "ordinary", "mv",
   );
-  assert.equal(unsupported.status, "evidence-required");
-  if (unsupported.status === "evidence-required") {
+  assert.equal(unsupported.status, "integrity-failure");
+  if (unsupported.status === "integrity-failure") {
     assert.equal(unsupported.capability, "skin.rehearsal-mv-unsupported");
   }
 }
@@ -229,8 +229,8 @@ function testFailedClosedPackage(): void {
     "ordinary",
     "standard",
   );
-  assert.equal(result.status, "evidence-required");
-  if (result.status === "evidence-required") {
+  assert.equal(result.status, "integrity-failure");
+  if (result.status === "integrity-failure") {
     assert.equal(result.capability, "skin.special-package-unavailable");
   }
 }
@@ -447,7 +447,7 @@ function states(state: "on" | "off") {
   } as const;
 }
 
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly capability: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly capability: string }): T {
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }

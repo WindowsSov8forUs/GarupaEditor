@@ -156,35 +156,76 @@ export interface EvidenceBound<T> {
   readonly evidence: readonly EvidenceReference[];
 }
 
+export interface EvidenceNotice {
+  readonly capability: string;
+  readonly requiredEvidence: readonly SimulatorEvidenceId[];
+  readonly boundary: string;
+  readonly productSemanticsId: string;
+}
+
+export interface EvidenceNoticeSink {
+  publish(notice: EvidenceNotice): void;
+}
+
+export class EvidenceNoticeCollector implements EvidenceNoticeSink {
+  private readonly notices: EvidenceNotice[] = [];
+
+  publish(notice: EvidenceNotice): void {
+    this.notices.push(freezeEvidenceNotice(notice));
+  }
+
+  snapshot(): readonly EvidenceNotice[] {
+    return Object.freeze([...this.notices]);
+  }
+}
+
 export interface SimulatorOk<T> {
   readonly status: "ok";
   readonly value: T;
+  readonly evidenceNotices?: readonly EvidenceNotice[];
 }
 
-export interface EvidenceRequired {
-  readonly status: "evidence-required";
+export interface SimulatorIntegrityFailure {
+  readonly status: "integrity-failure";
   readonly capability: string;
   readonly requiredEvidence: readonly SimulatorEvidenceId[];
   readonly boundary: string;
 }
 
-export type SimulatorResult<T> = SimulatorOk<T> | EvidenceRequired;
+export type SimulatorResult<T> = SimulatorOk<T> | SimulatorIntegrityFailure;
 
-export function ok<T>(value: T): SimulatorOk<T> {
-  return { status: "ok", value };
+export function ok<T>(value: T, evidenceNotices: readonly EvidenceNotice[] = []): SimulatorOk<T> {
+  return Object.freeze({
+    status: "ok",
+    value,
+    evidenceNotices: Object.freeze(evidenceNotices.map(freezeEvidenceNotice)),
+  });
 }
 
-export function evidenceRequired(
+export function productSemantic<T>(
+  value: T,
   capability: string,
   requiredEvidence: readonly SimulatorEvidenceId[],
   boundary: string,
-): EvidenceRequired {
-  return {
-    status: "evidence-required",
+  productSemanticsId: string,
+  sink?: EvidenceNoticeSink,
+): SimulatorOk<T> {
+  const notice = freezeEvidenceNotice({ capability, requiredEvidence, boundary, productSemanticsId });
+  sink?.publish(notice);
+  return ok(value, [notice]);
+}
+
+export function integrityFailure(
+  capability: string,
+  requiredEvidence: readonly SimulatorEvidenceId[],
+  boundary: string,
+): SimulatorIntegrityFailure {
+  return Object.freeze({
+    status: "integrity-failure",
     capability,
-    requiredEvidence,
+    requiredEvidence: Object.freeze([...requiredEvidence]),
     boundary,
-  };
+  });
 }
 
 export function readEvidenceBound<T>(
@@ -194,11 +235,21 @@ export function readEvidenceBound<T>(
   boundary: string,
 ): SimulatorResult<T> {
   if (input.evidence.length === 0) {
-    return evidenceRequired(
+    return integrityFailure(
       capability,
       requiredEvidence,
       boundary,
     );
   }
   return ok(input.value);
+}
+
+function freezeEvidenceNotice(notice: EvidenceNotice): EvidenceNotice {
+  if (notice.productSemanticsId.trim().length === 0) throw new Error("product semantics identity is required");
+  return Object.freeze({
+    capability: notice.capability,
+    requiredEvidence: Object.freeze([...notice.requiredEvidence]),
+    boundary: notice.boundary,
+    productSemanticsId: notice.productSemanticsId,
+  });
 }

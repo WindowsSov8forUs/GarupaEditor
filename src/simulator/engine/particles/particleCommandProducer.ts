@@ -14,7 +14,7 @@ import {
 } from "../chart/types";
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
 import { NoteResultType, type NoteResultTypeValue } from "../data/manualJudgement";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
 import {
   isTapKeepStartJudgeNoteType,
@@ -834,5 +834,5 @@ function cloneState(source: MutableParticleOwnerState): MutableParticleOwnerStat
 }
 
 function rejected<T = never>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

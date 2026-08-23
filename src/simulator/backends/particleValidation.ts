@@ -515,5 +515,5 @@ function deepFreeze<T>(value: T): T {
 }
 
 function reject(capability: string, boundary: string): ParticleOperationResult<never> {
-  return particleRejected("evidence-required", capability, boundary);
+  return particleRejected("integrity-failure", capability, boundary);
 }

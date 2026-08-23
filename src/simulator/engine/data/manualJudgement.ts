@@ -1,7 +1,7 @@
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { ButtonTypeValue, NoteInformation } from "../chart/types";
 import type { ManualInputPosition } from "./manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 const MUSIC_BAR_DIVISION_COUNT = 192;
 const SECONDS_PER_MINUTE_TIMES_FOUR = Math.fround(240);
@@ -115,7 +115,7 @@ export function getManualScreenDistanceRate(
     normalization.value.cameraScale === 0 ||
     normalization.value.gameplayScale === 0
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual-input.invalid-screen-to-world-owner-output",
       ["D07", "D15", "MJ08", "MJ09", "MJ26"],
       "Screen-to-world coordinates and both normalization scales must be exact finite nonzero Float32 owner values.",
@@ -135,7 +135,7 @@ export function getManualScreenDistanceRate(
   const rate = Math.fround(cameraNormalized / normalization.value.gameplayScale);
   return Number.isFinite(rate)
     ? ok(rate)
-    : evidenceRequired(
+    : integrityFailure(
         "manual-input.non-finite-screen-distance-rate",
         ["D07", "D15", "MJ08", "MJ09", "MJ26"],
         "The ARM64 Float32 screen-to-world distance chain must remain finite.",
@@ -147,7 +147,7 @@ export function getSecondsWithDistance(
   bpm: number,
 ): SimulatorResult<number> {
   if (!isExactFiniteFloat32(distance) || distance < 0 || !isExactFiniteFloat32(bpm) || bpm <= 0) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.judgement.invalid-distance-or-bpm",
       ["D05", "MJ02"],
       "GetSecWithDistance requires non-negative finite Float32 distance and positive finite Float32 BPM.",
@@ -158,7 +158,7 @@ export function getSecondsWithDistance(
   const seconds = Math.fround(scaledDistance / MUSIC_BAR_DIVISION_COUNT);
   return Number.isFinite(seconds)
     ? ok(seconds)
-    : evidenceRequired(
+    : integrityFailure(
         "manual.judgement.non-finite-distance-result",
         ["D05", "MJ02"],
         "The recovered Float32 distance conversion must remain finite.",
@@ -173,7 +173,7 @@ export function getManualNoteResult(
   readonly roundedFrame: number;
 }> {
   if (!Number.isInteger(sweetFrame) || !isInt32(sweetFrame) || !isExactFiniteFloat32(differenceSeconds)) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.judgement.invalid-result-input",
       ["D05", "MJ02"],
       "GetResult requires an Int32 sweetFrame and a finite exact Float32 second difference.",
@@ -181,7 +181,7 @@ export function getManualNoteResult(
   }
   const frameDistance = Math.fround(differenceSeconds / FRAME_SECOND);
   if (!Number.isFinite(frameDistance)) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.judgement.non-finite-frame-distance",
       ["D05", "MJ02"],
       "The recovered Float32 1/60 conversion must remain finite before rounding.",
@@ -213,7 +213,7 @@ export function judgeManualNote(
     !isExactFiniteFloat32(notePosition) ||
     !isExactFiniteFloat32(currentPosition)
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.judgement.invalid-position",
       ["D05", "MJ02"],
       "JudgeNote requires finite exact Float32 note and adjusted music positions.",

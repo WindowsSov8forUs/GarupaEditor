@@ -131,7 +131,7 @@ export class AutonomousSimulatorModule {
         Math.fround(tick.deltaTimeSeconds) < 0
       ) {
         this.closeTerminal(moduleFailure(
-          "evidence-required",
+          "integrity-failure",
           "simulator.runtime.invalid-frame-tick",
           "Outer-frame identities are contiguous and deltas must remain finite non-negative Float32 values; runtime never clamps or repairs them.",
         ));
@@ -158,7 +158,7 @@ export class AutonomousSimulatorModule {
       }
       if (input.value.surfaceRevision !== surface.value.revision) {
         this.closeTerminal(moduleFailure(
-          "evidence-required",
+          "integrity-failure",
           "simulator.runtime.input-surface-revision-mismatch",
           "The input batch must be produced against the exact surface revision validated before command consumption.",
         ));
@@ -183,7 +183,7 @@ export class AutonomousSimulatorModule {
         }
         const pauseLayout = createPauseControlLayout(controlLayout.value);
         if (pauseLayout.status !== "ok") {
-          this.closeTerminal(moduleFailure("evidence-required", pauseLayout.capability, pauseLayout.boundary));
+          this.closeTerminal(moduleFailure("integrity-failure", pauseLayout.capability, pauseLayout.boundary));
           return;
         }
         const routed = this.pauseControl.route(
@@ -194,7 +194,7 @@ export class AutonomousSimulatorModule {
           input.value.hardwareBack,
         );
         if (routed.status !== "ok") {
-          this.closeTerminal(moduleFailure("evidence-required", routed.capability, routed.boundary));
+          this.closeTerminal(moduleFailure("integrity-failure", routed.capability, routed.boundary));
           return;
         }
         manualFrame = routed.value.manualFrame;
@@ -254,7 +254,7 @@ export class AutonomousSimulatorModule {
   ): Promise<SimulatorAssemblyResult<void>> {
     if (command === null || typeof command !== "object") {
       return rejected(
-        "evidence-required",
+        "integrity-failure",
         "simulator.runtime.invalid-command",
         "The internal UI/input owner emits only platform lifecycle, opaque Pause UI or fixed Rehearsal MoveTime commands.",
       );
@@ -279,7 +279,7 @@ export class AutonomousSimulatorModule {
     if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort") {
       const consumed = consumePauseControlCommand(command, controlState, surface);
       if (consumed.status !== "ok") {
-        return rejected("evidence-required", consumed.capability, consumed.boundary);
+        return rejected("integrity-failure", consumed.capability, consumed.boundary);
       }
       if (consumed.value === "pause") return this.session!.pause();
       if (consumed.value === "resume") return this.session!.resume();
@@ -298,14 +298,14 @@ export class AutonomousSimulatorModule {
         surfaceRevision: surface.value.revision,
       });
       if (consumed.status !== "ok") {
-        return rejected("evidence-required", consumed.capability, consumed.boundary);
+        return rejected("integrity-failure", consumed.capability, consumed.boundary);
       }
       return this.session!.moveTime(
         consumed.value === "return-five-seconds" ? "return-five" : "advance-five",
       );
     }
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.runtime.unknown-command",
       "Unknown internal runtime commands fail closed and are never treated as no-op.",
     );

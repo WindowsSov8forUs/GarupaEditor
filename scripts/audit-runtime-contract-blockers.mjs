@@ -9,6 +9,9 @@ const EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".rs", ".kt"]);
 const MARKERS = [
   ["evidence-required-call", "evidenceRequired("],
   ["evidence-required-string", '"evidence-required"'],
+  ["integrity-failure-call", "integrityFailure("],
+  ["integrity-failure-string", '"integrity-failure"'],
+  ["observational-gap-string", '"observational-gap"'],
   ["terminal-close", "closeTerminal("],
   ["exact-prototype", "Object.getPrototypeOf"],
   ["exact-key-order", ".sort().join("],
@@ -122,12 +125,16 @@ function nearestSymbol(lines, index) {
 function effect(marker) {
   if (marker === "terminal-close") return "session-terminal-candidate";
   if (marker.startsWith("evidence-required")) return "evidence-controlled-result-candidate";
+  if (marker.startsWith("integrity-failure")) return "typed-integrity-result-candidate";
+  if (marker === "observational-gap-string") return "nonblocking-capability-notice";
   if (marker.startsWith("exact-")) return "overexact-input-gate-candidate";
   if (marker === "throw-error") return "exception-candidate";
   return "typed-rejection-candidate";
 }
 function authority(marker) {
   if (marker.startsWith("evidence-required")) return "evidence-or-internal-assertion-review";
+  if (marker.startsWith("integrity-failure")) return "integrity-or-internal-assertion-review";
+  if (marker === "observational-gap-string") return "internal-capability-metadata";
   if (marker.startsWith("exact-")) return "semantic-necessity-review";
   return "integrity-product-or-internal-review";
 }

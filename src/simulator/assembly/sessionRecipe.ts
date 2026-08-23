@@ -35,7 +35,7 @@ import type { ManualInputFrame } from "../engine/data/manualInput";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import type { OriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
@@ -74,7 +74,7 @@ export function createSimulatorSessionRecipe(
   if (copied.value.presentation.mv !== null &&
     copied.value.config.sessionMode !== "live") {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.mv-live.unsupported-rehearsal-mode",
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
@@ -107,7 +107,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       createFreshEngine: async (purpose) => {
         const fresh = await this.builder.createFreshEngine(recipe.value, purpose);
         if (fresh.status === "rejected") {
-          return evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
+          return integrityFailure(fresh.failure.capability, [], fresh.failure.boundary);
         }
         if (
           fresh.value.chartFidelity === initial.value.chartFidelity &&
@@ -119,7 +119,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
           return ok(fresh.value.engine);
         }
         const disposed = fresh.value.engine.dispose();
-        return evidenceRequired(
+        return integrityFailure(
           "simulator.recipe.fresh-composition-mismatch",
           [],
           "Retry and MoveTime must reconstruct the same frozen standard/product chart route and the same single authorized initial surface." +
@@ -227,7 +227,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (surface.status === "rejected") return surface;
     if (this.sessionMode !== "rehearsal") {
       return rejected(
-        "evidence-required",
+        "integrity-failure",
         "simulator.recipe.movetime-outside-rehearsal",
         "Fixed MoveTime controls exist only in Rehearsal and never infer session identity from Manual or Auto input.",
       );
@@ -287,7 +287,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private checkSurface(revision: number): SimulatorAssemblyResult<void> {
     if (revision !== this.surface.revision) {
       return rejected(
-        "evidence-required",
+        "integrity-failure",
         "simulator.surface.input-revision-mismatch",
         "Input must carry the exact single initial surface revision; stale, future and repaired revisions are forbidden.",
       );
@@ -326,7 +326,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const secondaryFailures = [];
     if (snapshot.status !== "ok") {
       if (terminalFailure === null) terminalFailure = moduleFailure(
-        "evidence-required",
+        "integrity-failure",
         snapshot.capability,
         snapshot.boundary,
       );
@@ -334,7 +334,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     }
     if (disposed.status !== "ok") {
       if (terminalFailure === null) terminalFailure = moduleFailure(
-        "evidence-required",
+        "integrity-failure",
         disposed.capability,
         disposed.boundary,
       );
@@ -412,7 +412,7 @@ function copyLaunchRequest(
     !Object.values(request.config.audio).every(isUnitGain)
   ) {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.recipe.invalid-public-request",
       "The launch recipe accepts only exact chartData/presentation/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed presentation resources, judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
@@ -425,7 +425,7 @@ function copyLaunchRequest(
   if (!(bgm instanceof Uint8Array) || bgm.byteLength === 0 ||
     Object.getPrototypeOf(bgm) !== Uint8Array.prototype) {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.recipe.invalid-chart-bgm",
       "The immutable chart package requires one explicit non-empty owned Uint8Array BGM resource; metadata is derived only inside simulator.",
     );
@@ -496,18 +496,18 @@ function isUnitGain(value: unknown): boolean {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
-function rejectedStep(result: { readonly status: "evidence-required"; readonly capability: string; readonly boundary: string }): SimulatorOwnedSessionStepResult {
-  return Object.freeze({ status: "rejected" as const, failure: fromEvidence(result) });
+function rejectedStep(result: { readonly status: "integrity-failure"; readonly capability: string; readonly boundary: string }): SimulatorOwnedSessionStepResult {
+  return Object.freeze({ status: "rejected" as const, failure: fromIntegrity(result) });
 }
 
 function fromEngineFailure<T>(
-  result: Extract<SimulatorResult<T>, { status: "evidence-required" }>,
+  result: Extract<SimulatorResult<T>, { status: "integrity-failure" }>,
 ): SimulatorAssemblyResult<T> {
-  return rejected("evidence-required", result.capability, result.boundary);
+  return rejected("integrity-failure", result.capability, result.boundary);
 }
 
-function fromEvidence(result: { readonly capability: string; readonly boundary: string }): SimulatorModuleFailure {
-  return moduleFailure("evidence-required", result.capability, result.boundary);
+function fromIntegrity(result: { readonly capability: string; readonly boundary: string }): SimulatorModuleFailure {
+  return moduleFailure("integrity-failure", result.capability, result.boundary);
 }
 
 function closedFailure<T>(): SimulatorAssemblyResult<T> {

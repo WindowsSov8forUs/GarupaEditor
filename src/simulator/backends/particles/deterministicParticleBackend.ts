@@ -289,7 +289,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
   }
 
   private reject(capability: string, boundary: string): ParticleOperationResult<never> {
-    return particleRejected("evidence-required", capability, boundary);
+    return particleRejected("integrity-failure", capability, boundary);
   }
 }
 
@@ -396,5 +396,5 @@ function compareOrdinal(left: string, right: string): number {
 }
 
 function transitionRejected(capability: string, boundary: string): ParticleOperationResult<never> {
-  return particleRejected("evidence-required", capability, boundary);
+  return particleRejected("integrity-failure", capability, boundary);
 }

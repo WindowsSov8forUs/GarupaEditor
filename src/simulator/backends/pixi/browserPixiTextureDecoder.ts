@@ -1,5 +1,5 @@
 import { Texture } from "pixi.js";
-import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../../engine/evidence";
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiDecodedFont, PixiTextureDecoder } from "./pixiRendererBackend";
 
@@ -79,7 +79,7 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["RPR-D02", "RPR-D14", "RPR-D17", "PR35", "PR37", "WBR-P01", "WBR-P02", "WBR-P03", "WBR-P04"],
     boundary,

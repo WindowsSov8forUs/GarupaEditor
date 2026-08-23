@@ -62,8 +62,8 @@ function testInternalProfiles(): void {
   });
   for (const invalid of [undefined, null, 0, 1, "false", "full", {}, []]) {
     const result = createCurrentSinglePlayLifeProfile(invalid);
-    assert.equal(result.status, "evidence-required");
-    if (result.status === "evidence-required") {
+    assert.equal(result.status, "integrity-failure");
+    if (result.status === "integrity-failure") {
       assert.equal(result.capability, "score-life.invalid-full-length-classification");
     }
   }

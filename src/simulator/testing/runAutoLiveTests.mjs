@@ -1292,7 +1292,7 @@ function validateAutoLive() {
           commitManualFinger() {},
           clearManualFinger() {},
           markUsed() {
-            if (this.isUsed) return { status: "evidence-required" };
+            if (this.isUsed) return { status: "integrity-failure" };
             this.isUsed = true;
             return { status: "ok", value: undefined };
           },
@@ -1502,7 +1502,7 @@ function validateAutoLive() {
     ]) {
       const invalidIdentityNote = new notes.NoteNormal("invalid-source-identity");
       const result = invalidIdentityNote.activate(invalidIdentity);
-      assert.equal(result.status, "evidence-required");
+      assert.equal(result.status, "integrity-failure");
       assert([
         "auto-live.invalid-note-button-identity",
         "auto-live.invalid-playable-root-identity",
@@ -2490,7 +2490,7 @@ function validateAutoLive() {
         commitManualFinger() {},
         clearManualFinger() {},
         markUsed() {
-          if (this.isUsed) return { status: "evidence-required" };
+          if (this.isUsed) return { status: "integrity-failure" };
           this.isUsed = true;
           return { status: "ok", value: undefined };
         },
@@ -2928,7 +2928,7 @@ function ok(result, label) {
 }
 
 function evidence(result, capability) {
-  assert.equal(result.status, "evidence-required", JSON.stringify(result));
+  assert.equal(result.status, "integrity-failure", JSON.stringify(result));
   assert.equal(result.capability, capability, JSON.stringify(result));
   return result;
 }

@@ -149,7 +149,7 @@ function verifyProductOnlyParticleBypass(chart: ChartConstructionResult): void {
     entryCount: 1,
     entries: Object.freeze([entry]),
   }) as any);
-  assert.equal(prepared.status, "ok", prepared.status === "evidence-required" ? prepared.boundary : "");
+  assert.equal(prepared.status, "ok", prepared.status === "integrity-failure" ? prepared.boundary : "");
   if (prepared.status === "ok") {
     assert.equal(prepared.value.commands.length, 0, "product-only outside lane emits no original GamePlayButton particle");
     assert.equal(prepared.value.commit().status, "ok");
@@ -243,7 +243,7 @@ function productScreenPoint(scene: GarupaProductSceneLayout, node: GarupaProduct
 function manualFrame(fingerId: number, phase: 0 | 1 | 2 | 3, position: ManualInputPosition): ManualInputFrame {
   return Object.freeze({ touches: Object.freeze([{ fingerId, phase, position, buttonResolution: null }]) });
 }
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly boundary: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly boundary: string }): T {
   if (result.status !== "ok") throw new Error(result.boundary);
   return result.value;
 }

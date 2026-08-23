@@ -5,7 +5,7 @@ import {
   type ChartConstructionResult,
   type NoteInformation,
 } from "../chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import {
   NORMALIZED_SCORE_RULESET_ID,
   type SimulatorScoringPhase,
@@ -91,7 +91,7 @@ export function createConstructedChartScoringPlan(
     }
   }
   if (candidates.length === 0 || candidates.length > 0x7fffffff) {
-    return evidenceRequired(
+    return integrityFailure(
       "score.plan.invalid-scoring-unit-count",
       [],
       "CS-V1 requires a positive Int32 count derived only from chart-owned scoring units.",
@@ -100,7 +100,7 @@ export function createConstructedChartScoringPlan(
   candidates.sort(compareCandidate);
   for (let index = 1; index < candidates.length; index += 1) {
     if (sameOrderingIdentity(candidates[index - 1]!, candidates[index]!)) {
-      return evidenceRequired(
+      return integrityFailure(
         "score.plan.ambiguous-unit-order",
         [],
         "CS-V1 refuses chart scoring units whose absolute position, chart-owned note index and judgement phase cannot establish a unique ordinal.",
@@ -109,7 +109,7 @@ export function createConstructedChartScoringPlan(
   }
   const scoreMaximum = calculateNormalizedScoreMaximum(candidates.length);
   if (scoreMaximum === null) {
-    return evidenceRequired(
+    return integrityFailure(
       "score.plan.invalid-score-maximum",
       [],
       "CS-V1 scoreMaximum must be the exact UInt32 sum of ten million and the chart-owned scoring-unit count.",
@@ -123,7 +123,7 @@ export function createConstructedChartScoringPlan(
     const ordinal = index + 1;
     const perfectQuota = calculatePerfectQuota(ordinal, candidates.length);
     if (perfectQuota === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "score.plan.invalid-perfect-quota",
         [],
         "Every CS-V1 scoring ordinal must derive one positive exact-integer Perfect quota.",
@@ -131,7 +131,7 @@ export function createConstructedChartScoringPlan(
     }
     const id = scoringUnitId(candidate);
     if (byId.has(id)) {
-      return evidenceRequired(
+      return integrityFailure(
         "score.plan.duplicate-unit-identity",
         [],
         "Chart-owned scoring fields must produce one unique stable CS-V1 identity per judgement phase.",
@@ -145,7 +145,7 @@ export function createConstructedChartScoringPlan(
         bySource.set(alias, phases);
       }
       if (phases.has(candidate.phase)) {
-        return evidenceRequired(
+        return integrityFailure(
           "score.plan.duplicate-source-phase",
           [],
           "One chart-owned NoteInformation and judgement phase may resolve to exactly one CS-V1 scoring unit.",
@@ -167,7 +167,7 @@ export function createConstructedChartScoringPlan(
         ? bySource.get(source)?.get(phase)
         : undefined;
       return unit === undefined
-        ? evidenceRequired(
+        ? integrityFailure(
             "score.plan.foreign-source-or-phase",
             [],
             "Only an exact chart-owned source and its registered judgement phase can resolve a CS-V1 scoring unit.",

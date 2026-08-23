@@ -1,4 +1,4 @@
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import {
   InGameMovieManager,
   InGameMusicVideoState,
@@ -139,8 +139,8 @@ export class MvBackgroundModule {
   }
 }
 
-function rejected(capability: string, boundary: string): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(
+function rejected(capability: string, boundary: string): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
     capability,
     ["MVL-E41", "MVL-E42", "MVL-R01", "MVL-R02", "MVL-R07"],
     boundary,

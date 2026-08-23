@@ -1,5 +1,5 @@
 import type { ChartConstructionResult } from "../chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   GarupaProductChartProfile,
   GarupaProductTimingGroupId,
@@ -328,7 +328,7 @@ function ownerOrder(owner: "group" | "global"): number {
 }
 
 function invalidAxis<T>(boundary: string): SimulatorResult<T> {
-  return evidenceRequired(
+  return integrityFailure(
     "simulator.garupa-extension.invalid-timing-axis",
     [],
     boundary,

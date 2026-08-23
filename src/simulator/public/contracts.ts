@@ -124,7 +124,7 @@ export interface SimulatorModuleCleanupFailure {
 
 export interface SimulatorModuleFailure {
   readonly code:
-    | "evidence-required"
+    | "integrity-failure"
     | "resource-unavailable"
     | "resource-integrity"
     | "resource-decode"
@@ -158,7 +158,7 @@ export type SimulatorCapabilityGateStatus =
   | "closed-product-extension"
   | "degraded-explicit"
   | "excluded"
-  | "open-evidence-required"
+  | "observational-gap"
   | "open-device-exact"
   | "open-objective-environment-blocked"
   | "closed-original-unreachable"
@@ -174,7 +174,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
-  readonly habahiroOriginalParity: "open-evidence-required";
+  readonly habahiroOriginalParity: "observational-gap";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
   readonly startupDirectionPortable: "closed-portable";
   readonly mvLivePortable: "closed-portable";
@@ -190,16 +190,16 @@ export interface SimulatorModuleCapabilitySummary {
   readonly button07SceneMapping: "closed-original-unreachable";
   readonly browserDecodeRaster: "closed-portable";
   readonly initialAdaptiveLandscapeLayout: "closed-portable";
-  readonly dynamicSurfaceResize: "open-evidence-required";
+  readonly dynamicSurfaceResize: "observational-gap";
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly originalSkinSettings: "closed-static-portable";
   readonly originalLiveSettings: "closed-portable";
   readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
-  readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
-  readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";
+  readonly selectedRenderingGate: "closed-portable" | "observational-gap";
+  readonly selectedBackgroundGate: "closed-portable" | "observational-gap";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";
-  readonly selectedSkinGate: "closed-static-portable" | "open-evidence-required";
+  readonly selectedSkinGate: "closed-static-portable" | "observational-gap";
 }
 
 export interface SimulatorModuleCloseReport {

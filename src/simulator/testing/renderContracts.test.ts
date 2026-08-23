@@ -30,7 +30,7 @@ import {
   FrontNoteType,
   GameNoteType,
 } from "../engine/chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { validateOrdinaryRenderedBatchAuthorization } from "../engine/managers/noteManager";
 import { resolveFrontSpriteBinding } from "../engine/rendering/renderCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
@@ -96,7 +96,7 @@ class LocalProvider implements SimulatorResourceProvider {
         "asset.multiple-directional-line-right",
       ].includes(logicalAssetId)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "test.provider.missing",
         ["PR35"],
         "The test provider has no requested local bytes.",
@@ -521,11 +521,11 @@ async function testPortableLocalResources(): Promise<void> {
   first[1] = 0;
   const second = requireOk(await provider.read("local.abc"), "read second byte copy");
   equal(second[1], 0x62, "each read returns detached bytes");
-  equal((await provider.read("missing")).status, "evidence-required", "unknown local ID rejected");
+  equal((await provider.read("missing")).status, "integrity-failure", "unknown local ID rejected");
   equal(ImmutableLocalRenderResourceProvider.create([
     { logicalAssetId: "duplicate", bytes: BYTES },
     { logicalAssetId: "duplicate", bytes: BYTES },
-  ]).status, "evidence-required", "duplicate local ID rejected");
+  ]).status, "integrity-failure", "duplicate local ID rejected");
   equal(sha256UpperHex(Uint8Array.from([0x61, 0x62, 0x63])),
     "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD",
     "portable SHA-256 abc vector");
@@ -540,7 +540,7 @@ async function testPortableLocalResources(): Promise<void> {
   equal(metadata.width, 4, "PNG width");
   equal(metadata.height, 4, "PNG height");
   equal((await adapter.inspect(Uint8Array.from([1]), "image/png")).status,
-    "evidence-required", "invalid PNG rejected");
+    "integrity-failure", "invalid PNG rejected");
 
   const actualProfile = cloneProfile(profile());
   (actualProfile.assets[0] as { byteLength: number }).byteLength = png.byteLength;
@@ -574,19 +574,19 @@ async function testProfileValidationAndAliases(): Promise<void> {
     ...duplicate.assets[0],
     atlasRows: duplicate.assets[0].atlasRows.map((row) => ({ ...row })),
   });
-  equal(validateAndFreezeRenderProfile(duplicate).status, "evidence-required", "duplicate asset rejected");
+  equal(validateAndFreezeRenderProfile(duplicate).status, "integrity-failure", "duplicate asset rejected");
 
   const outOfBounds = cloneProfile(profile());
   (outOfBounds.assets[0].atlasRows[0] as { width: number }).width = 5;
-  equal(validateAndFreezeRenderProfile(outOfBounds).status, "evidence-required", "atlas bounds rejected");
+  equal(validateAndFreezeRenderProfile(outOfBounds).status, "integrity-failure", "atlas bounds rejected");
 
   const incomplete = cloneProfile(profile());
   (incomplete.scene.components as unknown as { component: string; support: string }[]).pop();
-  equal(validateAndFreezeRenderProfile(incomplete).status, "evidence-required", "component omission rejected");
+  equal(validateAndFreezeRenderProfile(incomplete).status, "integrity-failure", "component omission rejected");
 
   const implicitProjection = cloneProfile(profile());
   (implicitProjection.scene.projection as { pixelsPerWorldUnit: number }).pixelsPerWorldUnit = 1;
-  equal(validateAndFreezeRenderProfile(implicitProjection).status, "evidence-required",
+  equal(validateAndFreezeRenderProfile(implicitProjection).status, "integrity-failure",
     "implicit or mismatched projection rejected before resource reads");
 
   const badLabel = profile({
@@ -595,7 +595,7 @@ async function testProfileValidationAndAliases(): Promise<void> {
     profile: "current-external-portable-atlas",
     visibleLabel: "wrong" as typeof RenderFidelityLabel,
   }, "current-external-portable");
-  equal(validateAndFreezeRenderProfile(badLabel).status, "evidence-required", "degraded label rejected");
+  equal(validateAndFreezeRenderProfile(badLabel).status, "integrity-failure", "degraded label rejected");
   console.log("ok 2 - profile shape, deep freeze and fidelity gates");
 }
 
@@ -608,7 +608,7 @@ async function testAtomicPrepare(): Promise<void> {
   equal(ready.resourceCount, 1, "resource count");
   equal(renderer.commandSnapshot().length, 0, "prepare creates no commands");
   equal((await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight())).status,
-    "evidence-required", "duplicate prepare rejected");
+    "integrity-failure", "duplicate prepare rejected");
 
   const failures: readonly [string, SimulatorResourceProvider, RenderResourcePreflightAdapter][] = [
     ["byte length", new LocalProvider(Uint8Array.from([1])), preflight()],
@@ -620,7 +620,7 @@ async function testAtomicPrepare(): Promise<void> {
   for (const [label, provider, adapter] of failures) {
     const failed = new RecordingSimulatorRendererBackend();
     equal((await failed.prepare(SESSION, profile(), provider, adapter)).status,
-      "evidence-required", `${label} rejected`);
+      "integrity-failure", `${label} rejected`);
     equal(failed.snapshot().state, "unprepared", `${label} atomic state`);
     equal(failed.snapshot().resourceCount, 0, `${label} resource count`);
     equal(failed.snapshot().objectCount, 0, `${label} object count`);
@@ -632,7 +632,7 @@ async function testAtomicPrepare(): Promise<void> {
     profile({ mode: "habahiro", fidelity: "exact-current-unityfs" }, "current-external-portable"),
     new LocalProvider(),
     preflight(),
-  )).status, "evidence-required", "external bytes cannot claim exact HAB");
+  )).status, "integrity-failure", "external bytes cannot claim exact HAB");
 
   const degraded = new RecordingSimulatorRendererBackend();
   requireOk(await degraded.prepare(
@@ -666,7 +666,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
   const forged = new RecordingSimulatorRendererBackend();
   requireOk(await forged.prepare(SESSION, profile(), new LocalProvider(), preflight()), "forged renderer prepare");
   equal(forged.commit({ sessionId: SESSION, firstSequence: 0, commandCount: 1 }).status,
-    "evidence-required", "forged batch rejected");
+    "integrity-failure", "forged batch rejected");
   equal(forged.snapshot().objectCount, 0, "forged batch has no mutation");
 
   const renderer = new RecordingSimulatorRendererBackend();
@@ -708,7 +708,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
   assert(Object.isFrozen(renderer.commandSnapshot()[2]), "command frozen");
 
   const firstFault = renderer.execute({ ...createObject(4), sessionId: "foreign" });
-  equal(firstFault.status, "evidence-required", "foreign session rejected");
+  equal(firstFault.status, "integrity-failure", "foreign session rejected");
   const fault = renderer.snapshot().fault;
   equal(renderer.snapshot().state, "faulted", "terminal fault state");
   assert(fault !== null, "fault snapshot present");
@@ -734,7 +734,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
     binding: "sprite",
     logicalAssetId: "asset.note",
     exactKey: "missing",
-  }).status, "evidence-required", "missing exact key rejected");
+  }).status, "integrity-failure", "missing exact key rejected");
   equal(unknown.snapshot().state, "faulted", "binding fault terminal");
   console.log("ok 4 - session, sequence, identity, exact resource and terminal fault");
 }
@@ -909,7 +909,7 @@ async function testHostReadyGate(): Promise<void> {
     },
     rendering: RENDERING,
   };
-  equal(createSimulatorEngine(input, backends).status, "evidence-required", "unprepared host rejected");
+  equal(createSimulatorEngine(input, backends).status, "integrity-failure", "unprepared host rejected");
   equal(backends.snapshot().length, 0, "host rejection precedes backend/domain mutation");
 
   requireOk(await unprepared.prepare(SESSION, profile(), new LocalProvider(), preflight()), "host renderer prepare");
@@ -993,9 +993,9 @@ async function testHostReadyGate(): Promise<void> {
     { ...engineInput(), rendering: { ...RENDERING, sessionId: "foreign" } },
     createRecordingSimulatorBackends(unprepared),
   );
-  equal(mismatch.status, "evidence-required", "cross-session host rejected");
+  equal(mismatch.status, "integrity-failure", "cross-session host rejected");
   equal(createSimulatorEngine(engineInput(), createRecordingSimulatorBackends(unprepared)).status,
-    "evidence-required", "typed backend requires explicit host session");
+    "integrity-failure", "typed backend requires explicit host session");
   console.log("ok 8 - host ready and exact-session gate precedes owner mutation");
 }
 
@@ -1012,8 +1012,8 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   const invalidSlide = validateOrdinaryRenderedBatchAuthorization([
     { ...normal, fireNoteType: FrontNoteType.SlideA },
   ]);
-  equal(invalidSlide.status, "evidence-required", "Slide without a child chain stays invalid");
-  equal(invalidSlide.status === "evidence-required" ? invalidSlide.capability : null,
+  equal(invalidSlide.status, "integrity-failure", "Slide without a child chain stays invalid");
+  equal(invalidSlide.status === "integrity-failure" ? invalidSlide.capability : null,
     "render.note.invalid-slide-child-chain", "invalid Slide reports the exact structural gate");
   equal(validateOrdinaryRenderedBatchAuthorization([normal]).status, "ok",
     "ordinary Normal remains authorized");
@@ -1342,7 +1342,7 @@ async function testSharedTypedHudValidation(): Promise<void> {
         hudRole: route.hudRole,
         state: malformed.state,
       } as unknown as RenderCommand);
-      equal(rejected.status, "evidence-required", `${route.hudRole} ${malformed.label} rejected`);
+      equal(rejected.status, "integrity-failure", `${route.hudRole} ${malformed.label} rejected`);
       equal(renderer.snapshot().objectCount, 1, `${route.hudRole} ${malformed.label} zero owner mutation`);
       equal(renderer.commandSnapshot().length, 1, `${route.hudRole} ${malformed.label} zero command mutation`);
       requireOk(renderer.dispose(), `${route.hudRole} ${malformed.label} dispose`);

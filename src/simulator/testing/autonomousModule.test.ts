@@ -619,7 +619,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     publicAutonomousCore: "closed-portable",
     ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
-    habahiroOriginalParity: "open-evidence-required",
+    habahiroOriginalParity: "observational-gap",
     liveRehearsalFourModeMatrix: "closed-portable",
     startupDirectionPortable: "closed-portable",
     mvLivePortable: "closed-portable",
@@ -635,16 +635,16 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     button07SceneMapping: "closed-original-unreachable",
     browserDecodeRaster: "closed-portable",
     initialAdaptiveLandscapeLayout: "closed-portable",
-    dynamicSurfaceResize: "open-evidence-required",
+    dynamicSurfaceResize: "observational-gap",
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
     originalLiveSettings: "closed-portable",
     mainProgramIntegration: "closed-product-integration",
-    selectedRenderingGate: "open-evidence-required",
+    selectedRenderingGate: "observational-gap",
     selectedBackgroundGate: "closed-portable",
     selectedChartGate: "closed-portable",
-    selectedSkinGate: "open-evidence-required",
+    selectedSkinGate: "observational-gap",
   }, "close receipt publishes each capability gate without an aggregate complete claim");
   assert.equal(session.steps, 1, "user-close owns frame before engine step");
   assert.equal(session.closes, 1);
@@ -869,7 +869,7 @@ class SurfaceRejectingSession extends FakeSession {
     return Object.freeze({
       status: "rejected" as const,
       failure: Object.freeze({
-        code: "evidence-required" as const,
+        code: "integrity-failure" as const,
         capability: "surface.dynamic-revision-unsupported",
         boundary: "injected post-initial revision",
       }),
@@ -957,7 +957,7 @@ function requireAccepted<T>(result: SharedStaticResourceResult<T> | SimulatorAss
   if (result.status !== "accepted") throw new Error(result.failure.capability);
   return result.value;
 }
-function requireOk<T>(result: { status: "ok"; value: T } | { status: "evidence-required"; capability: string }): T {
+function requireOk<T>(result: { status: "ok"; value: T } | { status: "integrity-failure"; capability: string }): T {
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }

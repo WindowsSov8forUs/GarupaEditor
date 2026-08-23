@@ -98,7 +98,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     const video = prepared.value.resource;
     if (!video.muted || !video.defaultMuted || !video.playsInline || video.loop || video.autoplay) {
       return movieRejected(
-        "evidence-required",
+        "integrity-failure",
         "movie.pixi.invalid-media-flags",
         "Portable MV video is permanently muted, inline, non-looping and explicitly started; browser defaults are not accepted.",
       );
@@ -432,6 +432,6 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     return this.reject(`movie.pixi.invalid-${operation}-state`, `Movie ${operation} requires ${expected} state and has no implicit correction.`);
   }
   private reject(capability: string, boundary: string): MovieOperationResult<never> {
-    return movieRejected("evidence-required", capability, boundary);
+    return movieRejected("integrity-failure", capability, boundary);
   }
 }

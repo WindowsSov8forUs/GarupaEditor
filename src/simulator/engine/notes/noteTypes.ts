@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -69,7 +69,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
   protected override moveState(deltaTimeSeconds: number): SimulatorResult<void> {
     const noteInformation = this.noteInformation;
     if (noteInformation === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "single-without-note-information",
         ["R02", "R04", "D05"],
         "A pooled Single note must be activated before MoveState.",
@@ -81,7 +81,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     }
     const adjustedPosition = autoRuntime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjustedPosition)) {
-      return evidenceRequired(
+      return integrityFailure(
         autoRuntime.value.isAutoPlay()
           ? "auto-live.non-finite-adjusted-position"
           : "manual.single-non-finite-adjusted-position",
@@ -120,7 +120,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
   }
 
   protected forcePerfect(): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       "auto-live.single-base-force-perfect-unrepresented",
       ["R02", "R04"],
       "Only recovered concrete Single/Flick/Directional owners may select an Auto Live judgement note type.",
@@ -132,7 +132,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "auto-live.single-without-note-information",
             ["R02", "R04"],
             "Force Perfect requires the activated NoteInformation.",
@@ -173,7 +173,7 @@ export class NoteNormal extends NoteSingleBase {
     const runtime = this.manualRuntime;
     if (information === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.normal-without-note-information",
             ["D05", "MJ02", "MJ11"],
             "Normal Began judgement requires its activated NoteInformation owner.",
@@ -216,7 +216,7 @@ export class NoteNormal extends NoteSingleBase {
       typeof judgement !== "object" ||
       judgement.result === NoteResultType.None
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.normal-invalid-began-plan",
         ["D05", "D14", "D15", "MJ02", "MJ26"],
         "Only the owner-produced non-None Normal timing projection can reserve a manual OneFrame slot.",
@@ -331,7 +331,7 @@ export class NoteLong extends NoteFrontBase {
     const runtime = this.manualRuntime;
     if (information === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.long-without-source",
             ["D05", "D12", "MJ11"],
             "Long Began requires its activated root and manual timing owner.",
@@ -369,7 +369,7 @@ export class NoteLong extends NoteFrontBase {
       judgement === null ||
       judgement.result <= NoteResultType.Miss
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.long-invalid-began-plan",
         ["D05", "D12", "D14", "MJ11", "MJ26"],
         "Only an owner-produced Good-or-better Long head may reserve type4.",
@@ -444,7 +444,7 @@ export class NoteLong extends NoteFrontBase {
       this.state !== NoteState.Stop
     ) {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.long-after-owner-unavailable",
             ["D09", "D10", "D12", "MJ12", "MJ15"],
             "Long continuation requires its Began origin, Stop state and parent-owned after node.",
@@ -506,7 +506,7 @@ export class NoteLong extends NoteFrontBase {
       }));
     }
     if (input.deltaTimeSeconds === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.long-owner-delta-unavailable",
         ["D10", "D14", "D15", "MJ14", "MJ26"],
         "Long movement grace requires the host-owned outer-frame Float32 delta.",
@@ -558,7 +558,7 @@ export class NoteLong extends NoteFrontBase {
             after.afterNoteType === AfterNoteType.MultipleDirectionalFlickRight)
         ) {
           if (group === null || group.isUsed) {
-            return evidenceRequired(
+            return integrityFailure(
               "manual.long-multiple-after-group-unavailable",
               ["D08", "D12", "MJ13"],
               "Long Multiple after movement requires its unused chart-owned group.",
@@ -609,7 +609,7 @@ export class NoteLong extends NoteFrontBase {
     const information = this.noteInformation;
     const after = this.afterNoteValue;
     if (information === null || after === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.long-tail-source-unavailable",
         ["D12", "D14", "MJ15"],
         "Long tail reservation requires its root and parent-owned after source.",
@@ -617,7 +617,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
     if (noteType === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.long-after-type-unrepresented",
         ["D12", "MJ15"],
         `Long after type ${after.afterNoteType} has no confirmed manual note type.`,
@@ -680,7 +680,7 @@ export class NoteLong extends NoteFrontBase {
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "auto-live.long-without-note-information",
             ["R02", "R04"],
             "Long MoveState requires an activated root.",
@@ -689,7 +689,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.non-finite-adjusted-position",
         ["R02", "R04"],
         "Long Force Perfect requires a finite adjusted position.",
@@ -723,7 +723,7 @@ export class NoteLong extends NoteFrontBase {
     const autoRuntime = this.autoLiveRuntime;
     if (information === null || autoRuntime.status !== "ok") {
       return autoRuntime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.long-start-timeout-owner-unavailable",
             ["D11", "MJ16"],
             "Long Wait timeout requires its activated root and adjusted-position owner.",
@@ -776,7 +776,7 @@ export class NoteLong extends NoteFrontBase {
     const autoRuntime = this.autoLiveRuntime;
     if (after === null || information === null || autoRuntime.status !== "ok") {
       return autoRuntime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.long-end-timeout-owner-unavailable",
             ["D11", "MJ17"],
             "Long Stop timeout requires its parent-owned tail and adjusted-position owner.",
@@ -800,7 +800,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
     if (noteType === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.long-timeout-after-type-unrepresented",
         ["D11", "MJ17"],
         `Long timeout after type ${after.afterNoteType} has no confirmed note type.`,
@@ -832,7 +832,7 @@ export class NoteLong extends NoteFrontBase {
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     if (after === null || noteInformation === null || runtime.status !== "ok") {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.long-runtime-graph-unavailable",
         ["R02", "R04"],
         "Long OnUpdate requires its parent-owned linked after runtime.",
@@ -844,7 +844,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.non-finite-adjusted-position",
         ["R02", "R04"],
         "Long tail Force Perfect requires a finite adjusted position.",
@@ -855,7 +855,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const noteType = longAfterJudgeNoteType(after.afterNoteType);
     if (noteType === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-long-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Long root ${noteInformation.index} retained an unconfirmed terminal type.`,
@@ -990,7 +990,7 @@ export class NoteSlide extends NoteFrontBase {
       noteInformation.slideNoteList.length - 1
     ];
     if (terminalSource === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-slide-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Slide root ${noteInformation.index} has no terminal source node.`,
@@ -1011,7 +1011,7 @@ export class NoteSlide extends NoteFrontBase {
         seen.has(source) ||
         source.absolutePos <= previousPosition
       ) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.duplicate-or-missing-slide-node",
           ["R01", "R02", "R04", "U01"],
           `Slide root ${noteInformation.index} contains an invalid shared after-node identity.`,
@@ -1054,7 +1054,7 @@ export class NoteSlide extends NoteFrontBase {
     const runtime = this.manualRuntime;
     if (source === null || runtime.status !== "ok" || this.manualHeadJudgedValue) {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.slide-head-owner-unavailable",
             ["D10", "D12", "MJ18", "MJ20"],
             "Slide Began requires its unconsumed parent-owned head.",
@@ -1123,7 +1123,7 @@ export class NoteSlide extends NoteFrontBase {
       this.state !== NoteState.Stop
     ) {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.slide-current-owner-unavailable",
             ["D10", "D12", "MJ19", "MJ20"],
             "Slide Moved requires its parent-owned current node in Stop state.",
@@ -1166,7 +1166,7 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     if (input.deltaTimeSeconds === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-owner-delta-unavailable",
         ["D10", "D14", "D15", "MJ21", "MJ26"],
         "Slide terminal movement grace requires the host-owned outer-frame delta.",
@@ -1197,7 +1197,7 @@ export class NoteSlide extends NoteFrontBase {
       ? input.currentPosition
       : this.manualTouchOriginValue;
     if (origin === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-touch-origin-unavailable",
         ["D09", "D10", "MJ21"],
         "Slide terminal movement requires its cached Began origin.",
@@ -1231,7 +1231,7 @@ export class NoteSlide extends NoteFrontBase {
         movementSucceeded = horizontalRate.value > float32FromBits(0x3c23d70a);
         if (movementSucceeded && (gameNoteType === 11 || gameNoteType === 12)) {
           if (group === null || group.isUsed) {
-            return evidenceRequired(
+            return integrityFailure(
               "manual.slide-multiple-terminal-group-unavailable",
               ["D08", "D12", "MJ21"],
               "Slide Multiple terminal requires its unused chart-owned group.",
@@ -1288,7 +1288,7 @@ export class NoteSlide extends NoteFrontBase {
     const runtime = this.manualRuntime;
     if (current === undefined || root === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.slide-ended-owner-unavailable",
             ["D12", "MJ22"],
             "Slide Ended requires its current parent-owned node.",
@@ -1308,7 +1308,7 @@ export class NoteSlide extends NoteFrontBase {
       ? manualSlideFinalJudgeNoteType(root.afterNoteType)
       : 8;
     if (noteType === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-final-type-unrepresented",
         ["D12", "MJ22"],
         `Slide after type ${root.afterNoteType} has no confirmed final note type.`,
@@ -1423,7 +1423,7 @@ export class NoteSlide extends NoteFrontBase {
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.slide-without-note-information",
         ["R02", "R04"],
         "Slide MoveState requires an activated root and Auto Live runtime.",
@@ -1431,7 +1431,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.non-finite-adjusted-position",
         ["R02", "R04"],
         "Slide Force Perfect requires a finite adjusted position.",
@@ -1465,7 +1465,7 @@ export class NoteSlide extends NoteFrontBase {
     const autoRuntime = this.autoLiveRuntime;
     if (information === null || autoRuntime.status !== "ok") {
       return autoRuntime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.slide-front-timeout-owner-unavailable",
             ["D11", "MJ23"],
             "Slide Wait timeout requires its root and pending-node graph.",
@@ -1522,7 +1522,7 @@ export class NoteSlide extends NoteFrontBase {
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.slide-stop-runtime-unavailable",
         ["R02", "R04"],
         "Slide StopState requires the activated parent-owned after graph.",
@@ -1539,7 +1539,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.non-finite-adjusted-position",
         ["R02", "R04"],
         "Slide Stop Force Perfect requires a finite adjusted position.",
@@ -1603,7 +1603,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-timeout-non-finite-adjusted-position",
         ["D11", "MJ23"],
         "Slide current timeout requires a finite adjusted position.",
@@ -1669,7 +1669,7 @@ export class NoteSlide extends NoteFrontBase {
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.slide-runtime-graph-unavailable",
         ["R02", "R04"],
         "Slide pending-node Force Perfect requires the parent-owned runtime graph.",
@@ -1680,7 +1680,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const current = this.afterNotesValue[this.currentAfterIndexValue];
     if (current === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.slide-current-after-missing",
         ["R02", "R04"],
         "An active Slide must retain one selected pending after node.",
@@ -1692,7 +1692,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.non-finite-adjusted-position",
         ["R02", "R04"],
         "Slide after Force Perfect requires a finite adjusted position.",
@@ -1720,7 +1720,7 @@ export class NoteSlide extends NoteFrontBase {
         current.terminalJudgeNoteType === null ||
         current.terminalJudgeNoteType !== this.terminalJudgeNoteTypeValue
       ) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.invalid-slide-terminal-graph",
           ["R02", "R03", "R04", "U01"],
           "The selected Slide terminal must retain the validated parent-owned judgement mapping.",
@@ -1815,7 +1815,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     const runtime = this.manualRuntime;
     if (information === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.flick-without-note-information",
             ["D05", "D07", "MJ02", "MJ08", "MJ09"],
             "Flick Began requires its activated NoteInformation owner.",
@@ -1899,7 +1899,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     const manualRuntime = this.manualRuntime;
     if (information === null || manualRuntime.status !== "ok") {
       return manualRuntime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.flick-force-perfect-without-source",
             ["R18", "D07", "MJ08", "MJ09"],
             "The seven-frame Flick synthetic chain requires its activated source owner.",
@@ -1925,7 +1925,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     const information = this.noteInformation;
     const judgement = this.cachedJudgementValue;
     if (information === null || judgement === null || this.state !== NoteState.Wait) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.flick-move-without-began-owner",
         ["R18", "D06", "D07", "MJ07", "MJ08", "MJ09"],
         "A Flick movement may consume only the non-None result/timing cached by its Began owner in Wait state.",
@@ -2034,7 +2034,7 @@ export class NoteDirectionalFlick extends NoteFlickBase {
     if (sourceType === 11) {
       return ok(Math.fround(500));
     }
-    return evidenceRequired(
+    return integrityFailure(
       "directional-flick-source-type",
       ["R02", "R04", "R05", "D07"],
       `Directional Flick only confirms source note types 10 and 11, received ${String(sourceType)}.`,
@@ -2052,7 +2052,7 @@ export class NoteDirectionalFlick extends NoteFlickBase {
     const runtime = this.manualRuntime;
     if (information === null || runtime.status !== "ok") {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.directional-without-source",
             ["D07", "MJ09"],
             "Directional movement requires its activated source owner.",
@@ -2134,7 +2134,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   ): SimulatorResult<ManualNoteBeganPlan> {
     const group = this.groupValue;
     if (group?.isUsed) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.multiple-directional-group-already-used",
         ["D08", "MJ10"],
         "A consumed Multiple Directional side owner cannot accept another Began.",
@@ -2145,7 +2145,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return basePlan;
     }
     if (group === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.multiple-directional-runtime-unavailable",
         ["D08", "MJ10"],
         "Multiple Directional Began requires its registered group owner.",
@@ -2178,7 +2178,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     const group = this.groupValue;
     if (information === null || runtime.status !== "ok" || group === null) {
       return runtime.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "manual.multiple-directional-runtime-unavailable",
             ["D07", "D08", "MJ10"],
             "Multiple Directional movement requires its activated source and registered group owner.",
@@ -2186,7 +2186,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
         : runtime;
     }
     if (group.isUsed) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.multiple-directional-group-already-used",
         ["D08", "MJ10"],
         "A consumed Multiple Directional side owner cannot produce a duplicate movement judgement.",
@@ -2278,7 +2278,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return graphValidation;
     }
     if (this.groupResolverValue === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.multiple-directional-group-unregistered",
         ["R10", "R13", "R16"],
         "NoteManager must establish the adjacent-button runtime group before activation.",
@@ -2311,7 +2311,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     const runtime = this.autoLiveRuntime;
     const group = this.groupValue;
     if (noteInformation === null || runtime.status !== "ok" || group === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "multiple-directional-runtime-unavailable",
         ["R10", "R12", "R16", "D08", "MJ10"],
         "Multiple Directional Force Perfect requires its activated adjacent-button runtime group.",
@@ -2431,14 +2431,14 @@ export class NoteMultipleDirectionalVisual extends NoteFrontBase {
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
     // R7 closes the presentation owner only for the explicitly connected renderer.
-    if (!this.presentationLifecycleEnabled) return evidenceRequired(
+    if (!this.presentationLifecycleEnabled) return integrityFailure(
       "auto-live.multiple-directional-visual-presentation",
       ["R10", "R13", "R16.D01", "R16.D03"],
       "AddLong/AddSlide Multiple Directional presentation requires its explicit R7 renderer owner.",
     );
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
-    if (noteInformation === null || runtime.status !== "ok") return evidenceRequired(
+    if (noteInformation === null || runtime.status !== "ok") return integrityFailure(
       "auto-live.multiple-directional-visual-presentation",
       ["R10", "R13", "R16.D01", "R16.D03", "RPR-R7-009"],
       "The connected Multiple Directional visual requires its activated chart time owner; R7 closes only the registered production presentation path.",
@@ -2478,7 +2478,7 @@ export class LongAfterRuntime {
 
   markJudged(): SimulatorResult<void> {
     if (this.judgedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.long-after-already-judged",
         ["R02", "R04"],
         "The linked Long after node cannot produce a second Auto Live result.",
@@ -2509,7 +2509,7 @@ export class SlideAfterRuntime {
 
   markJudged(): SimulatorResult<void> {
     if (this.judgedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.slide-after-already-judged",
         ["R02", "R04"],
         `Slide after node ${this.sourceIndex} cannot produce a second Auto Live result.`,
@@ -2564,7 +2564,7 @@ export function validateAutoLiveActivationGraph(
   noteInformation: NoteInformation,
 ): SimulatorResult<void> {
   if (noteInformation.isInvisible) {
-    return evidenceRequired(
+    return integrityFailure(
       "auto-live.invalid-playable-root-identity",
       ["R02", "R04", "U01"],
       `Playable root ${noteInformation.index} cannot use an invisible support identity.`,
@@ -2585,7 +2585,7 @@ export function validateAutoLiveActivationGraph(
       !isInt32Position(noteInformation.afterNoteAbsolutePos) ||
       noteInformation.afterNoteAbsolutePos <= noteInformation.absolutePos
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-long-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Long root ${noteInformation.index} has no confirmed terminal after node.`,
@@ -2602,7 +2602,7 @@ export function validateAutoLiveActivationGraph(
       !noteInformation.isSlideNoteHead ||
       noteInformation.slideNoteList.length === 0
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-slide-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Slide root ${noteInformation.index} has no confirmed after-node list.`,
@@ -2612,14 +2612,14 @@ export function validateAutoLiveActivationGraph(
       noteInformation.slideNoteList.length - 1
     ];
     if (terminalSource === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-slide-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Slide root ${noteInformation.index} has no terminal source node.`,
       );
     }
     if (terminalSource.isInvisible) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-slide-terminal-graph",
         ["R02", "R03", "R04", "U01"],
         `Slide root ${noteInformation.index} has an invisible terminal outside the confirmed graph.`,
@@ -2637,7 +2637,7 @@ export function validateAutoLiveActivationGraph(
     for (let index = 0; index < noteInformation.slideNoteList.length; index += 1) {
       const source = noteInformation.slideNoteList[index];
       if (source === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.duplicate-or-missing-slide-node",
           ["R01", "R02", "R04", "U01"],
           `Slide root ${noteInformation.index} contains a missing after-node identity.`,
@@ -2660,7 +2660,7 @@ export function validateAutoLiveActivationGraph(
         !isInt32Position(source.absolutePos) ||
         source.absolutePos <= previousPosition
       ) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.duplicate-or-missing-slide-node",
           ["R01", "R02", "R04", "U01"],
           `Slide root ${noteInformation.index} contains an invalid shared after-node identity.`,
@@ -2676,7 +2676,7 @@ export function validateAutoLiveActivationGraph(
       noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
       noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.directional-flick-source-type",
         ["R02", "R04", "R05"],
         `Directional Force Perfect only confirms source note types 10 and 11, received ${String(noteInformation.gameNoteType)}.`,
@@ -2689,7 +2689,7 @@ export function validateAutoLiveActivationGraph(
       noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
       noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-multiple-directional-root",
         ["R10", "R16", "R16.D05", "R16.D08"],
         `Core Multiple Directional requires front type 6 and source game type 10/11 (front=${noteInformation.fireNoteType}, game=${noteInformation.gameNoteType}).`,
@@ -2710,7 +2710,7 @@ export function validateAutoLiveChartOwnership(
         continue;
       }
       if (playableRoots.has(information)) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.duplicate-runtime-note-identity",
           ["R02", "R04", "U01"],
           `Playable root ${information.index} is bound more than once in the runtime chart.`,
@@ -2732,7 +2732,7 @@ export function validateAutoLiveChartOwnership(
     for (const child of root.slideNoteList) {
       const existingOwner = childOwners.get(child);
       if (playableRoots.has(child) || existingOwner !== undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "auto-live.shared-slide-child-owner",
           ["R02", "R04", "U01"],
           `Slide child ${child.index} must be owned by exactly one parent and remain outside the playable root list.`,
@@ -2767,7 +2767,7 @@ function validatePlayableButtonIdentity(
       button < ButtonType.Button_00_BMS_1P_SC ||
       button > ButtonType.Button_15_BMS_2P_SC)
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "auto-live.invalid-note-button-identity",
       ["R02", "R04", "U01"],
       `Playable root ${noteInformation.index} has an unconfirmed primary/button-array identity.`,
@@ -2812,7 +2812,7 @@ function validateRootFamilyShape(
         noteInformation.afterNoteType === AfterNoteType.None;
       break;
     default:
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.invalid-note-family-shape",
         ["R02", "R04", "R10", "U01"],
         `Playable root ${noteInformation.index} has an unconfirmed front family ${noteInformation.fireNoteType}.`,
@@ -2820,7 +2820,7 @@ function validateRootFamilyShape(
   }
   return valid
     ? ok(undefined)
-    : evidenceRequired(
+    : integrityFailure(
         "auto-live.invalid-note-family-shape",
         ["R02", "R04", "R10", "U01"],
         `Playable root ${noteInformation.index} has an unconfirmed front/game/after combination (${noteInformation.fireNoteType}/${noteInformation.gameNoteType}/${noteInformation.afterNoteType}).`,
@@ -2840,7 +2840,7 @@ function validateSlideChildRole(
         source.gameNoteType === root.gameNoteType);
   return validRole
     ? ok(undefined)
-    : evidenceRequired(
+    : integrityFailure(
         "auto-live.invalid-slide-child-role",
         ["R02", "R04", "U01"],
         `Slide child ${source.index} does not match its parent-owned ${isTerminal ? "terminal" : "intermediate"} role.`,
@@ -2854,7 +2854,7 @@ function validateConcreteNoteOwner(
 ): SimulatorResult<void> {
   return accepted
     ? ok(undefined)
-    : evidenceRequired(
+    : integrityFailure(
         "auto-live.note-family-owner-mismatch",
         ["R02", "R04", "U01"],
         `Pool object ${poolObjectId} cannot bind front family ${noteInformation.fireNoteType}.`,
@@ -2878,7 +2878,7 @@ function isManualTimeoutOver(
     !Number.isFinite(bpm) ||
     bpm <= 0
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "manual.timeout-owner-value-invalid",
       ["D11", "MJ16", "MJ17", "MJ23"],
       "Manual timeout requires finite production positions and a positive finite BPM.",
@@ -3006,7 +3006,7 @@ function resolveSlideTerminalJudgeNoteType(
   ) {
     return ok(7);
   }
-  return evidenceRequired(
+  return integrityFailure(
     "auto-live.invalid-slide-terminal-graph",
     ["R02", "R03", "R04", "U01"],
     `Slide terminal mapping is not confirmed (afterNoteType=${afterNoteType}, terminalGameNoteType=${terminalGameNoteType}).`,

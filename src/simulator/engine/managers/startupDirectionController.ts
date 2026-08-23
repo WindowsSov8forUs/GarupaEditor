@@ -1,6 +1,6 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import { GameState, type GameStateValue } from "../data/inGameState";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
 import {
   StartupAudioOwner,
@@ -310,7 +310,7 @@ export class StartupDirectionController {
     if (primaryGate.status !== "ok") return primaryGate;
     if (!primaryGate.value) return ok(undefined);
     const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
-    if (audioTransition?.status === "evidence-required") return audioTransition;
+    if (audioTransition?.status === "integrity-failure") return audioTransition;
     if (this.mvBackground !== null) {
       const afterSound = this.mvBackground.startAfterSound();
       if (afterSound.status !== "ok") {
@@ -350,5 +350,5 @@ function advance(elapsed: number, duration: number, delta: number): Readonly<{ e
 }
 function unit(elapsed: number, duration: number): number { return Math.fround(Math.min(1, elapsed / duration)); }
 function rejected(capability: string, boundary: string) {
-  return evidenceRequired(capability, ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD17"], boundary);
+  return integrityFailure(capability, ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD17"], boundary);
 }

@@ -4,7 +4,7 @@ import {
   type SinglePlayScoreGaugeMeterKey,
   type SinglePlayScoreGaugeSnapshot,
 } from "../data/singlePlayScoreGauge";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import { NORMALIZED_SCORE_RULESET_ID } from "../scoring/contracts";
 import {
   calculateNormalizedScoreMaximum,
@@ -32,7 +32,7 @@ export class SinglePlayScoreGauge {
   static create(totalScoringUnitCount: number): SimulatorResult<SinglePlayScoreGauge> {
     const scoreMax = calculateNormalizedScoreMaximum(totalScoringUnitCount);
     return scoreMax === null || scoreMax <= NORMALIZED_SCORE_RANK_THRESHOLDS.scoreSS
-      ? evidenceRequired(
+      ? integrityFailure(
           "score-gauge.invalid-scoring-unit-count",
           [],
           "CS-V1 Score Gauge requires a positive chart-owned Int32 scoring-unit count and a UInt32 maximum above the fixed SS threshold.",
@@ -48,7 +48,7 @@ export class SinglePlayScoreGauge {
 
   update(score: number): SimulatorResult<SinglePlayScoreGaugeSnapshot> {
     if (!isUInt32(score) || score > this.scoreMax) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-gauge.invalid-score",
         [],
         "CS-V1 Score Gauge accepts one unsigned score no greater than its chart-derived scoreMaximum.",

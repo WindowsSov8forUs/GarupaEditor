@@ -21,7 +21,7 @@ import {
   type NoteInformation,
 } from "../chart/types";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -308,7 +308,7 @@ export class RenderCommandProducer {
         (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
           Object.values(this.resources.habahiroAtlasLogicalAssetIds).some((value) => !isNonEmpty(value))))
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-session-or-resource-bindings",
         ["RPR-D03", "RPR-D14", "PR05", "PR38"],
         "The producer requires one ready renderer session and explicit exact Note/Directional logical asset IDs.",
@@ -319,7 +319,7 @@ export class RenderCommandProducer {
 
   beginOuterFrame(frame: number): SimulatorResult<void> {
     if (!Number.isSafeInteger(frame) || frame < 0 || frame < this.frame) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-frame",
         ["RPR-D13", "PR33", "PR34"],
         "Render frame identity is monotonic and authored by the engine outer-frame owner.",
@@ -332,7 +332,7 @@ export class RenderCommandProducer {
 
   beginSubstep(substep: number): SimulatorResult<void> {
     if (!Number.isSafeInteger(substep) || substep < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-substep",
         ["RPR-D13", "PR33", "PR39"],
         "Render substep identity is a non-negative integer authored by NoteManager.",
@@ -570,7 +570,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-hud-animation-delta",
         ["RPR-D12", "RPR-D13", "PR21", "PR24", "PR31"],
         "Portable HUD animation sampling requires one non-negative finite engine delta and never a backend ticker.",
@@ -711,7 +711,7 @@ export class RenderCommandProducer {
         (plan.maskObjectId !== null && !maskIds.has(plan.maskObjectId))
       )
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-field-plan",
         ["RPR-D08", "RPR-D13", "PR18", "PR39"],
         "Field setup requires unique typed field/judge identities and every visible-inside mask must be an explicit polygon referenced within the same atomic setup.",
@@ -805,7 +805,7 @@ export class RenderCommandProducer {
         state.textureIndex !== expectedTextures[index] || state.active ||
         !validateVector3(state.position) || !validateVector2(state.scale) ||
         !validateColor(state.color) || !validateOrdering(state.ordering))) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.tap-lane-effect.invalid-setup",
         ["OLS-R05", "OLS-P01"],
         "Tap lane effects require thirteen ordered full/half-button owners, the exact four current sprites and inactive initial states before renderer mutation.",
@@ -840,7 +840,7 @@ export class RenderCommandProducer {
       !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
       !validateVector3(state.position) || !validateVector2(state.scale) ||
       !validateColor(state.color) || !validateOrdering(state.ordering))) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.tap-lane-effect.invalid-update",
         ["OLS-R05", "OLS-P01"],
         "Tap lane effect updates require setup-owned slots and finite serialized animation samples.",
@@ -879,7 +879,7 @@ export class RenderCommandProducer {
       syncLinePoolLength < 0 ||
       (syncLinePoolLength > 0 && !isNonEmpty(syncLineLogicalAssetId))
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-sync-line-pool-setup",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "The current simultaneous-line path requires the fixed non-negative pool length and one explicit local material asset ID when present.",
@@ -892,7 +892,7 @@ export class RenderCommandProducer {
         (!isNonEmpty(multipleDirectionalLineLeftLogicalAssetId) ||
           !isNonEmpty(multipleDirectionalLineRightLogicalAssetId)))
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-multiple-directional-line-pool-setup",
         ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
         "The R4 MultipleDirectional path requires a fixed non-negative back-line pool and explicit left/right local material asset IDs.",
@@ -918,7 +918,7 @@ export class RenderCommandProducer {
           ? this.isDegradedHabahiro() ? slideChildCount !== 0 : slideChildCount < 1
           : slideChildCount !== 0)
       ) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.producer.invalid-slide-child-pool-setup",
           ["RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
           "Only a Slide pool identity may declare its positive chart-owned child count.",
@@ -1159,7 +1159,7 @@ export class RenderCommandProducer {
       !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
       !this.creationSequenceByObjectId.has(HABAHIRO_FLASH_OBJECT)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.invalid-flash-start",
         ["HAB-A07", "HAB-A09", "HA-D07"],
         "The complete HABAHIRO route requires its committed flash owner before the chart marker phase.",
@@ -1183,7 +1183,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (!this.isCompleteHabahiro() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.invalid-flash-sample",
         ["HAB-A09", "HAB-A10", "HA-D07"],
         "HABAHIRO flash sampling requires explicit engine-clock Float32 time.",
@@ -1212,7 +1212,7 @@ export class RenderCommandProducer {
         !validateRenderFloat32(plan.rotationDegrees) || !validateColor(plan.color) ||
         !validateOrdering(plan.ordering))
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.invalid-lane-change",
         ["HAB-A07", "HAB-A09", "HAB-A10", "HA-D08"],
         "The inferred HABAHIRO lane swap requires every pre-created field/judge owner and typed post-change transform.",
@@ -1245,7 +1245,7 @@ export class RenderCommandProducer {
       absolutePosition < 0 ||
       !this.creationSequenceByObjectId.has(DEGRADED_HABAHIRO_LANE_OBJECT)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.invalid-degraded-lane-change",
         ["RPR-D08", "PR19", "PR40", "HA-D07", "HA-D08", "HA-D09"],
         "Only the legacy degraded HABAHIRO route with its committed diagnostic owner may emit the same-frame lane-change command.",
@@ -1282,7 +1282,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (typeof noteColor !== "boolean" || !Number.isSafeInteger(substep) || substep < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-substep",
         ["RPR-D13", "PR33", "PR39"],
         "Note activation commands require the engine-owned non-negative adaptive substep.",
@@ -1329,7 +1329,7 @@ export class RenderCommandProducer {
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
     if (typeof noteColor !== "boolean" || !Number.isSafeInteger(substep) || substep < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-substep",
         ["RPR-D13", "PR33", "PR39"],
         "Note activation commands require the engine-owned non-negative adaptive substep.",
@@ -1339,7 +1339,7 @@ export class RenderCommandProducer {
     const legacyDegradedHabahiro = this.isDegradedHabahiro();
     const habahiro = completeHabahiro || legacyDegradedHabahiro;
     if (completeHabahiro && !validateHabahiroScene(scene.habahiro)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
         "Complete HABAHIRO rendering requires explicit mesh width, flash duration and pre/post field plans.",
@@ -1364,7 +1364,7 @@ export class RenderCommandProducer {
       !r7Front &&
       !r7Slide
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.ordinary-child-lifecycle-unimplemented",
         ["RPR-R7-001", "PR06", "PR08", "PR09", "PR15", "PR39"],
         "The current R7 production route accepts every recovered ordinary front, Long tail, Slide terminal and MultipleDirectional side-visual family.",
@@ -1378,7 +1378,7 @@ export class RenderCommandProducer {
         scene.longMeshColor === undefined ||
         !validateColor(scene.longMeshColor))
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.long-scene-unavailable",
         ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
         "The ordinary Long and R4 Slide mesh paths require explicit positive safe-area ratio and typed mesh color inputs."
@@ -1395,7 +1395,7 @@ export class RenderCommandProducer {
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
     if (creationSequence === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.note-root-not-created",
         ["RPR-D13", "RPR-D14", "PR05", "PR39"],
         "Ordinary activation requires its committed engine-authored pool root identity.",
@@ -1482,7 +1482,7 @@ export class RenderCommandProducer {
       const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
       const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
       if (iconCreationSequence === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.habahiro.icon-owner-missing",
           ["HAB-A04", "HAB-A06", "HAB-A07"],
           "Every current-external-complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
@@ -1554,7 +1554,7 @@ export class RenderCommandProducer {
       const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
       const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
       if (afterCreationSequence === undefined || meshCreationSequence === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.producer.long-child-not-created",
           ["RPR-D07", "RPR-D13", "PR15", "PR20", "PR39"],
           "Long activation requires committed after and mesh pool identities.",
@@ -1671,7 +1671,7 @@ export class RenderCommandProducer {
       for (let index = 0; index < information.slideNoteList.length; index += 1) {
         const source = information.slideNoteList[index];
         if (source === undefined) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.slide.child-source-unavailable",
             ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
             "Each fixed Slide child identity requires its chart-owned source at the same index.",
@@ -1711,7 +1711,7 @@ export class RenderCommandProducer {
         const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
         const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
         if (childCreationSequence === undefined || meshCreationSequence === undefined) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.producer.slide-child-not-created",
             ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR39"],
             "Slide activation requires every chart-sized child and mesh pool identity to be committed.",
@@ -1886,7 +1886,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-multiple-directional-line-pool-index",
         ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
         "MultipleDirectional back-line updates require a non-negative engine-owned pool index.",
@@ -1894,7 +1894,7 @@ export class RenderCommandProducer {
     }
     const renderObjectId = multipleDirectionalLineRenderObjectId(poolIndex);
     if (!this.creationSequenceByObjectId.has(renderObjectId)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.multiple-directional-line-not-created",
         ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
         "MultipleDirectional back-line updates require a committed fixed-pool identity.",
@@ -1939,7 +1939,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-sync-line-pool-index",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "Simultaneous-line updates require one non-negative engine-owned pool index.",
@@ -1947,7 +1947,7 @@ export class RenderCommandProducer {
     }
     const renderObjectId = syncLineRenderObjectId(poolIndex);
     if (!this.creationSequenceByObjectId.has(renderObjectId)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.sync-line-not-created",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "Simultaneous-line updates require a committed fixed-pool identity.",
@@ -1987,7 +1987,7 @@ export class RenderCommandProducer {
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
     if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
         "Complete HABAHIRO Long motion requires its validated width and field profile.",
@@ -2000,7 +2000,7 @@ export class RenderCommandProducer {
       scene.longMeshColor === undefined ||
       !validateColor(scene.longMeshColor)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.long-scene-unavailable",
         ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
         "Long child frames require explicit positive safe-area ratio and typed base-mesh color inputs.",
@@ -2032,7 +2032,7 @@ export class RenderCommandProducer {
     const meshObjectId = longMeshRenderObjectId(poolObjectId);
     const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
     if (afterCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.long-child-not-created",
         ["RPR-D07", "RPR-D13", "PR15", "PR20", "PR39"],
         "Long child frames require committed after and mesh pool identities.",
@@ -2108,7 +2108,7 @@ export class RenderCommandProducer {
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
     if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
         "Complete HABAHIRO Slide motion requires its validated width and field profile.",
@@ -2118,7 +2118,7 @@ export class RenderCommandProducer {
       scene.screenToSafeAreaRatio === undefined ||
       scene.longMeshColor === undefined
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.slide.scene-unavailable",
         ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
         "R4 Slide frames require explicit safe-area ratio and typed mesh color.",
@@ -2148,7 +2148,7 @@ export class RenderCommandProducer {
       const meshObjectId = slideMeshRenderObjectId(poolObjectId, segment.sourceIndex);
       const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
       if (childCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.producer.slide-child-not-created",
           ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR39"],
           "Slide updates require every chart-sized child and segment identity to remain committed.",
@@ -2222,7 +2222,7 @@ export class RenderCommandProducer {
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
     if (creationSequence === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.note-root-not-created",
         ["RPR-D13", "RPR-D14", "PR05", "PR39"],
         "Ordinary Move requires its committed engine-authored pool root identity.",
@@ -2248,7 +2248,7 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (!isNonEmpty(poolObjectId) || visualState.maskObjectId !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-ordinary-note-transform-owner",
         ["RPR-D05", "RPR-D13", "PR10", "PR39"],
         "Ordinary Note Move requires one pool identity and the confirmed unmasked root Sprite path.",
@@ -2347,7 +2347,7 @@ export class RenderCommandProducer {
       !Number.isSafeInteger(deactivateSlideChildCount) ||
       deactivateSlideChildCount < 0
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.invalid-slide-child-teardown-count",
         ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
         "Slide teardown requires the non-negative chart-sized child count committed at setup.",
@@ -2386,7 +2386,7 @@ export class RenderCommandProducer {
     }
     for (const poolIndex of syncLinePoolIndices) {
       if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.producer.invalid-sync-line-pool-index",
           ["RPR-D06", "RPR-D13", "PR16", "PR39"],
           "Simultaneous-line teardown requires only non-negative engine-owned pool indices.",
@@ -2405,7 +2405,7 @@ export class RenderCommandProducer {
     }
     for (const poolIndex of multipleDirectionalLinePoolIndices) {
       if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.producer.invalid-multiple-directional-line-pool-index",
           ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
           "MultipleDirectional teardown requires only non-negative engine-owned pool indices.",
@@ -2474,7 +2474,7 @@ export class RenderCommandProducer {
         .some((value) => !isNonEmpty(value)) ||
       visible.tapLaneEffectLogicalAssetIds.length !== 4 ||
       visible.tapLaneEffectLogicalAssetIds.some((value) => !isNonEmpty(value))) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.missing-ordinary-visible-bindings",
         ["PR22", "PR26", "PR27", "PR29", "PR30", "PR39"],
         "Common single-player setup requires exact Combo, Judge, Life, warning and four tap-lane-effect resources before domain mutation.",
@@ -2486,7 +2486,7 @@ export class RenderCommandProducer {
   private validateScoreHudBindings(): SimulatorResult<void> {
     if (this.resources.scoreHud === undefined ||
       Object.values(this.resources.scoreHud).some((value) => !isNonEmpty(value))) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.producer.missing-score-hud-bindings",
         [],
         "Score HUD setup requires the exact font, gauge and high-rank resource bindings prepared before domain mutation.",
@@ -2579,7 +2579,7 @@ export function validateOrdinaryFixedNoteSceneInput(
         scene.screenToSafeAreaRatio.value <= 0)) ||
     (scene.longMeshColor !== undefined && !validateColor(scene.longMeshColor))
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.producer.invalid-ordinary-fixed-note-scene",
       ["RPR-D05", "RPR-D13", "PR10", "PR39"],
       "The fixed ordinary Note scene requires exact speed/scale/aspect values, seven typed start/goal transforms, one color and one portable domain layer.",
@@ -2656,7 +2656,7 @@ function validateOrdinaryAnimationOwner(
 ): SimulatorResult<void> {
   return creationSequenceByObjectId.has(binding.ownerObjectId)
     ? ok(undefined)
-    : evidenceRequired(
+    : integrityFailure(
         "render.note.ordinary-animation-owner-missing",
         ["RPR-R7-001", "PR08", "PR09", "PR11", "PR39"],
         "Current ordinary Note animation requires its fixed independent Sprite child before activation.",
@@ -2747,7 +2747,7 @@ export function resolveFrontSpriteBinding(
     gameTypeIsDirectional(information.gameNoteType)
   ) {
     if (habahiro) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.habahiro-directional-root-unrepresented",
         ["RPR-D03", "RPR-D04", "PR04", "PR09", "HA-D04"],
         "The degraded HABAHIRO directional side-visual route is separate from the front Sprite binding and is not inferred here.",
@@ -2759,7 +2759,7 @@ export function resolveFrontSpriteBinding(
       ? afterTypeIsLeft(information.afterNoteType) ? "l" : "r"
       : null;
     if (direction === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.directional-side-unresolved",
         ["RPR-D03", "RPR-D04", "PR03", "PR09"],
         "A Directional front owner must expose its exact left/right GameNoteType before Sprite lookup.",
@@ -2788,7 +2788,7 @@ export function resolveFrontSpriteBinding(
         family = "note_flick";
         break;
       default:
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.front-sprite-route-unrepresented",
           ["RPR-D03", "RPR-D04", "PR06", "PR09"],
           "Multiple Directional and add-visual families require their dedicated owner route rather than a guessed front Sprite.",
@@ -2943,7 +2943,7 @@ function resolveHabahiroMotionLaneIndex(
   const lane = resolveLaneIndex(information.buttonType, true);
   return Number.isInteger(lane) && lane >= 0 && lane < 7
     ? ok(lane)
-    : evidenceRequired(
+    : integrityFailure(
         "render.note.habahiro-invalid-center-lane",
         ["PR04", "PR40", "HA-D04"],
         "HABAHIRO projects the chart-authored range representative through the current 0..6 viewport without clamp.",
@@ -2980,14 +2980,14 @@ function resolveLaneSuffix(
     lanes.some((lane) => !Number.isInteger(lane) || lane < 0 || lane > 6) ||
     lanes.some((lane, index) => index > 0 && lane !== lanes[index - 1]! + 1)
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.note.invalid-lane-range",
       ["RPR-D03", "RPR-D04", "PR04", "PR05", "PR07"],
       "Sprite lookup requires one confirmed lane or one ascending contiguous HABAHIRO lane range within 0-6.",
     );
   }
   if (!habahiro && lanes.length !== 1) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.note.ordinary-multi-lane-key-unavailable",
       ["RPR-D03", "PR02", "PR05"],
       "The ordinary 45-Sprite atlas has only single-lane exact keys and cannot alias a multi-lane range.",
@@ -3082,7 +3082,7 @@ function transactionRejected(
   operation: string,
   state: "committed" | "discarded",
 ) {
-  return evidenceRequired(
+  return integrityFailure(
     `render.producer.transaction-${operation}-after-${state}`,
     ["RPR-D13", "RPR-D17", "PR36", "PR38"],
     "A renderer owner transaction is one-use and cannot be replayed after commit or discard.",
@@ -3104,7 +3104,7 @@ function resolveOrdinaryMotionLaneIndex(
     ? information.buttonTypes
     : [information.buttonType];
   if (buttons.length !== 1) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.note.ordinary-motion-multi-lane-unavailable",
       ["RPR-D05", "PR04", "PR10"],
       "The fixed ordinary motion profile accepts exactly one authored lane per front Note.",
@@ -3113,7 +3113,7 @@ function resolveOrdinaryMotionLaneIndex(
   const lane = resolveLaneIndex(buttons[0]!, false);
   return Number.isInteger(lane) && lane >= 0 && lane < 7
     ? ok(lane)
-    : evidenceRequired(
+    : integrityFailure(
         "render.note.ordinary-motion-invalid-lane",
         ["RPR-D05", "PR05", "PR10"],
         "The fixed ordinary motion profile requires one lane in the current 0..6 playfield.",
@@ -3139,7 +3139,7 @@ function resolveOrdinarySlideCenterLane(
     centerLane < lanes[0]! ||
     centerLane > lanes[lanes.length - 1]!
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.slide.invalid-lane-range",
       ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
       "R4 Slide roots and children require one contiguous 1..7-button range and its authored center button.",

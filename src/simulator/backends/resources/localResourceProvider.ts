@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../../engine/evidence";
@@ -133,7 +133,7 @@ function readUint32(bytes: Uint8Array, offset: number): number {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["RPR-D02", "RPR-D14", "RPR-D17", "PR01", "PR05", "PR35"],
     boundary,

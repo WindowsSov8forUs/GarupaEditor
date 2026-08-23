@@ -148,7 +148,7 @@ async function testSessionBgmContract(): Promise<void> {
     ...producer.input,
     bgmCue: "foreign-session-cue",
   }, alternative, { noteBatches: [] } as any);
-  assert.equal(mismatch.validate().status, "evidence-required");
+  assert.equal(mismatch.validate().status, "integrity-failure");
   assert.equal(alternative.dispose().status, "accepted");
 
   const missingBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
@@ -156,7 +156,7 @@ async function testSessionBgmContract(): Promise<void> {
   const missingBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await missingBackend.prepare(
     "missing-bgm", missingBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
-  )).status, "evidence-required");
+  )).status, "integrity-failure");
 
   const duplicateBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
   const duplicateBgmIndex = duplicateBgm.resources.findIndex((resource: any) => resource.cue === "perfect");
@@ -164,14 +164,14 @@ async function testSessionBgmContract(): Promise<void> {
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
     "duplicate-bgm", duplicateBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
-  )).status, "evidence-required");
+  )).status, "integrity-failure");
 
   const aliasedBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
   aliasedBgm.resources[0].logicalId = "sound/common";
   const aliasBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await aliasBackend.prepare(
     "aliased-bgm", aliasedBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
-  )).status, "evidence-required");
+  )).status, "integrity-failure");
 
   const shortProvider: AudioResourceProvider = {
     async read(resource) {
@@ -536,7 +536,7 @@ function testPcmCase(): void {
     outputFrames: 1,
     sources: [{ sourceId: "x", sampleRate: 8000, channels: 1, frameCount: 1, samples: new Float32Array([0]) }],
     voices: [{ sourceId: "x", startFrame: 0, gainBits: "0x3F800000", loop: null, fade: null }],
-  }).status, "evidence-required");
+  }).status, "integrity-failure");
 }
 
 async function testStartupAudioCallgraphCommands(): Promise<void> {
@@ -563,7 +563,7 @@ async function testStartupAudioCallgraphCommands(): Promise<void> {
     cue: "SE_RHYTHM_GAYA",
     paused: false,
   }]);
-  assert.equal(producer.preflightStartStartupGaya("startup:gaya").status, "evidence-required");
+  assert.equal(producer.preflightStartStartupGaya("startup:gaya").status, "integrity-failure");
   assert.equal(requireOk(producer.preflightPlayPreparedStartupBgm()).commit().status, "ok");
   assert.equal(backend.snapshot().semantic.bgmPaused, false);
   assert.equal(requireOk(producer.preflightPause()).commit().status, "ok");
@@ -572,7 +572,7 @@ async function testStartupAudioCallgraphCommands(): Promise<void> {
   assert.equal(backend.snapshot().semantic.startupLoops[0]?.paused, false);
   assert.equal(requireOk(producer.preflightFadeStartupGaya("startup:gaya")).commit().status, "ok");
   assert.deepEqual(backend.snapshot().semantic.startupLoops, []);
-  assert.equal(producer.preflightFadeStartupGaya("startup:gaya").status, "evidence-required");
+  assert.equal(producer.preflightFadeStartupGaya("startup:gaya").status, "integrity-failure");
   assert.equal(backend.dispose().status, "accepted");
 
   const voiceSha = "B".repeat(64);
@@ -615,7 +615,7 @@ async function testStartupAudioCallgraphCommands(): Promise<void> {
   assert.equal(requireOk(voiceProducer.preflightInitialize()).commit().status, "ok");
   assert.equal(requireOk(voiceProducer.preflightStartupOpening(true, voiceCue)).commit().status, "ok");
   assert.equal(requireOk(voiceProducer.preflightReleaseLiveStartVoice(voiceCue)).commit().status, "ok");
-  assert.equal(voiceProducer.preflightReleaseLiveStartVoice("SE_RHYTHM_GAYA").status, "evidence-required");
+  assert.equal(voiceProducer.preflightReleaseLiveStartVoice("SE_RHYTHM_GAYA").status, "integrity-failure");
   const voiceCommands = voiceBackend.snapshot().commands;
   assert.equal(voiceCommands[voiceCommands.length - 1]?.kind, "voice.release-live-start");
   assert.equal(voiceBackend.dispose().status, "accepted");
@@ -677,7 +677,10 @@ function runCommands(
 }
 
 function expected(caseId: string): OracleCase["expected"] {
-  return byId.get(caseId)!.expected;
+  const value = byId.get(caseId)!.expected;
+  return value.outcome === "evidence-required"
+    ? { ...value, outcome: "integrity-failure" }
+    : value;
 }
 
 function expectedCommands(caseId: string): readonly AudioCommand[] {

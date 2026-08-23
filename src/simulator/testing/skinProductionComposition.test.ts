@@ -114,7 +114,7 @@ async function runComposition(scenario: "default" | "limited3"): Promise<void> {
         }, kind, resources, fieldBindings);
         return scene.status === "ok"
           ? { status: "accepted" as const, value: scene.value }
-          : { status: "rejected" as const, failure: { code: "evidence-required" as const, capability: scene.capability, boundary: scene.boundary } };
+          : { status: "rejected" as const, failure: { code: "integrity-failure" as const, capability: scene.capability, boundary: scene.boundary } };
       },
     },
   );
@@ -186,7 +186,7 @@ function buildAudioMetadata(packBytes: readonly Uint8Array[]) {
   return map;
 }
 function sha256(bytes: Uint8Array): string { return createHash("sha256").update(bytes).digest("hex").toUpperCase(); }
-function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly capability: string }): T {
+function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "integrity-failure"; readonly capability: string }): T {
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }

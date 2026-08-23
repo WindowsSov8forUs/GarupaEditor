@@ -75,7 +75,7 @@ const centerScreen = Object.freeze({
 assert.equal(requireOk(ordinary.manualInputGeometry.resolveButton(centerScreen)), 3);
 assert.equal(requireOk(ordinary.manualInputGeometry.isInsideTargetButtons(centerScreen, [3])), true);
 assert.equal(requireOk(ordinary.manualInputGeometry.getGameplayButtonLocalY!(3)), center.y.value);
-assert.equal(ordinary.manualInputGeometry.getGameplayButtonLocalY!(7).status, "evidence-required");
+assert.equal(ordinary.manualInputGeometry.getGameplayButtonLocalY!(7).status, "integrity-failure");
 const slideJudge = requireOk(ordinary.manualInputGeometry.getSlideJudgeGeometry!(slideSourcePlaceholder()));
 assert.ok(slideJudge.positions.length >= 17 && slideJudge.positions.length < 512);
 assert.ok(slideJudge.positions.every((value, index) => index === 0 || value > slideJudge.positions[index - 1]!));
@@ -112,7 +112,7 @@ for (const arbitraryLane of [-100.5, -1, 0.5, 7, 100.25]) {
   assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(arbitraryLane, 1).status, "ok");
 }
 assert.deepEqual(ordinary.garupaProductScene.fieldLines.map((line) => line.lane), [0, 1, 2, 3, 4, 5, 6]);
-assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(Number.NaN, 1).status, "evidence-required");
+assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(Number.NaN, 1).status, "integrity-failure");
 
 const habahiro = requireOk(createSimulatorSceneLayout(surface, config, "habahiro", resources));
 assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldBefore.length, 2);
@@ -123,9 +123,9 @@ habahiro.manualInputGeometry.setHabahiroLaneChanged?.();
 assert.equal(requireOk(habahiro.manualInputGeometry.resolveButton(centerScreen)), 11);
 
 assert.equal(createSimulatorSceneLayout({ ...surface, viewportWidth: 1599 }, config, "ordinary", resources).status,
-  "evidence-required");
+  "integrity-failure");
 assert.equal(createSimulatorSceneLayout(surface, { ...config, noteSize: Math.fround(79) }, "ordinary", resources).status,
-  "evidence-required");
+  "integrity-failure");
 
 assert.deepEqual(controls.returnFive.centerBottomLeft, [142.20799255371094, 360]);
 assert.deepEqual(controls.advanceFive.centerBottomLeft, [1457.7919921875, 360]);
@@ -154,7 +154,7 @@ assert.equal(requireOk(consumeRehearsalControlCommand(issuedAdvance, {
 })), "advance-five-seconds");
 assert.equal(consumeRehearsalControlCommand(issuedAdvance, {
   mode: REHEARSAL_AUTO_MODE, ...controlState,
-}).status, "evidence-required");
+}).status, "integrity-failure");
 assert.equal(requireOk(formatRehearsalTimeLabel(8, 125)), "0:08/2:05");
 
 console.log("unified simulator scene tests passed: ordinary/particle/manual-slide/HAB layout owner");

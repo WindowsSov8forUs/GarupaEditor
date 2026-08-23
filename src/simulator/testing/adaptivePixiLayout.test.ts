@@ -41,7 +41,7 @@ const decoder: PixiTextureDecoder = {
     }) }) };
   },
   async decodeFont() {
-    return { status: "evidence-required", capability: "adaptive.test.unexpected-font", requiredEvidence: [], boundary: "ordinary pack has no font" };
+    return { status: "integrity-failure", capability: "adaptive.test.unexpected-font", requiredEvidence: [], boundary: "ordinary pack has no font" };
   },
 };
 

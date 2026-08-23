@@ -9,7 +9,7 @@ import {
   particleFloat32ToBits,
 } from "../../backends/particleValidation";
 import type { OneFrameJudgementBatch } from "../data/oneFrameData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import {
   ParticleCommandOwnerTransaction,
   ParticleCommandProducer,
@@ -125,7 +125,7 @@ export class ParticleFrameCoordinator {
   pollFaults(): SimulatorResult<void> {
     const backend = this.backend.snapshot();
     if (backend.fault !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         `particle.${backend.fault.code}.${backend.fault.capability}`,
         [],
         backend.fault.boundary,
@@ -137,7 +137,7 @@ export class ParticleFrameCoordinator {
     if (this.renderer !== null) {
       const renderer = this.renderer.snapshot();
       if (renderer.fault !== null) {
-        return evidenceRequired(
+        return integrityFailure(
           `particle.renderer.${renderer.fault.code}.${renderer.fault.capability}`,
           [],
           renderer.fault.boundary,
@@ -275,7 +275,7 @@ export class ParticleFrameCoordinator {
 export function mapParticleResult<T>(result: ParticleOperationResult<T>): SimulatorResult<T> {
   return result.status === "accepted"
     ? ok(result.value)
-    : evidenceRequired(
+    : integrityFailure(
         `particle.${result.status}.${result.failure.capability}`,
         [],
         result.failure.boundary,
@@ -290,5 +290,5 @@ function transactionRejected(action: string, state: string): SimulatorResult<nev
 }
 
 function rejected<T = never>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

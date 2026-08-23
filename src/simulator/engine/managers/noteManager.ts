@@ -25,7 +25,7 @@ import type {
   MultipleDirectionalRuntimeGroup,
 } from "../data/autoLiveJudgement";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -372,7 +372,7 @@ export class NoteManager {
         this.ordinaryNoteScene.screenToSafeAreaRatio === undefined ||
         this.ordinaryNoteScene.longMeshColor === undefined)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.long-scene-unavailable",
         ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
         "A chart with ordinary Long or R4 Slide notes requires explicit safe-area ratio and base-mesh color before pool creation.",
@@ -390,7 +390,7 @@ export class NoteManager {
       (this.ordinaryNoteScene === null ||
         this.ordinaryNoteScene.syncLineEdgeMargin === undefined)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.sync-line-scene-unavailable",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "A chart with simultaneous ordinary Normal notes requires the explicit typed sync-line edge margin.",
@@ -416,7 +416,7 @@ export class NoteManager {
         ? MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH
         : 0,
     ) ?? null;
-    if (renderSetup?.status === "evidence-required") return renderSetup;
+    if (renderSetup?.status === "integrity-failure") return renderSetup;
 
     for (const [family, notes] of familyNotes) {
       const objects = notes.map((_, index) => {
@@ -500,14 +500,14 @@ export class NoteManager {
 
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if (!this.setupComplete) {
-      return evidenceRequired(
+      return integrityFailure(
         "note-manager.update-before-setup",
         ["E06"],
         "SetupNotes must establish pools and active-list callbacks before ExecUpdate.",
       );
     }
     if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "note-manager.invalid-delta-time",
         ["E03"],
         "ExecUpdate requires a finite non-negative frame delta.",
@@ -516,7 +516,7 @@ export class NoteManager {
 
     const frameDelta = Math.fround(deltaTimeSeconds);
     if (!Number.isFinite(frameDelta)) {
-      return evidenceRequired(
+      return integrityFailure(
         "note-manager.delta-outside-float32",
         ["E03"],
         "ExecUpdate delta must remain finite after the original Float32 conversion.",
@@ -548,7 +548,7 @@ export class NoteManager {
     const substepExecuteFrame = Math.fround(executeFrame / substepCount);
     this.clock.setExecuteFrame(substepExecuteFrame);
     const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
-    if (renderFrame?.status === "evidence-required") return renderFrame;
+    if (renderFrame?.status === "integrity-failure") return renderFrame;
     this.schedulerTraceValue.push({
       kind: "frame",
       deltaTimeSeconds: frameDelta,
@@ -560,7 +560,7 @@ export class NoteManager {
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
       const renderSubstep = this.renderProducer?.beginSubstep(substepIndex);
-      if (renderSubstep?.status === "evidence-required") return renderSubstep;
+      if (renderSubstep?.status === "integrity-failure") return renderSubstep;
       const advanceResult = this.clock.advance(substepDelta);
       if (advanceResult.status !== "ok") {
         return advanceResult;
@@ -599,7 +599,7 @@ export class NoteManager {
       while (activeIndex >= 0) {
         const note = this.activeNotesValue[activeIndex];
         if (note === undefined) {
-          return evidenceRequired(
+          return integrityFailure(
             "note-manager.unrepresented-cross-note-mutation",
             ["E17"],
             "No recovered Update caller removes a different lower-index active Note in this stage.",
@@ -738,7 +738,7 @@ export class NoteManager {
     owner: (note: NoteBase) => void,
   ): SimulatorResult<void> {
     if (typeof owner !== "function" || this.manualNoteDeactivatedOwner !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.note-deactivation-owner-invalid-or-duplicate",
         ["D12", "D14", "MJ15", "MJ22", "MJ25"],
         "NoteManager accepts exactly one dispatcher-owned manual finger cleanup callback.",
@@ -777,7 +777,7 @@ export class NoteManager {
       }
       const information = note.noteInformation;
       if (information === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "manual.active-candidate-without-information",
           ["D04", "MJ03"],
           "Every active candidate in the owner scan must retain its activated NoteInformation.",
@@ -800,7 +800,7 @@ export class NoteManager {
     const ordinarySource = ordinaryCandidate.noteInformation;
     const slideSource = slideCandidate.manualCandidateSource;
     if (ordinarySource === null || slideSource === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.candidate-button-owner-unavailable",
         ["D04", "D10", "MJ04"],
         "Near-line arbitration requires both candidates' owner-derived current buttons.",
@@ -912,7 +912,7 @@ export class NoteManager {
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
-        return evidenceRequired(
+        return integrityFailure(
           "manual.long-multiple-after-group-missing",
           ["R16.D17", "D08", "D12", "MJ13"],
           `Long root ${root.index} has a Multiple after type without its chart-owned side group.`,
@@ -948,7 +948,7 @@ export class NoteManager {
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
-        return evidenceRequired(
+        return integrityFailure(
           "manual.slide-multiple-after-group-missing",
           ["R16.D17", "D08", "D12", "MJ21"],
           `Slide root ${root.index} has a Multiple terminal without its chart-owned side group.`,
@@ -991,7 +991,7 @@ export class NoteManager {
   ): SimulatorResult<MultipleDirectionalRuntimeGroup> {
     const group = this.multipleDirectionalGroups.get(information);
     if (group === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "auto-live.multiple-directional-group-missing",
         ["R10", "R13", "R16"],
         `Multiple Directional note ${information.index} has no confirmed adjacent-button runtime group.`,
@@ -1005,7 +1005,7 @@ export class NoteManager {
     deltaTimeSeconds: number,
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.ordinary-scene-unavailable",
         ["RPR-D05", "RPR-D13", "PR10", "PR39"],
         "A rendered ordinary Note Move requires its producer and explicit typed fixed-scene input.",
@@ -1013,7 +1013,7 @@ export class NoteManager {
     }
     const current = this.ordinaryRenderMotionStates.get(note);
     if (current === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.motion-state-unavailable",
         ["RPR-D05", "RPR-D13", "PR10", "PR39"],
         "Every active rendered Note must retain the motion state committed by its activation owner.",
@@ -1049,7 +1049,7 @@ export class NoteManager {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return this.ordinaryLongRenderStates.size === 0
         ? ok(undefined)
-        : evidenceRequired(
+        : integrityFailure(
           "render.note.long-scene-unavailable",
           ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
           "Active rendered Long children require their producer and typed ordinary scene.",
@@ -1068,7 +1068,7 @@ export class NoteManager {
     for (const [note, childState] of this.ordinaryLongRenderStates) {
       const front = this.ordinaryRenderMotionStates.get(note);
       if (front === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.long-front-state-unavailable",
           ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
           "Every active rendered Long child requires its last committed front transform.",
@@ -1099,7 +1099,7 @@ export class NoteManager {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return this.ordinarySlideRenderStates.size === 0
         ? ok(undefined)
-        : evidenceRequired(
+        : integrityFailure(
           "render.slide.scene-unavailable",
           ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
           "Active R4 Slide children require their producer and typed ordinary scene.",
@@ -1118,7 +1118,7 @@ export class NoteManager {
     for (const [note, childStates] of this.ordinarySlideRenderStates) {
       const front = this.ordinaryRenderMotionStates.get(note);
       if (front === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.slide.front-state-unavailable",
           ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
           "Every active R4 Slide chain requires its last committed front transform.",
@@ -1182,7 +1182,7 @@ export class NoteManager {
     line: ActiveOrdinarySyncLine,
   ): SimulatorResult<OrdinarySyncLineOwnerState> {
     if (this.ordinaryNoteScene?.syncLineEdgeMargin === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.sync-line-scene-unavailable",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "Simultaneous-line geometry requires the explicit typed edge margin.",
@@ -1198,7 +1198,7 @@ export class NoteManager {
       informationA === null ||
       informationB === null
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.sync-line-target-state-unavailable",
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "Every active simultaneous line requires two committed ordinary transforms and their bound NoteInformation owners.",
@@ -1238,7 +1238,7 @@ export class NoteManager {
       const informationA = targetA.noteInformation;
       const informationB = targetB.noteInformation;
       if (informationA === null || informationB === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.sync-line-target-information-unavailable",
           ["RPR-D06", "RPR-D13", "PR16", "PR39"],
           "Sync-line connection runs only after both adjacent Note activations commit their information owners.",
@@ -1257,7 +1257,7 @@ export class NoteManager {
       }
       const poolIndex = this.activeOrdinarySyncLines.findIndex((line) => line === null);
       if (poolIndex < 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.sync-line-pool-exhausted",
           ["RPR-D06", "RPR-D13", "PR16", "PR39"],
           "The recovered 80-slot simultaneous-line pool has no inactive object.",
@@ -1306,7 +1306,7 @@ export class NoteManager {
     const targetA = this.ordinaryRenderMotionStates.get(line.targetA);
     const targetB = this.ordinaryRenderMotionStates.get(line.targetB);
     if (targetA === undefined || targetB === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.multiple-directional-line-target-state-unavailable",
         ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
         "Every active MultipleDirectional back line requires two committed root transforms.",
@@ -1342,7 +1342,7 @@ export class NoteManager {
       }
       const poolIndex = this.activeMultipleDirectionalLines.findIndex((line) => line === null);
       if (poolIndex < 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.multiple-directional-line-pool-exhausted",
           ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
           "The recovered 60-slot MultipleDirectional back-line pool has no inactive object.",
@@ -1449,7 +1449,7 @@ export class NoteManager {
       let slideChildStates: readonly OrdinarySlideChildState[] | null = null;
       if (this.renderProducer !== null) {
         if (this.ordinaryNoteScene === null) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.note.ordinary-scene-unavailable",
             ["RPR-D05", "RPR-D13", "PR10", "PR39"],
             "A rendered ordinary Note cannot activate without its explicit typed fixed-scene input.",
@@ -1536,7 +1536,7 @@ export class NoteManager {
       this.bpmPoolCursorValue = (index + 1) % this.bpmPoolValue.length;
       return ok(object);
     }
-    return evidenceRequired(
+    return integrityFailure(
       "note-manager.bpm-pool-exhausted",
       ["E07", "E10"],
       "The recovered 30-slot BPM pool has no inactive object.",
@@ -1553,7 +1553,7 @@ export class NoteManager {
     const family = familyResult.value;
     const pool = this.notePoolsValue.get(family);
     if (pool === undefined || pool.objects.length === 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "note-manager.pool-missing",
         ["E06", "E10"],
         `No ${family} pool exists for note ${noteInformation.index}.`,
@@ -1573,7 +1573,7 @@ export class NoteManager {
       });
     }
 
-    return evidenceRequired(
+    return integrityFailure(
       "note-manager.pool-exhausted",
       ["E04", "E06"],
       `No deactive ${family} pool object is available for note ${noteInformation.index}.`,
@@ -1656,7 +1656,7 @@ export function noteFamily(
     case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
       return ok("multiple-directional-visual");
     default:
-      return evidenceRequired(
+      return integrityFailure(
         "note-manager.unrepresented-note-family",
         ["E11", "E13"],
         `FrontNoteType ${noteInformation.fireNoteType} has no recovered playable-root pool mapping.`,
@@ -1674,7 +1674,7 @@ export function validateOrdinaryRenderedBatchAuthorization(
     switch (information.fireNoteType) {
       case FrontNoteType.Long:
         if (information.afterNoteAbsolutePos <= information.absolutePos) {
-          return evidenceRequired(
+          return integrityFailure(
             "render.note.invalid-long-tail-position",
             ["RPR-R7-001", "PR08", "PR11", "PR15"],
             "Current Long production requires its authored tail position to follow the root.",
@@ -1697,13 +1697,13 @@ export function validateOrdinaryRenderedBatchAuthorization(
         ) {
           continue;
         }
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.invalid-slide-child-chain",
           ["RPR-R7-001", "PR08", "PR09", "PR15", "PR39"],
           "Current Slide production requires a non-empty chart-owned ordered child chain.",
         );
       default:
-        return evidenceRequired(
+        return integrityFailure(
           "render.note.ordinary-child-lifecycle-evidence-required",
           ["RPR-R7-001", "PR06", "PR09", "PR39"],
           "Every rendered family must have a current R7 production owner route.",
@@ -1767,7 +1767,7 @@ function validateBpmCommand(
     bpm <= 0 ||
     noteInformation.bpmString.length === 0
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.invalid-bpm-command",
       ["E07", "E10", "U03"],
       "CC03/CC08 commands require a nonzero denominator, positive finite BPM and original string before scheduler mutation.",
@@ -1781,22 +1781,22 @@ function isNonPlayableCommand(noteInformation: NoteInformation): boolean {
 }
 
 const unavailableManualInputGeometry: SimulatorManualInputGeometryBackend = {
-  resolveButton: () => evidenceRequired(
+  resolveButton: () => integrityFailure(
     "manual-input.geometry-resolver-unavailable",
     ["D03", "D04", "D15", "MJ03", "MJ26"],
     "A direct NoteManager without a host geometry owner cannot resolve screen input.",
   ),
-  screenToWorld: () => evidenceRequired(
+  screenToWorld: () => integrityFailure(
     "manual-input.screen-to-world-unavailable",
     ["D07", "MJ08", "MJ09"],
     "A direct NoteManager without a host geometry owner cannot project screen positions.",
   ),
-  getDistanceNormalization: () => evidenceRequired(
+  getDistanceNormalization: () => integrityFailure(
     "manual-input.distance-normalization-unavailable",
     ["D07", "MJ08", "MJ09"],
     "A direct NoteManager without a host geometry owner cannot provide native distance scales.",
   ),
-  isInsideTargetButtons: () => evidenceRequired(
+  isInsideTargetButtons: () => integrityFailure(
     "manual-input.target-containment-unavailable",
     ["D09", "D10", "MJ14", "MJ20"],
     "A direct NoteManager without a host geometry owner cannot test target containment.",
@@ -1805,7 +1805,7 @@ const unavailableManualInputGeometry: SimulatorManualInputGeometryBackend = {
 
 function createUnavailableManualJudgementTransaction(): ManualJudgementTransaction {
   return {
-    preflight: () => evidenceRequired(
+    preflight: () => integrityFailure(
       "one-frame.manual-transaction-owner-unregistered",
       ["D05", "D14", "D15", "MJ26"],
       "Production manual judgement requires the engine OneFrame controller transaction owner.",
@@ -1909,7 +1909,7 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
       (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
       (projectedFinger >= 0 && projectedFinger !== fingerId)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.multiple-directional-finger-owner-conflict",
         ["D06", "D08", "D15", "MJ06", "MJ10", "MJ26"],
         "A Multiple Directional group accepts one owner finger before side consumption.",
@@ -1939,7 +1939,7 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
 
   markUsed(): SimulatorResult<void> {
     if (this.usedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "multiple-directional.group-already-used",
         ["R10", "R12", "R16", "D08", "MJ10"],
         "A connected Multiple Directional group produces one judgement before its side owner is consumed.",

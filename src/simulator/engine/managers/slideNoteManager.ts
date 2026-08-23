@@ -1,6 +1,6 @@
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { NoteInformation } from "../chart/types";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export interface SlideJudgeDecision {
   readonly result: -1 | 1 | 2 | 3 | 4;
@@ -34,7 +34,7 @@ export class SlideNoteManager {
       geometry?.getGameplayButtonLocalY === undefined ||
       geometry.getSlideCurrentLocalY === undefined
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-near-line-geometry-unavailable",
         ["D04", "D10", "MJ04", "MJ20"],
         "Slide near-line arbitration requires host-owned gameplay button local positions.",
@@ -57,7 +57,7 @@ export class SlideNoteManager {
       !isExactFiniteFloat32(first.value) ||
       !isExactFiniteFloat32(second.value)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-invalid-near-line-geometry",
         ["D04", "D10", "D15", "MJ04", "MJ26"],
         "Slide near-line button positions must be exact finite Float32 owner values.",
@@ -78,7 +78,7 @@ export class SlideNoteManager {
       geometry?.getSlideCurrentLocalY === undefined ||
       geometry.getSlideJudgeGeometry === undefined
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual.slide-judge-geometry-unavailable",
         ["D10", "D12", "MJ19", "MJ20"],
         "Slide judgement requires the host-owned gameplay-local touch projection and frozen judge positions.",
@@ -147,7 +147,7 @@ export class SlideNoteManager {
 }
 
 function invalidJudgeGeometry(boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     "manual.slide-invalid-judge-geometry",
     ["D10", "D12", "D15", "MJ19", "MJ20", "MJ26"],
     boundary,

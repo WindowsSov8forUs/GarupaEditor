@@ -23,7 +23,7 @@ import type {
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ButtonType, type ButtonTypeValue, type NoteInformation } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteMotion,
   getOrdinaryNoteArrivalSeconds,
@@ -298,10 +298,10 @@ function createGarupaProductScene(
     const start = projectLaneAtCurve(lane, 0);
     const goal = projectLaneAtCurve(lane, 1);
     if (start.status !== "ok") {
-      return evidenceRequired(start.capability, start.requiredEvidence, start.boundary);
+      return integrityFailure(start.capability, start.requiredEvidence, start.boundary);
     }
     if (goal.status !== "ok") {
-      return evidenceRequired(goal.capability, goal.requiredEvidence, goal.boundary);
+      return integrityFailure(goal.capability, goal.requiredEvidence, goal.boundary);
     }
     fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
   }
@@ -682,7 +682,7 @@ function ordering(sequence: number, depth: number): RenderOrderingKey {
 }
 
 function reject(capability: string, boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     capability,
     ["R04", "RPR-D05", "MJ03", "MJ04", "MJ20"],
     boundary,

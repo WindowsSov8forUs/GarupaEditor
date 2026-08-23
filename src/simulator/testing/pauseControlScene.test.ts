@@ -92,7 +92,7 @@ function testFourModePauseMatrix(): void {
     const command = routed.commands[0] as PauseControlCommand;
     assert.equal(command.kind, "pause");
     assert.equal(requireOk(consumePauseControlCommand(command, state(mode, true, false), SURFACE)), "pause");
-    assert.equal(consumePauseControlCommand(command, state(mode, true, false), SURFACE).status, "evidence-required", "capability is one-use");
+    assert.equal(consumePauseControlCommand(command, state(mode, true, false), SURFACE).status, "integrity-failure", "capability is one-use");
     assert.equal(routed.snapshot.state, "pause-menu");
     owner.dispose();
   }
@@ -121,7 +121,7 @@ function testHardwareBackResumeBoundary(): void {
   assert.equal(routed.snapshot.state, "resume-countdown");
   const nested = pausedOwner(mode);
   click(nested, mode, LAYOUT.pauseMenu.retryBoundsTopLeft);
-  assert.equal(nested.route(1 / 60, null, state(mode, true, true), LAYOUT, true).status, "evidence-required");
+  assert.equal(nested.route(1 / 60, null, state(mode, true, true), LAYOUT, true).status, "integrity-failure");
 }
 
 function testRetryCancelConfirmAndFreshCommand(): void {
@@ -137,7 +137,7 @@ function testRetryCancelConfirmAndFreshCommand(): void {
   const command = routed.commands[0] as PauseControlCommand;
   assert.equal(command.kind, "retry");
   assert.equal(requireOk(consumePauseControlCommand(command, state(mode, true, true), SURFACE)), "retry");
-  assert.equal(consumePauseControlCommand(Object.freeze({ ...command, capability: Object.freeze({}) }), state(mode, true, true), SURFACE).status, "evidence-required");
+  assert.equal(consumePauseControlCommand(Object.freeze({ ...command, capability: Object.freeze({}) }), state(mode, true, true), SURFACE).status, "integrity-failure");
 }
 
 function testAbortCancelConfirm(): void {
@@ -179,8 +179,8 @@ function testInputPriorityAndFailureClosure(): void {
   assert.equal(routed.manualFrame?.touches.length, 0, "modal dark cover consumes every touch");
   const foreignSurface = Object.freeze({ ...SURFACE, revision: 1 });
   const command = requireOk(new PauseControlSceneOwner().route(1 / 60, frame(4, ManualTouchPhase.Began, ...LAYOUT.pause.centerBottomLeft), state(mode, true, false), LAYOUT)).commands[0] as PauseControlCommand;
-  assert.equal(consumePauseControlCommand(command, state(mode, true, false), foreignSurface).status, "evidence-required");
-  assert.equal(createPauseControlLayout({} as any).status, "evidence-required");
+  assert.equal(consumePauseControlCommand(command, state(mode, true, false), foreignSurface).status, "integrity-failure");
+  assert.equal(createPauseControlLayout({} as any).status, "integrity-failure");
 }
 
 function pausedOwner(mode: ReturnType<typeof createSimulatorModeIdentity>): PauseControlSceneOwner {

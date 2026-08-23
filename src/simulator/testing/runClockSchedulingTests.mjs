@@ -272,7 +272,7 @@ function validateClockScheduling() {
 
   assertEqual(
     createSimulatorEngine(inputFor(cc08, false, -6), createRecordingSimulatorBackends()).status,
-    "evidence-required",
+    "integrity-failure",
     "judge offset outside observed UI range",
   );
 
@@ -284,7 +284,7 @@ function validateClockScheduling() {
   let failedClosed = false;
   for (let frame = 0; frame < 4000; frame += 1) {
     const result = productionNoteEngine.step(Math.fround(1 / 60), { touches: [] });
-    if (result.status === "evidence-required") {
+    if (result.status === "integrity-failure") {
       failedClosed = true;
       break;
     }
@@ -310,7 +310,7 @@ function validateClockScheduling() {
       judgementAdjustValueB,
       new InGameCalculatedData(LIVE_MANUAL_MODE, DEFAULT_ORIGINAL_LIVE_SETTINGS),
       () => oneFrame.getUsableOneFrameData(),
-      () => ({ status: "evidence-required", capability: "unused", requiredEvidence: [], boundary: "unused" }),
+      () => ({ status: "integrity-failure", capability: "unused", requiredEvidence: [], boundary: "unused" }),
     );
     assertEqual(manager.execAwakeEnd().status, "ok", "command manager initialize");
     return { controller, manager };

@@ -7,7 +7,7 @@ import {
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -176,7 +176,7 @@ export function buildOrdinaryLongNormalMesh(
 }
 
 function reject(capability: string, detail: string): SimulatorResult<never> {
-  return evidenceRequired(capability, [
+  return integrityFailure(capability, [
     "RPR-D05",
     "RPR-D06",
     "RPR-D07",

@@ -15,7 +15,7 @@ import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import { GameState } from "../engine/data/inGameState";
 import { ManualTouchPhase, type ManualInputPosition } from "../engine/data/manualInput";
 import { NoteResultType } from "../engine/data/manualJudgement";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { GamePlayInputDispatcher, InputManager } from "../engine/managers/inputBoundaries";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
@@ -60,7 +60,7 @@ class Clock implements NoteManagerClock {
 }
 class Geometry implements SimulatorManualInputGeometryBackend {
   inside = true;
-  resolveButton() { return evidenceRequired("test.resolver-unused", ["MJ11"], "unused") }
+  resolveButton() { return integrityFailure("test.resolver-unused", ["MJ11"], "unused") }
   screenToWorld(position: ManualInputPosition) {
     return ok(Object.freeze({ x: position.x, y: position.y, z: Math.fround(0) }));
   }
@@ -117,7 +117,7 @@ function createGraph(afterNoteType: AfterNoteTypeValue): Graph {
     [batch], new SlideNoteManager(), new Clock(), music, 0, 0,
     new InGameCalculatedData(manualMode, DEFAULT_ORIGINAL_LIVE_SETTINGS),
     () => oneFrame.getUsableOneFrameData(),
-    () => evidenceRequired("test.auto-unused", ["MJ11"], "unused"),
+    () => integrityFailure("test.auto-unused", ["MJ11"], "unused"),
     undefined,
     () => oneFrame.createManualJudgementTransaction(),
     geometry,

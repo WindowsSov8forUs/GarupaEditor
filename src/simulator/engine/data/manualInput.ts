@@ -1,5 +1,5 @@
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -84,7 +84,7 @@ export class ManualInputResolutionOwner {
 
   initialize(): SimulatorResult<void> {
     if (this.disposedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.resolution-owner.initialize-after-dispose",
         ["D14", "MJ25"],
         "An input resolver owner remains terminal after its initialized engine session is disposed.",
@@ -99,7 +99,7 @@ export class ManualInputResolutionOwner {
     buttonOwner: object,
   ): SimulatorResult<ManualInputButtonResolution> {
     if (!this.initializedValue || this.disposedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.resolution-owner.outside-initialized-session",
         ["D03", "D14", "MJ25"],
         "Button resolutions are bound to one initialized, non-disposed engine session.",
@@ -110,7 +110,7 @@ export class ManualInputResolutionOwner {
       return positionValidation;
     }
     if (buttonOwner === null || typeof buttonOwner !== "object") {
-      return evidenceRequired(
+      return integrityFailure(
         "input.resolution-owner.invalid-button-owner",
         ["D03", "D15", "MJ26"],
         "Only an engine-owned GamePlayButton object can back a resolver capability.",
@@ -131,7 +131,7 @@ export class ManualInputResolutionOwner {
     deltaTimeSeconds?: number,
   ): SimulatorResult<PreparedManualInputFrame> {
     if (!this.initializedValue || this.disposedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.frame.outside-initialized-session",
         ["D14", "MJ25"],
         "Manual input frames can only be prepared by their initialized, non-disposed engine owner.",
@@ -144,14 +144,14 @@ export class ManualInputResolutionOwner {
       frameDeltaTime !== null &&
       (!Number.isFinite(frameDeltaTime) || frameDeltaTime < 0)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.invalid-owner-delta-time",
         ["D10", "D14", "D15", "MJ14", "MJ25", "MJ26"],
         "The owner-produced outer-frame delta must remain finite and non-negative after Float32 conversion.",
       );
     }
     if (frame === null || typeof frame !== "object" || !Array.isArray(frame.touches)) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.invalid-frame",
         ["D15", "MJ26"],
         "A manual outer frame must explicitly provide a touch array.",
@@ -200,7 +200,7 @@ export class ManualInputResolutionOwner {
           owned.consumed ||
           !samePosition(owned.position, positionValidation.value)
         ) {
-          return evidenceRequired(
+          return integrityFailure(
             "input.foreign-or-invalid-button-resolution",
             ["D03", "D15", "MJ26"],
             "The button resolution must belong to this engine session, remain unused and match the exact Float32 touch position.",
@@ -231,14 +231,14 @@ export class ManualInputResolutionOwner {
 
   commit(prepared: PreparedManualInputFrame): SimulatorResult<void> {
     if (!this.initializedValue || this.disposedValue) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.frame.commit-outside-initialized-session",
         ["D14", "MJ25"],
         "A prepared frame cannot consume capabilities outside its initialized engine session.",
       );
     }
     if (!this.ownedPreparedFrames.has(prepared)) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.foreign-prepared-frame",
         ["D03", "D15", "MJ26"],
         "Only the exact immutable frame prepared by this resolver owner can consume its capabilities.",
@@ -248,7 +248,7 @@ export class ManualInputResolutionOwner {
     for (const handle of prepared.buttonResolutions) {
       const resolution = this.ownedResolutions.get(handle);
       if (resolution === undefined || resolution.consumed) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.foreign-or-invalid-button-resolution",
           ["D03", "D15", "MJ26"],
           "Every prepared button resolution must remain owned and unused until whole-frame dispatch preflight succeeds.",
@@ -279,7 +279,7 @@ export class ManualInputResolutionOwner {
 }
 
 function invalidTouch(boundary: string) {
-  return evidenceRequired(
+  return integrityFailure(
     "input.invalid-touch",
     ["D06", "D15", "MJ07", "MJ26"],
     boundary,
@@ -295,7 +295,7 @@ export function copyManualInputPosition(
     !isExactFiniteFloat32(position.x) ||
     !isExactFiniteFloat32(position.y)
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "input.invalid-float32-position",
       ["D03", "D15", "MJ26"],
       "Touch positions must preserve finite Float32 x/y values in bottom-left screen space.",

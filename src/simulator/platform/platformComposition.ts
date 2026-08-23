@@ -30,18 +30,13 @@ import {
   createOriginalLiveSettings,
   originalLiveSettingsIdentity,
 } from "../engine/data/originalLiveSettings";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import {
   createSimulatorEngine,
   registerSimulatorEngineMoveTimeWrapper,
 } from "../host/createSimulatorEngine";
-import {
-  isTotalRevalidationOpen,
-  TOTAL_REVALIDATION_BOUNDARY,
-  TOTAL_REVALIDATION_CAPABILITY,
-} from "../public/capabilities";
 import {
   appendSimulatorCleanupFailures,
   simulatorCleanupFailure,
@@ -200,26 +195,19 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     recipe: SimulatorSessionRecipe,
     purpose: SimulatorEngineBuildPurpose = "initial",
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>> {
-    if (isTotalRevalidationOpen()) {
-      return rejected(
-        "evidence-required",
-        TOTAL_REVALIDATION_CAPABILITY,
-        TOTAL_REVALIDATION_BOUNDARY,
-      );
-    }
     const surface = readPlatformSurface(this.platform.graphics);
     if (surface.status === "rejected") return surface;
     const originalLayout = createOriginalSurfaceLayout(
       surface.value,
       recipe.request.config.visual.noteSize,
     );
-    if (originalLayout.status !== "ok") return fromEvidence(originalLayout);
+    if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
     const moveTimeCandidate = purpose === "move-time-reconstruction";
     const mvPackage = recipe.request.presentation.mv;
     if (mvPackage !== null &&
       (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
       return rejected(
-        "evidence-required",
+        "integrity-failure",
         "simulator.mv-live.unsupported-mode-or-purpose",
         "Current MV Live is supported only for fresh Live Manual/Auto; Practice, Retry and MoveTime cannot inherit the standard route.",
       );
@@ -248,7 +236,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       recipe.request.chartData.chart,
     );
     if (chart.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(chart), releasePendingMovie());
+      return rejectedWithCleanup(fromIntegrity(chart), releasePendingMovie());
     }
     const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
     if (chartCapabilities.status === "rejected") {
@@ -276,7 +264,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       visibleTapLaneEffect: recipe.request.config.visibleTapLaneEffect,
     });
     if (originalLiveSettings.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(originalLiveSettings), releasePendingMovie());
+      return rejectedWithCleanup(fromIntegrity(originalLiveSettings), releasePendingMovie());
     }
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
     if (skin.status === "rejected") {
@@ -333,7 +321,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             resources,
             fieldBindings,
           );
-          return scene.status === "ok" ? accepted(scene.value) : fromEvidence(scene);
+          return scene.status === "ok" ? accepted(scene.value) : fromIntegrity(scene);
         },
       },
     );
@@ -363,7 +351,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     );
     if (surfaceBound.status !== "ok") {
       return rejectedWithCleanup(
-        fromEvidence(surfaceBound),
+        fromIntegrity(surfaceBound),
         Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
@@ -380,7 +368,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const commonStartup = renderer.getStartupDirectionCommonResources();
     if (commonStartup.status !== "ok") {
       return rejectedWithCleanup(
-        fromEvidence(commonStartup),
+        fromIntegrity(commonStartup),
         Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
@@ -394,7 +382,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     );
     if (startupScene.status !== "ok") {
       return rejectedWithCleanup(
-        fromEvidence(startupScene),
+        fromIntegrity(startupScene),
         Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
@@ -469,7 +457,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (engine.status !== "ok") {
       startupScene.value.dispose();
       return rejectedWithCleanup(
-        fromEvidence(engine),
+        fromIntegrity(engine),
         Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
       );
     }
@@ -484,7 +472,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         engine.value.dispose(),
       );
       return rejectedWithCleanup(
-        fromEvidence(controlOverlay),
+        fromIntegrity(controlOverlay),
         Object.freeze([
           ...(cleanup === null ? [] : [cleanup]),
           ...await releaseResourceLeaseCleanup(resourceLease.value),
@@ -505,7 +493,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose()),
         ...await releaseResourceLeaseCleanup(resourceLease.value),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-      return rejectedWithCleanup(fromEvidence(combinedScene), cleanups);
+      return rejectedWithCleanup(fromIntegrity(combinedScene), cleanups);
     }
     const deferredMount = purpose !== "initial";
     combinedScene.value.root.visible = !deferredMount;
@@ -539,7 +527,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       (active) => controlOverlay.value.setMoveTimeInProgress(active),
     );
     if (registered.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(registered), [
+      return rejectedWithCleanup(fromIntegrity(registered), [
         simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
     }
@@ -572,7 +560,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const pending = Promise.resolve(
       derived.status === "ok"
         ? accepted<ResolvedOriginalSkinRecipe>(derived.value)
-        : fromEvidence<ResolvedOriginalSkinRecipe>(derived),
+        : fromIntegrity<ResolvedOriginalSkinRecipe>(derived),
     );
     this.skinByRecipe.set(recipe, pending);
     return pending;
@@ -628,7 +616,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
 
   publishMount(): SimulatorResult<void> {
     if (this.disposed || this.mount !== null || this.combinedScene.root.parent !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "simulator.composition.invalid-fresh-visual-publication",
         ["LR-C03", "PAU-B04"],
         "A fresh Retry/MoveTime generation may mount exactly once only after the old generation has released the platform graphics owner.",
@@ -636,7 +624,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
     }
     const mounted = this.graphics.mount(this.sessionId, this.combinedScene.root);
     if (mounted.status === "rejected") {
-      return evidenceRequired(mounted.failure.capability, ["LR-C03", "PAU-B04"], mounted.failure.boundary);
+      return integrityFailure(mounted.failure.capability, ["LR-C03", "PAU-B04"], mounted.failure.boundary);
     }
     this.mount = mounted.value;
     this.combinedScene.root.visible = true;
@@ -709,12 +697,12 @@ class MountedSimulatorEngine implements SimulatorEngine {
       mount?.dispose();
     } catch {
       result = result.status === "ok"
-        ? evidenceRequired(
+        ? integrityFailure(
             "simulator.composition.visual-unmount-threw",
             ["OSR-GAP-01"],
             "The visual surface mount threw during terminal cleanup after all engine-owned backends were disposed.",
           )
-        : evidenceRequired(
+        : integrityFailure(
             result.capability,
             result.requiredEvidence,
             `${result.boundary} Secondary cleanup failure: simulator.composition.visual-unmount-threw.`,
@@ -722,10 +710,10 @@ class MountedSimulatorEngine implements SimulatorEngine {
     }
     void this.resourceLease.release().catch(() => {});
     const combinedDisposed = this.combinedScene.dispose();
-    if (combinedDisposed.status === "evidence-required") {
+    if (combinedDisposed.status === "integrity-failure") {
       return result.status === "ok"
         ? combinedDisposed
-        : evidenceRequired(
+        : integrityFailure(
             result.capability,
             result.requiredEvidence,
             `${result.boundary} Secondary cleanup failure: ${combinedDisposed.capability}.`,
@@ -740,7 +728,7 @@ function mapScoreLifeProfile(
   sessionId: string,
 ): SimulatorAssemblyResult<ScoreLifeStateProfile> {
   const life = createCurrentSinglePlayLifeProfile(request.chartData.isFullLength);
-  if (life.status !== "ok") return fromEvidence(life);
+  if (life.status !== "ok") return fromIntegrity(life);
   const mode = createSimulatorModeIdentity(
     request.config.sessionMode,
     request.config.inputMode,
@@ -763,7 +751,7 @@ function gainBits(request: SimulatorModuleLaunchRequest): SimulatorAssemblyResul
   const se = audioFloat32ToBits(Math.fround(request.config.audio.seGain));
   return master === null || bgm === null || se === null
     ? rejected(
-        "evidence-required",
+        "integrity-failure",
         "simulator.composition.invalid-audio-gain",
         "Public master, BGM and SE unit gains must convert to finite binary32 values without fallback.",
       )
@@ -798,7 +786,7 @@ function readPlatformSurface(
 ): SimulatorAssemblyResult<SimulatorSurfaceState> {
   try {
     const checked = copyAndValidateInitialSimulatorSurface(graphics.readSurfaceState());
-    return checked.status === "ok" ? accepted(checked.value) : fromEvidence(checked);
+    return checked.status === "ok" ? accepted(checked.value) : fromIntegrity(checked);
   } catch {
     return rejected(
       "platform-unavailable",
@@ -814,7 +802,7 @@ function validateCurrentPlatformSurface(
 ): SimulatorAssemblyResult<void> {
   try {
     const checked = validateUnchangedSimulatorSurface(initial, graphics.readSurfaceState());
-    return checked.status === "ok" ? accepted(undefined) : fromEvidence(checked);
+    return checked.status === "ok" ? accepted(undefined) : fromIntegrity(checked);
   } catch {
     return rejected(
       "platform-unavailable",
@@ -886,8 +874,8 @@ function fromMovieOperation<T>(
       ? "resource-decode"
       : result.status === "movie-platform-unavailable"
         ? "platform-unavailable"
-        : result.status === "evidence-required"
-          ? "evidence-required"
+        : result.status === "integrity-failure"
+          ? "integrity-failure"
           : "launch-failed";
   return rejected(code, result.failure.capability, result.failure.boundary);
 }
@@ -896,10 +884,10 @@ function accepted<T>(value: T): SimulatorAssemblyResult<T> {
   return Object.freeze({ status: "accepted" as const, value });
 }
 
-function fromEvidence<T>(result: {
-  readonly status: "evidence-required";
+function fromIntegrity<T>(result: {
+  readonly status: "integrity-failure";
   readonly capability: string;
   readonly boundary: string;
 }): SimulatorAssemblyResult<T> {
-  return rejected("evidence-required", result.capability, result.boundary);
+  return rejected("integrity-failure", result.capability, result.boundary);
 }

@@ -6,7 +6,7 @@ import {
   type NoteInformation,
 } from "../engine/chart/types";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../engine/evidence";
@@ -142,7 +142,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const beforeUpdate = this.inGameManager.snapshot();
     if (!beforeUpdate.playable) {
       if (inputFrame !== undefined && inputFrame.touches.length > 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "startup-direction.manual-input-before-playable",
           ["SD09"],
           "Manual touches cannot enter the input owner before PlayingSound.",
@@ -178,14 +178,14 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (audioFault.status !== "ok") return audioFault;
     const managerSnapshot = this.inGameManager.snapshot();
     if (this.inGameManager.state !== "initialized" || managerSnapshot.paused || !managerSnapshot.playable) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual-input.resolve-outside-active-session",
         ["D03", "D14", "MJ25"],
         "Raw input geometry can be resolved only by an initialized, running and PlayingSound manual engine session.",
       );
     }
     if (managerSnapshot.noteManager.calculatedData.isAutoPlay) {
-      return evidenceRequired(
+      return integrityFailure(
         "manual-input.resolve-in-auto-live",
         ["D03", "D14", "MJ25"],
         "Real-touch button capabilities are unavailable in Auto Live.",
@@ -225,7 +225,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (movieFault.status !== "ok") return movieFault;
     const manager = this.inGameManager.snapshot();
     if (manager.startupDirection?.playable === false) {
-      return evidenceRequired(
+      return integrityFailure(
         "startup-direction.pause-during-opening",
         ["SD09"],
         "Pause cannot emit audio commands before PlayingSound.",
@@ -260,7 +260,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const manager = this.inGameManager.snapshot();
     if (manager.startupDirection?.playable === false && !manager.paused) {
-      return evidenceRequired(
+      return integrityFailure(
         "startup-direction.resume-during-opening",
         ["SD09"],
         "Resume cannot emit audio commands before PlayingSound.",
@@ -294,21 +294,21 @@ class SimulatorEngineHost implements SimulatorEngine {
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.state !== "initialized" || this.audioProducer === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "audio.complete.without-active-session",
         [],
         "Game Clear audio requires an initialized explicitly configured audio session.",
       );
     }
     if (clearStatus !== 1 && clearStatus !== 2 && clearStatus !== 3) {
-      return evidenceRequired(
+      return integrityFailure(
         "audio.complete.invalid-clear-status",
         [],
         "Current Full Combo/Game Clear routing is confirmed only for clear status 1, 2 or 3.",
       );
     }
     const particle = this.particleCoordinator?.preflightTerminal("natural-end") ?? null;
-    if (particle?.status === "evidence-required") return particle;
+    if (particle?.status === "integrity-failure") return particle;
     const audio = this.audioProducer.preflightCompleteLive(clearStatus);
     if (audio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
@@ -343,7 +343,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const publish = this.backends.audio.publishMoveTimeOutput;
     const seekMilliseconds = Math.trunc(targetSeconds * 1000);
     if (publish === undefined || !Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "audio.move-time.publication-owner-missing",
         ["LR-E16", "LR-C03"],
         "MoveTime publication requires the prepared audio owner and trunc(InGameSec*1000) target.",
@@ -358,7 +358,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   ): SimulatorResult<void> {
     const manager = this.inGameManager.scoreLifeStateManager;
     return manager === null
-      ? evidenceRequired(
+      ? integrityFailure(
           "score-life.move-time-without-record-owner",
           ["LR-R03", "LR-C04"],
           "Rehearsal MoveTime publication requires the Score/Life/Record owner.",
@@ -371,7 +371,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const backendFault = this.pollAudioFault();
     if (backendFault.status !== "ok") return backendFault;
     if (this.inGameManager.state !== "initialized" || this.particleCoordinator === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "particle.movetime.without-whole-engine-participant",
         [],
         "MoveTime requires one initialized particle session owned by the whole-engine replay host.",
@@ -435,9 +435,9 @@ class SimulatorEngineHost implements SimulatorEngine {
       return this.disposePhysicalBackends();
     }
     const rendererValidation = this.renderProducer?.validate();
-    if (rendererValidation?.status === "evidence-required") return rendererValidation;
+    if (rendererValidation?.status === "integrity-failure") return rendererValidation;
     const particle = this.particleCoordinator?.preflightDispose() ?? null;
-    if (particle?.status === "evidence-required") return particle;
+    if (particle?.status === "integrity-failure") return particle;
     const domainDispose = this.inGameManager.dispose();
     if (domainDispose.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
@@ -445,7 +445,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       const physical = this.disposePhysicalBackends();
       return physical.status === "ok"
         ? domainDispose
-        : evidenceRequired(
+        : integrityFailure(
             domainDispose.capability,
             domainDispose.requiredEvidence,
             `${domainDispose.boundary} Secondary cleanup failure: ${physical.capability}.`,
@@ -456,7 +456,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (domain.status !== "ok") return domain;
     }
     const release = this.renderProducer?.preflightSessionRelease() ?? null;
-    if (release?.status === "evidence-required") {
+    if (release?.status === "integrity-failure") {
       if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
       return release;
     }
@@ -475,12 +475,12 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   private disposePhysicalBackends(): SimulatorResult<void> {
-    let primary: import("../engine/evidence").EvidenceRequired | null = null;
+    let primary: import("../engine/evidence").SimulatorIntegrityFailure | null = null;
     const capture = (result: SimulatorResult<void>): void => {
       if (result.status === "ok") return;
       primary = primary === null
         ? result
-        : evidenceRequired(
+        : integrityFailure(
             primary.capability,
             primary.requiredEvidence,
             `${primary.boundary} Secondary cleanup failure: ${result.capability}.`,
@@ -513,7 +513,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const scoreLife = this.inGameManager.scoreLifeStateManager;
     if (scoreLife === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "audio.natural-completion.without-score-owner",
         [],
         "Natural BGM completion requires the recovered InGameRecord clear-status owner; a default clear status is forbidden.",
@@ -532,7 +532,7 @@ class SimulatorEngineHost implements SimulatorEngine {
 
   private pollAudioFault(): SimulatorResult<void> {
     const particle = this.particleCoordinator?.pollFaults() ?? null;
-    if (particle?.status === "evidence-required") {
+    if (particle?.status === "integrity-failure") {
       return this.inGameManager.latchExternalFault(particle);
     }
     if (this.audioProducer === null) return ok(undefined);
@@ -581,7 +581,7 @@ export function registerSimulatorEngineMoveTimeWrapper(
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(inner);
   if (host === null || wrapper === inner || registeredMoveTimeWrappers.has(wrapper)) {
-    return evidenceRequired(
+    return integrityFailure(
       "timeline.movetime.invalid-engine-wrapper",
       ["LR-C03"],
       "A production mount may register exactly one simulator-owned wrapper around one host engine.",
@@ -606,7 +606,7 @@ export function setMoveTimeVisualState(
 export function publishFreshEngineVisual(engine: SimulatorEngine): SimulatorResult<void> {
   const wrapper = registeredMoveTimeWrappers.get(engine);
   return wrapper === undefined
-    ? evidenceRequired(
+    ? integrityFailure(
         "timeline.retry.visual-publication-owner-missing",
         ["PAU-B04"],
         "Retry fresh generation publication requires the registered production mount wrapper after the old generation is disposed.",
@@ -620,7 +620,7 @@ export function publishMoveTimeAudio(
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(engine);
   if (host === null) {
-    return evidenceRequired(
+    return integrityFailure(
       "audio.move-time.foreign-engine",
       ["LR-C03"],
       "MoveTime audio publication may run only on an engine created by the simulator host.",
@@ -639,7 +639,7 @@ export function commitMoveTimeTimelineRevision(
   const host = resolveMoveTimeHost(engine);
   return host !== null
     ? host.commitMoveTimeTimelineRevision(timelineRevision, moveTimeCount)
-    : evidenceRequired(
+    : integrityFailure(
         "score-life.move-time-foreign-engine",
         ["LR-C04"],
         "Timeline revision may be committed only on an engine created by the simulator host.",
@@ -652,7 +652,7 @@ export function enterMoveTimeForWholeEngineReplay(
   const host = resolveMoveTimeHost(engine);
   return host !== null
     ? host.enterMoveTimeForWholeEngineReplay()
-    : evidenceRequired(
+    : integrityFailure(
         "particle.movetime.foreign-engine",
         [],
         "Whole-engine replay accepts only an engine created by the portable simulator host.",
@@ -678,7 +678,7 @@ export function createSimulatorEngine(
       !(fidelity?.mode === "habahiro" &&
         fidelity.fidelity === "current-external-complete")
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.note.non-ordinary-scene-lifecycle-unimplemented",
         ["RPR-D05", "RPR-D13", "PR04", "PR39", "PR40", "HA-D04"],
         "The connected Note lifecycle accepts exact ordinary or the functionally complete HABAHIRO current-external route; legacy degraded profiles are not production engine modes.",
@@ -695,7 +695,7 @@ export function createSimulatorEngine(
         input.rendering.ordinaryNoteScene.habahiro,
       )
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
         "Complete HABAHIRO rendering requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
@@ -710,7 +710,7 @@ export function createSimulatorEngine(
       )
     : null;
   const producerValidation = renderProducer?.validate();
-  if (producerValidation?.status === "evidence-required") return producerValidation;
+  if (producerValidation?.status === "integrity-failure") return producerValidation;
   const chartValidation = validateChart(input.chart);
   if (chartValidation.status !== "ok") {
     return chartValidation;
@@ -719,7 +719,7 @@ export function createSimulatorEngine(
   if (particleCoordinatorResult.status !== "ok") return particleCoordinatorResult;
   const particleCoordinator = particleCoordinatorResult.value;
   if (input.audio === undefined && backends.audio.snapshot().state === "ready") {
-    return evidenceRequired(
+    return integrityFailure(
       "audio.session.incomplete-host-binding",
       [],
       "A prepared audio backend requires one explicit matching host audio session.",
@@ -734,14 +734,14 @@ export function createSimulatorEngine(
   }
   const runtimeMetadata = getConstructedChartRuntimeMetadata(input.chart);
   if (runtimeMetadata === undefined) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.unregistered-chart-construction",
       ["E07", "E25"],
       "The runtime only accepts the exact ChartConstructionResult produced by the recovered chart factory; cloned or caller-synthesized charts have no proven process-history BPM count.",
     );
   }
   if (runtimeMetadata.isCommand) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.command-parse-chart",
       ["E07", "E25"],
       "The gameplay runtime consumes the normal construction result captured before the separate command parse, not an isCommand construction result.",
@@ -800,7 +800,7 @@ export function createSimulatorEngine(
   if (productProfile?.route === "product-extension") {
     const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);
     if (productAxis === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "simulator.garupa-extension.axis-profile-unregistered",
         [],
         "A product-extension chart requires its exact construction-owned TimingGroup axis profile.",
@@ -811,7 +811,7 @@ export function createSimulatorEngine(
         input.garupaProductScene !== input.rendering.garupaProductScene) ||
       (modeValidation.value.inputMode === "manual" && productScene === undefined) ||
       (input.rendering !== undefined && input.rendering.garupaProductScene === undefined)) {
-      return evidenceRequired(
+      return integrityFailure(
         "simulator.garupa-extension.scene-profile-unregistered",
         [],
         "A rendered or Manual product-extension chart requires one unambiguous scene sibling with the unchanged seven reference field lines.",
@@ -945,7 +945,7 @@ function createMovieBackground(
     const state = backend?.snapshot().state ?? null;
     return state === "ready" || state === "play-pending" || state === "playing" ||
       state === "paused" || state === "seeking" || state === "ended"
-      ? evidenceRequired(
+      ? integrityFailure(
           "movie.session.incomplete-host-binding",
           ["MVL-C01"],
           "A prepared movie backend requires one explicit matching Live host binding and cannot become an ambient background.",
@@ -961,7 +961,7 @@ function createMovieBackground(
     input.startupDirection === undefined ||
     input.startupDirection.purpose === "move-time-reconstruction" ||
     mode.sessionMode !== "live" || backend === undefined) {
-    return evidenceRequired(
+    return integrityFailure(
       "movie.session.invalid-host-binding",
       ["MVL-E12", "MVL-E13", "MVL-R01", "MVL-R02"],
       "MV Live requires one prepared backend, exact session/delay binding, fresh Live Manual/Auto startup and no Rehearsal/MoveTime inheritance.",
@@ -971,7 +971,7 @@ function createMovieBackground(
   if (snapshot.state !== "ready" || snapshot.sessionId !== input.movie.sessionId ||
     snapshot.resourceCount !== 1 || snapshot.fault !== null ||
     snapshot.muted !== true || snapshot.loop !== false) {
-    return evidenceRequired(
+    return integrityFailure(
       "movie.session.backend-not-ready",
       ["MVL-P01", "MVL-P02", "MVL-C01"],
       "The exact muted non-looping movie backend session must be ready before engine owners are constructed.",
@@ -991,7 +991,7 @@ function createParticleCoordinator(
   const rendererState = backends.particleRendering?.snapshot().state ?? null;
   if (input.particles === undefined) {
     return backendState === "ready" || rendererState === "ready"
-      ? evidenceRequired(
+      ? integrityFailure(
           "particle.session.incomplete-host-binding",
           [],
           "A prepared particle backend/renderer requires one explicit matching host particle session.",
@@ -1002,7 +1002,7 @@ function createParticleCoordinator(
     Object.keys(input.particles).length !== 1 ||
     typeof input.particles.sessionId !== "string" || input.particles.sessionId.length === 0 ||
     backends.particles === undefined) {
-    return evidenceRequired(
+    return integrityFailure(
       "particle.session.invalid-host-binding",
       [],
       "Particle input contains only one non-empty session identity and requires an explicit prepared backend.",
@@ -1031,7 +1031,7 @@ function validateRendererSession(
     sessionId.length === 0 ||
     backends.rendering === undefined
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.session.incomplete-host-binding",
       ["RPR-D14", "RPR-D17", "PR35", "PR38"],
       "A rendering engine requires both one explicit session identity and one prepared typed renderer backend.",
@@ -1043,7 +1043,7 @@ function validateRendererSession(
     snapshot.sessionId !== sessionId ||
     snapshot.fault !== null
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "render.session.renderer-not-ready",
       ["RPR-D14", "RPR-D17", "PR35", "PR38"],
       "Renderer readiness and the exact host session must validate before chart or domain owners are created or initialized.",
@@ -1059,7 +1059,7 @@ function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {
     chart.bpmChangeRealValueList.length !==
       chart.bpmChangeStringRealValueList.length
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.invalid-chart-bpm-state",
       ["E07", "E08"],
       "The chart must preserve positive finite start/change BPM values and their original parallel strings.",
@@ -1078,7 +1078,7 @@ function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {
       !isInt32(batch.denominator) ||
       !isInt32(batch.absolutePos)
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "runtime.invalid-chart-batch-position",
         ["E10", "E14"],
         "Runtime batches must preserve the recovered Int32 position fields.",
@@ -1104,7 +1104,7 @@ function validateNoteInformation(
     !isInt32(noteInformation.denominator) ||
     !isInt32(noteInformation.absolutePos)
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.invalid-note-position",
       ["E10", "E14"],
       "NoteInformation must preserve recovered Int32 fields.",
@@ -1116,7 +1116,7 @@ function validateNoteInformation(
       !isValidBpm(noteInformation.bpm) ||
       noteInformation.bpmString.length === 0
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "runtime.invalid-bpm-command",
         ["E07", "E10"],
         "CC03/CC08 commands require a nonzero denominator, positive finite BPM and original string.",
@@ -1134,7 +1134,7 @@ function validateNoteInformation(
   if (
     !validFrontType
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "runtime.unrepresented-note-root",
       ["E11", "E13"],
       `A surviving non-BPM record must map to a confirmed playable root family (index=${noteInformation.index}, ccNum=${noteInformation.ccNum}, buttonType=${noteInformation.buttonType}, fireNoteType=${noteInformation.fireNoteType}).`,

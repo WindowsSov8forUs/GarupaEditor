@@ -11,7 +11,7 @@ import {
   type PreparedManualInputFrame,
   type PreparedManualInputTouch,
 } from "../data/manualInput";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { ManualJudgementTransaction } from "../data/manualJudgement";
 import {
   NoteBase,
@@ -78,7 +78,7 @@ export class InputManager {
     buttonOwner: object,
   ): SimulatorResult<ManualInputButtonResolution> {
     if (this.mode.isAutoPlay) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.resolution-in-auto-live",
         ["D03", "D14", "MJ25"],
         "The real-touch geometry owner cannot issue gameplay button capabilities in Auto Live.",
@@ -95,7 +95,7 @@ export class InputManager {
       typeof dispatcher.preflight !== "function" ||
       typeof dispatcher.commit !== "function"
     ) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.invalid-or-duplicate-dispatcher",
         ["D03", "D14", "D15", "MJ25", "MJ26"],
         "InputManager accepts exactly one engine-owned manual dispatcher for its initialized session.",
@@ -110,7 +110,7 @@ export class InputManager {
     deltaTimeSeconds?: number,
   ): SimulatorResult<void> {
     if (this.pendingFrameValue !== null) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.frame-already-pending",
         ["D14", "D15", "MJ25", "MJ26"],
         "One InputManager owner can stage at most one input frame for an outer update.",
@@ -121,14 +121,14 @@ export class InputManager {
         return ok(undefined);
       }
       if (frame === null || typeof frame !== "object" || !Array.isArray(frame.touches)) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.invalid-auto-live-frame",
           ["D14", "D15", "MJ25", "MJ26"],
           "An Auto Live outer update cannot accept a malformed manual input frame.",
         );
       }
       if (frame.touches.length !== 0) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.touch-in-auto-live",
           ["D14", "MJ25"],
           "Real touch input cannot switch Auto Live into manual judgement or share its synthetic producer.",
@@ -137,7 +137,7 @@ export class InputManager {
       return ok(undefined);
     }
     if (frame === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.manual-frame-required",
         ["D03", "D14", "MJ01", "MJ25"],
         "Manual mode requires an explicit touch array for every consumed outer frame.",
@@ -150,7 +150,7 @@ export class InputManager {
     let dispatchPlan: ManualInputDispatchPlan | null = null;
     if (prepared.value.touches.length > 0) {
       if (this.dispatcherValue === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.manual-dispatcher-unregistered",
           ["D03", "D14", "D15", "MJ25", "MJ26"],
           "A non-empty manual frame requires the single engine-owned dispatcher before any resolver capability is consumed.",
@@ -162,7 +162,7 @@ export class InputManager {
       }
       dispatchPlan = preflight.value;
       if (dispatchPlan.touchCount !== prepared.value.touches.length) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.invalid-dispatch-plan",
           ["D14", "D15", "MJ25", "MJ26"],
           "The dispatcher plan must cover every touch in caller enumeration order.",
@@ -192,7 +192,7 @@ export class InputManager {
     }
     const pending = this.pendingFrameValue;
     if (pending === null) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.manual-frame-not-staged",
         ["D14", "MJ01", "MJ25"],
         "InputManager consumes exactly one explicitly staged manual frame per active outer update.",
@@ -200,7 +200,7 @@ export class InputManager {
     }
     if (pending.dispatchPlan !== null) {
       if (this.dispatcherValue === null) {
-        return evidenceRequired(
+        return integrityFailure(
           "input.manual-dispatcher-lost",
           ["D14", "D15", "MJ25", "MJ26"],
           "The owner that preflighted a non-empty frame must remain registered until the same outer-frame input dispatch.",
@@ -332,7 +332,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
 
   getButtonForResolver(buttonType: ButtonTypeValue): SimulatorResult<GamePlayButton> {
     if (!Number.isInteger(buttonType) || buttonType < 0 || buttonType >= GAME_PLAY_BUTTON_COUNT) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.resolver-button-outside-gameplay-domain",
         ["D02", "D03", "D15", "MJ05", "MJ26"],
         "The gameplay resolver owner can issue only one of the 16 ButtonType values 0..15.",
@@ -340,7 +340,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     }
     const button = this.buttonsValue[buttonType];
     return button === undefined
-      ? evidenceRequired(
+      ? integrityFailure(
           "input.resolver-button-owner-missing",
           ["D02", "D03", "D15", "MJ05", "MJ26"],
           "The requested gameplay button must exist in this dispatcher owner.",
@@ -375,7 +375,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       if (touch.phase === ManualTouchPhase.Began) {
         if (touch.buttonOwner !== null) {
           if (!(touch.buttonOwner instanceof GamePlayButton) || !this.ownedButtons.has(touch.buttonOwner)) {
-            return evidenceRequired(
+            return integrityFailure(
               "input.foreign-game-play-button",
               ["D03", "D15", "MJ05", "MJ26"],
               "A resolved button must be the exact GamePlayButton owned by this engine dispatcher.",
@@ -439,7 +439,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
   commit(plan: ManualInputDispatchPlan): SimulatorResult<void> {
     const ownedPlan = plan as GamePlayInputPlan;
     if (!this.ownedPlans.has(ownedPlan)) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.foreign-game-play-plan",
         ["OLS-R05", "D14", "D15"],
         "GamePlayInputDispatcher commits only its own single-use preflight plan.",
@@ -502,7 +502,7 @@ export class GamePlayButton {
     deltaTimeSeconds: number | null,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     if (this.noteManager === undefined) {
-      return evidenceRequired(
+      return integrityFailure(
         "input.game-play-button.owner-unregistered",
         ["D03", "D04", "MJ03", "MJ05"],
         "GamePlayButton must retain its engine NoteManager owner before touch arbitration.",
@@ -653,7 +653,7 @@ export class GamePlayButton {
   }
 
   execTouchBegan(): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       "input.game-play-button.touch-began",
       ["D03", "D04", "D15", "MJ03", "MJ26"],
       "GamePlayButton touch dispatch requires an owner-preflighted outer-frame plan and cannot be called as a public shortcut.",

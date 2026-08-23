@@ -6,7 +6,7 @@ import {
   createRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
-  evidenceRequired,
+  integrityFailure,
   ok,
   type SimulatorResult,
 } from "../evidence";
@@ -129,7 +129,7 @@ export function advanceOrdinarySlideChildren(
 }
 
 function reject(capability: string, detail: string): SimulatorResult<never> {
-  return evidenceRequired(capability, [
+  return integrityFailure(capability, [
     "RPR-R4-010",
     "RPR-R4-014",
     "PR07",

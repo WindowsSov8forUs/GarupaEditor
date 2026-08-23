@@ -1,6 +1,6 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import { validateSimulatorModeIdentity } from "../data/inGameCalculatedData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   OriginalSkinBackgroundMode,
   OriginalSkinChartMode,
@@ -259,6 +259,6 @@ function float32Bits(value: number): string {
   return `0x${view.getUint32(0, true).toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
-function invalid(capability: string, boundary: string): ReturnType<typeof evidenceRequired> {
-  return evidenceRequired(capability, [], boundary);
+function invalid(capability: string, boundary: string): ReturnType<typeof integrityFailure> {
+  return integrityFailure(capability, [], boundary);
 }

@@ -28,7 +28,7 @@ export async function deriveSessionMvResource(
     preflight === null || typeof preflight !== "object" ||
     typeof preflight.sha256 !== "function" || typeof preflight.prepare !== "function") {
     return rejected(
-      "evidence-required",
+      "integrity-failure",
       "simulator.mv-live.invalid-derivation-input",
       "MV derivation requires the recipe-owned byte copy, one signed Int32 delay and one explicit local browser preflight adapter.",
     );
@@ -107,8 +107,8 @@ function fromMovie<T>(result: Exclude<MovieOperationResult<T>, { status: "accept
       ? "resource-decode"
       : result.status === "movie-platform-unavailable"
         ? "platform-unavailable"
-        : result.status === "evidence-required"
-          ? "evidence-required"
+        : result.status === "integrity-failure"
+          ? "integrity-failure"
           : "launch-failed";
   return rejected(code, result.failure.capability, result.failure.boundary);
 }

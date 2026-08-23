@@ -759,7 +759,7 @@ function normalizeElapsedOffset(
 }
 
 function reject(capability: string, boundary: string): AudioOperationResult<never> {
-  return audioRejected("evidence-required", capability, boundary);
+  return audioRejected("integrity-failure", capability, boundary);
 }
 
 function terminalDisposed<T = never>(): AudioOperationResult<T> {

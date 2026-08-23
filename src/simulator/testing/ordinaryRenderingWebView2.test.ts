@@ -655,12 +655,12 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
     _provider: AudioResourceProvider,
     _preflight: AudioResourcePreflightAdapter,
   ): Promise<AudioOperationResult<void>> {
-    return audioRejected("evidence-required", "test.visual-audio.already-ready", "testing visual lifecycle audio is explicitly ready");
+    return audioRejected("integrity-failure", "test.visual-audio.already-ready", "testing visual lifecycle audio is explicitly ready");
   }
 
   preflight(commands: readonly AudioCommand[]): AudioOperationResult<AudioCommandBatch> {
     if (this.state !== "ready" || this.pending !== null || !Array.isArray(commands)) {
-      return audioRejected("evidence-required", "test.visual-audio.invalid-preflight", "invalid visual lifecycle audio batch");
+      return audioRejected("integrity-failure", "test.visual-audio.invalid-preflight", "invalid visual lifecycle audio batch");
     }
     const batch = Object.freeze({
       sessionId: this.sessionId,
@@ -673,7 +673,7 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
 
   commit(batch: AudioCommandBatch): AudioOperationResult<void> {
     if (this.pending?.batch !== batch) {
-      return audioRejected("evidence-required", "test.visual-audio.invalid-commit", "foreign visual lifecycle audio batch");
+      return audioRejected("integrity-failure", "test.visual-audio.invalid-commit", "foreign visual lifecycle audio batch");
     }
     this.commands.push(...this.pending.commands);
     this.nextSequence += this.pending.commands.length;
@@ -683,7 +683,7 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
 
   discard(batch: AudioCommandBatch): AudioOperationResult<void> {
     if (this.pending?.batch !== batch) {
-      return audioRejected("evidence-required", "test.visual-audio.invalid-discard", "foreign visual lifecycle audio batch");
+      return audioRejected("integrity-failure", "test.visual-audio.invalid-discard", "foreign visual lifecycle audio batch");
     }
     this.pending = null;
     return audioAccepted(undefined);

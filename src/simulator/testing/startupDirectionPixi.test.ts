@@ -43,8 +43,8 @@ async function main(): Promise<void> {
     true,
     SURFACE_LAYOUT,
   );
-  assert.equal(forbiddenCharacters.status, "evidence-required");
-  if (forbiddenCharacters.status === "evidence-required") {
+  assert.equal(forbiddenCharacters.status, "integrity-failure");
+  if (forbiddenCharacters.status === "integrity-failure") {
     assert.equal(forbiddenCharacters.capability, "render.startup-direction.non-empty-sd-character-assets");
   }
   const commonTextures = Array.from({ length: 8 }, () => new Texture());
@@ -179,7 +179,7 @@ async function main(): Promise<void> {
   console.log("startup direction Pixi tests passed: dynamic resources/hierarchy/order/publication/dispose");
 }
 
-function requireOk<T>(result: { status: "ok"; value: T } | { status: "evidence-required"; capability: string }): T {
+function requireOk<T>(result: { status: "ok"; value: T } | { status: "integrity-failure"; capability: string }): T {
   if (result.status !== "ok") throw new Error(result.capability);
   return result.value;
 }

@@ -289,7 +289,7 @@ async function main(): Promise<void> {
   assert.equal(moveTimeContext.sources[0]!.startOffset, 5);
   const moveTimeCommands = moveTime.snapshot().commands;
   assert.equal(moveTimeCommands[moveTimeCommands.length - 1]?.kind, "bgm.move-time-load");
-  assert.equal(moveTime.publishMoveTimeOutput(5000).status, "evidence-required");
+  assert.equal(moveTime.publishMoveTimeOutput(5000).status, "integrity-failure");
   assert.equal(moveTime.dispose().status, "accepted");
 
   const throwingContext = new FakeAudioContext();

@@ -430,11 +430,11 @@ function validateFixedSeResource(
 }
 
 function rejectProfile(capability: string, boundary: string) {
-  return audioRejected("evidence-required", capability, boundary);
+  return audioRejected("integrity-failure", capability, boundary);
 }
 
 function rejectCommand(capability: string, boundary: string) {
-  return audioRejected("evidence-required", capability, boundary);
+  return audioRejected("integrity-failure", capability, boundary);
 }
 
 function isUnitFloat32Bits(bits: string): boolean {

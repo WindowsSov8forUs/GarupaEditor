@@ -20,7 +20,7 @@ export class BrowserAudioResourcePreflightAdapter
   async sha256(bytes: Uint8Array): Promise<AudioOperationResult<string>> {
     if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0) {
       return audioRejected(
-        "evidence-required",
+        "integrity-failure",
         "audio.preflight.invalid-hash-input",
         "Audio SHA-256 accepts only one non-empty owned byte sequence.",
       );

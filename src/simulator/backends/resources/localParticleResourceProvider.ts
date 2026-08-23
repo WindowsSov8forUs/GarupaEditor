@@ -83,7 +83,7 @@ function readUint32(bytes: Uint8Array, offset: number): number {
 }
 
 function reject(capability: string, boundary: string) {
-  return particleRejected("evidence-required", capability, boundary);
+  return particleRejected("integrity-failure", capability, boundary);
 }
 
 function decodeReject(capability: string, boundary: string) {

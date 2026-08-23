@@ -13,7 +13,7 @@ import {
   validateSimulatorModeIdentity,
   type SimulatorModeIdentity,
 } from "../data/inGameCalculatedData";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import { NORMALIZED_SCORE_RULESET_ID, type SimulatorScoringPlan } from "../scoring/contracts";
 import { calculateNormalizedScoreContribution } from "../scoring/normalizedScoreRule";
@@ -93,7 +93,7 @@ export class ScoreLifeStateManager {
     const validation = validateProfile(profile, runtimeMode);
     if (validation.status !== "ok") return validation;
     if (!validScoringPlan(scoringPlan)) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.invalid-scoring-plan",
         [],
         "Score/Life initialization requires one immutable CS-V1 plan with a positive chart-owned unit count and exact scoreMaximum.",
@@ -141,7 +141,7 @@ export class ScoreLifeStateManager {
 
   preflightReflect(batch: OneFrameJudgementBatch): SimulatorResult<ScoreLifeReflectPlan> {
     if (this.pendingReflect !== null || batch.entries.length === 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.reflect-plan-overlap-or-empty",
         ["SLS-D02", "SLS-D20", "BS10", "RPR-D13", "PR33"],
         "Exactly one non-empty score/life Reflect batch may be planned without mutation.",
@@ -156,7 +156,7 @@ export class ScoreLifeStateManager {
     for (const entry of batch.entries) {
       const business = entry.business;
       if (business === undefined) {
-        return evidenceRequired(
+        return integrityFailure(
           "score-life.reflect-entry-without-business-payload",
           ["SLS-D02", "SLS-D20", "BS10"],
           "A configured score/life session cannot Reflect an entry without its frozen gameplay projection.",
@@ -165,7 +165,7 @@ export class ScoreLifeStateManager {
       const unit = this.scoringPlan.getById(business.scoringUnitId);
       if (unit === undefined || unit.ordinal !== business.scoringUnitOrdinal ||
           stagedConsumed.has(unit.id)) {
-        return evidenceRequired(
+        return integrityFailure(
           "score-life.foreign-or-duplicate-scoring-unit",
           [],
           `Every CS-V1 scoring unit must belong to this plan, preserve its ordinal and be consumed exactly once (id=${business.scoringUnitId}, ordinal=${business.scoringUnitOrdinal}).`,
@@ -177,7 +177,7 @@ export class ScoreLifeStateManager {
         this.profile.mode.isAutoPlay,
       );
       if (expected.status !== "ok" || expected.value !== business.addScore) {
-        return evidenceRequired(
+        return integrityFailure(
           "score-life.scoring-contribution-identity-mismatch",
           [],
           "The frozen CS-V1 contribution must match the plan-owned quota, judgement and session mode.",
@@ -186,7 +186,7 @@ export class ScoreLifeStateManager {
       const scoreBefore = stagedRecord.snapshot().score;
       const scoreAfter = scoreBefore + business.addScore;
       if (!isUInt32(scoreAfter) || scoreAfter > this.scoringPlan.scoreMaximum) {
-        return evidenceRequired(
+        return integrityFailure(
           "score-life.score-maximum-exceeded",
           [],
           "CS-V1 score accumulation is monotonic UInt32 and cannot exceed the chart-derived scoreMaximum.",
@@ -237,7 +237,7 @@ export class ScoreLifeStateManager {
 
   commitReflect(plan: ScoreLifeReflectPlan): SimulatorResult<void> {
     if (this.pendingReflect?.plan !== plan) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.invalid-reflect-plan",
         ["SLS-D20", "BS10", "RPR-D13", "PR33", "PR38"],
         "Only the exact one-use score/life Reflect plan may commit owner state.",
@@ -254,7 +254,7 @@ export class ScoreLifeStateManager {
 
   discardReflect(plan: ScoreLifeReflectPlan): SimulatorResult<void> {
     if (this.pendingReflect?.plan !== plan) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.invalid-reflect-discard",
         ["SLS-D20", "BS10", "RPR-D13", "PR33", "PR38"],
         "Only the exact pending score/life Reflect plan may be discarded before owner mutation.",
@@ -270,7 +270,7 @@ export class ScoreLifeStateManager {
   ): SimulatorResult<void> {
     if (this.pendingReflect !== null || !Number.isSafeInteger(timelineRevision) ||
       timelineRevision < 0 || !Number.isSafeInteger(moveTimeCount) || moveTimeCount <= 0) {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.invalid-move-time-revision",
         ["LR-R03", "LR-R05", "LR-C04"],
         "A reconstructed Rehearsal timeline commits one non-negative revision and positive MoveTime count only after all Score/Life replay owners are settled.",
@@ -279,7 +279,7 @@ export class ScoreLifeStateManager {
     try {
       this.record.commitMoveTimeCount(moveTimeCount);
     } catch {
-      return evidenceRequired(
+      return integrityFailure(
         "score-life.invalid-move-time-count",
         ["LR-E20", "LR-R03", "LR-R05"],
         "MoveTime count is monotonic across reconstructed timeline publications.",
@@ -291,7 +291,7 @@ export class ScoreLifeStateManager {
   }
 
   continueLive(): SimulatorResult<void> {
-    return evidenceRequired(
+    return integrityFailure(
       "score-life.continue-excluded",
       ["SLS-D22", "SLS-D24", "BS36"],
       "Premium-currency Continue remains outside the portable contract and performs no mutation.",
@@ -340,7 +340,7 @@ function validateProfile(
     typeof profile.sessionId !== "string" || profile.sessionId.length === 0 ||
     !validLife(profile.life) || !modeMatches
   ) {
-    return evidenceRequired(
+    return integrityFailure(
       "score-life.invalid-profile",
       ["SLS-D01", "SLS-D03", "SLS-D24", "BS01", "BS36", "LR-C01"],
       "The CS-V1 score/life profile requires exact life bounds and the same canonical orthogonal mode identity as the runtime.",

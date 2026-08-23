@@ -282,18 +282,18 @@ function mergeRenderProviders(
   });
 }
 
-function mapAudioFailure(code: Exclude<Awaited<ReturnType<SimulatorAudioBackend["prepare"]>>, { status: "accepted" }>["status"]): "evidence-required" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "platform-unavailable" | "launch-failed" {
+function mapAudioFailure(code: Exclude<Awaited<ReturnType<SimulatorAudioBackend["prepare"]>>, { status: "accepted" }>["status"]): "integrity-failure" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "platform-unavailable" | "launch-failed" {
   if (code === "audio-resource-unavailable") return "resource-unavailable";
   if (code === "audio-resource-integrity") return "resource-integrity";
   if (code === "audio-resource-decode") return "resource-decode";
   if (code === "audio-context-unavailable") return "platform-unavailable";
-  return code === "evidence-required" ? "evidence-required" : "launch-failed";
+  return code === "integrity-failure" ? "integrity-failure" : "launch-failed";
 }
-function mapParticleFailure(code: "evidence-required" | "particle-resource-unavailable" | "particle-resource-integrity" | "particle-resource-decode" | "particle-backend-fault" | "terminal-disposed"): "evidence-required" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "launch-failed" {
+function mapParticleFailure(code: "integrity-failure" | "particle-resource-unavailable" | "particle-resource-integrity" | "particle-resource-decode" | "particle-backend-fault" | "terminal-disposed"): "integrity-failure" | "resource-unavailable" | "resource-integrity" | "resource-decode" | "launch-failed" {
   if (code === "particle-resource-unavailable") return "resource-unavailable";
   if (code === "particle-resource-integrity") return "resource-integrity";
   if (code === "particle-resource-decode") return "resource-decode";
-  return code === "evidence-required" ? "evidence-required" : "launch-failed";
+  return code === "integrity-failure" ? "integrity-failure" : "launch-failed";
 }
 function rejectedWithCleanup<T>(primary: SimulatorAssemblyResult<T>, cleanupFailures: readonly SimulatorModuleCleanupFailure[]): SimulatorAssemblyResult<T> {
   if (primary.status === "accepted" || cleanupFailures.length === 0) return primary;

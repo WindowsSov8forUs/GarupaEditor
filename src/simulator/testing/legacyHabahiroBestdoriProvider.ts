@@ -4,7 +4,7 @@ import type {
   RenderResourceProfile,
   SimulatorResourceProvider,
 } from "../backends/renderingContracts";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { sha256UpperHex } from "../backends/resources/sha256";
 import {
   HABAHIRO_BESTDORI_PACK_IDENTITY,
@@ -423,5 +423,5 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 function reject(capability: string, detail: string): SimulatorResult<never> {
-  return evidenceRequired(capability, ["HAB-A01", "HAB-A02", "HAB-A03"], detail);
+  return integrityFailure(capability, ["HAB-A01", "HAB-A02", "HAB-A03"], detail);
 }

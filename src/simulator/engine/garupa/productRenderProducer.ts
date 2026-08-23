@@ -11,7 +11,7 @@ import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { getOrdinaryNoteArrivalSeconds } from "../rendering/ordinaryNoteGeometry";
 import { RenderOwnerTransaction, type RenderEngineResourceBindings } from "../rendering/renderCommandProducer";
-import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaProductTimingGroupAxisProfile } from "./timingGroupAxis";
 
@@ -658,5 +658,5 @@ function white(): RenderColor {
   return color(1, 1, 1, 1);
 }
 function rejected<T>(capability: string, boundary: string): SimulatorResult<T> {
-  return evidenceRequired(capability, [], boundary);
+  return integrityFailure(capability, [], boundary);
 }

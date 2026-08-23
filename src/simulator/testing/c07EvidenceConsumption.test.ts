@@ -45,14 +45,14 @@ async function testBrowserDecoderBoundary(): Promise<void> {
     (globalThis as any).createImageBitmap = undefined;
     (globalThis as any).FontFace = undefined;
     const png = await decoder.decodePng(asset as any, new Uint8Array([0]));
-    assert.equal(png.status, "evidence-required");
-    if (png.status === "evidence-required") {
+    assert.equal(png.status, "integrity-failure");
+    if (png.status === "integrity-failure") {
       assert.equal(png.capability, "render.pixi.create-image-bitmap-unavailable");
       assert.deepEqual(png.requiredEvidence.slice(-4), ["WBR-P01", "WBR-P02", "WBR-P03", "WBR-P04"]);
     }
     const font = await decoder.decodeFont({ ...asset, kind: "font" } as any, new Uint8Array([0]));
-    assert.equal(font.status, "evidence-required");
-    if (font.status === "evidence-required") {
+    assert.equal(font.status, "integrity-failure");
+    if (font.status === "integrity-failure") {
       assert.equal(font.capability, "render.pixi.font-face-unavailable");
       assert.deepEqual(font.requiredEvidence.slice(-4), ["WBR-P01", "WBR-P02", "WBR-P03", "WBR-P04"]);
     }

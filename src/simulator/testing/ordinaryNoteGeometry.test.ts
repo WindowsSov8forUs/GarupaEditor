@@ -11,7 +11,7 @@ import type {
   SimulatorResourceProvider,
 } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
@@ -92,7 +92,7 @@ class CapturingRenderer implements SimulatorRendererBackend {
   preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
     if (this.rejectNext) {
       this.rejectNext = false;
-      return evidenceRequired("test.renderer-rejection", ["PR39"], "Synthetic producer rejection.");
+      return integrityFailure("test.renderer-rejection", ["PR39"], "Synthetic producer rejection.");
     }
     this.commands.push(...commands);
     this.pending = Object.freeze({
@@ -103,13 +103,13 @@ class CapturingRenderer implements SimulatorRendererBackend {
     return ok(this.pending);
   }
   commit(batch: RenderCommandBatch): SimulatorResult<void> {
-    if (batch !== this.pending) return evidenceRequired("test.invalid-batch", ["PR39"], "Unexpected batch.");
+    if (batch !== this.pending) return integrityFailure("test.invalid-batch", ["PR39"], "Unexpected batch.");
     this.nextSequence += batch.commandCount;
     this.pending = null;
     return ok(undefined);
   }
   discard(batch: RenderCommandBatch): SimulatorResult<void> {
-    if (batch !== this.pending) return evidenceRequired("test.invalid-batch", ["PR39"], "Unexpected batch.");
+    if (batch !== this.pending) return integrityFailure("test.invalid-batch", ["PR39"], "Unexpected batch.");
     this.pending = null;
     return ok(undefined);
   }
@@ -163,7 +163,7 @@ function main(): void {
   equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(1)), "arrival speed 1")), "0000B040", "slow arrival branch");
   equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(11)), "arrival speed 11")), "0000003F", "fast edge arrival branch");
   equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(12)), "arrival speed 12")), "CDCCCC3E", "speed greater than 11.01 branch");
-  equal(getOrdinaryNoteArrivalSeconds(f32(16)).status, "evidence-required", "non-positive arrival fails closed");
+  equal(getOrdinaryNoteArrivalSeconds(f32(16)).status, "integrity-failure", "non-positive arrival fails closed");
 
   const motionState: OrdinaryNoteMotionState = Object.freeze({
     progressRate: f32(0),
@@ -225,7 +225,7 @@ function main(): void {
   );
   equal(virtualMotion.position.x.bits, motion.position.x.bits,
     "virtual-lane owner consumes the same typed endpoint projection before advanced mesh interpolation");
-  equal(advanceOrdinaryNoteMotion({ ...motionState, targetCenterY: motionState.launcherY }).status, "evidence-required", "degenerate scale range fails closed");
+  equal(advanceOrdinaryNoteMotion({ ...motionState, targetCenterY: motionState.launcherY }).status, "integrity-failure", "degenerate scale range fails closed");
 
   const fixedScene = Object.freeze({
     specificSpeed: f32(11),
@@ -247,7 +247,7 @@ function main(): void {
   requireOk(validateOrdinaryFixedNoteSceneInput(fixedScene), "validate fixed ordinary scene");
   equal(
     validateOrdinaryFixedNoteSceneInput({ ...fixedScene, goalPositions: fixedScene.goalPositions.slice(0, 6) }).status,
-    "evidence-required",
+    "integrity-failure",
     "fixed ordinary scene requires all seven goal transforms",
   );
   const activationRenderer = new CapturingRenderer();
@@ -316,7 +316,7 @@ function main(): void {
       true,
       1,
     );
-    equal(childRejected.status, "evidence-required", `front family ${unsupportedFront} child route remains fail-closed`);
+    equal(childRejected.status, "integrity-failure", `front family ${unsupportedFront} child route remains fail-closed`);
   }
   const virtualPrepared = requireOk(activationProducer.preflightOrdinaryNoteActivation(
     "normal:0",
@@ -393,7 +393,7 @@ function main(): void {
   equal(transform.ordering.sourceDepthOrSortingOrder, 70, "command preserves explicit source sorting order");
   requireOk(prepared.transaction.commit(), "commit ordinary Note transform");
   equal(renderer.nextSequence, 3, "motion commit consumes exactly one sequence");
-  equal(prepared.transaction.commit().status, "evidence-required", "motion transaction is one-use");
+  equal(prepared.transaction.commit().status, "integrity-failure", "motion transaction is one-use");
   renderer.rejectNext = true;
   const rejectedMotion = producer.preflightOrdinaryNoteMotion(
     "normal:0",
@@ -404,7 +404,7 @@ function main(): void {
       maskObjectId: null,
     },
   );
-  equal(rejectedMotion.status, "evidence-required", "renderer rejection returns before owner can advance progress");
+  equal(rejectedMotion.status, "integrity-failure", "renderer rejection returns before owner can advance progress");
   equal(renderer.nextSequence, 3, "renderer rejection consumes no sequence");
 
   const fieldTransform = Object.freeze({
@@ -466,7 +466,7 @@ function main(): void {
       ...fieldTransform,
     },
   ]);
-  equal(invalidField.status, "evidence-required", "duplicate field identity fails before backend");
+  equal(invalidField.status, "integrity-failure", "duplicate field identity fails before backend");
   equal(renderer.nextSequence, 11, "invalid field plan consumes no sequence");
   const release = requireOk(producer.preflightSessionRelease(), "preflight reverse session release");
   const releaseCommands = renderer.commands.slice(-3);
@@ -561,27 +561,27 @@ function main(): void {
     ...meshState,
     front: { ...meshState.front, buttonCount: 8 },
   });
-  equal(badButton.status, "evidence-required", "button count outside current 1..7 fails closed");
+  equal(badButton.status, "integrity-failure", "button count outside current 1..7 fails closed");
   const zeroRate = buildOrdinaryBaseNoteMesh({ ...meshState, widthRate: f32(0) });
-  equal(zeroRate.status, "evidence-required", "zero width rate fails closed");
+  equal(zeroRate.status, "integrity-failure", "zero width rate fails closed");
   const overflow = buildOrdinaryBaseNoteMesh({
     ...meshState,
     front: { ...meshState.front, position: vector2(3.4028234663852886e38, 0), localScaleX: f32(3.4028234663852886e38) },
     widthRate: f32(3.4028234663852886e38),
   });
-  equal(overflow.status, "evidence-required", "Float32 overflow fails closed without throwing");
+  equal(overflow.status, "integrity-failure", "Float32 overflow fails closed without throwing");
   const degenerate = buildOrdinarySyncLine({
     targetA: target(0, 0, -13, 1, 1, 10),
     targetB: target(0, 0, -12, 1, 1, 10),
     edgeMargin: f32(0),
   });
-  equal(degenerate.status, "evidence-required", "degenerate projected line fails closed");
+  equal(degenerate.status, "integrity-failure", "degenerate projected line fails closed");
   const malformed = buildOrdinarySyncLine({
     targetA: { ...target(0, 0, -13, 1, 1, 1), lossyScaleX: { value: Number.NaN } as RenderFloat32 },
     targetB: target(1, 0, -13, 1, 1, 1),
     edgeMargin: f32(0.1),
   });
-  equal(malformed.status, "evidence-required", "non-Float32 owner value fails closed");
+  equal(malformed.status, "integrity-failure", "non-Float32 owner value fails closed");
 
   const longChild = requireOk(createOrdinaryLongNormalChildState(
     { ...motionState, progressRate: f32(0.75), realMoveSecond: f32(0.25) },
@@ -637,7 +637,7 @@ function main(): void {
   }), "current R7 virtual Long advanced mesh");
   equal(virtualLongMesh.vertices.length, 42, "virtual Long consumes advanced 42-vertex topology");
   equal(createOrdinaryLongNormalChildState(motionState, -1, f32(120)).status,
-    "evidence-required", "Long child invalid tail position remains fail-closed");
+    "integrity-failure", "Long child invalid tail position remains fail-closed");
 
   console.log("ordinary Note geometry producer tests passed: motion=powf/scale mesh=22/60 line=margin/width long=wait/move/stop failures=closed");
 }

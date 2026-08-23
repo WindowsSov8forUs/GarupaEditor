@@ -107,7 +107,7 @@ async function testRecordingLifecycle(): Promise<void> {
   assert.equal((await backend.prepare("movie:test", resource)).status, "accepted");
   assert.equal(backend.snapshot().state, "ready");
   assert.equal(backend.snapshot().resourceCount, 1);
-  assert.equal(backend.setVisible(true).status, "evidence-required");
+  assert.equal(backend.setVisible(true).status, "integrity-failure");
   assert.equal(backend.play().status, "accepted");
   assert.equal(backend.setVisible(true).status, "accepted");
   assert.equal(backend.snapshot().visible, true);
@@ -115,7 +115,7 @@ async function testRecordingLifecycle(): Promise<void> {
   assert.equal(backend.snapshot().state, "paused");
   assert.equal(backend.seek(1.25).status, "accepted");
   assert.equal(backend.snapshot().currentTimeSeconds, 1.25);
-  assert.equal(backend.seek(2.001).status, "evidence-required");
+  assert.equal(backend.seek(2.001).status, "integrity-failure");
   assert.equal(backend.resume().status, "accepted");
   assert.equal(backend.notifyNaturalEnd().status, "accepted");
   assert.equal(backend.snapshot().state, "ended");
@@ -130,14 +130,14 @@ async function testSuppressedPublication(): Promise<void> {
   const backend = new RecordingSimulatorMovieBackend(true);
   assert.equal((await backend.prepare("movie:candidate", await prepared("webm", () => undefined))).status, "accepted");
   assert.equal(backend.play().status, "accepted");
-  assert.equal(backend.setVisible(true).status, "evidence-required");
+  assert.equal(backend.setVisible(true).status, "integrity-failure");
   assert.equal(backend.publishSuppressedOutput(1, true).status, "accepted");
   const snapshot = backend.snapshot();
   assert.equal(snapshot.outputSuppressed, false);
   assert.equal(snapshot.currentTimeSeconds, 1);
   assert.equal(snapshot.state, "playing");
   assert.equal(snapshot.visible, true);
-  assert.equal(backend.publishSuppressedOutput(1, true).status, "evidence-required");
+  assert.equal(backend.publishSuppressedOutput(1, true).status, "integrity-failure");
   assert.equal(backend.dispose().status, "accepted");
 }
 

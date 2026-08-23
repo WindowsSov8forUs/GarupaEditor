@@ -175,12 +175,12 @@ for (const invalid of [
   surface(0, 1600, 720, { x: 0, y: 0, width: 1601, height: 720 }),
   { ...surface(0, 1600, 720), safeArea: { x: 0.1, y: 0, width: 1600, height: 720 } },
 ]) {
-  assert.equal(copyAndValidateInitialSimulatorSurface(invalid).status, "evidence-required");
+  assert.equal(copyAndValidateInitialSimulatorSurface(invalid).status, "integrity-failure");
 }
 
 const initial = surface(4, 1600, 720);
 assert.equal(validateUnchangedSimulatorSurface(initial, initial).status, "ok");
-assert.equal(validateUnchangedSimulatorSurface(initial, surface(5, 1600, 720)).status, "evidence-required");
-assert.equal(validateUnchangedSimulatorSurface(initial, surface(4, 1920, 1080)).status, "evidence-required");
+assert.equal(validateUnchangedSimulatorSurface(initial, surface(5, 1600, 720)).status, "integrity-failure");
+assert.equal(validateUnchangedSimulatorSurface(initial, surface(4, 1920, 1080)).status, "integrity-failure");
 
 console.log("adaptive layout tests passed");

@@ -28,9 +28,9 @@ async function main(): Promise<void> {
     },
   };
   const tampered = await prepareHabahiroBestdoriPack(tamperedTransport);
-  equal(tampered.status, "evidence-required", "tampered Bestdori payload fails closed");
+  equal(tampered.status, "integrity-failure", "tampered Bestdori payload fails closed");
   equal(
-    tampered.status === "evidence-required" ? tampered.capability : null,
+    tampered.status === "integrity-failure" ? tampered.capability : null,
     "render.habahiro.bestdori-resource-mismatch",
     "tamper capability is stable",
   );
@@ -40,9 +40,9 @@ async function main(): Promise<void> {
     new TextEncoder().encode("[]"),
     new TextEncoder().encode("{}"),
   );
-  equal(malformedRows.status, "evidence-required", "malformed Sprite metadata fails closed");
+  equal(malformedRows.status, "integrity-failure", "malformed Sprite metadata fails closed");
   equal(
-    malformedRows.status === "evidence-required" ? malformedRows.capability : null,
+    malformedRows.status === "integrity-failure" ? malformedRows.capability : null,
     "render.habahiro.bestdori-sprite-count-mismatch",
     "Sprite count capability is stable",
   );
@@ -58,7 +58,7 @@ async function main(): Promise<void> {
   equal(requireOk(getHabahiroMeshWidthRate(7, settingOne), "width seven one").value,
     Math.fround(Math.fround(1.05) + Math.fround(0.0300000906)),
     "wide HABAHIRO coefficient uses Float32 steps");
-  equal(getHabahiroMeshWidthRate(8, settingOne).status, "evidence-required",
+  equal(getHabahiroMeshWidthRate(8, settingOne).status, "integrity-failure",
     "out-of-domain HABAHIRO width fails closed");
 
   console.log("HABAHIRO complete implementation contracts passed: pinned tamper/parser/Float32 width failure closure");

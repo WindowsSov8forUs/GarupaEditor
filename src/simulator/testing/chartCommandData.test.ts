@@ -127,11 +127,11 @@ test("Long终端保留Skill音符但归一Fever标记", () => {
 
 test("非法 BPM command 继续失败关闭", () => {
   const invalidHex = new NoteDataBMSBuilder().initialize("#BPM 120\n#00003:GG\n", false);
-  assertEqual(invalidHex.status, "evidence-required", "invalid hexadecimal status");
+  assertEqual(invalidHex.status, "integrity-failure", "invalid hexadecimal status");
   const nonFinite = new NoteDataBMSBuilder().initialize("#BPMXX Infinity\n", false);
-  assertEqual(nonFinite.status, "evidence-required", "non-finite BPM status");
+  assertEqual(nonFinite.status, "integrity-failure", "non-finite BPM status");
   const missingKey = new NoteDataBMSBuilder().initialize("#BPM 120\n#00008:01\n", false);
-  assertEqual(missingKey.status, "evidence-required", "missing BPM key status");
+  assertEqual(missingKey.status, "integrity-failure", "missing BPM key status");
 });
 
 test("公开入口完成 C09 后返回命令附加数据", () => {
@@ -155,7 +155,7 @@ test("命令模式按原作跳过 Bezier 转换并直接解析输入", () => {
   });
   assert(result.status === "ok", "command input skips Bezier and completes C09");
   const nonCommand = createNoteBatchInformationList({ musicScoreData });
-  assert(nonCommand.status === "evidence-required", "non-command malformed Bezier fails");
+  assert(nonCommand.status === "integrity-failure", "non-command malformed Bezier fails");
   assertEqual(
     nonCommand.capability,
     "chart-construction.invalid-bezier-score",

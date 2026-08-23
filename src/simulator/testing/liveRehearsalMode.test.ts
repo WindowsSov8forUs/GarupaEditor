@@ -18,7 +18,7 @@ import type { SimulatorEngine } from "../host/contracts";
 import { createSimulatorSessionRecipe, RecipeOwnedSessionFactory } from "../assembly/sessionRecipe";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
 import type { SimulatorSessionRecipe } from "../assembly/sessionRecipe";
-import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, type SimulatorResult } from "../engine/evidence";
 import {
   createDefaultTestSkinSettings,
   createTestPresentationPackage,
@@ -266,7 +266,7 @@ async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
       capabilities.preflight,
     );
     if (prepared.status !== "accepted") {
-      return evidenceRequired(prepared.failure.capability, [], prepared.failure.boundary);
+      return integrityFailure(prepared.failure.capability, [], prepared.failure.boundary);
     }
     const engine = createSimulatorEngine({
       chart,
@@ -463,7 +463,7 @@ function accepted<T>(value: T): any {
   return Object.freeze({ status: "accepted", value });
 }
 function rejected(capability: string, boundary: string): any {
-  return Object.freeze({ status: "rejected", failure: { code: "evidence-required", capability, boundary } });
+  return Object.freeze({ status: "rejected", failure: { code: "integrity-failure", capability, boundary } });
 }
 function requireOk<T>(result: { status: string; value?: T; capability?: string }, message: string): T {
   if (result.status !== "ok") throw new Error(`${message}: ${result.capability ?? result.status}`);
