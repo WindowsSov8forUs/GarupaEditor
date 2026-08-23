@@ -1,5 +1,9 @@
 # Simulator Original Skin Settings Contract
 
+## Runtime policy classification
+
+Reverse owns original Skin selection claims. A valid but unavailable selection makes only the Skin-change/player-launch action unavailable and retains the prior stable selection; evidence gaps are internal notices, never runtime failure codes. No default/nearest bundle substitution is permitted. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+
 ## Scope
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse resource baseline `977f5e7153257e5bb4cabb2904790408f5452aa7` plus Field/structural-stage reachability correction `4312a8ad5a755b28cb40366f6160771dbf79637e`.

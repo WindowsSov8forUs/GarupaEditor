@@ -1,5 +1,7 @@
 # GarupaEditor normalized scoring contract (CS-V1)
 
+This product contract follows the project-wide distinction in [`../runtime-contract-policy.md`](../runtime-contract-policy.md): product semantics execute without an original-parity claim; evidence notices never block scoring actions, while invalid chart ownership or non-atomic state remains an integrity failure.
+
 CS-V1 is a GarupaEditor product rule, not a claim about the original game's score formula. Reverse evidence continues to own judgement production, Combo state, Life, OneFrame ordering, and HUD resource/layout/animation behavior.
 
 ## Identity and fixed values

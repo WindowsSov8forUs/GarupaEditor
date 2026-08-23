@@ -1,5 +1,9 @@
 # Simulator Original Live Settings Contract
 
+## Runtime policy classification
+
+Reverse owns original-setting claims. Valid product actions outside that proven scope continue through registered product semantics and internal notices rather than `evidence-required`; malformed settings or inconsistent state remain typed action/integrity failures. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+
 ## Authority and scope
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse commits `bba194684529b62b443b3d12d538f45adf5e0a29` plus the positive-counter coroutine correction `50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`.

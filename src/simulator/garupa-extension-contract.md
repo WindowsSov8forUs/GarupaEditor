@@ -1,5 +1,9 @@
 # Garupa/ExGarupa Product Extension Contract
 
+## Runtime policy classification
+
+Every behavior in this document is an explicit product semantic unless a paragraph cites Reverse for an original-compatible fact. Evidence gaps emit internal notices and do not reject otherwise valid product actions; integrity-invalid charts and non-finite state still reject the current action. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+
 This document owns GarupaEditor-specific behavior layered above the reconstructed
 10.1.4 simulator. It does **not** describe original-game parity. The product
 implementation clue is `origin/main@a4ed4bbaa49d3e7db0407a1f2d5500f6d5940114`;

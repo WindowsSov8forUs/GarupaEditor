@@ -1,5 +1,9 @@
 # 谱面 MV Live portable 合同
 
+## 运行政策分类
+
+本合同的Reverse范围只约束原作等价声明。证据未覆盖的合法宿主动作采用逐项登记的产品语义和内部notice；无有效MP4/WebM或必需资源时只让当前MV启动动作不可用，不回退到图片/standard stage，也不终止编辑器。见[`../runtime-contract-policy.md`](../runtime-contract-policy.md)。
+
 ## Authority 与能力范围
 
 行为依据为已推送 Reverse `38802391fc6169e405c316e9a998f28c283961e3`，MvDarkness补充依据为`50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`的OLS-R06/OLS-P01：

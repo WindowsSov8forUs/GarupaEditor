@@ -1,5 +1,9 @@
 # Adaptive landscape layout contract
 
+## Runtime policy classification
+
+Reverse evidence owns original-layout claims. Missing original resize evidence is an internal notice, not a production terminal condition; GarupaEditor must use a separately registered atomic product surface-rebuild semantic without claiming original equivalence. Any remaining `evidence-required` runtime return is tracked migration debt under [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+
 ## Authority and status
 
 - Reverse commit: `9167dce77d0472a000b509f993b0e66e44e4797f`.

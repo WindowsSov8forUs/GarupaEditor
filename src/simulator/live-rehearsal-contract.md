@@ -1,5 +1,9 @@
 # Live/Rehearsal × Manual/Auto 合同
 
+## 运行政策分类
+
+Reverse证据用于标注原作事实；未覆盖分支必须绑定显式产品语义并只产生内部notice，不得以`evidence-required`中止合法模式动作。资源/状态损坏仍按[`../runtime-contract-policy.md`](../runtime-contract-policy.md)处理。
+
 ## Authority
 
 - Reverse模式/生命周期：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`。

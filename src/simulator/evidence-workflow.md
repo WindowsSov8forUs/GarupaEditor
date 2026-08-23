@@ -13,12 +13,12 @@
 2. 在Reverse运行对应verifier、`git diff --check`和暂存检查。
 3. 在Reverse提交并推送。
 4. 确认所引用的Reverse证据提交已存在于远端。
-5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知行为继续返回`evidence-required`。
+5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知原作表现登记为内部evidence notice并绑定显式产品语义，不得以`evidence-required`阻断合法动作，也不得把产品语义写成Reverse事实。
 
 ## 当前原作 Skin 证据
 
 - Reverse资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与后验可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`均已push、远端`0 0`。完整证据profile冻结42 normal rows、30 Collaboration、4 Limited、16-row mode/HAB/MV矩阵、133 official UnityFS/133 whole packs/635 files；其中3个structural-stage pack只经未开放的Live2D owner可达，当前Standard/MV production manifest必须过滤为130 packs/576 files。
-- 29 Collaboration与4 Limited包有完整resource profile；过期Collabo 36的六个`skinapril2019`路径不可得，必须包级`evidence-required`且禁止用`skin_april2019`替代。
+- 29 Collaboration与4 Limited包有完整resource profile；过期Collabo 36的六个`skinapril2019`路径不可得。选择该包时当前Skin切换动作不可用并保留既有Skin；内部记录证据notice，禁止用`skin_april2019`替代。
 - Default八包与Limited-3九包为隔离fixture，逐项登记来源提交、路径、字节和SHA；production composition另登记九个existing current audio最小MP3快照。Production只从platform static store读取simulator-selected whole-pack key，不读取fixture、Reverse或网络；default-current同样必须装配并校验八包，不得旁路。
 - `4312a8ad`正向确认既有Field startup consumer；structural stage不属于当前Standard/MV recipe，禁止为了验收绘制Live2D/3D placeholder。非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。特殊ParticleSystem动态模块图已由whole-pack profile成为deterministic backend/Pixi renderer consumer；auto-random stream是canonical identity派生portable policy，仍不升级非默认device/frame parity。
 
@@ -42,7 +42,7 @@
 
 - Reverse `9167dce77d0472a000b509f993b0e66e44e4797f`已push并远端`0 0`；`simulator-multiaspect-layout-runtime-contract-10-1-4/`包含27个current ARM64 slices、current level3与MoveTime/Movie/Auto-caption最小serialized sources、6组参数化ratio/safe-area oracle和committed verifier。
 - 证据关闭任意有效**初始横屏**viewport、base safe-area、StarUI continuous high-aspect、GameCamera、gameplay/particle scale、UIRoot FitWidth、MoveTime circle hit、Auto caption和movie widget。截图derived、fixed-frame authority、unclassified scalar及unknown order计数均为0。
-- 同一证据确认不存在完整任意局中resize刷新路由；`production_authorization.dynamic_resize=false`。Garupa任何post-initial revision均在command/input前`evidence-required`，不得用外层缩放、letterbox或产品算法补齐。
+- 同一证据确认不存在完整任意局中resize原作刷新路由；`production_authorization.dynamic_resize=false`只限制原作等价声明。GarupaEditor对post-initial revision采用独立登记的产品级原子surface重建语义并记录notice；重建失败时释放当前session并稳定返回宿主，不宣称原作连续刷新，也不使用无依据的外层letterbox冒充原作。
 - Garupa只复制contract和closure两项最小JSON fixture，分别记录来源commit、bytes与SHA；production不读取fixture。1600×720截图和全部WebView2 digest只作observation。
 
 ## 测试边界

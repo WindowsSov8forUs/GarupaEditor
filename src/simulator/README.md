@@ -4,7 +4,7 @@
 
 ## 当前全局门
 
-当前实现采用“Reverse行为证据 + 明确的产品合同 + 可执行回归测试”三层边界。Garupa JSON产品schema和旧实现线索锁定`origin/main@a4ed4bba`，产品扩展行为由[`garupa-extension-contract.md`](./garupa-extension-contract.md)授权；原作position合同锁定已推送Reverse `941b17b9`，CS-V1由[`scoring-contract.md`](./scoring-contract.md)授权。发布过程、耗时和逐文件声明只保留在本地忽略目录，不作为生产或测试输入。
+当前实现采用“Reverse事实 + 显式产品语义 + 完整性边界 + 行为级回归测试”分层，统一运行政策见[`../runtime-contract-policy.md`](../runtime-contract-policy.md)。`evidence-required`只允许作为内部证据缺口说明，不得直接控制launch、session、用户动作或错误页面；每个可达缺口必须绑定稳定`productSemanticsId`，且不得声称原作等价。安全、损坏字节、资源真实性、所有权和不可回滚一致性仍可拒绝。Garupa JSON产品schema和旧实现线索锁定`origin/main@a4ed4bba`，产品扩展行为由[`garupa-extension-contract.md`](./garupa-extension-contract.md)授权；原作position合同锁定已推送Reverse `941b17b9`，CS-V1由[`scoring-contract.md`](./scoring-contract.md)授权。发布过程、耗时和逐文件声明只保留在本地忽略目录，不作为生产或测试输入。
 
 总重验aggregate gate已在R12有界关闭。完整启动音频调用图最初基于Reverse `b17e64e98423bed3718ac2e76a43cde5c451ee1f`重新遍历，并由Reverse `c8562fe478a9719cc582256f0edcdc988bb208e5`纠正为四模式普通账号教程gate未命中路线的完整合同：普通Live/Practice在封面信息演出后无需第二次点击；首次Live四页教程是账号状态独立分支且production未授权。谱面MV Live另基于Reverse `38802391fc6169e405c316e9a998f28c283961e3`的83个current ARM64 slices、7条observation-only R1、signed-delay inventory、portable media profile及zero-count closure关闭；仅支持Live Manual/Auto的host-supplied MP4/WebM，Practice、独立MVView和Star3D分列排除。以上关闭均不升级Unity framebuffer、fixed-device exact、CRI/USM、HAB original、其他excluded玩法或Stage 9。
 
@@ -71,7 +71,7 @@ src/simulator/
 └─ testing/     # 隔离测试与manifested fixture
 ```
 
-`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。Simulator整体不导入主程序`src/resources`；`platform/resourceContracts.ts`只接收logical requirement和source-blind lease，具体ResourceRef/Snapshot/provider由`src/app/simulator`适配。Production不得读取testing fixture、Reverse工作树或本地忽略目录，不得隐式联网、选择默认资源、自动fallback、使用ambient random/wall clock或吞掉故障。缺少master、资源身份、logical ID/exact key、typed state或证据时必须在最早可知点失败关闭；SHA只留在主程序完整性与测试oracle，不进入动态资源资格判断。
+`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。Simulator整体不导入主程序`src/resources`；`platform/resourceContracts.ts`只接收logical requirement和source-blind lease，具体ResourceRef/Snapshot/provider由`src/app/simulator`适配。Production不得读取testing fixture、Reverse工作树或本地忽略目录，不得隐式联网、选择默认资源、使用ambient random/wall clock或吞掉完整性故障。缺少必需master、资源身份、logical ID或可解码字节时只阻止当前动作并保留宿主稳定状态；证据缺口改走逐项登记的产品语义和内部notice。SHA只留在主程序完整性与测试oracle，不进入动态资源资格判断。
 
 ## Rendering验收分层
 

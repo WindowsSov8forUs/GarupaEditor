@@ -11,6 +11,8 @@
     "resources:test": "node src/resources/testing/runTests.mjs",
     "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
     "resources:verify-production-assets": "node scripts/verify-builtin-production-assets.mjs",
+    "contracts:audit": "node scripts/audit-runtime-contract-blockers.mjs",
+    "contracts:audit:check": "node scripts/audit-runtime-contract-blockers.mjs --check",
     "simulator:test:first-slice": "node src/simulator/testing/runFirstSliceTests.mjs",
     "simulator:test:chart-boundary": "node src/simulator/testing/runChartConstructionBoundaryTests.mjs",
     "simulator:test:chart-parsing": "node src/simulator/testing/runChartConstructionParsingTests.mjs",

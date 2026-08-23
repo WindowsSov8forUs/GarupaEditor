@@ -1,5 +1,9 @@
 # Simulator Resource Integration Contract
 
+## Runtime policy classification
+
+This integration follows [`../runtime-contract-policy.md`](../runtime-contract-policy.md). Missing required resources make only the current launch/selection action unavailable and preserve the prior host state; evidence gaps are internal notices. Corrupt bytes, unsafe paths, digest mismatch and ownership/transaction violations remain integrity failures, and no silent/default/nearest resource substitution is allowed.
+
 ## Authority
 
 The main program owns every production resource identity, source, catalog, transaction, record revision, blob, selection, snapshot, lease and garbage-collection decision. Simulator code owns only semantic requirements and compatibility/decoding of leased bytes.
