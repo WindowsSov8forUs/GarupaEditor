@@ -110,7 +110,7 @@ export class StartupDirectionController {
         : ok(undefined)
     );
     if (startupAudio.status !== "ok") return startupAudio;
-    if (this.purpose === "move-time-reconstruction") {
+    if (this.purpose === "move-time-reconstruction" || this.purpose === "surface-rebuild") {
       this.phaseValue = "playing-sound";
       this.stateValue = GameState.PlayingSound;
       this.publish({

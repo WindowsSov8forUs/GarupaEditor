@@ -58,7 +58,7 @@ for (const required of [
   "preflightStartupOpening", "preflightEnterStartupPlaying",
   '"bgm.prepare-paused"', '"gaya.start"', '"gaya.fade-stop-at-zero"',
   '"gaya.fade-null-safe"', '"bgm.resume"', '"live-voice.release"',
-  'purpose !== "move-time-reconstruction"', 'mode.sessionMode === "live"',
+  'purpose === "surface-rebuild"', 'mode.sessionMode === "live"',
 ]) if (!(startupAudioOwner + joined).includes(required)) throw new Error(`startup audio owner missing: ${required}`);
 
 const forbiddenPatterns = [

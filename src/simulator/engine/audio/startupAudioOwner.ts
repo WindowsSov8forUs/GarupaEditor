@@ -4,7 +4,7 @@ import type {
   AudioCommandProducer,
   AudioOwnerTransaction,
 } from "./audioCommandProducer";
-export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstruction";
+export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstruction" | "surface-rebuild";
 
 export type StartupAudioOwnerPhase =
   | "created"
@@ -84,10 +84,9 @@ export class StartupAudioOwner {
     private readonly liveStartVoiceCue: string | null,
     mvLive = false,
   ) {
-    this.gayaRequired = purpose !== "move-time-reconstruction" &&
-      mode.sessionMode === "live" && !mvLive;
-    this.liveVoiceRequired = purpose !== "move-time-reconstruction" &&
-      mode.sessionMode === "live" && liveStartVoiceCue !== null;
+    const reconstruction = purpose === "move-time-reconstruction" || purpose === "surface-rebuild";
+    this.gayaRequired = !reconstruction && mode.sessionMode === "live" && !mvLive;
+    this.liveVoiceRequired = !reconstruction && mode.sessionMode === "live" && liveStartVoiceCue !== null;
   }
 
   initialize(): SimulatorResult<void> {
@@ -97,7 +96,8 @@ export class StartupAudioOwner {
         `Startup audio initialization is available only from created, not ${this.phaseValue}.`,
       );
     }
-    const planned = this.purpose === "move-time-reconstruction"
+    const reconstruction = this.purpose === "move-time-reconstruction" || this.purpose === "surface-rebuild";
+    const planned = reconstruction
       ? this.producer.preflightMoveTimeReconstructionBgm()
       : this.producer.preflightStartupOpening(
           this.gayaRequired,
@@ -112,7 +112,7 @@ export class StartupAudioOwner {
       this.phaseValue = "faulted";
       return committed;
     }
-    if (this.purpose === "move-time-reconstruction") {
+    if (reconstruction) {
       this.timeline.push("move-time.bgm.prepare-paused", "move-time.bgm.resume");
       this.phaseValue = "playing";
       return ok(undefined);

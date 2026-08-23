@@ -63,28 +63,25 @@ export async function createBrowserSimulatorPlatform(input: {
 
 class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   private revision = 0;
-  private readonly initialWidth: number;
-  private readonly initialHeight: number;
-  private readonly initialClientWidth: number;
-  private readonly initialClientHeight: number;
+  private lastWidth: number;
+  private lastHeight: number;
+  private lastClientWidth: number;
+  private lastClientHeight: number;
   private mountOwner: Container | null = null;
   private readonly resizeObserver: ResizeObserver | null;
 
   private constructor(
     private readonly app: Application,
     readonly canvas: HTMLCanvasElement,
-    host: HTMLElement,
+    private readonly host: HTMLElement,
     private readonly safeAreaPolicy: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"],
   ) {
-    this.initialWidth = canvas.width;
-    this.initialHeight = canvas.height;
-    this.initialClientWidth = host.clientWidth;
-    this.initialClientHeight = host.clientHeight;
+    this.lastWidth = canvas.width;
+    this.lastHeight = canvas.height;
+    this.lastClientWidth = host.clientWidth;
+    this.lastClientHeight = host.clientHeight;
     this.resizeObserver = typeof ResizeObserver === "function"
-      ? new ResizeObserver(() => {
-          if (host.clientWidth !== this.initialClientWidth || host.clientHeight !== this.initialClientHeight ||
-            canvas.width !== this.initialWidth || canvas.height !== this.initialHeight) this.revision += 1;
-        })
+      ? new ResizeObserver(() => this.synchronizeSurfaceMetrics())
       : null;
     this.resizeObserver?.observe(host);
     window.addEventListener("orientationchange", this.onSurfaceEnvironmentChange);
@@ -122,6 +119,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   }
 
   readSurfaceState(): SimulatorSurfaceState {
+    this.synchronizeSurfaceMetrics();
     const width = this.canvas.width;
     const height = this.canvas.height;
     const safeArea = this.safeAreaPolicy === "full-surface"
@@ -156,8 +154,36 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     }));
   }
 
-  private readonly onSurfaceEnvironmentChange = () => { this.revision += 1; };
-  render(): void { this.app.render(); }
+  private readonly onSurfaceEnvironmentChange = () => {
+    this.revision += 1;
+    this.synchronizeStageScale();
+  };
+  private synchronizeSurfaceMetrics(): void {
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const clientWidth = this.host.clientWidth;
+    const clientHeight = this.host.clientHeight;
+    if (
+      width !== this.lastWidth || height !== this.lastHeight ||
+      clientWidth !== this.lastClientWidth || clientHeight !== this.lastClientHeight
+    ) {
+      this.lastWidth = width;
+      this.lastHeight = height;
+      this.lastClientWidth = clientWidth;
+      this.lastClientHeight = clientHeight;
+      this.revision += 1;
+    }
+    this.synchronizeStageScale();
+  }
+  private synchronizeStageScale(): void {
+    const backingToPixiX = this.app.screen.width / this.canvas.width;
+    const backingToPixiY = this.app.screen.height / this.canvas.height;
+    if (Number.isFinite(backingToPixiX) && Number.isFinite(backingToPixiY) &&
+      backingToPixiX > 0 && backingToPixiY > 0) {
+      this.app.stage.scale.set(backingToPixiX, backingToPixiY);
+    }
+  }
+  render(): void { this.synchronizeSurfaceMetrics(); this.app.render(); }
   dispose(): void {
     this.resizeObserver?.disconnect();
     window.removeEventListener("orientationchange", this.onSurfaceEnvironmentChange);
@@ -221,6 +247,10 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
   private readonly commands: SimulatorRuntimeCommand[] = [];
   private disposed = false;
   private hardwareBack = false;
+  private lifecyclePaused = false;
+  private lifecyclePauseApplied = false;
+  private closeQueued = false;
+  private abortQueued = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -233,10 +263,11 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     document.addEventListener("visibilitychange", this.onVisibilityChange);
     window.addEventListener("pagehide", this.onPageHide);
     window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("blur", this.onWindowBlur);
     canvas.addEventListener("webglcontextlost", this.onContextLost);
   }
 
-  consume(_sequence: number, _controlState: SimulatorTimelineControlState, surface: SimulatorSurfaceState): SimulatorAssemblyResult<SimulatorRuntimeInputBatch> {
+  consume(_sequence: number, controlState: SimulatorTimelineControlState, surface: SimulatorSurfaceState): SimulatorAssemblyResult<SimulatorRuntimeInputBatch> {
     if (this.disposed) return rejected("launch-failed", "simulator.browser.input-disposed", "Disposed browser input cannot publish empty fallback frames.");
     const touches: ManualInputTouch[] = [];
     for (const [pointerId, pointer] of this.pointers) {
@@ -255,13 +286,46 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
       }
     }
     const frame: ManualInputFrame = Object.freeze({ touches: Object.freeze(touches) });
-    const commands = Object.freeze(this.commands.splice(0));
-    const hardwareBack = this.hardwareBack;
+    let hardwareBack = this.hardwareBack;
     this.hardwareBack = false;
-    return assemblyAccepted(Object.freeze({ surfaceRevision: surface.revision, manualFrame: frame, hardwareBack, commands }));
+    if (hardwareBack && !controlState.playable) {
+      this.enqueue({ kind: "user-close" });
+      hardwareBack = false;
+    }
+    const commands: SimulatorRuntimeCommand[] = [];
+    for (const command of this.commands.splice(0)) {
+      if (command.kind === "platform-pause") {
+        if (controlState.paused) {
+          this.lifecyclePauseApplied = false;
+          continue;
+        }
+        this.lifecyclePauseApplied = true;
+      } else if (command.kind === "platform-resume") {
+        if (!this.lifecyclePauseApplied) continue;
+        this.lifecyclePauseApplied = false;
+      }
+      commands.push(command);
+    }
+    return assemblyAccepted(Object.freeze({
+      surfaceRevision: surface.revision,
+      manualFrame: frame,
+      hardwareBack,
+      commands: Object.freeze(commands),
+    }));
   }
 
-  enqueue(command: SimulatorRuntimeCommand): void { if (!this.disposed) this.commands.push(Object.freeze(command)); }
+  enqueue(command: SimulatorRuntimeCommand): void {
+    if (this.disposed) return;
+    if (command.kind === "user-close") {
+      if (this.closeQueued) return;
+      this.closeQueued = true;
+    }
+    if (command.kind === "platform-abort") {
+      if (this.abortQueued) return;
+      this.abortQueued = true;
+    }
+    this.commands.push(Object.freeze(command));
+  }
 
   private readonly onPointerDown = (event: PointerEvent) => {
     if (this.disposed || this.fingerByPointer.has(event.pointerId)) return;
@@ -290,7 +354,17 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     pointer.terminal = true;
     pointer.pending.push({ phase: ManualTouchPhase.Ended, position: pointer.position });
   };
-  private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "platform-pause" : "platform-resume" }); };
+  private readonly onVisibilityChange = () => {
+    if (document.hidden) {
+      if (!this.lifecyclePaused) {
+        this.lifecyclePaused = true;
+        this.enqueue({ kind: "platform-pause" });
+      }
+    } else if (this.lifecyclePaused) {
+      this.lifecyclePaused = false;
+      this.enqueue({ kind: "platform-resume" });
+    }
+  };
   private readonly onPageHide = () => { this.enqueue({ kind: "user-close" }); };
   private readonly onKeyDown = (event: KeyboardEvent) => {
     if (this.disposed || (event.key !== "Escape" && event.key !== "BrowserBack")) return;
@@ -298,6 +372,13 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     this.hardwareBack = true;
   };
   private readonly onContextLost = (event: Event) => { event.preventDefault(); this.enqueue({ kind: "platform-abort" }); };
+  private readonly onWindowBlur = () => {
+    for (const pointer of this.pointers.values()) {
+      if (pointer.terminal) continue;
+      pointer.terminal = true;
+      pointer.pending.push({ phase: ManualTouchPhase.Ended, position: pointer.position });
+    }
+  };
 
   private position(event: PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
@@ -322,10 +403,15 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
     window.removeEventListener("pagehide", this.onPageHide);
     window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("blur", this.onWindowBlur);
     this.canvas.removeEventListener("webglcontextlost", this.onContextLost);
     this.pointers.clear();
     this.fingerByPointer.clear();
     this.commands.length = 0;
     this.hardwareBack = false;
+    this.lifecyclePaused = false;
+    this.lifecyclePauseApplied = false;
+    this.closeQueued = false;
+    this.abortQueued = false;
   }
 }

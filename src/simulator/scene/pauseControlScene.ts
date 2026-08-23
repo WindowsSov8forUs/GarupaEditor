@@ -1,5 +1,5 @@
 import { ManualTouchPhase, type ManualInputFrame, type ManualInputTouch } from "../engine/data/manualInput";
-import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, productSemantic, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import type { OriginalSurfaceLayout } from "./originalSurfaceLayout";
@@ -137,17 +137,24 @@ export class PauseControlSceneOwner {
     const commands: Array<PauseControlCommand | RehearsalControlCommand> = [];
     const touches = manualFrame?.touches ?? [];
     const gameplay: ManualInputTouch[] = [];
+    let hardwareBackProductSemanticsId: string | null = null;
 
     if (hardwareBack) {
-      if (this.state === "pause-menu" && controlState.playable && controlState.paused && !controlState.moveTimeInProgress) {
+      if (this.state === "playing" && controlState.playable && !controlState.paused && !controlState.moveTimeInProgress) {
+        commands.push(issue("pause", controlState.mode, layout.surfaceRevision));
+        this.state = "pause-menu";
+        this.pressed.clear();
+        hardwareBackProductSemanticsId = "GE-PS-BACK-PLAYING-OPENS-PAUSE";
+      } else if (this.state === "pause-menu" && controlState.playable && controlState.paused && !controlState.moveTimeInProgress) {
         this.state = "resume-countdown";
         this.countdown = RESUME_COUNTDOWN_SECONDS;
         this.pressed.clear();
-      } else {
-        return this.reject(
-          "pause.control.hardware-back-outside-pause-menu",
-          "Current Android Back evidence maps only an open three-button Pause menu to the right/Resume countdown callback; playing and nested-confirmation Back remain evidence-required.",
-        );
+      } else if (this.state === "retry-confirm" || this.state === "abort-confirm") {
+        this.state = "pause-menu";
+        this.pressed.clear();
+        hardwareBackProductSemanticsId = "GE-PS-BACK-CONFIRM-TO-PAUSE";
+      } else if (this.state === "resume-countdown") {
+        hardwareBackProductSemanticsId = "GE-PS-BACK-COUNTDOWN-CONSUMED";
       }
     }
 
@@ -195,11 +202,20 @@ export class PauseControlSceneOwner {
     const filtered = manualFrame === null
       ? null
       : Object.freeze({ touches: Object.freeze(gameplay) });
-    return ok(Object.freeze({
+    const result = Object.freeze({
       manualFrame: filtered,
       commands: Object.freeze(commands),
       snapshot: this.snapshot(controlState.mode, layout, controlState.playable),
-    }));
+    });
+    return hardwareBackProductSemanticsId === null
+      ? ok(result)
+      : productSemantic(
+          result,
+          "pause.control.product-hardware-back",
+          ["PAU-B04"],
+          "Android Back outside the observed open Pause-menu callback follows an explicit GarupaEditor navigation semantic without claiming original equivalence.",
+          hardwareBackProductSemanticsId,
+        );
   }
 
   snapshot(mode: SimulatorTimelineControlState["mode"], layout: PauseControlLayout, playable = true): PauseControlSceneSnapshot {

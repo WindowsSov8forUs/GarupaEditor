@@ -10,7 +10,7 @@
 
 原作Live设置另以Reverse `aae7e4fe`和Primary MoveNext纠正`50bc40b6`关闭：Public破坏性升级为Schema 12，恢复Primary/Secondary判定调整、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness。逐字段行为、资源、产品投影和排除项见[`original-live-settings-contract.md`](./original-live-settings-contract.md)。
 
-主程序统一资源迁移与Stage 9基于Reverse `f461b287`实施：production不再有Shared Store、`simulator-static`或固定网络资源SHA资格门；桌面独立窗口和移动route均经Schema 12、application Snapshot/Lease、Pixi/WebAudio/browser input/surface composition调用唯一Public入口。应用内部transport Schema 2仅把六个已验证Float32编码为大端bits字符串以避开Tauri event JSON数值扰动，播放器按位还原后才构建不变的Public Schema 12；不执行round/clamp或增加Public字段。Windows/Vite、desktop bundle与Android release均通过；实体Android已关闭单WebView route、immersive system-bar边界、Pause触摸、Back→Resume countdown、Retry fresh、Abort/cancel、二次启动、AudioFlinger active output及background/restore revision terminal。capability现为`closed-product-integration`。
+主程序统一资源迁移与Stage 9基于Reverse `f461b287`实施：production不再有Shared Store、`simulator-static`或固定网络资源SHA资格门；桌面独立窗口和移动route均经Schema 12、application Snapshot/Lease、Pixi/WebAudio/browser input/surface composition调用唯一Public入口。应用内部transport Schema 2仅把六个已验证Float32编码为大端bits字符串以避开Tauri event JSON数值扰动，播放器按位还原后才构建不变的Public Schema 12；不执行round/clamp或增加Public字段。Windows/Vite、desktop bundle与Android release均通过；实体Android已关闭单WebView route、immersive system-bar边界、Pause触摸、Back→Resume countdown、Retry fresh、Abort/cancel、二次启动及AudioFlinger active output；background/restore与landscape surface revision现走独立产品级原子重建/稳定返回语义。capability现为`closed-product-integration`。
 
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
@@ -27,7 +27,7 @@
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，不接受格式中不存在的laneCount；任意有限lane按七轨参考坐标连续投影，场地始终仅有0..6七条轨道线；按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
 | Initial adaptive landscape layout | `closed-portable` | Reverse `9167dce7`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
-| Dynamic surface resize | `open-evidence-required` | 10.1.4不存在完整局中刷新路由：arbitrary setScreenSize不重跑ButtonManager/particle，RefreshSafeArea不含VerticalFit；任何post-initial revision在command/input前失败关闭 |
+| Dynamic surface resize | `observational-gap` / `closed-product-extension` | 10.1.4不存在完整原作局中刷新路由，因此不声明原作等价；产品语义`GE-PS-SURFACE-ATOMIC-REBUILD`在下一输入帧前以deferred fresh generation重放当前timeline并原子替换surface/control/mount，失败则稳定返回编辑器 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布；控件由current serialized Left/Right anchor、±72 child、104×104 widget与world-circle radius 0.12共同派生，不再消费截图bbox或人工100×100 hit region |
 | Original in-game Pause UI | `closed-portable` | Reverse `99d40bcc`以19条accepted R1关闭四模式open/Resume/Retry/Abort/cancel/confirm/Android Back/natural lifecycle，`770af437`补全level3 Pause、三种modal、InGameCountDownAnimation、RhythmGameUI/UICommon/sgm/Countdown1–3及六组参数化布局。Simulator-owned hit router、opaque command、3秒countdown、四模式fresh Retry、actual Pixi和3-fresh WebView2均通过；Desktop X仍是平台关闭，fixed/GPU/CRI/speaker exact不声明 |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
@@ -39,7 +39,7 @@
 | Fixed-device physical exact | `open-objective-environment-blocked` | Reverse取证时锁定panel只有60 Hz且candidate/Stage 9尚不存在；当前产品包接入不提供校准光学/声学比较路径，四项客观exact阻断仍不升级 |
 | Original Skin settings / switching | `closed-static-portable` | Reverse资源基线`977f5e71`与Field/Stage可达性纠正`4312a8ad`：完整profile 133 packs中3个stageskin仅属未开放Live2D，当前Standard/MV manifest精确为130 packs/576 files；default不再绕过8-pack原子装配。Schema 12 aggregate resolver、Note/Directional/Judge/Field/可达Background、SE、动态ParticleSystem、Retry/MoveTime identity、default+Limited production composition、actual Pixi/WebAudio及各3-fresh WebView2 raster均关闭；MV路线由双静态门保证selected Skin assembly先于Movie backend construction/prepare并完整回滚两级failure owners；Collabo 36包级失败。非默认device/frame parity仍不声明 |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
-| Main-program integration | `closed-product-integration` | Desktop独立窗口及Android单WebView实体路线均已关闭：零第二点击、Pause全流程、system bars/Back、fresh Retry、Abort返回、重复启动、active AudioFlinger output和background revision fail-closed；不升级CRI/speaker/fixed-device exact |
+| Main-program integration | `closed-product-integration` | Desktop独立窗口及Android单WebView实体路线均已关闭：零第二点击、Pause全流程、system bars/Back、fresh Retry、Abort返回、重复启动和active AudioFlinger output；background/surface变化采用产品级原子重建或稳定返回，不升级CRI/speaker/fixed-device exact |
 
 状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-static-portable`表示原作选择/生命周期由静态链关闭且portable资源/backend验收完成，但不伪称非默认特殊包实机帧；`closed-product-extension`表示GarupaEditor产品合同和产品验收已闭合，但不声明原作等价；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
 

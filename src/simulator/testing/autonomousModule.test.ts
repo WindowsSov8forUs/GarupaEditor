@@ -435,6 +435,8 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded");
   assert.equal(stepped.report.capabilities.mainProgramIntegration, "closed-product-integration");
+  const repeatedClose = session.close("user-closed");
+  assert.equal(repeatedClose, stepped.report, "repeated close returns the immutable first report");
   assert.equal(disposals, 1);
 }
 

@@ -28,7 +28,7 @@ export class PrimaryJudgementAdjustmentOwner {
     readonly judgementAdjustValue: number,
     readonly purpose: StartupAudioPurpose,
   ) {
-    this.phaseValue = purpose === "move-time-reconstruction"
+    this.phaseValue = purpose === "move-time-reconstruction" || purpose === "surface-rebuild"
       ? "move-time-bypassed"
       : "waiting-music";
   }
@@ -41,7 +41,7 @@ export class PrimaryJudgementAdjustmentOwner {
         "Primary JudgementAdjustValue must remain the exact persisted integer range -30..30.",
       );
     }
-    if (this.purpose === "move-time-reconstruction") return ok(undefined);
+    if (this.purpose === "move-time-reconstruction" || this.purpose === "surface-rebuild") return ok(undefined);
     if (!hasStartupOwner) {
       if (this.judgementAdjustValue !== 0) {
         return this.fault(

@@ -693,11 +693,11 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   }
 
   private readonly onContextStateChange = (): void => {
-    if (this.recording.snapshot().state === "ready" && this.context.state !== "running") {
+    if (this.recording.snapshot().state === "ready" && this.context.state === "closed") {
       this.pending = null;
       this.recording.recordTerminalFault(
-        "audio.web.context-lost-after-ready",
-        "Context loss after ready is terminal; the backend does not resume, recreate or fall back.",
+        "audio.web.context-closed-after-ready",
+        "A permanently closed AudioContext cannot preserve the prepared graph; temporary suspended lifecycle state remains recoverable.",
       );
     }
   };
@@ -705,10 +705,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private requireRunningContext<T>(): AudioOperationResult<T> | null {
     const terminal = this.requireTerminalBeforeValidation<T>();
     if (terminal !== null) return terminal;
-    if (this.recording.snapshot().state === "ready" && this.context.state !== "running") {
+    if (this.recording.snapshot().state === "ready" && this.context.state === "closed") {
       return this.recording.recordTerminalFault(
-        "audio.web.context-lost-after-ready",
-        "Context loss after ready is terminal; mutating APIs reject before argument validation.",
+        "audio.web.context-closed-after-ready",
+        "A permanently closed AudioContext cannot preserve the prepared graph; temporary suspended lifecycle state remains recoverable.",
       );
     }
     return null;

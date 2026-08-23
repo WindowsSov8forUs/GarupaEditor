@@ -58,7 +58,13 @@ export type SimulatorOwnedSessionStepResult =
   | { readonly status: "closed"; readonly report: SimulatorModuleCloseReport }
   | { readonly status: "rejected"; readonly failure: SimulatorModuleFailure };
 
+export type SimulatorSurfaceSynchronizationResult =
+  | { readonly status: "ready" }
+  | { readonly status: "closed"; readonly report: SimulatorModuleCloseReport }
+  | { readonly status: "rejected"; readonly failure: SimulatorModuleFailure };
+
 export interface SimulatorOwnedSession {
+  synchronizeSurface?(): Promise<SimulatorSurfaceSynchronizationResult>;
   step(
     deltaTimeSeconds: number,
     manualFrame: ManualInputFrame | null,

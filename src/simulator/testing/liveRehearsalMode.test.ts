@@ -49,8 +49,9 @@ async function main(): Promise<void> {
   await testRehearsalLifeZeroContinuesAndLiveCloses();
   await testTransactionalMoveTimeScoreRestore();
   await testLiveRetryFreshGeneration();
+  await testAtomicSurfaceRebuild();
   await testStartupAudioFreshPurposeIsolation();
-  console.log("Live/Rehearsal mode tests passed: four identities, Life-zero, ±5 timeline and startup-audio fresh-purpose isolation");
+  console.log("Live/Rehearsal mode tests passed: four identities, Life-zero, ±5 timeline, surface rebuild and startup-audio fresh-purpose isolation");
 }
 
 function testFourCanonicalModes(): void {
@@ -168,7 +169,7 @@ async function testTransactionalMoveTimeScoreRestore(): Promise<void> {
   const mode = createSimulatorModeIdentity("rehearsal", "auto");
   let generation = 0;
   const purposes: string[] = [];
-  const fresh = async (purpose?: "retry" | "move-time-reconstruction"): Promise<SimulatorResult<SimulatorEngine>> => {
+  const fresh = async (purpose?: "retry" | "move-time-reconstruction" | "surface-rebuild"): Promise<SimulatorResult<SimulatorEngine>> => {
     if (purpose !== undefined) purposes.push(purpose);
     return createModeEngine(mode, `move-time:${generation++}`);
   };
@@ -232,7 +233,7 @@ async function testLiveRetryFreshGeneration(): Promise<void> {
   const mode = createSimulatorModeIdentity("live", "auto");
   let generation = 0;
   const purposes: string[] = [];
-  const fresh = async (purpose?: "retry" | "move-time-reconstruction"): Promise<SimulatorResult<SimulatorEngine>> => {
+  const fresh = async (purpose?: "retry" | "move-time-reconstruction" | "surface-rebuild"): Promise<SimulatorResult<SimulatorEngine>> => {
     if (purpose !== undefined) purposes.push(purpose);
     return createModeEngine(mode, `live-retry:${generation++}`);
   };
@@ -251,11 +252,37 @@ async function testLiveRetryFreshGeneration(): Promise<void> {
   requireOk(replay.dispose(), "Live Retry dispose");
 }
 
+async function testAtomicSurfaceRebuild(): Promise<void> {
+  const mode = createSimulatorModeIdentity("live", "auto");
+  const purposes: string[] = [];
+  let generation = 0;
+  const fresh = async (purpose?: "retry" | "move-time-reconstruction" | "surface-rebuild") => {
+    if (purpose !== undefined) purposes.push(purpose);
+    return createModeEngine(mode, `surface:${generation++}`);
+  };
+  const replay = requireOk(createPortableReplaySimulatorEngine(
+    requireOk(await fresh(), "surface initial"),
+    { mode, createFreshEngine: fresh },
+  ), "surface replay owner");
+  for (let frame = 0; frame < 180; frame += 1) requireOk(replay.step(1 / 60), `surface frame ${frame}`);
+  const before = requireOk(replay.snapshot(), "surface before");
+  const timelineBefore = requireOk(replay.getTimelineControlState(), "surface timeline before").timelineSeconds;
+  const rebuilt = await replay.rebuildSurface();
+  assert.equal(rebuilt.status, "ok", JSON.stringify(rebuilt));
+  assert.equal(rebuilt.status === "ok" ? rebuilt.evidenceNotices?.[0]?.productSemanticsId : null,
+    "GE-PS-SURFACE-ATOMIC-REBUILD");
+  assert.deepEqual(purposes, ["surface-rebuild"]);
+  const after = requireOk(replay.snapshot(), "surface after");
+  assert.equal(after.managers.scoreLifeState?.record.score, before.managers.scoreLifeState?.record.score);
+  assert.equal(requireOk(replay.getTimelineControlState(), "surface timeline after").timelineSeconds, timelineBefore);
+  requireOk(replay.dispose(), "surface dispose");
+}
+
 async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
   const mode = createSimulatorModeIdentity("rehearsal", "auto");
   const builds: { purpose: string; backends: ReturnType<typeof createRecordingSimulatorBackends> }[] = [];
   let generation = 0;
-  const fresh = async (purpose: "initial" | "retry" | "move-time-reconstruction") => {
+  const fresh = async (purpose: "initial" | "retry" | "move-time-reconstruction" | "surface-rebuild") => {
     const sessionId = `startup-purpose:${purpose}:${generation++}`;
     const backends = createRecordingSimulatorBackends();
     const capabilities = virtualAudioCapabilities(CURRENT_AUDIO_TEST_PROFILE);

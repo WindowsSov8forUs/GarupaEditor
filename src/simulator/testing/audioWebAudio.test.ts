@@ -141,14 +141,18 @@ async function main(): Promise<void> {
 
   context.state = "suspended";
   context.dispatchStateChange();
-  assert.equal(backend.snapshot().state, "faulted");
-  assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
+  assert.equal(backend.snapshot().state, "ready", "temporary browser lifecycle suspension is recoverable");
+  assert.equal(backend.snapshot().fault, null);
   context.state = "running";
+  context.dispatchStateChange();
+  assert.equal(backend.snapshot().state, "ready");
+  context.state = "closed";
+  context.dispatchStateChange();
   assert.equal(backend.execute({ kind: "unknown" } as any).status, "audio-backend-fault");
-  assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
+  assert.equal(backend.snapshot().fault?.capability, "audio.web.context-closed-after-ready");
   assert.equal(backend.dispose().status, "accepted");
   assert.equal(backend.snapshot().state, "disposed");
-  assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
+  assert.equal(backend.snapshot().fault?.capability, "audio.web.context-closed-after-ready");
   assert.equal(backend.dispose().status, "terminal-disposed");
 
   const gayaContext = new FakeAudioContext();

@@ -12,6 +12,7 @@ import {
 import {
   integrityFailure,
   ok,
+  productSemantic,
   type SimulatorIntegrityFailure,
   type SimulatorResult,
 } from "../engine/evidence";
@@ -63,6 +64,7 @@ export interface SimulatorWholeEngineReplayFactory {
 
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
+  rebuildSurface(): Promise<SimulatorResult<void>>;
   retrySession(): Promise<SimulatorResult<void>>;
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
@@ -378,6 +380,54 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       timelineRevision: nextRevision,
       moveTimeCount: nextMoveCount,
     }));
+  }
+
+  async rebuildSurface(): Promise<SimulatorResult<void>> {
+    const available = this.available<void>();
+    if (available !== null) return available;
+    this.state = "replaying";
+    const freshResult = await this.createFreshCandidate("surface-rebuild");
+    if (freshResult.status !== "ok") {
+      this.state = "ready";
+      return freshResult;
+    }
+    const fresh = freshResult.value;
+    const replayResolutions = new Map<number, ManualInputButtonResolution>();
+    for (const event of this.events) {
+      const replayed = this.replayEvent(fresh, event, replayResolutions);
+      if (replayed.status !== "ok") return this.rejectCandidate(fresh, replayed);
+    }
+    if (this.moveTimeCountValue > 0) {
+      const revised = commitMoveTimeTimelineRevision(
+        fresh,
+        this.timelineRevisionValue,
+        this.moveTimeCountValue,
+      );
+      if (revised.status !== "ok") return this.rejectCandidate(fresh, revised);
+    }
+    const previous = this.active;
+    const disposed = previous.dispose();
+    if (disposed.status !== "ok") {
+      fresh.dispose();
+      return this.latchReplayFault(disposed);
+    }
+    const published = publishMoveTimeAudio(fresh, this.timelineSecondsValue);
+    if (published.status !== "ok") {
+      fresh.dispose();
+      return this.latchReplayFault(published);
+    }
+    this.active = fresh;
+    this.currentResolutions = replayResolutions;
+    for (const [id, resolution] of replayResolutions) this.resolutionIds.set(resolution, id);
+    this.generation += 1;
+    this.state = "ready";
+    return productSemantic(
+      undefined,
+      "surface.product.atomic-rebuild",
+      ["ML-R05"],
+      "The original mid-session resize route is unobserved; GarupaEditor atomically replays the current generation onto the new landscape surface without claiming original continuity.",
+      "GE-PS-SURFACE-ATOMIC-REBUILD",
+    );
   }
 
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState> {

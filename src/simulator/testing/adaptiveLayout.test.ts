@@ -178,9 +178,22 @@ for (const invalid of [
   assert.equal(copyAndValidateInitialSimulatorSurface(invalid).status, "integrity-failure");
 }
 
+const semanticallyValid = copyAndValidateInitialSimulatorSurface({
+  ...surface(3, 1600, 720, { x: 0.1, y: 0.2, width: 1599.8, height: 719.7 }),
+  hostMetadata: "ignored-by-semantic-surface-copy",
+} as any);
+assert.equal(semanticallyValid.status, "ok");
+if (semanticallyValid.status === "ok") {
+  assert.equal(semanticallyValid.value.safeArea.x, Math.fround(0.1));
+  assert.equal("hostMetadata" in semanticallyValid.value, false);
+}
+
 const initial = surface(4, 1600, 720);
 assert.equal(validateUnchangedSimulatorSurface(initial, initial).status, "ok");
-assert.equal(validateUnchangedSimulatorSurface(initial, surface(5, 1600, 720)).status, "integrity-failure");
-assert.equal(validateUnchangedSimulatorSurface(initial, surface(4, 1920, 1080)).status, "integrity-failure");
+const revisionChanged = validateUnchangedSimulatorSurface(initial, surface(5, 1600, 720));
+assert.equal(revisionChanged.status, "ok");
+assert.equal(revisionChanged.status === "ok" ? revisionChanged.evidenceNotices?.[0]?.productSemanticsId : null,
+  "GE-PS-SURFACE-ATOMIC-REBUILD");
+assert.equal(validateUnchangedSimulatorSurface(initial, surface(4, 1920, 1080)).status, "ok");
 
 console.log("adaptive layout tests passed");

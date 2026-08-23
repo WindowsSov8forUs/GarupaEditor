@@ -116,12 +116,25 @@ function testResumeCountdown(): void {
 
 function testHardwareBackResumeBoundary(): void {
   const mode = createSimulatorModeIdentity("rehearsal", "auto");
+  const playing = new PauseControlSceneOwner();
+  const playingRoute = playing.route(1 / 60, null, state(mode, true, false), LAYOUT, true);
+  let routed = requireOk(playingRoute);
+  assert.equal(routed.snapshot.state, "pause-menu");
+  assert.equal(routed.commands[0]?.kind, "pause");
+  assert.equal(playingRoute.status === "ok" ? playingRoute.evidenceNotices?.[0]?.productSemanticsId : null,
+    "GE-PS-BACK-PLAYING-OPENS-PAUSE");
+
   const owner = pausedOwner(mode);
-  const routed = requireOk(owner.route(1 / 60, null, state(mode, true, true), LAYOUT, true));
+  routed = requireOk(owner.route(1 / 60, null, state(mode, true, true), LAYOUT, true));
   assert.equal(routed.snapshot.state, "resume-countdown");
+
   const nested = pausedOwner(mode);
   click(nested, mode, LAYOUT.pauseMenu.retryBoundsTopLeft);
-  assert.equal(nested.route(1 / 60, null, state(mode, true, true), LAYOUT, true).status, "integrity-failure");
+  const nestedRoute = nested.route(1 / 60, null, state(mode, true, true), LAYOUT, true);
+  routed = requireOk(nestedRoute);
+  assert.equal(routed.snapshot.state, "pause-menu");
+  assert.equal(nestedRoute.status === "ok" ? nestedRoute.evidenceNotices?.[0]?.productSemanticsId : null,
+    "GE-PS-BACK-CONFIRM-TO-PAUSE");
 }
 
 function testRetryCancelConfirmAndFreshCommand(): void {

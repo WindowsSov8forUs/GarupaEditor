@@ -10,7 +10,7 @@ Reverse evidence owns original-layout claims. Missing original resize evidence i
 - Investigation: `artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/`.
 - Locked sample: `jp.co.craftegg.band` 10.1.4 / 230 / `arm64-v8a`.
 - Initial landscape surface: `closed-portable`.
-- Mid-session surface revision: `open-evidence-required` and terminal before command/input.
+- Mid-session original parity: `observational-gap`; product runtime: `GE-PS-SURFACE-ATOMIC-REBUILD`.
 - Portrait, Unity GPU/framebuffer exact, physical-device raster and Stage 9 remain outside this contract.
 
 The old 1600×720 delivery frame is now only one regression sample. It is not a logical-canvas constant or a source of production coordinates.
@@ -138,7 +138,7 @@ Reverse proves no complete original arbitrary-resize refresh route:
 3. `RefreshSafeArea` reinitializes ScreenToSafeArea/SafeAreaToScreen/FullScreenTexture, but not `StarUIVerticalFitScreen`.
 4. `ButtonManager.execMultiResolution` and particle setup run at gameplay startup and have no arbitrary resize caller.
 
-Therefore a session accepts one initial revision only. Runtime validates the current platform state before control state, input and commands. A changed revision—including identical geometry with a new revision—returns `surface.dynamic-revision-unsupported`; it never continues stale output, letterboxes to 1600×720 or invents a portable reflow transaction.
+Therefore Reverse authorizes only the initial revision as an original-parity claim. GarupaEditor separately registers `GE-PS-SURFACE-ATOMIC-REBUILD`: before the next input frame, it constructs a fresh deferred-mount generation against the newly observed valid landscape surface, replays the current timeline with physical audio suppressed, disposes the previous mount, publishes current BGM/visual state, then atomically updates surface/control ownership. A failed candidate is not published; the session releases and returns to the editor without an evidence error page. This product behavior does not claim original resize equivalence and never letterboxes to a fixed 1600×720 frame.
 
 ## Provenance gate
 

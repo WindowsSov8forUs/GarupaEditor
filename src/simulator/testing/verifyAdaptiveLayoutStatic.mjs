@@ -41,8 +41,15 @@ for (const required of [
   "SimulatorSurfaceState",
   "copyAndValidateInitialSimulatorSurface",
   "validateUnchangedSimulatorSurface",
-  "surface.dynamic-revision-unsupported",
+  "GE-PS-SURFACE-ATOMIC-REBUILD",
 ]) if (!surface.includes(required)) throw new Error(`surface contract missing ${required}`);
+const composition = read("platform/platformComposition.ts");
+const replay = read("host/portableReplaySession.ts");
+for (const required of ['purpose === "surface-rebuild"', "readSurface: () => readPlatformSurface", "rebuildSurface()"]) {
+  if (!composition.includes(required) && !replay.includes(required)) {
+    throw new Error(`product surface rebuild missing ${required}`);
+  }
+}
 const layout = read("scene/originalSurfaceLayout.ts");
 for (const required of [
   "ORIGINAL_ASPECT_RATIO_BASE",
@@ -83,7 +90,7 @@ if (fixture.closure.production_authorization.initial_adaptive_landscape !== true
     fixture.closure.production_authorization.dynamic_resize !== false) {
   throw new Error("Reverse adaptive/dynamic authorization mismatch");
 }
-console.log(`adaptive layout static boundary verified: production-ts=${production.length} fixed-frame=0 screenshot-authority=0 dynamic=false`);
+console.log(`adaptive layout static boundary verified: production-ts=${production.length} fixed-frame=0 screenshot-authority=0 original-dynamic=false product-rebuild=true`);
 
 function read(relativePath) {
   return readFileSync(join(simulatorRoot, relativePath), "utf8");

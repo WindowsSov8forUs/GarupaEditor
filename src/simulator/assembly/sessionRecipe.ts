@@ -56,7 +56,7 @@ export interface SimulatorRecipeEngineBuild {
   readonly skinFidelity: SimulatorSkinFidelity;
   readonly surface: SimulatorSurfaceState;
   readonly controlLayout: OriginalSurfaceLayout;
-  validateSurface(): SimulatorAssemblyResult<void>;
+  readSurface?(): SimulatorAssemblyResult<SimulatorSurfaceState>;
 }
 
 export interface SimulatorRecipeEngineBuilder {
@@ -101,6 +101,8 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       );
     }
     if (initial.status === "rejected") return initial;
+    let activeSurface = initial.value.surface;
+    let pendingSurfaceBuild: SimulatorRecipeEngineBuild | null = null;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
       requireVisualPublication: true,
@@ -109,20 +111,23 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         if (fresh.status === "rejected") {
           return integrityFailure(fresh.failure.capability, [], fresh.failure.boundary);
         }
-        if (
+        const identityMatches =
           fresh.value.chartFidelity === initial.value.chartFidelity &&
           fresh.value.originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity &&
           fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity &&
-          fresh.value.skinFidelity === initial.value.skinFidelity &&
-          sameSurface(fresh.value.surface, initial.value.surface)
-        ) {
+          fresh.value.skinFidelity === initial.value.skinFidelity;
+        const surfaceMatches = purpose === "surface-rebuild"
+          ? !sameSurface(fresh.value.surface, activeSurface)
+          : sameSurface(fresh.value.surface, activeSurface);
+        if (identityMatches && surfaceMatches) {
+          if (purpose === "surface-rebuild") pendingSurfaceBuild = fresh.value;
           return ok(fresh.value.engine);
         }
         const disposed = fresh.value.engine.dispose();
         return integrityFailure(
           "simulator.recipe.fresh-composition-mismatch",
           [],
-          "Retry and MoveTime must reconstruct the same frozen standard/product chart route and the same single authorized initial surface." +
+          "A fresh generation must retain chart/settings/Skin identity; Retry and MoveTime retain the active surface while surface-rebuild must bind the newly observed landscape surface." +
             (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}.`),
         );
       },
@@ -141,7 +146,13 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       initial.value.skinFidelity,
       initial.value.surface,
       initial.value.controlLayout,
-      initial.value.validateSurface,
+      initial.value.readSurface ?? (() => accepted(initial.value.surface)),
+      () => {
+        const value = pendingSurfaceBuild;
+        pendingSurfaceBuild = null;
+        if (value !== null) activeSurface = value.surface;
+        return value;
+      },
     ));
   }
 }
@@ -149,6 +160,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
 class RecipeOwnedSession implements SimulatorOwnedSession {
   private state: "running" | "closed" = "running";
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
+  private closeReport: SimulatorModuleCloseReport | null = null;
 
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
@@ -156,10 +168,45 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly backgroundFidelity: SimulatorBackgroundFidelity,
     private readonly chartFidelity: SimulatorChartFidelity,
     private readonly skinFidelity: SimulatorSkinFidelity,
-    private readonly surface: SimulatorSurfaceState,
-    private readonly controlLayout: OriginalSurfaceLayout,
-    private readonly validateSurface: () => SimulatorAssemblyResult<void>,
+    private surface: SimulatorSurfaceState,
+    private controlLayout: OriginalSurfaceLayout,
+    private readonly readSurface: () => SimulatorAssemblyResult<SimulatorSurfaceState>,
+    private readonly consumeSurfaceBuild: () => SimulatorRecipeEngineBuild | null,
   ) {}
+
+  async synchronizeSurface() {
+    if (this.state !== "running") {
+      return Object.freeze({
+        status: "closed" as const,
+        report: this.closeReport ?? this.finish("user-closed", null),
+      });
+    }
+    const observed = this.readSurface();
+    if (observed.status === "rejected") {
+      return Object.freeze({ status: "closed" as const, report: this.finish("user-closed", null) });
+    }
+    if (sameSurface(observed.value, this.surface)) {
+      return Object.freeze({ status: "ready" as const });
+    }
+    const rebuilt = await this.engine.rebuildSurface();
+    if (rebuilt.status !== "ok") {
+      return Object.freeze({ status: "closed" as const, report: this.finish("user-closed", null) });
+    }
+    const build = this.consumeSurfaceBuild();
+    if (build === null || !sameSurface(build.surface, observed.value)) {
+      return Object.freeze({
+        status: "rejected" as const,
+        failure: moduleFailure(
+          "integrity-failure",
+          "simulator.recipe.surface-rebuild-publication-mismatch",
+          "A successful atomic surface replay must publish the exact observed surface and matching control layout before the next input frame.",
+        ),
+      });
+    }
+    this.surface = build.surface;
+    this.controlLayout = build.controlLayout;
+    return Object.freeze({ status: "ready" as const });
+  }
 
   step(
     deltaTimeSeconds: number,
@@ -200,15 +247,11 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   }
 
   getSurfaceState(): SimulatorAssemblyResult<SimulatorSurfaceState> {
-    if (this.state !== "running") return closedFailure();
-    const checked = this.checkSurface(this.surface.revision);
-    return checked.status === "accepted" ? accepted(this.surface) : checked;
+    return this.state === "running" ? accepted(this.surface) : closedFailure();
   }
 
   getControlLayout(): SimulatorAssemblyResult<OriginalSurfaceLayout> {
-    if (this.state !== "running") return closedFailure();
-    const checked = this.checkSurface(this.surface.revision);
-    return checked.status === "accepted" ? accepted(this.controlLayout) : checked;
+    return this.state === "running" ? accepted(this.controlLayout) : closedFailure();
   }
 
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorAssemblyResult<void> {
@@ -256,23 +299,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     reason: "user-closed" | "terminal-fault",
     failure?: SimulatorModuleFailure,
   ): SimulatorModuleCloseReport {
-    if (this.state === "closed") {
-      return Object.freeze({
-        reason: "terminal-fault" as const,
-        result: null,
-        failure: failure ?? moduleFailure(
-          "launch-failed",
-          "simulator.recipe.repeated-close",
-          "A closed owned session is terminal and cannot publish another mutable result.",
-        ),
-        capabilities: createSimulatorModuleCapabilitySummary(
-          this.renderingFidelity,
-          this.backgroundFidelity,
-          this.chartFidelity,
-          this.skinFidelity,
-        ),
-      });
-    }
+    if (this.state === "closed" && this.closeReport !== null) return this.closeReport;
     return this.finish(reason, failure ?? null);
   }
 
@@ -292,7 +319,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         "Input must carry the exact single initial surface revision; stale, future and repaired revisions are forbidden.",
       );
     }
-    return this.validateSurface();
+    return accepted(undefined);
   }
 
   private available(): SimulatorOwnedSessionStepResult | null {
@@ -343,7 +370,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (terminalFailure !== null) {
       terminalFailure = appendSimulatorCleanupFailures(terminalFailure, secondaryFailures);
     }
-    return Object.freeze({
+    const report = Object.freeze({
       reason: terminalFailure === null ? reason : "terminal-fault" as const,
       result: value === null || record === null ? null : Object.freeze({
         adjustedMusicPosition: value.adjustedMusicPosition,
@@ -362,6 +389,8 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         this.skinFidelity,
       ),
     });
+    this.closeReport = report;
+    return report;
   }
 }
 

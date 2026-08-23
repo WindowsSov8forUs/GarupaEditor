@@ -47,11 +47,11 @@ for (const symbol of [
 const pause = read("scene/pauseControlScene.ts");
 for (const symbol of [
   "PauseControlSceneOwner", "createPauseControlLayout", "consumePauseControlCommand",
-  "resume-countdown", "RESUME_COUNTDOWN_SECONDS", "issuedCommands", "hardware-back-outside-pause-menu",
-  "retry-confirm", "abort-confirm",
+  "resume-countdown", "RESUME_COUNTDOWN_SECONDS", "issuedCommands", "GE-PS-BACK-PLAYING-OPENS-PAUSE",
+  "GE-PS-BACK-CONFIRM-TO-PAUSE", "retry-confirm", "abort-confirm",
 ]) if (!pause.includes(symbol)) throw new Error(`Pause scene/capability missing ${symbol}`);
 const autonomous = read("runtime/autonomousSimulatorRuntime.ts");
-for (const symbol of ["pauseControl.route", "publishPauseControlState", "consumePauseControlCommand", "platform-abort"])
+for (const symbol of ["synchronizeSurface", "pauseControl.route", "publishPauseControlState", "consumePauseControlCommand", "platform-abort"])
   if (!autonomous.includes(symbol)) throw new Error(`Pause runtime route missing ${symbol}`);
 const pixi = read("backends/pixi/pixiRendererBackend.ts");
 for (const symbol of ["createInGameControlOverlay", "original-pause-button", "pause-modal-root", "resume-countdown-", "pauseTextures.countdown"])

@@ -1,4 +1,4 @@
-import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, productSemantic, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSurfaceRect {
   readonly x: number;
@@ -20,8 +20,6 @@ export function copyAndValidateInitialSimulatorSurface(
 ): SimulatorResult<SimulatorSurfaceState> {
   if (
     value === null || typeof value !== "object" || Array.isArray(value) ||
-    Object.keys(value).sort().join(",") !==
-      "origin,revision,safeArea,viewportHeight,viewportWidth" ||
     !Number.isSafeInteger(value.revision) || value.revision < 0 ||
     !Number.isSafeInteger(value.viewportWidth) || value.viewportWidth <= 0 ||
     !Number.isSafeInteger(value.viewportHeight) || value.viewportHeight <= 0 ||
@@ -29,10 +27,9 @@ export function copyAndValidateInitialSimulatorSurface(
     value.origin !== "bottom-left" ||
     value.safeArea === null || typeof value.safeArea !== "object" ||
     Array.isArray(value.safeArea) ||
-    Object.keys(value.safeArea).sort().join(",") !== "height,width,x,y" ||
-    !exactFloat32(value.safeArea.x) || !exactFloat32(value.safeArea.y) ||
-    !exactPositiveFloat32(value.safeArea.width) ||
-    !exactPositiveFloat32(value.safeArea.height) ||
+    !finiteNumber(value.safeArea.x) || !finiteNumber(value.safeArea.y) ||
+    !positiveFiniteNumber(value.safeArea.width) ||
+    !positiveFiniteNumber(value.safeArea.height) ||
     value.safeArea.x < 0 || value.safeArea.y < 0 ||
     Math.fround(value.safeArea.x + value.safeArea.width) > value.viewportWidth ||
     Math.fround(value.safeArea.y + value.safeArea.height) > value.viewportHeight
@@ -73,21 +70,23 @@ export function validateUnchangedSimulatorSurface(
     !Object.is(value.safeArea.width, initial.safeArea.width) ||
     !Object.is(value.safeArea.height, initial.safeArea.height)
   ) {
-    return reject(
-      "surface.dynamic-revision-unsupported",
-      "Reverse 10.1.4 proves no complete original route that refreshes gameplay, particles, every StarUI helper and MV for an arbitrary mid-session surface revision. Any post-initial revision fails before command or input consumption.",
+    return productSemantic(
+      undefined,
+      "surface.product.revision-change-detected",
+      ["ML-R05"],
+      "Reverse does not provide an original arbitrary mid-session refresh route; the runtime must atomically rebuild the product surface before consuming the next input frame.",
+      "GE-PS-SURFACE-ATOMIC-REBUILD",
     );
   }
   return ok(undefined);
 }
 
-function exactFloat32(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) &&
-    Object.is(value, Math.fround(value));
+function finiteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
 }
 
-function exactPositiveFloat32(value: unknown): value is number {
-  return exactFloat32(value) && value > 0;
+function positiveFiniteNumber(value: unknown): value is number {
+  return finiteNumber(value) && value > 0;
 }
 
 function reject(capability: string, boundary: string) {

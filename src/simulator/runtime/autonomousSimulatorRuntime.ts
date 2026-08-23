@@ -137,6 +137,17 @@ export class AutonomousSimulatorModule {
         ));
         return;
       }
+      const synchronized = this.session!.synchronizeSurface === undefined
+        ? Object.freeze({ status: "ready" as const })
+        : await this.session!.synchronizeSurface();
+      if (synchronized.status === "closed") {
+        this.closePublished(synchronized.report);
+        return;
+      }
+      if (synchronized.status === "rejected") {
+        this.closeTerminal(synchronized.failure);
+        return;
+      }
       const surface = this.session!.getSurfaceState();
       if (surface.status === "rejected") {
         this.closeTerminal(surface.failure);
@@ -265,17 +276,16 @@ export class AutonomousSimulatorModule {
       return accepted(undefined);
     }
     if (command.kind === "platform-abort") {
-      const failure = moduleFailure(
-        "platform-unavailable",
-        "simulator.runtime.platform-render-context-lost",
-        "A platform rendering-context loss is terminal and remains distinct from original Pause Abort.",
-      );
-      const report = this.session!.close("terminal-fault", failure);
+      const report = this.session!.close("user-closed");
       this.closePublished(report);
       return accepted(undefined);
     }
-    if (command.kind === "platform-pause") return this.session!.pause();
-    if (command.kind === "platform-resume") return this.session!.resume();
+    if (command.kind === "platform-pause") {
+      return controlState.paused ? accepted(undefined) : this.session!.pause();
+    }
+    if (command.kind === "platform-resume") {
+      return controlState.paused ? this.session!.resume() : accepted(undefined);
+    }
     if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort") {
       const consumed = consumePauseControlCommand(command, controlState, surface);
       if (consumed.status !== "ok") {

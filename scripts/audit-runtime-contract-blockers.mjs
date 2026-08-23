@@ -12,6 +12,7 @@ const MARKERS = [
   ["integrity-failure-call", "integrityFailure("],
   ["integrity-failure-string", '"integrity-failure"'],
   ["observational-gap-string", '"observational-gap"'],
+  ["product-semantic-call", "productSemantic("],
   ["terminal-close", "closeTerminal("],
   ["exact-prototype", "Object.getPrototypeOf"],
   ["exact-key-order", ".sort().join("],
@@ -45,6 +46,9 @@ for (const file of files) {
         marker,
         symbol: nearestSymbol(lines, index),
         source: source.trim().slice(0, 300),
+        productSemanticsId: marker === "product-semantic-call"
+          ? lines.slice(index, index + 14).join("\n").match(/"(GE-PS-[A-Z0-9-]+)"/)?.[1] ?? null
+          : null,
       });
     }
   }
@@ -52,23 +56,29 @@ for (const file of files) {
 productionEntries.sort((left, right) =>
   left.file.localeCompare(right.file) || left.line - right.line || left.marker.localeCompare(right.marker));
 
-const entries = productionEntries.map((entry, index) => Object.freeze({
-  id: `RCB-${String(index + 1).padStart(4, "0")}`,
-  ...entry,
-  trigger: "pending call-site review",
-  userReachability: "runtime-review-required",
-  currentEffect: effect(entry.marker),
-  authority: authority(entry.marker),
-  risk: Object.freeze({
-    security: null,
-    corruptBytesOrStorage: null,
-    ownershipOrAtomicity: null,
-    irreversibleMutation: null,
-  }),
-  disposition: "pending-classification",
-  productSemanticsId: null,
-  regression: null,
-}));
+const entries = productionEntries.map((entry, index) => {
+  const classification = classify(entry);
+  return Object.freeze({
+    id: `RCB-${String(index + 1).padStart(4, "0")}`,
+    ...entry,
+    trigger: classification.trigger,
+    userReachability: classification.userReachability,
+    currentEffect: effect(entry.marker),
+    authority: authority(entry.marker),
+    risk: Object.freeze({
+      security: null,
+      corruptBytesOrStorage: null,
+      ownershipOrAtomicity: null,
+      irreversibleMutation: null,
+    }),
+    disposition: classification.disposition,
+    productSemanticsId: entry.productSemanticsId ??
+      (entry.marker === "product-semantic-call" && entry.file.endsWith("pauseControlScene.ts")
+        ? "GE-PS-BACK-STATE-ROUTING"
+        : classification.productSemanticsId),
+    regression: classification.regression,
+  });
+});
 const markerCounts = Object.fromEntries(MARKERS.map(([kind]) => [kind, entries.filter((entry) => entry.marker === kind).length]));
 const audit = {
   schemaVersion: 1,
@@ -127,6 +137,7 @@ function effect(marker) {
   if (marker.startsWith("evidence-required")) return "evidence-controlled-result-candidate";
   if (marker.startsWith("integrity-failure")) return "typed-integrity-result-candidate";
   if (marker === "observational-gap-string") return "nonblocking-capability-notice";
+  if (marker === "product-semantic-call") return "nonblocking-product-continuation";
   if (marker.startsWith("exact-")) return "overexact-input-gate-candidate";
   if (marker === "throw-error") return "exception-candidate";
   return "typed-rejection-candidate";
@@ -135,6 +146,44 @@ function authority(marker) {
   if (marker.startsWith("evidence-required")) return "evidence-or-internal-assertion-review";
   if (marker.startsWith("integrity-failure")) return "integrity-or-internal-assertion-review";
   if (marker === "observational-gap-string") return "internal-capability-metadata";
+  if (marker === "product-semantic-call") return "registered-product-semantics";
   if (marker.startsWith("exact-")) return "semantic-necessity-review";
   return "integrity-product-or-internal-review";
+}
+function classify(entry) {
+  if (entry.marker === "product-semantic-call") return {
+    trigger: "registered valid product action",
+    userReachability: "runtime-product-path",
+    disposition: "continue-product",
+    productSemanticsId: entry.productSemanticsId,
+    regression: "behavior-level product semantic test required",
+  };
+  if (entry.marker === "observational-gap-string") return {
+    trigger: "capability summary construction",
+    userReachability: "internal-observation-only",
+    disposition: "continue-product",
+    productSemanticsId: "GE-PS-CAPABILITY-OBSERVATION",
+    regression: "runtimeContractPolicy.test.ts",
+  };
+  if (entry.marker === "evidence-required-string" && entry.file.includes("currentOrdinaryVisibleProfile")) return {
+    trigger: "tracked internal HAB missing-animation disposition",
+    userReachability: "internal-profile-description",
+    disposition: "continue-product",
+    productSemanticsId: "GE-PS-HAB-MISSING-ANIMATION-OMIT",
+    regression: "renderContracts.test.ts",
+  };
+  if (entry.marker === "evidence-required-string" && /audio(?:Contracts|Validation)|leasedAudioPreparation/.test(entry.file)) return {
+    trigger: "fixed audio pool exhaustion descriptor",
+    userReachability: "internal-profile-description",
+    disposition: "integrity-failure",
+    productSemanticsId: null,
+    regression: "audioContracts.test.ts",
+  };
+  return {
+    trigger: "pending call-site review",
+    userReachability: "runtime-review-required",
+    disposition: "pending-classification",
+    productSemanticsId: null,
+    regression: null,
+  };
 }

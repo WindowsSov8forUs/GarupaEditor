@@ -97,7 +97,6 @@ import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDir
 import type { SimulatorResourceCapability, SimulatorResourceLease } from "./resourceContracts";
 import {
   copyAndValidateInitialSimulatorSurface,
-  validateUnchangedSimulatorSurface,
   type SimulatorSurfaceState,
 } from "./surfaceContracts";
 
@@ -203,6 +202,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     );
     if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
     const moveTimeCandidate = purpose === "move-time-reconstruction";
+    const reconstructionCandidate = moveTimeCandidate || purpose === "surface-rebuild";
     const mvPackage = recipe.request.presentation.mv;
     if (mvPackage !== null &&
       (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
@@ -285,7 +285,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       );
     }
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, reconstructionCandidate);
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -542,10 +542,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       skinFidelity: skin.value.fidelity,
       surface: surface.value,
       controlLayout: originalLayout.value,
-      validateSurface: () => validateCurrentPlatformSurface(
-        this.platform.graphics,
-        surface.value,
-      ),
+      readSurface: () => readPlatformSurface(this.platform.graphics),
     }));
   }
 
@@ -792,22 +789,6 @@ function readPlatformSurface(
       "platform-unavailable",
       "simulator.composition.surface-read-threw",
       "The platform surface reader threw before resource/backend/engine ownership; no default viewport is substituted.",
-    );
-  }
-}
-
-function validateCurrentPlatformSurface(
-  graphics: SimulatorGraphicsSurface,
-  initial: SimulatorSurfaceState,
-): SimulatorAssemblyResult<void> {
-  try {
-    const checked = validateUnchangedSimulatorSurface(initial, graphics.readSurfaceState());
-    return checked.status === "ok" ? accepted(undefined) : fromIntegrity(checked);
-  } catch {
-    return rejected(
-      "platform-unavailable",
-      "simulator.composition.surface-reread-threw",
-      "The platform surface reader threw before command/input consumption; the session terminates without continuing stale geometry.",
     );
   }
 }
