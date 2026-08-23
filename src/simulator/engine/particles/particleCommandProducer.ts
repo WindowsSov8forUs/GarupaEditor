@@ -141,10 +141,10 @@ export class ParticleCommandProducer {
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
-    if (!isJudgementBatchShape(batch)) {
+    if (!isJudgementBatchShape(batch, this.productScoringKeys)) {
       return rejected(
         "particle.producer.invalid-judgement-batch",
-        `Judgement particle routing consumes one immutable owner-produced OneFrame batch. ${describeInvalidJudgementBatch(batch)}`,
+        `Judgement particle routing consumes one immutable owner-produced OneFrame batch. ${describeInvalidJudgementBatch(batch, this.productScoringKeys)}`,
       );
     }
     const projected = cloneState(this.state);
@@ -756,7 +756,10 @@ function isRangeLength(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= 7;
 }
 
-function isJudgementBatchShape(batch: OneFrameJudgementBatch): boolean {
+function isJudgementBatchShape(
+  batch: OneFrameJudgementBatch,
+  productScoringKeys: ReadonlySet<string>,
+): boolean {
   return batch !== null && typeof batch === "object" &&
     Number.isSafeInteger(batch.batchIndex) && batch.batchIndex >= 0 &&
     Array.isArray(batch.entries) && batch.entries.length >= 1 && batch.entries.length <= 5 &&
@@ -767,12 +770,28 @@ function isJudgementBatchShape(batch: OneFrameJudgementBatch): boolean {
       Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
       Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
       (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
-      Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
+      isJudgementButtonSpan(entry, productScoringKeys) &&
       Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
       entry.multipleDirectionalFlickNoteCount >= 0);
 }
 
-function describeInvalidJudgementBatch(batch: OneFrameJudgementBatch): string {
+function isJudgementButtonSpan(
+  entry: OneFrameJudgementBatch["entries"][number],
+  productScoringKeys: ReadonlySet<string>,
+): boolean {
+  if (!Array.isArray(entry.buttonTypes) || entry.buttonTypes.length === 0 ||
+    !entry.buttonTypes.every(Number.isSafeInteger)) return false;
+  return entry.buttonTypes.every(isButtonType) || productScoringKeys.has(productScoringKey(
+    entry.noteIndex,
+    entry.absolutePosition,
+    entry.buttonTypes,
+  ));
+}
+
+function describeInvalidJudgementBatch(
+  batch: OneFrameJudgementBatch,
+  productScoringKeys: ReadonlySet<string>,
+): string {
   if (batch === null || typeof batch !== "object") return "The batch root is null or non-object.";
   if (!Number.isSafeInteger(batch.batchIndex) || batch.batchIndex < 0) {
     return `batchIndex=${String(batch.batchIndex)} is not a non-negative safe integer.`;
@@ -787,7 +806,7 @@ function describeInvalidJudgementBatch(batch: OneFrameJudgementBatch): string {
     Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
     Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
     (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
-    Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
+    isJudgementButtonSpan(entry, productScoringKeys) &&
     Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
     entry.multipleDirectionalFlickNoteCount >= 0));
   const entry = batch.entries[index];

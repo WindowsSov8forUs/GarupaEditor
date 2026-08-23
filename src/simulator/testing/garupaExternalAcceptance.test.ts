@@ -14,6 +14,7 @@ import type { ChartConstructionResult } from "../engine/chart/types";
 import { ManualTouchPhase, type ManualInputFrame, type ManualInputPosition } from "../engine/data/manualInput";
 import { getGarupaProductChartProfile, type GarupaProductNode } from "../engine/garupa/productChartProfile";
 import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
+import { ParticleCommandProducer } from "../engine/particles/particleCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorSceneLayout, type GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
 
@@ -49,6 +50,7 @@ async function main(): Promise<void> {
     const product = getGarupaProductChartProfile(chart)!;
     assert.equal(product.route, "product-extension");
     assert.equal(product.visibleNodes.length, identity!.units);
+    verifyProductOnlyParticleBypass(chart);
     const auto = runAuto(chart, identity!.units);
     assert.deepEqual(auto, {
       judged: identity!.units,
@@ -117,6 +119,44 @@ function runAuto(chart: ChartConstructionResult, expectedUnits: number) {
   });
   requireOk(engine.dispose());
   return value;
+}
+
+function verifyProductOnlyParticleBypass(chart: ChartConstructionResult): void {
+  const product = getGarupaProductChartProfile(chart)!;
+  const node = product.visibleNodes.find((candidate) =>
+    candidate.scoringSource !== null &&
+    candidate.scoringSource.buttonTypesArray.some((button) => button < 0 || button > 15));
+  assert.notEqual(node, undefined, "external outside-lane particle bypass fixture");
+  if (node === undefined || node.scoringSource === null) return;
+  const producer = new ParticleCommandProducer(chart);
+  assert.equal(producer.validate().status, "ok");
+  const entry = Object.freeze({
+    slot: 0,
+    containerId: "one-frame:0",
+    noteIndex: node.scoringSource.index,
+    buttonTypes: Object.freeze([...node.scoringSource.buttonTypesArray]),
+    noteType: 0,
+    phase: "head",
+    rawResult: 4,
+    adjustedResult: 4,
+    addCombo: 1,
+    absolutePosition: node.absolutePosition,
+    judgeTiming: 0,
+    multipleDirectionalFlickNoteCount: 0,
+  });
+  const prepared = producer.preflightJudgement(Object.freeze({
+    batchIndex: 0,
+    entryCount: 1,
+    entries: Object.freeze([entry]),
+  }) as any);
+  assert.equal(prepared.status, "ok", prepared.status === "evidence-required" ? prepared.boundary : "");
+  if (prepared.status === "ok") {
+    assert.equal(prepared.value.commands.length, 0, "product-only outside lane emits no original GamePlayButton particle");
+    assert.equal(prepared.value.commit().status, "ok");
+  }
+  const disposed = producer.preflightDispose();
+  assert.equal(disposed.status, "ok");
+  if (disposed.status === "ok") assert.equal(disposed.value.commit().status, "ok");
 }
 
 function runManual(canonical: ReturnType<typeof parseGarupaChartJson>, expectedUnits: number) {
