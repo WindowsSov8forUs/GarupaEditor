@@ -18,7 +18,7 @@ import type { GarupaProductTimingGroupAxisProfile } from "./timingGroupAxis";
 interface ProductNodeSample {
   readonly node: GarupaProductNode;
   readonly curve: number;
-  readonly position: RenderVector3;
+  readonly position: RenderVector3 | null;
   readonly visible: boolean;
 }
 
@@ -104,16 +104,20 @@ export class GarupaProductRenderProducer {
       if (displacement.status !== "ok") return displacement;
       const progress = 1 - displacement.value / arrivalMilliseconds;
       const curve = Math.pow(1.1, 50 * (progress - 1));
-      const projected = this.scene.projectLaneAtCurve(
-        node.spanStart + (node.width - 1) / 2,
-        curve,
-      );
-      if (projected.status !== "ok") return projected;
+      let position: RenderVector3 | null = null;
+      if (Number.isFinite(curve)) {
+        const projected = this.scene.projectLaneAtCurve(
+          node.spanStart + (node.width - 1) / 2,
+          curve,
+        );
+        if (projected.status !== "ok") return projected;
+        position = projected.value;
+      }
       samples.set(node.identity, Object.freeze({
         node,
         curve,
-        position: projected.value,
-        visible: Number.isFinite(curve) && curve >= 0.002 && curve <= 1.55,
+        position,
+        visible: position !== null && curve >= 0.002 && curve <= 1.55,
       }));
     }
 
@@ -174,7 +178,11 @@ export class GarupaProductRenderProducer {
           }));
           plannedCreated.add(objectId);
         }
-        commands.push(command(commands.length, productSyncLine(objectId, first.position, second.position)));
+        commands.push(command(commands.length, productSyncLine(
+          objectId,
+          requireProjectedPosition(first),
+          requireProjectedPosition(second),
+        )));
         if (!plannedVisible.has(objectId)) {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
           plannedVisible.add(objectId);
@@ -435,7 +443,7 @@ function nodeTransform(
   return {
     kind: "set-transform",
     renderObjectId,
-    position: sample.position,
+    position: requireProjectedPosition(sample),
     scale: vector2(scale * width, scale),
     rotationDegrees: f32(0),
     color: white(),
@@ -455,10 +463,12 @@ function slideMesh(
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
   const indices: number[] = [];
+  const fromPosition = requireProjectedPosition(from);
+  const toPosition = requireProjectedPosition(to);
   for (let section = 0; section <= 10; section += 1) {
     const ratio = section / 10;
-    const x = from.position.x.value + (to.position.x.value - from.position.x.value) * ratio;
-    const y = from.position.y.value + (to.position.y.value - from.position.y.value) * ratio;
+    const x = fromPosition.x.value + (toPosition.x.value - fromPosition.x.value) * ratio;
+    const y = fromPosition.y.value + (toPosition.y.value - fromPosition.y.value) * ratio;
     const curve = from.curve + (to.curve - from.curve) * ratio;
     const width = Math.max(0.008, laneSpacing * Math.max(from.node.width, to.node.width) * 0.48 * Math.max(0.02, curve));
     vertices.push(vector3(x - width, y, 0), vector3(x + width, y, 0));
@@ -535,7 +545,7 @@ function judgementFlashMesh(
   frames: number,
 ): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   const centerResult = scene.projectLaneAtCurve(node.spanStart + (node.width - 1) / 2, 1);
-  if (centerResult.status !== "ok") throw new Error(centerResult.capability);
+  if (centerResult.status !== "ok") throw new Error(`${centerResult.capability}: ${centerResult.boundary}: node=${node.identity} spanStart=${String(node.spanStart)} width=${String(node.width)}`);
   const center = centerResult.value;
   const life = frames / 12;
   const radius = scene.laneSpacingWorld.value * node.width * (0.35 + (1 - life) * 0.35);
@@ -589,6 +599,13 @@ function productTapLaneTransform(
   };
 }
 
+function requireProjectedPosition(sample: ProductNodeSample): RenderVector3 {
+  if (sample.position === null) {
+    throw new Error(`Non-finite product curve ${String(sample.curve)} for ${sample.node.identity} cannot publish render geometry.`);
+  }
+  return sample.position;
+}
+
 function segmentVisible(first: number, second: number): boolean {
   if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
   const minimum = Math.min(first, second);
@@ -623,7 +640,7 @@ function ordering(domain: number, source: number, identity: string): RenderOrder
 }
 function f32(value: number): RenderFloat32 {
   const created = createRenderFloat32(Math.fround(value));
-  if (created.status !== "ok") throw new Error(created.capability);
+  if (created.status !== "ok") throw new Error(`${created.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);
   return created.value;
 }
 function vector2(x: number, y: number): RenderVector2 {

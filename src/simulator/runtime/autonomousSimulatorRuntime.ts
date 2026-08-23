@@ -175,11 +175,11 @@ export class AutonomousSimulatorModule {
       }
       this.expectedFrame += 1;
       if (stepped.status === "closed") this.closePublished(stepped.report);
-    } catch {
+    } catch (error) {
       this.closeTerminal(moduleFailure(
         "launch-failed",
         "simulator.runtime.frame-consumer-threw",
-        "The first internal input, command or engine frame exception is terminal and closes the autonomous module exactly once.",
+        `The first internal input, command or engine frame exception is terminal and closes the autonomous module exactly once. ${error instanceof Error ? error.stack ?? error.message : String(error)}`,
       ));
     } finally {
       this.processingFrame = false;

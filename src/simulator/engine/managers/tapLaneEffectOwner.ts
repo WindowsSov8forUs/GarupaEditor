@@ -226,7 +226,7 @@ function ordering(sourceZ: RenderFloat32, creationSequence: number): RenderOrder
 }
 function f32(value: number): RenderFloat32 {
   const result = createRenderFloat32(Math.fround(value));
-  if (result.status !== "ok") throw new Error(result.capability);
+  if (result.status !== "ok") throw new Error(`${result.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);
   return result.value;
 }
 function unavailable(): ReturnType<typeof evidenceRequired> {
