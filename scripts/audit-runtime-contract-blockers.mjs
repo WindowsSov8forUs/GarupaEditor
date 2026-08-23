@@ -1,10 +1,10 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { extname, join, relative, sep } from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
 const OUTPUT = join(ROOT, "src", "runtime-contract-audit.json");
-const SOURCE_ROOTS = [join(ROOT, "src"), join(ROOT, "src-tauri", "src"), join(ROOT, "src-tauri", "gen", "android", "app", "src", "main", "java", "com", "garupa", "editor")];
 const EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs", ".rs", ".kt"]);
 const MARKERS = [
   ["evidence-required-call", "evidenceRequired("],
@@ -22,9 +22,15 @@ const MARKERS = [
   ["rust-result-error", ".ok_or_else("],
 ];
 
-const files = [];
-for (const root of SOURCE_ROOTS) await collect(root, files);
-files.sort((left, right) => normalized(left).localeCompare(normalized(right)));
+const tracked = execFileSync("git", ["ls-files", "--", "src", "src-tauri/src", "src-tauri/gen/android/app/src/main/java/com/garupa/editor"], {
+  cwd: ROOT,
+  encoding: "utf8",
+}).split(/\r?\n/).filter(Boolean);
+const files = tracked
+  .filter((path) => EXTENSIONS.has(extname(path)))
+  .filter((path) => !path.includes("/generated/"))
+  .map((path) => join(ROOT, path))
+  .sort((left, right) => normalized(left).localeCompare(normalized(right)));
 
 const productionEntries = [];
 const testMarkerCounts = Object.fromEntries(MARKERS.map(([kind]) => [kind, 0]));
@@ -113,18 +119,6 @@ if (process.argv.includes("--check")) {
   console.log(`runtime contract audit: wrote ${entries.length} production entries; ${audit.summary.pendingClassificationCount} pending classification`);
 }
 
-async function collect(directory, output) {
-  let rows;
-  try { rows = await readdir(directory, { withFileTypes: true }); } catch { return; }
-  rows.sort((left, right) => left.name.localeCompare(right.name));
-  for (const row of rows) {
-    if (["node_modules", "target", "dist"].includes(row.name)) continue;
-    if (row.name === "generated" && normalized(join(directory, row.name)).includes("src-tauri/gen/android")) continue;
-    const path = join(directory, row.name);
-    if (row.isDirectory()) await collect(path, output);
-    else if (row.isFile() && EXTENSIONS.has(extname(row.name))) output.push(path);
-  }
-}
 function normalized(path) { return relative(ROOT, path).split(sep).join("/"); }
 function nearestSymbol(lines, index) {
   for (let cursor = index; cursor >= Math.max(0, index - 30); cursor -= 1) {

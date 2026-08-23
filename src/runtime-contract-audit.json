@@ -23,17 +23,17 @@
       "rust-result-error": 30
     },
     "testMarkerCounts": {
-      "evidence-required-call": 11,
-      "evidence-required-string": 17,
+      "evidence-required-call": 0,
+      "evidence-required-string": 5,
       "integrity-failure-call": 28,
       "integrity-failure-string": 171,
       "observational-gap-string": 8,
       "product-semantic-call": 1,
       "terminal-close": 0,
-      "exact-prototype": 2,
-      "exact-key-order": 9,
-      "rejected-call": 50,
-      "throw-error": 703,
+      "exact-prototype": 0,
+      "exact-key-order": 8,
+      "rejected-call": 48,
+      "throw-error": 533,
       "rust-error-return": 0,
       "rust-result-error": 0
     }
