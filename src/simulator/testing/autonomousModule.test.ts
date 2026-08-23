@@ -14,6 +14,8 @@ import {
   resolveRehearsalControlTouch,
 } from "../scene/rehearsalControlScene";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import { createPauseControlLayout } from "../scene/pauseControlScene";
+import { ManualTouchPhase, type ManualInputFrame } from "../engine/data/manualInput";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
 import { DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS } from "./originalLiveSettingsTestProfile";
 import {
@@ -58,6 +60,7 @@ import type {
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
 import type { SimulatorAssemblyResult } from "./legacySharedResourceAdapters";
+import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 
 const TEST_SURFACE = Object.freeze({
   revision: 0,
@@ -66,9 +69,9 @@ const TEST_SURFACE = Object.freeze({
   safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
   origin: "bottom-left" as const,
 });
-const TEST_CONTROL_LAYOUT = createRehearsalControlSceneLayout(requireOk(
-  createOriginalSurfaceLayout(TEST_SURFACE, Math.fround(100)),
-));
+const TEST_ORIGINAL_LAYOUT = requireOk(createOriginalSurfaceLayout(TEST_SURFACE, Math.fround(100)));
+const TEST_CONTROL_LAYOUT = createRehearsalControlSceneLayout(TEST_ORIGINAL_LAYOUT);
+const TEST_PAUSE_LAYOUT = requireOk(createPauseControlLayout(TEST_ORIGINAL_LAYOUT));
 
 async function main(): Promise<void> {
   const beforeInstall = await launchSimulatorModule(request());
@@ -87,6 +90,7 @@ async function main(): Promise<void> {
   await testProductionCompositionFailureBoundary();
   testConstructedChartEarlyCapabilityGates();
   await testAutonomousLaunchAndClose();
+  await testSimulatorOwnedPauseRoute();
   await testSurfaceRevisionFailsBeforeInput();
   await testInvalidTickCloses();
   await testTerminalCleanupFailuresRemainSecondary();
@@ -570,7 +574,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
   const session = new FakeSession();
-  const controlState = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
+  const controlState = Object.freeze({ timelineSeconds: 8, playable: true, paused: false, moveTimeInProgress: false });
   const returnCommand = requireOk(resolveRehearsalControlTouch(
     REHEARSAL_AUTO_MODE, "began", { x: 142, y: 360 }, controlState,
     TEST_CONTROL_LAYOUT,
@@ -582,7 +586,6 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   input.set(0, [
     returnCommand,
     advanceCommand,
-    { kind: "retry" },
   ]);
   input.set(1, [{ kind: "user-close" }]);
   const module = new AutonomousSimulatorModule({
@@ -602,7 +605,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal("dispose" in launched, false);
   await scheduler.tick(0, 1 / 60);
   assert.equal(session.steps, 1);
-  assert.deepEqual(session.commands, ["return-five", "advance-five", "retry"]);
+  assert.deepEqual(session.commands, ["return-five", "advance-five"]);
   await scheduler.tick(1, 1 / 60);
   const report = await launched.closed;
   assert.equal(report.reason, "user-closed");
@@ -646,6 +649,37 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal(session.closes, 1);
   assert.equal(scheduler.stops, 1);
   assert.equal(input.disposes, 1);
+}
+
+async function testSimulatorOwnedPauseRoute(): Promise<void> {
+  const scheduler = new ControlledScheduler();
+  const input = new ControlledInput();
+  const session = new StatefulPauseSession();
+  const pause = TEST_PAUSE_LAYOUT.pause.centerBottomLeft;
+  const resumeBounds = TEST_PAUSE_LAYOUT.pauseMenu.resumeBoundsTopLeft;
+  const resumeX = Math.fround(resumeBounds.x + resumeBounds.width / 2);
+  const resumeY = Math.fround(TEST_SURFACE.viewportHeight - (resumeBounds.y + resumeBounds.height / 2));
+  input.setFrame(0, touchFrame(0, ManualTouchPhase.Began, pause[0], pause[1]));
+  input.setFrame(1, touchFrame(0, ManualTouchPhase.Began, resumeX, resumeY));
+  input.setFrame(2, touchFrame(0, ManualTouchPhase.Ended, resumeX, resumeY));
+  const module = new AutonomousSimulatorModule({ scheduler, input, sessions: factory(session) });
+  const launched = await module.launch(request());
+  assert.equal(launched.status, "accepted");
+  if (launched.status !== "accepted") throw new Error(launched.failure.capability);
+  await scheduler.tick(0, 1 / 60);
+  assert.deepEqual(session.commands, ["pause"]);
+  assert.equal(session.pausedState, true);
+  await scheduler.tick(1, 1 / 60);
+  await scheduler.tick(2, 1 / 60);
+  assert.deepEqual(session.commands, ["pause"], "Resume waits for original countdown callback");
+  await scheduler.tick(3, 1);
+  await scheduler.tick(4, 1);
+  await scheduler.tick(5, 1);
+  assert.deepEqual(session.commands, ["pause", "resume"]);
+  assert.equal(session.pausedState, false);
+  input.set(6, [{ kind: "user-close" }]);
+  await scheduler.tick(6, 1 / 60);
+  assert.equal((await launched.closed).reason, "user-closed");
 }
 
 function assertPlatformUnavailable(result: Awaited<ReturnType<typeof launchSimulatorModule>>): void {
@@ -741,18 +775,20 @@ class ThrowingStopScheduler extends ControlledScheduler {
 
 class ControlledInput implements SimulatorRuntimeInputSource {
   private readonly commands = new Map<number, readonly any[]>();
+  private readonly frames = new Map<number, ManualInputFrame>();
   consumes = 0;
   disposes = 0;
 
   set(sequence: number, commands: readonly any[]): void {
     this.commands.set(sequence, Object.freeze([...commands]));
   }
+  setFrame(sequence: number, frame: ManualInputFrame): void { this.frames.set(sequence, frame); }
 
   consume(sequence: number): SimulatorAssemblyResult<SimulatorRuntimeInputBatch> {
     this.consumes += 1;
     return accepted(Object.freeze({
       surfaceRevision: TEST_SURFACE.revision,
-      manualFrame: null,
+      manualFrame: this.frames.get(sequence) ?? null,
       commands: this.commands.get(sequence) ?? Object.freeze([]),
     }));
   }
@@ -777,6 +813,7 @@ class FakeSession implements SimulatorOwnedSession {
     return Object.freeze({ status: "running" as const });
   }
   getSurfaceState() { return accepted(TEST_SURFACE); }
+  getControlLayout() { return accepted(TEST_ORIGINAL_LAYOUT); }
   pause(): SimulatorAssemblyResult<void> { this.commands.push("pause"); return accepted(undefined); }
   resume(): SimulatorAssemblyResult<void> { this.commands.push("resume"); return accepted(undefined); }
   async moveTime(direction: "return-five" | "advance-five"): Promise<SimulatorAssemblyResult<void>> {
@@ -787,10 +824,11 @@ class FakeSession implements SimulatorOwnedSession {
     this.commands.push("retry");
     return accepted(undefined);
   }
-  getControlState() {
+  getControlState(): SimulatorAssemblyResult<SimulatorTimelineControlState> {
     return accepted(Object.freeze({
       mode: REHEARSAL_AUTO_MODE,
       timelineSeconds: 8,
+      playable: true,
       paused: false,
       moveTimeInProgress: false,
     }));
@@ -803,6 +841,21 @@ class FakeSession implements SimulatorOwnedSession {
       failure: failure ?? null,
       capabilities: createSimulatorModuleCapabilitySummary(null, "standard-current-portable"),
     });
+  }
+}
+
+class StatefulPauseSession extends FakeSession {
+  pausedState = false;
+  override pause(): SimulatorAssemblyResult<void> { this.pausedState = true; this.commands.push("pause"); return accepted(undefined); }
+  override resume(): SimulatorAssemblyResult<void> { this.pausedState = false; this.commands.push("resume"); return accepted(undefined); }
+  override getControlState() {
+    return accepted(Object.freeze({
+      mode: REHEARSAL_AUTO_MODE,
+      timelineSeconds: 8,
+      playable: true,
+      paused: this.pausedState,
+      moveTimeInProgress: false,
+    }));
   }
 }
 
@@ -821,6 +874,12 @@ class SurfaceRejectingSession extends FakeSession {
 
 function factory(session: SimulatorOwnedSession): SimulatorOwnedSessionFactory {
   return { async create() { return accepted(session); } };
+}
+
+function touchFrame(fingerId: number, phase: 0 | 1 | 2 | 3, x: number, y: number): ManualInputFrame {
+  return Object.freeze({ touches: Object.freeze([Object.freeze({
+    fingerId, phase, position: Object.freeze({ x: Math.fround(x), y: Math.fround(y) }), buttonResolution: null,
+  })]) });
 }
 
 function selectSimulatorStaticResources(chart: any) {
@@ -881,6 +940,7 @@ function engineBuild(engine: any) {
     skinRecipeIdentity: "skin-recipe-v1|default-current|test",
     skinFidelity: "default-current" as const,
     surface: TEST_SURFACE,
+    controlLayout: TEST_ORIGINAL_LAYOUT,
     validateSurface: () => accepted(undefined),
   });
 }

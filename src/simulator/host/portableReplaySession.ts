@@ -39,6 +39,7 @@ export interface SimulatorTimelineControlState {
     readonly isAutoPlay: boolean;
   }>;
   readonly timelineSeconds: number;
+  readonly playable: boolean;
   readonly paused: boolean;
   readonly moveTimeInProgress: boolean;
 }
@@ -59,7 +60,7 @@ export interface SimulatorWholeEngineReplayFactory {
 
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
-  retryRehearsal(): Promise<SimulatorResult<void>>;
+  retrySession(): Promise<SimulatorResult<void>>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
 }
 
@@ -370,21 +371,21 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return ok(Object.freeze({
       mode: this.controlMode,
       timelineSeconds: this.timelineSecondsValue,
+      playable: snapshot.value.managers.playable && this.active.getNaturalCompletionClearStatus() === null,
       paused: snapshot.value.managers.paused,
       moveTimeInProgress: false,
     }));
   }
 
-  async retryRehearsal(): Promise<SimulatorResult<void>> {
+  async retrySession(): Promise<SimulatorResult<void>> {
     const available = this.available<void>();
     if (available !== null) return available;
     const snapshot = this.active.snapshot();
     if (snapshot.status !== "ok") return snapshot;
-    const mode = snapshot.value.managers.noteManager.calculatedData;
-    if (mode.sessionMode !== "rehearsal" || !mode.isEnablePractice || !snapshot.value.managers.playable) {
+    if (!snapshot.value.managers.playable || !snapshot.value.managers.paused || this.active.getNaturalCompletionClearStatus() !== null) {
       return rejected(
-        "timeline.retry.outside-rehearsal",
-        "The evidenced Retry scene transition belongs only to a playable Rehearsal pause-menu session."
+        "timeline.retry.outside-paused-playing-state",
+        "Current four-mode Retry accepts only the paused playable Pause-menu confirmation state before creating a fresh generation."
       );
     }
     const visual = setMoveTimeVisualState(this.active, true);

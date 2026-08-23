@@ -1,0 +1,1784 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-four-mode-pause-runtime-resource-layout-portable-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_bytes": 119816840,
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json_bytes": 139657741,
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump_cs_bytes": 53099861,
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "question": "Can the visible in-game Pause button, four-mode modal interactions and lifecycle be authorized for portable production?",
+  "scope": {
+    "positive": [
+      "current PauseButton and ButtonManager managed owner inventory",
+      "current InGameManager pause/resume/retry/exit callback anchors",
+      "accepted current four-mode Pause open/resume/abort runtime matrix",
+      "Retry fresh generation, cancel paths, Android hardware Back and natural completion",
+      "current serialized Pause button and three modal prefab owners",
+      "parameterized 4:3, 16:9, high-aspect and asymmetric-safe-area layout",
+      "exact existing portable atlas/font resources and visible localized words"
+    ],
+    "negative": [
+      "Unity/GPU framebuffer exact",
+      "CRI or physical speaker exact",
+      "arbitrary unsupported game modes",
+      "portrait or mid-session surface reflow",
+      "first-Live tutorial visual restoration"
+    ]
+  },
+  "sources": {
+    "managed_declarations": {
+      "path": "managed_declarations.tsv",
+      "sha256": "1ECF9F6121FDD3EB9465FE5EF1F4E13EC935CE1433BC18D9BE27DD1CCAD13B00"
+    },
+    "targets": {
+      "path": "targets.tsv",
+      "sha256": "43EB0626725EC58784999DAD6E74C9C3DA23BDC387737F3DD1EBB96C0AE4EEE1"
+    },
+    "historical_runtime_blocker": {
+      "path": "runtime_blocker.json",
+      "sha256": "0F250E135B25E82682F787B5782E82EB7BFFD29FF33E41F5480C81100FE5412B"
+    },
+    "runtime_capture_plan": {
+      "path": "pause_runtime_capture_plan.json",
+      "sha256": "958C3094BCB967C54AB79CDFE5249B1A1492AD0F97DC97FDFF9D841007335893"
+    },
+    "runtime_trace_manifest": {
+      "path": "pause_runtime_trace_manifest.json",
+      "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086"
+    },
+    "serialized_resource_profile": {
+      "path": "pause_serialized_resource_profile.json",
+      "sha256": "27E196EFEA770F1109007D8AF41E6160FBC7EE499AEFF4BE5E0D8ED1D4A17058"
+    },
+    "existing_rehearsal_profile": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    }
+  },
+  "managed_declarations": [
+    {
+      "identity": "pause-cover-sprite",
+      "declaration": "private UISprite coverSprite; // 0x78"
+    },
+    {
+      "identity": "pause-disable-state",
+      "declaration": "private bool isDisable; // 0x80"
+    },
+    {
+      "identity": "pause-widget",
+      "declaration": "private UIWidget widget_; // 0x88"
+    },
+    {
+      "identity": "pause-dialog-layer",
+      "declaration": "private GameObject layerDialogObject; // 0x90"
+    },
+    {
+      "identity": "pause-sound-callback",
+      "declaration": "private Action onPauseSound; // 0x98"
+    },
+    {
+      "identity": "pause-retry-callback",
+      "declaration": "private Action onRetry; // 0xA0"
+    },
+    {
+      "identity": "pause-escape-callback",
+      "declaration": "private Action onEscapeGame; // 0xA8"
+    },
+    {
+      "identity": "pause-resume-callback",
+      "declaration": "private Action<Action> onClickResume; // 0xB0"
+    },
+    {
+      "identity": "pause-resume-finish-callback",
+      "declaration": "private Action onFinishResumeCountdownAnimation; // 0xB8"
+    },
+    {
+      "identity": "pause-execute-callback",
+      "declaration": "private Action onExecutePause; // 0xC0"
+    },
+    {
+      "identity": "button-manager-pause-owner",
+      "declaration": "private PauseButton pauseButton; // 0x60"
+    },
+    {
+      "identity": "pause-touch-began",
+      "declaration": "public override void ExecTouchBegan(Vector2 touchPos, int fingerId) { }"
+    },
+    {
+      "identity": "pause-touch-moved",
+      "declaration": "public override void ExecTouchMoved(Vector2 touchPos, int fingerId) { }"
+    },
+    {
+      "identity": "pause-touch-ended",
+      "declaration": "public override void ExecTouchEnded(Vector2 touchPos, int fingerId) { }"
+    },
+    {
+      "identity": "button-manager-press",
+      "declaration": "public void PressPauseButton() { }"
+    },
+    {
+      "identity": "button-manager-get-pause",
+      "declaration": "private ButtonBase GetPauseButton(Vector3 inputPosOnUILayer) { }"
+    }
+  ],
+  "methods": [
+    {
+      "evidence_id": "PAU-E01",
+      "owner_method": "InGameManager$$ExecUpdate",
+      "rva": "0x32F7DA8",
+      "end_rva": "0x32F7E98",
+      "code_bytes": 240,
+      "code_sha256": "EC1D136A8173352FC807F79B2FB06BECC3DF20B56F994C3FAFB240730FA68722",
+      "arm64": "arm64/032f7da8__InGameManager_ExecUpdate.arm64.tsv",
+      "arm64_bytes": 2534,
+      "arm64_sha256": "8FDE30A84A4FA3DEE1AF7EFBC32B37372CAD7999C450FE4B1BA22813C9277D10",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32F7DB8",
+          "kind": "bl",
+          "target": "UnityEngine.Input$$GetKeyDown"
+        },
+        {
+          "at": "0x32F7DC4",
+          "kind": "bl",
+          "target": "InGameManager$$onHardwareBackKeyProcess"
+        },
+        {
+          "at": "0x32F7DFC",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x32F7E08",
+          "kind": "bl",
+          "target": "InGameManager$$updatePlayState"
+        },
+        {
+          "at": "0x32F7E1C",
+          "kind": "bl",
+          "target": "InputManager$$ExecInput"
+        },
+        {
+          "at": "0x32F7E28",
+          "kind": "bl",
+          "target": "InGameManager$$UpdateClearMotionStartState"
+        },
+        {
+          "at": "0x32F7E64",
+          "kind": "bl",
+          "target": "ButtonManager$$Pause"
+        },
+        {
+          "at": "0x32F7E70",
+          "kind": "bl",
+          "target": "InGameManager$$resumeGame"
+        },
+        {
+          "at": "0x32F7E88",
+          "kind": "b",
+          "target": "InGameCutInController$$Update"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E02",
+      "owner_method": "InGameManager$$onExit",
+      "rva": "0x32FB6C8",
+      "end_rva": "0x32FB750",
+      "code_bytes": 136,
+      "code_sha256": "C724E7853CF89E581451A80DF916B8CDE3189D907D35121485CBBCB5E38B7077",
+      "arm64": "arm64/032fb6c8__InGameManager_onExit.arm64.tsv",
+      "arm64_bytes": 1372,
+      "arm64_sha256": "F281FB4AA0F0ADA245788039D62EE90EA2BC8FC818F8FC9DAAF6CFC4C72B70CE",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FB714",
+          "kind": "bl",
+          "target": "System.Object$$.ctor"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E03",
+      "owner_method": "InGameManager$$resumeGame",
+      "rva": "0x32FBA8C",
+      "end_rva": "0x32FBC6C",
+      "code_bytes": 480,
+      "code_sha256": "51B3944CF4A27382383A73902943E5D433F07550E35A339D8C52E7EC19056CEC",
+      "arm64": "arm64/032fba8c__InGameManager_resumeGame.arm64.tsv",
+      "arm64_bytes": 4782,
+      "arm64_sha256": "30178A8A58E87BAF7A823CC7AB14376EB3C9E0C931D5FCD925673CB8A212BDFC",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FBAD4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FBAE0",
+          "kind": "bl",
+          "target": "CE.SoundManager$$ResumeBgm"
+        },
+        {
+          "at": "0x32FBAE8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FBAF4",
+          "kind": "bl",
+          "target": "CE.SoundManager$$ResumeSe"
+        },
+        {
+          "at": "0x32FBBD8",
+          "kind": "bl",
+          "target": "InGameTimeController$$get_GetInGameAdjustMilliSecond"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E04",
+      "owner_method": "InGameManager$$onPauseSound",
+      "rva": "0x32FDC24",
+      "end_rva": "0x32FDC44",
+      "code_bytes": 32,
+      "code_sha256": "471B23115BB71C5AED1EFAB545058DB8105FC78C5A133992988F60CAAD63B1CA",
+      "arm64": "arm64/032fdc24__InGameManager_onPauseSound.arm64.tsv",
+      "arm64_bytes": 375,
+      "arm64_sha256": "FACE56C9DCFC80840C3DF97C5F5D5F84DF4DEA9207A9D938C63562581B23C6E8",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FDC3C",
+          "kind": "b",
+          "target": "InGameManager$$pauseSound"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E05",
+      "owner_method": "InGameManager$$onRetry",
+      "rva": "0x32FDCCC",
+      "end_rva": "0x32FDD20",
+      "code_bytes": 84,
+      "code_sha256": "57C4742324A4899EFE9E468830951BE3C8FBB758DD67B833E21071500FEC2495",
+      "arm64": "arm64/032fdccc__InGameManager_onRetry.arm64.tsv",
+      "arm64_bytes": 949,
+      "arm64_sha256": "9D720B18357A63FDA279B30F29536896329D39788CB3DC217BB1CED5D4F4B194",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FDD00",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FDD18",
+          "kind": "b",
+          "target": "StarSceneManager$$RequestScene"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E06",
+      "owner_method": "InGameManager$$onExecutePause",
+      "rva": "0x32FDE14",
+      "end_rva": "0x32FDE44",
+      "code_bytes": 48,
+      "code_sha256": "DDA692B2AB60CE01E229CF27F161A66F268CA6BCE2B4B0B13D7ACFCDC92B752F",
+      "arm64": "arm64/032fde14__InGameManager_onExecutePause.arm64.tsv",
+      "arm64_bytes": 558,
+      "arm64_sha256": "A17B7D8E83E905C532B8366EE70AFD325EDE4E4D02B8C29BC5824080C5C3FBEF",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FDE28",
+          "kind": "bl",
+          "target": "ButtonManager$$AllNoteLaneEffectOff"
+        },
+        {
+          "at": "0x32FDE3C",
+          "kind": "b",
+          "target": "InGameManager$$prePauseSound"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E07",
+      "owner_method": "InGameManager.<startMusicCoroutine>d__128$$MoveNext",
+      "rva": "0x33001F0",
+      "end_rva": "0x3300840",
+      "code_bytes": 1616,
+      "code_sha256": "DABA96C125985FAA18C7C39E3F5E372E9D93C5EF37ED9E7AD38893048EA91AEE",
+      "arm64": "arm64/033001f0__InGameManager_startMusicCoroutine_MoveNext.arm64.tsv",
+      "arm64_bytes": 15996,
+      "arm64_sha256": "871B032CD21134B1B2BE5B412203ECEF69D146F9CB36214D94575EED67E1E866",
+      "resolved_direct_calls": [
+        {
+          "at": "0x33002E8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300304",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x3300408",
+          "kind": "bl",
+          "target": "ButtonManager$$EnablePauseButton"
+        },
+        {
+          "at": "0x3300448",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x33004F4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300500",
+          "kind": "bl",
+          "target": "TutorialManager$$get_IsComplete"
+        },
+        {
+          "at": "0x330050C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300518",
+          "kind": "bl",
+          "target": "TutorialManager$$get_CurrentTutorialState"
+        },
+        {
+          "at": "0x3300558",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x330058C",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x33005AC",
+          "kind": "bl",
+          "target": "TutorialUtility$$CreateSlideWindow"
+        },
+        {
+          "at": "0x33005BC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005D4",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005DC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005F0",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005F8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330060C",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x3300614",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300628",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x330063C",
+          "kind": "bl",
+          "target": "ButtonManager$$DisablePauseButton"
+        },
+        {
+          "at": "0x3300668",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330069C",
+          "kind": "bl",
+          "target": "System.Enum$$ToString"
+        },
+        {
+          "at": "0x33006C4",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x33006DC",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x33006E4",
+          "kind": "bl",
+          "target": "InGameManager$$fadeOutGayaSound"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E08",
+      "owner_method": "ButtonManager$$DisablePauseButton",
+      "rva": "0x3872290",
+      "end_rva": "0x38722A8",
+      "code_bytes": 24,
+      "code_sha256": "C3D20662740AC1496977363B3515B9FB427DEA8C454AA6BBB840560F2CA23975",
+      "arm64": "arm64/03872290__ButtonManager_DisablePauseButton.arm64.tsv",
+      "arm64_bytes": 303,
+      "arm64_sha256": "BA6CC94F598B834982E85D9B497DBD748EBE5FD2365193CF364BB9B606C3050F",
+      "resolved_direct_calls": [
+        {
+          "at": "0x38722A0",
+          "kind": "b",
+          "target": "PauseButton$$DisableButton"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E09",
+      "owner_method": "PauseButton$$Init",
+      "rva": "0x387E9EC",
+      "end_rva": "0x387EA60",
+      "code_bytes": 116,
+      "code_sha256": "209546E754ED36A541F182C548743BBA236BBAC424AEB9A61319D497A100FF2E",
+      "arm64": "arm64/0387e9ec__PauseButton_Init.arm64.tsv",
+      "arm64_bytes": 1206,
+      "arm64_sha256": "FB1B360A23972CDDC58DBB4CF1F8E5FDC0B5D2BC3A3AE33F843BB78E53B4388A",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387E9FC",
+          "kind": "bl",
+          "target": "ButtonBase$$Init"
+        },
+        {
+          "at": "0x387EA28",
+          "kind": "bl",
+          "target": "PauseButton$$DisableButton"
+        },
+        {
+          "at": "0x387EA30",
+          "kind": "bl",
+          "target": "InGameScreenManager$$get_Instance"
+        },
+        {
+          "at": "0x387EA40",
+          "kind": "bl",
+          "target": "InGameScreenManager$$GetLayerObject"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E10",
+      "owner_method": "PauseButton$$DisableButton",
+      "rva": "0x387EA60",
+      "end_rva": "0x387EAB0",
+      "code_bytes": 80,
+      "code_sha256": "8939D0BDDBC6E5CD1D30956BC467E4E54F76C4A72B053ABEF6D33CB53CF0A78E",
+      "arm64": "arm64/0387ea60__PauseButton_DisableButton.arm64.tsv",
+      "arm64_bytes": 897,
+      "arm64_sha256": "061B2224BA1B28142A6EC91278AD188ACD8CA6F715FCEAD39C7F887DDF38480A",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EA7C",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_gameObject"
+        },
+        {
+          "at": "0x387EA8C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$SetActive"
+        },
+        {
+          "at": "0x387EAA8",
+          "kind": "b",
+          "target": "UIWidget$$set_color"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E11",
+      "owner_method": "PauseButton$$EnableButton",
+      "rva": "0x387EAB0",
+      "end_rva": "0x387EAE4",
+      "code_bytes": 52,
+      "code_sha256": "12D99B5F48C80A7914601CED5AAF49424B8A53047258B0C351CA580363ACE5AB",
+      "arm64": "arm64/0387eab0__PauseButton_EnableButton.arm64.tsv",
+      "arm64_bytes": 595,
+      "arm64_sha256": "1C55353671805AA17F2C1C3C133B86157EAD686B8282CFF7DF6F8227918E29E3",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EAC8",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_gameObject"
+        },
+        {
+          "at": "0x387EADC",
+          "kind": "b",
+          "target": "UnityEngine.GameObject$$SetActive"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E12",
+      "owner_method": "PauseButton$$ExecTouchBegan",
+      "rva": "0x387EAE4",
+      "end_rva": "0x387EAEC",
+      "code_bytes": 8,
+      "code_sha256": "0D85D92A7A4CA06D64C24EA8BDF528C3071704AF525D58A3D76F0767BB5BD8A7",
+      "arm64": "arm64/0387eae4__PauseButton_ExecTouchBegan.arm64.tsv",
+      "arm64_bytes": 143,
+      "arm64_sha256": "CAB299E8B4F5A13BA12AF3C90929601F6DCB8D6F81422F3EB5B6775F6E2EEC93",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EAE8",
+          "kind": "b",
+          "target": "PauseButton$$ExecPauseButtonProcess"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E13",
+      "owner_method": "PauseButton$$ExecPauseButtonProcess",
+      "rva": "0x387EAEC",
+      "end_rva": "0x387EC44",
+      "code_bytes": 344,
+      "code_sha256": "E5385E304A57A16F25EF51B8BE325C31B866260CEEF77799DE6E965FDADDB587",
+      "arm64": "arm64/0387eaec__PauseButton_ExecPauseButtonProcess.arm64.tsv",
+      "arm64_bytes": 3656,
+      "arm64_sha256": "87126508DB7E506A2DE6205B9C55A328990821231EF6E2CD35B51B2C1ED272C9",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EB70",
+          "kind": "bl",
+          "target": "PauseButton$$canGameOverAtCurrentGameMode"
+        },
+        {
+          "at": "0x387EBAC",
+          "kind": "bl",
+          "target": "System.GC$$Collect"
+        },
+        {
+          "at": "0x387EBB8",
+          "kind": "bl",
+          "target": "PauseButton$$showPauseDialog"
+        },
+        {
+          "at": "0x387EBC8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387EBE4",
+          "kind": "bl",
+          "target": "CE.SoundManager$$PlaySEOneShot"
+        },
+        {
+          "at": "0x387EBFC",
+          "kind": "bl",
+          "target": "UIWidget$$set_color"
+        },
+        {
+          "at": "0x387EC0C",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_gameObject"
+        },
+        {
+          "at": "0x387EC1C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$SetActive"
+        },
+        {
+          "at": "0x387EC24",
+          "kind": "bl",
+          "target": "PauseButton$$finishCoverFlash"
+        },
+        {
+          "at": "0x387EC3C",
+          "kind": "b",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E14",
+      "owner_method": "PauseButton$$ExecTouchMoved",
+      "rva": "0x387EC44",
+      "end_rva": "0x387EC48",
+      "code_bytes": 4,
+      "code_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "arm64": "arm64/0387ec44__PauseButton_ExecTouchMoved.arm64.tsv",
+      "arm64_bytes": 67,
+      "arm64_sha256": "1BA099154ED87714D2504CE24EBCA2056431336F4A172BF5DD27DD74EA8DD108",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "PAU-E15",
+      "owner_method": "PauseButton$$ExecTouchEnded",
+      "rva": "0x387EC48",
+      "end_rva": "0x387EC4C",
+      "code_bytes": 4,
+      "code_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "arm64": "arm64/0387ec48__PauseButton_ExecTouchEnded.arm64.tsv",
+      "arm64_bytes": 67,
+      "arm64_sha256": "5136CA79F687D951EABAC1B0611B02F686F887979B3D9CD3D093B9A868F961A9",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "PAU-E16",
+      "owner_method": "PauseButton$$Pause",
+      "rva": "0x387EC7C",
+      "end_rva": "0x387EC94",
+      "code_bytes": 24,
+      "code_sha256": "5E65DFD7DA0F702E138EE140E93113DAF6064A8C90B6A3F5224C9D3766C812B5",
+      "arm64": "arm64/0387ec7c__PauseButton_Pause.arm64.tsv",
+      "arm64_bytes": 270,
+      "arm64_sha256": "CDC56C31690344170EC2B3F8E205A9D5FAC389B92C3C2F0CFB3843B777B7ADD4",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EC8C",
+          "kind": "b",
+          "target": "SystemUtility$$SafeCallback"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E17",
+      "owner_method": "PauseButton$$pauseSound",
+      "rva": "0x387ED34",
+      "end_rva": "0x387ED40",
+      "code_bytes": 12,
+      "code_sha256": "A7F6ADB794448DACB41B88DEFDA5E3591768AB63D121C6E65B9FB5E0509884A3",
+      "arm64": "arm64/0387ed34__PauseButton_pauseSound.arm64.tsv",
+      "arm64_bytes": 176,
+      "arm64_sha256": "9F19235A724DE544339BA92D0AB4F56AC0065053EEDEA7A467BC7C4DA2D7E612",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387ED3C",
+          "kind": "b",
+          "target": "SystemUtility$$SafeCallback"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E18",
+      "owner_method": "PauseButton$$canGameOverAtCurrentGameMode",
+      "rva": "0x387ED40",
+      "end_rva": "0x387EDAC",
+      "code_bytes": 108,
+      "code_sha256": "6A0043EAFE0A26E87B38D0614A001F7CBF855356F3F9705953BBFFC78B713CEC",
+      "arm64": "arm64/0387ed40__PauseButton_canGameOverAtCurrentGameMode.arm64.tsv",
+      "arm64_bytes": 1089,
+      "arm64_sha256": "EB2D8FF8717590D50C3302F33C20CCB3E5144FB5AFD37279B400B2CAEFDF0382",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387ED64",
+          "kind": "bl",
+          "target": "MusicModel$$get_IsCollaboOriginalMusic"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E19",
+      "owner_method": "PauseButton$$showPauseDialog",
+      "rva": "0x387EDAC",
+      "end_rva": "0x387F0E8",
+      "code_bytes": 828,
+      "code_sha256": "6D3618F065F336E232A4C0A7A0AC0948C172A719A085C2B3A9F65F361B0859D6",
+      "arm64": "arm64/0387edac__PauseButton_showPauseDialog.arm64.tsv",
+      "arm64_bytes": 8560,
+      "arm64_sha256": "AA1F071D6CC3303DEC30A8048BFAFC1B80CECAACD44C1F02AD6EAA467E05B69A",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387EEB8",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387EEC4",
+          "kind": "bl",
+          "target": "PauseButton$$getPauseDialogMessage"
+        },
+        {
+          "at": "0x387EEF8",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387EF10",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387EF2C",
+          "kind": "bl",
+          "target": "InGameUtility$$IsRetryableGameMode"
+        },
+        {
+          "at": "0x387EF58",
+          "kind": "b",
+          "target": "PauseButton$$showRetryablePauseDialog"
+        },
+        {
+          "at": "0x387EF68",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387EF80",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387EFB4",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387EFD8",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387F000",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F020",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F05C",
+          "kind": "bl",
+          "target": "DialogManager$$ShowSelectableDialog"
+        },
+        {
+          "at": "0x387F070",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$GetComponent<object>"
+        },
+        {
+          "at": "0x387F080",
+          "kind": "bl",
+          "target": "SelectableCommonDialog$$SetReplaceBackKeyTargetButtonFlag"
+        },
+        {
+          "at": "0x387F08C",
+          "kind": "bl",
+          "target": "SelectableCommonDialog$$SetCancelButtonSeToPositive"
+        },
+        {
+          "at": "0x387F0C4",
+          "kind": "b",
+          "target": "SelectableCommonDialog$$SetContentsTextColorWhite"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E20",
+      "owner_method": "PauseButton$$getPauseDialogMessage",
+      "rva": "0x387F0E8",
+      "end_rva": "0x387F224",
+      "code_bytes": 316,
+      "code_sha256": "DD1C6BC9636EC96AAB609D5FCC96CE07ADDDADF5C12CFFA2D79D44354893C01D",
+      "arm64": "arm64/0387f0e8__PauseButton_getPauseDialogMessage.arm64.tsv",
+      "arm64_bytes": 3155,
+      "arm64_sha256": "E0320852153F20DDF15310C333F6C1BAE8DEDE8498BE6F5695046652C1E10B47",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F1CC",
+          "kind": "bl",
+          "target": "MusicModel$$get_IsCollaboOriginalMusic"
+        },
+        {
+          "at": "0x387F21C",
+          "kind": "b",
+          "target": "CE.WordingManager$$LoadWord"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E21",
+      "owner_method": "PauseButton$$onClickFirstRetryButton",
+      "rva": "0x387F224",
+      "end_rva": "0x387F448",
+      "code_bytes": 548,
+      "code_sha256": "9F0F0035483B0026E510B9AF94391B203AC105303800AE59FFC7B2D162658A52",
+      "arm64": "arm64/0387f224__PauseButton_onClickFirstRetryButton.arm64.tsv",
+      "arm64_bytes": 5563,
+      "arm64_sha256": "341C5AF4A58C340CFBB2DB7352C1D359041AC07EAECA17B92EB6E17E5FA5921D",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F2DC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387F33C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387F364",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F37C",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F3A0",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387F3BC",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387F3CC",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F3E4",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F420",
+          "kind": "bl",
+          "target": "DialogManager$$ShowSelectableDialog"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E22",
+      "owner_method": "PauseButton$$showRetryablePauseDialog",
+      "rva": "0x387F448",
+      "end_rva": "0x387F6B0",
+      "code_bytes": 616,
+      "code_sha256": "7D183A24ABFC1A7B349CA6EC06167FD03493D4649B0662849F1BC804DC435BB9",
+      "arm64": "arm64/0387f448__PauseButton_showRetryablePauseDialog.arm64.tsv",
+      "arm64_bytes": 6161,
+      "arm64_sha256": "3B2B7DEECA81FEB6A383DA638E565E96772689FB31A893F74FC53E12E2A7A894",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F514",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387F530",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387F598",
+          "kind": "bl",
+          "target": "DialogManager$$ShowDialog<object>"
+        },
+        {
+          "at": "0x387F5C0",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F5D8",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F5F0",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F614",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x387F630",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x387F654",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x387F688",
+          "kind": "bl",
+          "target": "ThreeButtonCommonDialog$$Setup"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E23",
+      "owner_method": "PauseButton$$onClickResumeButton",
+      "rva": "0x387F6B0",
+      "end_rva": "0x387F744",
+      "code_bytes": 148,
+      "code_sha256": "42DFA88D44432BC7162530B6DA3BAA65B5167F73C8746D6097041B35FE6C5A65",
+      "arm64": "arm64/0387f6b0__PauseButton_onClickResumeButton.arm64.tsv",
+      "arm64_bytes": 1523,
+      "arm64_sha256": "ED62C5BEEB37BD4F98D341411D864568A763B2B0BDF68825C30CAC6EED66BA11",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F718",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E24",
+      "owner_method": "PauseButton$$onClickFirstRetireButton",
+      "rva": "0x387F744",
+      "end_rva": "0x387F76C",
+      "code_bytes": 40,
+      "code_sha256": "2CB71BD1E158E9ADB76F275B06B5E1E4C5EBA6446B01B03D55D5525E8B445703",
+      "arm64": "arm64/0387f744__PauseButton_onClickFirstRetireButton.arm64.tsv",
+      "arm64_bytes": 539,
+      "arm64_sha256": "AEF99323EE48F447217DE91214D4FA98F87B6408B5E2538434573AE38FE55DA6",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F74C",
+          "kind": "bl",
+          "target": "PauseButton$$shouldShowAnnotatedRetireDialog"
+        },
+        {
+          "at": "0x387F75C",
+          "kind": "b",
+          "target": "PauseButton$$showAnnotatedRetireDialog"
+        },
+        {
+          "at": "0x387F768",
+          "kind": "b",
+          "target": "PauseButton$$showRetireDialog"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E25",
+      "owner_method": "PauseButton$$shouldShowAnnotatedRetireDialog",
+      "rva": "0x387F76C",
+      "end_rva": "0x387F7D0",
+      "code_bytes": 100,
+      "code_sha256": "C841F7DFB6AE3075F702DBB6AA68D995F314AA4C034E7C33AF90EDC4F8EF3C38",
+      "arm64": "arm64/0387f76c__PauseButton_shouldShowAnnotatedRetireDialog.arm64.tsv",
+      "arm64_bytes": 1013,
+      "arm64_sha256": "2A9973934B64447835018BCE5F33D34E441AAD96E2EA9C953409505F60B7D6DF",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F7A0",
+          "kind": "bl",
+          "target": "MusicModel$$get_IsCollaboOriginalMusic"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E26",
+      "owner_method": "PauseButton$$showAnnotatedRetireDialog",
+      "rva": "0x387F7D0",
+      "end_rva": "0x387FA1C",
+      "code_bytes": 588,
+      "code_sha256": "3B988D0736B06B15677527DCE10A49EF8868CB50B0006E9BDDFB6ABC62D4A840",
+      "arm64": "arm64/0387f7d0__PauseButton_showAnnotatedRetireDialog.arm64.tsv",
+      "arm64_bytes": 6031,
+      "arm64_sha256": "27E7C6F4A1F0F757803CD5A3F6B9E0FB5FFAE02170768E20968E7A7C1B3E1D1F",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387F894",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387F8F4",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387F91C",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F934",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F958",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387F974",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387F984",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F99C",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387F9E0",
+          "kind": "bl",
+          "target": "DialogManager$$ShowSelectableDialog<object>"
+        },
+        {
+          "at": "0x387FA14",
+          "kind": "b",
+          "target": "RhythmGameRetireAnnotatedDialog$$SetAnnotatedLabel"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E27",
+      "owner_method": "PauseButton$$showRetireDialog",
+      "rva": "0x387FA1C",
+      "end_rva": "0x387FDA4",
+      "code_bytes": 904,
+      "code_sha256": "E817FC463C1023820DEDB9B07CA02E203A47F610F983132F49251B744F1E470B",
+      "arm64": "arm64/0387fa1c__PauseButton_showRetireDialog.arm64.tsv",
+      "arm64_bytes": 9032,
+      "arm64_sha256": "3E482ABFA1B313A796AF74807FDBBDA48C4811D28592068D35F1B4C72C378466",
+      "resolved_direct_calls": [
+        {
+          "at": "0x387FB1C",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FB44",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387FB5C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387FBA4",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387FBC8",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387FBF0",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FC10",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FC74",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FC8C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x387FCA4",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$get_transform"
+        },
+        {
+          "at": "0x387FCD8",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387FCFC",
+          "kind": "bl",
+          "target": "CE.NGUIUtil.OnButtonPressDelegate$$.ctor"
+        },
+        {
+          "at": "0x387FD24",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FD44",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x387FD80",
+          "kind": "bl",
+          "target": "DialogManager$$ShowSelectableDialog"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E28",
+      "owner_method": "PauseButton$$onClickSecondRetireButton",
+      "rva": "0x387FDA4",
+      "end_rva": "0x387FDC0",
+      "code_bytes": 28,
+      "code_sha256": "968607FB859441337BA90EBE425318FA6B9EEC4721C7399B900BFB24D5D80802",
+      "arm64": "arm64/0387fda4__PauseButton_onClickSecondRetireButton.arm64.tsv",
+      "arm64_bytes": 298,
+      "arm64_sha256": "5B597012AFAD305E122FC4AE02FAC08F2F04307368E069C4612BB8CBAB2F5136",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "PAU-E29",
+      "owner_method": "PauseButton$$onFinishRhythmGameStartCountdownAnimation",
+      "rva": "0x387FDC0",
+      "end_rva": "0x387FDDC",
+      "code_bytes": 28,
+      "code_sha256": "0AF1CFB7D92C1FF627F09D3BB17997D1CD1BFFE538068A87680E352B705E6EBC",
+      "arm64": "arm64/0387fdc0__PauseButton_onFinishRhythmGameStartCountdownAnimation.arm64.tsv",
+      "arm64_bytes": 298,
+      "arm64_sha256": "A23C147FB870EA04C11F1F4A6BD29AA5839F9A858AAB580B34221C2DE9FFDC9A",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "PAU-E30",
+      "owner_method": "ButtonManager$$Init",
+      "rva": "0x3880030",
+      "end_rva": "0x3880190",
+      "code_bytes": 352,
+      "code_sha256": "183A40339638E85573E80EA051280AA6522DDCAB7FB6189B8FBB0DDACFD29CA2",
+      "arm64": "arm64/03880030__ButtonManager_Init.arm64.tsv",
+      "arm64_bytes": 3539,
+      "arm64_sha256": "B3D5E8EF102A9470454E66097738F267F6C20CE8084E19EB8A3E83433AA1BCCE",
+      "resolved_direct_calls": [
+        {
+          "at": "0x38800D0",
+          "kind": "bl",
+          "target": "InGamePlayButtonController$$.ctor"
+        },
+        {
+          "at": "0x38800F4",
+          "kind": "bl",
+          "target": "InGameVirtualLaneController$$.ctor"
+        },
+        {
+          "at": "0x3880110",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_transform"
+        },
+        {
+          "at": "0x3880124",
+          "kind": "bl",
+          "target": "GameObjectUtility$$FindChild<object>"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E31",
+      "owner_method": "ButtonManager$$ExecAwakeStart",
+      "rva": "0x3880190",
+      "end_rva": "0x38807DC",
+      "code_bytes": 1612,
+      "code_sha256": "6624A83C16920BDAA02CE7A106EBD5DD43FE2D1F1C8A91283441859EFE364388",
+      "arm64": "arm64/03880190__ButtonManager_ExecAwakeStart.arm64.tsv",
+      "arm64_bytes": 16814,
+      "arm64_sha256": "FA8078251123AB870206F392F71BADABAA2569052DFE51967E951959BD959F65",
+      "resolved_direct_calls": [
+        {
+          "at": "0x38802E8",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_transform"
+        },
+        {
+          "at": "0x388030C",
+          "kind": "bl",
+          "target": "InGamePlayButtonController$$Init"
+        },
+        {
+          "at": "0x3880340",
+          "kind": "bl",
+          "target": "UnityEngine.SpriteRenderer$$get_color"
+        },
+        {
+          "at": "0x388034C",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$get_Instance_"
+        },
+        {
+          "at": "0x3880360",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$get_IsMultiRangeNotes"
+        },
+        {
+          "at": "0x388037C",
+          "kind": "bl",
+          "target": "AssetBundleNames$$get_HabahiroBundleName"
+        },
+        {
+          "at": "0x388038C",
+          "kind": "bl",
+          "target": "ButtonManager$$getFieldSkinBundleName"
+        },
+        {
+          "at": "0x38803B4",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetInGameSkinFieldSkinBundleName"
+        },
+        {
+          "at": "0x38803C4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x38803D4",
+          "kind": "bl",
+          "target": "CE.AssetLoaderManager$$CreateAssetLoader"
+        },
+        {
+          "at": "0x38803F0",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$get_Instance_"
+        },
+        {
+          "at": "0x38803FC",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$IsEnableHabahiroChangeFlash"
+        },
+        {
+          "at": "0x3880424",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetInGameSkinFieldSkinBundleName"
+        },
+        {
+          "at": "0x3880434",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3880444",
+          "kind": "bl",
+          "target": "CE.AssetLoaderManager$$CreateAssetLoader"
+        },
+        {
+          "at": "0x388045C",
+          "kind": "bl",
+          "target": "ButtonManager$$getEffectSkinBundleName"
+        },
+        {
+          "at": "0x3880464",
+          "kind": "bl",
+          "target": "ButtonManager$$createTapEffectLoader"
+        },
+        {
+          "at": "0x3880488",
+          "kind": "bl",
+          "target": "ButtonManager$$createDirectionalFlickEffectLoader"
+        },
+        {
+          "at": "0x38804C0",
+          "kind": "bl",
+          "target": "ButtonManager$$setupPlayButtons"
+        },
+        {
+          "at": "0x38804D8",
+          "kind": "bl",
+          "target": "CE.AssetLoader$$LoadResource<object>"
+        },
+        {
+          "at": "0x38804EC",
+          "kind": "bl",
+          "target": "UnityEngine.SpriteRenderer$$set_sprite"
+        },
+        {
+          "at": "0x3880500",
+          "kind": "bl",
+          "target": "CE.AssetLoader$$LoadResource<object>"
+        },
+        {
+          "at": "0x3880528",
+          "kind": "bl",
+          "target": "CE.AssetLoader$$LoadResource<object>"
+        },
+        {
+          "at": "0x388053C",
+          "kind": "bl",
+          "target": "UnityEngine.SpriteRenderer$$set_sprite"
+        },
+        {
+          "at": "0x388054C",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_gameObject"
+        },
+        {
+          "at": "0x388056C",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$SetActive"
+        },
+        {
+          "at": "0x3880588",
+          "kind": "bl",
+          "target": "System.Action<object, bool>$$.ctor"
+        },
+        {
+          "at": "0x38805AC",
+          "kind": "bl",
+          "target": "SituationSkillManager$$RegisterPlaySituationSkillCallback"
+        },
+        {
+          "at": "0x38805C8",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x38805D8",
+          "kind": "bl",
+          "target": "SituationSkillManager$$RegisterFinishSituationSkillCallback"
+        },
+        {
+          "at": "0x38805E8",
+          "kind": "bl",
+          "target": "ButtonManager$$execMultiResolution"
+        },
+        {
+          "at": "0x38805F8",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_transform"
+        },
+        {
+          "at": "0x3880604",
+          "kind": "bl",
+          "target": "UnityEngine.Transform$$get_localScale"
+        },
+        {
+          "at": "0x3880614",
+          "kind": "bl",
+          "target": "GameObjectUtility$$SetScale"
+        },
+        {
+          "at": "0x388061C",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$get_Instance_"
+        },
+        {
+          "at": "0x3880628",
+          "kind": "bl",
+          "target": "NoteBatchInformationListFactory$$IsEnableHabahiroChangeFlash"
+        },
+        {
+          "at": "0x3880658",
+          "kind": "bl",
+          "target": "System.Action<float>$$.ctor"
+        },
+        {
+          "at": "0x3880694",
+          "kind": "bl",
+          "target": "CE.AssetLoader$$LoadResource<object>"
+        },
+        {
+          "at": "0x38806AC",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_transform"
+        },
+        {
+          "at": "0x38806C0",
+          "kind": "bl",
+          "target": "CE.NGUIUtil$$InstantiatePrefab"
+        },
+        {
+          "at": "0x38806D8",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$AddComponent<object>"
+        },
+        {
+          "at": "0x38806F0",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$GetComponent<object>"
+        },
+        {
+          "at": "0x3880718",
+          "kind": "bl",
+          "target": "UnityEngine.GameObject$$GetComponentsInChildren<object>"
+        },
+        {
+          "at": "0x3880754",
+          "kind": "bl",
+          "target": "UnityEngine.SpriteRenderer$$set_maskInteraction"
+        },
+        {
+          "at": "0x3880788",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E32",
+      "owner_method": "ButtonManager$$ExecUpdate",
+      "rva": "0x3881D04",
+      "end_rva": "0x3881D20",
+      "code_bytes": 28,
+      "code_sha256": "4B4F3D4BE4B340E5D6883F28B07F3E28AABCAA1F651A56189048697A7B4100A2",
+      "arm64": "arm64/03881d04__ButtonManager_ExecUpdate.arm64.tsv",
+      "arm64_bytes": 348,
+      "arm64_sha256": "B857060E9661B1BCB187C2455606317F931FB16B839FF33C83AE4D7B6B0887B1",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3881D18",
+          "kind": "b",
+          "target": "InGamePlayButtonController$$ExecUpdate"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E33",
+      "owner_method": "ButtonManager$$PressPauseButton",
+      "rva": "0x38820B0",
+      "end_rva": "0x3882128",
+      "code_bytes": 120,
+      "code_sha256": "19190977A0629CF0D5C2C1A4F2542A1F8DB3EA2BA16F4EDE2D214923907983F5",
+      "arm64": "arm64/038820b0__ButtonManager_PressPauseButton.arm64.tsv",
+      "arm64_bytes": 1235,
+      "arm64_sha256": "F6F4D38D4FFE01F91B1B3EB16D74242BFBE5056383AC81D4C957D93516950869",
+      "resolved_direct_calls": []
+    },
+    {
+      "evidence_id": "PAU-E34",
+      "owner_method": "ButtonManager$$Pause",
+      "rva": "0x3882128",
+      "end_rva": "0x3882158",
+      "code_bytes": 48,
+      "code_sha256": "A5A04FD71A92E39E1F314CEEDBF7F070D94227BDC2489C0D66AD4BA762C70C8E",
+      "arm64": "arm64/03882128__ButtonManager_Pause.arm64.tsv",
+      "arm64_bytes": 514,
+      "arm64_sha256": "3528854D24A7D8CCDEF35A5A0D6B7735B01A7BAF22D508BB44C1F50B13EF9C8A",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3882148",
+          "kind": "b",
+          "target": "SystemUtility$$SafeCallback"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E35",
+      "owner_method": "ButtonManager$$EnablePauseButton",
+      "rva": "0x3882158",
+      "end_rva": "0x3882170",
+      "code_bytes": 24,
+      "code_sha256": "F4A872B78BD96B8DCC26C02FDEC0982CA25C6E27DA97201209313D26CE7BFC9F",
+      "arm64": "arm64/03882158__ButtonManager_EnablePauseButton.arm64.tsv",
+      "arm64_bytes": 302,
+      "arm64_sha256": "B1167C883090F2D31014D730A25B16B154A1A362FFDC086E939B959A765A4EF3",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3882168",
+          "kind": "b",
+          "target": "PauseButton$$EnableButton"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E36",
+      "owner_method": "ButtonManager$$GetButton",
+      "rva": "0x3882170",
+      "end_rva": "0x38822BC",
+      "code_bytes": 332,
+      "code_sha256": "B5E91841928E7341EF59274F032D9E5C620D1398C5EDA3264B76141119FF7165",
+      "arm64": "arm64/03882170__ButtonManager_GetButton.arm64.tsv",
+      "arm64_bytes": 3494,
+      "arm64_sha256": "63E72A4ED4E5F5F386753EDE8CD9189F28917E188440AE1646119739F0A5F009",
+      "resolved_direct_calls": [
+        {
+          "at": "0x38821D0",
+          "kind": "bl",
+          "target": "UnityEngine.Camera$$ScreenToWorldPoint"
+        },
+        {
+          "at": "0x38821E4",
+          "kind": "bl",
+          "target": "ButtonManager$$GetPauseButton"
+        },
+        {
+          "at": "0x388220C",
+          "kind": "bl",
+          "target": "UnityEngine.Object$$op_Equality"
+        },
+        {
+          "at": "0x3882238",
+          "kind": "bl",
+          "target": "ButtonManager$$getMoveTimeButton"
+        },
+        {
+          "at": "0x388225C",
+          "kind": "bl",
+          "target": "UnityEngine.Object$$op_Equality"
+        },
+        {
+          "at": "0x388227C",
+          "kind": "bl",
+          "target": "UnityEngine.Camera$$ScreenToWorldPoint"
+        },
+        {
+          "at": "0x3882298",
+          "kind": "b",
+          "target": "ButtonManager$$GetPlayButton"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E37",
+      "owner_method": "ButtonManager$$GetPauseButton",
+      "rva": "0x38822BC",
+      "end_rva": "0x38823B0",
+      "code_bytes": 244,
+      "code_sha256": "EFB0E753856460BBAC1A6D5F9BB34FF5127ADD8F9EFB9D2943AD9C63B58961DF",
+      "arm64": "arm64/038822bc__ButtonManager_GetPauseButton.arm64.tsv",
+      "arm64_bytes": 2551,
+      "arm64_sha256": "B50C13C84D5628F8C53E4590177C69AE3B612AD70B1817A58C1CAD26375DA4C9",
+      "resolved_direct_calls": [
+        {
+          "at": "0x388233C",
+          "kind": "bl",
+          "target": "UnityEngine.Object$$op_Equality"
+        },
+        {
+          "at": "0x3882370",
+          "kind": "bl",
+          "target": "Debug$$LogError"
+        },
+        {
+          "at": "0x38823AC",
+          "kind": "b",
+          "target": "ButtonManager$$searchPressedUIButton"
+        }
+      ]
+    },
+    {
+      "evidence_id": "PAU-E38",
+      "owner_method": "ButtonManager$$searchPressedUIButton",
+      "rva": "0x3883CB0",
+      "end_rva": "0x3883D68",
+      "code_bytes": 184,
+      "code_sha256": "6EEF6537FE4F8F474A25E40B6C7622963FC4BC20F1418167FE33B169697B35D0",
+      "arm64": "arm64/03883cb0__ButtonManager_searchPressedUIButton.arm64.tsv",
+      "arm64_bytes": 1959,
+      "arm64_sha256": "AE7D674F3626231AA0552282CBB6D7231580900A4924E964F0717130E2CDF913",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3883CF8",
+          "kind": "bl",
+          "target": "UnityEngine.Component$$get_transform"
+        },
+        {
+          "at": "0x3883D0C",
+          "kind": "bl",
+          "target": "UnityEngine.Transform$$get_position"
+        },
+        {
+          "at": "0x3883D3C",
+          "kind": "bl",
+          "target": "MathUtility$$CalcDistanceSquared"
+        }
+      ]
+    }
+  ],
+  "static_disposition": {
+    "pause_owner_fields_classified": true,
+    "pause_touch_entry_classified": true,
+    "button_manager_router_anchors_classified": true,
+    "manager_lifecycle_anchors_classified": true,
+    "existing_rehearsal_modal_observation": [
+      "abort",
+      "retry",
+      "resume"
+    ],
+    "existing_rehearsal_profile_is_not_four_mode_authority": true
+  },
+  "blocking_findings": [],
+  "closed_findings": [
+    {
+      "id": "PAU-B01",
+      "disposition": "closed by 19 accepted R1 traces spanning all four exact mode profiles; one planned Auto Live unit consumed"
+    },
+    {
+      "id": "PAU-B02",
+      "disposition": "closed by level3 Pause owner, StarUIAnchor, UISprite and circle-hit serialization"
+    },
+    {
+      "id": "PAU-B03",
+      "disposition": "closed by three current modal prefabs, exact existing RhythmGameUI/UICommon/sgm resources and visible current words"
+    },
+    {
+      "id": "PAU-B04",
+      "disposition": "closed by open/resume/retry/abort confirm+cancel/hardware-Back/natural-completion traces"
+    },
+    {
+      "id": "PAU-B05",
+      "disposition": "closed by six serialized/formula-derived 4:3, 16:9, high-aspect and asymmetric-safe-area rows"
+    }
+  ],
+  "runtime_evidence": {
+    "plan_status": "precommitted-r1-four-mode-pause-plan-revision6",
+    "trace_manifest_status": "accepted-r1-observation-only-complete-pause-matrix",
+    "accepted_trace_count": 19,
+    "confirmed_mode_rows": [
+      {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      }
+    ],
+    "post_natural_service_boundary": "After accepted natural states 11/12 and onExit, the obsolete live service returned a network error and a later title login remained black. No post-error trace was promoted and no production fact depends on it."
+  },
+  "resource_layout_evidence": {
+    "status": "confirmed-current-serialized-pause-resource-and-parameterized-layout-profile",
+    "pause_sprite": "button_pause",
+    "portable_resources": {
+      "rhythm_game_ui": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+        "bytes": 641969,
+        "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+      },
+      "ui_common": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+        "bytes": 43935,
+        "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
+      },
+      "font": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+        "bytes": 4304904,
+        "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+      },
+      "font_serialized_owner": {
+        "sharedassets_path_id": 75,
+        "name": "sgm",
+        "ui_font_path_id": 1799
+      }
+    },
+    "layout_row_count": 6,
+    "runtime_visible_words": {
+      "authority": "accepted current R1 screenshots classify visible localized text only; all geometry is serialized/formula-derived",
+      "pause": {
+        "title": "一時停止",
+        "message": "ライブを一時停止しています",
+        "buttons": [
+          "中断",
+          "リトライ",
+          "再開"
+        ]
+      },
+      "retry": {
+        "title": "リトライ",
+        "message": "リトライしてライブを最初からプレイしますか？",
+        "buttons": [
+          "キャンセル",
+          "リトライ"
+        ]
+      },
+      "abort": {
+        "title": "中断",
+        "message": "ライブを中断してホーム画面に戻りますか？",
+        "annotation": "※中断した場合、ライブ報酬を獲得できません。",
+        "buttons": [
+          "キャンセル",
+          "中断"
+        ]
+      }
+    }
+  },
+  "historical_runtime_blocker": {
+    "schema_version": 1,
+    "observed_on": "2026-08-23",
+    "question": "Is the locked native ARM64 runtime presently available for the pre-registered four-mode Pause interaction matrix?",
+    "command": "adb devices -l",
+    "expected_device_serial": "FICIPZUGEIQC4P7H",
+    "observed_devices": [],
+    "disposition": "objective-device-absent",
+    "prohibited_substitutions": [
+      "reuse Rehearsal screenshots as Live mode runtime evidence",
+      "use Desktop product behavior as original Android behavior",
+      "spend Auto Live capture budget without the locked device",
+      "classify static branches as a four-mode dynamic interaction closure"
+    ]
+  },
+  "remaining_boundaries": [
+    "fixed-device/GPU framebuffer exact remains open-not-claimed",
+    "CRI and physical speaker exact remain open-not-claimed",
+    "portrait, arbitrary resize and unsupported game modes remain evidence-required",
+    "the precommitted post-matrix layout/word hook pass was not promoted after the obsolete service login failed; it contributes no claim"
+  ],
+  "closure": {
+    "static_target_count": 38,
+    "runtime_mode_rows_confirmed": 4,
+    "accepted_runtime_trace_count": 19,
+    "serialized_prefab_profiles_confirmed": 4,
+    "parameterized_layout_rows_confirmed": 6,
+    "blocking_finding_count": 0,
+    "unknown_live_modal_branch_count": 0,
+    "missing_resource_pack_count": 0,
+    "auto_live_uses_consumed": 1,
+    "auto_live_budget_remaining": 8,
+    "screenshot_derived_geometry_scalar_count": 0,
+    "fixed_device_exact": "open-not-claimed",
+    "portable_pause_ui_authorization": true,
+    "production_authorization": true
+  }
+}

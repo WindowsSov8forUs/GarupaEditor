@@ -1076,6 +1076,27 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png",
       "bytes": 5535,
       "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "FCE213AF067F6F2B1C39C9310BAF382D146FF2B2556E8FE98832CC33AB5B7227"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
+      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
+      "bytes": 35527,
+      "sha256": "27E196EFEA770F1109007D8AF41E6160FBC7EE499AEFF4BE5E0D8ED1D4A17058"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
+      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
+      "bytes": 28975,
+      "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086"
     }
   ]
 }

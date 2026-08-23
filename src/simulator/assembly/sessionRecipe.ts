@@ -33,6 +33,7 @@ import {
 } from "./result";
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
+import type { OriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
@@ -53,6 +54,7 @@ export interface SimulatorRecipeEngineBuild {
   readonly skinRecipeIdentity: string;
   readonly skinFidelity: SimulatorSkinFidelity;
   readonly surface: SimulatorSurfaceState;
+  readonly controlLayout: OriginalSurfaceLayout;
   validateSurface(): SimulatorAssemblyResult<void>;
 }
 
@@ -136,6 +138,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       initial.value.chartFidelity,
       initial.value.skinFidelity,
       initial.value.surface,
+      initial.value.controlLayout,
       initial.value.validateSurface,
     ));
   }
@@ -152,6 +155,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly chartFidelity: SimulatorChartFidelity,
     private readonly skinFidelity: SimulatorSkinFidelity,
     private readonly surface: SimulatorSurfaceState,
+    private readonly controlLayout: OriginalSurfaceLayout,
     private readonly validateSurface: () => SimulatorAssemblyResult<void>,
   ) {}
 
@@ -199,6 +203,12 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     return checked.status === "accepted" ? accepted(this.surface) : checked;
   }
 
+  getControlLayout(): SimulatorAssemblyResult<OriginalSurfaceLayout> {
+    if (this.state !== "running") return closedFailure();
+    const checked = this.checkSurface(this.surface.revision);
+    return checked.status === "accepted" ? accepted(this.controlLayout) : checked;
+  }
+
   async moveTime(
     direction: "return-five" | "advance-five",
   ): Promise<SimulatorAssemblyResult<void>> {
@@ -228,14 +238,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (this.state !== "running") return closedFailure();
     const surface = this.checkSurface(this.surface.revision);
     if (surface.status === "rejected") return surface;
-    if (this.sessionMode !== "rehearsal") {
-      return rejected(
-        "evidence-required",
-        "simulator.recipe.retry-outside-rehearsal",
-        "The evidenced Retry owner belongs to the Rehearsal pause menu.",
-      );
-    }
-    const retried = await this.engine.retryRehearsal();
+    const retried = await this.engine.retrySession();
     return retried.status === "ok" ? accepted(undefined) : fromEngineFailure(retried);
   }
 

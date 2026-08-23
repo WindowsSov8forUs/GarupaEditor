@@ -1,0 +1,861 @@
+{
+  "schema_version": 1,
+  "status": "accepted-r1-observation-only-complete-pause-matrix",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "traces": [
+    {
+      "path": "runtime/live-auto-abort-confirm-r1.trace.json.gz",
+      "bytes": 1211,
+      "sha256": "989F1B88ADAB874884432D16DEE9D4D4EE8C6B735ADC62C2E87E9F3C6CD30545",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-auto-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-abort",
+        "tap-abort-confirm"
+      ],
+      "event_count": 27,
+      "first_sequence": 0,
+      "last_sequence": 26,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onExit",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameMovie.Pause",
+        "InGameMovieManager.Pause",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.onClickSecondRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressOKButton",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-auto-open-pause-r1.trace.json.gz",
+      "bytes": 1190,
+      "sha256": "AA8565E545630469978A36D8DDA2E08E483F4BD016FF5A3AEE2D7E8F1646C11C",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-auto-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause"
+      ],
+      "event_count": 28,
+      "first_sequence": 0,
+      "last_sequence": 27,
+      "methods": [
+        "ButtonManager.EnablePauseButton",
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameMovie.Pause",
+        "InGameMovieManager.Pause",
+        "PauseButton.DisableButton",
+        "PauseButton.EnableButton",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-auto-resume-r1.trace.json.gz",
+      "bytes": 1192,
+      "sha256": "212093DDA28BCED43104BCA8DA02C62A587275CDD86BCB03BC884D4C4951811A",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-auto-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-resume"
+      ],
+      "event_count": 28,
+      "first_sequence": 0,
+      "last_sequence": 27,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "CE.SoundManager.ResumeBgm",
+        "CE.SoundManager.ResumeSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameManager.resumeFromPause",
+        "InGameManager.resumeGame",
+        "InGameMovie.Pause",
+        "InGameMovie.Resume",
+        "InGameMovieManager.Pause",
+        "InGameMovieManager.Resume",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickResumeButton",
+        "PauseButton.onFinishRhythmGameStartCountdownAnimation",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.OnClickRightButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-manual-abort-confirm-r1.trace.json.gz",
+      "bytes": 1397,
+      "sha256": "FC58E1224F06E72AB8D816DB6F7FFDD1FBC451B5472D1CB5DFE265D66B249ABA",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-manual-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause",
+        "tap-abort",
+        "tap-abort-confirm"
+      ],
+      "event_count": 38,
+      "first_sequence": 0,
+      "last_sequence": 37,
+      "methods": [
+        "ButtonManager.EnablePauseButton",
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onExit",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameMovie.Pause",
+        "InGameMovieManager.Pause",
+        "PauseButton.DisableButton",
+        "PauseButton.EnableButton",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.onClickSecondRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressOKButton",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-manual-abort-first-stage-r1.trace.json.gz",
+      "bytes": 1330,
+      "sha256": "11109AD9197C1CA61A8D673475A85FF92F6F96C501EE9CA7418D91023423ABB6",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-manual-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause",
+        "tap-abort"
+      ],
+      "event_count": 34,
+      "first_sequence": 0,
+      "last_sequence": 33,
+      "methods": [
+        "ButtonManager.EnablePauseButton",
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameMovie.Pause",
+        "InGameMovieManager.Pause",
+        "PauseButton.DisableButton",
+        "PauseButton.EnableButton",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-manual-open-pause-r1.trace.json.gz",
+      "bytes": 1189,
+      "sha256": "798EC81B65680C384F7878A4E484B668E08A9CBC528170ADC3D2F1D862C0EEF4",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-manual-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause"
+      ],
+      "event_count": 28,
+      "first_sequence": 0,
+      "last_sequence": 27,
+      "methods": [
+        "ButtonManager.EnablePauseButton",
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameMovie.Pause",
+        "InGameMovieManager.Pause",
+        "PauseButton.DisableButton",
+        "PauseButton.EnableButton",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/live-manual-resume-r1.trace.json.gz",
+      "bytes": 1293,
+      "sha256": "8EE7D0105BBEA02299D21AC1258F47D8FC61168E1CCC18FB0C1A5A2CD3A92B50",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-live-manual-r1",
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-resume"
+      ],
+      "event_count": 37,
+      "first_sequence": 0,
+      "last_sequence": 36,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "CE.SoundManager.ResumeBgm",
+        "CE.SoundManager.ResumeSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameManager.resumeFromPause",
+        "InGameManager.resumeGame",
+        "InGameMovie.Pause",
+        "InGameMovie.Resume",
+        "InGameMovieManager.Pause",
+        "InGameMovieManager.Resume",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickResumeButton",
+        "PauseButton.onFinishRhythmGameStartCountdownAnimation",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.OnClickRightButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-abort-cancel-r1.trace.json.gz",
+      "bytes": 1205,
+      "sha256": "1C6AFB9FC4D52EE5B98367F7E43ED8327C824E2A8BBFE7A368605E412718CFF3",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-abort",
+        "tap-abort-cancel"
+      ],
+      "event_count": 27,
+      "first_sequence": 0,
+      "last_sequence": 26,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetireDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressCancelButton",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-abort-confirm-r1.trace.json.gz",
+      "bytes": 1191,
+      "sha256": "9D2E24A3A4ABF03DBBBB559E7BE463BAE2EE4FE91DD533808E3647C3B2C30065",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-abort",
+        "tap-abort-confirm"
+      ],
+      "event_count": 25,
+      "first_sequence": 0,
+      "last_sequence": 24,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onExit",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.onClickSecondRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetireDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressOKButton",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-hardware-back-r1.trace.json.gz",
+      "bytes": 1181,
+      "sha256": "944138E3FAE27648DAE2C838842F9769D3B9440C9095A657BB56E9362856DB82",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "hardware-back"
+      ],
+      "event_count": 25,
+      "first_sequence": 0,
+      "last_sequence": 24,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "CE.SoundManager.ResumeBgm",
+        "CE.SoundManager.ResumeSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onHardwareBackKeyProcess",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameManager.resumeFromPause",
+        "InGameManager.resumeGame",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickResumeButton",
+        "PauseButton.onFinishRhythmGameStartCountdownAnimation",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.OnClickRightButton",
+        "ThreeButtonCommonDialog.Setup",
+        "ThreeButtonCommonDialog.onHardwareBackKeyProcess"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-natural-completion-r1.trace.json.gz",
+      "bytes": 771,
+      "sha256": "8673F0BB41E257F064328C90B12971E4FF80D7B830724C758E4C9640E9E68990",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [],
+      "event_count": 5,
+      "first_sequence": 0,
+      "last_sequence": 4,
+      "methods": [
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExit",
+        "SelectableCommonDialog.InitSelectableDialog"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-open-pause-r1.trace.json.gz",
+      "bytes": 980,
+      "sha256": "6B39B2DEF8B6BB2DF482CDAFCED8C1C405AA4F391EE8FDA42AF6A145D947DD6F",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause"
+      ],
+      "event_count": 15,
+      "first_sequence": 0,
+      "last_sequence": 14,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-resume-r1.trace.json.gz",
+      "bytes": 1160,
+      "sha256": "0EBA19948CAAB3AFBDB73F45D1405D3AB18C0C4F1BB6B2DA19A4687D5BC4E1BB",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-resume"
+      ],
+      "event_count": 24,
+      "first_sequence": 0,
+      "last_sequence": 23,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "CE.SoundManager.ResumeBgm",
+        "CE.SoundManager.ResumeSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameManager.resumeFromPause",
+        "InGameManager.resumeGame",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickResumeButton",
+        "PauseButton.onFinishRhythmGameStartCountdownAnimation",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.OnClickRightButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-retry-cancel-r1.trace.json.gz",
+      "bytes": 1168,
+      "sha256": "4D7CD889CF8480B5AD1E314E26E6CE3A9BF7BAC680FDADC60F2FF6D73B1D5669",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-retry",
+        "tap-retry-cancel"
+      ],
+      "event_count": 25,
+      "first_sequence": 0,
+      "last_sequence": 24,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetryButton",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressCancelButton",
+        "ThreeButtonCommonDialog.OnClickCenterButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-demo-retry-confirm-r1.trace.json.gz",
+      "bytes": 1315,
+      "sha256": "42CB994DDAA3A0AA84D5B52EC23125656552A82C89898DF911C1DD24BFB5AB00",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-demo-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause",
+        "tap-retry",
+        "tap-retry-confirm"
+      ],
+      "event_count": 33,
+      "first_sequence": 0,
+      "last_sequence": 32,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.onRetry",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetryButton",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressOKButton",
+        "ThreeButtonCommonDialog.OnClickCenterButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-manual-abort-confirm-r1.trace.json.gz",
+      "bytes": 1217,
+      "sha256": "AC137FF451D24F0552449773CAAD1DB6C51E964C1ED4CB76DBDB665781FAC5DD",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-manual-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-abort",
+        "tap-abort-confirm"
+      ],
+      "event_count": 26,
+      "first_sequence": 0,
+      "last_sequence": 25,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onExit",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.canGameOverAtCurrentGameMode",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetireButton",
+        "PauseButton.onClickSecondRetireButton",
+        "PauseButton.shouldShowAnnotatedRetireDialog",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetireDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "SelectableCommonDialog.OnPressOKButton",
+        "ThreeButtonCommonDialog.OnClickLeftButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-manual-open-pause-r1.trace.json.gz",
+      "bytes": 1116,
+      "sha256": "02E9ECD8B395CF76DD0A3F91D0780E5CD3AC090F0F4DFFCF4B402C72F5FF8DDE",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-manual-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-session-start",
+        "tap-pause"
+      ],
+      "event_count": 22,
+      "first_sequence": 0,
+      "last_sequence": 21,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.Init",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-manual-resume-r1.trace.json.gz",
+      "bytes": 1186,
+      "sha256": "F9C924E173D27250258F67F4705009E35D35B2DDE79D2B8401AE9AB52A899CBB",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-manual-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-resume"
+      ],
+      "event_count": 25,
+      "first_sequence": 0,
+      "last_sequence": 24,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "CE.SoundManager.ResumeBgm",
+        "CE.SoundManager.ResumeSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "InGameManager.resumeFromPause",
+        "InGameManager.resumeGame",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.canGameOverAtCurrentGameMode",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickResumeButton",
+        "PauseButton.onFinishRhythmGameStartCountdownAnimation",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "ThreeButtonCommonDialog.OnClickRightButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    },
+    {
+      "path": "runtime/rehearsal-manual-retry-first-stage-r1.trace.json.gz",
+      "bytes": 1109,
+      "sha256": "6E6830265EE75B0C0FEA8A34AE88FBE143B0EC90217C10661AC5B5FBD7DF8A65",
+      "status": "confirmed-r1-observation-only",
+      "scenario_id": "pause-rehearsal-manual-r1",
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "actions": [
+        "tap-pause",
+        "tap-retry"
+      ],
+      "event_count": 20,
+      "first_sequence": 0,
+      "last_sequence": 19,
+      "methods": [
+        "ButtonManager.GetPauseButton",
+        "ButtonManager.Pause",
+        "CE.SoundManager.PauseBgm",
+        "CE.SoundManager.PauseSe",
+        "InGameManager.ExecUpdate",
+        "InGameManager.onExecutePause",
+        "InGameManager.onPauseSound",
+        "InGameManager.pauseSound",
+        "PauseButton.ExecPauseButtonProcess",
+        "PauseButton.ExecTouchBegan",
+        "PauseButton.canGameOverAtCurrentGameMode",
+        "PauseButton.getPauseDialogMessage",
+        "PauseButton.onClickFirstRetryButton",
+        "PauseButton.showPauseDialog",
+        "PauseButton.showRetryablePauseDialog",
+        "SelectableCommonDialog.InitSelectableDialog",
+        "ThreeButtonCommonDialog.OnClickCenterButton",
+        "ThreeButtonCommonDialog.Setup"
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "runtime/live-auto-pause-r1.png",
+      "bytes": 139000,
+      "sha256": "71B23BA23124A67600598EF128DDC58DEAF0030AF3D637BDE7F18428A6F8B53D"
+    },
+    {
+      "path": "runtime/live-manual-abort-confirm-r1.png",
+      "bytes": 149916,
+      "sha256": "8670866777B37A89C05433986BD7AA7A28E24FDAD864AD0B5E136903B14B378C"
+    },
+    {
+      "path": "runtime/live-manual-pause-r1.png",
+      "bytes": 135979,
+      "sha256": "76BE105F407335D8198FC534C6A5BA6C4E3C48EFA072807C2CD37DC4C23B6D6E"
+    },
+    {
+      "path": "runtime/rehearsal-demo-natural-exit-r1.png",
+      "bytes": 57610,
+      "sha256": "ADD53D46E27F2F2250E5C96A0964540A0EDC56FDBE8C8E64D935F221274B87B7"
+    },
+    {
+      "path": "runtime/rehearsal-demo-pause-r1.png",
+      "bytes": 663160,
+      "sha256": "7905BDA4988F8585A337C736EA15E6B362303F206C28CDF289AAE6DC648460EA"
+    },
+    {
+      "path": "runtime/rehearsal-demo-retry-fresh-start-r1.png",
+      "bytes": 282923,
+      "sha256": "E706E6F1506D5B0B08F09DE8D2A3A10B3DC9E4A4A453398C15F77D3DCF890E54"
+    },
+    {
+      "path": "runtime/rehearsal-manual-pause-r1.png",
+      "bytes": 661844,
+      "sha256": "18E90C5B2DE00C6D42A7D5611D5C6F9FDC611B7A386C3CEAB1671CCBE87BF95D"
+    },
+    {
+      "path": "runtime/rehearsal-manual-retry-confirm-r1.png",
+      "bytes": 694668,
+      "sha256": "FF99899937E8FC6995E381CD34EFEFAC7AEEFF2C6337D2202BAF93A10365693D"
+    }
+  ],
+  "summary": {
+    "accepted_trace_count": 19,
+    "accepted_screenshot_count": 8,
+    "confirmed_mode_rows": [
+      {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      }
+    ],
+    "rejected_trace_count_promoted": 0,
+    "memory_write_count": 0,
+    "return_replacement_count": 0,
+    "managed_invocation_count": 0,
+    "raw_pointer_count": 0
+  },
+  "production_authorization_from_manifest_alone": false
+}

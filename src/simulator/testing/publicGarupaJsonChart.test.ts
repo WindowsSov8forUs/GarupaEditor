@@ -683,7 +683,8 @@ async function testProductReplayLifecycle(): Promise<void> {
   assert.equal(afterMove.managers.garupaProduct?.judgedNodeCount, 3);
   assert.equal(afterMove.managers.garupaProduct?.activeFingerCount, 0);
   assert.equal(afterMove.managers.scoreLifeState?.record.moveTimeCount, 1);
-  requireOk(await replay.retryRehearsal());
+  requireOk(replay.pause());
+  requireOk(await replay.retrySession());
   const afterRetry = requireOk(replay.snapshot());
   assert.equal(afterRetry.managers.garupaProduct?.judgedNodeCount, 0);
   assert.equal(afterRetry.managers.scoreLifeState?.record.score, 0);
@@ -722,7 +723,8 @@ async function testProductReplayLifecycle(): Promise<void> {
   requireOk(await manualReplay.moveTime("advance-five"));
   assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.missedNodeCount, 1);
   assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.activeFingerCount, 0);
-  requireOk(await manualReplay.retryRehearsal());
+  requireOk(manualReplay.pause());
+  requireOk(await manualReplay.retrySession());
   assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.missedNodeCount, 0);
   requireOk(manualReplay.dispose());
 }

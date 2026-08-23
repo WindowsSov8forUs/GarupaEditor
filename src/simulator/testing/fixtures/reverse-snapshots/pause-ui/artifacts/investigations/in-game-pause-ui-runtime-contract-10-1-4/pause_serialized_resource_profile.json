@@ -1,0 +1,1421 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-serialized-pause-resource-and-parameterized-layout-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "assets/bin/Data/level3": {
+      "path": "base.apk!/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "assets/bin/Data/21fcebc7601514bcc8d880e2f8d715f8": {
+      "path": "base.apk!/assets/bin/Data/21fcebc7601514bcc8d880e2f8d715f8",
+      "bytes": 10440,
+      "sha256": "F5CDC3509BECE2806D02D0B839B4C9689721371794238802B00BB6A499274DB6"
+    },
+    "assets/bin/Data/2d4806d5de3f243879d28b7a263c10f8": {
+      "path": "base.apk!/assets/bin/Data/2d4806d5de3f243879d28b7a263c10f8",
+      "bytes": 8604,
+      "sha256": "C9B4585155C094A668DB0D96C3C6FE5CCEA8A6FD0D092C7C81656E49890AB69D"
+    },
+    "assets/bin/Data/04d05415bbbf647b0b234ca5bf973ddd": {
+      "path": "base.apk!/assets/bin/Data/04d05415bbbf647b0b234ca5bf973ddd",
+      "bytes": 9128,
+      "sha256": "ED7251CA35205C7354614B223CF77C8BC0F416E1D0EBDEBF9DBADE1F35692B0B"
+    },
+    "assets/bin/Data/7a973c9610ddb4405aa7764876ab4a61": {
+      "path": "base.apk!/assets/bin/Data/7a973c9610ddb4405aa7764876ab4a61",
+      "bytes": 9648,
+      "sha256": "FC9B1A6D29C4EB6458072B0D4D2E7EE42653142297C157B2FD8A042DADF678D0"
+    },
+    "assets/bin/Data/9df491ec212ed42c190d9aba4caa3917": {
+      "path": "base.apk!/assets/bin/Data/9df491ec212ed42c190d9aba4caa3917",
+      "bytes": 356,
+      "sha256": "5D07C346746E6F8283FC287C16973D0DBC7D41A1427C851334947E4FDE492741"
+    },
+    "assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52": {
+      "path": "base.apk!/assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
+      "bytes": 1048848,
+      "sha256": "788141DB50D3A33A0B4ED869D89DD7778FF66A4E2244A19DAA9384CD017F4F70"
+    }
+  },
+  "actual_pause_button": {
+    "root": {
+      "path_id": 564,
+      "game_object_path_id": 131,
+      "game_object": "Pause",
+      "active": true,
+      "local_position": [
+        -42.0,
+        -54.0,
+        0.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent_path_id": 449,
+      "children": [
+        509
+      ]
+    },
+    "parent_anchor": {
+      "transform": {
+        "path_id": 449,
+        "game_object_path_id": 16,
+        "game_object": "Button",
+        "active": true,
+        "local_position": [
+          411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          564
+        ]
+      },
+      "target_widget": {
+        "file_id": 0,
+        "path_id": 1073
+      },
+      "horizontal_enum": 3,
+      "horizontal": "Right",
+      "vertical_enum": 1,
+      "vertical": "Top",
+      "screen_to_safe_area": true,
+      "raw_sha256": "3D5B483D34D9309D98F30C092EE11A245D4FD2C3091C8337153E70D65B34CD8A"
+    },
+    "sprite": {
+      "path_id": 1172,
+      "serialized_bytes": 292,
+      "width": 68,
+      "height": 70,
+      "depth": 0,
+      "raw_sha256": "3108AA2C540BF9DE9433C2205D87E0AAFE87B962CFCC8A9B57D5EEC604EAB3CC",
+      "atlas": {
+        "file_id": 31,
+        "path_id": 3
+      },
+      "sprite_name": "button_pause"
+    },
+    "cover": {
+      "transform": {
+        "path_id": 509,
+        "game_object_path_id": 76,
+        "game_object": "cover",
+        "active": false,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 564,
+        "children": []
+      },
+      "sprite": {
+        "path_id": 1128,
+        "serialized_bytes": 292,
+        "width": 67,
+        "height": 69,
+        "depth": 1,
+        "raw_sha256": "D0E7D287DDC6B210A04F0BA083E721F26F20FBF9F3169C23459DA3220C587C34",
+        "atlas": {
+          "file_id": 32,
+          "path_id": 3
+        },
+        "sprite_name": "button_pause"
+      }
+    },
+    "button_owner": {
+      "path_id": 1173,
+      "serialized_bytes": 52,
+      "radius": 0.15000000596046448,
+      "button_type": 16,
+      "cover_sprite": {
+        "file_id": 0,
+        "path_id": 1128
+      },
+      "raw_sha256": "F05C57BD3A782C870D8DF90E0F3323AEDDAF990FBB8BF260A6FE8B7669B6D3FC"
+    },
+    "atlas": {
+      "source": {
+        "path": "base.apk!/assets/bin/Data/7a973c9610ddb4405aa7764876ab4a61",
+        "bytes": 9648,
+        "sha256": "FC9B1A6D29C4EB6458072B0D4D2E7EE42653142297C157B2FD8A042DADF678D0"
+      },
+      "material_pointer": {
+        "file_id": 2,
+        "path_id": 1
+      },
+      "button_pause": {
+        "name": "button_pause",
+        "rect": [
+          828,
+          319,
+          64,
+          64
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "material_source": {
+        "path": "base.apk!/assets/bin/Data/9df491ec212ed42c190d9aba4caa3917",
+        "bytes": 356,
+        "sha256": "5D07C346746E6F8283FC287C16973D0DBC7D41A1427C851334947E4FDE492741"
+      },
+      "texture_source": {
+        "path": "base.apk!/assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
+        "bytes": 1048848,
+        "sha256": "788141DB50D3A33A0B4ED869D89DD7778FF66A4E2244A19DAA9384CD017F4F70"
+      }
+    }
+  },
+  "modal_prefabs": {
+    "retryable_pause": {
+      "root": {
+        "path_id": 29,
+        "game_object_path_id": 11,
+        "game_object": "RetryablePauseDialog",
+        "active": true,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          27,
+          30
+        ]
+      },
+      "window": {
+        "path_id": 42,
+        "serialized_bytes": 292,
+        "width": 922,
+        "height": 320,
+        "depth": 5,
+        "raw_sha256": "2EA15DD5D008D73CFCC17ED10B351484CFEEA4301FB363EDA68E517F17A099AE",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_base_r12"
+      },
+      "background_cover": {
+        "path_id": 50,
+        "serialized_bytes": 284,
+        "width": 778,
+        "height": 586,
+        "depth": 0,
+        "raw_sha256": "96345E4D257793C7B865A8E2F7648362FADCD150B2F042A1AC2F9B0D5A4AD52E",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "fill"
+      },
+      "header": {
+        "path_id": 49,
+        "serialized_bytes": 296,
+        "width": 842,
+        "height": 40,
+        "depth": 6,
+        "raw_sha256": "8F4FFF5EF72E678A6B87AF0BD705194947B3A84DD39BE4827FE28898ECFE62C1",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_header_dialog"
+      },
+      "title": {
+        "path_id": 45,
+        "serialized_bytes": 364,
+        "width": 832,
+        "height": 63,
+        "depth": 7,
+        "raw_sha256": "7536B6D217016F83628A99B42838320E3C062AFD9E4E984D4DDE951F13132CE8",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "",
+        "font_size": 30
+      },
+      "content": {
+        "path_id": 38,
+        "serialized_bytes": 364,
+        "width": 900,
+        "height": 114,
+        "depth": 10,
+        "raw_sha256": "483C9BE083B972C084DEC1CC4296ADA22970066E0B38D5FCEFEC58BE684EA765",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "",
+        "font_size": 24
+      },
+      "buttons": [
+        {
+          "identity": "abort",
+          "transform": {
+            "path_id": 20,
+            "game_object_path_id": 1,
+            "game_object": "ButtonCancel",
+            "active": true,
+            "local_position": [
+              -274.0,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              19,
+              26
+            ]
+          },
+          "sprite": {
+            "path_id": 40,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "D56B696FBC784BC76BA6C18C0697C19A0F92A93956DD978D9B4F6E1F0FEE157B",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 44,
+            "serialized_bytes": 372,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "4F79FDAD73CBEACB2B0325534D001A5B7016C19B97735968AF9CDFB6493C1761",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "中断",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "retry",
+          "transform": {
+            "path_id": 23,
+            "game_object_path_id": 5,
+            "game_object": "ButtonRetry",
+            "active": true,
+            "local_position": [
+              0.0,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              22,
+              17
+            ]
+          },
+          "sprite": {
+            "path_id": 48,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "0D7E9D44D8C108B2BDB78AE09641C8F3CAFECD436191C0B76D8AC99BE7C55EC1",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 56,
+            "serialized_bytes": 376,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "211EB0330245D4D8B0086F726FFDB3118D11D0A0B3F4CDC202E65FA3B8A29824",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "リトライ",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "resume",
+          "transform": {
+            "path_id": 31,
+            "game_object_path_id": 13,
+            "game_object": "ButtonOK",
+            "active": true,
+            "local_position": [
+              272.0000305175781,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              32,
+              18
+            ]
+          },
+          "sprite": {
+            "path_id": 54,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "5E400CEA5FEBA2727C89D1C9FEA8F645FE48DE33F0C5247A736DF01D0877FB81",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_pink"
+          },
+          "label": {
+            "path_id": 43,
+            "serialized_bytes": 372,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "CAA053130CFDA82A1CE24D204DBDC5612F7B44D95244C274678872F00C7523CC",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "再開",
+            "font_size": 34
+          }
+        }
+      ]
+    },
+    "selectable_common": {
+      "root": {
+        "path_id": 18,
+        "game_object_path_id": 4,
+        "game_object": "SelectableCommonDialog",
+        "active": true,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          14,
+          17
+        ]
+      },
+      "window": {
+        "path_id": 30,
+        "serialized_bytes": 292,
+        "width": 960,
+        "height": 600,
+        "depth": 5,
+        "raw_sha256": "2E74250E81589CBAC627F99D9F6CBD7738AA1604CC16A87656F0CF2CD5F8FCCD",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_base_r12"
+      },
+      "background_cover": {
+        "path_id": 32,
+        "serialized_bytes": 284,
+        "width": 778,
+        "height": 586,
+        "depth": 0,
+        "raw_sha256": "B4CB9BB4C722B87246799E587AFA14C48C8EF7D23C76F564747EA05FF47B2A3A",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "fill"
+      },
+      "header": {
+        "path_id": 31,
+        "serialized_bytes": 296,
+        "width": 770,
+        "height": 40,
+        "depth": 6,
+        "raw_sha256": "193F9B2CED5BEDFBF7A088C3E88D960C9930267B9277D4BA6C1A86BF5C811B1C",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_header_dialog"
+      },
+      "title": {
+        "path_id": 33,
+        "serialized_bytes": 376,
+        "width": 832,
+        "height": 63,
+        "depth": 7,
+        "raw_sha256": "00A9A06DAF25E5B872247FC60E6100DE81D3280A98DF719FEBCA587D18CACE80",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "タイトル",
+        "font_size": 30
+      },
+      "content": {
+        "path_id": 35,
+        "serialized_bytes": 400,
+        "width": 940,
+        "height": 360,
+        "depth": 10,
+        "raw_sha256": "2767826A7B572177FB01DA0426C4FEE3A0B0FCF50776FF2B7F02F66C882296B8",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "ダイアログのメッセージ",
+        "font_size": 24
+      },
+      "buttons": [
+        {
+          "identity": "cancel",
+          "transform": {
+            "path_id": 23,
+            "game_object_path_id": 9,
+            "game_object": "CancelButton",
+            "active": true,
+            "local_position": [
+              -136.0,
+              -232.0,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 21,
+            "children": [
+              22,
+              20
+            ]
+          },
+          "sprite": {
+            "path_id": 41,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "5DCA402688649FB4788D5EA97054683772254046EAE90A76B2B4F7970A575845",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 42,
+            "serialized_bytes": 364,
+            "width": 230,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "624055ED5BC53228762987F64918A50B492E569A36CAE61C7C1952B266A943C3",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "confirm",
+          "transform": {
+            "path_id": 26,
+            "game_object_path_id": 12,
+            "game_object": "OKButton",
+            "active": true,
+            "local_position": [
+              136.0,
+              -232.0,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 21,
+            "children": [
+              25,
+              24
+            ]
+          },
+          "sprite": {
+            "path_id": 46,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "5296C679A2C8949B6CA631CCD6E6B61B3E2D8DF5C287AC512C32E9A1576F1798",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_pink"
+          },
+          "label": {
+            "path_id": 38,
+            "serialized_bytes": 364,
+            "width": 230,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "3F03A7BFDF4388CE64CC5CC509A7FADB43A2FC607A68F86FF98350C1387DF73F",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "",
+            "font_size": 32
+          }
+        }
+      ]
+    },
+    "annotated_abort": {
+      "root": {
+        "path_id": 22,
+        "game_object_path_id": 8,
+        "game_object": "RhythmGameRetireAnnotatedDialog",
+        "active": true,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          17,
+          23
+        ]
+      },
+      "window": {
+        "path_id": 36,
+        "serialized_bytes": 292,
+        "width": 640,
+        "height": 318,
+        "depth": 5,
+        "raw_sha256": "678A63AF279D613259CC0EEC62C5F6590DD3677D67D24035DCCA688E308C9C81",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_base_r12"
+      },
+      "background_cover": {
+        "path_id": 39,
+        "serialized_bytes": 284,
+        "width": 778,
+        "height": 586,
+        "depth": 0,
+        "raw_sha256": "682D6D5465F418B1DB28DAE54EF04BED20E43DAD5B0F720307E2E64329216BBC",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "fill"
+      },
+      "header": {
+        "path_id": 32,
+        "serialized_bytes": 296,
+        "width": 558,
+        "height": 40,
+        "depth": 6,
+        "raw_sha256": "4925420D23A0C06CD83F6D13A872DE4B219A9D152526042ACF1FCE5498EE2F85",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_header_dialog"
+      },
+      "title": {
+        "path_id": 38,
+        "serialized_bytes": 376,
+        "width": 525,
+        "height": 63,
+        "depth": 7,
+        "raw_sha256": "8F11B63D0D5E13F6B336E9A27F3EEAE37B8D9F7C1944D535862AB7065AD0EDC6",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "タイトル",
+        "font_size": 29
+      },
+      "content": {
+        "path_id": 35,
+        "serialized_bytes": 428,
+        "width": 534,
+        "height": 56,
+        "depth": 10,
+        "raw_sha256": "4A463B71C4D9364D22B78AC075FAD932368A39CEDF1B1F89B91B03BA3EDFAF11",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "ライブを中断してホーム画面にもどりますか？",
+        "font_size": 23
+      },
+      "buttons": [
+        {
+          "identity": "cancel",
+          "transform": {
+            "path_id": 26,
+            "game_object_path_id": 11,
+            "game_object": "ButtonCancel",
+            "active": true,
+            "local_position": [
+              -136.00001525878906,
+              -240.00001525878906,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 18,
+            "children": [
+              25,
+              15
+            ]
+          },
+          "sprite": {
+            "path_id": 44,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "E4E290C22EDE271F4DD1CA3BCB92D1E33BCA68D5300E2F8CFEA5693FA34F4CE9",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 37,
+            "serialized_bytes": 380,
+            "width": 256,
+            "height": 86,
+            "depth": 15,
+            "raw_sha256": "EC086B1EE5071DA4F06CFD28B22DC5CE63C9EF3974587A4A50D4E7B80E8D49A3",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "キャンセル",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "confirm",
+          "transform": {
+            "path_id": 27,
+            "game_object_path_id": 14,
+            "game_object": "ButtonOK",
+            "active": true,
+            "local_position": [
+              135.0,
+              -240.00001525878906,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 18,
+            "children": [
+              28,
+              20
+            ]
+          },
+          "sprite": {
+            "path_id": 46,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "1C0FD8CBD2396988AA07413B3881F2FEDE6CB03C406526499B7152182F153338",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_pink"
+          },
+          "label": {
+            "path_id": 40,
+            "serialized_bytes": 368,
+            "width": 240,
+            "height": 86,
+            "depth": 15,
+            "raw_sha256": "4073CD43CA02BBC1F5ED5824909D4219E84BC4BBD7075A3180518CD2B73BA8C5",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "OK",
+            "font_size": 32
+          }
+        }
+      ],
+      "annotation": {
+        "transform": {
+          "path_id": 24,
+          "game_object_path_id": 10,
+          "game_object": "AnnotatedText",
+          "active": true,
+          "local_position": [
+            -7.0,
+            -9.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 17,
+          "children": []
+        },
+        "label": {
+          "path_id": 42,
+          "serialized_bytes": 484,
+          "width": 534,
+          "height": 360,
+          "depth": 10,
+          "raw_sha256": "E586E5BC104C761E323824B41EB8C17AAE306021BD294843C858F7E40D0F7F50",
+          "font": {
+            "file_id": 2,
+            "path_id": 1799
+          },
+          "serialized_text": "※中断するとライブ報酬の獲得はできません。\n消費したライブブーストも戻りません。",
+          "font_size": 19
+        }
+      }
+    }
+  },
+  "common_atlas": {
+    "sharedassets_path_id": 1883,
+    "material_pointer": {
+      "file_id": 0,
+      "path_id": 6
+    },
+    "rows": {
+      "bg_base_r12": {
+        "name": "bg_base_r12",
+        "rect": [
+          164,
+          94,
+          32,
+          32
+        ],
+        "border": [
+          12,
+          12,
+          12,
+          12
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "bg_header_dialog": {
+        "name": "bg_header_dialog",
+        "rect": [
+          214,
+          216,
+          40,
+          40
+        ],
+        "border": [
+          28,
+          4,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "button_gray": {
+        "name": "button_gray",
+        "rect": [
+          164,
+          208,
+          48,
+          48
+        ],
+        "border": [
+          14,
+          20,
+          12,
+          22
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "button_pink": {
+        "name": "button_pink",
+        "rect": [
+          154,
+          19,
+          48,
+          48
+        ],
+        "border": [
+          14,
+          20,
+          12,
+          22
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "fill": {
+        "name": "fill",
+        "rect": [
+          211,
+          156,
+          8,
+          8
+        ],
+        "border": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "portable_resources": {
+    "rhythm_game_ui": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "bytes": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+    },
+    "ui_common": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+      "bytes": 43935,
+      "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
+    },
+    "font": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    "font_serialized_owner": {
+      "sharedassets_path_id": 75,
+      "name": "sgm",
+      "ui_font_path_id": 1799
+    }
+  },
+  "runtime_visible_words": {
+    "authority": "accepted current R1 screenshots classify visible localized text only; all geometry is serialized/formula-derived",
+    "pause": {
+      "title": "一時停止",
+      "message": "ライブを一時停止しています",
+      "buttons": [
+        "中断",
+        "リトライ",
+        "再開"
+      ]
+    },
+    "retry": {
+      "title": "リトライ",
+      "message": "リトライしてライブを最初からプレイしますか？",
+      "buttons": [
+        "キャンセル",
+        "リトライ"
+      ]
+    },
+    "abort": {
+      "title": "中断",
+      "message": "ライブを中断してホーム画面に戻りますか？",
+      "annotation": "※中断した場合、ライブ報酬を獲得できません。",
+      "buttons": [
+        "キャンセル",
+        "中断"
+      ]
+    }
+  },
+  "layout_formula": {
+    "source_contract": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+    },
+    "pause": "Right+Top StarUIAnchor to normalized safe area; serialized child (-42,-54), 68x70 and circle radius 0.15 use existing FitWidth*ScreenToSafeArea control scale.",
+    "modal": "Dialog roots are centered; serialized transforms and widgets use the same existing control scale. No screenshot coordinate is consumed."
+  },
+  "layout_rows": [
+    {
+      "id": "4:3-full",
+      "viewport": [
+        1200,
+        900
+      ],
+      "safe_area": [
+        0.0,
+        0.0,
+        1200.0,
+        900.0
+      ],
+      "control_scale": 0.899550199508667,
+      "pause": {
+        "center_top_left": [
+          1162.2188720703125,
+          48.57568359375
+        ],
+        "visible_size": [
+          61.16941452026367,
+          62.96851348876953
+        ],
+        "hit_circle_radius": 67.5
+      },
+      "retryable_pause": {
+        "window_size": [
+          829.38525390625,
+          287.8560791015625
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            353.52325439453125,
+            534.5577392578125
+          ],
+          "retry": [
+            600.0,
+            534.5577392578125
+          ],
+          "resume": [
+            844.6776733398438,
+            534.5577392578125
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          575.712158203125,
+          286.0569763183594
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            477.6611633300781,
+            534.5577392578125
+          ],
+          "confirm": [
+            721.4392700195312,
+            534.5577392578125
+          ]
+        }
+      }
+    },
+    {
+      "id": "16:9-full",
+      "viewport": [
+        1600,
+        900
+      ],
+      "safe_area": [
+        0.0,
+        0.0,
+        1600.0,
+        900.0
+      ],
+      "control_scale": 1.1994003057479858,
+      "pause": {
+        "center_top_left": [
+          1549.625244140625,
+          64.76763916015625
+        ],
+        "visible_size": [
+          81.55921936035156,
+          83.95802307128906
+        ],
+        "hit_circle_radius": 67.5
+      },
+      "retryable_pause": {
+        "window_size": [
+          1105.8470458984375,
+          383.80810546875
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            471.36431884765625,
+            562.74365234375
+          ],
+          "retry": [
+            800.0,
+            562.74365234375
+          ],
+          "resume": [
+            1126.23681640625,
+            562.74365234375
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          767.6162109375,
+          381.4093017578125
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            636.881591796875,
+            562.74365234375
+          ],
+          "confirm": [
+            961.9190673828125,
+            562.74365234375
+          ]
+        }
+      }
+    },
+    {
+      "id": "20:9-full",
+      "viewport": [
+        1600,
+        720
+      ],
+      "safe_area": [
+        80.0,
+        0.0,
+        1440.0,
+        720.0
+      ],
+      "control_scale": 0.8639999628067017,
+      "pause": {
+        "center_top_left": [
+          1483.7120361328125,
+          46.656005859375
+        ],
+        "visible_size": [
+          58.75199890136719,
+          60.47999572753906
+        ],
+        "hit_circle_radius": 54.000003814697266
+      },
+      "retryable_pause": {
+        "window_size": [
+          796.6079711914062,
+          276.47998046875
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            563.2640380859375,
+            441.21600341796875
+          ],
+          "retry": [
+            800.0,
+            441.21600341796875
+          ],
+          "resume": [
+            1035.008056640625,
+            441.21600341796875
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          552.9599609375,
+          274.7519836425781
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            682.4959716796875,
+            441.21600341796875
+          ],
+          "confirm": [
+            916.6400146484375,
+            441.21600341796875
+          ]
+        }
+      }
+    },
+    {
+      "id": "21:9-full",
+      "viewport": [
+        1680,
+        720
+      ],
+      "safe_area": [
+        84.0,
+        0.0,
+        1512.0,
+        720.0
+      ],
+      "control_scale": 0.8639999628067017,
+      "pause": {
+        "center_top_left": [
+          1559.7120361328125,
+          46.656005859375
+        ],
+        "visible_size": [
+          58.75199890136719,
+          60.47999572753906
+        ],
+        "hit_circle_radius": 54.000003814697266
+      },
+      "retryable_pause": {
+        "window_size": [
+          796.6079711914062,
+          276.47998046875
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            603.2640380859375,
+            441.21600341796875
+          ],
+          "retry": [
+            840.0,
+            441.21600341796875
+          ],
+          "resume": [
+            1075.008056640625,
+            441.21600341796875
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          552.9599609375,
+          274.7519836425781
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            722.4959716796875,
+            441.21600341796875
+          ],
+          "confirm": [
+            956.6400146484375,
+            441.21600341796875
+          ]
+        }
+      }
+    },
+    {
+      "id": "32:9-full",
+      "viewport": [
+        2560,
+        720
+      ],
+      "safe_area": [
+        128.0,
+        0.0,
+        2304.0,
+        720.0
+      ],
+      "control_scale": 0.8640000224113464,
+      "pause": {
+        "center_top_left": [
+          2395.7119140625,
+          46.656005859375
+        ],
+        "visible_size": [
+          58.75200271606445,
+          60.480003356933594
+        ],
+        "hit_circle_radius": 54.000003814697266
+      },
+      "retryable_pause": {
+        "window_size": [
+          796.6080322265625,
+          276.4800109863281
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            1043.2640380859375,
+            441.21600341796875
+          ],
+          "retry": [
+            1280.0,
+            441.21600341796875
+          ],
+          "resume": [
+            1515.008056640625,
+            441.21600341796875
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          552.9600219726562,
+          274.75201416015625
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            1162.4959716796875,
+            441.21600341796875
+          ],
+          "confirm": [
+            1396.6400146484375,
+            441.21600341796875
+          ]
+        }
+      }
+    },
+    {
+      "id": "20:9-asymmetric-base-safe",
+      "viewport": [
+        1600,
+        720
+      ],
+      "safe_area": [
+        52.0,
+        18.0,
+        1496.0,
+        684.0
+      ],
+      "control_scale": 0.8976000547409058,
+      "pause": {
+        "center_top_left": [
+          1510.30078125,
+          66.47039794921875
+        ],
+        "visible_size": [
+          61.03680419921875,
+          62.83200454711914
+        ],
+        "hit_circle_radius": 54.000003814697266
+      },
+      "retryable_pause": {
+        "window_size": [
+          827.5872802734375,
+          287.2320251464844
+        ],
+        "button_centers_top_left": {
+          "abort": [
+            554.0576171875,
+            444.3743896484375
+          ],
+          "retry": [
+            800.0,
+            444.3743896484375
+          ],
+          "resume": [
+            1044.147216796875,
+            444.3743896484375
+          ]
+        }
+      },
+      "annotated_abort": {
+        "window_size": [
+          574.4640502929688,
+          285.43682861328125
+        ],
+        "button_centers_top_left": {
+          "cancel": [
+            677.9263916015625,
+            444.3743896484375
+          ],
+          "confirm": [
+            921.176025390625,
+            444.3743896484375
+          ]
+        }
+      }
+    }
+  ],
+  "closure": {
+    "serialized_pause_owner_count": 1,
+    "serialized_modal_prefab_count": 3,
+    "parameterized_layout_row_count": 6,
+    "required_existing_portable_resource_count": 3,
+    "missing_resource_count": 0,
+    "unknown_geometry_count": 0,
+    "screenshot_derived_geometry_scalar_count": 0,
+    "fixed_device_exact": "open-not-claimed",
+    "portable_resource_layout_authorization": true
+  }
+}

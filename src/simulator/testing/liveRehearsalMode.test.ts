@@ -27,12 +27,14 @@ import type { AudioResourceProfileSet } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 import { RecordingStartupDirectionBackend } from "../backends/recordingStartupDirectionBackend";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 
 const TEST_SURFACE = Object.freeze({
   revision: 0, viewportWidth: 1600, viewportHeight: 720,
   safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
   origin: "bottom-left" as const,
 });
+const TEST_CONTROL_LAYOUT = requireOk(createOriginalSurfaceLayout(TEST_SURFACE, Math.fround(100)), "test control layout");
 
 const chartText = readFileSync(join(
   process.cwd(),
@@ -46,6 +48,7 @@ async function main(): Promise<void> {
   testLegacyPublicShapesFailClosed();
   await testRehearsalLifeZeroContinuesAndLiveCloses();
   await testTransactionalMoveTimeScoreRestore();
+  await testLiveRetryFreshGeneration();
   await testStartupAudioFreshPurposeIsolation();
   console.log("Live/Rehearsal mode tests passed: four identities, Life-zero, ±5 timeline and startup-audio fresh-purpose isolation");
 }
@@ -138,6 +141,7 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
             skinRecipeIdentity: "skin-recipe-v1|default-current|live-rehearsal-test",
             skinFidelity: "default-current" as const,
             surface: TEST_SURFACE,
+            controlLayout: TEST_CONTROL_LAYOUT,
             validateSurface: () => accepted(undefined),
           })
         : rejected(engine.capability, engine.boundary);
@@ -217,10 +221,34 @@ async function testTransactionalMoveTimeScoreRestore(): Promise<void> {
   assert.equal(postAdvance.record.moveTimeCount, 2);
   assert.ok(postAdvance.record.score <= postAdvance.initialization.scoreMaximum);
   assert.deepEqual(purposes, ["move-time-reconstruction", "move-time-reconstruction"]);
-  requireOk(await replay.retryRehearsal(), "Retry transaction");
+  requireOk(replay.pause(), "Pause before Retry transaction");
+  requireOk(await replay.retrySession(), "Retry transaction");
   assert.deepEqual(purposes, ["move-time-reconstruction", "move-time-reconstruction", "retry"]);
   assert.equal(requireOk(replay.snapshot(), "Retry snapshot").managers.noteManager.nextBatchIndex, 0);
   requireOk(replay.dispose(), "MoveTime dispose");
+}
+
+async function testLiveRetryFreshGeneration(): Promise<void> {
+  const mode = createSimulatorModeIdentity("live", "auto");
+  let generation = 0;
+  const purposes: string[] = [];
+  const fresh = async (purpose?: "retry" | "move-time-reconstruction"): Promise<SimulatorResult<SimulatorEngine>> => {
+    if (purpose !== undefined) purposes.push(purpose);
+    return createModeEngine(mode, `live-retry:${generation++}`);
+  };
+  const replay = requireOk(createPortableReplaySimulatorEngine(requireOk(await fresh(), "Live Retry initial"), {
+    mode,
+    createFreshEngine: fresh,
+  }), "Live Retry owner");
+  await stepUntilPlayable(replay);
+  requireOk(replay.pause(), "Live Retry Pause");
+  requireOk(await replay.retrySession(), "Live Retry fresh generation");
+  assert.deepEqual(purposes, ["retry"]);
+  const snapshot = requireOk(replay.snapshot(), "Live Retry snapshot");
+  assert.equal(snapshot.managers.noteManager.nextBatchIndex, 0);
+  assert.equal(snapshot.managers.scoreLifeState?.record.score, 0);
+  assert.equal(requireOk(replay.getTimelineControlState(), "Live Retry control").timelineSeconds, 0);
+  requireOk(replay.dispose(), "Live Retry dispose");
 }
 
 async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
@@ -278,7 +306,8 @@ async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
   assert.deepEqual(builds[0]!.backends.audio.snapshot().commands.map((row) => row.kind), [
     "session.open", "gain.set", "bgm.load", "bgm.pause", "bgm.resume",
   ]);
-  requireOk(await replay.retryRehearsal(), "startup-audio Retry");
+  requireOk(replay.pause(), "startup-audio Pause before Retry");
+  requireOk(await replay.retrySession(), "startup-audio Retry");
   assert.equal(builds[0]!.backends.audio.snapshot().state, "disposed");
   assert.equal(builds[1]!.purpose, "retry");
   let retrySnapshot = requireOk(replay.snapshot(), "Retry opening snapshot");

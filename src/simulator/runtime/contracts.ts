@@ -7,6 +7,8 @@ import type {
 import type { SimulatorAssemblyResult } from "../assembly/result";
 import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type { RehearsalControlCommand } from "../scene/rehearsalControlScene";
+import type { PauseControlCommand } from "../scene/pauseControlScene";
+import type { OriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 
 export interface SimulatorFrameTick {
@@ -24,13 +26,16 @@ export interface SimulatorFrameScheduler {
   ): SimulatorAssemblyResult<SimulatorFrameSubscription>;
 }
 
-export type SimulatorRuntimeCommand =
-  | { readonly kind: "pause" }
-  | { readonly kind: "resume" }
-  | RehearsalControlCommand
-  | { readonly kind: "retry" }
-  | { readonly kind: "abort" }
+export type SimulatorPlatformRuntimeCommand =
+  | { readonly kind: "platform-pause" }
+  | { readonly kind: "platform-resume" }
+  | { readonly kind: "platform-abort" }
   | { readonly kind: "user-close" };
+
+export type SimulatorRuntimeCommand =
+  | PauseControlCommand
+  | RehearsalControlCommand
+  | SimulatorPlatformRuntimeCommand;
 
 export interface SimulatorRuntimeInputBatch {
   readonly surfaceRevision: number;
@@ -59,6 +64,7 @@ export interface SimulatorOwnedSession {
     surfaceRevision: number,
   ): SimulatorOwnedSessionStepResult;
   getSurfaceState(): SimulatorAssemblyResult<SimulatorSurfaceState>;
+  getControlLayout(): SimulatorAssemblyResult<OriginalSurfaceLayout>;
   pause(): SimulatorAssemblyResult<void>;
   resume(): SimulatorAssemblyResult<void>;
   moveTime(

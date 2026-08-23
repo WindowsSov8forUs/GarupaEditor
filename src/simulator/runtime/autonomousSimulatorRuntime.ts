@@ -13,6 +13,13 @@ import type {
 } from "../public/contracts";
 import { rejected, type SimulatorAssemblyResult } from "../assembly/result";
 import { consumeRehearsalControlCommand } from "../scene/rehearsalControlScene";
+import {
+  consumePauseControlCommand,
+  createPauseControlLayout,
+  PauseControlSceneOwner,
+} from "../scene/pauseControlScene";
+import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
+import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type {
   AutonomousSimulatorEnvironment,
   SimulatorFrameSubscription,
@@ -28,6 +35,7 @@ export class AutonomousSimulatorModule {
   private processingFrame = false;
   private resolveClosed: ((report: SimulatorModuleCloseReport) => void) | null = null;
   private closedPromise: Promise<SimulatorModuleCloseReport> | null = null;
+  private readonly pauseControl = new PauseControlSceneOwner();
 
   constructor(private readonly environment: AutonomousSimulatorEnvironment) {}
 
@@ -156,17 +164,51 @@ export class AutonomousSimulatorModule {
         ));
         return;
       }
-      for (const command of input.value.commands) {
-        const applied = await this.applyCommand(command);
-        if (applied.status === "rejected") {
-          this.closeTerminal(applied.failure);
+      let manualFrame = input.value.manualFrame;
+      if (input.value.commands.length > 0) {
+        manualFrame = null;
+        for (const command of input.value.commands) {
+          const applied = await this.applyCommand(command, controlState.value, surface.value);
+          if (applied.status === "rejected") {
+            this.closeTerminal(applied.failure);
+            return;
+          }
+          if (this.state !== "running") return;
+        }
+      } else {
+        const controlLayout = this.session!.getControlLayout();
+        if (controlLayout.status === "rejected") {
+          this.closeTerminal(controlLayout.failure);
           return;
         }
-        if (this.state !== "running") return;
+        const pauseLayout = createPauseControlLayout(controlLayout.value);
+        if (pauseLayout.status !== "ok") {
+          this.closeTerminal(moduleFailure("evidence-required", pauseLayout.capability, pauseLayout.boundary));
+          return;
+        }
+        const routed = this.pauseControl.route(
+          tick.deltaTimeSeconds,
+          manualFrame,
+          controlState.value,
+          pauseLayout.value,
+        );
+        if (routed.status !== "ok") {
+          this.closeTerminal(moduleFailure("evidence-required", routed.capability, routed.boundary));
+          return;
+        }
+        manualFrame = routed.value.manualFrame;
+        for (const command of routed.value.commands) {
+          const applied = await this.applyCommand(command, controlState.value, surface.value);
+          if (applied.status === "rejected") {
+            this.closeTerminal(applied.failure);
+            return;
+          }
+          if (this.state !== "running") return;
+        }
       }
       const stepped = this.session!.step(
         tick.deltaTimeSeconds,
-        input.value.manualFrame,
+        manualFrame,
         input.value.surfaceRevision,
       );
       if (stepped.status === "rejected") {
@@ -188,21 +230,45 @@ export class AutonomousSimulatorModule {
 
   private async applyCommand(
     command: SimulatorRuntimeCommand,
+    controlState: SimulatorTimelineControlState,
+    surface: SimulatorSurfaceState,
   ): Promise<SimulatorAssemblyResult<void>> {
     if (command === null || typeof command !== "object") {
       return rejected(
         "evidence-required",
         "simulator.runtime.invalid-command",
-        "The internal UI/input owner emits only typed pause, resume, fixed Rehearsal MoveTime or user-close commands.",
+        "The internal UI/input owner emits only platform lifecycle, opaque Pause UI or fixed Rehearsal MoveTime commands.",
       );
     }
-    if (command.kind === "user-close" || command.kind === "abort") {
+    if (command.kind === "user-close") {
       const report = this.session!.close("user-closed");
       this.closePublished(report);
       return accepted(undefined);
     }
-    if (command.kind === "pause") return this.session!.pause();
-    if (command.kind === "resume") return this.session!.resume();
+    if (command.kind === "platform-abort") {
+      const failure = moduleFailure(
+        "platform-unavailable",
+        "simulator.runtime.platform-render-context-lost",
+        "A platform rendering-context loss is terminal and remains distinct from original Pause Abort.",
+      );
+      const report = this.session!.close("terminal-fault", failure);
+      this.closePublished(report);
+      return accepted(undefined);
+    }
+    if (command.kind === "platform-pause") return this.session!.pause();
+    if (command.kind === "platform-resume") return this.session!.resume();
+    if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort") {
+      const consumed = consumePauseControlCommand(command, controlState, surface);
+      if (consumed.status !== "ok") {
+        return rejected("evidence-required", consumed.capability, consumed.boundary);
+      }
+      if (consumed.value === "pause") return this.session!.pause();
+      if (consumed.value === "resume") return this.session!.resume();
+      if (consumed.value === "retry") return this.session!.retry();
+      const report = this.session!.close("user-closed");
+      this.closePublished(report);
+      return accepted(undefined);
+    }
     if (command.kind === "return-five-seconds" || command.kind === "advance-five-seconds") {
       const controlState = this.session!.getControlState();
       if (controlState.status === "rejected") return controlState;
@@ -219,7 +285,6 @@ export class AutonomousSimulatorModule {
         consumed.value === "return-five-seconds" ? "return-five" : "advance-five",
       );
     }
-    if (command.kind === "retry") return this.session!.retry();
     return rejected(
       "evidence-required",
       "simulator.runtime.unknown-command",
@@ -323,6 +388,7 @@ export class AutonomousSimulatorModule {
   private disposeInput(): SimulatorModuleFailure | null {
     try {
       this.environment.input.dispose();
+      this.pauseControl.dispose();
       return null;
     } catch {
       return moduleFailure(

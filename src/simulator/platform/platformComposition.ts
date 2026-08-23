@@ -527,6 +527,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       skinRecipeIdentity: assembly.value.skinRecipeIdentity,
       skinFidelity: skin.value.fidelity,
       surface: surface.value,
+      controlLayout: originalLayout.value,
       validateSurface: () => validateCurrentPlatformSurface(
         this.platform.graphics,
         surface.value,

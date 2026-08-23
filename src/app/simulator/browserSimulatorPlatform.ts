@@ -274,9 +274,9 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     pointer.position = this.position(event);
     pointer.terminal = true;
   };
-  private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "pause" : "resume" }); };
+  private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "platform-pause" : "platform-resume" }); };
   private readonly onPageHide = () => { this.enqueue({ kind: "user-close" }); };
-  private readonly onContextLost = (event: Event) => { event.preventDefault(); this.enqueue({ kind: "abort" }); };
+  private readonly onContextLost = (event: Event) => { event.preventDefault(); this.enqueue({ kind: "platform-abort" }); };
 
   private position(event: PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
