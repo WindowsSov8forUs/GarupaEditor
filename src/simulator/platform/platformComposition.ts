@@ -486,31 +486,35 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(fromEvidence(combinedScene), cleanups);
     }
-    combinedScene.value.root.visible = !moveTimeCandidate;
-    const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
-    if (mounted.status === "rejected") {
-      const cleanups = [
-        simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value.dispose()),
-        simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
-        simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
-        ...await releaseResourceLeaseCleanup(resourceLease.value),
-      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-      return rejectedWithCleanup(mounted, cleanups);
+    const deferredMount = purpose !== "initial";
+    combinedScene.value.root.visible = !deferredMount;
+    let mount: SimulatorGraphicsMount | null = null;
+    if (!deferredMount) {
+      const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
+      if (mounted.status === "rejected") {
+        const cleanups = [
+          simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value.dispose()),
+          simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
+          simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+        return rejectedWithCleanup(mounted, cleanups);
+      }
+      mount = mounted.value;
     }
     const mountedEngine = new MountedSimulatorEngine(
       engine.value,
-      mounted.value,
+      mount,
       combinedScene.value,
       controlOverlay.value,
       resourceLease.value,
+      this.platform.graphics,
+      sessionId,
     );
     const registered = registerSimulatorEngineMoveTimeWrapper(
       mountedEngine,
       engine.value,
-      () => {
-        combinedScene.value.root.visible = true;
-        return ok(undefined);
-      },
+      () => mountedEngine.publishMount(),
       (active) => controlOverlay.value.setMoveTimeInProgress(active),
     );
     if (registered.status !== "ok") {
@@ -595,8 +599,27 @@ class MountedSimulatorEngine implements SimulatorEngine {
     private readonly combinedScene: PixiCombinedScene,
     private readonly controlOverlay: PixiInGameControlOverlay,
     private readonly resourceLease: SimulatorResourceLease,
+    private readonly graphics: SimulatorGraphicsSurface,
+    private readonly sessionId: string,
   ) {
     this.mount = mount;
+  }
+
+  publishMount(): SimulatorResult<void> {
+    if (this.disposed || this.mount !== null || this.combinedScene.root.parent !== null) {
+      return evidenceRequired(
+        "simulator.composition.invalid-fresh-visual-publication",
+        ["LR-C03", "PAU-B04"],
+        "A fresh Retry/MoveTime generation may mount exactly once only after the old generation has released the platform graphics owner.",
+      );
+    }
+    const mounted = this.graphics.mount(this.sessionId, this.combinedScene.root);
+    if (mounted.status === "rejected") {
+      return evidenceRequired(mounted.failure.capability, ["LR-C03", "PAU-B04"], mounted.failure.boundary);
+    }
+    this.mount = mounted.value;
+    this.combinedScene.root.visible = true;
+    return ok(undefined);
   }
 
   initialize(): SimulatorResult<void> {

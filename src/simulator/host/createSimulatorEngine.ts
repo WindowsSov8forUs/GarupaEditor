@@ -603,6 +603,17 @@ export function setMoveTimeVisualState(
   return wrapper === undefined ? ok(undefined) : wrapper.setMoveTimeVisualState(active);
 }
 
+export function publishFreshEngineVisual(engine: SimulatorEngine): SimulatorResult<void> {
+  const wrapper = registeredMoveTimeWrappers.get(engine);
+  return wrapper === undefined
+    ? evidenceRequired(
+        "timeline.retry.visual-publication-owner-missing",
+        ["PAU-B04"],
+        "Retry fresh generation publication requires the registered production mount wrapper after the old generation is disposed.",
+      )
+    : wrapper.publishVisual();
+}
+
 export function publishMoveTimeAudio(
   engine: SimulatorEngine,
   targetSeconds: number,

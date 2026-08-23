@@ -23,6 +23,7 @@ import type {
 import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import {
   commitMoveTimeTimelineRevision,
+  publishFreshEngineVisual,
   publishMoveTimeAudio,
   setMoveTimeVisualState,
 } from "./createSimulatorEngine";
@@ -56,6 +57,7 @@ export interface SimulatorMoveTimeReceipt {
 
 export interface SimulatorWholeEngineReplayFactory {
   readonly mode: SimulatorModeIdentity;
+  readonly requireVisualPublication?: boolean;
   createFreshEngine(purpose: Exclude<SimulatorEngineBuildPurpose, "initial">): Promise<SimulatorResult<SimulatorEngine>>;
 }
 
@@ -418,6 +420,13 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (disposed.status !== "ok") {
       fresh.dispose();
       return this.latchReplayFault(disposed);
+    }
+    if (this.factory.requireVisualPublication === true) {
+      const published = publishFreshEngineVisual(fresh);
+      if (published.status !== "ok") {
+        fresh.dispose();
+        return this.latchReplayFault(published);
+      }
     }
     this.active = fresh;
     this.events = [];

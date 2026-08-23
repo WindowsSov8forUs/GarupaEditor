@@ -103,6 +103,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
+      requireVisualPublication: true,
       createFreshEngine: async (purpose) => {
         const fresh = await this.builder.createFreshEngine(recipe.value, purpose);
         if (fresh.status === "rejected") {
