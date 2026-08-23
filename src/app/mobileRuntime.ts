@@ -87,15 +87,19 @@ export async function shareFile(params: ShareFileParams): Promise<PreparedShareF
   return invoke<PreparedShareFile>("share_file", { params });
 }
 
+export function setMobileSimulatorImmersive(enabled: boolean): void {
+  if (getRuntimePlatform() !== "android") return;
+  const bridge = (window as unknown as {
+    readonly GarupaSimulatorHost?: { setImmersive(value: boolean): void };
+  }).GarupaSimulatorHost;
+  if (bridge === undefined || typeof bridge.setImmersive !== "function") {
+    throw new Error("Android Simulator immersive host bridge is unavailable.");
+  }
+  bridge.setImmersive(enabled);
+}
+
 export function navigateBackToEditor(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  const hash = window.location.hash ?? "";
-  const isMobileChildRoute = hash.startsWith("#static-render") || hash.startsWith("#simulator");
-  if (isMobileChildRoute && window.history.length > 1) {
-    window.history.back();
-    return;
-  }
+  if (typeof window === "undefined") return;
+  if (getRuntimePlatform() === "android") setMobileSimulatorImmersive(false);
   window.location.replace(`${window.location.pathname}${window.location.search}`);
 }

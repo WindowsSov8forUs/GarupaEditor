@@ -27,6 +27,7 @@ import {
   navigateBackToEditor,
   readMobileRoutePayload,
   removeMobileRoutePayload,
+  setMobileSimulatorImmersive,
 } from "./mobileRuntime";
 import "../App.css";
 
@@ -51,6 +52,13 @@ function BuiltInSimulatorWindow() {
   const [transportFailure, setTransportFailure] = useState<string | null>(null);
   const requestId = routeRequestId();
   const mobile = isMobileRuntime();
+
+  useEffect(() => {
+    if (!mobile) return;
+    return () => {
+      try { setMobileSimulatorImmersive(false); } catch { /* terminal platform teardown */ }
+    };
+  }, [mobile]);
 
   useEffect(() => {
     let disposed = false;

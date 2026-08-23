@@ -96,7 +96,7 @@ try {
     `${quick ? "quick simulator regression" : "total revalidation"} passed: ` +
     `${quick ? "developmentGroups" : "semanticLeaves"}=${semanticLeaves} sharedTestCompile=1 elapsedMs=${Date.now() - started}; ` +
     `browserLeaves=${quick ? "skipped-use-total-revalidation" : cleanBrowserBuild ? "executed-clean-build" : "executed-cached-build"}; ` +
-    "fixed-device exact remains objectively blocked; main-program integration is authorized-in-progress pending desktop/mobile interactive device acceptance",
+    "fixed-device exact remains objectively blocked; main-program integration is closed-product-integration after Desktop and Android interactive acceptance",
   );
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });

@@ -1,12 +1,12 @@
 import type { RenderResourceAssetProfile } from "../backends/renderingContracts";
 
-const pauseRhythmRow = Object.freeze({ exactKey: "button_pause", x: 828, y: 319, width: 64, height: 64, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 0, borderRight: 0, borderTop: 0, borderBottom: 0 });
+const pauseRhythmRow = Object.freeze({ exactKey: "button_pause", x: 828, y: 319, width: 64, height: 64, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 0, borderRight: 0, borderTop: 0, borderBottom: 0 });
 const pauseCommonRows = Object.freeze([
-  Object.freeze({ exactKey: "bg_base_r12", x: 164, y: 94, width: 32, height: 32, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 12, borderRight: 12, borderTop: 12, borderBottom: 12 }),
-  Object.freeze({ exactKey: "bg_header_dialog", x: 214, y: 216, width: 40, height: 40, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 28, borderRight: 4, borderTop: 0, borderBottom: 0 }),
-  Object.freeze({ exactKey: "button_gray", x: 164, y: 208, width: 48, height: 48, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 14, borderRight: 20, borderTop: 22, borderBottom: 12 }),
-  Object.freeze({ exactKey: "button_pink", x: 154, y: 19, width: 48, height: 48, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 14, borderRight: 20, borderTop: 22, borderBottom: 12 }),
-  Object.freeze({ exactKey: "fill", x: 211, y: 156, width: 8, height: 8, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100, borderLeft: 1, borderRight: 1, borderTop: 1, borderBottom: 1 }),
+  Object.freeze({ exactKey: "bg_base_r12", x: 164, y: 94, width: 32, height: 32, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 12, borderRight: 12, borderTop: 12, borderBottom: 12 }),
+  Object.freeze({ exactKey: "bg_header_dialog", x: 214, y: 216, width: 40, height: 40, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 28, borderRight: 4, borderTop: 0, borderBottom: 0 }),
+  Object.freeze({ exactKey: "button_gray", x: 164, y: 208, width: 48, height: 48, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 14, borderRight: 20, borderTop: 22, borderBottom: 12 }),
+  Object.freeze({ exactKey: "button_pink", x: 154, y: 19, width: 48, height: 48, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 14, borderRight: 20, borderTop: 22, borderBottom: 12 }),
+  Object.freeze({ exactKey: "fill", x: 211, y: 156, width: 8, height: 8, pivotX: 0, pivotY: 0, pixelsPerUnit: 100, borderLeft: 1, borderRight: 1, borderTop: 1, borderBottom: 1 }),
 ]);
 
 export const PAUSE_COUNTDOWN_FIXTURE_RELATIVE_PATHS = Object.freeze([

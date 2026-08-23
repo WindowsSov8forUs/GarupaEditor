@@ -8,10 +8,11 @@ import {
 } from "../../simulator/engine/data/manualInput";
 import type { SimulatorTimelineControlState } from "../../simulator/host/portableReplaySession";
 import type { SimulatorResourceCapability } from "../../simulator/platform/resourceContracts";
-import type {
-  AutonomousSimulatorPlatformCapabilities,
-  SimulatorGraphicsMount,
-  SimulatorGraphicsSurface,
+import {
+  releaseProductionAutonomousSimulatorPlatform,
+  type AutonomousSimulatorPlatformCapabilities,
+  type SimulatorGraphicsMount,
+  type SimulatorGraphicsSurface,
 } from "../../simulator/platform/platformComposition";
 import type { SimulatorSurfaceState } from "../../simulator/platform/surfaceContracts";
 import { measureCssSafeArea } from "./mobileSafeArea";
@@ -52,6 +53,7 @@ export async function createBrowserSimulatorPlatform(input: {
     platform,
     requestClose() { pointerInput.enqueue({ kind: "user-close" }); },
     dispose() {
+      releaseProductionAutonomousSimulatorPlatform(platform);
       pointerInput.dispose();
       scheduler.dispose();
       graphics.dispose();
@@ -205,9 +207,12 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
 
 interface PointerState {
   readonly fingerId: number;
-  phase: typeof ManualTouchPhase[keyof typeof ManualTouchPhase];
   position: { x: number; y: number };
   terminal: boolean;
+  readonly pending: Array<Readonly<{
+    phase: typeof ManualTouchPhase[keyof typeof ManualTouchPhase];
+    position: { x: number; y: number };
+  }>>;
 }
 
 class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
@@ -235,17 +240,18 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     if (this.disposed) return rejected("launch-failed", "simulator.browser.input-disposed", "Disposed browser input cannot publish empty fallback frames.");
     const touches: ManualInputTouch[] = [];
     for (const [pointerId, pointer] of this.pointers) {
+      const pending = pointer.pending.shift();
+      const phase = pending?.phase ?? ManualTouchPhase.Stationary;
+      const position = pending?.position ?? pointer.position;
       touches.push(Object.freeze({
         fingerId: pointer.fingerId,
-        phase: pointer.phase,
-        position: Object.freeze({ ...pointer.position }),
+        phase,
+        position: Object.freeze({ ...position }),
         buttonResolution: null,
       }));
-      if (pointer.terminal) {
+      if (phase === ManualTouchPhase.Ended && pointer.pending.length === 0) {
         this.pointers.delete(pointerId);
         this.fingerByPointer.delete(pointerId);
-      } else {
-        pointer.phase = ManualTouchPhase.Stationary;
       }
     }
     const frame: ManualInputFrame = Object.freeze({ touches: Object.freeze(touches) });
@@ -263,20 +269,26 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     if (fingerId === null) return;
     this.canvas.setPointerCapture(event.pointerId);
     this.fingerByPointer.set(event.pointerId, fingerId);
-    this.pointers.set(event.pointerId, { fingerId, phase: ManualTouchPhase.Began, position: this.position(event), terminal: false });
+    const position = this.position(event);
+    this.pointers.set(event.pointerId, {
+      fingerId,
+      position,
+      terminal: false,
+      pending: [{ phase: ManualTouchPhase.Began, position }],
+    });
   };
   private readonly onPointerMove = (event: PointerEvent) => {
     const pointer = this.pointers.get(event.pointerId);
     if (pointer === undefined || pointer.terminal) return;
-    pointer.phase = ManualTouchPhase.Moved;
     pointer.position = this.position(event);
+    pointer.pending.push({ phase: ManualTouchPhase.Moved, position: pointer.position });
   };
   private readonly onPointerUp = (event: PointerEvent) => {
     const pointer = this.pointers.get(event.pointerId);
     if (pointer === undefined) return;
-    pointer.phase = ManualTouchPhase.Ended;
     pointer.position = this.position(event);
     pointer.terminal = true;
+    pointer.pending.push({ phase: ManualTouchPhase.Ended, position: pointer.position });
   };
   private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "platform-pause" : "platform-resume" }); };
   private readonly onPageHide = () => { this.enqueue({ kind: "user-close" }); };

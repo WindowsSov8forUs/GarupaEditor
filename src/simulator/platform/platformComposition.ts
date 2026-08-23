@@ -62,7 +62,10 @@ import type {
   SimulatorFrameScheduler,
   SimulatorRuntimeInputSource,
 } from "../runtime/contracts";
-import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
+import {
+  installSimulatorModuleLauncher,
+  uninstallSimulatorModuleLauncher,
+} from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
@@ -126,6 +129,7 @@ export interface AutonomousSimulatorPlatformCapabilities {
 }
 
 let nextPlatformIdentity = 1;
+const installedPlatformLaunchers = new WeakMap<object, AutonomousSimulatorModule["launch"]>();
 
 export function createProductionAutonomousSimulatorModule(
   platform: AutonomousSimulatorPlatformCapabilities,
@@ -146,9 +150,26 @@ export function installProductionAutonomousSimulatorPlatform(
   platform: AutonomousSimulatorPlatformCapabilities,
 ): SimulatorAssemblyResult<void> {
   const module = createProductionAutonomousSimulatorModule(platform);
-  return module.status === "rejected"
-    ? module
-    : installSimulatorModuleLauncher(module.value.launch);
+  if (module.status === "rejected") return module;
+  const installed = installSimulatorModuleLauncher(module.value.launch);
+  if (installed.status === "accepted") installedPlatformLaunchers.set(platform, module.value.launch);
+  return installed;
+}
+
+export function releaseProductionAutonomousSimulatorPlatform(
+  platform: AutonomousSimulatorPlatformCapabilities,
+): SimulatorAssemblyResult<void> {
+  const launcher = installedPlatformLaunchers.get(platform);
+  if (launcher === undefined) {
+    return rejected(
+      "launch-failed",
+      "simulator.composition.platform-launcher-not-owned",
+      "Only a platform that successfully installed the active autonomous launcher may release it after session teardown.",
+    );
+  }
+  const released = uninstallSimulatorModuleLauncher(launcher);
+  if (released.status === "accepted") installedPlatformLaunchers.delete(platform);
+  return released;
 }
 
 class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {

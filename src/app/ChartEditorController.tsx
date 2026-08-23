@@ -45,7 +45,7 @@ import { useEditorPointerLifecycle } from "./hooks/useEditorPointerLifecycle";
 import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
-import { isMobileRuntime, writeMobileRoutePayload } from "./mobileRuntime";
+import { isMobileRuntime, setMobileSimulatorImmersive, writeMobileRoutePayload } from "./mobileRuntime";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "./slideChainCleanup";
 import {
@@ -5833,6 +5833,7 @@ function ChartEditorController() {
           releaseHandoff(requestId);
           throw new Error("移动端播放器数据写入失败。");
         }
+        setMobileSimulatorImmersive(true);
         window.location.hash = targetUrl.hash;
         setStatusMessage("已切换到移动端播放器。");
         return;

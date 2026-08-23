@@ -59,6 +59,13 @@ for (const symbol of ["createInGameControlOverlay", "original-pause-button", "pa
 const builtInWindow = readFileSync(resolve(process.cwd(), "src/app/BuiltInSimulatorWindow.tsx"), "utf8");
 for (const forbiddenSymbol of ["showTemporaryMobileBack", "temporaryMobileBackStyle", "点击开始以解锁音频"])
   if (builtInWindow.includes(forbiddenSymbol)) throw new Error(`player shell retains forbidden running overlay: ${forbiddenSymbol}`);
+if (!builtInWindow.includes("setMobileSimulatorImmersive(false)")) throw new Error("Mobile Simulator teardown does not restore system bars");
+const mobileRuntime = readFileSync(resolve(process.cwd(), "src/app/mobileRuntime.ts"), "utf8");
+for (const symbol of ["GarupaSimulatorHost", "setMobileSimulatorImmersive", "window.location.replace"])
+  if (!mobileRuntime.includes(symbol)) throw new Error(`Mobile route boundary missing ${symbol}`);
+const androidActivity = readFileSync(resolve(process.cwd(), "src-tauri/gen/android/app/src/main/java/com/garupa/editor/MainActivity.kt"), "utf8");
+for (const symbol of ["SimulatorHostBridge", "SYSTEM_UI_FLAG_IMMERSIVE_STICKY", "BrowserBack", "handleBackNavigation: Boolean = false"])
+  if (!androidActivity.includes(symbol)) throw new Error(`Android Simulator host boundary missing ${symbol}`);
 const browserPlatform = readFileSync(resolve(process.cwd(), "src/app/simulator/browserSimulatorPlatform.ts"), "utf8");
 for (const symbol of ["platform-pause", "platform-resume", "platform-abort", "hardwareBack"])
   if (!browserPlatform.includes(symbol)) throw new Error(`browser raw platform input missing ${symbol}`);
@@ -67,7 +74,7 @@ const capabilities = read("public/capabilities.ts");
 for (const required of [
   'liveRehearsalFourModeMatrix: "closed-portable"',
   'rehearsalMoveTimeControls: "closed-portable"',
-  'mainProgramIntegration: "authorized-in-progress"',
+  'mainProgramIntegration: "closed-product-integration"',
 ]) if (!capabilities.includes(required)) throw new Error(`mode capability missing: ${required}`);
 const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf8"));
 if (packageJson.scripts?.["simulator:test:live-rehearsal"] !==

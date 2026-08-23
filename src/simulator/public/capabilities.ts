@@ -60,7 +60,7 @@ export function createSimulatorModuleCapabilitySummary(
     characterSkillFeverMultiplayer: "excluded" as const,
     originalSkinSettings: "closed-static-portable" as const,
     originalLiveSettings: "closed-portable" as const,
-    mainProgramIntegration: "authorized-in-progress" as const,
+    mainProgramIntegration: "closed-product-integration" as const,
     selectedRenderingGate: rendering === null
       ? "open-evidence-required" as const
       : "closed-portable" as const,

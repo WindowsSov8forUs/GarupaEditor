@@ -145,7 +145,7 @@ function testFixedDeviceAndCapabilityReceipt(): void {
   assert.equal(receipt.browserDecodeRaster, "closed-portable");
   assert.equal(receipt.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(receipt.characterSkillFeverMultiplayer, "excluded");
-  assert.equal(receipt.mainProgramIntegration, "authorized-in-progress");
+  assert.equal(receipt.mainProgramIntegration, "closed-product-integration");
   const mvReceipt = createSimulatorModuleCapabilitySummary(
     "ordinary-current-portable",
     "mv-live-host-supplied-portable",

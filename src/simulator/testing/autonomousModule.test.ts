@@ -25,6 +25,7 @@ import {
 import {
   installSimulatorModuleLauncher,
   launchInstalledSimulatorModule,
+  uninstallSimulatorModuleLauncher,
 } from "../runtime/moduleEntryBinding";
 import type {
   SimulatorFrameScheduler,
@@ -433,7 +434,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.browserDecodeRaster, "closed-portable");
   assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded");
-  assert.equal(stepped.report.capabilities.mainProgramIntegration, "authorized-in-progress");
+  assert.equal(stepped.report.capabilities.mainProgramIntegration, "closed-product-integration");
   assert.equal(disposals, 1);
 }
 
@@ -639,7 +640,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
     originalLiveSettings: "closed-portable",
-    mainProgramIntegration: "authorized-in-progress",
+    mainProgramIntegration: "closed-product-integration",
     selectedRenderingGate: "open-evidence-required",
     selectedBackgroundGate: "closed-portable",
     selectedChartGate: "closed-portable",
@@ -649,6 +650,8 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal(session.closes, 1);
   assert.equal(scheduler.stops, 1);
   assert.equal(input.disposes, 1);
+  assert.equal(uninstallSimulatorModuleLauncher(module.launch).status, "accepted");
+  assert.equal(uninstallSimulatorModuleLauncher(module.launch).status, "rejected");
 }
 
 async function testSimulatorOwnedPauseRoute(): Promise<void> {

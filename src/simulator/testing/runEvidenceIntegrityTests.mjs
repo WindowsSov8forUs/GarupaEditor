@@ -22,7 +22,7 @@ for (const [label, runner] of stages) {
   run(process.execPath, [join(testingRoot, runner)]);
 }
 console.log(
-  "legacy evidence-integrity candidate matrix executed; it does not close current production gates, and HAB/browser/device/stage-9 remain open or excluded",
+  "legacy evidence-integrity candidate matrix executed; it does not close current production gates; HAB original/fixed-device exact remain open or excluded while Stage 9 product integration is separately closed",
 );
 
 function run(command, args) {

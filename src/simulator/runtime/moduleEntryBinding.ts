@@ -32,6 +32,20 @@ export function installSimulatorModuleLauncher(
   return Object.freeze({ status: "accepted" as const, value: undefined });
 }
 
+export function uninstallSimulatorModuleLauncher(
+  launcher: LaunchSimulatorModule,
+): SimulatorAssemblyResult<void> {
+  if (installedLauncher !== launcher) {
+    return rejected(
+      "launch-failed",
+      "simulator.entry.launcher-release-identity-mismatch",
+      "Only the exact installed autonomous launcher may release its closed platform binding; foreign or repeated release is rejected.",
+    );
+  }
+  installedLauncher = null;
+  return Object.freeze({ status: "accepted" as const, value: undefined });
+}
+
 export async function launchInstalledSimulatorModule(
   request: SimulatorModuleLaunchRequest,
 ): Promise<SimulatorModuleLaunchResult> {
