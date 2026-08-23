@@ -16,6 +16,7 @@ try {
     run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "runtimeContractPolicy.test.js")]);
+  run(process.execPath, [join(testingRoot, "verifyRuntimeContractPolicyStatic.mjs")]);
 } finally {
   if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }

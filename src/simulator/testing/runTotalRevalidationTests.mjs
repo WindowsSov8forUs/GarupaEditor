@@ -15,6 +15,7 @@ const typeScriptCli = require.resolve("typescript/bin/tsc");
 const quick = process.argv.includes("--quick");
 const cleanBrowserBuild = process.argv.includes("--clean-browser-build");
 const baseLeaves = [
+  ["runtime-contract-policy", "runRuntimeContractPolicyTests.mjs", {}],
   ["chart-boundary", "runChartConstructionBoundaryTests.mjs", {}],
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["chart-batches", "runChartBatchConversionTests.mjs", {}],
@@ -47,6 +48,7 @@ const baseLeaves = [
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
 ];
 const quickLeaves = [
+  ["runtime-contract-policy", "runRuntimeContractPolicyTests.mjs", {}],
   ["compiled-unit-and-static-subset", "runQuickCompiledTests.mjs", {}],
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["clock", "runClockSchedulingTests.mjs", {}],

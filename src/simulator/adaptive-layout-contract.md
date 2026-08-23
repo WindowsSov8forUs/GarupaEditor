@@ -2,7 +2,7 @@
 
 ## Runtime policy classification
 
-Reverse evidence owns original-layout claims. Missing original resize evidence is an internal notice, not a production terminal condition; GarupaEditor must use a separately registered atomic product surface-rebuild semantic without claiming original equivalence. Any remaining `evidence-required` runtime return is tracked migration debt under [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+Reverse evidence owns original-layout claims. Missing original resize evidence is an internal notice, not a production terminal condition; GarupaEditor must use a separately registered atomic product surface-rebuild semantic without claiming original equivalence. The production runtime now contains no `evidence-required` resize failure path; evidence status remains internal capability metadata under [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
 
 ## Authority and status
 

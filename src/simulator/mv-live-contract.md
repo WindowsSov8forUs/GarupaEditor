@@ -51,7 +51,7 @@ interface SimulatorPresentationPackage {
 - simulator只接受严格结构且browser可解码的MP4或WebM，并内部派生全部身份与metadata；
 - stage backdrop仍是schema必填并严格校验；Reverse `d408d758`证明的空SD集合与缺语音SoundResource由simulator内部固定，Public不再携带对应null字段。MV路线不decode/附着standard stage，也不在MV故障时fallback；所选特殊Background同样不附着，其他Skin组件继续按各自谓词生效。
 
-`config.mvDarkness`必填且只接受`0,10,...,70`；它不等于Movie alpha。`presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、shared-store、mount、scheduler和domain mutation前以`evidence-required / simulator.mv-live.unsupported-rehearsal-mode`拒绝。
+`config.mvDarkness`必填且只接受`0,10,...,70`；它不等于Movie alpha。`presentation.mv !== null`与`sessionMode !== "live"`在browser decode、chart、resource、mount、scheduler和domain mutation前将当前MV launch标为action-unavailable并稳定返回编辑器；内部notice说明该路线不属于Reverse正向范围。
 
 ## Signed delay 与状态
 
@@ -134,9 +134,9 @@ Project-authored probe只验证adapter：
 rendering: "ordinary-current-portable" | "habahiro-current-external-complete" | null;
 background: "standard-current-portable" | "mv-live-host-supplied-portable" | null;
 mvLivePortable: "closed-portable";
-selectedBackgroundGate: "closed-portable" | "open-evidence-required";
+selectedBackgroundGate: "closed-portable" | "observational-gap";
 standaloneMvView: "excluded";
 star3DLiveView: "excluded";
 ```
 
-`closed-portable`只声明上述browser语义、serialized movie-widget多比例映射、当前WebView2 actual Pixi raster和owner lifecycle，不升级original codec/device exact。任何post-initial surface revision按adaptive合同在media command前失败关闭。
+`closed-portable`只声明上述browser语义、serialized movie-widget多比例映射、当前WebView2 actual Pixi raster和owner lifecycle，不升级original codec/device exact。任何post-initial有效landscape surface revision按adaptive合同执行`GE-PS-SURFACE-ATOMIC-REBUILD`；候选无法原子发布时稳定返回编辑器。

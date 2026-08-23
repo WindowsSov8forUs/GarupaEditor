@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema12 exact shape/copy/intrinsic stage PNG/internal absent SD+voice/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema12 required semantics/owned copy/intrinsic stage PNG/internal absent SD+voice/nullable MV");
 }
 
 function testExactShapeAndOwnership(): void {

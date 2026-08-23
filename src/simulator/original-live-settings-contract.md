@@ -23,7 +23,7 @@ visibleTapLaneEffect: boolean;
 mvDarkness: number;                // 0,10,20,30,40,50,60,70
 ```
 
-They coexist with mandatory `sessionMode`, `inputMode`, `highFrequencyMode`, `skin`, `visual` and `audio`. There are no aliases or defaults. `judgeOffsetFrames`, `offsetMs`, `effectEnable` and `mvAlphaPercent` are extra keys and fail exact-shape validation.
+They coexist with mandatory `sessionMode`, `inputMode`, `highFrequencyMode`, `skin`, `visual` and `audio`. There are no aliases or defaults. Legacy metadata such as `judgeOffsetFrames`, `offsetMs`, `effectEnable` and `mvAlphaPercent` is discarded by the owned semantic projection and never overrides the mandatory current fields.
 
 The immutable internal snapshot separates LiveCore fields (HighFrequency, A, B, MvDarkness) from Live fields (SyncLine, NoteColor, VisibleTapLaneEffect). Its canonical identity participates in initial, Retry and MoveTime fresh-build comparison. Pause/Resume does not reload it and there is no hot-switch command.
 

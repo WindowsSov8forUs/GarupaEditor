@@ -105,7 +105,7 @@ function invalidRequirements<T>(): SimulatorResourceResult<T> {
   return simulatorResourceRejected(
     "invalid-resource-request",
     "simulator.resources.requirements.invalid",
-    "Resource requirements require exact shape, unique semantic roles, one safe logical resource and an optional non-empty unique exact file list; conflicting duplicate resources cannot be repaired.",
+    "Resource requirements require unique semantic roles, one safe logical resource and an optional non-empty unique required-file list; extra metadata is discarded, while conflicting duplicate resources cannot be repaired.",
   );
 }
 

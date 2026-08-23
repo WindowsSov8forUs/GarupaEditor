@@ -42,7 +42,7 @@ Standard四种Public模式固定映射为账号教程gate未命中的普通路�
 
 Reverse `99d40bcc`的四模式Pause矩阵及`770af437`倒计时资源补充确认Live Manual/Auto与Rehearsal Manual/Demo均进入同一三按钮Pause菜单；Retry确认后创建fresh InGame generation，不继承旧owner。MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
-Launch根仍精确三键`{chartData,presentation,config}`。Schema 12 presentation不再包含SD角色或开场语音字段；simulator内部固定建立冻结空SD集合与缺SoundResource路径。Presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。Skin recipe同样在initial冻结：Live Auto只让Judge回默认而保留其他特殊组件，Rehearsal两种input均按Practice禁用聚合组件；Retry/MoveTime fresh build必须匹配同一canonical Skin identity。
+Launch owned投影仍为`{chartData,presentation,config}`；键顺序和额外host metadata不参与行为。Schema 12 presentation不再包含SD角色或开场语音字段；simulator内部固定建立冻结空SD集合与缺SoundResource路径。Presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV动作在ownership transfer前保持不可用并返回编辑器，不伪装为standard背景。purpose仍由simulator内部拥有且不进入Public。Skin recipe同样在initial冻结：Live Auto只让Judge回默认而保留其他特殊组件，Rehearsal两种input均按Practice禁用聚合组件；Retry/MoveTime fresh build必须匹配同一canonical Skin identity。
 
 ## Original Live settings lifecycle
 

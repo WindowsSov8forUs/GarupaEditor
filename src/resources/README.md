@@ -29,7 +29,7 @@ cargo test --manifest-path src-tauri/Cargo.toml resource_manager --lib --no-run
 npm.cmd run chart:test
 ```
 
-`npm run build` is not complete after Vite compilation alone: `resources:verify-production-assets` hashes `dist/assets` and requires all 43 logical Builtins to retain their source-manifest byte length and SHA-256. This closes source-to-production transformations such as SVG Data URL normalization while leaving the runtime fail-closed check intact.
+`npm run build` is not complete after Vite compilation alone: `resources:verify-production-assets` hashes `dist/assets` and requires all 43 logical Builtins to retain their source-manifest byte length and SHA-256. This closes source-to-production transformations such as SVG Data URL normalization while retaining the typed runtime byte-integrity check; a mismatch blocks only the affected resource action.
 
 The current Windows environment compiles the Rust unit-test executable but cannot run it because the existing Tauri test binary exits with `STATUS_ENTRYPOINT_NOT_FOUND`; semantic resource lifecycle tests run through the isolated TypeScript memory backend. This environment limitation is recorded rather than treating `--no-run` as an executed Rust test pass.
 

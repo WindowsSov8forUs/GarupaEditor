@@ -24,16 +24,16 @@
     },
     "testMarkerCounts": {
       "evidence-required-call": 11,
-      "evidence-required-string": 16,
+      "evidence-required-string": 17,
       "integrity-failure-call": 28,
-      "integrity-failure-string": 170,
+      "integrity-failure-string": 171,
       "observational-gap-string": 8,
       "product-semantic-call": 1,
       "terminal-close": 0,
       "exact-prototype": 2,
       "exact-key-order": 9,
       "rejected-call": 50,
-      "throw-error": 698,
+      "throw-error": 703,
       "rust-error-return": 0,
       "rust-result-error": 0
     }
