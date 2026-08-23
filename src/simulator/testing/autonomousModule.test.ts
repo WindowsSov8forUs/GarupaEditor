@@ -789,6 +789,7 @@ class ControlledInput implements SimulatorRuntimeInputSource {
     return accepted(Object.freeze({
       surfaceRevision: TEST_SURFACE.revision,
       manualFrame: this.frames.get(sequence) ?? null,
+      hardwareBack: false,
       commands: this.commands.get(sequence) ?? Object.freeze([]),
     }));
   }
@@ -814,6 +815,7 @@ class FakeSession implements SimulatorOwnedSession {
   }
   getSurfaceState() { return accepted(TEST_SURFACE); }
   getControlLayout() { return accepted(TEST_ORIGINAL_LAYOUT); }
+  publishPauseControlState(): SimulatorAssemblyResult<void> { return accepted(undefined); }
   pause(): SimulatorAssemblyResult<void> { this.commands.push("pause"); return accepted(undefined); }
   resume(): SimulatorAssemblyResult<void> { this.commands.push("resume"); return accepted(undefined); }
   async moveTime(direction: "return-five" | "advance-five"): Promise<SimulatorAssemblyResult<void>> {

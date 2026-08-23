@@ -128,6 +128,27 @@
       "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05",
       "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-1.png",
+      "byteLength": 2024,
+      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-2.png",
+      "byteLength": 10393,
+      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-3.png",
+      "byteLength": 12514,
+      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png"
     }
   ]
 }

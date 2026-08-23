@@ -108,6 +108,7 @@ function commonLogicalResource(file: string): string | null {
   if (file === "score-font.png") return "fonts/score/score";
   if (file === "rank-label-font.ttf") return "fonts/sgm";
   if (file === "startup-line-star.png") return "prefabs/bms/information";
+  if (file.startsWith("countdown-")) return "prefabs/bms/pause";
   if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
   return null;
 }

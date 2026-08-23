@@ -34,6 +34,10 @@ const scoreRoot = join(
   fixtureRoot,
   "score-hud-rank-gauge", "artifacts", "investigations", "score-hud-rank-gauge-10-1-4",
 );
+const pauseRoot = join(
+  fixtureRoot,
+  "pause-ui", "artifacts", "investigations", "in-game-pause-ui-runtime-contract-10-1-4",
+);
 const particleRoot = join(
   fixtureRoot,
   "device-closure", "artifacts", "investigations", "device-runtime-closure-10-1-4",
@@ -65,6 +69,9 @@ const renderSources = [
   ["hud/score/high-rank-kira", join(scoreRoot, "portable-assets", "high-rank-kira.png")],
   ["hud/score/high-rank-long-star", join(scoreRoot, "portable-assets", "high-rank-long-star.png")],
   ["hud/score/high-rank-overlay", join(scoreRoot, "portable-assets", "high-rank-overlay.png")],
+  ["ui/pause/countdown-1", join(pauseRoot, "portable-assets", "countdown-1.png")],
+  ["ui/pause/countdown-2", join(pauseRoot, "portable-assets", "countdown-2.png")],
+  ["ui/pause/countdown-3", join(pauseRoot, "portable-assets", "countdown-3.png")],
 ];
 const particleSources = [
   ["particle/profile/current-portable-v1", join(particleRoot, "particle_portable_profile.json")],

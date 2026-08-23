@@ -198,23 +198,10 @@ function BuiltInSimulatorWindow() {
     activateAudioFromPointer,
     () => { void leavePlayer(); },
   );
-  const showTemporaryMobileBack = mobile && launchState.phase === "running";
-
   return (
     <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
       <div ref={hostRef} style={{ width: "100%", height: "100%" }} />
       {overlay}
-      {showTemporaryMobileBack ? (
-        <button
-          type="button"
-          className="simulator-mobile-back-button"
-          aria-label="返回编辑器"
-          onClick={() => void leavePlayer()}
-          style={temporaryMobileBackStyle}
-        >
-          ×
-        </button>
-      ) : null}
     </main>
   );
 }
@@ -307,19 +294,4 @@ const returnButtonStyle = Object.freeze({
   padding: "8px 16px",
   cursor: "pointer",
 } as const);
-const temporaryMobileBackStyle = Object.freeze({
-  position: "absolute",
-  right: "max(8px, env(safe-area-inset-right, 0px))",
-  top: "max(8px, env(safe-area-inset-top, 0px))",
-  zIndex: 12,
-  width: 40,
-  height: 40,
-  border: "1px solid rgba(255,255,255,.55)",
-  borderRadius: 20,
-  background: "rgba(2,5,13,.7)",
-  color: "white",
-  fontSize: 28,
-  lineHeight: "36px",
-} as const);
-
 export default BuiltInSimulatorWindow;

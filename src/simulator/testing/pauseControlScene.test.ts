@@ -34,6 +34,7 @@ function main(): void {
   testFixtureAndParameterizedLayout();
   testFourModePauseMatrix();
   testResumeCountdown();
+  testHardwareBackResumeBoundary();
   testRetryCancelConfirmAndFreshCommand();
   testAbortCancelConfirm();
   testInputPriorityAndFailureClosure();
@@ -49,7 +50,7 @@ function testFixtureAndParameterizedLayout(): void {
     static_target_count: 38,
     runtime_mode_rows_confirmed: 4,
     accepted_runtime_trace_count: 19,
-    serialized_prefab_profiles_confirmed: 4,
+    serialized_prefab_profiles_confirmed: 5,
     parameterized_layout_rows_confirmed: 6,
     blocking_finding_count: 0,
     unknown_live_modal_branch_count: 0,
@@ -75,6 +76,8 @@ function testFixtureAndParameterizedLayout(): void {
   assert.deepEqual(center(LAYOUT.pauseMenu.retryBoundsTopLeft), high.retryable_pause.button_centers_top_left.retry);
   assert.deepEqual(center(LAYOUT.pauseMenu.resumeBoundsTopLeft), high.retryable_pause.button_centers_top_left.resume);
   assert.equal(profile.actual_pause_button.sprite.sprite_name, "button_pause");
+  assert.deepEqual(profile.resume_countdown.textures.map((row: any) => row.size), [[51, 119], [99, 120], [99, 121]]);
+  assert.equal(profile.resume_countdown.runtime_callback_seconds, 3);
   assert.deepEqual(profile.common_atlas.rows.button_pink.rect, [154, 19, 48, 48]);
   assert.equal(Object.isFrozen(LAYOUT), true);
 }
@@ -109,6 +112,16 @@ function testResumeCountdown(): void {
   assert.equal(command.kind, "resume");
   assert.equal(requireOk(consumePauseControlCommand(command, state(mode, true, true), SURFACE)), "resume");
   assert.equal(routed.snapshot.state, "playing");
+}
+
+function testHardwareBackResumeBoundary(): void {
+  const mode = createSimulatorModeIdentity("rehearsal", "auto");
+  const owner = pausedOwner(mode);
+  const routed = requireOk(owner.route(1 / 60, null, state(mode, true, true), LAYOUT, true));
+  assert.equal(routed.snapshot.state, "resume-countdown");
+  const nested = pausedOwner(mode);
+  click(nested, mode, LAYOUT.pauseMenu.retryBoundsTopLeft);
+  assert.equal(nested.route(1 / 60, null, state(mode, true, true), LAYOUT, true).status, "evidence-required");
 }
 
 function testRetryCancelConfirmAndFreshCommand(): void {

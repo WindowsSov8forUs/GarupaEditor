@@ -28,6 +28,17 @@ export const COMMON_ORDINARY_VISIBLE_BINDINGS = Object.freeze({
   ] as const),
 });
 
+export const COMMON_PAUSE_CONTROL_BINDINGS = Object.freeze({
+  rhythmGameUiLogicalAssetId: "hud/score/rhythm-game-ui-atlas",
+  uiCommonLogicalAssetId: "hud/score/ui-common-atlas",
+  fontLogicalAssetId: "hud/score/rank-label-font",
+  countdownLogicalAssetIds: Object.freeze([
+    "ui/pause/countdown-1",
+    "ui/pause/countdown-2",
+    "ui/pause/countdown-3",
+  ] as const),
+});
+
 export const COMMON_STARTUP_DIRECTION_BINDINGS = Object.freeze({
   lineStarLogicalAssetId: "startup/information/line-star",
   uiCommonLogicalAssetId: "hud/score/ui-common-atlas",

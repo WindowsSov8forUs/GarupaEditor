@@ -20,6 +20,7 @@ import type {
   SimulatorSnapshot,
   SimulatorEngineBuildPurpose,
 } from "./contracts";
+import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import {
   commitMoveTimeTimelineRevision,
   publishMoveTimeAudio,
@@ -61,7 +62,12 @@ export interface SimulatorWholeEngineReplayFactory {
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
   retrySession(): Promise<SimulatorResult<void>>;
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
+}
+
+interface PauseControlVisualEngine {
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
 }
 
 type ReplayEvent =
@@ -226,6 +232,15 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   }
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
     return this.active.getNaturalCompletionClearStatus();
+  }
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void> {
+    const active = this.active as SimulatorEngine & Partial<PauseControlVisualEngine>;
+    return typeof active.publishPauseControlState === "function"
+      ? active.publishPauseControlState(snapshot)
+      : rejected(
+          "timeline.pause-control.visual-owner-unavailable",
+          "Production Pause routing requires the active fresh engine generation to expose its Simulator-owned control visual owner.",
+        );
   }
   getAdjustedMusicPosition(): SimulatorResult<number> { return this.active.getAdjustedMusicPosition(); }
   snapshot(): SimulatorResult<SimulatorSnapshot> {

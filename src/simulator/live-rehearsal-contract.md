@@ -36,7 +36,7 @@ Reverse `c8562fe478a9719cc582256f0edcdc988bb208e5`将SD01–SD16纠正为SD01–
 
 Standard四种Public模式固定映射为账号教程gate未命中的普通路线，从`Prepare(0)`依次自动进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle，Public不接收账号教程状态或tap-to-start字段。启动音频是允许的独立owner：BGM先以零voice gain建立并paused；Live Manual/Auto创建`SE_RHYTHM_GAYA`全buffer owned loop（volume 1.0、0.5秒fade-in），Practice Manual/Auto保持null；原作nullable voice分支保留为调用图证据，但current production内部固定缺SoundResource并直接走bypass，Public不携带voice字段。music edge先发布PlayingNone，再从current Gaya gain用1.5秒fade-to-zero/stop并resume prepared BGM，下一状态进入PlayingSound。
 
-Reverse `99d40bcc`的四模式Pause矩阵确认Live Manual/Auto与Rehearsal Manual/Demo均进入同一三按钮Pause菜单；Retry确认后创建fresh InGame generation，不继承旧owner。MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
+Reverse `99d40bcc`的四模式Pause矩阵及`770af437`倒计时资源补充确认Live Manual/Auto与Rehearsal Manual/Demo均进入同一三按钮Pause菜单；Retry确认后创建fresh InGame generation，不继承旧owner。MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
 Launch根仍精确三键`{chartData,presentation,config}`。Schema 12 presentation不再包含SD角色或开场语音字段；simulator内部固定建立冻结空SD集合与缺SoundResource路径。Presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。Skin recipe同样在initial冻结：Live Auto只让Judge回默认而保留其他特殊组件，Rehearsal两种input均按Practice禁用聚合组件；Retry/MoveTime fresh build必须匹配同一canonical Skin identity。
 
@@ -52,7 +52,7 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 
 - Live Life归零：走现有terminal Game Over链并关闭会话。
 - Rehearsal Life归零：Record保留`singleGameOver`事实，但不关闭会话。LR-R01实测本轮69次Life0/GameOver后的`ExecUpdate`；此前已提交R1另有1216次。
-- Reverse `99d40bcc`以19条accepted R1、四个精确mode rows、level3 `Pause`/三种modal serialized owners、现有RhythmGameUI/UICommon/sgm资源及六组参数化布局关闭旧`41f4ecfe`阻断。Pause touch-began先于MoveTime/gameplay；modal覆盖触摸且按钮在release回调；Resume保持engine paused并执行3秒countdown后恢复，Retry fresh、Abort与两类cancel均使用opaque one-use命令。Android Back进入右侧Resume；Desktop native X仍是平台关闭。
+- Reverse `99d40bcc`以19条accepted R1（并由`770af437`补全恢复倒计时owner/三PNG）、四个精确mode rows、level3 `Pause`/三种modal serialized owners、现有RhythmGameUI/UICommon/sgm资源及六组参数化布局关闭旧`41f4ecfe`阻断。Pause touch-began先于MoveTime/gameplay；modal覆盖触摸且按钮在release回调；Resume保持engine paused并执行3秒countdown后恢复，Retry fresh、Abort与两类cancel均使用opaque one-use命令。Android Back进入右侧Resume；Desktop native X仍是平台关闭。
 - 自然结束仍进入Rehearsal结果；使用MoveTime后的原作结果语义不得被当作普通Live结果。
 
 依据：PLP-E01–PLP-E07、LR-R01、LR-C02与current committed Live no-input Game Over证据。Medley继承与premium Continue仍排除。

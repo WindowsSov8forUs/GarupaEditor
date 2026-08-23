@@ -4,7 +4,7 @@
 
 ## Source classes
 
-- `builtin`: 22 application UI files plus 18 minimal Simulator common files (40 total), imported only by the two builtin catalog owners and verified against generated integrity/provenance manifests. Every physical import is an explicit Vite `?url&no-inline` asset: packaging may change its URL or hashed filename but may not rewrite the bytes described by the source manifest. The Simulator pack contains common Combo/Life/Score/Rank/Startup assets and semantic profiles; Skin, SE and particle source packages remain network resources.
+- `builtin`: 22 application UI files plus 21 minimal Simulator common files (43 total), imported only by the two builtin catalog owners and verified against generated integrity/provenance manifests. Every physical import is an explicit Vite `?url&no-inline` asset: packaging may change its URL or hashed filename but may not rewrite the bytes described by the source manifest. The Simulator pack contains common Combo/Life/Score/Rank/Startup/Pause countdown assets and semantic profiles; Skin, SE and particle source packages remain network resources.
 - global `network`: reusable resources discovered from the live Bestdori `_info`, complete song master and their last complete offline catalog snapshot. Skin, TapSE/common sound, particle and other reusable packages are installed globally. Note Skin primary/sample bundles remain separate provider-native records and are joined only by explicit operation-local Snapshot slots, so migrated split records work offline without filename fallback or forced redownload. Provider BGM/jacket/MV candidates remain discoverable, but selected chart-media bytes are materialized in the current workspace rather than installed as global media records.
 - current-session `workspace`: locally uploaded or provider-downloaded BGM, cover, MV and stage backdrop for the currently recoverable chart session. Skin/SE/package upload and a permanent user media library are not exposed. Legacy `user/media/*` is migration-only.
 
@@ -29,7 +29,7 @@ cargo test --manifest-path src-tauri/Cargo.toml resource_manager --lib --no-run
 npm.cmd run chart:test
 ```
 
-`npm run build` is not complete after Vite compilation alone: `resources:verify-production-assets` hashes `dist/assets` and requires all 40 logical Builtins to retain their source-manifest byte length and SHA-256. This closes source-to-production transformations such as SVG Data URL normalization while leaving the runtime fail-closed check intact.
+`npm run build` is not complete after Vite compilation alone: `resources:verify-production-assets` hashes `dist/assets` and requires all 43 logical Builtins to retain their source-manifest byte length and SHA-256. This closes source-to-production transformations such as SVG Data URL normalization while leaving the runtime fail-closed check intact.
 
 The current Windows environment compiles the Rust unit-test executable but cannot run it because the existing Tauri test binary exits with `STATUS_ENTRYPOINT_NOT_FOUND`; semantic resource lifecycle tests run through the isolated TypeScript memory backend. This environment limitation is recorded rather than treating `--no-run` as an executed Rust test pass.
 

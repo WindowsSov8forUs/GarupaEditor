@@ -215,6 +215,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
   private readonly fingerByPointer = new Map<number, number>();
   private readonly commands: SimulatorRuntimeCommand[] = [];
   private disposed = false;
+  private hardwareBack = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -226,6 +227,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     canvas.addEventListener("pointercancel", this.onPointerUp);
     document.addEventListener("visibilitychange", this.onVisibilityChange);
     window.addEventListener("pagehide", this.onPageHide);
+    window.addEventListener("keydown", this.onKeyDown);
     canvas.addEventListener("webglcontextlost", this.onContextLost);
   }
 
@@ -248,7 +250,9 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     }
     const frame: ManualInputFrame = Object.freeze({ touches: Object.freeze(touches) });
     const commands = Object.freeze(this.commands.splice(0));
-    return assemblyAccepted(Object.freeze({ surfaceRevision: surface.revision, manualFrame: frame, commands }));
+    const hardwareBack = this.hardwareBack;
+    this.hardwareBack = false;
+    return assemblyAccepted(Object.freeze({ surfaceRevision: surface.revision, manualFrame: frame, hardwareBack, commands }));
   }
 
   enqueue(command: SimulatorRuntimeCommand): void { if (!this.disposed) this.commands.push(Object.freeze(command)); }
@@ -276,6 +280,11 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
   };
   private readonly onVisibilityChange = () => { this.enqueue({ kind: document.hidden ? "platform-pause" : "platform-resume" }); };
   private readonly onPageHide = () => { this.enqueue({ kind: "user-close" }); };
+  private readonly onKeyDown = (event: KeyboardEvent) => {
+    if (this.disposed || (event.key !== "Escape" && event.key !== "BrowserBack")) return;
+    event.preventDefault();
+    this.hardwareBack = true;
+  };
   private readonly onContextLost = (event: Event) => { event.preventDefault(); this.enqueue({ kind: "platform-abort" }); };
 
   private position(event: PointerEvent): { x: number; y: number } {
@@ -300,9 +309,11 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
     this.canvas.removeEventListener("pointercancel", this.onPointerUp);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
     window.removeEventListener("pagehide", this.onPageHide);
+    window.removeEventListener("keydown", this.onKeyDown);
     this.canvas.removeEventListener("webglcontextlost", this.onContextLost);
     this.pointers.clear();
     this.fingerByPointer.clear();
     this.commands.length = 0;
+    this.hardwareBack = false;
   }
 }

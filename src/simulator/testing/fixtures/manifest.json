@@ -1079,17 +1079,17 @@
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
       "bytes": 56234,
-      "sha256": "FCE213AF067F6F2B1C39C9310BAF382D146FF2B2556E8FE98832CC33AB5B7227"
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "bytes": 35527,
-      "sha256": "27E196EFEA770F1109007D8AF41E6160FBC7EE499AEFF4BE5E0D8ED1D4A17058"
+      "bytes": 43746,
+      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
@@ -1097,6 +1097,27 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
       "bytes": 28975,
       "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
+      "bytes": 2024,
+      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
+      "bytes": 10393,
+      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
+      "bytes": 12514,
+      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
     }
   ]
 }

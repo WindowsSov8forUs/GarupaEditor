@@ -191,6 +191,7 @@ export class AutonomousSimulatorModule {
           manualFrame,
           controlState.value,
           pauseLayout.value,
+          input.value.hardwareBack,
         );
         if (routed.status !== "ok") {
           this.closeTerminal(moduleFailure("evidence-required", routed.capability, routed.boundary));
@@ -204,6 +205,24 @@ export class AutonomousSimulatorModule {
             return;
           }
           if (this.state !== "running") return;
+        }
+        let visualSnapshot = routed.value.snapshot;
+        if (routed.value.commands.length > 0) {
+          const refreshed = this.session!.getControlState();
+          if (refreshed.status === "rejected") {
+            this.closeTerminal(refreshed.failure);
+            return;
+          }
+          visualSnapshot = this.pauseControl.snapshot(
+            refreshed.value.mode,
+            pauseLayout.value,
+            refreshed.value.playable,
+          );
+        }
+        const published = this.session!.publishPauseControlState(visualSnapshot);
+        if (published.status === "rejected") {
+          this.closeTerminal(published.failure);
+          return;
         }
       }
       const stepped = this.session!.step(

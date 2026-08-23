@@ -55,7 +55,7 @@
     },
     "serialized_resource_profile": {
       "path": "pause_serialized_resource_profile.json",
-      "sha256": "27E196EFEA770F1109007D8AF41E6160FBC7EE499AEFF4BE5E0D8ED1D4A17058"
+      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
     },
     "existing_rehearsal_profile": {
       "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
@@ -1769,7 +1769,7 @@
     "static_target_count": 38,
     "runtime_mode_rows_confirmed": 4,
     "accepted_runtime_trace_count": 19,
-    "serialized_prefab_profiles_confirmed": 4,
+    "serialized_prefab_profiles_confirmed": 5,
     "parameterized_layout_rows_confirmed": 6,
     "blocking_finding_count": 0,
     "unknown_live_modal_branch_count": 0,

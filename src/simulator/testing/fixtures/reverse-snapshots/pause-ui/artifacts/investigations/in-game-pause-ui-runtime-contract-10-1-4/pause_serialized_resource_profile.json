@@ -42,6 +42,41 @@
       "path": "base.apk!/assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
       "bytes": 1048848,
       "sha256": "788141DB50D3A33A0B4ED869D89DD7778FF66A4E2244A19DAA9384CD017F4F70"
+    },
+    "assets/bin/Data/bd688bb9453ad4bb3b372e88553ec44a": {
+      "path": "base.apk!/assets/bin/Data/bd688bb9453ad4bb3b372e88553ec44a",
+      "bytes": 5668,
+      "sha256": "5E3A36ABE3EAF91BF958397DD7159FC2291D890BEF87413ED5C5902DA6A3673F"
+    },
+    "assets/bin/Data/459e6353cf8204b9bb9ef02e04b12fcf": {
+      "path": "base.apk!/assets/bin/Data/459e6353cf8204b9bb9ef02e04b12fcf",
+      "bytes": 960,
+      "sha256": "DD30D95DA86BCC8EE082F5528F2E57BA283BB628C58098312B231EF9CCADDF5A"
+    },
+    "assets/bin/Data/a4660f7b1ac3c4c298deeb2af80e6e34": {
+      "path": "base.apk!/assets/bin/Data/a4660f7b1ac3c4c298deeb2af80e6e34",
+      "bytes": 5968,
+      "sha256": "AC269A168A0B79DC1E86C4D1B2B1CD9E8455FDD7EEE87D1F42D7C6283B6D5D42"
+    },
+    "assets/bin/Data/f38918dc176784068a1b986ea9f04b84": {
+      "path": "base.apk!/assets/bin/Data/f38918dc176784068a1b986ea9f04b84",
+      "bytes": 3800,
+      "sha256": "02474337B95BE75DA522E1A39FD34D9D297238F427D011C6CDA93886CA5B6013"
+    },
+    "assets/bin/Data/9d1c46600fe7a4f028991ca89f2bd62e": {
+      "path": "base.apk!/assets/bin/Data/9d1c46600fe7a4f028991ca89f2bd62e",
+      "bytes": 24548,
+      "sha256": "88E8EE4FC4D6A4BAE3BF8271D2FB32A06A39B2BC509414559B8BBDA98D224A30"
+    },
+    "assets/bin/Data/c49041ba3dcb04fb7bbf0c0482103e06": {
+      "path": "base.apk!/assets/bin/Data/c49041ba3dcb04fb7bbf0c0482103e06",
+      "bytes": 47792,
+      "sha256": "BA620CCF773283F8A375B2E2F2DFB61D776D7D7F37AFD9C7ED344B8E5762BE80"
+    },
+    "assets/bin/Data/c6d8cb48f15474256b60f31f45a83db3": {
+      "path": "base.apk!/assets/bin/Data/c6d8cb48f15474256b60f31f45a83db3",
+      "bytes": 48188,
+      "sha256": "49AA6870AB125E14D4AE0B7FABCEF10E95690EE40EECFB20C693C99638FFA9BA"
     }
   },
   "actual_pause_button": {
@@ -866,6 +901,261 @@
       }
     }
   },
+  "resume_countdown": {
+    "root": {
+      "path_id": 16,
+      "game_object_path_id": 3,
+      "game_object": "InGameCountDownAnimation",
+      "active": true,
+      "local_position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent_path_id": 0,
+      "children": [
+        13
+      ]
+    },
+    "contents": {
+      "path_id": 13,
+      "game_object_path_id": 1,
+      "game_object": "Contents",
+      "active": false,
+      "local_position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent_path_id": 16,
+      "children": [
+        14,
+        19,
+        15,
+        18,
+        17,
+        21
+      ]
+    },
+    "count_3": {
+      "transform": {
+        "path_id": 14,
+        "game_object_path_id": 5,
+        "game_object": "Count3",
+        "active": false,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 13,
+        "children": []
+      },
+      "texture_component_path_id": 31,
+      "texture_source_file_id": 6
+    },
+    "count_2": {
+      "transform": {
+        "path_id": 15,
+        "game_object_path_id": 2,
+        "game_object": "Count2",
+        "active": false,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 13,
+        "children": []
+      },
+      "texture_component_path_id": 27,
+      "texture_source_file_id": 5
+    },
+    "count_1": {
+      "transform": {
+        "path_id": 18,
+        "game_object_path_id": 7,
+        "game_object": "Count1",
+        "active": false,
+        "local_position": [
+          -5.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 13,
+        "children": []
+      },
+      "texture_component_path_id": 28,
+      "texture_source_file_id": 3
+    },
+    "count_1_fadeout": {
+      "transform": {
+        "path_id": 17,
+        "game_object_path_id": 6,
+        "game_object": "Count1Fadeout",
+        "active": false,
+        "local_position": [
+          -5.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 13,
+        "children": []
+      },
+      "texture_component_path_id": 26,
+      "texture_source_file_id": 3
+    },
+    "time_move": {
+      "path_id": 21,
+      "game_object_path_id": 10,
+      "game_object": "TimeMove",
+      "active": false,
+      "local_position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "parent_path_id": 13,
+      "children": [
+        23,
+        22,
+        24
+      ]
+    },
+    "controller": {
+      "source": {
+        "path": "base.apk!/assets/bin/Data/459e6353cf8204b9bb9ef02e04b12fcf",
+        "bytes": 960,
+        "sha256": "DD30D95DA86BCC8EE082F5528F2E57BA283BB628C58098312B231EF9CCADDF5A"
+      },
+      "name": "ContinueCountDownAnimation",
+      "states": [
+        "Base Layer.ContinueCountDownAnimation",
+        "Base Layer.ResumeCountDownOneSecAnimation"
+      ],
+      "clip_sources": [
+        {
+          "path": "base.apk!/assets/bin/Data/a4660f7b1ac3c4c298deeb2af80e6e34",
+          "bytes": 5968,
+          "sha256": "AC269A168A0B79DC1E86C4D1B2B1CD9E8455FDD7EEE87D1F42D7C6283B6D5D42"
+        },
+        {
+          "path": "base.apk!/assets/bin/Data/f38918dc176784068a1b986ea9f04b84",
+          "bytes": 3800,
+          "sha256": "02474337B95BE75DA522E1A39FD34D9D297238F427D011C6CDA93886CA5B6013"
+        }
+      ]
+    },
+    "continue_clip": {
+      "name": "ContinueCountDownAnimation",
+      "sample_rate": 60.0,
+      "start_time": 0.0,
+      "stop_time": 3.5,
+      "streamed_curve_count": 25
+    },
+    "resume_one_second_clip": {
+      "name": "ResumeCountDownOneSecAnimamtion",
+      "sample_rate": 60.0,
+      "start_time": 0.0,
+      "stop_time": 1.899999976158142,
+      "streamed_curve_count": 10
+    },
+    "textures": [
+      {
+        "identity": "countdown-1",
+        "source": {
+          "path": "base.apk!/assets/bin/Data/9d1c46600fe7a4f028991ca89f2bd62e",
+          "bytes": 24548,
+          "sha256": "88E8EE4FC4D6A4BAE3BF8271D2FB32A06A39B2BC509414559B8BBDA98D224A30"
+        },
+        "source_name": "Countdown1",
+        "size": [
+          51,
+          119
+        ],
+        "rgba_sha256": "C6CC7B9318B6BFB96A3F29B54009041FFF2911E2F491C3EE2ECA36936B053BD9",
+        "portable": {
+          "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
+          "bytes": 2024,
+          "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
+        }
+      },
+      {
+        "identity": "countdown-2",
+        "source": {
+          "path": "base.apk!/assets/bin/Data/c49041ba3dcb04fb7bbf0c0482103e06",
+          "bytes": 47792,
+          "sha256": "BA620CCF773283F8A375B2E2F2DFB61D776D7D7F37AFD9C7ED344B8E5762BE80"
+        },
+        "source_name": "Countdown2",
+        "size": [
+          99,
+          120
+        ],
+        "rgba_sha256": "20C8A540763058F00447F89AF0FA406B39FB0788B873E9872BB1C0F53A439124",
+        "portable": {
+          "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
+          "bytes": 10393,
+          "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
+        }
+      },
+      {
+        "identity": "countdown-3",
+        "source": {
+          "path": "base.apk!/assets/bin/Data/c6d8cb48f15474256b60f31f45a83db3",
+          "bytes": 48188,
+          "sha256": "49AA6870AB125E14D4AE0B7FABCEF10E95690EE40EECFB20C693C99638FFA9BA"
+        },
+        "source_name": "Countdown3",
+        "size": [
+          99,
+          121
+        ],
+        "rgba_sha256": "949462DE38A08B609B4915AF011E7290D5F350B27F6148C86809237DEA129F2D",
+        "portable": {
+          "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
+          "bytes": 12514,
+          "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+        }
+      }
+    ],
+    "runtime_callback_seconds": 3.0
+  },
   "common_atlas": {
     "sharedassets_path_id": 1883,
     "material_pointer": {
@@ -1408,10 +1698,10 @@
     }
   ],
   "closure": {
-    "serialized_pause_owner_count": 1,
+    "serialized_pause_owner_count": 2,
     "serialized_modal_prefab_count": 3,
     "parameterized_layout_row_count": 6,
-    "required_existing_portable_resource_count": 3,
+    "required_existing_portable_resource_count": 6,
     "missing_resource_count": 0,
     "unknown_geometry_count": 0,
     "screenshot_derived_geometry_scalar_count": 0,

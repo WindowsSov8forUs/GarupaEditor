@@ -34,6 +34,7 @@ import {
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import type { OriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
@@ -207,6 +208,14 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (this.state !== "running") return closedFailure();
     const checked = this.checkSurface(this.surface.revision);
     return checked.status === "accepted" ? accepted(this.controlLayout) : checked;
+  }
+
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorAssemblyResult<void> {
+    if (this.state !== "running") return closedFailure();
+    const checked = this.checkSurface(snapshot.surfaceRevision);
+    if (checked.status === "rejected") return checked;
+    const published = this.engine.publishPauseControlState(snapshot);
+    return published.status === "ok" ? accepted(undefined) : fromEngineFailure(published);
   }
 
   async moveTime(

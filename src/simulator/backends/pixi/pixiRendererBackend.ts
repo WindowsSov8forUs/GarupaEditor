@@ -30,8 +30,10 @@ import {
   ORIGINAL_UI_HALF_WIDTH_BASE,
   type OriginalSurfaceLayout,
 } from "../../scene/originalSurfaceLayout";
+import type { PauseControlSceneSnapshot, PauseControlBounds } from "../../scene/pauseControlScene";
 import {
   COMMON_ORDINARY_VISIBLE_BINDINGS as CURRENT_ORDINARY_VISIBLE_BINDINGS,
+  COMMON_PAUSE_CONTROL_BINDINGS as CURRENT_PAUSE_CONTROL_BINDINGS,
   COMMON_SCORE_HUD_BINDINGS as CURRENT_SCORE_HUD_BINDINGS,
   COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
 } from "../../engine/rendering/commonResourceBindings";
@@ -82,10 +84,11 @@ export interface PixiSceneObjectFactory {
   create(role: string, renderObjectId: string, roundPixels: boolean): Container;
 }
 
-export interface PixiRehearsalControlOverlay {
+export interface PixiInGameControlOverlay {
   readonly root: Container;
   updateTimeline(timelineSeconds: number): SimulatorResult<void>;
   setMoveTimeInProgress(active: boolean): SimulatorResult<void>;
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   dispose(): SimulatorResult<void>;
 }
 
@@ -249,12 +252,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }));
   }
 
-  createRehearsalControlOverlay(
+  createInGameControlOverlay(
     mode: SimulatorModeIdentity,
     durationSeconds: number,
     surfaceLayout: OriginalSurfaceLayout,
-  ): SimulatorResult<PixiRehearsalControlOverlay | null> {
-    if (mode.sessionMode !== "rehearsal") return ok(null);
+  ): SimulatorResult<PixiInGameControlOverlay> {
     if (this.surfaceLayout !== surfaceLayout) {
       return evidenceRequired(
         "render.rehearsal-control.surface-layout-mismatch",
@@ -286,10 +288,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
       "label_round_white",
     ));
+    const pauseTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "button_pause"));
+    const windowTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "bg_base_r12"));
+    const headerTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "bg_header_dialog"));
+    const grayButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_gray"));
+    const pinkButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"));
+    const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     if (snapshot.state !== "ready" || returnTexture === undefined ||
       advanceTexture === undefined || timeBackgroundTexture === undefined ||
-      demoBackgroundTexture === undefined || font === undefined ||
+      demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
+      headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined ||
+      countdownTextures.some((texture) => texture === undefined) || font === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return evidenceRequired(
         "render.rehearsal-control.resources-unavailable",
@@ -297,13 +307,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         "Rehearsal controls require the ready current rhythm-game-ui atlas, exact sgm font and positive session duration; no fallback is rendered.",
       );
     }
-    const overlay = new PixiRehearsalControlOverlayOwner(
+    const overlay = new PixiInGameControlOverlayOwner(
       mode,
       durationSeconds,
       returnTexture,
       advanceTexture,
       timeBackgroundTexture,
       demoBackgroundTexture,
+      pauseTexture,
+      windowTexture,
+      headerTexture,
+      grayButtonTexture,
+      pinkButtonTexture,
+      countdownTextures as [Texture, Texture, Texture],
       font.family,
       createRehearsalControlSceneLayout(surfaceLayout),
       (root) => {
@@ -1526,14 +1542,27 @@ function applyBounds(
   target.height = value.height;
 }
 
-class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
-  readonly root = new Container({ label: "rehearsal-control-root", sortableChildren: true });
-  private readonly returnButton: Sprite;
-  private readonly advanceButton: Sprite;
-  private readonly timeText: Text;
+class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
+  readonly root = new Container({ label: "in-game-control-root", sortableChildren: true });
+  private readonly rehearsalRoot = new Container({ label: "rehearsal-control-root", sortableChildren: true });
+  private readonly modalRoot = new Container({ label: "pause-modal-root", sortableChildren: true });
+  private readonly pauseButton: Sprite;
+  private readonly returnButton: Sprite | null;
+  private readonly advanceButton: Sprite | null;
+  private readonly timeText: Text | null;
+  private readonly pauseTextures: Readonly<{
+    window: Texture;
+    header: Texture;
+    gray: Texture;
+    pink: Texture;
+    countdown: readonly [Texture, Texture, Texture];
+  }>;
   private disposed = false;
   private moveTimeInProgress = false;
   private timelineSeconds = 0;
+  private lastPauseState: PauseControlSceneSnapshot["state"] | null = null;
+  private lastCountdownNumber: number | null = null;
+  private readonly surfaceRevision: number;
 
   constructor(
     mode: SimulatorModeIdentity,
@@ -1542,80 +1571,74 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
     advanceTexture: Texture,
     timeBackgroundTexture: Texture,
     demoBackgroundTexture: Texture,
-    fontFamily: string,
+    pauseTexture: Texture,
+    windowTexture: Texture,
+    headerTexture: Texture,
+    grayButtonTexture: Texture,
+    pinkButtonTexture: Texture,
+    countdownTextures: readonly [Texture, Texture, Texture],
+    private readonly fontFamily: string,
     layout: RehearsalControlSceneLayout,
     private readonly releaseOwner: (root: Container) => void,
   ) {
     this.root.zIndex = 2_000_000_000;
     this.root.eventMode = "none";
-    this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
-    applyBounds(this.returnButton, layout.returnFive.widgetBoundsTopLeft);
-    this.returnButton.zIndex = 10;
-    this.advanceButton = new Sprite({ texture: advanceTexture, label: "rehearsal-advance-five" });
-    applyBounds(this.advanceButton, layout.advanceFive.widgetBoundsTopLeft);
-    this.advanceButton.zIndex = 10;
+    this.rehearsalRoot.zIndex = 10;
+    this.rehearsalRoot.eventMode = "none";
+    this.modalRoot.zIndex = 100;
+    this.modalRoot.eventMode = "none";
+    this.modalRoot.visible = false;
+    this.pauseTextures = Object.freeze({ window: windowTexture, header: headerTexture, gray: grayButtonTexture, pink: pinkButtonTexture, countdown: countdownTextures });
+    this.surfaceRevision = layout.surfaceRevision;
+    this.pauseButton = new Sprite({ texture: pauseTexture, label: "original-pause-button" });
+    this.pauseButton.visible = false;
+    this.pauseButton.zIndex = 50;
+    this.pauseButton.eventMode = "none";
+    this.root.addChild(this.rehearsalRoot, this.pauseButton, this.modalRoot);
 
-    const timeRegion = layout.timeLabelBoundsTopLeft;
-    const timeBackground = new NineSliceSprite({
-      texture: timeBackgroundTexture,
-      ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.rehearsalTime,
-      label: "rehearsal-time-label-background",
-    });
-    applyBounds(timeBackground, timeRegion);
-    timeBackground.tint = 0xffffff;
-    timeBackground.zIndex = 20;
-    this.timeText = new Text({
-      text: "",
-      style: {
-        fill: 0xff3b74,
-        fontFamily,
-        fontSize: timeRegion.height * 20 / 32,
-        fontWeight: "normal",
-        align: "center",
-      },
-      label: "rehearsal-time-label",
-    });
-    this.timeText.anchor.set(0.5, 0.5);
-    this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
-    this.timeText.zIndex = 21;
-    this.root.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
-
-    if (mode.isDemoPlayMode) {
-      const demo = layout.demoBadgeBoundsTopLeft;
-      const badge = new NineSliceSprite({
-        texture: demoBackgroundTexture,
-        ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption,
-        label: "rehearsal-demo-badge-background",
-      });
-      applyBounds(badge, demo);
-      badge.tint = 0xff3b74;
-      badge.zIndex = 20;
-      const label = new Text({
-        text: "デモプレイ",
-        style: {
-          fill: 0xffffff,
-          fontFamily,
-          fontSize: demo.height * 24 / 38,
-          fontWeight: "normal",
-        },
-        label: "rehearsal-demo-badge",
-      });
-      label.anchor.set(0.5, 0.5);
-      label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
-      label.zIndex = 21;
-      this.root.addChild(badge, label);
+    if (mode.sessionMode === "rehearsal") {
+      this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
+      applyBounds(this.returnButton, layout.returnFive.widgetBoundsTopLeft);
+      this.returnButton.zIndex = 10;
+      this.advanceButton = new Sprite({ texture: advanceTexture, label: "rehearsal-advance-five" });
+      applyBounds(this.advanceButton, layout.advanceFive.widgetBoundsTopLeft);
+      this.advanceButton.zIndex = 10;
+      const timeRegion = layout.timeLabelBoundsTopLeft;
+      const timeBackground = new NineSliceSprite({ texture: timeBackgroundTexture, ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.rehearsalTime, label: "rehearsal-time-label-background" });
+      applyBounds(timeBackground, timeRegion);
+      timeBackground.tint = 0xffffff;
+      timeBackground.zIndex = 20;
+      this.timeText = this.text("", timeRegion.height * 20 / 32, 0xff3b74, "rehearsal-time-label");
+      this.timeText.anchor.set(0.5, 0.5);
+      this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
+      this.timeText.zIndex = 21;
+      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
+      if (mode.isDemoPlayMode) {
+        const demo = layout.demoBadgeBoundsTopLeft;
+        const badge = new NineSliceSprite({ texture: demoBackgroundTexture, ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption, label: "rehearsal-demo-badge-background" });
+        applyBounds(badge, demo);
+        badge.tint = 0xff3b74;
+        badge.zIndex = 20;
+        const label = this.text("デモプレイ", demo.height * 24 / 38, 0xffffff, "rehearsal-demo-badge");
+        label.anchor.set(0.5, 0.5);
+        label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
+        label.zIndex = 21;
+        this.rehearsalRoot.addChild(badge, label);
+      }
+      const initialized = this.updateTimeline(0);
+      if (initialized.status !== "ok") throw new Error(initialized.capability);
+    } else {
+      this.returnButton = null;
+      this.advanceButton = null;
+      this.timeText = null;
+      this.rehearsalRoot.visible = false;
     }
     this.root.sortChildren();
-    const initialized = this.updateTimeline(0);
-    if (initialized.status !== "ok") throw new Error(initialized.capability);
   }
 
   updateTimeline(timelineSeconds: number): SimulatorResult<void> {
-    if (this.disposed) return evidenceRequired(
-      "render.rehearsal-control.after-dispose",
-      ["LR-C03"],
-      "Disposed Rehearsal controls reject timeline publication.",
-    );
+    if (this.disposed) return evidenceRequired("render.in-game-control.after-dispose", ["LR-C03", "PAU-B01"], "Disposed InGame controls reject timeline publication.");
+    if (this.timeText === null) return ok(undefined);
     const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
     if (formatted.status !== "ok") return formatted;
     this.timelineSeconds = timelineSeconds;
@@ -1625,13 +1648,27 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
   }
 
   setMoveTimeInProgress(active: boolean): SimulatorResult<void> {
-    if (this.disposed || typeof active !== "boolean") return evidenceRequired(
-      "render.rehearsal-control.invalid-move-state",
-      ["LR-E11"],
-      "Only the live control owner may publish an explicit MoveTime availability state.",
-    );
+    if (this.disposed || typeof active !== "boolean") return evidenceRequired("render.in-game-control.invalid-move-state", ["LR-E11"], "Only the live control owner may publish an explicit MoveTime availability state.");
     this.moveTimeInProgress = active;
     this.applyAvailability();
+    return ok(undefined);
+  }
+
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void> {
+    if (this.disposed || snapshot.surfaceRevision !== this.surfaceRevision || snapshot.surfaceRevision !== snapshot.layout.surfaceRevision) {
+      return evidenceRequired("render.pause-control.invalid-state", ["PAU-B01", "PAU-B05"], "Pause visuals consume one live scene snapshot bound to the exact initial surface revision.");
+    }
+    applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
+    this.pauseButton.visible = snapshot.playable && snapshot.state === "playing";
+    this.rehearsalRoot.visible = snapshot.playable && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
+    const countdownNumber = snapshot.state === "resume-countdown"
+      ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
+      : null;
+    if (this.lastPauseState !== snapshot.state || this.lastCountdownNumber !== countdownNumber) {
+      this.rebuildModal(snapshot, countdownNumber);
+      this.lastPauseState = snapshot.state;
+      this.lastCountdownNumber = countdownNumber;
+    }
     return ok(undefined);
   }
 
@@ -1644,12 +1681,80 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
     return ok(undefined);
   }
 
+  private rebuildModal(snapshot: PauseControlSceneSnapshot, countdownNumber: number | null): void {
+    this.modalRoot.removeChildren().forEach((child) => child.destroy({ children: true }));
+    this.modalRoot.visible = snapshot.state !== "playing";
+    if (snapshot.state === "playing") return;
+    if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
+      const texture = this.pauseTextures.countdown[countdownNumber - 1];
+      const sprite = new Sprite({ texture, label: `resume-countdown-${countdownNumber}` });
+      const scale = snapshot.layout.controlScale;
+      sprite.width = texture.width * scale;
+      sprite.height = texture.height * scale;
+      sprite.position.set((snapshot.layout.viewportWidth - sprite.width) / 2 + (countdownNumber === 1 ? -5 * scale : 0), (snapshot.layout.viewportHeight - sprite.height) / 2);
+      this.modalRoot.addChild(sprite);
+      return;
+    }
+    const cover = new Graphics().rect(0, 0, snapshot.layout.viewportWidth, snapshot.layout.viewportHeight).fill({ color: 0x000000, alpha: 0.5 });
+    cover.label = "pause-dark-cover";
+    this.modalRoot.addChild(cover);
+    if (snapshot.state === "pause-menu") this.buildPauseMenu(snapshot);
+    else this.buildConfirmation(snapshot, snapshot.state === "retry-confirm");
+  }
+
+  private buildPauseMenu(snapshot: PauseControlSceneSnapshot): void {
+    const layout = snapshot.layout;
+    this.addWindow(layout.pauseMenu.windowBoundsTopLeft, "pause-window");
+    this.addHeader(layout.pauseMenu.windowBoundsTopLeft, Math.fround(842 * layout.controlScale), Math.fround(40 * layout.controlScale));
+    this.addCenteredText(snapshot.words.pause.title, layout.viewportWidth / 2, layout.pauseMenu.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, "pause-title");
+    this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, "pause-message");
+    this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, "pause-abort");
+    this.addButton(layout.pauseMenu.retryBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[1], 32 * layout.controlScale, "pause-retry");
+    this.addButton(layout.pauseMenu.resumeBoundsTopLeft, this.pauseTextures.pink, snapshot.words.pause.buttons[2], 34 * layout.controlScale, "pause-resume");
+  }
+
+  private buildConfirmation(snapshot: PauseControlSceneSnapshot, retry: boolean): void {
+    const layout = snapshot.layout;
+    this.addWindow(layout.confirmation.windowBoundsTopLeft, retry ? "retry-confirm-window" : "abort-confirm-window");
+    this.addHeader(layout.confirmation.windowBoundsTopLeft, Math.fround(558 * layout.controlScale), Math.fround(40 * layout.controlScale));
+    const words = retry ? snapshot.words.retry : snapshot.words.abort;
+    this.addCenteredText(words.title, layout.viewportWidth / 2, layout.confirmation.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, retry ? "retry-confirm-title" : "abort-confirm-title");
+    this.addCenteredText(words.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 38 * layout.controlScale, 24 * layout.controlScale, 0x333333, retry ? "retry-confirm-message" : "abort-confirm-message");
+    if (!retry) this.addCenteredText(snapshot.words.abort.annotation, layout.viewportWidth / 2, layout.viewportHeight / 2 + 52 * layout.controlScale, 19 * layout.controlScale, 0x555555, "abort-confirm-annotation");
+    this.addButton(layout.confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, retry ? "retry-cancel" : "abort-cancel");
+    this.addButton(layout.confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, retry ? "retry-confirm" : "abort-confirm");
+  }
+
+  private addWindow(value: PauseControlBounds, label: string): void {
+    const window = new NineSliceSprite({ texture: this.pauseTextures.window, leftWidth: 12, rightWidth: 12, topHeight: 12, bottomHeight: 12, label });
+    applyBounds(window, value);
+    this.modalRoot.addChild(window);
+  }
+  private addHeader(window: PauseControlBounds, width: number, height: number): void {
+    const header = new NineSliceSprite({ texture: this.pauseTextures.header, leftWidth: 28, rightWidth: 4, topHeight: 0, bottomHeight: 0, label: "pause-dialog-header" });
+    applyBounds(header, { x: Math.fround(window.x + (window.width - width) / 2), y: window.y, width, height });
+    this.modalRoot.addChild(header);
+  }
+  private addButton(value: PauseControlBounds, texture: Texture, text: string, fontSize: number, label: string): void {
+    const button = new NineSliceSprite({ texture, leftWidth: 14, rightWidth: 20, topHeight: 22, bottomHeight: 12, label });
+    applyBounds(button, value);
+    const caption = this.text(text, fontSize, texture === this.pauseTextures.pink ? 0xffffff : 0x555555, `${label}-label`);
+    caption.anchor.set(0.5, 0.5);
+    caption.position.set(value.x + value.width / 2, value.y + value.height / 2);
+    this.modalRoot.addChild(button, caption);
+  }
+  private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string): void {
+    const value = this.text(text, size, fill, label);
+    value.anchor.set(0.5, 0.5);
+    value.position.set(x, y);
+    this.modalRoot.addChild(value);
+  }
+  private text(value: string, size: number, fill: number, label: string): Text {
+    return new Text({ text: value, style: { fill, fontFamily: this.fontFamily, fontSize: size, fontWeight: "normal", align: "center" }, label });
+  }
   private applyAvailability(): void {
-    const disabledAlpha = 0.45;
-    this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0
-      ? disabledAlpha
-      : 1;
-    this.advanceButton.alpha = this.moveTimeInProgress ? disabledAlpha : 1;
+    if (this.returnButton !== null) this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0 ? 0.45 : 1;
+    if (this.advanceButton !== null) this.advanceButton.alpha = this.moveTimeInProgress ? 0.45 : 1;
   }
 }
 

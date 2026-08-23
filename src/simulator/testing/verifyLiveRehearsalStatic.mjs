@@ -44,6 +44,25 @@ for (const symbol of [
 ]) {
   if (!control.includes(symbol)) throw new Error(`control prefab/capability missing ${symbol}`);
 }
+const pause = read("scene/pauseControlScene.ts");
+for (const symbol of [
+  "PauseControlSceneOwner", "createPauseControlLayout", "consumePauseControlCommand",
+  "resume-countdown", "RESUME_COUNTDOWN_SECONDS", "issuedCommands", "hardware-back-outside-pause-menu",
+  "retry-confirm", "abort-confirm",
+]) if (!pause.includes(symbol)) throw new Error(`Pause scene/capability missing ${symbol}`);
+const autonomous = read("runtime/autonomousSimulatorRuntime.ts");
+for (const symbol of ["pauseControl.route", "publishPauseControlState", "consumePauseControlCommand", "platform-abort"])
+  if (!autonomous.includes(symbol)) throw new Error(`Pause runtime route missing ${symbol}`);
+const pixi = read("backends/pixi/pixiRendererBackend.ts");
+for (const symbol of ["createInGameControlOverlay", "original-pause-button", "pause-modal-root", "resume-countdown-", "pauseTextures.countdown"])
+  if (!pixi.includes(symbol)) throw new Error(`Pause Pixi owner missing ${symbol}`);
+const builtInWindow = readFileSync(resolve(process.cwd(), "src/app/BuiltInSimulatorWindow.tsx"), "utf8");
+for (const forbiddenSymbol of ["showTemporaryMobileBack", "temporaryMobileBackStyle", "点击开始以解锁音频"])
+  if (builtInWindow.includes(forbiddenSymbol)) throw new Error(`player shell retains forbidden running overlay: ${forbiddenSymbol}`);
+const browserPlatform = readFileSync(resolve(process.cwd(), "src/app/simulator/browserSimulatorPlatform.ts"), "utf8");
+for (const symbol of ["platform-pause", "platform-resume", "platform-abort", "hardwareBack"])
+  if (!browserPlatform.includes(symbol)) throw new Error(`browser raw platform input missing ${symbol}`);
+
 const capabilities = read("public/capabilities.ts");
 for (const required of [
   'liveRehearsalFourModeMatrix: "closed-portable"',

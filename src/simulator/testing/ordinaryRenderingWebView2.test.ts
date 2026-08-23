@@ -25,13 +25,14 @@ import { createPixiCombinedScene, type PixiCombinedScene } from "../backends/pix
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
 import {
   PixiRendererBackend,
-  type PixiRehearsalControlOverlay,
+  type PixiInGameControlOverlay,
 } from "../backends/pixi/pixiRendererBackend";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
+import { augmentScoreHudProfilesForPause } from "./pauseControlTestResources";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import {
   ImmutableLocalParticleResourceProvider,
@@ -48,6 +49,7 @@ import type { SimulatorResult } from "../engine/evidence";
 import type { SimulatorEngine } from "../host/contracts";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorSceneLayout, type SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { createPauseControlLayout, PauseControlSceneOwner } from "../scene/pauseControlScene";
 import { observePixiWorld } from "./pixiWorldObserver";
 import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
 
@@ -74,7 +76,7 @@ interface BrowserSession {
   readonly particleRenderer: PixiParticleRendererBackend;
   readonly combined: PixiCombinedScene;
   readonly layout: SimulatorSceneLayout;
-  readonly controlOverlay: PixiRehearsalControlOverlay | null;
+  readonly controlOverlay: PixiInGameControlOverlay;
   mounted: boolean;
 }
 
@@ -167,7 +169,7 @@ async function main(): Promise<void> {
   const requiredLabels = [
     "initialize", "note-spawn", "note-animation", "judgement", "combo-add-score",
     "rank-c", "rank-b", "rank-a", "rank-s", "rank-ss", "particle-peak",
-    "pause", "resume", "natural-completion", "life-warning", "game-over",
+    "pause", "pause-retry-confirm", "pause-abort-confirm", "pause-resume-countdown", "resume", "natural-completion", "life-warning", "game-over",
     "rehearsal-manual-controls", "rehearsal-life-zero-continuation",
     "rehearsal-forward-five-controls", "rehearsal-return-five-controls",
     "rehearsal-auto-demo-controls",
@@ -231,17 +233,28 @@ async function runAutoScenario(
   captures: FrameCapture[],
 ): Promise<void> {
   const captured = new Set(captures.map((entry) => entry.label));
+  const pauseLayout = requireOk(createPauseControlLayout(session.layout.surfaceLayout));
+  const pauseOwner = new PauseControlSceneOwner();
+  const playingPauseState = pauseOwner.snapshot(LIVE_AUTO_MODE, pauseLayout, true);
+  requireOk(session.controlOverlay.publishPauseControlState(playingPauseState));
   let completed = false;
   for (let frame = 1; frame <= 1400; frame += 1) {
     if (frame === 140) {
       requireOk(session.engine.pause());
+      requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "pause-menu" as const })));
       requireOk(session.engine.step(DELTA));
       captures.push(await capture(app, session, "pause", frame));
+      requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "retry-confirm" as const })));
+      captures.push(await capture(app, session, "pause-retry-confirm", frame));
+      requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "abort-confirm" as const })));
+      captures.push(await capture(app, session, "pause-abort-confirm", frame));
+      requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })));
+      captures.push(await capture(app, session, "pause-resume-countdown", frame));
       requireOk(session.engine.resume());
+      requireOk(session.controlOverlay.publishPauseControlState(playingPauseState));
       requireOk(session.engine.step(DELTA));
       captures.push(await capture(app, session, "resume", frame));
-      captured.add("pause");
-      captured.add("resume");
+      for (const label of ["pause", "pause-retry-confirm", "pause-abort-confirm", "pause-resume-countdown", "resume"]) captured.add(label);
       continue;
     }
     requireOk(session.engine.step(DELTA));
@@ -370,7 +383,7 @@ async function createSession(
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
-  const controlOverlay = requireOk(renderer.createRehearsalControlOverlay(
+  const controlOverlay = requireOk(renderer.createInGameControlOverlay(
     identity,
     180,
     layout.surfaceLayout,
@@ -439,7 +452,7 @@ function mount(app: Application, session: BrowserSession): void {
 
 function disposeSession(app: Application, session: BrowserSession) {
   requireOk(session.engine.dispose());
-  if (session.controlOverlay !== null) requireOk(session.controlOverlay.dispose());
+  requireOk(session.controlOverlay.dispose());
   session.combined.root.removeFromParent();
   requireOk(session.combined.dispose());
   session.mounted = false;
@@ -540,7 +553,7 @@ async function loadInputs(): Promise<LoadedInputs> {
     assets: Object.freeze([
       ...base.assets,
       ...CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((entry) => entry.profile),
-      ...CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) => entry.profile),
+      ...augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) => entry.profile)),
     ]),
     ordinaryVisibleProfile: visible,
     scoreGaugeSsAnimation: scoreAnimation,

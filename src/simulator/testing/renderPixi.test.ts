@@ -8,7 +8,7 @@ declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
 const { join } = require("node:path");
 
-import { Container, Graphics, Texture, TextureSource } from "pixi.js";
+import { Container, Graphics, Sprite, Text, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
@@ -33,6 +33,8 @@ import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingG
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import { createPauseControlLayout, PauseControlSceneOwner } from "../scene/pauseControlScene";
+import { augmentScoreHudProfilesForPause, PAUSE_COUNTDOWN_FIXTURE_RELATIVE_PATHS } from "./pauseControlTestResources";
 import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelector";
 import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
@@ -84,13 +86,14 @@ async function main(): Promise<void> {
     join(scoreRoot, "score_gauge_ss_animation_profile.json"), "utf8",
   )));
   assert(scoreAnimation !== null, "ScoreGaugeSS profile parses");
+  const scoreResources = augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile));
   const profile: RenderResourceProfile = {
     ...baseProfile,
     packIdentity: `${baseProfile.packIdentity}+actual-visible+actual-score`,
     assets: Object.freeze([
       ...baseProfile.assets,
       ...CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((row) => row.profile),
-      ...CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile),
+      ...scoreResources,
     ]),
     ordinaryVisibleProfile: visibleProfile,
     scoreGaugeSsAnimation: scoreAnimation,
@@ -103,16 +106,28 @@ async function main(): Promise<void> {
   ), "actual Pixi prepare");
   requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "bind control surface");
 
-  assert(requireOk(renderer.createRehearsalControlOverlay(LIVE_AUTO_MODE, 120, CONTROL_SURFACE_LAYOUT), "live controls") === null,
-    "Live does not create Rehearsal controls");
+  const liveControls = requireOk(renderer.createInGameControlOverlay(LIVE_AUTO_MODE, 120, CONTROL_SURFACE_LAYOUT), "live controls");
+  const pauseLayout = requireOk(createPauseControlLayout(CONTROL_SURFACE_LAYOUT), "Pause visual layout");
+  const pauseOwner = new PauseControlSceneOwner();
+  const playing = pauseOwner.snapshot(LIVE_AUTO_MODE, pauseLayout, true);
+  requireOk(liveControls.publishPauseControlState(playing), "publish visible Pause button");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible, "Live owns visible original Pause button");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "publish Pause modal");
+  assert(liveControls.root.getChildByLabel("pause-window", true) !== null, "Pause modal uses serialized window");
+  assert((liveControls.root.getChildByLabel("pause-title", true) as Text).text === "一時停止", "Pause modal uses current visible title");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "retry-confirm" as const })), "publish Retry confirmation");
+  assert(liveControls.root.getChildByLabel("retry-confirm-window", true) !== null, "Retry confirmation is Simulator-owned");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })), "publish Resume countdown");
+  assert(liveControls.root.getChildByLabel("resume-countdown-3", true) !== null, "Resume countdown consumes exact Countdown3 texture");
+  requireOk(liveControls.dispose(), "dispose Live controls");
   const manualControls = requireOk(
-    renderer.createRehearsalControlOverlay(REHEARSAL_MANUAL_MODE, 125, CONTROL_SURFACE_LAYOUT),
+    renderer.createInGameControlOverlay(REHEARSAL_MANUAL_MODE, 125, CONTROL_SURFACE_LAYOUT),
     "manual Rehearsal controls",
   );
-  assert(manualControls !== null, "manual Rehearsal overlay exists");
-  assert(manualControls.root.label === "rehearsal-control-root", "control root identity");
+  assert(manualControls.root.label === "in-game-control-root", "control root identity");
+  const rehearsalRoot = manualControls.root.getChildByLabel("rehearsal-control-root") as Container;
   assert(JSON.stringify(
-    manualControls.root.children.filter((child) => child.label.includes("rehearsal-")).map((child) => child.label),
+    rehearsalRoot.children.filter((child) => child.label.includes("rehearsal-")).map((child) => child.label),
   ) === JSON.stringify([
     "rehearsal-return-five",
     "rehearsal-advance-five",
@@ -120,15 +135,14 @@ async function main(): Promise<void> {
     "rehearsal-time-label",
   ]), "manual control child identities");
   requireOk(manualControls.updateTimeline(8), "control timeline");
-  assert((manualControls.root.getChildByLabel("rehearsal-time-label") as any)?.text === "0:08/2:05",
+  assert((manualControls.root.getChildByLabel("rehearsal-time-label", true) as any)?.text === "0:08/2:05",
     "engine-owned Rehearsal time label");
   requireOk(manualControls.dispose(), "dispose manual controls");
   const autoControls = requireOk(
-    renderer.createRehearsalControlOverlay(REHEARSAL_AUTO_MODE, 125, CONTROL_SURFACE_LAYOUT),
+    renderer.createInGameControlOverlay(REHEARSAL_AUTO_MODE, 125, CONTROL_SURFACE_LAYOUT),
     "Auto Rehearsal controls",
   );
-  assert(autoControls !== null, "Auto Rehearsal overlay exists");
-  assert(autoControls.root.getChildByLabel("rehearsal-demo-badge") !== null,
+  assert(autoControls.root.getChildByLabel("rehearsal-demo-badge", true) !== null,
     "Demo Play badge exists only on Rehearsal Auto");
   requireOk(autoControls.dispose(), "dispose Auto controls");
 
@@ -989,13 +1003,19 @@ function actualResources(assets: readonly RenderResourceAssetProfile[]) {
   ]);
   const visibleFiles = new Map(CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((row) => [row.profile.logicalAssetId, join("portable-assets", row.resourceKeySuffix)]));
   const scoreFiles = new Map(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => [row.profile.logicalAssetId, join("portable-assets", row.resourceKeySuffix)]));
+  const pauseFiles = new Map(PAUSE_COUNTDOWN_FIXTURE_RELATIVE_PATHS.map((relative, index) => [
+    `ui/pause/countdown-${index + 1}`,
+    join(process.cwd(), "src/simulator/testing/fixtures", relative),
+  ]));
   return assets.map((asset) => {
     const ordinary = ordinaryFiles.get(asset.logicalAssetId);
     const visible = visibleFiles.get(asset.logicalAssetId);
     const score = scoreFiles.get(asset.logicalAssetId);
+    const pause = pauseFiles.get(asset.logicalAssetId);
     const path = ordinary !== undefined ? join(ordinaryRoot, ordinary)
       : visible !== undefined ? join(visibleRoot, visible)
       : score !== undefined ? join(scoreRoot, score)
+      : pause !== undefined ? pause
       : null;
     if (path === null) throw new Error(`missing actual fixture mapping ${asset.logicalAssetId}`);
     return Object.freeze({ logicalAssetId: asset.logicalAssetId, bytes: new Uint8Array(readFileSync(path)) });

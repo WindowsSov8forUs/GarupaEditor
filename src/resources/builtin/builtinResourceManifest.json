@@ -87,6 +87,21 @@
       "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D"
     },
     {
+      "path": "game/prefabs/bms/pause/countdown-1.png",
+      "byteLength": 2024,
+      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-2.png",
+      "byteLength": 10393,
+      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-3.png",
+      "byteLength": 12514,
+      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+    },
+    {
       "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png",
       "byteLength": 2002,
       "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D"

@@ -12,6 +12,9 @@ import rankLabelFontUrl from "../../assets/game/fonts/sgm/rank-label-font.ttf?ur
 import ordinaryRenderProfileUrl from "../../assets/game/portable/profiles/ordinary-render/profile.json?url&no-inline";
 import ordinaryVisibleProfileUrl from "../../assets/game/portable/profiles/ordinary-visible/profile.json?url&no-inline";
 import startupLineStarUrl from "../../assets/game/prefabs/bms/information/startup-line-star.png?url&no-inline";
+import countdown1Url from "../../assets/game/prefabs/bms/pause/countdown-1.png?url&no-inline";
+import countdown2Url from "../../assets/game/prefabs/bms/pause/countdown-2.png?url&no-inline";
+import countdown3Url from "../../assets/game/prefabs/bms/pause/countdown-3.png?url&no-inline";
 import highRankKiraUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png?url&no-inline";
 import highRankLongStarUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png?url&no-inline";
 import highRankOverlayUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png?url&no-inline";
@@ -82,6 +85,11 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("prefabs/bms/information", "Startup information resources", "image", [
     file("game/prefabs/bms/information/startup-line-star.png", "startup-line-star.png", "image/png", startupLineStarUrl),
+  ]),
+  resource("prefabs/bms/pause", "In-game Pause countdown resources", "package", [
+    file("game/prefabs/bms/pause/countdown-1.png", "countdown-1.png", "image/png", countdown1Url),
+    file("game/prefabs/bms/pause/countdown-2.png", "countdown-2.png", "image/png", countdown2Url),
+    file("game/prefabs/bms/pause/countdown-3.png", "countdown-3.png", "image/png", countdown3Url),
   ]),
   resource("prefabs/bms/rhythmgamegauge/score", "Score gauge portable resources", "package", [
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),

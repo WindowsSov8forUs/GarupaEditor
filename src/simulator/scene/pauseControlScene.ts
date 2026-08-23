@@ -58,6 +58,7 @@ export interface PauseControlSceneSnapshot {
   readonly state: PauseControlState;
   readonly surfaceRevision: number;
   readonly mode: SimulatorTimelineControlState["mode"];
+  readonly playable: boolean;
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
   readonly words: {
@@ -121,9 +122,11 @@ export class PauseControlSceneOwner {
     manualFrame: ManualInputFrame | null,
     controlState: SimulatorTimelineControlState,
     layout: PauseControlLayout,
+    hardwareBack = false,
   ): SimulatorResult<PauseControlRouteResult> {
     if (this.disposed || !validControlState(controlState) || !validLayout(layout) ||
       !Number.isFinite(deltaTimeSeconds) || Math.fround(deltaTimeSeconds) < 0 ||
+      typeof hardwareBack !== "boolean" ||
       (manualFrame !== null && (typeof manualFrame !== "object" || !Array.isArray(manualFrame.touches)))) {
       return evidenceRequired(
         "pause.control.invalid-route-state",
@@ -134,6 +137,19 @@ export class PauseControlSceneOwner {
     const commands: Array<PauseControlCommand | RehearsalControlCommand> = [];
     const touches = manualFrame?.touches ?? [];
     const gameplay: ManualInputTouch[] = [];
+
+    if (hardwareBack) {
+      if (this.state === "pause-menu" && controlState.playable && controlState.paused && !controlState.moveTimeInProgress) {
+        this.state = "resume-countdown";
+        this.countdown = RESUME_COUNTDOWN_SECONDS;
+        this.pressed.clear();
+      } else {
+        return this.reject(
+          "pause.control.hardware-back-outside-pause-menu",
+          "Current Android Back evidence maps only an open three-button Pause menu to the right/Resume countdown callback; playing and nested-confirmation Back remain evidence-required.",
+        );
+      }
+    }
 
     if (this.state === "resume-countdown") {
       if (!controlState.paused) return this.reject("pause.control.countdown-engine-not-paused", "Resume countdown requires the engine to remain paused until its exact three-second callback.");
@@ -182,15 +198,16 @@ export class PauseControlSceneOwner {
     return ok(Object.freeze({
       manualFrame: filtered,
       commands: Object.freeze(commands),
-      snapshot: this.snapshot(controlState.mode, layout),
+      snapshot: this.snapshot(controlState.mode, layout, controlState.playable),
     }));
   }
 
-  snapshot(mode: SimulatorTimelineControlState["mode"], layout: PauseControlLayout): PauseControlSceneSnapshot {
+  snapshot(mode: SimulatorTimelineControlState["mode"], layout: PauseControlLayout, playable = true): PauseControlSceneSnapshot {
     return deepFreeze({
       state: this.state,
       surfaceRevision: layout.surfaceRevision,
       mode,
+      playable,
       layout,
       resumeCountdownSecondsRemaining: this.state === "resume-countdown" ? this.countdown : null,
       words: VISIBLE_WORDS,

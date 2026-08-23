@@ -22,7 +22,7 @@ The quick tier includes the startup-direction schema/state/mutation/Pixi/static 
 npm.cmd run simulator:test:total-revalidation
 ```
 
-This runs the current 40-semantic-leaf DAG, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current digests are ordinary `53fff434639585383f7fff18b2c9ad97aa45ab47afdc27aad476399cb1fb39a4`, startup visual `dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f`（包含4:3/32:9 captures）, and startup audio `7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc`. The audio digest additionally requires `userActivation.isActive=false`、`hasBeenActive=false`、initial AudioContext `running` and advancing without a test-side `resume()`; it covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
+This runs the current 40-semantic-leaf DAG, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current digests are ordinary `495ebf50b6d2418996a7545fd484758dc07e00ca5066796d5c3eb17b0261d9e0`（每个fresh含24 captures及Pause/menu/Retry/Abort/countdown）, startup visual `dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f`（包含4:3/32:9 captures）, and startup audio `7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc`. The audio digest additionally requires `userActivation.isActive=false`、`hasBeenActive=false`、initial AudioContext `running` and advancing without a test-side `resume()`; it covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
 
 Cargo release targets are retained under each ignored WebView2 harness `target/` directory, so repeated full runs reuse validated Rust artifacts. To force the historical cold-build boundary:
 
@@ -31,6 +31,16 @@ npm.cmd run simulator:test:total-revalidation:clean
 ```
 
 `SIMULATOR_WEBVIEW2_CLEAN_BUILD=1` affects only ignored Cargo build artifacts. It does not alter browser process freshness, scene inputs, capture count, expected digests, or production behavior.
+
+## Original Pause leaves
+
+```powershell
+npm.cmd run simulator:test:live-rehearsal
+npm.cmd run simulator:test:render-pixi
+npm.cmd run simulator:test:ordinary-rendering-webview2
+```
+
+第一项消费Reverse `770af437`最终contract/resource profile与`99d40bcc`的19-trace manifest，验证四模式Pause优先命中、modal吞触摸、opaque one-use capability、3秒Resume countdown、Live/Practice fresh Retry、Abort/cancel/confirm及Android Back→Resume。第二项用actual Pixi验证`button_pause`、三层modal、现有UICommon/sgm及Countdown3纹理。第三项每个fresh增加Pause/menu/Retry/Abort/countdown captures，3 fresh共24 captures/进程；functional digest为`495ebf50…1d9e0`。截图只作browser观察，布局数值全部来自serialized/StarUI公式。
 
 ## Startup-direction leaves
 

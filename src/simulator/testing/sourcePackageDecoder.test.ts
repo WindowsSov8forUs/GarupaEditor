@@ -46,6 +46,7 @@ async function testCommonRenderPackages(): Promise<void> {
   add("fonts/score/score", [["score-font.png", "fonts/score/score/score-font.png"]]);
   add("fonts/sgm", [["rank-label-font.ttf", "fonts/sgm/rank-label-font.ttf"]]);
   add("prefabs/bms/information", [["startup-line-star.png", "prefabs/bms/information/startup-line-star.png"]]);
+  add("prefabs/bms/pause", [1, 2, 3].map((index) => [`countdown-${index}.png`, `prefabs/bms/pause/countdown-${index}.png`] as const));
   add("prefabs/bms/rhythmgamegauge/score", [
     ["high-rank-kira.png", "prefabs/bms/rhythmgamegauge/score/high-rank-kira.png"],
     ["high-rank-long-star.png", "prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png"],
@@ -55,7 +56,7 @@ async function testCommonRenderPackages(): Promise<void> {
   const prepared = await prepareLeasedCommonRenderResources(new MemoryLease(packages));
   assert.equal(prepared.status, "accepted", prepared.status === "rejected" ? prepared.failure.capability : "");
   if (prepared.status === "rejected") return;
-  assert.equal(prepared.value.profile.assets.length, 15);
+  assert.equal(prepared.value.profile.assets.length, 18);
   assert.equal(prepared.value.profile.packIdentity, "application-leased-semantic-render-v1");
   assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
   assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
