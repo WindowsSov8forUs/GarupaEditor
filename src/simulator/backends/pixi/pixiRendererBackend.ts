@@ -536,12 +536,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       for (const command of pending.commands) {
         this.apply(command, pending.reservedNodes, pending.reservedGeometry, pending.reservedMasks);
       }
-    } catch {
+    } catch (error) {
       this.pending.delete(batch);
       this.recording.discard(pending.recordingBatch);
       this.recording.recordTerminalFault(
         "render.pixi.scene-mutation-threw",
-        "A Pixi scene exception terminates the renderer and is never converted to a no-op.",
+        `A Pixi scene exception terminates the renderer and is never converted to a no-op. ${error instanceof Error ? error.message : String(error)}`,
       );
       const cleanupFailures = this.resetSceneAfterTerminalMutation(pending);
       this.recording.recordSecondaryCleanupFailures(cleanupFailures);
@@ -1112,7 +1112,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           )) {
             return reject(
               "render.pixi.hud-outside-r3-profile",
-              "Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys.",
+              `Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys. role=${shadow.get(command.renderObjectId)!.role} command=${JSON.stringify(command)}.`,
             );
           }
           break;
@@ -1715,13 +1715,8 @@ function isEvidenceHud(
         )));
     }
     case "result":
-      return textures.has(spriteKey(
-        CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId,
-        command.state.judgeKey,
-      )) && (command.state.timingKey === null || textures.has(spriteKey(
-        CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId,
-        command.state.timingKey,
-      )));
+      return hasUniqueExactTextureBinding(textures, command.state.judgeKey) &&
+        (command.state.timingKey === null || hasUniqueExactTextureBinding(textures, command.state.timingKey));
     case "life":
       return ordinaryLifeTexturesAvailable(textures) &&
         decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
@@ -2008,7 +2003,7 @@ function applyResultHud(
     CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
   );
   object.node.alpha = profile.result.alpha;
-  const judgeBinding = requiredTextureBinding(textures, CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId, state.judgeKey);
+  const judgeBinding = requiredUniqueExactTextureBinding(textures, state.judgeKey);
   const judge = new Sprite({ texture: judgeBinding.texture, label: "result-judge" });
   judge.anchor.set(0.5);
   judge.width = profile.result.judgeSize[0];
@@ -2018,7 +2013,7 @@ function applyResultHud(
   visual.digitSprites.push(judge);
   retainHudBinding(object, judgeBinding.key, referenceCounts);
   if (state.timingKey !== null) {
-    const timingBinding = requiredTextureBinding(textures, CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId, state.timingKey);
+    const timingBinding = requiredUniqueExactTextureBinding(textures, state.timingKey);
     const timing = new Sprite({ texture: timingBinding.texture, label: "result-timing" });
     timing.anchor.set(0.5);
     timing.width = profile.result.timingSize[0];
@@ -2388,6 +2383,28 @@ function requiredTextureBinding(
   const texture = textures.get(key);
   if (texture === undefined) throw new Error(`missing Score HUD texture ${logicalAssetId}:${exactKey}`);
   return Object.freeze({ key, texture });
+}
+
+function hasUniqueExactTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  exactKey: string,
+): boolean {
+  let count = 0;
+  for (const key of textures.keys()) {
+    if (boundSpriteExactKey(key) === exactKey) count += 1;
+  }
+  return count === 1;
+}
+
+function requiredUniqueExactTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  exactKey: string,
+): { readonly key: string; readonly texture: Texture } {
+  const matches = [...textures].filter(([key]) => boundSpriteExactKey(key) === exactKey);
+  if (matches.length !== 1) {
+    throw new Error(`Result HUD requires exactly one selected Judge texture for ${exactKey}; found ${matches.length}.`);
+  }
+  return Object.freeze({ key: matches[0]![0], texture: matches[0]![1] });
 }
 
 function retainHudBinding(

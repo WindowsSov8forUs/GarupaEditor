@@ -469,7 +469,7 @@ async function main(): Promise<void> {
   await verifyActualPixiHabahiroComplete(profile, resources);
   const fullChart = await verifyActualPixiFullChart(profile, resources);
   await verifyActualPixiGarupaProduct(profile, resources);
-  await verifyActualPixiSelectedSkin(baseProfile);
+  await verifyActualPixiSelectedSkin(profile);
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
     writeFileSync(observationPath, JSON.stringify({
@@ -560,6 +560,12 @@ async function verifyActualPixiSelectedSkin(
       color: color(1, 1, 1, 1), ordering: ordering(4, 2), maskObjectId: null,
       sessionId: "actual-pixi-selected-skin", sequence: 9, frame: 0, substep: 0 },
     { kind: "activate-object", renderObjectId: "skin:judge", sessionId: "actual-pixi-selected-skin", sequence: 10, frame: 0, substep: 0 },
+    { kind: "create-object", renderObjectId: "skin:result", poolFamily: "result", role: "hud-result", parentObjectId: null,
+      sessionId: "actual-pixi-selected-skin", sequence: 11, frame: 0, substep: 0 },
+    { kind: "set-hud", renderObjectId: "skin:result", hudRole: "result", state: Object.freeze({ judgeKey: "judge_perfect", timingKey: null }),
+      sessionId: "actual-pixi-selected-skin", sequence: 12, frame: 0, substep: 0 },
+    { kind: "activate-object", renderObjectId: "skin:result",
+      sessionId: "actual-pixi-selected-skin", sequence: 13, frame: 0, substep: 0 },
   ];
   requireOk(renderer.commit(requireOk(renderer.preflight(extra), "selected visible preflight")), "selected visible commit");
   const scene = requireOk(createSimulatorSceneLayout(
@@ -1067,6 +1073,6 @@ function ordering(domainLayer: number, creationSequence: number) {
 function f32(value: number) { return requireOk(createRenderFloat32(Math.fround(value)), "Float32"); }
 function assert(condition: unknown, message: string): asserts condition { if (!condition) throw new Error(message); }
 function equal<T>(actual: T, expected: T, message: string): void { if (!Object.is(actual, expected)) throw new Error(`${message}: ${String(actual)} !== ${String(expected)}`); }
-function requireOk<T>(result: SimulatorResult<T>, message: string): T { if (result.status !== "ok") throw new Error(`${message}: ${result.capability}`); return result.value; }
+function requireOk<T>(result: SimulatorResult<T>, message: string): T { if (result.status !== "ok") throw new Error(`${message}: ${result.capability}: ${result.boundary}`); return result.value; }
 
 void main();
