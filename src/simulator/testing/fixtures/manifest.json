@@ -623,10 +623,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
-      "sourceReverseCommit": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
+      "sourceReverseCommit": "7629a508c4ceee0d7ac4ce908cfd32060cf45e28",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "bytes": 740,
-      "sha256": "932B4064C2CD257A3824D3412EC93D8AC6DA8D41C200D16F3E11A4236558C74F"
+      "sha256": "EDCA1824447C5F35120132BE6ECC66429EBB822172B8C37565F88C89B336EECA"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
@@ -644,10 +644,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "sourceReverseCommit": "ee76bd2923781ac80935e93608b515818905f968",
+      "sourceReverseCommit": "7629a508c4ceee0d7ac4ce908cfd32060cf45e28",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "bytes": 23732,
-      "sha256": "7F2FE0D4422AB331A78CA4D3DA55C5422B023C0BF38F21B829819002A94DCA34"
+      "bytes": 24396,
+      "sha256": "E2EEDCB153D1263FB585004FF4ACB90A93FAA1905A30D9D5559ACE60E966283B"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
@@ -1118,6 +1118,13 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
       "bytes": 12514,
       "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+    },
+    {
+      "path": "reverse-snapshots/visual-layout-correction/artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "sourceReverseCommit": "28b6a790a058fb04f45e0383554e99c86e3ae62a",
+      "sourcePath": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "bytes": 8090,
+      "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
     }
   ]
 }

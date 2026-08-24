@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-production-visual-layout-correction",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_bytes": 764840,
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+  },
+  "sources": {
+    "extractor_helper": {
+      "path": "artifacts/investigations/hud-combo-rendering/extract_hud_combo_rendering.py",
+      "sha256": "B0DB23CA459A796D88FAB9232F2357EB08D1156A1450A2DDAFACC8A028706E63"
+    },
+    "hud_profile": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "multiaspect": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+    }
+  },
+  "hud_roots": {
+    "score": {
+      "transform": {
+        "path_id": 670,
+        "game_object_path_id": 206,
+        "game_object_name": "Score",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          685,
+          745
+        ]
+      },
+      "anchor": {
+        "path_id": 1126,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1125
+        },
+        "horizontal": 1,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "life": {
+      "transform": {
+        "path_id": 461,
+        "game_object_path_id": 30,
+        "game_object_name": "LifeGauge",
+        "local_position": [
+          411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          578,
+          511,
+          464
+        ]
+      },
+      "anchor": {
+        "path_id": 1084,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1083
+        },
+        "horizontal": 3,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "add_score": {
+      "transform": {
+        "path_id": 468,
+        "game_object_path_id": 35,
+        "game_object_name": "AddScore",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          575
+        ]
+      },
+      "anchor": {
+        "path_id": 1091,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1090
+        },
+        "horizontal": 1,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "combo": {
+      "transform": {
+        "path_id": 555,
+        "game_object_path_id": 122,
+        "game_object_name": "Combo",
+        "local_position": [
+          434.70001220703125,
+          82.80000305175781,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          439
+        ]
+      },
+      "has_star_ui_anchor": false
+    },
+    "result": {
+      "transform": {
+        "path_id": 609,
+        "game_object_path_id": 199,
+        "game_object_name": "Result",
+        "local_position": [
+          0.0,
+          -160.0,
+          0.0
+        ],
+        "local_scale": [
+          0.800000011920929,
+          0.800000011920929,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          616
+        ]
+      },
+      "has_star_ui_anchor": false
+    }
+  },
+  "hud_portable_mapping": {
+    "score": "left+top StarUIAnchor resolves the Score root to safe-area left/top; descendants remain root-local",
+    "life": "right+top StarUIAnchor resolves the Life root to safe-area right/top; descendants remain root-local",
+    "add_score": {
+      "root": "left+top safe-area anchor",
+      "number_local_position_after_anchor": [
+        282.0,
+        -85.0,
+        0.0
+      ],
+      "calculation": "Offset (300,-84) + UISpriteNumber (-18,-1); do not reuse pre-anchor accumulated (-129,224)"
+    },
+    "combo": "unanchored UI_Root_Back centered authored transform",
+    "result": "unanchored UI_Root_Back centered authored transform",
+    "animation_scale": "authored animation local scale multiplies, and never replaces, the FitWidth*ScreenToSafeArea root scale"
+  },
+  "field": {
+    "button_manager": {
+      "path_id": 1153,
+      "script_file_id": 1,
+      "script_path_id": 7097,
+      "class": "ButtonManager",
+      "serialized_size": 116
+    },
+    "rhythm_game_lines_panel": {
+      "path_id": 1443,
+      "clipping": 0,
+      "clip_region": [
+        0.0,
+        0.0,
+        300.0,
+        200.0
+      ]
+    },
+    "rhythm_game_lines_image": {
+      "component": {
+        "path_id": 1200,
+        "script_file_id": 1,
+        "script_path_id": 5929,
+        "class": "UITexture",
+        "serialized_size": 316
+      },
+      "transform": {
+        "path_id": 580,
+        "game_object_path_id": 147,
+        "game_object_name": "NoteLane",
+        "local_position": [
+          0.0,
+          -240.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 520,
+        "children": []
+      },
+      "widget": {
+        "path_id": 1200,
+        "serialized_bytes": 316,
+        "pivot": 7,
+        "width": 1160,
+        "height": 610,
+        "depth": 0
+      }
+    },
+    "judge_line": {
+      "sprite_renderer_path_id": 1054,
+      "transform": {
+        "path_id": 549,
+        "game_object_path_id": 116,
+        "game_object_name": "judgeLine",
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          0.9900000095367432,
+          0.9900000095367432,
+          1.0
+        ],
+        "parent_path_id": 488,
+        "children": []
+      },
+      "button_parent_transform": {
+        "path_id": 488,
+        "game_object_path_id": 55,
+        "game_object_name": "Button4",
+        "local_position": [
+          0.0,
+          -3.450000047683716,
+          15.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 447,
+        "children": [
+          549,
+          497,
+          523
+        ]
+      }
+    },
+    "portable_mapping": {
+      "background": "UITexture 1160x610, Bottom pivot, authored (0,-240), FitWidth scale, no UIPanel clip",
+      "judge_line": "selected 1800x38 Sprite, pivot center, local scale 0.99 under the multiresolution Button4 transform",
+      "arbitrary_field_mask_allowed": false
+    }
+  },
+  "background_boundary": {
+    "selected_skin_source_dimensions": [
+      2048,
+      1024
+    ],
+    "startup_reference_input_dimensions": [
+      1600,
+      720
+    ],
+    "finding": "The committed original contracts do not authorize independent X/Y stretching or define an original-equivalent adapter from the selected Skin source texture to the portable startup full-frame input.",
+    "portable_disposition": "GarupaEditor must register any recoverable aspect-preserving adapter as explicit product semantics without claiming original framebuffer equivalence."
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "limits": [
+    "selected 2D backdrop adaptation remains outside the original-equivalence claim"
+  ]
+}

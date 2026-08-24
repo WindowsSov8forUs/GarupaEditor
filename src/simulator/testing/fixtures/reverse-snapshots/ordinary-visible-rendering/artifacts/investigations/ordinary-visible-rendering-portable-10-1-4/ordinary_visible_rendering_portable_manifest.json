@@ -21,7 +21,7 @@
         {
           "exactKey": "bg_health",
           "x": 0,
-          "y": 633,
+          "y": 329,
           "width": 186,
           "height": 62,
           "border": [
@@ -35,12 +35,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "bg_no_health",
           "x": 349,
-          "y": 287,
+          "y": 668,
           "width": 131,
           "height": 69,
           "border": [
@@ -54,12 +54,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "combo",
           "x": 592,
-          "y": 807,
+          "y": 175,
           "width": 150,
           "height": 42,
           "border": [
@@ -73,12 +73,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "combo_AP",
           "x": 837,
-          "y": 777,
+          "y": 205,
           "width": 150,
           "height": 42,
           "border": [
@@ -92,12 +92,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "hp_meter",
           "x": 208,
-          "y": 874,
+          "y": 124,
           "width": 17,
           "height": 26,
           "border": [
@@ -111,12 +111,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_0",
           "x": 147,
-          "y": 757,
+          "y": 197,
           "width": 47,
           "height": 70,
           "border": [
@@ -130,12 +130,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_1",
           "x": 98,
-          "y": 757,
+          "y": 197,
           "width": 47,
           "height": 70,
           "border": [
@@ -149,12 +149,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_2",
           "x": 0,
-          "y": 757,
+          "y": 197,
           "width": 47,
           "height": 70,
           "border": [
@@ -168,12 +168,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_3",
           "x": 49,
-          "y": 757,
+          "y": 197,
           "width": 47,
           "height": 70,
           "border": [
@@ -187,12 +187,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_4",
           "x": 237,
-          "y": 685,
+          "y": 269,
           "width": 47,
           "height": 70,
           "border": [
@@ -206,12 +206,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_5",
           "x": 188,
-          "y": 685,
+          "y": 269,
           "width": 47,
           "height": 70,
           "border": [
@@ -225,12 +225,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_6",
           "x": 953,
-          "y": 821,
+          "y": 133,
           "width": 47,
           "height": 70,
           "border": [
@@ -244,12 +244,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_7",
           "x": 228,
-          "y": 817,
+          "y": 137,
           "width": 47,
           "height": 70,
           "border": [
@@ -263,12 +263,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_8",
           "x": 966,
-          "y": 893,
+          "y": 61,
           "width": 47,
           "height": 70,
           "border": [
@@ -282,12 +282,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_9",
           "x": 917,
-          "y": 893,
+          "y": 61,
           "width": 47,
           "height": 70,
           "border": [
@@ -301,12 +301,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_plus",
           "x": 432,
-          "y": 358,
+          "y": 596,
           "width": 47,
           "height": 70,
           "border": [
@@ -320,7 +320,7 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         }
       ]
     },
@@ -353,7 +353,7 @@
         {
           "exactKey": "icon_number_big_0",
           "x": 336,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -367,12 +367,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_1",
           "x": 168,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -386,12 +386,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_2",
           "x": 84,
-          "y": 354,
+          "y": 42,
           "width": 82,
           "height": 116,
           "border": [
@@ -405,12 +405,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_3",
           "x": 84,
-          "y": 236,
+          "y": 160,
           "width": 82,
           "height": 116,
           "border": [
@@ -424,12 +424,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_4",
           "x": 84,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -443,12 +443,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_5",
           "x": 84,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -462,12 +462,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_6",
           "x": 0,
-          "y": 354,
+          "y": 42,
           "width": 82,
           "height": 116,
           "border": [
@@ -481,12 +481,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_7",
           "x": 0,
-          "y": 236,
+          "y": 160,
           "width": 82,
           "height": 116,
           "border": [
@@ -500,12 +500,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_8",
           "x": 0,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -519,12 +519,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_9",
           "x": 252,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -538,12 +538,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_0",
           "x": 0,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -557,12 +557,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_1",
           "x": 252,
-          "y": 236,
+          "y": 160,
           "width": 82,
           "height": 116,
           "border": [
@@ -576,12 +576,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_2",
           "x": 420,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -595,12 +595,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_3",
           "x": 336,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -614,12 +614,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_4",
           "x": 252,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -633,12 +633,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_5",
           "x": 168,
-          "y": 354,
+          "y": 42,
           "width": 82,
           "height": 116,
           "border": [
@@ -652,12 +652,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_6",
           "x": 168,
-          "y": 236,
+          "y": 160,
           "width": 82,
           "height": 116,
           "border": [
@@ -671,12 +671,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_7",
           "x": 168,
-          "y": 118,
+          "y": 278,
           "width": 82,
           "height": 116,
           "border": [
@@ -690,12 +690,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_8",
           "x": 420,
-          "y": 0,
+          "y": 396,
           "width": 82,
           "height": 116,
           "border": [
@@ -709,12 +709,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "icon_number_big_AP_9",
           "x": 252,
-          "y": 354,
+          "y": 42,
           "width": 82,
           "height": 116,
           "border": [
@@ -728,7 +728,7 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         }
       ]
     },
@@ -754,7 +754,7 @@
         {
           "exactKey": "judge_auto",
           "x": 289,
-          "y": 0,
+          "y": 177,
           "width": 205,
           "height": 79,
           "border": [
@@ -768,12 +768,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_bad",
           "x": 168,
-          "y": 153,
+          "y": 33,
           "width": 148,
           "height": 70,
           "border": [
@@ -787,12 +787,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_fast",
           "x": 318,
-          "y": 153,
+          "y": 73,
           "width": 143,
           "height": 30,
           "border": [
@@ -806,12 +806,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_good",
           "x": 227,
-          "y": 81,
+          "y": 105,
           "width": 219,
           "height": 70,
           "border": [
@@ -825,12 +825,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_great",
           "x": 0,
-          "y": 81,
+          "y": 105,
           "width": 225,
           "height": 70,
           "border": [
@@ -844,12 +844,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_miss",
           "x": 0,
-          "y": 153,
+          "y": 33,
           "width": 166,
           "height": 70,
           "border": [
@@ -863,12 +863,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_perfect",
           "x": 0,
-          "y": 0,
+          "y": 177,
           "width": 287,
           "height": 79,
           "border": [
@@ -882,12 +882,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "judge_slow",
           "x": 318,
-          "y": 185,
+          "y": 41,
           "width": 143,
           "height": 30,
           "border": [
@@ -901,7 +901,7 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         }
       ]
     },
@@ -927,7 +927,7 @@
         {
           "exactKey": "hp_meter",
           "x": 474,
-          "y": 535,
+          "y": 463,
           "width": 17,
           "height": 26,
           "border": [
@@ -941,7 +941,7 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         }
       ]
     },
@@ -967,7 +967,7 @@
         {
           "exactKey": "effect_health_caution_inside",
           "x": 216,
-          "y": 174,
+          "y": 68,
           "width": 16,
           "height": 14,
           "border": [
@@ -981,12 +981,12 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         },
         {
           "exactKey": "effect_health_caution_outline",
           "x": 0,
-          "y": 130,
+          "y": 43,
           "width": 180,
           "height": 83,
           "border": [
@@ -1000,7 +1000,7 @@
             0.5
           ],
           "pixelsPerUnit": 100.0,
-          "coordinateConvention": "portable-png-top-left-from-unity-bottom-left"
+          "coordinateConvention": "unitypy-exported-png-top-left-same-row-as-serialized-atlas"
         }
       ]
     }
