@@ -249,6 +249,19 @@ export class GarupaProductRenderProducer {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
           plannedVisible.add(objectId);
         }
+        if (animation !== null && !plannedAnimationElapsed.has(animation.ownerObjectId)) {
+          commands.push(command(commands.length, {
+            kind: "activate-object",
+            renderObjectId: animation.ownerObjectId,
+          }));
+          commands.push(command(commands.length, {
+            kind: "play-animation",
+            renderObjectId: animation.ownerObjectId,
+            animationRole: animation.animationRole,
+            restart: true,
+          }));
+          plannedAnimationElapsed.set(animation.ownerObjectId, 0);
+        }
         commands.push(command(commands.length, nodeTransform(
           node,
           sample,
