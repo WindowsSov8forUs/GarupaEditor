@@ -1,4 +1,4 @@
-import { Texture } from "pixi.js";
+import { ImageSource, Texture } from "pixi.js";
 import type { ParticleOperationResult, ParticleResourceAllowlistEntry } from "../particleContracts";
 import { particleAccepted, particleRejected } from "../particleValidation";
 import type { ParticlePixiTextureDecoder } from "./pixiParticleRendererBackend";
@@ -39,7 +39,14 @@ export class BrowserPixiParticleTextureDecoder implements ParticlePixiTextureDec
           "Browser-decoded particle dimensions must match the hash-validated current PNG profile.",
         );
       }
-      const texture = Texture.from(bitmap, true);
+      const texture = new Texture({
+        source: new ImageSource({
+          resource: bitmap,
+          alphaMode: "no-premultiply-alpha",
+          format: "rgba8unorm-srgb",
+          autoGarbageCollect: false,
+        }),
+      });
       const ownedBitmap = bitmap;
       texture.source.once("destroy", () => ownedBitmap.close());
       bitmap = null;

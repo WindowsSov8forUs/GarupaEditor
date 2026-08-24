@@ -588,6 +588,7 @@ export interface ParticlePixiSceneProfile {
   readonly worldCenterXBits: string;
   readonly worldCenterYBits: string;
   readonly pixelsPerWorldUnitBits: string;
+  readonly gameplayParentScaleBits: string;
   readonly roundPixels: false;
   readonly buttonAnchors: readonly ParticlePixiButtonAnchor[];
 }

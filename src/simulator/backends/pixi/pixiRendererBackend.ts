@@ -1416,7 +1416,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
       const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
       if (leftRecord === undefined || rightRecord === undefined) {
-        throw new Error("Pixi sibling ordering encountered an unowned scene object");
+        const externalLayer = (node: Container): boolean =>
+          node.label === "GarupaSimulatorParticles";
+        if ((leftRecord === undefined && !externalLayer(left)) ||
+          (rightRecord === undefined && !externalLayer(right))) {
+          throw new Error("Pixi sibling ordering encountered an unowned scene object");
+        }
+        return left.zIndex - right.zIndex;
       }
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
     });
@@ -2250,8 +2256,10 @@ function applyScoreHud(
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
   const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
   const glyphByKey = new Map(CURRENT_SCORE_HUD_BITMAP_GLYPHS.map((glyph) => [glyph.exactKey, glyph]));
-  const fontScale = 1;
-  const advances = [...displayed].map((digit) => glyphByKey.get(digit)!.xAdvance * fontScale);
+  const fontScale = Math.fround(scene.totalScoreFontSize / scene.bmFontLineHeight);
+  const advances = [...displayed].map((digit) => Math.fround(
+    glyphByKey.get(digit)!.xAdvance * fontScale,
+  ));
   let cursor = scene.totalScoreLocalPosition[0] - advances.reduce((sum, value) => sum + value, 0);
   [...displayed].forEach((digit, index) => {
     const glyph = glyphByKey.get(digit)!;

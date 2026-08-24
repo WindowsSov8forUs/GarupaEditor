@@ -1,4 +1,8 @@
 import { Application, type Container } from "pixi.js";
+import {
+  installPixiLinearOutput,
+  type PixiLinearOutputOwner,
+} from "../../simulator/backends/pixi/pixiLinearColorPipeline";
 import { assemblyAccepted, rejected, type SimulatorAssemblyResult } from "../../simulator/assembly/result";
 import type { SimulatorLifecycleBackendState } from "../../simulator/backends/contracts";
 import {
@@ -68,6 +72,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   private lastClientWidth: number;
   private lastClientHeight: number;
   private mountOwner: Container | null = null;
+  private linearOutputOwner: PixiLinearOutputOwner | null = null;
   private readonly resizeObserver: ResizeObserver | null;
 
   private constructor(
@@ -101,6 +106,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
       backgroundAlpha: 0,
       autoStart: false,
       roundPixels: false,
+      preference: "webgl",
     });
     const canvas = app.canvas;
     const backingToPixiX = app.screen.width / canvas.width;
@@ -141,6 +147,11 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
       return rejected("launch-failed", "simulator.browser.graphics-invalid-mount", "Browser graphics accepts one live combined scene root exactly once.");
     }
     this.mountOwner = sceneRoot;
+    this.linearOutputOwner = installPixiLinearOutput(
+      sceneRoot,
+      this.canvas.width,
+      this.canvas.height,
+    );
     this.app.stage.addChild(sceneRoot);
     this.app.render();
     let disposed = false;
@@ -149,6 +160,8 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
         if (disposed) return;
         disposed = true;
         if (this.mountOwner === sceneRoot) this.mountOwner = null;
+        this.linearOutputOwner?.dispose();
+        this.linearOutputOwner = null;
         if (sceneRoot.parent === this.app.stage) this.app.stage.removeChild(sceneRoot);
       },
     }));
@@ -173,6 +186,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
       this.lastClientHeight = clientHeight;
       this.revision += 1;
     }
+    this.linearOutputOwner?.update(this.canvas.width, this.canvas.height);
     this.synchronizeStageScale();
   }
   private synchronizeStageScale(): void {
@@ -189,6 +203,8 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     window.removeEventListener("orientationchange", this.onSurfaceEnvironmentChange);
     window.visualViewport?.removeEventListener("resize", this.onSurfaceEnvironmentChange);
     this.mountOwner = null;
+    this.linearOutputOwner?.dispose();
+    this.linearOutputOwner = null;
     this.app.destroy({ removeView: true }, { children: false, texture: false, textureSource: false });
   }
 }

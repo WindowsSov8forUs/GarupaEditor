@@ -14,6 +14,7 @@ export interface PixiCombinedSceneSnapshot {
   readonly childLabels: readonly string[];
   readonly rootParentAttached: boolean;
   readonly particleStageParentIsRoot: boolean;
+  readonly particleStageParentIsOrdinary: boolean;
   readonly ordinaryStageParentIsRoot: boolean;
   readonly mvStageParentIsRoot: boolean | null;
   readonly startupBackgroundParentIsRoot: boolean | null;
@@ -59,7 +60,9 @@ export function createPixiCombinedScene(
   try {
     if (mvStage !== undefined) root.addChild(mvStage);
     if (startupScene !== undefined) root.addChild(startupScene.backgroundRoot);
-    root.addChild(particleStage);
+    particleStage.zIndex = 2_000_000;
+    ordinaryStage.addChild(particleStage);
+    ordinaryStage.sortChildren();
     root.addChild(ordinaryStage);
     if (startupScene !== undefined) root.addChild(startupScene.foregroundRoot);
   } catch {
@@ -114,6 +117,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       ]),
       rootParentAttached: this.root.parent !== null,
       particleStageParentIsRoot: this.particleStage.parent === this.root,
+      particleStageParentIsOrdinary: this.particleStage.parent === this.ordinaryStage,
       ordinaryStageParentIsRoot: this.ordinaryStage.parent === this.root,
       mvStageParentIsRoot: this.mvStage === undefined ? null : this.mvStage.parent === this.root,
       startupBackgroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.backgroundRoot.parent === this.root,

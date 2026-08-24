@@ -72,7 +72,7 @@ export async function createPixiStartupDirectionScene(
       height: image.height,
       textureSettings: Object.freeze({
         scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp",
-        mipmap: "off", premultiplyAlpha: true, blendMode: "normal",
+        mipmap: "off", premultiplyAlpha: false, blendMode: "normal",
       }),
       atlasRows: Object.freeze([]), materialRole: "hud", animationRole: "none",
       provenance: "current-external-portable",

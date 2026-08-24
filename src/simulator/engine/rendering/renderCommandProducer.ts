@@ -61,7 +61,6 @@ export interface RenderEngineResourceBindings {
   readonly multipleDirectionalLineRightLogicalAssetId?: string;
   readonly longNoteMaterialLogicalAssetId?: string;
   readonly curveNoteMaterialLogicalAssetId?: string;
-  readonly productJudgementEffectLogicalAssetId?: string;
   readonly habahiroAtlasLogicalAssetIds?: {
     readonly normal: string;
     readonly normal16: string;
@@ -250,6 +249,16 @@ type NoteVisualAnimationRole =
   | "note-directional-flick"
   | "note-long-flash";
 
+export interface RenderHudSessionMode {
+  readonly isAutoPlay: boolean;
+  readonly allPerfectStatusPresentationEnabled: boolean;
+}
+
+const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
+  isAutoPlay: false,
+  allPerfectStatusPresentationEnabled: true,
+});
+
 export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
@@ -275,6 +284,7 @@ export class RenderCommandProducer {
     readonly sessionId: string,
     private readonly renderer: SimulatorRendererBackend,
     private readonly resources: RenderEngineResourceBindings,
+    private readonly hudSessionMode: RenderHudSessionMode = DEFAULT_RENDER_HUD_SESSION_MODE,
   ) {}
 
   isCompleteHabahiro(): boolean {
@@ -299,6 +309,8 @@ export class RenderCommandProducer {
       snapshot.state !== "ready" ||
       snapshot.sessionId !== this.sessionId ||
       snapshot.fault !== null ||
+      typeof this.hudSessionMode.isAutoPlay !== "boolean" ||
+      typeof this.hudSessionMode.allPerfectStatusPresentationEnabled !== "boolean" ||
       !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
       !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
@@ -431,26 +443,30 @@ export class RenderCommandProducer {
         animationRole: "add-score", restart: true,
       });
     }
+    const displayedAllPerfect = resolveDisplayedAllPerfect(
+      plan.record.allPerfect,
+      this.hudSessionMode.allPerfectStatusPresentationEnabled,
+    );
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
-      plan.record.allPerfect !== this.lastAllPerfect;
+      displayedAllPerfect !== this.lastAllPerfect;
     const comboScalePlaying = this.hudAnimationElapsedSeconds.has("combo");
     const allPerfectPlaying = this.hudAnimationElapsedSeconds.has("all-perfect");
     if (comboChanged) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
         hudRole: "combo",
-        state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: plan.record.allPerfect }),
+        state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: displayedAllPerfect }),
       });
       if (plan.record.currentCombo > 0) {
         commands.push({
           ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "combo", restart: true,
         });
-        if (plan.record.allPerfect && !allPerfectPlaying) commands.push({
+        if (displayedAllPerfect && !allPerfectPlaying) commands.push({
           ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "all-perfect", restart: true,
         });
-        if (!plan.record.allPerfect && allPerfectPlaying) commands.push({
+        if (!displayedAllPerfect && allPerfectPlaying) commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "all-perfect", restart: false,
         });
@@ -474,7 +490,10 @@ export class RenderCommandProducer {
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.result,
       hudRole: "result", state: Object.freeze({
-        judgeKey: judgeKeyForResult(plan.reflect.representativeRawResult),
+        judgeKey: resolveResultJudgeKey(
+          plan.reflect.representativeRawResult,
+          this.hudSessionMode.isAutoPlay,
+        ),
         timingKey: timingKeyForJudgeTiming(plan.reflect.representativeJudgeTiming),
       }),
     });
@@ -530,16 +549,16 @@ export class RenderCommandProducer {
         this.hudAnimationElapsedSeconds.delete("combo");
         if (plan.record.currentCombo > 0) {
           this.hudAnimationElapsedSeconds.set("combo", 0);
-          if (plan.record.allPerfect && !allPerfectPlaying) {
+          if (displayedAllPerfect && !allPerfectPlaying) {
             this.hudAnimationElapsedSeconds.set("all-perfect", 0);
-          } else if (!plan.record.allPerfect) {
+          } else if (!displayedAllPerfect) {
             this.hudAnimationElapsedSeconds.delete("all-perfect");
           }
         } else {
           this.hudAnimationElapsedSeconds.delete("all-perfect");
         }
         this.lastCombo = plan.record.currentCombo;
-        this.lastAllPerfect = plan.record.allPerfect;
+        this.lastAllPerfect = displayedAllPerfect;
       }
       this.resultElapsedSeconds = 0;
       if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") {
@@ -3070,8 +3089,20 @@ function float32State(value: number): RenderFloat32 {
   return result.value;
 }
 
-function judgeKeyForResult(result: 0 | 1 | 2 | 3 | 4) {
-  return (["judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"] as const)[result];
+export function resolveDisplayedAllPerfect(
+  allPerfectStatistic: boolean,
+  allPerfectStatusPresentationEnabled: boolean,
+): boolean {
+  return allPerfectStatistic && allPerfectStatusPresentationEnabled;
+}
+
+export function resolveResultJudgeKey(
+  result: 0 | 1 | 2 | 3 | 4,
+  isAutoPlay: boolean,
+) {
+  return isAutoPlay
+    ? "judge_auto" as const
+    : (["judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"] as const)[result];
 }
 
 function timingKeyForJudgeTiming(timing: 0 | 1 | 2): "judge_fast" | "judge_slow" | null {

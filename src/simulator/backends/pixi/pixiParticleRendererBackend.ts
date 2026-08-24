@@ -55,7 +55,7 @@ interface PendingParticleFrame {
 
 export class PixiParticleRendererBackend implements SimulatorParticleRendererBackend {
   readonly id = "pixi-v8-particle-portable-v1";
-  readonly stage = new Container({ label: "GarupaSimulatorParticles", sortableChildren: false });
+  readonly stage = new Container({ label: "GarupaSimulatorParticles", sortableChildren: true });
 
   private state: ParticleRendererBackendSnapshot["state"] = "unprepared";
   private sessionId: string | null = null;
@@ -263,6 +263,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         this.stage.addChild(sprite);
         this.liveSprites.push(sprite);
       }
+      this.stage.sortChildren();
     } catch {
       this.pending = null;
       const cleanupFailures = [
@@ -433,9 +434,11 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (anchor === undefined) {
       throw new Error("particle button has no evidence-authored scene anchor");
     }
-    const worldX = addBits(anchor.position.xBits, sample.position.xBits);
-    const worldY = addBits(anchor.position.yBits, sample.position.yBits);
+    const gameplayParentScale = particleFloat32FromBits(this.scene!.gameplayParentScaleBits)!;
+    const worldX = addScaledBits(anchor.position.xBits, sample.position.xBits, gameplayParentScale);
+    const worldY = addScaledBits(anchor.position.yBits, sample.position.yBits, gameplayParentScale);
     const pixelsPerUnit = particleFloat32FromBits(this.scene!.pixelsPerWorldUnitBits)!;
+    const geometryPixelsPerUnit = Math.fround(pixelsPerUnit * gameplayParentScale);
     sprite.position.set(
       Math.fround(this.scene!.viewportWidth / 2 + Math.fround(worldX * pixelsPerUnit)),
       Math.fround(this.scene!.viewportHeight / 2 - Math.fround(worldY * pixelsPerUnit)),
@@ -444,7 +447,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       sample,
       binding,
       texture,
-      pixelsPerUnit,
+      geometryPixelsPerUnit,
+      this.scene!.viewportHeight,
       sprite.position.x,
       sprite.position.y,
     ));
@@ -454,6 +458,9 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     sprite.alpha = particleFloat32FromBits(sample.color.alphaBits)!;
     sprite.tint = rgbTint(red, green, blue);
     sprite.blendMode = binding.blend;
+    sprite.zIndex = sample.sortingOrder * 1_000_000 -
+      Math.round(particleFloat32FromBits(sample.position.zBits)! * 1000) +
+      sample.creationSequence;
     return sprite;
   }
 
@@ -612,12 +619,16 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
   const pixelsPerWorldUnit = scene === null || typeof scene !== "object"
     ? null
     : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
+  const gameplayParentScale = scene === null || typeof scene !== "object"
+    ? null
+    : particleFloat32FromBits(scene.gameplayParentScaleBits);
   if (scene === null || typeof scene !== "object" ||
     !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
     !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 ||
     scene.viewportWidth < scene.viewportHeight ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
-    pixelsPerWorldUnit !== Math.fround(scene.viewportHeight / 2) || scene.roundPixels !== false ||
+    pixelsPerWorldUnit !== Math.fround(scene.viewportHeight / 2) ||
+    gameplayParentScale === null || gameplayParentScale <= 0 || scene.roundPixels !== false ||
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
     scene.buttonAnchors.some((anchor, index) =>
       anchor.buttonType !== (index < 7 ? index : index + 1) ||
@@ -627,7 +638,7 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
     return particleRejected(
       "integrity-failure",
       "particle.pixi.invalid-scene-profile",
-      "Particle projection requires the current landscape orthographic height/2 PPU and the 15 ordered engine-authored anchors; unsupported Button_07 fails closed without a fixed-device viewport fallback.",
+      "Particle projection requires the current landscape orthographic height/2 PPU, positive GamePlayButton parent scale and 15 ordered engine-authored anchors; unsupported Button_07 fails closed without a fixed-device viewport fallback.",
     );
   }
   return particleAccepted(Object.freeze({
@@ -675,6 +686,7 @@ function particleSpriteMatrix(
   binding: SystemRenderBinding,
   texture: Texture,
   pixelsPerUnit: number,
+  viewportHeight: number,
   positionX: number,
   positionY: number,
 ): Matrix {
@@ -693,16 +705,34 @@ function particleSpriteMatrix(
       renderF32(0),
     );
     const speed = renderF32(Math.sqrt(speedSquared));
-    const width = renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit);
-    const heightWorld = renderAdd(
-      renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), binding.renderer.m_LengthScale),
+    const width = Math.abs(renderMultiply(
+      renderMultiply(sizeX, hierarchyScale[0]),
+      pixelsPerUnit,
+    ));
+    const signedHeightWorld = renderAdd(
+      renderMultiply(renderMultiply(Math.abs(sizeY), hierarchyScale[1]), binding.renderer.m_LengthScale),
       renderMultiply(speed, binding.renderer.m_VelocityScale),
     );
-    const height = renderMultiply(heightWorld, pixelsPerUnit);
+    const dimensions = clampParticleDimensions(
+      width,
+      Math.abs(renderMultiply(signedHeightWorld, pixelsPerUnit)),
+      binding.renderer.m_MaxParticleSize * viewportHeight,
+    );
+    const signedHeight = signedHeightWorld < 0 ? -dimensions[1] : dimensions[1];
     const screenRotation = velocity[0] === 0 && velocity[1] === 0
       ? Math.fround(-rotation)
-      : Math.fround(Math.atan2(-velocity[1], velocity[0]) - Math.PI / 2);
-    return viewAlignedMatrix(texture, width, height, screenRotation, positionX, positionY);
+      : Math.fround(
+          Math.atan2(-velocity[1], velocity[0]) - Math.PI / 2 -
+          (binding.renderer.m_RotateWithStretchDirection ? rotation : 0),
+        );
+    return viewAlignedMatrix(
+      texture,
+      dimensions[0],
+      signedHeight,
+      screenRotation,
+      positionX,
+      positionY,
+    );
   }
   if (sample.renderAlignment === 2) {
     const cosine = renderF32(Math.cos(rotation));
@@ -717,8 +747,17 @@ function particleSpriteMatrix(
       renderMultiply(cosine, sizeY),
       0,
     ];
-    const worldX = applySystemLinear(localX, binding);
-    const worldY = applySystemLinear(localY, binding);
+    let worldX = applySystemLinear(localX, binding);
+    let worldY = applySystemLinear(localY, binding);
+    const dimensions = clampParticleDimensions(
+      renderMultiply(Math.hypot(worldX[0], worldX[1], worldX[2]), pixelsPerUnit),
+      renderMultiply(Math.hypot(worldY[0], worldY[1], worldY[2]), pixelsPerUnit),
+      binding.renderer.m_MaxParticleSize * viewportHeight,
+    );
+    const sourceX = Math.max(Math.hypot(worldX[0], worldX[1], worldX[2]) * pixelsPerUnit, Number.EPSILON);
+    const sourceY = Math.max(Math.hypot(worldY[0], worldY[1], worldY[2]) * pixelsPerUnit, Number.EPSILON);
+    worldX = worldX.map((value) => value * dimensions[0] / sourceX) as unknown as ParticleVector;
+    worldY = worldY.map((value) => value * dimensions[1] / sourceY) as unknown as ParticleVector;
     return new Matrix(
       renderMultiply(worldX[0], pixelsPerUnit) / texture.width,
       renderMultiply(-worldX[1], pixelsPerUnit) / texture.width,
@@ -729,14 +768,30 @@ function particleSpriteMatrix(
     );
   }
   const hierarchyScale = systemHierarchyScale(binding);
+  const dimensions = clampParticleDimensions(
+    Math.abs(renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit)),
+    Math.abs(renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit)),
+    binding.renderer.m_MaxParticleSize * viewportHeight,
+  );
   return viewAlignedMatrix(
     texture,
-    renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit),
-    renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit),
+    dimensions[0],
+    dimensions[1],
     Math.fround(-rotation),
     positionX,
     positionY,
   );
+}
+
+function clampParticleDimensions(
+  width: number,
+  height: number,
+  maximum: number,
+): readonly [number, number] {
+  const largest = Math.max(Math.abs(width), Math.abs(height));
+  if (!(maximum > 0) || largest <= maximum) return Object.freeze([width, height] as const);
+  const ratio = maximum / largest;
+  return Object.freeze([width * ratio, height * ratio] as const);
 }
 
 function viewAlignedMatrix(
@@ -817,10 +872,14 @@ function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): voi
   texture.source.style.update();
   texture.source.autoGenerateMipmaps = false;
   texture.source.alphaMode = "no-premultiply-alpha";
+  texture.source.format = "rgba8unorm-srgb";
 }
 
-function addBits(leftBits: string, rightBits: string): number {
-  return Math.fround(particleFloat32FromBits(leftBits)! + particleFloat32FromBits(rightBits)!);
+function addScaledBits(leftBits: string, rightBits: string, scale: number): number {
+  return Math.fround(
+    particleFloat32FromBits(leftBits)! +
+    Math.fround(particleFloat32FromBits(rightBits)! * scale),
+  );
 }
 
 function rgbTint(red: number, green: number, blue: number): number {

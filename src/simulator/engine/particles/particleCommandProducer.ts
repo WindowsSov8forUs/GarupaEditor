@@ -15,7 +15,10 @@ import {
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
 import { NoteResultType, type NoteResultTypeValue } from "../data/manualJudgement";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
-import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
+import {
+  getGarupaProductChartProfile,
+  type GarupaProductNode,
+} from "../garupa/productChartProfile";
 import {
   isTapKeepStartJudgeNoteType,
   isTapKeepStopJudgeNoteType,
@@ -100,6 +103,7 @@ export class ParticleCommandProducer {
   private readonly slideRootByNode = new WeakMap<NoteInformation, NoteInformation>();
   private readonly registeredNotes = new WeakSet<NoteInformation>();
   private readonly productScoringKeys = new Set<string>();
+  private readonly productScoringNodes = new Map<string, GarupaProductNode>();
   private chartIdentityValid = true;
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
@@ -116,11 +120,13 @@ export class ParticleCommandProducer {
     if (product?.route === "product-extension") {
       for (const node of product.visibleNodes) {
         if (node.scoringSource !== null) {
-          this.productScoringKeys.add(productScoringKey(
+          const key = productScoringKey(
             node.scoringSource.index,
             node.absolutePosition,
             node.scoringSource.buttonTypesArray,
-          ));
+          );
+          this.productScoringKeys.add(key);
+          this.productScoringNodes.set(key, node);
         }
       }
     }
@@ -151,11 +157,30 @@ export class ParticleCommandProducer {
     const commands: ParticleCommand[] = [];
     if (!projected.suppressedUntilReplay) {
       for (const entry of batch.entries) {
-        if (this.productScoringKeys.has(productScoringKey(
+        const productKey = productScoringKey(
           entry.noteIndex,
           entry.absolutePosition,
           entry.buttonTypes,
-        ))) continue;
+        );
+        if (this.productScoringKeys.has(productKey)) {
+          const node = this.productScoringNodes.get(productKey);
+          if (node === undefined) {
+            return rejected(
+              "particle.producer.missing-product-node-owner",
+              "A registered product scoring key must retain its exact immutable chart node owner.",
+            );
+          }
+          const routed = compatibleProductParticleRoot(node, entry.adjustedResult);
+          if (routed !== null) {
+            const buttonType = node.spanStart;
+            commands.push(playRoot(
+              buttonParticleOwnerKey(buttonType, routed, 1),
+              buttonInstance(buttonType, 1),
+              routed,
+            ));
+          }
+          continue;
+        }
         const resolvedNote = this.resolveJudgementNote(entry);
         if (resolvedNote.status !== "ok") return resolvedNote;
         const note = resolvedNote.value;
@@ -720,6 +745,37 @@ function judgementKey(
   buttonTypes: readonly number[],
 ): string {
   return `${absolutePosition}|${buttonTypes.join(",")}`;
+}
+
+function compatibleProductParticleRoot(
+  node: GarupaProductNode,
+  result: NoteResultTypeValue,
+): ParticleRootId | null {
+  if (
+    node.width !== 1 || !Number.isInteger(node.spanStart) ||
+    node.spanStart < 0 || node.spanStart > 6 || result < NoteResultType.Good
+  ) return null;
+  if (node.type === "Skill") {
+    return result === NoteResultType.Perfect
+      ? "ordinary:effect_tap_skill_perfect"
+      : result === NoteResultType.Great
+      ? "ordinary:effect_tap_skill_great"
+      : "ordinary:effect_tap_skill_good";
+  }
+  if (node.type === "Flick") return "ordinary:effect_tap_swipe";
+  if (node.type === "Directional") {
+    return node.direction === "Left"
+      ? "directional:effect_tap_directional_flick_l"
+      : node.direction === "Right"
+      ? "directional:effect_tap_directional_flick_r"
+      : null;
+  }
+  if (node.type !== "Single") return null;
+  return result === NoteResultType.Perfect
+    ? "ordinary:effect_tap_perfect"
+    : result === NoteResultType.Great
+    ? "ordinary:effect_tap_great"
+    : "ordinary:effect_tap_good";
 }
 
 function productScoringKey(

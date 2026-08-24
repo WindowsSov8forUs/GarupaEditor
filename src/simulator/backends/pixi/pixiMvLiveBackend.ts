@@ -116,6 +116,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
         muted: true,
         playsinline: true,
         preload: true,
+        format: "rgba8unorm-srgb",
+        alphaMode: "no-premultiply-alpha",
       });
       await source.load();
       texture = new Texture({ source, label: `${profile.value.logicalId}:texture` });

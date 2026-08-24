@@ -41,6 +41,10 @@ export const CURRENT_SCORE_HUD_NINE_SLICE_BORDERS = Object.freeze({
 export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
   rootLocalPosition: Object.freeze([-411, 309] as const),
   totalScoreLocalPosition: Object.freeze([212, -84] as const),
+  totalScoreWidgetWidth: 188,
+  totalScorePivot: "right" as const,
+  totalScoreFontSize: 28,
+  bmFontLineHeight: 36,
   scoreMinimumDigits: 8,
   scoreLeadingColor: 0xbebebe,
   scoreSignificantColor: 0xff3b72,

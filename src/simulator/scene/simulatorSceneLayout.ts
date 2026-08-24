@@ -551,7 +551,8 @@ function createParticleScene(
     }));
   }
   const pixelsPerWorldUnitBits = particleFloat32ToBits(layout.camera.pixelsPerWorldUnit);
-  if (pixelsPerWorldUnitBits === null) {
+  const gameplayParentScaleBits = particleFloat32ToBits(layout.gameplay.particleScaleTotal);
+  if (pixelsPerWorldUnitBits === null || gameplayParentScaleBits === null) {
     return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
   }
   return ok(Object.freeze({
@@ -560,6 +561,7 @@ function createParticleScene(
     worldCenterXBits: "0x00000000",
     worldCenterYBits: "0x00000000",
     pixelsPerWorldUnitBits,
+    gameplayParentScaleBits,
     roundPixels: false,
     buttonAnchors: Object.freeze(anchors),
   }));
@@ -598,6 +600,7 @@ function createOriginalSkinFieldScene(
         null,
         judgeScale,
         1,
+        judgeScale,
       ),
     ]),
     masks: Object.freeze([] as RenderFieldMaskPlan[]),
@@ -643,6 +646,7 @@ function fieldObject(
   maskObjectId: string | null,
   scale: number,
   depth: number,
+  scaleY = 1,
 ): RenderFieldObjectPlan {
   return Object.freeze({
     renderObjectId,
@@ -650,7 +654,7 @@ function fieldObject(
     logicalAssetId,
     exactKey,
     position: vector3(x, y, 0),
-    scale: vector2(scale, 1),
+    scale: vector2(scale, scaleY),
     rotationDegrees: f32(0),
     color: white(),
     ordering: ordering(depth + 1, depth),

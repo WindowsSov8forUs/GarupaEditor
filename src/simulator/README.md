@@ -15,8 +15,8 @@
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
-| Ordinary Note/HUD Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、121条actual Pixi world records、parent/Y/mask/fallback反例、全部Note/HUD生命周期及完整production WebView2 combined scene限定范围；PNG在ImageBitmap阶段premultiply，所有`set-mesh`与`set-line`都必须消费已绑定Skin material，禁止Pixi `Texture.WHITE`把long/curve/effect mesh画成纯色矩形；NGUI、BitmapFont、UICommon及Unity Sprite按各自Reverse profile中已确认的PNG坐标消费，禁止统一二次Y翻转 |
-| Ordinary particle visible composition | `closed-portable` | 17-root actual Pixi world/UV/blend/viewport、stage-order/UV-row反例、production particle decoder、跨stage ordering及dispose归零限定范围 |
+| Ordinary Note/HUD Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、`28b6a790`与`50170414`限定范围；current PNG以straight-alpha sRGB source进入Linear intermediate，最终统一编码回sRGB，禁止premultiplied-sRGB和encoded-space tint/blend；所有`set-mesh`与`set-line`消费已绑定Skin material，禁止`Texture.WHITE`或粒子texture矩形替代；NGUI、BitmapFont、UICommon及Unity Sprite按各自坐标/字号/pivot消费，Judge line保持Button4 uniform scale |
+| Ordinary particle visible composition | `closed-portable` | Reverse `50170414`：17-root actual Pixi world/UV/blend/viewport、authored stretched roll、signed long axis、`m_MaxParticleSize`、Field < particle < Note/HUD nesting及dispose归零；device-closure simulation oracle保持不变，两个exact七级mip仍是显式portable raster difference |
 | Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但production内部固定无voice资源、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `observational-gap` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
@@ -35,7 +35,7 @@
 | Continuous / outside lane | `closed-product-extension` | Garupa任意有限lane在固定七轨参考坐标上执行fractional/outside Float32 affine scene、front/mesh/particle及raw Manual span；场地线恒为0..6七条，不round/clamp到原Button |
 | ExGarupa Slide graph / Manual | `closed-product-extension` | singleton、Hidden head/tail、all-Hidden、same-position、任意schema合法visible类型、Auto和chain-finger Manual均按authored graph闭合 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；该结论只限定original-compatible图。产品任意continuous/outside lane由sidecar拥有，不伪造成Button 07 |
-| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129 patch line执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；`GE-PS-BROWSER-PREMULTIPLIED-ALPHA`在`createImageBitmap`阶段完成premultiply，使原作图集中alpha=0但RGB非零的texel叠加到不透明舞台时保持背景不变。该浏览器映射是经行为测试关闭的产品语义，不将跨runtime/GPU digest泛化为原作framebuffer exact |
+| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129 patch line执行production PNG/FontFace/Pixi WebGL；Reverse `50170414`取代旧premultiply假设：ImageBitmap保持straight alpha，PNG/视频声明sRGB，场景在Linear intermediate完成normal/additive，最终一次unpremultiply→linear-to-sRGB→repremultiply；受控half-alpha actual framebuffer与alpha0脏RGB均通过，不泛化为Unity/GPU exact |
 | Fixed-device physical exact | `open-objective-environment-blocked` | Reverse取证时锁定panel只有60 Hz且candidate/Stage 9尚不存在；当前产品包接入不提供校准光学/声学比较路径，四项客观exact阻断仍不升级 |
 | Original Skin settings / switching | `closed-static-portable` | Reverse资源基线`977f5e71`与Field/Stage可达性纠正`4312a8ad`：完整profile 133 packs中3个stageskin仅属未开放Live2D，当前Standard/MV manifest精确为130 packs/576 files；default不再绕过8-pack原子装配。Schema 12 aggregate resolver、Note/Directional/Judge/Field/可达Background、SE、动态ParticleSystem、Retry/MoveTime identity、default+Limited production composition、actual Pixi/WebAudio及各3-fresh WebView2 raster均关闭；MV路线由双静态门保证selected Skin assembly先于Movie backend construction/prepare并完整回滚两级failure owners；Collabo 36包级失败。非默认device/frame parity仍不声明 |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
@@ -78,7 +78,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：以下digest只保留为锁定browser的回归观察，不是布局authority。2026-08-24素材/anchor/pivot/clip纠错后，普通完整场景为`1b6d2264…f46c`；原作Live设置四PNG/13-slot为`ea881bb1…a445`；Skin default/limited3实际Field/Judge raster分别为`bfcc3222…a67c`/`ab4c0552…fada`；Garupa产品扩展initial/negative/zero/restore为`80b944d3…d89`；standard启动视觉为`a42da3ee…9f3`，并含4:3/32:9 aspect-cover captures，音频仍为`7d537afa…6adc`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh processes，含MvDarkness dark-cover的media graph digest为`34c34580…3db9`、serialized widget raster digest为`538d21c3…e7dd`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：以下digest读取实际WebGL framebuffer，只作锁定browser回归，不是布局authority。最终Linear/parent-particle-scale实现：ordinary 24 captures `5d1f4adc…6ace`；OLS四PNG/13-slot `ca809887…d534`；Skin default/limited3 `bf73d5bd…8de6`/`12619584…6c83`；Garupa initial/negative/zero/restore `b4187892…794`；Startup视觉`5ffd7d40…f3edc`、音频仍`7d537afa…6adc`；MV media `34c34580…3db9`、raster `66c76856…8ddb`。cleanup后Blob/video/Pixi归零；不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。

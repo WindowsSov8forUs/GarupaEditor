@@ -141,7 +141,7 @@ function buildAssets(pack: PreparedSkinSourcePackage): SimulatorAssemblyResult<{
         wrapModeU: textureSettings.m_WrapU === 0 ? "repeat" as const : "clamp" as const,
         wrapModeV: textureSettings.m_WrapV === 0 ? "repeat" as const : "clamp" as const,
         mipmap: number(value.m_MipCount) > 1 ? "on" as const : "off" as const,
-        premultiplyAlpha: true,
+        premultiplyAlpha: false,
         blendMode: "normal" as const,
       }),
       atlasRows: atlasRows.value,
@@ -252,15 +252,6 @@ function resolveBindings(
   let right = base.multipleDirectionalLineRightLogicalAssetId;
   if (base.ordinaryVisible === undefined) return invalid("simulator.skin.render-visible-bindings");
   let ordinaryVisible: NonNullable<RenderEngineResourceBindings["ordinaryVisible"]> = base.ordinaryVisible;
-  const effectAssets = assets.get(recipe.tapEffect.logicalResource ?? "");
-  const productJudgementEffectLogicalAssetId = effectAssets === undefined
-    ? undefined
-    : effectAssets.get("effect_circle") ?? effectAssets.get("Default-Particle") ??
-      effectAssets.get("Default-ParticleSystem") ?? effectAssets.values().next().value;
-  if (effectAssets !== undefined &&
-    (typeof productJudgementEffectLogicalAssetId !== "string" || productJudgementEffectLogicalAssetId.length === 0)) {
-    return invalid("simulator.skin.product-effect-binding");
-  }
   const noteAssets = assets.get(recipe.note.logicalResource!);
   const directionalAssets = assets.get(recipe.directional.noteLogicalResource);
   const judgeAssets = assets.get(recipe.judge.logicalResource!);
@@ -316,7 +307,6 @@ function resolveBindings(
       multipleDirectionalLineRightLogicalAssetId: right,
       ordinaryVisible,
       habahiroAtlasLogicalAssetIds: Object.freeze(habahiro),
-      ...(productJudgementEffectLogicalAssetId === undefined ? {} : { productJudgementEffectLogicalAssetId }),
     }));
   }
   return accepted(Object.freeze({
@@ -329,9 +319,6 @@ function resolveBindings(
     multipleDirectionalLineLeftLogicalAssetId: left,
     multipleDirectionalLineRightLogicalAssetId: right,
     ordinaryVisible,
-    ...(productJudgementEffectLogicalAssetId === undefined
-      ? {}
-      : { productJudgementEffectLogicalAssetId }),
   }));
 }
 

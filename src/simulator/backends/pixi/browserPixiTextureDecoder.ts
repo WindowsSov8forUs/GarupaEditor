@@ -1,4 +1,4 @@
-import { Texture } from "pixi.js";
+import { ImageSource, Texture } from "pixi.js";
 import { integrityFailure, ok, type SimulatorResult } from "../../engine/evidence";
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiDecodedFont, PixiTextureDecoder } from "./pixiRendererBackend";
@@ -52,12 +52,10 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
         new Blob([owned.buffer], { type: "image/png" }),
         {
           imageOrientation: "none",
-          // GE-PS-BROWSER-PREMULTIPLIED-ALPHA: Pixi's normal blend path consumes
-          // premultiplied ImageBitmap pixels. WebGL
-          // cannot retroactively premultiply an ImageBitmap during upload, so doing
-          // this at decode time prevents transparent non-zero RGB atlas texels from
-          // being added as opaque white/colored rectangles over the live scene.
-          premultiplyAlpha: "premultiply",
+          // Original current textures are sampled as sRGB into a Linear project.
+          // Keep browser bytes straight-alpha; Pixi's NPM blend then performs
+          // SrcAlpha/OneMinusSrcAlpha or SrcAlpha/One in the linear target.
+          premultiplyAlpha: "none",
           colorSpaceConversion: "none",
         },
       );
@@ -68,7 +66,14 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
           "Browser-decoded dimensions must match the already hash-validated PNG profile.",
         );
       }
-      const texture = Texture.from(bitmap, true);
+      const texture = new Texture({
+        source: new ImageSource({
+          resource: bitmap,
+          alphaMode: "no-premultiply-alpha",
+          format: "rgba8unorm-srgb",
+          autoGarbageCollect: false,
+        }),
+      });
       const ownedBitmap = bitmap;
       texture.source.once("destroy", () => ownedBitmap.close());
       bitmap = null;

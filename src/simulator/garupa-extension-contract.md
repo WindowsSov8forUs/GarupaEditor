@@ -28,15 +28,18 @@ Reverse remains the only authority for original behavior.
 - Product-extension charts consume the same frozen original Skin recipe as original-compatible charts; they do not expose a second custom-Judge or rip-map mode.
 - Note and Directional fronts use the selected original atlas bindings directly at continuous authored coordinates. No lane clamp or nearest-Sprite fallback is introduced.
 - Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
-- Product judgement flash binds the selected TapEffect portable texture with neutral cyan-white tint, target-line center and a 12-frame owner-local lifetime. `GE-PS-PRODUCT-JUDGEMENT-VISUAL` owns this visible product result and emits an internal evidence notice; disposal or frame preflight rejection atomically removes/discards the attempted owner. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes or that the mesh is an original particle composition.
-- The selected TapEffect/Directional whole-pack module graph is prepared by the shared deterministic particle backend. Product continuous-span flash geometry remains a product mapping and binds the selected TapEffect texture; it is not original fractional-lane evidence.
+- The former `GE-PS-PRODUCT-JUDGEMENT-VISUAL` rectangular flash is withdrawn: a selected ParticleSystem texture cannot be stretched across a synthetic NoteMesh or replaced by `Default-Particle`/first-texture selection.
+- `GE-PS-PRODUCT-COMPATIBLE-PARTICLE-ROUTE` permits a product node to reuse one exact selected original particle root only when it has width one, an integer original button owner in `0..6`, a supported Single/Skill/Flick/Directional family and a successful judgement. This is a product reuse rule, not evidence that SV itself is original-compatible.
+- Fractional/outside/wide nodes continue judgement, Judge HUD, score/life, SE and lifecycle atomically without inventing a nearest button or substitute particle. `GE-PS-PRODUCT-NONDISCRETE-PARTICLE-OMISSION` records that isolated product behavior; it is not a launch/session failure and makes no original visual-equivalence claim.
+- The selected TapEffect/Directional whole-pack module graph remains prepared by the shared deterministic particle backend. Only that backend may consume its particle textures and renderer/material profiles.
 
 ## Original Live settings narrow projection
 
 - Primary/Secondary judgement adjustment and MvDarkness use the same global original owners; product charts do not create alternate clocks or movie-opacity controls.
 - Product nodes freeze `shortRhythmUnder8beat`; NoteColor uses the original normal/normal16 predicate and selected atlas.
 - Same-position visible nodes freeze deterministic authored-order SyncLine sidecar pairs. Each endpoint uses its own continuous projection and recovered ordinary uniform Note scale every frame; line width is `uniformScale*0.28`, not a constant world width. No lane is rounded, clamped or selected as nearest.
-- VisibleTapLaneEffect creates a separate recovered-Sprite sidecar at the exact continuous span center and authored width. Turning it Off does not disable the existing product judgement flash/particle, Judge, SE, Combo, Score or Life.
+- VisibleTapLaneEffect remains owned by the common 13-slot GamePlayButton owner. Compatible integer width-one product nodes reuse its exact slot/texture mapping; the product renderer creates no duplicate fixed-`NoteLaneEffect_4` sidecar. Fractional/outside/wide nodes do not use nearest-slot substitution. Turning it Off does not disable selected particles, Judge, SE, Combo, Score or Life.
+- Product Slide strips use the selected curve texture with the ordinary neutral `(0.8,0.8,0.8)` material tint and `0.6` normal visible alpha; Hidden composition only reduces that product alpha. The texture is not recolored with a second saturated-green multiplier.
 - These continuous/outside projections are `closed-product-extension`. They are not evidence that the original discrete GamePlayButton/NoteSyncLine owners accept fractional or outside lanes.
 
 ## Position and lane

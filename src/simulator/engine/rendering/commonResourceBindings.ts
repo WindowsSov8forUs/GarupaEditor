@@ -54,7 +54,6 @@ export const BASE_DYNAMIC_RENDER_BINDINGS: RenderEngineResourceBindings = Object
   multipleDirectionalLineRightLogicalAssetId: "unbound/skin/directional-line-right",
   longNoteMaterialLogicalAssetId: "unbound/skin/long-line",
   curveNoteMaterialLogicalAssetId: "unbound/skin/curve-line",
-  productJudgementEffectLogicalAssetId: "unbound/skin/tap-effect",
   scoreHud: COMMON_SCORE_HUD_BINDINGS,
   ordinaryVisible: COMMON_ORDINARY_VISIBLE_BINDINGS,
 });

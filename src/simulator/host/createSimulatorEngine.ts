@@ -707,6 +707,13 @@ export function createSimulatorEngine(
         input.rendering.sessionId,
         backends.rendering,
         input.rendering.resources,
+        Object.freeze({
+          isAutoPlay: input.runtime.mode.isAutoPlay,
+          // The public launch surface has no original AllPerfect display-mode
+          // owner. Product semantics keep the normal Combo skin rather than
+          // deriving AP presentation from the judgement statistic alone.
+          allPerfectStatusPresentationEnabled: false,
+        }),
       )
     : null;
   const producerValidation = renderProducer?.validate();
@@ -829,7 +836,6 @@ export function createSimulatorEngine(
           input.rendering.ordinaryNoteScene.specificSpeed,
           originalLiveSettings.noteColor,
           originalLiveSettings.syncLine,
-          originalLiveSettings.visibleTapLaneEffect,
         );
     productTimeline = new GarupaProductTimelineManager(
       productProfile,
