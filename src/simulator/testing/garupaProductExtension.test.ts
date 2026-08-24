@@ -93,7 +93,6 @@ async function main(): Promise<void> {
     layout.ordinaryNoteScene.specificSpeed,
     true,
     true,
-    false,
   );
   requireOk(producer.validate());
   const first = requireOk(producer.preflightFrame(0, []));
@@ -117,9 +116,10 @@ async function main(): Promise<void> {
   assert.ok(effect);
   requireOk(effect!.commit());
   const judgedRows = renderer.sceneSnapshot();
-  assert.ok(judgedRows.some((row) =>
-    row.renderObjectId === `render:garupa:effect:${judged.identity}` &&
-    row.visible && row.geometryVertexCount === 22));
+  assert.equal(judgedRows.some((row) =>
+    row.renderObjectId.startsWith("render:garupa:effect:") ||
+    row.renderObjectId.startsWith("render:garupa:tap-lane:")), false,
+  "product renderer does not replace selected ParticleSystem or 13-slot lane-effect owners with sidecar geometry");
   assert.equal(
     judgedRows.find((row) => row.renderObjectId === `render:garupa:node:${judged.identity}`)?.visible,
     false,
@@ -138,7 +138,7 @@ async function main(): Promise<void> {
   assert.equal(renderer.snapshot().objectCount, 0);
   assert.equal(renderer.stage.children.length, 0);
   requireOk(renderer.dispose());
-  console.log("Garupa product actual Pixi passed: selected-field-only/ordinary-scale/scaled-sync/judged-hide/clipped-slide/effect/cleanup");
+  console.log("Garupa product actual Pixi passed: selected-field-only/ordinary-scale/scaled-sync/judged-hide/clipped-slide/no-fallback-effect/cleanup");
 }
 
 function resourcePath(asset: RenderResourceAssetProfile): string {

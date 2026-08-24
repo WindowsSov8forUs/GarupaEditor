@@ -66,14 +66,14 @@ async function verifyHabahiroCompleteReplay() {
   const atlasAsset = (technicalName) => ({
     logicalAssetId: logical(technicalName), role: "note-atlas", byteLength: png.byteLength,
     sha256: hash, mime: "image/png", width: 1, height: 1,
-    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
+    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" },
     atlasRows: textureGroups.get(technicalName), materialRole: "sprite", animationRole: "none",
     provenance: "current-external-portable",
   });
   const materialAsset = (name, role) => ({
     logicalAssetId: logical(name), role: "material-texture", byteLength: png.byteLength,
     sha256: hash, mime: "image/png", width: 1, height: 1,
-    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
+    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" },
     atlasRows: [], materialRole: role, animationRole: "none", provenance: "current-external-portable",
   });
   const profile = {
@@ -234,7 +234,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
       logicalAssetId: assetId, role: "note-atlas", byteLength: png.byteLength,
       sha256: createHash("sha256").update(png).digest("hex").toUpperCase(), mime: "image/png",
       width: 1, height: 1,
-      textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
+      textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" },
       atlasRows: keyFixture.keys.map((exactKey) => ({ exactKey, x: 0, y: 0, width: 1, height: 1, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100 })),
       materialRole: "sprite", animationRole: "none", provenance: "current-external-portable",
     }],
@@ -285,7 +285,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     logicalAssetId, role: "material-texture", byteLength: png.byteLength,
     sha256: createHash("sha256").update(png).digest("hex").toUpperCase(), mime: "image/png",
     width: 1, height: 1,
-    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
+    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" },
     atlasRows: [], materialRole, animationRole: "none", provenance: "current-apk",
   });
   const ordinaryKeys = [...keyFixture.keys, ...Array.from({ length: 7 }, (_, lane) => `note_flick_l_${lane}`), ...Array.from({ length: 7 }, (_, lane) => `note_flick_r_${lane}`)];

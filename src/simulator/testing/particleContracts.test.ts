@@ -65,6 +65,12 @@ const commandOracle = fixtureJson("particle_command_oracle.json");
 const simulationOracle = fixtureJson("particle_simulation_oracle.json");
 const semanticOracle = fixtureJson("particle_semantic_frame_oracle.json");
 const closure = fixtureJson("particle_portable_closure.json");
+const visualReconciliation = JSON.parse(readFileSync(join(
+  fixtureBase,
+  "pixi-particle-visual", "artifacts", "investigations",
+  "simulator-pixi-particle-visual-reconciliation-10-1-4",
+  "simulator_pixi_particle_visual_reconciliation.json",
+), "utf8"));
 const totalReauditFixture = JSON.parse(readFileSync(join(
   fixtureBase,
   "ordinary-rendering-total-reaudit", "artifacts", "investigations",
@@ -128,6 +134,17 @@ function verifyClosureAndOracleIdentity(): void {
     "visible onset/peak",
     "CRI/Android/speaker output",
   ]);
+  assert.equal(visualReconciliation.status, "confirmed-current-pixi-particle-visual-reconciliation");
+  assert.equal(
+    visualReconciliation.authority_reconciliation.simulation.required_disposition,
+    "preserve-oracle-exact-no-unilateral-Hermite-or-capacity-reclassification",
+  );
+  assert.equal(visualReconciliation.color_pipeline["encoded-space-tint_or_blend_allowed"], false);
+  assert.equal(visualReconciliation.renderer_geometry.stretched_renderer_systems, 37);
+  assert.equal(
+    visualReconciliation.renderer_geometry["single-monolithic-particle-stage-before-all-ordinary_allowed"],
+    false,
+  );
 }
 
 async function testResourcesAndPrepare() {
@@ -456,8 +473,19 @@ async function testPixiMapping(profile: any): Promise<void> {
   const stretchedSprite = sprites.find((sprite) => sprite.label === stretchedSample.particleId)!;
   const velocityX = particleFloat32FromBits(stretchedSample.velocity.xBits)!;
   const velocityY = particleFloat32FromBits(stretchedSample.velocity.yBits)!;
-  assert.ok(angleClose(stretchedSprite.rotation, Math.atan2(-velocityY, velocityX) - Math.PI / 2),
-    "stretched major axis follows the projected velocity after Unity Y-up to Pixi Y-down reflection");
+  const stretchedRoll = particleFloat32FromBits(stretchedSample.rotation.zBits)!;
+  assert.ok(angleClose(
+    stretchedSprite.rotation,
+    Math.atan2(-velocityY, velocityX) - Math.PI / 2 - stretchedRoll,
+  ), "stretched major axis retains authored roll after Unity Y-up to Pixi Y-down reflection");
+  const stretchedProfile = rendererProfile(profile, stretchedSample.systemId);
+  const stretchedMatrix = stretchedSprite.localTransform;
+  const stretchedWidth = Math.hypot(stretchedMatrix.a, stretchedMatrix.b) * stretchedSprite.texture.width;
+  const stretchedHeight = Math.hypot(stretchedMatrix.c, stretchedMatrix.d) * stretchedSprite.texture.height;
+  assert.ok(
+    Math.max(stretchedWidth, stretchedHeight) <= stretchedProfile.m_MaxParticleSize * 720 + 1e-4,
+    "particle billboard preserves aspect while applying the serialized camera-height max-size clamp",
+  );
 
   const routeRoots = [...new Set<string>(profile.bundles.flatMap((bundle: any) =>
     bundle.systems.map((system: any) => system.root)))].sort();
@@ -482,8 +510,11 @@ async function testPixiMapping(profile: any): Promise<void> {
     nextPixiFrame += 1;
     lastCorpusSampleCount = routeSamples.length;
     const routeSprites = renderer.stage.children as Sprite[];
-    assert.deepEqual(routeSprites.map((sprite) => sprite.label), routeSamples.map((sample) => sample.particleId),
-      `${root} preserves sortingOrder/system/creation sample order in the non-sortable stage`);
+    assert.deepEqual(
+      routeSprites.map((sprite) => sprite.label),
+      [...routeSprites].sort((left, right) => left.zIndex - right.zIndex).map((sprite) => sprite.label),
+      `${root} publishes monotonic sortingOrder/Z/creation zIndex in the sortable particle stage`,
+    );
     assert.ok(routeSprites.every((sprite) => {
       observedTextures.add(sprite.texture.label ?? "");
       const matrix = sprite.localTransform;
@@ -501,11 +532,11 @@ async function testPixiMapping(profile: any): Promise<void> {
   const ordinaryStage = new Container({ label: "GarupaSimulatorRoot" });
   const combined = requireOk(createPixiCombinedScene(renderer.stage, ordinaryStage), "combined particle scene");
   assert.deepEqual(combined.root.children.map((child) => child.label), [
-    "GarupaSimulatorParticles",
     "GarupaSimulatorRoot",
   ]);
-  assert.equal(combined.root.children[0], renderer.stage);
-  assert.equal(combined.root.children[1], ordinaryStage);
+  assert.equal(combined.root.children[0], ordinaryStage);
+  assert.equal(renderer.stage.parent, ordinaryStage);
+  assert.equal(renderer.stage.zIndex, 2_000_000);
   const combinedWorld = observePixiWorld(combined.root);
   verifyCombinedStageWorld(combinedWorld, totalReauditFixture.combinedRoot);
   const particleStage = combinedWorld.records.find((record) =>
@@ -515,11 +546,9 @@ async function testPixiMapping(profile: any): Promise<void> {
     record.localBounds !== null && record.worldBounds !== null && record.texture !== null));
   const stageOrderMutation = structuredClone(combinedWorld) as any;
   stageOrderMutation.records.find((record: any) =>
-    record.label === totalReauditFixture.combinedRoot.particleStageLabel).order[0] = 1;
-  stageOrderMutation.records.find((record: any) =>
-    record.label === totalReauditFixture.combinedRoot.ordinaryStageLabel).order[0] = 0;
+    record.label === totalReauditFixture.combinedRoot.particleStageLabel).parent = null;
   assert.throws(() => verifyCombinedStageWorld(stageOrderMutation, totalReauditFixture.combinedRoot),
-    "combined-stage order mutation sentinel must fail");
+    "combined-stage parent mutation sentinel must fail");
   assert.equal(combined.dispose().status, "ok");
 
   const badSample = { ...samples[0]!, material: "foreign" } as ParticleRenderSample;
@@ -777,9 +806,17 @@ function verifyCombinedStageWorld(observation: ReturnType<typeof observePixiWorl
   const ordinary = observation.records.filter((record) => record.label === expected.ordinaryStageLabel);
   assert.equal(particle.length, 1);
   assert.equal(ordinary.length, 1);
-  assert.equal(particle[0]!.parent, roots[0]!.path);
   assert.equal(ordinary[0]!.parent, roots[0]!.path);
-  assert.deepEqual([particle[0]!.order[0], ordinary[0]!.order[0]], [0, 1]);
+  assert.equal(particle[0]!.parent, ordinary[0]!.path);
+  assert.equal(particle[0]!.order[1], 2_000_000);
+}
+
+function rendererProfile(profile: any, systemId: string): any {
+  for (const bundle of profile.bundles) {
+    const system = bundle.systems.find((candidate: any) => candidate.identity === systemId);
+    if (system !== undefined) return bundle.rendererProfiles[bundle.profiles[system.profile].renderer];
+  }
+  throw new Error(`unknown particle renderer ${systemId}`);
 }
 
 function uvProfile(profile: any, systemId: string): {
@@ -836,12 +873,16 @@ function buttonInstance(_root: string, rangeLength: number | null, buttonType = 
 function particleScene(): ParticlePixiSceneProfile {
   const widthRate = Math.fround(Math.fround(1600 / 720) / Math.fround(9.578571319580078));
   const buttonY = Math.fround(Math.fround(-3.450000047683716) * widthRate);
+  const screenRatioX = Math.fround(1600 / 1334);
+  const verticalFit = Math.fround(720 / Math.fround(screenRatioX * 750));
+  const gameplayParentScale = Math.fround(widthRate * Math.fround(Math.fround(0.9) * verticalFit));
   return Object.freeze({
     viewportWidth: 1600,
     viewportHeight: 720,
     worldCenterXBits: "0x00000000",
     worldCenterYBits: "0x00000000",
     pixelsPerWorldUnitBits: "0x43B40000",
+    gameplayParentScaleBits: particleFloat32ToBits(gameplayParentScale)!,
     roundPixels: false,
     buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => buttonType)
       .filter((buttonType) => buttonType !== 7)

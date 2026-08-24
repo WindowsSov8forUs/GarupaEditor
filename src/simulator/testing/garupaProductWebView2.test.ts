@@ -1,5 +1,6 @@
-import { Application, Rectangle } from "pixi.js";
+import { Application } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
@@ -11,6 +12,7 @@ import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingG
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { observePixiWorld } from "./pixiWorldObserver";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
 interface InputMap { readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[]; }
 const WIDTH = 1600;
@@ -33,7 +35,16 @@ async function main(): Promise<void> {
   ]);
   if (!mapResponse.ok || !profileResponse.ok) throw new Error("staged product input unavailable");
   const map = await mapResponse.json() as InputMap;
-  const profile = await profileResponse.json() as RenderResourceProfile;
+  const sourceProfile = await profileResponse.json() as RenderResourceProfile;
+  const profile: RenderResourceProfile = Object.freeze({
+    ...sourceProfile,
+    assets: Object.freeze(sourceProfile.assets.map((asset) => asset.textureSettings === null
+      ? asset
+      : Object.freeze({
+          ...asset,
+          textureSettings: Object.freeze({ ...asset.textureSettings, premultiplyAlpha: false }),
+        }))),
+  });
   const renderResources = await Promise.all(map.render.map(async (row) => {
     const response = await fetch(row.url);
     if (!response.ok) throw new Error(`render resource unavailable ${row.logicalAssetId}`);
@@ -49,6 +60,7 @@ async function main(): Promise<void> {
     preserveDrawingBuffer: true, autoStart: false, sharedTicker: false,
   });
   document.body.appendChild(app.canvas);
+  const linearOutput = installPixiLinearOutput(renderer.stage, WIDTH, HEIGHT);
   app.stage.addChild(renderer.stage);
 
   const copied = requireOk(copyAndFreezeGarupaChartJson([
@@ -77,7 +89,7 @@ async function main(): Promise<void> {
   requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
   const producer = new GarupaProductRenderProducer(
     SESSION, renderer, CURRENT_ORDINARY_RENDER_BINDINGS, product, axis,
-    layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true, false,
+    layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true,
   );
   requireOk(producer.validate());
   const captures = [];
@@ -95,6 +107,7 @@ async function main(): Promise<void> {
   const release = requireOk(producer.preflightDispose());
   if (release !== null) requireOk(release.commit());
   renderer.stage.removeFromParent();
+  linearOutput.dispose();
   requireOk(renderer.dispose());
   const cleanup = Object.freeze({
     rendererState: renderer.snapshot().state,
@@ -141,13 +154,7 @@ async function capture(
   label: string,
   position: number,
 ) {
-  const output = app.renderer.extract.pixels({
-    target: app.stage,
-    frame: new Rectangle(0, 0, WIDTH, HEIGHT),
-    resolution: 1,
-    clearColor: [0, 0, 0, 0],
-  });
-  const bytes = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonTransparentPixels = 0;
   for (let index = 3; index < bytes.length; index += 4) if (bytes[index] !== 0) nonTransparentPixels += 1;
   return Object.freeze({

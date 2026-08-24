@@ -32,7 +32,11 @@ import {
 } from "../engine/chart/types";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { validateOrdinaryRenderedBatchAuthorization } from "../engine/managers/noteManager";
-import { resolveFrontSpriteBinding } from "../engine/rendering/renderCommandProducer";
+import {
+  resolveDisplayedAllPerfect,
+  resolveFrontSpriteBinding,
+  resolveResultJudgeKey,
+} from "../engine/rendering/renderCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
 
@@ -1367,6 +1371,7 @@ async function testSharedTypedHudValidation(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  testHudSessionSemanticRoutes();
   await testPortableLocalResources();
   await testProfileValidationAndAliases();
   await testAtomicPrepare();
@@ -1376,7 +1381,17 @@ async function main(): Promise<void> {
   await testHostReadyGate();
   await testR4NoteFamilyBoundaries();
   await testSharedTypedHudValidation();
-  console.log("render contract tests passed: 10");
+  console.log("render contract tests passed: 11");
+}
+
+function testHudSessionSemanticRoutes(): void {
+  equal(resolveResultJudgeKey(4, true), "judge_auto", "Auto result selects the Auto Judge sprite");
+  equal(resolveResultJudgeKey(4, false), "judge_perfect", "Manual Perfect selects the Perfect sprite");
+  equal(resolveDisplayedAllPerfect(true, false), false,
+    "all-perfect statistics do not authorize AP presentation without display-mode owner");
+  equal(resolveDisplayedAllPerfect(true, true), true,
+    "explicit display-mode owner can authorize AP presentation");
+  console.log("ok 5 - Auto Judge and AP display mode remain separate semantic owners");
 }
 
 void main().catch((error: unknown) => {

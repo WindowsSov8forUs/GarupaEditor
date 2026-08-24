@@ -1,6 +1,8 @@
-import { Application, Rectangle } from "pixi.js";
+import { Application } from "pixi.js";
 import { BrowserMovieResourcePreflightAdapter } from "../backends/movie/browserMovieResourcePreflightAdapter";
 import { PixiMvLiveBackend } from "../backends/pixi/pixiMvLiveBackend";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 import { deriveSessionMvResource } from "../assembly/sessionMvDerivation";
 import {
   createOriginalSurfaceLayout,
@@ -37,6 +39,7 @@ async function main(): Promise<void> {
     sharedTicker: false,
   });
   document.body.appendChild(app.canvas);
+  const linearOutput = installPixiLinearOutput(app.stage, WIDTH, HEIGHT);
   const preflight = new BrowserMovieResourcePreflightAdapter();
   const outputs = [];
   for (const [container, route] of [
@@ -127,6 +130,7 @@ async function main(): Promise<void> {
         .sort(),
     },
   });
+  linearOutput.dispose();
   app.destroy(true, { children: true, texture: true, textureSource: true });
   window.ipc.postMessage(JSON.stringify(result));
 }
@@ -174,17 +178,8 @@ async function capture(app: Application): Promise<{
   readonly rgbaSha256: string;
   readonly nonBlackPixels: number;
 }> {
-  const output = app.renderer.extract.pixels({
-    target: app.stage,
-    frame: new Rectangle(0, 0, WIDTH, HEIGHT),
-    resolution: 1,
-    clearColor: [0, 0, 0, 1],
-  });
-  const bytes = new Uint8Array(
-    output.pixels.buffer,
-    output.pixels.byteOffset,
-    output.pixels.byteLength,
-  );
+  app.render();
+  const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonBlackPixels = 0;
   for (let index = 0; index < bytes.byteLength; index += 4) {
     if (bytes[index] !== 0 || bytes[index + 1] !== 0 || bytes[index + 2] !== 0) {

@@ -62,9 +62,11 @@ for (const required of ["syncPairs", "freezeProductSyncPairs", "shortRhythmUnder
   if (!productProfile.includes(required)) throw new Error(`product sidecar identity missing: ${required}`);
 }
 for (const required of [
-  "garupa-product-sync-line", "garupa-product-tap-lane-effect", "NoteLaneEffect_4",
-  "this.visibleTapLaneEffect", "this.syncLine", "note_normal_16",
+  "garupa-product-sync-line", "this.syncLine", "note_normal_16",
 ]) if (!productRender.includes(required)) throw new Error(`product narrow projection missing: ${required}`);
+for (const forbidden of ["garupa-product-tap-lane-effect", "NoteLaneEffect_4", "render:garupa:tap-lane:"]) {
+  if (productRender.includes(forbidden)) throw new Error(`product duplicate lane-effect fallback remains: ${forbidden}`);
+}
 for (const required of [
   "Math.fround(0.8)", "Math.fround(this.mvDarkness / 100)", "fadeInDarkCover",
   "advanceDarkCover", "hideDarkCover",

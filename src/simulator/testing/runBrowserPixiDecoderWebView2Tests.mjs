@@ -161,11 +161,10 @@ function adaptiveScoreLayout() {
   const safeLeft = f32(f32(f32(width) - safeWidth) * f32(0.5));
   const screenToSafe = f32(f32(safeWidth / f32(width)) * verticalFit);
   const scale = f32(screenRatioX * screenToSafe);
-  const root = [
-    f32(safeLeft + f32((-411 + 667) * scale)),
-    f32(height - f32(height + f32((309 - 375) * scale))),
-  ];
+  const root = [safeLeft, 0];
   const progress = [root[0] + 25 * scale, root[1] + 45 * scale];
+  const glyphScale = f32(28 / 36);
+  const firstDigitLocalX = f32(212 - f32((36 + 33 + 36 * 6) * glyphScale) + f32(2 * glyphScale));
   return {
     progress,
     maskBounds: [
@@ -174,7 +173,7 @@ function adaptiveScoreLayout() {
       progress[0] + 417,
       progress[1] + 25.5,
     ],
-    firstDigit: [root[0] - 71 * scale, root[1] + 84 * scale],
+    firstDigit: [root[0] + firstDigitLocalX * scale, root[1] + 84 * scale],
   };
 }
 

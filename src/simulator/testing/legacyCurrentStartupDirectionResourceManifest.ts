@@ -29,7 +29,7 @@ export const CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES: readonly StartupDirec
         wrapModeU: "clamp" as const,
         wrapModeV: "clamp" as const,
         mipmap: "off" as const,
-        premultiplyAlpha: true,
+        premultiplyAlpha: false,
         blendMode: "normal" as const,
       }),
       atlasRows: Object.freeze([]),

@@ -308,6 +308,12 @@ async function main(): Promise<void> {
   equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
   equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
+  const scoreRootNode = renderer.stage.getChildByLabel("hud:score", true) as any;
+  const firstScoreDigit = scoreRootNode?.getChildByLabel("score-digit-0", true) as any;
+  equal(firstScoreDigit?.scale?.x, Math.fround(28 / 36),
+    "TotalScore BMFont glyph consumes UILabel fontSize28 over lineHeight36");
+  assert(firstScoreDigit?.getBounds().minX >= -0.01,
+    "Right-pivot TotalScore glyphs remain inside the safe-left viewport");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-background" && node.zIndex === 4), "Score background depth is 4");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-foreground" && node.zIndex === 5), "Score foreground depth is 5");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-cover" && node.zIndex === 28), "Score cover depth is 28");
@@ -631,6 +637,12 @@ async function verifyActualPixiSelectedSkin(
   equal(fieldJudge.position[1], Math.fround(
     360 - scene.ordinaryNoteScene.targetCenterY.value * 360,
   ), "judge line follows the projected target center");
+  const judgeScale = Math.fround(
+    Math.fround(scene.ordinaryNoteScene.noteSettingScale.value * Math.fround(0.9900000095367432)) *
+    Math.fround(360 / 69),
+  );
+  equal(fieldJudge.scale[0], judgeScale, "judge line X consumes Button4 and local .99 scale");
+  equal(fieldJudge.scale[1], judgeScale, "judge line Y consumes the same uniform Button4 and local .99 scale");
   requireOk(requireOk(producer.preflightSessionRelease(), "selected Field release").commit(), "selected Field release commit");
   equal(renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 0, "selected Field cleanup");
   requireOk(renderer.dispose(), "selected Skin renderer dispose");
@@ -685,7 +697,6 @@ async function verifyActualPixiGarupaProduct(
     layout.ordinaryNoteScene.specificSpeed,
     true,
     true,
-    true,
   );
   requireOk(producer.validate(), "product producer validate");
   const first = requireOk(producer.preflightFrame(0, []), "product first frame");
@@ -713,29 +724,20 @@ async function verifyActualPixiGarupaProduct(
   assert(effect !== null, "product effect frame has commands");
   requireOk(effect!.commit(), "product effect frame commit");
   const judgedRows = renderer.sceneSnapshot();
-  assert(judgedRows.some((row) =>
-    row.renderObjectId === `render:garupa:effect:${judged.identity}` && row.geometryVertexCount === 22 &&
-    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.productJudgementEffectLogicalAssetId &&
-    row.geometryTextureLabel !== "WHITE"),
-    "actual Pixi product judgement mesh consumes its prepared effect texture instead of a tinted white rectangle");
+  assert(!judgedRows.some((row) =>
+    row.renderObjectId.startsWith("render:garupa:effect:") ||
+    row.renderObjectId.startsWith("render:garupa:tap-lane:")),
+  "actual Pixi product rendering does not bind particle textures to NoteMesh or duplicate lane-effect owners");
   equal(judgedRows.find((row) =>
     row.renderObjectId === `render:garupa:node:${judged.identity}`)?.visible, false,
   "committed product judgement permanently hides its front owner");
-  const tapLane = judgedRows.find((row) =>
-    row.renderObjectId === `render:garupa:tap-lane:${judged.identity}` && row.visible &&
-    row.spriteBindingKey?.endsWith("NoteLaneEffect_4"));
-  assert(tapLane !== undefined, "actual Pixi has the recovered Sprite on the continuous product tap-lane sidecar");
-  assert(tapLane.position[0] > 0 && tapLane.position[1] > 0 && tapLane.scale[0] > 0,
-    "product tap-lane Sprite projects world position and PPU/parent scale instead of remaining at the raw origin");
-  const tapLaneNode = renderer.stage.getChildByLabel(`render:garupa:tap-lane:${judged.identity}`, true) as any;
-  equal(tapLaneNode?.children?.[0]?.anchor?.y, 1, "Unity bottom pivot maps to Pixi top-left anchor one");
   const released = requireOk(producer.preflightDispose(), "product render release");
   assert(released !== null, "product release owns objects");
   requireOk(released!.commit(), "product render release commit");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi product releases every owner");
   requireOk(renderer.dispose(), "actual Pixi product backend dispose");
   equal(renderer.stage.children.length, 0, "actual Pixi product leaves empty stage");
-  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/clipped-slide/tap-effect/cleanup");
+  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/clipped-slide/no-fallback-effect/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

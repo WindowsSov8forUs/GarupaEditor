@@ -108,14 +108,16 @@ async function main(): Promise<void> {
   if (combined.status === "ok") {
     assert.deepEqual(combined.value.root.children.map((child: any) => child.label), [
       PIXI_STARTUP_BACKGROUND_LABEL,
-      PIXI_PARTICLE_STAGE_LABEL,
       PIXI_ORDINARY_STAGE_LABEL,
       PIXI_STARTUP_FOREGROUND_LABEL,
     ]);
+    assert.equal(particle.parent, ordinary);
     const snapshot = combined.value.snapshot();
     assert.equal(snapshot.mvStageParentIsRoot, null);
     assert.equal(snapshot.startupBackgroundParentIsRoot, true);
     assert.equal(snapshot.startupForegroundParentIsRoot, true);
+    assert.equal(snapshot.particleStageParentIsRoot, false);
+    assert.equal(snapshot.particleStageParentIsOrdinary, true);
     combined.value.dispose();
   }
   scene.value.dispose();
@@ -148,10 +150,10 @@ async function main(): Promise<void> {
       assert.deepEqual(mvCombined.value.root.children.map((child: any) => child.label), [
         PIXI_MV_LIVE_STAGE_LABEL,
         PIXI_STARTUP_BACKGROUND_LABEL,
-        PIXI_PARTICLE_STAGE_LABEL,
         PIXI_ORDINARY_STAGE_LABEL,
         PIXI_STARTUP_FOREGROUND_LABEL,
       ]);
+      assert.equal(mvParticles.parent, mvOrdinary);
       assert.equal(mvCombined.value.snapshot().mvStageParentIsRoot, true);
       mvCombined.value.dispose();
     }

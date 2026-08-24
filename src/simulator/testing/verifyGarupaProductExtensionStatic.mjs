@@ -6,6 +6,7 @@ const profile = read("engine/garupa/productChartProfile.ts");
 const axis = read("engine/garupa/timingGroupAxis.ts");
 const timeline = read("engine/garupa/productTimelineManager.ts");
 const render = read("engine/garupa/productRenderProducer.ts");
+const particles = read("engine/particles/particleCommandProducer.ts");
 const scene = read("scene/simulatorSceneLayout.ts");
 const recipe = read("assembly/sessionRecipe.ts");
 const contracts = read("public/contracts.ts");
@@ -17,7 +18,8 @@ for (const [source, symbols] of [
   [profile, ["product-extension", "ButtonType.None", "visibleNodes", "allHidden", "containsHidden"]],
   [axis, ["owner === \"group\" ? 0 : 1", "speed = nextSpeed", "findVisibilityWindows", "displacementAtPosition"]],
   [timeline, ["garupa-visible-node", "screenToContinuousLane", "isInsideContinuousSpan", "pendingGesture", "missedNodeCount"]],
-  [render, ["garupa-product-front", "garupa-product-slide-line", "garupa-product-particle", "set-mesh"]],
+  [render, ["garupa-product-front", "garupa-product-slide-line", "set-mesh"]],
+  [particles, ["compatibleProductParticleRoot", "ordinary:effect_tap_perfect", "ordinary:effect_tap_swipe", "directional:effect_tap_directional_flick_l"]],
   [scene, ["for (let lane = 0; lane < 7; lane += 1)", "projectLaneAtCurve", "screenToContinuousLane"]],
   [recipe, ["readonly schemaVersion: 12", "isFullLength: request.chartData.isFullLength"]],
   [contracts, ["readonly chart: GarupaChartJson", "readonly isFullLength: boolean"]],
@@ -33,11 +35,11 @@ for (const [source, forbidden] of [
   [profile, ["Math.random", "Date.now", "performance.now", "laneDomain", "laneCount", "minimumLane", "maximumLane"]],
   [axis, ["Math.random", "Date.now", "performance.now"]],
   [timeline, ["Math.random", "Date.now", "performance.now", "src/app", "Button_07_BMS_1P_07"]],
-  [render, ["Math.random", "Date.now", "performance.now", "Math.round(node.lane)", "Math.min(7", "laneDomain"]],
+  [render, ["Math.random", "Date.now", "performance.now", "Math.round(node.lane)", "Math.min(7", "laneDomain", "garupa-product-particle", "render:garupa:effect:", "render:garupa:tap-lane:"]],
   [scene, ["SimulatorProductLaneCount", "minimumLane", "maximumLane"]],
   [recipe, ["chartData.laneCount"]],
   [contracts, ["SimulatorProductLaneCount", "readonly laneCount"]],
   [composition, ["chartData.laneCount"]],
 ]) for (const symbol of forbidden) if (source.includes(symbol)) throw new Error(`Garupa product forbidden fallback/ambient dependency remains: ${symbol}`);
 
-console.log("Garupa product extension static boundary verified: schema12/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");
+console.log("Garupa product extension static boundary verified: schema12/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/no-fallback-render/compatible-particle/lifecycle");

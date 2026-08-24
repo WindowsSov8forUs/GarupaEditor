@@ -5,7 +5,7 @@ export interface OrdinaryVisiblePortableResourceEntry {
   readonly profile: RenderResourceAssetProfile;
 }
 
-const TEXTURE = Object.freeze({ scaleMode: "linear" as const, wrapModeU: "clamp" as const, wrapModeV: "clamp" as const, mipmap: "off" as const, premultiplyAlpha: true, blendMode: "normal" as const });
+const TEXTURE = Object.freeze({ scaleMode: "linear" as const, wrapModeU: "clamp" as const, wrapModeV: "clamp" as const, mipmap: "off" as const, premultiplyAlpha: false, blendMode: "normal" as const });
 const ADDITIVE_TEXTURE = Object.freeze({ ...TEXTURE, blendMode: "add" as const });
 
 export const CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE = Object.freeze({ logicalAssetId: "hud/ordinary/visible-profile", resourceKeySuffix: "ordinary-visible-rendering-profile.json", byteLength: 28809, sha256: "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D" });

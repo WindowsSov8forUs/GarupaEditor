@@ -5,7 +5,7 @@ import {
   REHEARSAL_AUTO_MODE,
   REHEARSAL_MANUAL_MODE,
 } from "./modeFixtures";
-import { Application, Rectangle } from "pixi.js";
+import { Application } from "pixi.js";
 import type {
   AudioBackendSnapshot,
   AudioCommand,
@@ -21,6 +21,10 @@ import type { SimulatorBackends } from "../backends/contracts";
 import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import {
+  installPixiLinearOutput,
+  type PixiLinearOutputOwner,
+} from "../backends/pixi/pixiLinearColorPipeline";
 import { createPixiCombinedScene, type PixiCombinedScene } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
 import {
@@ -51,6 +55,7 @@ import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorSceneLayout, type SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { createPauseControlLayout, PauseControlSceneOwner } from "../scene/pauseControlScene";
 import { observePixiWorld } from "./pixiWorldObserver";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
 
 const WIDTH = 1600;
@@ -77,6 +82,7 @@ interface BrowserSession {
   readonly combined: PixiCombinedScene;
   readonly layout: SimulatorSceneLayout;
   readonly controlOverlay: PixiInGameControlOverlay;
+  readonly linearOutput: PixiLinearOutputOwner;
   mounted: boolean;
 }
 
@@ -205,7 +211,7 @@ async function main(): Promise<void> {
     }),
     scene: Object.freeze({
       rootLabel: "GarupaSimulatorCombinedScene",
-      stageOrder: Object.freeze(["GarupaSimulatorParticles", "GarupaSimulatorRoot"]),
+      stageOrder: Object.freeze(["GarupaSimulatorRoot", "GarupaSimulatorRoot/GarupaSimulatorParticles"]),
       chartBatchCount: 656,
       captures: Object.freeze(captures),
       naturalClearStatus,
@@ -441,7 +447,8 @@ async function createSession(
     particles: { sessionId: id },
   }, backends));
   const combined = requireOk(createPixiCombinedScene(particleRenderer.stage, renderer.stage));
-  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, mounted: false };
+  const linearOutput = installPixiLinearOutput(combined.root, WIDTH, HEIGHT);
+  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, linearOutput, mounted: false };
 }
 
 function mount(app: Application, session: BrowserSession): void {
@@ -454,6 +461,7 @@ function disposeSession(app: Application, session: BrowserSession) {
   requireOk(session.engine.dispose());
   requireOk(session.controlOverlay.dispose());
   session.combined.root.removeFromParent();
+  session.linearOutput.dispose();
   requireOk(session.combined.dispose());
   session.mounted = false;
   const result = Object.freeze({
@@ -494,13 +502,7 @@ async function capture(
   frame: number,
 ): Promise<FrameCapture> {
   app.render();
-  const output = app.renderer.extract.pixels({
-    target: app.stage,
-    frame: new Rectangle(0, 0, WIDTH, HEIGHT),
-    resolution: 1,
-    clearColor: [0, 0, 0, 0],
-  });
-  const bytes = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   const alpha = alphaObservation(bytes, WIDTH, HEIGHT);
   const crops = Object.freeze({
     hud: await sha256(crop(bytes, WIDTH, 0, 0, WIDTH, 220)),
@@ -514,8 +516,13 @@ async function capture(
   const root = worldObservation.records.find((record) => record.parent === null);
   const stageChildren = worldObservation.records.filter((record) => record.parent === root?.path)
     .map((record) => record.label);
+  const ordinary = worldObservation.records.find((record) =>
+    record.parent === root?.path && record.label === "GarupaSimulatorRoot");
+  const particle = worldObservation.records.find((record) =>
+    record.parent === ordinary?.path && record.label === "GarupaSimulatorParticles");
   if (root?.label !== "GarupaSimulatorCombinedScene" ||
-      JSON.stringify(stageChildren) !== JSON.stringify(["GarupaSimulatorParticles", "GarupaSimulatorRoot"])) {
+      JSON.stringify(stageChildren) !== JSON.stringify(["GarupaSimulatorRoot"]) ||
+      particle === undefined || particle.order[1] !== 2_000_000) {
     throw new Error(`combined root observation mismatch: ${root?.label}/${stageChildren.join("|")}`);
   }
   return Object.freeze({
@@ -551,7 +558,10 @@ async function loadInputs(): Promise<LoadedInputs> {
     ...base,
     packIdentity: `${base.packIdentity}+ordinary-visible-webview2+score-webview2`,
     assets: Object.freeze([
-      ...base.assets,
+      ...base.assets.map((asset) => asset.textureSettings === null ? asset : Object.freeze({
+        ...asset,
+        textureSettings: Object.freeze({ ...asset.textureSettings, premultiplyAlpha: false }),
+      })),
       ...CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((entry) => entry.profile),
       ...augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) => entry.profile)),
     ]),

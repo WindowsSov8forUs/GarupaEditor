@@ -16,7 +16,7 @@ const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
 const ordinaryRoot = join(fixtureRoot, "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering", "artifacts", "investigations", "ordinary-visible-rendering-portable-10-1-4");
-const EXPECTED_DIGEST = "ea881bb158d3f7e62a73860700ade2be0468b3395eebb05c6c200a9523aea445";
+const EXPECTED_DIGEST = "ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534";
 const sources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -83,7 +83,7 @@ function laneAsset(index, byteLength, sha256, width) {
   return {
     logicalAssetId: `field/ordinary/tap-lane-effect-${index}`, role: "lane-effect", byteLength, sha256,
     mime: "image/png", width, height: 500,
-    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "add" },
+    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "add" },
     atlasRows: [{ exactKey: `NoteLaneEffect_${index}`, x: 0, y: 0, width, height: 500, pivotX: 0.5, pivotY: 0, pixelsPerUnit: 69 }],
     materialRole: "sprite", animationRole: "none", provenance: "current-apk",
   };

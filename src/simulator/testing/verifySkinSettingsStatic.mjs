@@ -125,7 +125,7 @@ for (const required of [
 for (const required of [
   'roles=note/field/judge/background',
   'producer.preflightFieldSetup(field.objects, field.masks)',
-  'app.renderer.extract.pixels',
+  'readWebGlFramebufferRgba',
   'backgroundExpected ? ["note", "field", "judge", "background"]',
   'fieldCleanup',
   'rgbaSha256',

@@ -785,7 +785,6 @@ function testProductRenderCommands(): void {
     scene.ordinaryNoteScene.specificSpeed,
     true,
     false,
-    false,
   );
   assert.equal(producer.validate().status, "ok");
   const first = requireOk(producer.preflightFrame(0, []));
@@ -801,8 +800,10 @@ function testProductRenderCommands(): void {
   const effect = requireOk(producer.preflightFrame(judgedNode.absolutePosition, [judgedNode]));
   assert.ok(effect);
   requireOk(effect!.commit());
-  assert.ok((backend as any).commands.some((command: any) =>
-    command.renderObjectId === `render:garupa:effect:${judgedNode.identity}` && command.kind === "set-mesh"));
+  assert.equal((backend as any).commands.some((command: any) =>
+    command.renderObjectId.startsWith("render:garupa:effect:") ||
+    command.renderObjectId.startsWith("render:garupa:tap-lane:")), false,
+  "product render commands never substitute particle textures or duplicate the 13-slot lane effect");
   const disposed = requireOk(producer.preflightDispose());
   assert.ok(disposed);
   requireOk(disposed!.commit());

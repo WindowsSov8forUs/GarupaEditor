@@ -1,5 +1,6 @@
 import { Application, Rectangle, Texture } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "./legacyCurrentStartupDirectionResourceManifest";
@@ -21,6 +22,7 @@ import {
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
 import { StartupAudioOwner } from "../engine/audio/startupAudioOwner";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
 const WIDTH = 1600;
 const HEIGHT = 720;
@@ -44,6 +46,7 @@ async function main(): Promise<void> {
     autoStart: false, sharedTicker: false,
   });
   document.body.appendChild(app.canvas);
+  const linearOutput = installPixiLinearOutput(app.stage, WIDTH, HEIGHT);
   const decoder = new BrowserPixiTextureDecoder();
   const [lineBytes, uiBytes, fontBytes] = await Promise.all([
     fetchBytes("/assets/startup-line-star.png"),
@@ -112,6 +115,7 @@ async function main(): Promise<void> {
   const adaptiveCaptures = [];
   for (const [label, width, height] of [["4:3", 1200, 900], ["32:9", 2560, 720]] as const) {
     app.renderer.resize(width, height);
+    linearOutput.update(width, height);
     const layout = requireOk<any>(createOriginalSurfaceLayout({
       revision: 0, viewportWidth: width, viewportHeight: height,
       safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(width), height: Math.fround(height) },
@@ -152,6 +156,7 @@ async function main(): Promise<void> {
     scene.dispose();
   }
   app.renderer.resize(WIDTH, HEIGHT);
+  linearOutput.update(WIDTH, HEIGHT);
   const audio = await runStartupAudioObservation();
   const result = Object.freeze({
     schema: "garupa-startup-direction-webview2-v4",
@@ -164,6 +169,7 @@ async function main(): Promise<void> {
   });
   for (const texture of [frame, full, ...Object.values(difficulties)]) texture.destroy(false);
   line.destroy(true); ui.destroy(true); font.dispose();
+  linearOutput.dispose();
   app.destroy(true, { children: true, texture: true, textureSource: true });
   window.ipc.postMessage(JSON.stringify(result));
 }
@@ -349,8 +355,7 @@ async function capture(
   height = HEIGHT,
 ) {
   app.render();
-  const output = app.renderer.extract.pixels({ target: app.stage, frame: new Rectangle(0, 0, width, height), resolution: 1, clearColor: [0, 0, 0, 0] });
-  const bytes = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const bytes = readWebGlFramebufferRgba(app, width, height);
   let visible = 0;
   for (let index = 3; index < bytes.length; index += 4) if (bytes[index] !== 0) visible += 1;
   return Object.freeze({ label, rgbaSha256: await sha256(bytes), visible, snapshot });

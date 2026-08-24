@@ -68,9 +68,11 @@ async function testBrowserDecoderBoundary(): Promise<void> {
     "document.fonts.add(face)",
     "await globalThis.createImageBitmap(",
     'imageOrientation: "none"',
-    'premultiplyAlpha: "premultiply"',
+    'premultiplyAlpha: "none"',
     'colorSpaceConversion: "none"',
-    "Texture.from(bitmap, true)",
+    "new ImageSource({",
+    'format: "rgba8unorm-srgb"',
+    'alphaMode: "no-premultiply-alpha"',
     'texture.source.once("destroy"',
   ]) assert.ok(source.includes(token), `production browser operation missing: ${token}`);
   for (const forbidden of ["new Image(", "URL.createObjectURL", "fetch(", "Assets.load", "document.fonts.check() ||"] ) {

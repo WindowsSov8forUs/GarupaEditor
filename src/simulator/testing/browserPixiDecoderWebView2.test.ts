@@ -1,5 +1,6 @@
 import {
   Application,
+  BufferImageSource,
   Container,
   Rectangle,
   Sprite,
@@ -7,6 +8,7 @@ import {
   Texture,
 } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
@@ -53,6 +55,8 @@ async function main(): Promise<void> {
   equal(texture.source.resource?.constructor?.name, "ImageBitmap", "production decoder ImageBitmap resource");
   equal(texture.width, 1024, "production decoder PNG width");
   equal(texture.height, 1024, "production decoder PNG height");
+  equal(texture.source.format, "rgba8unorm-srgb", "production decoder sRGB GPU source");
+  equal(texture.source.alphaMode, "no-premultiply-alpha", "production decoder straight-alpha source");
   equal(document.fonts.check(`32px '${font.family}'`, TEXT), true, "production decoder FontFace family registered");
 
   const fallbackCanvas = document.createElement("canvas");
@@ -87,6 +91,7 @@ async function main(): Promise<void> {
   pngStage.addChild(pngSprite);
   const pngRaster = await extract(app, pngStage);
   verifyTransparentRgbComposite(app, texture);
+  verifyLinearSrgbComposite(app);
 
   const fontStage = new Container();
   const rankText = new Text({
@@ -218,6 +223,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
   requireOk(backend.commit(requireOk(backend.preflight(commands))));
 
   app.renderer.resize(1600, 720);
+  const linearOutput = installPixiLinearOutput(backend.stage, 1600, 720);
   app.stage.addChild(backend.stage);
   app.render();
   const mask = findLabel(backend.stage, "score-high-rank-panel-mask");
@@ -253,6 +259,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
     firstDigitWorldTransform,
     pngDataUrl: (canvas as HTMLCanvasElement).toDataURL("image/png"),
   });
+  linearOutput.dispose();
   requireOk(backend.dispose());
   app.stage.removeChild(backend.stage);
   return result;
@@ -355,7 +362,7 @@ function asset(
       wrapModeU: "clamp" as const,
       wrapModeV: "clamp" as const,
       mipmap: "off" as const,
-      premultiplyAlpha: true,
+      premultiplyAlpha: false,
       blendMode: "normal" as const,
     }) : null,
     atlasRows: Object.freeze([]),
@@ -369,6 +376,84 @@ async function fetchBytes(path: string): Promise<Uint8Array> {
   const response = await fetch(path, { cache: "no-store", credentials: "omit", redirect: "error" });
   if (!response.ok) throw new Error(`fixture fetch failed: ${path} ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
+}
+
+function verifyLinearSrgbComposite(app: Application): void {
+  const root = new Container();
+  const output = installPixiLinearOutput(root, 8, 8);
+  const background = new Sprite(Texture.WHITE);
+  background.width = 8;
+  background.height = 8;
+  background.tint = 0x020918;
+  const sample = new Texture({
+    source: new BufferImageSource({
+      resource: new Uint8Array([115, 154, 154, 132]),
+      width: 1,
+      height: 1,
+      format: "rgba8unorm-srgb",
+      alphaMode: "no-premultiply-alpha",
+      scaleMode: "nearest",
+    }),
+  });
+  const sprite = new Sprite(sample);
+  sprite.width = 8;
+  sprite.height = 8;
+  root.addChild(background);
+  app.stage.addChild(root);
+  app.render();
+  const backgroundObserved = readScreenPixels(app, 0, 0, 8, 8);
+  root.addChild(sprite);
+  app.render();
+  const observed = readScreenPixels(app, 0, 0, 8, 8);
+  root.removeFromParent();
+  const expected = linearComposite(
+    [115, 154, 154],
+    132,
+    [backgroundObserved[0]!, backgroundObserved[1]!, backgroundObserved[2]!],
+  );
+  for (let index = 0; index < observed.length; index += 4) {
+    for (let channel = 0; channel < 3; channel += 1) {
+      if (Math.abs(observed[index + channel]! - expected[channel]!) > 1) {
+        const gpu = Object.values((sample.source as any)._gpuData ?? {})[0] as any;
+        throw new Error(`linear sRGB composite channel ${channel}: ${observed[index + channel]} != ${expected[channel]} source=${sample.source.format} internal=${String(gpu?.internalFormat)} upload=${String(gpu?.format)}`);
+      }
+    }
+    if (observed[index + 3] !== 255) throw new Error("linear sRGB composite lost opaque alpha");
+  }
+  output.dispose();
+  sample.destroy(true);
+  root.destroy({ children: true });
+}
+
+function readScreenPixels(
+  app: Application,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): Uint8Array {
+  const gl = (app.renderer as unknown as { readonly gl: WebGL2RenderingContext }).gl;
+  const output = new Uint8Array(width * height * 4);
+  gl.readPixels(x, app.canvas.height - y - height, width, height, gl.RGBA, gl.UNSIGNED_BYTE, output);
+  return output;
+}
+
+function linearComposite(
+  source: readonly [number, number, number],
+  alphaByte: number,
+  background: readonly [number, number, number],
+): readonly [number, number, number] {
+  const decode = (byte: number): number => {
+    const value = byte / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  const encode = (value: number): number => Math.round(255 * (
+    value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055
+  ));
+  const alpha = alphaByte / 255;
+  return Object.freeze(source.map((byte, index) => encode(
+    decode(byte) * alpha + decode(background[index]!) * (1 - alpha),
+  )) as unknown as [number, number, number]);
 }
 
 function verifyTransparentRgbComposite(app: Application, texture: Texture): void {

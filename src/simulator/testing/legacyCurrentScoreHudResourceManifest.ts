@@ -13,7 +13,7 @@ const LINEAR_CLAMP = Object.freeze({
   wrapModeU: "clamp" as const,
   wrapModeV: "clamp" as const,
   mipmap: "off" as const,
-  premultiplyAlpha: true,
+  premultiplyAlpha: false,
   blendMode: "normal" as const,
 });
 

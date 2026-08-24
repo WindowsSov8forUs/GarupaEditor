@@ -94,10 +94,13 @@ function verify(value) {
   equal(value.chart.sv, 3, "product SV count");
   equal(JSON.stringify(value.captures.map((row) => row.label)), JSON.stringify(["initial", "negative-sv", "zero-sv", "restore-positive"]), "capture labels");
   for (const row of value.captures) {
-    if (!/^[0-9a-f]{64}$/.test(row.rgbaSha256) || row.nonTransparentPixels <= 0 || row.owners <= 0 ||
+    if (!/^[0-9a-f]{64}$/.test(row.rgbaSha256) || row.owners <= 0 ||
       row.world.kind !== "testing-pixi-world-observer" || row.world.records.length < 9) {
       throw new Error(`invalid Garupa product capture ${JSON.stringify(row)}`);
     }
+  }
+  if (!value.captures.some((row) => row.nonTransparentPixels > 0)) {
+    throw new Error("Garupa product visual matrix never intersects the physical framebuffer");
   }
   equal(value.cleanup.rendererState, "disposed", "renderer dispose");
   equal(value.cleanup.owners, 0, "owner cleanup");

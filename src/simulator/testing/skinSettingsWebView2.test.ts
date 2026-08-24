@@ -1,5 +1,6 @@
-import { Application, Rectangle } from "pixi.js";
+import { Application } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceProfile } from "../backends/renderingContracts";
@@ -19,6 +20,7 @@ import { PortableParticleResourcePreflightAdapter } from "../backends/resources/
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
 declare global {
   interface Window { readonly ipc: { postMessage(value: string): void } }
@@ -132,11 +134,10 @@ async function main(): Promise<void> {
   await app.init({ width: 1600, height: 720, preference: "webgl", antialias: false,
     resolution: 1, backgroundAlpha: 0, preserveDrawingBuffer: true, autoStart: false, sharedTicker: false });
   document.body.appendChild(app.canvas);
+  const linearOutput = installPixiLinearOutput(renderer.stage, 1600, 720);
   app.stage.addChild(renderer.stage);
   app.render();
-  const output = app.renderer.extract.pixels({ target: app.stage,
-    frame: new Rectangle(0, 0, 1600, 720), resolution: 1, clearColor: [0, 0, 0, 0] });
-  const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const pixels = readWebGlFramebufferRgba(app, 1600, 720);
   const rgbaSha256 = await sha256(pixels);
   const alphaPixels = alphaCount(pixels);
   const snapshot = renderer.sceneSnapshot();
@@ -154,6 +155,7 @@ async function main(): Promise<void> {
   requireOk(released.commit());
   const fieldCleanup = renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length;
   renderer.stage.removeFromParent();
+  linearOutput.dispose();
   requireOk(renderer.dispose());
   const cleanup = renderer.snapshot().objectCount;
   app.destroy(true, { children: true, texture: true, textureSource: true });

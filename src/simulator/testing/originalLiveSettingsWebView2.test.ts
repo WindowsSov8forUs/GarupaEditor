@@ -1,5 +1,6 @@
 import { Application } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
@@ -7,6 +8,7 @@ import type { RenderResourceProfile } from "../backends/renderingContracts";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { TapLaneEffectOwner } from "../engine/managers/tapLaneEffectOwner";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
 interface InputMap { readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[]; }
 const WIDTH = 1600;
@@ -43,6 +45,7 @@ async function main(): Promise<void> {
     preserveDrawingBuffer: true, autoStart: false, sharedTicker: false,
   });
   document.body.appendChild(app.canvas);
+  const linearOutput = installPixiLinearOutput(renderer.stage, WIDTH, HEIGHT);
   app.stage.addChild(renderer.stage);
   const layout = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT,
@@ -80,6 +83,7 @@ async function main(): Promise<void> {
   if (disabled.activeCount !== 0) throw new Error("lane effect did not finish disabled");
   const release = requireOk(producer.preflightSessionRelease());
   requireOk(release.commit());
+  linearOutput.dispose();
   requireOk(renderer.dispose());
   const result = Object.freeze({
     schema: "garupa-original-live-settings-webview2-v1",
@@ -100,8 +104,7 @@ async function main(): Promise<void> {
 }
 
 async function capture(app: Application): Promise<{ rgbaSha256: string; nonBackgroundPixels: number }> {
-  const pixels = app.renderer.extract.pixels({ target: app.stage });
-  const bytes = pixels.pixels;
+  const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonBackgroundPixels = 0;
   for (let offset = 0; offset < bytes.length; offset += 4) {
     if (bytes[offset] !== 8 || bytes[offset + 1] !== 16 || bytes[offset + 2] !== 32 || bytes[offset + 3] !== 255) nonBackgroundPixels += 1;

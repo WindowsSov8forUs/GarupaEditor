@@ -50,7 +50,7 @@ async function main(): Promise<void> {
     const product = getGarupaProductChartProfile(chart)!;
     assert.equal(product.route, "product-extension");
     assert.equal(product.visibleNodes.length, identity!.units);
-    verifyProductOnlyParticleBypass(chart);
+    verifyProductParticleBoundary(chart);
     const auto = runAuto(chart, identity!.units);
     assert.deepEqual(auto, {
       judged: identity!.units,
@@ -121,38 +121,52 @@ function runAuto(chart: ChartConstructionResult, expectedUnits: number) {
   return value;
 }
 
-function verifyProductOnlyParticleBypass(chart: ChartConstructionResult): void {
+function verifyProductParticleBoundary(chart: ChartConstructionResult): void {
   const product = getGarupaProductChartProfile(chart)!;
-  const node = product.visibleNodes.find((candidate) =>
-    candidate.scoringSource !== null &&
-    candidate.scoringSource.buttonTypesArray.some((button) => button < 0 || button > 15));
-  assert.notEqual(node, undefined, "external outside-lane particle bypass fixture");
-  if (node === undefined || node.scoringSource === null) return;
+  const compatible = product.visibleNodes.find((candidate) =>
+    candidate.scoringSource !== null && candidate.width === 1 &&
+    Number.isInteger(candidate.spanStart) && candidate.spanStart >= 0 && candidate.spanStart <= 6 &&
+    (candidate.type === "Single" || candidate.type === "Skill" ||
+      candidate.type === "Flick" || candidate.type === "Directional"));
+  assert.notEqual(compatible, undefined, "external compatible product particle fixture");
+  const incompatible = product.visibleNodes.find((candidate) =>
+    candidate.scoringSource !== null && !(candidate.width === 1 &&
+      Number.isInteger(candidate.spanStart) && candidate.spanStart >= 0 && candidate.spanStart <= 6));
+  const cases = [
+    ...(compatible === undefined ? [] : [{ node: compatible, expected: 1 }]),
+    ...(incompatible === undefined ? [] : [{ node: incompatible, expected: 0 }]),
+  ];
   const producer = new ParticleCommandProducer(chart);
   assert.equal(producer.validate().status, "ok");
-  const entry = Object.freeze({
-    slot: 0,
-    containerId: "one-frame:0",
-    noteIndex: node.scoringSource.index,
-    buttonTypes: Object.freeze([...node.scoringSource.buttonTypesArray]),
-    noteType: 0,
-    phase: "head",
-    rawResult: 4,
-    adjustedResult: 4,
-    addCombo: 1,
-    absolutePosition: node.absolutePosition,
-    judgeTiming: 0,
-    multipleDirectionalFlickNoteCount: 0,
-  });
-  const prepared = producer.preflightJudgement(Object.freeze({
-    batchIndex: 0,
-    entryCount: 1,
-    entries: Object.freeze([entry]),
-  }) as any);
-  assert.equal(prepared.status, "ok", prepared.status === "integrity-failure" ? prepared.boundary : "");
-  if (prepared.status === "ok") {
-    assert.equal(prepared.value.commands.length, 0, "product-only outside lane emits no original GamePlayButton particle");
-    assert.equal(prepared.value.commit().status, "ok");
+  for (const [batchIndex, item] of cases.entries()) {
+    const source = item.node.scoringSource!;
+    const entry = Object.freeze({
+      slot: 0,
+      containerId: `one-frame:${batchIndex}`,
+      noteIndex: source.index,
+      buttonTypes: Object.freeze([...source.buttonTypesArray]),
+      noteType: 0,
+      phase: "head",
+      rawResult: 4,
+      adjustedResult: 4,
+      addCombo: 1,
+      absolutePosition: item.node.absolutePosition,
+      judgeTiming: 0,
+      multipleDirectionalFlickNoteCount: 0,
+    });
+    const prepared = producer.preflightJudgement(Object.freeze({
+      batchIndex,
+      entryCount: 1,
+      entries: Object.freeze([entry]),
+    }) as any);
+    assert.equal(prepared.status, "ok", prepared.status === "integrity-failure" ? prepared.boundary : "");
+    if (prepared.status === "ok") {
+      assert.equal(prepared.value.commands.length, item.expected,
+        item.expected === 1
+          ? "integer-lane width-one product node reuses one selected exact particle root"
+          : "fractional/wide product node uses no nearest or fallback original particle root");
+      assert.equal(prepared.value.commit().status, "ok");
+    }
   }
   const disposed = producer.preflightDispose();
   assert.equal(disposed.status, "ok");

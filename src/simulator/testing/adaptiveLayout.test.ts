@@ -127,6 +127,11 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
       layout.value.camera.pixelsPerWorldUnit,
       `${name}: product particle projection`,
     );
+    assert.equal(
+      particleFloat32FromBits(scene.value.particleScene.gameplayParentScaleBits),
+      layout.value.gameplay.particleScaleTotal,
+      `${name}: GamePlayButton parent particle scale`,
+    );
   }
 }
 

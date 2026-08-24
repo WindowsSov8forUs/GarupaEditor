@@ -174,7 +174,7 @@ function verify(value) {
   equal(value.productionDecoders.render, "BrowserPixiTextureDecoder", "production render decoder");
   equal(value.productionDecoders.particle, "BrowserPixiParticleTextureDecoder", "production particle decoder");
   equal(value.scene.rootLabel, "GarupaSimulatorCombinedScene", "combined scene root");
-  equal(JSON.stringify(value.scene.stageOrder), JSON.stringify(["GarupaSimulatorParticles", "GarupaSimulatorRoot"]), "combined stage order");
+  equal(JSON.stringify(value.scene.stageOrder), JSON.stringify(["GarupaSimulatorRoot", "GarupaSimulatorRoot/GarupaSimulatorParticles"]), "combined stage order");
   equal(value.scene.chartBatchCount, 656, "registered full chart batch count");
   equal(value.scene.naturalClearStatus, 3, "natural completion status");
   const required = new Set([
@@ -195,6 +195,19 @@ function verify(value) {
     }
   }
   if (required.size !== 0) throw new Error(`missing full-scene captures: ${[...required].join(",")}`);
+  const judgement = value.scene.captures.find((capture) => capture.label === "judgement");
+  const judgementTextures = judgement?.worldObservation?.records
+    ?.map((record) => record.texture?.label ?? "") ?? [];
+  if (!judgementTextures.some((label) => label.endsWith(":judge_auto")) ||
+      judgementTextures.some((label) => label.endsWith(":judge_perfect"))) {
+    throw new Error(`Auto judgement material route mismatch: ${judgementTextures.join("|")}`);
+  }
+  const comboCapture = value.scene.captures.find((capture) => capture.label === "combo-add-score");
+  const comboTextures = comboCapture?.worldObservation?.records
+    ?.map((record) => record.texture?.label ?? "") ?? [];
+  if (comboTextures.some((label) => label.includes("icon_number_big_AP_") || label.endsWith(":combo_AP"))) {
+    throw new Error(`AP material appeared without display-mode owner: ${comboTextures.join("|")}`);
+  }
   for (const cleanup of [
     value.cleanup.auto,
     value.cleanup.manual,

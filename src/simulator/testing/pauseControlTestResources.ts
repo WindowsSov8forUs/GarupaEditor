@@ -43,7 +43,7 @@ function profile(logicalAssetId: string, byteLength: number, sha256: string, wid
     sha256,
     width,
     height,
-    textureSettings: Object.freeze({ scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" }),
+    textureSettings: Object.freeze({ scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" }),
     atlasRows: Object.freeze([]),
     materialRole: "hud",
     animationRole: "none",
