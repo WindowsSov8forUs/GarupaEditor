@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-pixi-particle-visual-reconciliation",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "devicePolicy": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    "deviceSimulationOracle": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
+      "bytes": 127583,
+      "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
+    },
+    "deviceReference": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_reference.py",
+      "bytes": 23534,
+      "sha256": "A8B20CB298732EAAF434658E28B962DE6AE0B06264FC3AAE2C9BED68301B6F6A"
+    },
+    "gameplayProfiles": {
+      "path": "artifacts/investigations/gameplay-particle-simulation/gameplay_particle_profiles.json",
+      "bytes": 1532300,
+      "sha256": "9B2F333E90761AC7D974666DAE8157FCD20DE5C2F5C2F788FFFDEE9B017F0350"
+    },
+    "gameplayReadme": {
+      "path": "artifacts/investigations/gameplay-particle-simulation/README.md",
+      "bytes": 12814,
+      "sha256": "4551F81F52D7063E2EF5CF8E5DEAFC09B392D1BCA1ABC72152A7841FBBD2C580"
+    },
+    "softwareRenderer": {
+      "path": "artifacts/investigations/runtime-integration-prototype/software_renderer.py",
+      "bytes": 99529,
+      "sha256": "48B4E7BA8BFC1CC79CE9A06818F74A34F7C15200CB6F11F0ED2FE739092DA074"
+    },
+    "runtimeParticleSimulation": {
+      "path": "artifacts/investigations/runtime-integration-prototype/particle_simulation.py",
+      "bytes": 33394,
+      "sha256": "DB8C87B8ACA9594D96BAD1F4E8ED8988A40E428DD006E83B3FE488F48E5110AA"
+    },
+    "renderResources": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    }
+  },
+  "authority_reconciliation": {
+    "simulation": {
+      "production_authority": "device-runtime-closure-10-1-4 particle portable policy/oracle",
+      "oracle_sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE",
+      "case_count": 5,
+      "corpus_root_count": 17,
+      "required_disposition": "preserve-oracle-exact-no-unilateral-Hermite-or-capacity-reclassification",
+      "later_runtime_prototype": "separate exploratory software-reference evolution; not a replacement for the later production-authorized oracle"
+    },
+    "rendering": {
+      "production_authority": "current serialized renderer controls plus portable software-render mapping",
+      "physical_gpu_exact": false,
+      "portable_mapping_authorized": true
+    }
+  },
+  "color_pipeline": {
+    "active_color_space": "Linear",
+    "active_color_space_serialized": 1,
+    "particle_texture_count": 8,
+    "particle_texture_space": "sRGB",
+    "dynamic_skin_texture_count": 189,
+    "dynamic_skin_texture_space": "sRGB",
+    "browser_texture_sampling": "sRGB-decode-to-linear",
+    "browser_blending": "straight-alpha source with material SrcAlpha/OneMinusSrcAlpha or SrcAlpha/One in linear target",
+    "browser_output": "unpremultiply-linear, linear-to-sRGB encode, repremultiply for final canvas composition",
+    "encoded-space-tint_or_blend_allowed": false
+  },
+  "renderer_geometry": {
+    "enabled_renderer_systems": 104,
+    "stretched_renderer_systems": 37,
+    "rotate_with_stretch_direction_systems": 37,
+    "negative_stretched_length_systems": 6,
+    "max_particle_size_counts": [
+      {
+        "maximum": 0.5,
+        "systems": 11
+      },
+      {
+        "maximum": 1.0,
+        "systems": 2
+      },
+      {
+        "maximum": 2.0,
+        "systems": 37
+      },
+      {
+        "maximum": 3.0,
+        "systems": 10
+      },
+      {
+        "maximum": 99.0,
+        "systems": 60
+      }
+    ],
+    "stretched_screen_angle": "reflectY(atan2(velocityY,velocityX)-pi/2+authoredRoll)",
+    "signed_height": "height*lengthScale+speed*velocityScale; abs extent plus independent long-axis/UV sign",
+    "maximum_extent": "2*orthographicHalfHeight*m_MaxParticleSize; uniform aspect-preserving clamp",
+    "sort_tuple": [
+      "sortingOrder",
+      "negative-renderer-bounds-center-z",
+      "creationSequence"
+    ],
+    "hud_after_world_renderers": true,
+    "single-monolithic-particle-stage-before-all-ordinary_allowed": false
+  },
+  "mipmap_boundary": {
+    "authored_seven_level_texture_count": 2,
+    "production_base_png_contains_authored_lower_mips": false,
+    "runtime_generated_mips_equivalent": false,
+    "disposition": "remain explicit portable raster difference until exact lower levels are delivered"
+  },
+  "product_boundary": {
+    "garupa_chart_route_is_original_evidence": false,
+    "compatible_integer-lane product routing": "GarupaEditor product semantics may reuse exact selected original roots only when the node supplies an original 0..6 button owner and supported note family",
+    "fractional_outside_routing": "must remain product-identified and cannot use nearest button, first texture, fixed lane-effect texture, or rectangular particle-texture mesh fallback"
+  },
+  "unknown_fields": [],
+  "blocking_findings": []
+}

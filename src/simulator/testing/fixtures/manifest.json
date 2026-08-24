@@ -5,20 +5,6 @@
   "sourceHead": "d408d758f39873c2c997107903300e58d56c59c6",
   "entries": [
     {
-      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
-      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
-      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
-      "bytes": 732,
-      "sha256": "43C0097F729D0888DB0FD853EFE2015762090711FDE355B4620B3D1DA956A9FF"
-    },
-    {
-      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
-      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
-      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
-      "bytes": 39710,
-      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
-    },
-    {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_external_atlas_profile.json",
@@ -31,6 +17,20 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_approximation_difference_matrix.json",
       "bytes": 2318,
       "sha256": "DADAAE3D83EDDDECC0E7921761CDF1B64BFE2A584823A91854760D190383CE84"
+    },
+    {
+      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
+      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
+      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
+      "bytes": 732,
+      "sha256": "43C0097F729D0888DB0FD853EFE2015762090711FDE355B4620B3D1DA956A9FF"
+    },
+    {
+      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
+      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "bytes": 39710,
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/audio_command_oracle.json",
@@ -678,11 +678,95 @@
       "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533"
     },
     {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-1.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_1.png",
+      "bytes": 14137,
+      "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-2.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_2.png",
+      "bytes": 11402,
+      "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-3.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_3.png",
+      "bytes": 7630,
+      "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-4.png",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png",
+      "bytes": 5535,
+      "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48"
+    },
+    {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
       "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
       "bytes": 20188,
       "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E"
+    },
+    {
+      "path": "reverse-snapshots/original-live-settings/artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
+      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "bytes": 9920,
+      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
+      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
+      "bytes": 28975,
+      "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
+      "bytes": 43746,
+      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
+      "bytes": 2024,
+      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
+      "bytes": 10393,
+      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
+    },
+    {
+      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
+      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
+      "bytes": 12514,
+      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+    },
+    {
+      "path": "reverse-snapshots/pixi-particle-visual/artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "sourceReverseCommit": "50170414da613b15dd1064addc7cceed0bb991fd",
+      "sourcePath": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "bytes": 5440,
+      "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
     },
     {
       "path": "reverse-snapshots/public-life-profile/artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
@@ -811,54 +895,123 @@
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
     },
     {
-      "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/portable-assets/SE_RHYTHM_GAYA.mp3",
-      "sourceReverseCommit": "b17e64e98423bed3718ac2e76a43cde5c451ee1f",
-      "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
-      "bytes": 151033,
-      "sha256": "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554",
-      "extraction": "minimum offline byte snapshot of the contract's external-reference/no-redistribution Gaya URL; exact identity and decoded metadata are committed in sourcePath"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 36197,
+      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
     },
     {
-      "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
-      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
-      "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
-      "bytes": 73542,
-      "sha256": "79B346D0A0EA48AD0FB6124C8F9919962DCC2257854143100C64A3B1FF07F4EC"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 37081,
+      "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5"
     },
     {
-      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
-      "sourceReverseCommit": "d408d758f39873c2c997107903300e58d56c59c6",
-      "sourcePath": "artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
-      "bytes": 5407,
-      "sha256": "020799421EF7C69B684660A08BE5106BECA281A206556B6B46003661246C043F"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 41143,
+      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
     },
     {
-      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
-      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
-      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
-      "bytes": 10967,
-      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 48550,
+      "sha256": "ABD069B4FADB057AAA9E48012D6DCB28DF3C3B0C7BDB55894B717FDE13C62776"
     },
     {
-      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
-      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
-      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
-      "bytes": 18387,
-      "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_SKILL.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 42310,
+      "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F"
     },
     {
-      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
-      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
-      "sourcePath": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
-      "bytes": 17501,
-      "sha256": "7DC13FE97466219744D3921A35A7DB8BCB5B6FF33CBBC32501855C91D12D7452"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 16740,
+      "sha256": "084A1A8ED5255C61B63BFA1CE87F373DCEECDF7875321BF652EB3EE71395BC0F"
     },
     {
-      "path": "reverse-snapshots/startup-live-tutorial-gate/artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
-      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
-      "sourcePath": "artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
-      "bytes": 29804,
-      "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D"
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_TAP_SKILL.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 12046,
+      "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 504,
+      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 792,
+      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__fieldskin__skin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/52ebaedc47441fb827146e12b74a9485a96e265acde4c3e9ee2c7e26d509ec52.json",
+      "bytes": 178936,
+      "sha256": "BADFA231AD71F6EFB323F84ED06393B47494EC20C2051B4CE30AD29A84BD71F6"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__judgeskin__skin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/da06e6d246e3a236cba1a47bd87680fed31113f09aad2fe0f006104ebae8bb43.json",
+      "bytes": 133225,
+      "sha256": "C20B4AF555D289006AE0C6B5468B7C20498FF81738FEF2E72D7A966C6C3476EC"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__directionalflickskin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/6d1d827e2f1dcea38864b5b5e8e57599230462b8abdcafac3b19e2ec22cd61a6.json",
+      "bytes": 364249,
+      "sha256": "1A53F8E67F5CCAF5E471FD8DAB4839A1686DAD94DD3FE48F6D3F527F02DF1953"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__skin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/ee9df8c9bb9620b5dcf8d0de9aa2060cc3b6a842bdd899d00cc332d8478c5d45.json",
+      "bytes": 1616664,
+      "sha256": "AC2F7760E27A9E694071764E8CD00CDE51B991DB2932E4978C4670FFB4F2FB84"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__directionalflickskin00normal.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/b81d70849ea4efa389e3fd50b7d3cd8d4922b76d2a69f220456b157d4dc55083.json",
+      "bytes": 750923,
+      "sha256": "77678B8828543A0E5ECE3067BDFDCB4419D63505A9321201A1FDD4E5A313E9AA"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__skin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/9ac7f458347bf5219024e1d1cbf6b3fdc69a7672384c9dda09403db21f490c28.json",
+      "bytes": 1172896,
+      "sha256": "BB699D469BA1B49D5EB769E92EE5A521D868B092F9D71473A6B2DE52D1513CF3"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__directionalflickskin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/d7424a72151ce5361809cca1c1be78d3c78912b3b51b9dd029f85cd32b53b74a.json",
+      "bytes": 88263,
+      "sha256": "D65A2627BDCC29B05008214B9957A0D36F72B9E0269839F511A9FBACC1157435"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__skin00.json",
+      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/8130c39c597d7615461cd9786f54c3916fb0bcda8f06111393c58193413a702b.json",
+      "bytes": 128402,
+      "sha256": "E31C3493979C7E37759D7E70B21ED75AF2E648BD201ED21DD5AAC2101F7FDA0E"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__bgskin__skin_april2021.json",
@@ -924,200 +1077,54 @@
       "sha256": "16181D497D66114D5F142C942AE9FB88A132A6D7637437E9E41612CEBFBFE597"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__fieldskin__skin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/52ebaedc47441fb827146e12b74a9485a96e265acde4c3e9ee2c7e26d509ec52.json",
-      "bytes": 178936,
-      "sha256": "BADFA231AD71F6EFB323F84ED06393B47494EC20C2051B4CE30AD29A84BD71F6"
+      "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/portable-assets/SE_RHYTHM_GAYA.mp3",
+      "sourceReverseCommit": "b17e64e98423bed3718ac2e76a43cde5c451ee1f",
+      "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
+      "bytes": 151033,
+      "sha256": "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554",
+      "extraction": "minimum offline byte snapshot of the contract's external-reference/no-redistribution Gaya URL; exact identity and decoded metadata are committed in sourcePath"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__judgeskin__skin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/da06e6d246e3a236cba1a47bd87680fed31113f09aad2fe0f006104ebae8bb43.json",
-      "bytes": 133225,
-      "sha256": "C20B4AF555D289006AE0C6B5468B7C20498FF81738FEF2E72D7A966C6C3476EC"
+      "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
+      "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
+      "bytes": 73542,
+      "sha256": "79B346D0A0EA48AD0FB6124C8F9919962DCC2257854143100C64A3B1FF07F4EC"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__directionalflickskin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/6d1d827e2f1dcea38864b5b5e8e57599230462b8abdcafac3b19e2ec22cd61a6.json",
-      "bytes": 364249,
-      "sha256": "1A53F8E67F5CCAF5E471FD8DAB4839A1686DAD94DD3FE48F6D3F527F02DF1953"
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
+      "sourceReverseCommit": "d408d758f39873c2c997107903300e58d56c59c6",
+      "sourcePath": "artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
+      "bytes": 5407,
+      "sha256": "020799421EF7C69B684660A08BE5106BECA281A206556B6B46003661246C043F"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__skin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/ee9df8c9bb9620b5dcf8d0de9aa2060cc3b6a842bdd899d00cc332d8478c5d45.json",
-      "bytes": 1616664,
-      "sha256": "AC2F7760E27A9E694071764E8CD00CDE51B991DB2932E4978C4670FFB4F2FB84"
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
+      "bytes": 10967,
+      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__directionalflickskin00normal.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/b81d70849ea4efa389e3fd50b7d3cd8d4922b76d2a69f220456b157d4dc55083.json",
-      "bytes": 750923,
-      "sha256": "77678B8828543A0E5ECE3067BDFDCB4419D63505A9321201A1FDD4E5A313E9AA"
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+      "bytes": 18387,
+      "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__skin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/9ac7f458347bf5219024e1d1cbf6b3fdc69a7672384c9dda09403db21f490c28.json",
-      "bytes": 1172896,
-      "sha256": "BB699D469BA1B49D5EB769E92EE5A521D868B092F9D71473A6B2DE52D1513CF3"
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
+      "sourcePath": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "bytes": 17501,
+      "sha256": "7DC13FE97466219744D3921A35A7DB8BCB5B6FF33CBBC32501855C91D12D7452"
     },
     {
-      "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__directionalflickskin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/d7424a72151ce5361809cca1c1be78d3c78912b3b51b9dd029f85cd32b53b74a.json",
-      "bytes": 88263,
-      "sha256": "D65A2627BDCC29B05008214B9957A0D36F72B9E0269839F511A9FBACC1157435"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__skin00.json",
-      "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/8130c39c597d7615461cd9786f54c3916fb0bcda8f06111393c58193413a702b.json",
-      "bytes": 128402,
-      "sha256": "E31C3493979C7E37759D7E70B21ED75AF2E648BD201ED21DD5AAC2101F7FDA0E"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 36197,
-      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 37081,
-      "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 41143,
-      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 48550,
-      "sha256": "ABD069B4FADB057AAA9E48012D6DCB28DF3C3B0C7BDB55894B717FDE13C62776"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_SKILL.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 42310,
-      "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 16740,
-      "sha256": "084A1A8ED5255C61B63BFA1CE87F373DCEECDF7875321BF652EB3EE71395BC0F"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_TAP_SKILL.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 12046,
-      "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 504,
-      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 792,
-      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
-    },
-    {
-      "path": "reverse-snapshots/original-live-settings/artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
-      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
-      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
-      "bytes": 9920,
-      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
-    },
-    {
-      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-1.png",
-      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
-      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_1.png",
-      "bytes": 14137,
-      "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D"
-    },
-    {
-      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-2.png",
-      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
-      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_2.png",
-      "bytes": 11402,
-      "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113"
-    },
-    {
-      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-3.png",
-      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
-      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_3.png",
-      "bytes": 7630,
-      "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA"
-    },
-    {
-      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-4.png",
-      "sourceReverseCommit": "50bc40b641e32a4f70ca84d7d0d5f7e332d3a906",
-      "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png",
-      "bytes": 5535,
-      "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "bytes": 56234,
-      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "bytes": 43746,
-      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
-      "sourceReverseCommit": "99d40bcc8c7153d85021a59cf137ecaad6cc0709",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
-      "bytes": 28975,
-      "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
-      "bytes": 2024,
-      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
-      "bytes": 10393,
-      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
-    },
-    {
-      "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
-      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
-      "bytes": 12514,
-      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+      "path": "reverse-snapshots/startup-live-tutorial-gate/artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+      "sourceReverseCommit": "c8562fe478a9719cc582256f0edcdc988bb208e5",
+      "sourcePath": "artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
+      "bytes": 29804,
+      "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D"
     },
     {
       "path": "reverse-snapshots/visual-layout-correction/artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
