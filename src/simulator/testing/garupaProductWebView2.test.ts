@@ -99,7 +99,11 @@ async function main(): Promise<void> {
     { label: "zero-sv", position: 192, judged: [] as typeof product.visibleNodes },
     { label: "restore-positive", position: 288, judged: [] as typeof product.visibleNodes },
   ]) {
-    const transaction = requireOk(producer.preflightFrame(sample.position, sample.judged));
+    const transaction = requireOk(producer.preflightFrame(
+      sample.position,
+      sample.judged,
+      Math.fround(1 / 60),
+    ));
     if (transaction !== null) requireOk(transaction.commit());
     app.render();
     captures.push(await capture(app, renderer, sample.label, sample.position));

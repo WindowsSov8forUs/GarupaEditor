@@ -8,7 +8,7 @@ declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
 const { join } = require("node:path");
 
-import { Container, Graphics, Sprite, Text, Texture, TextureSource } from "pixi.js";
+import { Container, Graphics, NineSliceSprite, Sprite, Text, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
@@ -112,6 +112,19 @@ async function main(): Promise<void> {
   const playing = pauseOwner.snapshot(LIVE_AUTO_MODE, pauseLayout, true);
   requireOk(liveControls.publishPauseControlState(playing), "publish visible Pause button");
   assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible, "Live owns visible original Pause button");
+  const autoCaptionRoot = liveControls.root.getChildByLabel("auto-live-caption-root") as Container;
+  const autoCaptionBackground = autoCaptionRoot.getChildByLabel("auto-live-caption-background") as NineSliceSprite;
+  const autoCaptionLabel = autoCaptionRoot.getChildByLabel("auto-live-caption-label") as Text;
+  assert(autoCaptionRoot.visible, "Live Auto owns the serialized Auto Live caption");
+  equal(autoCaptionBackground.tint, 0xff3b72, "Auto Live caption keeps serialized pink tint");
+  equal(autoCaptionLabel.text, "オートライブ", "Auto Live caption keeps serialized label");
+  equal(JSON.stringify([
+    autoCaptionBackground.x,
+    autoCaptionBackground.y,
+    autoCaptionBackground.width,
+    autoCaptionBackground.height,
+  ]), JSON.stringify(CONTROL_SURFACE_LAYOUT.ui.autoLiveCaptionBoundsTopLeft),
+  "Auto Live caption keeps the independent multiaspect bounds");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "publish Pause modal");
   assert(liveControls.root.getChildByLabel("pause-window", true) !== null, "Pause modal uses serialized window");
   assert((liveControls.root.getChildByLabel("pause-title", true) as Text).text === "一時停止", "Pause modal uses current visible title");
@@ -290,7 +303,7 @@ async function main(): Promise<void> {
   const lifeMasks = new Map(life.hudFillMasks?.map((mask) => [mask.label, mask]));
   equal(JSON.stringify(lifeMasks.get("life-primary-fill-mask")?.bounds), JSON.stringify([-323, 31, Math.fround(44.8), 26]), "Life primary left-to-right mask matches current ratio");
   const lifeTexts = new Map(life.hudTextNodes?.map((text) => [text.label, text]));
-  equal(lifeTexts.get("life-current-label")?.fontSize, 18, "Life current label consumes serialized UILabel font size");
+  equal(lifeTexts.get("life-current-label")?.fontSize, 24, "Life current label consumes serialized UILabel font size");
   equal(JSON.stringify(lifeTexts.get("life-current-label")?.anchor), JSON.stringify([1, 0.5]), "Life current label consumes Right pivot");
   equal(JSON.stringify(lifeTexts.get("life-current-label")?.position), JSON.stringify([Math.fround(-103.99990844726562), 74]), "Life current label converts authored world to owner-local");
   equal(lifeTexts.get("life-game-over-label")?.text, "ライフゼロ!\n獲得スコアDOWN!", "Life owns the current GameOver UILabel text");
@@ -699,13 +712,16 @@ async function verifyActualPixiGarupaProduct(
     true,
   );
   requireOk(producer.validate(), "product producer validate");
-  const first = requireOk(producer.preflightFrame(0, []), "product first frame");
+  const first = requireOk(
+    producer.preflightFrame(0, [], Math.fround(1 / 60)),
+    "product first frame",
+  );
   assert(first !== null, "product first frame has visible commands");
   requireOk(first!.commit(), "product first frame commit");
   const rows = renderer.sceneSnapshot();
   assert(rows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible &&
-    row.spriteBindingKey?.endsWith("note_normal_16_3")),
-    "actual Pixi has the NoteColor normal16 binding on a fractional product front");
+    row.spriteBindingKey?.endsWith("note_normal_16_1") && row.scale[0] === row.scale[1]),
+    "actual Pixi has the exact-center NoteColor normal16 binding and uniform transform on a product-wide front");
   const slideMeshes = rows.filter((row) =>
     row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22);
   assert(slideMeshes.length > 0, "actual Pixi has product Slide mesh");
@@ -720,7 +736,11 @@ async function verifyActualPixiGarupaProduct(
   assert(Math.max(...productSyncY) - Math.min(...productSyncY) < 40,
     "product SyncLine width consumes Note scale instead of constant .28 world units");
   const judged = product.visibleNodes[0]!;
-  const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]), "product effect frame");
+  const effect = requireOk(producer.preflightFrame(
+    judged.absolutePosition,
+    [judged],
+    Math.fround(1 / 60),
+  ), "product effect frame");
   assert(effect !== null, "product effect frame has commands");
   requireOk(effect!.commit(), "product effect frame commit");
   const judgedRows = renderer.sceneSnapshot();

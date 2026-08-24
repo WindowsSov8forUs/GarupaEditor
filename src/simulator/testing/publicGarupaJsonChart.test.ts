@@ -551,7 +551,7 @@ function testProductManualChainOwner(): void {
   const head = product.visibleNodes.find((node) => node.type === "Single" && node.chainIdentity !== null)!;
   const headPoint = productScreenPoint(scene.garupaProductScene, head);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Began, position: headPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   let batch = requireOk(oneFrame.reflectOneFrameData())!;
   assert.equal(batch.entries[0]!.adjustedResult, 4);
   assert.equal(batch.entries[0]!.noteType, 0);
@@ -561,10 +561,10 @@ function testProductManualChainOwner(): void {
   const flick = product.visibleNodes.find((node) => node.type === "Flick")!;
   const flickPoint = productScreenPoint(scene.garupaProductScene, flick);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: flickPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: flickPoint.x + 20, y: flickPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   batch = requireOk(oneFrame.reflectOneFrameData())!;
   assert.equal(batch.entries[0]!.noteType, 3);
 
@@ -572,16 +572,16 @@ function testProductManualChainOwner(): void {
   const directional = product.visibleNodes.find((node) => node.type === "Directional")!;
   const directionalPoint = productScreenPoint(scene.garupaProductScene, directional);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: directionalPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: directionalPoint.x - 10, y: directionalPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   batch = requireOk(oneFrame.reflectOneFrameData())!;
   assert.equal(batch.entries[0]!.noteType, 9);
   assert.equal(manager.snapshot().activeFingerCount, 0);
 
   requireOk(music.advance(Math.fround(0.7)));
-  requireOk(manager.update());
+  requireOk(manager.update(Math.fround(1 / 60)));
   batch = requireOk(oneFrame.reflectOneFrameData())!;
   assert.equal(batch.entries[0]!.adjustedResult, 0);
   assert.equal(manager.snapshot().judgedNodeCount, 3);
@@ -787,7 +787,7 @@ function testProductRenderCommands(): void {
     false,
   );
   assert.equal(producer.validate().status, "ok");
-  const first = requireOk(producer.preflightFrame(0, []));
+  const first = requireOk(producer.preflightFrame(0, [], Math.fround(1 / 60)));
   assert.ok(first);
   requireOk(first!.commit());
   const commands = (backend as any).commands as any[];
@@ -796,8 +796,16 @@ function testProductRenderCommands(): void {
   const meshes = commands.filter((command) => command.kind === "set-mesh");
   assert.ok(meshes.length >= 1);
   assert.ok(meshes.every((command) => command.vertices.length === 22 && command.indices.length === 60));
+  assert.ok(meshes.every((command) => command.colors.every((value: any) =>
+    value.red.value === 1 && value.green.value === 1 && value.blue.value === 1 &&
+    value.alpha.value === Math.fround(0.8))),
+  "product Slide mesh keeps the ordinary white 0.8 base color instead of a synthetic chain tint");
   const judgedNode = product.visibleNodes[0]!;
-  const effect = requireOk(producer.preflightFrame(judgedNode.absolutePosition, [judgedNode]));
+  const effect = requireOk(producer.preflightFrame(
+    judgedNode.absolutePosition,
+    [judgedNode],
+    Math.fround(1 / 60),
+  ));
   assert.ok(effect);
   requireOk(effect!.commit());
   assert.equal((backend as any).commands.some((command: any) =>

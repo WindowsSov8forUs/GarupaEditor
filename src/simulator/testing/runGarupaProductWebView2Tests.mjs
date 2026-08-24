@@ -15,6 +15,10 @@ const clean = process.env.SIMULATOR_WEBVIEW2_CLEAN_BUILD === "1";
 const require = createRequire(import.meta.url);
 const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots", "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
+const visibleProfilePath = join(
+  testingRoot,
+  "fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+);
 const sources = [
   ["ordinary/notes/skin00/atlas", "rhythm-game-sprites.png"],
   ["ordinary/notes/skin00/long-note-line", "long-note-line.png"],
@@ -74,7 +78,15 @@ function prepareStage() {
     return { logicalAssetId, url: route };
   });
   stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render })), allowlist);
-  stageFile("/render-profile.json", "render-profile.json", "application/json; charset=utf-8", readFileSync(join(fixtureRoot, "ordinary_portable_profile.json")), allowlist);
+  const renderProfile = JSON.parse(readFileSync(join(fixtureRoot, "ordinary_portable_profile.json"), "utf8"));
+  renderProfile.ordinaryVisibleProfile = JSON.parse(readFileSync(visibleProfilePath, "utf8"));
+  stageFile(
+    "/render-profile.json",
+    "render-profile.json",
+    "application/json; charset=utf-8",
+    Buffer.from(JSON.stringify(renderProfile)),
+    allowlist,
+  );
   while (allowlist.length < 32) {
     const index = allowlist.length;
     stageFile(`/unused/product-${index}`, `unused-${index}.bin`, "application/octet-stream", Buffer.from([index]), allowlist);
