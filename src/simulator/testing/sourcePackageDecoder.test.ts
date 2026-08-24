@@ -60,6 +60,23 @@ async function testCommonRenderPackages(): Promise<void> {
   assert.equal(prepared.value.profile.packIdentity, "application-leased-semantic-render-v1");
   assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
   assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
+  const asset = (id: string) => prepared.value.profile.assets.find((row) => row.logicalAssetId === id)!;
+  const atlas = (id: string, key: string) => asset(id).atlasRows.find((row) => row.exactKey === key)!;
+  assert.deepEqual(
+    [atlas("hud/ordinary/combo-number-atlas", "icon_number_big_0").y,
+      atlas("hud/ordinary/ui-additive-effect-atlas", "effect_health_caution_outline").y,
+      atlas("hud/score/rhythm-game-ui-atlas", "gauge_base_score").y,
+      atlas("hud/score/rhythm-game-ui-atlas", "combo").y,
+      atlas("hud/score/rhythm-game-ui-atlas", "btn_ingame_time_back").y,
+      atlas("hud/score/rhythm-game-ui-atlas", "button_pause").y],
+    [396, 43, 449, 175, 920, 319],
+    "NGUI-derived common atlas rows use the exported PNG top-left coordinates from the Reverse profile",
+  );
+  assert.deepEqual(
+    [atlas("hud/score/font-atlas", "0").y, atlas("hud/score/ui-common-atlas", "icon_fullmusic_gray").y],
+    [40, 33],
+    "bitmap-font and UICommon rows retain their already top-left source coordinates",
+  );
 }
 
 async function testNoteSourcePackage(): Promise<void> {

@@ -174,7 +174,7 @@ function buildAtlasRows(
   if (rows.length === 0 && ngui.length === 1 && Array.isArray(ngui[0]!.sprites)) {
     for (const value of ngui[0]!.sprites as unknown[]) {
       if (!isRecord(value)) return invalid("simulator.skin.render-ngui-row");
-      const row = atlasRow(value.name, value, { x: 0.5, y: 0.5 }, 100, textureHeight);
+      const row = nguiAtlasRow(value.name, value, { x: 0.5, y: 0.5 }, 100);
       if (row === null) return invalid("simulator.skin.render-ngui-row");
       rows.push(Object.freeze({
         ...row,
@@ -213,6 +213,20 @@ function atlasRow(
   const pivotX = number(pivot.x); const pivotY = number(pivot.y); const ppu = number(pixelsPerUnit);
   if (typeof name !== "string" || width <= 0 || height <= 0 || ppu <= 0) return null;
   return Object.freeze({ exactKey: name, x, y: textureHeight - y - height, width, height, pivotX, pivotY, pixelsPerUnit: ppu });
+}
+
+function nguiAtlasRow(
+  name: unknown,
+  rect: Record<string, unknown>,
+  pivot: Record<string, unknown>,
+  pixelsPerUnit: unknown,
+): RenderAtlasRow | null {
+  const x = number(rect.x); const y = number(rect.y); const width = number(rect.width); const height = number(rect.height);
+  const pivotX = number(pivot.x); const pivotY = number(pivot.y); const ppu = number(pixelsPerUnit);
+  if (typeof name !== "string" || width <= 0 || height <= 0 || ppu <= 0) return null;
+  // NGUI UISpriteData rects already use the exported PNG's top-left origin.
+  // Unity Sprite m_Rect rows use bottom-left and continue through atlasRow().
+  return Object.freeze({ exactKey: name, x, y, width, height, pivotX, pivotY, pixelsPerUnit: ppu });
 }
 
 function resolveBindings(

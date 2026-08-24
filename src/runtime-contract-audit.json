@@ -9723,7 +9723,7 @@
     {
       "id": "RCB-0462",
       "file": "src/simulator/assembly/skinRenderPreparation.ts",
-      "line": 351,
+      "line": 365,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, \"Selected Skin render packs must preserve every texture, atlas row, Float32 geometry and required binding without fallback.\");",

@@ -297,6 +297,19 @@ async function testDefaultPortablePackAndRenderOverlay(): Promise<void> {
   assert.notEqual(overlay, null);
   assert.match(overlay!.bindings.noteAtlasLogicalAssetId, /skin00/);
   assert.match(overlay!.bindings.ordinaryVisible!.judgeLogicalAssetId, /skin00/);
+  const judgeAsset = overlay!.assets.find((asset) =>
+    asset.logicalAssetId === overlay!.bindings.ordinaryVisible!.judgeLogicalAssetId)!;
+  const judgeRow = (key: string) => judgeAsset.atlasRows.find((row) => row.exactKey === key)!;
+  assert.deepEqual(
+    [judgeRow("judge_bad").x, judgeRow("judge_bad").y,
+      judgeRow("judge_perfect").x, judgeRow("judge_perfect").y],
+    [168, 33, 0, 177],
+    "NGUI Judge UISpriteData retains the exported PNG top-left origin instead of a second vertical flip",
+  );
+  const noteAsset = overlay!.assets.find((asset) =>
+    asset.logicalAssetId === overlay!.bindings.noteAtlasLogicalAssetId)!;
+  assert.equal(noteAsset.atlasRows.find((row) => row.exactKey === "note_normal_3")!.y, 904,
+    "Unity Sprite m_Rect continues to convert from bottom-left independently of NGUI rows");
   assert.notEqual(overlay!.fieldBindings, null);
   assert.match(overlay!.fieldBindings!.backgroundLineLogicalAssetId, /fieldskin%2Fskin00|fieldskin\/skin00/);
   assert.equal(overlay!.backgroundLogicalAssetId, null);

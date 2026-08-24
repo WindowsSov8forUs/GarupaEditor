@@ -14,19 +14,19 @@ export const CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES: readonly OrdinaryVisib
   entry("combo-number.png", {
     logicalAssetId: "hud/ordinary/combo-number-atlas", role: "hud-atlas", byteLength: 137053,
     sha256: "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C", mime: "image/png", width: 512, height: 512,
-    textureSettings: TEXTURE, atlasRows: Object.freeze([row("icon_number_big_0",336,0,82,116,[0, 0, 0, 0]),row("icon_number_big_1",168,0,82,116,[0, 0, 0, 0]),row("icon_number_big_2",84,354,82,116,[0, 0, 0, 0]),row("icon_number_big_3",84,236,82,116,[0, 0, 0, 0]),row("icon_number_big_4",84,118,82,116,[0, 0, 0, 0]),row("icon_number_big_5",84,0,82,116,[0, 0, 0, 0]),row("icon_number_big_6",0,354,82,116,[0, 0, 0, 0]),row("icon_number_big_7",0,236,82,116,[0, 0, 0, 0]),row("icon_number_big_8",0,118,82,116,[0, 0, 0, 0]),row("icon_number_big_9",252,0,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_0",0,0,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_1",252,236,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_2",420,118,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_3",336,118,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_4",252,118,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_5",168,354,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_6",168,236,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_7",168,118,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_8",420,0,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_9",252,354,82,116,[0, 0, 0, 0])]),
+    textureSettings: TEXTURE, atlasRows: Object.freeze([row("icon_number_big_0",336,396,82,116,[0, 0, 0, 0]),row("icon_number_big_1",168,396,82,116,[0, 0, 0, 0]),row("icon_number_big_2",84,42,82,116,[0, 0, 0, 0]),row("icon_number_big_3",84,160,82,116,[0, 0, 0, 0]),row("icon_number_big_4",84,278,82,116,[0, 0, 0, 0]),row("icon_number_big_5",84,396,82,116,[0, 0, 0, 0]),row("icon_number_big_6",0,42,82,116,[0, 0, 0, 0]),row("icon_number_big_7",0,160,82,116,[0, 0, 0, 0]),row("icon_number_big_8",0,278,82,116,[0, 0, 0, 0]),row("icon_number_big_9",252,396,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_0",0,396,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_1",252,160,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_2",420,278,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_3",336,278,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_4",252,278,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_5",168,42,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_6",168,160,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_7",168,278,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_8",420,396,82,116,[0, 0, 0, 0]),row("icon_number_big_AP_9",252,42,82,116,[0, 0, 0, 0])]),
     materialRole: "hud", animationRole: "none", provenance: "current-apk",
   }),
   entry("judge-skin00.png", {
     logicalAssetId: "hud/ordinary/judge-atlas", role: "hud-atlas", byteLength: 97258,
     sha256: "1FACA23DE96039095EF2CE5970335C560DC6A365070C601A1C53AF5A1457E205", mime: "image/png", width: 512, height: 256,
-    textureSettings: TEXTURE, atlasRows: Object.freeze([row("judge_auto",289,0,205,79,[0, 0, 0, 0]),row("judge_bad",168,153,148,70,[0, 0, 0, 0]),row("judge_fast",318,153,143,30,[0, 0, 0, 0]),row("judge_good",227,81,219,70,[0, 0, 0, 0]),row("judge_great",0,81,225,70,[0, 0, 0, 0]),row("judge_miss",0,153,166,70,[0, 0, 0, 0]),row("judge_perfect",0,0,287,79,[0, 0, 0, 0]),row("judge_slow",318,185,143,30,[0, 0, 0, 0])]),
+    textureSettings: TEXTURE, atlasRows: Object.freeze([row("judge_auto",289,177,205,79,[0, 0, 0, 0]),row("judge_bad",168,33,148,70,[0, 0, 0, 0]),row("judge_fast",318,73,143,30,[0, 0, 0, 0]),row("judge_good",227,105,219,70,[0, 0, 0, 0]),row("judge_great",0,105,225,70,[0, 0, 0, 0]),row("judge_miss",0,33,166,70,[0, 0, 0, 0]),row("judge_perfect",0,177,287,79,[0, 0, 0, 0]),row("judge_slow",318,41,143,30,[0, 0, 0, 0])]),
     materialRole: "hud", animationRole: "none", provenance: "current-apk",
   }),
   entry("rhythm-game-additive.png", {
     logicalAssetId: "hud/ordinary/rhythm-game-additive-atlas", role: "hud-atlas", byteLength: 464153,
     sha256: "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533", mime: "image/png", width: 1024, height: 1024,
-    textureSettings: ADDITIVE_TEXTURE, atlasRows: Object.freeze([row("hp_meter",474,535,17,26,[8, 8, 0, 0])]),
+    textureSettings: ADDITIVE_TEXTURE, atlasRows: Object.freeze([row("hp_meter",474,463,17,26,[8, 8, 0, 0])]),
     materialRole: "hud", animationRole: "none", provenance: "current-apk",
   }),
   entry("tap-lane-effect-1.png", laneEffectProfile(1, 14137, "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D", 467)),
@@ -36,7 +36,7 @@ export const CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES: readonly OrdinaryVisib
   entry("ui-additive-effect.png", {
     logicalAssetId: "hud/ordinary/ui-additive-effect-atlas", role: "hud-atlas", byteLength: 20188,
     sha256: "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E", mime: "image/png", width: 256, height: 256,
-    textureSettings: ADDITIVE_TEXTURE, atlasRows: Object.freeze([row("effect_health_caution_inside",216,174,16,14,[6, 6, 5, 5]),row("effect_health_caution_outline",0,130,180,83,[15, 158, 0, 0])]),
+    textureSettings: ADDITIVE_TEXTURE, atlasRows: Object.freeze([row("effect_health_caution_inside",216,68,16,14,[6, 6, 5, 5]),row("effect_health_caution_outline",0,43,180,83,[15, 158, 0, 0])]),
     materialRole: "hud", animationRole: "none", provenance: "current-apk",
   }),
 ]);
