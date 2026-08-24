@@ -1,0 +1,1165 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-production-visual-third-reaudit",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "multiaspect": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "bytes": 39710,
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+    },
+    "visual_layout": {
+      "path": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "bytes": 8090,
+      "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
+    },
+    "note_family": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_family_r4_profile.json",
+      "bytes": 23931,
+      "sha256": "B57A918F44124EBB7218B311FCC7D39FABBCDC08E6A912087AE44BAB63EB3AD3"
+    },
+    "note_geometry": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_geometry_profile.json",
+      "bytes": 20910,
+      "sha256": "940A4BCB88B760CD7EF2EAD26EDBA52038FC8051A327191151DDCB896F403BCB"
+    },
+    "note_animation": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "ordinary_visible": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+    },
+    "skin_profile": {
+      "path": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_resource_profile.json",
+      "bytes": 12254715,
+      "sha256": "D3AA638111708B9A106A50D9A656EE966997C601DB861B525C2AADED44104D87"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "particle_reconciliation": {
+      "path": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "bytes": 5440,
+      "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
+    }
+  },
+  "original_runtime_frames": {
+    "scene-ready.png": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/scene-ready.png",
+      "bytes": 428887,
+      "sha256": "31749F5A0C36E8D6C3887B89B37EABE7DF5361BB3E33127835230ED9120CB30E"
+    },
+    "first-note-mid.png": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/first-note-mid.png",
+      "bytes": 931857,
+      "sha256": "1DD981C2494A36FFCBAE561CB10B6AC080982E4594CBB0E3147C433BBD91AC84"
+    },
+    "judge-perfect.png": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/judge-perfect.png",
+      "bytes": 1203368,
+      "sha256": "CD4217D1F256B0E12AE6D28A2F4F13E414DA85189FB38AC585797ADE7D43A0C8"
+    },
+    "combo-change.png": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/combo-change.png",
+      "bytes": 1304154,
+      "sha256": "DEE3FE766AA982E191580D51A8371A6E83CDCF1102A0A07660AB99289FB3482E"
+    },
+    "life-change.png": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/life-change.png",
+      "bytes": 922860,
+      "sha256": "0219667EA63ACDD838FCEB1B305419B48A314B4918FF2C9F4A197D0F3AA653B7"
+    }
+  },
+  "auto_live_caption": {
+    "source": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/auto-live-caption-prefab",
+      "bytes": 1476,
+      "sha256": "8775A7AB6DBC2B508754912710CDD8D3B19A502A0F496019DEE7E74D123B6C94"
+    },
+    "label": {
+      "path_id": 5,
+      "text": "オートライブ",
+      "width": 312,
+      "height": 104,
+      "depth": 15,
+      "font_size": 24,
+      "color_rgba_f32_bits": [
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ]
+    },
+    "background": {
+      "path_id": 6,
+      "exact_key": "label_round_white",
+      "width": 206,
+      "height": 38,
+      "depth": 10,
+      "color_rgba_f32_bits": [
+        "3F800000",
+        "3E6CECED",
+        "3EE4E4E5",
+        "3F800000"
+      ],
+      "atlas_row": {
+        "name": "label_round_white",
+        "rect": [
+          302,
+          245,
+          60,
+          40
+        ],
+        "border": [
+          25,
+          25,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "scene": {
+      "scene_anchor_transform": {
+        "path_id": 521,
+        "game_object": "AutoLiveLabelRoot",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          506
+        ]
+      },
+      "scene_content_root_transform": {
+        "path_id": 506,
+        "game_object": "root",
+        "local_position": [
+          130.0,
+          -135.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 521,
+        "children": []
+      },
+      "scene_anchor": {
+        "horizontal": "Left",
+        "vertical": "Top",
+        "screen_to_safe_area": true
+      },
+      "prefab_root_transform": {
+        "path_id": 3,
+        "game_object": "AutoLiveCaption",
+        "local_position": [
+          -541.0,
+          234.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          4
+        ]
+      },
+      "background_transform": {
+        "path_id": 4,
+        "game_object": "background",
+        "local_position": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 3,
+        "children": []
+      },
+      "label_widget": {
+        "path_id": 5,
+        "authored_width": 312,
+        "authored_height": 104
+      },
+      "background_widget": {
+        "path_id": 6,
+        "authored_width": 206,
+        "authored_height": 38
+      },
+      "runtime_parent": "InGamePlayDisplay.autoLiveLabelRoot resolves scene content root path 506; instantiated caption local transform is owned by that root."
+    },
+    "bounds_top_left_1600x900": [
+      32.383811950683594,
+      137.93096923828125,
+      247.0764617919922,
+      45.577213287353516
+    ]
+  },
+  "hud_owner_contract": {
+    "score": {
+      "transform": {
+        "path_id": 670,
+        "game_object_path_id": 206,
+        "game_object_name": "Score",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          685,
+          745
+        ]
+      },
+      "anchor": {
+        "path_id": 1126,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1125
+        },
+        "horizontal": 1,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "life": {
+      "transform": {
+        "path_id": 461,
+        "game_object_path_id": 30,
+        "game_object_name": "LifeGauge",
+        "local_position": [
+          411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          578,
+          511,
+          464
+        ]
+      },
+      "anchor": {
+        "path_id": 1084,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1083
+        },
+        "horizontal": 3,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "add_score": {
+      "transform": {
+        "path_id": 468,
+        "game_object_path_id": 35,
+        "game_object_name": "AddScore",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          575
+        ]
+      },
+      "anchor": {
+        "path_id": 1091,
+        "script_file_id": 1,
+        "script_path_id": 6970,
+        "class": "StarUIAnchor",
+        "serialized_size": 56,
+        "target_widget": {
+          "file_id": 0,
+          "path_id": 1090
+        },
+        "horizontal": 1,
+        "vertical": 1,
+        "screen_to_safe_area": true
+      }
+    },
+    "combo": {
+      "transform": {
+        "path_id": 555,
+        "game_object_path_id": 122,
+        "game_object_name": "Combo",
+        "local_position": [
+          434.70001220703125,
+          82.80000305175781,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          439
+        ]
+      },
+      "has_star_ui_anchor": false
+    },
+    "result": {
+      "transform": {
+        "path_id": 609,
+        "game_object_path_id": 199,
+        "game_object_name": "Result",
+        "local_position": [
+          0.0,
+          -160.0,
+          0.0
+        ],
+        "local_scale": [
+          0.800000011920929,
+          0.800000011920929,
+          1.0
+        ],
+        "parent_path_id": 492,
+        "children": [
+          616
+        ]
+      },
+      "has_star_ui_anchor": false
+    },
+    "mapping": {
+      "score": "left+top StarUIAnchor resolves the Score root to safe-area left/top; descendants remain root-local",
+      "life": "right+top StarUIAnchor resolves the Life root to safe-area right/top; descendants remain root-local",
+      "add_score": {
+        "root": "left+top safe-area anchor",
+        "number_local_position_after_anchor": [
+          282.0,
+          -85.0,
+          0.0
+        ],
+        "calculation": "Offset (300,-84) + UISpriteNumber (-18,-1); do not reuse pre-anchor accumulated (-129,224)"
+      },
+      "combo": "unanchored UI_Root_Back centered authored transform",
+      "result": "unanchored UI_Root_Back centered authored transform",
+      "animation_scale": "authored animation local scale multiplies, and never replaces, the FitWidth*ScreenToSafeArea root scale"
+    },
+    "ui_scale_1600x900": 1.1994003057479858,
+    "rule": "Score/Life/AddScore use their serialized safe-area anchors; Combo/Result remain centered UI_Root_Back descendants. Animation local scale multiplies the root UI scale."
+  },
+  "note_resource_contract": {
+    "selected_skin00_rows": {
+      "logical_resource": "ingameskin/noteskin/skin00",
+      "texture": "RhythmGameSprites",
+      "rows": [
+        {
+          "name": "note_flick_0",
+          "rect": {
+            "x": 620.0,
+            "y": 610.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_1",
+          "rect": {
+            "x": 0.0,
+            "y": 854.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_2",
+          "rect": {
+            "x": 0.0,
+            "y": 732.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_3",
+          "rect": {
+            "x": 0.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_4",
+          "rect": {
+            "x": 1240.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_5",
+          "rect": {
+            "x": 0.0,
+            "y": 488.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_6",
+          "rect": {
+            "x": 310.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_flick_top",
+          "rect": {
+            "x": 1240.0,
+            "y": 854.0,
+            "width": 171.0,
+            "height": 138.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_0",
+          "rect": {
+            "x": 1550.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_1",
+          "rect": {
+            "x": 620.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_2",
+          "rect": {
+            "x": 310.0,
+            "y": 854.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_3",
+          "rect": {
+            "x": 620.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_4",
+          "rect": {
+            "x": 1240.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_5",
+          "rect": {
+            "x": 1240.0,
+            "y": 610.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_6",
+          "rect": {
+            "x": 1240.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_0",
+          "rect": {
+            "x": 310.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_1",
+          "rect": {
+            "x": 310.0,
+            "y": 732.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_2",
+          "rect": {
+            "x": 0.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_3",
+          "rect": {
+            "x": 310.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_4",
+          "rect": {
+            "x": 0.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_5",
+          "rect": {
+            "x": 930.0,
+            "y": 488.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_long_flash_6",
+          "rect": {
+            "x": 930.0,
+            "y": 610.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_0",
+          "rect": {
+            "x": 620.0,
+            "y": 732.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_1",
+          "rect": {
+            "x": 620.0,
+            "y": 488.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_0",
+          "rect": {
+            "x": 930.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_1",
+          "rect": {
+            "x": 0.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_2",
+          "rect": {
+            "x": 620.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_3",
+          "rect": {
+            "x": 930.0,
+            "y": 854.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_4",
+          "rect": {
+            "x": 1240.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_5",
+          "rect": {
+            "x": 1550.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_16_6",
+          "rect": {
+            "x": 310.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_2",
+          "rect": {
+            "x": 620.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_3",
+          "rect": {
+            "x": 1550.0,
+            "y": 0.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_4",
+          "rect": {
+            "x": 930.0,
+            "y": 244.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_5",
+          "rect": {
+            "x": 620.0,
+            "y": 854.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_normal_6",
+          "rect": {
+            "x": 1550.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_0",
+          "rect": {
+            "x": 930.0,
+            "y": 732.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_1",
+          "rect": {
+            "x": 930.0,
+            "y": 366.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_2",
+          "rect": {
+            "x": 310.0,
+            "y": 488.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_3",
+          "rect": {
+            "x": 930.0,
+            "y": 122.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_4",
+          "rect": {
+            "x": 1240.0,
+            "y": 732.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_5",
+          "rect": {
+            "x": 0.0,
+            "y": 610.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        },
+        {
+          "name": "note_skill_6",
+          "rect": {
+            "x": 1240.0,
+            "y": 488.0,
+            "width": 308.0,
+            "height": 120.0
+          },
+          "pivot": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "pixels_per_unit": 100.0
+        }
+      ]
+    },
+    "ordinary_family_mapping": {
+      "standalone_normal": "note_normal_<source-center-lane>",
+      "standalone_skill": "note_skill_<source-center-lane>",
+      "standalone_flick": "note_flick_<source-center-lane> + note_flick_top child",
+      "standalone_directional": "note_flick_<l|r>_<source-center-lane> + note_flick_top_<l|r> child",
+      "slide_head_normal": "note_long_<source-center-lane> + note_long_flash_<source-center-lane> child",
+      "slide_head_skill": "note_skill_<source-center-lane> + note_long_flash_<source-center-lane> child",
+      "slide_interior_visible": "note_long_<source-center-lane> + note_long_flash_<source-center-lane> child",
+      "slide_terminal_normal_or_skill": "note_long_<source-center-lane> + note_long_flash_<source-center-lane> child",
+      "slide_terminal_flick": "note_flick_<source-center-lane> + note_flick_top child",
+      "slide_terminal_directional": "note_flick_<l|r>_<source-center-lane> + note_flick_top_<l|r> child",
+      "slide_interior_hidden": "no front Sprite; chain mesh remains connected"
+    },
+    "animation": {
+      "flick_clip": "FlickNoteIcon",
+      "flick_duration_seconds": 0.3333333432674408,
+      "directional_left_clip": "FlickNoteIconLeft",
+      "directional_right_clip": "FlickNoteIconRight",
+      "long_flash_clip": "LongNoteFlash",
+      "long_flash_duration_seconds": 0.8333333134651184,
+      "restart_normalized_time_f32_bits": "00000000"
+    },
+    "mesh": {
+      "vertex_count": 22,
+      "index_count": 60,
+      "boundary": "position.x +/- localScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+      "initial_color_f32_bits": [
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F4CCCCD"
+      ],
+      "uv_f32_bits": [
+        [
+          "00000000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "00000000",
+          "3DCCCCCD"
+        ],
+        [
+          "3F800000",
+          "3DCCCCCD"
+        ],
+        [
+          "00000000",
+          "3E4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3E4CCCCD"
+        ],
+        [
+          "00000000",
+          "3E99999A"
+        ],
+        [
+          "3F800000",
+          "3E99999A"
+        ],
+        [
+          "00000000",
+          "3ECCCCCD"
+        ],
+        [
+          "3F800000",
+          "3ECCCCCD"
+        ],
+        [
+          "00000000",
+          "3F000000"
+        ],
+        [
+          "3F800000",
+          "3F000000"
+        ],
+        [
+          "00000000",
+          "3F19999A"
+        ],
+        [
+          "3F800000",
+          "3F19999A"
+        ],
+        [
+          "00000000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "00000000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "00000000",
+          "3F666666"
+        ],
+        [
+          "3F800000",
+          "3F666666"
+        ],
+        [
+          "00000000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ]
+    }
+  },
+  "product_semantics": {
+    "id": "simulator.product-compatible-node-visual-routing-v1",
+    "statement": "A whole chart entering the Garupa/ExGarupa product timeline does not erase the exact ordinary resource family, chain role, child animation or integer source-lane identity of locally compatible nodes.",
+    "integer_lane": "reuse the exact selected ordinary family and exact 0..6 source-center-lane key",
+    "fractional_or_outside_lane": "remain product-identified; no nearest lane, first texture, default texture or original-equivalence claim",
+    "wide_node": "must not silently present a single authored Sprite as original evidence after arbitrary X-only deformation; its visible span construction is an explicit product behavior with behavior-level tests",
+    "hidden_slide_node": "connects adjacent mesh sections but creates no front Sprite or icon"
+  },
+  "particle_boundary": {
+    "garupa_chart_route_is_original_evidence": false,
+    "compatible_integer-lane product routing": "GarupaEditor product semantics may reuse exact selected original roots only when the node supplies an original 0..6 button owner and supported note family",
+    "fractional_outside_routing": "must remain product-identified and cannot use nearest button, first texture, fixed lane-effect texture, or rectangular particle-texture mesh fallback"
+  },
+  "acceptance": {
+    "required": [
+      "resource-key observation per visible product node role",
+      "parent-child transform and animation sample observation",
+      "independent 1600x900 HUD bounds oracle",
+      "real WebView2 framebuffer crops for Score, Life, Combo, Auto caption, judge result and representative Note families"
+    ],
+    "forbidden": [
+      "whole-frame digest as sole correctness gate",
+      "stable output from implementation-derived formulas as original proof",
+      "nearest/default/first resource fallback",
+      "closing resource, stretch or animation findings from visual impression alone"
+    ]
+  },
+  "unknown_fields": [],
+  "blocking_findings": []
+}

@@ -12,6 +12,7 @@
 - `reverse-snapshots/ordinary-visible-rendering/` 包含已推送 Reverse `f94947d9` 的普通Note动画与通用单人HUD contract/profile/oracle及4个去重PNG；closure/manifest已按Reverse `7629a508`同步UnityPy导出PNG direct-row坐标纠正，并按Reverse `50bc40b6`登记4个GamePlayButton lane-effect PNG。RhythmGameUI与sgm字体复用既有Score快照身份，不重复保存。该快照授权portable production消费，但不声明设备GPU/framebuffer exact。
 - `reverse-snapshots/visual-layout-correction/` 只包含已推送Reverse `28b6a790`的HUD StarUIAnchor、Field UITexture/Bottom pivot、unclipped UIPanel与Judge Button4父链最小合同；不复制level3、脚本表、截图或Reverse工作输入。
 - `reverse-snapshots/pixi-particle-visual/` 只包含已推送Reverse `50170414`的粒子simulation authority与Linear/sRGB、stretched roll、max-size、signed-axis、cross-renderer ordering协调合同；不复制软件renderer、旧oracle、texture或raw资源。
+- `reverse-snapshots/production-visual-third-reaudit/` 只包含已推送Reverse `2bdd91c6`的第三轮最小合同：Auto Live caption exact row/tint/text/16:9 bounds、产品路线中局部兼容Note family/child animation保持、HUD owner和非循环验收门；不复制Prefab、Skin纹理、原作截图或Reverse脚本。
 - `reverse-snapshots/c07-evidence/` 只保留已推送Reverse `a87cd3a7`真实WebView2合同与`0dd4d71c`fixed-device客观阻断disposition；旧initial-seek产品扩展fixture已随`startMilliseconds`能力删除。
 - `reverse-snapshots/live-rehearsal/` 包含已推送Reverse `d100f96e`四模式/MoveTime合同与`6c0dfb76`control rendering profile两个最小JSON；不复制R1 trace或截图，controls atlas复用既有Score HUD快照。
 - `reverse-snapshots/pause-ui/` 包含Reverse `770af437`最终Pause contract、serialized resource/layout profile、`99d40bcc`的19-trace最小manifest及Countdown1/2/3三张portable PNG；不复制19条gzip、设备账号数据或截图。生产资源由应用Builtin独立装配，production不得读取fixture。
