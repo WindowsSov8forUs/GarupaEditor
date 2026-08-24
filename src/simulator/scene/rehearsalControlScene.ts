@@ -31,6 +31,7 @@ export interface RehearsalControlSceneLayout {
     readonly hitCircleRadiusPixels: number;
   };
   readonly timeLabelBoundsTopLeft: RehearsalControlBounds;
+  readonly autoLiveCaptionBoundsTopLeft: RehearsalControlBounds;
   readonly demoBadgeBoundsTopLeft: RehearsalControlBounds;
 }
 
@@ -64,6 +65,7 @@ export function createRehearsalControlSceneLayout(
       hitCircleRadiusPixels: layout.ui.moveTime.hitCircleRadiusPixels,
     },
     timeLabelBoundsTopLeft: bounds(layout.ui.moveTime.timeBackgroundBoundsTopLeft),
+    autoLiveCaptionBoundsTopLeft: bounds(layout.ui.autoLiveCaptionBoundsTopLeft),
     demoBadgeBoundsTopLeft: bounds(layout.ui.autoLiveCaptionBoundsTopLeft),
   });
 }

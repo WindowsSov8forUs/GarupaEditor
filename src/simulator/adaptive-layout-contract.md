@@ -111,7 +111,7 @@ MoveTime uses the committed current prefab:
 - `ButtonBase.radius = 0.12` world units;
 - `searchPressedUIButton` compares squared world distance with radius squared.
 
-The hit shape is therefore a circle of pixel radius `0.12 * height/2`, not the removed synthetic 100×100 rectangle. Time background uses the serialized Right+Top hierarchy and 172×32 widget. Rehearsal Auto caption uses the serialized Left+Top scene root, `(130,-135)` content offset, `(0,1)` prefab background offset and 206×38 widget. Actual atlas textures/NineSlice borders are used; screenshot alpha bounding boxes are not consumed.
+The hit shape is therefore a circle of pixel radius `0.12 * height/2`, not the removed synthetic 100×100 rectangle. Time background uses the serialized Right+Top hierarchy and 172×32 widget. Rehearsal Auto `デモプレイ` and Live Auto `オートライブ` use the serialized Left+Top scene root, `(130,-135)` content offset, `(0,1)` prefab background offset and 206×38 widget; the Live caption consumes exact `label_round_white`, serialized pink tint and white 24-point label. Actual atlas textures/NineSlice borders are used; screenshot alpha bounding boxes are not consumed.
 
 ## Startup, standard backdrop and MV
 

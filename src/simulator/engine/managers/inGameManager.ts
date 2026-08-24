@@ -206,7 +206,7 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
     }
-    const productUpdate = this.garupaProduct?.update() ?? ok(undefined);
+    const productUpdate = this.garupaProduct?.update(deltaTimeSeconds) ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
     const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
     if (tapLaneEffectAdvance?.status === "integrity-failure") {

@@ -144,7 +144,7 @@ export class GarupaProductTimelineManager {
     return lane.status === "ok" ? ok(null) : lane;
   }
 
-  update(): SimulatorResult<void> {
+  update(deltaTimeSeconds: number): SimulatorResult<void> {
     if (!this.initialized || this.disposed) {
       return rejected(
         "simulator.garupa-extension.update-outside-lifecycle",
@@ -153,10 +153,12 @@ export class GarupaProductTimelineManager {
     }
     const visualPosition = this.music.musicPosition;
     const judgementPosition = this.music.getAdjustedMusicPosition(this.judgementAdjustValueB);
-    if (!Number.isFinite(visualPosition) || visualPosition < 0 || !Number.isFinite(judgementPosition)) {
+    if (!Number.isFinite(visualPosition) || visualPosition < 0 || !Number.isFinite(judgementPosition) ||
+      !Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0 ||
+      deltaTimeSeconds !== Math.fround(deltaTimeSeconds)) {
       return rejected(
         "simulator.garupa-extension.non-finite-current-position",
-        "Product visual and judgement sampling requires finite BPM-clock positions.",
+        "Product visual and judgement sampling requires finite BPM-clock positions and one exact nonnegative Float32 outer-frame delta.",
       );
     }
     const judgedThisFrame: GarupaProductNode[] = [];
@@ -172,7 +174,11 @@ export class GarupaProductTimelineManager {
       if (manual.status !== "ok") return manual;
       judgedThisFrame.push(...manual.value);
     }
-    const render = this.render?.preflightFrame(visualPosition, judgedThisFrame) ?? ok(null);
+    const render = this.render?.preflightFrame(
+      visualPosition,
+      judgedThisFrame,
+      deltaTimeSeconds,
+    ) ?? ok(null);
     if (render.status !== "ok") return render;
     if (this.mode.inputMode === "auto") {
       for (const node of judgedThisFrame) {

@@ -1553,6 +1553,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   readonly root = new Container({ label: "in-game-control-root", sortableChildren: true });
   private readonly rehearsalRoot = new Container({ label: "rehearsal-control-root", sortableChildren: true });
   private readonly modalRoot = new Container({ label: "pause-modal-root", sortableChildren: true });
+  private readonly autoLiveCaptionRoot: Container | null;
   private readonly pauseButton: Sprite;
   private readonly returnButton: Sprite | null;
   private readonly advanceButton: Sprite | null;
@@ -1602,6 +1603,40 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.pauseButton.zIndex = 50;
     this.pauseButton.eventMode = "none";
     this.root.addChild(this.rehearsalRoot, this.pauseButton, this.modalRoot);
+
+    if (mode.isAutoLive) {
+      const caption = layout.autoLiveCaptionBoundsTopLeft;
+      const owner = new Container({ label: "auto-live-caption-root", sortableChildren: true });
+      owner.visible = false;
+      owner.zIndex = 20;
+      owner.eventMode = "none";
+      const background = new NineSliceSprite({
+        texture: demoBackgroundTexture,
+        ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption,
+        label: "auto-live-caption-background",
+      });
+      applyBounds(background, caption);
+      background.tint = 0xff3b72;
+      background.zIndex = 10;
+      const label = this.text(
+        "オートライブ",
+        caption.height * 24 / 38,
+        0xffffff,
+        "auto-live-caption-label",
+      );
+      label.anchor.set(0.5, 0.5);
+      label.position.set(
+        caption.x + caption.width / 2,
+        caption.y + caption.height / 2,
+      );
+      label.zIndex = 15;
+      owner.addChild(background, label);
+      owner.sortChildren();
+      this.autoLiveCaptionRoot = owner;
+      this.root.addChild(owner);
+    } else {
+      this.autoLiveCaptionRoot = null;
+    }
 
     if (mode.sessionMode === "rehearsal") {
       this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
@@ -1668,6 +1703,9 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
     this.pauseButton.visible = snapshot.playable && snapshot.state === "playing";
     this.rehearsalRoot.visible = snapshot.playable && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
+    if (this.autoLiveCaptionRoot !== null) {
+      this.autoLiveCaptionRoot.visible = snapshot.playable && snapshot.mode.isAutoLive;
+    }
     const countdownNumber = snapshot.state === "resume-countdown"
       ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
       : null;

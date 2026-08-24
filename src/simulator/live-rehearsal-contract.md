@@ -80,9 +80,9 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 - rewind/advance由Left/Right+Center safe anchor、`±72` child和`104×104` UISprite派生；
 - 命中使用原作world-circle radius `0.12`，不再使用旧截图bbox或人工`100×100`矩形；
 - time background由Right+Top hierarchy与`172×32` widget派生；
-- Rehearsal Auto caption由Left+Top scene root、`(130,-135)` content、`(0,1)` background和`206×38` widget派生；
+- Rehearsal Auto的`デモプレイ`badge与Live Auto的`オートライブ`caption均由Left+Top scene root、`(130,-135)` content、`(0,1)` background和`206×38` widget派生；Live Auto进一步锁定`label_round_white`、pink `(1,59/255,114/255,1)`、白色24pt label；
 - exact current atlas rows、NineSlice border和sgm font无fallback；
-- 两种Rehearsal共享同一initial surface revision，Live均隐藏。
+- 两种Rehearsal共享同一initial surface revision；Live隐藏MoveTime控件，但Live Auto必须保留其独立caption。
 
 1600×720上的约`(142.208,360)`与`(1457.792,360)`只是参数化公式的一组回归结果。截图不提供production数值；GPU/fixed-device exact仍不声明。
 

@@ -1,5 +1,6 @@
 import type { SimulatorRendererBackend } from "../../backends/renderingContracts";
 import type {
+  RenderAnimationRole,
   RenderColor,
   RenderCommand,
   RenderFloat32,
@@ -12,7 +13,11 @@ import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout"
 import { getOrdinaryNoteArrivalSeconds } from "../rendering/ordinaryNoteGeometry";
 import { RenderOwnerTransaction, type RenderEngineResourceBindings } from "../rendering/renderCommandProducer";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
-import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
+import type {
+  GarupaProductChartProfile,
+  GarupaProductNode,
+  GarupaProductSlideChain,
+} from "./productChartProfile";
 import type { GarupaProductTimingGroupAxisProfile } from "./timingGroupAxis";
 
 interface ProductNodeSample {
@@ -37,6 +42,8 @@ export class GarupaProductRenderProducer {
   private readonly created = new Set<string>();
   private readonly visible = new Set<string>();
   private readonly judgedNodeIdentities = new Set<string>();
+  private readonly animationElapsedSeconds = new Map<string, number>();
+  private readonly chainByIdentity: ReadonlyMap<string, GarupaProductSlideChain>;
 
   constructor(
     private readonly sessionId: string,
@@ -48,7 +55,9 @@ export class GarupaProductRenderProducer {
     private readonly specificSpeed: RenderFloat32,
     private readonly noteColor: boolean,
     private readonly syncLine: boolean,
-  ) {}
+  ) {
+    this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
+  }
 
   validate(): SimulatorResult<void> {
     if (this.chart.route !== "product-extension") return ok(undefined);
@@ -76,14 +85,16 @@ export class GarupaProductRenderProducer {
   preflightFrame(
     currentAbsolutePosition: number,
     judgedNodes: readonly GarupaProductNode[],
+    deltaTimeSeconds: number,
   ): SimulatorResult<RenderOwnerTransaction | null> {
     const valid = this.validate();
     if (valid.status !== "ok") return valid;
     if (!Number.isFinite(currentAbsolutePosition) || currentAbsolutePosition < 0 ||
-      !Array.isArray(judgedNodes)) {
+      !Array.isArray(judgedNodes) || !Number.isFinite(deltaTimeSeconds) ||
+      deltaTimeSeconds < 0 || deltaTimeSeconds !== Math.fround(deltaTimeSeconds)) {
       return rejected(
         "render.garupa-product.invalid-frame-input",
-        "Product frame projection requires finite current position and one owner-produced judgement list.",
+        "Product frame projection requires finite current position, one owner-produced judgement list and an exact nonnegative Float32 outer-frame delta.",
       );
     }
     if (this.chart.route !== "product-extension") return ok(null);
@@ -131,6 +142,7 @@ export class GarupaProductRenderProducer {
 
     const plannedCreated = new Set(this.created);
     const plannedVisible = new Set(this.visible);
+    const plannedAnimationElapsed = new Map(this.animationElapsedSeconds);
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
 
@@ -173,6 +185,18 @@ export class GarupaProductRenderProducer {
     for (const node of this.chart.visibleNodes) {
       const sample = samples.get(node.identity)!;
       const objectId = nodeObjectId(node);
+      const front = frontBinding(
+        node,
+        this.resources,
+        this.noteColor,
+        this.chainByIdentity,
+      );
+      const animation = productAnimationBinding(
+        node,
+        objectId,
+        this.resources,
+        this.chainByIdentity,
+      );
       if (sample.visible) {
         if (!plannedCreated.has(objectId)) {
           commands.push(command(commands.length, {
@@ -182,15 +206,44 @@ export class GarupaProductRenderProducer {
             role: "note-root",
             parentObjectId: null,
           }));
-          const binding = frontBinding(node, this.resources, this.noteColor);
           commands.push(command(commands.length, {
             kind: "bind-resource",
             renderObjectId: objectId,
             binding: "sprite",
-            logicalAssetId: binding.logicalAssetId,
-            exactKey: binding.exactKey,
+            logicalAssetId: front.logicalAssetId,
+            exactKey: front.exactKey,
           }));
           plannedCreated.add(objectId);
+          if (animation !== null) {
+            commands.push(command(commands.length, {
+              kind: "create-object",
+              renderObjectId: animation.ownerObjectId,
+              poolFamily: `garupa-product-${animation.animationRole}`,
+              role: animation.animationRole === "note-long-flash"
+                ? "note-intermediate"
+                : "note-icon",
+              parentObjectId: objectId,
+            }));
+            commands.push(command(commands.length, {
+              kind: "bind-resource",
+              renderObjectId: animation.ownerObjectId,
+              binding: "sprite",
+              logicalAssetId: animation.logicalAssetId,
+              exactKey: animation.exactKey,
+            }));
+            commands.push(command(commands.length, {
+              kind: "activate-object",
+              renderObjectId: animation.ownerObjectId,
+            }));
+            commands.push(command(commands.length, {
+              kind: "play-animation",
+              renderObjectId: animation.ownerObjectId,
+              animationRole: animation.animationRole,
+              restart: true,
+            }));
+            plannedCreated.add(animation.ownerObjectId);
+            plannedAnimationElapsed.set(animation.ownerObjectId, 0);
+          }
         }
         if (!plannedVisible.has(objectId)) {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
@@ -201,8 +254,33 @@ export class GarupaProductRenderProducer {
           sample,
           objectId,
         )));
+        if (animation !== null) {
+          const elapsed = plannedAnimationElapsed.get(animation.ownerObjectId) ?? 0;
+          commands.push(command(commands.length, {
+            kind: "sample-animation",
+            renderObjectId: animation.ownerObjectId,
+            animationRole: animation.animationRole,
+            elapsedSeconds: f32(elapsed),
+          }));
+          plannedAnimationElapsed.set(
+            animation.ownerObjectId,
+            Math.fround(elapsed + deltaTimeSeconds),
+          );
+        }
       } else if (plannedVisible.delete(objectId)) {
         commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
+        if (animation !== null && plannedAnimationElapsed.delete(animation.ownerObjectId)) {
+          commands.push(command(commands.length, {
+            kind: "stop-animation",
+            renderObjectId: animation.ownerObjectId,
+            animationRole: animation.animationRole,
+            restart: false,
+          }));
+          commands.push(command(commands.length, {
+            kind: "hide-object",
+            renderObjectId: animation.ownerObjectId,
+          }));
+        }
       }
     }
 
@@ -241,7 +319,6 @@ export class GarupaProductRenderProducer {
             from,
             to,
             this.scene.screenToSafeAreaRatio.value,
-            chain.allHidden ? 0.5 : chain.containsHidden ? 0.72 : 0.9,
           )));
         } else if (plannedVisible.delete(objectId)) {
           commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
@@ -262,6 +339,10 @@ export class GarupaProductRenderProducer {
       for (const id of plannedVisible) this.visible.add(id);
       this.judgedNodeIdentities.clear();
       for (const id of plannedJudged) this.judgedNodeIdentities.add(id);
+      this.animationElapsedSeconds.clear();
+      for (const [id, elapsed] of plannedAnimationElapsed) {
+        this.animationElapsedSeconds.set(id, elapsed);
+      }
       this.frame += 1;
     }));
   }
@@ -270,7 +351,7 @@ export class GarupaProductRenderProducer {
     if (this.created.size === 0) return ok(null);
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
-    for (const objectId of this.created) {
+    for (const objectId of [...this.created].reverse()) {
       commands.push(command(commands.length, { kind: "release-object", renderObjectId: objectId }));
     }
     const batch = this.renderer.preflight(commands);
@@ -279,6 +360,7 @@ export class GarupaProductRenderProducer {
           this.created.clear();
           this.visible.clear();
           this.judgedNodeIdentities.clear();
+          this.animationElapsedSeconds.clear();
         }))
       : batch;
   }
@@ -288,7 +370,7 @@ export class GarupaProductRenderProducer {
       frame: this.frame,
       createdObjectCount: this.created.size,
       visibleObjectCount: this.visible.size,
-      activeEffectCount: 0,
+      activeEffectCount: this.animationElapsedSeconds.size,
       activeTapLaneEffectCount: 0,
       syncPairCount: this.chart.syncPairs.length,
     });
@@ -309,28 +391,86 @@ function commandFactory(sessionId: string, renderer: SimulatorRendererBackend, f
   }) as RenderCommand;
 }
 
+interface ProductAnimationBinding {
+  readonly ownerObjectId: string;
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+  readonly animationRole: Extract<
+    RenderAnimationRole,
+    "note-flick" | "note-directional-flick" | "note-long-flash"
+  >;
+}
+
 function frontBinding(
   node: GarupaProductNode,
   resources: RenderEngineResourceBindings,
   noteColor: boolean,
+  chains: ReadonlyMap<string, GarupaProductSlideChain>,
 ) {
+  const lane = productResourceLane(node);
   if (node.type === "Directional") {
     return Object.freeze({
       logicalAssetId: resources.directionalAtlasLogicalAssetId,
-      exactKey: `note_flick_${node.direction === "Left" ? "l" : "r"}_3`,
+      exactKey: `note_flick_${node.direction === "Left" ? "l" : "r"}_${lane}`,
     });
   }
-  const family = node.type === "Skill"
-    ? "note_skill"
-    : node.type === "Flick"
-      ? "note_flick"
-      : noteColor && node.shortRhythmUnder8beat
-        ? "note_normal_16"
-        : "note_normal";
+  const chain = node.chainIdentity === null ? undefined : chains.get(node.chainIdentity);
+  const chainHead = chain !== undefined && node.connectionIndex === 0;
+  const family = node.type === "Flick"
+    ? "note_flick"
+    : chain !== undefined
+      ? chainHead && node.type === "Skill"
+        ? "note_skill"
+        : "note_long"
+      : node.type === "Skill"
+        ? "note_skill"
+        : noteColor && node.shortRhythmUnder8beat
+          ? "note_normal_16"
+          : "note_normal";
   return Object.freeze({
     logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${family}_3`,
+    exactKey: `${family}_${lane}`,
   });
+}
+
+function productAnimationBinding(
+  node: GarupaProductNode,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+  chains: ReadonlyMap<string, GarupaProductSlideChain>,
+): ProductAnimationBinding | null {
+  if (node.type === "Directional") {
+    return Object.freeze({
+      ownerObjectId: `${parentObjectId}:icon`,
+      logicalAssetId: resources.directionalAtlasLogicalAssetId,
+      exactKey: node.direction === "Left" ? "note_flick_top_l" : "note_flick_top_r",
+      animationRole: "note-directional-flick",
+    });
+  }
+  if (node.type === "Flick") {
+    return Object.freeze({
+      ownerObjectId: `${parentObjectId}:icon`,
+      logicalAssetId: resources.noteAtlasLogicalAssetId,
+      exactKey: "note_flick_top",
+      animationRole: "note-flick",
+    });
+  }
+  if (node.chainIdentity === null || !chains.has(node.chainIdentity)) return null;
+  return Object.freeze({
+    ownerObjectId: `${parentObjectId}:long-flash`,
+    logicalAssetId: resources.noteAtlasLogicalAssetId,
+    exactKey: `note_long_flash_${productResourceLane(node)}`,
+    animationRole: "note-long-flash",
+  });
+}
+
+function productResourceLane(node: GarupaProductNode): number {
+  const center = node.spanStart + (node.width - 1) / 2;
+  if (Number.isInteger(center) && center >= 0 && center <= 6) return center;
+  // Product semantics: fractional/outside nodes use one fixed center glyph of
+  // the selected family. This is neither a nearest-lane lookup nor an
+  // original-equivalence claim; integer source owners always retain their key.
+  return 3;
 }
 
 function nodeTransform(
@@ -339,12 +479,11 @@ function nodeTransform(
   renderObjectId: string,
 ): Omit<Extract<RenderCommand, { kind: "set-transform" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   const scale = requireUniformScale(sample).value;
-  const width = node.width;
   return {
     kind: "set-transform",
     renderObjectId,
     position: requireProjectedPosition(sample),
-    scale: vector2(scale * width, scale),
+    scale: vector2(scale, scale),
     rotationDegrees: f32(0),
     color: white(),
     ordering: ordering(3, node.authoredOrder, renderObjectId),
@@ -357,7 +496,6 @@ function slideMesh(
   from: ProductNodeSample,
   to: ProductNodeSample,
   screenToSafeAreaRatio: number,
-  alpha: number,
 ): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
@@ -379,10 +517,9 @@ function slideMesh(
     const halfWidth = uniformScale * authoredWidth * screenToSafeAreaRatio;
     vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
     uv.push(vector2(0, sectionRatio), vector2(1, sectionRatio));
-    const productAlpha = Math.fround(alpha * (2 / 3));
     colors.push(
-      color(0.8, 0.8, 0.8, productAlpha),
-      color(0.8, 0.8, 0.8, productAlpha),
+      color(1, 1, 1, 0.8),
+      color(1, 1, 1, 0.8),
     );
     if (section < 10) {
       const left = section * 2;
@@ -396,7 +533,7 @@ function slideMesh(
     indices: Object.freeze(indices),
     uv: Object.freeze(uv),
     colors: Object.freeze(colors),
-    materialRole: "curve-note",
+    materialRole: "long-note",
   };
 }
 
