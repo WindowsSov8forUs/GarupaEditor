@@ -19,6 +19,7 @@ interface ProductNodeSample {
   readonly node: GarupaProductNode;
   readonly curve: number;
   readonly position: RenderVector3 | null;
+  readonly uniformScale: RenderFloat32 | null;
   readonly visible: boolean;
 }
 
@@ -37,6 +38,7 @@ export class GarupaProductRenderProducer {
   private readonly visible = new Set<string>();
   private readonly effectFrames = new Map<string, number>();
   private readonly tapLaneEffectFrames = new Map<string, number>();
+  private readonly judgedNodeIdentities = new Set<string>();
 
   constructor(
     private readonly sessionId: string,
@@ -94,6 +96,8 @@ export class GarupaProductRenderProducer {
     const arrival = getOrdinaryNoteArrivalSeconds(this.specificSpeed);
     if (arrival.status !== "ok") return arrival;
     const arrivalMilliseconds = arrival.value.value * 1000;
+    const plannedJudged = new Set(this.judgedNodeIdentities);
+    for (const node of judgedNodes) plannedJudged.add(node.identity);
     const samples = new Map<string, ProductNodeSample>();
     for (const node of this.chart.nodes) {
       const displacement = this.axis.displacementAtPosition(
@@ -105,20 +109,29 @@ export class GarupaProductRenderProducer {
       const progress = 1 - displacement.value / arrivalMilliseconds;
       const curve = Math.pow(1.1, 50 * (progress - 1));
       let position: RenderVector3 | null = null;
+      let uniformScale: RenderFloat32 | null = null;
       if (Number.isFinite(curve)) {
         const projected = this.scene.projectLaneAtCurve(
           node.spanStart + (node.width - 1) / 2,
           curve,
         );
+        const scale = this.scene.projectNoteScaleAtCurve(curve, node.width);
         if (projected.status !== "ok") {
-          if (curve >= 0.002 && curve <= 1.55) return projected;
-        } else position = projected.value;
+          if (curve >= 0.002 && curve <= 1) return projected;
+        } else if (scale.status !== "ok") {
+          if (curve >= 0.002 && curve <= 1) return scale;
+        } else {
+          position = projected.value;
+          uniformScale = scale.value;
+        }
       }
       samples.set(node.identity, Object.freeze({
         node,
         curve,
         position,
-        visible: position !== null && curve >= 0.002 && curve <= 1.55,
+        uniformScale,
+        visible: position !== null && uniformScale !== null &&
+          curve >= 0.002 && curve <= 1 && !plannedJudged.has(node.identity),
       }));
     }
 
@@ -132,29 +145,6 @@ export class GarupaProductRenderProducer {
     }
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
-
-    for (const fieldLine of this.scene.fieldLines) {
-      const objectId = `render:garupa:field:${fieldLine.lane}`;
-      if (plannedCreated.has(objectId)) continue;
-      commands.push(command(commands.length, {
-        kind: "create-object",
-        renderObjectId: objectId,
-        poolFamily: "garupa-product-field",
-        role: "note-mesh",
-        parentObjectId: null,
-      }));
-      commands.push(command(commands.length, {
-        kind: "bind-resource",
-        renderObjectId: objectId,
-        binding: "material",
-        logicalAssetId: this.resources.curveNoteMaterialLogicalAssetId!,
-        exactKey: null,
-      }));
-      commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
-      commands.push(command(commands.length, productFieldMesh(objectId, fieldLine.start, fieldLine.goal)));
-      plannedCreated.add(objectId);
-      plannedVisible.add(objectId);
-    }
 
     if (this.syncLine) {
       for (const pair of this.chart.syncPairs) {
@@ -183,6 +173,7 @@ export class GarupaProductRenderProducer {
           objectId,
           requireProjectedPosition(first),
           requireProjectedPosition(second),
+          requireUniformScale(first),
         )));
         if (!plannedVisible.has(objectId)) {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
@@ -221,7 +212,6 @@ export class GarupaProductRenderProducer {
           node,
           sample,
           objectId,
-          this.scene.noteSettingScale.value,
         )));
       } else if (plannedVisible.delete(objectId)) {
         commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
@@ -262,7 +252,7 @@ export class GarupaProductRenderProducer {
             objectId,
             from,
             to,
-            this.scene.laneSpacingWorld.value,
+            this.scene.screenToSafeAreaRatio.value,
             chain.allHidden ? 0.5 : chain.containsHidden ? 0.72 : 0.9,
           )));
         } else if (plannedVisible.delete(objectId)) {
@@ -362,6 +352,8 @@ export class GarupaProductRenderProducer {
       for (const id of plannedVisible) this.visible.add(id);
       for (const [id, frames] of plannedEffects) this.effectFrames.set(id, frames);
       for (const [id, frames] of plannedTapLaneEffects) this.tapLaneEffectFrames.set(id, frames);
+      this.judgedNodeIdentities.clear();
+      for (const id of plannedJudged) this.judgedNodeIdentities.add(id);
       this.frame += 1;
     }));
   }
@@ -380,6 +372,7 @@ export class GarupaProductRenderProducer {
           this.visible.clear();
           this.effectFrames.clear();
           this.tapLaneEffectFrames.clear();
+          this.judgedNodeIdentities.clear();
         }))
       : batch;
   }
@@ -438,10 +431,9 @@ function nodeTransform(
   node: GarupaProductNode,
   sample: ProductNodeSample,
   renderObjectId: string,
-  noteSettingScale: number,
 ): Omit<Extract<RenderCommand, { kind: "set-transform" }>, "sessionId" | "sequence" | "frame" | "substep"> {
-  const scale = noteSettingScale * Math.max(0.03, Math.min(2.5, sample.curve));
-  const width = node.type === "Directional" ? node.width : node.width;
+  const scale = requireUniformScale(sample).value;
+  const width = node.width;
   return {
     kind: "set-transform",
     renderObjectId,
@@ -458,7 +450,7 @@ function slideMesh(
   renderObjectId: string,
   from: ProductNodeSample,
   to: ProductNodeSample,
-  laneSpacing: number,
+  screenToSafeAreaRatio: number,
   alpha: number,
 ): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   const vertices: RenderVector3[] = [];
@@ -467,14 +459,20 @@ function slideMesh(
   const indices: number[] = [];
   const fromPosition = requireProjectedPosition(from);
   const toPosition = requireProjectedPosition(to);
+  const interval = visibleSegmentInterval(from.curve, to.curve);
+  if (interval === null) throw new Error(`Invisible product segment reached mesh publication: ${renderObjectId}`);
+  const fromScale = requireUniformScale(from).value;
+  const toScale = requireUniformScale(to).value;
   for (let section = 0; section <= 10; section += 1) {
-    const ratio = section / 10;
+    const sectionRatio = section / 10;
+    const ratio = interval[0] + (interval[1] - interval[0]) * sectionRatio;
     const x = fromPosition.x.value + (toPosition.x.value - fromPosition.x.value) * ratio;
     const y = fromPosition.y.value + (toPosition.y.value - fromPosition.y.value) * ratio;
-    const curve = from.curve + (to.curve - from.curve) * ratio;
-    const width = Math.max(0.008, laneSpacing * Math.max(from.node.width, to.node.width) * 0.48 * Math.max(0.02, curve));
-    vertices.push(vector3(x - width, y, 0), vector3(x + width, y, 0));
-    uv.push(vector2(0, ratio), vector2(1, ratio));
+    const uniformScale = fromScale + (toScale - fromScale) * ratio;
+    const authoredWidth = from.node.width + (to.node.width - from.node.width) * ratio;
+    const halfWidth = uniformScale * authoredWidth * screenToSafeAreaRatio;
+    vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
+    uv.push(vector2(0, sectionRatio), vector2(1, sectionRatio));
     colors.push(color(0.38, 0.9, 0.57, alpha), color(0.38, 0.9, 0.57, alpha));
     if (section < 10) {
       const left = section * 2;
@@ -496,47 +494,15 @@ function productSyncLine(
   renderObjectId: string,
   start: RenderVector3,
   end: RenderVector3,
+  uniformScale: RenderFloat32,
 ): Omit<Extract<RenderCommand, { kind: "set-line" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   return {
     kind: "set-line",
     renderObjectId,
     start,
     end,
-    width: f32(0.28),
+    width: f32(Math.fround(uniformScale.value * Math.fround(0.2800000011920929))),
     materialRole: "sync-line",
-  };
-}
-
-function productFieldMesh(
-  renderObjectId: string,
-  start: RenderVector3,
-  goal: RenderVector3,
-): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
-  const vertices: RenderVector3[] = [];
-  const uv: RenderVector2[] = [];
-  const colors: RenderColor[] = [];
-  const indices: number[] = [];
-  for (let section = 0; section <= 10; section += 1) {
-    const ratio = section / 10;
-    const x = start.x.value + (goal.x.value - start.x.value) * ratio;
-    const y = start.y.value + (goal.y.value - start.y.value) * ratio;
-    const halfWidth = 0.004 + ratio * 0.006;
-    vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
-    uv.push(vector2(0, ratio), vector2(1, ratio));
-    colors.push(color(0.32, 0.48, 0.82, 0.38), color(0.32, 0.48, 0.82, 0.38));
-    if (section < 10) {
-      const offset = section * 2;
-      indices.push(offset, offset + 2, offset + 1, offset + 1, offset + 2, offset + 3);
-    }
-  }
-  return {
-    kind: "set-mesh",
-    renderObjectId,
-    vertices: Object.freeze(vertices),
-    indices: Object.freeze(indices),
-    uv: Object.freeze(uv),
-    colors: Object.freeze(colors),
-    materialRole: "curve-note",
   };
 }
 
@@ -562,7 +528,7 @@ function judgementFlashMesh(
     const y = center.y.value - radius + radius * 2 * ratio;
     vertices.push(vector3(left.x.value, y, 0), vector3(right.x.value, y, 0));
     uv.push(vector2(0, ratio), vector2(1, ratio));
-    colors.push(color(1, 0.86, 0.3, life), color(1, 0.86, 0.3, life));
+    colors.push(color(0.55, 0.92, 1, life), color(0.55, 0.92, 1, life));
     if (section < 10) {
       const offset = section * 2;
       indices.push(offset, offset + 2, offset + 1, offset + 1, offset + 2, offset + 3);
@@ -608,11 +574,27 @@ function requireProjectedPosition(sample: ProductNodeSample): RenderVector3 {
   return sample.position;
 }
 
+function requireUniformScale(sample: ProductNodeSample): RenderFloat32 {
+  if (sample.uniformScale === null) {
+    throw new Error(`Product Note scale is unavailable for ${sample.node.identity}.`);
+  }
+  return sample.uniformScale;
+}
+
+function visibleSegmentInterval(first: number, second: number): readonly [number, number] | null {
+  if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
+  if (first === second) return first >= 0.002 && first <= 1
+    ? Object.freeze([0, 1] as const)
+    : null;
+  const lower = (0.002 - first) / (second - first);
+  const upper = (1 - first) / (second - first);
+  const from = Math.max(0, Math.min(lower, upper));
+  const to = Math.min(1, Math.max(lower, upper));
+  return to >= from ? Object.freeze([from, to] as const) : null;
+}
+
 function segmentVisible(first: number, second: number): boolean {
-  if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
-  const minimum = Math.min(first, second);
-  const maximum = Math.max(first, second);
-  return maximum >= 0.002 && minimum <= 1.55;
+  return visibleSegmentInterval(first, second) !== null;
 }
 
 function nodeObjectId(node: GarupaProductNode): string {

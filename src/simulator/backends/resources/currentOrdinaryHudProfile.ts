@@ -20,7 +20,8 @@ const key = (
 
 /**
  * Current 10.1.4 ordinary HUD descendant/layout profile.
- * Source: pushed Reverse 6908ddfa8a45721f981e2356a9dde84970313bae.
+ * Source: pushed Reverse 6908ddfa8a45721f981e2356a9dde84970313bae,
+ * with StarUIAnchor/AddScore local-space correction 28b6a790a058fb04f45e0383554e99c86e3ae62a.
  */
 export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
   sorting: Object.freeze({
@@ -37,7 +38,7 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     unitDepth: 6,
   }),
   addScore: Object.freeze({
-    numberBaseAuthoredPosition: Object.freeze([-129, 224] as const),
+    numberBaseAuthoredPosition: Object.freeze([282, -85] as const),
     numberScale: Math.fround(0.6000000238418579),
     padding: 1,
     maxValueDigits: 6,

@@ -26,6 +26,7 @@ import type { ManualInputPosition } from "../engine/data/manualInput";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteMotion,
+  calculateOrdinaryNoteScaleAtY,
   getOrdinaryNoteArrivalSeconds,
   type OrdinaryNoteMotionState,
 } from "../engine/rendering/ordinaryNoteGeometry";
@@ -63,8 +64,10 @@ export interface GarupaProductSceneLayout {
   readonly laneSpacingWorld: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
+  readonly screenToSafeAreaRatio: RenderFloat32;
   readonly fieldLines: readonly GarupaProductFieldLine[];
   readonly projectLaneAtCurve: (lane: number, curve: number) => SimulatorResult<RenderVector3>;
+  readonly projectNoteScaleAtCurve: (curve: number, authoredWidth: number) => SimulatorResult<RenderFloat32>;
   readonly screenToContinuousLane: (position: ManualInputPosition) => SimulatorResult<number>;
   readonly isInsideContinuousSpan: (
     position: ManualInputPosition,
@@ -116,7 +119,7 @@ export function createSimulatorSceneLayout(
     : ok<HabahiroSceneInput | undefined>(undefined);
   if (habahiro.status !== "ok") return habahiro;
   const field = renderingKind === "ordinary" && fieldBindings !== null
-    ? createOriginalSkinFieldScene(fieldBindings)
+    ? createOriginalSkinFieldScene(fieldBindings, originalLayout.value)
     : undefined;
   const ordinaryNoteScene: OrdinaryFixedNoteSceneInput = Object.freeze({
     specificSpeed: values.value.specificSpeed,
@@ -242,6 +245,31 @@ function createGarupaProductScene(
     }
     return ok(vector3(projectedX, projectedY, NOTE_WORLD_Z));
   };
+  const projectNoteScaleAtCurve = (
+    curve: number,
+    authoredWidth: number,
+  ): SimulatorResult<RenderFloat32> => {
+    if (!Number.isFinite(curve) || !Number.isInteger(authoredWidth) || authoredWidth <= 0) {
+      return reject(
+        "scene.invalid-product-note-scale",
+        "Product Note scale requires one finite curve and a positive authored width.",
+      );
+    }
+    const projected = projectLaneAtCurve(3, curve);
+    if (projected.status !== "ok") return projected;
+    const zero = f32(0);
+    const source = motionState(scene, 3, zero, zero, zero);
+    const scaled = calculateOrdinaryNoteScaleAtY(
+      Object.freeze({
+        ...source,
+        buttonCount: authoredWidth <= 7 ? authoredWidth : 1,
+      }),
+      projected.value.y.value,
+    );
+    return scaled.status === "ok"
+      ? ok(scaled.value.x)
+      : integrityFailure(scaled.capability, scaled.requiredEvidence, scaled.boundary);
+  };
   const screenToContinuousLane = (
     position: ManualInputPosition,
   ): SimulatorResult<number> => {
@@ -309,8 +337,10 @@ function createGarupaProductScene(
     laneSpacingWorld: f32(laneSpacing),
     noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,
+    screenToSafeAreaRatio: f32(scene.surfaceLayout.starUi.screenToSafeAreaRatio),
     fieldLines: Object.freeze(fieldLines),
     projectLaneAtCurve,
+    projectNoteScaleAtCurve,
     screenToContinuousLane,
     isInsideContinuousSpan,
   }));
@@ -535,18 +565,16 @@ function createParticleScene(
   }));
 }
 
-function createOriginalSkinFieldScene(bindings: {
-  readonly backgroundLineLogicalAssetId: string;
-  readonly judgeLineLogicalAssetId: string;
-}) {
-  const mask: RenderFieldMaskPlan = Object.freeze({
-    renderObjectId: "render:skin-field:mask",
-    polygon: Object.freeze([vector2(-4, -5), vector2(4, -5), vector2(4, 5), vector2(-4, 5)]),
-    position: vector3(0, 0, 0),
-    scale: vector2(1, 1),
-    rotationDegrees: f32(0),
-    ordering: ordering(0, -1),
-  });
+function createOriginalSkinFieldScene(
+  bindings: {
+    readonly backgroundLineLogicalAssetId: string;
+    readonly judgeLineLogicalAssetId: string;
+  },
+  layout: OriginalSurfaceLayout,
+) {
+  const judgeScale = Math.fround(
+    layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
+  );
   return Object.freeze({
     objects: Object.freeze([
       fieldObject(
@@ -555,8 +583,8 @@ function createOriginalSkinFieldScene(bindings: {
         bindings.backgroundLineLogicalAssetId,
         "bg_line_rhythm",
         0,
-        0,
-        mask.renderObjectId,
+        -240,
+        null,
         1,
         0,
       ),
@@ -566,13 +594,13 @@ function createOriginalSkinFieldScene(bindings: {
         bindings.judgeLineLogicalAssetId,
         "game_play_line",
         0,
-        -3.45,
+        layout.gameplay.targetCenterY,
         null,
-        1,
+        judgeScale,
         1,
       ),
     ]),
-    masks: Object.freeze([mask]),
+    masks: Object.freeze([] as RenderFieldMaskPlan[]),
   });
 }
 

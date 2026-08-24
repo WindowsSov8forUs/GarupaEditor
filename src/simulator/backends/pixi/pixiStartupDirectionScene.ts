@@ -128,7 +128,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (includeStandardStage) {
       const stageTexture = dynamicTextures[0]!;
       const characterTextures = dynamicTextures.slice(1, -1);
-      this.stageBackdrop = fullFrameSprite(
+      this.stageBackdrop = aspectCoverSprite(
         stageTexture,
         "StartupStageBackdrop",
         surfaceLayout.surface.viewportWidth,
@@ -157,10 +157,9 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     const lineStar = informationSprite(common.lineStar, "StartupLineStar", 0, -170, 1346, 196);
     this.information.addChild(lineStar);
 
-    const jacket = informationSprite(jacketTexture, "StartupJacket", 0, 138, 360, 360);
-    this.information.addChild(jacket);
     const frame = informationSprite(common.jacketFrame, "StartupJacketFrame", 0, 138, 374, 374);
-    this.information.addChild(frame);
+    const jacket = informationSprite(jacketTexture, "StartupJacket", 0, 138, 360, 360);
+    this.information.addChild(frame, jacket);
 
     const difficultyFrame = informationSprite(
       common.difficultyFrames[presentation.difficulty.type],
@@ -232,6 +231,20 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.foregroundRoot.destroy({ children: true });
     for (const texture of this.dynamicTextures) texture.destroy(true);
   }
+}
+
+function aspectCoverSprite(
+  texture: Texture,
+  label: string,
+  width: number,
+  height: number,
+): Sprite {
+  const sprite = new Sprite({ texture, label });
+  const scale = Math.max(width / texture.width, height / texture.height);
+  sprite.anchor.set(0.5);
+  sprite.position.set(width / 2, height / 2);
+  sprite.scale.set(scale);
+  return sprite;
 }
 
 function fullFrameSprite(

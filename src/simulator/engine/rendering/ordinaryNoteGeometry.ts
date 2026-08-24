@@ -222,7 +222,7 @@ export function advanceOrdinaryNoteMotion(
   );
   const position = vector3(x, y, state.currentPositionZ.value);
   if (position.status !== "ok") return position;
-  const scale = calculateOrdinaryNoteScale(state, y);
+  const scale = calculateOrdinaryNoteScaleAtY(state, y);
   if (scale.status !== "ok") return scale;
   return ok(Object.freeze({
     progressRate: progress.value,
@@ -478,7 +478,7 @@ export function buildOrdinarySyncLine(
   }));
 }
 
-function calculateOrdinaryNoteScale(
+export function calculateOrdinaryNoteScaleAtY(
   state: OrdinaryNoteMotionState,
   currentY: number,
 ): SimulatorResult<RenderVector3> {

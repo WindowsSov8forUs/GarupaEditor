@@ -212,7 +212,16 @@ function atlasRow(
   const x = number(rect.x); const y = number(rect.y); const width = number(rect.width); const height = number(rect.height);
   const pivotX = number(pivot.x); const pivotY = number(pivot.y); const ppu = number(pixelsPerUnit);
   if (typeof name !== "string" || width <= 0 || height <= 0 || ppu <= 0) return null;
-  return Object.freeze({ exactKey: name, x, y: textureHeight - y - height, width, height, pivotX, pivotY, pixelsPerUnit: ppu });
+  return Object.freeze({
+    exactKey: name,
+    x,
+    y: textureHeight - y - height,
+    width,
+    height,
+    pivotX,
+    pivotY: Math.fround(1 - pivotY),
+    pixelsPerUnit: ppu,
+  });
 }
 
 function nguiAtlasRow(

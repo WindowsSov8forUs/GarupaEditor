@@ -25,11 +25,7 @@ import {
   type RehearsalControlBounds,
   type RehearsalControlSceneLayout,
 } from "../../scene/rehearsalControlScene";
-import {
-  ORIGINAL_UI_HALF_HEIGHT_BASE,
-  ORIGINAL_UI_HALF_WIDTH_BASE,
-  type OriginalSurfaceLayout,
-} from "../../scene/originalSurfaceLayout";
+import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 import type { PauseControlSceneSnapshot, PauseControlBounds } from "../../scene/pauseControlScene";
 import {
   COMMON_ORDINARY_VISIBLE_BINDINGS as CURRENT_ORDINARY_VISIBLE_BINDINGS,
@@ -1296,8 +1292,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           );
           object.spriteBindingKey = bindingKey;
         }
-        if (command.binding === "sprite" && object.lastTransform !== null && noteSpatialRole(object.role)) {
-          applyNoteSpatialTransform(object, object.lastTransform, this.profile!);
+        if (command.binding === "sprite" && object.lastTransform !== null && spatialSpriteRole(object.role)) {
+          applySpatialSpriteTransform(object, object.lastTransform, this.profile!);
         }
         return;
       }
@@ -1305,8 +1301,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const object = this.objects.get(command.renderObjectId)!;
         const node = object.node;
         object.lastTransform = command;
-        if (noteSpatialRole(object.role)) {
-          applyNoteSpatialTransform(object, command, this.profile!);
+        if (spatialSpriteRole(object.role)) {
+          applySpatialSpriteTransform(object, command, this.profile!);
         } else {
           node.position.set(command.position.x.value, command.position.y.value);
           node.scale.set(command.scale.x.value, command.scale.y.value);
@@ -1977,26 +1973,15 @@ function placeAuthoredUiRoot(
 function placeSafeTopAnchoredUiRoot(
   object: PixiObjectRecord,
   side: "left" | "right",
-  authoredX: number,
-  authoredY: number,
 ): void {
   const layout = object.surfaceLayout;
   const safe = layout.starUi.safeArea;
-  const uiScale = authoredUiScale(object);
   const safeX = side === "left" ? safe.x : Math.fround(safe.x + safe.width);
-  const authoredEdgeX = side === "left"
-    ? -ORIGINAL_UI_HALF_WIDTH_BASE
-    : ORIGINAL_UI_HALF_WIDTH_BASE;
-  const bottomLeftY = Math.fround(
-    safe.y + safe.height + Math.fround(
-      (authoredY - ORIGINAL_UI_HALF_HEIGHT_BASE) * uiScale,
-    ),
+  const safeTop = Math.fround(
+    layout.surface.viewportHeight - Math.fround(safe.y + safe.height),
   );
-  object.node.position.set(
-    Math.fround(safeX + Math.fround((authoredX - authoredEdgeX) * uiScale)),
-    Math.fround(layout.surface.viewportHeight - bottomLeftY),
-  );
-  object.node.scale.set(uiScale);
+  object.node.position.set(safeX, safeTop);
+  object.node.scale.set(authoredUiScale(object));
 }
 
 function applyComboHud(
@@ -2065,12 +2050,14 @@ function applyAddScoreHud(
   const profile = requireOrdinaryVisibleProfile(object);
   clearHudSprites(object, visual, referenceCounts);
   const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-  placeAuthoredUiRoot(
-    object,
-    current.numberBaseAuthoredPosition[0],
-    current.numberBaseAuthoredPosition[1] + current.initialLocalY,
-    current.numberScale,
+  placeSafeTopAnchoredUiRoot(object, "left");
+  const uiScale = authoredUiScale(object);
+  object.node.position.set(
+    Math.fround(object.node.position.x + current.numberBaseAuthoredPosition[0] * uiScale),
+    Math.fround(object.node.position.y -
+      (current.numberBaseAuthoredPosition[1] + current.initialLocalY) * uiScale),
   );
+  object.node.scale.set(Math.fround(uiScale * current.numberScale));
   object.node.alpha = profile.addScore.start.alpha;
   const leastSignificantKeys = [
     ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`),
@@ -2151,12 +2138,7 @@ function applyLifeHud(
   const profile = requireOrdinaryVisibleProfile(object);
   const current = CURRENT_ORDINARY_HUD_PROFILE.life;
   clearHudSprites(object, visual, referenceCounts);
-  placeSafeTopAnchoredUiRoot(
-    object,
-    "right",
-    current.rootPosition[0],
-    current.rootPosition[1],
-  );
+  placeSafeTopAnchoredUiRoot(object, "right");
   const localFromAuthoredWorld = (position: readonly number[]): readonly [number, number] => Object.freeze([
     Math.fround(position[0]! - current.rootPosition[0]),
     Math.fround(-(position[1]! - current.rootPosition[1])),
@@ -2262,12 +2244,7 @@ function applyScoreHud(
   clearScoreHud(object, visual, referenceCounts);
   if (visual.text !== null) visual.text.visible = false;
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
-  placeSafeTopAnchoredUiRoot(
-    object,
-    "left",
-    scene.rootLocalPosition[0],
-    scene.rootLocalPosition[1],
-  );
+  placeSafeTopAnchoredUiRoot(object, "left");
 
   const scoreDigits = String(state.score);
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
@@ -2572,7 +2549,11 @@ function applyEvidenceAnimation(
     const clip = profile.combo.clips.find((candidate) => candidate.clipId === "combo-scale");
     if (clip === undefined) throw new Error("Combo scale clip is missing");
     const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
-    object.node.scale.set(values[0]!, values[1]!);
+    const uiScale = authoredUiScale(object);
+    object.node.scale.set(
+      Math.fround(values[0]! * uiScale),
+      Math.fround(values[1]! * uiScale),
+    );
     return;
   }
   if (role === "all-perfect") {
@@ -2632,9 +2613,13 @@ function applyEvidenceAnimation(
       : phase === 1
       ? Math.fround(current.initialLocalY + 8 + progress)
       : Math.fround(current.initialLocalY + 9 + progress);
+    const layout = object.surfaceLayout;
+    const safe = layout.starUi.safeArea;
+    const safeTop = Math.fround(
+      layout.surface.viewportHeight - Math.fround(safe.y + safe.height),
+    );
     object.node.position.y = Math.fround(
-      object.resourceProfile.scene.projection.viewportHeight / 2 -
-        (current.numberBaseAuthoredPosition[1] + localY) * authoredUiScale(object),
+      safeTop - (current.numberBaseAuthoredPosition[1] + localY) * authoredUiScale(object),
     );
     object.node.alpha = phase === 0
       ? Math.fround(0.2 + 0.8 * progress)
@@ -2681,12 +2666,14 @@ function applyEvidenceAnimation(
 
 function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimationRole): void {
   if (role === "combo") {
-    object.node.scale.set(1, 1);
+    object.node.scale.set(authoredUiScale(object));
     object.node.alpha = 1;
     return;
   }
   if (role === "result") {
-    object.node.scale.set(1, 1);
+    object.node.scale.set(Math.fround(
+      authoredUiScale(object) * CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
+    ));
     object.node.alpha = 1;
     return;
   }
@@ -2930,6 +2917,11 @@ function noteSpatialRole(role: RenderObjectRole): boolean {
     role === "note-intermediate" || role === "note-side-visual";
 }
 
+function spatialSpriteRole(role: RenderObjectRole): boolean {
+  return noteSpatialRole(role) || role === "field-line" || role === "judge-line" ||
+    role === "tap-lane-effect";
+}
+
 function boundAtlasRow(
   profile: RenderResourceProfile,
   bindingKey: string | null,
@@ -2941,6 +2933,52 @@ function boundAtlasRow(
   const exactKey = bindingKey.slice(separator + 1);
   return profile.assets.find((asset) => asset.logicalAssetId === logicalAssetId)
     ?.atlasRows.find((row) => row.exactKey === exactKey) ?? null;
+}
+
+function applySpatialSpriteTransform(
+  object: PixiObjectRecord,
+  command: SetTransformCommand,
+  profile: RenderResourceProfile,
+): void {
+  if (noteSpatialRole(object.role)) {
+    applyNoteSpatialTransform(object, command, profile);
+    return;
+  }
+  const row = boundAtlasRow(profile, object.spriteBindingKey);
+  if (row === null || object.spriteContent === null) {
+    throw new Error("spatial Sprite transform requires one bound atlas row");
+  }
+  const node = object.node;
+  if (object.role === "field-line") {
+    const uiScale = authoredUiScale(object);
+    node.position.set(
+      Math.fround(profile.scene.projection.viewportWidth / 2 + command.position.x.value * uiScale),
+      Math.fround(profile.scene.projection.viewportHeight / 2 - command.position.y.value * uiScale),
+    );
+    node.scale.set(
+      Math.fround(command.scale.x.value * uiScale),
+      Math.fround(command.scale.y.value * uiScale),
+    );
+    object.spriteContent.anchor.set(0.5, 1);
+  } else {
+    const projected = projectWorldPoint(
+      command.position.x.value,
+      command.position.y.value,
+      profile.scene.projection,
+    );
+    const parentScale = object.role === "tap-lane-effect"
+      ? object.surfaceLayout.gameplay.noteSettingScale
+      : Math.fround(1);
+    const textureScale = Math.fround(
+      profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit * parentScale,
+    );
+    node.position.set(projected[0], projected[1]);
+    node.scale.set(
+      Math.fround(command.scale.x.value * textureScale),
+      Math.fround(command.scale.y.value * textureScale),
+    );
+  }
+  node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
 }
 
 function applyNoteSpatialTransform(

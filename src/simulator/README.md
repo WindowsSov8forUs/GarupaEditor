@@ -78,7 +78,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：以下1600×720 digest只保留为锁定browser的回归观察，不是布局authority。普通完整场景digest为`53fff434…39a4`；原作Live设置四PNG/13-slot专项digest为`de2b524c…86ae7`；Skin default/limited3实际Field/Judge raster分别为`e4718031…66c2`/`5b0c4791…1311`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`a9fcc1b1…eb0f`；standard启动在serialized hierarchy迁移后视觉digest为`dfaeb868…8f8f`，并新增4:3/32:9 actual WebView2 captures，音频digest更新为`7d537afa…6adc`，并明确要求无user activation时初始AudioContext即为running且测试侧不调用resume。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，含MvDarkness dark-cover的media graph digest为`34c34580…3db9`、serialized widget raster digest为`538d21c3…e7dd`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：以下digest只保留为锁定browser的回归观察，不是布局authority。2026-08-24素材/anchor/pivot/clip纠错后，普通完整场景为`1b6d2264…f46c`；原作Live设置四PNG/13-slot为`ea881bb1…a445`；Skin default/limited3实际Field/Judge raster分别为`bfcc3222…a67c`/`ab4c0552…fada`；Garupa产品扩展initial/negative/zero/restore为`80b944d3…d89`；standard启动视觉为`a42da3ee…9f3`，并含4:3/32:9 aspect-cover captures，音频仍为`7d537afa…6adc`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh processes，含MvDarkness dark-cover的media graph digest为`34c34580…3db9`、serialized widget raster digest为`538d21c3…e7dd`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。

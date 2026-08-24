@@ -28,14 +28,14 @@ Reverse remains the only authority for original behavior.
 - Product-extension charts consume the same frozen original Skin recipe as original-compatible charts; they do not expose a second custom-Judge or rip-map mode.
 - Note and Directional fronts use the selected original atlas bindings directly at continuous authored coordinates. No lane clamp or nearest-Sprite fallback is introduced.
 - Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
-- Product judgement flash binds the selected TapEffect portable texture while retaining the documented product continuous-span mesh/lifetime. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes.
+- Product judgement flash binds the selected TapEffect portable texture with neutral cyan-white tint, target-line center and a 12-frame owner-local lifetime. `GE-PS-PRODUCT-JUDGEMENT-VISUAL` owns this visible product result and emits an internal evidence notice; disposal or frame preflight rejection atomically removes/discards the attempted owner. This mapping is `closed-product-extension`, not evidence that the original game supports fractional/outside lanes or that the mesh is an original particle composition.
 - The selected TapEffect/Directional whole-pack module graph is prepared by the shared deterministic particle backend. Product continuous-span flash geometry remains a product mapping and binds the selected TapEffect texture; it is not original fractional-lane evidence.
 
 ## Original Live settings narrow projection
 
 - Primary/Secondary judgement adjustment and MvDarkness use the same global original owners; product charts do not create alternate clocks or movie-opacity controls.
 - Product nodes freeze `shortRhythmUnder8beat`; NoteColor uses the original normal/normal16 predicate and selected atlas.
-- Same-position visible nodes freeze deterministic authored-order SyncLine sidecar pairs. Each endpoint uses its own continuous projection every frame; no lane is rounded, clamped or selected as nearest.
+- Same-position visible nodes freeze deterministic authored-order SyncLine sidecar pairs. Each endpoint uses its own continuous projection and recovered ordinary uniform Note scale every frame; line width is `uniformScale*0.28`, not a constant world width. No lane is rounded, clamped or selected as nearest.
 - VisibleTapLaneEffect creates a separate recovered-Sprite sidecar at the exact continuous span center and authored width. Turning it Off does not disable the existing product judgement flash/particle, Judge, SE, Combo, Score or Life.
 - These continuous/outside projections are `closed-product-extension`. They are not evidence that the original discrete GamePlayButton/NoteSyncLine owners accept fractional or outside lanes.
 
@@ -56,15 +56,14 @@ Reverse remains the only authority for original behavior.
   ```
 
   Mirror substitutes `6 - lane`. No rounding or nearest-button mapping occurs.
-- The playfield always retains exactly the original seven reference lines at
-  lanes `0..6`. The original camera, StarUI, safe-area and initial landscape projection come only from [`adaptive-layout-contract.md`](./adaptive-layout-contract.md); this product extension supplies no viewport, center, PPU or high-aspect constants. Authored lane values do not resize or add field lines. Fractional
+- The playfield always retains exactly the selected original Field UITexture's seven reference lines at
+  lanes `0..6`; the product renderer does not duplicate them with a second curve-material mesh. The original camera, StarUI, safe-area and initial landscape projection come only from [`adaptive-layout-contract.md`](./adaptive-layout-contract.md); this product extension supplies no viewport, center, PPU or high-aspect constants. Authored lane values do not resize or add field lines. Fractional
   and outside notes continue through the same affine geometry and may be between
   those lines or outside the viewport; there is no lane domain.
 - A rhythm front is centered at `lane + (width - 1) / 2`. Directional incoming
   anchor is `lane`; outgoing anchor is the span edge.
 - Product rendering uses scalable generic front/line geometry when a lane- or
-  width-specific original asset has no exact binding. It never reuses the
-  nearest lane/width asset silently. This is reported as product-extension
+  width-specific original asset has no exact binding. `GE-PS-PRODUCT-VISUAL-LIFECYCLE` reuses the ordinary Note scale formula, shows an unjudged front only for curve `[0.002,1]`, permanently hides a judged identity, and intersects every Slide segment with that same interval before publishing vertices. Width above seven uses the one-head vertical aspect branch and authored horizontal span; it is not numerically clamped. It never reuses the nearest lane/width asset silently. Frame rejection discards the complete product transaction. This is reported as product-extension
   fidelity, not original resource parity.
 
 ## TimingGroup and SV
@@ -91,8 +90,8 @@ Reverse remains the only authority for original behavior.
   The new speed applies at the event boundary. Negative values reverse, zero
   stops, and positive values are not clamped.
 - Note displacement is `axis(noteHitMs) - axis(nowMs)`. Visibility is sampled
-  statelessly for every frame, so reverse/stop segments can leave and re-enter
-  the viewport before or after the one gameplay judgement. Pausing freezes now;
+  statelessly before judgement, so reverse/stop segments can leave and re-enter
+  the viewport; once the one gameplay judgement commits, that identity remains hidden. Pausing freezes now;
   Retry creates a fresh profile; MoveTime samples the target time without
   publishing candidate output and commits the complete frame atomically.
 
@@ -147,6 +146,10 @@ Auto-only.
   existing managers. The product owner contributes only candidate geometry,
   chain ownership and continuous render anchors.
 
+## Backdrop product adaptation
+
+`GE-PS-STANDARD-BACKDROP-ASPECT-COVER` applies only when a selected Standard 2D Skin backdrop does not already have the portable full-frame aspect. It preserves source aspect, uniformly covers the frozen surface and clips centered overflow. It never stretches X/Y independently, never substitutes another image, and does not claim an original framebuffer-equivalent adapter. Decode/allocation failure rejects the launch before mount; a later backend fault follows whole-generation cleanup.
+
 ## Lifecycle and composition
 
 - Product managers participate in the same preflight/commit/discard outer-frame
@@ -170,7 +173,7 @@ Retry and MoveTime reject any fresh-generation fidelity mismatch.
 Portable product raster acceptance uses production Browser decoding and actual
 Pixi/WebGL in three fresh WebView2 processes. The initial/negative-SV/zero-SV/
 restored-positive stable digest is
-`a9fcc1b1fa0d25033a722ce273764f6f26eeb492b381758c0cb6f5967b73eb0f`.
+`80b944d36aa34bd343b9acc36d3045012706e996ebcd4d1b671a413173cfcd89`.
 This is a product portable claim, not Unity framebuffer or fixed-device parity.
 
 This contract does not open character skills, Fever, multiplayer, HABAHIRO
