@@ -68,7 +68,7 @@ async function testBrowserDecoderBoundary(): Promise<void> {
     "document.fonts.add(face)",
     "await globalThis.createImageBitmap(",
     'imageOrientation: "none"',
-    'premultiplyAlpha: "none"',
+    'premultiplyAlpha: "premultiply"',
     'colorSpaceConversion: "none"',
     "Texture.from(bitmap, true)",
     'texture.source.once("destroy"',

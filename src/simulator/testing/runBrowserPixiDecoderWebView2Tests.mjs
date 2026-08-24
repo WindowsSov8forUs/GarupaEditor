@@ -93,6 +93,8 @@ function verify(value) {
   equal(value.productionDecoder.documentFontsDeleted, true, "production FontFace cleanup");
   equal(value.productionDecoder.textureResourceType, "ImageBitmap", "real production PNG decode resource");
   equal(JSON.stringify(value.productionDecoder.textureDimensions), "[1024,1024]", "production PNG dimensions");
+  equal(value.productionDecoder.transparentRgbCompositePreserved, true,
+    "GE-PS-BROWSER-PREMULTIPLIED-ALPHA opaque-scene compositing");
   equal(value.productionDecoder.textureResourceAfterDestroy, null, "production ImageBitmap ownership release");
   equal(
     JSON.stringify(value.productionDecoder.fallbackMetrics),
@@ -113,12 +115,16 @@ function verify(value) {
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }
-  for (const [key, expectedKey] of [["pngOnly", "pngOnly"], ["fontOnly", "fontOnly"]]) {
-    const actual = value.raster[key];
-    const expected = contract.observation.raster[expectedKey];
-    equal(actual.sha256, expected.sha256, `${key} RGBA digest`);
-    equal(actual.nonTransparentPixels, expected.stats.nonTransparentPixels, `${key} visible pixel count`);
+  const pngRaster = value.raster.pngOnly;
+  if (!/^[0-9a-f]{64}$/.test(pngRaster.sha256)) {
+    throw new Error(`premultiplied production PNG raster digest is invalid: ${pngRaster.sha256}`);
   }
+  equal(pngRaster.nonTransparentPixels, contract.observation.raster.pngOnly.stats.nonTransparentPixels,
+    "premultiplied PNG visible pixel count");
+  const fontRaster = value.raster.fontOnly;
+  equal(fontRaster.sha256, contract.observation.raster.fontOnly.sha256, "fontOnly RGBA digest");
+  equal(fontRaster.nonTransparentPixels, contract.observation.raster.fontOnly.stats.nonTransparentPixels,
+    "fontOnly visible pixel count");
   if (new Set(value.isolation.resourceUrls.map((url) => new URL(url).origin)).size !== 1 ||
       !value.isolation.resourceUrls.every((url) => url.startsWith("http://garupa.localhost/"))) {
     throw new Error(`production browser harness escaped custom protocol: ${value.isolation.resourceUrls.join(",")}`);

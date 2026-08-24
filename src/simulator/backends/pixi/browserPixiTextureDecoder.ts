@@ -52,7 +52,12 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
         new Blob([owned.buffer], { type: "image/png" }),
         {
           imageOrientation: "none",
-          premultiplyAlpha: "none",
+          // GE-PS-BROWSER-PREMULTIPLIED-ALPHA: Pixi's normal blend path consumes
+          // premultiplied ImageBitmap pixels. WebGL
+          // cannot retroactively premultiply an ImageBitmap during upload, so doing
+          // this at decode time prevents transparent non-zero RGB atlas texels from
+          // being added as opaque white/colored rectangles over the live scene.
+          premultiplyAlpha: "premultiply",
           colorSpaceConversion: "none",
         },
       );

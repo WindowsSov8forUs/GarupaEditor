@@ -50,7 +50,7 @@ try {
   if (audioStable.some((value) => value !== audioStable[0])) throw new Error("startup WebView2 audio fresh processes differ");
   const visualDigest = createHash("sha256").update(visualStable[0]).digest("hex");
   const audioDigest = createHash("sha256").update(audioStable[0]).digest("hex");
-  if (visualDigest !== "dfaeb868728798c5064f5c42f8b2b00d6f10c44c618161adea02bcdbd4bd8f8f") {
+  if (visualDigest !== "f720c7ef29781a7a71787a3e84b3a8c6f6039f6eda38ff4f115b57bb65f34957") {
     throw new Error(`startup visual digest changed: ${visualDigest}`);
   }
   if (audioDigest !== "7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc") {

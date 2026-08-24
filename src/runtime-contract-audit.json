@@ -33,7 +33,7 @@
       "exact-prototype": 0,
       "exact-key-order": 8,
       "rejected-call": 48,
-      "throw-error": 533,
+      "throw-error": 535,
       "rust-error-return": 0,
       "rust-result-error": 0
     }
@@ -10416,7 +10416,7 @@
     {
       "id": "RCB-0495",
       "file": "src/simulator/backends/pixi/browserPixiTextureDecoder.ts",
-      "line": 82,
+      "line": 87,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",

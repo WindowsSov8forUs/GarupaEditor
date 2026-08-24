@@ -4,6 +4,7 @@ import {
   Rectangle,
   Sprite,
   Text,
+  Texture,
 } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
@@ -85,6 +86,7 @@ async function main(): Promise<void> {
   pngSprite.scale.set(0.125);
   pngStage.addChild(pngSprite);
   const pngRaster = await extract(app, pngStage);
+  verifyTransparentRgbComposite(app, texture);
 
   const fontStage = new Container();
   const rankText = new Text({
@@ -139,6 +141,7 @@ async function main(): Promise<void> {
       loadedMetrics,
       textureResourceType: "ImageBitmap",
       textureDimensions: [1024, 1024],
+      transparentRgbCompositePreserved: true,
       textureResourceAfterDestroy: resourceAfterDestroy == null ? null : resourceAfterDestroy.constructor?.name ?? "unknown",
     },
     raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud },
@@ -366,6 +369,41 @@ async function fetchBytes(path: string): Promise<Uint8Array> {
   const response = await fetch(path, { cache: "no-store", credentials: "omit", redirect: "error" });
   if (!response.ok) throw new Error(`fixture fetch failed: ${path} ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
+}
+
+function verifyTransparentRgbComposite(app: Application, texture: Texture): void {
+  // rhythm-game-ui.png texel (200, 200) is transparent orange (255,139,78,0).
+  // A straight-alpha ImageBitmap mislabeled as premultiplied adds that hidden RGB
+  // to an opaque scene. The decoded premultiplied bitmap must leave the sentinel
+  // background byte-identical after actual Pixi/WebGL compositing.
+  const frame = new Rectangle(0, 0, 8, 8);
+  const clearColor: [number, number, number, number] = [18 / 255, 52 / 255, 86 / 255, 1];
+  const baseline = extractCompositePixels(app, new Container(), frame, clearColor);
+  const sample = new Texture({
+    source: texture.source,
+    frame: new Rectangle(200, 200, 1, 1),
+    orig: new Rectangle(0, 0, 1, 1),
+  });
+  const sprite = new Sprite(sample);
+  sprite.width = 8;
+  sprite.height = 8;
+  const stage = new Container();
+  stage.addChild(sprite);
+  const observed = extractCompositePixels(app, stage, frame, clearColor);
+  sample.destroy(false);
+  if (baseline.length !== observed.length || baseline.some((byte, index) => byte !== observed[index])) {
+    throw new Error("transparent non-zero RGB atlas texel contaminated the opaque Pixi scene");
+  }
+}
+
+function extractCompositePixels(
+  app: Application,
+  target: Container,
+  frame: Rectangle,
+  clearColor: [number, number, number, number],
+): Uint8Array {
+  const output = app.renderer.extract.pixels({ target, frame, resolution: 1, clearColor });
+  return Uint8Array.from(new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength));
 }
 
 async function extract(app: Application, target: Container): Promise<{
