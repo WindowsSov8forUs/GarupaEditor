@@ -669,18 +669,26 @@ async function verifyActualPixiGarupaProduct(
   assert(rows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible &&
     row.spriteBindingKey?.endsWith("note_normal_16_3")),
     "actual Pixi has the NoteColor normal16 binding on a fractional product front");
-  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22),
-    "actual Pixi has product Slide mesh");
-  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible),
-    "actual Pixi has the continuous product SyncLine sidecar");
+  const slideMeshes = rows.filter((row) =>
+    row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22);
+  assert(slideMeshes.length > 0, "actual Pixi has product Slide mesh");
+  assert(slideMeshes.every((row) =>
+    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.longNoteMaterialLogicalAssetId ||
+    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.curveNoteMaterialLogicalAssetId),
+    "product Slide mesh consumes its prepared skin material instead of Pixi Texture.WHITE");
+  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible &&
+    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.syncLineLogicalAssetId),
+    "actual Pixi continuous SyncLine sidecar consumes its prepared skin material");
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]), "product effect frame");
   assert(effect !== null, "product effect frame has commands");
   requireOk(effect!.commit(), "product effect frame commit");
   const judgedRows = renderer.sceneSnapshot();
   assert(judgedRows.some((row) =>
-    row.renderObjectId === `render:garupa:effect:${judged.identity}` && row.geometryVertexCount === 22),
-    "actual Pixi has continuous product judgement particle mesh");
+    row.renderObjectId === `render:garupa:effect:${judged.identity}` && row.geometryVertexCount === 22 &&
+    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.productJudgementEffectLogicalAssetId &&
+    row.geometryTextureLabel !== "WHITE"),
+    "actual Pixi product judgement mesh consumes its prepared effect texture instead of a tinted white rectangle");
   assert(judgedRows.some((row) =>
     row.renderObjectId === `render:garupa:tap-lane:${judged.identity}` && row.visible &&
     row.spriteBindingKey?.endsWith("NoteLaneEffect_4")),

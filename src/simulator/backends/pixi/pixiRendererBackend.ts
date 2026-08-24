@@ -147,6 +147,7 @@ interface PixiObjectRecord {
   scoreHighRankBindingKeys: string[];
   spriteContent: Sprite | null;
   materialTexture: Texture | null;
+  materialLogicalAssetId: string | null;
   geometryContent: Mesh | null;
   maskContent: Graphics | null;
   thresholdMaskContent: Graphics | null;
@@ -650,6 +651,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly geometryVertexCount: number | null;
     readonly geometryIndexCount: number | null;
     readonly geometryPositions: readonly number[] | null;
+    readonly geometryTextureLabel: string | null;
+    readonly geometryMaterialLogicalAssetId: string | null;
+    readonly geometryBlendMode: string | null;
     readonly maskVertexCount: number | null;
     readonly threshold: number | null;
     readonly hudText: string | null;
@@ -737,6 +741,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       geometryPositions: value.geometryContent === null
         ? null
         : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
+      geometryTextureLabel: value.geometryContent?.texture.label ?? null,
+      geometryMaterialLogicalAssetId: value.geometryContent === null ? null : value.materialLogicalAssetId,
+      geometryBlendMode: value.geometryContent === null ? null : String(value.geometryContent.blendMode),
       maskVertexCount: value.maskVertexCount,
       threshold: value.threshold,
       hudText: value.hudVisual?.text?.text ?? null,
@@ -1095,6 +1102,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "set-mesh":
           if (
             shadow.get(command.renderObjectId)!.role !== "note-mesh" ||
+            !shadow.get(command.renderObjectId)!.materialBound ||
             !isEvidenceMesh(command)
           ) {
             return reject(
@@ -1214,6 +1222,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           scoreHighRankBindingKeys: [],
           spriteContent: spriteChild(node),
           materialTexture: null,
+          materialLogicalAssetId: null,
           geometryContent: null,
           maskContent: null,
           thresholdMaskContent: null,
@@ -1271,6 +1280,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         } else {
           const texture = this.baseTextures.get(command.logicalAssetId)!;
           object.materialTexture = texture;
+          object.materialLogicalAssetId = command.logicalAssetId;
           if (object.geometryContent !== null) {
             object.geometryContent.texture = texture;
             object.geometryContent.blendMode = asset.textureSettings!.blendMode;
@@ -1347,6 +1357,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         const mesh = reservedGeometry.get(command.sequence)!;
+        applyGeometryMaterial(mesh, object, this.profile!);
         object.node.addChild(mesh);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
@@ -1356,13 +1367,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         const mesh = reservedGeometry.get(command.sequence)!;
-        if (object.materialTexture !== null) {
-          mesh.texture = object.materialTexture;
-          const asset = this.profile!.assets.find(
-            (candidate) => this.baseTextures.get(candidate.logicalAssetId) === object.materialTexture,
-          )!;
-          mesh.blendMode = asset.textureSettings!.blendMode;
-        }
+        applyGeometryMaterial(mesh, object, this.profile!);
         object.node.addChild(mesh);
         object.geometryContent = mesh;
         return;
@@ -3095,6 +3100,23 @@ const defaultObjectFactory: PixiSceneObjectFactory = Object.freeze({
     return root;
   },
 });
+
+function applyGeometryMaterial(
+  mesh: Mesh,
+  object: PixiObjectRecord,
+  profile: RenderResourceProfile,
+): void {
+  const texture = object.materialTexture;
+  if (texture === null) throw new Error("geometry material texture is missing after validated preflight");
+  const asset = object.materialLogicalAssetId === null
+    ? undefined
+    : profile.assets.find((candidate) => candidate.logicalAssetId === object.materialLogicalAssetId);
+  if (asset === undefined || asset.textureSettings === null) {
+    throw new Error("geometry material profile is missing after validated preflight");
+  }
+  mesh.texture = texture;
+  mesh.blendMode = asset.textureSettings.blendMode;
+}
 
 function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfile): void {
   const settings = asset.textureSettings!;
