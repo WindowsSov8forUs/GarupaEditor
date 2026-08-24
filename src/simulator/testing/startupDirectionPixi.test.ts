@@ -1,7 +1,7 @@
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
-const { Container, Texture } = require("pixi.js");
+const { Container, Texture, TextureSource } = require("pixi.js");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
@@ -30,6 +30,20 @@ const SURFACE_LAYOUT = requireOk(createOriginalSurfaceLayout({
   safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
   origin: "bottom-left",
 }, Math.fround(100)));
+const dynamicDecoder = {
+  async decodePng(asset: { readonly width: number; readonly height: number; readonly logicalId: string }) {
+    return {
+      status: "ok" as const,
+      value: new Texture({ source: new TextureSource({
+        width: asset.width,
+        height: asset.height,
+        resource: { width: asset.width, height: asset.height },
+        resolution: 1,
+        autoGarbageCollect: false,
+      }), label: asset.logicalId }),
+    };
+  },
+};
 
 async function main(): Promise<void> {
   await testCommonResourcePreparation();
@@ -60,7 +74,7 @@ async function main(): Promise<void> {
       fullLiveLabel: commonTextures[7],
       fontFamily: "EvidenceFont",
     },
-    { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
+    dynamicDecoder as any,
     true,
     SURFACE_LAYOUT,
   );
@@ -69,6 +83,9 @@ async function main(): Promise<void> {
   assert.equal(scene.value.backgroundRoot.label, PIXI_STARTUP_BACKGROUND_LABEL);
   assert.equal(scene.value.foregroundRoot.label, PIXI_STARTUP_FOREGROUND_LABEL);
   assert.equal(scene.value.snapshot().dynamicTextureCount, 2);
+  const informationOrder = (scene.value.foregroundRoot.getChildByLabel("StartupInformation") as any)
+    .children.map((child: any) => child.label);
+  assert(informationOrder.indexOf("StartupJacketFrame") < informationOrder.indexOf("StartupJacket"));
   scene.value.publish({
     ...INITIAL_STARTUP_DIRECTION_SCENE_STATE,
     sequence: 1,
@@ -113,7 +130,7 @@ async function main(): Promise<void> {
       },
       fullLiveLabel: commonTextures[7], fontFamily: "EvidenceFont",
     },
-    { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
+    dynamicDecoder as any,
     false,
     SURFACE_LAYOUT,
     false,
@@ -158,7 +175,7 @@ async function main(): Promise<void> {
       },
       fullLiveLabel: commonTextures[7], fontFamily: "EvidenceFont",
     },
-    { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
+    dynamicDecoder as any,
     true,
     fourByThreeLayout,
   );
@@ -166,8 +183,10 @@ async function main(): Promise<void> {
   if (adaptiveScene.status === "ok") {
     const stage = adaptiveScene.value.backgroundRoot.getChildByLabel("StartupStageBackdrop") as any;
     const information = adaptiveScene.value.foregroundRoot.getChildByLabel("StartupInformation") as any;
-    assert.equal(stage.width, 1200);
+    assert.equal(stage.width, 2000);
     assert.equal(stage.height, 900);
+    assert.deepEqual([stage.x, stage.y], [600, 450]);
+    assert.equal(stage.scale.x, stage.scale.y);
     assert.deepEqual([information.x, information.y], [600, 450]);
     assert.equal(information.scale.x, fourByThreeLayout.ui.screenToSafeChildScale);
     adaptiveScene.value.dispose();

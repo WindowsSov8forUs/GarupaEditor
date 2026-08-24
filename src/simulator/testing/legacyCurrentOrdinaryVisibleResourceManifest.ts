@@ -80,7 +80,7 @@ function laneEffectProfile(
       width,
       height: 500,
       pivotX: 0.5,
-      pivotY: 0,
+      pivotY: 1,
       pixelsPerUnit: 69,
     })]),
     materialRole: "sprite" as const,

@@ -136,7 +136,7 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
     height: 256,
     textureSettings: LINEAR_CLAMP,
     atlasRows: Object.freeze([
-      atlas("level_mark", 128, 247, 8, 5),
+      atlas("level_mark", 128, 4, 8, 5),
       atlas("bg_base_jacket_frame", 206, 92, 34, 34, [4, 4, 4, 4]),
       atlas("bg_jacket_frame_rank_1_easy", 206, 70, 20, 20, [1, 1, 1, 1]),
       atlas("bg_jacket_frame_rank_1_expert", 228, 70, 20, 20, [1, 1, 1, 1]),

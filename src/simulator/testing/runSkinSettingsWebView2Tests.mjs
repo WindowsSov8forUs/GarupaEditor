@@ -93,7 +93,7 @@ function stageFile(route, name, mime, bytes, allowlist) {
 function verify(value, scenario) {
   if (value.status !== "accepted" || value.scenario !== scenario.kind || value.packCount !== scenario.packCount ||
       value.assetCount < 10 || JSON.stringify(value.actualDrawnRoles) !== JSON.stringify(scenario.roles) ||
-      value.fieldDrawCount !== 3 || value.judgeDraw !== true || value.backgroundDraw !== scenario.background ||
+      value.fieldDrawCount !== 2 || value.judgeDraw !== true || value.backgroundDraw !== scenario.background ||
       typeof value.rgbaSha256 !== "string" || !/^[0-9a-f]{64}$/.test(value.rgbaSha256) ||
       !Number.isSafeInteger(value.alphaPixels) || value.alphaPixels <= 0 ||
       value.particleResources <= 2 || value.particleCleanup !== 0 || value.fieldCleanup !== 0 || value.cleanup !== 0) {

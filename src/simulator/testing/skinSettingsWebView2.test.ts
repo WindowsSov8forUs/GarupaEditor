@@ -144,7 +144,7 @@ async function main(): Promise<void> {
   const judgeRow = snapshot.find((row) => row.renderObjectId === "skin:web:judge");
   const backgroundRow = snapshot.find((row) => row.renderObjectId === "skin:web:background");
   const backgroundExpected = scenario.kind === "limited3";
-  if (fieldRows.length !== 3 || !fieldRows.some((row) => row.role === "mask") ||
+  if (fieldRows.length !== 2 || fieldRows.some((row) => row.role === "mask") ||
     judgeRow?.spriteBindingKey?.endsWith("\u0000judge_perfect") !== true ||
     (backgroundRow?.spriteBindingKey?.endsWith("\u0000liveBG") === true) !== backgroundExpected ||
     alphaPixels <= 0) {

@@ -100,19 +100,37 @@ async function main(): Promise<void> {
   assert.ok(first);
   requireOk(first!.commit());
   const firstRows = renderer.sceneSnapshot();
+  assert.equal(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:field:")), false);
+  const farScale = requireOk(layout.garupaProductScene.projectNoteScaleAtCurve(0.002, 1));
+  assert.ok(farScale.value > 0 && farScale.value < 0.04);
   assert.ok(firstRows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible));
   assert.ok(firstRows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:3" && row.visible));
   assert.ok(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22));
-  assert.ok(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible));
+  const sync = firstRows.find((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible);
+  assert.ok(sync?.geometryPositions);
+  const syncY = sync!.geometryPositions!.filter((_value, index) => index % 2 === 1);
+  assert.ok(Math.max(...syncY) - Math.min(...syncY) < 40);
   assert.ok(firstRows.every((row) => !row.renderObjectId.startsWith("render:garupa:node:garupa-slide:5")));
 
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]));
   assert.ok(effect);
   requireOk(effect!.commit());
-  assert.ok(renderer.sceneSnapshot().some((row) =>
+  const judgedRows = renderer.sceneSnapshot();
+  assert.ok(judgedRows.some((row) =>
     row.renderObjectId === `render:garupa:effect:${judged.identity}` &&
     row.visible && row.geometryVertexCount === 22));
+  assert.equal(
+    judgedRows.find((row) => row.renderObjectId === `render:garupa:node:${judged.identity}`)?.visible,
+    false,
+  );
+  const targetTopY = layout.surfaceLayout.surface.viewportHeight / 2 -
+    layout.garupaProductScene.targetCenterY.value * layout.surfaceLayout.camera.pixelsPerWorldUnit;
+  for (const row of judgedRows.filter((candidate) => candidate.renderObjectId.startsWith("render:garupa:line:"))) {
+    assert.ok(row.geometryPositions);
+    const y = row.geometryPositions!.filter((_value, index) => index % 2 === 1);
+    assert.ok(Math.max(...y) <= targetTopY + 0.01);
+  }
 
   const release = requireOk(producer.preflightDispose());
   assert.ok(release);
@@ -120,7 +138,7 @@ async function main(): Promise<void> {
   assert.equal(renderer.snapshot().objectCount, 0);
   assert.equal(renderer.stage.children.length, 0);
   requireOk(renderer.dispose());
-  console.log("Garupa product actual Pixi passed: fixed-seven-field/arbitrary-lane/SV/Hidden/all-Hidden/effect/cleanup");
+  console.log("Garupa product actual Pixi passed: selected-field-only/ordinary-scale/scaled-sync/judged-hide/clipped-slide/effect/cleanup");
 }
 
 function resourcePath(asset: RenderResourceAssetProfile): string {

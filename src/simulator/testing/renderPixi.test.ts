@@ -233,15 +233,16 @@ async function main(): Promise<void> {
   equal(comboNodes.get("combo-unit")?.zIndex, hudOracle.combo.unitDepth, "Combo unit retains depth above digit Sprites");
   equal(JSON.stringify(combo.ordering.slice(0, 3)), JSON.stringify([3, 100, 5]), "Combo root consumes current UIPanel sorting order and widget depth");
   equal(combo.activeAnimationRole, "all-perfect", "Combo scale and AP roles coexist without replacing AP");
+  equal(combo.scale[0], Math.fround(UI_SCALE * 1.100000023841858), "Combo animation multiplies rather than replaces the UIRoot scale");
 
   const add = row("hud:add");
   equal(add.hudText, null, "AddScore creates no system Text");
   equal(add.hudSpriteCount, 4, "AddScore plus and three digits are Sprites");
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
   equal(JSON.stringify(add.position), JSON.stringify([
-    Math.fround(800 + (671 - 800) * UI_SCALE),
-    Math.fround(360 - (360 - 186) * UI_SCALE),
-  ]), "AddScore starts at the UIRoot FitWidth-projected number descendant owner");
+    Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + 282 * UI_SCALE),
+    Math.fround(135 * UI_SCALE),
+  ]), "AddScore starts from the post-anchor Offset+UISpriteNumber local position");
   equal(JSON.stringify(add.scale), JSON.stringify([
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
@@ -270,6 +271,10 @@ async function main(): Promise<void> {
   equal(resultNodes.get("result-timing")?.zIndex, 55, "JudgeTiming depth remains above the judgement Sprite");
 
   const life = row("hud:life");
+  equal(JSON.stringify(life.position), JSON.stringify([
+    Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + CONTROL_SURFACE_LAYOUT.starUi.safeArea.width),
+    0,
+  ]), "Life StarUIAnchor resolves the root to safe right/top");
   equal(life.hudText, "200/1000", "Life uses current/max label");
   assert(life.hudFontFamily?.startsWith("sgm-"), "Life label uses hash-validated sgm font");
   equal(life.hudFillRatios?.[0], Math.fround(0.2), "Life primary fill Float32 threshold");
@@ -293,6 +298,10 @@ async function main(): Promise<void> {
   equal(JSON.stringify(life.ordering.slice(0, 3)), JSON.stringify([3, 100, 1000]), "Life root consumes current front-panel ordering");
 
   const scoreAtHalf = row("hud:score");
+  equal(JSON.stringify(scoreAtHalf.position), JSON.stringify([
+    CONTROL_SURFACE_LAYOUT.starUi.safeArea.x,
+    0,
+  ]), "Score StarUIAnchor resolves the root to safe left/top");
   equal(scoreAtHalf.hudText, null, "Score allocates no hidden system Text owner");
   equal(scoreAtHalf.hudScoreDigitCount, 8, "Score threshold value owns eight bitmap glyph Sprites");
   equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
@@ -604,7 +613,24 @@ async function verifyActualPixiSelectedSkin(
   assert(textureLabels.some((label) => label.includes("fieldskin%2Fskin_april2021")), "actual Pixi consumes selected Field textures");
   assert(textureLabels.some((label) => label.includes("judgeskin%2Fskinapril2021")), "actual Pixi consumes selected Judge atlas");
   assert(textureLabels.some((label) => label.includes("bgskin%2Fskin_april2021")), "actual Pixi consumes selected Background texture");
-  equal(selectedRows.filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 3, "selected Field publishes mask/line/judge owners");
+  const selectedFieldRows = selectedRows.filter((row) => row.renderObjectId.startsWith("render:skin-field:"));
+  equal(selectedFieldRows.length, 2, "selected Field publishes only serialized UITexture and judge-line owners");
+  const fieldBackground = selectedFieldRows.find((row) => row.role === "field-line");
+  const fieldJudge = selectedFieldRows.find((row) => row.role === "judge-line");
+  assert(fieldBackground !== undefined && fieldJudge !== undefined, "selected Field owner roles exist");
+  equal(JSON.stringify(fieldBackground.position), JSON.stringify([
+    800,
+    Math.fround(360 + 240 * scene.surfaceLayout.ui.screenToSafeChildScale),
+  ]), "Field UITexture keeps authored (0,-240) Bottom-pivot position");
+  equal(JSON.stringify(fieldBackground.scale), JSON.stringify([
+    scene.surfaceLayout.ui.screenToSafeChildScale,
+    scene.surfaceLayout.ui.screenToSafeChildScale,
+  ]), "Field UITexture consumes FitWidth*ScreenToSafeArea scale");
+  equal(fieldBackground.maskVertexCount, null, "ordinary Field has no invented polygon mask");
+  equal(fieldJudge.position[0], 800, "judge line follows multiresolution Button4 center");
+  equal(fieldJudge.position[1], Math.fround(
+    360 - scene.ordinaryNoteScene.targetCenterY.value * 360,
+  ), "judge line follows the projected target center");
   requireOk(requireOk(producer.preflightSessionRelease(), "selected Field release").commit(), "selected Field release commit");
   equal(renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 0, "selected Field cleanup");
   requireOk(renderer.dispose(), "selected Skin renderer dispose");
@@ -676,9 +702,12 @@ async function verifyActualPixiGarupaProduct(
     row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.longNoteMaterialLogicalAssetId ||
     row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.curveNoteMaterialLogicalAssetId),
     "product Slide mesh consumes its prepared skin material instead of Pixi Texture.WHITE");
-  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible &&
-    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.syncLineLogicalAssetId),
-    "actual Pixi continuous SyncLine sidecar consumes its prepared skin material");
+  const productSync = rows.find((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible &&
+    row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.syncLineLogicalAssetId);
+  assert(productSync?.geometryPositions, "actual Pixi continuous SyncLine consumes its prepared skin material");
+  const productSyncY = productSync!.geometryPositions!.filter((_value, index) => index % 2 === 1);
+  assert(Math.max(...productSyncY) - Math.min(...productSyncY) < 40,
+    "product SyncLine width consumes Note scale instead of constant .28 world units");
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]), "product effect frame");
   assert(effect !== null, "product effect frame has commands");
@@ -689,17 +718,24 @@ async function verifyActualPixiGarupaProduct(
     row.geometryMaterialLogicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.productJudgementEffectLogicalAssetId &&
     row.geometryTextureLabel !== "WHITE"),
     "actual Pixi product judgement mesh consumes its prepared effect texture instead of a tinted white rectangle");
-  assert(judgedRows.some((row) =>
+  equal(judgedRows.find((row) =>
+    row.renderObjectId === `render:garupa:node:${judged.identity}`)?.visible, false,
+  "committed product judgement permanently hides its front owner");
+  const tapLane = judgedRows.find((row) =>
     row.renderObjectId === `render:garupa:tap-lane:${judged.identity}` && row.visible &&
-    row.spriteBindingKey?.endsWith("NoteLaneEffect_4")),
-    "actual Pixi has the recovered Sprite on the continuous product tap-lane sidecar");
+    row.spriteBindingKey?.endsWith("NoteLaneEffect_4"));
+  assert(tapLane !== undefined, "actual Pixi has the recovered Sprite on the continuous product tap-lane sidecar");
+  assert(tapLane.position[0] > 0 && tapLane.position[1] > 0 && tapLane.scale[0] > 0,
+    "product tap-lane Sprite projects world position and PPU/parent scale instead of remaining at the raw origin");
+  const tapLaneNode = renderer.stage.getChildByLabel(`render:garupa:tap-lane:${judged.identity}`, true) as any;
+  equal(tapLaneNode?.children?.[0]?.anchor?.y, 1, "Unity bottom pivot maps to Pixi top-left anchor one");
   const released = requireOk(producer.preflightDispose(), "product render release");
   assert(released !== null, "product release owns objects");
   requireOk(released!.commit(), "product render release commit");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi product releases every owner");
   requireOk(renderer.dispose(), "actual Pixi product backend dispose");
   equal(renderer.stage.children.length, 0, "actual Pixi product leaves empty stage");
-  console.log("actual Pixi Garupa product passed: fixed-seven-field/arbitrary-lane/SV/Hidden mesh/effect/cleanup");
+  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/clipped-slide/tap-effect/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

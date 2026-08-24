@@ -47,6 +47,13 @@ async function runComposition(scenario: "default" | "limited3"): Promise<void> {
         } },
   }, createSimulatorModeIdentity("live", "manual"), "ordinary", "standard"));
   const selection = selectSimulatorStaticResources(chart, skin);
+  const levelMark = selection.scoreHud
+    .flatMap((resource) => resource.profile.atlasRows ?? [])
+    .find((row) => row.exactKey === "level_mark");
+  assert.deepEqual(
+    levelMark === undefined ? null : [levelMark.x, levelMark.y, levelMark.width, levelMark.height],
+    [128, 4, 8, 5],
+  );
   const rows: Array<{ readonly resourceKey: string; readonly profile: any }> = [
     ...selection.audioSe,
     ...selection.particles,
@@ -135,7 +142,10 @@ async function runComposition(scenario: "default" | "limited3"): Promise<void> {
   if (field === undefined) throw new Error("production selected Field absent");
   const producer = new RenderCommandProducer(result.value.sessionId, renderer, result.value.renderBindings);
   requireOk(requireOk(producer.preflightFieldSetup(field.objects, field.masks)).commit());
-  assert.equal(renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length, 3);
+  const fieldRows = renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:"));
+  assert.equal(fieldRows.length, 2);
+  assert.equal(fieldRows.some((row) => row.maskVertexCount !== null), false);
+  assert.deepEqual(fieldRows.find((row) => row.role === "field-line")?.position, [800, Math.fround(360 + 240 * result.value.sceneLayout.surfaceLayout.ui.screenToSafeChildScale)]);
   requireOk(requireOk(producer.preflightSessionRelease()).commit());
   assert.equal(particleRenderer.dispose().status, "accepted");
   assert.equal(particles.dispose().status, "accepted");
@@ -143,7 +153,7 @@ async function runComposition(scenario: "default" | "limited3"): Promise<void> {
   requireOk(renderer.dispose());
   assert.equal(renderer.snapshot().objectCount, 0);
   assert.equal(particleRenderer.snapshot().nodeCount, 0);
-  console.log(`selected Skin production composition ${scenario} passed: resources=${entries.length} packs=${result.value.skinPortablePacks.length} field=3 cleanup=0`);
+  console.log(`selected Skin production composition ${scenario} passed: resources=${entries.length} packs=${result.value.skinPortablePacks.length} field=2 cleanup=0`);
 }
 
 function fixtureBytes(profile: any): Uint8Array {

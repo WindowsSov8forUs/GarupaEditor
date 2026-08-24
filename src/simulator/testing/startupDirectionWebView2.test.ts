@@ -140,7 +140,10 @@ async function main(): Promise<void> {
     });
     const stage = scene.backgroundRoot.getChildByLabel("StartupStageBackdrop");
     const information = scene.foregroundRoot.getChildByLabel("StartupInformation");
-    if (stage?.width !== width || stage?.height !== height ||
+    const coverScale = Math.max(width / presentation.stageBackdrop.width, height / presentation.stageBackdrop.height);
+    if (stage?.width !== presentation.stageBackdrop.width * coverScale ||
+      stage?.height !== presentation.stageBackdrop.height * coverScale ||
+      stage?.x !== width / 2 || stage?.y !== height / 2 || stage?.scale.x !== stage?.scale.y ||
       information?.x !== width / 2 || information?.y !== height / 2 ||
       information?.scale.x !== layout.ui.screenToSafeChildScale) {
       throw new Error(`${label}: adaptive startup geometry mismatch`);

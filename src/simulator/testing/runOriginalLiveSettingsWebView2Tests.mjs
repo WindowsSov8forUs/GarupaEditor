@@ -16,7 +16,7 @@ const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
 const ordinaryRoot = join(fixtureRoot, "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering", "artifacts", "investigations", "ordinary-visible-rendering-portable-10-1-4");
-const EXPECTED_DIGEST = "de2b524c583b674b7dae85e325e9725d4619a21a704875485939bc4ccec86ae7";
+const EXPECTED_DIGEST = "ea881bb158d3f7e62a73860700ade2be0468b3395eebb05c6c200a9523aea445";
 const sources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
