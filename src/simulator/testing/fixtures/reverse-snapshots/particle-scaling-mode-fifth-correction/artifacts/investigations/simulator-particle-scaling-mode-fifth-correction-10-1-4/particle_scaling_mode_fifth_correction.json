@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-particle-local-scaling-fifth-correction",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "gameplay_readme": {
+      "path": "artifacts/investigations/gameplay-particle-simulation/README.md",
+      "bytes": 12814,
+      "sha256": "4551F81F52D7063E2EF5CF8E5DEAFC09B392D1BCA1ABC72152A7841FBBD2C580"
+    },
+    "fourth_transform": {
+      "path": "artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
+      "bytes": 59152,
+      "sha256": "A5C2E8348BAFBC63885EB9EDBC4E22BAED6ACA3791692EEDFA736B39413D55B2"
+    },
+    "visual_reconciliation": {
+      "path": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "bytes": 5440,
+      "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
+    },
+    "original_peak_frame": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/judge-perfect.png",
+      "bytes": 1203368,
+      "sha256": "CD4217D1F256B0E12AE6D28A2F4F13E414DA85189FB38AC585797ADE7D43A0C8"
+    },
+    "managed_declarations": {
+      "path": "artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/managed_declarations.tsv",
+      "bytes": 344,
+      "sha256": "DD1612AF6E3DCFA4713AE425EE8821AB3AFAD48ABF845CCB5056C2EC9AADD344"
+    }
+  },
+  "serialized_inventory": {
+    "systems": 120,
+    "profiles": 100,
+    "enabled_renderers": 104,
+    "scaling_mode_values": [
+      1
+    ],
+    "scaling_mode_name": "Local",
+    "hierarchy_mode_value": 0,
+    "local_mode_value": 1,
+    "shape_mode_value": 2
+  },
+  "corrected_scale_ownership": {
+    "button_manager_mutation": "g multiplies every ParticleSystem Transform localScale",
+    "emission_position_and_velocity": "compose emitting child and ParticleSystem ancestor TRS; nested child world offsets retain g per ParticleSystem transform",
+    "billboard_size": "ParticleSystemScalingMode.Local consumes the emitting ParticleSystem own local scale and does not multiply parent ParticleSystem scale into particle size",
+    "billboard_orientation": "compose root-to-component rotations while parent scale is excluded from Local size magnitude",
+    "enabled_position_scale_exponents": {
+      "1": 1,
+      "2": 103
+    },
+    "enabled_billboard_gameplay_scale_exponent": 1,
+    "fourth_g_squared_billboard_conclusion_valid": false,
+    "fourth_transform_mutation_conclusion_valid": true
+  },
+  "visual_corroboration": {
+    "original_frame": "judge-perfect.png",
+    "original_frame_contains_multilayer_ring_star_glitter_peak": true,
+    "g_squared_portable_windows_result": "rejected-too-small-near-button-points",
+    "local_size_correction_factor_relative_to_g_squared": "1/g"
+  },
+  "production_acceptance": {
+    "must_keep_nested_transform_for_position_and_velocity": true,
+    "must_use_only_emitting_local_scale_for_billboard_size": true,
+    "must_keep_parent_rotations_for_local_alignment": true,
+    "must_not_restore_one_flattened_final_g_to_world_position": true,
+    "must_not_apply_g_squared_to_billboard_size": true,
+    "actual_windows_peak_required": true
+  },
+  "limits": [
+    "portable random draw assignment and native module byte parity remain separate open claims",
+    "GPU framebuffer and authored lower-mip parity remain open",
+    "this correction narrows transform consumption and does not reclassify those open claims"
+  ],
+  "unknown_fields": []
+}
