@@ -1,0 +1,3538 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-complete-hud-resource-manifest",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "level3": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "sharedassets0_split0": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/sharedassets0.assets.split0",
+      "bytes": 1048576,
+      "sha256": "EA4F4ECDD448B6F3AC753C7163A2AEAC04031A282907576B34F4617C0BB27573"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "hud_visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "score_clip": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "score_panel": {
+      "path": "artifacts/investigations/score-hud-panel-clip-portable-10-1-4/score_hud_panel_clip_portable_contract.json",
+      "bytes": 14343,
+      "sha256": "EAAD5175499737F8F3C492885819AC8634D902366F9D04AFE49F68E47518E2D5"
+    },
+    "ap": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    "life": {
+      "path": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+      "bytes": 7027,
+      "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1"
+    },
+    "pause": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+    },
+    "rehearsal": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "bytes": 4805,
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    },
+    "ordinary_lifecycle": {
+      "path": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_hud_lifecycle_oracle.json",
+      "bytes": 402544,
+      "sha256": "44ABFE7A84D289BDAEF67FB985865D437DEB359E3FEB678C36EBB9B2BE997E4C"
+    }
+  },
+  "high_rank_textures": {
+    "sss_star_long": {
+      "name": "sss_star_long",
+      "size": [
+        420,
+        24
+      ],
+      "rgba_sha256": "A9485C0614989823E567386E98569540DBB7907D017B0D952974D9EBB7B2FB79",
+      "file_id": 73,
+      "external": "1495c21b4276e40e19cb15ef6938b01a",
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/1495c21b4276e40e19cb15ef6938b01a",
+      "bytes": 10356,
+      "sha256": "48B2A83574966793E5EDCD1E6D2F1F8D6ADE30F0B9DFB9605875B62A3124AC1B"
+    },
+    "ss_overlay": {
+      "name": "ss_overlay",
+      "size": [
+        64,
+        32
+      ],
+      "rgba_sha256": "D54F51B563249C9F36C8E21D2654EFE2AEDD9EB0B46D8881ABFB0205D92D1292",
+      "file_id": 74,
+      "external": "eac4aa8c4378940de88a0c881bfaed2a",
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/eac4aa8c4378940de88a0c881bfaed2a",
+      "bytes": 2320,
+      "sha256": "D9B3DB890D5C7A6C8B9E2FDAA051158B3D2C23757E05B41CCBED239D6F1EF65E"
+    },
+    "ss_kira": {
+      "name": "ss_kira",
+      "size": [
+        64,
+        64
+      ],
+      "rgba_sha256": "EFA5DFA5BBCD171A5E2C565E10EDC5244E923968734E85037462B2FCF0DA5A87",
+      "file_id": 69,
+      "external": "cad47f492fbd04898a8c328c8c385693",
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/cad47f492fbd04898a8c328c8c385693",
+      "bytes": 4364,
+      "sha256": "C8674ECB2D30E6CEFBD719D19720FFFCBE302A972F4BDC55830A3831E37C6DEE"
+    }
+  },
+  "score_font": {
+    "source_texture": {
+      "file_id": 868,
+      "path_id": 1,
+      "external": "702bf9b25c49a4524990d053f774a0f1",
+      "types": [
+        "Texture2D"
+      ],
+      "path": "base.apk!/assets/bin/Data/702bf9b25c49a4524990d053f774a0f1",
+      "size": [
+        512,
+        256
+      ],
+      "sha256": "1d12852ecd95e273e333e6f17ee1c47a3c9a58cb3ecef6ef1fcad0e48af5879c",
+      "name": "score",
+      "rgba_sha256": "61640bd9d352a0cab9ff92924c11167fe9554b52b15deeb609363014aea1c552",
+      "filter_mode": 1,
+      "wrap_u": 0,
+      "wrap_v": 0
+    },
+    "bmfont": {
+      "file_id": 870,
+      "path_id": 1,
+      "external": "6701cd85a7a5c4385bd4840f2273ed1b",
+      "types": [
+        "TextAsset"
+      ],
+      "path": "base.apk!/assets/bin/Data/6701cd85a7a5c4385bd4840f2273ed1b",
+      "size": 12180,
+      "sha256": "8471b1e7529d09840fd0c4130e7a991a249fc7940fdc6aba70b4031b6a60a81f",
+      "line_height": 36,
+      "base": 24,
+      "scale": [
+        512,
+        256
+      ],
+      "digit_glyphs": {
+        "0": {
+          "id": 48,
+          "x": 92,
+          "y": 40,
+          "width": 40,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 36,
+          "page": 0,
+          "chnl": 0
+        },
+        "1": {
+          "id": 49,
+          "x": 138,
+          "y": 130,
+          "width": 17,
+          "height": 28,
+          "xoffset": 0,
+          "yoffset": 0,
+          "xadvance": 11,
+          "page": 0,
+          "chnl": 0
+        },
+        "2": {
+          "id": 50,
+          "x": 43,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "3": {
+          "id": 51,
+          "x": 82,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "4": {
+          "id": 52,
+          "x": 121,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "5": {
+          "id": 53,
+          "x": 160,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "6": {
+          "id": 54,
+          "x": 199,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "7": {
+          "id": 55,
+          "x": 432,
+          "y": 100,
+          "width": 31,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 27,
+          "page": 0,
+          "chnl": 0
+        },
+        "8": {
+          "id": 56,
+          "x": 263,
+          "y": 130,
+          "width": 37,
+          "height": 27,
+          "xoffset": 2,
+          "yoffset": 1,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        },
+        "9": {
+          "id": 57,
+          "x": 238,
+          "y": 100,
+          "width": 37,
+          "height": 28,
+          "xoffset": 2,
+          "yoffset": 0,
+          "xadvance": 33,
+          "page": 0,
+          "chnl": 0
+        }
+      }
+    },
+    "portable_texture": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
+      "bytes": 48359,
+      "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE"
+    }
+  },
+  "rank_label_font": {
+    "name": "sgm",
+    "source_file": "sharedassets0.assets",
+    "source_path_id": 75,
+    "font_size": 12,
+    "portable_font": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    }
+  },
+  "combo_atlas": {
+    "resource_path": "atlas/bms/ui/iconcombonumber",
+    "atlas": {
+      "file_id": 596,
+      "path_id": 1,
+      "external": "cd81ab693438f4a3e8e1d322b23cfb38",
+      "types": [
+        "MonoBehaviour"
+      ],
+      "path": "base.apk!/assets/bin/Data/cd81ab693438f4a3e8e1d322b23cfb38",
+      "size": 1864,
+      "sha256": "0bbc99cd26d6872599254bd15f3bf07c6b462937143f76c53fcc6f4cd821a6a4"
+    },
+    "material": {
+      "file_id": 597,
+      "path_id": 1,
+      "external": "f76153272013c4baf9154523bdf8408f",
+      "types": [
+        "Material"
+      ],
+      "path": "base.apk!/assets/bin/Data/f76153272013c4baf9154523bdf8408f",
+      "size": 360,
+      "sha256": "c17a5dba1a441f65cdbcfa384cd2c03e42c11058347d1a973aa95aa01ae5ce9c",
+      "name": "IconComboNumber",
+      "main_texture": {
+        "m_FileID": 2,
+        "m_PathID": 1
+      }
+    },
+    "texture": {
+      "file_id": 598,
+      "path_id": 1,
+      "external": "92408feb5e6be490b9b67f22a0239432",
+      "types": [
+        "Texture2D"
+      ],
+      "path": "base.apk!/assets/bin/Data/92408feb5e6be490b9b67f22a0239432",
+      "size": [
+        512,
+        512
+      ],
+      "sha256": "f759c1a9767e500e5b589115f961285a3804957a79a192b023e5844e73590300",
+      "name": "IconComboNumber",
+      "rgba_sha256": "4a98a20b2de55879805c312d4b78ebed6a7dea26135122930ba374fb7505294c",
+      "filter_mode": 2,
+      "wrap_u": 1,
+      "wrap_v": 1
+    },
+    "sprites": [
+      {
+        "name": "icon_number_big_0",
+        "rect": [
+          336,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_1",
+        "rect": [
+          168,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_2",
+        "rect": [
+          84,
+          42,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_3",
+        "rect": [
+          84,
+          160,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_4",
+        "rect": [
+          84,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_5",
+        "rect": [
+          84,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_6",
+        "rect": [
+          0,
+          42,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_7",
+        "rect": [
+          0,
+          160,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_8",
+        "rect": [
+          0,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_9",
+        "rect": [
+          252,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_0",
+        "rect": [
+          0,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_1",
+        "rect": [
+          252,
+          160,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_2",
+        "rect": [
+          420,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_3",
+        "rect": [
+          336,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_4",
+        "rect": [
+          252,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_5",
+        "rect": [
+          168,
+          42,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_6",
+        "rect": [
+          168,
+          160,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_7",
+        "rect": [
+          168,
+          278,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_8",
+        "rect": [
+          420,
+          396,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_AP_9",
+        "rect": [
+          252,
+          42,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_big_plus",
+        "rect": [
+          336,
+          160,
+          82,
+          116
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "rhythm_game_ui_atlas": {
+    "resource_path": "atlas/bms/ui/rhythmgameui",
+    "atlas": {
+      "file_id": 600,
+      "path_id": 1,
+      "external": "7a973c9610ddb4405aa7764876ab4a61",
+      "types": [
+        "GameObject",
+        "Transform",
+        "MonoBehaviour"
+      ],
+      "path": "base.apk!/assets/bin/Data/7a973c9610ddb4405aa7764876ab4a61",
+      "size": 9648,
+      "sha256": "fc9b1a6d29c4eb6458072b0d4d2e7ee42653142297c157b2fd8a042dadf678d0"
+    },
+    "material": {
+      "file_id": 599,
+      "path_id": 1,
+      "external": "9df491ec212ed42c190d9aba4caa3917",
+      "types": [
+        "Material"
+      ],
+      "path": "base.apk!/assets/bin/Data/9df491ec212ed42c190d9aba4caa3917",
+      "size": 356,
+      "sha256": "5d07c346746e6f8283fc287c16973d0dbc7d41a1427c851334947e4fde492741",
+      "name": "RhythmGameUI",
+      "main_texture": {
+        "m_FileID": 2,
+        "m_PathID": 1
+      }
+    },
+    "texture": {
+      "file_id": 601,
+      "path_id": 1,
+      "external": "923acbc2709f740bb8f9ccbd6fed5d52",
+      "types": [
+        "Texture2D"
+      ],
+      "path": "base.apk!/assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
+      "size": [
+        1024,
+        1024
+      ],
+      "sha256": "788141db50d3a33a0b4ed869d89dd7778ff66a4e2244a19daa9384cd017f4f70",
+      "name": "RhythmGameUI",
+      "rgba_sha256": "a3abe242c670dffe7f82abc4a3fea4a8489eb4aeee4f16229d63ba5d4da3a65b",
+      "filter_mode": 2,
+      "wrap_u": 1,
+      "wrap_v": 1
+    },
+    "sprites": [
+      {
+        "name": "ALL_READY_text",
+        "rect": [
+          696,
+          713,
+          311,
+          117
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "balloon_ready_a",
+        "rect": [
+          959,
+          251,
+          58,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "balloon_ready_d",
+        "rect": [
+          0,
+          269,
+          56,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "balloon_ready_e",
+        "rect": [
+          196,
+          209,
+          50,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "balloon_ready_r",
+        "rect": [
+          115,
+          269,
+          52,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "balloon_ready_y",
+        "rect": [
+          58,
+          269,
+          55,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bar_health",
+        "rect": [
+          169,
+          301,
+          17,
+          26
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_area_banner",
+        "rect": [
+          839,
+          114,
+          76,
+          60
+        ],
+        "border": [
+          20,
+          30,
+          20,
+          30
+        ],
+        "padding": [
+          0,
+          2,
+          0,
+          2
+        ]
+      },
+      {
+        "name": "bg_area_banner_open",
+        "rect": [
+          523,
+          892,
+          136,
+          132
+        ],
+        "border": [
+          0,
+          0,
+          90,
+          30
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_base_r5_inside",
+        "rect": [
+          661,
+          979,
+          20,
+          20
+        ],
+        "border": [
+          5,
+          5,
+          5,
+          5
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_base_r6_inside_rhythm",
+        "rect": [
+          481,
+          616,
+          24,
+          24
+        ],
+        "border": [
+          6,
+          6,
+          6,
+          6
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_gauge_score_multi",
+        "rect": [
+          277,
+          195,
+          18,
+          18
+        ],
+        "border": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_health",
+        "rect": [
+          0,
+          329,
+          186,
+          62
+        ],
+        "border": [
+          39,
+          143,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_no_health",
+        "rect": [
+          349,
+          668,
+          131,
+          69
+        ],
+        "border": [
+          50,
+          50,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_rhythm_iPX_black",
+        "rect": [
+          0,
+          122,
+          94,
+          2
+        ],
+        "border": [
+          1,
+          92,
+          1,
+          1
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_score_progress",
+        "rect": [
+          696,
+          629,
+          324,
+          82
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_skill_start",
+        "rect": [
+          0,
+          659,
+          347,
+          78
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_stageBuffEffect_combo",
+        "rect": [
+          400,
+          531,
+          24,
+          24
+        ],
+        "border": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_stageBuffEffect_judge",
+        "rect": [
+          400,
+          505,
+          24,
+          24
+        ],
+        "border": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_stageBuffEffect_life",
+        "rect": [
+          481,
+          642,
+          24,
+          24
+        ],
+        "border": [
+          8,
+          8,
+          8,
+          8
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_stagechallenge_scoreIcon",
+        "rect": [
+          364,
+          245,
+          28,
+          40
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "bg_user_you",
+        "rect": [
+          411,
+          213,
+          78,
+          26
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "btn_ingame_time_back",
+        "rect": [
+          909,
+          920,
+          104,
+          104
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "btn_ingame_time_forward",
+        "rect": [
+          899,
+          311,
+          104,
+          104
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "button_min",
+        "rect": [
+          938,
+          548,
+          78,
+          79
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          2,
+          0,
+          7,
+          0
+        ]
+      },
+      {
+        "name": "button_pause",
+        "rect": [
+          828,
+          319,
+          64,
+          64
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "check_box",
+        "rect": [
+          448,
+          247,
+          47,
+          46
+        ],
+        "border": [
+          15,
+          15,
+          15,
+          15
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "combo",
+        "rect": [
+          592,
+          175,
+          150,
+          42
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "combo_AP",
+        "rect": [
+          837,
+          205,
+          150,
+          42
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "combo_plate",
+        "rect": [
+          397,
+          183,
+          68,
+          28
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "effect_bg_ingame_move_time",
+        "rect": [
+          401,
+          295,
+          96,
+          96
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "effect_health_caution_outline",
+        "rect": [
+          238,
+          417,
+          180,
+          83
+        ],
+        "border": [
+          15,
+          162,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "effect_health_guard_outline",
+        "rect": [
+          0,
+          557,
+          214,
+          100
+        ],
+        "border": [
+          32,
+          174,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "effect_health_guts_outline",
+        "rect": [
+          216,
+          557,
+          214,
+          100
+        ],
+        "border": [
+          32,
+          174,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "effect_ingame_time_move",
+        "rect": [
+          539,
+          152,
+          45,
+          32
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_base_score",
+        "rect": [
+          648,
+          449,
+          236,
+          82
+        ],
+        "border": [
+          216,
+          16,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_base_score_2",
+        "rect": [
+          0,
+          418,
+          236,
+          82
+        ],
+        "border": [
+          216,
+          16,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_base_score_fes",
+        "rect": [
+          420,
+          428,
+          202,
+          62
+        ],
+        "border": [
+          155,
+          50,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_for_teamFesScore_blue01",
+        "rect": [
+          482,
+          714,
+          20,
+          23
+        ],
+        "border": [
+          9,
+          9,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_for_teamFesScore_blue02",
+        "rect": [
+          661,
+          1001,
+          20,
+          23
+        ],
+        "border": [
+          9,
+          9,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_for_teamFesScore_red01",
+        "rect": [
+          1002,
+          198,
+          20,
+          23
+        ],
+        "border": [
+          9,
+          9,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "gauge_for_teamFesScore_red02",
+        "rect": [
+          999,
+          845,
+          20,
+          23
+        ],
+        "border": [
+          9,
+          9,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "hp_meter",
+        "rect": [
+          208,
+          124,
+          17,
+          26
+        ],
+        "border": [
+          4,
+          4,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_exclamation_white",
+        "rect": [
+          624,
+          460,
+          20,
+          30
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_ingame_music",
+        "rect": [
+          989,
+          223,
+          32,
+          26
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_0",
+        "rect": [
+          147,
+          197,
+          47,
+          70
+        ],
+        "border": [
+          2,
+          2,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_1",
+        "rect": [
+          98,
+          197,
+          47,
+          70
+        ],
+        "border": [
+          8,
+          9,
+          1,
+          1
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_2",
+        "rect": [
+          0,
+          197,
+          47,
+          70
+        ],
+        "border": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_3",
+        "rect": [
+          49,
+          197,
+          47,
+          70
+        ],
+        "border": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_4",
+        "rect": [
+          237,
+          269,
+          47,
+          70
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_5",
+        "rect": [
+          188,
+          269,
+          47,
+          70
+        ],
+        "border": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_6",
+        "rect": [
+          953,
+          133,
+          47,
+          70
+        ],
+        "border": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_7",
+        "rect": [
+          228,
+          137,
+          47,
+          70
+        ],
+        "border": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_8",
+        "rect": [
+          966,
+          61,
+          47,
+          70
+        ],
+        "border": [
+          1,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_9",
+        "rect": [
+          917,
+          61,
+          47,
+          70
+        ],
+        "border": [
+          2,
+          1,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_number_plus",
+        "rect": [
+          432,
+          596,
+          47,
+          70
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_score_progress_on_gauge",
+        "rect": [
+          917,
+          135,
+          25,
+          39
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_AvoidLifeZero",
+        "rect": [
+          302,
+          217,
+          107,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_guard",
+        "rect": [
+          523,
+          868,
+          128,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_judge",
+        "rect": [
+          0,
+          126,
+          111,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_0",
+        "rect": [
+          379,
+          109,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_1",
+        "rect": [
+          359,
+          109,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_2",
+        "rect": [
+          339,
+          109,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_3",
+        "rect": [
+          661,
+          933,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_4",
+        "rect": [
+          281,
+          101,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_5",
+        "rect": [
+          261,
+          101,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_6",
+        "rect": [
+          319,
+          109,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_7",
+        "rect": [
+          475,
+          113,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_8",
+        "rect": [
+          455,
+          113,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_9",
+        "rect": [
+          661,
+          909,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_number_period",
+        "rect": [
+          399,
+          109,
+          18,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_percentage",
+        "rect": [
+          277,
+          149,
+          52,
+          20
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_score_half",
+        "rect": [
+          302,
+          194,
+          93,
+          21
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_score_up_1",
+        "rect": [
+          277,
+          171,
+          87,
+          21
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_score_up_2",
+        "rect": [
+          467,
+          186,
+          87,
+          21
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_score_zero",
+        "rect": [
+          467,
+          163,
+          70,
+          21
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_skill_total",
+        "rect": [
+          366,
+          159,
+          54,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuff_combo",
+        "rect": [
+          600,
+          343,
+          226,
+          40
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuff_judgement",
+        "rect": [
+          600,
+          301,
+          226,
+          40
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuff_life",
+        "rect": [
+          600,
+          259,
+          226,
+          40
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_combo",
+        "rect": [
+          556,
+          187,
+          20,
+          20
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_judge",
+        "rect": [
+          481,
+          594,
+          20,
+          20
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_life",
+        "rect": [
+          661,
+          957,
+          20,
+          20
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_star_0",
+        "rect": [
+          394,
+          241,
+          52,
+          52
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_star_1",
+        "rect": [
+          340,
+          287,
+          52,
+          52
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_star_2",
+        "rect": [
+          286,
+          287,
+          52,
+          52
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stageBuffEffect_star_3",
+        "rect": [
+          248,
+          215,
+          52,
+          52
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_stagechallenge_small",
+        "rect": [
+          624,
+          417,
+          30,
+          30
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "icon_VS",
+        "rect": [
+          744,
+          116,
+          93,
+          58
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "img_circle_star",
+        "rect": [
+          696,
+          832,
+          211,
+          192
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "img_line_star_pink",
+        "rect": [
+          0,
+          152,
+          226,
+          21
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "label_round_white",
+        "rect": [
+          302,
+          245,
+          60,
+          40
+        ],
+        "border": [
+          25,
+          25,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "line_tap_area_fever",
+        "rect": [
+          0,
+          94,
+          259,
+          20
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "multi_meter_blue",
+        "rect": [
+          999,
+          870,
+          20,
+          23
+        ],
+        "border": [
+          1,
+          3,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "multi_meter_green",
+        "rect": [
+          999,
+          895,
+          20,
+          23
+        ],
+        "border": [
+          1,
+          3,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "multi_meter_orange",
+        "rect": [
+          1002,
+          148,
+          20,
+          23
+        ],
+        "border": [
+          1,
+          3,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "multi_meter_purple",
+        "rect": [
+          1002,
+          173,
+          20,
+          23
+        ],
+        "border": [
+          1,
+          3,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "multi_meter_red",
+        "rect": [
+          482,
+          689,
+          20,
+          23
+        ],
+        "border": [
+          1,
+          3,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "noticeBase",
+        "rect": [
+          0,
+          502,
+          398,
+          53
+        ],
+        "border": [
+          120,
+          120,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "noticeIcon",
+        "rect": [
+          499,
+          209,
+          91,
+          88
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "player_icon_01",
+        "rect": [
+          653,
+          866,
+          39,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "player_icon_02",
+        "rect": [
+          372,
+          133,
+          39,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "player_icon_03",
+        "rect": [
+          422,
+          157,
+          39,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "player_icon_04",
+        "rect": [
+          463,
+          137,
+          39,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "player_icon_05",
+        "rect": [
+          331,
+          133,
+          39,
+          24
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "point_charactor_shadow",
+        "rect": [
+          188,
+          341,
+          211,
+          50
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_fever",
+        "rect": [
+          0,
+          852,
+          521,
+          172
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_fever_chance",
+        "rect": [
+          828,
+          249,
+          129,
+          60
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_gage_back",
+        "rect": [
+          592,
+          219,
+          243,
+          28
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_gage_font",
+        "rect": [
+          664,
+          385,
+          233,
+          62
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_gage_rainbow",
+        "rect": [
+          0,
+          185,
+          225,
+          10
+        ],
+        "border": [
+          20,
+          20,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "ribbon_ready",
+        "rect": [
+          113,
+          122,
+          93,
+          28
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_icon",
+        "rect": [
+          648,
+          551,
+          41,
+          41
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_meter_blue",
+        "rect": [
+          413,
+          133,
+          40,
+          22
+        ],
+        "border": [
+          4,
+          4,
+          3,
+          3
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_meter_green",
+        "rect": [
+          504,
+          128,
+          40,
+          22
+        ],
+        "border": [
+          5,
+          5,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_meter_orange",
+        "rect": [
+          586,
+          151,
+          40,
+          22
+        ],
+        "border": [
+          5,
+          5,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_meter_pink",
+        "rect": [
+          277,
+          125,
+          40,
+          22
+        ],
+        "border": [
+          5,
+          5,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "score_meter_s",
+        "rect": [
+          0,
+          393,
+          662,
+          22
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "skill_eff",
+        "rect": [
+          744,
+          176,
+          207,
+          27
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "speaker_effect",
+        "rect": [
+          899,
+          417,
+          118,
+          114
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "star_line",
+        "rect": [
+          546,
+          129,
+          36,
+          21
+        ],
+        "border": [
+          26,
+          3,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "Tex_speaker",
+        "rect": [
+          507,
+          594,
+          187,
+          256
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "UI_effect_life_plus_gauge",
+        "rect": [
+          432,
+          492,
+          214,
+          100
+        ],
+        "border": [
+          32,
+          174,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "UI_effect_life_plus_icon",
+        "rect": [
+          499,
+          299,
+          99,
+          92
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "UI_effect_score_plus_guage",
+        "rect": [
+          0,
+          739,
+          505,
+          111
+        ],
+        "border": [
+          297,
+          131,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "UI_effect_score_plus_guage_fes",
+        "rect": [
+          696,
+          533,
+          240,
+          94
+        ],
+        "border": [
+          180,
+          50,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "UI_effect_score_plus_icon",
+        "rect": [
+          909,
+          832,
+          88,
+          86
+        ],
+        "border": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "padding": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "judge_resource_boundary": [
+    {
+      "file_id": 433,
+      "path_id": 1,
+      "external": "54116481daaec4ab3a211c8ffa2b047c",
+      "types": [
+        "AnimationClip"
+      ],
+      "path": "base.apk!/assets/bin/Data/54116481daaec4ab3a211c8ffa2b047c",
+      "size": 3224,
+      "sha256": "b519bbf7c7f8df8e721d179292dcf90d8f6cb166de8533224ddec2ff33996729"
+    },
+    {
+      "file_id": 434,
+      "path_id": 1,
+      "external": "72061fb2042ef4b9896b45fbc86ae651",
+      "types": [
+        "AnimatorController"
+      ],
+      "path": "base.apk!/assets/bin/Data/72061fb2042ef4b9896b45fbc86ae651",
+      "size": 612,
+      "sha256": "843bbfa4a8de0bff5f79a784a680bf88e33c5e001071e2e13b487649cb75bc59"
+    }
+  ],
+  "unknown_fields": []
+}

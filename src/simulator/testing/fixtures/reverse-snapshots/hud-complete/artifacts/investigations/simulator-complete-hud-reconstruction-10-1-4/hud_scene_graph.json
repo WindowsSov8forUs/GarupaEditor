@@ -1,0 +1,1012 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-complete-hud-scene-graph",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "level3": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "sharedassets0_split0": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/sharedassets0.assets.split0",
+      "bytes": 1048576,
+      "sha256": "EA4F4ECDD448B6F3AC753C7163A2AEAC04031A282907576B34F4617C0BB27573"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "hud_visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "score_clip": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "score_panel": {
+      "path": "artifacts/investigations/score-hud-panel-clip-portable-10-1-4/score_hud_panel_clip_portable_contract.json",
+      "bytes": 14343,
+      "sha256": "EAAD5175499737F8F3C492885819AC8634D902366F9D04AFE49F68E47518E2D5"
+    },
+    "ap": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    "life": {
+      "path": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+      "bytes": 7027,
+      "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1"
+    },
+    "pause": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+    },
+    "rehearsal": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "bytes": 4805,
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    },
+    "ordinary_lifecycle": {
+      "path": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_hud_lifecycle_oracle.json",
+      "bytes": 402544,
+      "sha256": "44ABFE7A84D289BDAEF67FB985865D437DEB359E3FEB678C36EBB9B2BE997E4C"
+    }
+  },
+  "roots": {
+    "GamePlay/UI_Root/Display/LifeGauge": {
+      "game_object_path_id": 30,
+      "transform_path_id": 461,
+      "active": true,
+      "local_position_f32_bits": [
+        "0080CD43",
+        "00809A43",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ]
+    },
+    "GamePlay/UI_Root_Back/Display/Information/AddScore": {
+      "game_object_path_id": 35,
+      "transform_path_id": 468,
+      "active": true,
+      "local_position_f32_bits": [
+        "0080CDC3",
+        "00809A43",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ]
+    },
+    "GamePlay/UI_Root_Back/Display/Information/Combo": {
+      "game_object_path_id": 122,
+      "transform_path_id": 555,
+      "active": true,
+      "local_position_f32_bits": [
+        "9A59D943",
+        "9A99A542",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ]
+    },
+    "GamePlay/UI_Root/Display/Button/Pause": {
+      "game_object_path_id": 131,
+      "transform_path_id": 564,
+      "active": true,
+      "local_position_f32_bits": [
+        "000028C2",
+        "000058C2",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ]
+    },
+    "GamePlay/UI_Root_Back/Display/Information/Result": {
+      "game_object_path_id": 199,
+      "transform_path_id": 609,
+      "active": true,
+      "local_position_f32_bits": [
+        "00000000",
+        "000020C3",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "CDCC4C3F",
+        "CDCC4C3F",
+        "0000803F"
+      ]
+    },
+    "GamePlay/UI_Root/Display/Score": {
+      "game_object_path_id": 206,
+      "transform_path_id": 670,
+      "active": true,
+      "local_position_f32_bits": [
+        "0080CDC3",
+        "00809A43",
+        "00000000"
+      ],
+      "local_scale_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ]
+    }
+  },
+  "widgets": [
+    {
+      "path": "GamePlay/UI_Root/Display/Button/Pause",
+      "game_object_path_id": 131,
+      "component_path_id": 1172,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Button/Pause/cover",
+      "game_object_path_id": 76,
+      "component_path_id": 1128,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage",
+      "game_object_path_id": 31,
+      "component_path_id": 1086,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+      "game_object_path_id": 21,
+      "component_path_id": 1079,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteBase",
+      "game_object_path_id": 141,
+      "component_path_id": 1191,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteIcon",
+      "game_object_path_id": 127,
+      "component_path_id": 1170,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge",
+      "game_object_path_id": 20,
+      "component_path_id": 1077,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG",
+      "game_object_path_id": 114,
+      "component_path_id": 1160,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge",
+      "game_object_path_id": 153,
+      "component_path_id": 1204,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning",
+      "game_object_path_id": 9,
+      "component_path_id": 1071,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody",
+      "game_object_path_id": 138,
+      "component_path_id": 1187,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total",
+      "game_object_path_id": 68,
+      "component_path_id": 1120,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Base/Score",
+      "game_object_path_id": 170,
+      "component_path_id": 1249,
+      "component": "UILabel",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+      "game_object_path_id": 204,
+      "component_path_id": 1271,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Background",
+      "game_object_path_id": 339,
+      "component_path_id": 1237,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+      "game_object_path_id": 297,
+      "component_path_id": 1269,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+      "game_object_path_id": 184,
+      "component_path_id": 1217,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge1P",
+      "game_object_path_id": 161,
+      "component_path_id": 1298,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge2P",
+      "game_object_path_id": 298,
+      "component_path_id": 1300,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge3P",
+      "game_object_path_id": 178,
+      "component_path_id": 1314,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge4P",
+      "game_object_path_id": 333,
+      "component_path_id": 1219,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge5P",
+      "game_object_path_id": 162,
+      "component_path_id": 1338,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/BigStar_1",
+      "game_object_path_id": 415,
+      "component_path_id": 1390,
+      "component": "UITexture",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/BigStar_2",
+      "game_object_path_id": 404,
+      "component_path_id": 1427,
+      "component": "UITexture",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/Flash",
+      "game_object_path_id": 391,
+      "component_path_id": 1395,
+      "component": "UITexture",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_1",
+      "game_object_path_id": 408,
+      "component_path_id": 1379,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_2",
+      "game_object_path_id": 422,
+      "component_path_id": 1380,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_3",
+      "game_object_path_id": 373,
+      "component_path_id": 1413,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_4",
+      "game_object_path_id": 370,
+      "component_path_id": 1405,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_5",
+      "game_object_path_id": 393,
+      "component_path_id": 1400,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_6",
+      "game_object_path_id": 377,
+      "component_path_id": 1378,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_7",
+      "game_object_path_id": 395,
+      "component_path_id": 1406,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_8",
+      "game_object_path_id": 399,
+      "component_path_id": 1415,
+      "component": "UITexture",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA+/A+",
+      "game_object_path_id": 385,
+      "component_path_id": 1424,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA+/Separator",
+      "game_object_path_id": 434,
+      "component_path_id": 1358,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/A",
+      "game_object_path_id": 219,
+      "component_path_id": 1238,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/Separator",
+      "game_object_path_id": 289,
+      "component_path_id": 1295,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB+/B+",
+      "game_object_path_id": 398,
+      "component_path_id": 1385,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB+/Separator",
+      "game_object_path_id": 406,
+      "component_path_id": 1418,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/B",
+      "game_object_path_id": 195,
+      "component_path_id": 1263,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/Separator",
+      "game_object_path_id": 158,
+      "component_path_id": 1221,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC+/C+",
+      "game_object_path_id": 343,
+      "component_path_id": 1392,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC+/Separator",
+      "game_object_path_id": 421,
+      "component_path_id": 1423,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",
+      "game_object_path_id": 308,
+      "component_path_id": 1313,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/Separator",
+      "game_object_path_id": 267,
+      "component_path_id": 1270,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS+/S+",
+      "game_object_path_id": 430,
+      "component_path_id": 1425,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS+/Separator",
+      "game_object_path_id": 400,
+      "component_path_id": 1434,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/S",
+      "game_object_path_id": 269,
+      "component_path_id": 1216,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/Separator",
+      "game_object_path_id": 305,
+      "component_path_id": 1222,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS+/SS",
+      "game_object_path_id": 413,
+      "component_path_id": 1411,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS+/Separator",
+      "game_object_path_id": 345,
+      "component_path_id": 1384,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS",
+      "game_object_path_id": 200,
+      "component_path_id": 1301,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/Separator",
+      "game_object_path_id": 214,
+      "component_path_id": 1310,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSSS/SSS",
+      "game_object_path_id": 433,
+      "component_path_id": 1414,
+      "component": "UILabel",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSSS/Separator",
+      "game_object_path_id": 411,
+      "component_path_id": 1422,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/SkillEffect/SpriteBase",
+      "game_object_path_id": 278,
+      "component_path_id": 1276,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root/Display/Score/Progress/SkillEffect/SpriteIcon",
+      "game_object_path_id": 171,
+      "component_path_id": 1335,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num",
+      "game_object_path_id": 182,
+      "component_path_id": 1306,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (1)",
+      "game_object_path_id": 189,
+      "component_path_id": 1280,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (2)",
+      "game_object_path_id": 242,
+      "component_path_id": 1315,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (3)",
+      "game_object_path_id": 255,
+      "component_path_id": 1247,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (4)",
+      "game_object_path_id": 231,
+      "component_path_id": 1261,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (5)",
+      "game_object_path_id": 260,
+      "component_path_id": 1243,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (1)/addScore/num (6)",
+      "game_object_path_id": 281,
+      "component_path_id": 1323,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num",
+      "game_object_path_id": 248,
+      "component_path_id": 1288,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (1)",
+      "game_object_path_id": 259,
+      "component_path_id": 1320,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (2)",
+      "game_object_path_id": 202,
+      "component_path_id": 1279,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (3)",
+      "game_object_path_id": 191,
+      "component_path_id": 1214,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (4)",
+      "game_object_path_id": 164,
+      "component_path_id": 1224,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (5)",
+      "game_object_path_id": 317,
+      "component_path_id": 1210,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (2)/addScore/num (6)",
+      "game_object_path_id": 335,
+      "component_path_id": 1346,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num",
+      "game_object_path_id": 192,
+      "component_path_id": 1321,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (1)",
+      "game_object_path_id": 203,
+      "component_path_id": 1287,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (2)",
+      "game_object_path_id": 256,
+      "component_path_id": 1303,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (3)",
+      "game_object_path_id": 241,
+      "component_path_id": 1241,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (4)",
+      "game_object_path_id": 220,
+      "component_path_id": 1257,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (5)",
+      "game_object_path_id": 276,
+      "component_path_id": 1235,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject (3)/addScore/num (6)",
+      "game_object_path_id": 295,
+      "component_path_id": 1329,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num",
+      "game_object_path_id": 205,
+      "component_path_id": 1311,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (1)",
+      "game_object_path_id": 197,
+      "component_path_id": 1285,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (2)",
+      "game_object_path_id": 244,
+      "component_path_id": 1309,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (3)",
+      "game_object_path_id": 236,
+      "component_path_id": 1233,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (4)",
+      "game_object_path_id": 209,
+      "component_path_id": 1251,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (5)",
+      "game_object_path_id": 277,
+      "component_path_id": 1239,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/AddScore/Offset/AddScoreObject/addScore/num (6)",
+      "game_object_path_id": 299,
+      "component_path_id": 1332,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_num_label/num",
+      "game_object_path_id": 99,
+      "component_path_id": 1143,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_num_label/num (1)",
+      "game_object_path_id": 134,
+      "component_path_id": 1175,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_num_label/num (2)",
+      "game_object_path_id": 57,
+      "component_path_id": 1105,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_num_label/num (3)",
+      "game_object_path_id": 81,
+      "component_path_id": 1131,
+      "component": "UISprite",
+      "active": false,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_unit",
+      "game_object_path_id": 115,
+      "component_path_id": 1161,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other",
+      "game_object_path_id": 287,
+      "component_path_id": 1264,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/JudgeTiming",
+      "game_object_path_id": 371,
+      "component_path_id": 1407,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/base",
+      "game_object_path_id": 429,
+      "component_path_id": 1383,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/percentage",
+      "game_object_path_id": 423,
+      "component_path_id": 1430,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/period",
+      "game_object_path_id": 416,
+      "component_path_id": 1409,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/rateUpValueSpriteNumber/num",
+      "game_object_path_id": 389,
+      "component_path_id": 1382,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/rateUpValueSpriteNumber/num (1)",
+      "game_object_path_id": 410,
+      "component_path_id": 1377,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/rateUpValueSpriteNumber/num (2)",
+      "game_object_path_id": 405,
+      "component_path_id": 1208,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/rateUpValueSpriteNumber/num (3)",
+      "game_object_path_id": 420,
+      "component_path_id": 1419,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/rateChangeSkillEffect/total",
+      "game_object_path_id": 419,
+      "component_path_id": 1421,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/skillEffect_0",
+      "game_object_path_id": 235,
+      "component_path_id": 1292,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/skillEffect_0/base",
+      "game_object_path_id": 258,
+      "component_path_id": 1337,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/skillEffect_1",
+      "game_object_path_id": 216,
+      "component_path_id": 1215,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    },
+    {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result/other/SkillEffects/skillEffect_1/base",
+      "game_object_path_id": 160,
+      "component_path_id": 1262,
+      "component": "UISprite",
+      "active": true,
+      "enabled": true
+    }
+  ],
+  "widget_count": 104,
+  "unknown_fields": []
+}

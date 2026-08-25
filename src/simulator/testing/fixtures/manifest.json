@@ -104,20 +104,6 @@
       "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78"
     },
     {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "bytes": 4978,
-      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "bytes": 20287,
-      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
-    },
-    {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
       "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
@@ -165,6 +151,20 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
       "bytes": 247,
       "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "bytes": 4978,
+      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "bytes": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
     },
     {
       "path": "reverse-snapshots/c07-evidence/artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
@@ -237,6 +237,55 @@
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
     },
     {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "bytes": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "bytes": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "bytes": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "bytes": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "bytes": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "bytes": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
+    },
+    {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
       "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
@@ -300,55 +349,6 @@
       "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
     },
     {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
-      "bytes": 2024,
-      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
-      "bytes": 202371,
-      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
-      "bytes": 4116,
-      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
-      "bytes": 40235,
-      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
-      "bytes": 13393,
-      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
-      "bytes": 236417,
-      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
-      "bytes": 222637,
-      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
-    },
-    {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/653_ikuoku_easy.bms.txt",
       "sourceReverseCommit": "d408d758f39873c2c997107903300e58d56c59c6",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
@@ -389,6 +389,62 @@
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
       "bytes": 3921,
       "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99"
+    },
+    {
+      "path": "reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "sourceReverseCommit": "341749d90e3c68cc9fd85d16fbc501f733378623",
+      "sourcePath": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
+      "bytes": 4360,
+      "sha256": "3CE55A2C5FA1999404B29CBD6062A776965A79F4B7BDC28EFB774FD5AF15DE46"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+      "bytes": 233351,
+      "sha256": "2397421336B942390A95A91AEEDE57A8256EEB8B62738B0056FEFF8E61F72366"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
+      "bytes": 899855,
+      "sha256": "C708244D6F1E05D4F55987DBDA302B628D2D9F7BCAA142C188F47A232E59F1C4"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
+      "bytes": 256931,
+      "sha256": "96C55D4BAA306D588CCF50948170AFDC229812D3EBF8980072A26095FB3092FC"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
+      "bytes": 58363,
+      "sha256": "F3AB898D27C06481835123669879F69E95E373C52F428E5949175895616ED942"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
+      "bytes": 6166,
+      "sha256": "F81AA9A07CC948F116882415DD18067C7CAF4570A560EAE18BCFF8A9EB4DD350"
+    },
+    {
+      "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
+      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
+      "bytes": 31749,
+      "sha256": "300D6CA1CB79FFC45E22320DF07B33F7C9BE90E0F1919C2C32D1EB9178C285FA"
     },
     {
       "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
@@ -615,6 +671,13 @@
       "sha256": "FE1C42F70B83376CB6C8DC5250E25485119325ABDA2134542E2244554D757FDE"
     },
     {
+      "path": "reverse-snapshots/note-hierarchy-fourth-reaudit/artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
+      "sourceReverseCommit": "118a693d876c384b3319b4697cd408ea54def805",
+      "sourcePath": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
+      "bytes": 17234,
+      "sha256": "C6E15ACDE7DBD2829ED1166E1C8D533D66ED1BD15C87F781E4EE021A7267C832"
+    },
+    {
       "path": "reverse-snapshots/ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
       "sourceReverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
       "sourcePath": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
@@ -718,6 +781,20 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
       "bytes": 9920,
       "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    {
+      "path": "reverse-snapshots/particle-scaling-mode-fifth-correction/artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
+      "sourceReverseCommit": "61743e0fca21c6430b2d67ac043d6c709e6cd1e6",
+      "sourcePath": "artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
+      "bytes": 3898,
+      "sha256": "0A5F5C90DE060C81509EDF1BF1ED159D48EE21127ECEC9B9DD9857966872CAA9"
+    },
+    {
+      "path": "reverse-snapshots/particle-transform-fourth-reaudit/artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
+      "sourceReverseCommit": "249f6d4816fae88143d9db52932bbeb805bbec42",
+      "sourcePath": "artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
+      "bytes": 59152,
+      "sha256": "A5C2E8348BAFBC63885EB9EDBC4E22BAED6ACA3791692EEDFA736B39413D55B2"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
@@ -902,18 +979,11 @@
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
     },
     {
-      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 504,
-      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 792,
-      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
+      "bytes": 36197,
+      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
@@ -923,11 +993,11 @@
       "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5"
     },
     {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 36197,
-      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
+      "bytes": 41143,
+      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
@@ -944,13 +1014,6 @@
       "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F"
     },
     {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 41143,
-      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
-    },
-    {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
@@ -963,6 +1026,20 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 12046,
       "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 504,
+      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 792,
+      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__fieldskin__skin00.json",
@@ -1134,34 +1211,6 @@
       "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D"
     },
     {
-      "path": "reverse-snapshots/visual-layout-correction/artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
-      "sourceReverseCommit": "28b6a790a058fb04f45e0383554e99c86e3ae62a",
-      "sourcePath": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
-      "bytes": 8090,
-      "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
-    },
-    {
-      "path": "reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
-      "sourceReverseCommit": "341749d90e3c68cc9fd85d16fbc501f733378623",
-      "sourcePath": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
-      "bytes": 19748,
-      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
-    },
-    {
-      "path": "reverse-snapshots/particle-transform-fourth-reaudit/artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
-      "sourceReverseCommit": "249f6d4816fae88143d9db52932bbeb805bbec42",
-      "sourcePath": "artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
-      "bytes": 59152,
-      "sha256": "A5C2E8348BAFBC63885EB9EDBC4E22BAED6ACA3791692EEDFA736B39413D55B2"
-    },
-    {
-      "path": "reverse-snapshots/note-hierarchy-fourth-reaudit/artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
-      "sourceReverseCommit": "118a693d876c384b3319b4697cd408ea54def805",
-      "sourcePath": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
-      "bytes": 17234,
-      "sha256": "C6E15ACDE7DBD2829ED1166E1C8D533D66ED1BD15C87F781E4EE021A7267C832"
-    },
-    {
       "path": "reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
       "sourceReverseCommit": "05db132b1ef742ac1dc762b779320fa32a937045",
       "sourcePath": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
@@ -1169,11 +1218,11 @@
       "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1"
     },
     {
-      "path": "reverse-snapshots/particle-scaling-mode-fifth-correction/artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
-      "sourceReverseCommit": "61743e0fca21c6430b2d67ac043d6c709e6cd1e6",
-      "sourcePath": "artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
-      "bytes": 3898,
-      "sha256": "0A5F5C90DE060C81509EDF1BF1ED159D48EE21127ECEC9B9DD9857966872CAA9"
+      "path": "reverse-snapshots/visual-layout-correction/artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "sourceReverseCommit": "28b6a790a058fb04f45e0383554e99c86e3ae62a",
+      "sourcePath": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "bytes": 8090,
+      "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
     }
   ]
 }

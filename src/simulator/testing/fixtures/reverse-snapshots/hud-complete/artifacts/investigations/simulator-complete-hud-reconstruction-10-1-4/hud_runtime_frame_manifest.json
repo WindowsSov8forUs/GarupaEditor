@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-hud-runtime-frame-manifest",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "surface": [
+    1600,
+    720
+  ],
+  "sources": {
+    "level3": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "sharedassets0_split0": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/sharedassets0.assets.split0",
+      "bytes": 1048576,
+      "sha256": "EA4F4ECDD448B6F3AC753C7163A2AEAC04031A282907576B34F4617C0BB27573"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "hud_visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "score_clip": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "score_panel": {
+      "path": "artifacts/investigations/score-hud-panel-clip-portable-10-1-4/score_hud_panel_clip_portable_contract.json",
+      "bytes": 14343,
+      "sha256": "EAAD5175499737F8F3C492885819AC8634D902366F9D04AFE49F68E47518E2D5"
+    },
+    "ap": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    "life": {
+      "path": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+      "bytes": 7027,
+      "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1"
+    },
+    "pause": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+    },
+    "rehearsal": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "bytes": 4805,
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    },
+    "ordinary_lifecycle": {
+      "path": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_hud_lifecycle_oracle.json",
+      "bytes": 402544,
+      "sha256": "44ABFE7A84D289BDAEF67FB985865D437DEB359E3FEB678C36EBB9B2BE997E4C"
+    }
+  },
+  "frames": [
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/scene-ready.png",
+      "bytes": 428887,
+      "sha256": "31749F5A0C36E8D6C3887B89B37EABE7DF5361BB3E33127835230ED9120CB30E"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/combo-change.png",
+      "bytes": 1304154,
+      "sha256": "DEE3FE766AA982E191580D51A8371A6E83CDCF1102A0A07660AB99289FB3482E"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/judge-perfect.png",
+      "bytes": 1203368,
+      "sha256": "CD4217D1F256B0E12AE6D28A2F4F13E414DA85189FB38AC585797ADE7D43A0C8"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/life-change.png",
+      "bytes": 922860,
+      "sha256": "0219667EA63ACDD838FCEB1B305419B48A314B4918FF2C9F4A197D0F3AA653B7"
+    },
+    {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/runtime/ap-status-on-172-a.png",
+      "bytes": 1032046,
+      "sha256": "4724F6AC53A93B3140D98758EE783A05262D7F006AC1744993648804DD913A02"
+    },
+    {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/runtime/ap-status-on-172-b.png",
+      "bytes": 942663,
+      "sha256": "5B7692244D390C4AE5E6C23C0A971EA45084A0C0718E1A16D0B89DFFDF92D183"
+    },
+    {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/runtime/live-manual-pause-r1.png",
+      "bytes": 135979,
+      "sha256": "76BE105F407335D8198FC534C6A5BA6C4E3C48EFA072807C2CD37DC4C23B6D6E"
+    },
+    {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/runtime/rehearsal-demo-pause-r1.png",
+      "bytes": 663160,
+      "sha256": "7905BDA4988F8585A337C736EA15E6B362303F206C28CDF289AAE6DC648460EA"
+    }
+  ],
+  "frame_semantics": [
+    "scene-ready",
+    "normal-combo-change",
+    "judge-perfect",
+    "life-change",
+    "ap-combo-172-phase-a",
+    "ap-combo-172-phase-b",
+    "live-manual-pause",
+    "rehearsal-demo-pause"
+  ],
+  "capture_policy": "observation-only natural ARM64 play; no process memory write or synthetic judgement input",
+  "unknown_fields": []
+}

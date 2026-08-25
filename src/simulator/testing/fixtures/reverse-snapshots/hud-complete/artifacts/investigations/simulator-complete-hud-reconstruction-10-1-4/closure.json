@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "status": "closed-current-complete-hud-evidence",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "level3": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "sharedassets0_split0": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/sharedassets0.assets.split0",
+      "bytes": 1048576,
+      "sha256": "EA4F4ECDD448B6F3AC753C7163A2AEAC04031A282907576B34F4617C0BB27573"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "hud_visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "score_clip": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "score_panel": {
+      "path": "artifacts/investigations/score-hud-panel-clip-portable-10-1-4/score_hud_panel_clip_portable_contract.json",
+      "bytes": 14343,
+      "sha256": "EAAD5175499737F8F3C492885819AC8634D902366F9D04AFE49F68E47518E2D5"
+    },
+    "ap": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    "life": {
+      "path": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+      "bytes": 7027,
+      "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1"
+    },
+    "pause": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56234,
+      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+    },
+    "rehearsal": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "bytes": 4805,
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    },
+    "ordinary_lifecycle": {
+      "path": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_hud_lifecycle_oracle.json",
+      "bytes": 402544,
+      "sha256": "44ABFE7A84D289BDAEF67FB985865D437DEB359E3FEB678C36EBB9B2BE997E4C"
+    }
+  },
+  "sections": {
+    "scene": "confirmed",
+    "components": "confirmed",
+    "resources": "confirmed",
+    "logic": "confirmed",
+    "render_primitives": "confirmed",
+    "runtime_frames": "confirmed"
+  },
+  "critical_correction": {
+    "prior_name_based_route_rejected": true,
+    "Flash": "ss_overlay",
+    "BigStar_1": "sss_star_long",
+    "BigStar_2": "sss_star_long",
+    "effect": "prevents 64x32 overlay from being stretched over the 467x24 Flash widget"
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": true
+}
