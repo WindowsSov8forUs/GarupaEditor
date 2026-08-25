@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-visual-fifth-correction-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "level3": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/rhythm-game-level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "life_arm64": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03a6e7c4__InGameLifeGauge__updateGaugeColor.arm64.tsv",
+      "bytes": 645,
+      "sha256": "0ADAB8E3B513E6C5C201534B8192FDA8EA9A4DE600C165C668B21C98C39BB93E"
+    },
+    "life_text_arm64": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0331bfa0__InGameUtility__AppendLifeText.arm64.tsv",
+      "bytes": 3603,
+      "sha256": "458E48D0883257550758EB706FFEB2C6211CD5DC7723041E86D4FB5EC937988F"
+    },
+    "note_geometry": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_geometry_profile.json",
+      "bytes": 20910,
+      "sha256": "940A4BCB88B760CD7EF2EAD26EDBA52038FC8051A327191151DDCB896F403BCB"
+    },
+    "note_hierarchy": {
+      "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
+      "bytes": 17234,
+      "sha256": "C6E15ACDE7DBD2829ED1166E1C8D533D66ED1BD15C87F781E4EE021A7267C832"
+    },
+    "particle_profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "particle_policy": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    "particle_reconciliation": {
+      "path": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "bytes": 5440,
+      "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
+    },
+    "tap_lane": {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "bytes": 9920,
+      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    "ap": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+      "bytes": 19748,
+      "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0"
+    },
+    "color_arm64": {
+      "path": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/arm64/03384074__ColorUtility__StringColorDictionary.arm64.tsv",
+      "bytes": 2595,
+      "sha256": "169095EA62D4735D89AD9F9FF8CD11ECCC8525B1A06089CC16BB72A3D2F58A42"
+    }
+  },
+  "hud": {
+    "life_label": {
+      "path_id": 1120,
+      "serialized_bytes": 376,
+      "base_color_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ],
+      "widget_width": 251,
+      "widget_height": 70,
+      "depth": 42,
+      "font_size": 18,
+      "font_style": 0,
+      "alignment": 0,
+      "support_encoding": true,
+      "effect_style": 0,
+      "effect_color_f32_bits": [
+        "00000000",
+        "00000000",
+        "00000000",
+        "0000803F"
+      ],
+      "symbol_style": 1,
+      "effect_distance_f32_bits": [
+        "0000803F",
+        "0000803F"
+      ],
+      "overflow": 0,
+      "apply_gradient": false,
+      "gradient_top_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ],
+      "gradient_bottom_f32_bits": [
+        "3333333F",
+        "3333333F",
+        "3333333F",
+        "0000803F"
+      ]
+    },
+    "judge_line_renderer": {
+      "path_id": 1054,
+      "sorting_layer_id": 0,
+      "sorting_order": 20,
+      "color_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ],
+      "mask_interaction": 0
+    },
+    "life_gauge_color_route": {
+      "normal_update_target": "FrontGauge only",
+      "gauge_background_normal_tint_f32_bits": [
+        "0000803F",
+        "0000803F",
+        "0000803F",
+        "0000803F"
+      ],
+      "production_must_not_apply_get_gauge_color_to_bg_health": true
+    },
+    "life_text_markup": {
+      "font_size": 18,
+      "current_positive": {
+        "color_type": 4,
+        "hex": "00C000"
+      },
+      "current_zero": {
+        "color_type": 3,
+        "hex": "FE2349"
+      },
+      "separator": {
+        "text": "/",
+        "color_type": 1,
+        "hex": "505050"
+      },
+      "maximum": {
+        "color_type": 4,
+        "hex": "00C000"
+      },
+      "support_encoding": true
+    },
+    "all_perfect": {
+      "original_setting_owner": "isAllPerfectStatusDisplayMode",
+      "fixed_on_is_original_equivalent": false
+    }
+  },
+  "note_mesh": {
+    "ordinary_boundary_formula": "position.x +/- localScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+    "product_compatible_width1_must_include_screen_width_adjust_rate": true,
+    "omitting_width_rate_enlarges_by_reciprocal_width_rate": true,
+    "vertex_count": 22,
+    "index_count": 60
+  },
+  "world_ordering": {
+    "tap_lane_effect": {
+      "sorting_order": 0,
+      "owners": 13
+    },
+    "particles": {
+      "sorting_order_counts": {
+        "1": 8,
+        "5": 10,
+        "50": 86
+      }
+    },
+    "judge_line": {
+      "sorting_order": 20
+    },
+    "note_front": {
+      "sorting_order": 70
+    },
+    "hud": {
+      "sorting_order": 100
+    },
+    "required_group_order": [
+      "tap-lane-0",
+      "particle-1",
+      "particle-5",
+      "judge-20",
+      "particle-50",
+      "note-70",
+      "hud-100"
+    ],
+    "single_particle_parent_cannot_cross_judge_20": true
+  },
+  "particle_boundary": {
+    "portable_random_is_original_witness": false,
+    "portable_module_math_is_unity_byte_parity": false,
+    "original_sort_tuple": [
+      "sortingOrder",
+      "negative-renderer-bounds-center-z",
+      "creationSequence"
+    ],
+    "position_z_may_replace_renderer_bounds_center_z": false,
+    "system_identity_may_replace_renderer_bounds_center_z": false,
+    "per_frame_sprite_rebuild_is_original_lifecycle": false
+  },
+  "production_corrections": [
+    "life-font-24-to-18-and-rich-color-segments",
+    "life-bg-health-remains-white-while-front-gauge-is-colored",
+    "product-slide-width-multiplies-screen-width-adjust-rate",
+    "split-particle-sorting-groups-around-judge-20",
+    "tap-lane-effect-sorting-0-below-all-particles",
+    "do-not-claim-fixed-on-ap-or-portable-particle-math-as-original-equivalent"
+  ],
+  "unknown_fields": []
+}
