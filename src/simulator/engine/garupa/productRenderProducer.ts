@@ -351,6 +351,7 @@ export class GarupaProductRenderProducer {
             from,
             to,
             this.scene.screenToSafeAreaRatio.value,
+            this.scene.screenWidthAdjustRate.value,
           )));
           commands.push(command(commands.length, {
             kind: "set-threshold",
@@ -542,6 +543,7 @@ function slideMesh(
   from: ProductNodeSample,
   to: ProductNodeSample,
   screenToSafeAreaRatio: number,
+  screenWidthAdjustRate: number,
 ): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
@@ -560,7 +562,7 @@ function slideMesh(
     const y = fromPosition.y.value + (toPosition.y.value - fromPosition.y.value) * ratio;
     const uniformScale = fromScale + (toScale - fromScale) * ratio;
     const authoredWidth = from.node.width + (to.node.width - from.node.width) * ratio;
-    const halfWidth = uniformScale * authoredWidth * screenToSafeAreaRatio;
+    const halfWidth = uniformScale * authoredWidth * screenToSafeAreaRatio * screenWidthAdjustRate;
     vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
     uv.push(vector2(0, sectionRatio), vector2(1, sectionRatio));
     colors.push(

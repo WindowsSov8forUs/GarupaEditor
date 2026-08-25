@@ -6,6 +6,7 @@ import type { StartupDirectionSceneState } from "../../scene/startupDirectionSce
 
 export const PIXI_COMBINED_SCENE_LABEL = "GarupaSimulatorCombinedScene";
 export const PIXI_PARTICLE_STAGE_LABEL = "GarupaSimulatorParticles";
+export const PIXI_PARTICLE_HIGH_STAGE_LABEL = "GarupaSimulatorParticlesHigh";
 export const PIXI_ORDINARY_STAGE_LABEL = "GarupaSimulatorRoot";
 
 export interface PixiCombinedSceneSnapshot {
@@ -15,6 +16,7 @@ export interface PixiCombinedSceneSnapshot {
   readonly rootParentAttached: boolean;
   readonly particleStageParentIsRoot: boolean;
   readonly particleStageParentIsOrdinary: boolean;
+  readonly particleHighStageParentIsOrdinary: boolean | null;
   readonly ordinaryStageParentIsRoot: boolean;
   readonly mvStageParentIsRoot: boolean | null;
   readonly startupBackgroundParentIsRoot: boolean | null;
@@ -33,6 +35,7 @@ export function createPixiCombinedScene(
   ordinaryStage: Container,
   startupScene?: PixiStartupDirectionScene,
   mvStage?: Container,
+  particleHighStage?: Container,
 ): SimulatorResult<PixiCombinedScene> {
   if (
     !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
@@ -40,6 +43,11 @@ export function createPixiCombinedScene(
     particleStage.parent !== null || ordinaryStage.parent !== null ||
     particleStage.label !== PIXI_PARTICLE_STAGE_LABEL ||
     ordinaryStage.label !== PIXI_ORDINARY_STAGE_LABEL ||
+    (particleHighStage !== undefined && (
+      !(particleHighStage instanceof Container) || particleHighStage === particleStage ||
+      particleHighStage === ordinaryStage || particleHighStage.destroyed ||
+      particleHighStage.parent !== null || particleHighStage.label !== PIXI_PARTICLE_HIGH_STAGE_LABEL
+    )) ||
     (mvStage !== undefined && (
       !(mvStage instanceof Container) || mvStage === particleStage || mvStage === ordinaryStage ||
       mvStage.destroyed || mvStage.parent !== null || mvStage.label !== PIXI_MV_LIVE_STAGE_LABEL
@@ -62,6 +70,10 @@ export function createPixiCombinedScene(
     if (startupScene !== undefined) root.addChild(startupScene.backgroundRoot);
     particleStage.zIndex = 2_000_000;
     ordinaryStage.addChild(particleStage);
+    if (particleHighStage !== undefined) {
+      particleHighStage.zIndex = 2_050_000;
+      ordinaryStage.addChild(particleHighStage);
+    }
     ordinaryStage.sortChildren();
     root.addChild(ordinaryStage);
     if (startupScene !== undefined) root.addChild(startupScene.foregroundRoot);
@@ -69,6 +81,7 @@ export function createPixiCombinedScene(
     mvStage?.removeFromParent();
     startupScene?.backgroundRoot.removeFromParent();
     particleStage.removeFromParent();
+    particleHighStage?.removeFromParent();
     ordinaryStage.removeFromParent();
     startupScene?.foregroundRoot.removeFromParent();
     root.destroy({ children: false });
@@ -78,7 +91,7 @@ export function createPixiCombinedScene(
       "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
     );
   }
-  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene, mvStage));
+  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene, mvStage, particleHighStage));
 }
 
 class OwnedPixiCombinedScene implements PixiCombinedScene {
@@ -90,6 +103,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     private readonly ordinaryStage: Container,
     private readonly startupScene?: PixiStartupDirectionScene,
     private readonly mvStage?: Container,
+    private readonly particleHighStage?: Container,
   ) {}
 
   applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void> {
@@ -113,11 +127,15 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       childLabels: Object.freeze([
         ...(this.mvStage === undefined ? [] : [PIXI_MV_LIVE_STAGE_LABEL]),
         PIXI_PARTICLE_STAGE_LABEL,
+        ...(this.particleHighStage === undefined ? [] : [PIXI_PARTICLE_HIGH_STAGE_LABEL]),
         PIXI_ORDINARY_STAGE_LABEL,
       ]),
       rootParentAttached: this.root.parent !== null,
       particleStageParentIsRoot: this.particleStage.parent === this.root,
       particleStageParentIsOrdinary: this.particleStage.parent === this.ordinaryStage,
+      particleHighStageParentIsOrdinary: this.particleHighStage === undefined
+        ? null
+        : this.particleHighStage.parent === this.ordinaryStage,
       ordinaryStageParentIsRoot: this.ordinaryStage.parent === this.root,
       mvStageParentIsRoot: this.mvStage === undefined ? null : this.mvStage.parent === this.root,
       startupBackgroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.backgroundRoot.parent === this.root,
@@ -133,6 +151,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       this.mvStage?.removeFromParent();
       this.startupScene?.backgroundRoot.removeFromParent();
       this.particleStage.removeFromParent();
+      this.particleHighStage?.removeFromParent();
       this.ordinaryStage.removeFromParent();
       this.startupScene?.foregroundRoot.removeFromParent();
       this.root.destroy({ children: false });

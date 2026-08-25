@@ -222,7 +222,7 @@ function color(red: number, green: number, blue: number, alpha: number): RenderC
   return Object.freeze({ red: f32(red), green: f32(green), blue: f32(blue), alpha: f32(alpha) });
 }
 function ordering(sourceZ: RenderFloat32, creationSequence: number): RenderOrderingKey {
-  return Object.freeze({ domainLayer: 3, sourceDepthOrSortingOrder: 0, sourceZ, creationSequence });
+  return Object.freeze({ domainLayer: 1, sourceDepthOrSortingOrder: 0, sourceZ, creationSequence });
 }
 function f32(value: number): RenderFloat32 {
   const result = createRenderFloat32(Math.fround(value));

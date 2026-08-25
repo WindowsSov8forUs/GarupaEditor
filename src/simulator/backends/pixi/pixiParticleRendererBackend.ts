@@ -56,6 +56,7 @@ interface PendingParticleFrame {
 export class PixiParticleRendererBackend implements SimulatorParticleRendererBackend {
   readonly id = "pixi-v8-particle-portable-v1";
   readonly stage = new Container({ label: "GarupaSimulatorParticles", sortableChildren: true });
+  readonly highSortingStage = new Container({ label: "GarupaSimulatorParticlesHigh", sortableChildren: true });
 
   private state: ParticleRendererBackendSnapshot["state"] = "unprepared";
   private sessionId: string | null = null;
@@ -93,8 +94,9 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     }
     const validatedScene = validateScene(scene);
     if (validatedScene.status !== "accepted") return validatedScene;
-    if (this.stage.destroyed || this.stage.children.length !== 0) {
-      return this.reject("particle.pixi.stage-not-empty-or-destroyed", "The particle stage must be live and empty before atomic prepare.");
+    if (this.stage.destroyed || this.highSortingStage.destroyed ||
+      this.stage.children.length !== 0 || this.highSortingStage.children.length !== 0) {
+      return this.reject("particle.pixi.stage-not-empty-or-destroyed", "Both particle sorting stages must be live and empty before atomic prepare.");
     }
 
     this.state = "preparing";
@@ -259,11 +261,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       if (priorCleanupFailures.length > 0) {
         throw new Error(`failed prior live Sprite cleanup: ${priorCleanupFailures.join(",")}`);
       }
-      for (const sprite of pending.sprites) {
-        this.stage.addChild(sprite);
+      for (let index = 0; index < pending.sprites.length; index += 1) {
+        const sprite = pending.sprites[index]!;
+        const sample = pending.samples[index]!;
+        (sample.sortingOrder > 20 ? this.highSortingStage : this.stage).addChild(sprite);
         this.liveSprites.push(sprite);
       }
       this.stage.sortChildren();
+      this.highSortingStage.sortChildren();
     } catch {
       this.pending = null;
       const cleanupFailures = [

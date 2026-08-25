@@ -100,6 +100,7 @@ interface PixiHudVisual {
   readonly kind: "score" | "combo" | "result" | "life" | "add-score" | "habahiro-flash" | "fidelity-label";
   readonly content: Container;
   readonly text: Text | null;
+  readonly lifeTextSegments: readonly [Text, Text, Text] | null;
   readonly gameOverText: Text | null;
   readonly primaryFill: Graphics | null;
   readonly secondaryFill: Graphics | null;
@@ -779,7 +780,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }))),
       hudTextNodes: value.hudVisual === null
         ? null
-        : Object.freeze([value.hudVisual.text, value.hudVisual.gameOverText]
+        : Object.freeze([
+            value.hudVisual.text,
+            ...(value.hudVisual.lifeTextSegments ?? []),
+            value.hudVisual.gameOverText,
+          ]
             .filter((text): text is Text => text !== null)
             .map((text) => Object.freeze({
               label: text.label,
@@ -1970,6 +1975,13 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     style: { fill: 0xffffff, fontSize: 32 },
     label: kind === "life" ? "life-current-label" : "fidelity-label",
   }) : null;
+  const lifeTextSegments = kind === "life"
+    ? Object.freeze([
+        new Text({ text: "", style: { fill: 0x00c000, fontSize: 18 }, label: "life-current-segment" }),
+        new Text({ text: "/", style: { fill: 0x505050, fontSize: 18 }, label: "life-separator-segment" }),
+        new Text({ text: "", style: { fill: 0x00c000, fontSize: 18 }, label: "life-maximum-segment" }),
+      ] as const)
+    : null;
   const gameOverText = kind === "life"
     ? new Text({ text: "", style: { fill: 0xff0000, fontSize: 22 }, label: "life-game-over-label" })
     : null;
@@ -1980,7 +1992,11 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     : null;
   if (secondaryFill !== null) content.addChild(secondaryFill);
   if (primaryFill !== null) content.addChild(primaryFill);
-  if (text !== null) content.addChild(text);
+  if (text !== null) {
+    content.addChild(text);
+    if (kind === "life") text.visible = false;
+  }
+  if (lifeTextSegments !== null) content.addChild(...lifeTextSegments);
   if (gameOverText !== null) content.addChild(gameOverText);
   content.addChild(animationLayer);
   if (scoreHighRankPanelMask !== null) {
@@ -1992,6 +2008,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     kind,
     content,
     text,
+    lifeTextSegments,
     gameOverText,
     primaryFill,
     secondaryFill,
@@ -2190,7 +2207,7 @@ function applyResultHud(
 function applyLifeHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
-  state: { readonly label: string; readonly primaryFill: { readonly value: number }; readonly secondaryFill: { readonly value: number }; readonly color: "normal" | "danger"; readonly warning: boolean; readonly singleGameOver: boolean },
+  state: { readonly currentLife: number; readonly label: string; readonly primaryFill: { readonly value: number }; readonly secondaryFill: { readonly value: number }; readonly color: "normal" | "danger"; readonly warning: boolean; readonly singleGameOver: boolean },
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
@@ -2251,7 +2268,7 @@ function applyLifeHud(
   };
   const colors = state.singleGameOver ? profile.life.colorsF32Bits.gameOverBase : profile.life.colorsF32Bits[state.color];
   const tint = rgbTint(f32FromBits(colors[0]), f32FromBits(colors[1]), f32FromBits(colors[2]));
-  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health", "gauge_base", "life-gauge-base", true, tint);
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health", "gauge_base", "life-gauge-base", true, 0xffffff);
   const secondary = add(CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter", "second", "life-secondary", state.secondaryFill.value > 0);
   clipLeftToRight(secondary, state.secondaryFill.value, "life-secondary-fill-mask");
   const primary = add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "hp_meter", "primary", "life-primary", state.primaryFill.value > 0, tint);
@@ -2260,13 +2277,28 @@ function applyLifeHud(
   add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside", "warning_body", "life-warning-body", state.warning);
   add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", state.singleGameOver);
   const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
-  if (font === undefined || visual.text === null || visual.gameOverText === null) {
+  if (font === undefined || visual.text === null || visual.lifeTextSegments === null || visual.gameOverText === null) {
     throw new Error("Life sgm label font is missing");
   }
-  setHudText(visual.text, state.label, current.lifeLabel.fontSize, 0xffffff, font.family);
-  visual.text.anchor.set(1, 0.5);
-  visual.text.position.set(...localFromAuthoredWorld(current.lifeLabel.authoredPosition));
-  visual.text.zIndex = current.lifeLabel.depth;
+  visual.text.text = state.label;
+  visual.text.visible = false;
+  const separator = state.label.indexOf("/");
+  if (separator <= 0 || separator === state.label.length - 1) {
+    throw new Error("Life label requires current/maximum encoded segments");
+  }
+  const segments = [state.label.slice(0, separator), "/", state.label.slice(separator + 1)] as const;
+  const fills = [state.currentLife > 0 ? 0x00c000 : 0xfe2349, 0x505050, 0x00c000] as const;
+  const labelPosition = localFromAuthoredWorld(current.lifeLabel.authoredPosition);
+  let cursor = labelPosition[0];
+  for (let index = visual.lifeTextSegments.length - 1; index >= 0; index -= 1) {
+    const text = visual.lifeTextSegments[index]!;
+    setHudText(text, segments[index]!, current.lifeLabel.fontSize, fills[index]!, font.family);
+    text.anchor.set(0, 0.5);
+    cursor = Math.fround(cursor - text.width);
+    text.position.set(cursor, labelPosition[1]);
+    text.zIndex = current.lifeLabel.depth;
+    text.visible = true;
+  }
   setHudText(
     visual.gameOverText,
     current.gameOverLabel.text,

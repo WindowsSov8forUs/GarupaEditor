@@ -486,6 +486,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       renderer.stage,
       startupScene.value,
       movie?.stage,
+      particleRenderer.highSortingStage,
     );
     if (combinedScene.status !== "ok") {
       const cleanups = [

@@ -65,6 +65,7 @@ export interface GarupaProductSceneLayout {
   readonly noteSettingScale: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly screenToSafeAreaRatio: RenderFloat32;
+  readonly screenWidthAdjustRate: RenderFloat32;
   readonly fieldLines: readonly GarupaProductFieldLine[];
   readonly projectLaneAtCurve: (lane: number, curve: number) => SimulatorResult<RenderVector3>;
   readonly projectNoteScaleAtCurve: (curve: number, authoredWidth: number) => SimulatorResult<RenderFloat32>;
@@ -338,6 +339,7 @@ function createGarupaProductScene(
     noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,
     screenToSafeAreaRatio: f32(scene.surfaceLayout.starUi.screenToSafeAreaRatio),
+    screenWidthAdjustRate: f32(scene.surfaceLayout.gameplay.screenWidthAdjustRate),
     fieldLines: Object.freeze(fieldLines),
     projectLaneAtCurve,
     projectNoteScaleAtCurve,
@@ -601,6 +603,8 @@ function createOriginalSkinFieldScene(
         judgeScale,
         1,
         judgeScale,
+        2,
+        20,
       ),
     ]),
     masks: Object.freeze([] as RenderFieldMaskPlan[]),
@@ -647,6 +651,8 @@ function fieldObject(
   scale: number,
   depth: number,
   scaleY = 1,
+  domainLayer = depth + 1,
+  sourceSortingOrder = depth,
 ): RenderFieldObjectPlan {
   return Object.freeze({
     renderObjectId,
@@ -657,7 +663,7 @@ function fieldObject(
     scale: vector2(scale, scaleY),
     rotationDegrees: f32(0),
     color: white(),
-    ordering: ordering(depth + 1, depth),
+    ordering: ordering(domainLayer, sourceSortingOrder),
     maskObjectId,
   });
 }

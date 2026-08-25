@@ -115,7 +115,7 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     lifeLabel: Object.freeze({
       authoredPosition: Object.freeze([Math.fround(307.0000915527344), 235] as const),
       pivot: "right" as const,
-      fontSize: 24,
+      fontSize: 18,
       depth: 42,
     }),
     warningTween: Object.freeze({
