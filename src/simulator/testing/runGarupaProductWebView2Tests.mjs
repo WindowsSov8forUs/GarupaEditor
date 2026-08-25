@@ -19,6 +19,10 @@ const visibleProfilePath = join(
   testingRoot,
   "fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
 );
+const visualFifthContractPath = join(
+  testingRoot,
+  "fixtures/reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+);
 const sources = [
   ["ordinary/notes/skin00/atlas", "rhythm-game-sprites.png"],
   ["ordinary/notes/skin00/long-note-line", "long-note-line.png"],
@@ -77,7 +81,15 @@ function prepareStage() {
     stageFile(route, name, "application/octet-stream", readFileSync(join(fixtureRoot, "ordinary-portable-assets", file)), allowlist);
     return { logicalAssetId, url: route };
   });
-  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render })), allowlist);
+  const visualFifthContractUrl = "/visual-fifth-contract.json";
+  stageFile(
+    visualFifthContractUrl,
+    "visual-fifth-contract.json",
+    "application/json; charset=utf-8",
+    readFileSync(visualFifthContractPath),
+    allowlist,
+  );
+  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render, visualFifthContractUrl })), allowlist);
   const renderProfile = JSON.parse(readFileSync(join(fixtureRoot, "ordinary_portable_profile.json"), "utf8"));
   renderProfile.ordinaryVisibleProfile = JSON.parse(readFileSync(visibleProfilePath, "utf8"));
   stageFile(
@@ -107,6 +119,7 @@ function verify(value) {
   equal(JSON.stringify(value.captures.map((row) => row.label)), JSON.stringify(["initial", "negative-sv", "zero-sv", "restore-positive"]), "capture labels");
   for (const row of value.captures) {
     if (!/^[0-9a-f]{64}$/.test(row.rgbaSha256) || row.owners <= 0 ||
+      row.observedMaximumSlideSectionWidth > row.maximumSlideSectionWidth + 0.02 ||
       row.world.kind !== "testing-pixi-world-observer" || row.world.records.length < 9) {
       throw new Error(`invalid Garupa product capture ${JSON.stringify(row)}`);
     }

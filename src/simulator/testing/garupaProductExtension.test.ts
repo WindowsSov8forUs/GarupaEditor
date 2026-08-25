@@ -60,6 +60,13 @@ async function main(): Promise<void> {
   assert.equal(noteHierarchy.slide_scene_ownership.root_flash_owner_count, 1);
   assert.equal(noteHierarchy.slide_scene_ownership.intermediate_long_flash_owner_count, 0);
   assert.equal(noteHierarchy.portable_acceptance.must_preserve_front_70_icon_71_and_mesh_before_front, true);
+  const visualFifth = JSON.parse(readFileSync(join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+  ), "utf8"));
+  assert.equal(visualFifth.note_mesh.product_compatible_width1_must_include_screen_width_adjust_rate, true);
+  assert.equal(visualFifth.note_mesh.vertex_count, 22);
+  assert.equal(visualFifth.note_mesh.index_count, 60);
   const baseProfile = JSON.parse(readFileSync(
     join(fixtureRoot, "ordinary_portable_profile.json"),
     "utf8",
@@ -178,6 +185,39 @@ async function main(): Promise<void> {
   assert.equal(firstRows.find((row) => row.renderObjectId === `${head.renderObjectId}:long-flash`)?.activeAnimationRole, "note-long-flash");
   assert.equal(firstRows.some((row) => row.renderObjectId === `${interior.renderObjectId}:long-flash`), false);
   assert.equal(firstRows.find((row) => row.renderObjectId === `${terminal.renderObjectId}:icon`)?.activeAnimationRole, "note-flick");
+  const compatibleNodes = compatibleChain.connectionIdentities.map((identity) =>
+    product.visibleNodes.find((node) => node.identity === identity)!);
+  const compatibleSamples = compatibleNodes.map((node) => {
+    const displacement = requireOk(axis.displacementAtPosition(
+      node.timingGroup,
+      node.absolutePosition,
+      0,
+    ));
+    const progress = 1 - displacement / 500;
+    const curve = Math.pow(1.1, 50 * (progress - 1));
+    const scale = requireOk(layout.garupaProductScene.projectNoteScaleAtCurve(curve, 1)).value;
+    return { curve, scale };
+  });
+  for (let segment = 0; segment < compatibleSamples.length - 1; segment += 1) {
+    const mesh = firstRows.find((row) =>
+      row.renderObjectId === `render:garupa:line:${compatibleChain.identity}:${segment}`)!;
+    assert.ok(mesh.geometryPositions, `compatible segment ${segment} publishes geometry`);
+    for (let section = 0; section <= 10; section += 1) {
+      const ratio = section / 10;
+      const uniformScale = compatibleSamples[segment]!.scale +
+        (compatibleSamples[segment + 1]!.scale - compatibleSamples[segment]!.scale) * ratio;
+      const expectedWidthPixels = 2 * uniformScale *
+        layout.garupaProductScene.screenToSafeAreaRatio.value *
+        layout.garupaProductScene.screenWidthAdjustRate.value *
+        layout.surfaceLayout.camera.pixelsPerWorldUnit;
+      const offset = section * 4;
+      const actualWidthPixels = Math.abs(
+        mesh.geometryPositions![offset + 2]! - mesh.geometryPositions![offset]!,
+      );
+      assert.ok(Math.abs(actualWidthPixels - expectedWidthPixels) < 0.02,
+        `compatible Slide width section ${segment}:${section} preserves Reverse widthRate: ${actualWidthPixels} vs ${expectedWidthPixels}`);
+    }
+  }
   assert.ok(firstRows.filter((row) => row.role === "note-root" &&
     row.renderObjectId.startsWith("render:garupa:node:")).every((row) =>
       row.ordering[0] === 3 && row.ordering[1] === 70));

@@ -82,6 +82,12 @@ const particleTransformReaudit = JSON.parse(readFileSync(join(
   "simulator-particle-transform-fourth-reaudit-10-1-4",
   "particle_transform_fourth_reaudit_contract.json",
 ), "utf8"));
+const visualFifth = JSON.parse(readFileSync(join(
+  fixtureBase,
+  "visual-fifth-reaudit", "artifacts", "investigations",
+  "simulator-visual-fifth-reaudit-10-1-4",
+  "visual_fifth_correction_contract.json",
+), "utf8"));
 
 const resourceFiles = Object.freeze({
   "particle/profile/current-portable-v1": "particle_portable_profile.json",
@@ -153,6 +159,11 @@ function verifyClosureAndOracleIdentity(): void {
   );
   assert.deepEqual(particleTransformReaudit.inventory.enabled_scale_exponent_counts, { "1": 1, "2": 103 });
   assert.equal(particleTransformReaudit.portable_acceptance.must_apply_g_per_particle_system_transform, true);
+  assert.deepEqual(visualFifth.world_ordering.particles.sorting_order_counts, { "1": 8, "5": 10, "50": 86 });
+  assert.deepEqual(visualFifth.world_ordering.required_group_order, [
+    "tap-lane-0", "particle-1", "particle-5", "judge-20", "particle-50", "note-70", "hud-100",
+  ]);
+  assert.equal(visualFifth.particle_boundary.position_z_may_replace_renderer_bounds_center_z, false);
   assert.equal(particleTransformReaudit.portable_acceptance.must_not_apply_one_global_g_after_completed_serialized_world_transform, true);
 }
 
@@ -423,7 +434,7 @@ async function testPixiMapping(profile: any): Promise<void> {
   assert.equal(renderer.snapshot().nodeCount, samples.length);
   assert.equal(renderer.sceneSnapshot().length, samples.length);
   assert.ok(renderer.sceneSnapshot().every((entry) => Number.isFinite(entry.position[0]) && Number.isFinite(entry.position[1])));
-  assert.ok((renderer.stage.children as Sprite[]).every((sprite) =>
+  assert.ok(liveParticleSprites(renderer).every((sprite) =>
     sprite.texture.source.alphaMode === "no-premultiply-alpha" && sprite.blendMode === "add"),
   "current enabled Mobile/Particles/Additive sprites retain straight-alpha upload and Pixi's add→add-npm adjustment inputs");
 
@@ -437,7 +448,7 @@ async function testPixiMapping(profile: any): Promise<void> {
     samples: visibleSamples,
   }), "Pixi visible composition frame");
   assert.equal(renderer.commitFrame(visibleFrame).status, "accepted");
-  const sprites = renderer.stage.children as Sprite[];
+  const sprites = liveParticleSprites(renderer);
   assert.equal(sprites.length, visibleSamples.length);
   const nestedScaleSample = visibleSamples.find((sample) =>
     sample.systemId === "ordinary:effect_tap_perfect/Sring_1")!;
@@ -463,7 +474,7 @@ async function testPixiMapping(profile: any): Promise<void> {
   );
   assert.equal(uvSprite.texture.frame.width, uvTileWidth);
   assert.equal(uvSprite.texture.frame.height, uvTileHeight);
-  const uvWorldObservation = observePixiWorld(renderer.stage);
+  const uvWorldObservation = observePixiWorld(uvSprite.parent as Container);
   verifyObservedUvRow(uvWorldObservation, uvSample.particleId, uvSprite.texture.frame.y);
   const uvRowMutation = structuredClone(uvWorldObservation) as any;
   uvRowMutation.records.find((record: any) => record.label === uvSample.particleId).texture.frame[1] += uvTileHeight;
@@ -530,10 +541,21 @@ async function testPixiMapping(profile: any): Promise<void> {
     assert.equal(renderer.commitFrame(routeFrame).status, "accepted");
     nextPixiFrame += 1;
     lastCorpusSampleCount = routeSamples.length;
-    const routeSprites = renderer.stage.children as Sprite[];
+    const routeSprites = [
+      ...(renderer.stage.children as Sprite[]),
+      ...(renderer.highSortingStage.children as Sprite[]),
+    ];
+    const routeObservation = new Map(renderer.sceneSnapshot().map((row) => [row.particleId, row]));
+    for (const sample of routeSamples) {
+      assert.equal(
+        routeObservation.get(sample.particleId)?.sortingStage,
+        sample.sortingOrder > 20 ? "high" : "low",
+        `${sample.systemId} is mounted on the evidence side of judge sortingOrder20`,
+      );
+    }
     assert.deepEqual(
-      routeSprites.map((sprite) => sprite.label),
-      [...routeSprites].sort((left, right) => left.zIndex - right.zIndex).map((sprite) => sprite.label),
+      (renderer.stage.children as Sprite[]).map((sprite) => sprite.label),
+      [...(renderer.stage.children as Sprite[])].sort((left, right) => left.zIndex - right.zIndex).map((sprite) => sprite.label),
       `${root} publishes monotonic sortingOrder/Z/creation zIndex in the sortable particle stage`,
     );
     assert.ok(routeSprites.every((sprite) => {
@@ -551,18 +573,33 @@ async function testPixiMapping(profile: any): Promise<void> {
   assert.ok(observedTextures.size >= 3, "the 17-root actual Pixi corpus consumes multiple prepared base/UV texture identities");
 
   const ordinaryStage = new Container({ label: "GarupaSimulatorRoot" });
-  const combined = requireOk(createPixiCombinedScene(renderer.stage, ordinaryStage), "combined particle scene");
+  const combined = requireOk(createPixiCombinedScene(
+    renderer.stage,
+    ordinaryStage,
+    undefined,
+    undefined,
+    renderer.highSortingStage,
+  ), "combined particle scene");
   assert.deepEqual(combined.root.children.map((child) => child.label), [
     "GarupaSimulatorRoot",
   ]);
   assert.equal(combined.root.children[0], ordinaryStage);
   assert.equal(renderer.stage.parent, ordinaryStage);
   assert.equal(renderer.stage.zIndex, 2_000_000);
+  assert.equal(renderer.highSortingStage.parent, ordinaryStage);
+  assert.equal(renderer.highSortingStage.zIndex, 2_050_000);
+  assert.equal(combined.snapshot().particleHighStageParentIsOrdinary, true);
   const combinedWorld = observePixiWorld(combined.root);
   verifyCombinedStageWorld(combinedWorld, totalReauditFixture.combinedRoot);
   const particleStage = combinedWorld.records.find((record) =>
     record.label === totalReauditFixture.combinedRoot.particleStageLabel)!;
-  assert.ok(combinedWorld.records.filter((record) => record.parent === particleStage.path).every((record) =>
+  const particleHighStage = combinedWorld.records.find((record) =>
+    record.label === "GarupaSimulatorParticlesHigh")!;
+  assert.equal(particleHighStage.parent, combinedWorld.records.find((record) =>
+    record.label === totalReauditFixture.combinedRoot.ordinaryStageLabel)!.path);
+  assert.equal(particleHighStage.order[1], 2_050_000);
+  assert.ok(combinedWorld.records.filter((record) => record.parent === particleStage.path ||
+    record.parent === particleHighStage.path).every((record) =>
     record.localMatrix.length === 6 && record.worldMatrix.length === 6 &&
     record.localBounds !== null && record.worldBounds !== null && record.texture !== null));
   const stageOrderMutation = structuredClone(combinedWorld) as any;
@@ -830,6 +867,13 @@ function verifyCombinedStageWorld(observation: ReturnType<typeof observePixiWorl
   assert.equal(ordinary[0]!.parent, roots[0]!.path);
   assert.equal(particle[0]!.parent, ordinary[0]!.path);
   assert.equal(particle[0]!.order[1], 2_000_000);
+}
+
+function liveParticleSprites(renderer: PixiParticleRendererBackend): Sprite[] {
+  return [
+    ...(renderer.stage.children as Sprite[]),
+    ...(renderer.highSortingStage.children as Sprite[]),
+  ];
 }
 
 function rendererProfile(profile: any, systemId: string): any {

@@ -451,7 +451,13 @@ async function createSession(
     },
     particles: { sessionId: id },
   }, backends));
-  const combined = requireOk(createPixiCombinedScene(particleRenderer.stage, renderer.stage));
+  const combined = requireOk(createPixiCombinedScene(
+    particleRenderer.stage,
+    renderer.stage,
+    undefined,
+    undefined,
+    particleRenderer.highSortingStage,
+  ));
   const linearOutput = installPixiLinearOutput(combined.root, WIDTH, HEIGHT);
   return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, linearOutput, mounted: false };
 }
@@ -477,12 +483,14 @@ function disposeSession(app: Application, session: BrowserSession) {
     particleOwners: session.particleRenderer.snapshot().nodeCount,
     particleResources: session.particleRenderer.snapshot().resourceCount,
     particleStageChildren: session.particleRenderer.stage.children.length,
+    particleHighStageChildren: session.particleRenderer.highSortingStage.children.length,
     combinedDestroyed: session.combined.root.destroyed,
     applicationStageChildren: app.stage.children.length,
   });
   if (result.rendererState !== "disposed" || result.renderOwners !== 0 || result.renderStageChildren !== 0 ||
       result.particleState !== "disposed" || result.particleOwners !== 0 || result.particleResources !== 0 ||
-      result.particleStageChildren !== 0 || !result.combinedDestroyed || result.applicationStageChildren !== 0) {
+      result.particleStageChildren !== 0 || result.particleHighStageChildren !== 0 ||
+      !result.combinedDestroyed || result.applicationStageChildren !== 0) {
     throw new Error(`session cleanup failed: ${JSON.stringify(result)}`);
   }
   return result;
@@ -525,10 +533,41 @@ async function capture(
     record.parent === root?.path && record.label === "GarupaSimulatorRoot");
   const particle = worldObservation.records.find((record) =>
     record.parent === ordinary?.path && record.label === "GarupaSimulatorParticles");
+  const particleHigh = worldObservation.records.find((record) =>
+    record.parent === ordinary?.path && record.label === "GarupaSimulatorParticlesHigh");
   if (root?.label !== "GarupaSimulatorCombinedScene" ||
       JSON.stringify(stageChildren) !== JSON.stringify(["GarupaSimulatorRoot"]) ||
-      particle === undefined || particle.order[1] !== 2_000_000) {
+      particle === undefined || particle.order[1] !== 2_000_000 ||
+      particleHigh === undefined || particleHigh.order[1] !== 2_050_000) {
     throw new Error(`combined root observation mismatch: ${root?.label}/${stageChildren.join("|")}`);
+  }
+  const renderRows = session.renderer.sceneSnapshot();
+  const life = renderRows.find((row) => row.renderObjectId === "render:hud:life");
+  const lifeSprites = new Map(life?.hudSpriteNodes?.map((row) => [row.label, row]));
+  const lifeTexts = new Map(life?.hudTextNodes?.map((row) => [row.label, row]));
+  const judge = renderRows.find((row) => row.renderObjectId === "render:skin-field:judge-line");
+  if (life === undefined || lifeSprites.get("life-gauge-base")?.tint !== 0xffffff ||
+      lifeTexts.get("life-current-label")?.fontSize !== 18 ||
+      lifeTexts.get("life-current-segment")?.fill !== (Number((life.hudState as any).currentLife) > 0 ? 0x00c000 : 0xfe2349) ||
+      lifeTexts.get("life-separator-segment")?.fill !== 0x505050 ||
+      lifeTexts.get("life-maximum-segment")?.fill !== 0x00c000 ||
+      (judge !== undefined && (judge.ordering[0] !== 2 || judge.ordering[1] !== 20)) ||
+      renderRows.some((row) => row.role === "tap-lane-effect" &&
+        (row.ordering[0] !== 1 || row.ordering[1] !== 0))) {
+    throw new Error(`fifth HUD/world object gate mismatch at ${label}: ${JSON.stringify({
+      life: life?.hudState,
+      baseTint: lifeSprites.get("life-gauge-base")?.tint,
+      fontSize: lifeTexts.get("life-current-label")?.fontSize,
+      currentFill: lifeTexts.get("life-current-segment")?.fill,
+      separatorFill: lifeTexts.get("life-separator-segment")?.fill,
+      maximumFill: lifeTexts.get("life-maximum-segment")?.fill,
+      judgeOrdering: judge?.ordering,
+      badTap: renderRows.filter((row) => row.role === "tap-lane-effect").map((row) => row.ordering),
+    })}`);
+  }
+  for (const row of session.particleRenderer.sceneSnapshot()) {
+    const expected = row.zIndex >= 50_000_000 ? "high" : "low";
+    if (row.sortingStage !== expected) throw new Error(`particle sorting-stage mismatch: ${row.particleId}`);
   }
   return Object.freeze({
     label,

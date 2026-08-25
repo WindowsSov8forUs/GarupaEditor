@@ -14,7 +14,10 @@ import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { observePixiWorld } from "./pixiWorldObserver";
 import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
-interface InputMap { readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[]; }
+interface InputMap {
+  readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[];
+  readonly visualFifthContractUrl: string;
+}
 const WIDTH = 1600;
 const HEIGHT = 720;
 const SESSION = "garupa-product-webview2";
@@ -35,6 +38,12 @@ async function main(): Promise<void> {
   ]);
   if (!mapResponse.ok || !profileResponse.ok) throw new Error("staged product input unavailable");
   const map = await mapResponse.json() as InputMap;
+  const contractResponse = await fetch(map.visualFifthContractUrl);
+  if (!contractResponse.ok) throw new Error("staged fifth visual contract unavailable");
+  const visualFifth = await contractResponse.json() as any;
+  if (visualFifth.note_mesh.product_compatible_width1_must_include_screen_width_adjust_rate !== true) {
+    throw new Error("fifth Reverse width contract mismatch");
+  }
   const sourceProfile = await profileResponse.json() as RenderResourceProfile;
   const profile: RenderResourceProfile = Object.freeze({
     ...sourceProfile,
@@ -92,6 +101,11 @@ async function main(): Promise<void> {
     layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true,
   );
   requireOk(producer.validate());
+  const maximumSlideSectionWidth = 2 *
+    (layout.ordinaryNoteScene.noteSettingScale.value + 0.01) * 2 *
+    layout.garupaProductScene.screenToSafeAreaRatio.value *
+    layout.garupaProductScene.screenWidthAdjustRate.value *
+    layout.surfaceLayout.camera.pixelsPerWorldUnit;
   const captures = [];
   for (const sample of [
     { label: "initial", position: 0, judged: [] as typeof product.visibleNodes },
@@ -106,7 +120,13 @@ async function main(): Promise<void> {
     ));
     if (transaction !== null) requireOk(transaction.commit());
     app.render();
-    captures.push(await capture(app, renderer, sample.label, sample.position));
+    captures.push(await capture(
+      app,
+      renderer,
+      sample.label,
+      sample.position,
+      maximumSlideSectionWidth,
+    ));
   }
   const release = requireOk(producer.preflightDispose());
   if (release !== null) requireOk(release.commit());
@@ -157,15 +177,32 @@ async function capture(
   renderer: PixiRendererBackend,
   label: string,
   position: number,
+  maximumSlideSectionWidth: number,
 ) {
   const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonTransparentPixels = 0;
   for (let index = 3; index < bytes.length; index += 4) if (bytes[index] !== 0) nonTransparentPixels += 1;
+  let observedMaximumSlideSectionWidth = 0;
+  for (const row of renderer.sceneSnapshot().filter((candidate) =>
+    candidate.renderObjectId.startsWith("render:garupa:line:") && candidate.geometryPositions !== null)) {
+    for (let section = 0; section <= 10; section += 1) {
+      const offset = section * 4;
+      observedMaximumSlideSectionWidth = Math.max(
+        observedMaximumSlideSectionWidth,
+        Math.abs(row.geometryPositions![offset + 2]! - row.geometryPositions![offset]!),
+      );
+    }
+  }
+  if (observedMaximumSlideSectionWidth > maximumSlideSectionWidth + 0.02) {
+    throw new Error(`Product Slide omitted Reverse widthRate: ${observedMaximumSlideSectionWidth} > ${maximumSlideSectionWidth}`);
+  }
   return Object.freeze({
     label,
     position,
     rgbaSha256: await sha256(bytes),
     nonTransparentPixels,
+    observedMaximumSlideSectionWidth,
+    maximumSlideSectionWidth,
     world: observePixiWorld(renderer.stage),
     owners: renderer.snapshot().objectCount,
   });
