@@ -691,6 +691,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudScoreRankVisualCount: number | null;
     readonly hudScoreHighRankGeneration: number | null;
     readonly hudScoreLayerNodes: readonly { readonly label: string; readonly zIndex: number }[] | null;
+    readonly hudScoreDigitLayout: readonly {
+      readonly label: string;
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly width: number;
+      readonly height: number;
+    }[] | null;
     readonly hudScoreNineSliceBorders: readonly {
       readonly label: string;
       readonly left: number;
@@ -802,6 +809,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : Object.freeze(scoreHudDescendants(value.hudVisual.content).map((node) => Object.freeze({
             label: node.label,
             zIndex: node.zIndex,
+          }))),
+      hudScoreDigitLayout: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(value.hudVisual.scoreDigitTexts.map((node) => Object.freeze({
+            label: node.label,
+            position: Object.freeze([node.position.x, node.position.y] as const),
+            scale: Object.freeze([node.scale.x, node.scale.y] as const),
+            width: node.width,
+            height: node.height,
           }))),
       hudScoreNineSliceBorders: value.hudVisual?.kind !== "score"
         ? null
@@ -2294,11 +2310,20 @@ function applyScoreHud(
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
   const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
   const glyphByKey = new Map(CURRENT_SCORE_HUD_BITMAP_GLYPHS.map((glyph) => [glyph.exactKey, glyph]));
-  const fontScale = Math.fround(scene.totalScoreFontSize / scene.bmFontLineHeight);
-  const advances = [...displayed].map((digit) => Math.fround(
-    glyphByKey.get(digit)!.xAdvance * fontScale,
-  ));
-  let cursor = scene.totalScoreLocalPosition[0] - advances.reduce((sum, value) => sum + value, 0);
+  const sourceAdvanceUnits = [...displayed].reduce(
+    (sum, digit) => sum + glyphByKey.get(digit)!.xAdvance,
+    scene.totalScoreSpacingX * Math.max(0, displayed.length - 1),
+  );
+  let finalFontSize = scene.totalScoreFontSize;
+  while (
+    finalFontSize > 0 &&
+    sourceAdvanceUnits * finalFontSize / scene.bmFontDefaultSize > scene.totalScoreWidgetWidth
+  ) {
+    finalFontSize -= 1;
+  }
+  const fontScale = Math.fround(finalFontSize / scene.bmFontDefaultSize);
+  const printedWidth = Math.fround(sourceAdvanceUnits * fontScale);
+  let cursor = Math.fround(scene.totalScoreLocalPosition[0] - printedWidth);
   [...displayed].forEach((digit, index) => {
     const glyph = glyphByKey.get(digit)!;
     const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.fontLogicalAssetId, digit);
@@ -2308,10 +2333,12 @@ function applyScoreHud(
     sprite.tint = index < leadingZeroCount ? scene.scoreLeadingColor : scene.scoreSignificantColor;
     sprite.zIndex = scene.totalScoreDepth;
     sprite.position.set(
-      cursor + glyph.xOffset * fontScale,
-      -scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale,
+      Math.fround(cursor + glyph.xOffset * fontScale),
+      Math.fround(-scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale),
     );
-    cursor += glyph.xAdvance * fontScale;
+    cursor = Math.fround(cursor + Math.fround(
+      (glyph.xAdvance + (index + 1 < displayed.length ? scene.totalScoreSpacingX : 0)) * fontScale,
+    ));
     visual.content.addChild(sprite);
     visual.scoreDigitTexts.push(sprite);
     retainHudBinding(object, binding.key, referenceCounts);
