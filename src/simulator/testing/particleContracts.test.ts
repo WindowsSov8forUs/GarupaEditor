@@ -88,6 +88,12 @@ const visualFifth = JSON.parse(readFileSync(join(
   "simulator-visual-fifth-reaudit-10-1-4",
   "visual_fifth_correction_contract.json",
 ), "utf8"));
+const particleLocalScaling = JSON.parse(readFileSync(join(
+  fixtureBase,
+  "particle-scaling-mode-fifth-correction", "artifacts", "investigations",
+  "simulator-particle-scaling-mode-fifth-correction-10-1-4",
+  "particle_scaling_mode_fifth_correction.json",
+), "utf8"));
 
 const resourceFiles = Object.freeze({
   "particle/profile/current-portable-v1": "particle_portable_profile.json",
@@ -164,6 +170,10 @@ function verifyClosureAndOracleIdentity(): void {
     "tap-lane-0", "particle-1", "particle-5", "judge-20", "particle-50", "note-70", "hud-100",
   ]);
   assert.equal(visualFifth.particle_boundary.position_z_may_replace_renderer_bounds_center_z, false);
+  assert.equal(particleLocalScaling.serialized_inventory.scaling_mode_name, "Local");
+  assert.equal(particleLocalScaling.corrected_scale_ownership.enabled_billboard_gameplay_scale_exponent, 1);
+  assert.equal(particleLocalScaling.production_acceptance.must_keep_nested_transform_for_position_and_velocity, true);
+  assert.equal(particleLocalScaling.production_acceptance.must_not_apply_g_squared_to_billboard_size, true);
   assert.equal(particleTransformReaudit.portable_acceptance.must_not_apply_one_global_g_after_completed_serialized_world_transform, true);
 }
 
@@ -456,9 +466,9 @@ async function testPixiMapping(profile: any): Promise<void> {
   const nestedScaleSprite = sprites.find((sprite) => sprite.label === nestedScaleSample.particleId)!;
   const nestedWidth = Math.abs(nestedScaleSprite.scale.x) * nestedScaleSprite.texture.width;
   const expectedNestedWidth = particleFloat32FromBits(nestedScaleSample.size.xBits)! *
-    360 * gameplayTransformScale * gameplayTransformScale;
+    360 * gameplayTransformScale;
   assert.ok(Math.abs(nestedWidth - expectedNestedWidth) < 1e-3,
-    `nested root+child ParticleSystem billboard consumes g squared instead of one flattened final g: ${nestedWidth} vs ${expectedNestedWidth}`);
+    `Local scaling billboard consumes only the emitting ParticleSystem gameplay scale: ${nestedWidth} vs ${expectedNestedWidth}`);
 
   const uvSample = visibleSamples.find((sample) => sample.uvFrame !== 0 && uvProfile(profile, sample.systemId) !== null)!;
   assert.ok(uvSample, "visible particle frame contains one non-zero texture-sheet frame");

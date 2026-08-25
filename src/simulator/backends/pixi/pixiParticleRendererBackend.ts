@@ -709,7 +709,7 @@ function particleSpriteMatrix(
       particleFloat32FromBits(sample.velocity.yBits)!,
       particleFloat32FromBits(sample.velocity.zBits)!,
     ];
-    const hierarchyScale = systemHierarchyScale(binding, gameplayTransformScale);
+    const hierarchyScale = localParticleScale(binding, gameplayTransformScale);
     const speedSquared = velocity.reduce(
       (sum, component) => renderAdd(sum, renderMultiply(component, component)),
       renderF32(0),
@@ -757,8 +757,8 @@ function particleSpriteMatrix(
       renderMultiply(cosine, sizeY),
       0,
     ];
-    let worldX = applySystemLinear(localX, binding, gameplayTransformScale);
-    let worldY = applySystemLinear(localY, binding, gameplayTransformScale);
+    let worldX = applyLocalScalingModeLinear(localX, binding, gameplayTransformScale);
+    let worldY = applyLocalScalingModeLinear(localY, binding, gameplayTransformScale);
     const dimensions = clampParticleDimensions(
       renderMultiply(Math.hypot(worldX[0], worldX[1], worldX[2]), pixelsPerUnit),
       renderMultiply(Math.hypot(worldY[0], worldY[1], worldY[2]), pixelsPerUnit),
@@ -777,7 +777,7 @@ function particleSpriteMatrix(
       positionY,
     );
   }
-  const hierarchyScale = systemHierarchyScale(binding, gameplayTransformScale);
+  const hierarchyScale = localParticleScale(binding, gameplayTransformScale);
   const dimensions = clampParticleDimensions(
     Math.abs(renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit)),
     Math.abs(renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit)),
@@ -824,30 +824,31 @@ function viewAlignedMatrix(
   );
 }
 
-function systemHierarchyScale(
+function localParticleScale(
   binding: SystemRenderBinding,
   gameplayTransformScale: number,
 ): readonly [number, number] {
-  const x = applySystemLinear([1, 0, 0], binding, gameplayTransformScale);
-  const y = applySystemLinear([0, 1, 0], binding, gameplayTransformScale);
+  const x = applyLocalScalingModeLinear([1, 0, 0], binding, gameplayTransformScale);
+  const y = applyLocalScalingModeLinear([0, 1, 0], binding, gameplayTransformScale);
   return Object.freeze([
     renderF32(Math.hypot(x[0], x[1], x[2])),
     renderF32(Math.hypot(y[0], y[1], y[2])),
   ] as const);
 }
 
-function applySystemLinear(
+function applyLocalScalingModeLinear(
   vector: ParticleVector,
   binding: SystemRenderBinding,
   gameplayTransformScale: number,
 ): ParticleVector {
-  let value = vector;
-  for (const transform of [binding.system.transform, ...binding.system.parentTransforms]) {
-    value = quaternionRotate([
-      renderMultiply(value[0], renderMultiply(transform.m_LocalScale.x, gameplayTransformScale)),
-      renderMultiply(value[1], renderMultiply(transform.m_LocalScale.y, gameplayTransformScale)),
-      renderMultiply(value[2], renderMultiply(transform.m_LocalScale.z, gameplayTransformScale)),
-    ], transform.m_LocalRotation);
+  const emitting = binding.system.transform;
+  let value = quaternionRotate([
+    renderMultiply(vector[0], renderMultiply(emitting.m_LocalScale.x, gameplayTransformScale)),
+    renderMultiply(vector[1], renderMultiply(emitting.m_LocalScale.y, gameplayTransformScale)),
+    renderMultiply(vector[2], renderMultiply(emitting.m_LocalScale.z, gameplayTransformScale)),
+  ], emitting.m_LocalRotation);
+  for (const parent of binding.system.parentTransforms) {
+    value = quaternionRotate(value, parent.m_LocalRotation);
   }
   return value;
 }
