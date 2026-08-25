@@ -52,6 +52,11 @@
       "path": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
       "bytes": 5440,
       "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
+    },
+    "score_hud": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
     }
   },
   "original_runtime_frames": {
@@ -399,6 +404,58 @@
     },
     "ui_scale_1600x900": 1.1994003057479858,
     "rule": "Score/Life/AddScore use their serialized safe-area anchors; Combo/Result remain centered UI_Root_Back descendants. Animation local scale multiplies the root UI scale."
+  },
+  "score_total_label": {
+    "source": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/rhythm-game-level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "path_id": 1271,
+    "text": "10000000",
+    "widget_width": 188,
+    "widget_height": 204,
+    "pivot": "Right",
+    "font_size": 28,
+    "bmfont_default_size": 32,
+    "spacing_x": 1,
+    "overflow_serialized": 0,
+    "overflow": "ShrinkContent",
+    "portable_rule": "decrement integer final font size from authored fontSize until (sum xadvance + spacingX gaps) * finalSize / BMFont default size fits widget width",
+    "oracles": [
+      {
+        "text": "00000000",
+        "source_advance_units": 295,
+        "final_font_size": 20,
+        "printed_width": 184.375,
+        "left_local_x": 27.625,
+        "right_local_x": 212.0
+      },
+      {
+        "text": "10000000",
+        "source_advance_units": 270,
+        "final_font_size": 22,
+        "printed_width": 185.625,
+        "left_local_x": 26.375,
+        "right_local_x": 212.0
+      },
+      {
+        "text": "01494183",
+        "source_advance_units": 230,
+        "final_font_size": 26,
+        "printed_width": 186.875,
+        "left_local_x": 25.125,
+        "right_local_x": 212.0
+      },
+      {
+        "text": "99999999",
+        "source_advance_units": 271,
+        "final_font_size": 22,
+        "printed_width": 186.3125,
+        "left_local_x": 25.6875,
+        "right_local_x": 212.0
+      }
+    ]
   },
   "note_resource_contract": {
     "selected_skin00_rows": {
