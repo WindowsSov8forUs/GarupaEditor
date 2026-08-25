@@ -323,8 +323,16 @@ async function main(): Promise<void> {
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
   const scoreRootNode = renderer.stage.getChildByLabel("hud:score", true) as any;
   const firstScoreDigit = scoreRootNode?.getChildByLabel("score-digit-0", true) as any;
-  equal(firstScoreDigit?.scale?.x, Math.fround(28 / 36),
-    "TotalScore BMFont glyph consumes UILabel fontSize28 over lineHeight36");
+  equal(firstScoreDigit?.scale?.x, Math.fround(20 / 32),
+    "TotalScore ShrinkContent decrements integer font size against BMFont default size32");
+  const scoreDigitLayout = scoreAtHalf.hudScoreDigitLayout!;
+  assert(scoreDigitLayout.length === 8 && scoreDigitLayout.every((digit) =>
+    digit.scale[0] === Math.fround(20 / 32) && digit.scale[0] === digit.scale[1]),
+  "TotalScore eight glyphs share the ShrinkContent final font size");
+  const scoreDigitMinX = Math.min(...scoreDigitLayout.map((digit) => digit.position[0]));
+  const scoreDigitMaxX = Math.max(...scoreDigitLayout.map((digit) => digit.position[0] + digit.width));
+  assert(scoreDigitMinX >= 24,
+  `Right-pivot TotalScore starts inside the serialized widget: ${scoreDigitMinX}..${scoreDigitMaxX}`);
   assert(firstScoreDigit?.getBounds().minX >= -0.01,
     "Right-pivot TotalScore glyphs remain inside the safe-left viewport");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-background" && node.zIndex === 4), "Score background depth is 4");

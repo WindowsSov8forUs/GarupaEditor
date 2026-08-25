@@ -46,6 +46,12 @@ async function main(): Promise<void> {
     reaudit.note_resource_contract.mesh.initial_color_f32_bits,
     ["3F800000", "3F800000", "3F800000", "3F4CCCCD"],
   );
+  assert.equal(reaudit.score_total_label.overflow, "ShrinkContent");
+  assert.equal(reaudit.score_total_label.bmfont_default_size, 32);
+  assert.deepEqual(
+    reaudit.score_total_label.oracles.map((row: any) => row.final_font_size),
+    [20, 22, 26, 22],
+  );
   const baseProfile = JSON.parse(readFileSync(
     join(fixtureRoot, "ordinary_portable_profile.json"),
     "utf8",
