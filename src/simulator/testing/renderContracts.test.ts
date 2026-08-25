@@ -1251,14 +1251,19 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
 }
 
 async function testSharedTypedHudValidation(): Promise<void> {
-  const totalScoringUnitCount = 1000;
-  const scoreMax = 10_000_000 + totalScoringUnitCount;
+  const scoreMax = 10_001_000;
+  const thresholds = Object.freeze({
+    scoreC: 375_000,
+    scoreB: 2_250_000,
+    scoreA: 4_500_000,
+    scoreS: 6_750_000,
+    scoreSS: 9_000_000,
+  });
   const marker = (value: number) => f32(Math.fround(Math.fround(41) + Math.fround(
     Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(scoreMax),
   )));
   const score = {
-    ruleSetId: "garupa-editor-normalized-10m-v1",
-    totalScoringUnitCount,
+    thresholds,
     score: 375_000,
     scoreText: "[BEBEBE]00[-][FF3B72]375000[-]",
     scoreMax,

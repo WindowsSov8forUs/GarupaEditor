@@ -29,6 +29,11 @@ import type { NoteFamily } from "../data/noteData";
 import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import { InGameHudController } from "../hud/inGameHudController";
+import { HUD_PREFAB_OBJECT_IDS } from "../hud/hudContracts";
+import { resolveDisplayedAllPerfect } from "../hud/comboHudOwner";
+import { resolveResultJudgeKey } from "../hud/resultHudOwner";
+export { resolveDisplayedAllPerfect, resolveResultJudgeKey };
 import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
@@ -231,17 +236,7 @@ const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
 const HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
 
 const HUD_OBJECTS = Object.freeze({
-  addScore: Object.freeze([
-    "render:hud:add-score",
-    "render:hud:add-score:1",
-    "render:hud:add-score:2",
-    "render:hud:add-score:3",
-  ]),
-  combo: "render:hud:combo",
-  comboAllPerfect: "render:hud:combo:all-perfect",
-  result: "render:hud:result",
-  score: "render:hud:score",
-  life: "render:hud:life",
+  ...HUD_PREFAB_OBJECT_IDS,
   fidelity: "render:hud:fidelity-label",
 });
 
@@ -270,8 +265,7 @@ export class RenderCommandProducer {
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
-  private addScoreCursor = 0;
-  private addScoreDepthCycle = 0;
+  private readonly hud: InGameHudController;
   private lastCombo = 0;
   private lastAllPerfect = false;
   private lastLifeWarning = false;
@@ -286,7 +280,12 @@ export class RenderCommandProducer {
     private readonly renderer: SimulatorRendererBackend,
     private readonly resources: RenderEngineResourceBindings,
     private readonly hudSessionMode: RenderHudSessionMode = DEFAULT_RENDER_HUD_SESSION_MODE,
-  ) {}
+  ) {
+    this.hud = new InGameHudController(
+      hudSessionMode.isAutoPlay,
+      hudSessionMode.allPerfectStatusPresentationEnabled,
+    );
+  }
 
   isCompleteHabahiro(): boolean {
     const fidelity = this.renderer.snapshot().fidelity;
@@ -391,11 +390,11 @@ export class RenderCommandProducer {
     create(HUD_OBJECTS.score, "hud-score");
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: scoreHudState(record, scoreGauge),
+      hudRole: "score", state: this.hud.score.createState(record, scoreGauge),
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
-    const initialLifeState = lifeHudState(record);
+    const initialLifeState = this.hud.life.createState(record);
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
       hudRole: "life", state: initialLifeState,
@@ -430,15 +429,12 @@ export class RenderCommandProducer {
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const totalAddScore = plan.reflect.totalScore;
-    const addScoreObjectId = HUD_OBJECTS.addScore[this.addScoreCursor]!;
+    const addScoreOwnerState = this.hud.addScore.snapshot();
+    const addScoreObjectId = HUD_OBJECTS.addScore[addScoreOwnerState.poolIndex]!;
     if (totalAddScore !== 0) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
-        hudRole: "add-score", state: Object.freeze({
-          value: totalAddScore,
-          poolIndex: this.addScoreCursor as 0 | 1 | 2 | 3,
-          depth: this.addScoreDepthCycle as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
-        }),
+        hudRole: "add-score", state: this.hud.addScore.createState(totalAddScore),
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
       commands.push({
@@ -446,10 +442,7 @@ export class RenderCommandProducer {
         animationRole: "add-score", restart: true,
       });
     }
-    const displayedAllPerfect = resolveDisplayedAllPerfect(
-      plan.record.allPerfect,
-      this.hudSessionMode.allPerfectStatusPresentationEnabled,
-    );
+    const displayedAllPerfect = this.hud.combo.displayedAllPerfect(plan.record.allPerfect);
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
       displayedAllPerfect !== this.lastAllPerfect;
     const normalComboPlaying = this.hudAnimationElapsedSeconds.has("normal-combo");
@@ -459,7 +452,7 @@ export class RenderCommandProducer {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
         hudRole: "combo",
-        state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: false }),
+        state: this.hud.combo.normalState(plan.record.currentCombo),
       });
       if (plan.record.currentCombo > 0) {
         commands.push({
@@ -473,7 +466,7 @@ export class RenderCommandProducer {
           commands.push({
             ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.comboAllPerfect,
             hudRole: "combo",
-            state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: true }),
+            state: this.hud.combo.allPerfectState(plan.record.currentCombo),
           });
           commands.push({
             ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
@@ -521,13 +514,10 @@ export class RenderCommandProducer {
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.result });
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.result,
-      hudRole: "result", state: Object.freeze({
-        judgeKey: resolveResultJudgeKey(
-          plan.reflect.representativeRawResult,
-          this.hudSessionMode.isAutoPlay,
-        ),
-        timingKey: timingKeyForJudgeTiming(plan.reflect.representativeJudgeTiming),
-      }),
+      hudRole: "result", state: this.hud.result.createState(
+        plan.reflect.representativeRawResult,
+        plan.reflect.representativeJudgeTiming,
+      ),
     });
     commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.result,
@@ -535,13 +525,13 @@ export class RenderCommandProducer {
     });
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: scoreHudState(plan.record, plan.scoreGauge),
+      hudRole: "score", state: this.hud.score.createState(plan.record, plan.scoreGauge),
     });
     if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
       animationRole: "score-gauge-ss", restart: true,
     });
-    const nextLifeState = lifeHudState(plan.record);
+    const nextLifeState = this.hud.life.createState(plan.record);
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
       hudRole: "life", state: nextLifeState,
@@ -574,8 +564,7 @@ export class RenderCommandProducer {
     return this.preflight(commands, () => {
       if (totalAddScore !== 0) {
         this.addScoreElapsedSeconds.set(addScoreObjectId, 0);
-        this.addScoreCursor = (this.addScoreCursor + 1) % HUD_OBJECTS.addScore.length;
-        this.addScoreDepthCycle = (this.addScoreDepthCycle + 1) % 8;
+        this.hud.addScore.commit();
       }
       if (comboChanged) {
         this.hudAnimationElapsedSeconds.delete("normal-combo");
@@ -3064,82 +3053,10 @@ function resolveLaneIndex(button: number, habahiro: boolean): number {
     : -1;
 }
 
-function scoreHudState(
-  record: InGameRecordSnapshot,
-  gauge: SinglePlayScoreGaugeSnapshot,
-) {
-  const scoreText = zeroFilledScoreText(record.score);
-  return Object.freeze({
-    ruleSetId: gauge.ruleSetId,
-    totalScoringUnitCount: gauge.totalScoringUnitCount,
-    score: record.score,
-    scoreText,
-    scoreMax: gauge.scoreMax,
-    rank: gauge.currentGaugeColorRank,
-    beforeRank: gauge.beforeGaugeColorRank,
-    rankChanged: gauge.rankChanged,
-    meterKey: gauge.meterKey,
-    ratio: Object.freeze({ value: gauge.ratio, bits: gauge.ratioBits }),
-    sliderValue: Object.freeze({ value: gauge.sliderValue, bits: gauge.sliderValueBits }),
-    foregroundActive: gauge.foregroundActive,
-    indicatorLocalX: gauge.indicatorLocalX,
-    rankMarkerCLocalX: float32State(gauge.rankMarkerCLocalX),
-    rankMarkerBLocalX: float32State(gauge.rankMarkerBLocalX),
-    rankMarkerALocalX: float32State(gauge.rankMarkerALocalX),
-    rankMarkerSLocalX: float32State(gauge.rankMarkerSLocalX),
-    rankMarkerSSLocalX: float32State(gauge.rankMarkerSSLocalX),
-    highRankEffect: gauge.highRankEffect,
-    highRankEffectActive: gauge.highRankEffectActive,
-  });
-}
-
-function zeroFilledScoreText(score: number): string {
-  const digits = String(score);
-  const zeroCount = Math.max(8 - Math.max(1, digits.length), 0);
-  return `[BEBEBE]${"0".repeat(zeroCount)}[-][FF3B72]${digits}[-]`;
-}
-
-function lifeHudState(record: InGameRecordSnapshot) {
-  const ratio = Math.fround(record.currentLife / 1000);
-  const primaryFill = Math.fround(Math.min(ratio, 1));
-  const secondaryFill = Math.fround(Math.max(ratio - 1, 0));
-  return Object.freeze({
-    currentLife: record.currentLife,
-    playerMaxLife: record.playerMaxLife,
-    lifeUpperLimit: record.lifeUpperLimit,
-    singleGameOver: record.singleGameOver,
-    primaryFill: float32State(primaryFill),
-    secondaryFill: float32State(secondaryFill),
-    color: primaryFill <= Math.fround(0.2) ? "danger" as const : "normal" as const,
-    warning: primaryFill <= Math.fround(0.25),
-    label: `${record.currentLife}/${record.playerMaxLife}`,
-  });
-}
-
 function float32State(value: number): RenderFloat32 {
   const result = createRenderFloat32(value);
   if (result.status !== "ok") throw new Error("internal HUD Float32 invariant failed");
   return result.value;
-}
-
-export function resolveDisplayedAllPerfect(
-  allPerfectStatistic: boolean,
-  allPerfectStatusPresentationEnabled: boolean,
-): boolean {
-  return allPerfectStatistic && allPerfectStatusPresentationEnabled;
-}
-
-export function resolveResultJudgeKey(
-  result: 0 | 1 | 2 | 3 | 4,
-  isAutoPlay: boolean,
-) {
-  return isAutoPlay
-    ? "judge_auto" as const
-    : (["judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"] as const)[result];
-}
-
-function timingKeyForJudgeTiming(timing: 0 | 1 | 2): "judge_fast" | "judge_slow" | null {
-  return timing === 1 ? "judge_fast" : timing === 2 ? "judge_slow" : null;
 }
 
 function transactionRejected(

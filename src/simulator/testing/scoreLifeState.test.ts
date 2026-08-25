@@ -132,7 +132,15 @@ assert.equal(auto.snapshot().record.currentCombo, 3);
 assert.equal(auto.snapshot().scoreGauge.sliderValue, 1);
 assert.equal(auto.getClearStatus(), 3);
 
-const gauge = requireOk(SinglePlayScoreGauge.create(3));
+const gauge = requireOk(SinglePlayScoreGauge.create(Object.freeze({
+  profileIdentity: "garupa-editor-normalized-10m-v1",
+  scoreC: 375_000,
+  scoreB: 2_250_000,
+  scoreA: 4_500_000,
+  scoreS: 6_750_000,
+  scoreSS: 9_000_000,
+  scoreMaximum: BASE + 3,
+})));
 assert.equal(gauge.scoreMax, BASE + 3);
 for (const [score, rank] of [
   [374_999, LiveClearRank.D], [375_000, LiveClearRank.C],

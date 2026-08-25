@@ -43,21 +43,17 @@ export function validateTypedRenderHudCommand(
   switch (command.hudRole) {
     case "score": {
       const state = command.state;
-      const expectedMax = validScoringUnitCount(state.totalScoringUnitCount)
-        ? 10_000_000 + state.totalScoringUnitCount
-        : null;
       return objectRole === "hud-score" && exactKeys(state, [
         "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
         "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
-        "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "ruleSetId", "score",
-        "scoreMax", "scoreText", "sliderValue", "totalScoringUnitCount",
+        "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
+        "scoreMax", "scoreText", "sliderValue", "thresholds",
       ]) &&
-        state.ruleSetId === "garupa-editor-normalized-10m-v1" &&
-        expectedMax !== null && state.scoreMax === expectedMax &&
+        validScoreThresholds(state.thresholds, state.scoreMax) &&
         isUInt32(state.score) && state.score <= state.scoreMax && isUInt32(state.scoreMax) &&
         state.scoreText === expectedScoreText(state.score) &&
         isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
-        state.rank === scoreRank(state.score) &&
+        state.rank === scoreRank(state.score, state.thresholds) &&
         state.rankChanged === (state.beforeRank !== state.rank) &&
         isScoreMeterKey(state.meterKey) && state.meterKey === scoreMeterKeyForRank(state.rank) &&
         validateRenderFloat32(state.ratio) && state.ratio.value === expectedScoreRatio(state.score, state.scoreMax) &&
@@ -66,11 +62,11 @@ export function validateTypedRenderHudCommand(
         Number.isInteger(state.indicatorLocalX) && state.indicatorLocalX === expectedScoreIndicatorX(state.ratio.value) &&
         [state.rankMarkerCLocalX, state.rankMarkerBLocalX, state.rankMarkerALocalX,
           state.rankMarkerSLocalX, state.rankMarkerSSLocalX].every(validateRenderFloat32) &&
-        state.rankMarkerCLocalX.value === expectedRankMarkerX(375_000, state.scoreMax) &&
-        state.rankMarkerBLocalX.value === expectedRankMarkerX(2_250_000, state.scoreMax) &&
-        state.rankMarkerALocalX.value === expectedRankMarkerX(4_500_000, state.scoreMax) &&
-        state.rankMarkerSLocalX.value === expectedRankMarkerX(6_750_000, state.scoreMax) &&
-        state.rankMarkerSSLocalX.value === expectedRankMarkerX(9_000_000, state.scoreMax) &&
+        state.rankMarkerCLocalX.value === expectedRankMarkerX(state.thresholds.scoreC, state.scoreMax) &&
+        state.rankMarkerBLocalX.value === expectedRankMarkerX(state.thresholds.scoreB, state.scoreMax) &&
+        state.rankMarkerALocalX.value === expectedRankMarkerX(state.thresholds.scoreA, state.scoreMax) &&
+        state.rankMarkerSLocalX.value === expectedRankMarkerX(state.thresholds.scoreS, state.scoreMax) &&
+        state.rankMarkerSSLocalX.value === expectedRankMarkerX(state.thresholds.scoreSS, state.scoreMax) &&
         (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS") &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.rank === 5 && state.rankChanged) &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.highRankEffectActive);
@@ -174,11 +170,11 @@ export function freezeTypedHudState<T extends SetHudCommand["state"]>(state: T):
 }
 
 function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
-  if ("ruleSetId" in state) return [
+  if ("thresholds" in state) return [
     "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
     "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX", "rankMarkerCLocalX",
-    "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "ruleSetId", "score", "scoreMax", "scoreText",
-    "sliderValue", "totalScoringUnitCount",
+    "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score", "scoreMax", "scoreText",
+    "sliderValue", "thresholds",
   ];
   if ("combo" in state) return ["allPerfect", "combo"];
   if ("judgeKey" in state) return ["judgeKey", "timingKey"];
@@ -216,17 +212,25 @@ function isScoreMeterKey(value: unknown): value is string {
     value === "score_meter_orange" || value === "score_meter_pink" || value === "score_meter_s";
 }
 
-function validScoringUnitCount(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) > 0 && (value as number) <= 0x7fffffff &&
-    10_000_000 + (value as number) <= 0xffffffff;
+function validScoreThresholds(
+  value: { readonly scoreC: number; readonly scoreB: number; readonly scoreA: number; readonly scoreS: number; readonly scoreSS: number },
+  scoreMaximum: number,
+): boolean {
+  return exactKeys(value, ["scoreA", "scoreB", "scoreC", "scoreS", "scoreSS"]) &&
+    [value.scoreC, value.scoreB, value.scoreA, value.scoreS, value.scoreSS, scoreMaximum].every(isUInt32) &&
+    value.scoreC < value.scoreB && value.scoreB < value.scoreA && value.scoreA < value.scoreS &&
+    value.scoreS < value.scoreSS && value.scoreSS < scoreMaximum;
 }
 
-function scoreRank(score: number): number {
-  if (score < 375_000) return 4;
-  if (score < 2_250_000) return 3;
-  if (score < 4_500_000) return 2;
-  if (score < 6_750_000) return 1;
-  if (score < 9_000_000) return 0;
+function scoreRank(
+  score: number,
+  thresholds: { readonly scoreC: number; readonly scoreB: number; readonly scoreA: number; readonly scoreS: number; readonly scoreSS: number },
+): number {
+  if (score < thresholds.scoreC) return 4;
+  if (score < thresholds.scoreB) return 3;
+  if (score < thresholds.scoreA) return 2;
+  if (score < thresholds.scoreS) return 1;
+  if (score < thresholds.scoreSS) return 0;
   return 5;
 }
 

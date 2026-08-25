@@ -273,8 +273,11 @@ function scoreState(
   highRankEffect: "none" | "ScoreGaugeSS",
   highRankEffectActive: boolean,
 ) {
-  const totalScoringUnitCount = 1000;
-  const scoreMax = 10_000_000 + totalScoringUnitCount;
+  const scoreMax = 10_001_000;
+  const thresholds = Object.freeze({
+    scoreC: 375_000, scoreB: 2_250_000, scoreA: 4_500_000,
+    scoreS: 6_750_000, scoreSS: 9_000_000,
+  });
   const ratio = Math.fround(Math.fround(score) / Math.fround(scoreMax));
   const marker = (value: number) => float32(Math.fround(
     Math.fround(41) + Math.fround(
@@ -283,8 +286,7 @@ function scoreState(
   ));
   const digits = String(score);
   return Object.freeze({
-    ruleSetId: "garupa-editor-normalized-10m-v1" as const,
-    totalScoringUnitCount,
+    thresholds,
     score,
     scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
     scoreMax, rank, beforeRank, rankChanged,

@@ -275,9 +275,16 @@ export interface RenderObjectCommandBase extends RenderCommandBase {
   readonly renderObjectId: string;
 }
 
+export interface RenderScoreGaugeThresholds {
+  readonly scoreC: number;
+  readonly scoreB: number;
+  readonly scoreA: number;
+  readonly scoreS: number;
+  readonly scoreSS: number;
+}
+
 export interface RenderScoreHudState {
-  readonly ruleSetId: "garupa-editor-normalized-10m-v1";
-  readonly totalScoringUnitCount: number;
+  readonly thresholds: RenderScoreGaugeThresholds;
   readonly score: number;
   readonly scoreText: string;
   readonly scoreMax: number;

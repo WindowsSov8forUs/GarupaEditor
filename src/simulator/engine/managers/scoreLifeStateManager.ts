@@ -14,9 +14,16 @@ import {
   type SimulatorModeIdentity,
 } from "../data/inGameCalculatedData";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
-import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
+import type {
+  ScoreGaugeThresholdProfile,
+  SinglePlayScoreGaugeSnapshot,
+} from "../data/singlePlayScoreGauge";
 import { NORMALIZED_SCORE_RULESET_ID, type SimulatorScoringPlan } from "../scoring/contracts";
-import { calculateNormalizedScoreContribution } from "../scoring/normalizedScoreRule";
+import {
+  calculateNormalizedScoreContribution,
+  calculateNormalizedScoreMaximum,
+  NORMALIZED_SCORE_RANK_THRESHOLDS,
+} from "../scoring/normalizedScoreRule";
 import { InGameRecord, type InGameRecordSnapshot } from "./inGameRecord";
 import { SinglePlayScoreGauge } from "./singlePlayScoreGauge";
 
@@ -99,7 +106,15 @@ export class ScoreLifeStateManager {
         "Score/Life initialization requires one immutable CS-V1 plan with a positive chart-owned unit count and exact scoreMaximum.",
       );
     }
-    const scoreGauge = SinglePlayScoreGauge.create(scoringPlan.totalScoringUnitCount);
+    const thresholdProfile = normalizedScoreGaugeThresholdProfile(scoringPlan.totalScoringUnitCount);
+    if (thresholdProfile === null) {
+      return integrityFailure(
+        "score-life.invalid-score-gauge-profile",
+        [],
+        "The approved CS-V1 branch must supply one valid immutable threshold profile before the original Score Gauge display owner is created.",
+      );
+    }
+    const scoreGauge = SinglePlayScoreGauge.create(thresholdProfile);
     if (scoreGauge.status !== "ok") return scoreGauge;
     const initializedGauge = scoreGauge.value.update(0);
     if (initializedGauge.status !== "ok") return initializedGauge;
@@ -322,6 +337,22 @@ export class ScoreLifeStateManager {
   }
 }
 
+function normalizedScoreGaugeThresholdProfile(
+  totalScoringUnitCount: number,
+): ScoreGaugeThresholdProfile | null {
+  const scoreMaximum = calculateNormalizedScoreMaximum(totalScoringUnitCount);
+  if (scoreMaximum === null) return null;
+  return Object.freeze({
+    profileIdentity: NORMALIZED_SCORE_RULESET_ID,
+    scoreC: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreC,
+    scoreB: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreB,
+    scoreA: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreA,
+    scoreS: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreS,
+    scoreSS: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreSS,
+    scoreMaximum,
+  });
+}
+
 function validateProfile(
   profile: ScoreLifeStateProfile,
   runtimeMode: SimulatorModeIdentity,
@@ -375,7 +406,10 @@ function freezeRecordSnapshot(snapshot: InGameRecordSnapshot): InGameRecordSnaps
 }
 
 function freezeScoreGaugeSnapshot(snapshot: SinglePlayScoreGaugeSnapshot): SinglePlayScoreGaugeSnapshot {
-  return Object.freeze({ ...snapshot });
+  return Object.freeze({
+    ...snapshot,
+    thresholdProfile: Object.freeze({ ...snapshot.thresholdProfile }),
+  });
 }
 
 function isInt32(value: number): boolean {

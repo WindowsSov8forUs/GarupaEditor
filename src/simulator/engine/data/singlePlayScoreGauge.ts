@@ -1,5 +1,3 @@
-import type { NORMALIZED_SCORE_RULESET_ID } from "../scoring/contracts";
-
 export const LiveClearRank = {
   S: 0,
   A: 1,
@@ -19,9 +17,18 @@ export type SinglePlayScoreGaugeMeterKey =
   | "score_meter_pink"
   | "score_meter_s";
 
+export interface ScoreGaugeThresholdProfile {
+  readonly profileIdentity: string;
+  readonly scoreC: number;
+  readonly scoreB: number;
+  readonly scoreA: number;
+  readonly scoreS: number;
+  readonly scoreSS: number;
+  readonly scoreMaximum: number;
+}
+
 export interface SinglePlayScoreGaugeSnapshot {
-  readonly ruleSetId: typeof NORMALIZED_SCORE_RULESET_ID;
-  readonly totalScoringUnitCount: number;
+  readonly thresholdProfile: ScoreGaugeThresholdProfile;
   readonly scoreMax: number;
   readonly beforeGaugeColorRank: LiveClearRankValue;
   readonly currentGaugeColorRank: LiveClearRankValue;
