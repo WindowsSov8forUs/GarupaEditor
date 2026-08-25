@@ -709,11 +709,8 @@ export function createSimulatorEngine(
         input.rendering.resources,
         Object.freeze({
           isAutoPlay: input.runtime.mode.isAutoPlay,
-          // Product semantics: Public Schema 12 has no original Live-setting
-          // field for コンボ状態表示. The autonomous simulator fixes that
-          // omitted setting ON, while the renderer still owns the original
-          // independent status transition and parallel normal/AP scene graphs.
-          allPerfectStatusPresentationEnabled: true,
+          allPerfectStatusPresentationEnabled:
+            input.runtime.originalLiveSettings.allPerfectStatusDisplayMode,
         }),
       )
     : null;

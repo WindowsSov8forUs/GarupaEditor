@@ -28,6 +28,7 @@ export interface SimulatorPreAdaptationInput {
   readonly noteSize: number;
   readonly noteSpeed: number;
   readonly syncLine: boolean;
+  readonly allPerfectStatusDisplayMode: boolean;
   readonly bgmGainPercent: number;
   readonly seGainPercent: number;
 }
@@ -43,6 +44,9 @@ export function buildSimulatorPreAdaptedConfig(
   const seGain = exactUnitPercent(input.seGainPercent, "SE gain");
   if (input.fps !== 60 && input.fps !== 120) throw new Error("Simulator FPS must be exactly 60 or 120.");
   if (typeof input.syncLine !== "boolean") throw new Error("Simulator SyncLine requires one explicit boolean.");
+  if (typeof input.allPerfectStatusDisplayMode !== "boolean") {
+    throw new Error("Simulator コンボ状態表示 requires one explicit boolean; no cache default is inferred.");
+  }
   return Object.freeze({
     sessionMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.sessionMode,
     inputMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
@@ -52,6 +56,7 @@ export function buildSimulatorPreAdaptedConfig(
     syncLine: input.syncLine,
     noteColor: SIMULATOR_PRE_ADAPTATION_DEFAULTS.noteColor,
     visibleTapLaneEffect: SIMULATOR_PRE_ADAPTATION_DEFAULTS.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
     mvDarkness: SIMULATOR_PRE_ADAPTATION_DEFAULTS.mvDarkness,
     skin: SIMULATOR_PRE_ADAPTATION_DEFAULTS.skin,
     visual: Object.freeze({

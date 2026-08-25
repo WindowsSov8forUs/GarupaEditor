@@ -28,7 +28,7 @@ export type SimulatorLaunchTransportConfig = Omit<SimulatorLaunchConfig, "visual
 };
 
 export interface SimulatorLaunchTransportDescriptor {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly requestId: string;
   readonly mediaSnapshotId: ResourceSnapshotId;
   readonly chartJson: string;
@@ -84,6 +84,7 @@ export function encodeSimulatorLaunchTransportConfig(
     syncLine: config.syncLine,
     noteColor: config.noteColor,
     visibleTapLaneEffect: config.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
     skin: config.skin,
     visual: Object.freeze({
@@ -109,7 +110,7 @@ export function decodeSimulatorLaunchTransportConfig(
     config === null || typeof config !== "object" || Array.isArray(config) ||
     config.visual === null || typeof config.visual !== "object" || Array.isArray(config.visual) ||
     config.audio === null || typeof config.audio !== "object" || Array.isArray(config.audio)
-  ) throw new Error("Simulator transport config requires the exact Schema 12 projection and six Float32 bit strings.");
+  ) throw new Error("Simulator transport config requires the exact Schema 13 projection and six Float32 bit strings.");
   return Object.freeze({
     sessionMode: config.sessionMode,
     inputMode: config.inputMode,
@@ -119,6 +120,7 @@ export function decodeSimulatorLaunchTransportConfig(
     syncLine: config.syncLine,
     noteColor: config.noteColor,
     visibleTapLaneEffect: config.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
     skin: config.skin,
     visual: Object.freeze({

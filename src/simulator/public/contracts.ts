@@ -77,6 +77,7 @@ export interface SimulatorOriginalLiveSettings {
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
+  readonly allPerfectStatusDisplayMode: boolean;
   readonly mvDarkness: number;
 }
 

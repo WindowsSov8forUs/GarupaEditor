@@ -1189,6 +1189,8 @@ function ChartEditorController() {
   const [playbackFps, setPlaybackFps] = useState(60);
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
+  const [playbackAllPerfectStatusDisplayMode, setPlaybackAllPerfectStatusDisplayMode] =
+    useState<boolean | null>(null);
   const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => normalizeSkinSelection(DEFAULT_SKIN_SELECTION));
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
     normalizeSkinSelection(DEFAULT_SKIN_SELECTION),
@@ -3170,6 +3172,7 @@ function ChartEditorController() {
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     WINDOW_SIZE_PRESETS,
     normalizeMetadata,
     normalizeSettings,
@@ -3205,6 +3208,7 @@ function ChartEditorController() {
     setPlaybackFps,
     setPlaybackMvMode,
     setPlaybackMvAlphaPercent,
+    setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     clearAllSelections,
@@ -5789,6 +5793,10 @@ function ChartEditorController() {
     };
 
     try {
+      if (playbackAllPerfectStatusDisplayMode === null) {
+        setStatusMessage("请先在设置→显示→播放中明确选择“コンボ状态显示”开或关。");
+        return;
+      }
       const playbackPreset = WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
         ?? WINDOW_SIZE_PRESETS[0] ?? WINDOW_SIZE_PRESETS[1];
       const prepared = await buildSimulatorLaunchDescriptor({
@@ -5802,6 +5810,7 @@ function ChartEditorController() {
         noteSize: appOptionSettings.rhythmNoteSizePercent,
         noteSpeed: appOptionSettings.rhythmNoteSpeed,
         syncLine: appOptionSettings.simultaneousLineEnabled,
+        allPerfectStatusDisplayMode: playbackAllPerfectStatusDisplayMode,
         bgmGainPercent: playbackVolumePercent,
         seGainPercent: playbackVolumePercent * noteSeVolumeScale,
         requestedWindowWidth: Number(playbackPreset?.width ?? 1366),
@@ -5905,6 +5914,7 @@ function ChartEditorController() {
     noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
+    playbackAllPerfectStatusDisplayMode,
     playbackVolumePercent,
     playbackWindowPresetId,
     resourceManager,
@@ -6201,12 +6211,14 @@ function ChartEditorController() {
         playbackFps,
         playbackMvMode,
         playbackMvAlphaPercent,
+        playbackAllPerfectStatusDisplayMode,
         WINDOW_SIZE_PRESETS,
         setWindowPresetId,
         setPlaybackWindowPresetId,
         setPlaybackFps,
         setPlaybackMvMode,
         setPlaybackMvAlphaPercent,
+        setPlaybackAllPerfectStatusDisplayMode,
         pendingSkinSelection,
         setPendingSkinSelection,
         normalizeSkinSelection,

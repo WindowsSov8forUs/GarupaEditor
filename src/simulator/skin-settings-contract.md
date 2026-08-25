@@ -8,7 +8,7 @@ Reverse owns original Skin selection claims. A valid but unavailable selection m
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse resource baseline `977f5e7153257e5bb4cabb2904790408f5452aa7` plus Field/structural-stage reachability correction `4312a8ad5a755b28cb40366f6160771dbf79637e`.
 
-Public Schema 12 owns the semantic projection `{ chartData, presentation, config }`. `config.skin` copies only original persisted normal settings, one aggregate special selection and seven component states. Caller metadata outside that projection is discarded rather than rejected or consumed; it never becomes a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
+Public Schema 13 owns the semantic projection `{ chartData, presentation, config }`. `config.skin` copies only original persisted normal settings, one aggregate special selection and seven component states. Caller metadata outside that projection is discarded rather than rejected or consumed; it never becomes a URL, bundle name, SHA, store key, server/rip name or independent Judge identity.
 
 ## Public shape
 
@@ -46,7 +46,7 @@ On the MV route, browser media derivation remains one pending immutable prefligh
 
 ## Interaction with original Live settings
 
-Schema 12 Live settings are frozen independently from the Skin recipe. NoteColor chooses normal/normal16 inside the selected Note atlas; SyncLine uses the selected simultaneous-line material and edge margin. The common four-Sprite GamePlayButton lane-effect pack is not the selected TapEffect particle pack: VisibleTapLaneEffect controls only that fixed lane Sprite owner, while selected TapEffect continues to control judgement particle resources. MvDarkness controls the movie black cover and never selects a Skin identity.
+Schema 13 Live settings are frozen independently from the Skin recipe. NoteColor chooses normal/normal16 inside the selected Note atlas; SyncLine uses the selected simultaneous-line material and edge margin. The common four-Sprite GamePlayButton lane-effect pack is not the selected TapEffect particle pack: VisibleTapLaneEffect controls only that fixed lane Sprite owner, while selected TapEffect continues to control judgement particle resources. MvDarkness controls the movie black cover and never selects a Skin identity.
 
 All identities participate in the same pre-backend resource assembly. Retry/MoveTime compare both canonical Skin and original-Live-settings identities; Pause changes neither.
 

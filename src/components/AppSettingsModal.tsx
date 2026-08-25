@@ -13,12 +13,14 @@ type AppSettingsModalProps = {
   playbackFps: number;
   playbackMvMode: boolean;
   playbackMvAlphaPercent: number;
+  playbackAllPerfectStatusDisplayMode: boolean | null;
   windowPresets: Array<{ id: string; label: string }>;
   onWindowPresetIdChange: (value: string) => void;
   onPlaybackWindowPresetIdChange: (value: string) => void;
   onPlaybackFpsChange: (value: number) => void;
   onPlaybackMvModeChange: (value: boolean) => void;
   onPlaybackMvAlphaPercentChange: (value: number) => void;
+  onPlaybackAllPerfectStatusDisplayModeChange: (value: boolean) => void;
   onApplyWindowPreset: () => void;
   optionSettings: EditorOptionSettings;
   onApplyOptionSettings: (value: EditorOptionSettings) => boolean | void | Promise<boolean | void>;
@@ -159,12 +161,14 @@ export function AppSettingsModal({
   playbackFps,
   playbackMvMode,
   playbackMvAlphaPercent,
+  playbackAllPerfectStatusDisplayMode,
   windowPresets,
   onWindowPresetIdChange,
   onPlaybackWindowPresetIdChange,
   onPlaybackFpsChange,
   onPlaybackMvModeChange,
   onPlaybackMvAlphaPercentChange,
+  onPlaybackAllPerfectStatusDisplayModeChange,
   onApplyWindowPreset,
   optionSettings,
   onApplyOptionSettings,
@@ -465,6 +469,30 @@ export function AppSettingsModal({
                               <StepperIcon type="plus" />
                             </button>
                           </div>
+                        </div>
+                      </div>
+
+                      <div className="setting-block">
+                        <span className="setting-title-strip">コンボ状态显示</span>
+                        <div className="binary-choice-group" role="radiogroup" aria-label="コンボ状态显示">
+                          <button
+                            type="button"
+                            className={`binary-choice ${playbackAllPerfectStatusDisplayMode === true ? "active" : ""}`}
+                            onClick={() => onPlaybackAllPerfectStatusDisplayModeChange(true)}
+                            aria-pressed={playbackAllPerfectStatusDisplayMode === true}
+                          >
+                            <span className="choice-dot" />
+                            <span className="btn-content">开</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`binary-choice ${playbackAllPerfectStatusDisplayMode === false ? "active" : ""}`}
+                            onClick={() => onPlaybackAllPerfectStatusDisplayModeChange(false)}
+                            aria-pressed={playbackAllPerfectStatusDisplayMode === false}
+                          >
+                            <span className="choice-dot" />
+                            <span className="btn-content">关</span>
+                          </button>
                         </div>
                       </div>
                     </div>

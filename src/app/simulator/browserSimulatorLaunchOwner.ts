@@ -96,11 +96,11 @@ export class BrowserSimulatorLaunchOwner {
     private readonly onStateChange: (state: BrowserSimulatorLaunchState) => void,
   ) {
     if (
-      requestId.length === 0 || descriptor.schemaVersion !== 2 || descriptor.requestId !== requestId
+      requestId.length === 0 || descriptor.schemaVersion !== 3 || descriptor.requestId !== requestId
     ) {
       throw new BrowserSimulatorLaunchDependencyError(
         "app.simulator.invalid-launch-descriptor",
-        "The launch owner requires one schema-2 descriptor whose requestId exactly matches the route identity and preserves Float32 transport bits.",
+        "The launch owner requires one schema-3 descriptor whose requestId exactly matches the route identity, explicit コンボ状态显示 setting and Float32 transport bits.",
       );
     }
   }

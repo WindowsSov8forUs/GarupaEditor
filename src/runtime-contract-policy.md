@@ -48,4 +48,4 @@ Generic `ignore`, `continue`, or `fallback` rules are not sufficient unless the 
 | Internal invariant with complete rollback | Release the attempted generation and retain the prior stable owner |
 | Unrecoverable consistency/security/ownership failure | Terminal fault with complete best-effort cleanup report |
 
-Public Simulator request Schema 12 remains `{ chartData, presentation, config }`; diagnostics and resource identities do not become Public business fields.
+Public Simulator request Schema 13 remains `{ chartData, presentation, config }`; diagnostics and resource identities do not become Public business fields.

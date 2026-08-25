@@ -295,12 +295,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     WINDOW_SIZE_PRESETS,
     setWindowPresetId,
     setPlaybackWindowPresetId,
     setPlaybackFps,
     setPlaybackMvMode,
     setPlaybackMvAlphaPercent,
+    setPlaybackAllPerfectStatusDisplayMode,
     pendingSkinSelection,
     setPendingSkinSelection,
     normalizeSkinSelection,
@@ -2034,12 +2036,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         playbackFps={playbackFps}
         playbackMvMode={playbackMvMode}
         playbackMvAlphaPercent={playbackMvAlphaPercent}
+        playbackAllPerfectStatusDisplayMode={playbackAllPerfectStatusDisplayMode}
         windowPresets={WINDOW_SIZE_PRESETS}
         onWindowPresetIdChange={setWindowPresetId}
         onPlaybackWindowPresetIdChange={setPlaybackWindowPresetId}
         onPlaybackFpsChange={setPlaybackFps}
         onPlaybackMvModeChange={setPlaybackMvMode}
         onPlaybackMvAlphaPercentChange={setPlaybackMvAlphaPercent}
+        onPlaybackAllPerfectStatusDisplayModeChange={setPlaybackAllPerfectStatusDisplayMode}
         onApplyWindowPreset={() => void applyWindowPreset()}
         optionSettings={appOptionSettings}
         onApplyOptionSettings={applyAppOptionSettings}

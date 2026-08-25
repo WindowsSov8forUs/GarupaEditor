@@ -274,7 +274,7 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 12);
+  assert.equal(recipe.schemaVersion, 13);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -959,7 +959,7 @@ function engineBuild(engine: any) {
     engine,
     mode: LIVE_AUTO_MODE,
     chartFidelity: "standard-original-compatible" as const,
-    originalLiveSettingsIdentity: "60:0:0:20:1:1:1",
+    originalLiveSettingsIdentity: "60:0:0:20:1:1:1:1",
     skinRecipeIdentity: "skin-recipe-v1|default-current|test",
     skinFidelity: "default-current" as const,
     surface: TEST_SURFACE,

@@ -8,9 +8,9 @@ Reverse owns original-setting claims. Valid product actions outside that proven 
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse commits `bba194684529b62b443b3d12d538f45adf5e0a29` plus the positive-counter coroutine correction `50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`.
 
-Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. HUD/AP correction evidence is Reverse `341749d90e3c68cc9fd85d16fbc501f733378623`. The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
+Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. HUD/AP correction evidence is Reverse `341749d90e3c68cc9fd85d16fbc501f733378623`; complete HUD component and logic closure is Reverse `879fcec25d02969b31a86b9972225f9ea27d5093`. The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
 
-## Public Schema 12
+## Public Schema 13
 
 The owned root projection remains `{ chartData, presentation, config }`. Field order, plain/frozen prototype and unrelated host metadata do not affect validation; the copy reads only the following mandatory `config` semantics and drops additional fields:
 
@@ -20,18 +20,19 @@ judgementAdjustValueB: number;     // integer -5..5
 syncLine: boolean;
 noteColor: boolean;
 visibleTapLaneEffect: boolean;
+allPerfectStatusDisplayMode: boolean;
 mvDarkness: number;                // 0,10,20,30,40,50,60,70
 ```
 
 They coexist with mandatory `sessionMode`, `inputMode`, `highFrequencyMode`, `skin`, `visual` and `audio`. There are no aliases or defaults. Legacy metadata such as `judgeOffsetFrames`, `offsetMs`, `effectEnable` and `mvAlphaPercent` is discarded by the owned semantic projection and never overrides the mandatory current fields.
 
-The immutable internal snapshot separates LiveCore fields (HighFrequency, A, B, MvDarkness) from Live fields (SyncLine, NoteColor, VisibleTapLaneEffect). Its canonical identity participates in initial, Retry and MoveTime fresh-build comparison. Pause/Resume does not reload it and there is no hot-switch command.
+The immutable internal snapshot separates LiveCore fields (HighFrequency, A, B, MvDarkness) from Live fields (SyncLine, NoteColor, VisibleTapLaneEffect, AllPerfectStatusDisplayMode). Its canonical identity participates in initial, Retry and MoveTime fresh-build comparison. Pause/Resume does not reload it and there is no hot-switch command.
 
-## All Perfect Combo display product semantics
+## All Perfect Combo display setting
 
-The original `コンボ状態表示` setting is real, but Public Schema 12 has no field for it. The simulator therefore registers `simulator.ap-combo-display-fixed-on-v1`: the omitted setting is fixed ON for every autonomous session. This is an explicit product choice, not an inference from caller metadata and not a claim that Schema 12 restores the original setting UI.
+`allPerfectStatusDisplayMode` is the Public projection of original `LiveCoreSettingsProtoData.isAllPerfectStatusDisplayMode`. The application exposes an explicit “コンボ状态显示” ON/OFF setting and persists that choice. Existing caches without the field remain unselected: launch asks the user to choose and never silently migrates the former fixed-ON product behavior.
 
-With that fixed setting, the original internal status owner still applies: Perfect preserves AllPerfect; Great and below clear it. Rendering owns two persistent parallel graphs:
+OFF initializes ordinary status to None and suppresses the AP graph. ON initializes AllPerfect; Perfect preserves it and Great or below clears it. Rendering owns two persistent parallel graphs:
 
 ```text
 normal ComboNumber: icon_number_big_* + combo

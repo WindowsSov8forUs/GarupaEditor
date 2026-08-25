@@ -130,7 +130,7 @@ for (const forbidden of ["SimulatorAppController", "SimulatorLaunchPayload", "Da
   if ((simulatorWindowSource + simulatorTransportSource).includes(forbidden)) throw new Error(`Stage 9 transport/window contains forbidden legacy/resource field: ${forbidden}`);
 }
 for (const marker of [
-  "readonly schemaVersion: 2;", "encodeSimulatorLaunchTransportConfig",
+  "readonly schemaVersion: 3;", "encodeSimulatorLaunchTransportConfig",
   "decodeSimulatorLaunchTransportConfig", "SimulatorTransportFloat32Bits", "view.getFloat32",
 ]) if (!simulatorTransportSource.includes(marker)) {
   throw new Error(`Stage 9 Float32-stable transport marker missing: ${marker}`);

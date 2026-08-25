@@ -24,6 +24,7 @@ export interface InGameCalculatedDataSnapshot extends SimulatorModeIdentity {
   readonly isSyncLineEnabled: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
+  readonly isAllPerfectStatusDisplayMode: boolean;
 }
 
 export function createSimulatorModeIdentity(
@@ -80,6 +81,7 @@ export class InGameCalculatedData {
   get isSyncLineEnabled(): boolean { return this.settings.syncLine; }
   get noteColor(): boolean { return this.settings.noteColor; }
   get visibleTapLaneEffect(): boolean { return this.settings.visibleTapLaneEffect; }
+  get isAllPerfectStatusDisplayMode(): boolean { return this.settings.allPerfectStatusDisplayMode; }
 
   snapshot(): InGameCalculatedDataSnapshot {
     return Object.freeze({
@@ -89,6 +91,7 @@ export class InGameCalculatedData {
       isSyncLineEnabled: this.isSyncLineEnabled,
       noteColor: this.noteColor,
       visibleTapLaneEffect: this.visibleTapLaneEffect,
+      isAllPerfectStatusDisplayMode: this.isAllPerfectStatusDisplayMode,
     });
   }
 }

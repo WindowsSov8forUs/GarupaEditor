@@ -110,7 +110,7 @@ function testPublicExactShape(): void {
 function testRecipeOwnership(): void {
   const source = request(true);
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  assert.equal(recipe.schemaVersion, 12);
+  assert.equal(recipe.schemaVersion, 13);
   assert.equal(recipe.request.chartData.isFullLength, true);
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);

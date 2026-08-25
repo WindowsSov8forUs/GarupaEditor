@@ -25,6 +25,7 @@ export interface BuildSimulatorLaunchDescriptorInput {
   readonly noteSize: number;
   readonly noteSpeed: number;
   readonly syncLine: boolean;
+  readonly allPerfectStatusDisplayMode: boolean;
   readonly bgmGainPercent: number;
   readonly seGainPercent: number;
   readonly requestedWindowWidth: number;
@@ -52,6 +53,7 @@ export async function buildSimulatorLaunchDescriptor(
     noteSize: input.noteSize,
     noteSpeed: input.noteSpeed,
     syncLine: input.syncLine,
+    allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
     bgmGainPercent: input.bgmGainPercent,
     seGainPercent: input.seGainPercent,
   });
@@ -82,7 +84,7 @@ export async function buildSimulatorLaunchDescriptor(
     throw new Error(`${handoff.failure.capability}: ${handoff.failure.boundary}`);
   }
   const descriptor: SimulatorLaunchTransportDescriptor = Object.freeze({
-    schemaVersion: 2,
+    schemaVersion: 3,
     requestId: requestIdentity(),
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),

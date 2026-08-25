@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema12 required semantics/owned copy/intrinsic stage PNG/internal absent SD+voice/nullable MV");
+  console.log("startup presentation derivation tests passed: schema13 required semantics/owned copy/intrinsic stage PNG/internal absent SD+voice/nullable MV");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -24,7 +24,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 12);
+  assert.equal(result.value.schemaVersion, 13);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);

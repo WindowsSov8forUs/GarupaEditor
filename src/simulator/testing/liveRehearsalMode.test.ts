@@ -81,6 +81,7 @@ function testFourCanonicalModes(): void {
         isSyncLineEnabled: true,
         noteColor: true,
         visibleTapLaneEffect: true,
+        isAllPerfectStatusDisplayMode: true,
       },
     );
     requireOk(engine.initialize(), "identity initialize");
@@ -150,7 +151,7 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
             engine: engine.value,
             mode,
             chartFidelity: "standard-original-compatible" as const,
-            originalLiveSettingsIdentity: "60:0:0:20:1:1:1",
+            originalLiveSettingsIdentity: "60:0:0:20:1:1:1:1",
             skinRecipeIdentity: "skin-recipe-v1|default-current|live-rehearsal-test",
             skinFidelity: "default-current" as const,
             surface: TEST_SURFACE,

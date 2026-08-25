@@ -115,7 +115,7 @@ function validateAutoLive() {
   const LIVE_AUTO_MODE = createSimulatorModeIdentity("live", "auto");
   const originalLiveSettings = (judgementAdjustValueB = 0) => Object.freeze({
     core: Object.freeze({ highFrequencyMode: false, judgementAdjustValue: 0, judgementAdjustValueB, mvDarkness: 20 }),
-    syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+    syncLine: true, noteColor: true, visibleTapLaneEffect: true, allPerfectStatusDisplayMode: true,
   });
   const DEFAULT_ORIGINAL_LIVE_SETTINGS = originalLiveSettings();
   const calculatedSnapshot = (mode, judgementAdjustValueB = 0) => ({
@@ -125,6 +125,7 @@ function validateAutoLive() {
     isSyncLineEnabled: true,
     noteColor: true,
     visibleTapLaneEffect: true,
+    isAllPerfectStatusDisplayMode: true,
   });
   const fixture = require(join(
     simulatorRoot,
@@ -282,6 +283,7 @@ function validateAutoLive() {
       isSyncLineEnabled: true,
       noteColor: true,
       visibleTapLaneEffect: true,
+      isAllPerfectStatusDisplayMode: true,
     });
 
     const mutableAutoMode = { ...LIVE_AUTO_MODE };
@@ -1366,7 +1368,7 @@ function validateAutoLive() {
       runtime: {
         originalLiveSettings: Object.freeze({
           core: Object.freeze({ highFrequencyMode: false, judgementAdjustValue: 0, judgementAdjustValueB: 0, mvDarkness: 20 }),
-          syncLine: true, noteColor: true, visibleTapLaneEffect: true,
+          syncLine: true, noteColor: true, visibleTapLaneEffect: true, allPerfectStatusDisplayMode: true,
         }),
         mode,
       },

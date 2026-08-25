@@ -21,6 +21,7 @@ import { createResourceRef, type ResourceRef } from "../../resources/contracts";
 import type { ChartMediaResources } from "../../resources/selections";
 
 const SESSION_SCHEMA_VERSION = 1;
+const SETTINGS_SCHEMA_VERSION = 2;
 const SESSION_AUTOSAVE_DELAY_MS = 1000;
 type LoadedEditorChartCache = {
   chartJson: string;
@@ -62,6 +63,7 @@ type SettingsSnapshotV1 = {
   playbackFps?: number;
   playbackMvMode?: boolean;
   playbackMvAlphaPercent?: number;
+  playbackAllPerfectStatusDisplayMode?: boolean | null;
   uploadCommunityPostContent?: string;
   uploadCommunityPostTags?: BestdoriPostTag[];
   skinSelection?: Record<string, unknown>;
@@ -150,6 +152,7 @@ export function useEditorSessionCache(params: any) {
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     WINDOW_SIZE_PRESETS,
     normalizeMetadata,
     normalizeSettings,
@@ -184,6 +187,7 @@ export function useEditorSessionCache(params: any) {
     setPlaybackFps,
     setPlaybackMvMode,
     setPlaybackMvAlphaPercent,
+    setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     clearAllSelections,
@@ -273,6 +277,11 @@ export function useEditorSessionCache(params: any) {
               ? Math.max(30, Math.min(100, Math.round(rawPlaybackMvAlphaPercent / 10) * 10))
               : 100;
           setPlaybackMvAlphaPercent(resolvedPlaybackMvAlphaPercent);
+          const resolvedPlaybackAllPerfectStatusDisplayMode =
+            typeof snapshot.playbackAllPerfectStatusDisplayMode === "boolean"
+              ? snapshot.playbackAllPerfectStatusDisplayMode
+              : null;
+          setPlaybackAllPerfectStatusDisplayMode(resolvedPlaybackAllPerfectStatusDisplayMode);
 
           const nextUploadCommunityPostContent = normalizeOptionalText(snapshot.uploadCommunityPostContent) ?? "";
           setUploadCommunityPostContent(nextUploadCommunityPostContent);
@@ -301,13 +310,14 @@ export function useEditorSessionCache(params: any) {
           }
 
           lastSavedSettingsFingerprintRef.current = JSON.stringify({
-            schemaVersion: SESSION_SCHEMA_VERSION,
+            schemaVersion: SETTINGS_SCHEMA_VERSION,
             appOptionSettings: nextAppOptionSettings,
             windowPresetId: resolvedWindowPresetId,
             playbackWindowPresetId: resolvedPlaybackWindowPresetId,
             playbackFps: resolvedPlaybackFps,
             playbackMvMode: resolvedPlaybackMvMode,
             playbackMvAlphaPercent: resolvedPlaybackMvAlphaPercent,
+            playbackAllPerfectStatusDisplayMode: resolvedPlaybackAllPerfectStatusDisplayMode,
             uploadCommunityPostContent: nextUploadCommunityPostContent,
             uploadCommunityPostTags: nextUploadCommunityPostTags,
             skinSelection: normalizedSkinSelection,
@@ -692,13 +702,14 @@ export function useEditorSessionCache(params: any) {
           const normalizedSkinSelection = normalizeSkinSelection(skinSelection);
 
           const settingsCore: Omit<SettingsSnapshotV1, "savedAt"> = {
-            schemaVersion: SESSION_SCHEMA_VERSION,
+            schemaVersion: SETTINGS_SCHEMA_VERSION,
             appOptionSettings,
             windowPresetId,
             playbackWindowPresetId,
             playbackFps,
             playbackMvMode,
             playbackMvAlphaPercent,
+            playbackAllPerfectStatusDisplayMode,
             uploadCommunityPostContent: normalizedUploadCommunityPostContent,
             uploadCommunityPostTags: normalizedUploadCommunityPostTags,
             skinSelection: normalizedSkinSelection,
@@ -735,6 +746,7 @@ export function useEditorSessionCache(params: any) {
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
     skinSelection,

@@ -21,7 +21,7 @@ for (const [source, symbols] of [
   [render, ["garupa-product-front", "garupa-product-slide-line", "set-mesh"]],
   [particles, ["compatibleProductParticleRoot", "ordinary:effect_tap_perfect", "ordinary:effect_tap_swipe", "directional:effect_tap_directional_flick_l"]],
   [scene, ["for (let lane = 0; lane < 7; lane += 1)", "projectLaneAtCurve", "screenToContinuousLane"]],
-  [recipe, ["readonly schemaVersion: 12", "isFullLength: request.chartData.isFullLength"]],
+  [recipe, ["readonly schemaVersion: 13", "isFullLength: request.chartData.isFullLength"]],
   [contracts, ["readonly chart: GarupaChartJson", "readonly isFullLength: boolean"]],
   [composition, ["constructChartFromGarupaChartJson", "garupaProductScene", "chartFidelity"]],
   [capabilities, ["garupaSvTimingGroup", "garupaContinuousLaneOutside", "garupaExtendedSlideGraph", "garupaExtendedManualInput", "closed-product-extension"]],
@@ -42,4 +42,4 @@ for (const [source, forbidden] of [
   [composition, ["chartData.laneCount"]],
 ]) for (const symbol of forbidden) if (source.includes(symbol)) throw new Error(`Garupa product forbidden fallback/ambient dependency remains: ${symbol}`);
 
-console.log("Garupa product extension static boundary verified: schema12/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/no-fallback-render/compatible-particle/lifecycle");
+console.log("Garupa product extension static boundary verified: schema13/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/no-fallback-render/compatible-particle/lifecycle");

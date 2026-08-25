@@ -43,7 +43,7 @@ import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSk
 import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 12;
+  readonly schemaVersion: 13;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -79,7 +79,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 12 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 13 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -414,6 +414,7 @@ function copyLaunchRequest(
         syncLine: configRecord.syncLine,
         noteColor: configRecord.noteColor,
         visibleTapLaneEffect: configRecord.visibleTapLaneEffect,
+        allPerfectStatusDisplayMode: configRecord.allPerfectStatusDisplayMode,
       });
   if (
     request === null || typeof request !== "object" || Array.isArray(request) ||
@@ -467,6 +468,7 @@ function copyLaunchRequest(
       syncLine: originalLiveSettings.value.syncLine,
       noteColor: originalLiveSettings.value.noteColor,
       visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect,
+      allPerfectStatusDisplayMode: originalLiveSettings.value.allPerfectStatusDisplayMode,
       skin: skin.value,
       visual: Object.freeze({
         specificSpeed: Math.fround(request.config.visual.specificSpeed),

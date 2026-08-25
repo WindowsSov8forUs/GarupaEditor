@@ -39,13 +39,14 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
     noteSize: 100,
     noteSpeed: 9.7,
     syncLine: false,
+    allPerfectStatusDisplayMode: false,
     bgmGainPercent: 80,
     seGainPercent: 60,
     requestedWindowWidth: 1280,
     requestedWindowHeight: 720,
   });
   const descriptor = prepared.descriptor;
-  equal(descriptor.schemaVersion, 2);
+  equal(descriptor.schemaVersion, 3);
   equal(descriptor.isFullLength, false);
   equal(descriptor.config.sessionMode, "live");
   equal(descriptor.config.inputMode, "auto");
@@ -53,8 +54,9 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(descriptor.config.syncLine, false);
   equal(descriptor.config.noteColor, true);
   equal(descriptor.config.visibleTapLaneEffect, true);
+  equal(descriptor.config.allPerfectStatusDisplayMode, false);
   equal(descriptor.config.mvDarkness, 20);
-  equal(Object.keys(descriptor.config).sort().join(","), "audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual");
+  equal(Object.keys(descriptor.config).sort().join(","), "allPerfectStatusDisplayMode,audio,highFrequencyMode,inputMode,judgementAdjustValue,judgementAdjustValueB,mvDarkness,noteColor,sessionMode,skin,syncLine,visibleTapLaneEffect,visual");
   equal(descriptor.config.visual.specificSpeed, "0x411B3333");
   equal(descriptor.config.visual.noteSize, "0x42C80000");
   equal(descriptor.config.visual.habahiroMeshWidthSetting, "0x3F800000");
@@ -161,7 +163,7 @@ export async function runSimulatorPreAdaptationTests(): Promise<void> {
   equal(safeArea.height, Math.fround(700));
   let rejected = false;
   try {
-    buildSimulatorPreAdaptedConfig({ fps: 60, noteSize: 151, noteSpeed: 9, syncLine: true, bgmGainPercent: 100, seGainPercent: 100 });
+    buildSimulatorPreAdaptedConfig({ fps: 60, noteSize: 151, noteSpeed: 9, syncLine: true, allPerfectStatusDisplayMode: true, bgmGainPercent: 100, seGainPercent: 100 });
   } catch { rejected = true; }
   equal(rejected, true);
 }

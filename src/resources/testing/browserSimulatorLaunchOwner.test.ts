@@ -244,7 +244,7 @@ class FakePlatformOwner implements BrowserSimulatorLaunchPlatformOwner {
 
 function createDescriptor(): SimulatorLaunchTransportDescriptor {
   return Object.freeze({
-    schemaVersion: 2,
+    schemaVersion: 3,
     requestId: "request:test-launch",
     mediaSnapshotId: "snapshot/test-launch" as ResourceSnapshotId,
     chartJson: "[]",

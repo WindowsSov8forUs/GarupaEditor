@@ -10,6 +10,7 @@ export const DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS: SimulatorOriginalLiveSetting
   syncLine: true,
   noteColor: true,
   visibleTapLaneEffect: true,
+  allPerfectStatusDisplayMode: true,
   mvDarkness: 20,
 });
 
@@ -31,6 +32,7 @@ export function originalLiveSettingsForTest(
     syncLine: boolean;
     noteColor: boolean;
     visibleTapLaneEffect: boolean;
+    allPerfectStatusDisplayMode: boolean;
     mvDarkness: number;
   }> = {},
 ): OriginalLiveSettings {

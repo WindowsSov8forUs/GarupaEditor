@@ -262,6 +262,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       syncLine: recipe.request.config.syncLine,
       noteColor: recipe.request.config.noteColor,
       visibleTapLaneEffect: recipe.request.config.visibleTapLaneEffect,
+      allPerfectStatusDisplayMode: recipe.request.config.allPerfectStatusDisplayMode,
     });
     if (originalLiveSettings.status !== "ok") {
       return rejectedWithCleanup(fromIntegrity(originalLiveSettings), releasePendingMovie());

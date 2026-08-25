@@ -18,26 +18,30 @@ import { DEFAULT_PUBLIC_ORIGINAL_LIVE_SETTINGS, originalLiveSettingsForTest } fr
 import { createDefaultTestSkinSettings, createTestPresentationPackage } from "./startupPresentationTestProfile";
 
 function main(): void {
-  testSchema12ExactShapeAndFreeze();
+  testSchema13ExactShapeAndFreeze();
   testCurrentDomainsAndIdentity();
   testPrimaryOwnerCounters();
   testIntegratedNegativePauseAndMoveTime();
-  console.log("original Live settings tests passed: Schema12/domains/frozen identity/Primary counters/pause/MoveTime");
+  console.log("original Live settings tests passed: Schema13/AP setting/domains/frozen identity/Primary counters/pause/MoveTime");
 }
 
-function testSchema12ExactShapeAndFreeze(): void {
+function testSchema13ExactShapeAndFreeze(): void {
   const request = validRequest();
   const recipe = accepted(createSimulatorSessionRecipe(request));
-  assert.equal(recipe.schemaVersion, 12);
+  assert.equal(recipe.schemaVersion, 13);
   assert.equal(Object.isFrozen(recipe.request.config), true);
   assert.equal(Object.isFrozen(recipe.request.config.skin), true);
   assert.equal(recipe.request.config.judgementAdjustValue, 0);
   assert.equal(recipe.request.config.judgementAdjustValueB, 0);
   assert.equal(recipe.request.config.mvDarkness, 20);
+  assert.equal(recipe.request.config.allPerfectStatusDisplayMode, true);
+  const disabled = cloneRequest(request) as any;
+  disabled.config = { ...disabled.config, allPerfectStatusDisplayMode: false };
+  assert.equal(accepted(createSimulatorSessionRecipe(disabled)).request.config.allPerfectStatusDisplayMode, false);
 
   for (const key of [
     "judgementAdjustValue", "judgementAdjustValueB", "syncLine", "noteColor",
-    "visibleTapLaneEffect", "mvDarkness",
+    "visibleTapLaneEffect", "allPerfectStatusDisplayMode", "mvDarkness",
   ]) {
     const missing = cloneRequest(request) as any;
     delete missing.config[key];
@@ -69,13 +73,14 @@ function testCurrentDomainsAndIdentity(): void {
           syncLine: true,
           noteColor: false,
           visibleTapLaneEffect: true,
+          allPerfectStatusDisplayMode: true,
           mvDarkness,
         }));
         assert.equal(Object.isFrozen(value), true);
         assert.equal(Object.isFrozen(value.core), true);
         assert.equal(
           originalLiveSettingsIdentity(value),
-          `60:${judgementAdjustValue}:${judgementAdjustValueB}:${mvDarkness}:1:0:1`,
+          `60:${judgementAdjustValue}:${judgementAdjustValueB}:${mvDarkness}:1:0:1:1`,
         );
       }
     }

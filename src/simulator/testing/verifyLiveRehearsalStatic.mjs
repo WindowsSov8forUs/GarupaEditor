@@ -20,7 +20,10 @@ const forbidden = [
 for (const file of productionFiles) {
   const source = readFileSync(file, "utf8");
   for (const [symbol, description] of forbidden) {
-    if (source.includes(symbol)) throw new Error(`${description} remains in ${relative(root, file)}`);
+    const present = symbol === "playMode:"
+      ? /(?:^|[^A-Za-z0-9_])playMode\s*:/.test(source)
+      : source.includes(symbol);
+    if (present) throw new Error(`${description} remains in ${relative(root, file)}`);
   }
 }
 

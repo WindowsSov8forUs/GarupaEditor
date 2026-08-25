@@ -17,17 +17,23 @@ const productRender = read("src/simulator/engine/garupa/productRenderProducer.ts
 const movie = read("src/simulator/engine/movie/inGameMovieManager.ts");
 const pixiMovie = read("src/simulator/backends/pixi/pixiMvLiveBackend.ts");
 const platform = read("src/simulator/platform/platformComposition.ts");
+const host = read("src/simulator/host/createSimulatorEngine.ts");
 
 for (const required of [
   "readonly judgementAdjustValue: number;", "readonly judgementAdjustValueB: number;",
   "readonly syncLine: boolean;", "readonly noteColor: boolean;",
-  "readonly visibleTapLaneEffect: boolean;", "readonly mvDarkness: number;",
-]) if (!contracts.includes(required)) throw new Error(`Schema 12 Public setting missing: ${required}`);
+  "readonly visibleTapLaneEffect: boolean;", "readonly allPerfectStatusDisplayMode: boolean;",
+  "readonly mvDarkness: number;",
+]) if (!contracts.includes(required)) throw new Error(`Schema 13 Public setting missing: ${required}`);
 for (const required of [
-  "readonly schemaVersion: 12;", "schemaVersion: 12 as const",
+  "readonly schemaVersion: 13;", "schemaVersion: 13 as const",
   "visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect",
+  "allPerfectStatusDisplayMode: originalLiveSettings.value.allPerfectStatusDisplayMode",
   "originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity",
-]) if (!recipe.includes(required)) throw new Error(`Schema 12 recipe gate missing: ${required}`);
+]) if (!recipe.includes(required)) throw new Error(`Schema 13 recipe gate missing: ${required}`);
+if (!host.includes("input.runtime.originalLiveSettings.allPerfectStatusDisplayMode") || host.includes("allPerfectStatusPresentationEnabled: true")) {
+  throw new Error("AP display must consume the explicit original Live setting without fixed-on product semantics");
+}
 for (const forbidden of ["judgeOffsetFrames", "offsetMs", "effectEnable", "mvAlphaPercent"]) {
   if ((contracts + recipe).includes(forbidden)) throw new Error(`legacy Public alias remains: ${forbidden}`);
 }
@@ -79,4 +85,4 @@ const movieConstruct = platform.indexOf("new PixiMvLiveBackend");
 if (skinAssembly < 0 || movieConstruct < 0 || skinAssembly >= movieConstruct) {
   throw new Error("selected resources must remain assembled before Movie backend construction");
 }
-console.log("original Live settings static boundary verified: Schema12/A+B/SyncLine/NoteColor/TapLane/MvDarkness/product projection/atomic order");
+console.log("original Live settings static boundary verified: Schema13/AP/A+B/SyncLine/NoteColor/TapLane/MvDarkness/product projection/atomic order");

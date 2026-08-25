@@ -25,7 +25,7 @@ for (const forbidden of ["SimulatorProductLaneCount", "readonly laneCount:"]) {
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 12;", "schemaVersion: 12 as const",
+  "readonly schemaVersion: 13;", "schemaVersion: 13 as const",
   'typeof request.chartData.isFullLength !== "boolean"',
   "isFullLength: request.chartData.isFullLength",
 ]) if (!recipe.includes(required)) throw new Error(`recipe full-length boundary missing: ${required}`);

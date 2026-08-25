@@ -18,6 +18,7 @@ export interface OriginalLiveSettings {
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
+  readonly allPerfectStatusDisplayMode: boolean;
 }
 
 export interface OriginalLiveSettingsInput {
@@ -28,6 +29,7 @@ export interface OriginalLiveSettingsInput {
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
+  readonly allPerfectStatusDisplayMode: boolean;
 }
 
 export type OriginalLiveSettingsSnapshot = OriginalLiveSettings;
@@ -46,7 +48,8 @@ export function createOriginalLiveSettings(
     !MV_DARKNESS_VALUES.includes(input.mvDarkness as typeof MV_DARKNESS_VALUES[number]) ||
     typeof input.syncLine !== "boolean" ||
     typeof input.noteColor !== "boolean" ||
-    typeof input.visibleTapLaneEffect !== "boolean"
+    typeof input.visibleTapLaneEffect !== "boolean" ||
+    typeof input.allPerfectStatusDisplayMode !== "boolean"
   ) {
     return invalid();
   }
@@ -60,6 +63,7 @@ export function createOriginalLiveSettings(
     syncLine: input.syncLine,
     noteColor: input.noteColor,
     visibleTapLaneEffect: input.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
   }));
 }
 
@@ -82,6 +86,7 @@ export function validateOriginalLiveSettings(
     syncLine: settings.syncLine,
     noteColor: settings.noteColor,
     visibleTapLaneEffect: settings.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: settings.allPerfectStatusDisplayMode,
   });
 }
 
@@ -94,6 +99,7 @@ export function originalLiveSettingsIdentity(value: OriginalLiveSettings): strin
     value.syncLine ? 1 : 0,
     value.noteColor ? 1 : 0,
     value.visibleTapLaneEffect ? 1 : 0,
+    value.allPerfectStatusDisplayMode ? 1 : 0,
   ].join(":");
 }
 
@@ -105,6 +111,7 @@ export function snapshotOriginalLiveSettings(
     syncLine: value.syncLine,
     noteColor: value.noteColor,
     visibleTapLaneEffect: value.visibleTapLaneEffect,
+    allPerfectStatusDisplayMode: value.allPerfectStatusDisplayMode,
   });
 }
 
@@ -116,6 +123,6 @@ function invalid(): ReturnType<typeof integrityFailure> {
   return integrityFailure(
     "runtime.invalid-original-live-settings",
     ["OLS-R01", "OLS-R03", "OLS-R04", "OLS-R05", "OLS-R06"],
-    "Original Live settings require exact booleans, Primary -30..30, Secondary -5..5 and one persisted MV darkness value 0..70 in steps of ten; aliases, defaults, clamp and rounding are forbidden.",
+    "Original Live settings require exact booleans including コンボ状態表示, Primary -30..30, Secondary -5..5 and one persisted MV darkness value 0..70 in steps of ten; aliases, defaults, clamp and rounding are forbidden.",
   );
 }

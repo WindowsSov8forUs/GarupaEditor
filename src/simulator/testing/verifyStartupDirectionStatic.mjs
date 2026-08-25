@@ -19,7 +19,7 @@ const publicBarrel = read("public/index.ts") + read("index.ts");
 
 for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
-  "readonly schemaVersion: 12;",
+  "readonly schemaVersion: 13;",
   'specificSpeed: Math.fround(request.config.visual.specificSpeed)',
   '"move-time-reconstruction"',
 ]) {
@@ -136,7 +136,7 @@ if (closed && (
   closure.production_authorization_scope !== "ordinary tutorial-gate-not-taken route only" ||
   closure.first_live_tutorial_production_authorization !== false
 )) throw new Error("startup capability closed without zero-count authorized ordinary-route callgraph");
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=17 SDN=4 STG=8 schema=12 ordinary-second-click=false tutorial-production=false callgraph=${closed ? "closed-authorized-ordinary" : "open"}`);
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=17 SDN=4 STG=8 schema=13 ordinary-second-click=false tutorial-production=false callgraph=${closed ? "closed-authorized-ordinary" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

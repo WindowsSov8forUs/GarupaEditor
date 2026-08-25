@@ -142,7 +142,7 @@ async function verifyHabahiroCompleteReplay() {
   };
   const engine = ok(createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true }), mode:Object.freeze({
+    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true, allPerfectStatusDisplayMode:true }), mode:Object.freeze({
       sessionMode:"live", inputMode:"auto", inGameMode:"single-normal",
       isEnablePractice:false, isDemoPlayMode:false, isAutoLive:true, isAutoPlay:true,
     }) },
@@ -263,7 +263,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   });
   const legacyCreation = createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true }), mode:Object.freeze({
+    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true, allPerfectStatusDisplayMode:true }), mode:Object.freeze({
       sessionMode:"live", inputMode:"auto", inGameMode:"single-normal",
       isEnablePractice:false, isDemoPlayMode:false, isAutoLive:true, isAutoPlay:true,
     }) },
@@ -310,7 +310,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     new PortableRenderResourcePreflightAdapter()), "prepare ordinary renderer");
   const ordinaryEngine = ok(createSimulatorEngine({
     chart: ordinaryChart.value,
-    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true }), mode:Object.freeze({
+    runtime: { originalLiveSettings:Object.freeze({ core:Object.freeze({ highFrequencyMode:false, judgementAdjustValue:0, judgementAdjustValueB:0, mvDarkness:20 }), syncLine:true, noteColor:true, visibleTapLaneEffect:true, allPerfectStatusDisplayMode:true }), mode:Object.freeze({
       sessionMode:"live", inputMode:"auto", inGameMode:"single-normal",
       isEnablePractice:false, isDemoPlayMode:false, isAutoLive:true, isAutoPlay:true,
     }) },
