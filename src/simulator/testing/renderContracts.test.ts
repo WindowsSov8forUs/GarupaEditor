@@ -229,6 +229,7 @@ function longProfile(): RenderResourceProfile {
         ...asset.atlasRows,
         Object.freeze({ ...asset.atlasRows[0], exactKey: "note_long_0" }),
         Object.freeze({ ...asset.atlasRows[0], exactKey: "note_long_flash_0" }),
+        Object.freeze({ ...asset.atlasRows[0], exactKey: "note_slide_among" }),
       ]),
     }))),
   };
@@ -377,10 +378,10 @@ const ORDINARY_LONG_NOTE_SCENE = Object.freeze({
   ...ORDINARY_NOTE_SCENE,
   screenToSafeAreaRatio: f32(1),
   longMeshColor: Object.freeze({
-    red: f32(0.8),
-    green: f32(0.8),
-    blue: f32(0.8),
-    alpha: f32(0.6),
+    red: f32(1),
+    green: f32(1),
+    blue: f32(1),
+    alpha: f32(0.8),
   }),
 });
 
@@ -465,7 +466,7 @@ function renderedSlideNoteBatch(absolutePos: number) {
     slideNoteList: Object.freeze([]),
   });
   const children = Object.freeze([
-    child(root.index + 1, absolutePos + 48, true, false),
+    child(root.index + 1, absolutePos + 48, false, false),
     child(root.index + 2, absolutePos + 96, false, true),
   ]);
   return Object.freeze({
@@ -1144,8 +1145,8 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
     createRecordingSimulatorBackends(slideRenderer),
   ), "R4 Slide engine create");
   requireOk(slideEngine.initialize(), "R4 Slide engine initialize");
-  equal(slideRenderer.snapshot().objectCount, 10,
-    "R4 root/flash and two child icon/flash/segment owner groups are fixed before activation");
+  equal(slideRenderer.snapshot().objectCount, 8,
+    "R4 Slide owns one root flash plus child head/icon/segment groups without per-child flash duplication");
   requireOk(slideEngine.step(0), "R4 Slide activates");
   const slideCommands = slideRenderer.commandSnapshot();
   equal(slideCommands.filter((command) =>
@@ -1153,7 +1154,18 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   ).length, 2, "R4 Slide N children emit exactly N base-mesh segments");
   equal(slideCommands.filter((command) =>
     command.kind === "activate-object" && /:slide-child:\d+$/.test(command.renderObjectId)
-  ).length, 1, "R4 Slide preserves one visible and one invisible child head owner");
+  ).length, 2, "R4 Slide activates its visible non-terminal and terminal child heads");
+  equal(slideCommands.filter((command) =>
+    command.kind === "bind-resource" && command.exactKey === "note_slide_among"
+  ).length, 1, "R4 visible non-terminal Slide child binds the authored among bar");
+  equal(slideCommands.some((command) =>
+    command.renderObjectId.includes(":slide-child:") &&
+    command.renderObjectId.endsWith(":ordinary-long-flash")
+  ), false, "R4 Slide children never create or animate duplicate LongNoteFlash owners");
+  equal(slideCommands.filter((command) =>
+    command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:") &&
+    command.materialRole === "curve-note"
+  ).length, 2, "R4 Slide segments retain the curve material role");
   requireOk(slideEngine.step(1 / 60), "R4 Slide child chain updates");
   equal(slideRenderer.commandSnapshot().filter((command) =>
     command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:")

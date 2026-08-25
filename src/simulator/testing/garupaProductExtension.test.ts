@@ -52,6 +52,14 @@ async function main(): Promise<void> {
     reaudit.score_total_label.oracles.map((row: any) => row.final_font_size),
     [20, 22, 26, 22],
   );
+  const noteHierarchy = JSON.parse(readFileSync(join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/note-hierarchy-fourth-reaudit/artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
+  ), "utf8"));
+  assert.equal(noteHierarchy.slide_scene_ownership.visible_nonterminal_replacement_family, "note_slide_among");
+  assert.equal(noteHierarchy.slide_scene_ownership.root_flash_owner_count, 1);
+  assert.equal(noteHierarchy.slide_scene_ownership.intermediate_long_flash_owner_count, 0);
+  assert.equal(noteHierarchy.portable_acceptance.must_preserve_front_70_icon_71_and_mesh_before_front, true);
   const baseProfile = JSON.parse(readFileSync(
     join(fixtureRoot, "ordinary_portable_profile.json"),
     "utf8",
@@ -165,12 +173,17 @@ async function main(): Promise<void> {
     throw new Error(`compatible product Slide rows missing: ${JSON.stringify(firstRows.map((row) => row.renderObjectId))}`);
   }
   assert.equal(head.spriteBindingKey?.endsWith("note_long_0"), true);
-  assert.equal(interior.spriteBindingKey?.endsWith("note_long_1"), true);
+  assert.equal(interior.spriteBindingKey?.endsWith("note_slide_among"), true);
   assert.equal(terminal.spriteBindingKey?.endsWith("note_flick_2"), true);
   assert.equal(firstRows.find((row) => row.renderObjectId === `${head.renderObjectId}:long-flash`)?.activeAnimationRole, "note-long-flash");
-  assert.equal(firstRows.find((row) => row.renderObjectId === `${interior.renderObjectId}:long-flash`)?.activeAnimationRole, "note-long-flash");
+  assert.equal(firstRows.some((row) => row.renderObjectId === `${interior.renderObjectId}:long-flash`), false);
   assert.equal(firstRows.find((row) => row.renderObjectId === `${terminal.renderObjectId}:icon`)?.activeAnimationRole, "note-flick");
-  assert.ok(firstRows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22));
+  assert.ok(firstRows.filter((row) => row.role === "note-root" &&
+    row.renderObjectId.startsWith("render:garupa:node:")).every((row) =>
+      row.ordering[0] === 3 && row.ordering[1] === 70));
+  assert.ok(firstRows.filter((row) => row.renderObjectId.startsWith("render:garupa:line:")).every((row) =>
+    row.geometryVertexCount === 22 && row.geometryMaterialLogicalAssetId === "ordinary/notes/skin00/curve-note-line" &&
+    row.ordering[0] === 3 && row.ordering[1] === 0));
   const sync = firstRows.find((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible);
   assert.ok(sync?.geometryPositions);
   const syncY = sync!.geometryPositions!.filter((_value, index) => index % 2 === 1);

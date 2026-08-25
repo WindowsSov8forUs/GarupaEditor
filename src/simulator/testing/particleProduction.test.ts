@@ -98,7 +98,12 @@ async function replay(
 ): Promise<ProductionProjection> {
   const particle = new RecordingSimulatorParticleBackend();
   const provider = await applicationLeaseParticleProviderForTesting(legacyProvider, preflight);
-  assert.equal((await particle.prepare(sessionId, provider, preflight)).status, "accepted");
+  assert.equal((await particle.prepare(
+    sessionId,
+    Object.freeze({ gameplayTransformScaleBits: "0x3F800000" }),
+    provider,
+    preflight,
+  )).status, "accepted");
   const engine = requireOk(createSimulatorEngine({
     chart: chartData,
     runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },

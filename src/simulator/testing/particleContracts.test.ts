@@ -76,6 +76,12 @@ const totalReauditFixture = JSON.parse(readFileSync(join(
   "ordinary-rendering-total-reaudit", "artifacts", "investigations",
   "ordinary-single-rendering-total-reaudit-10-1-4", "ordinary_rendering_candidate_fixture.json",
 ), "utf8"));
+const particleTransformReaudit = JSON.parse(readFileSync(join(
+  fixtureBase,
+  "particle-transform-fourth-reaudit", "artifacts", "investigations",
+  "simulator-particle-transform-fourth-reaudit-10-1-4",
+  "particle_transform_fourth_reaudit_contract.json",
+), "utf8"));
 
 const resourceFiles = Object.freeze({
   "particle/profile/current-portable-v1": "particle_portable_profile.json",
@@ -145,6 +151,9 @@ function verifyClosureAndOracleIdentity(): void {
     visualReconciliation.renderer_geometry["single-monolithic-particle-stage-before-all-ordinary_allowed"],
     false,
   );
+  assert.deepEqual(particleTransformReaudit.inventory.enabled_scale_exponent_counts, { "1": 1, "2": 103 });
+  assert.equal(particleTransformReaudit.portable_acceptance.must_apply_g_per_particle_system_transform, true);
+  assert.equal(particleTransformReaudit.portable_acceptance.must_not_apply_one_global_g_after_completed_serialized_world_transform, true);
 }
 
 async function testResourcesAndPrepare() {
@@ -391,9 +400,11 @@ async function testPixiMapping(profile: any): Promise<void> {
     },
   };
   const renderer = new PixiParticleRendererBackend(decoder);
-  assert.equal((await renderer.prepare("pixi-particle", particleScene(), await leasedProvider(), preflight)).status, "accepted");
+  const scene = particleScene();
+  const gameplayTransformScale = particleFloat32FromBits(scene.gameplayTransformScaleBits)!;
+  assert.equal((await renderer.prepare("pixi-particle", scene, await leasedProvider(), preflight)).status, "accepted");
   assert.equal(renderer.snapshot().resourceCount, 7);
-  const backend = await readyDeterministic("pixi-particle");
+  const backend = await readyDeterministic("pixi-particle", gameplayTransformScale);
   const frame = accepted(backend.preflightFrame({
     frame: 0,
     deltaTimeBits: "0x3C888889",
@@ -416,7 +427,7 @@ async function testPixiMapping(profile: any): Promise<void> {
     sprite.texture.source.alphaMode === "no-premultiply-alpha" && sprite.blendMode === "add"),
   "current enabled Mobile/Particles/Additive sprites retain straight-alpha upload and Pixi's add→add-npm adjustment inputs");
 
-  const visibleWorld = new DeterministicParticleSimulation(profile);
+  const visibleWorld = new DeterministicParticleSimulation(profile, gameplayTransformScale);
   visibleWorld.playRoot("visible-owner", buttonInstance("ordinary:effect_tap_perfect", 1, 3), "ordinary:effect_tap_perfect");
   visibleWorld.step(Math.fround(1 / 30), false);
   const visibleSamples = visibleWorld.samples();
@@ -428,6 +439,16 @@ async function testPixiMapping(profile: any): Promise<void> {
   assert.equal(renderer.commitFrame(visibleFrame).status, "accepted");
   const sprites = renderer.stage.children as Sprite[];
   assert.equal(sprites.length, visibleSamples.length);
+  const nestedScaleSample = visibleSamples.find((sample) =>
+    sample.systemId === "ordinary:effect_tap_perfect/Sring_1")!;
+  assert.ok(nestedScaleSample, "visible Perfect root contains the nested Sring_1 renderer");
+  const nestedScaleSprite = sprites.find((sprite) => sprite.label === nestedScaleSample.particleId)!;
+  const nestedWidth = Math.abs(nestedScaleSprite.scale.x) * nestedScaleSprite.texture.width;
+  const expectedNestedWidth = particleFloat32FromBits(nestedScaleSample.size.xBits)! *
+    360 * gameplayTransformScale * gameplayTransformScale;
+  assert.ok(Math.abs(nestedWidth - expectedNestedWidth) < 1e-3,
+    `nested root+child ParticleSystem billboard consumes g squared instead of one flattened final g: ${nestedWidth} vs ${expectedNestedWidth}`);
+
   const uvSample = visibleSamples.find((sample) => sample.uvFrame !== 0 && uvProfile(profile, sample.systemId) !== null)!;
   assert.ok(uvSample, "visible particle frame contains one non-zero texture-sheet frame");
   const uvSprite = sprites.find((sprite) => sprite.label === uvSample.particleId)!;
@@ -875,14 +896,14 @@ function particleScene(): ParticlePixiSceneProfile {
   const buttonY = Math.fround(Math.fround(-3.450000047683716) * widthRate);
   const screenRatioX = Math.fround(1600 / 1334);
   const verticalFit = Math.fround(720 / Math.fround(screenRatioX * 750));
-  const gameplayParentScale = Math.fround(widthRate * Math.fround(Math.fround(0.9) * verticalFit));
+  const gameplayTransformScale = Math.fround(widthRate * Math.fround(Math.fround(0.9) * verticalFit));
   return Object.freeze({
     viewportWidth: 1600,
     viewportHeight: 720,
     worldCenterXBits: "0x00000000",
     worldCenterYBits: "0x00000000",
     pixelsPerWorldUnitBits: "0x43B40000",
-    gameplayParentScaleBits: particleFloat32ToBits(gameplayParentScale)!,
+    gameplayTransformScaleBits: particleFloat32ToBits(gameplayTransformScale)!,
     roundPixels: false,
     buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => buttonType)
       .filter((buttonType) => buttonType !== 7)
@@ -905,13 +926,26 @@ function particleScene(): ParticlePixiSceneProfile {
 
 async function readyRecording(sessionId: string): Promise<RecordingSimulatorParticleBackend> {
   const backend = new RecordingSimulatorParticleBackend();
-  assert.equal((await backend.prepare(sessionId, await leasedProvider(), preflight)).status, "accepted");
+  assert.equal((await backend.prepare(
+    sessionId,
+    Object.freeze({ gameplayTransformScaleBits: particleFloat32ToBits(1)! }),
+    await leasedProvider(),
+    preflight,
+  )).status, "accepted");
   return backend;
 }
 
-async function readyDeterministic(sessionId: string): Promise<DeterministicSimulatorParticleBackend> {
+async function readyDeterministic(
+  sessionId: string,
+  gameplayTransformScale = Math.fround(1),
+): Promise<DeterministicSimulatorParticleBackend> {
   const backend = new DeterministicSimulatorParticleBackend();
-  assert.equal((await backend.prepare(sessionId, await leasedProvider(), preflight)).status, "accepted");
+  assert.equal((await backend.prepare(
+    sessionId,
+    Object.freeze({ gameplayTransformScaleBits: particleFloat32ToBits(gameplayTransformScale)! }),
+    await leasedProvider(),
+    preflight,
+  )).status, "accepted");
   return backend;
 }
 

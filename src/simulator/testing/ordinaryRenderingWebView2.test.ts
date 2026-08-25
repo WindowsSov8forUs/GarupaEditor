@@ -401,7 +401,12 @@ async function createSession(
   const particle = new DeterministicSimulatorParticleBackend();
   const particleRenderer = new PixiParticleRendererBackend(new BrowserPixiParticleTextureDecoder());
   const particlePreflight = new PortableParticleResourcePreflightAdapter();
-  requireParticle(await particle.prepare(id, particleProvider, particlePreflight));
+  requireParticle(await particle.prepare(
+    id,
+    Object.freeze({ gameplayTransformScaleBits: layout.particleScene.gameplayTransformScaleBits }),
+    particleProvider,
+    particlePreflight,
+  ));
   requireParticle(await particleRenderer.prepare(id, layout.particleScene, particleProvider, particlePreflight));
   const chart = requireOk(createNoteBatchInformationList({ musicScoreData: inputs.chartText }));
   const tracing = createRecordingSimulatorBackends(renderer, particle, particleRenderer);

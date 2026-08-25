@@ -62,6 +62,10 @@ const totalReauditFixture = JSON.parse(readFileSync(
   "utf8",
 ));
 const hudOracle = totalReauditFixture.hudCorrections;
+const hudApReaudit = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -78,6 +82,10 @@ const decoder: PixiTextureDecoder = {
 };
 
 async function main(): Promise<void> {
+  equal(hudApReaudit.combo_ownership.parallel_distinct_scene_components, true,
+    "HUD/AP evidence requires parallel normal and AP scene graphs");
+  equal(hudApReaudit.portable_acceptance.must_hide_each_combo_number_after_one_second_without_change, true,
+    "HUD/AP evidence requires owner-local one-second hide");
   const baseProfile = JSON.parse(readFileSync(join(ordinaryRoot, "ordinary_portable_profile.json"), "utf8")) as RenderResourceProfile;
   const visibleFixture = JSON.parse(readFileSync(join(visibleRoot, "ordinary_visible_rendering_profile.json"), "utf8"));
   const visibleProfile = parseCurrentOrdinaryVisibleProfile(visibleFixture);
@@ -884,6 +892,7 @@ async function verifyActualPixiFullChart(
   let visibleNoteSampleCount = 0;
   let visibleNoteViewportCount = 0;
   let tapLaneEffectVisibleSampleCount = 0;
+  let apOverlaySampleCount = 0;
   let frames = 0;
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
   for (; frames < 7200; frames += 1) {
@@ -919,11 +928,18 @@ async function verifyActualPixiFullChart(
       }
     }
     const combo = visible.find((row) => row.renderObjectId === "render:hud:combo");
+    const apCombo = visible.find((row) => row.renderObjectId === "render:hud:combo:all-perfect");
     const add = visible.find((row) => row.renderObjectId.startsWith("render:hud:add-score") && row.visible);
     const result = visible.find((row) => row.renderObjectId === "render:hud:result");
     const score = visible.find((row) => row.renderObjectId === "render:hud:score");
     const life = visible.find((row) => row.renderObjectId === "render:hud:life");
     if (combo?.visible && combo.hudSpriteCount !== null && combo.hudSpriteCount >= 2) routes.add("combo");
+    if (combo?.visible && apCombo?.visible && apCombo.hudState !== null &&
+      "allPerfect" in apCombo.hudState && apCombo.hudState.allPerfect === true &&
+      apCombo.activeAnimationRole !== null && apCombo.ordering[3] > combo.ordering[3]) {
+      routes.add("combo-ap-overlay");
+      apOverlaySampleCount += 1;
+    }
     if (add?.visible && add.hudText === null && (add.hudSpriteCount ?? 0) >= 2) routes.add("add-score");
     if (result?.visible && result.hudText === null && (result.hudSpriteCount ?? 0) >= 1) routes.add("result");
     if (score?.visible && (score.hudScoreDigitCount ?? 0) >= 8) routes.add("score");
@@ -934,12 +950,13 @@ async function verifyActualPixiFullChart(
   finalSnapshot = requireOk(engine.snapshot(), "actual Pixi final full-chart snapshot");
   equal(finalSnapshot.managers.noteManager.nextBatchIndex, chart.noteBatches.length,
     "actual Pixi full chart consumes every Note batch");
-  equal([...routes].sort().join(","), "add-score,combo,life,result,score",
-    "actual Pixi full chart observes the Reverse judged command order route set");
+  equal([...routes].sort().join(","), "add-score,combo,combo-ap-overlay,life,result,score",
+    "actual Pixi full chart observes parallel normal/AP Combo plus the judged HUD route set");
   const record = finalSnapshot.managers.scoreLifeState?.record;
   assert(record !== undefined, "full-chart Score/Life snapshot exists");
   assert(record.score > 0 && record.currentCombo > 0, "full-chart Auto Live updates Score and Combo");
   assert(tapLaneEffectVisibleSampleCount > 0, "actual Pixi observes the recovered tap lane effect Sprite owner");
+  assert(apOverlaySampleCount > 0, "actual Pixi observes AP as a distinct animated overlay above the normal Combo graph");
   equal(record.currentLife, 1000, "full-chart Auto Live preserves ordinary Life");
   const consumedBatches = finalSnapshot.managers.noteManager.nextBatchIndex;
   const totalScoringUnitCount = finalSnapshot.managers.scoreLifeState?.initialization.totalScoringUnitCount ?? 0;
@@ -1061,7 +1078,7 @@ function ordinaryScene() {
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(0.2),
     screenToSafeAreaRatio: f32(1),
-    longMeshColor: Object.freeze({ red: f32(0.8), green: f32(0.8), blue: f32(0.8), alpha: f32(0.6) }),
+    longMeshColor: Object.freeze({ red: f32(1), green: f32(1), blue: f32(1), alpha: f32(0.8) }),
   });
 }
 

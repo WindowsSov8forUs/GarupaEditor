@@ -128,8 +128,8 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
       `${name}: product particle projection`,
     );
     assert.equal(
-      particleFloat32FromBits(scene.value.particleScene.gameplayParentScaleBits),
-      layout.value.gameplay.particleScaleTotal,
+      particleFloat32FromBits(scene.value.particleScene.gameplayTransformScaleBits),
+      layout.value.gameplay.particleTransformScale,
       `${name}: GamePlayButton parent particle scale`,
     );
   }

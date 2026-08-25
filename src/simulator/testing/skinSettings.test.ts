@@ -385,6 +385,7 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   const particleBackend = new DeterministicSimulatorParticleBackend();
   const particleReady = await particleBackend.prepare(
     "selected-skin-particle",
+    Object.freeze({ gameplayTransformScaleBits: "0x3F800000" }),
     particleProvider,
     new PortableParticleResourcePreflightAdapter(),
   );

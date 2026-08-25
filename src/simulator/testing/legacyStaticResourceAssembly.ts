@@ -348,6 +348,9 @@ export async function assembleSimulatorResources(
 
   const particleReady = await targets.particles.backend.prepare(
     targets.sessionId,
+    Object.freeze({
+      gameplayTransformScaleBits: scene.value.particleScene.gameplayTransformScaleBits,
+    }),
     skinParticles.value,
     targets.particles.preflight,
   );
