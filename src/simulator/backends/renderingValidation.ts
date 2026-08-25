@@ -391,12 +391,18 @@ function validateScoreGaugeSsAnimation(
     if (
       !isNonEmpty(node.name) || nodeNames.has(node.name) ||
       (node.textureKey !== "high-rank-kira" && node.textureKey !== "high-rank-long-star" && node.textureKey !== "high-rank-overlay") ||
+      !Number.isInteger(node.widgetWidth) || node.widgetWidth <= 0 ||
+      !Number.isInteger(node.widgetHeight) || node.widgetHeight <= 0 ||
+      (node.pivot !== "center" && node.pivot !== "left") || node.blendMode !== "normal" ||
+      !Array.isArray(node.colorF32Bits) || node.colorF32Bits.length !== 4 ||
+      node.colorF32Bits.some((bits: unknown) => typeof bits !== "string" || !/^[0-9A-F]{8}$/.test(bits)) ||
       !validFiniteTuple(node.initialPosition, 3) || !validFiniteTuple(node.initialScale, 3) ||
       !validFiniteTuple(node.initialRotationQuaternion, 4)
     ) return reject("render.profile.invalid-score-gauge-ss-node", "Every ScoreGaugeSS node requires one unique identity, explicit portable texture and finite initial transform.");
     nodeNames.add(node.name);
     nodes.push(Object.freeze({
       ...node,
+      colorF32Bits: Object.freeze([...node.colorF32Bits]) as readonly [string, string, string, string],
       initialPosition: Object.freeze([...node.initialPosition]) as readonly [number, number, number],
       initialScale: Object.freeze([...node.initialScale]) as readonly [number, number, number],
       initialRotationQuaternion: Object.freeze([...node.initialRotationQuaternion]) as readonly [number, number, number, number],

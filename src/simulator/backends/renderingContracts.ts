@@ -193,6 +193,11 @@ export interface RenderScoreGaugeSsAnimationFrame {
 export interface RenderScoreGaugeSsAnimationNode {
   readonly name: string;
   readonly textureKey: "high-rank-kira" | "high-rank-long-star" | "high-rank-overlay";
+  readonly widgetWidth: number;
+  readonly widgetHeight: number;
+  readonly pivot: "center" | "left";
+  readonly colorF32Bits: readonly [string, string, string, string];
+  readonly blendMode: "normal";
   readonly initialPosition: readonly [number, number, number];
   readonly initialScale: readonly [number, number, number];
   readonly initialRotationQuaternion: readonly [number, number, number, number];

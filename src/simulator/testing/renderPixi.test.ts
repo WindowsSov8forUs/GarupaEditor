@@ -326,16 +326,16 @@ async function main(): Promise<void> {
   const lifeTexts = new Map(life.hudTextNodes?.map((text) => [text.label, text]));
   equal(lifeTexts.get("life-current-label")?.fontSize, 18, "Life metadata label consumes serialized UILabel font size");
   equal(lifeTexts.get("life-current-label")?.visible, false, "encoded Life metadata is not drawn as one fallback-color Text");
-  equal(lifeTexts.get("life-current-segment")?.text, "200/1000", "Life current-color base layer preserves the full encoded label");
+  equal(lifeTexts.get("life-current-segment")?.text, "200", "Life encoded UILabel current run is independent");
   equal(lifeTexts.get("life-current-segment")?.fontSize, 18, "Life current segment consumes serialized 18pt");
   equal(lifeTexts.get("life-current-segment")?.fill, 0x00c000, "positive current Life consumes StringColorType.Green");
-  equal(lifeTexts.get("life-separator-segment")?.text, "/1000", "Life Black suffix layer preserves separator placement without guessed glyph widths");
+  equal(lifeTexts.get("life-separator-segment")?.text, "/", "Life encoded UILabel separator run is independent");
   equal(lifeTexts.get("life-separator-segment")?.fill, 0x505050, "Life separator consumes StringColorType.Black");
   equal(lifeTexts.get("life-maximum-segment")?.text, "1000", "Life maximum segment preserves the engine maximum");
   equal(lifeTexts.get("life-maximum-segment")?.fill, 0x00c000, "maximum Life consumes StringColorType.Green");
   for (const label of ["life-current-segment", "life-separator-segment", "life-maximum-segment"]) {
-    equal(JSON.stringify(lifeTexts.get(label)?.anchor), JSON.stringify([1, 0.5]),
-      `${label} preserves the serialized Right pivot`);
+    equal(JSON.stringify(lifeTexts.get(label)?.anchor), JSON.stringify([0, 0.5]),
+      `${label} participates in one sequential encoded UILabel run`);
     equal(JSON.stringify(lifeTexts.get(label)?.position), JSON.stringify([Math.fround(-103.99990844726562), 74]),
       `${label} shares the evidence-authored right edge without measuring fallback glyph widths`);
   }

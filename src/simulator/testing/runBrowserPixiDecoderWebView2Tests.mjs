@@ -163,8 +163,9 @@ function adaptiveScoreLayout() {
   const scale = f32(screenRatioX * screenToSafe);
   const root = [safeLeft, 0];
   const progress = [root[0] + 25 * scale, root[1] + 45 * scale];
-  const glyphScale = f32(28 / 36);
-  const firstDigitLocalX = f32(212 - f32((36 + 33 + 36 * 6) * glyphScale) + f32(2 * glyphScale));
+  const glyphScale = f32(20 / 32);
+  const sourceAdvanceWithSpacing = 36 + 33 + 36 * 6 + 7;
+  const firstDigitLocalX = f32(212 - f32(sourceAdvanceWithSpacing * glyphScale) + f32(2 * glyphScale));
   return {
     progress,
     maskBounds: [

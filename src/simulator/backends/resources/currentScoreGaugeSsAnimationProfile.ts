@@ -8,9 +8,16 @@ export interface ScoreGaugeSsAnimationFrame {
   readonly keys: readonly ScoreGaugeSsAnimationKey[];
 }
 
+import { CURRENT_SCORE_GAUGE_SS_WIDGETS } from "./currentCompleteHudProfile";
+
 export interface ScoreGaugeSsAnimationNodeProfile {
   readonly name: string;
   readonly textureKey: "high-rank-kira" | "high-rank-long-star" | "high-rank-overlay";
+  readonly widgetWidth: number;
+  readonly widgetHeight: number;
+  readonly pivot: "center" | "left";
+  readonly colorF32Bits: readonly [string, string, string, string];
+  readonly blendMode: "normal";
   readonly initialPosition: readonly [number, number, number];
   readonly initialScale: readonly [number, number, number];
   readonly initialRotationQuaternion: readonly [number, number, number, number];
@@ -59,9 +66,16 @@ export function parseCurrentScoreGaugeSsAnimationProfile(
         node.portable_texture !== "high-rank-long-star" &&
         node.portable_texture !== "high-rank-overlay")
     ) return null;
+    const widget = CURRENT_SCORE_GAUGE_SS_WIDGETS[node.name];
+    if (widget === undefined) return null;
     nodes.push(Object.freeze({
       name: node.name,
-      textureKey: node.portable_texture,
+      textureKey: widget.textureKey,
+      widgetWidth: widget.width,
+      widgetHeight: widget.height,
+      pivot: widget.pivot,
+      colorF32Bits: widget.colorF32Bits,
+      blendMode: widget.blendMode,
       initialPosition: freezeVector3(node.initial_position),
       initialScale: freezeVector3(node.initial_scale),
       initialRotationQuaternion: Object.freeze([...node.initial_rotation_quaternion]) as
