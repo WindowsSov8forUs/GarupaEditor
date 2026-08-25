@@ -1,0 +1,1570 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-particle-transform-fourth-reaudit",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "policy": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    "visual_reconciliation": {
+      "path": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
+      "bytes": 5440,
+      "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9"
+    },
+    "static_contract": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_static_contract.json",
+      "bytes": 2615204,
+      "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+    },
+    "arm64": [
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03883074__ButtonManager__initButtonScale.arm64.tsv",
+        "bytes": 4981,
+        "sha256": "3AC2AE56B7AEDC01BC18E1F59F0A928742971E5B651724818946B2B4EE5590EF"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03883d68__ButtonManager__setupParticleScale.arm64.tsv",
+        "bytes": 2674,
+        "sha256": "DFB51844E6262082956CAF9998347FED07F0087E38442EBB8BDA87A8422D5F9A"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03883e60__ButtonManager__setupChildParticleSystemScale.arm64.tsv",
+        "bytes": 2448,
+        "sha256": "82E7B4614006EEE7B0F8AEE09D9382B34AD22D8675395818915ACD9C566E10F0"
+      }
+    ],
+    "device_frame": {
+      "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/runtime/ap-status-on-172-a.png",
+      "bytes": 1032046,
+      "sha256": "4724F6AC53A93B3140D98758EE783A05262D7F006AC1744993648804DD913A02"
+    }
+  },
+  "original_scale_pipeline": {
+    "first_pass": "each child ParticleSystem Transform.localScale XYZ *= screenWidthAdjustRate",
+    "second_pass": "the same child ParticleSystem Transform.localScale XYZ *= normalizedNoteSize * ScreenToSafeAreaRatio",
+    "combined_per_particle_system_factor": "g = screenWidthAdjustRate * normalizedNoteSize * ScreenToSafeAreaRatio",
+    "enumeration": "GetComponentsInChildren<ParticleSystem>(includeInactive=true) under every integer and half GamePlayButton",
+    "mutated_property": "each ParticleSystem component own Transform.localScale only",
+    "local_position_mutated": false,
+    "nested_semantics": "every ParticleSystem component in an ancestor chain receives g; child local position is scaled by particle-system ancestors while emitted shape position, velocity and billboard size also consume the emitting system own g",
+    "final_world_semantics": "compose each serialized TRS after multiplying that ParticleSystem transform scale by g; do not flatten the completed world sample to one final g"
+  },
+  "inventory": {
+    "systems": 120,
+    "enabled_renderers": 104,
+    "enabled_scale_exponent_counts": {
+      "1": 1,
+      "2": 103
+    },
+    "enabled_single_factor_systems": [
+      "ordinary:effect_tap_swipe"
+    ],
+    "enabled_nested_factor_systems": 103,
+    "rows": [
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_parOnpu_a",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_parOnpu_a",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_parOnpu_b",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_parOnpu_b",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_parStar",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_parStar",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_parStar _b",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_parStar _b",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_ring_scale",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_ring_scale",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/par_square",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/par_square",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/ring_rotate_a",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/ring_rotate_a",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/ring_rotate_b",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/ring_rotate_b",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_TapKeep/ring_rotate_c",
+        "root": "ordinary:effect_TapKeep",
+        "path": "effect_TapKeep/ring_rotate_c",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_TapKeep"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap",
+        "root": "ordinary:effect_tap",
+        "path": "effect_tap",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap/Sring_1",
+        "root": "ordinary:effect_tap",
+        "path": "effect_tap/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap/Sring_2",
+        "root": "ordinary:effect_tap",
+        "path": "effect_tap/Sring_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap/kira",
+        "root": "ordinary:effect_tap",
+        "path": "effect_tap/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap/star",
+        "root": "ordinary:effect_tap",
+        "path": "effect_tap/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_good",
+        "root": "ordinary:effect_tap_good",
+        "path": "effect_tap_good",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_good/Sring_1",
+        "root": "ordinary:effect_tap_good",
+        "path": "effect_tap_good/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_good/kira",
+        "root": "ordinary:effect_tap_good",
+        "path": "effect_tap_good/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_good/star",
+        "root": "ordinary:effect_tap_good",
+        "path": "effect_tap_good/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great/Sring_1[0]",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great/Sring_1[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great/Sring_1[1]",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great/Sring_1[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great/kira",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great/light_lay",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great/light_lay",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_great/star",
+        "root": "ordinary:effect_tap_great",
+        "path": "effect_tap_great/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/Smatt_1",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/Smatt_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/Sring_1",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/Sring_2",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/Sring_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/kira",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/kira (1)",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/kira (1)",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/kira_par_2",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/kira_par_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/light_lay_2",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/light_lay_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/ring_2",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/ring_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/ring_3",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/ring_3",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_perfect/star",
+        "root": "ordinary:effect_tap_perfect",
+        "path": "effect_tap_perfect/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_good",
+        "root": "ordinary:effect_tap_skill_good",
+        "path": "effect_tap_skill_good",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_good/Sring_1",
+        "root": "ordinary:effect_tap_skill_good",
+        "path": "effect_tap_skill_good/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_good/kira",
+        "root": "ordinary:effect_tap_skill_good",
+        "path": "effect_tap_skill_good/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_good/star",
+        "root": "ordinary:effect_tap_skill_good",
+        "path": "effect_tap_skill_good/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_good"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great/Sring_1[0]",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great/Sring_1[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great/Sring_1[1]",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great/Sring_1[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great/Star_center",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great/Star_center",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great/kira",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_great/star",
+        "root": "ordinary:effect_tap_skill_great",
+        "path": "effect_tap_skill_great/star",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_great"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Smatt_1[0]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Smatt_1[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Smatt_1[1]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Smatt_1[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Sring_1[0]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Sring_1[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Sring_1[1]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Sring_1[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Sring_2",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Sring_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/Star_center",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/Star_center",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/kira (1)",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/kira (1)",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/kira[0]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/kira[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/kira[1]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/kira[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/star[0]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/star[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_skill_perfect/star[1]",
+        "root": "ordinary:effect_tap_skill_perfect",
+        "path": "effect_tap_skill_perfect/star[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_skill_perfect"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/Sring_1[0]",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/Sring_1[0]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/Sring_1[1]",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/Sring_1[1]",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/glow",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/glow",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/kira",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/kira",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/kira_tate",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/kira_tate",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/slash",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/slash",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "ordinary",
+        "identity": "ordinary:effect_tap_swipe/square",
+        "root": "ordinary:effect_tap_swipe",
+        "path": "effect_tap_swipe/square",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_swipe"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/burtst",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/notes",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/spark_1",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/star_1",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/star_2",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/star_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_l",
+        "path": "effect_tap_directional_flick_l/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/burtst",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/glitter_1_1",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/glitter_1_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/notes",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/spark_1",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/star_1",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_2/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_l_2",
+        "path": "effect_tap_directional_flick_l_2/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/burtst",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/glitter_1_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/notes",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/spark_1",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/spark_2",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/spark_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/spark_3",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/spark_3",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/star_1",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_3/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_l_3",
+        "path": "effect_tap_directional_flick_l_3/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_finger",
+        "root": "directional:effect_tap_directional_flick_l_finger",
+        "path": "effect_tap_directional_flick_l_finger",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_finger/Sring_1",
+        "root": "directional:effect_tap_directional_flick_l_finger",
+        "path": "effect_tap_directional_flick_l_finger/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_finger/glow",
+        "root": "directional:effect_tap_directional_flick_l_finger",
+        "path": "effect_tap_directional_flick_l_finger/glow",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_l_finger/slash",
+        "root": "directional:effect_tap_directional_flick_l_finger",
+        "path": "effect_tap_directional_flick_l_finger/slash",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_l_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/burtst",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/notes",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/spark_1",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/star_1",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/star_2",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/star_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_r",
+        "path": "effect_tap_directional_flick_r/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/burtst",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/glitter_1_1",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/glitter_1_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/notes",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/spark_1",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/star_1",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_2/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_r_2",
+        "path": "effect_tap_directional_flick_r_2/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_2"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/burtst",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/burtst",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/glitter_1_1",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/glitter_1_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/notes",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/notes",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/spark_1",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/spark_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/spark_2",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/spark_2",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/spark_3",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/spark_3",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/star_1",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/star_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_3/star_glitter_1",
+        "root": "directional:effect_tap_directional_flick_r_3",
+        "path": "effect_tap_directional_flick_r_3/star_glitter_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_3"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_finger",
+        "root": "directional:effect_tap_directional_flick_r_finger",
+        "path": "effect_tap_directional_flick_r_finger",
+        "renderer_enabled": false,
+        "particle_system_ancestors": [],
+        "runtime_scale_exponent": 1,
+        "serialized_parent_transform_count": 0
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_finger/Sring_1",
+        "root": "directional:effect_tap_directional_flick_r_finger",
+        "path": "effect_tap_directional_flick_r_finger/Sring_1",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_finger/glow",
+        "root": "directional:effect_tap_directional_flick_r_finger",
+        "path": "effect_tap_directional_flick_r_finger/glow",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      },
+      {
+        "bundle": "directional",
+        "identity": "directional:effect_tap_directional_flick_r_finger/slash",
+        "root": "directional:effect_tap_directional_flick_r_finger",
+        "path": "effect_tap_directional_flick_r_finger/slash",
+        "renderer_enabled": true,
+        "particle_system_ancestors": [
+          "effect_tap_directional_flick_r_finger"
+        ],
+        "runtime_scale_exponent": 2,
+        "serialized_parent_transform_count": 1
+      }
+    ]
+  },
+  "renderer_requirements": {
+    "color_pipeline": {
+      "active_color_space": "Linear",
+      "active_color_space_serialized": 1,
+      "particle_texture_count": 8,
+      "particle_texture_space": "sRGB",
+      "dynamic_skin_texture_count": 189,
+      "dynamic_skin_texture_space": "sRGB",
+      "browser_texture_sampling": "sRGB-decode-to-linear",
+      "browser_blending": "straight-alpha source with material SrcAlpha/OneMinusSrcAlpha or SrcAlpha/One in linear target",
+      "browser_output": "unpremultiply-linear, linear-to-sRGB encode, repremultiply for final canvas composition",
+      "encoded-space-tint_or_blend_allowed": false
+    },
+    "geometry": {
+      "enabled_renderer_systems": 104,
+      "stretched_renderer_systems": 37,
+      "rotate_with_stretch_direction_systems": 37,
+      "negative_stretched_length_systems": 6,
+      "max_particle_size_counts": [
+        {
+          "maximum": 0.5,
+          "systems": 11
+        },
+        {
+          "maximum": 1.0,
+          "systems": 2
+        },
+        {
+          "maximum": 2.0,
+          "systems": 37
+        },
+        {
+          "maximum": 3.0,
+          "systems": 10
+        },
+        {
+          "maximum": 99.0,
+          "systems": 60
+        }
+      ],
+      "stretched_screen_angle": "reflectY(atan2(velocityY,velocityX)-pi/2+authoredRoll)",
+      "signed_height": "height*lengthScale+speed*velocityScale; abs extent plus independent long-axis/UV sign",
+      "maximum_extent": "2*orthographicHalfHeight*m_MaxParticleSize; uniform aspect-preserving clamp",
+      "sort_tuple": [
+        "sortingOrder",
+        "negative-renderer-bounds-center-z",
+        "creationSequence"
+      ],
+      "hud_after_world_renderers": true,
+      "single-monolithic-particle-stage-before-all-ordinary_allowed": false
+    },
+    "mipmap_boundary": {
+      "authored_seven_level_texture_count": 2,
+      "production_base_png_contains_authored_lower_mips": false,
+      "runtime_generated_mips_equivalent": false,
+      "disposition": "remain explicit portable raster difference until exact lower levels are delivered"
+    },
+    "float_particle_color_must_not_be_quantized_to_rgb8_before_shader": true,
+    "sort_must_not_use_particle_position_z_as_renderer_bounds_center_without_proof": true
+  },
+  "simulation_boundaries": {
+    "portable_deterministic_random_is_original_native_random": false,
+    "auto_random_seed_serialized": true,
+    "expiry_capacity_order": "update existing, remove expired, then process chronologically ordered births",
+    "pause_difference": "freeze particle domain with the engine clock and consume no random/event draws until resume; this intentionally differs from native UI-pause continuation",
+    "physical_gpu_exact": false
+  },
+  "device_observation": {
+    "surface": [
+      1600,
+      720
+    ],
+    "tap_effect_setting": 1,
+    "all_perfect_status_display": "ON",
+    "natural_rehearsal_demo_play": true,
+    "effect_envelope": "localized around judged GamePlayButton owners; physical frame is an observation, not a per-pixel portable oracle"
+  },
+  "portable_acceptance": {
+    "must_apply_g_per_particle_system_transform": true,
+    "must_preserve_103_enabled_g_squared_chains": true,
+    "must_preserve_one_enabled_g_single_chain": true,
+    "must_not_apply_one_global_g_after_completed_serialized_world_transform": true,
+    "must_preserve_float_color_until_fragment_input": true,
+    "must_keep_fixed_random_identity_product_labeled": true
+  },
+  "unknown_fields": []
+}
