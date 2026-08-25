@@ -13,6 +13,7 @@ import type {
   ParticleResourcePreflightAdapter,
   ParticleResourceProvider,
   ParticleRootId,
+  ParticleSimulationSceneProfile,
   SimulatorParticleBackend,
 } from "../particleContracts";
 import {
@@ -64,6 +65,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
 
   async prepare(
     sessionId: string,
+    scene: ParticleSimulationSceneProfile,
     provider: ParticleResourceProvider,
     preflight: ParticleResourcePreflightAdapter,
   ): Promise<ParticleOperationResult<void>> {
@@ -75,6 +77,12 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     if (typeof sessionId !== "string" || sessionId.length === 0) {
       return this.reject("particle.prepare.invalid-session", "Prepare requires one non-empty host-authored session identity.");
     }
+    const gameplayScale = scene === null || typeof scene !== "object"
+      ? null
+      : particleFloat32FromBits(scene.gameplayTransformScaleBits);
+    if (gameplayScale === null || gameplayScale <= 0) {
+      return this.reject("particle.prepare.invalid-scene-scale", "Particle preparation requires one positive binary32 per-ParticleSystem gameplay Transform scale.");
+    }
     if (provider === null || typeof provider !== "object" || typeof provider.read !== "function" ||
       preflight === null || typeof preflight !== "object" || typeof preflight.sha256 !== "function" ||
       typeof preflight.inspectPng !== "function") {
@@ -84,7 +92,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     try {
       const prepared = await prepareCurrentParticleResources(provider, preflight);
       if (prepared.status !== "accepted") return this.abortPrepare(prepared);
-      const simulation = new DeterministicParticleSimulation(prepared.value.profile);
+      const simulation = new DeterministicParticleSimulation(prepared.value.profile, gameplayScale);
       this.sessionId = sessionId;
       this.profile = prepared.value.profile;
       this.simulation = simulation;

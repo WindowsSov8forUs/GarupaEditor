@@ -238,6 +238,7 @@ const HUD_OBJECTS = Object.freeze({
     "render:hud:add-score:3",
   ]),
   combo: "render:hud:combo",
+  comboAllPerfect: "render:hud:combo:all-perfect",
   result: "render:hud:result",
   score: "render:hud:score",
   life: "render:hud:life",
@@ -264,7 +265,7 @@ export class RenderCommandProducer {
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
-  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect", number>();
+  private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
   private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
@@ -383,6 +384,8 @@ export class RenderCommandProducer {
     }
     create(HUD_OBJECTS.combo, "hud-combo");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
+    create(HUD_OBJECTS.comboAllPerfect, "hud-combo");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect });
     create(HUD_OBJECTS.result, "hud-result");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
     create(HUD_OBJECTS.score, "hud-score");
@@ -449,42 +452,71 @@ export class RenderCommandProducer {
     );
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
       displayedAllPerfect !== this.lastAllPerfect;
-    const comboScalePlaying = this.hudAnimationElapsedSeconds.has("combo");
-    const allPerfectPlaying = this.hudAnimationElapsedSeconds.has("all-perfect");
+    const normalComboPlaying = this.hudAnimationElapsedSeconds.has("normal-combo");
+    const apComboPlaying = this.hudAnimationElapsedSeconds.has("ap-combo");
+    const apAlphaPlaying = this.hudAnimationElapsedSeconds.has("ap-alpha");
     if (comboChanged) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
         hudRole: "combo",
-        state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: displayedAllPerfect }),
+        state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: false }),
       });
       if (plan.record.currentCombo > 0) {
         commands.push({
           ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "combo", restart: true,
         });
-        if (displayedAllPerfect && !allPerfectPlaying) commands.push({
-          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
-          animationRole: "all-perfect", restart: true,
+        commands.push({
+          ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.combo,
         });
-        if (!displayedAllPerfect && allPerfectPlaying) commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
-          animationRole: "all-perfect", restart: false,
-        });
+        if (displayedAllPerfect) {
+          commands.push({
+            ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            hudRole: "combo",
+            state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: true }),
+          });
+          commands.push({
+            ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "combo", restart: true,
+          });
+          if (!apAlphaPlaying) commands.push({
+            ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "all-perfect", restart: true,
+          });
+          commands.push({
+            ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          });
+        } else {
+          if (apComboPlaying) commands.push({
+            ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "combo", restart: false,
+          });
+          if (apAlphaPlaying) commands.push({
+            ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "all-perfect", restart: false,
+          });
+          commands.push({
+            ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          });
+        }
       } else {
-        if (comboScalePlaying) commands.push({
+        if (normalComboPlaying) commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "combo", restart: false,
         });
-        if (allPerfectPlaying) commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+        if (apComboPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          animationRole: "combo", restart: false,
+        });
+        if (apAlphaPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
           animationRole: "all-perfect", restart: false,
         });
+        commands.push(
+          { ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo },
+          { ...base(commands.length + 1), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect },
+        );
       }
-      commands.push({
-        ...base(commands.length),
-        kind: plan.record.currentCombo > 0 ? "activate-object" : "hide-object",
-        renderObjectId: HUD_OBJECTS.combo,
-      });
     }
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.result });
     commands.push({
@@ -535,7 +567,7 @@ export class RenderCommandProducer {
         ...base(commands.length), kind: "stop-animation", renderObjectId: addScoreObjectId,
         animationRole: "add-score", restart: false,
       });
-      for (const renderObjectId of [HUD_OBJECTS.combo, ...HUD_OBJECTS.addScore]) {
+      for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, ...HUD_OBJECTS.addScore]) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       }
     }
@@ -546,16 +578,18 @@ export class RenderCommandProducer {
         this.addScoreDepthCycle = (this.addScoreDepthCycle + 1) % 8;
       }
       if (comboChanged) {
-        this.hudAnimationElapsedSeconds.delete("combo");
+        this.hudAnimationElapsedSeconds.delete("normal-combo");
+        this.hudAnimationElapsedSeconds.delete("ap-combo");
         if (plan.record.currentCombo > 0) {
-          this.hudAnimationElapsedSeconds.set("combo", 0);
-          if (displayedAllPerfect && !allPerfectPlaying) {
-            this.hudAnimationElapsedSeconds.set("all-perfect", 0);
-          } else if (!displayedAllPerfect) {
-            this.hudAnimationElapsedSeconds.delete("all-perfect");
+          this.hudAnimationElapsedSeconds.set("normal-combo", 0);
+          if (displayedAllPerfect) {
+            this.hudAnimationElapsedSeconds.set("ap-combo", 0);
+            if (!apAlphaPlaying) this.hudAnimationElapsedSeconds.set("ap-alpha", 0);
+          } else {
+            this.hudAnimationElapsedSeconds.delete("ap-alpha");
           }
         } else {
-          this.hudAnimationElapsedSeconds.delete("all-perfect");
+          this.hudAnimationElapsedSeconds.delete("ap-alpha");
         }
         this.lastCombo = plan.record.currentCombo;
         this.lastAllPerfect = displayedAllPerfect;
@@ -605,29 +639,35 @@ export class RenderCommandProducer {
     ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
-    const next = new Map<"combo" | "all-perfect", number>();
+    const next = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
     const nextLife = new Map<"life-warning" | "life-game-over", number>();
     const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
-    for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
+    for (const [owner, elapsed] of this.hudAnimationElapsedSeconds) {
       const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
-      const renderObjectId = HUD_OBJECTS.combo;
-      if (role === "combo" && nextElapsed >= 1) {
+      const renderObjectId = owner === "normal-combo"
+        ? HUD_OBJECTS.combo
+        : HUD_OBJECTS.comboAllPerfect;
+      const animationRole = owner === "ap-alpha" ? "all-perfect" as const : "combo" as const;
+      if (animationRole === "combo" && nextElapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
-          animationRole: role, restart: false,
+          animationRole, restart: false,
+        });
+        commands.push({
+          ...base(commands.length), kind: "hide-object", renderObjectId,
         });
       } else {
         const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
         commands.push({
           ...base(commands.length), kind: "sample-animation", renderObjectId,
-          animationRole: role, elapsedSeconds: sample.value,
+          animationRole, elapsedSeconds: sample.value,
         });
-        next.set(role, nextElapsed);
+        next.set(owner, nextElapsed);
       }
     }
     for (const [role, elapsed] of this.lifeAnimationElapsedSeconds) {
@@ -1062,15 +1102,7 @@ export class RenderCommandProducer {
               "note-icon",
               childObjectId,
             );
-            appendHiddenChild(
-              commands,
-              created,
-              base,
-              ordinaryLongFlashRenderObjectId(childObjectId),
-              `${pool.family}-child-long-flash`,
-              "note-intermediate",
-              childObjectId,
-            );
+
           }
           commands.push({
             ...base(commands.length),
@@ -1629,7 +1661,7 @@ export class RenderCommandProducer {
         position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
         scale: Object.freeze({ x: one.value, y: one.value }),
         rotationDegrees: zero.value,
-        color: scene.longMeshColor!,
+        color: scene.noteTint,
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
           sourceDepthOrSortingOrder: 0,
@@ -1760,7 +1792,11 @@ export class RenderCommandProducer {
                 index === information.slideNoteList.length - 1,
                 this.resources,
               )
-            : resolveSlideChildSpriteBinding(source, this.resources);
+            : resolveSlideChildSpriteBinding(
+                source,
+                index === information.slideNoteList.length - 1,
+                this.resources,
+              );
           if (childBinding.status !== "ok") return childBinding;
           commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
           commands.push({
@@ -1773,7 +1809,7 @@ export class RenderCommandProducer {
           });
           const childAnimation = completeHabahiro
             ? null
-            : resolveOrdinaryAnimationBinding(source, childObjectId, this.resources, true);
+            : resolveOrdinaryAnimationBinding(source, childObjectId, this.resources, false);
           if (childAnimation !== null) {
             const ownerValidation = validateOrdinaryAnimationOwner(
               childAnimation,
@@ -1810,7 +1846,7 @@ export class RenderCommandProducer {
           position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
           scale: Object.freeze({ x: one.value, y: one.value }),
           rotationDegrees: zero.value,
-          color: scene.longMeshColor!,
+          color: scene.noteTint,
           ordering: Object.freeze({
             domainLayer: scene.noteDomainLayer,
             sourceDepthOrSortingOrder: 0,
@@ -1827,7 +1863,7 @@ export class RenderCommandProducer {
           indices: mesh.value.indices,
           uv: mesh.value.uv,
           colors: mesh.value.colors,
-          materialRole: "long-note",
+          materialRole: "curve-note",
         });
         commands.push({
           ...base(commands.length),
@@ -2193,10 +2229,7 @@ export class RenderCommandProducer {
           }),
           maskObjectId: null,
         });
-        for (const animatedObjectId of [
-          ordinaryNoteIconRenderObjectId(childObjectId),
-          ordinaryLongFlashRenderObjectId(childObjectId),
-        ]) {
+        for (const animatedObjectId of [ordinaryNoteIconRenderObjectId(childObjectId)]) {
           const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
           if (animation === undefined) continue;
           const elapsed = Math.fround(animation.elapsed + input.deltaTime.value);
@@ -2217,7 +2250,7 @@ export class RenderCommandProducer {
         indices: segment.geometry.indices,
         uv: segment.geometry.uv,
         colors: segment.geometry.colors,
-        materialRole: "long-note",
+        materialRole: "curve-note",
       });
     }
     const transaction = this.preflight(commands, () => {
@@ -3201,8 +3234,15 @@ function resolveAfterSpriteBinding(
 
 function resolveSlideChildSpriteBinding(
   information: NoteInformation,
+  terminal: boolean,
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  if (!terminal) {
+    return ok(Object.freeze({
+      logicalAssetId: resources.noteAtlasLogicalAssetId,
+      exactKey: "note_slide_among",
+    }));
+  }
   const lane = resolveOrdinarySlideCenterLane(information);
   if (lane.status !== "ok") return lane;
   if (gameTypeIsDirectional(information.gameNoteType)) {

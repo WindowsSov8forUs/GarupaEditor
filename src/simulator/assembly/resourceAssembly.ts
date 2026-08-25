@@ -218,6 +218,9 @@ export async function assembleSimulatorResources(
   prepared.push({ identity: "audio", dispose: () => targets.audio.backend.dispose() });
   const particleReady = await targets.particles.backend.prepare(
     targets.sessionId,
+    Object.freeze({
+      gameplayTransformScaleBits: scene.value.particleScene.gameplayTransformScaleBits,
+    }),
     particles.value,
     targets.particles.preflight,
   );

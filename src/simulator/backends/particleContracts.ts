@@ -582,13 +582,17 @@ export interface ParticlePixiButtonAnchor {
   readonly position: ParticleFloat32Vector3;
 }
 
+export interface ParticleSimulationSceneProfile {
+  readonly gameplayTransformScaleBits: string;
+}
+
 export interface ParticlePixiSceneProfile {
   readonly viewportWidth: number;
   readonly viewportHeight: number;
   readonly worldCenterXBits: string;
   readonly worldCenterYBits: string;
   readonly pixelsPerWorldUnitBits: string;
-  readonly gameplayParentScaleBits: string;
+  readonly gameplayTransformScaleBits: string;
   readonly roundPixels: false;
   readonly buttonAnchors: readonly ParticlePixiButtonAnchor[];
 }
@@ -636,6 +640,7 @@ export interface SimulatorParticleBackend {
   readonly id: string;
   prepare(
     sessionId: string,
+    scene: ParticleSimulationSceneProfile,
     provider: ParticleResourceProvider,
     preflight: ParticleResourcePreflightAdapter,
   ): Promise<ParticleOperationResult<void>>;

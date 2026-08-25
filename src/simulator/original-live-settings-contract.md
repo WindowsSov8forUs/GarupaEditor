@@ -8,7 +8,7 @@ Reverse owns original-setting claims. Valid product actions outside that proven 
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse commits `bba194684529b62b443b3d12d538f45adf5e0a29` plus the positive-counter coroutine correction `50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`.
 
-Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. Unknown, unresolved and blocking counts are zero. The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
+Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. HUD/AP correction evidence is Reverse `341749d90e3c68cc9fd85d16fbc501f733378623`. The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
 
 ## Public Schema 12
 
@@ -26,6 +26,19 @@ mvDarkness: number;                // 0,10,20,30,40,50,60,70
 They coexist with mandatory `sessionMode`, `inputMode`, `highFrequencyMode`, `skin`, `visual` and `audio`. There are no aliases or defaults. Legacy metadata such as `judgeOffsetFrames`, `offsetMs`, `effectEnable` and `mvAlphaPercent` is discarded by the owned semantic projection and never overrides the mandatory current fields.
 
 The immutable internal snapshot separates LiveCore fields (HighFrequency, A, B, MvDarkness) from Live fields (SyncLine, NoteColor, VisibleTapLaneEffect). Its canonical identity participates in initial, Retry and MoveTime fresh-build comparison. Pause/Resume does not reload it and there is no hot-switch command.
+
+## All Perfect Combo display product semantics
+
+The original `コンボ状態表示` setting is real, but Public Schema 12 has no field for it. The simulator therefore registers `simulator.ap-combo-display-fixed-on-v1`: the omitted setting is fixed ON for every autonomous session. This is an explicit product choice, not an inference from caller metadata and not a claim that Schema 12 restores the original setting UI.
+
+With that fixed setting, the original internal status owner still applies: Perfect preserves AllPerfect; Great and below clear it. Rendering owns two persistent parallel graphs:
+
+```text
+normal ComboNumber: icon_number_big_* + combo
+AP overlay:         icon_number_big_AP_* + combo_AP
+```
+
+Both visible child graphs restart the one-second `0.8→1.1→1` scale clip on changed Combo and independently hide after one second without another change. The AP parent continues its 0.8333333-second `alpha 1→0.5→1` loop above the normal graph. The AP texture is never substituted into the normal owner.
 
 ## Primary and Secondary judgement adjustment
 

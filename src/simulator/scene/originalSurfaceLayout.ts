@@ -52,7 +52,7 @@ export interface OriginalGameplayLayout {
   readonly screenWidthAdjustRate: number;
   readonly normalizedNoteSize: number;
   readonly noteSettingScale: number;
-  readonly particleScaleTotal: number;
+  readonly particleTransformScale: number;
   readonly targetCenterY: number;
   readonly launcherY: number;
   readonly laneSpacingWorld: number;
@@ -196,7 +196,7 @@ export function createOriginalSurfaceLayout(
       screenWidthAdjustRate: widthRate,
       normalizedNoteSize,
       noteSettingScale,
-      particleScaleTotal: mul(noteSettingScale, screenToSafeAreaRatio),
+      particleTransformScale: mul(noteSettingScale, screenToSafeAreaRatio),
       targetCenterY,
       launcherY,
       laneSpacingWorld,

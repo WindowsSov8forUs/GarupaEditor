@@ -86,10 +86,12 @@ There is no fixed center or PPU.
 screenWidthAdjustRate = cameraHalfWidth / 9.578571319580078
 normalizedNoteSize    = noteSize / 100
 noteSettingScale      = screenWidthAdjustRate * normalizedNoteSize
-particleScaleTotal    = noteSettingScale * ScreenToSafeAreaRatio
+particleTransformScale = noteSettingScale * ScreenToSafeAreaRatio
 ```
 
-Button/launcher positions, seven original lane goals, thirteen full/half tap-lane-effect owners, note starts, manual inverse projection, Long/Slide width and particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
+`particleTransformScale` is not one final world scalar. Original `setupParticleScale` multiplies every include-inactive ParticleSystem component's own Transform localScale. Of the 104 enabled current renderers, 103 are child systems under a root ParticleSystem and therefore compose two scaled transforms (`g²`); only enabled root `ordinary:effect_tap_swipe` composes one (`g`). Child local positions consume ancestor scale, while emitted shape/velocity/size also consume the emitting system's scale.
+
+Button/launcher positions, seven original lane goals, thirteen full/half tap-lane-effect owners, note starts, manual inverse projection, Long/Slide width and the decomposed particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
 
 ## NGUI, HUD and Rehearsal controls
 

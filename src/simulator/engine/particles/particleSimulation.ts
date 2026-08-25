@@ -84,7 +84,14 @@ export class DeterministicParticleSimulation {
   private readonly owners = new Map<string, OwnerRuntime>();
   private creationSequence = 0;
 
-  constructor(readonly profile: ParticlePortableProfile) {
+  constructor(
+    readonly profile: ParticlePortableProfile,
+    readonly gameplayTransformScale: number = Math.fround(1),
+  ) {
+    if (!Number.isFinite(gameplayTransformScale) || gameplayTransformScale <= 0 ||
+      gameplayTransformScale !== Math.fround(gameplayTransformScale)) {
+      throw fault("particle.simulation.invalid-gameplay-transform-scale", "ParticleSystem hierarchy scale must be one positive binary32 value.");
+    }
     for (const bundle of profile.bundles) {
       for (const definition of bundle.systems) {
         if (this.definitions.has(definition.identity)) {
@@ -105,6 +112,7 @@ export class DeterministicParticleSimulation {
   clone(): DeterministicParticleSimulation {
     const cloned = Object.create(DeterministicParticleSimulation.prototype) as DeterministicParticleSimulation;
     Object.defineProperty(cloned, "profile", { value: this.profile, enumerable: true });
+    Object.defineProperty(cloned, "gameplayTransformScale", { value: this.gameplayTransformScale, enumerable: true });
     Object.defineProperty(cloned, "definitions", { value: new Map(this.definitions) });
     Object.defineProperty(cloned, "global", {
       value: new Map([...this.global].map(([identity, state]) => [identity, {
@@ -183,6 +191,7 @@ export class DeterministicParticleSimulation {
         for (const particle of [...runtime.particles]) {
           this.updateParticle(record.bundle, profile, particle, delta);
         }
+        runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
         for (const at of this.events(record.bundle, profile, before, after, runtime.first)) {
           this.spawn(owner, record, profile, runtime, at, subtract(after, at));
         }
@@ -367,11 +376,11 @@ export class DeterministicParticleSimulation {
       }
     }
     let velocity = direction.map((value) => multiply(value, speed)) as Vector3;
-    position = applyTransform(position, record.definition.transform, true);
-    velocity = applyTransform(velocity, record.definition.transform, false);
+    position = applyTransform(position, record.definition.transform, true, this.gameplayTransformScale);
+    velocity = applyTransform(velocity, record.definition.transform, false, this.gameplayTransformScale);
     for (const parent of record.definition.parentTransforms) {
-      position = applyTransform(position, parent, true);
-      velocity = applyTransform(velocity, parent, false);
+      position = applyTransform(position, parent, true, this.gameplayTransformScale);
+      velocity = applyTransform(velocity, parent, false, this.gameplayTransformScale);
     }
     global.birthCount += 1;
     this.creationSequence += 1;
@@ -552,13 +561,18 @@ function minMaxColor(value: ParticleMinMaxGradient, time: number, ratio: number)
   }
 }
 
-function applyTransform(vector: Vector3, transform: ParticleTransformProfile, position: boolean): Vector3 {
+function applyTransform(
+  vector: Vector3,
+  transform: ParticleTransformProfile,
+  position: boolean,
+  gameplayTransformScale: number,
+): Vector3 {
   const scale = transform.m_LocalScale;
   const translation = transform.m_LocalPosition;
   let value: Vector3 = [
-    multiply(vector[0], scale.x),
-    multiply(vector[1], scale.y),
-    multiply(vector[2], scale.z),
+    multiply(vector[0], multiply(scale.x, gameplayTransformScale)),
+    multiply(vector[1], multiply(scale.y, gameplayTransformScale)),
+    multiply(vector[2], multiply(scale.z, gameplayTransformScale)),
   ];
   value = quaternionRotate(value, transform.m_LocalRotation);
   if (position) {

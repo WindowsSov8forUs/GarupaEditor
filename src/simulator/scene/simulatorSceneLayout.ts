@@ -133,7 +133,7 @@ export function createSimulatorSceneLayout(
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(config.syncLineEdgeMargin),
     screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
-    longMeshColor: color(0.8, 0.8, 0.8, 0.6),
+    longMeshColor: color(1, 1, 1, 0.8),
     ...(field === undefined ? {} : { field }),
     ...(habahiro.value === undefined ? {} : { habahiro: habahiro.value }),
   });
@@ -551,8 +551,8 @@ function createParticleScene(
     }));
   }
   const pixelsPerWorldUnitBits = particleFloat32ToBits(layout.camera.pixelsPerWorldUnit);
-  const gameplayParentScaleBits = particleFloat32ToBits(layout.gameplay.particleScaleTotal);
-  if (pixelsPerWorldUnitBits === null || gameplayParentScaleBits === null) {
+  const gameplayTransformScaleBits = particleFloat32ToBits(layout.gameplay.particleTransformScale);
+  if (pixelsPerWorldUnitBits === null || gameplayTransformScaleBits === null) {
     return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
   }
   return ok(Object.freeze({
@@ -561,7 +561,7 @@ function createParticleScene(
     worldCenterXBits: "0x00000000",
     worldCenterYBits: "0x00000000",
     pixelsPerWorldUnitBits,
-    gameplayParentScaleBits,
+    gameplayTransformScaleBits,
     roundPixels: false,
     buttonAnchors: Object.freeze(anchors),
   }));

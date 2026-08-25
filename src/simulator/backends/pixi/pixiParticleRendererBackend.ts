@@ -434,11 +434,10 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (anchor === undefined) {
       throw new Error("particle button has no evidence-authored scene anchor");
     }
-    const gameplayParentScale = particleFloat32FromBits(this.scene!.gameplayParentScaleBits)!;
-    const worldX = addScaledBits(anchor.position.xBits, sample.position.xBits, gameplayParentScale);
-    const worldY = addScaledBits(anchor.position.yBits, sample.position.yBits, gameplayParentScale);
+    const gameplayTransformScale = particleFloat32FromBits(this.scene!.gameplayTransformScaleBits)!;
+    const worldX = addScaledBits(anchor.position.xBits, sample.position.xBits, 1);
+    const worldY = addScaledBits(anchor.position.yBits, sample.position.yBits, 1);
     const pixelsPerUnit = particleFloat32FromBits(this.scene!.pixelsPerWorldUnitBits)!;
-    const geometryPixelsPerUnit = Math.fround(pixelsPerUnit * gameplayParentScale);
     sprite.position.set(
       Math.fround(this.scene!.viewportWidth / 2 + Math.fround(worldX * pixelsPerUnit)),
       Math.fround(this.scene!.viewportHeight / 2 - Math.fround(worldY * pixelsPerUnit)),
@@ -447,7 +446,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       sample,
       binding,
       texture,
-      geometryPixelsPerUnit,
+      pixelsPerUnit,
+      gameplayTransformScale,
       this.scene!.viewportHeight,
       sprite.position.x,
       sprite.position.y,
@@ -619,16 +619,16 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
   const pixelsPerWorldUnit = scene === null || typeof scene !== "object"
     ? null
     : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
-  const gameplayParentScale = scene === null || typeof scene !== "object"
+  const gameplayTransformScale = scene === null || typeof scene !== "object"
     ? null
-    : particleFloat32FromBits(scene.gameplayParentScaleBits);
+    : particleFloat32FromBits(scene.gameplayTransformScaleBits);
   if (scene === null || typeof scene !== "object" ||
     !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
     !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 ||
     scene.viewportWidth < scene.viewportHeight ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
     pixelsPerWorldUnit !== Math.fround(scene.viewportHeight / 2) ||
-    gameplayParentScale === null || gameplayParentScale <= 0 || scene.roundPixels !== false ||
+    gameplayTransformScale === null || gameplayTransformScale <= 0 || scene.roundPixels !== false ||
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
     scene.buttonAnchors.some((anchor, index) =>
       anchor.buttonType !== (index < 7 ? index : index + 1) ||
@@ -686,6 +686,7 @@ function particleSpriteMatrix(
   binding: SystemRenderBinding,
   texture: Texture,
   pixelsPerUnit: number,
+  gameplayTransformScale: number,
   viewportHeight: number,
   positionX: number,
   positionY: number,
@@ -699,7 +700,7 @@ function particleSpriteMatrix(
       particleFloat32FromBits(sample.velocity.yBits)!,
       particleFloat32FromBits(sample.velocity.zBits)!,
     ];
-    const hierarchyScale = systemHierarchyScale(binding);
+    const hierarchyScale = systemHierarchyScale(binding, gameplayTransformScale);
     const speedSquared = velocity.reduce(
       (sum, component) => renderAdd(sum, renderMultiply(component, component)),
       renderF32(0),
@@ -747,8 +748,8 @@ function particleSpriteMatrix(
       renderMultiply(cosine, sizeY),
       0,
     ];
-    let worldX = applySystemLinear(localX, binding);
-    let worldY = applySystemLinear(localY, binding);
+    let worldX = applySystemLinear(localX, binding, gameplayTransformScale);
+    let worldY = applySystemLinear(localY, binding, gameplayTransformScale);
     const dimensions = clampParticleDimensions(
       renderMultiply(Math.hypot(worldX[0], worldX[1], worldX[2]), pixelsPerUnit),
       renderMultiply(Math.hypot(worldY[0], worldY[1], worldY[2]), pixelsPerUnit),
@@ -767,7 +768,7 @@ function particleSpriteMatrix(
       positionY,
     );
   }
-  const hierarchyScale = systemHierarchyScale(binding);
+  const hierarchyScale = systemHierarchyScale(binding, gameplayTransformScale);
   const dimensions = clampParticleDimensions(
     Math.abs(renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit)),
     Math.abs(renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit)),
@@ -814,22 +815,29 @@ function viewAlignedMatrix(
   );
 }
 
-function systemHierarchyScale(binding: SystemRenderBinding): readonly [number, number] {
-  const x = applySystemLinear([1, 0, 0], binding);
-  const y = applySystemLinear([0, 1, 0], binding);
+function systemHierarchyScale(
+  binding: SystemRenderBinding,
+  gameplayTransformScale: number,
+): readonly [number, number] {
+  const x = applySystemLinear([1, 0, 0], binding, gameplayTransformScale);
+  const y = applySystemLinear([0, 1, 0], binding, gameplayTransformScale);
   return Object.freeze([
     renderF32(Math.hypot(x[0], x[1], x[2])),
     renderF32(Math.hypot(y[0], y[1], y[2])),
   ] as const);
 }
 
-function applySystemLinear(vector: ParticleVector, binding: SystemRenderBinding): ParticleVector {
+function applySystemLinear(
+  vector: ParticleVector,
+  binding: SystemRenderBinding,
+  gameplayTransformScale: number,
+): ParticleVector {
   let value = vector;
   for (const transform of [binding.system.transform, ...binding.system.parentTransforms]) {
     value = quaternionRotate([
-      renderMultiply(value[0], transform.m_LocalScale.x),
-      renderMultiply(value[1], transform.m_LocalScale.y),
-      renderMultiply(value[2], transform.m_LocalScale.z),
+      renderMultiply(value[0], renderMultiply(transform.m_LocalScale.x, gameplayTransformScale)),
+      renderMultiply(value[1], renderMultiply(transform.m_LocalScale.y, gameplayTransformScale)),
+      renderMultiply(value[2], renderMultiply(transform.m_LocalScale.z, gameplayTransformScale)),
     ], transform.m_LocalRotation);
   }
   return value;

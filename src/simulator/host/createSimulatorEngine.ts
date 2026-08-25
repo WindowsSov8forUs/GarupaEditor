@@ -709,10 +709,11 @@ export function createSimulatorEngine(
         input.rendering.resources,
         Object.freeze({
           isAutoPlay: input.runtime.mode.isAutoPlay,
-          // The public launch surface has no original AllPerfect display-mode
-          // owner. Product semantics keep the normal Combo skin rather than
-          // deriving AP presentation from the judgement statistic alone.
-          allPerfectStatusPresentationEnabled: false,
+          // Product semantics: Public Schema 12 has no original Live-setting
+          // field for コンボ状態表示. The autonomous simulator fixes that
+          // omitted setting ON, while the renderer still owns the original
+          // independent status transition and parallel normal/AP scene graphs.
+          allPerfectStatusPresentationEnabled: true,
         }),
       )
     : null;

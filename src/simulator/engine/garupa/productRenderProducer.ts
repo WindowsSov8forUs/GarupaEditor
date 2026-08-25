@@ -169,6 +169,16 @@ export class GarupaProductRenderProducer {
           }));
           plannedCreated.add(objectId);
         }
+        commands.push(command(commands.length, {
+          kind: "set-transform",
+          renderObjectId: objectId,
+          position: vector3(0, 0, 0),
+          scale: vector2(1, 1),
+          rotationDegrees: f32(0),
+          color: white(),
+          ordering: ordering(3, 0, objectId),
+          maskObjectId: null,
+        }));
         commands.push(command(commands.length, productSyncLine(
           objectId,
           requireProjectedPosition(first),
@@ -263,7 +273,6 @@ export class GarupaProductRenderProducer {
           plannedAnimationElapsed.set(animation.ownerObjectId, 0);
         }
         commands.push(command(commands.length, nodeTransform(
-          node,
           sample,
           objectId,
         )));
@@ -327,12 +336,27 @@ export class GarupaProductRenderProducer {
             commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
             plannedVisible.add(objectId);
           }
+          commands.push(command(commands.length, {
+            kind: "set-transform",
+            renderObjectId: objectId,
+            position: vector3(0, 0, 0.9900000095367432),
+            scale: vector2(1, 1),
+            rotationDegrees: f32(0),
+            color: white(),
+            ordering: ordering(3, 0, objectId, 0.9900000095367432),
+            maskObjectId: null,
+          }));
           commands.push(command(commands.length, slideMesh(
             objectId,
             from,
             to,
             this.scene.screenToSafeAreaRatio.value,
           )));
+          commands.push(command(commands.length, {
+            kind: "set-threshold",
+            renderObjectId: objectId,
+            threshold: f32(712.711181640625),
+          }));
         } else if (plannedVisible.delete(objectId)) {
           commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
         }
@@ -429,6 +453,14 @@ function frontBinding(
   }
   const chain = node.chainIdentity === null ? undefined : chains.get(node.chainIdentity);
   const chainHead = chain !== undefined && node.connectionIndex === 0;
+  const chainTerminal = chain !== undefined &&
+    node.connectionIndex === chain.connectionIdentities.length - 1;
+  if (chain !== undefined && !chainHead && !chainTerminal) {
+    return Object.freeze({
+      logicalAssetId: resources.noteAtlasLogicalAssetId,
+      exactKey: "note_slide_among",
+    });
+  }
   const family = node.type === "Flick"
     ? "note_flick"
     : chain !== undefined
@@ -468,7 +500,9 @@ function productAnimationBinding(
       animationRole: "note-flick",
     });
   }
-  if (node.chainIdentity === null || !chains.has(node.chainIdentity)) return null;
+  if (node.chainIdentity === null || !chains.has(node.chainIdentity) || node.connectionIndex !== 0) {
+    return null;
+  }
   return Object.freeze({
     ownerObjectId: `${parentObjectId}:long-flash`,
     logicalAssetId: resources.noteAtlasLogicalAssetId,
@@ -487,7 +521,6 @@ function productResourceLane(node: GarupaProductNode): number {
 }
 
 function nodeTransform(
-  node: GarupaProductNode,
   sample: ProductNodeSample,
   renderObjectId: string,
 ): Omit<Extract<RenderCommand, { kind: "set-transform" }>, "sessionId" | "sequence" | "frame" | "substep"> {
@@ -499,7 +532,7 @@ function nodeTransform(
     scale: vector2(scale, scale),
     rotationDegrees: f32(0),
     color: white(),
-    ordering: ordering(3, node.authoredOrder, renderObjectId),
+    ordering: ordering(3, 70, renderObjectId, requireProjectedPosition(sample).z.value),
     maskObjectId: null,
   };
 }
@@ -546,7 +579,7 @@ function slideMesh(
     indices: Object.freeze(indices),
     uv: Object.freeze(uv),
     colors: Object.freeze(colors),
-    materialRole: "long-note",
+    materialRole: "curve-note",
   };
 }
 
@@ -605,13 +638,18 @@ function lineObjectId(chainIdentity: string, segmentIndex: number): string {
 function syncPairObjectId(identity: string): string {
   return `render:garupa:sync:${identity}`;
 }
-function ordering(domain: number, source: number, identity: string): RenderOrderingKey {
+function ordering(
+  domain: number,
+  source: number,
+  identity: string,
+  sourceZ = 0,
+): RenderOrderingKey {
   let hash = 0;
   for (let index = 0; index < identity.length; index += 1) hash = (Math.imul(hash, 31) + identity.charCodeAt(index)) | 0;
   return Object.freeze({
     domainLayer: domain,
     sourceDepthOrSortingOrder: source,
-    sourceZ: f32(0),
+    sourceZ: f32(sourceZ),
     creationSequence: hash >>> 0,
   });
 }
