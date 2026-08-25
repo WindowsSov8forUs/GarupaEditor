@@ -19,6 +19,7 @@ export function createSimulatorModuleCapabilitySummary(
     skin,
     publicAutonomousCore: "closed-portable" as const,
     ordinaryCommandScene: "closed-portable" as const,
+    ordinaryHud: "closed-evidence-equivalent" as const,
     habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "observational-gap" as const,
     liveRehearsalFourModeMatrix: "closed-portable" as const,
@@ -45,6 +46,7 @@ export function createSimulatorModuleCapabilitySummary(
     selectedRenderingGate: rendering === null
       ? "observational-gap" as const
       : "closed-portable" as const,
+    selectedHudGate: "closed-evidence-equivalent" as const,
     selectedBackgroundGate: background === null
       ? "observational-gap" as const
       : "closed-portable" as const,

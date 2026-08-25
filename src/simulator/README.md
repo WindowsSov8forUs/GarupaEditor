@@ -15,7 +15,8 @@
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
-| Ordinary Note/HUD Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、`28b6a790`与`50170414`限定范围；current PNG以straight-alpha sRGB source进入Linear intermediate，最终统一编码回sRGB，禁止premultiplied-sRGB和encoded-space tint/blend；所有`set-mesh`与`set-line`消费已绑定Skin material，禁止`Texture.WHITE`或粒子texture矩形替代；NGUI、BitmapFont、UICommon及Unity Sprite按各自坐标/字号/pivot消费，Judge line保持Button4 uniform scale |
+| Ordinary Note Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、`28b6a790`与`50170414`限定范围；current PNG以straight-alpha sRGB source进入Linear intermediate，最终统一编码回sRGB；所有Note mesh/line消费绑定Skin material，Judge line保持Button4 uniform scale |
+| Complete ordinary HUD | `closed-evidence-equivalent` | Reverse `07bf4e7c`：104个选定widget、Score/Life/normal+AP Combo/AddScore/Result/Pause、11个ScoreGaugeSS UITexture、字体/材质/Transform/world corners、56曲线/236 keys与同状态ARM64观察已闭合。Pixi使用持久对象图、NGUI widget/pivot/color/normal blend、Score SoftClip `[20,3]`及顺序encoding Life run；`Flash→ss_overlay`、`BigStar_1/2→sss_star_long`。逻辑/primitive严格等价；浏览器字体抗锯齿/GPU边缘不声明Unity framebuffer逐像素一致 |
 | Ordinary particle visible composition | `closed-portable` | Reverse `50170414`：17-root actual Pixi world/UV/blend/viewport、authored stretched roll、signed long axis、`m_MaxParticleSize`、Field < particle < Note/HUD nesting及dispose归零；device-closure simulation oracle保持不变，两个exact七级mip仍是显式portable raster difference |
 | Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但production内部固定无voice资源、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |

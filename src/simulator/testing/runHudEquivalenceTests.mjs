@@ -7,23 +7,29 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const outputRoot = mkdtempSync(join(tmpdir(), "garupa-hud-equivalence-tests-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-hud-equivalence-tests-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
 try {
-  run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  }
   for (const file of [
     "hudLogicEquivalence.test.js",
     "hudSceneGraphEquivalence.test.js",
     "hudRenderPrimitiveEquivalence.test.js",
   ]) run(process.execPath, [join(outputRoot, "src", "simulator", "testing", file)]);
-  run(process.execPath, [join(testingRoot, "runRenderPixiTests.mjs")]);
-  if (process.env.SIMULATOR_HUD_SKIP_WEBVIEW2 !== "1") {
+  if (process.env.SIMULATOR_HUD_EQUIVALENCE_CORE_ONLY !== "1") {
+    run(process.execPath, [join(testingRoot, "runRenderPixiTests.mjs")]);
+  }
+  if (process.env.SIMULATOR_HUD_EQUIVALENCE_CORE_ONLY !== "1" &&
+    process.env.SIMULATOR_HUD_SKIP_WEBVIEW2 !== "1") {
     run(process.execPath, [join(testingRoot, "runBrowserPixiDecoderWebView2Tests.mjs")]);
   }
 } finally {
-  rmSync(outputRoot, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }
 
 function run(command, args) {

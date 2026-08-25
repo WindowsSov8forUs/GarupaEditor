@@ -95,17 +95,15 @@ export function verifyOrdinaryPixiWorldObservation(world, fixture) {
   closeTuple(timing.worldMatrix.slice(4), timingExpected, 1e-4, "animated JudgeTiming world position");
 
   const score = one(world, "hud:score");
-  const scoreAuthored = fixture.selectedUiWorld.score.authoredWorldPosition;
   closeTuple(score.worldMatrix.slice(4), [
-    adaptive.safeLeft + (scoreAuthored[0] + 667) * adaptive.childScale,
-    fixture.viewport[1] - (adaptive.safeTop + (scoreAuthored[1] - 375) * adaptive.childScale),
-  ], 1e-4, "Score safe-anchored world position");
+    adaptive.safeLeft,
+    fixture.viewport[1] - adaptive.safeTop,
+  ], 1e-4, "Score StarUIAnchor safe-left/top world position");
   const life = one(world, "hud:life");
-  const lifeAuthored = fixture.selectedUiWorld.life.authoredWorldPosition;
   closeTuple(life.worldMatrix.slice(4), [
-    adaptive.safeRight + (lifeAuthored[0] - 667) * adaptive.childScale,
-    fixture.viewport[1] - (adaptive.safeTop + (lifeAuthored[1] - 375) * adaptive.childScale),
-  ], 1e-4, "Life safe-anchored world position");
+    adaptive.safeRight,
+    fixture.viewport[1] - adaptive.safeTop,
+  ], 1e-4, "Life StarUIAnchor safe-right/top world position");
   const consumer = world.records.find((record) =>
     record.path.startsWith(`${score.path}/`) && record.label === "score-high-rank-animation-layer" &&
     record.mask === "score-high-rank-panel-mask");

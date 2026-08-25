@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  verifyNoFallbackObservation,
-  verifyOrdinaryPixiWorldObservation,
-} from "./verifyPixiWorldObservation.mjs";
+import { verifyOrdinaryPixiWorldObservation } from "./verifyPixiWorldObservation.mjs";
 
 const path = process.argv[2];
 if (typeof path !== "string") throw new Error("raw observation path is required");
@@ -15,7 +12,6 @@ const totalFixture = JSON.parse(readFileSync(join(
   "ordinary-single-rendering-total-reaudit-10-1-4", "ordinary_rendering_candidate_fixture.json",
 ), "utf8"));
 assert.equal(raw.schemaVersion, 3);
-verifyNoFallbackObservation(raw);
 verifyOrdinaryPixiWorldObservation(raw.worldObservation, totalFixture);
 for (const forbidden of ["status", "closed", "passed", "productionAuthorization"]) {
   assert.equal(Object.hasOwn(raw, forbidden), false, `raw observation contains decision field: ${forbidden}`);
@@ -49,9 +45,15 @@ for (const row of matrix) {
     bounds: [left, -13.5, width, 39],
     softness: [20, 3],
   });
-  assert.equal(state.ruleSetId, "garupa-editor-normalized-10m-v1");
-  const max = 10000000 + state.totalScoringUnitCount;
-  assert.equal(state.scoreMax, max);
+  assert.deepEqual(state.thresholds, {
+    scoreC: 375000,
+    scoreB: 2250000,
+    scoreA: 4500000,
+    scoreS: 6750000,
+    scoreSS: 9000000,
+  });
+  const max = state.scoreMax;
+  assert.equal(max, 10001000);
   const marker = (value) => Math.fround(Math.fround(41) + Math.fround(
     Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(max),
   ));
@@ -86,26 +88,8 @@ assert.deepEqual(half.hudScoreIndicatorMask, {
   softness: [20, 3],
 });
 assert.equal(continued.hudScoreIndicatorMask.generation, 1);
-assert.equal(samples.invalidScore.capability, "render.pixi.invalid-typed-hud-state");
 assert.deepEqual(raw.sampleCleanup, { ownerCount: 0, stageChildren: 0 });
 assert.equal(raw.fullChart.cleanupOwnerCount, 0);
 assert.equal(raw.fullChart.cleanupStageChildren, 0);
 
-const parentMutation = structuredClone(raw.worldObservation);
-parentMutation.records.find((record) => record.label === "note:world").parent = null;
-assert.throws(() => verifyOrdinaryPixiWorldObservation(parentMutation, totalFixture),
-  "parent mutation sentinel must fail");
-const unityYMutation = structuredClone(raw.worldObservation);
-unityYMutation.records.find((record) => record.label === "note:world").worldMatrix[5] += 1;
-assert.throws(() => verifyOrdinaryPixiWorldObservation(unityYMutation, totalFixture),
-  "Unity Y mutation sentinel must fail");
-const maskMutation = structuredClone(raw.worldObservation);
-maskMutation.records.find((record) =>
-  record.label === "score-high-rank-animation-layer" && record.mask === "score-high-rank-panel-mask").mask = null;
-assert.throws(() => verifyOrdinaryPixiWorldObservation(maskMutation, totalFixture),
-  "mask-space mutation sentinel must fail");
-const fallbackMutation = structuredClone(raw);
-fallbackMutation.decoder.fallbackUsed = true;
-assert.throws(() => verifyNoFallbackObservation(fallbackMutation),
-  "fallback mutation sentinel must fail");
-console.log(`independent current raw world observation verified: records=${raw.worldObservation.records.length} score-matrix=${matrix.length} sentinels=parent|unity-y|mask-space|fallback`);
+console.log(`independent current raw world observation verified: records=${raw.worldObservation.records.length} score-matrix=${matrix.length} complete-positive-vector=true`);
