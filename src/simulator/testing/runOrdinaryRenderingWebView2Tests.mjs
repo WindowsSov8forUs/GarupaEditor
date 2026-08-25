@@ -205,8 +205,14 @@ function verify(value) {
   const comboCapture = value.scene.captures.find((capture) => capture.label === "combo-add-score");
   const comboTextures = comboCapture?.worldObservation?.records
     ?.map((record) => record.texture?.label ?? "") ?? [];
-  if (comboTextures.some((label) => label.includes("icon_number_big_AP_") || label.endsWith(":combo_AP"))) {
-    throw new Error(`AP material appeared without display-mode owner: ${comboTextures.join("|")}`);
+  const normalDigitIndex = comboTextures.findIndex((label) =>
+    label.includes("icon_number_big_") && !label.includes("icon_number_big_AP_"));
+  const normalUnitIndex = comboTextures.findIndex((label) => label.endsWith(":combo"));
+  const apDigitIndex = comboTextures.findIndex((label) => label.includes("icon_number_big_AP_"));
+  const apUnitIndex = comboTextures.findIndex((label) => label.endsWith(":combo_AP"));
+  if (normalDigitIndex < 0 || normalUnitIndex < 0 || apDigitIndex < 0 || apUnitIndex < 0 ||
+      apDigitIndex <= normalDigitIndex || apUnitIndex <= normalUnitIndex) {
+    throw new Error(`parallel normal/AP Combo material route mismatch: ${comboTextures.join("|")}`);
   }
   for (const cleanup of [
     value.cleanup.auto,
