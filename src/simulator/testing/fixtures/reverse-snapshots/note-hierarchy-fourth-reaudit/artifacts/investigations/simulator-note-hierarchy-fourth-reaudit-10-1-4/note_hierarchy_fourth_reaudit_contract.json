@@ -1,0 +1,629 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-note-hierarchy-fourth-reaudit",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "resource_contract": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    },
+    "note_family": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_family_r4_profile.json",
+      "bytes": 23931,
+      "sha256": "B57A918F44124EBB7218B311FCC7D39FABBCDC08E6A912087AE44BAB63EB3AD3"
+    },
+    "geometry": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_geometry_profile.json",
+      "bytes": 20910,
+      "sha256": "940A4BCB88B760CD7EF2EAD26EDBA52038FC8051A327191151DDCB896F403BCB"
+    },
+    "visible_profile": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+    },
+    "managed_dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "name_global_r0": {
+      "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_name_global_r0.json",
+      "bytes": 1166,
+      "sha256": "008DEBDC66B803AD97B46E5DCDEE1265FC34B5B19DC972C35F5C205ED2CC92B7"
+    },
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/030ea764__NoteLong__setupNoteSprite.arm64.tsv",
+        "bytes": 1016,
+        "sha256": "510E960ECC646DB8C8D8C5A7DBE65850B15F5C3D192F57E1C2B7E12774742DFA"
+      },
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/0321a6a8__NoteSlideAfter__SetupAfterNoteSprite.arm64.tsv",
+        "bytes": 2105,
+        "sha256": "4D20CFD30FBCEF573CD8D3AA2070B7FC0169AAB344668B88B00249C44FB8B9AD"
+      },
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/0321aa54__NoteSlide__setupNoteSprite.arm64.tsv",
+        "bytes": 1016,
+        "sha256": "AED661FC32A7D2119EFFA689C1650CA78E7DCC424F24D3DE1E3F507C68E00168"
+      },
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/0321fb78__NoteSlideAfter__setupNoteSprite.arm64.tsv",
+        "bytes": 1016,
+        "sha256": "D76F04BB84DC43C77BE51076A524A7892AAF1C8C022439FE2D0E6AFB978F4FC9"
+      },
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/03220eb0__NoteSlideDirectionalFlickAfter__setupNoteSprite.arm64.tsv",
+        "bytes": 3829,
+        "sha256": "E5ACF200E297C27CE6CD343AEDB649C793705768186282B23BDD2D263F2C8CEE"
+      },
+      {
+        "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/arm64/0322151c__NoteSlideFlickAfter__setupNoteSprite.arm64.tsv",
+        "bytes": 1200,
+        "sha256": "9947A4519E5D63A735606088FD998FC9F692C08443C5FDBEF2BBC4136FA3CC1D"
+      }
+    ],
+    "device_frame": {
+      "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/runtime/long-note-live.png",
+      "bytes": 1041625,
+      "sha256": "792D7420B6638368F5DD90B6A58D97D0F1334DBF8C69C428AECCB0E77CFD1046"
+    }
+  },
+  "selected_skin00_resources": {
+    "note_long_0": {
+      "rect": {
+        "x": 1550.0,
+        "y": 366.0,
+        "width": 308.0,
+        "height": 120.0
+      },
+      "texture_rect": {
+        "x": 1550.0,
+        "y": 366.0,
+        "width": 308.0,
+        "height": 120.0
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pixels_per_unit": 100.0
+    },
+    "note_slide_among": {
+      "rect": {
+        "x": 310.0,
+        "y": 610.0,
+        "width": 308.0,
+        "height": 120.0
+      },
+      "texture_rect": {
+        "x": 313.0267639160156,
+        "y": 659.0761108398438,
+        "width": 301.94647216796875,
+        "height": 25.847759246826172
+      },
+      "texture_rect_offset": {
+        "x": 3.026763916015625,
+        "y": 49.07611083984375
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "pixels_per_unit": 100.0
+    },
+    "note_long_flash_count": 7
+  },
+  "name_globals": [
+    {
+      "global_slot_rva": "0x6C8E230",
+      "resolved_string_literal_address": "0x6FA0B10",
+      "value": "note_long"
+    },
+    {
+      "global_slot_rva": "0x6C95EE0",
+      "resolved_string_literal_address": "0x6FA0B50",
+      "value": "note_slide_among"
+    },
+    {
+      "global_slot_rva": "0x6C8E2E8",
+      "resolved_string_literal_address": "0x6FA0AC8",
+      "value": "note_flick"
+    }
+  ],
+  "slide_scene_ownership": {
+    "root_class": "NoteSlide",
+    "root_default_family": "note_long",
+    "root_flash_owner_count": 1,
+    "root_flash_fields": [
+      "slideNoteFlashAnimator@0x188",
+      "slideNoteFlashSprite@0x190"
+    ],
+    "after_class": "NoteSlideAfter",
+    "after_has_long_flash_fields": false,
+    "after_initial_default_family": "note_long",
+    "visible_nonterminal_replacement_family": "note_slide_among",
+    "replacement_requires_next_note": true,
+    "invisible_nonterminal_sprite_hidden": true,
+    "replacement_uses_range_key": true,
+    "normal_terminal_family": "note_long",
+    "flick_terminal_family": "note_flick",
+    "directional_terminal_family": "note_flick_l/r",
+    "intermediate_long_flash_owner_count": 0
+  },
+  "slide_lifecycle": {
+    "activation_order": [
+      "after initial default setup",
+      "mesh setup",
+      "virtual setup",
+      "SetupAfterNoteSprite replacement"
+    ],
+    "nonterminal_visual": "thin note_slide_among bar",
+    "terminal_visual": "long/flick/directional terminal head",
+    "flash_visual": "one root-owned LongNoteFlash animation, not one animation per child"
+  },
+  "animations": {
+    "root_long_flash": {
+      "clipId": "note-long-flash",
+      "owner": "long-flash-icon",
+      "durationSeconds": 0.8333333134651184,
+      "loop": true,
+      "curves": [
+        {
+          "index": 0,
+          "channel": "path_hash:1735311026.attribute_hash:2526845255",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                -5.529601097106934,
+                2.303999900817871,
+                0.9600000977516174,
+                0.20000000298023224
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                5.529601097106934,
+                -4.6080002784729,
+                0.0,
+                0.6000000238418579
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.20000000298023224
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "channel": "path_hash:1735311026.attribute_hash:4215373228",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                -5.529601097106934,
+                2.303999900817871,
+                0.9600000977516174,
+                0.20000000298023224
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                5.529601097106934,
+                -4.6080002784729,
+                0.0,
+                0.6000000238418579
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.20000000298023224
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "channel": "path_hash:1735311026.attribute_hash:2334886179",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                -5.529601097106934,
+                2.303999900817871,
+                0.9600000977516174,
+                0.20000000298023224
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                5.529601097106934,
+                -4.6080002784729,
+                0.0,
+                0.6000000238418579
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.20000000298023224
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "channel": "path_hash:1735311026.attribute_hash:304273561",
+          "storage": "constant",
+          "value": 1.0
+        }
+      ]
+    },
+    "directional_icon_sorting_order": 71
+  },
+  "geometry": {
+    "base_mesh": {
+      "vertex_count": 22,
+      "index_count": 60,
+      "pair_count": 11,
+      "front_boundary": "position.x +/- localScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+      "after_boundary": "position.x +/- afterScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+      "vertices": "for section i=0..10, linear interpolate front/after boundaries at i/10; Z=0",
+      "indices": [
+        0,
+        2,
+        1,
+        1,
+        2,
+        3,
+        2,
+        4,
+        3,
+        3,
+        4,
+        5,
+        4,
+        6,
+        5,
+        5,
+        6,
+        7,
+        6,
+        8,
+        7,
+        7,
+        8,
+        9,
+        8,
+        10,
+        9,
+        9,
+        10,
+        11,
+        10,
+        12,
+        11,
+        11,
+        12,
+        13,
+        12,
+        14,
+        13,
+        13,
+        14,
+        15,
+        14,
+        16,
+        15,
+        15,
+        16,
+        17,
+        16,
+        18,
+        17,
+        17,
+        18,
+        19,
+        18,
+        20,
+        19,
+        19,
+        20,
+        21
+      ],
+      "uv_f32_bits": [
+        [
+          "00000000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "00000000",
+          "3DCCCCCD"
+        ],
+        [
+          "3F800000",
+          "3DCCCCCD"
+        ],
+        [
+          "00000000",
+          "3E4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3E4CCCCD"
+        ],
+        [
+          "00000000",
+          "3E99999A"
+        ],
+        [
+          "3F800000",
+          "3E99999A"
+        ],
+        [
+          "00000000",
+          "3ECCCCCD"
+        ],
+        [
+          "3F800000",
+          "3ECCCCCD"
+        ],
+        [
+          "00000000",
+          "3F000000"
+        ],
+        [
+          "3F800000",
+          "3F000000"
+        ],
+        [
+          "00000000",
+          "3F19999A"
+        ],
+        [
+          "3F800000",
+          "3F19999A"
+        ],
+        [
+          "00000000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "00000000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "00000000",
+          "3F666666"
+        ],
+        [
+          "3F800000",
+          "3F666666"
+        ],
+        [
+          "00000000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "initial_color_f32_bits": [
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ]
+      ],
+      "width_rate": "special disabled=>1; type2=>1.05; type3..7=>1.05+clamp(progress,0,1)*0.03; otherwise 1",
+      "threshold_property_id": 3453,
+      "observed_threshold_f32_bits": [
+        "44322D84"
+      ]
+    },
+    "note_motion": {
+      "arrival_seconds": 0.800000011920929,
+      "progress": "progress == 0 ? realMoveSecond / arrivalSeconds : progress + deltaTime / arrivalSeconds",
+      "curve": "pow(1.1, (progress - 1) * 50)",
+      "position_x": "startX + curve * (goalX - startX)",
+      "position_y": "startY - abs((startY - goalY) * curve)",
+      "button_x": "authoredButtonX * screenWidthAdjustRate",
+      "button_y": "authoredButtonY * screenWidthAdjustRate",
+      "note_start_x": "buttonX * launchDistanceRate",
+      "vanishing_y": "button1Y + button1X * vanishingSlope",
+      "note_start_y": "buttonY + (1 - launchDistanceRate) * (vanishingY - buttonY)",
+      "screen_width_adjust_rate": "screenSizeX / referenceScreenSizeX",
+      "note_setting_scale": "screenWidthAdjustRate * effectiveNoteSize / 100",
+      "effective_note_size": "multi-range ? clamp(NoteSize, 80, 150) : NoteSize",
+      "uniform_scale": "verticalRate * aspectRatio + (1 - aspectRatio)",
+      "vertical_rate": "noteSettingScale * abs(launcherY - currentY) / abs(launcherY - targetCenterY)",
+      "aspect_ratio": "clamp(highAspectRatio,0,1) * (scaleMinRatio[buttonCount-1] - 0.996) + 0.996",
+      "float_policy": "Float32 after every managed arithmetic write; no implicit clamp except named clamps"
+    },
+    "selected_device_frame_green_pixel_count": 80332
+  },
+  "portable_ordering": {
+    "front_source_sorting_order": 70,
+    "directional_icon_sorting_order": 71,
+    "slide_mesh_before_front": true,
+    "hud_sorting_order": 100,
+    "product_authored_node_order_is_render_sorting_order": false
+  },
+  "portable_acceptance": {
+    "must_bind_note_slide_among_for_visible_nonterminal_slide_children": true,
+    "must_keep_exactly_one_root_long_flash_owner": true,
+    "must_not_bind_note_long_and_long_flash_to_every_slide_child": true,
+    "must_preserve_front_70_icon_71_and_mesh_before_front": true,
+    "must_bind_curve_material_for_slide_mesh": true,
+    "must_publish_product_mesh_and_sync_ordering": true,
+    "fractional_outside_product_nodes_are_original_exact": false
+  },
+  "unknown_fields": []
+}
