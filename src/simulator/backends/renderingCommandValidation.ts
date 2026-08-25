@@ -50,7 +50,7 @@ export function validateTypedRenderHudCommand(
         "scoreMax", "scoreText", "sliderValue", "thresholds",
       ]) &&
         validScoreThresholds(state.thresholds, state.scoreMax) &&
-        isUInt32(state.score) && state.score <= state.scoreMax && isUInt32(state.scoreMax) &&
+        isUInt32(state.score) && isUInt32(state.scoreMax) &&
         state.scoreText === expectedScoreText(state.score) &&
         isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
         state.rank === scoreRank(state.score, state.thresholds) &&

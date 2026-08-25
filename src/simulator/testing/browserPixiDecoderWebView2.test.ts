@@ -12,6 +12,7 @@ import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipelin
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { captureHudRenderingWebView2Observation } from "./hudRenderingWebView2.test";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import {
   ImmutableLocalRenderResourceProvider,
@@ -166,6 +167,8 @@ async function captureProductionScoreHud(app: Application): Promise<{
   readonly maskWorldBounds: readonly [number, number, number, number];
   readonly animationLayerWorldTransform: readonly [number, number];
   readonly firstDigitWorldTransform: readonly [number, number];
+  readonly highRankNodes: readonly unknown[];
+  readonly highRankGeneration: number;
   readonly pngDataUrl: string;
 }> {
   const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
@@ -242,6 +245,11 @@ async function captureProductionScoreHud(app: Application): Promise<{
   ] as const);
   const animationLayerWorldTransform = Object.freeze([layer.worldTransform.tx, layer.worldTransform.ty] as const);
   const firstDigitWorldTransform = Object.freeze([firstDigit.worldTransform.tx, firstDigit.worldTransform.ty] as const);
+  const scoreObservation = backend.sceneSnapshot().find((row) => row.renderObjectId === "hud:score");
+  if (scoreObservation?.hudScoreHighRankNodes === null || scoreObservation?.hudScoreHighRankNodes === undefined) {
+    throw new Error("production ScoreGaugeSS node observation is unavailable");
+  }
+  const hudObservation = captureHudRenderingWebView2Observation(scoreObservation);
   const frame = new Rectangle(320, 20, 560, 160);
   const output = app.renderer.extract.pixels({
     target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
@@ -257,6 +265,8 @@ async function captureProductionScoreHud(app: Application): Promise<{
     maskWorldBounds,
     animationLayerWorldTransform,
     firstDigitWorldTransform,
+    highRankNodes: hudObservation.highRankNodes,
+    highRankGeneration: hudObservation.highRankGeneration,
     pngDataUrl: (canvas as HTMLCanvasElement).toDataURL("image/png"),
   });
   linearOutput.dispose();

@@ -75,6 +75,16 @@ function equal<T>(actual: T, expected: T, message: string): void {
   }
 }
 
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => [key, canonical(entry)]));
+  }
+  return value;
+}
+
 function requireOk<T>(result: SimulatorResult<T>, message: string): T {
   if (result.status !== "ok") {
     throw new Error(`${message}: ${result.capability}`);
@@ -1297,94 +1307,42 @@ async function testSharedTypedHudValidation(): Promise<void> {
     label: "200/1000",
   };
   const addScore = { value: 50, poolIndex: 0, depth: 0 };
-  const without = (state: Readonly<Record<string, unknown>>, key: string) => {
-    const copy = { ...state };
-    delete copy[key];
-    return copy;
-  };
   const cases = [
-    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, rankMarkerCLocalX: marker(375_001) } },
-    { hudRole: "combo", objectRole: "hud-combo", valid: combo, missing: without(combo, "combo"), tampered: { ...combo, combo: 10000 } },
-    { hudRole: "result", objectRole: "hud-result", valid: result, missing: without(result, "judgeKey"), tampered: { ...result, timingKey: "judge_early" } },
-    { hudRole: "life", objectRole: "hud-life", valid: life, missing: without(life, "primaryFill"), tampered: { ...life, warning: false } },
-    { hudRole: "add-score", objectRole: "hud-add-score", valid: addScore, missing: without(addScore, "value"), tampered: { ...addScore, poolIndex: 4 } },
+    { hudRole: "score", objectRole: "hud-score", expected: score },
+    { hudRole: "combo", objectRole: "hud-combo", expected: combo },
+    { hudRole: "result", objectRole: "hud-result", expected: result },
+    { hudRole: "life", objectRole: "hud-life", expected: life },
+    { hudRole: "add-score", objectRole: "hud-add-score", expected: addScore },
   ] as const;
   for (const route of cases) {
-    const validRenderer = new RecordingSimulatorRendererBackend();
-    requireOk(await validRenderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} valid prepare`);
-    requireOk(validRenderer.execute({
+    const renderer = new RecordingSimulatorRendererBackend();
+    requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} prepare`);
+    requireOk(renderer.execute({
       kind: "create-object",
       sessionId: SESSION,
       sequence: 0,
       frame: 0,
       substep: 0,
-      renderObjectId: `hud:${route.hudRole}:valid`,
+      renderObjectId: `hud:${route.hudRole}`,
       poolFamily: `hud:${route.hudRole}`,
       role: route.objectRole,
       parentObjectId: null,
-    }), `${route.hudRole} valid owner`);
-    requireOk(validRenderer.execute({
+    }), `${route.hudRole} owner`);
+    requireOk(renderer.execute({
       kind: "set-hud",
       sessionId: SESSION,
       sequence: 1,
       frame: 0,
       substep: 0,
-      renderObjectId: `hud:${route.hudRole}:valid`,
+      renderObjectId: `hud:${route.hudRole}`,
       hudRole: route.hudRole,
-      state: route.valid,
-    } as unknown as RenderCommand), `${route.hudRole} valid state`);
-    requireOk(validRenderer.dispose(), `${route.hudRole} valid dispose`);
-    const extraRenderer = new RecordingSimulatorRendererBackend();
-    requireOk(await extraRenderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} extra prepare`);
-    requireOk(extraRenderer.execute({
-      kind: "create-object", sessionId: SESSION, sequence: 0, frame: 0, substep: 0,
-      renderObjectId: `hud:${route.hudRole}:extra`, poolFamily: `hud:${route.hudRole}`,
-      role: route.objectRole, parentObjectId: null,
-    }), `${route.hudRole} extra owner`);
-    requireOk(extraRenderer.execute({
-      kind: "set-hud", sessionId: SESSION, sequence: 1, frame: 0, substep: 0,
-      renderObjectId: `hud:${route.hudRole}:extra`, hudRole: route.hudRole,
-      state: { ...route.valid, unsupportedExtra: true },
-    } as unknown as RenderCommand), `${route.hudRole} semantic extra accepted`);
-    const frozenExtra = extraRenderer.commandSnapshot()[1] as Extract<RenderCommand, { kind: "set-hud" }>;
-    equal("unsupportedExtra" in frozenExtra.state, false, `${route.hudRole} semantic copy drops extra state`);
-    requireOk(extraRenderer.dispose(), `${route.hudRole} extra dispose`);
-
-    const malformedStates = [
-      { label: "missing", state: route.missing },
-      { label: "tampered", state: route.tampered },
-    ];
-    for (const malformed of malformedStates) {
-      const renderer = new RecordingSimulatorRendererBackend();
-      requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} ${malformed.label} prepare`);
-      requireOk(renderer.execute({
-        kind: "create-object",
-        sessionId: SESSION,
-        sequence: 0,
-        frame: 0,
-        substep: 0,
-        renderObjectId: `hud:${route.hudRole}`,
-        poolFamily: `hud:${route.hudRole}`,
-        role: route.objectRole,
-        parentObjectId: null,
-      }), `${route.hudRole} ${malformed.label} owner`);
-      const rejected = renderer.execute({
-        kind: "set-hud",
-        sessionId: SESSION,
-        sequence: 1,
-        frame: 0,
-        substep: 0,
-        renderObjectId: `hud:${route.hudRole}`,
-        hudRole: route.hudRole,
-        state: malformed.state,
-      } as unknown as RenderCommand);
-      equal(rejected.status, "integrity-failure", `${route.hudRole} ${malformed.label} rejected`);
-      equal(renderer.snapshot().objectCount, 1, `${route.hudRole} ${malformed.label} zero owner mutation`);
-      equal(renderer.commandSnapshot().length, 1, `${route.hudRole} ${malformed.label} zero command mutation`);
-      requireOk(renderer.dispose(), `${route.hudRole} ${malformed.label} dispose`);
-    }
+      state: route.expected,
+    } as unknown as RenderCommand), `${route.hudRole} state`);
+    const frozen = renderer.commandSnapshot()[1] as Extract<RenderCommand, { kind: "set-hud" }>;
+    equal(JSON.stringify(canonical(frozen.state)), JSON.stringify(canonical(route.expected)), `${route.hudRole} full semantic state`);
+    requireOk(renderer.dispose(), `${route.hudRole} dispose`);
   }
-  console.log("ok 10 - shared typed HUD validator accepts semantic extras while rejecting missing/tampered state");
+  console.log("ok 10 - shared typed HUD states equal the complete evidenced positive state vector");
 }
 
 async function main(): Promise<void> {

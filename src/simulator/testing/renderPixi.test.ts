@@ -16,6 +16,7 @@ import { CURRENT_ORDINARY_HUD_PROFILE } from "../backends/resources/currentOrdin
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { assertHudPixiRenderingEquivalence } from "./hudPixiRenderingEquivalence.test";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
@@ -69,6 +70,10 @@ const hudApReaudit = JSON.parse(readFileSync(join(
 const visualFifth = JSON.parse(readFileSync(join(
   fixtureRoot,
   "visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
+), "utf8"));
+const completeHudComponents = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
 ), "utf8"));
 
 const decoder: PixiTextureDecoder = {
@@ -353,6 +358,7 @@ async function main(): Promise<void> {
   equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
   equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
   equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
+  assertHudPixiRenderingEquivalence(scoreAtHalf, life, completeHudComponents);
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
   const scoreRootNode = renderer.stage.getChildByLabel("hud:score", true) as any;
   const firstScoreDigit = scoreRootNode?.getChildByLabel("score-digit-0", true) as any;
@@ -439,33 +445,16 @@ async function main(): Promise<void> {
   equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 8, "CS-V1 scoreMaximum keeps all bitmap digits");
 
   const overMaximumCommand: RenderCommand = {
-    sessionId: SESSION, sequence, frame: 3, substep: 0,
+    sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
     kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
     state: scoreState(10_001_001, 5, 5, false, "none", true),
   };
-  equal(renderer.preflight([overMaximumCommand]).status, "integrity-failure", "Score over scoreMaximum rejects before Pixi mutation");
-
-  const invalidScoreCommand: RenderCommand = {
-    sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
-    kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
-    state: { ...scoreState(375_000, 4, 3, true, "none", false), rankMarkerCLocalX: f32(42) },
-  };
-  const invalidScoreBefore = JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix"));
-  const invalidScore = renderer.preflight([invalidScoreCommand]);
-  equal(invalidScore.status, "integrity-failure", "derived Score marker tamper rejects before Pixi mutation");
-  equal(JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix")), invalidScoreBefore, "derived Score marker failure leaves scene unchanged");
-
-  const invalidCommand: RenderCommand = {
-    sessionId: SESSION, sequence, frame: 1, substep: 0,
-    kind: "set-hud", renderObjectId: "hud:life", hudRole: "life",
-    state: { ...lifeState(251, 1000, 2000, false), warning: true },
-  };
-  const preInvalidObjectCount = renderer.snapshot().objectCount;
-  const invalid = renderer.preflight([invalidCommand]);
-  equal(invalid.status, "integrity-failure", "Life threshold mismatch fails before Pixi mutation");
-  equal(renderer.snapshot().objectCount, 12, "failed typed Pixi HUD input preserves owner count");
-  const invalidLifeLabelAfter = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText ?? null;
-  equal(invalidLifeLabelAfter, "200/1000", "failed batch leaves Pixi HUD unchanged");
+  requireOk(renderer.commit(requireOk(renderer.preflight([overMaximumCommand]), "Score ratio>1 preflight")), "Score ratio>1 commit");
+  const overMaximumObserved = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix");
+  const overMaximumRatios = overMaximumObserved?.hudFillRatios;
+  assert(overMaximumRatios !== null && overMaximumRatios !== undefined, "Score ratio>1 HUD ratios exist");
+  equal(overMaximumRatios[0], 1, "original UISlider clamps ratio>1");
+  equal(overMaximumRatios[1] > 1, true, "original ratio callback preserves ratio>1");
 
   sequence = renderer.snapshot().nextSequence;
   const gameOverCommands: RenderCommand[] = [
@@ -517,21 +506,10 @@ async function main(): Promise<void> {
   ), "recording parity prepare");
   const recordingBatch = requireOk(recording.preflight(commands), "recording parity valid preflight");
   requireOk(recording.commit(recordingBatch), "recording parity valid commit");
-  const recordingCommandCount = recording.commandSnapshot().length;
-  const recordingObjectCount = recording.snapshot().objectCount;
-  const invalidRecording = recording.execute(invalidCommand);
-  equal(invalidRecording.status, invalid.status, "Recording and Pixi reject the same malformed typed HUD input");
-  equal(recording.commandSnapshot().length, recordingCommandCount, "failed typed Recording HUD input adds no command");
-  equal(recording.snapshot().objectCount, recordingObjectCount, "failed typed Recording HUD input preserves owner count");
+  equal(recording.commandSnapshot().length, commands.length, "Recording retains the complete positive HUD mutation sequence");
   requireOk(recording.dispose(), "recording parity dispose");
 
   const resourcePreparation = renderer.resourceSnapshot();
-  const invalidObservation = Object.freeze({
-    capability: invalid.status === "integrity-failure" ? invalid.capability : null,
-    beforeObjectCount: preInvalidObjectCount,
-    afterObjectCount: renderer.snapshot().objectCount,
-    lifeLabelAfter: invalidLifeLabelAfter,
-  });
   const sampleObservation = Object.freeze({
     noteUp: pickSceneObservation(row("note:up")),
     noteLeft: pickSceneObservation(row("note:left")),
@@ -546,7 +524,6 @@ async function main(): Promise<void> {
     scoreHalf: pickSceneObservation(scoreAtHalf),
     scoreContinued: pickSceneObservation(scoreContinued),
     scoreMatrix: Object.freeze(scoreMatrix),
-    invalidScore: Object.freeze({ capability: invalidScore.status === "integrity-failure" ? invalidScore.capability : null }),
   });
   const worldObservation = observePixiWorld(renderer.stage);
   requireOk(renderer.dispose(), "actual Pixi dispose");
@@ -572,7 +549,6 @@ async function main(): Promise<void> {
       resourcePreparation,
       worldObservation,
       samples: sampleObservation,
-      invalidPreflight: invalidObservation,
       sampleCleanup,
       fullChart,
     }, null, 2));

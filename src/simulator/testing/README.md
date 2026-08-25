@@ -32,6 +32,14 @@ npm.cmd run simulator:test:total-revalidation:clean
 
 `SIMULATOR_WEBVIEW2_CLEAN_BUILD=1` affects only ignored Cargo build artifacts. It does not alter browser process freshness, scene inputs, capture count, expected digests, or production behavior.
 
+## Complete HUD equivalence leaf
+
+```powershell
+npm.cmd run simulator:test:hud-equivalence
+```
+
+该门只消费Reverse `07bf4e7c`晋升的scene/component/resource/logic/primitive/runtime/closure七项fixture。`hudLogicEquivalence`逐项比较原作19个Score边界、ratio/slider/indicator、AP设置、Life与AddScore owner；`hudSceneGraphEquivalence`比较104个选定widget和11个ScoreGaugeSS组件；`hudRenderPrimitiveEquivalence`比较world corners、纹理引用、widget/pivot/color/blend、56 curves/236 keys和SoftClip `[20,3]`。随后actual Pixi验证持久对象generation及Life分层，真实WebView2使用production PNG/TTF/Filter并将逐节点组件结果回连Reverse profile。稳定digest只作为捕获记录，不是通过依据；本门不以对象缺失、fallback缺失、hash格式或重复运行一致性作为HUD等价目标。
+
 ## Original Pause leaves
 
 ```powershell

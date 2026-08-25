@@ -44,11 +44,11 @@ export class SinglePlayScoreGauge {
   }
 
   update(score: number): SimulatorResult<SinglePlayScoreGaugeSnapshot> {
-    if (!isUInt32(score) || score > this.scoreMax) {
+    if (!isUInt32(score)) {
       return integrityFailure(
         "score-gauge.invalid-score",
         [],
-        "Score Gauge accepts one unsigned score no greater than its supplied threshold profile maximum.",
+        "Score Gauge accepts one unsigned score; the ratio callback may exceed one while UISlider and indicator clamp independently, and score-domain maxima remain an upstream branch concern.",
       );
     }
     const nextRank = rankForScore(score, this.thresholdProfile);

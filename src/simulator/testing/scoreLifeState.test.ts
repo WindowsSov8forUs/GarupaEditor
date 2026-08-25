@@ -149,7 +149,8 @@ for (const [score, rank] of [
   [6_749_999, LiveClearRank.A], [6_750_000, LiveClearRank.S],
   [8_999_999, LiveClearRank.S], [9_000_000, LiveClearRank.SS],
 ] as const) assert.equal(requireOk(gauge.update(score)).currentGaugeColorRank, rank);
-assert.equal(gauge.update(BASE + 4).status, "integrity-failure");
+assert.equal(requireOk(gauge.update(BASE + 4)).sliderValue, 1);
+assert.equal(gauge.update(-1).status, "integrity-failure");
 assert.equal(calculateNormalizedScoreMaximum(0), null);
 
 testFullChartAutoMaximum();

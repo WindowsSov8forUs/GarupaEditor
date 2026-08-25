@@ -30,6 +30,10 @@ const contract = JSON.parse(readFileSync(join(
   testingRoot,
   "fixtures/reverse-snapshots/c07-evidence/artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
 ), "utf8"));
+const completeHudComponents = JSON.parse(readFileSync(join(
+  testingRoot,
+  "fixtures/reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+), "utf8"));
 
 try {
   if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
@@ -112,6 +116,7 @@ function verify(value) {
   closeTuple(scoreHud.maskWorldBounds, adaptive.maskBounds, 1e-4, "Score high-rank panel SS-threshold world bounds");
   closeTuple(scoreHud.animationLayerWorldTransform, adaptive.progress, 1e-4, "Score high-rank animation and panel coordinate spaces");
   closeTuple(scoreHud.firstDigitWorldTransform, adaptive.firstDigit, 1e-4, "CS-V1 SS-threshold first bitmap digit world transform");
+  verifyHighRankNodes(scoreHud);
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }
@@ -132,6 +137,41 @@ function verify(value) {
   equal(sha256(readFileSync(png)), contract.observation.inputs.sha256.png.toUpperCase(), "fixture PNG hash");
   equal(sha256(readFileSync(font)), contract.observation.inputs.sha256.font.toUpperCase(), "fixture font hash");
   console.log(`production BrowserPixiTextureDecoder WebView2 passed: runtime=${versions.get("Microsoft Edge WebView2")} png=${value.raster.pngOnly.sha256} font=${value.raster.fontOnly.sha256} scoreHud=${scoreHud.sha256} pixels=${scoreHud.nonTransparentPixels}`);
+}
+
+function verifyHighRankNodes(scoreHud) {
+  equal(scoreHud.highRankGeneration, 1, "ScoreGaugeSS persistent graph generation");
+  const expected = new Map(completeHudComponents.high_rank_effect.nodes.map((node) => [
+    node.path.split("/").pop(), node,
+  ]));
+  equal(scoreHud.highRankNodes.length, expected.size, "ScoreGaugeSS complete component count");
+  for (const actual of scoreHud.highRankNodes) {
+    const source = expected.get(actual.name);
+    if (!source) throw new Error(`unexpected ScoreGaugeSS node ${actual.name}`);
+    const textureKey = source.resolved_texture_name === "ss_kira"
+      ? "high-rank-kira"
+      : source.resolved_texture_name === "ss_overlay"
+      ? "high-rank-overlay"
+      : "high-rank-long-star";
+    equal(actual.textureKey, textureKey, `${actual.name} serialized UITexture route`);
+    equal(JSON.stringify(actual.widgetSize), JSON.stringify([source.width, source.height]), `${actual.name} widget size`);
+    equal(JSON.stringify(actual.anchor), JSON.stringify([source.pivot === "Left" ? 0 : 0.5, 0.5]), `${actual.name} pivot`);
+    equal(actual.tint, colorTint(source.color_f32_bits), `${actual.name} widget RGB`);
+    if (Math.abs(actual.alpha - littleF32(source.color_f32_bits[3])) > 1e-6) {
+      throw new Error(`${actual.name} widget alpha: ${actual.alpha}`);
+    }
+    equal(actual.blend, "normal", `${actual.name} Unlit/Transparent Colored blend`);
+  }
+}
+
+function littleF32(bits) {
+  const bytes = bits.match(/../g).map((entry) => Number.parseInt(entry, 16));
+  return new DataView(Uint8Array.from(bytes).buffer).getFloat32(0, true);
+}
+
+function colorTint(bits) {
+  const channel = (value) => Math.round(littleF32(value) * 255);
+  return (channel(bits[0]) << 16) | (channel(bits[1]) << 8) | channel(bits[2]);
 }
 
 function sha256(bytes) {
