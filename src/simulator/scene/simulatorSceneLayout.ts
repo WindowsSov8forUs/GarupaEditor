@@ -663,7 +663,12 @@ function fieldObject(
     scale: vector2(scale, scaleY),
     rotationDegrees: f32(0),
     color: white(),
-    ordering: ordering(domainLayer, sourceSortingOrder),
+    ordering: Object.freeze({
+      domainLayer,
+      sourceDepthOrSortingOrder: sourceSortingOrder,
+      sourceZ: f32(0),
+      creationSequence: depth + 1,
+    }),
     maskObjectId,
   });
 }

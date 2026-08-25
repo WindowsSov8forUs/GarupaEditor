@@ -346,6 +346,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     readonly tint: number;
     readonly blendMode: string;
     readonly textureLabel: string;
+    readonly sortingStage: "low" | "high";
+    readonly zIndex: number;
   }[] {
     return Object.freeze(this.liveSprites.map((sprite) => Object.freeze({
       particleId: sprite.label,
@@ -356,6 +358,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       tint: Number(sprite.tint),
       blendMode: String(sprite.blendMode),
       textureLabel: sprite.texture.label ?? "",
+      sortingStage: sprite.parent === this.highSortingStage ? "high" : "low",
+      zIndex: sprite.zIndex,
     })));
   }
 

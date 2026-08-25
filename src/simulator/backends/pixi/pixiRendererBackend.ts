@@ -669,6 +669,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly height: number;
       readonly visible: boolean;
       readonly alpha: number;
+      readonly tint: number;
       readonly blend: string;
       readonly zIndex: number;
       readonly maskLabel: string | null;
@@ -679,6 +680,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly position: readonly [number, number];
       readonly anchor: readonly [number, number];
       readonly fontSize: number;
+      readonly fill: number;
       readonly visible: boolean;
       readonly alpha: number;
       readonly tint: number;
@@ -774,6 +776,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             height: sprite.height,
             visible: sprite.visible,
             alpha: sprite.alpha,
+            tint: Number(sprite.tint),
             blend: String(sprite.blendMode),
             zIndex: sprite.zIndex,
             maskLabel: sprite.mask instanceof Container ? sprite.mask.label : null,
@@ -792,6 +795,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
               position: Object.freeze([text.position.x, text.position.y] as const),
               anchor: Object.freeze([text.anchor.x, text.anchor.y] as const),
               fontSize: Number(text.style.fontSize),
+              fill: Number(text.style.fill),
               visible: text.visible,
               alpha: text.alpha,
               tint: text.tint,
@@ -1438,7 +1442,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
       if (leftRecord === undefined || rightRecord === undefined) {
         const externalLayer = (node: Container): boolean =>
-          node.label === "GarupaSimulatorParticles";
+          node.label === "GarupaSimulatorParticles" ||
+          node.label === "GarupaSimulatorParticlesHigh";
         if ((leftRecord === undefined && !externalLayer(left)) ||
           (rightRecord === undefined && !externalLayer(right))) {
           throw new Error("Pixi sibling ordering encountered an unowned scene object");
@@ -2280,23 +2285,28 @@ function applyLifeHud(
   if (font === undefined || visual.text === null || visual.lifeTextSegments === null || visual.gameOverText === null) {
     throw new Error("Life sgm label font is missing");
   }
-  visual.text.text = state.label;
+  setHudText(
+    visual.text,
+    state.label,
+    current.lifeLabel.fontSize,
+    state.currentLife > 0 ? 0x00c000 : 0xfe2349,
+    font.family,
+  );
   visual.text.visible = false;
   const separator = state.label.indexOf("/");
   if (separator <= 0 || separator === state.label.length - 1) {
     throw new Error("Life label requires current/maximum encoded segments");
   }
-  const segments = [state.label.slice(0, separator), "/", state.label.slice(separator + 1)] as const;
+  const maximum = state.label.slice(separator + 1);
+  const segments = [state.label, `/${maximum}`, maximum] as const;
   const fills = [state.currentLife > 0 ? 0x00c000 : 0xfe2349, 0x505050, 0x00c000] as const;
   const labelPosition = localFromAuthoredWorld(current.lifeLabel.authoredPosition);
-  let cursor = labelPosition[0];
-  for (let index = visual.lifeTextSegments.length - 1; index >= 0; index -= 1) {
+  for (let index = 0; index < visual.lifeTextSegments.length; index += 1) {
     const text = visual.lifeTextSegments[index]!;
     setHudText(text, segments[index]!, current.lifeLabel.fontSize, fills[index]!, font.family);
-    text.anchor.set(0, 0.5);
-    cursor = Math.fround(cursor - text.width);
-    text.position.set(cursor, labelPosition[1]);
-    text.zIndex = current.lifeLabel.depth;
+    text.anchor.set(1, 0.5);
+    text.position.set(labelPosition[0], labelPosition[1]);
+    text.zIndex = current.lifeLabel.depth + index;
     text.visible = true;
   }
   setHudText(
