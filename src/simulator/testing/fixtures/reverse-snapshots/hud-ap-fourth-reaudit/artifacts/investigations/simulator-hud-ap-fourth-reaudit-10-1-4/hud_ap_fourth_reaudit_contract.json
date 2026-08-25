@@ -1,0 +1,689 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-hud-ap-fourth-reaudit",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "level3_bytes": 764840,
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+  },
+  "sources": {
+    "hud_asset_profile": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "ordinary_visible_profile": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+    },
+    "static_contract": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_static_contract.json",
+      "bytes": 2615204,
+      "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+    },
+    "managed_dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "arm64": [
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032f4e68__AllPerfectStatusController___ctor.arm64.tsv",
+        "bytes": 3828,
+        "sha256": "B88253D7B7B775ADA1074080A3048C51CFBF1D31254E8E6459868C55389266D2"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032f501c__AllPerfectStatusController__UpdateAllPerfectStatus.arm64.tsv",
+        "bytes": 328,
+        "sha256": "A001F58620099F0F33084FE75A8AD24DC1E18EE3BC99E91227FA181E24977D4A"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032f503c__AllPerfectStatusController__Reset.arm64.tsv",
+        "bytes": 140,
+        "sha256": "0CD04330C34961F4383B14A327E3FF696AA884E634083FEC05D02F66A46D9982"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0396cc88__AllPerfectStatusAnimation__ExecUpdate.arm64.tsv",
+        "bytes": 1080,
+        "sha256": "A742390635CBED04074A3ABDE055280E49E1798FE9073C136AFCF26BB2CE9E4D"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0396ce54__Combo__ExecUpdate.arm64.tsv",
+        "bytes": 665,
+        "sha256": "E709A3BCAF1E611784A9990324014EDFAF848F5565259586FB4344BEF71E224E"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0396ccec__ComboNumber__Show.arm64.tsv",
+        "bytes": 1919,
+        "sha256": "45514B7434E5CB5818EC464919E032CD1EA6F0498560903C480044EACC6CAC9D"
+      },
+      {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0396cbf8__ComboNumber__Hide.arm64.tsv",
+        "bytes": 439,
+        "sha256": "C60739EC1A465C08B0B761EF77D3E649F1AF6B1DEECA91D4A4F402A90981B1C9"
+      }
+    ],
+    "decompiled": [
+      {
+        "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/decompiled/038fd1cc__AllPerfectStatusDisplaySetting_Initialize.c",
+        "bytes": 2410,
+        "sha256": "046309F1BCDAA38752CE4971805F832B851D9F66483D139F1AF041181E2B9A89"
+      },
+      {
+        "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/decompiled/038fd4a8__AllPerfectStatusDisplaySetting_Initialize_callback.c",
+        "bytes": 2147,
+        "sha256": "7C32FCDAD1F318EF5B6C53EA97018916F867DA2B0E999E574776514AC0B76EAC"
+      }
+    ],
+    "normal_frame": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/combo-change.png",
+      "bytes": 1304154,
+      "sha256": "DEE3FE766AA982E191580D51A8371A6E83CDCF1102A0A07660AB99289FB3482E"
+    },
+    "ap_frames": [
+      {
+        "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/runtime/ap-status-on-172-a.png",
+        "bytes": 1032046,
+        "sha256": "4724F6AC53A93B3140D98758EE783A05262D7F006AC1744993648804DD913A02"
+      },
+      {
+        "path": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/runtime/ap-status-on-172-b.png",
+        "bytes": 942663,
+        "sha256": "5B7692244D390C4AE5E6C23C0A971EA45084A0C0718E1A16D0B89DFFDF92D183"
+      }
+    ]
+  },
+  "hud_hierarchy": {
+    "score": {
+      "path": "GamePlay/UI_Root/Display/Score",
+      "root_position": [
+        -411.0,
+        309.0,
+        0.0
+      ],
+      "total_score_path": "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+      "total_score_widget": [
+        188,
+        204
+      ]
+    },
+    "combo": {
+      "root_position": [
+        434.70001220703125,
+        82.80000305175781,
+        0.0
+      ],
+      "normal_component_path_id": 1067,
+      "ap_component_path_id": 1174,
+      "digit_size": [
+        82,
+        116
+      ],
+      "number_local_position": [
+        22,
+        0,
+        0
+      ],
+      "padding": -12,
+      "normal_unit": "combo",
+      "ap_unit": "combo_AP",
+      "unit_position": [
+        -6,
+        -72,
+        0
+      ],
+      "unit_size": [
+        150,
+        42
+      ]
+    },
+    "life": {
+      "path": "GamePlay/UI_Root/Display/LifeGauge",
+      "root_position": [
+        411.0,
+        309.0,
+        0.0
+      ]
+    },
+    "result": {
+      "path": "GamePlay/UI_Root_Back/Display/Information/Result",
+      "root_position": [
+        0.0,
+        -160.0,
+        0.0
+      ],
+      "root_scale": [
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "judge_size": [
+        288,
+        80
+      ]
+    }
+  },
+  "all_perfect_setting": {
+    "live_core_backing_field": "isAllPerfectStatusDisplayMode",
+    "live_core_offset": "0x57",
+    "calculated_field": "IsAllPerfectStatusDisplayMode",
+    "calculated_offset": "0x180",
+    "ui_owner": "AllPerfectStatusDisplaySetting",
+    "ordinary_off_initial_status": "None(0)",
+    "ordinary_on_initial_status": "AllPerfect(1)",
+    "perfect_preserves_status": true,
+    "great_and_below_clear_status": true
+  },
+  "combo_ownership": {
+    "normal_graph": "Combo -> normal ComboNumber",
+    "ap_graph": "AllPerfectStatusAnimation -> AP ComboNumber",
+    "parallel_distinct_scene_components": true,
+    "normal_positive_combo_always_calls_show": true,
+    "ap_positive_combo_calls_show_only_when_status_all_perfect": true,
+    "combo_zero_resets_and_hides_both": true,
+    "changed_combo_restarts_each_visible_child_scale_clip": true,
+    "show_visibility_seconds": 1
+  },
+  "animations": {
+    "combo_scale": {
+      "clipId": "combo-scale",
+      "owner": "combo-root",
+      "durationSeconds": 1.0,
+      "loop": false,
+      "curves": [
+        {
+          "index": 0,
+          "channel": "m_LocalScale.x",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                -1036.800048828125,
+                129.60000610351562,
+                0.0,
+                0.800000011920929
+              ]
+            },
+            {
+              "time": 0.0833333358168602,
+              "coefficients": [
+                0.0,
+                0.0,
+                -1.200000286102295,
+                1.100000023841858
+              ]
+            },
+            {
+              "time": 0.1666666716337204,
+              "coefficients": [
+                0.0,
+                0.0,
+                -0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                0.0,
+                0.0,
+                -0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.5833333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 1.0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "channel": "m_LocalScale.y",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                -1036.800048828125,
+                129.60000610351562,
+                0.0,
+                0.800000011920929
+              ]
+            },
+            {
+              "time": 0.0833333358168602,
+              "coefficients": [
+                0.0,
+                0.0,
+                -1.200000286102295,
+                1.100000023841858
+              ]
+            },
+            {
+              "time": 0.1666666716337204,
+              "coefficients": [
+                0.0,
+                0.0,
+                -0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                0.0,
+                0.0,
+                -0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.5833333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 1.0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "channel": "m_LocalScale.z",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.0833333358168602,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.1666666716337204,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.5833333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 1.0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ap_parent_alpha": {
+      "clipId": "combo-all-perfect",
+      "owner": "combo-ap-sprites",
+      "durationSeconds": 0.8333333134651184,
+      "loop": true,
+      "curves": [
+        {
+          "index": 0,
+          "channel": "combo_number/combo_unit.mColor.a",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                13.82400131225586,
+                -8.640000343322754,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                -13.82400131225586,
+                8.640000343322754,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "channel": "combo_number/combo_num_label/num.mColor.a",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                13.82400131225586,
+                -8.640000343322754,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                -13.82400131225586,
+                8.640000343322754,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "channel": "combo_number/combo_num_label/num (1).mColor.a",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                13.82400131225586,
+                -8.640000343322754,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                -13.82400131225586,
+                8.640000343322754,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "channel": "combo_number/combo_num_label/num (2).mColor.a",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                13.82400131225586,
+                -8.640000343322754,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                -13.82400131225586,
+                8.640000343322754,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "channel": "combo_number/combo_num_label/num (3).mColor.a",
+          "storage": "streamed",
+          "keys": [
+            {
+              "time": 0.0,
+              "coefficients": [
+                13.82400131225586,
+                -8.640000343322754,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "time": 0.4166666567325592,
+              "coefficients": [
+                -13.82400131225586,
+                8.640000343322754,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "time": 0.8333333134651184,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "channel": "combo_number/combo_unit.mColor.r",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 6,
+          "channel": "combo_number/combo_unit.mColor.g",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 7,
+          "channel": "combo_number/combo_unit.mColor.b",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 8,
+          "channel": "combo_number/combo_num_label/num.mColor.r",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 9,
+          "channel": "combo_number/combo_num_label/num.mColor.g",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 10,
+          "channel": "combo_number/combo_num_label/num.mColor.b",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 11,
+          "channel": "combo_number/combo_num_label/num (1).mColor.r",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 12,
+          "channel": "combo_number/combo_num_label/num (1).mColor.g",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 13,
+          "channel": "combo_number/combo_num_label/num (1).mColor.b",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 14,
+          "channel": "combo_number/combo_num_label/num (2).mColor.r",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 15,
+          "channel": "combo_number/combo_num_label/num (2).mColor.g",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 16,
+          "channel": "combo_number/combo_num_label/num (2).mColor.b",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 17,
+          "channel": "combo_number/combo_num_label/num (3).mColor.r",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 18,
+          "channel": "combo_number/combo_num_label/num (3).mColor.g",
+          "storage": "constant",
+          "value": 1.0
+        },
+        {
+          "index": 19,
+          "channel": "combo_number/combo_num_label/num (3).mColor.b",
+          "storage": "constant",
+          "value": 1.0
+        }
+      ]
+    }
+  },
+  "visual_observation": {
+    "surface": [
+      1600,
+      720
+    ],
+    "normal_frame_color_counts": {
+      "magenta": 117,
+      "green": 2094,
+      "cyan": 6971
+    },
+    "ap_frame_color_counts": [
+      {
+        "magenta": 7658,
+        "green": 3539,
+        "cyan": 5281
+      },
+      {
+        "magenta": 8029,
+        "green": 3557,
+        "cyan": 5304
+      }
+    ],
+    "ap_gradient_has_magenta_green_cyan": true,
+    "ap_frame_same_combo_value": 172,
+    "ap_parent_loop_visible": true
+  },
+  "portable_acceptance": {
+    "must_represent_normal_and_ap_as_parallel_graphs": true,
+    "must_consume_live_setting_or_explicit_product_semantics": true,
+    "must_use_ap_digits_and_combo_AP": true,
+    "must_keep_normal_graph_below_ap_graph": true,
+    "must_hide_each_combo_number_after_one_second_without_change": true,
+    "must_loop_ap_parent_alpha_1_to_0_5_to_1": true,
+    "must_not_replace_normal_graph_with_single_ap_variant": true
+  },
+  "unknown_fields": []
+}

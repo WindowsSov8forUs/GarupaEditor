@@ -13,6 +13,7 @@
 - `reverse-snapshots/visual-layout-correction/` 只包含已推送Reverse `28b6a790`的HUD StarUIAnchor、Field UITexture/Bottom pivot、unclipped UIPanel与Judge Button4父链最小合同；不复制level3、脚本表、截图或Reverse工作输入。
 - `reverse-snapshots/pixi-particle-visual/` 只包含已推送Reverse `50170414`的粒子simulation authority与Linear/sRGB、stretched roll、max-size、signed-axis、cross-renderer ordering协调合同；不复制软件renderer、旧oracle、texture或raw资源。
 - `reverse-snapshots/production-visual-third-reaudit/` 只包含已推送Reverse `2bdd91c6`的第三轮最小合同：Auto Live caption exact row/tint/text/16:9 bounds、产品路线中局部兼容Note family/child animation保持、HUD owner和非循环验收门；不复制Prefab、Skin纹理、原作截图或Reverse脚本。
+- `reverse-snapshots/hud-ap-fourth-reaudit/` 只包含已推送Reverse `341749d9`的HUD/AP最小合同：原作Combo状态显示设置、并行normal/AP ComboNumber图、资源/层级/动画/一秒visibility owner及设备帧颜色观察摘要；不复制原作PNG、R1 trace、Prefab或反编译切片。
 - `reverse-snapshots/c07-evidence/` 只保留已推送Reverse `a87cd3a7`真实WebView2合同与`0dd4d71c`fixed-device客观阻断disposition；旧initial-seek产品扩展fixture已随`startMilliseconds`能力删除。
 - `reverse-snapshots/live-rehearsal/` 包含已推送Reverse `d100f96e`四模式/MoveTime合同与`6c0dfb76`control rendering profile两个最小JSON；不复制R1 trace或截图，controls atlas复用既有Score HUD快照。
 - `reverse-snapshots/pause-ui/` 包含Reverse `770af437`最终Pause contract、serialized resource/layout profile、`99d40bcc`的19-trace最小manifest及Countdown1/2/3三张portable PNG；不复制19条gzip、设备账号数据或截图。生产资源由应用Builtin独立装配，production不得读取fixture。
