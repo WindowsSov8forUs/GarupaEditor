@@ -1,6 +1,6 @@
 # GarupaEditor Simulator
 
-`src/simulator`已完成普通Note/场地/输入等既有portable链并接入GarupaEditor产品计分合同CS-V1；完整HUD不再列为完成。2026-08-26用户production帧推翻旧HUD验收，Life/Pause/Lane及Slide算术已纠错，但Score普通状态可见异议仍为`observational-gap`。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)授权，不宣称原作计分复原，也不用于解释视觉缺陷。
+`src/simulator`已完成普通Note/场地/输入及完整ordinary HUD的current portable恢复，并接入GarupaEditor产品计分合同CS-V1。2026-08-26用户production帧推翻旧HUD验收后，Life/Pause/Lane、Slide算术以及Score的字体链与NGUI九宫格均重新取证和实现；最终Reverse `818b8db6`、独立primitive/真实WebView2七状态及Windows 186帧D/C/B/A/S/SS生产窗口共同关闭当前证据范围。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)以产品身份授权，不宣称原作计分复原。
 
 ## 当前全局门
 
@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
 | Ordinary Note Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、`28b6a790`与`50170414`限定范围；current PNG以straight-alpha sRGB source进入Linear intermediate，最终统一编码回sRGB；所有Note mesh/line消费绑定Skin material，Judge line保持Button4 uniform scale |
-| Complete ordinary HUD | `observational-gap` | 用户production帧推翻Reverse `07bf4e7c`的旧消费验收；Reverse `c2187fe3`保留序列化事实但撤回旧production authorization。当前已将Score45/Life10组件identity接入持久图、删除会被重显的第二Life Text、以UICommon `fill` UISprite替代Pause Graphics cover并纠正三行正文，SS路由/SoftClip保持；然而HD+实际Score低/中Rank raster几乎未变，用户报告的Score可见缺陷未被独立同状态原作帧关闭，因此整体HUD和安装包推荐继续开放 |
+| Complete ordinary HUD | `closed-evidence-equivalent` | Reverse `c2187fe3`纠正Score45/Life10消费、Pause三行正文、Slide与Lane后，最终`818b8db6`证明TotalScore component1271→UIFont1799→sgm Font75并纠正NGUI UIAtlas/UISpriteData边框。Production以持久双color-run UILabel替换错误bitmap digit，Gauge base使用`216/16/0/0`直接left/right/top/bottom并随Rank更新meter NineSlice；独立18边界primitive、真实WebView2 D/C/B/A/S/SS/9位七状态及Windows HD+ 186帧六Rank通过。仅限current portable合同，不升级Unity/GPU fixed-device framebuffer exact |
 | Ordinary particle visible composition | `closed-portable` | Reverse `50170414`：17-root actual Pixi world/UV/blend/viewport、authored stretched roll、signed long axis、`m_MaxParticleSize`、Field < particle < Note/HUD nesting及dispose归零；device-closure simulation oracle保持不变，两个exact七级mip仍是显式portable raster difference |
 | Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但production内部固定无voice资源、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
@@ -84,7 +84,7 @@ src/simulator/
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
 
-Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bitmap数字、marker几何和SS持久owner；业务输入改为内部CS-V1 `ruleSetId + totalScoringUnitCount`。Gauge固定C/B/A/S/SS阈值并以`10,000,000+N`为最大值，typed validator独立复算Rank、ratio、marker和SS条件。该产品Score语义不升级原作计分等价、browser/GPU framebuffer或fixed-device exact。
+Score HUD消费Reverse `818b8db6`确认的NGUI UISpriteData left/right/top/bottom、depth、UIPanel clip、sgm动态字体UILabel、marker几何和SS持久owner；TotalScore在单一component1271下以灰/粉两个encoding run表达8位最小填充和9位ShrinkContent，不再创建或请求bitmap digit atlas。业务输入仍由内部CS-V1 `ruleSetId + totalScoringUnitCount`提供，Gauge固定C/B/A/S/SS阈值并以`10,000,000+N`为最大值，typed validator独立复算Rank、ratio、marker和SS条件。该产品Score语义不升级原作计分等价、GPU framebuffer或fixed-device exact。
 
 ## Evidence workflow
 

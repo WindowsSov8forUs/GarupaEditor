@@ -8,7 +8,7 @@ Reverse owns original-setting claims. Valid product actions outside that proven 
 
 This contract is locked to `jp.co.craftegg.band` 10.1.4 / code 230 / ARM64 and Reverse commits `bba194684529b62b443b3d12d538f45adf5e0a29` plus the positive-counter coroutine correction `50bc40b641e32a4f70ca84d7d0d5f7e332d3a906`.
 
-Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. HUD/AP correction evidence is Reverse `341749d90e3c68cc9fd85d16fbc501f733378623`; complete HUD component and logic closure is Reverse `879fcec25d02969b31a86b9972225f9ea27d5093`. The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
+Evidence lives only in `artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/`: OLS-E01–E37, OLS-R01–R06, OLS-P01 and OLS-C01. HUD/AP correction evidence is Reverse `341749d90e3c68cc9fd85d16fbc501f733378623`; complete HUD component/logic基础为`879fcec25d02969b31a86b9972225f9ea27d5093`，五项消费纠错为`c2187fe31eeedc0f288dfd29c25f741f93732ea8`，Score最终字体与NGUI UISpriteData可见闭环为`818b8db6149bedf9f816a1935d171fbccdf6dbbc`。The implementation does not consume Reverse, `tmp/`, test fixtures, network, wall clock or ambient settings at runtime.
 
 ## Public Schema 13
 
