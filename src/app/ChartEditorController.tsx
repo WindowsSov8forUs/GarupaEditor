@@ -150,6 +150,7 @@ import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
 import { buildSimulatorLaunchDescriptor } from "./simulator/buildSimulatorLaunchDescriptor";
+import { SIMULATOR_PRE_ADAPTATION_DEFAULTS } from "./simulator/preAdaptationContract";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -1190,7 +1191,7 @@ function ChartEditorController() {
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
   const [playbackAllPerfectStatusDisplayMode, setPlaybackAllPerfectStatusDisplayMode] =
-    useState<boolean | null>(null);
+    useState(SIMULATOR_PRE_ADAPTATION_DEFAULTS.allPerfectStatusDisplayMode);
   const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => normalizeSkinSelection(DEFAULT_SKIN_SELECTION));
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
     normalizeSkinSelection(DEFAULT_SKIN_SELECTION),
@@ -5793,10 +5794,6 @@ function ChartEditorController() {
     };
 
     try {
-      if (playbackAllPerfectStatusDisplayMode === null) {
-        setStatusMessage("请先在设置→显示→播放中明确选择“コンボ状态显示”开或关。");
-        return;
-      }
       const playbackPreset = WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
         ?? WINDOW_SIZE_PRESETS[0] ?? WINDOW_SIZE_PRESETS[1];
       const prepared = await buildSimulatorLaunchDescriptor({

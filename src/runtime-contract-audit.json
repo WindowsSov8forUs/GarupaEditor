@@ -2436,7 +2436,7 @@
     {
       "id": "RCB-0115",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 3928,
+      "line": 3929,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`fetch failed: ${response.status}`);",
@@ -2457,7 +2457,7 @@
     {
       "id": "RCB-0116",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 4630,
+      "line": 4631,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Bestdori HABAHIRO catalog is unavailable; no fixed network candidate is substituted.\");",
@@ -2478,7 +2478,7 @@
     {
       "id": "RCB-0117",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 4644,
+      "line": 4645,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Bestdori rhythm catalog is unavailable; no fixed network candidate is substituted.\");",
@@ -2499,7 +2499,7 @@
     {
       "id": "RCB-0118",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 5545,
+      "line": 5546,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (key === undefined) throw new Error(\"static render note references an unleased Skin derivative\");",
@@ -2520,7 +2520,7 @@
     {
       "id": "RCB-0119",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 5699,
+      "line": 5700,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"移动端预览数据写入失败。\");",
@@ -2541,7 +2541,7 @@
     {
       "id": "RCB-0120",
       "file": "src/app/ChartEditorController.tsx",
-      "line": 5845,
+      "line": 5842,
       "marker": "throw-error",
       "symbol": "releaseHandoff",
       "source": "throw new Error(\"移动端播放器数据写入失败。\");",
@@ -3381,7 +3381,7 @@
     {
       "id": "RCB-0160",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 225,
+      "line": 226,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"settings cache JSON root must be an object\");",
@@ -3402,7 +3402,7 @@
     {
       "id": "RCB-0161",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 331,
+      "line": 330,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"chart cache JSON root must be an object\");",
@@ -3423,7 +3423,7 @@
     {
       "id": "RCB-0162",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 426,
+      "line": 425,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"会话缓存末尾 BPM 为负数，已阻止恢复。\");",
@@ -3444,7 +3444,7 @@
     {
       "id": "RCB-0163",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 487,
+      "line": 486,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${adopted.failure.capability}: ${adopted.failure.boundary}`);",
@@ -3465,7 +3465,7 @@
     {
       "id": "RCB-0164",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 536,
+      "line": 535,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);",
@@ -3486,7 +3486,7 @@
     {
       "id": "RCB-0165",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 640,
+      "line": 639,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);",
@@ -3507,7 +3507,7 @@
     {
       "id": "RCB-0166",
       "file": "src/app/hooks/useEditorSessionCache.ts",
-      "line": 647,
+      "line": 646,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${finalized.failure.capability}: ${finalized.failure.boundary}`);",
@@ -4368,7 +4368,7 @@
     {
       "id": "RCB-0207",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 41,
+      "line": 45,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (noteSize < 80 || noteSize > 150) throw new Error(\"Simulator note size must be within [80,150] without clamping.\");",
@@ -4389,7 +4389,7 @@
     {
       "id": "RCB-0208",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 42,
+      "line": 46,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!(specificSpeed > 0)) throw new Error(\"Simulator note speed must be positive.\");",
@@ -4410,7 +4410,7 @@
     {
       "id": "RCB-0209",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 45,
+      "line": 49,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (input.fps !== 60 && input.fps !== 120) throw new Error(\"Simulator FPS must be exactly 60 or 120.\");",
@@ -4431,7 +4431,7 @@
     {
       "id": "RCB-0210",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 46,
+      "line": 50,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof input.syncLine !== \"boolean\") throw new Error(\"Simulator SyncLine requires one explicit boolean.\");",
@@ -4452,10 +4452,10 @@
     {
       "id": "RCB-0211",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 48,
+      "line": 52,
       "marker": "throw-error",
       "symbol": "if",
-      "source": "throw new Error(\"Simulator コンボ状態表示 requires one explicit boolean; no cache default is inferred.\");",
+      "source": "throw new Error(\"Simulator コンボ状態表示 requires one resolved boolean.\");",
       "productSemanticsId": null,
       "trigger": "invalid user file/action or recoverable application dependency failure",
       "userReachability": "action-level host boundary",
@@ -4473,7 +4473,7 @@
     {
       "id": "RCB-0212",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 76,
+      "line": 86,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof value !== \"number\" || !Number.isFinite(value)) throw new Error(`${label} must be finite.`);",
@@ -4494,7 +4494,7 @@
     {
       "id": "RCB-0213",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 78,
+      "line": 88,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!Number.isFinite(rounded)) throw new Error(`${label} cannot be represented as Float32.`);",
@@ -4515,7 +4515,7 @@
     {
       "id": "RCB-0214",
       "file": "src/app/simulator/preAdaptationContract.ts",
-      "line": 84,
+      "line": 94,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${label} percent must be within [0,100] without clamping.`);",

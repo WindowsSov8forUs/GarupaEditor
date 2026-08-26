@@ -1,6 +1,11 @@
 import { buildSimulatorLaunchDescriptor } from "../../app/simulator/buildSimulatorLaunchDescriptor";
 import { buildSimulatorLaunchRequest } from "../../app/simulator/buildSimulatorLaunchRequest";
-import { buildSimulatorPreAdaptedConfig } from "../../app/simulator/preAdaptationContract";
+import {
+  SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID,
+  SIMULATOR_PRE_ADAPTATION_DEFAULTS,
+  buildSimulatorPreAdaptedConfig,
+  resolveSimulatorAllPerfectStatusDisplayMode,
+} from "../../app/simulator/preAdaptationContract";
 import { calculateMobileSafeArea } from "../../app/simulator/mobileSafeArea";
 import {
   decodeSimulatorLaunchTransportConfig,
@@ -14,6 +19,13 @@ import { MemoryApplicationResourceBackend } from "../memoryResourceBackend";
 export async function runSimulatorPreAdaptationTests(): Promise<void> {
   const manager = new ApplicationResourceManager(new MemoryApplicationResourceBackend(), new NoopObjectUrls());
   equal((await manager.initialize()).status, "accepted");
+  equal(SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID,
+    "app.simulator.all-perfect-status-display-default-on-v1");
+  equal(SIMULATOR_PRE_ADAPTATION_DEFAULTS.allPerfectStatusDisplayMode, true);
+  equal(resolveSimulatorAllPerfectStatusDisplayMode(undefined), true);
+  equal(resolveSimulatorAllPerfectStatusDisplayMode(null), true);
+  equal(resolveSimulatorAllPerfectStatusDisplayMode(false), false);
+  equal(resolveSimulatorAllPerfectStatusDisplayMode(true), true);
   const bgm = await manager.importWorkspaceMedia({ purpose: "bgm", fileName: "song.mp3", mediaType: "audio/mpeg", bytes: id3() });
   const cover = await manager.importWorkspaceMedia({ purpose: "cover", fileName: "cover.png", mediaType: "image/png", bytes: png(360, 360) });
   const stage = await manager.importWorkspaceMedia({ purpose: "stage-backdrop", fileName: "stage.png", mediaType: "image/png", bytes: png(1600, 720) });

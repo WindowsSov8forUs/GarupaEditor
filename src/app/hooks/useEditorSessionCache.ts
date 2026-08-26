@@ -19,6 +19,7 @@ import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import { createResourceRef, type ResourceRef } from "../../resources/contracts";
 import type { ChartMediaResources } from "../../resources/selections";
+import { resolveSimulatorAllPerfectStatusDisplayMode } from "../simulator/preAdaptationContract";
 
 const SESSION_SCHEMA_VERSION = 1;
 const SETTINGS_SCHEMA_VERSION = 2;
@@ -63,7 +64,7 @@ type SettingsSnapshotV1 = {
   playbackFps?: number;
   playbackMvMode?: boolean;
   playbackMvAlphaPercent?: number;
-  playbackAllPerfectStatusDisplayMode?: boolean | null;
+  playbackAllPerfectStatusDisplayMode?: boolean;
   uploadCommunityPostContent?: string;
   uploadCommunityPostTags?: BestdoriPostTag[];
   skinSelection?: Record<string, unknown>;
@@ -278,9 +279,7 @@ export function useEditorSessionCache(params: any) {
               : 100;
           setPlaybackMvAlphaPercent(resolvedPlaybackMvAlphaPercent);
           const resolvedPlaybackAllPerfectStatusDisplayMode =
-            typeof snapshot.playbackAllPerfectStatusDisplayMode === "boolean"
-              ? snapshot.playbackAllPerfectStatusDisplayMode
-              : null;
+            resolveSimulatorAllPerfectStatusDisplayMode(snapshot.playbackAllPerfectStatusDisplayMode);
           setPlaybackAllPerfectStatusDisplayMode(resolvedPlaybackAllPerfectStatusDisplayMode);
 
           const nextUploadCommunityPostContent = normalizeOptionalText(snapshot.uploadCommunityPostContent) ?? "";

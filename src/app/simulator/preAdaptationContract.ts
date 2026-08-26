@@ -1,5 +1,8 @@
 import type { SimulatorLaunchConfig } from "../../simulator/public/contracts";
 
+export const SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID =
+  "app.simulator.all-perfect-status-display-default-on-v1";
+
 export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
   isFullLength: false,
   sessionMode: "live" as const,
@@ -8,6 +11,7 @@ export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
   judgementAdjustValueB: 0,
   noteColor: true,
   visibleTapLaneEffect: true,
+  allPerfectStatusDisplayMode: true,
   mvDarkness: 20,
   masterGain: Math.fround(1),
   habahiroMeshWidthSetting: Math.fround(1),
@@ -45,7 +49,7 @@ export function buildSimulatorPreAdaptedConfig(
   if (input.fps !== 60 && input.fps !== 120) throw new Error("Simulator FPS must be exactly 60 or 120.");
   if (typeof input.syncLine !== "boolean") throw new Error("Simulator SyncLine requires one explicit boolean.");
   if (typeof input.allPerfectStatusDisplayMode !== "boolean") {
-    throw new Error("Simulator コンボ状態表示 requires one explicit boolean; no cache default is inferred.");
+    throw new Error("Simulator コンボ状態表示 requires one resolved boolean.");
   }
   return Object.freeze({
     sessionMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.sessionMode,
@@ -70,6 +74,12 @@ export function buildSimulatorPreAdaptedConfig(
       seGain,
     }),
   });
+}
+
+export function resolveSimulatorAllPerfectStatusDisplayMode(value: unknown): boolean {
+  return typeof value === "boolean"
+    ? value
+    : SIMULATOR_PRE_ADAPTATION_DEFAULTS.allPerfectStatusDisplayMode;
 }
 
 function exactFloat32(value: number, label: string): number {

@@ -30,7 +30,7 @@ The immutable internal snapshot separates LiveCore fields (HighFrequency, A, B, 
 
 ## All Perfect Combo display setting
 
-`allPerfectStatusDisplayMode` is the Public projection of original `LiveCoreSettingsProtoData.isAllPerfectStatusDisplayMode`. The application exposes an explicit “コンボ状态显示” ON/OFF setting and persists that choice. Existing caches without the field remain unselected: launch asks the user to choose and never silently migrates the former fixed-ON product behavior.
+`allPerfectStatusDisplayMode` is the Public projection of original `LiveCoreSettingsProtoData.isAllPerfectStatusDisplayMode`. The application exposes a “コンボ状态显示” ON/OFF setting and persists that choice. Reverse confirms both original branches but not the original new-account default. The application therefore follows the same pre-adaptation pattern as other Simulator settings: new settings and legacy caches without a boolean receive the explicit product default `true` under `app.simulator.all-perfect-status-display-default-on-v1`, preserving the pre-Schema-13 product behavior. Public/transport/engine still receive one resolved boolean; this product migration default is not claimed as an original default.
 
 OFF initializes ordinary status to None and suppresses the AP graph. ON initializes AllPerfect; Perfect preserves it and Great or below clears it. Rendering owns two persistent parallel graphs:
 

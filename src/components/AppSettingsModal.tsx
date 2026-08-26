@@ -13,7 +13,7 @@ type AppSettingsModalProps = {
   playbackFps: number;
   playbackMvMode: boolean;
   playbackMvAlphaPercent: number;
-  playbackAllPerfectStatusDisplayMode: boolean | null;
+  playbackAllPerfectStatusDisplayMode: boolean;
   windowPresets: Array<{ id: string; label: string }>;
   onWindowPresetIdChange: (value: string) => void;
   onPlaybackWindowPresetIdChange: (value: string) => void;
