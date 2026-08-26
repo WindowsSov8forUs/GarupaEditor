@@ -34,6 +34,11 @@ import {
   COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
 } from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
+import {
+  CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
+  CURRENT_PAUSE_COMPONENT_PATHS,
+  CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
+} from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
 import { layoutNguiEncodedLifeLabel } from "./hud/nguiLabelGeometry";
 import {
@@ -112,6 +117,7 @@ interface PixiHudVisual {
   readonly primaryFill: Graphics | null;
   readonly secondaryFill: Graphics | null;
   readonly animationLayer: Container;
+  readonly serializedComponentNodes: ReadonlyMap<string, Container>;
   readonly digitSprites: Sprite[];
   readonly fillMasks: Graphics[];
   readonly scoreDigitTexts: Sprite[];
@@ -300,12 +306,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const headerTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "bg_header_dialog"));
     const grayButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_gray"));
     const pinkButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"));
+    const coverTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "fill"));
     const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     if (snapshot.state !== "ready" || returnTexture === undefined ||
       advanceTexture === undefined || timeBackgroundTexture === undefined ||
       demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
-      headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined ||
+      headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return integrityFailure(
@@ -326,6 +333,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       headerTexture,
       grayButtonTexture,
       pinkButtonTexture,
+      coverTexture,
       countdownTextures as [Texture, Texture, Texture],
       font.family,
       createRehearsalControlSceneLayout(surfaceLayout),
@@ -670,6 +678,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudSpriteLabels: readonly string[] | null;
     readonly hudSpriteAlphas: readonly number[] | null;
     readonly hudSpriteCount: number | null;
+    readonly hudSerializedComponentPaths: readonly string[] | null;
+    readonly hudSerializedActivePaths: readonly string[] | null;
     readonly hudSpriteNodes: readonly {
       readonly label: string;
       readonly position: readonly [number, number];
@@ -761,8 +771,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       geometryBlendMode: value.geometryContent === null ? null : String(value.geometryContent.blendMode),
       maskVertexCount: value.maskVertexCount,
       threshold: value.threshold,
-      hudText: value.hudVisual?.text?.text ?? null,
-      hudFontFamily: value.hudVisual?.text?.style.fontFamily == null
+      hudText: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
+        ? value.hudVisual.lifeTextSegments.map((text) => text.text).join("")
+        : value.hudVisual?.text?.text ?? null,
+      hudFontFamily: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
+        ? String(value.hudVisual.lifeTextSegments[0].style.fontFamily)
+        : value.hudVisual?.text?.style.fontFamily == null
         ? null
         : String(value.hudVisual.text.style.fontFamily),
       spriteBindingKey: value.spriteBindingKey,
@@ -775,6 +789,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ? null
         : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.alpha)),
       hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
+      hudSerializedComponentPaths: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes.keys()]),
+      hudSerializedActivePaths: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes]
+            .filter(([, node]) => node.visible)
+            .map(([path]) => path)),
       hudSpriteNodes: value.hudVisual === null
         ? null
         : Object.freeze(value.hudVisual.digitSprites.map((sprite) => Object.freeze({
@@ -1616,6 +1638,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     header: Texture;
     gray: Texture;
     pink: Texture;
+    cover: Texture;
     countdown: readonly [Texture, Texture, Texture];
   }>;
   private disposed = false;
@@ -1637,6 +1660,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     headerTexture: Texture,
     grayButtonTexture: Texture,
     pinkButtonTexture: Texture,
+    coverTexture: Texture,
     countdownTextures: readonly [Texture, Texture, Texture],
     private readonly fontFamily: string,
     layout: RehearsalControlSceneLayout,
@@ -1649,7 +1673,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.modalRoot.zIndex = 100;
     this.modalRoot.eventMode = "none";
     this.modalRoot.visible = false;
-    this.pauseTextures = Object.freeze({ window: windowTexture, header: headerTexture, gray: grayButtonTexture, pink: pinkButtonTexture, countdown: countdownTextures });
+    this.pauseTextures = Object.freeze({ window: windowTexture, header: headerTexture, gray: grayButtonTexture, pink: pinkButtonTexture, cover: coverTexture, countdown: countdownTextures });
     this.surfaceRevision = layout.surfaceRevision;
     this.pauseButton = new Sprite({ texture: pauseTexture, label: "original-pause-button" });
     this.pauseButton.visible = false;
@@ -1793,8 +1817,18 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.modalRoot.addChild(sprite);
       return;
     }
-    const cover = new Graphics().rect(0, 0, snapshot.layout.viewportWidth, snapshot.layout.viewportHeight).fill({ color: 0x000000, alpha: 0.5 });
-    cover.label = "pause-dark-cover";
+    const cover = new NineSliceSprite({
+      texture: this.pauseTextures.cover,
+      leftWidth: 1,
+      rightWidth: 1,
+      topHeight: 1,
+      bottomHeight: 1,
+      width: snapshot.layout.viewportWidth,
+      height: snapshot.layout.viewportHeight,
+      tint: 0x000000,
+      alpha: 0.5,
+      label: CURRENT_PAUSE_COMPONENT_PATHS.cover,
+    });
     this.modalRoot.addChild(cover);
     if (snapshot.state === "pause-menu") this.buildPauseMenu(snapshot);
     else this.buildConfirmation(snapshot, snapshot.state === "retry-confirm");
@@ -1802,13 +1836,13 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
 
   private buildPauseMenu(snapshot: PauseControlSceneSnapshot): void {
     const layout = snapshot.layout;
-    this.addWindow(layout.pauseMenu.windowBoundsTopLeft, "pause-window");
+    this.addWindow(layout.pauseMenu.windowBoundsTopLeft, CURRENT_PAUSE_COMPONENT_PATHS.window);
     this.addHeader(layout.pauseMenu.windowBoundsTopLeft, Math.fround(842 * layout.controlScale), Math.fround(40 * layout.controlScale));
-    this.addCenteredText(snapshot.words.pause.title, layout.viewportWidth / 2, layout.pauseMenu.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, "pause-title");
-    this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, "pause-message");
-    this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, "pause-abort");
-    this.addButton(layout.pauseMenu.retryBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[1], 32 * layout.controlScale, "pause-retry");
-    this.addButton(layout.pauseMenu.resumeBoundsTopLeft, this.pauseTextures.pink, snapshot.words.pause.buttons[2], 34 * layout.controlScale, "pause-resume");
+    this.addCenteredText(snapshot.words.pause.title, layout.viewportWidth / 2, layout.pauseMenu.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.title);
+    this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.content);
+    this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.abortButton);
+    this.addButton(layout.pauseMenu.retryBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[1], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.retryButton);
+    this.addButton(layout.pauseMenu.resumeBoundsTopLeft, this.pauseTextures.pink, snapshot.words.pause.buttons[2], 34 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.resumeButton);
   }
 
   private buildConfirmation(snapshot: PauseControlSceneSnapshot, retry: boolean): void {
@@ -1824,28 +1858,48 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   }
 
   private addWindow(value: PauseControlBounds, label: string): void {
-    const window = new NineSliceSprite({ texture: this.pauseTextures.window, leftWidth: 12, rightWidth: 12, topHeight: 12, bottomHeight: 12, label });
+    const primitiveLabel = label === CURRENT_PAUSE_COMPONENT_PATHS.window ? "pause-window" : label;
+    const window = new NineSliceSprite({ texture: this.pauseTextures.window, leftWidth: 12, rightWidth: 12, topHeight: 12, bottomHeight: 12, label: primitiveLabel });
     applyBounds(window, value);
-    this.modalRoot.addChild(window);
+    if (label === CURRENT_PAUSE_COMPONENT_PATHS.window) {
+      const component = new Container({ label });
+      component.addChild(window);
+      this.modalRoot.addChild(component);
+    } else {
+      this.modalRoot.addChild(window);
+    }
   }
   private addHeader(window: PauseControlBounds, width: number, height: number): void {
+    const component = new Container({ label: CURRENT_PAUSE_COMPONENT_PATHS.header });
     const header = new NineSliceSprite({ texture: this.pauseTextures.header, leftWidth: 28, rightWidth: 4, topHeight: 0, bottomHeight: 0, label: "pause-dialog-header" });
     applyBounds(header, { x: Math.fround(window.x + (window.width - width) / 2), y: window.y, width, height });
-    this.modalRoot.addChild(header);
+    component.addChild(header);
+    this.modalRoot.addChild(component);
   }
   private addButton(value: PauseControlBounds, texture: Texture, text: string, fontSize: number, label: string): void {
-    const button = new NineSliceSprite({ texture, leftWidth: 14, rightWidth: 20, topHeight: 22, bottomHeight: 12, label });
+    const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.abortButton ? "pause-abort"
+      : label === CURRENT_PAUSE_COMPONENT_PATHS.retryButton ? "pause-retry"
+      : label === CURRENT_PAUSE_COMPONENT_PATHS.resumeButton ? "pause-resume"
+      : label;
+    const component = new Container({ label });
+    const button = new NineSliceSprite({ texture, leftWidth: 14, rightWidth: 20, topHeight: 22, bottomHeight: 12, label: legacy });
     applyBounds(button, value);
-    const caption = this.text(text, fontSize, texture === this.pauseTextures.pink ? 0xffffff : 0x555555, `${label}-label`);
+    const caption = this.text(text, fontSize, texture === this.pauseTextures.pink ? 0xffffff : 0x555555, `${legacy}-label`);
     caption.anchor.set(0.5, 0.5);
     caption.position.set(value.x + value.width / 2, value.y + value.height / 2);
-    this.modalRoot.addChild(button, caption);
+    component.addChild(button, caption);
+    this.modalRoot.addChild(component);
   }
   private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string): void {
-    const value = this.text(text, size, fill, label);
+    const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.title ? "pause-title"
+      : label === CURRENT_PAUSE_COMPONENT_PATHS.content ? "pause-message"
+      : label;
+    const component = new Container({ label });
+    const value = this.text(text, size, fill, legacy);
     value.anchor.set(0.5, 0.5);
     value.position.set(x, y);
-    this.modalRoot.addChild(value);
+    component.addChild(value);
+    this.modalRoot.addChild(component);
   }
   private text(value: string, size: number, fill: number, label: string): Text {
     return new Text({ text: value, style: { fill, fontFamily: this.fontFamily, fontSize: size, fontWeight: "normal", align: "center" }, label });
@@ -1943,6 +1997,7 @@ function applyEvidenceHud(
 ): PixiHudVisual {
   const visual = object.hudVisual ?? createHudVisual(object.node, command.hudRole);
   if (visual.kind !== command.hudRole) throw new Error("HUD visual route cannot change owner kind");
+  for (const node of visual.serializedComponentNodes.values()) node.visible = false;
   if (visual.text !== null) visual.text.visible = true;
   visual.primaryFill?.clear();
   visual.secondaryFill?.clear();
@@ -1998,14 +2053,26 @@ function applyEvidenceHud(
 
 function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
   const content = new Container({ sortableChildren: true });
-  const needsText = kind === "life" || kind === "fidelity-label";
+  const componentPaths = kind === "score"
+    ? CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS
+    : kind === "life"
+    ? CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS
+    : Object.freeze([] as const);
+  const serializedComponentNodes = new Map<string, Container>();
+  for (const path of componentPaths) {
+    const component = new Container({ label: path, visible: false, sortableChildren: true });
+    component.eventMode = "none";
+    serializedComponentNodes.set(path, component);
+    content.addChild(component);
+  }
+  const needsText = kind === "fidelity-label";
   const needsFill = kind === "habahiro-flash";
   const secondaryFill = needsFill ? new Graphics() : null;
   const primaryFill = needsFill ? new Graphics() : null;
   const text = needsText ? new Text({
     text: "",
     style: { fill: 0xffffff, fontSize: 32 },
-    label: kind === "life" ? "life-current-label" : "fidelity-label",
+    label: "fidelity-label",
   }) : null;
   const lifeTextSegments = kind === "life"
     ? Object.freeze([
@@ -2028,8 +2095,14 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     content.addChild(text);
     if (kind === "life") text.visible = false;
   }
-  if (lifeTextSegments !== null) content.addChild(...lifeTextSegments);
-  if (gameOverText !== null) content.addChild(gameOverText);
+  if (lifeTextSegments !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total")
+      .addChild(...lifeTextSegments);
+  }
+  if (gameOverText !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text")
+      .addChild(gameOverText);
+  }
   content.addChild(animationLayer);
   if (scoreHighRankPanelMask !== null) {
     content.addChild(scoreHighRankPanelMask);
@@ -2045,6 +2118,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     primaryFill,
     secondaryFill,
     animationLayer,
+    serializedComponentNodes,
     digitSprites: [],
     fillMasks: [],
     scoreDigitTexts: [],
@@ -2060,6 +2134,19 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreHighRankGeneration: 0,
     fillRatios: Object.freeze([0, 0]),
   };
+}
+
+function serializedHudComponent(
+  nodes: ReadonlyMap<string, Container>,
+  path: string,
+): Container {
+  const node = nodes.get(path);
+  if (node === undefined) throw new Error(`Serialized HUD component is missing: ${path}`);
+  return node;
+}
+
+function showSerializedHudComponent(visual: PixiHudVisual, path: string): void {
+  serializedHudComponent(visual.serializedComponentNodes, path).visible = true;
 }
 
 function authoredUiScale(object: PixiObjectRecord): number {
@@ -2433,7 +2520,20 @@ function applyLifeHud(
     sprite.blendMode = logicalAssetId === CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId
       ? "normal"
       : "add";
-    visual.content.addChild(sprite);
+    const componentPath = sceneKey === "gauge_base"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG"
+      : sceneKey === "primary"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge"
+      : sceneKey === "second"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge"
+      : sceneKey === "warning_outline"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning"
+      : sceneKey === "warning_body"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody"
+      : "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage";
+    const componentOwner = serializedHudComponent(visual.serializedComponentNodes, componentPath);
+    componentOwner.visible = visible;
+    componentOwner.addChild(sprite);
     visual.digitSprites.push(sprite as unknown as Sprite);
     retainHudBinding(object, binding.key, referenceCounts);
     return sprite;
@@ -2461,17 +2561,10 @@ function applyLifeHud(
   add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside", "warning_body", "life-warning-body", state.warning);
   add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", state.singleGameOver);
   const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
-  if (font === undefined || visual.text === null || visual.lifeTextSegments === null || visual.gameOverText === null) {
+  if (font === undefined || visual.lifeTextSegments === null || visual.gameOverText === null) {
     throw new Error("Life sgm label font is missing");
   }
-  setHudText(
-    visual.text,
-    state.label,
-    current.lifeLabel.fontSize,
-    state.currentLife > 0 ? 0x00c000 : 0xfe2349,
-    font.family,
-  );
-  visual.text.visible = false;
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total");
   const separator = state.label.indexOf("/");
   if (separator <= 0 || separator === state.label.length - 1) {
     throw new Error("Life label requires current/maximum encoded segments");
@@ -2502,6 +2595,10 @@ function applyLifeHud(
   visual.gameOverText.position.set(...localFromAuthoredWorld(current.gameOverLabel.authoredPosition));
   visual.gameOverText.zIndex = current.gameOverLabel.depth;
   visual.gameOverText.visible = state.singleGameOver;
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+  ).visible = state.singleGameOver;
   visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
 }
 
@@ -2536,6 +2633,9 @@ function updatePersistentLifeHud(
     throw new Error("Persistent Life UILabel/UISprite graph is incomplete");
   }
   base.tint = 0xffffff;
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG");
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge").visible = state.secondaryFill.value > 0;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge").visible = state.primaryFill.value > 0;
   secondary.visible = state.secondaryFill.value > 0;
   primary.visible = state.primaryFill.value > 0;
   const colors = state.singleGameOver
@@ -2556,7 +2656,10 @@ function updatePersistentLifeHud(
   ).fill(0xffffff);
   warningOutline.visible = state.warning;
   warningBody.visible = state.warning;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning").visible = state.warning;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody").visible = state.warning;
   gameOver.visible = state.singleGameOver;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage").visible = state.singleGameOver;
   const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
   if (font === undefined) throw new Error("Life sgm label font is missing");
   const separator = state.label.indexOf("/");
@@ -2567,6 +2670,7 @@ function updatePersistentLifeHud(
     Math.fround(current.lifeLabel.authoredPosition[0] - current.rootPosition[0]),
     Math.fround(-(current.lifeLabel.authoredPosition[1] - current.rootPosition[1])),
   ] as const);
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total");
   layoutNguiEncodedLifeLabel(
     visual.lifeTextSegments,
     String(state.currentLife),
@@ -2581,6 +2685,10 @@ function updatePersistentLifeHud(
     text.visible = true;
   });
   visual.gameOverText.visible = state.singleGameOver;
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+  ).visible = state.singleGameOver;
   visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
 }
 
@@ -2611,6 +2719,7 @@ function applyScoreHud(
   if (visual.text !== null) visual.text.visible = false;
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
   placeSafeTopAnchoredUiRoot(object, "left");
+  showScoreBaselineComponents(visual, state.foregroundActive);
 
   const scoreDigits = String(state.score);
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
@@ -2645,7 +2754,10 @@ function applyScoreHud(
     cursor = Math.fround(cursor + Math.fround(
       (glyph.xAdvance + (index + 1 < displayed.length ? scene.totalScoreSpacingX : 0)) * fontScale,
     ));
-    visual.content.addChild(sprite);
+    serializedHudComponent(
+      visual.serializedComponentNodes,
+      "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+    ).addChild(sprite);
     visual.scoreDigitTexts.push(sprite);
     retainHudBinding(object, binding.key, referenceCounts);
   });
@@ -2664,7 +2776,12 @@ function applyScoreHud(
   );
   background.position.set(scene.gauge.background.position[0], -scene.gauge.background.position[1]);
   background.zIndex = scene.gauge.background.depth;
-  progress.addChild(background);
+  const backgroundOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Background",
+  );
+  progress.addChild(backgroundOwner);
+  backgroundOwner.addChild(background);
   retainHudBinding(object, spriteKey(gaugeAssetId, "gauge_base_score"), referenceCounts);
 
   const cover = scoreNineSlice(
@@ -2676,7 +2793,12 @@ function applyScoreHud(
   );
   cover.position.set(scene.gauge.cover.position[0], -scene.gauge.cover.position[1]);
   cover.zIndex = scene.gauge.cover.depth;
-  progress.addChild(cover);
+  const coverOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+  );
+  progress.addChild(coverOwner);
+  coverOwner.addChild(cover);
   retainHudBinding(object, spriteKey(gaugeAssetId, "bg_gauge_score_multi"), referenceCounts);
 
   const meterKey = state.meterKey as string;
@@ -2696,7 +2818,12 @@ function applyScoreHud(
   foreground.position.set(scene.gauge.foreground.position[0], -scene.gauge.foreground.position[1]);
   foreground.visible = state.foregroundActive as boolean;
   foreground.zIndex = scene.gauge.foreground.depth;
-  progress.addChild(foreground);
+  const foregroundOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+  );
+  progress.addChild(foregroundOwner);
+  foregroundOwner.addChild(foreground);
   const foregroundMask = new Graphics({ label: "score-gauge-foreground-fill-mask" }).rect(
     foreground.position.x,
     foreground.position.y - scene.gauge.foreground.height / 2,
@@ -2728,7 +2855,12 @@ function applyScoreHud(
     levelMark.height = 6;
     levelMark.position.set(x, 10);
     levelMark.zIndex = scene.gauge.markerDepth;
-    progress.addChild(levelMark);
+    const separatorOwner = serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/Separator`,
+    );
+    progress.addChild(separatorOwner);
+    separatorOwner.addChild(levelMark);
     visual.scoreRankSprites.push(levelMark);
     retainHudBinding(object, levelMarkBinding.key, referenceCounts);
     const rankFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
@@ -2741,7 +2873,12 @@ function applyScoreHud(
     rankLabel.anchor.set(0.5, 0.5);
     rankLabel.position.set(x, 2);
     rankLabel.zIndex = scene.gauge.markerDepth;
-    progress.addChild(rankLabel);
+    const rankLabelOwner = serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/${row.rank}`,
+    );
+    progress.addChild(rankLabelOwner);
+    rankLabelOwner.addChild(rankLabel);
     visual.scoreRankSprites.push(rankLabel);
   }
 
@@ -2778,6 +2915,7 @@ function updatePersistentScoreHud(
 ): void {
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
   placeSafeTopAnchoredUiRoot(object, "left");
+  showScoreBaselineComponents(visual, state.foregroundActive);
   const scoreDigits = String(state.score);
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
   const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
@@ -2798,7 +2936,10 @@ function updatePersistentScoreHud(
     for (const sprite of visual.scoreDigitTexts.splice(0)) sprite.destroy();
     for (let index = 0; index < displayed.length; index += 1) {
       const sprite = new Sprite({ label: `score-digit-${index}` });
-      visual.content.addChild(sprite);
+      serializedHudComponent(
+        visual.serializedComponentNodes,
+        "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+      ).addChild(sprite);
       visual.scoreDigitTexts.push(sprite);
     }
   }
@@ -2901,6 +3042,20 @@ function updateScoreSoftClipFilter(
   }
 }
 
+function showScoreBaselineComponents(visual: PixiHudVisual, foregroundActive: boolean): void {
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Base/TotalScore");
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Progress/Background");
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Progress/Background_Cover");
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+  ).visible = foregroundActive;
+  for (const rank of ["C", "B", "A", "S", "SS"] as const) {
+    showSerializedHudComponent(visual, `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/${rank}`);
+    showSerializedHudComponent(visual, `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/Separator`);
+  }
+}
+
 function ensureScoreHighRankSprites(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
@@ -2909,8 +3064,16 @@ function ensureScoreHighRankSprites(
   referenceCounts: Map<string, number>,
   progress: Container,
 ): void {
-  if (!state.highRankEffectActive || visual.scoreHighRankSprites.length > 0) return;
+  if (!state.highRankEffectActive) return;
   const animation = currentScoreGaugeSsAnimation(object);
+  for (const node of animation.nodes) {
+    showSerializedHudComponent(
+      visual,
+      `GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/${node.name}`,
+    );
+  }
+  visual.animationLayer.visible = true;
+  if (visual.scoreHighRankSprites.length > 0) return;
   visual.animationLayer.position.copyFrom(progress.position);
   visual.animationLayer.visible = true;
   visual.scoreHighRankGeneration += 1;
@@ -2937,7 +3100,12 @@ function ensureScoreHighRankSprites(
     sprite.rotation = quaternionZRadians(node.initialRotationQuaternion);
     sprite.visible = false;
     sprite.zIndex = 30;
-    visual.animationLayer.addChild(sprite);
+    const componentOwner = serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/${node.name}`,
+    );
+    visual.animationLayer.addChild(componentOwner);
+    componentOwner.addChild(sprite);
     visual.scoreHighRankSprites.push(sprite);
     visual.scoreHighRankNodeNames.push(node.name);
     visual.scoreHighRankBaseScales.push(baseScale);

@@ -62,7 +62,7 @@ export interface PauseControlSceneSnapshot {
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
   readonly words: {
-    readonly pause: { readonly title: "一時停止"; readonly message: "ライブを一時停止しています"; readonly buttons: readonly ["中断", "リトライ", "再開"] };
+    readonly pause: { readonly title: "一時停止"; readonly message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。"; readonly buttons: readonly ["中断", "リトライ", "再開"] };
     readonly retry: { readonly title: "リトライ"; readonly message: "リトライしてライブを最初からプレイしますか？"; readonly buttons: readonly ["キャンセル", "リトライ"] };
     readonly abort: { readonly title: "中断"; readonly message: "ライブを中断してホーム画面に戻りますか？"; readonly annotation: "※中断した場合、ライブ報酬を獲得できません。"; readonly buttons: readonly ["キャンセル", "中断"] };
   };
@@ -95,7 +95,7 @@ const CANCEL_BUTTON_X = Math.fround(-136.00001525878906);
 const CONFIRM_BUTTON_X = Math.fround(135);
 
 const VISIBLE_WORDS: PauseControlSceneSnapshot["words"] = deepFreeze({
-  pause: { title: "一時停止", message: "ライブを一時停止しています", buttons: ["中断", "リトライ", "再開"] as const },
+  pause: { title: "一時停止", message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。", buttons: ["中断", "リトライ", "再開"] as const },
   retry: { title: "リトライ", message: "リトライしてライブを最初からプレイしますか？", buttons: ["キャンセル", "リトライ"] as const },
   abort: { title: "中断", message: "ライブを中断してホーム画面に戻りますか？", annotation: "※中断した場合、ライブ報酬を獲得できません。", buttons: ["キャンセル", "中断"] as const },
 });
