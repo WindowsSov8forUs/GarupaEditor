@@ -79,6 +79,10 @@ const fiveVisualCorrection = JSON.parse(readFileSync(join(
   fixtureRoot,
   "five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
 ), "utf8"));
+const scoreFinalVisible = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -368,8 +372,10 @@ async function main(): Promise<void> {
     CONTROL_SURFACE_LAYOUT.starUi.safeArea.x,
     0,
   ]), "Score StarUIAnchor resolves the root to safe left/top");
-  equal(scoreAtHalf.hudText, null, "Score allocates no hidden system Text owner");
-  equal(scoreAtHalf.hudScoreDigitCount, 8, "Score threshold value owns eight bitmap glyph Sprites");
+  equal(scoreAtHalf.hudText, "09000000", "Score owns one encoded UILabel text value");
+  assert(scoreAtHalf.hudFontFamily?.startsWith("sgm-"), "Score TotalScore uses the hash-validated sgm FontFace");
+  equal(scoreAtHalf.hudScoreDigitCount, 0, "Score owns no rejected bitmap digit Sprite");
+  equal(scoreAtHalf.hudScoreTextRunCount, 2, "Score owns gray-leading and pink-significant runs under one UILabel owner");
   equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
   equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
   equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
@@ -377,21 +383,39 @@ async function main(): Promise<void> {
     JSON.stringify(fiveVisualCorrection.score_hud.widgets.map((row: any) => row.path)),
     "Score production graph owns all 45 serialized component identities in source order");
   assertHudPixiRenderingEquivalence(scoreAtHalf, life, completeHudComponents);
-  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
-  const scoreRootNode = renderer.stage.getChildByLabel("hud:score", true) as any;
-  const firstScoreDigit = scoreRootNode?.getChildByLabel("score-digit-0", true) as any;
-  equal(firstScoreDigit?.scale?.x, Math.fround(20 / 32),
-    "TotalScore ShrinkContent decrements integer font size against BMFont default size32");
-  const scoreDigitLayout = scoreAtHalf.hudScoreDigitLayout!;
-  assert(scoreDigitLayout.length === 8 && scoreDigitLayout.every((digit) =>
-    digit.scale[0] === Math.fround(20 / 32) && digit.scale[0] === digit.scale[1]),
-  "TotalScore eight glyphs share the ShrinkContent final font size");
-  const scoreDigitMinX = Math.min(...scoreDigitLayout.map((digit) => digit.position[0]));
-  const scoreDigitMaxX = Math.max(...scoreDigitLayout.map((digit) => digit.position[0] + digit.width));
-  assert(scoreDigitMinX >= 24,
-  `Right-pivot TotalScore starts inside the serialized widget: ${scoreDigitMinX}..${scoreDigitMaxX}`);
-  assert(firstScoreDigit?.getBounds().minX >= -0.01,
-    "Right-pivot TotalScore glyphs remain inside the safe-left viewport");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-leading-segment" && node.zIndex === 40),
+    "TotalScore leading UILabel run depth is 40");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-significant-segment" && node.zIndex === 40),
+    "TotalScore significant UILabel run depth is 40");
+  assert(!scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label.startsWith("score-digit-")),
+    "TotalScore contains no bitmap digit Sprite");
+  equal(JSON.stringify(scoreAtHalf.hudScoreTextLayout), JSON.stringify([
+    {
+      label: "score-leading-segment", text: "0", position: [-168, 0], anchor: [0, 0.5],
+      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0xbebebe, visible: true, zIndex: 40,
+    },
+    {
+      label: "score-significant-segment", text: "9000000", position: [-147, 0], anchor: [0, 0.5],
+      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0xff3b72, visible: true, zIndex: 40,
+    },
+  ]), "TotalScore encoded runs consume independent Reverse TTF advances");
+  const scoreComponents = new Map(scoreAtHalf.hudSerializedComponents?.map((row) => [row.path, row]));
+  equal(JSON.stringify(scoreComponents.get(scoreFinalVisible.total_score_label.path)), JSON.stringify({
+    path: scoreFinalVisible.total_score_label.path,
+    visible: true,
+    position: [212, 84],
+    zIndex: 40,
+    childLabels: ["score-leading-segment", "score-significant-segment"],
+  }), "TotalScore component 1271 owns exact local transform, depth and two color primitives");
+  for (const [path, position, zIndex, childLabel] of [
+    ["GamePlay/UI_Root/Display/Score/Progress/Background", [0, 23], 4, "score-gauge-background"],
+    ["GamePlay/UI_Root/Display/Score/Progress/Background_Cover", [38, 1], 28, "score-gauge-cover"],
+    ["GamePlay/UI_Root/Display/Score/Progress/Foreground", [41, 1], 5, "score-gauge-foreground"],
+  ] as const) {
+    const component = scoreComponents.get(path);
+    equal(JSON.stringify([component?.position, component?.zIndex, component?.childLabels]),
+      JSON.stringify([position, zIndex, [childLabel]]), `${path} component transform/depth`);
+  }
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-background" && node.zIndex === 4), "Score background depth is 4");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-foreground" && node.zIndex === 5), "Score foreground depth is 5");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-cover" && node.zIndex === 28), "Score cover depth is 28");
@@ -460,7 +484,10 @@ async function main(): Promise<void> {
     scoreMatrix.push(Object.freeze({ score: matrixScore, rank: expectedRank, observation: pickSceneObservation(observed) }));
     previousRank = expectedRank;
   }
-  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 8, "CS-V1 scoreMaximum keeps all bitmap digits");
+  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 0,
+    "CS-V1 scoreMaximum never restores bitmap digits");
+  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudText, "10001000",
+    "CS-V1 scoreMaximum keeps the complete eight-character UILabel value");
 
   const overMaximumCommand: RenderCommand = {
     sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
@@ -1041,7 +1068,8 @@ async function verifyActualPixiFullChart(
     }
     if (add?.visible && add.hudText === null && (add.hudSpriteCount ?? 0) >= 2) routes.add("add-score");
     if (result?.visible && result.hudText === null && (result.hudSpriteCount ?? 0) >= 1) routes.add("result");
-    if (score?.visible && (score.hudScoreDigitCount ?? 0) >= 8) routes.add("score");
+    if (score?.visible && score.hudScoreDigitCount === 0 && score.hudScoreTextRunCount === 2 &&
+      score.hudFontFamily?.startsWith("sgm-") && score.hudText !== null) routes.add("score");
     if (life?.visible && life.hudFontFamily?.startsWith("sgm-")) routes.add("life");
     if (finalSnapshot.managers.noteManager.nextBatchIndex === chart.noteBatches.length &&
       finalSnapshot.adjustedMusicPosition > 5000) break;
@@ -1144,6 +1172,9 @@ function pickSceneObservation(
     hudSpriteAlphas: row.hudSpriteAlphas,
     hudFillRatios: row.hudFillRatios,
     hudScoreDigitCount: row.hudScoreDigitCount,
+    hudScoreTextRunCount: row.hudScoreTextRunCount,
+    hudScoreTextLayout: row.hudScoreTextLayout,
+    hudSerializedComponents: row.hudSerializedComponents,
     hudScoreRankVisualCount: row.hudScoreRankVisualCount,
     hudScoreHighRankNodes: row.hudScoreHighRankNodes,
     hudScoreHighRankGeneration: row.hudScoreHighRankGeneration,

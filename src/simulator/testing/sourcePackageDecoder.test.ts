@@ -43,7 +43,6 @@ async function testCommonRenderPackages(): Promise<void> {
   add("atlas/bms/ui/tap-lane-effect", [1, 2, 3, 4].map((index) => [`tap-lane-effect-${index}.png`, `atlas/bms/ui/tap-lane-effect/tap-lane-effect-${index}.png`] as const));
   add("atlas/bms/ui/ui-additive-effect", [["ui-additive-effect.png", "atlas/bms/ui/ui-additive-effect/ui-additive-effect.png"]]);
   add("atlas/bms/ui/uicommon", [["ui-common.png", "atlas/bms/ui/uicommon/ui-common.png"]]);
-  add("fonts/score/score", [["score-font.png", "fonts/score/score/score-font.png"]]);
   add("fonts/sgm", [["rank-label-font.ttf", "fonts/sgm/rank-label-font.ttf"]]);
   add("prefabs/bms/information", [["startup-line-star.png", "prefabs/bms/information/startup-line-star.png"]]);
   add("prefabs/bms/pause", [1, 2, 3].map((index) => [`countdown-${index}.png`, `prefabs/bms/pause/countdown-${index}.png`] as const));
@@ -56,7 +55,7 @@ async function testCommonRenderPackages(): Promise<void> {
   const prepared = await prepareLeasedCommonRenderResources(new MemoryLease(packages));
   assert.equal(prepared.status, "accepted", prepared.status === "rejected" ? prepared.failure.capability : "");
   if (prepared.status === "rejected") return;
-  assert.equal(prepared.value.profile.assets.length, 18);
+  assert.equal(prepared.value.profile.assets.length, 17);
   assert.equal(prepared.value.profile.packIdentity, "application-leased-semantic-render-v1");
   assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
   assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
@@ -72,11 +71,10 @@ async function testCommonRenderPackages(): Promise<void> {
     [396, 43, 449, 175, 920, 319],
     "NGUI-derived common atlas rows use the exported PNG top-left coordinates from the Reverse profile",
   );
-  assert.deepEqual(
-    [atlas("hud/score/font-atlas", "0").y, atlas("hud/score/ui-common-atlas", "icon_fullmusic_gray").y],
-    [40, 33],
-    "bitmap-font and UICommon rows retain their already top-left source coordinates",
-  );
+  assert.equal(atlas("hud/score/ui-common-atlas", "icon_fullmusic_gray").y, 33,
+    "UICommon row retains its already top-left source coordinate");
+  assert.equal(prepared.value.profile.assets.some((row) => row.logicalAssetId === "hud/score/font-atlas"), false,
+    "common production preparation excludes the rejected TotalScore bitmap font atlas");
 }
 
 async function testNoteSourcePackage(): Promise<void> {

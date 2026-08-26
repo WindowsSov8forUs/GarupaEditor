@@ -38,7 +38,7 @@ npm.cmd run simulator:test:total-revalidation:clean
 npm.cmd run simulator:test:hud-equivalence
 ```
 
-该门消费Reverse `c2187fe3`纠错fixture：旧`07bf4e7c`静态组件仍有效，但production-consumption authorization已撤回。core分别比较19个Score逻辑边界、Score45/Life10完整组件path、SS 11节点、56/236曲线、SoftClip及独立Slide/Lane oracle；actual Pixi要求Life无第二root Text、Pause使用fill UISprite和三行正文、产品chart经主13槽Lane owner；真实Browser product入口另验证四张PNG、bottom pivot、add blend、精确bounds与非零framebuffer pixels。该门只证明已列纠错项；用户报告的Score可见raster仍为`observational-gap`，不再把core绿色命名为HUD整体等价。
+该门消费Reverse `c2187fe3`五项纠错及`a08fbced` Score最终可见fixture。core除19个Score逻辑边界、Score45/Life10组件path、SS 11节点、56/236曲线与SoftClip外，还独立验证TotalScore component1271→UIFont1799→sgm Font75链、拒绝bitmap score-font、双encoded color run及8/9位ShrinkContent。actual Pixi逐组件比较Total/Gauge/Rank owner transform/depth并要求零bitmap digit；真实WebView2使用生产FontFace/ImageBitmap执行D/C/B/A/S/SS/9位七状态矩阵、完整SS动画和逐状态framebuffer，且不得请求`score-font.png`。整体完成声明仍须等待Windows生产窗口多状态验收，不能只凭core恢复。
 
 ## Original Pause leaves
 

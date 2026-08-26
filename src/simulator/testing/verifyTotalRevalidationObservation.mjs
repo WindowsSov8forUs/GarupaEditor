@@ -20,13 +20,16 @@ const samples = raw.samples;
 assert.ok(samples && typeof samples === "object");
 const matrix = samples.scoreMatrix;
 assert.ok(Array.isArray(matrix));
-assert.deepEqual(matrix.map((row) => [row.score, row.rank, row.observation.hudScoreDigitCount]), [
-  [0, 4, 8], [374999, 4, 8], [375000, 3, 8], [375001, 3, 8],
-  [2249999, 3, 8], [2250000, 2, 8], [2250001, 2, 8],
-  [4499999, 2, 8], [4500000, 1, 8], [4500001, 1, 8],
-  [6749999, 1, 8], [6750000, 0, 8], [6750001, 0, 8],
-  [8999999, 0, 8], [9000000, 5, 8], [9000001, 5, 8],
-  [10000999, 5, 8], [10001000, 5, 8],
+assert.deepEqual(matrix.map((row) => [
+  row.score, row.rank, row.observation.hudScoreDigitCount,
+  row.observation.hudScoreTextRunCount, row.observation.hudText,
+]), [
+  [0, 4, 0, 2, "00000000"], [374999, 4, 0, 2, "00374999"], [375000, 3, 0, 2, "00375000"], [375001, 3, 0, 2, "00375001"],
+  [2249999, 3, 0, 2, "02249999"], [2250000, 2, 0, 2, "02250000"], [2250001, 2, 0, 2, "02250001"],
+  [4499999, 2, 0, 2, "04499999"], [4500000, 1, 0, 2, "04500000"], [4500001, 1, 0, 2, "04500001"],
+  [6749999, 1, 0, 2, "06749999"], [6750000, 0, 0, 2, "06750000"], [6750001, 0, 0, 2, "06750001"],
+  [8999999, 0, 0, 2, "08999999"], [9000000, 5, 0, 2, "09000000"], [9000001, 5, 0, 2, "09000001"],
+  [10000999, 5, 0, 2, "10000999"], [10001000, 5, 0, 2, "10001000"],
 ]);
 for (const row of matrix) {
   const state = row.observation.hudState;
@@ -65,7 +68,13 @@ for (const row of matrix) {
 }
 const half = samples.scoreHalf;
 const continued = samples.scoreContinued;
-assert.equal(half.hudText, null);
+assert.equal(half.hudText, "09000000");
+assert.equal(half.hudScoreDigitCount, 0);
+assert.equal(half.hudScoreTextRunCount, 2);
+assert.deepEqual(half.hudScoreTextLayout.map((row) => [row.label, row.text, row.position, row.fontSize, row.fill]), [
+  ["score-leading-segment", "0", [-168, 0], 28, 0xbebebe],
+  ["score-significant-segment", "9000000", [-147, 0], 28, 0xff3b72],
+]);
 assert.equal(half.animationElapsedSeconds, 0.5);
 assert.equal(continued.animationElapsedSeconds, Math.fround(0.55));
 assert.equal(half.hudScoreHighRankGeneration, 1);
@@ -76,7 +85,7 @@ assert.notDeepEqual(half.hudScoreHighRankNodes, continued.hudScoreHighRankNodes)
 assert.deepEqual(half.hudScoreNineSliceBorders.find((row) => row.label === "score-gauge-background"), {
   label: "score-gauge-background", left: 216, top: 0, right: 0, bottom: 16,
 });
-for (const [label, depth] of [["score-digit-0", 40], ["score-gauge-background", 4], ["score-gauge-foreground", 5], ["score-gauge-cover", 28], ["score-rank-marker-SS", 29]]) {
+for (const [label, depth] of [["score-leading-segment", 40], ["score-significant-segment", 40], ["score-gauge-background", 4], ["score-gauge-foreground", 5], ["score-gauge-cover", 28], ["score-rank-marker-SS", 29]]) {
   assert.ok(half.hudScoreLayerNodes.some((row) => row.label === label && row.zIndex === depth), `${label} depth`);
 }
 assert.deepEqual(half.hudScoreIndicatorMask, {

@@ -145,7 +145,7 @@ function testSelector(): void {
   const ordinarySelection = selectSimulatorStaticResources(ordinary);
   assert.equal(ordinarySelection.audioSe.length, 15);
   assert.equal(ordinarySelection.particles.length, 9);
-  assert.equal(ordinarySelection.scoreHud.length, 7);
+  assert.equal(ordinarySelection.scoreHud.length, 6);
   assert.ok(ordinarySelection.scoreGaugeSsAnimation.resourceKey.endsWith("score-gauge-ss-animation-profile.json"));
   assert.ok(ordinarySelection.scoreHud.every((row) =>
     row.resourceKey.startsWith("simulator-static/current-10.1.4/score-hud/")));
@@ -164,7 +164,7 @@ function testSelector(): void {
   ), "utf8");
   const hab = requireOk(createNoteBatchInformationList({ musicScoreData: habBms }));
   const habSelection = selectSimulatorStaticResources(hab);
-  assert.equal(habSelection.scoreHud.length, 7);
+  assert.equal(habSelection.scoreHud.length, 6);
   assert.equal(habSelection.rendering.kind, "habahiro");
   if (habSelection.rendering.kind === "habahiro") {
     assert.equal(habSelection.rendering.resources.length, 11);
@@ -239,8 +239,9 @@ async function testScoreHudPack(): Promise<void> {
   });
   const store = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
   const prepared = requireAccepted(await prepareSharedScoreHudRenderResources(selection, store));
-  assert.equal(prepared.assets.length, 7);
-  assert.equal((await prepared.provider.read("hud/score/font-atlas")).status, "ok");
+  assert.equal(prepared.assets.length, 6);
+  assert.equal((await prepared.provider.read("hud/score/font-atlas")).status, "integrity-failure");
+  assert.equal((await prepared.provider.read("hud/score/rank-label-font")).status, "ok");
   const animationProfile = requireAccepted(await prepareSharedScoreGaugeSsAnimationResource(animation, store));
   assert.equal(animationProfile.curveCount, 56);
   assert.equal(animationProfile.frames.length, 39);

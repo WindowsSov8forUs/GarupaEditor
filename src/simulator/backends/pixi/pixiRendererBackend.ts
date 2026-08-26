@@ -683,6 +683,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudSpriteCount: number | null;
     readonly hudSerializedComponentPaths: readonly string[] | null;
     readonly hudSerializedActivePaths: readonly string[] | null;
+    readonly hudSerializedComponents: readonly {
+      readonly path: string;
+      readonly visible: boolean;
+      readonly position: readonly [number, number];
+      readonly zIndex: number;
+      readonly childLabels: readonly string[];
+    }[] | null;
     readonly hudSpriteNodes: readonly {
       readonly label: string;
       readonly position: readonly [number, number];
@@ -826,6 +833,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : Object.freeze([...value.hudVisual.serializedComponentNodes]
             .filter(([, node]) => node.visible)
             .map(([path]) => path)),
+      hudSerializedComponents: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes].map(([path, node]) => Object.freeze({
+            path,
+            visible: node.visible,
+            position: Object.freeze([node.position.x, node.position.y] as const),
+            zIndex: node.zIndex,
+            childLabels: Object.freeze(node.children.map((child) => child.label)),
+          }))),
       hudSpriteNodes: value.hudVisual === null
         ? null
         : Object.freeze(value.hudVisual.digitSprites.map((sprite) => Object.freeze({

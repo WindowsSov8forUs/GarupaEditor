@@ -113,6 +113,7 @@ async function main(): Promise<void> {
     throw new Error("production decoder actual Pixi raster cases are empty or aliased");
   }
   const scoreHud = await captureProductionScoreHud(app);
+  const scoreStateMatrix = await captureProductionScoreHudStateMatrix(app);
 
   const source = texture.source;
   texture.destroy(true);
@@ -150,7 +151,7 @@ async function main(): Promise<void> {
       transparentRgbCompositePreserved: true,
       textureResourceAfterDestroy: resourceAfterDestroy == null ? null : resourceAfterDestroy.constructor?.name ?? "unknown",
     },
-    raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud },
+    raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud, scoreStateMatrix },
     isolation: {
       resourceUrls: performance.getEntriesByType("resource").map((entry) => entry.name).sort(),
     },
@@ -166,7 +167,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
   readonly maskWorldTransform: readonly [number, number];
   readonly maskWorldBounds: readonly [number, number, number, number];
   readonly animationLayerWorldTransform: readonly [number, number];
-  readonly firstDigitWorldTransform: readonly [number, number];
+  readonly leadingRunWorldTransform: readonly [number, number];
   readonly highRankNodes: readonly unknown[];
   readonly highRankGeneration: number;
   readonly pngDataUrl: string;
@@ -174,7 +175,10 @@ async function captureProductionScoreHud(app: Application): Promise<{
   const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
   const animation = parseCurrentScoreGaugeSsAnimationProfile(await fetchJson("/score-animation.json"));
   if (animation === null) throw new Error("committed ScoreGaugeSS profile did not parse in WebView2");
-  const resources = await Promise.all(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map(async (row) => Object.freeze({
+  const productionScoreResources = CURRENT_SCORE_HUD_PORTABLE_RESOURCES.filter(
+    (row) => row.resourceKeySuffix !== "score-font.png",
+  );
+  const resources = await Promise.all(productionScoreResources.map(async (row) => Object.freeze({
     logicalAssetId: row.profile.logicalAssetId,
     bytes: await fetchBytes(`/score-assets/${row.resourceKeySuffix}`),
   })));
@@ -182,7 +186,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
   const profile: RenderResourceProfile = {
     ...baseProfile,
     packIdentity: `${baseProfile.packIdentity}+production-score-hud-webview2`,
-    assets: Object.freeze(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile)),
+    assets: Object.freeze(productionScoreResources.map((row) => row.profile)),
     scoreGaugeSsAnimation: animation,
     ordinaryVisibleProfile: undefined,
   };
@@ -231,10 +235,20 @@ async function captureProductionScoreHud(app: Application): Promise<{
   app.render();
   const mask = findLabel(backend.stage, "score-high-rank-panel-mask");
   const layer = findLabel(backend.stage, "score-high-rank-animation-layer");
-  const firstDigit = findLabel(backend.stage, "score-digit-0");
-  if (mask === null || layer === null || firstDigit === null) {
-    throw new Error("production Score HUD panel or digit owner is absent");
+  const leadingRun = findLabel(backend.stage, "score-leading-segment");
+  const significantRun = findLabel(backend.stage, "score-significant-segment");
+  if (mask === null || layer === null || !(leadingRun instanceof Text) || !(significantRun instanceof Text)) {
+    throw new Error("production Score HUD panel or encoded UILabel owner is absent");
   }
+  if (findLabel(backend.stage, "score-digit-0") !== null) {
+    throw new Error("rejected TotalScore bitmap digit route is still present");
+  }
+  equal(leadingRun.text, "0", "SS TotalScore leading run");
+  equal(significantRun.text, "9000000", "SS TotalScore significant run");
+  equal(Number(leadingRun.style.fill), 0xbebebe, "SS TotalScore leading color");
+  equal(Number(significantRun.style.fill), 0xff3b72, "SS TotalScore significant color");
+  equal(String(leadingRun.style.fontFamily).startsWith("GarupaScoreRank-949356"), true,
+    "SS TotalScore exact sgm FontFace");
   const bounds = mask.getLocalBounds();
   const maskWorldTransform = Object.freeze([mask.worldTransform.tx, mask.worldTransform.ty] as const);
   const maskWorldBounds = Object.freeze([
@@ -244,13 +258,13 @@ async function captureProductionScoreHud(app: Application): Promise<{
     mask.worldTransform.ty + bounds.maxY,
   ] as const);
   const animationLayerWorldTransform = Object.freeze([layer.worldTransform.tx, layer.worldTransform.ty] as const);
-  const firstDigitWorldTransform = Object.freeze([firstDigit.worldTransform.tx, firstDigit.worldTransform.ty] as const);
+  const leadingRunWorldTransform = Object.freeze([leadingRun.worldTransform.tx, leadingRun.worldTransform.ty] as const);
   const scoreObservation = backend.sceneSnapshot().find((row) => row.renderObjectId === "hud:score");
   if (scoreObservation?.hudScoreHighRankNodes === null || scoreObservation?.hudScoreHighRankNodes === undefined) {
     throw new Error("production ScoreGaugeSS node observation is unavailable");
   }
   const hudObservation = captureHudRenderingWebView2Observation(scoreObservation);
-  const frame = new Rectangle(320, 20, 560, 160);
+  const frame = new Rectangle(0, 20, 900, 160);
   const output = app.renderer.extract.pixels({
     target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
   });
@@ -264,7 +278,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
     maskWorldTransform,
     maskWorldBounds,
     animationLayerWorldTransform,
-    firstDigitWorldTransform,
+    leadingRunWorldTransform,
     highRankNodes: hudObservation.highRankNodes,
     highRankGeneration: hudObservation.highRankGeneration,
     pngDataUrl: (canvas as HTMLCanvasElement).toDataURL("image/png"),
@@ -273,6 +287,151 @@ async function captureProductionScoreHud(app: Application): Promise<{
   requireOk(backend.dispose());
   app.stage.removeChild(backend.stage);
   return result;
+}
+
+async function captureProductionScoreHudStateMatrix(app: Application): Promise<readonly {
+  readonly score: number;
+  readonly rank: number;
+  readonly text: string;
+  readonly fontSize: number;
+  readonly leading: string;
+  readonly significant: string;
+  readonly leadingPosition: readonly [number, number];
+  readonly significantPosition: readonly [number, number];
+  readonly ownerWorldTransform: readonly [number, number];
+  readonly leadingWorldBounds: readonly [number, number, number, number];
+  readonly significantWorldBounds: readonly [number, number, number, number];
+  readonly sha256: string;
+  readonly nonTransparentPixels: number;
+  readonly alphaBounds: readonly [number, number, number, number];
+}[]> {
+  const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
+  const animation = parseCurrentScoreGaugeSsAnimationProfile(await fetchJson("/score-animation.json"));
+  if (animation === null) throw new Error("Score matrix AnimationClip profile did not parse");
+  const productionScoreResources = CURRENT_SCORE_HUD_PORTABLE_RESOURCES.filter(
+    (row) => row.resourceKeySuffix !== "score-font.png",
+  );
+  const resources = await Promise.all(productionScoreResources.map(async (row) => Object.freeze({
+    logicalAssetId: row.profile.logicalAssetId,
+    bytes: await fetchBytes(`/score-assets/${row.resourceKeySuffix}`),
+  })));
+  if (resources.some((row) => row.logicalAssetId === "hud/score/font-atlas")) {
+    throw new Error("Score matrix prepared the rejected bitmap font atlas");
+  }
+  const provider = requireOk(ImmutableLocalRenderResourceProvider.create(resources));
+  const profile: RenderResourceProfile = {
+    ...baseProfile,
+    packIdentity: `${baseProfile.packIdentity}+production-score-state-matrix-webview2`,
+    assets: Object.freeze(productionScoreResources.map((row) => row.profile)),
+    scoreGaugeSsAnimation: animation,
+    ordinaryVisibleProfile: undefined,
+  };
+  const sessionId = "production-score-state-matrix-webview2";
+  const backend = new PixiRendererBackend(new BrowserPixiTextureDecoder());
+  requireOk(await backend.prepare(sessionId, profile, provider, new PortableRenderResourcePreflightAdapter()));
+  requireOk(backend.bindOriginalSurfaceLayout(requireOk(createOriginalSurfaceLayout({
+    revision: 0, viewportWidth: 1600, viewportHeight: 720,
+    safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
+    origin: "bottom-left",
+  }, Math.fround(100)))));
+  let sequence = 0;
+  requireOk(backend.commit(requireOk(backend.preflight([{
+    sessionId, sequence: sequence++, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "hud:score:matrix", poolFamily: "score",
+    role: "hud-score", parentObjectId: null,
+  }]))));
+  app.renderer.resize(1600, 720);
+  const linearOutput = installPixiLinearOutput(backend.stage, 1600, 720);
+  app.stage.addChild(backend.stage);
+  const cases = [
+    { score: 0, before: 4, rank: 4, high: false, text: "00000000", size: 28 },
+    { score: 375_000, before: 4, rank: 3, high: false, text: "00375000", size: 28 },
+    { score: 2_250_000, before: 3, rank: 2, high: false, text: "02250000", size: 28 },
+    { score: 4_500_000, before: 2, rank: 1, high: false, text: "04500000", size: 28 },
+    { score: 6_750_000, before: 1, rank: 0, high: false, text: "06750000", size: 28 },
+    { score: 9_000_000, before: 0, rank: 5, high: true, text: "09000000", size: 28 },
+    { score: 900_000_000, before: 5, rank: 5, high: true, text: "900000000", size: 27 },
+  ] as const;
+  const rows = [];
+  for (let index = 0; index < cases.length; index += 1) {
+    const expected = cases[index]!;
+    const commands: RenderCommand[] = [{
+      sessionId, sequence: sequence++, frame: index + 1, substep: 0,
+      kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
+      state: scoreState(
+        expected.score,
+        expected.before,
+        expected.rank,
+        expected.before !== expected.rank,
+        expected.score === 9_000_000 ? "ScoreGaugeSS" : "none",
+        expected.high,
+      ),
+    }];
+    if (index === 0) commands.push({
+      sessionId, sequence: sequence++, frame: index + 1, substep: 0,
+      kind: "activate-object", renderObjectId: "hud:score:matrix",
+    });
+    if (expected.score === 9_000_000) {
+      commands.push(
+        {
+          sessionId, sequence: sequence++, frame: index + 1, substep: 0,
+          kind: "play-animation", renderObjectId: "hud:score:matrix", animationRole: "score-gauge-ss", restart: true,
+        },
+        {
+          sessionId, sequence: sequence++, frame: index + 1, substep: 0,
+          kind: "sample-animation", renderObjectId: "hud:score:matrix", animationRole: "score-gauge-ss",
+          elapsedSeconds: float32(0.5),
+        },
+      );
+    }
+    requireOk(backend.commit(requireOk(backend.preflight(commands))));
+    app.render();
+    const owner = findLabel(backend.stage, "GamePlay/UI_Root/Display/Score/Base/TotalScore");
+    const leading = findLabel(backend.stage, "score-leading-segment");
+    const significant = findLabel(backend.stage, "score-significant-segment");
+    if (owner === null || !(leading instanceof Text) || !(significant instanceof Text)) {
+      throw new Error(`Score matrix ${expected.score} UILabel graph is absent`);
+    }
+    if (findLabel(backend.stage, "score-digit-0") !== null) {
+      throw new Error(`Score matrix ${expected.score} restored a bitmap digit`);
+    }
+    equal(`${leading.text}${significant.text}`, expected.text, `Score matrix ${expected.score} encoded value`);
+    equal(Number(leading.style.fontSize), expected.size, `Score matrix ${expected.score} leading font size`);
+    equal(Number(significant.style.fontSize), expected.size, `Score matrix ${expected.score} significant font size`);
+    equal(Number(leading.style.fill), 0xbebebe, `Score matrix ${expected.score} leading fill`);
+    equal(Number(significant.style.fill), 0xff3b72, `Score matrix ${expected.score} significant fill`);
+    equal(String(leading.style.fontFamily).startsWith("GarupaScoreRank-949356"), true,
+      `Score matrix ${expected.score} exact sgm FontFace`);
+    const leadingBounds = leading.getBounds();
+    const significantBounds = significant.getBounds();
+    const frame = new Rectangle(0, 20, 900, 160);
+    const output = app.renderer.extract.pixels({
+      target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
+    });
+    const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+    const alpha = alphaObservation(pixels, frame.width, frame.height);
+    if (alpha.nonTransparentPixels <= 0) throw new Error(`Score matrix ${expected.score} raster is empty`);
+    rows.push(Object.freeze({
+      score: expected.score,
+      rank: expected.rank,
+      text: expected.text,
+      fontSize: expected.size,
+      leading: leading.text,
+      significant: significant.text,
+      leadingPosition: Object.freeze([leading.x, leading.y] as const),
+      significantPosition: Object.freeze([significant.x, significant.y] as const),
+      ownerWorldTransform: Object.freeze([owner.worldTransform.tx, owner.worldTransform.ty] as const),
+      leadingWorldBounds: Object.freeze([leadingBounds.x, leadingBounds.y, leadingBounds.width, leadingBounds.height] as const),
+      significantWorldBounds: Object.freeze([significantBounds.x, significantBounds.y, significantBounds.width, significantBounds.height] as const),
+      sha256: await sha256(pixels),
+      nonTransparentPixels: alpha.nonTransparentPixels,
+      alphaBounds: alpha.bounds,
+    }));
+  }
+  linearOutput.dispose();
+  requireOk(backend.dispose());
+  app.stage.removeChild(backend.stage);
+  return Object.freeze(rows);
 }
 
 function scoreState(

@@ -17,34 +17,6 @@ const LINEAR_CLAMP = Object.freeze({
   blendMode: "normal" as const,
 });
 
-const digitGlyphs = Object.freeze([
-  glyph("0", 92, 40, 40, 28, 2, 0, 36),
-  glyph("1", 138, 130, 17, 28, 0, 0, 11),
-  glyph("2", 43, 100, 37, 28, 2, 0, 33),
-  glyph("3", 82, 100, 37, 28, 2, 0, 33),
-  glyph("4", 121, 100, 37, 28, 2, 0, 33),
-  glyph("5", 160, 100, 37, 28, 2, 0, 33),
-  glyph("6", 199, 100, 37, 28, 2, 0, 33),
-  glyph("7", 432, 100, 31, 28, 2, 0, 27),
-  glyph("8", 263, 130, 37, 27, 2, 1, 33),
-  glyph("9", 238, 100, 37, 28, 2, 0, 33),
-]);
-
-export interface ScoreHudBitmapGlyph {
-  readonly exactKey: string;
-  readonly xOffset: number;
-  readonly yOffset: number;
-  readonly xAdvance: number;
-}
-
-export const CURRENT_SCORE_HUD_BITMAP_GLYPHS: readonly ScoreHudBitmapGlyph[] =
-  Object.freeze(digitGlyphs.map((row) => Object.freeze({
-    exactKey: row.exactKey,
-    xOffset: row.xOffset,
-    yOffset: row.yOffset,
-    xAdvance: row.xAdvance,
-  })));
-
 export const CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE = Object.freeze({
   logicalAssetId: "hud/score/score-gauge-ss-animation-profile",
   resourceKeySuffix: "score-gauge-ss-animation-profile.json",
@@ -56,20 +28,6 @@ export const CURRENT_SCORE_HUD_RESOURCE_IDENTITY =
   "score-hud-rank-gauge-current-10.1.4-portable-v1" as const;
 
 export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableResourceEntry[] = Object.freeze([
-  entry("score-font.png", {
-    logicalAssetId: "hud/score/font-atlas",
-    role: "font",
-    byteLength: 48359,
-    sha256: "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE",
-    mime: "image/png",
-    width: 512,
-    height: 256,
-    textureSettings: LINEAR_CLAMP,
-    atlasRows: digitGlyphs.map(({ xOffset: _xOffset, yOffset: _yOffset, xAdvance: _xAdvance, ...row }) => row),
-    materialRole: "hud",
-    animationRole: "none",
-    provenance: "current-apk",
-  }),
   entry("rhythm-game-ui.png", {
     logicalAssetId: "hud/score/rhythm-game-ui-atlas",
     role: "hud-atlas",
@@ -167,7 +125,7 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
 ]);
 
 export const CURRENT_SCORE_HUD_BINDINGS = Object.freeze({
-  fontLogicalAssetId: "hud/score/font-atlas",
+  fontLogicalAssetId: "hud/score/rank-label-font",
   gaugeLogicalAssetId: "hud/score/rhythm-game-ui-atlas",
   levelMarkLogicalAssetId: "hud/score/ui-common-atlas",
   rankLabelFontLogicalAssetId: "hud/score/rank-label-font",
@@ -218,24 +176,6 @@ export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
   ]),
   highRankEffect: Object.freeze({ clip: "ScoreGaugeSS", durationSeconds: 3, loop: true }),
 });
-
-function glyph(
-  exactKey: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  xOffset: number,
-  yOffset: number,
-  xAdvance: number,
-) {
-  return Object.freeze({
-    ...atlas(exactKey, x, y, width, height),
-    xOffset,
-    yOffset,
-    xAdvance,
-  });
-}
 
 function atlas(
   exactKey: string,

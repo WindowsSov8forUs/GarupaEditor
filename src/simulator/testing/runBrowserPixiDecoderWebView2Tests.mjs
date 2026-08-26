@@ -34,6 +34,10 @@ const completeHudComponents = JSON.parse(readFileSync(join(
   testingRoot,
   "fixtures/reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
 ), "utf8"));
+const scoreFinalVisible = JSON.parse(readFileSync(join(
+  testingRoot,
+  "fixtures/reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
+), "utf8"));
 
 try {
   if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
@@ -115,8 +119,10 @@ function verify(value) {
   closeTuple(scoreHud.maskWorldTransform, adaptive.progress, 1e-4, "Score high-rank panel mask world transform");
   closeTuple(scoreHud.maskWorldBounds, adaptive.maskBounds, 1e-4, "Score high-rank panel SS-threshold world bounds");
   closeTuple(scoreHud.animationLayerWorldTransform, adaptive.progress, 1e-4, "Score high-rank animation and panel coordinate spaces");
-  closeTuple(scoreHud.firstDigitWorldTransform, adaptive.firstDigit, 1e-4, "CS-V1 SS-threshold first bitmap digit world transform");
+  closeTuple(scoreHud.leadingRunWorldTransform, adaptive.leadingRun, 1e-4,
+    "CS-V1 SS-threshold TotalScore leading sgm run world transform");
   verifyHighRankNodes(scoreHud);
+  verifyScoreStateMatrix(value.raster.scoreStateMatrix);
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }
@@ -134,9 +140,49 @@ function verify(value) {
       !value.isolation.resourceUrls.every((url) => url.startsWith("http://garupa.localhost/"))) {
     throw new Error(`production browser harness escaped custom protocol: ${value.isolation.resourceUrls.join(",")}`);
   }
+  if (value.isolation.resourceUrls.some((url) => url.endsWith("/score-assets/score-font.png"))) {
+    throw new Error("production WebView2 fetched the rejected TotalScore bitmap font atlas");
+  }
   equal(sha256(readFileSync(png)), contract.observation.inputs.sha256.png.toUpperCase(), "fixture PNG hash");
   equal(sha256(readFileSync(font)), contract.observation.inputs.sha256.font.toUpperCase(), "fixture font hash");
   console.log(`production BrowserPixiTextureDecoder WebView2 passed: runtime=${versions.get("Microsoft Edge WebView2")} png=${value.raster.pngOnly.sha256} font=${value.raster.fontOnly.sha256} scoreHud=${scoreHud.sha256} pixels=${scoreHud.nonTransparentPixels}`);
+}
+
+function verifyScoreStateMatrix(rows) {
+  equal(scoreFinalVisible.status, "confirmed-current-score-hud-final-visible-closure",
+    "final Score fixture status");
+  const expected = [
+    [0, 4, "00000000", 28, "0000000", "0", -168, -21],
+    [375000, 3, "00375000", 28, "00", "375000", -168, -126],
+    [2250000, 2, "02250000", 28, "0", "2250000", -168, -147],
+    [4500000, 1, "04500000", 28, "0", "4500000", -168, -147],
+    [6750000, 0, "06750000", 28, "0", "6750000", -168, -147],
+    [9000000, 5, "09000000", 28, "0", "9000000", -168, -147],
+    [900000000, 5, "900000000", 27, "", "900000000", -182.25, -182.25],
+  ];
+  equal(rows.length, expected.length, "Score Browser state count");
+  const digests = new Set();
+  rows.forEach((row, index) => {
+    const [score, rank, text, size, leading, significant, leadingX, significantX] = expected[index];
+    equal(row.score, score, `Score Browser row${index} score`);
+    equal(row.rank, rank, `Score Browser row${index} rank`);
+    equal(row.text, text, `Score Browser row${index} text`);
+    equal(row.fontSize, size, `Score Browser row${index} font size`);
+    equal(row.leading, leading, `Score Browser row${index} leading run`);
+    equal(row.significant, significant, `Score Browser row${index} significant run`);
+    closeTuple(row.leadingPosition, [leadingX, 0], 1e-6, `Score Browser row${index} leading position`);
+    closeTuple(row.significantPosition, [significantX, 0], 1e-6, `Score Browser row${index} significant position`);
+    if (!/^[0-9a-f]{64}$/.test(row.sha256) || row.nonTransparentPixels <= 0 ||
+        !row.leadingWorldBounds.every(Number.isFinite) || !row.significantWorldBounds.every(Number.isFinite)) {
+      throw new Error(`Score Browser row${index} invalid primitive/raster: ${JSON.stringify(row)}`);
+    }
+    digests.add(row.sha256);
+  });
+  if (digests.size < 6) throw new Error(`Score Browser state rasters aliased: ${[...digests].join(",")}`);
+  equal(scoreFinalVisible.encoded_text.portable_ttf_advance_at_28["00000000"], 168,
+    "independent Reverse sgm eight-digit advance");
+  equal(scoreFinalVisible.encoded_text.portable_ttf_advance_at_28["009000000"], 189,
+    "independent Reverse sgm nine-digit advance");
 }
 
 function verifyHighRankNodes(scoreHud) {
@@ -203,9 +249,7 @@ function adaptiveScoreLayout() {
   const scale = f32(screenRatioX * screenToSafe);
   const root = [safeLeft, 0];
   const progress = [root[0] + 25 * scale, root[1] + 45 * scale];
-  const glyphScale = f32(20 / 32);
-  const sourceAdvanceWithSpacing = 36 + 33 + 36 * 6 + 7;
-  const firstDigitLocalX = f32(212 - f32(sourceAdvanceWithSpacing * glyphScale) + f32(2 * glyphScale));
+  const leadingRunLocalX = f32(212 - 168);
   return {
     progress,
     maskBounds: [
@@ -214,7 +258,7 @@ function adaptiveScoreLayout() {
       progress[0] + 417,
       progress[1] + 25.5,
     ],
-    firstDigit: [root[0] + firstDigitLocalX * scale, root[1] + 84 * scale],
+    leadingRun: [root[0] + leadingRunLocalX * scale, root[1] + 84 * scale],
   };
 }
 
