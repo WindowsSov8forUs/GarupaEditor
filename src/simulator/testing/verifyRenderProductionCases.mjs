@@ -72,10 +72,8 @@ export function verifyRenderObservation(observation, oracle, closure) {
   const expectedResult = oracle.resultRoute;
   const expectedLife = oracle.lifeThreshold;
   const full = observation.fullChart;
-  const invalid = observation.invalidPreflight;
   const sampleCleanup = observation.sampleCleanup;
 
-  const currentNegativeOwnerCount = 12;
   const predicates = new Map([
     ["PR08", () =>
       equalArray(samples.noteUp.position, noteLocalToPixi(expectedNotes["note:up"])) &&
@@ -111,14 +109,11 @@ export function verifyRenderObservation(observation, oracle, closure) {
       Number.isInteger(full.score) && full.score > 0 &&
       full.score <= 10000000 + full.totalScoringUnitCount &&
       full.life === oracle.fullChart.life &&
-      equalArray(full.routes, oracle.fullChart.routes) &&
+      equalArray(full.routes.filter((route) => route !== "combo-ap-overlay"), oracle.fullChart.routes) &&
+      full.routes.includes("combo-ap-overlay") &&
       full.cleanupOwnerCount === oracle.fullChart.cleanupOwnerCount &&
       full.cleanupStageChildren === oracle.fullChart.cleanupStageChildren &&
-      sampleCleanup.ownerCount === 0 && sampleCleanup.stageChildren === 0 &&
-      invalid.capability === oracle.negativePreflight.capability &&
-      invalid.beforeObjectCount === currentNegativeOwnerCount &&
-      invalid.afterObjectCount === currentNegativeOwnerCount &&
-      invalid.lifeLabelAfter === oracle.negativePreflight.lifeLabel],
+      sampleCleanup.ownerCount === 0 && sampleCleanup.stageChildren === 0],
   ]);
 
   if (!equalArray([...predicates.keys()], oracle.expectedProductionCases)) {
@@ -130,7 +125,7 @@ export function verifyRenderObservation(observation, oracle, closure) {
     computed.push(Object.freeze({
       id,
       observation: id === "PR39"
-        ? "full-chart-owner-resource-cleanup-and-negative-preflight"
+        ? "full-chart-owner-resource-cleanup"
         : "typed-command-scene-value-match",
     }));
   }

@@ -20,6 +20,7 @@ try {
     "hudLogicEquivalence.test.js",
     "hudSceneGraphEquivalence.test.js",
     "hudRenderPrimitiveEquivalence.test.js",
+    "fiveVisualCorrectionEquivalence.test.js",
   ]) run(process.execPath, [join(outputRoot, "src", "simulator", "testing", file)]);
   if (process.env.SIMULATOR_HUD_EQUIVALENCE_CORE_ONLY !== "1") {
     run(process.execPath, [join(testingRoot, "runRenderPixiTests.mjs")]);

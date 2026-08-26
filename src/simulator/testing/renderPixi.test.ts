@@ -75,6 +75,10 @@ const completeHudComponents = JSON.parse(readFileSync(join(
   fixtureRoot,
   "hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
 ), "utf8"));
+const fiveVisualCorrection = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -150,6 +154,13 @@ async function main(): Promise<void> {
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "publish Pause modal");
   assert(liveControls.root.getChildByLabel("pause-window", true) !== null, "Pause modal uses serialized window");
   assert((liveControls.root.getChildByLabel("pause-title", true) as Text).text === "一時停止", "Pause modal uses current visible title");
+  equal((liveControls.root.getChildByLabel("pause-message", true) as Text).text,
+    fiveVisualCorrection.pause.visible_message,
+    "Pause modal consumes the corrected natural-frame three-line UILabel");
+  assert(liveControls.root.getChildByLabel(fiveVisualCorrection.pause.background_cover_component.sprite_name, true) === null,
+    "Pause does not infer component identity from a Sprite name");
+  assert(liveControls.root.getChildByLabel("RetryablePauseDialog/Background", true) instanceof NineSliceSprite,
+    "Pause dark cover consumes the serialized fill UISprite rather than Graphics");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "retry-confirm" as const })), "publish Retry confirmation");
   assert(liveControls.root.getChildByLabel("retry-confirm-window", true) !== null, "Retry confirmation is Simulator-owned");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })), "publish Resume countdown");
@@ -329,8 +340,8 @@ async function main(): Promise<void> {
   const lifeMasks = new Map(life.hudFillMasks?.map((mask) => [mask.label, mask]));
   equal(JSON.stringify(lifeMasks.get("life-primary-fill-mask")?.bounds), JSON.stringify([-323, 31, Math.fround(44.8), 26]), "Life primary left-to-right mask matches current ratio");
   const lifeTexts = new Map(life.hudTextNodes?.map((text) => [text.label, text]));
-  equal(lifeTexts.get("life-current-label")?.fontSize, 18, "Life metadata label consumes serialized UILabel font size");
-  equal(lifeTexts.get("life-current-label")?.visible, false, "encoded Life metadata is not drawn as one fallback-color Text");
+  equal(lifeTexts.has("life-current-label"), false,
+    "Life owns no second root-level fallback Text that can be re-enabled on a persistent update");
   equal(lifeTexts.get("life-current-segment")?.text, "200", "Life encoded UILabel current run is independent");
   equal(lifeTexts.get("life-current-segment")?.fontSize, 18, "Life current segment consumes serialized 18pt");
   equal(lifeTexts.get("life-current-segment")?.fill, 0x00c000, "positive current Life consumes StringColorType.Green");
@@ -347,6 +358,10 @@ async function main(): Promise<void> {
   equal(lifeTexts.get("life-game-over-label")?.text, "ライフゼロ!\n獲得スコアDOWN!", "Life owns the current GameOver UILabel text");
   equal(lifeTexts.get("life-game-over-label")?.visible, false, "GameOver label remains hidden before zero Life");
   equal(JSON.stringify(life.ordering.slice(0, 3)), JSON.stringify([3, 100, 1000]), "Life root consumes current front-panel ordering");
+  equal(life.hudSerializedComponentPaths?.length, fiveVisualCorrection.life_hud.serialized_widget_count,
+    "Life production graph owns all ten serialized component identities");
+  equal(life.hudSerializedComponentPaths?.filter((path) => path.endsWith("/life_panel/Total")).length, 1,
+    "Life production graph owns exactly one Total UILabel identity");
 
   const scoreAtHalf = row("hud:score");
   equal(JSON.stringify(scoreAtHalf.position), JSON.stringify([
@@ -358,6 +373,9 @@ async function main(): Promise<void> {
   equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
   equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
   equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
+  equal(JSON.stringify(scoreAtHalf.hudSerializedComponentPaths),
+    JSON.stringify(fiveVisualCorrection.score_hud.widgets.map((row: any) => row.path)),
+    "Score production graph owns all 45 serialized component identities in source order");
   assertHudPixiRenderingEquivalence(scoreAtHalf, life, completeHudComponents);
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
   const scoreRootNode = renderer.stage.getChildByLabel("hud:score", true) as any;
@@ -782,7 +800,77 @@ async function verifyActualPixiGarupaProduct(
   equal(renderer.snapshot().objectCount, 0, "actual Pixi product releases every owner");
   requireOk(renderer.dispose(), "actual Pixi product backend dispose");
   equal(renderer.stage.children.length, 0, "actual Pixi product leaves empty stage");
-  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/clipped-slide/no-fallback-effect/cleanup");
+
+  const routedSession = `${sessionId}:integer-lane-effect`;
+  const routedProvider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "product lane actual provider");
+  const routedRenderer = new PixiRendererBackend(decoder);
+  requireOk(await routedRenderer.prepare(
+    routedSession,
+    profile,
+    routedProvider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "product lane actual Pixi prepare");
+  requireOk(routedRenderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "product lane bind surface");
+  const routedChart = requireOk(constructChartFromGarupaChartJson(requireOk(copyAndFreezeGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "Single", beat: 1, lane: 3, width: 1 },
+    { type: "SV", beat: 10, value: -1 },
+  ]), "product lane chart copy").chart), "product lane chart construct");
+  const routedProduct = getGarupaProductChartProfile(routedChart)!;
+  equal(routedProduct.route, "product-extension", "late negative SV selects the product timeline without changing the due note span");
+  const routedLayout = requireOk(createSimulatorSceneLayout(
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0) },
+    "ordinary",
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+  ), "product lane scene");
+  const routedEngine = requireOk(createSimulatorEngine({
+    chart: routedChart,
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode: LIVE_AUTO_MODE },
+    scoreLifeState: {
+      schemaVersion: 3,
+      sessionId: routedSession,
+      life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+      mode: LIVE_AUTO_MODE,
+    },
+    rendering: {
+      sessionId: routedSession,
+      resources: CURRENT_ORDINARY_RENDER_BINDINGS,
+      ordinaryNoteScene: routedLayout.ordinaryNoteScene,
+      garupaProductScene: routedLayout.garupaProductScene,
+    },
+  }, createRecordingSimulatorBackends(routedRenderer)), "product lane engine create");
+  requireOk(routedEngine.initialize(), "product lane engine initialize");
+  let routedLane: ReturnType<PixiRendererBackend["sceneSnapshot"]>[number] | undefined;
+  for (let frame = 0; frame < 120 && routedLane === undefined; frame += 1) {
+    requireOk(routedEngine.step(Math.fround(1 / 60)), `product lane frame ${frame}`);
+    routedLane = routedRenderer.sceneSnapshot().find((row) =>
+      row.renderObjectId === "render:tap-lane-effect:6" && row.visible);
+  }
+  assert(routedLane !== undefined, "product-route integer judgement reaches the main 13-slot lane-effect owner");
+  equal(routedLane!.spriteBindingKey?.endsWith("NoteLaneEffect_4"), true,
+    "center product note selects the fixed center NoteLaneEffect_4 component");
+  equal(JSON.stringify(routedLane!.spriteAnchor), JSON.stringify([0.5, 1]),
+    "lane effect preserves the serialized bottom-center Sprite pivot");
+  equal(routedLane!.spriteBlendMode, "add", "lane effect preserves the additive material");
+  const laneOracle = fiveVisualCorrection.tap_lane_effect.bounds_oracles.find((row: any) =>
+    row.case_id === "20:9-full" && row.texture === "NoteLaneEffect_4");
+  assert(laneOracle !== undefined && routedLane!.spriteWorldBounds !== null, "lane bounds oracle and actual bounds exist");
+  const expectedLaneBounds = [
+    800 + laneOracle.visible_bounds_relative_to_target_top_left[0],
+    laneOracle.target_top_left_y + laneOracle.visible_bounds_relative_to_target_top_left[1],
+    laneOracle.visible_bounds_relative_to_target_top_left[2],
+    laneOracle.visible_bounds_relative_to_target_top_left[3],
+  ];
+  routedLane!.spriteWorldBounds!.forEach((value, index) => {
+    assert(Math.abs(value - expectedLaneBounds[index]!) < 0.02,
+      `product lane effect bound ${index}: ${value} vs ${expectedLaneBounds[index]}`);
+  });
+  equal(requireOk(routedEngine.snapshot(), "product lane snapshot").managers.tapLaneEffect?.activeCount, 1,
+    "product lane effect state is owned by the same fixed owner");
+  requireOk(routedEngine.dispose(), "product lane engine dispose");
+  equal(routedRenderer.snapshot().objectCount, 0, "product lane effect cleanup");
+  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/independent-slide/product-lane-effect/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

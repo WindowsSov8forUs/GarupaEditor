@@ -23,6 +23,11 @@ const visualFifthContractPath = join(
   testingRoot,
   "fixtures/reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
 );
+const fiveVisualCorrectionPath = join(
+  testingRoot,
+  "fixtures/reverse-snapshots/five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
+);
+const commonRenderCatalogPath = join(repositoryRoot, "src/simulator/engine/skin/commonRenderSemanticCatalog.json");
 const sources = [
   ["ordinary/notes/skin00/atlas", "rhythm-game-sprites.png"],
   ["ordinary/notes/skin00/long-note-line", "long-note-line.png"],
@@ -81,6 +86,33 @@ function prepareStage() {
     stageFile(route, name, "application/octet-stream", readFileSync(join(fixtureRoot, "ordinary-portable-assets", file)), allowlist);
     return { logicalAssetId, url: route };
   });
+  const catalog = JSON.parse(readFileSync(commonRenderCatalogPath, "utf8"));
+  const laneProfiles = catalog.groups.ordinaryVisible
+    .filter((row) => row.file.startsWith("tap-lane-effect-"))
+    .map((row) => {
+      const bytes = readFileSync(join(
+        repositoryRoot,
+        "src/assets/game/atlas/bms/ui/tap-lane-effect",
+        row.file,
+      ));
+      return {
+        ...row,
+        bytes,
+        profile: {
+          ...row.profile,
+          byteLength: bytes.length,
+          sha256: createHash("sha256").update(bytes).digest("hex").toUpperCase(),
+          provenance: "current-apk",
+        },
+      };
+    });
+  for (const row of laneProfiles) {
+    const index = render.length;
+    const name = `render-${String(index).padStart(2, "0")}.bin`;
+    const route = `/assets/${name}`;
+    stageFile(route, name, "application/octet-stream", row.bytes, allowlist);
+    render.push({ logicalAssetId: row.profile.logicalAssetId, url: route });
+  }
   const visualFifthContractUrl = "/visual-fifth-contract.json";
   stageFile(
     visualFifthContractUrl,
@@ -89,9 +121,18 @@ function prepareStage() {
     readFileSync(visualFifthContractPath),
     allowlist,
   );
-  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render, visualFifthContractUrl })), allowlist);
+  const fiveVisualCorrectionUrl = "/five-visual-correction.json";
+  stageFile(
+    fiveVisualCorrectionUrl,
+    "five-visual-correction.json",
+    "application/json; charset=utf-8",
+    readFileSync(fiveVisualCorrectionPath),
+    allowlist,
+  );
+  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render, visualFifthContractUrl, fiveVisualCorrectionUrl })), allowlist);
   const renderProfile = JSON.parse(readFileSync(join(fixtureRoot, "ordinary_portable_profile.json"), "utf8"));
   renderProfile.ordinaryVisibleProfile = JSON.parse(readFileSync(visibleProfilePath, "utf8"));
+  renderProfile.assets.push(...laneProfiles.map((row) => row.profile));
   stageFile(
     "/render-profile.json",
     "render-profile.json",
@@ -131,13 +172,19 @@ function verify(value) {
   equal(value.cleanup.owners, 0, "owner cleanup");
   equal(value.cleanup.rendererChildren, 0, "renderer child cleanup");
   equal(value.cleanup.applicationChildren, 0, "application child cleanup");
+  equal(value.laneEffect.binding.endsWith("NoteLaneEffect_4"), true, "product entry lane binding");
+  equal(JSON.stringify(value.laneEffect.anchor), JSON.stringify([0.5, 1]), "product entry lane pivot");
+  equal(value.laneEffect.blendMode, "add", "product entry lane blend");
+  if (!/^[0-9a-f]{64}$/.test(value.laneEffect.rgbaSha256) || value.laneEffect.nonTransparentPixels <= 0) {
+    throw new Error(`product lane effect has no real-resource framebuffer pixels: ${JSON.stringify(value.laneEffect)}`);
+  }
   if (new Set(value.isolation.resourceUrls.map((url) => new URL(url).origin)).size !== 1 ||
     !value.isolation.resourceUrls.every((url) => url.startsWith("http://garupa.localhost/"))) {
     throw new Error(`Garupa product browser escaped custom protocol: ${value.isolation.resourceUrls.join(",")}`);
   }
 }
 function stableProjection(value) {
-  return { runtime: value.runtime, productionDecoder: value.productionDecoder, chart: value.chart, captures: value.captures, cleanup: value.cleanup, isolation: value.isolation };
+  return { runtime: value.runtime, productionDecoder: value.productionDecoder, chart: value.chart, captures: value.captures, laneEffect: value.laneEffect, cleanup: value.cleanup, isolation: value.isolation };
 }
 function canonical(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);

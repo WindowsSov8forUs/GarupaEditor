@@ -5,6 +5,10 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { CURRENT_SCORE_GAUGE_SS_WIDGETS } from "../backends/resources/currentCompleteHudProfile";
+import {
+  CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
+  CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
+} from "../backends/resources/currentFiveVisualCorrectionProfile";
 import { CONTROL_HUD_IDENTITY } from "../engine/hud/controlHudOwner";
 import { HUD_PREFAB_OBJECT_IDS } from "../engine/hud/hudContracts";
 
@@ -12,10 +16,21 @@ const root = "src/simulator/testing/fixtures/reverse-snapshots/hud-complete/arti
 const scene = read("hud_scene_graph.json");
 const components = read("hud_component_profile.json");
 const closure = read("closure.json");
+const correction = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
+), "utf8"));
 
 assert.equal(scene.status, "confirmed-current-complete-hud-scene-graph");
 assert.equal(scene.widget_count, scene.widgets.length);
-assert.ok(scene.widget_count > 100);
+assert.equal(correction.status, "confirmed-current-five-visual-correction-contract");
+assert.deepEqual(CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
+  correction.score_hud.widgets.map((row: any) => row.path));
+assert.deepEqual(CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
+  correction.life_hud.widgets.map((row: any) => row.path));
+assert.equal(CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS.length, 45);
+assert.equal(CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS.length, 10);
+assert.equal(CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS.filter((path) => path.endsWith("/life_panel/Total")).length, 1);
 for (const prefix of [
   "GamePlay/UI_Root/Display/Score",
   "GamePlay/UI_Root/Display/LifeGauge",
@@ -55,15 +70,10 @@ for (const [name, actual] of Object.entries(CURRENT_SCORE_GAUGE_SS_WIDGETS)) {
     blendMode: "normal",
   });
 }
-assert.deepEqual(closure.sections, {
-  scene: "confirmed",
-  components: "confirmed",
-  resources: "confirmed",
-  logic: "confirmed",
-  render_primitives: "confirmed",
-  runtime_frames: "confirmed",
-});
-console.log(`HUD scene graph equivalence passed: widgets=${scene.widget_count} high-rank=${sourceNodes.size}`);
+assert.equal(closure.status, "superseded-production-consumption-authorization-withdrawn");
+assert.equal(closure.production_authorization, false);
+assert.equal(correction.prior_closure_disposition.complete_hud_production_authorization_withdrawn, true);
+console.log(`HUD scene graph equivalence passed: Score=${CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS.length} Life=${CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS.length} high-rank=${sourceNodes.size}`);
 
 function read(name: string): any {
   return JSON.parse(readFileSync(join(process.cwd(), root, name), "utf8"));

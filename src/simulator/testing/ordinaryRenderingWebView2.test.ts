@@ -547,7 +547,8 @@ async function capture(
   const lifeTexts = new Map(life?.hudTextNodes?.map((row) => [row.label, row]));
   const judge = renderRows.find((row) => row.renderObjectId === "render:skin-field:judge-line");
   if (life === undefined || lifeSprites.get("life-gauge-base")?.tint !== 0xffffff ||
-      lifeTexts.get("life-current-label")?.fontSize !== 18 ||
+      lifeTexts.has("life-current-label") ||
+      lifeTexts.get("life-current-segment")?.fontSize !== 18 ||
       lifeTexts.get("life-current-segment")?.fill !== (Number((life.hudState as any).currentLife) > 0 ? 0x00c000 : 0xfe2349) ||
       lifeTexts.get("life-separator-segment")?.fill !== 0x505050 ||
       lifeTexts.get("life-maximum-segment")?.fill !== 0x00c000 ||
@@ -557,7 +558,8 @@ async function capture(
     throw new Error(`fifth HUD/world object gate mismatch at ${label}: ${JSON.stringify({
       life: life?.hudState,
       baseTint: lifeSprites.get("life-gauge-base")?.tint,
-      fontSize: lifeTexts.get("life-current-label")?.fontSize,
+      legacyLifeTextPresent: lifeTexts.has("life-current-label"),
+      fontSize: lifeTexts.get("life-current-segment")?.fontSize,
       currentFill: lifeTexts.get("life-current-segment")?.fill,
       separatorFill: lifeTexts.get("life-separator-segment")?.fill,
       maximumFill: lifeTexts.get("life-maximum-segment")?.fill,
