@@ -16,6 +16,7 @@
 - `reverse-snapshots/hud-ap-fourth-reaudit/` 只包含已推送Reverse `341749d9`的HUD/AP最小合同：原作Combo状态显示设置、并行normal/AP ComboNumber图、资源/层级/动画/一秒visibility owner及设备帧颜色观察摘要；不复制原作PNG、R1 trace、Prefab或反编译切片。
 - `reverse-snapshots/hud-complete/` 包含已推送Reverse `c2187fe3`更新后的选定HUD scene/component/resource/logic/primitive/runtime/closure七项JSON；序列化组件与SS路由仍有效，但旧production-consumption authorization已撤回，不能再用widget库存存在冒充生产完整消费。production不得读取fixture。
 - `reverse-snapshots/five-visual-correction/` 包含Reverse `c2187fe3`的Score 45/Life 10组件、三行Pause、width-one Slide独立Float32 oracle及13槽Lane bounds/lifecycle纠错合同；不复制用户截图或原作二进制。
+- `reverse-snapshots/score-hud-final-visible/` 包含Reverse `a08fbced`的最终TotalScore UILabel→UIFont1799→sgm Font75链、bitmap score-font拒绝、D/C运行观察与完整状态验收合同，并只保留一个430×95原作TotalScore观察crop；不复制完整设备帧、trace、ARM64或本地Unity资产。
 - `reverse-snapshots/particle-transform-fourth-reaudit/` 只包含已推送Reverse `249f6d48`的粒子嵌套Transform最小合同：两次scale pass逐ParticleSystem组件相乘、120/104 inventory、103个enabled `g²`链与一个enabled `g`链，以及禁止最终world sample只乘一次`g`的修正门；不复制1.5MB profile、原作帧、ARM64或粒子纹理。
 - `reverse-snapshots/note-hierarchy-fourth-reaudit/` 只包含已推送Reverse `118a693d`的Note层级最小合同：Slide root/terminal `note_long`、可见非terminal `note_slide_among`、单一root LongNoteFlash owner、selected row几何、Mesh与Product ordering门；不复制原作帧、Skin PNG、ARM64、R0输出或dump。
 - `reverse-snapshots/visual-fifth-reaudit/` 只包含已推送Reverse `05db132b`的第五轮最小纠错合同：Life 18pt rich-color UILabel/FrontGauge-only tint、Product Slide widthRate、TapLane0/Particle1·5/Judge20/Particle50/Note70/HUD100世界排序及portable粒子非原作边界；不复制level3、ARM64、原作帧或完整particle profile。

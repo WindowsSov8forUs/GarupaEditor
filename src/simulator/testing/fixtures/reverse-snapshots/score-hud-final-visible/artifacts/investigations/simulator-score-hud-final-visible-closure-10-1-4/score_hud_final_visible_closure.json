@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-score-hud-final-visible-closure",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "level3": {
+      "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "sharedassets0_complete": {
+      "path_pattern": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/sharedassets0.assets.split*",
+      "part_count": 79,
+      "bytes": 82102012,
+      "sha256": "3D7659F422BC38EA6CD311BDEABFF77F3EA2143EE829146300BE20B37D5DB323"
+    },
+    "complete_hud": {
+      "path": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+      "bytes": 233351,
+      "sha256": "A5103670BA69FBDD1A5585DE05756EE9AFDD59FD06A3A1AF5F460E202EDB7D73"
+    },
+    "prior_score_contract": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "update_total_score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/decompiled/0322a0e4__Score_UpdateTotalScore.c",
+      "bytes": 1493,
+      "sha256": "50879E08B908DBEE0931DE8ADCCD31484190043F5429D4E3B50E778BF4499428"
+    },
+    "runtime_trace": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-frames-r1.trace.json.gz",
+      "bytes": 750,
+      "sha256": "B850515FEE1A00581F15610B3C14C9792E330B918D892544B6A05F6E035B39C4"
+    },
+    "runtime_plan": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-frames-r1-plan.json",
+      "bytes": 1845,
+      "sha256": "628E6BB6D88D2B5083128DA07D874CD11D1A86EBF56382D1E818ED032CC0A9F3"
+    },
+    "runtime_rank3_frame": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-r1.png",
+      "bytes": 949858,
+      "sha256": "D9F547E1FCD49A39DBD4AADB63C0E5E1089F02798C37EB2F9CCEF96FA954493A"
+    },
+    "runtime_rank3_total_crop": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
+      "bytes": 46841,
+      "sha256": "77E8C28C50E148BFCD7279CEB9B3CD38D04C2AB406F75C4E4267B90BC1B82724"
+    }
+  },
+  "total_score_label": {
+    "path": "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+    "component_path_id": 1271,
+    "component": "UILabel",
+    "active": true,
+    "enabled": true,
+    "font": {
+      "file_id": 16,
+      "path_id": 1799
+    },
+    "font_size": 28,
+    "font_style": 0,
+    "pivot": "Right",
+    "width": 188,
+    "height": 204,
+    "depth": 40,
+    "support_encoding": true,
+    "effect_style": 0,
+    "effect_distance_f32_bits": [
+      "0000803F",
+      "0000803F"
+    ],
+    "overflow": 0,
+    "world_matrix": [
+      [
+        0.003241491038352251,
+        0.0,
+        0.0,
+        -0.645056716632098
+      ],
+      [
+        0.0,
+        0.003241491038352251,
+        0.0,
+        0.7293354836292565
+      ],
+      [
+        0.0,
+        0.0,
+        0.003241491038352251,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_corners": [
+      [
+        -1.2544570318423212,
+        0.3987033977173269,
+        0.0
+      ],
+      [
+        -1.2544570318423212,
+        1.059967569541186,
+        0.0
+      ],
+      [
+        -0.645056716632098,
+        1.059967569541186,
+        0.0
+      ],
+      [
+        -0.645056716632098,
+        0.3987033977173269,
+        0.0
+      ]
+    ]
+  },
+  "font_chain": {
+    "ui_font_path_id": 1799,
+    "ui_font_serialized_bytes": 132,
+    "ui_font_serialized_sha256": "5F8ACBCD5CBCB523BA2987C61EA79FC168A468033F0EA13CD05A0ABDC99EB169",
+    "dynamic_font_pointer_serialized_offset": 112,
+    "dynamic_font": {
+      "file_id": 0,
+      "path_id": 75,
+      "name": "sgm"
+    },
+    "dynamic_font_default_size": 24,
+    "dynamic_font_style": 0,
+    "font_asset": {
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56",
+      "line_spacing": 16.0,
+      "asset_font_size": 16.0,
+      "tracking": 1.0,
+      "character_spacing": 0,
+      "character_padding": 1,
+      "pixel_scale_f32_bits": "CDCCCC3D"
+    },
+    "same_ui_font_as_normal_rank_labels": [
+      "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",
+      "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/B",
+      "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/A",
+      "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/S",
+      "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS"
+    ]
+  },
+  "runtime_font_disposition": {
+    "score_update_total_rva": "0x322A0E4",
+    "total_label_field_offset": "0x70",
+    "only_visible_mutation": "UILabel.set_text(StringUtility.ZeroFilledNumberString(score,8,Gray,Pink))",
+    "font_mutation_in_score_awake_reset_update": false,
+    "prior_bitmap_score_font_is_not_referenced_by_serialized_total_score_label": true,
+    "rejected_total_score_route": {
+      "resource": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
+        "bytes": 48359,
+        "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE"
+      },
+      "reason": "The bitmap atlas has no serialized TotalScore UILabel font pointer and produces the disproved outlined production digits."
+    }
+  },
+  "encoded_text": {
+    "minimum_digits": 8,
+    "leading_color": {
+      "type": "Gray",
+      "bbcode": "[BEBEBE]"
+    },
+    "significant_color": {
+      "type": "Pink",
+      "bbcode": "[FF3B72]"
+    },
+    "overflow": "not truncated; maxDigit only controls prepended zero count",
+    "one_persistent_label_owner": true,
+    "portable_ttf_advance_at_28": {
+      "00000000": 168.0,
+      "00036314": 168.0,
+      "10000000": 168.0,
+      "009000000": 189.0
+    },
+    "shrink_content_rule": "decrement integer font size only while shaped run width exceeds serialized widget width 188; eight digits remain 28, nine-digit 009000000 begins at 27"
+  },
+  "ordinary_single_rank_components": [
+    {
+      "rank": "C",
+      "label_path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",
+      "component_path_id": 1313,
+      "font": {
+        "file_id": 16,
+        "path_id": 1799
+      },
+      "font_size": 12,
+      "depth": 40
+    },
+    {
+      "rank": "B",
+      "label_path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/B",
+      "component_path_id": 1263,
+      "font": {
+        "file_id": 16,
+        "path_id": 1799
+      },
+      "font_size": 12,
+      "depth": 40
+    },
+    {
+      "rank": "A",
+      "label_path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/A",
+      "component_path_id": 1238,
+      "font": {
+        "file_id": 16,
+        "path_id": 1799
+      },
+      "font_size": 12,
+      "depth": 40
+    },
+    {
+      "rank": "S",
+      "label_path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/S",
+      "component_path_id": 1216,
+      "font": {
+        "file_id": 16,
+        "path_id": 1799
+      },
+      "font_size": 12,
+      "depth": 40
+    },
+    {
+      "rank": "SS",
+      "label_path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS",
+      "component_path_id": 1301,
+      "font": {
+        "file_id": 16,
+        "path_id": 1799
+      },
+      "font_size": 12,
+      "depth": 40
+    }
+  ],
+  "runtime_observation": {
+    "capture_level": "R1 observation-only plus input-device control; no target process write or return replacement",
+    "environment": {
+      "selinux_at_observer_attach": "Enforcing",
+      "input_control_interval": "temporary Permissive",
+      "selinux_after_control": "Enforcing"
+    },
+    "capture_plan": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-frames-r1-plan.json",
+      "bytes": 1845,
+      "sha256": "628E6BB6D88D2B5083128DA07D874CD11D1A86EBF56382D1E818ED032CC0A9F3"
+    },
+    "rank_transitions": [
+      {
+        "sequence": 2,
+        "event": "rank_transition",
+        "score": 0,
+        "before_rank": 4,
+        "current_rank": 4
+      },
+      {
+        "sequence": 3,
+        "event": "rank_transition",
+        "score": 36314,
+        "before_rank": 4,
+        "current_rank": 3
+      }
+    ],
+    "rank3_frame": {
+      "event_sequence": 3,
+      "semantic": "rank-3-score-36314",
+      "path": "runtime/score-rank-3-r1.png",
+      "bytes": 949858,
+      "sha256": "D9F547E1FCD49A39DBD4AADB63C0E5E1089F02798C37EB2F9CCEF96FA954493A"
+    },
+    "rank3_total_crop": {
+      "path": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
+      "bytes": 46841,
+      "sha256": "77E8C28C50E148BFCD7279CEB9B3CD38D04C2AB406F75C4E4267B90BC1B82724"
+    },
+    "visible_fact": "The current native frame renders the gray leading run and pink significant run as the serialized sgm UILabel without the rejected score-font bitmap glyph outlines."
+  },
+  "production_acceptance": {
+    "total_score": "persistent component 1271; exact sgm TTF; two encoded color runs under one UILabel owner; right pivot; widget/depth/transform preserved; no bitmap digit Sprite",
+    "rank_labels": "same sgm FontFace and serialized UILabel fields for C/B/A/S/SS",
+    "gauge": "retain committed Gauge UISprite, marker, SoftClip and ScoreGaugeSS primitive contracts",
+    "states": [
+      "D/zero",
+      "C",
+      "B",
+      "A",
+      "S",
+      "SS",
+      "continuous-update",
+      "nine-digit-overflow"
+    ],
+    "required_tests": [
+      "independent complete primitive comparison",
+      "real Browser TTF/PNG WebView2",
+      "Windows production surface"
+    ]
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": true
+}

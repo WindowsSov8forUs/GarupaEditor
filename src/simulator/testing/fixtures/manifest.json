@@ -881,6 +881,20 @@
       "sha256": "03DEE2153F0E700448D87DD5D9DF977AE163C9BEE1333A578A79AF210C28EDEB"
     },
     {
+      "path": "reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
+      "sourceReverseCommit": "a08fbceda8c8e691f62cdc68fd843049e8dafb02",
+      "sourcePath": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
+      "bytes": 46841,
+      "sha256": "77E8C28C50E148BFCD7279CEB9B3CD38D04C2AB406F75C4E4267B90BC1B82724"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
+      "sourceReverseCommit": "a08fbceda8c8e691f62cdc68fd843049e8dafb02",
+      "sourcePath": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
+      "bytes": 10332,
+      "sha256": "0EE0EB224D2272D9F735C0E42BF390B478C7E7B71CBB785EA706BAC05C13D202"
+    },
+    {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
       "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
