@@ -675,6 +675,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly spriteBindingKey: string | null;
     readonly spriteAlpha: number | null;
     readonly spriteTint: number | null;
+    readonly spriteBlendMode: string | null;
+    readonly spriteAnchor: readonly [number, number] | null;
+    readonly spriteWorldBounds: readonly [number, number, number, number] | null;
     readonly hudSpriteLabels: readonly string[] | null;
     readonly hudSpriteAlphas: readonly number[] | null;
     readonly hudSpriteCount: number | null;
@@ -782,6 +785,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       spriteBindingKey: value.spriteBindingKey,
       spriteAlpha: value.spriteContent?.alpha ?? null,
       spriteTint: value.spriteContent?.tint ?? null,
+      spriteBlendMode: value.spriteContent === null ? null : String(value.spriteContent.blendMode),
+      spriteAnchor: value.spriteContent === null
+        ? null
+        : Object.freeze([value.spriteContent.anchor.x, value.spriteContent.anchor.y] as const),
+      spriteWorldBounds: value.spriteContent === null || value.role !== "tap-lane-effect"
+        ? null
+        : (() => {
+            const bounds = value.spriteContent.getBounds();
+            return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
+          })(),
       hudSpriteLabels: value.hudVisual === null
         ? null
         : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.label)),

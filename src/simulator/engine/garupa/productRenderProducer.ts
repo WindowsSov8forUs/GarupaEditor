@@ -578,10 +578,11 @@ function slideMesh(
     const authoredWidth = Math.fround(
       from.node.width + Math.fround(Math.fround(to.node.width - from.node.width) * ratio),
     );
-    const halfWidth = Math.fround(
-      Math.fround(
-        Math.fround(uniformScale * authoredWidth) * Math.fround(screenToSafeAreaRatio),
-      ) * Math.fround(screenWidthAdjustRate),
+    const halfWidth = calculateGarupaProductSlideHalfWidth(
+      uniformScale,
+      authoredWidth,
+      screenToSafeAreaRatio,
+      screenWidthAdjustRate,
     );
     vertices.push(
       vector3(Math.fround(x - halfWidth), y, 0),
@@ -606,6 +607,24 @@ function slideMesh(
     colors: Object.freeze(colors),
     materialRole: "curve-note",
   };
+}
+
+export function calculateGarupaProductSlideHalfWidth(
+  uniformScale: number,
+  authoredWidth: number,
+  screenToSafeAreaRatio: number,
+  screenWidthAdjustRate: number,
+): number {
+  if (![uniformScale, authoredWidth, screenToSafeAreaRatio, screenWidthAdjustRate].every(Number.isFinite) ||
+    uniformScale < 0 || authoredWidth <= 0 || screenToSafeAreaRatio <= 0 || screenWidthAdjustRate <= 0) {
+    throw new Error("Garupa product Slide width requires finite non-negative scale and positive authored width/layout rates.");
+  }
+  return Math.fround(
+    Math.fround(
+      Math.fround(Math.fround(uniformScale) * Math.fround(authoredWidth)) *
+        Math.fround(screenToSafeAreaRatio),
+    ) * Math.fround(screenWidthAdjustRate),
+  );
 }
 
 function productSyncLine(
