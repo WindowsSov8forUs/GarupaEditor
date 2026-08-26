@@ -889,10 +889,10 @@
     },
     {
       "path": "reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
-      "sourceReverseCommit": "a08fbceda8c8e691f62cdc68fd843049e8dafb02",
+      "sourceReverseCommit": "818b8db6149bedf9f816a1935d171fbccdf6dbbc",
       "sourcePath": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
-      "bytes": 10332,
-      "sha256": "0EE0EB224D2272D9F735C0E42BF390B478C7E7B71CBB785EA706BAC05C13D202"
+      "bytes": 14124,
+      "sha256": "8974B69F99FA5992B15CF073E6A954A566A973A55763D05B00FAA1201A51302C"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
