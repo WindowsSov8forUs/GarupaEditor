@@ -6,7 +6,7 @@ export const STARTUP_DIRECTION_RESOURCE_EVIDENCE_IDS = Object.freeze([
 ] as const);
 
 export const COMMON_SCORE_HUD_BINDINGS = Object.freeze({
-  fontLogicalAssetId: "hud/score/font-atlas",
+  fontLogicalAssetId: "hud/score/rank-label-font",
   gaugeLogicalAssetId: "hud/score/rhythm-game-ui-atlas",
   levelMarkLogicalAssetId: "hud/score/ui-common-atlas",
   rankLabelFontLogicalAssetId: "hud/score/rank-label-font",

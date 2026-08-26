@@ -41,13 +41,13 @@ import {
 } from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
 import { layoutNguiEncodedLifeLabel } from "./hud/nguiLabelGeometry";
+import { layoutNguiEncodedScoreLabel } from "./hud/nguiEncodedScoreLabel";
 import {
   createNguiSoftClipFilter,
   updateNguiSoftClipFilter,
   type NguiSoftClipFilter,
 } from "./hud/nguiPanelClip";
 import {
-  CURRENT_SCORE_HUD_BITMAP_GLYPHS,
   CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../../engine/rendering/currentScoreHudSemanticProfile";
@@ -120,7 +120,7 @@ interface PixiHudVisual {
   readonly serializedComponentNodes: ReadonlyMap<string, Container>;
   readonly digitSprites: Sprite[];
   readonly fillMasks: Graphics[];
-  readonly scoreDigitTexts: Sprite[];
+  readonly scoreTextSegments: readonly [Text, Text] | null;
   readonly scoreGaugeSprites: Container[];
   readonly scoreRankSprites: Container[];
   readonly scoreHighRankSprites: Sprite[];
@@ -713,6 +713,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly bounds: readonly [number, number, number, number];
     }[] | null;
     readonly hudScoreDigitCount: number | null;
+    readonly hudScoreTextRunCount: number | null;
+    readonly hudScoreTextLayout: readonly {
+      readonly label: string;
+      readonly text: string;
+      readonly position: readonly [number, number];
+      readonly anchor: readonly [number, number];
+      readonly fontFamily: string;
+      readonly fontSize: number;
+      readonly fill: number;
+      readonly visible: boolean;
+      readonly zIndex: number;
+    }[] | null;
     readonly hudScoreRankVisualCount: number | null;
     readonly hudScoreHighRankGeneration: number | null;
     readonly hudScoreLayerNodes: readonly { readonly label: string; readonly zIndex: number }[] | null;
@@ -776,9 +788,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       threshold: value.threshold,
       hudText: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
         ? value.hudVisual.lifeTextSegments.map((text) => text.text).join("")
+        : value.hudVisual?.kind === "score" && value.hudVisual.scoreTextSegments !== null
+        ? value.hudVisual.scoreTextSegments.map((text) => text.text).join("")
         : value.hudVisual?.text?.text ?? null,
       hudFontFamily: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
         ? String(value.hudVisual.lifeTextSegments[0].style.fontFamily)
+        : value.hudVisual?.kind === "score" && value.hudVisual.scoreTextSegments !== null
+        ? String(value.hudVisual.scoreTextSegments[0].style.fontFamily)
         : value.hudVisual?.text?.style.fontFamily == null
         ? null
         : String(value.hudVisual.text.style.fontFamily),
@@ -829,6 +845,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ? null
         : Object.freeze([
             value.hudVisual.text,
+            ...(value.hudVisual.scoreTextSegments ?? []),
             ...(value.hudVisual.lifeTextSegments ?? []),
             value.hudVisual.gameOverText,
           ]
@@ -854,7 +871,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
               bounds: Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const),
             });
           })),
-      hudScoreDigitCount: value.hudVisual?.scoreDigitTexts.length ?? null,
+      hudScoreDigitCount: value.hudVisual?.kind === "score" ? 0 : null,
+      hudScoreTextRunCount: value.hudVisual?.scoreTextSegments?.length ?? null,
+      hudScoreTextLayout: value.hudVisual?.scoreTextSegments === null ||
+          value.hudVisual?.scoreTextSegments === undefined
+        ? null
+        : Object.freeze(value.hudVisual.scoreTextSegments.map((node) => Object.freeze({
+            label: node.label,
+            text: node.text,
+            position: Object.freeze([node.position.x, node.position.y] as const),
+            anchor: Object.freeze([node.anchor.x, node.anchor.y] as const),
+            fontFamily: String(node.style.fontFamily),
+            fontSize: Number(node.style.fontSize),
+            fill: Number(node.style.fill),
+            visible: node.visible,
+            zIndex: node.zIndex,
+          }))),
       hudScoreRankVisualCount: value.hudVisual?.scoreRankSprites.length ?? null,
       hudScoreHighRankGeneration: value.hudVisual?.scoreHighRankGeneration ?? null,
       hudScoreLayerNodes: value.hudVisual?.kind !== "score"
@@ -865,13 +897,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }))),
       hudScoreDigitLayout: value.hudVisual?.kind !== "score"
         ? null
-        : Object.freeze(value.hudVisual.scoreDigitTexts.map((node) => Object.freeze({
-            label: node.label,
-            position: Object.freeze([node.position.x, node.position.y] as const),
-            scale: Object.freeze([node.scale.x, node.scale.y] as const),
-            width: node.width,
-            height: node.height,
-          }))),
+        : Object.freeze([]),
       hudScoreNineSliceBorders: value.hudVisual?.kind !== "score"
         ? null
         : Object.freeze(scoreHudDescendants(value.hudVisual.content)
@@ -2087,6 +2113,12 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     style: { fill: 0xffffff, fontSize: 32 },
     label: "fidelity-label",
   }) : null;
+  const scoreTextSegments = kind === "score"
+    ? Object.freeze([
+        new Text({ text: "", style: { fill: 0xbebebe, fontSize: 28 }, label: "score-leading-segment" }),
+        new Text({ text: "", style: { fill: 0xff3b72, fontSize: 28 }, label: "score-significant-segment" }),
+      ] as const)
+    : null;
   const lifeTextSegments = kind === "life"
     ? Object.freeze([
         new Text({ text: "", style: { fill: 0x00c000, fontSize: 18 }, label: "life-current-segment" }),
@@ -2108,6 +2140,10 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     content.addChild(text);
     if (kind === "life") text.visible = false;
   }
+  if (scoreTextSegments !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/Score/Base/TotalScore")
+      .addChild(...scoreTextSegments);
+  }
   if (lifeTextSegments !== null) {
     serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total")
       .addChild(...lifeTextSegments);
@@ -2126,6 +2162,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     kind,
     content,
     text,
+    scoreTextSegments,
     lifeTextSegments,
     gameOverText,
     primaryFill,
@@ -2134,7 +2171,6 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     serializedComponentNodes,
     digitSprites: [],
     fillMasks: [],
-    scoreDigitTexts: [],
     scoreGaugeSprites: [],
     scoreRankSprites: [],
     scoreHighRankSprites: [],
@@ -2726,7 +2762,7 @@ function applyScoreHud(
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): void {
   if (visual.scoreGaugeSprites.length > 0) {
-    updatePersistentScoreHud(object, visual, state, textures, referenceCounts);
+    updatePersistentScoreHud(object, visual, state, textures, referenceCounts, decodedFonts);
     return;
   }
   if (visual.text !== null) visual.text.visible = false;
@@ -2734,46 +2770,29 @@ function applyScoreHud(
   placeSafeTopAnchoredUiRoot(object, "left");
   showScoreBaselineComponents(visual, state.foregroundActive);
 
-  const scoreDigits = String(state.score);
-  const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
-  const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
-  const glyphByKey = new Map(CURRENT_SCORE_HUD_BITMAP_GLYPHS.map((glyph) => [glyph.exactKey, glyph]));
-  const sourceAdvanceUnits = [...displayed].reduce(
-    (sum, digit) => sum + glyphByKey.get(digit)!.xAdvance,
-    scene.totalScoreSpacingX * Math.max(0, displayed.length - 1),
-  );
-  let finalFontSize = scene.totalScoreFontSize;
-  while (
-    finalFontSize > 0 &&
-    sourceAdvanceUnits * finalFontSize / scene.bmFontDefaultSize > scene.totalScoreWidgetWidth
-  ) {
-    finalFontSize -= 1;
+  const scoreFont = decodedFonts.get(scene.totalScoreFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null) {
+    throw new Error("Score TotalScore sgm UILabel font owner is missing");
   }
-  const fontScale = Math.fround(finalFontSize / scene.bmFontDefaultSize);
-  const printedWidth = Math.fround(sourceAdvanceUnits * fontScale);
-  let cursor = Math.fround(scene.totalScoreLocalPosition[0] - printedWidth);
-  [...displayed].forEach((digit, index) => {
-    const glyph = glyphByKey.get(digit)!;
-    const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.fontLogicalAssetId, digit);
-    const sprite = new Sprite({ texture: binding.texture, label: `score-digit-${index}` });
-    sprite.anchor.set(0, 0);
-    sprite.scale.set(fontScale);
-    sprite.tint = index < leadingZeroCount ? scene.scoreLeadingColor : scene.scoreSignificantColor;
-    sprite.zIndex = scene.totalScoreDepth;
-    sprite.position.set(
-      Math.fround(cursor + glyph.xOffset * fontScale),
-      Math.fround(-scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale),
-    );
-    cursor = Math.fround(cursor + Math.fround(
-      (glyph.xAdvance + (index + 1 < displayed.length ? scene.totalScoreSpacingX : 0)) * fontScale,
-    ));
-    serializedHudComponent(
-      visual.serializedComponentNodes,
-      "GamePlay/UI_Root/Display/Score/Base/TotalScore",
-    ).addChild(sprite);
-    visual.scoreDigitTexts.push(sprite);
-    retainHudBinding(object, binding.key, referenceCounts);
-  });
+  const totalScoreOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+  );
+  totalScoreOwner.position.set(
+    scene.totalScoreLocalPosition[0],
+    -scene.totalScoreLocalPosition[1],
+  );
+  totalScoreOwner.zIndex = scene.totalScoreDepth;
+  layoutNguiEncodedScoreLabel(
+    visual.scoreTextSegments,
+    state.score,
+    0,
+    0,
+    scene.totalScoreWidgetWidth,
+    scene.totalScoreFontSize,
+    scoreFont.family,
+    scene.totalScoreDepth,
+  );
 
   const progress = new Container({ label: "score-gauge-progress", sortableChildren: true });
   progress.position.set(scene.progressLocalPosition[0], -scene.progressLocalPosition[1]);
@@ -2787,12 +2806,17 @@ function applyScoreHud(
     CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase,
     "score-gauge-background",
   );
-  background.position.set(scene.gauge.background.position[0], -scene.gauge.background.position[1]);
+  background.position.set(0, 0);
   background.zIndex = scene.gauge.background.depth;
   const backgroundOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Background",
   );
+  backgroundOwner.position.set(
+    scene.gauge.background.position[0],
+    -scene.gauge.background.position[1],
+  );
+  backgroundOwner.zIndex = scene.gauge.background.depth;
   progress.addChild(backgroundOwner);
   backgroundOwner.addChild(background);
   retainHudBinding(object, spriteKey(gaugeAssetId, "gauge_base_score"), referenceCounts);
@@ -2804,12 +2828,17 @@ function applyScoreHud(
     CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeCover,
     "score-gauge-cover",
   );
-  cover.position.set(scene.gauge.cover.position[0], -scene.gauge.cover.position[1]);
+  cover.position.set(0, 0);
   cover.zIndex = scene.gauge.cover.depth;
   const coverOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
   );
+  coverOwner.position.set(
+    scene.gauge.cover.position[0],
+    -scene.gauge.cover.position[1],
+  );
+  coverOwner.zIndex = scene.gauge.cover.depth;
   progress.addChild(coverOwner);
   coverOwner.addChild(cover);
   retainHudBinding(object, spriteKey(gaugeAssetId, "bg_gauge_score_multi"), referenceCounts);
@@ -2828,18 +2857,23 @@ function applyScoreHud(
     borders,
     "score-gauge-foreground",
   );
-  foreground.position.set(scene.gauge.foreground.position[0], -scene.gauge.foreground.position[1]);
+  foreground.position.set(0, 0);
   foreground.visible = state.foregroundActive as boolean;
   foreground.zIndex = scene.gauge.foreground.depth;
   const foregroundOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Foreground",
   );
+  foregroundOwner.position.set(
+    scene.gauge.foreground.position[0],
+    -scene.gauge.foreground.position[1],
+  );
+  foregroundOwner.zIndex = scene.gauge.foreground.depth;
   progress.addChild(foregroundOwner);
   foregroundOwner.addChild(foreground);
   const foregroundMask = new Graphics({ label: "score-gauge-foreground-fill-mask" }).rect(
-    foreground.position.x,
-    foreground.position.y - scene.gauge.foreground.height / 2,
+    scene.gauge.foreground.position[0],
+    -scene.gauge.foreground.position[1] - scene.gauge.foreground.height / 2,
     Math.fround(scene.gauge.foreground.width * state.sliderValue.value),
     scene.gauge.foreground.height,
   ).fill(0xffffff);
@@ -2866,12 +2900,14 @@ function applyScoreHud(
     levelMark.anchor.set(0.5, 0.5);
     levelMark.width = 8;
     levelMark.height = 6;
-    levelMark.position.set(x, 10);
+    levelMark.position.set(0, 0);
     levelMark.zIndex = scene.gauge.markerDepth;
     const separatorOwner = serializedHudComponent(
       visual.serializedComponentNodes,
       `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/Separator`,
     );
+    separatorOwner.position.set(x, 10);
+    separatorOwner.zIndex = scene.gauge.markerDepth;
     progress.addChild(separatorOwner);
     separatorOwner.addChild(levelMark);
     visual.scoreRankSprites.push(levelMark);
@@ -2884,12 +2920,14 @@ function applyScoreHud(
       label: `score-rank-${row.rank}`,
     });
     rankLabel.anchor.set(0.5, 0.5);
-    rankLabel.position.set(x, 2);
-    rankLabel.zIndex = scene.gauge.markerDepth;
+    rankLabel.position.set(0, 0);
+    rankLabel.zIndex = 40;
     const rankLabelOwner = serializedHudComponent(
       visual.serializedComponentNodes,
       `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/${row.rank}`,
     );
+    rankLabelOwner.position.set(x, 2);
+    rankLabelOwner.zIndex = 40;
     progress.addChild(rankLabelOwner);
     rankLabelOwner.addChild(rankLabel);
     visual.scoreRankSprites.push(rankLabel);
@@ -2925,55 +2963,34 @@ function updatePersistentScoreHud(
   state: RenderScoreHudState,
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): void {
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
   placeSafeTopAnchoredUiRoot(object, "left");
   showScoreBaselineComponents(visual, state.foregroundActive);
-  const scoreDigits = String(state.score);
-  const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
-  const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
-  const glyphByKey = new Map(CURRENT_SCORE_HUD_BITMAP_GLYPHS.map((glyph) => [glyph.exactKey, glyph]));
-  const sourceAdvanceUnits = [...displayed].reduce(
-    (sum, digit) => sum + glyphByKey.get(digit)!.xAdvance,
-    scene.totalScoreSpacingX * Math.max(0, displayed.length - 1),
+  const scoreFont = decodedFonts.get(scene.totalScoreFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null) {
+    throw new Error("Persistent Score TotalScore sgm UILabel owner is incomplete");
+  }
+  const totalScoreOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   );
-  let finalFontSize = scene.totalScoreFontSize;
-  while (finalFontSize > 0 &&
-    sourceAdvanceUnits * finalFontSize / scene.bmFontDefaultSize > scene.totalScoreWidgetWidth) {
-    finalFontSize -= 1;
-  }
-  const fontScale = Math.fround(finalFontSize / scene.bmFontDefaultSize);
-  const printedWidth = Math.fround(sourceAdvanceUnits * fontScale);
-  let cursor = Math.fround(scene.totalScoreLocalPosition[0] - printedWidth);
-  if (visual.scoreDigitTexts.length !== displayed.length) {
-    for (const sprite of visual.scoreDigitTexts.splice(0)) sprite.destroy();
-    for (let index = 0; index < displayed.length; index += 1) {
-      const sprite = new Sprite({ label: `score-digit-${index}` });
-      serializedHudComponent(
-        visual.serializedComponentNodes,
-        "GamePlay/UI_Root/Display/Score/Base/TotalScore",
-      ).addChild(sprite);
-      visual.scoreDigitTexts.push(sprite);
-    }
-  }
-  [...displayed].forEach((digit, index) => {
-    const glyph = glyphByKey.get(digit)!;
-    const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.fontLogicalAssetId, digit);
-    const sprite = visual.scoreDigitTexts[index]!;
-    sprite.texture = binding.texture;
-    sprite.anchor.set(0, 0);
-    sprite.scale.set(fontScale);
-    sprite.tint = index < leadingZeroCount ? scene.scoreLeadingColor : scene.scoreSignificantColor;
-    sprite.zIndex = scene.totalScoreDepth;
-    sprite.position.set(
-      Math.fround(cursor + glyph.xOffset * fontScale),
-      Math.fround(-scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale),
-    );
-    cursor = Math.fround(cursor + Math.fround(
-      (glyph.xAdvance + (index + 1 < displayed.length ? scene.totalScoreSpacingX : 0)) * fontScale,
-    ));
-    retainHudBindingOnce(object, binding.key, referenceCounts);
-  });
+  totalScoreOwner.position.set(
+    scene.totalScoreLocalPosition[0],
+    -scene.totalScoreLocalPosition[1],
+  );
+  totalScoreOwner.zIndex = scene.totalScoreDepth;
+  layoutNguiEncodedScoreLabel(
+    visual.scoreTextSegments,
+    state.score,
+    0,
+    0,
+    scene.totalScoreWidgetWidth,
+    scene.totalScoreFontSize,
+    scoreFont.family,
+    scene.totalScoreDepth,
+  );
 
   const progress = visual.scoreGaugeSprites[0]!;
   const foreground = findHudDescendant(progress, "score-gauge-foreground") as NineSliceSprite | null;
@@ -2987,8 +3004,8 @@ function updatePersistentScoreHud(
   foreground.texture = foregroundBinding.texture;
   foreground.visible = state.foregroundActive;
   foregroundMask.clear().rect(
-    foreground.position.x,
-    foreground.position.y - scene.gauge.foreground.height / 2,
+    scene.gauge.foreground.position[0],
+    -scene.gauge.foreground.position[1] - scene.gauge.foreground.height / 2,
     Math.fround(scene.gauge.foreground.width * state.sliderValue.value),
     scene.gauge.foreground.height,
   ).fill(0xffffff);
@@ -3002,10 +3019,15 @@ function updatePersistentScoreHud(
     state.rankMarkerSSLocalX.value,
   ];
   for (let index = 0; index < scene.rankRoots.length; index += 1) {
-    const marker = visual.scoreRankSprites[index * 2]!;
-    const label = visual.scoreRankSprites[index * 2 + 1]!;
-    marker.position.x = markerPositions[index]!;
-    label.position.x = markerPositions[index]!;
+    const rank = scene.rankRoots[index]!.rank;
+    serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/Separator`,
+    ).position.set(markerPositions[index]!, 10);
+    serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/${rank}`,
+    ).position.set(markerPositions[index]!, 2);
   }
   updateScorePanelClip(visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts, progress);
@@ -3493,10 +3515,8 @@ function scoreHudTexturesAvailable(
   textures: ReadonlyMap<string, Texture>,
   meterKey: string,
 ): boolean {
-  const font = CURRENT_SCORE_HUD_BINDINGS.fontLogicalAssetId;
   const gauge = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
-  return [..."0123456789"].every((key) => textures.has(spriteKey(font, key))) &&
-    textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId, "level_mark")) &&
+  return textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId, "level_mark")) &&
     ["gauge_base_score", "bg_gauge_score_multi", meterKey]
       .every((key) => textures.has(spriteKey(gauge, key))) &&
     textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.highRankKiraLogicalAssetId, "high-rank-kira")) &&

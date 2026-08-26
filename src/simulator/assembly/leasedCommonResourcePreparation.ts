@@ -105,7 +105,6 @@ function commonLogicalResource(file: string): string | null {
   if (file.startsWith("tap-lane-effect-")) return "atlas/bms/ui/tap-lane-effect";
   if (file === "ui-additive-effect.png") return "atlas/bms/ui/ui-additive-effect";
   if (file === "ui-common.png") return "atlas/bms/ui/uicommon";
-  if (file === "score-font.png") return "fonts/score/score";
   if (file === "rank-label-font.ttf") return "fonts/sgm";
   if (file === "startup-line-star.png") return "prefabs/bms/information";
   if (file.startsWith("countdown-")) return "prefabs/bms/pause";
