@@ -136,7 +136,6 @@ fn protocol_response(inputs: &Inputs, request: Request<Vec<u8>>) -> Response<std
     "/font.ttf" => (inputs.font.clone(), "font/ttf"),
     "/score-profile.json" => (inputs.score_profile.clone(), "application/json; charset=utf-8"),
     "/score-animation.json" => (inputs.score_animation.clone(), "application/json; charset=utf-8"),
-    "/score-assets/score-font.png" => (inputs.score_assets.join("score-font.png"), "image/png"),
     "/score-assets/rhythm-game-ui.png" => (inputs.score_assets.join("rhythm-game-ui.png"), "image/png"),
     "/score-assets/rank-label-font.ttf" => (inputs.score_assets.join("rank-label-font.ttf"), "font/ttf"),
     "/score-assets/ui-common.png" => (inputs.score_assets.join("ui-common.png"), "image/png"),

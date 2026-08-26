@@ -62,11 +62,6 @@
       "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
     },
     {
-      "path": "game/fonts/score/score/score-font.png",
-      "byteLength": 48359,
-      "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE"
-    },
-    {
       "path": "game/fonts/sgm/rank-label-font.ttf",
       "byteLength": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"

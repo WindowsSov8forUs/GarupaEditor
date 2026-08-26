@@ -67,13 +67,6 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png"
     },
     {
-      "path": "game/fonts/score/score/score-font.png",
-      "byteLength": 48359,
-      "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE",
-      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
-      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png"
-    },
-    {
       "path": "game/fonts/sgm/rank-label-font.ttf",
       "byteLength": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56",

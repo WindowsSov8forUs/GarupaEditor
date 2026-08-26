@@ -7,7 +7,6 @@ import tapLaneEffect3Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/ta
 import tapLaneEffect4Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-4.png?url&no-inline";
 import uiAdditiveEffectUrl from "../../assets/game/atlas/bms/ui/ui-additive-effect/ui-additive-effect.png?url&no-inline";
 import uiCommonUrl from "../../assets/game/atlas/bms/ui/uicommon/ui-common.png?url&no-inline";
-import scoreFontUrl from "../../assets/game/fonts/score/score/score-font.png?url&no-inline";
 import rankLabelFontUrl from "../../assets/game/fonts/sgm/rank-label-font.ttf?url&no-inline";
 import ordinaryRenderProfileUrl from "../../assets/game/portable/profiles/ordinary-render/profile.json?url&no-inline";
 import ordinaryVisibleProfileUrl from "../../assets/game/portable/profiles/ordinary-visible/profile.json?url&no-inline";
@@ -70,9 +69,6 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("atlas/bms/ui/uicommon", "UI common atlas", "image", [
     file("game/atlas/bms/ui/uicommon/ui-common.png", "ui-common.png", "image/png", uiCommonUrl),
-  ]),
-  resource("fonts/score/score", "Score bitmap font atlas", "image", [
-    file("game/fonts/score/score/score-font.png", "score-font.png", "image/png", scoreFontUrl),
   ]),
   resource("fonts/sgm", "Rank label font", "font", [
     file("game/fonts/sgm/rank-label-font.ttf", "rank-label-font.ttf", "font/ttf", rankLabelFontUrl),
