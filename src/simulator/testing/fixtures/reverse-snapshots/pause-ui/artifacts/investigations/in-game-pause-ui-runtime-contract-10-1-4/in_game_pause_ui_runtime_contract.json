@@ -55,7 +55,7 @@
     },
     "serialized_resource_profile": {
       "path": "pause_serialized_resource_profile.json",
-      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
+      "sha256": "AC907D731479277FB1C3E32FEE8257AC32945B0C6FE08F4F4F23E6637F5356F1"
     },
     "existing_rehearsal_profile": {
       "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
@@ -1718,7 +1718,7 @@
       "authority": "accepted current R1 screenshots classify visible localized text only; all geometry is serialized/formula-derived",
       "pause": {
         "title": "一時停止",
-        "message": "ライブを一時停止しています",
+        "message": "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。",
         "buttons": [
           "中断",
           "リトライ",

@@ -1296,7 +1296,7 @@
     "authority": "accepted current R1 screenshots classify visible localized text only; all geometry is serialized/formula-derived",
     "pause": {
       "title": "一時停止",
-      "message": "ライブを一時停止しています",
+      "message": "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。",
       "buttons": [
         "中断",
         "リトライ",

@@ -71,8 +71,8 @@
     },
     "pause": {
       "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "bytes": 56234,
-      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+      "bytes": 56331,
+      "sha256": "E10089EC5C9F7B5CF4FDC8F0B3B881D2F1E9F6DFA1215C97F4772AB8C80C0930"
     },
     "rehearsal": {
       "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",

@@ -1,0 +1,3134 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-five-visual-correction-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "hud_components": {
+      "path": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+      "bytes": 233351,
+      "sha256": "A5103670BA69FBDD1A5585DE05756EE9AFDD59FD06A3A1AF5F460E202EDB7D73"
+    },
+    "multiaspect": {
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "bytes": 39710,
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+    },
+    "pause_profile": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
+      "bytes": 43843,
+      "sha256": "AC907D731479277FB1C3E32FEE8257AC32945B0C6FE08F4F4F23E6637F5356F1"
+    },
+    "pause_contract": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
+      "bytes": 56331,
+      "sha256": "E10089EC5C9F7B5CF4FDC8F0B3B881D2F1E9F6DFA1215C97F4772AB8C80C0930"
+    },
+    "pause_frame": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/runtime/live-auto-pause-r1.png",
+      "bytes": 139000,
+      "sha256": "71B23BA23124A67600598EF128DDC58DEAF0030AF3D637BDE7F18428A6F8B53D"
+    },
+    "note_geometry": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_geometry_profile.json",
+      "bytes": 20910,
+      "sha256": "940A4BCB88B760CD7EF2EAD26EDBA52038FC8051A327191151DDCB896F403BCB"
+    },
+    "lane_profile": {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "bytes": 9920,
+      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    "lane_contract": {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_runtime_contract.json",
+      "bytes": 70866,
+      "sha256": "4B0CA31A55B888052C776C82680F628D6CE5EF2EFF9E9FA0C687613B9195C17B"
+    },
+    "ordinary_effect_frame": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/runtime/frames/ordinary/combo-change.png",
+      "bytes": 1304154,
+      "sha256": "DEE3FE766AA982E191580D51A8371A6E83CDCF1102A0A07660AB99289FB3482E"
+    }
+  },
+  "score_hud": {
+    "serialized_widget_count": 45,
+    "widgets": [
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Base/Score",
+        "component_path_id": 1249,
+        "component": "UILabel",
+        "active": false,
+        "enabled": true,
+        "color_f32_bits": [
+          "5A5A9A3E",
+          "5A5A9A3E",
+          "5A5A9A3E",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 786,
+        "height": 86,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "SCORE",
+        "font_size": 22,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+        "component_path_id": 1271,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Right",
+        "width": 188,
+        "height": 204,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "10000000",
+        "font_size": 28,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Background",
+        "component_path_id": 1237,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 470,
+        "height": 82,
+        "depth": 4,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "gauge_base_score"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+        "component_path_id": 1269,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 427,
+        "height": 33,
+        "depth": 28,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "bg_gauge_score_multi"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+        "component_path_id": 1217,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 24,
+        "depth": 5,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "score_meter_blue"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge1P",
+        "component_path_id": 1298,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 26,
+        "depth": 25,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "multi_meter_red"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge2P",
+        "component_path_id": 1300,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 26,
+        "depth": 24,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "multi_meter_blue"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge3P",
+        "component_path_id": 1314,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 26,
+        "depth": 23,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "multi_meter_orange"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge4P",
+        "component_path_id": 1219,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 26,
+        "depth": 22,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "multi_meter_green"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/MultiGauge/Gauge5P",
+        "component_path_id": 1338,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 421,
+        "height": 26,
+        "depth": 21,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "multi_meter_purple"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/BigStar_1",
+        "component_path_id": 1390,
+        "component": "UITexture",
+        "active": false,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "C9C8483F"
+        ],
+        "pivot": "Center",
+        "width": 420,
+        "height": 24,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 73,
+          "path_id": 1
+        },
+        "resolved_texture_name": "sss_star_long",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/BigStar_2",
+        "component_path_id": 1427,
+        "component": "UITexture",
+        "active": false,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "C9C8483F"
+        ],
+        "pivot": "Center",
+        "width": 420,
+        "height": 24,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 73,
+          "path_id": 1
+        },
+        "resolved_texture_name": "sss_star_long",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/Flash",
+        "component_path_id": 1395,
+        "component": "UITexture",
+        "active": false,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "DEDD5D3F",
+          "EEED6D3F",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 467,
+        "height": 24,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 74,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_overlay",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_1",
+        "component_path_id": 1379,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "7E0E693F",
+          "41187C3F",
+          "DDDC5C3F"
+        ],
+        "pivot": "Center",
+        "width": 20,
+        "height": 20,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_2",
+        "component_path_id": 1380,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "A426583F",
+          "8FDB7B3F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 12,
+        "height": 12,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_3",
+        "component_path_id": 1413,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "209B6C3F",
+          "0000803F",
+          "1D52533F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 8,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_4",
+        "component_path_id": 1405,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "DDDC5C3F"
+        ],
+        "pivot": "Center",
+        "width": 28,
+        "height": 28,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_5",
+        "component_path_id": 1400,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "45077E3F",
+          "F639643F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 12,
+        "height": 12,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_6",
+        "component_path_id": 1378,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "3AA4663F",
+          "5DE1763F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 15,
+        "height": 15,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_7",
+        "component_path_id": 1406,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "20A6713F",
+          "0000803F",
+          "3AA4663F",
+          "DDDC5C3F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 22,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/kira_8",
+        "component_path_id": 1415,
+        "component": "UITexture",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "6A2E6F3F",
+          "A426583F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 12,
+        "height": 12,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "texture": {
+          "file_id": 69,
+          "path_id": 1
+        },
+        "resolved_texture_name": "ss_kira",
+        "shader": {
+          "file_id": 16,
+          "path_id": 61
+        }
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA+/A+",
+        "component_path_id": 1424,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 33,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "A+",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA+/Separator",
+        "component_path_id": 1358,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/A",
+        "component_path_id": 1238,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "A",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/Separator",
+        "component_path_id": 1295,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB+/B+",
+        "component_path_id": 1385,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 33,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "B+",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB+/Separator",
+        "component_path_id": 1418,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/B",
+        "component_path_id": 1263,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "B",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/Separator",
+        "component_path_id": 1221,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC+/C+",
+        "component_path_id": 1392,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 33,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "C+",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC+/Separator",
+        "component_path_id": 1423,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",
+        "component_path_id": 1313,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "C",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/Separator",
+        "component_path_id": 1270,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS+/S+",
+        "component_path_id": 1425,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 33,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "S+",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS+/Separator",
+        "component_path_id": 1434,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/S",
+        "component_path_id": 1216,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "S",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/Separator",
+        "component_path_id": 1222,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS+/SS",
+        "component_path_id": 1411,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 33,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "SS+",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS+/Separator",
+        "component_path_id": 1384,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS",
+        "component_path_id": 1301,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 22,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "SS",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/Separator",
+        "component_path_id": 1310,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSSS/SSS",
+        "component_path_id": 1414,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 30,
+        "height": 26,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "SSS",
+        "font_size": 12,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSSS/Separator",
+        "component_path_id": 1422,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 8,
+        "height": 6,
+        "depth": 29,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 16,
+          "path_id": 1883
+        },
+        "sprite_name": "level_mark"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/SkillEffect/SpriteBase",
+        "component_path_id": 1276,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 500,
+        "height": 110,
+        "depth": 3,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "UI_effect_score_plus_guage"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/Score/Progress/SkillEffect/SpriteIcon",
+        "component_path_id": 1335,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 88,
+        "height": 86,
+        "depth": 35,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "UI_effect_score_plus_icon"
+      }
+    ],
+    "persistent_component_identity_required": true,
+    "synthetic_rank_or_gauge_node_allowed": false,
+    "required_runtime_projection": "StarUIAnchor Left+Top; FitWidth*ScreenToSafeArea; preserve widget pivot/size/depth/material and UILabel fields",
+    "acceptance": "compare every selected production component identity, local bounds, screen bounds, glyph primitive and draw order; fixture inventory existence alone is insufficient"
+  },
+  "life_hud": {
+    "serialized_widget_count": 10,
+    "widgets": [
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage",
+        "component_path_id": 1086,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 264,
+        "height": 70,
+        "depth": 0,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "bg_no_health"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+        "component_path_id": 1079,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "pivot": "Left",
+        "width": 200,
+        "height": 60,
+        "depth": 40,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "ライフゼロ!\n獲得スコアDOWN!",
+        "font_size": 22,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "0000803F",
+          "D578693E",
+          "3BDFCF3E",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteBase",
+        "component_path_id": 1191,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 300,
+        "height": 100,
+        "depth": 5,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "effect_health_guard_outline"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteIcon",
+        "component_path_id": 1170,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 47,
+        "height": 49,
+        "depth": 7,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "UI_effect_life_plus_icon"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge",
+        "component_path_id": 1077,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "100FCF3E",
+          "0000803F",
+          "F45C213F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 224,
+        "height": 26,
+        "depth": 5,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "hp_meter"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG",
+        "component_path_id": 1160,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 266,
+        "height": 62,
+        "depth": 4,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 31,
+          "path_id": 3
+        },
+        "sprite_name": "bg_health"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge",
+        "component_path_id": 1204,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "1425BB3E",
+          "0000803F",
+          "00000000",
+          "2731C83E"
+        ],
+        "pivot": "Center",
+        "width": 224,
+        "height": 26,
+        "depth": 36,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 36,
+          "path_id": 3
+        },
+        "sprite_name": "hp_meter"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning",
+        "component_path_id": 1071,
+        "component": "UISprite",
+        "active": false,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Center",
+        "width": 287,
+        "height": 83,
+        "depth": 44,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 30,
+          "path_id": 3
+        },
+        "sprite_name": "effect_health_caution_outline"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody",
+        "component_path_id": 1187,
+        "component": "UISprite",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "CFF7333F"
+        ],
+        "pivot": "Center",
+        "width": 228,
+        "height": 27,
+        "depth": 44,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "atlas": {
+          "file_id": 30,
+          "path_id": 3
+        },
+        "sprite_name": "effect_health_caution_inside"
+      },
+      {
+        "path": "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total",
+        "component_path_id": 1120,
+        "component": "UILabel",
+        "active": true,
+        "enabled": true,
+        "color_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "pivot": "Right",
+        "width": 251,
+        "height": 70,
+        "depth": 42,
+        "material": {
+          "file_id": 0,
+          "path_id": 0
+        },
+        "font": {
+          "file_id": 16,
+          "path_id": 1799
+        },
+        "text": "1200/1200",
+        "font_size": 18,
+        "font_style": 0,
+        "alignment": 0,
+        "support_encoding": true,
+        "effect_style": 0,
+        "effect_color_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000",
+          "0000803F"
+        ],
+        "effect_distance_f32_bits": [
+          "0000803F",
+          "0000803F"
+        ],
+        "overflow": 0,
+        "apply_gradient": false,
+        "gradient_top_f32_bits": [
+          "0000803F",
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "gradient_bottom_f32_bits": [
+          "3333333F",
+          "3333333F",
+          "3333333F",
+          "0000803F"
+        ]
+      }
+    ],
+    "single_total_label_path": "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total",
+    "single_total_label_component_path_id": 1120,
+    "additional_root_level_life_text_allowed": false,
+    "persistent_component_identity_required": true,
+    "acceptance": "exactly one visible total label owner; compare all ten component active states, screen bounds, font runs, fills, tint, masks and draw order"
+  },
+  "pause": {
+    "visible_message": "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。",
+    "visible_message_lines": [
+      "ライブを一時停止しました。",
+      "ライブを再開しますか？",
+      "また、リトライで最初からプレイできます。"
+    ],
+    "source_frame": {
+      "path": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/runtime/live-auto-pause-r1.png",
+      "bytes": 139000,
+      "sha256": "71B23BA23124A67600598EF128DDC58DEAF0030AF3D637BDE7F18428A6F8B53D"
+    },
+    "retryable_prefab": {
+      "root": {
+        "path_id": 29,
+        "game_object_path_id": 11,
+        "game_object": "RetryablePauseDialog",
+        "active": true,
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          27,
+          30
+        ]
+      },
+      "window": {
+        "path_id": 42,
+        "serialized_bytes": 292,
+        "width": 922,
+        "height": 320,
+        "depth": 5,
+        "raw_sha256": "2EA15DD5D008D73CFCC17ED10B351484CFEEA4301FB363EDA68E517F17A099AE",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_base_r12"
+      },
+      "background_cover": {
+        "path_id": 50,
+        "serialized_bytes": 284,
+        "width": 778,
+        "height": 586,
+        "depth": 0,
+        "raw_sha256": "96345E4D257793C7B865A8E2F7648362FADCD150B2F042A1AC2F9B0D5A4AD52E",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "fill"
+      },
+      "header": {
+        "path_id": 49,
+        "serialized_bytes": 296,
+        "width": 842,
+        "height": 40,
+        "depth": 6,
+        "raw_sha256": "8F4FFF5EF72E678A6B87AF0BD705194947B3A84DD39BE4827FE28898ECFE62C1",
+        "atlas": {
+          "file_id": 2,
+          "path_id": 1883
+        },
+        "sprite_name": "bg_header_dialog"
+      },
+      "title": {
+        "path_id": 45,
+        "serialized_bytes": 364,
+        "width": 832,
+        "height": 63,
+        "depth": 7,
+        "raw_sha256": "7536B6D217016F83628A99B42838320E3C062AFD9E4E984D4DDE951F13132CE8",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "",
+        "font_size": 30
+      },
+      "content": {
+        "path_id": 38,
+        "serialized_bytes": 364,
+        "width": 900,
+        "height": 114,
+        "depth": 10,
+        "raw_sha256": "483C9BE083B972C084DEC1CC4296ADA22970066E0B38D5FCEFEC58BE684EA765",
+        "font": {
+          "file_id": 2,
+          "path_id": 1799
+        },
+        "serialized_text": "",
+        "font_size": 24
+      },
+      "buttons": [
+        {
+          "identity": "abort",
+          "transform": {
+            "path_id": 20,
+            "game_object_path_id": 1,
+            "game_object": "ButtonCancel",
+            "active": true,
+            "local_position": [
+              -274.0,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              19,
+              26
+            ]
+          },
+          "sprite": {
+            "path_id": 40,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "D56B696FBC784BC76BA6C18C0697C19A0F92A93956DD978D9B4F6E1F0FEE157B",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 44,
+            "serialized_bytes": 372,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "4F79FDAD73CBEACB2B0325534D001A5B7016C19B97735968AF9CDFB6493C1761",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "中断",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "retry",
+          "transform": {
+            "path_id": 23,
+            "game_object_path_id": 5,
+            "game_object": "ButtonRetry",
+            "active": true,
+            "local_position": [
+              0.0,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              22,
+              17
+            ]
+          },
+          "sprite": {
+            "path_id": 48,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "0D7E9D44D8C108B2BDB78AE09641C8F3CAFECD436191C0B76D8AC99BE7C55EC1",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_gray"
+          },
+          "label": {
+            "path_id": 56,
+            "serialized_bytes": 376,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "211EB0330245D4D8B0086F726FFDB3118D11D0A0B3F4CDC202E65FA3B8A29824",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "リトライ",
+            "font_size": 32
+          }
+        },
+        {
+          "identity": "resume",
+          "transform": {
+            "path_id": 31,
+            "game_object_path_id": 13,
+            "game_object": "ButtonOK",
+            "active": true,
+            "local_position": [
+              272.0000305175781,
+              -94.00001525878906,
+              -30.000001907348633
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 28,
+            "children": [
+              32,
+              18
+            ]
+          },
+          "sprite": {
+            "path_id": 54,
+            "serialized_bytes": 292,
+            "width": 248,
+            "height": 72,
+            "depth": 10,
+            "raw_sha256": "5E400CEA5FEBA2727C89D1C9FEA8F645FE48DE33F0C5247A736DF01D0877FB81",
+            "atlas": {
+              "file_id": 2,
+              "path_id": 1883
+            },
+            "sprite_name": "button_pink"
+          },
+          "label": {
+            "path_id": 43,
+            "serialized_bytes": 372,
+            "width": 234,
+            "height": 56,
+            "depth": 15,
+            "raw_sha256": "CAA053130CFDA82A1CE24D204DBDC5612F7B44D95244C274678872F00C7523CC",
+            "font": {
+              "file_id": 2,
+              "path_id": 1799
+            },
+            "serialized_text": "再開",
+            "font_size": 34
+          }
+        }
+      ]
+    },
+    "background_cover_component": {
+      "path_id": 50,
+      "serialized_bytes": 284,
+      "width": 778,
+      "height": 586,
+      "depth": 0,
+      "raw_sha256": "96345E4D257793C7B865A8E2F7648362FADCD150B2F042A1AC2F9B0D5A4AD52E",
+      "atlas": {
+        "file_id": 2,
+        "path_id": 1883
+      },
+      "sprite_name": "fill"
+    },
+    "graphics_rectangle_cover_allowed": false,
+    "component_backed_nine_slice_and_label_required": true,
+    "acceptance": "compare the complete serialized RetryablePauseDialog component graph and corrected three-line UILabel output; hit bounds alone are insufficient"
+  },
+  "slide": {
+    "source_formula": {
+      "vertex_count": 22,
+      "index_count": 60,
+      "pair_count": 11,
+      "front_boundary": "position.x +/- localScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+      "after_boundary": "position.x +/- afterScaleX * buttonCount * screenToSafeAreaRatio * widthRate",
+      "vertices": "for section i=0..10, linear interpolate front/after boundaries at i/10; Z=0",
+      "indices": [
+        0,
+        2,
+        1,
+        1,
+        2,
+        3,
+        2,
+        4,
+        3,
+        3,
+        4,
+        5,
+        4,
+        6,
+        5,
+        5,
+        6,
+        7,
+        6,
+        8,
+        7,
+        7,
+        8,
+        9,
+        8,
+        10,
+        9,
+        9,
+        10,
+        11,
+        10,
+        12,
+        11,
+        11,
+        12,
+        13,
+        12,
+        14,
+        13,
+        13,
+        14,
+        15,
+        14,
+        16,
+        15,
+        15,
+        16,
+        17,
+        16,
+        18,
+        17,
+        17,
+        18,
+        19,
+        18,
+        20,
+        19,
+        19,
+        20,
+        21
+      ],
+      "uv_f32_bits": [
+        [
+          "00000000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "00000000",
+          "3DCCCCCD"
+        ],
+        [
+          "3F800000",
+          "3DCCCCCD"
+        ],
+        [
+          "00000000",
+          "3E4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3E4CCCCD"
+        ],
+        [
+          "00000000",
+          "3E99999A"
+        ],
+        [
+          "3F800000",
+          "3E99999A"
+        ],
+        [
+          "00000000",
+          "3ECCCCCD"
+        ],
+        [
+          "3F800000",
+          "3ECCCCCD"
+        ],
+        [
+          "00000000",
+          "3F000000"
+        ],
+        [
+          "3F800000",
+          "3F000000"
+        ],
+        [
+          "00000000",
+          "3F19999A"
+        ],
+        [
+          "3F800000",
+          "3F19999A"
+        ],
+        [
+          "00000000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "00000000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "00000000",
+          "3F666666"
+        ],
+        [
+          "3F800000",
+          "3F666666"
+        ],
+        [
+          "00000000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "initial_color_f32_bits": [
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F4CCCCD"
+        ]
+      ],
+      "width_rate": "special disabled=>1; type2=>1.05; type3..7=>1.05+clamp(progress,0,1)*0.03; otherwise 1",
+      "threshold_property_id": 3453,
+      "observed_threshold_f32_bits": [
+        "44322D84"
+      ]
+    },
+    "float_policy": "Float32 after every managed arithmetic write; no implicit clamp except named clamps",
+    "width_one_oracles": [
+      {
+        "surface": [
+          1600,
+          900
+        ],
+        "case_id": "16:9-full",
+        "authored_width": 1,
+        "samples": [
+          {
+            "curve_f32_bits": "00000000",
+            "y_f32_bits": "65736C3F",
+            "uniform_scale_f32_bits": "96F8583C",
+            "full_width_world_f32_bits": "2F14A13B",
+            "full_width_pixels_f32_bits": "BD920D40",
+            "full_width_pixels": 2.21208119392395
+          },
+          {
+            "curve_f32_bits": "0000803E",
+            "y_f32_bits": "925B083F",
+            "uniform_scale_f32_bits": "5C126A3D",
+            "full_width_world_f32_bits": "3CC6AD3C",
+            "full_width_pixels_f32_bits": "3BBB1841",
+            "full_width_pixels": 9.545710563659668
+          },
+          {
+            "curve_f32_bits": "0000003F",
+            "y_f32_bits": "000F113E",
+            "uniform_scale_f32_bits": "49F3CE3D",
+            "full_width_world_f32_bits": "B6A3193D",
+            "full_width_pixels_f32_bits": "E3088741",
+            "full_width_pixels": 16.87933921813965
+          },
+          {
+            "curve_f32_bits": "0000403F",
+            "y_f32_bits": "4C507FBE",
+            "uniform_scale_f32_bits": "B26E143E",
+            "full_width_world_f32_bits": "4E645C3D",
+            "full_width_pixels_f32_bits": "29B4C141",
+            "full_width_pixels": 24.212968826293945
+          },
+          {
+            "curve_f32_bits": "0000803F",
+            "y_f32_bits": "E5EB23BF",
+            "uniform_scale_f32_bits": "C063413E",
+            "full_width_world_f32_bits": "73928F3D",
+            "full_width_pixels_f32_bits": "6E5FFC41",
+            "full_width_pixels": 31.54659652709961
+          }
+        ]
+      },
+      {
+        "surface": [
+          1600,
+          720
+        ],
+        "case_id": "20:9-full",
+        "authored_width": 1,
+        "samples": [
+          {
+            "curve_f32_bits": "00000000",
+            "y_f32_bits": "20C8933F",
+            "uniform_scale_f32_bits": "AD7B003D",
+            "full_width_world_f32_bits": "A9C72B3C",
+            "full_width_pixels_f32_bits": "C6907140",
+            "full_width_pixels": 3.774461269378662
+          },
+          {
+            "curve_f32_bits": "0000803E",
+            "y_f32_bits": "78722A3F",
+            "uniform_scale_f32_bits": "44D4AE3D",
+            "full_width_world_f32_bits": "6EBEE93C",
+            "full_width_pixels_f32_bits": "E5592441",
+            "full_width_pixels": 10.271946907043457
+          },
+          {
+            "curve_f32_bits": "0000003F",
+            "y_f32_bits": "C452353E",
+            "uniform_scale_f32_bits": "59B50E3E",
+            "full_width_world_f32_bits": "84CC3E3D",
+            "full_width_pixels_f32_bits": "CD278641",
+            "full_width_pixels": 16.769433975219727
+          },
+          {
+            "curve_f32_bits": "0000403F",
+            "y_f32_bits": "2C929FBE",
+            "uniform_scale_f32_bits": "9000463E",
+            "full_width_world_f32_bits": "E95C843D",
+            "full_width_pixels_f32_bits": "A822BA41",
+            "full_width_pixels": 23.266921997070312
+          },
+          {
+            "curve_f32_bits": "0000803F",
+            "y_f32_bits": "DEE64CBF",
+            "uniform_scale_f32_bits": "C54B7D3E",
+            "full_width_world_f32_bits": "8E53A93D",
+            "full_width_pixels_f32_bits": "801DEE41",
+            "full_width_pixels": 29.764404296875
+          }
+        ]
+      }
+    ],
+    "material_alpha_f32_bits": "3F4CCCCD",
+    "acceptance": "for each section compare both world boundaries, projected pixel width, 22 vertices, 60 indices, UV, material, threshold and endpoint ownership; expected values must not import product renderer helpers"
+  },
+  "tap_lane_effect": {
+    "slot_count": 13,
+    "texture_route": [
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_1"
+    ],
+    "textures": [
+      {
+        "name": "NoteLaneEffect_1",
+        "sourceFile": "2d93a39353c29401e9d74baead0ee4f6",
+        "sourceBytes": 1549104,
+        "sourceSha256": "D498F3FC6C89E5A6BF270129F800803E873D0A218BEDF2C4E4E61A7F13FF424D",
+        "textureWidth": 774,
+        "textureHeight": 500,
+        "spriteRectF32": [
+          "439988EB",
+          "00000000",
+          "43E97715",
+          "43FA0000"
+        ],
+        "spritePixelsPerUnitF32": "428A0000",
+        "spritePivotF32": [
+          "3F000000",
+          "00000000"
+        ],
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_1.png",
+          "bytes": 14137,
+          "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
+          "width": 467,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_2",
+        "sourceFile": "427cca15e588a402e95de70b00a443e0",
+        "sourceBytes": 1053104,
+        "sourceSha256": "FD4F9AF0EA4AAB37A87F4AD26B347BE2300BB055BFA8070DB72CF3BE397FD63A",
+        "textureWidth": 526,
+        "textureHeight": 500,
+        "spriteRectF32": [
+          "43383638",
+          "00000000",
+          "43AAE4E4",
+          "43FA0000"
+        ],
+        "spritePixelsPerUnitF32": "428A0000",
+        "spritePivotF32": [
+          "3F000000",
+          "00000000"
+        ],
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_2.png",
+          "bytes": 11402,
+          "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
+          "width": 342,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_3",
+        "sourceFile": "03a0932a885754baa804975b120c8015",
+        "sourceBytes": 557072,
+        "sourceSha256": "5E406020F080C52C8FBCBCF9D65AD31354AE8D829AC6DF41B439F51A3D33123F",
+        "textureWidth": 278,
+        "textureHeight": 500,
+        "spriteRectF32": [
+          "4270F2AB",
+          "00000000",
+          "4359C355",
+          "43FA0000"
+        ],
+        "spritePixelsPerUnitF32": "428A0000",
+        "spritePivotF32": [
+          "3F000000",
+          "00000000"
+        ],
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_3.png",
+          "bytes": 7630,
+          "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
+          "width": 218,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_4",
+        "sourceFile": "18cb136c2c5a344d5a696a66bc45a878",
+        "sourceBytes": 309104,
+        "sourceSha256": "888172CDA690D441DB70926609787DBE8F9F8D3F3FD551AEFF9884E49C9869B1",
+        "textureWidth": 154,
+        "textureHeight": 500,
+        "spriteRectF32": [
+          "00000000",
+          "00000000",
+          "431A0000",
+          "43FA0000"
+        ],
+        "spritePixelsPerUnitF32": "428A0000",
+        "spritePivotF32": [
+          "3F000000",
+          "00000000"
+        ],
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_4.png",
+          "bytes": 5535,
+          "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
+          "width": 154,
+          "height": 500
+        }
+      }
+    ],
+    "bounds_oracles": [
+      {
+        "surface": [
+          1600,
+          900
+        ],
+        "case_id": "16:9-full",
+        "texture": "NoteLaneEffect_1",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "CA0D3E3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -282.6357421875,
+          -605.2156982421875,
+          565.271484375,
+          605.2156982421875
+        ],
+        "target_top_left_y": 738.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          900
+        ],
+        "case_id": "16:9-full",
+        "texture": "NoteLaneEffect_2",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "CA0D3E3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -206.9837646484375,
+          -605.2156982421875,
+          413.967529296875,
+          605.2156982421875
+        ],
+        "target_top_left_y": 738.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          900
+        ],
+        "case_id": "16:9-full",
+        "texture": "NoteLaneEffect_3",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "CA0D3E3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -131.93702697753906,
+          -605.2156982421875,
+          263.8740539550781,
+          605.2156982421875
+        ],
+        "target_top_left_y": 738.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          900
+        ],
+        "case_id": "16:9-full",
+        "texture": "NoteLaneEffect_4",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "CA0D3E3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -93.20321655273438,
+          -605.2156982421875,
+          186.40643310546875,
+          605.2156982421875
+        ],
+        "target_top_left_y": 738.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          720
+        ],
+        "case_id": "20:9-full",
+        "texture": "NoteLaneEffect_1",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "3D916D3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -282.6357421875,
+          -605.2156982421875,
+          565.271484375,
+          605.2156982421875
+        ],
+        "target_top_left_y": 648.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          720
+        ],
+        "case_id": "20:9-full",
+        "texture": "NoteLaneEffect_2",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "3D916D3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -206.9837646484375,
+          -605.2156982421875,
+          413.967529296875,
+          605.2156982421875
+        ],
+        "target_top_left_y": 648.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          720
+        ],
+        "case_id": "20:9-full",
+        "texture": "NoteLaneEffect_3",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "3D916D3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -131.93702697753906,
+          -605.2156982421875,
+          263.8740539550781,
+          605.2156982421875
+        ],
+        "target_top_left_y": 648.1431884765625
+      },
+      {
+        "surface": [
+          1600,
+          720
+        ],
+        "case_id": "20:9-full",
+        "texture": "NoteLaneEffect_4",
+        "pivot": "bottom-center",
+        "button_scale_f32_bits": "3D916D3E",
+        "visible_bounds_relative_to_target_top_left": [
+          -93.20321655273438,
+          -605.2156982421875,
+          186.40643310546875,
+          605.2156982421875
+        ],
+        "target_top_left_y": 648.1431884765625
+      }
+    ],
+    "idle_animation": {
+      "name": "NoteLaneEffectAnimationIdle",
+      "sourceFile": "e24f55481fb664d3e9a32ca1dcde4d4c",
+      "sourceBytes": 2724,
+      "sourceSha256": "2A2882167CD0D2DEC1FEE528CB2E5D9E865B1514ED45E81E0A8F5632DE006BC7",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "00000000",
+      "loop": true,
+      "denseFrameCount": 2,
+      "constantF32": [
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ],
+      "valueDeltaF32": [
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "bindings": [
+        [
+          3305885265,
+          212
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2526845255,
+          212
+        ],
+        [
+          4215373228,
+          212
+        ],
+        [
+          2334886179,
+          212
+        ],
+        [
+          304273561,
+          212
+        ]
+      ]
+    },
+    "fade_animation": {
+      "name": "NoteLaneEffectAnimationFadeOut",
+      "sourceFile": "ca481f406f6b64f15ad1845d13c9dceb",
+      "sourceBytes": 2980,
+      "sourceSha256": "BAE2ED2E21640A6678B774CC817B26CA7FE50BF5A6AEC7D733E936DDEB2A143A",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "3E2AAAAB",
+      "loop": false,
+      "denseFrameCount": 12,
+      "constantF32": [
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ],
+      "valueDeltaF32": [
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F333333"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "00000000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000"
+        ]
+      ],
+      "bindings": [
+        [
+          3,
+          4
+        ],
+        [
+          304273561,
+          212
+        ],
+        [
+          3305885265,
+          212
+        ],
+        [
+          2526845255,
+          212
+        ],
+        [
+          4215373228,
+          212
+        ],
+        [
+          2334886179,
+          212
+        ]
+      ]
+    },
+    "disabled_animation": {
+      "name": "NoteLaneEffectAnimationDisabled",
+      "sourceFile": "d1ebd1b62beab4386a6a991583b56374",
+      "sourceBytes": 2504,
+      "sourceSha256": "7251B377EC6FBFA5FB7D7B2736B13DF64678810351D7D830BF3F9A5DA702BB4B",
+      "sampleRateF32": "42700000",
+      "startTimeF32": "00000000",
+      "stopTimeF32": "00000000",
+      "loop": true,
+      "denseFrameCount": 2,
+      "constantF32": [],
+      "valueDeltaF32": [
+        [
+          "00000000",
+          "00000000"
+        ]
+      ],
+      "bindings": [
+        [
+          3305885265,
+          212
+        ]
+      ]
+    },
+    "off_reserve_outer_updates": 2,
+    "setting": {
+      "type": "bool",
+      "snapshotSourceOffset": "LiveSettings+0x34",
+      "calculatedOffset": "InGameCalculatedData+0xB9",
+      "buttonOffset": "GamePlayButton+0x70",
+      "falseBehavior": "NoteLaneEffectOn returns before Animator/SpriteRenderer mutation",
+      "particleAndJudgeIndependent": true
+    },
+    "session_lifecycle": {
+      "highFrequency": "Primary counters are InGameManager outer update counters; they are not scheduler substep counters",
+      "pause": "pause clears every lane effect and freezes gameplay/audio phase state",
+      "moveTime": "onResetOnMovedTime zeroes both primary counters and clears lane effects before resume reconstruction",
+      "retry": "fresh InGameCalculatedData copies the immutable settings snapshot",
+      "mvOrdering": "MV signed delay branch invokes FadeInDarkCover before movie Play; standalone MVView invokes HideDarkCover instead",
+      "hotSwitch": false
+    },
+    "acceptance": "same judgement frame must expose the selected bottom-pivot beam with exact bounds, additive material, RGBA and Animator phase; visible owner count or texture binding alone is insufficient"
+  },
+  "prior_closure_disposition": {
+    "complete_hud_production_authorization_withdrawn": true,
+    "reason": "the prior closure froze 104 serialized widgets but production tests compared only inventory presence plus eleven ScoreGaugeSS nodes; Pause text also conflicted with its committed natural frame"
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": true
+}

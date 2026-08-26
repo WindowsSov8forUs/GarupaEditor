@@ -391,6 +391,13 @@
       "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99"
     },
     {
+      "path": "reverse-snapshots/five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
+      "sourcePath": "artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
+      "bytes": 78848,
+      "sha256": "228A536C54FE99293A3F8F759B917B95D501B76ABD83F2D8AA9B61B6E6474A8B"
+    },
+    {
       "path": "reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
       "sourceReverseCommit": "341749d90e3c68cc9fd85d16fbc501f733378623",
       "sourcePath": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
@@ -399,52 +406,52 @@
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
-      "bytes": 4360,
-      "sha256": "3CE55A2C5FA1999404B29CBD6062A776965A79F4B7BDC28EFB774FD5AF15DE46"
+      "bytes": 4738,
+      "sha256": "63595C8F0BEAB71271EF6D707B05F367F531D70E330C621DADC48F97074D8102"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
       "bytes": 233351,
-      "sha256": "2397421336B942390A95A91AEEDE57A8256EEB8B62738B0056FEFF8E61F72366"
+      "sha256": "A5103670BA69FBDD1A5585DE05756EE9AFDD59FD06A3A1AF5F460E202EDB7D73"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
-      "bytes": 899855,
-      "sha256": "C708244D6F1E05D4F55987DBDA302B628D2D9F7BCAA142C188F47A232E59F1C4"
+      "bytes": 899952,
+      "sha256": "FE863BE15EDCE743E0B74ACD7BD41F57EA500352075BA74A22CFA727FADA0171"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
       "bytes": 256931,
-      "sha256": "96C55D4BAA306D588CCF50948170AFDC229812D3EBF8980072A26095FB3092FC"
+      "sha256": "B6AC060A6ADEA9FA333E4ECC456D52A352B5B216D3BCFFFD16FEF0CD1E8887F3"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
       "bytes": 58363,
-      "sha256": "F3AB898D27C06481835123669879F69E95E373C52F428E5949175895616ED942"
+      "sha256": "CF9B4D9AC741E650059D1739C19BAC1BEE60AE43499FB9A325D24A216AAC4D0B"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
       "bytes": 6166,
-      "sha256": "F81AA9A07CC948F116882415DD18067C7CAF4570A560EAE18BCFF8A9EB4DD350"
+      "sha256": "1C0A265E591500C129DBB05C87EE23213D27B685C344EDD4C059B761C99457E9"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
-      "sourceReverseCommit": "879fcec25d02969b31a86b9972225f9ea27d5093",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
       "bytes": 31749,
-      "sha256": "300D6CA1CB79FFC45E22320DF07B33F7C9BE90E0F1919C2C32D1EB9178C285FA"
+      "sha256": "2A2C26C9F2FF166777365C132BF66FB6FFA0561D98F125F6518E6F3687FB92B9"
     },
     {
       "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
@@ -798,10 +805,10 @@
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
-      "bytes": 56234,
-      "sha256": "07FDEF4266E15F31D7B278B6669FA51F18940068B9D87D2A35114DA6FA605363"
+      "bytes": 56331,
+      "sha256": "E10089EC5C9F7B5CF4FDC8F0B3B881D2F1E9F6DFA1215C97F4772AB8C80C0930"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
@@ -812,10 +819,10 @@
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "sourceReverseCommit": "770af437d09c1b0436a3963c3152d483da2247af",
+      "sourceReverseCommit": "c2187fe31eeedc0f288dfd29c25f741f93732ea8",
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
-      "bytes": 43746,
-      "sha256": "B231AC3192D212797FC359AEF8FDA58B0830480E4CBAB868D9815928774CD44D"
+      "bytes": 43843,
+      "sha256": "AC907D731479277FB1C3E32FEE8257AC32945B0C6FE08F4F4F23E6637F5356F1"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
