@@ -2,6 +2,7 @@ import {
   Application,
   BufferImageSource,
   Container,
+  NineSliceSprite,
   Rectangle,
   Sprite,
   Text,
@@ -301,6 +302,8 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
   readonly ownerWorldTransform: readonly [number, number];
   readonly leadingWorldBounds: readonly [number, number, number, number];
   readonly significantWorldBounds: readonly [number, number, number, number];
+  readonly backgroundBorder: readonly [number, number, number, number];
+  readonly foregroundBorder: readonly [number, number, number, number];
   readonly sha256: string;
   readonly nonTransparentPixels: number;
   readonly alphaBounds: readonly [number, number, number, number];
@@ -389,7 +392,10 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     const owner = findLabel(backend.stage, "GamePlay/UI_Root/Display/Score/Base/TotalScore");
     const leading = findLabel(backend.stage, "score-leading-segment");
     const significant = findLabel(backend.stage, "score-significant-segment");
-    if (owner === null || !(leading instanceof Text) || !(significant instanceof Text)) {
+    const background = findLabel(backend.stage, "score-gauge-background");
+    const foreground = findLabel(backend.stage, "score-gauge-foreground");
+    if (owner === null || !(leading instanceof Text) || !(significant instanceof Text) ||
+        !(background instanceof NineSliceSprite) || !(foreground instanceof NineSliceSprite)) {
       throw new Error(`Score matrix ${expected.score} UILabel graph is absent`);
     }
     if (findLabel(backend.stage, "score-digit-0") !== null) {
@@ -423,6 +429,8 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
       ownerWorldTransform: Object.freeze([owner.worldTransform.tx, owner.worldTransform.ty] as const),
       leadingWorldBounds: Object.freeze([leadingBounds.x, leadingBounds.y, leadingBounds.width, leadingBounds.height] as const),
       significantWorldBounds: Object.freeze([significantBounds.x, significantBounds.y, significantBounds.width, significantBounds.height] as const),
+      backgroundBorder: Object.freeze([background.leftWidth, background.topHeight, background.rightWidth, background.bottomHeight] as const),
+      foregroundBorder: Object.freeze([foreground.leftWidth, foreground.topHeight, foreground.rightWidth, foreground.bottomHeight] as const),
       sha256: await sha256(pixels),
       nonTransparentPixels: alpha.nonTransparentPixels,
       alphaBounds: alpha.bounds,

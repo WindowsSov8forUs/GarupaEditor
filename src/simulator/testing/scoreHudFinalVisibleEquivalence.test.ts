@@ -10,6 +10,7 @@ import { layoutNguiEncodedScoreLabel } from "../backends/pixi/hud/nguiEncodedSco
 import { COMMON_SCORE_HUD_BINDINGS } from "../engine/rendering/commonResourceBindings";
 import {
   CURRENT_SCORE_HUD_FINAL_VISIBLE_SOURCE_COMMIT,
+  CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../engine/rendering/currentScoreHudSemanticProfile";
 
@@ -22,7 +23,7 @@ const contract = JSON.parse(readFileSync(join(root, "score_hud_final_visible_clo
 assert.equal(contract.status, "confirmed-current-score-hud-final-visible-closure");
 assert.equal(contract.production_authorization, true);
 assert.equal(contract.blocking_findings.length, 0);
-assert.equal(CURRENT_SCORE_HUD_FINAL_VISIBLE_SOURCE_COMMIT, "a08fbced");
+assert.equal(CURRENT_SCORE_HUD_FINAL_VISIBLE_SOURCE_COMMIT, "818b8db6");
 assert.deepEqual(contract.total_score_label, {
   path: "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   component_path_id: 1271,
@@ -54,6 +55,18 @@ assert.equal((commonCatalog.groups.scoreHud as readonly { readonly file: string 
   .some((row) => row.file === "score-font.png"), false);
 assert.equal(CURRENT_SCORE_HUD_SCENE_PROFILE.totalScoreFontLogicalAssetId, "hud/score/rank-label-font");
 assert.equal(CURRENT_SCORE_HUD_SCENE_PROFILE.totalScoreAdvancePerFontSize, Math.fround(0.75));
+assert.deepEqual(contract.ngui_atlas_score_sprites.critical_correction.gauge_base_score_pixi_border,
+  { left: 216, top: 0, right: 16, bottom: 0 });
+assert.deepEqual(contract.ngui_atlas_score_sprites.critical_correction.score_meter_blue_pixi_border,
+  { left: 4, top: 3, right: 4, bottom: 3 });
+assert.deepEqual(contract.ngui_atlas_score_sprites.critical_correction.score_meter_other_pixi_border,
+  { left: 5, top: 0, right: 5, bottom: 0 });
+assert.deepEqual(CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase,
+  contract.ngui_atlas_score_sprites.critical_correction.gauge_base_score_pixi_border);
+assert.deepEqual(CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterBlue,
+  contract.ngui_atlas_score_sprites.critical_correction.score_meter_blue_pixi_border);
+assert.deepEqual(CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterOther,
+  contract.ngui_atlas_score_sprites.critical_correction.score_meter_other_pixi_border);
 
 const cases = [
   { score: 0, displayed: "00000000", leading: "0000000", significant: "0", size: 28, leadingX: -168, significantX: -21 },

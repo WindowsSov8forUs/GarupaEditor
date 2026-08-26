@@ -38,7 +38,7 @@ npm.cmd run simulator:test:total-revalidation:clean
 npm.cmd run simulator:test:hud-equivalence
 ```
 
-该门消费Reverse `c2187fe3`五项纠错及`a08fbced` Score最终可见fixture。core除19个Score逻辑边界、Score45/Life10组件path、SS 11节点、56/236曲线与SoftClip外，还独立验证TotalScore component1271→UIFont1799→sgm Font75链、拒绝bitmap score-font、双encoded color run及8/9位ShrinkContent。actual Pixi逐组件比较Total/Gauge/Rank owner transform/depth并要求零bitmap digit；真实WebView2使用生产FontFace/ImageBitmap执行D/C/B/A/S/SS/9位七状态矩阵、完整SS动画和逐状态framebuffer，且不得请求`score-font.png`。整体完成声明仍须等待Windows生产窗口多状态验收，不能只凭core恢复。
+该门消费Reverse `c2187fe3`五项纠错及`818b8db6` Score最终可见fixture。core除19个Score逻辑边界、Score45/Life10组件path、SS 11节点、56/236曲线与SoftClip外，还独立验证TotalScore component1271→UIFont1799→sgm Font75链、拒绝bitmap score-font、双encoded color run、8/9位ShrinkContent，以及NGUI UISpriteData left/right/top/bottom边框（禁止再按Unity Sprite.border重排）。actual Pixi逐组件比较Total/Gauge/Rank owner transform/depth并要求零bitmap digit；真实WebView2使用生产FontFace/ImageBitmap执行D/C/B/A/S/SS/9位七状态矩阵、完整SS动画和逐状态framebuffer，且不得请求`score-font.png`。整体完成声明仍须等待纠正后Windows生产窗口多状态验收，不能只凭core恢复。
 
 ## Original Pause leaves
 

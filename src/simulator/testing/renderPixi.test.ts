@@ -423,7 +423,8 @@ async function main(): Promise<void> {
   const borders = new Map(scoreAtHalf.hudScoreNineSliceBorders?.map((row) => [row.label, row]));
   const backgroundBorder = borders.get("score-gauge-background");
   assert(backgroundBorder !== undefined, "Score background NineSlice exists");
-  equal(JSON.stringify(backgroundBorder), JSON.stringify({ label: "score-gauge-background", left: 216, top: 0, right: 0, bottom: 16 }), "Unity left/bottom/right/top maps to Pixi left/top/right/bottom");
+  equal(JSON.stringify(backgroundBorder), JSON.stringify({ label: "score-gauge-background", left: 216, top: 0, right: 16, bottom: 0 }),
+    "NGUI UISpriteData left/right/top/bottom maps directly to Pixi NineSlice");
   const foregroundBorder = borders.get("score-gauge-foreground");
   assert(foregroundBorder !== undefined, "Score foreground NineSlice exists");
   equal(JSON.stringify(foregroundBorder), JSON.stringify({ label: "score-gauge-foreground", left: 0, top: 0, right: 0, bottom: 0 }), "SS meter border mapping");
@@ -481,6 +482,14 @@ async function main(): Promise<void> {
     requireOk(renderer.commit(requireOk(renderer.preflight([matrixCommand]), `Score matrix ${matrixScore} preflight`)), `Score matrix ${matrixScore} commit`);
     const observed = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix");
     assert(observed !== undefined, `Score matrix ${matrixScore} owner exists`);
+    const foregroundNineSlice = observed.hudScoreNineSliceBorders?.find((row) => row.label === "score-gauge-foreground");
+    const expectedForegroundBorder = expectedRank === 4
+      ? { label: "score-gauge-foreground", left: 4, top: 3, right: 4, bottom: 3 }
+      : expectedRank === 0 || expectedRank === 5
+      ? { label: "score-gauge-foreground", left: 0, top: 0, right: 0, bottom: 0 }
+      : { label: "score-gauge-foreground", left: 5, top: 0, right: 5, bottom: 0 };
+    equal(JSON.stringify(foregroundNineSlice), JSON.stringify(expectedForegroundBorder),
+      `Score matrix ${matrixScore} updates the persistent NGUI meter border with the rank texture`);
     scoreMatrix.push(Object.freeze({ score: matrixScore, rank: expectedRank, observation: pickSceneObservation(observed) }));
     previousRank = expectedRank;
   }

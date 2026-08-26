@@ -1,15 +1,15 @@
-/** Source: pushed Reverse a08fbced, current 10.1.4 Score final visible closure. */
+/** Source: pushed Reverse 818b8db6, current 10.1.4 Score final visible closure. */
 export const CURRENT_SCORE_HUD_FINAL_VISIBLE_SOURCE_COMMIT =
-  "a08fbced" as const;
+  "818b8db6" as const;
 
 export const CURRENT_SCORE_HUD_NINE_SLICE_BORDERS = Object.freeze({
-  gaugeBase: pixiBorderFromUnity(216, 16, 0, 0),
-  gaugeCover: pixiBorderFromUnity(8, 8, 8, 8),
-  meterBlue: pixiBorderFromUnity(4, 4, 3, 3),
-  meterOther: pixiBorderFromUnity(5, 5, 0, 0),
-  meterS: pixiBorderFromUnity(0, 0, 0, 0),
-  rehearsalTime: pixiBorderFromUnity(6, 6, 6, 6),
-  autoLiveCaption: pixiBorderFromUnity(25, 25, 0, 0),
+  gaugeBase: nguiBorder(216, 16, 0, 0),
+  gaugeCover: nguiBorder(8, 8, 8, 8),
+  meterBlue: nguiBorder(4, 4, 3, 3),
+  meterOther: nguiBorder(5, 5, 0, 0),
+  meterS: nguiBorder(0, 0, 0, 0),
+  rehearsalTime: nguiBorder(6, 6, 6, 6),
+  autoLiveCaption: nguiBorder(25, 25, 0, 0),
 });
 
 export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
@@ -52,11 +52,11 @@ export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
 });
 
 
-function pixiBorderFromUnity(
+function nguiBorder(
   left: number,
-  bottom: number,
   right: number,
   top: number,
+  bottom: number,
 ) {
   return Object.freeze({ left, top, right, bottom });
 }

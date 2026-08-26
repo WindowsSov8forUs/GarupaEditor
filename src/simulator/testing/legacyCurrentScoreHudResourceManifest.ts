@@ -135,13 +135,13 @@ export const CURRENT_SCORE_HUD_BINDINGS = Object.freeze({
 });
 
 export const CURRENT_SCORE_HUD_NINE_SLICE_BORDERS = Object.freeze({
-  gaugeBase: pixiBorderFromUnity(216, 16, 0, 0),
-  gaugeCover: pixiBorderFromUnity(8, 8, 8, 8),
-  meterBlue: pixiBorderFromUnity(4, 4, 3, 3),
-  meterOther: pixiBorderFromUnity(5, 5, 0, 0),
-  meterS: pixiBorderFromUnity(0, 0, 0, 0),
-  rehearsalTime: pixiBorderFromUnity(6, 6, 6, 6),
-  autoLiveCaption: pixiBorderFromUnity(25, 25, 0, 0),
+  gaugeBase: nguiBorder(216, 16, 0, 0),
+  gaugeCover: nguiBorder(8, 8, 8, 8),
+  meterBlue: nguiBorder(4, 4, 3, 3),
+  meterOther: nguiBorder(5, 5, 0, 0),
+  meterS: nguiBorder(0, 0, 0, 0),
+  rehearsalTime: nguiBorder(6, 6, 6, 6),
+  autoLiveCaption: nguiBorder(25, 25, 0, 0),
 });
 
 export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
@@ -197,22 +197,22 @@ function scoreAtlas(
   y: number,
   width: number,
   height: number,
-  unityLeftBottomRightTop: readonly [number, number, number, number],
+  nguiLeftRightTopBottom: readonly [number, number, number, number],
 ): RenderAtlasRow {
   return Object.freeze({
     exactKey, x, y, width, height, pivotX: 0, pivotY: 0, pixelsPerUnit: 100,
-    borderLeft: unityLeftBottomRightTop[0],
-    borderRight: unityLeftBottomRightTop[2],
-    borderTop: unityLeftBottomRightTop[3],
-    borderBottom: unityLeftBottomRightTop[1],
+    borderLeft: nguiLeftRightTopBottom[0],
+    borderRight: nguiLeftRightTopBottom[1],
+    borderTop: nguiLeftRightTopBottom[2],
+    borderBottom: nguiLeftRightTopBottom[3],
   });
 }
 
-function pixiBorderFromUnity(
+function nguiBorder(
   left: number,
-  bottom: number,
   right: number,
   top: number,
+  bottom: number,
 ) {
   return Object.freeze({ left, top, right, bottom });
 }

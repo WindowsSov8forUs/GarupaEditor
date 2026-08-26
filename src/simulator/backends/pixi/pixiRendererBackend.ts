@@ -2861,11 +2861,7 @@ function applyScoreHud(
 
   const meterKey = state.meterKey as string;
   const foregroundBinding = requiredTextureBinding(textures, gaugeAssetId, meterKey);
-  const borders = meterKey === "score_meter_blue"
-    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterBlue
-    : meterKey === "score_meter_s"
-    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterS
-    : CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterOther;
+  const borders = scoreMeterNineSliceBorders(meterKey);
   const foreground = scoreNineSlice(
     foregroundBinding,
     scene.gauge.foreground.width,
@@ -3018,6 +3014,11 @@ function updatePersistentScoreHud(
     state.meterKey,
   );
   foreground.texture = foregroundBinding.texture;
+  const foregroundBorders = scoreMeterNineSliceBorders(state.meterKey);
+  foreground.leftWidth = foregroundBorders.left;
+  foreground.topHeight = foregroundBorders.top;
+  foreground.rightWidth = foregroundBorders.right;
+  foreground.bottomHeight = foregroundBorders.bottom;
   foreground.visible = state.foregroundActive;
   foregroundMask.clear().rect(
     scene.gauge.foreground.position[0],
@@ -3171,6 +3172,14 @@ function findHudDescendant(root: Container, label: string): Container | null {
     if (nested !== null) return nested;
   }
   return null;
+}
+
+function scoreMeterNineSliceBorders(meterKey: string) {
+  return meterKey === "score_meter_blue"
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterBlue
+    : meterKey === "score_meter_s"
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterS
+    : CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterOther;
 }
 
 function scoreNineSlice(

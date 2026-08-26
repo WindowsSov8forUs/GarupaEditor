@@ -152,18 +152,18 @@ function verifyScoreStateMatrix(rows) {
   equal(scoreFinalVisible.status, "confirmed-current-score-hud-final-visible-closure",
     "final Score fixture status");
   const expected = [
-    [0, 4, "00000000", 28, "0000000", "0", -168, -21],
-    [375000, 3, "00375000", 28, "00", "375000", -168, -126],
-    [2250000, 2, "02250000", 28, "0", "2250000", -168, -147],
-    [4500000, 1, "04500000", 28, "0", "4500000", -168, -147],
-    [6750000, 0, "06750000", 28, "0", "6750000", -168, -147],
-    [9000000, 5, "09000000", 28, "0", "9000000", -168, -147],
-    [900000000, 5, "900000000", 27, "", "900000000", -182.25, -182.25],
+    [0, 4, "00000000", 28, "0000000", "0", -168, -21, [4, 3, 4, 3]],
+    [375000, 3, "00375000", 28, "00", "375000", -168, -126, [5, 0, 5, 0]],
+    [2250000, 2, "02250000", 28, "0", "2250000", -168, -147, [5, 0, 5, 0]],
+    [4500000, 1, "04500000", 28, "0", "4500000", -168, -147, [5, 0, 5, 0]],
+    [6750000, 0, "06750000", 28, "0", "6750000", -168, -147, [0, 0, 0, 0]],
+    [9000000, 5, "09000000", 28, "0", "9000000", -168, -147, [0, 0, 0, 0]],
+    [900000000, 5, "900000000", 27, "", "900000000", -182.25, -182.25, [0, 0, 0, 0]],
   ];
   equal(rows.length, expected.length, "Score Browser state count");
   const digests = new Set();
   rows.forEach((row, index) => {
-    const [score, rank, text, size, leading, significant, leadingX, significantX] = expected[index];
+    const [score, rank, text, size, leading, significant, leadingX, significantX, foregroundBorder] = expected[index];
     equal(row.score, score, `Score Browser row${index} score`);
     equal(row.rank, rank, `Score Browser row${index} rank`);
     equal(row.text, text, `Score Browser row${index} text`);
@@ -172,6 +172,8 @@ function verifyScoreStateMatrix(rows) {
     equal(row.significant, significant, `Score Browser row${index} significant run`);
     closeTuple(row.leadingPosition, [leadingX, 0], 1e-6, `Score Browser row${index} leading position`);
     closeTuple(row.significantPosition, [significantX, 0], 1e-6, `Score Browser row${index} significant position`);
+    closeTuple(row.backgroundBorder, [216, 0, 16, 0], 0, `Score Browser row${index} NGUI background border`);
+    closeTuple(row.foregroundBorder, foregroundBorder, 0, `Score Browser row${index} NGUI meter border`);
     if (!/^[0-9a-f]{64}$/.test(row.sha256) || row.nonTransparentPixels <= 0 ||
         !row.leadingWorldBounds.every(Number.isFinite) || !row.significantWorldBounds.every(Number.isFinite)) {
       throw new Error(`Score Browser row${index} invalid primitive/raster: ${JSON.stringify(row)}`);

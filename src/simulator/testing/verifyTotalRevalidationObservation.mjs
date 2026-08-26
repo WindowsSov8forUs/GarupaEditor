@@ -48,6 +48,13 @@ for (const row of matrix) {
     bounds: [left, -13.5, width, 39],
     softness: [20, 3],
   });
+  const foreground = row.observation.hudScoreNineSliceBorders.find((entry) => entry.label === "score-gauge-foreground");
+  const expectedForeground = row.rank === 4
+    ? { label: "score-gauge-foreground", left: 4, top: 3, right: 4, bottom: 3 }
+    : row.rank === 0 || row.rank === 5
+    ? { label: "score-gauge-foreground", left: 0, top: 0, right: 0, bottom: 0 }
+    : { label: "score-gauge-foreground", left: 5, top: 0, right: 5, bottom: 0 };
+  assert.deepEqual(foreground, expectedForeground);
   assert.deepEqual(state.thresholds, {
     scoreC: 375000,
     scoreB: 2250000,
@@ -83,7 +90,7 @@ assert.equal(half.hudScoreHighRankNodes.length, 11);
 assert.equal(continued.hudScoreHighRankNodes.length, 11);
 assert.notDeepEqual(half.hudScoreHighRankNodes, continued.hudScoreHighRankNodes);
 assert.deepEqual(half.hudScoreNineSliceBorders.find((row) => row.label === "score-gauge-background"), {
-  label: "score-gauge-background", left: 216, top: 0, right: 0, bottom: 16,
+  label: "score-gauge-background", left: 216, top: 0, right: 16, bottom: 0,
 });
 for (const [label, depth] of [["score-leading-segment", 40], ["score-significant-segment", 40], ["score-gauge-background", 4], ["score-gauge-foreground", 5], ["score-gauge-cover", 28], ["score-rank-marker-SS", 29]]) {
   assert.ok(half.hudScoreLayerNodes.some((row) => row.label === label && row.zIndex === depth), `${label} depth`);
