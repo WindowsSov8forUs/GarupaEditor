@@ -69,6 +69,7 @@ export class TapLaneEffectOwner {
     private readonly producer: RenderCommandProducer,
     private readonly scene: OrdinaryFixedNoteSceneInput,
     private readonly visible: boolean,
+    private readonly resolveProductButtonTypes: ((noteIndex: number) => readonly number[] | null) | null = null,
   ) {}
 
   preflightInitialize(): SimulatorResult<TapLaneEffectTransaction> {
@@ -110,7 +111,8 @@ export class TapLaneEffectOwner {
     const projected = [...this.slots];
     const changed = new Set<number>();
     for (const entry of batch.entries) {
-      const slot = judgementSlot(entry.buttonTypes);
+      const productButtons = this.resolveProductButtonTypes?.(entry.noteIndex) ?? null;
+      const slot = judgementSlot(productButtons ?? entry.buttonTypes);
       if (slot === null) continue;
       projected[slot] = frozenSlot(slot, "idle", OFF_RESERVE_UPDATES, 0);
       changed.add(slot);
@@ -173,9 +175,15 @@ export class TapLaneEffectOwner {
 
   private renderState(state: TapLaneEffectSlotState): TapLaneEffectRenderState {
     const position = slotPosition(this.scene.goalPositions, state.slot);
-    const progress = state.phase === "fading" ? state.fadeFrame / FADE_FRAMES : 0;
-    const scale = state.phase === "fading" ? 1 - 0.3 * progress : 1;
-    const colorChannel = state.phase === "fading" ? 1 - progress : 1;
+    const progress = state.phase === "fading"
+      ? Math.fround(state.fadeFrame / FADE_FRAMES)
+      : Math.fround(0);
+    const scale = state.phase === "fading"
+      ? Math.fround(Math.fround(1) - Math.fround(Math.fround(0.3) * progress))
+      : Math.fround(1);
+    const colorChannel = state.phase === "fading"
+      ? Math.fround(Math.fround(1) - progress)
+      : Math.fround(1);
     return Object.freeze({
       slot: state.slot,
       textureIndex: TEXTURES[state.slot]!,

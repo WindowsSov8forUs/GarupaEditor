@@ -765,12 +765,31 @@ export function createSimulatorEngine(
     originalLiveSettings.core.judgementAdjustValue,
     input.startupDirection?.purpose ?? "initial",
   );
+  const productProfile = getGarupaProductChartProfile(input.chart);
+  const productLaneEffectButtons = new Map<number, readonly number[]>();
+  if (productProfile?.route === "product-extension") {
+    for (const node of productProfile.visibleNodes) {
+      const noteIndex = node.scoringSource?.index;
+      if (noteIndex === undefined || !Number.isInteger(node.spanStart) ||
+        !Number.isInteger(node.spanEnd) || node.spanStart < 0 || node.spanEnd > 6) continue;
+      productLaneEffectButtons.set(
+        noteIndex,
+        Object.freeze(Array.from(
+          { length: node.spanEnd - node.spanStart + 1 },
+          (_, index) => node.spanStart + index,
+        )),
+      );
+    }
+  }
   const tapLaneEffectOwner = renderProducer !== null && input.rendering !== undefined &&
     input.rendering.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds.length === 4
     ? new TapLaneEffectOwner(
         renderProducer,
         input.rendering.ordinaryNoteScene,
         originalLiveSettings.visibleTapLaneEffect,
+        productLaneEffectButtons.size === 0
+          ? null
+          : (noteIndex) => productLaneEffectButtons.get(noteIndex) ?? null,
       )
     : null;
   const movieBackgroundResult = createMovieBackground(
@@ -800,7 +819,6 @@ export function createSimulatorEngine(
   const scoreLifeStateManager = scoreLifeStateResult.value;
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
-  const productProfile = getGarupaProductChartProfile(input.chart);
   let productTimeline: GarupaProductTimelineManager | null = null;
   if (productProfile?.route === "product-extension") {
     const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);

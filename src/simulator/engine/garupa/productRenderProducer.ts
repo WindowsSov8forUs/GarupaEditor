@@ -556,14 +556,37 @@ function slideMesh(
   const fromScale = requireUniformScale(from).value;
   const toScale = requireUniformScale(to).value;
   for (let section = 0; section <= 10; section += 1) {
-    const sectionRatio = section / 10;
-    const ratio = interval[0] + (interval[1] - interval[0]) * sectionRatio;
-    const x = fromPosition.x.value + (toPosition.x.value - fromPosition.x.value) * ratio;
-    const y = fromPosition.y.value + (toPosition.y.value - fromPosition.y.value) * ratio;
-    const uniformScale = fromScale + (toScale - fromScale) * ratio;
-    const authoredWidth = from.node.width + (to.node.width - from.node.width) * ratio;
-    const halfWidth = uniformScale * authoredWidth * screenToSafeAreaRatio * screenWidthAdjustRate;
-    vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
+    const sectionRatio = Math.fround(section / 10);
+    const ratio = Math.fround(
+      Math.fround(interval[0]) + Math.fround(
+        Math.fround(Math.fround(interval[1]) - Math.fround(interval[0])) * sectionRatio,
+      ),
+    );
+    const x = Math.fround(
+      fromPosition.x.value + Math.fround(
+        Math.fround(toPosition.x.value - fromPosition.x.value) * ratio,
+      ),
+    );
+    const y = Math.fround(
+      fromPosition.y.value + Math.fround(
+        Math.fround(toPosition.y.value - fromPosition.y.value) * ratio,
+      ),
+    );
+    const uniformScale = Math.fround(
+      fromScale + Math.fround(Math.fround(toScale - fromScale) * ratio),
+    );
+    const authoredWidth = Math.fround(
+      from.node.width + Math.fround(Math.fround(to.node.width - from.node.width) * ratio),
+    );
+    const halfWidth = Math.fround(
+      Math.fround(
+        Math.fround(uniformScale * authoredWidth) * Math.fround(screenToSafeAreaRatio),
+      ) * Math.fround(screenWidthAdjustRate),
+    );
+    vertices.push(
+      vector3(Math.fround(x - halfWidth), y, 0),
+      vector3(Math.fround(x + halfWidth), y, 0),
+    );
     uv.push(vector2(0, sectionRatio), vector2(1, sectionRatio));
     colors.push(
       color(1, 1, 1, 0.8),
