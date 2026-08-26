@@ -175,7 +175,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly skin: SimulatorSkinFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
-  readonly ordinaryHud: "closed-evidence-equivalent";
+  readonly ordinaryHud: "observational-gap";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "observational-gap";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
@@ -200,7 +200,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly originalLiveSettings: "closed-portable";
   readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
   readonly selectedRenderingGate: "closed-portable" | "observational-gap";
-  readonly selectedHudGate: "closed-evidence-equivalent";
+  readonly selectedHudGate: "observational-gap";
   readonly selectedBackgroundGate: "closed-portable" | "observational-gap";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";
   readonly selectedSkinGate: "closed-static-portable" | "observational-gap";

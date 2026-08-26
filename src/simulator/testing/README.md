@@ -22,7 +22,7 @@ The quick tier includes the startup-direction schema/state/mutation/Pixi/static 
 npm.cmd run simulator:test:total-revalidation
 ```
 
-This runs the current 42-semantic-leaf DAG, starting with the runtime-contract-policy leaf that forbids blocking `evidence-required`, prototype/key-order exact gates and unclassified audit entries, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current actual-framebuffer observation digests are ordinary `29c85738abc1632f2dadf555b5c9129c0b47db31d91a9df9d77c7108f6faf63d` and isolated Score HUD `dd145cc1d945477ba156f4ba4b8ca73910790ee847d460c2dbe84e57ed3cbbc0`（每个fresh含24 captures及Pause/menu/Retry/Abort/countdown，并比较Auto→judge_auto及AP设置ON/OFF完整状态向量）, startup visual `5ffd7d40b278888397dd7a2e2e5c0f1d07fdae52965c20e4dedfcedc975f3edc`（包含4:3/32:9 aspect-cover captures）, and startup audio `7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc`. The audio digest additionally requires `userActivation.isActive=false`、`hasBeenActive=false`、initial AudioContext `running` and advancing without a test-side `resume()`; it covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
+This runs the current 42-semantic-leaf DAG, starting with the runtime-contract-policy leaf that forbids blocking `evidence-required`, prototype/key-order exact gates and unclassified audit entries, including independent startup-audio and MV Live leaves, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph, and MP4/H264 + WebM/VP9 MV production decode/Pixi lifecycle in three fresh processes each. Current actual-framebuffer observation digests are ordinary `2cea4f8e3a2bc78b9e26b753c3419ae6d160ec6880f4f84cd6d54ad9346ac4c4` and isolated Score HUD `dd145cc1d945477ba156f4ba4b8ca73910790ee847d460c2dbe84e57ed3cbbc0`（每个fresh含24 captures及Pause/menu/Retry/Abort/countdown，并比较Auto→judge_auto及AP设置ON/OFF完整状态向量）, startup visual `5ffd7d40b278888397dd7a2e2e5c0f1d07fdae52965c20e4dedfcedc975f3edc`（包含4:3/32:9 aspect-cover captures）, and startup audio `7d537afa53d4ac3a4766b6f17ca1ab65e14f3e56158acc7a6c09c69e73a76adc`. The audio digest additionally requires `userActivation.isActive=false`、`hasBeenActive=false`、initial AudioContext `running` and advancing without a test-side `resume()`; it covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
 
 Cargo release targets are retained under each ignored WebView2 harness `target/` directory, so repeated full runs reuse validated Rust artifacts. To force the historical cold-build boundary:
 
@@ -38,7 +38,7 @@ npm.cmd run simulator:test:total-revalidation:clean
 npm.cmd run simulator:test:hud-equivalence
 ```
 
-该门只消费Reverse `07bf4e7c`晋升的scene/component/resource/logic/primitive/runtime/closure七项fixture。`hudLogicEquivalence`逐项比较原作19个Score边界、ratio/slider/indicator、AP设置、Life与AddScore owner；`hudSceneGraphEquivalence`比较104个选定widget和11个ScoreGaugeSS组件；`hudRenderPrimitiveEquivalence`比较world corners、纹理引用、widget/pivot/color/blend、56 curves/236 keys和SoftClip `[20,3]`。随后actual Pixi验证持久对象generation及Life分层，真实WebView2使用production PNG/TTF/Filter并将逐节点组件结果回连Reverse profile。稳定digest只作为捕获记录，不是通过依据；本门不以对象缺失、fallback缺失、hash格式或重复运行一致性作为HUD等价目标。
+该门消费Reverse `c2187fe3`纠错fixture：旧`07bf4e7c`静态组件仍有效，但production-consumption authorization已撤回。core分别比较19个Score逻辑边界、Score45/Life10完整组件path、SS 11节点、56/236曲线、SoftClip及独立Slide/Lane oracle；actual Pixi要求Life无第二root Text、Pause使用fill UISprite和三行正文、产品chart经主13槽Lane owner；真实Browser product入口另验证四张PNG、bottom pivot、add blend、精确bounds与非零framebuffer pixels。该门只证明已列纠错项；用户报告的Score可见raster仍为`observational-gap`，不再把core绿色命名为HUD整体等价。
 
 ## Original Pause leaves
 
@@ -48,7 +48,7 @@ npm.cmd run simulator:test:render-pixi
 npm.cmd run simulator:test:ordinary-rendering-webview2
 ```
 
-第一项消费Reverse `770af437`最终contract/resource profile与`99d40bcc`的19-trace manifest，验证四模式Pause优先命中、modal吞触摸、opaque one-use capability、3秒Resume countdown、Live/Practice fresh Retry、Abort/cancel/confirm及Android Back→Resume。第二项用actual Pixi验证`button_pause`、三层modal、现有UICommon/sgm及Countdown3纹理。第三项每个fresh增加Pause/menu/Retry/Abort/countdown captures，3 fresh共24 captures/进程；functional digest为`81ec0382…d5c80`。截图只作browser观察，布局数值全部来自serialized/StarUI公式。
+第一项消费Reverse `c2187fe3`纠正后的contract/resource profile与`99d40bcc`的19-trace manifest，验证四模式Pause状态链。第二项用actual Pixi要求dark cover为UICommon `fill` UISprite而非Graphics，并验证window/header/buttons/sgm、三行正文及Countdown3。第三项3 fresh共24 captures；当前ordinary digest见总门。布局仍来自serialized/StarUI公式，截图不反向生成标量。
 
 ## Startup-direction leaves
 
@@ -67,7 +67,7 @@ npm.cmd run simulator:test:original-live-settings
 npm.cmd run simulator:test:original-live-settings-webview2
 ```
 
-第一项覆盖Schema 12 required semantics/owned copy、旧alias metadata丢弃、A/B值域与frozen identity、Primary正零负counter、Pause/Retry/MoveTime、SyncLine/NoteColor差分、13-slot TapLaneEffect、MvDarkness dark cover、Garupa/HAB窄产品投影和静态原子顺序门。第二项在3个fresh WebView2进程中用production straight-sRGB/Linear decoder真实解码四个lane-effect Sprite并执行on→10-frame fade→disabled，actual-framebuffer observation digest为`ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534`。ordinary full-scene和MV leaves分别覆盖全谱lane effect与dark cover。
+第一项覆盖Schema 13、A/B、Pause/Retry/MoveTime、SyncLine/NoteColor、13-slot TapLaneEffect及MvDarkness。第二项验证ordinary四张Lane Sprite on→fade→disabled，digest为`ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534`；另由Garupa product Browser门关闭曾被`ButtonType.None`旁路的整数span→主13槽路由。
 
 ## Original Skin leaves
 
@@ -95,7 +95,7 @@ npm.cmd run simulator:test:garupa-extensions-webview2
 npm.cmd run simulator:test:garupa-external -- HOST________/D_N_A.json HOST________/B.B.K.K.B.K.K..json
 ```
 
-第一项覆盖Schema 12、无laneCount的Public边界、固定0..6七条场地线、任意有限continuous/outside lane、product profile/axis、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary；product renderer不得创建particle-texture矩形flash或固定Effect4 sidecar。第二项用production straight-sRGB/Linear Browser decoder和actual WebGL framebuffer执行3 fresh process，initial/negative/zero/restore digest为`b41878920770e151e3c8f557bba10001dfa94c14277fbbcf73cbeea8ad3fa794`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱parser/profile/axis与Auto/Manual，并验证B.B的整数lane/width1节点复用exact selected particle root、fractional/wide节点不nearest替代；外部文件不复制进fixture或production。
+第一项覆盖Schema 13、固定七条场地线、continuous/outside lane、product axis/graph、Auto/Manual与actual Pixi；width-one Slide按Reverse独立Float32 oracle保持透视细线，不作观感倍增。第二项执行3 fresh actual WebGL，除四个SV captures外还用真实四张Lane PNG驱动完整product engine，验证slot6/NoteLaneEffect_4/bottom pivot/add blend/bounds/framebuffer；digest为`bb85df1cc9d86cb2998461b8cf43b3bc2d00ec25db88b3965e9d38b4812c9000`。第三项继续执行两张外部谱面验收且不复制文件。
 
 ## Adaptive layout leaf
 

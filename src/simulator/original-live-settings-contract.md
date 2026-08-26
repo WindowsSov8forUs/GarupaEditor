@@ -77,7 +77,9 @@ _1,_1,_2,_2,_3,_3,_4,_4,_3,_3,_2,_2,_1
 
 Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses ten nominal frames from the committed serialized clip: XY scale 1→0.7 and RG 1→0, with B/A retained, then Disabled. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
 
-Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. A missing or tampered byte rejects before scene publication, Movie preparation, mount or scheduler start. `visibleTapLaneEffect=false` still creates the fixed owner but publishes no visible updates; particle/audio/judgement/Score digests remain independent.
+Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。现在只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
+
+Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Node actual Pixi和3-fresh Browser product engine逐项验证slot6、`NoteLaneEffect_4`、bottom-center pivot、add blend、20:9 bounds及真实PNG framebuffer非零像素。A missing or tampered byte rejects before scene publication, Movie preparation, mount or scheduler start. `visibleTapLaneEffect=false` still creates the fixed owner but publishes no visible updates; particle/audio/judgement/Score digests remain independent.
 
 ## MvDarkness
 
