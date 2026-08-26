@@ -62,7 +62,6 @@ const renderSources = [
   ["field/ordinary/tap-lane-effect-2", join(visibleRoot, "portable-assets", "tap-lane-effect-2.png")],
   ["field/ordinary/tap-lane-effect-3", join(visibleRoot, "portable-assets", "tap-lane-effect-3.png")],
   ["field/ordinary/tap-lane-effect-4", join(visibleRoot, "portable-assets", "tap-lane-effect-4.png")],
-  ["hud/score/font-atlas", join(scoreRoot, "portable-assets", "score-font.png")],
   ["hud/score/rhythm-game-ui-atlas", join(scoreRoot, "portable-assets", "rhythm-game-ui.png")],
   ["hud/score/rank-label-font", join(scoreRoot, "portable-assets", "rank-label-font.ttf")],
   ["hud/score/ui-common-atlas", join(scoreRoot, "portable-assets", "ui-common.png")],
