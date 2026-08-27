@@ -123,11 +123,13 @@ export class GarupaProductRenderProducer {
         const scale = this.scene.projectNoteScaleAtCurve(curve, node.width);
         if (projected.status !== "ok") {
           if (curve >= 0.002 && curve <= 1) return projected;
-        } else if (scale.status !== "ok") {
-          if (curve >= 0.002 && curve <= 1) return scale;
         } else {
           position = projected.value;
-          uniformScale = scale.value;
+          if (scale.status !== "ok") {
+            if (curve >= 0.002 && curve <= 1) return scale;
+          } else {
+            uniformScale = scale.value;
+          }
         }
       }
       samples.set(node.identity, Object.freeze({
@@ -389,8 +391,7 @@ export class GarupaProductRenderProducer {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;
         const to = samples.get(chain.connectionIdentities[index]!)!;
         const objectId = lineObjectId(chain.identity, index - 1);
-        const lineVisible = from.position !== null && to.position !== null &&
-          segmentVisible(from.curve, to.curve);
+        const lineVisible = segmentVisible(from.curve, to.curve);
         if (lineVisible) {
           if (!plannedCreated.has(objectId)) {
             commands.push(command(commands.length, {
@@ -424,16 +425,18 @@ export class GarupaProductRenderProducer {
             ordering: ordering(3, 0, objectId, 0.9900000095367432),
             maskObjectId: null,
           }));
-          commands.push(command(commands.length, slideMesh(
+          const mesh = slideMesh(
             objectId,
             from,
             to,
-            this.scene.screenToSafeAreaRatio.value,
-          )));
+            this.scene,
+          );
+          if (mesh.status !== "ok") return mesh;
+          commands.push(command(commands.length, mesh.value));
           commands.push(command(commands.length, {
             kind: "set-threshold",
             renderObjectId: objectId,
-            threshold: f32(712.711181640625),
+            threshold: this.scene.slideMeshThresholdBottomLeft,
           }));
         } else if (plannedVisible.delete(objectId)) {
           commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
@@ -610,18 +613,25 @@ function slideMesh(
   renderObjectId: string,
   from: ProductNodeSample,
   to: ProductNodeSample,
-  screenToSafeAreaRatio: number,
-): Omit<Extract<RenderCommand, { kind: "set-mesh" }>,  "sessionId" | "sequence" | "frame" | "substep"> {
+  scene: GarupaProductSceneLayout,
+): SimulatorResult<Omit<Extract<RenderCommand, { kind: "set-mesh" }>,  "sessionId" | "sequence" | "frame" | "substep">> {
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
   const indices: number[] = [];
-  const fromPosition = requireProjectedPosition(from);
-  const toPosition = requireProjectedPosition(to);
   const interval = visibleSegmentInterval(from.curve, to.curve);
-  if (interval === null) throw new Error(`Invisible product segment reached mesh publication: ${renderObjectId}`);
-  const fromScale = requireUniformScale(from).value;
-  const toScale = requireUniformScale(to).value;
+  if (interval === null) return rejected(
+    "render.garupa-product.invisible-slide-mesh",
+    `Invisible product segment reached mesh publication: ${renderObjectId}`,
+  );
+  const rawProjectionAvailable = from.position !== null && to.position !== null &&
+    from.uniformScale !== null && to.uniformScale !== null;
+  const visibleCurveStart = from.curve <= to.curve
+    ? Math.max(0.002, from.curve)
+    : Math.min(1, from.curve);
+  const visibleCurveEnd = from.curve <= to.curve
+    ? Math.min(1, to.curve)
+    : Math.max(0.002, to.curve);
   for (let section = 0; section <= 10; section += 1) {
     const sectionRatio = Math.fround(section / 10);
     const ratio = Math.fround(
@@ -629,26 +639,51 @@ function slideMesh(
         Math.fround(Math.fround(interval[1]) - Math.fround(interval[0])) * sectionRatio,
       ),
     );
-    const x = Math.fround(
-      fromPosition.x.value + Math.fround(
-        Math.fround(toPosition.x.value - fromPosition.x.value) * ratio,
-      ),
-    );
-    const y = Math.fround(
-      fromPosition.y.value + Math.fround(
-        Math.fround(toPosition.y.value - fromPosition.y.value) * ratio,
-      ),
-    );
-    const uniformScale = Math.fround(
-      fromScale + Math.fround(Math.fround(toScale - fromScale) * ratio),
-    );
+    let x: number;
+    let y: number;
+    let uniformScale: number;
+    if (rawProjectionAvailable) {
+      x = Math.fround(from.position!.x.value + Math.fround(
+        Math.fround(to.position!.x.value - from.position!.x.value) * ratio,
+      ));
+      y = Math.fround(from.position!.y.value + Math.fround(
+        Math.fround(to.position!.y.value - from.position!.y.value) * ratio,
+      ));
+      uniformScale = Math.fround(from.uniformScale!.value + Math.fround(
+        Math.fround(to.uniformScale!.value - from.uniformScale!.value) * ratio,
+      ));
+    } else {
+      // A negative/zero SV can put one endpoint far beyond Float32 world range while
+      // the segment still crosses the complete visible 0.002..1 curve. Re-project
+      // each clipped section from its finite curve instead of dropping the mesh.
+      const targetCurve = Math.fround(visibleCurveStart + Math.fround(
+        Math.fround(visibleCurveEnd - visibleCurveStart) * sectionRatio,
+      ));
+      const stableRatio = stableSegmentRatio(from.curve, to.curve, targetCurve);
+      const lane = Math.fround(
+        (from.node.spanStart + (from.node.width - 1) / 2) +
+          ((to.node.spanStart + (to.node.width - 1) / 2) -
+            (from.node.spanStart + (from.node.width - 1) / 2)) * stableRatio,
+      );
+      const projected = scene.projectLaneAtCurve(lane, targetCurve);
+      const fromScale = scene.projectNoteScaleAtCurve(targetCurve, from.node.width);
+      const toScale = scene.projectNoteScaleAtCurve(targetCurve, to.node.width);
+      if (projected.status !== "ok") return projected;
+      if (fromScale.status !== "ok") return fromScale;
+      if (toScale.status !== "ok") return toScale;
+      x = projected.value.x.value;
+      y = projected.value.y.value;
+      uniformScale = Math.fround(fromScale.value.value + Math.fround(
+        Math.fround(toScale.value.value - fromScale.value.value) * stableRatio,
+      ));
+    }
     const authoredWidth = Math.fround(
       from.node.width + Math.fround(Math.fround(to.node.width - from.node.width) * ratio),
     );
     const halfWidth = calculateGarupaProductSlideHalfWidth(
       uniformScale,
       authoredWidth,
-      screenToSafeAreaRatio,
+      scene.screenToSafeAreaRatio.value,
     );
     vertices.push(
       vector3(Math.fround(x - halfWidth), y, 0),
@@ -664,7 +699,7 @@ function slideMesh(
       indices.push(left, left + 2, left + 1, left + 1, left + 2, left + 3);
     }
   }
-  return {
+  return ok({
     kind: "set-mesh",
     renderObjectId,
     vertices: Object.freeze(vertices),
@@ -672,7 +707,16 @@ function slideMesh(
     uv: Object.freeze(uv),
     colors: Object.freeze(colors),
     materialRole: "curve-note",
-  };
+  });
+}
+
+function stableSegmentRatio(first: number, second: number, target: number): number {
+  const maximum = Math.max(Math.abs(first), Math.abs(second), Math.abs(target), 1);
+  const normalizedFirst = first / maximum;
+  const normalizedSecond = second / maximum;
+  const denominator = normalizedSecond - normalizedFirst;
+  if (denominator === 0) return 0;
+  return Math.max(0, Math.min(1, (target / maximum - normalizedFirst) / denominator));
 }
 
 export function calculateGarupaProductSlideHalfWidth(
@@ -720,16 +764,24 @@ function requireUniformScale(sample: ProductNodeSample): RenderFloat32 {
   return sample.uniformScale;
 }
 
+const PRODUCT_CURVE_BOUNDARY_EPSILON = 1e-9;
 function visibleSegmentInterval(first: number, second: number): readonly [number, number] | null {
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
-  if (first === second) return first >= 0.002 && first <= 1
+  const minimum = Math.min(first, second);
+  const maximum = Math.max(first, second);
+  if (maximum < 0.002 - PRODUCT_CURVE_BOUNDARY_EPSILON ||
+      minimum > 1 + PRODUCT_CURVE_BOUNDARY_EPSILON) return null;
+  if (first === second) return first >= 0.002 - PRODUCT_CURVE_BOUNDARY_EPSILON &&
+      first <= 1 + PRODUCT_CURVE_BOUNDARY_EPSILON
     ? Object.freeze([0, 1] as const)
     : null;
   const lower = (0.002 - first) / (second - first);
   const upper = (1 - first) / (second - first);
   const from = Math.max(0, Math.min(lower, upper));
   const to = Math.min(1, Math.max(lower, upper));
-  return to >= from ? Object.freeze([from, to] as const) : null;
+  return to + PRODUCT_CURVE_BOUNDARY_EPSILON >= from
+    ? Object.freeze([Math.min(1, from), Math.max(0, to)] as const)
+    : null;
 }
 
 function segmentVisible(first: number, second: number): boolean {

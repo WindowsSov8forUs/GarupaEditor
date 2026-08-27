@@ -399,10 +399,10 @@
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/bbkk_slide_full_timeline_oracle.json",
-      "sourceReverseCommit": "767102ca81b81ea98a28df2f2a01dbcbe98df1da",
+      "sourceReverseCommit": "c5223b25367fb0dd018d6afdef26a199e0b4a843",
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/bbkk_slide_full_timeline_oracle.json",
-      "bytes": 9066,
-      "sha256": "C0D6C0D6354B85B84724A9DE2A5694CC82CD16492074EF842F20A5A807B5064A"
+      "bytes": 51238,
+      "sha256": "2B0046FD37351548A5A8D9244A795DCF2F7D82AED1FEB5663D9CD3AD15E24D9F"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
@@ -1352,10 +1352,10 @@
     },
     {
       "path": "reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
-      "sourceReverseCommit": "1bff69eb8031cf723e4081f35ece14d0f775a19f",
+      "sourceReverseCommit": "c5223b25367fb0dd018d6afdef26a199e0b4a843",
       "sourcePath": "artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
-      "bytes": 562579,
-      "sha256": "5B10BD1AB3E502CF37C6CFD9A09710ED852C13BFD30B1285C0FBF293563EA63D"
+      "bytes": 617684,
+      "sha256": "504699C49C5E2A1164908AFEEBB388203A73E290EB8081CA137E976461EB607A"
     }
   ]
 }

@@ -134,6 +134,23 @@ async function main(): Promise<void> {
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
+  assert.equal(layout.garupaProductScene.slideMeshThresholdBottomLeft.value,
+    Math.fround(Math.fround(712.711181640625) * Math.fround(720 / 900)),
+    "product Slide threshold preserves the observed normalized height on 1600×720");
+  const productionSurfaceLayout = requireOk(createSimulatorSceneLayout(
+    { revision: 0, viewportWidth: 2400, viewportHeight: 1350, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(2400), height: Math.fround(1350) }, origin: "bottom-left" },
+    {
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100),
+      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
+    },
+    "ordinary",
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+  ));
+  assert.equal(productionSurfaceLayout.garupaProductScene.slideMeshThresholdBottomLeft.value,
+    Math.fround(Math.fround(712.711181640625) * Math.fround(1350 / 900)),
+    "2400×1350 backing surface no longer clips Slide geometry to the lower half");
+  assert.ok(1350 - productionSurfaceLayout.garupaProductScene.slideMeshThresholdBottomLeft.value < 300,
+    "production threshold leaves only the normalized launcher-top margin rather than 638 lower-half pixels");
   const overflowProjection = layout.garupaProductScene.projectLaneAtCurve(0, Number.MAX_VALUE);
   assert.equal(overflowProjection.status, "integrity-failure");
   if (overflowProjection.status === "integrity-failure") {
@@ -230,7 +247,8 @@ async function main(): Promise<void> {
       row.ordering[0] === 3 && row.ordering[1] === 70));
   assert.ok(firstRows.filter((row) => row.renderObjectId.startsWith("render:garupa:line:")).every((row) =>
     row.geometryVertexCount === 22 && row.geometryMaterialLogicalAssetId === "ordinary/notes/skin00/curve-note-line" &&
-    row.ordering[0] === 3 && row.ordering[1] === 0));
+    row.ordering[0] === 3 && row.ordering[1] === 0 &&
+    row.threshold === layout.garupaProductScene.slideMeshThresholdBottomLeft.value));
   const sync = firstRows.find((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible);
   assert.ok(sync?.geometryPositions);
   const syncY = sync!.geometryPositions!.filter((_value, index) => index % 2 === 1);
@@ -312,26 +330,69 @@ async function main(): Promise<void> {
     layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true,
   );
   const upperHalfBoundary = layout.surfaceLayout.surface.viewportHeight / 2 -
-    ((layout.ordinaryNoteScene.launcherY.value + layout.garupaProductScene.targetCenterY.value) / 2) *
+    ((layout.garupaProductScene.fieldLines[3]!.start.y.value + layout.garupaProductScene.targetCenterY.value) / 2) *
       layout.surfaceLayout.camera.pixelsPerWorldUnit;
-  for (const sample of bbkkOracle.timeline.selectedUpperHalfCases as readonly any[]) {
-    const currentPosition = sample.timeMs * bbkkOracle.chart.bpm * 48 / 60_000;
+  const selectedByTime = new Map<number, any>((bbkkOracle.timeline.selectedUpperHalfCases as readonly any[])
+    .map((sample) => [sample.timeMs, sample]));
+  const lastSlideBeat = Math.max(...bbkkChart
+    .filter((item: any) => item.type === "Slide")
+    .flatMap((item: any) => item.connections.map((connection: any) => connection.beat)));
+  const lastTickMs = Math.ceil(lastSlideBeat * 60_000 / bbkkOracle.chart.bpm);
+  let visibleFrames = 0;
+  let upperHalfFrames = 0;
+  const visibleTicks: number[] = [];
+  const upperTicks: number[] = [];
+  let maxVisibleSegments = 0;
+  for (let timeMs = 0; timeMs <= lastTickMs; timeMs += bbkkOracle.timeline.stepMs) {
+    const currentPosition = timeMs * bbkkOracle.chart.bpm * 48 / 60_000;
     const transaction = requireOk(bbkkProducer.preflightFrame(currentPosition, [], Math.fround(1 / 60)));
     if (transaction !== null) requireOk(transaction.commit());
-    const chain = bbkkProduct.slideChains.find((candidate) => candidate.chartItemIndex === sample.slideIndex)!;
-    const row = renderer.sceneSnapshot().find((candidate) =>
-      candidate.renderObjectId === `render:garupa:line:${chain.identity}:${sample.segment}`);
-    assert.ok(row?.geometryPositions, `B.B.K Slide ${sample.slideIndex}:${sample.segment} publishes its evidenced segment`);
-    const ys = row!.geometryPositions!.filter((_value, index) => index % 2 === 1);
-    assert.ok(Math.min(...ys) < upperHalfBoundary,
-      `B.B.K Slide ${sample.slideIndex}:${sample.segment} reaches the upper half at ${sample.timeMs}ms`);
-    const widths = Array.from({ length: 11 }, (_, section) => Math.abs(
-      row!.geometryPositions![section * 4 + 2]! - row!.geometryPositions![section * 4]!,
-    ));
-    const requiredWidth = sample.visibleCurve[1] >= 0.5 ? 50 : 5;
-    assert.ok(Math.max(...widths) > requiredWidth,
-      `corrected width-one Slide rejects the former double-scale result at curve ${sample.visibleCurve}`);
+    const rows = renderer.sceneSnapshot().filter((candidate) =>
+      candidate.visible && candidate.renderObjectId.startsWith("render:garupa:line:") && candidate.geometryPositions !== null);
+    if (rows.length > 0) {
+      visibleFrames += 1;
+      visibleTicks.push(timeMs);
+      maxVisibleSegments = Math.max(maxVisibleSegments, rows.length);
+      if (rows.some((row) => Math.min(...row.geometryPositions!.filter((_value, index) => index % 2 === 1)) < upperHalfBoundary)) {
+        upperHalfFrames += 1;
+        upperTicks.push(timeMs);
+      }
+    }
+    for (const row of rows) {
+      assert.equal(row.geometryPositions!.length, 44, `B.B.K ${timeMs}ms publishes all 22 vertices`);
+      assert.equal(row.geometryIndexCount, 60, `B.B.K ${timeMs}ms publishes all 60 indices`);
+      assert.equal(row.threshold, layout.garupaProductScene.slideMeshThresholdBottomLeft.value,
+        `B.B.K ${timeMs}ms consumes the initial-surface threshold`);
+    }
+    const sample = selectedByTime.get(timeMs);
+    if (sample !== undefined) {
+      const chain = bbkkProduct.slideChains.find((candidate) => candidate.chartItemIndex === sample.slideIndex)!;
+      const row = rows.find((candidate) =>
+        candidate.renderObjectId === `render:garupa:line:${chain.identity}:${sample.segment}`);
+      assert.ok(row?.geometryPositions, `B.B.K Slide ${sample.slideIndex}:${sample.segment} publishes its evidenced segment`);
+      const ys = row!.geometryPositions!.filter((_value, index) => index % 2 === 1);
+      assert.ok(Math.min(...ys) < upperHalfBoundary,
+        `B.B.K Slide ${sample.slideIndex}:${sample.segment} reaches the upper half at ${sample.timeMs}ms`);
+      const widths = Array.from({ length: 11 }, (_, section) => Math.abs(
+        row!.geometryPositions![section * 4 + 2]! - row!.geometryPositions![section * 4]!,
+      ));
+      const requiredWidth = sample.visibleCurve[1] >= 0.5 ? 50 : 5;
+      assert.ok(Math.max(...widths) > requiredWidth,
+        `corrected width-one Slide rejects the former double-scale result at curve ${sample.visibleCurve}`);
+    }
   }
+  const actualTickSet = new Set(visibleTicks);
+  const expectedTickSet = new Set<number>(bbkkOracle.timeline.visibleTicksMs);
+  const missingTicks = bbkkOracle.timeline.visibleTicksMs.filter((tick: number) => !actualTickSet.has(tick));
+  const extraTicks = visibleTicks.filter((tick) => !expectedTickSet.has(tick));
+  const actualUpperSet = new Set(upperTicks);
+  const missingUpperTicks = bbkkOracle.timeline.upperHalfTicksMs.filter((tick: number) => !actualUpperSet.has(tick));
+  assert.deepEqual({ visibleFrames, upperHalfFrames, maxVisibleSegments, missingTicks, extraTicks, missingUpperTicks }, {
+    visibleFrames: bbkkOracle.timeline.visibleFrames,
+    upperHalfFrames: bbkkOracle.timeline.upperHalfFrames,
+    maxVisibleSegments: bbkkOracle.timeline.maxVisibleSegments,
+    missingTicks: [], extraTicks: [], missingUpperTicks: [],
+  }, `B.B.K all 83 Slides/141 segments match the independent 50ms full-timeline oracle; first=${visibleTicks.slice(0, 4)} last=${visibleTicks.slice(-4)}`);
   const bbkkRelease = requireOk(bbkkProducer.preflightDispose());
   if (bbkkRelease !== null) requireOk(bbkkRelease.commit());
   assert.equal(renderer.snapshot().objectCount, 0);

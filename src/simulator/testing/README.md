@@ -103,7 +103,7 @@ npm.cmd run simulator:test:garupa-extensions-webview2
 npm.cmd run simulator:test:garupa-external -- HOST________/D_N_A.json HOST________/B.B.K.K.B.K.K..json
 ```
 
-第一项覆盖Schema 13、固定七条场地线、continuous/outside lane、product axis/graph、Auto/Manual与actual Pixi；width-one Slide按Reverse独立Float32 oracle保持透视细线，不作观感倍增。第二项执行3 fresh actual WebGL，除四个SV captures外还用真实四张Lane PNG驱动完整product engine，验证slot6/NoteLaneEffect_4/bottom pivot/add blend/bounds/framebuffer；digest为`bb85df1cc9d86cb2998461b8cf43b3bc2d00ec25db88b3965e9d38b4812c9000`。第三项继续执行两张外部谱面验收且不复制文件。
+第一项覆盖Schema 13、固定七条场地线、continuous/outside lane、product axis/graph、Auto/Manual与actual Pixi；Reverse `c5223b25`纠正后的B.B.K oracle按`GJP-D01 floor(48*beat)`逐50ms公开1,617个visible/1,611个upper-half tick，actual Pixi必须完整枚举83 Slide/141 segment、每帧22顶点/60索引并逐tick同集。width-one保持独立Float32公式；1600×900观测threshold `44322D84`按正交归一高度投影到初始surface，禁止在2400×1350仍写死712.711而把mesh裁到下半屏。第二项执行3 fresh actual WebGL，除四个SV captures外还用真实四张Lane PNG驱动完整product engine，验证slot6/NoteLaneEffect_4/bottom pivot/add blend/bounds/framebuffer；digest为`bb85df1cc9d86cb2998461b8cf43b3bc2d00ec25db88b3965e9d38b4812c9000`。第三项继续执行两张外部谱面验收且不复制文件。
 
 ## Adaptive layout leaf
 

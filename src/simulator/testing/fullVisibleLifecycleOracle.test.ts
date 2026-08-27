@@ -120,6 +120,9 @@ for (const name of [
 }
 assert.equal(bbkk.chart.slideItems, 83);
 assert.equal(bbkk.chart.segments, 141);
+assert.equal(bbkk.chart.positionProjection, "GJP-D01 floor(48*beat)");
+assert.equal(bbkk.timeline.visibleFrames, bbkk.timeline.visibleTicksMs.length);
+assert.equal(bbkk.timeline.upperHalfFrames, bbkk.timeline.upperHalfTicksMs.length);
 assert.equal(bbkk.timeline.upperHalfFrames, 1611);
 assert.equal(bbkk.widthOne[0].samples[4].oldErroneousPixels, 31.54659652709961);
 assert.equal(bbkk.widthOne[0].samples[4].correctPixels, 169.9713592529297);
