@@ -1946,7 +1946,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.addHeader(layout.pauseMenu.windowBoundsTopLeft, 842, 40, 115, layout.controlScale);
     this.addText(snapshot.words.pause.title,
       layout.viewportWidth / 2 - 391 * layout.controlScale,
-      layout.viewportHeight / 2 + layout.controlScale,
+      layout.pauseMenu.windowBoundsTopLeft.y + layout.pauseMenu.windowBoundsTopLeft.height / 2 - 115 * layout.controlScale,
       30 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.title, 0, 0.5);
     this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.content);
     this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.abortButton);
@@ -1965,7 +1965,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const words = retry ? snapshot.words.retry : snapshot.words.abort;
     this.addText(words.title,
       layout.viewportWidth / 2 + (retry ? -352.260009765625 : -250) * layout.controlScale,
-      layout.viewportHeight / 2 + (retry ? 1 : 0) * layout.controlScale,
+      confirmation.windowBoundsTopLeft.y + confirmation.windowBoundsTopLeft.height / 2 -
+        (retry ? 239.64999389648438 : 115) * layout.controlScale,
       (retry ? 30 : 29) * layout.controlScale, 0x333333,
       components.title, 0, 0.5, retry ? "retry-confirm-title" : "abort-confirm-title");
     this.addCenteredText(words.message,
@@ -2247,11 +2248,11 @@ function applyGameClearHud(
       sprite.width = widget.width;
       sprite.height = widget.height;
       sprite.tint = rgbTint(
-        f32FromBits(widget.color_f32_bits[0]),
-        f32FromBits(widget.color_f32_bits[1]),
-        f32FromBits(widget.color_f32_bits[2]),
+        f32FromLittleEndianBytes(widget.color_f32_bits[0]),
+        f32FromLittleEndianBytes(widget.color_f32_bits[1]),
+        f32FromLittleEndianBytes(widget.color_f32_bits[2]),
       );
-      sprite.alpha = f32FromBits(widget.color_f32_bits[3]);
+      sprite.alpha = f32FromLittleEndianBytes(widget.color_f32_bits[3]);
       sprite.zIndex = widget.depth;
       node.addChild(sprite);
       visual.digitSprites.push(sprite);
@@ -2289,12 +2290,13 @@ function renderGameClearParticles(
     const texture = gameClearParticleTexture(bundle, particleProfile, sample.uvFrame, textures, material.texture);
     const sprite = new Sprite({ texture, label: `game-clear-particle:${sample.particleId}` });
     sprite.anchor.set(0.5);
+    const pixelsPerWorldUnit = Math.fround(visual.gameClearViewportHeight / 2);
     const x = particleFloat32FromBits(sample.position.xBits)!;
     const y = particleFloat32FromBits(sample.position.yBits)!;
     const localScaleX = Math.abs(definition.transform.m_LocalScale.x);
     const localScaleY = Math.abs(definition.transform.m_LocalScale.y);
-    let width = Math.abs(particleFloat32FromBits(sample.size.xBits)! * localScaleX);
-    let height = Math.abs(particleFloat32FromBits(sample.size.yBits)! * localScaleY);
+    let width = Math.abs(particleFloat32FromBits(sample.size.xBits)! * localScaleX * pixelsPerWorldUnit);
+    let height = Math.abs(particleFloat32FromBits(sample.size.yBits)! * localScaleY * pixelsPerWorldUnit);
     let rotation = -particleFloat32FromBits(sample.rotation.zBits)!;
     if (sample.renderMode === 1) {
       const vx = particleFloat32FromBits(sample.velocity.xBits)!;
@@ -2305,7 +2307,10 @@ function renderGameClearParticles(
     const maximum = renderer.m_MaxParticleSize * visual.gameClearViewportHeight;
     const largest = Math.max(width, height);
     if (maximum > 0 && largest > maximum) { const ratio = maximum / largest; width *= ratio; height *= ratio; }
-    sprite.position.set(x, -y);
+    sprite.position.set(
+      Math.fround(x * pixelsPerWorldUnit),
+      Math.fround(-y * pixelsPerWorldUnit),
+    );
     sprite.width = Math.max(width, 0.001);
     sprite.height = Math.max(height, 0.001);
     sprite.rotation = rotation;
@@ -3050,6 +3055,16 @@ function f32FromBits(bits: string): number {
   const view = new DataView(buffer);
   view.setUint32(0, Number.parseInt(bits, 16), false);
   return view.getFloat32(0, false);
+}
+
+function f32FromLittleEndianBytes(bits: string): number {
+  if (!/^[0-9A-Fa-f]{8}$/.test(bits)) throw new Error("invalid little-endian Float32 bytes");
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  for (let index = 0; index < 4; index += 1) {
+    view.setUint8(index, Number.parseInt(bits.slice(index * 2, index * 2 + 2), 16));
+  }
+  return view.getFloat32(0, true);
 }
 
 function applyScoreHud(

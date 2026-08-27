@@ -139,6 +139,8 @@ async function main(): Promise<void> {
   captures.push(await capture(app, auto, "initialize", 0));
   await runAutoScenario(app, auto, captures);
   requireOk(auto.engine.completeLiveAudio(3));
+  sampleGameClear(auto, 1.2);
+  assertGameClearWhite(auto);
   captures.push(await capture(app, auto, "natural-completion", 1401));
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
@@ -149,6 +151,7 @@ async function main(): Promise<void> {
   await advanceToPlayable(liveManualClear);
   requireOk(liveManualClear.engine.completeLiveAudio(2));
   sampleGameClear(liveManualClear, 1.2);
+  assertGameClearWhite(liveManualClear);
   captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
   const liveManualClearCleanup = disposeSession(app, liveManualClear);
 
@@ -173,6 +176,7 @@ async function main(): Promise<void> {
   captures.push(await capture(app, rehearsalManual, "rehearsal-return-five-controls", 0));
   requireOk(rehearsalManual.engine.completeLiveAudio(1));
   sampleGameClear(rehearsalManual, 1.2);
+  assertGameClearWhite(rehearsalManual);
   captures.push(await capture(app, rehearsalManual, "rehearsal-manual-base-clear", 0));
   const rehearsalManualCleanup = disposeSession(app, rehearsalManual);
 
@@ -187,6 +191,7 @@ async function main(): Promise<void> {
   await advanceToPlayable(rehearsalAuto);
   requireOk(rehearsalAuto.engine.completeLiveAudio(3));
   sampleGameClear(rehearsalAuto, 1.2);
+  assertGameClearWhite(rehearsalAuto);
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
@@ -255,6 +260,14 @@ async function main(): Promise<void> {
 
 function sampleGameClear(session: BrowserSession, elapsedSeconds: number): void {
   requireOk(session.engine.advanceNaturalCompletionPresentation(Math.fround(elapsedSeconds)));
+}
+
+function assertGameClearWhite(session: BrowserSession): void {
+  const clear = session.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:game-clear");
+  const visible = clear?.hudSpriteNodes?.filter((sprite) => sprite.visible) ?? [];
+  if (visible.length > 0 && visible.some((sprite) => sprite.tint !== 0xffffff)) {
+    throw new Error(`game-clear serialized white tint mismatch: ${visible.map((sprite) => sprite.tint).join("|")}`);
+  }
 }
 
 async function advanceToPlayable(session: BrowserSession): Promise<void> {

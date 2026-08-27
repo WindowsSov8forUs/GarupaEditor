@@ -309,8 +309,19 @@ async function main(): Promise<void> {
   equal(clear.activeAnimationRole, "game-clear", "All Perfect clear graph owns one engine-clock animation");
   assert((clear.hudSpriteNodes?.length ?? 0) >= 20, "All Perfect clear graph consumes the complete serialized UITexture letter/star inventory");
   assert(clear.hudSpriteNodes?.some((sprite) => sprite.visible), "All Perfect clear clip publishes visible serialized nodes before exit");
+  assert(clear.hudSpriteNodes?.filter((sprite) => sprite.visible).every((sprite) => sprite.tint === 0xffffff),
+    "Game-clear UITexture consumes little-endian serialized white color bytes instead of black tint");
   const allPerfectParticles = renderer.stage.getChildByLabel("game-clear-particles", true) as Container;
   assert((allPerfectParticles?.children.length ?? 0) >= 180, "All Perfect consumes base plus additional serialized ParticleSystems at the 1.2-second phase");
+  const visibleClearParticle = allPerfectParticles.children.find((child) => child instanceof Sprite &&
+    Math.max(child.width, child.height) > 8 && child.getBounds().maxX > 0 && child.getBounds().minX < 1600 &&
+    child.getBounds().maxY > 0 && child.getBounds().minY < 720);
+  assert(visibleClearParticle !== undefined,
+    `Game-clear particles consume orthographic height/2 PPU and visibly intersect the production viewport: ${JSON.stringify(
+      allPerfectParticles.children.slice(0, 8).map((child) => child instanceof Sprite ? {
+        p: [child.x, child.y], s: [child.width, child.height], b: child.getBounds(), a: child.alpha,
+      } : { label: child.label }),
+    )}`);
   const baseClear = row("hud:game-clear:base");
   equal(baseClear.activeAnimationRole, "game-clear", "base clear owns game-clear animation");
   const baseParticleContainers = renderer.stage.getChildrenByLabel("game-clear-particles", true) as Container[];

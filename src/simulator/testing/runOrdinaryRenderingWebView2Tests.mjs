@@ -19,6 +19,7 @@ const bundle = join(harnessRoot, "bundle.js");
 const stage = join(harnessRoot, "input-stage");
 const target = join(harnessRoot, "target");
 const cleanCargoTarget = process.env.SIMULATOR_WEBVIEW2_CLEAN_BUILD === "1";
+const freshRunCount = process.env.SIMULATOR_WEBVIEW2_FRESH_RUNS === "1" ? 1 : 3;
 const require = createRequire(import.meta.url);
 const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
@@ -121,7 +122,7 @@ try {
   copyFileSync(loader, join(release, "WebView2Loader.dll"));
   const executable = join(release, "garupa-production-browser-decoder-harness.exe");
   const observed = [];
-  for (let runIndex = 0; runIndex < 3; runIndex += 1) {
+  for (let runIndex = 0; runIndex < freshRunCount; runIndex += 1) {
     const capture = join(harnessRoot, `capture-${runIndex + 1}.json`);
     run(executable, [capture, stage], harnessRoot);
     const value = JSON.parse(readFileSync(capture, "utf8"));
