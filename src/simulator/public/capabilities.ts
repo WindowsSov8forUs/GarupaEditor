@@ -18,8 +18,8 @@ export function createSimulatorModuleCapabilitySummary(
     chart,
     skin,
     publicAutonomousCore: "closed-portable" as const,
-    ordinaryCommandScene: "closed-evidence-equivalent" as const,
-    ordinaryHud: "closed-evidence-equivalent" as const,
+    ordinaryCommandScene: "observational-gap" as const,
+    ordinaryHud: "observational-gap" as const,
     habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "observational-gap" as const,
     liveRehearsalFourModeMatrix: "closed-portable" as const,
@@ -41,16 +41,12 @@ export function createSimulatorModuleCapabilitySummary(
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
     originalSkinSettings: "closed-static-portable" as const,
-    originalLiveSettings: "closed-evidence-equivalent" as const,
+    originalLiveSettings: "observational-gap" as const,
     mainProgramIntegration: "closed-product-integration" as const,
-    selectedRenderingGate: rendering === null
-      ? "observational-gap" as const
-      : rendering === "ordinary-current-portable"
-        ? "closed-evidence-equivalent" as const
-        : "closed-portable" as const,
-    selectedHudGate: rendering === null
-      ? "observational-gap" as const
-      : "closed-evidence-equivalent" as const,
+    selectedRenderingGate: rendering === "habahiro-current-external-complete"
+      ? "closed-portable" as const
+      : "observational-gap" as const,
+    selectedHudGate: "observational-gap" as const,
     selectedBackgroundGate: background === null
       ? "observational-gap" as const
       : "closed-portable" as const,

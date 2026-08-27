@@ -174,8 +174,8 @@ export interface SimulatorModuleCapabilitySummary {
   readonly chart: SimulatorChartFidelity;
   readonly skin: SimulatorSkinFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
-  readonly ordinaryCommandScene: "closed-evidence-equivalent";
-  readonly ordinaryHud: "closed-evidence-equivalent";
+  readonly ordinaryCommandScene: "closed-evidence-equivalent" | "observational-gap";
+  readonly ordinaryHud: "closed-evidence-equivalent" | "observational-gap";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "observational-gap";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
@@ -197,7 +197,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly originalSkinSettings: "closed-static-portable";
-  readonly originalLiveSettings: "closed-evidence-equivalent";
+  readonly originalLiveSettings: "closed-evidence-equivalent" | "observational-gap";
   readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
   readonly selectedRenderingGate: "closed-portable" | "closed-evidence-equivalent" | "observational-gap";
   readonly selectedHudGate: "closed-evidence-equivalent" | "observational-gap";

@@ -46,7 +46,7 @@ npm.cmd run simulator:test:full-visible-lifecycle-oracle
 npm.cmd run simulator:test:hud-reaudit-regression
 ```
 
-该历史门单独仍只证明Score45/Life10、字体、SS曲线与SoftClip回归；能力恢复不依赖它的旧expected。2026-08-28 aggregate gate另要求`full-visible-lifecycle-oracle`、`lane-particle-same-state`、B.B.K全时间轴、actual Pixi、四模式27-capture production WebView2、selected Skin/MV/Garupa Browser矩阵及Windows Pause/AP全程共同通过。只有该完整组合才授权`ordinaryHud`、`ordinaryCommandScene`、`originalLiveSettings`和已选择ordinary gates恢复为`closed-evidence-equivalent`。
+该历史门单独仍只证明Score45/Life10、字体、SS曲线与SoftClip回归；能力恢复不依赖它的旧expected。2026-08-28第二次生产复现已证明此前`full-visible-lifecycle-oracle`、`lane-particle-same-state`、B.B.K全时间轴、actual Pixi、四模式27-capture WebView2和Windows截图组合仍会漏过明显错误，因此这些leaf全部降为回归/发现门，当前不授权`ordinaryHud`、`ordinaryCommandScene`、`originalLiveSettings`或已选择ordinary gates恢复。新的完成门必须以独立Reverse primitive/同状态帧逐对象否证旧expected，并由fresh生产窗口覆盖全时间轴。
 
 ## Original Pause leaves
 
