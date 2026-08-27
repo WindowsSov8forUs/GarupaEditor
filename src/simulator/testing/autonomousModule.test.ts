@@ -430,9 +430,14 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(clearControl.playable, false, "Pause/gameplay input is disabled during GameClearAnimStart");
   const beforeFinish = session.step(3.232, null, TEST_SURFACE.revision);
   assert.equal(beforeFinish.status, "running", "clear presentation remains mounted before 3.233 seconds");
+  const endpoint = session.step(0.002, null, TEST_SURFACE.revision);
+  assert.equal(endpoint.status, "running",
+    "ClearAnimationFinished endpoint remains mounted before the observed 15ms onExit edge");
+  const beforeExit = session.step(0.014, null, TEST_SURFACE.revision);
+  assert.equal(beforeExit.status, "running", "terminal endpoint remains visible before the 15ms exit delay");
   const stepped = session.step(0.002, null, TEST_SURFACE.revision);
   assert.equal(stepped.status, "closed");
-  if (stepped.status !== "closed") throw new Error("natural completion closes only after clear animation finished");
+  if (stepped.status !== "closed") throw new Error("natural completion closes only after clear endpoint plus exit delay");
   assert.equal(stepped.report.reason, "completed");
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);
@@ -457,7 +462,8 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   const repeatedClose = session.close("user-closed");
   assert.equal(repeatedClose, stepped.report, "repeated close returns the immutable first report");
   assert.equal(disposals, 1);
-  assert.equal(presentationAdvances, 2, "presentation hold advances only the clear graph on each host hold step");
+  assert.equal(presentationAdvances, 2,
+    "presentation hold advances only through the exact clear endpoint; the 15ms exit delay does not resample gameplay");
 }
 
 async function testProductionCompositionFailureBoundary(): Promise<void> {

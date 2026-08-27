@@ -162,6 +162,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
   private closeReport: SimulatorModuleCloseReport | null = null;
   private naturalCompletionPresentationRemainingSeconds: number | null = null;
+  private naturalCompletionExitDelayRemainingSeconds: number | null = null;
 
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
@@ -225,14 +226,31 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
         return Object.freeze({ status: "running" as const });
       }
-      const advanced = this.engine.advanceNaturalCompletionPresentation(deltaTimeSeconds);
+      if (this.naturalCompletionExitDelayRemainingSeconds !== null) {
+        this.naturalCompletionExitDelayRemainingSeconds = Math.fround(
+          this.naturalCompletionExitDelayRemainingSeconds - Math.fround(deltaTimeSeconds),
+        );
+        if (this.naturalCompletionExitDelayRemainingSeconds <= 0) {
+          const report = this.finish("completed", null);
+          return Object.freeze({ status: "closed" as const, report });
+        }
+        return Object.freeze({ status: "running" as const });
+      }
+      const presentationDelta = Math.fround(Math.min(
+        Math.fround(deltaTimeSeconds),
+        this.naturalCompletionPresentationRemainingSeconds,
+      ));
+      const advanced = this.engine.advanceNaturalCompletionPresentation(presentationDelta);
       if (advanced.status !== "ok") return rejectedStep(advanced);
       this.naturalCompletionPresentationRemainingSeconds = Math.fround(
-        this.naturalCompletionPresentationRemainingSeconds - Math.fround(deltaTimeSeconds),
+        this.naturalCompletionPresentationRemainingSeconds - presentationDelta,
       );
       if (this.naturalCompletionPresentationRemainingSeconds <= 0) {
-        const report = this.finish("completed", null);
-        return Object.freeze({ status: "closed" as const, report });
+        // Reverse R1: ClearAnimationFinished publishes the final frame, then
+        // InGameManager.onExit follows 15 ms later. Never dispose in the same
+        // scheduler turn that committed the terminal presentation endpoint.
+        this.naturalCompletionPresentationRemainingSeconds = Math.fround(0);
+        this.naturalCompletionExitDelayRemainingSeconds = Math.fround(0.015);
       }
       return Object.freeze({ status: "running" as const });
     }

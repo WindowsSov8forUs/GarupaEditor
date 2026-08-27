@@ -2329,7 +2329,7 @@ function applyGameClearHud(
       sprite.anchor.set(pivot.x, pivot.y);
       sprite.width = widget.width;
       sprite.height = widget.height;
-      sprite.tint = rgbTint(
+      sprite.tint = linearTintFromSrgbChannels(
         f32FromLittleEndianBytes(widget.color_f32_bits[0]),
         f32FromLittleEndianBytes(widget.color_f32_bits[1]),
         f32FromLittleEndianBytes(widget.color_f32_bits[2]),
