@@ -398,6 +398,90 @@
       "sha256": "228A536C54FE99293A3F8F759B917B95D501B76ABD83F2D8AA9B61B6E6474A8B"
     },
     {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "sourceReverseCommit": "dc2a8db819032498d0deb8181c29a6963af8cb3f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "bytes": 6919505,
+      "sha256": "9492A5B34127EF1D6201D261047607E076CC18207C98E24C3C970B6411E4F819"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",
+      "bytes": 114726,
+      "sha256": "051C618D47F36535D1EE0FD55356905B98CB746F5635F3DD81175918D3EAD51E"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-039-life-UpdateView.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-039-life-UpdateView.png",
+      "bytes": 832823,
+      "sha256": "3D48BAB2C2ABC5A99F66BE31D07CE27AA46177BEC8393C299E394749112C1317"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-043-playing-start.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-043-playing-start.png",
+      "bytes": 865632,
+      "sha256": "01276A310B65230745AB8BC3F555BBFFCBAE8ADAB2829C90E5ECDF87DFFC267A"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-050-add-score-Play.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-050-add-score-Play.png",
+      "bytes": 608737,
+      "sha256": "4E3D5034BA62358527D097CD6B8E7D6FF40D7E4CB293067DDC6EA273C2468186"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-060-particle-route-playParticle.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-060-particle-route-playParticle.png",
+      "bytes": 1031296,
+      "sha256": "B27BEB9EB200E933183600DA1924B867C4C0E69A4BB424FA00F9E8C5754B6E4A"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-070-pause-open.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-070-pause-open.png",
+      "bytes": 392075,
+      "sha256": "A8CA59F12F4A3AC4725233D98DB7B7D6AD095DAE6E4BAAFEF15FCB83F2A7E2A6"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-077-playing-periodic.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-077-playing-periodic.png",
+      "bytes": 628251,
+      "sha256": "DD1D84E94ECEF27A8DA549F46663843AF5E142AE75273F94810DFC57C4936891"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-090-playing-periodic.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-090-playing-periodic.png",
+      "bytes": 815532,
+      "sha256": "238B92B568F9A92E933B534C02D462F64D783910986B134195C2C335D1198A7A"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-108-completion-onGameClear.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-108-completion-onGameClear.png",
+      "bytes": 242304,
+      "sha256": "EAEC91FE7C8DBC2A88C37D9A5235ADE2ABE5CB6A7E59477BFD570037E74467C5"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-112-completion-PlayAnimation.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-112-completion-PlayAnimation.png",
+      "bytes": 262337,
+      "sha256": "D9B310FDE9AB3307BFE1585A8E04B2F3FFBF174282BC164008A6B597B29BE28E"
+    },
+    {
+      "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-115-completion-ClearAnimationFinished.png",
+      "sourceReverseCommit": "4a61a184b9bbbd129752bc3ba84d9a5ab3448f2f",
+      "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-115-completion-ClearAnimationFinished.png",
+      "bytes": 107893,
+      "sha256": "CE445A0B5F9C11FA858A3E2F4A673DDC49A5E595DFBF732EC6103C5B55B8049C"
+    },
+    {
       "path": "reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
       "sourceReverseCommit": "341749d90e3c68cc9fd85d16fbc501f733378623",
       "sourcePath": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",

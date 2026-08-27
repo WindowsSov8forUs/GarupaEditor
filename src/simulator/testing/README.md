@@ -32,6 +32,14 @@ npm.cmd run simulator:test:total-revalidation:clean
 
 `SIMULATOR_WEBVIEW2_CLEAN_BUILD=1` affects only ignored Cargo build artifacts. It does not alter browser process freshness, scene inputs, capture count, expected digests, or production behavior.
 
+## Full visible/lifecycle independent oracle
+
+```powershell
+npm.cmd run simulator:test:full-visible-lifecycle-oracle
+```
+
+该门消费Reverse `4a61a184`的全量结构化合同与最小R1帧，独立计算Rank阈值位置并锁定Score编码色来源、Auto双widget、AddScore/Life/Pause对象图、Slide/Lane/default skin00粒子及自然结束3233ms→exit 15ms顺序。它不导入production Score/Slide/particle helper，且不以PNG像素采样产生颜色或位置expected。
+
 ## HUD re-audit regression leaf
 
 ```powershell
