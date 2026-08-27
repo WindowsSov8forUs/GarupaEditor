@@ -378,8 +378,17 @@ export class RenderCommandProducer {
         poolFamily: role, role, parentObjectId: null,
       });
     };
-    for (const renderObjectId of HUD_OBJECTS.addScore) {
+    for (let poolIndex = 0; poolIndex < HUD_OBJECTS.addScore.length; poolIndex += 1) {
+      const renderObjectId = HUD_OBJECTS.addScore[poolIndex]!;
       create(renderObjectId, "hud-add-score");
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId,
+        hudRole: "add-score", state: Object.freeze({
+          value: 1,
+          poolIndex: poolIndex as 0 | 1 | 2 | 3,
+          depth: 0 as const,
+        }),
+      });
       commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     }
     create(HUD_OBJECTS.combo, "hud-combo");

@@ -182,8 +182,18 @@ async function main(): Promise<void> {
     "Pause does not infer component identity from a Sprite name");
   assert(liveControls.root.getChildByLabel("RetryablePauseDialog/Background", true) instanceof NineSliceSprite,
     "Pause dark cover consumes the serialized fill UISprite rather than Graphics");
+  const persistentPauseWindow = liveControls.root.getChildByLabel("RetryablePauseDialog/Window", true);
+  assert(persistentPauseWindow !== null, "Retryable Pause serialized component owner exists");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "retry-confirm" as const })), "publish Retry confirmation");
   assert(liveControls.root.getChildByLabel("retry-confirm-window", true) !== null, "Retry confirmation is Simulator-owned");
+  assert(liveControls.root.getChildByLabel("SelectableCommonDialog/Window/Header", true) !== null,
+    "Retry confirmation keeps the SelectableCommonDialog component identity");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "return to persistent Pause graph");
+  equal(liveControls.root.getChildByLabel("RetryablePauseDialog/Window", true), persistentPauseWindow,
+    "Pause state mutation reactivates the same serialized component graph without rebuilding it");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "abort-confirm" as const })), "publish Abort confirmation");
+  assert(liveControls.root.getChildByLabel("RhythmGameRetireAnnotatedDialog/Window/AnnotatedText", true) !== null,
+    "Abort confirmation keeps the annotated serialized component identity");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })), "publish Resume countdown");
   assert(liveControls.root.getChildByLabel("resume-countdown-3", true) !== null, "Resume countdown consumes exact Countdown3 texture");
   requireOk(liveControls.dispose(), "dispose Live controls");
@@ -325,7 +335,7 @@ async function main(): Promise<void> {
 
   const add = row("hud:add");
   equal(add.hudText, null, "AddScore creates no system Text");
-  equal(add.hudSpriteCount, 4, "AddScore plus and three digits are Sprites");
+  equal(add.hudSpriteCount, 7, "AddScore keeps the serialized seven-Sprite slot graph per pooled root");
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
   equal(JSON.stringify(add.position), JSON.stringify([
     Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + 282 * UI_SCALE),
@@ -339,6 +349,8 @@ async function main(): Promise<void> {
   equal(JSON.stringify(["add-score-0", "add-score-1", "add-score-2", "add-score-3"].map((label) => addNodes.get(label)?.position)), JSON.stringify([
     [143, 0], [96, 0], [48, 0], [0, 0],
   ]), "AddScore UISpriteNumber LEFT layout consumes per-glyph inner widths and plus sign");
+  equal(["add-score-4", "add-score-5", "add-score-6"].every((label) => addNodes.get(label)?.visible === false), true,
+    "unused serialized AddScore slots remain persistent and inactive");
   equal(JSON.stringify(add.ordering.slice(0, 3)), JSON.stringify([3, 100, 3]), "AddScore depth cycle participates in current back-panel ordering");
   const largeAdd = row("hud:add:large");
   equal(largeAdd.hudSpriteCount, 9, "N=1 CS-V1 AddScore renders plus and all eight quota digits");

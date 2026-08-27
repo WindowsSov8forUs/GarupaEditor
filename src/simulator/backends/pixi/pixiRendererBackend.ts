@@ -46,6 +46,7 @@ import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudPro
 import {
   CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
   CURRENT_PAUSE_COMPONENT_PATHS,
+  CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS,
   CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
 } from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
@@ -1699,6 +1700,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   readonly root = new Container({ label: "in-game-control-root", sortableChildren: true });
   private readonly rehearsalRoot = new Container({ label: "rehearsal-control-root", sortableChildren: true });
   private readonly modalRoot = new Container({ label: "pause-modal-root", sortableChildren: true });
+  private readonly persistentModalGraphs = new Map<string, Container>();
   private readonly autoLiveCaptionRoot: Container | null;
   private readonly pauseButton: Sprite;
   private readonly returnButton: Sprite | null;
@@ -1885,13 +1887,23 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.releaseOwner(this.root);
     this.root.removeFromParent();
     this.root.destroy({ children: true });
+    this.persistentModalGraphs.clear();
     return ok(undefined);
   }
 
   private rebuildModal(snapshot: PauseControlSceneSnapshot, countdownNumber: number | null): void {
-    this.modalRoot.removeChildren().forEach((child) => child.destroy({ children: true }));
+    const graphKey = snapshot.state === "resume-countdown"
+      ? `resume-countdown:${String(countdownNumber)}`
+      : snapshot.state;
     this.modalRoot.visible = snapshot.state !== "playing";
+    for (const [key, graph] of this.persistentModalGraphs) graph.visible = key === graphKey;
     if (snapshot.state === "playing") return;
+    if (this.persistentModalGraphs.has(graphKey)) return;
+
+    const graph = new Container({ label: `pause-prefab:${graphKey}`, sortableChildren: true });
+    graph.eventMode = "none";
+    this.modalRoot.addChild(graph);
+    this.persistentModalGraphs.set(graphKey, graph);
     if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
       const texture = this.pauseTextures.countdown[countdownNumber - 1];
       const sprite = new Sprite({ texture, label: `resume-countdown-${countdownNumber}` });
@@ -1899,9 +1911,10 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       sprite.width = texture.width * scale;
       sprite.height = texture.height * scale;
       sprite.position.set((snapshot.layout.viewportWidth - sprite.width) / 2 + (countdownNumber === 1 ? -5 * scale : 0), (snapshot.layout.viewportHeight - sprite.height) / 2);
-      this.modalRoot.addChild(sprite);
+      graph.addChild(sprite);
       return;
     }
+    const directChildrenBefore = new Set(this.modalRoot.children);
     const cover = new NineSliceSprite({
       texture: this.pauseTextures.cover,
       leftWidth: 1,
@@ -1912,11 +1925,19 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       height: snapshot.layout.viewportHeight,
       tint: 0x000000,
       alpha: 0.5,
-      label: CURRENT_PAUSE_COMPONENT_PATHS.cover,
+      label: snapshot.state === "pause-menu"
+        ? CURRENT_PAUSE_COMPONENT_PATHS.cover
+        : snapshot.state === "retry-confirm"
+          ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry.cover
+          : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.cover,
     });
     this.modalRoot.addChild(cover);
     if (snapshot.state === "pause-menu") this.buildPauseMenu(snapshot);
     else this.buildConfirmation(snapshot, snapshot.state === "retry-confirm");
+    for (const child of [...this.modalRoot.children]) {
+      if (!directChildrenBefore.has(child)) graph.addChild(child);
+    }
+    graph.sortChildren();
   }
 
   private buildPauseMenu(snapshot: PauseControlSceneSnapshot): void {
@@ -1936,41 +1957,41 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private buildConfirmation(snapshot: PauseControlSceneSnapshot, retry: boolean): void {
     const layout = snapshot.layout;
     const confirmation = retry ? layout.retryConfirmation : layout.abortConfirmation;
-    this.addWindow(confirmation.windowBoundsTopLeft, retry ? "retry-confirm-window" : "abort-confirm-window");
-    this.addHeader(confirmation.windowBoundsTopLeft, retry ? 770 : 558, 40, retry ? 239.64999389648438 : 115, layout.controlScale);
+    const components = retry
+      ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry
+      : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort;
+    this.addWindow(confirmation.windowBoundsTopLeft, components.window, retry ? "retry-confirm-window" : "abort-confirm-window");
+    this.addHeader(confirmation.windowBoundsTopLeft, retry ? 770 : 558, 40, retry ? 239.64999389648438 : 115, layout.controlScale, components.header);
     const words = retry ? snapshot.words.retry : snapshot.words.abort;
     this.addText(words.title,
       layout.viewportWidth / 2 + (retry ? -352.260009765625 : -250) * layout.controlScale,
       layout.viewportHeight / 2 + (retry ? 1 : 0) * layout.controlScale,
       (retry ? 30 : 29) * layout.controlScale, 0x333333,
-      retry ? "retry-confirm-title" : "abort-confirm-title", 0, 0.5);
+      components.title, 0, 0.5, retry ? "retry-confirm-title" : "abort-confirm-title");
     this.addCenteredText(words.message,
       layout.viewportWidth / 2 + (retry ? 0 : 5) * layout.controlScale,
       layout.viewportHeight / 2 - (retry ? 0 : 50) * layout.controlScale,
       (retry ? 24 : 23) * layout.controlScale, 0x333333,
-      retry ? "retry-confirm-message" : "abort-confirm-message");
+      components.content, retry ? "retry-confirm-message" : "abort-confirm-message");
     if (!retry) this.addCenteredText(snapshot.words.abort.annotation,
       layout.viewportWidth / 2 - 7 * layout.controlScale,
       layout.viewportHeight / 2 + 9 * layout.controlScale,
-      19 * layout.controlScale, 0x555555, "abort-confirm-annotation");
-    this.addButton(confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, retry ? "retry-cancel" : "abort-cancel");
-    this.addButton(confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, retry ? "retry-confirm" : "abort-confirm");
+      19 * layout.controlScale, 0x555555,
+      CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.annotation, "abort-confirm-annotation");
+    this.addButton(confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, components.cancelButton, retry ? "retry-cancel" : "abort-cancel");
+    this.addButton(confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, components.confirmButton, retry ? "retry-confirm" : "abort-confirm");
   }
 
-  private addWindow(value: PauseControlBounds, label: string): void {
-    const primitiveLabel = label === CURRENT_PAUSE_COMPONENT_PATHS.window ? "pause-window" : label;
+  private addWindow(value: PauseControlBounds, label: string, explicitPrimitiveLabel?: string): void {
+    const primitiveLabel = explicitPrimitiveLabel ?? (label === CURRENT_PAUSE_COMPONENT_PATHS.window ? "pause-window" : label);
     const window = new NineSliceSprite({ texture: this.pauseTextures.window, leftWidth: 12, rightWidth: 12, topHeight: 12, bottomHeight: 12, label: primitiveLabel });
     applyBounds(window, value);
-    if (label === CURRENT_PAUSE_COMPONENT_PATHS.window) {
-      const component = new Container({ label });
-      component.addChild(window);
-      this.modalRoot.addChild(component);
-    } else {
-      this.modalRoot.addChild(window);
-    }
+    const component = new Container({ label });
+    component.addChild(window);
+    this.modalRoot.addChild(component);
   }
-  private addHeader(window: PauseControlBounds, authoredWidth: number, authoredHeight: number, authoredLocalY: number, scale: number): void {
-    const component = new Container({ label: CURRENT_PAUSE_COMPONENT_PATHS.header });
+  private addHeader(window: PauseControlBounds, authoredWidth: number, authoredHeight: number, authoredLocalY: number, scale: number, componentPath: string = CURRENT_PAUSE_COMPONENT_PATHS.header): void {
+    const component = new Container({ label: componentPath });
     const header = new NineSliceSprite({ texture: this.pauseTextures.header, leftWidth: 28, rightWidth: 4, topHeight: 0, bottomHeight: 0, label: "pause-dialog-header" });
     const width = Math.fround(authoredWidth * scale);
     const height = Math.fround(authoredHeight * scale);
@@ -1979,11 +2000,11 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     component.addChild(header);
     this.modalRoot.addChild(component);
   }
-  private addButton(value: PauseControlBounds, texture: Texture, text: string, fontSize: number, label: string): void {
+  private addButton(value: PauseControlBounds, texture: Texture, text: string, fontSize: number, label: string, explicitPrimitiveLabel?: string): void {
     const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.abortButton ? "pause-abort"
       : label === CURRENT_PAUSE_COMPONENT_PATHS.retryButton ? "pause-retry"
       : label === CURRENT_PAUSE_COMPONENT_PATHS.resumeButton ? "pause-resume"
-      : label;
+      : explicitPrimitiveLabel ?? label;
     const component = new Container({ label });
     const button = new NineSliceSprite({ texture, leftWidth: 14, rightWidth: 20, topHeight: 22, bottomHeight: 12, label: legacy });
     applyBounds(button, value);
@@ -1993,13 +2014,13 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     component.addChild(button, caption);
     this.modalRoot.addChild(component);
   }
-  private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string): void {
-    this.addText(text, x, y, size, fill, label, 0.5, 0.5);
+  private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string, explicitPrimitiveLabel?: string): void {
+    this.addText(text, x, y, size, fill, label, 0.5, 0.5, explicitPrimitiveLabel);
   }
-  private addText(text: string, x: number, y: number, size: number, fill: number, label: string, anchorX: number, anchorY: number): void {
+  private addText(text: string, x: number, y: number, size: number, fill: number, label: string, anchorX: number, anchorY: number, explicitPrimitiveLabel?: string): void {
     const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.title ? "pause-title"
       : label === CURRENT_PAUSE_COMPONENT_PATHS.content ? "pause-message"
-      : label;
+      : explicitPrimitiveLabel ?? label;
     const component = new Container({ label });
     const value = this.text(text, size, fill, legacy);
     value.anchor.set(anchorX, anchorY);
@@ -2652,44 +2673,16 @@ function applyAddScoreHud(
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
 ): void {
-  const profile = requireOrdinaryVisibleProfile(object);
-  if (visual.digitSprites.length > 0) {
-    updatePersistentAddScoreHud(object, visual, state, textures, referenceCounts);
-    return;
+  if (visual.digitSprites.length === 0) {
+    for (let slot = 0; slot < 7; slot += 1) {
+      const sprite = new Sprite({ label: `add-score-${slot}`, visible: false });
+      sprite.anchor.set(0.5);
+      sprite.eventMode = "none";
+      visual.content.addChild(sprite);
+      visual.digitSprites.push(sprite);
+    }
   }
-  const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-  placeSafeTopAnchoredUiRoot(object, "left");
-  const uiScale = authoredUiScale(object);
-  object.node.position.set(
-    Math.fround(object.node.position.x + current.numberBaseAuthoredPosition[0] * uiScale),
-    Math.fround(object.node.position.y -
-      (current.numberBaseAuthoredPosition[1] + current.initialLocalY) * uiScale),
-  );
-  object.node.scale.set(Math.fround(uiScale * current.numberScale));
-  object.node.alpha = profile.addScore.start.alpha;
-  const leastSignificantKeys = [
-    ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`),
-    profile.addScore.digits.plus,
-  ];
-  const positions = spriteNumberPositions(
-    object.resourceProfile,
-    CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-    leastSignificantKeys,
-    current.padding,
-    "left",
-  );
-  leastSignificantKeys.forEach((exactKey, index) => {
-    const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, exactKey);
-    const sprite = new Sprite({ texture: binding.texture, label: `add-score-${index}` });
-    sprite.anchor.set(0.5);
-    sprite.width = profile.addScore.digits.size[0];
-    sprite.height = profile.addScore.digits.size[1];
-    sprite.position.set(positions[index]!, 0);
-    sprite.zIndex = state.depth;
-    visual.content.addChild(sprite);
-    visual.digitSprites.push(sprite);
-    retainHudBinding(object, binding.key, referenceCounts);
-  });
+  updatePersistentAddScoreHud(object, visual, state, textures, referenceCounts);
 }
 
 function updatePersistentAddScoreHud(
@@ -2722,7 +2715,7 @@ function updatePersistentAddScoreHud(
     "left",
   );
   while (visual.digitSprites.length < keys.length) {
-    const sprite = new Sprite({ label: `add-score-${visual.digitSprites.length}` });
+    const sprite = new Sprite({ label: `product-add-score-overflow-${visual.digitSprites.length - 7}` });
     sprite.anchor.set(0.5);
     visual.content.addChild(sprite);
     visual.digitSprites.push(sprite);

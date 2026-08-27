@@ -78,3 +78,25 @@ export const CURRENT_PAUSE_COMPONENT_PATHS = Object.freeze({
   retryButton: "RetryablePauseDialog/Buttons/ButtonRetry",
   resumeButton: "RetryablePauseDialog/Buttons/ButtonOK",
 } as const);
+
+export const CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS = Object.freeze({
+  retry: Object.freeze({
+    cover: "SelectableCommonDialog/Background",
+    window: "SelectableCommonDialog/Window",
+    header: "SelectableCommonDialog/Window/Header",
+    title: "SelectableCommonDialog/Window/Title",
+    content: "SelectableCommonDialog/Window/Content",
+    cancelButton: "SelectableCommonDialog/Buttons/CancelButton",
+    confirmButton: "SelectableCommonDialog/Buttons/OKButton",
+  }),
+  abort: Object.freeze({
+    cover: "RhythmGameRetireAnnotatedDialog/Background",
+    window: "RhythmGameRetireAnnotatedDialog/Window",
+    header: "RhythmGameRetireAnnotatedDialog/Window/Header",
+    title: "RhythmGameRetireAnnotatedDialog/Window/Title",
+    content: "RhythmGameRetireAnnotatedDialog/Window/Content",
+    annotation: "RhythmGameRetireAnnotatedDialog/Window/AnnotatedText",
+    cancelButton: "RhythmGameRetireAnnotatedDialog/Buttons/ButtonCancel",
+    confirmButton: "RhythmGameRetireAnnotatedDialog/Buttons/ButtonOK",
+  }),
+} as const);
