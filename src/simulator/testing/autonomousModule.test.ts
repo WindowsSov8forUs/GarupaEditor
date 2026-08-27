@@ -387,6 +387,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   let initialized = false;
   let completed = false;
   let disposals = 0;
+  let presentationAdvances = 0;
   const engine = {
     initialize: () => { initialized = true; return ok(undefined); },
     step: () => { completed = true; return ok(undefined); },
@@ -394,6 +395,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     pause: () => ok(undefined),
     resume: () => ok(undefined),
     completeLiveAudio: () => ok(undefined),
+    advanceNaturalCompletionPresentation: () => { presentationAdvances += 1; return ok(undefined); },
     getNaturalCompletionClearStatus: () => completed ? 2 as const : null,
     getAdjustedMusicPosition: () => ok(1.25),
     snapshot: () => ok({
@@ -455,6 +457,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   const repeatedClose = session.close("user-closed");
   assert.equal(repeatedClose, stepped.report, "repeated close returns the immutable first report");
   assert.equal(disposals, 1);
+  assert.equal(presentationAdvances, 2, "presentation hold advances only the clear graph on each host hold step");
 }
 
 async function testProductionCompositionFailureBoundary(): Promise<void> {

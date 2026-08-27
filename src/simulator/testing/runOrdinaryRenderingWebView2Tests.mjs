@@ -72,6 +72,21 @@ const renderSources = [
   ["ui/pause/countdown-2", join(pauseRoot, "portable-assets", "countdown-2.png")],
   ["ui/pause/countdown-3", join(pauseRoot, "portable-assets", "countdown-3.png")],
 ];
+const gameClearRoot = join(repositoryRoot, "src", "assets", "game", "prefabs", "bms", "gameclear");
+const commonRenderCatalog = JSON.parse(readFileSync(join(
+  repositoryRoot, "src", "simulator", "engine", "skin", "commonRenderSemanticCatalog.json",
+)));
+const gameClearRows = commonRenderCatalog.groups.gameClear;
+for (const row of gameClearRows) renderSources.push([row.profile.logicalAssetId, join(gameClearRoot, row.file)]);
+const gameClearAssets = gameClearRows.map((row) => {
+  const bytes = readFileSync(join(gameClearRoot, row.file));
+  return {
+    ...row.profile,
+    byteLength: bytes.byteLength,
+    sha256: createHash("sha256").update(bytes).digest("hex").toUpperCase(),
+    provenance: "current-official-portable",
+  };
+});
 const particleSources = [
   ["particle/profile/current-portable-v1", join(particleRoot, "particle_portable_profile.json")],
   ["particle/textures/current-portable-v1", join(particleRoot, "particle_portable_texture_manifest.json")],
@@ -143,8 +158,12 @@ function prepareStage() {
     ["/render-profile.json", "render-profile.json", "application/json; charset=utf-8", join(ordinaryRoot, "ordinary_portable_profile.json")],
     ["/visible-profile.json", "visible-profile.json", "application/json; charset=utf-8", join(visibleRoot, "ordinary_visible_rendering_profile.json")],
     ["/score-animation.json", "score-animation.json", "application/json; charset=utf-8", join(scoreRoot, "score_gauge_ss_animation_profile.json")],
+    ["/game-clear-profile.json", "game-clear-profile.json", "application/json; charset=utf-8", join(gameClearRoot, "game-clear-profile.json")],
+    ["/game-clear-assets.json", "game-clear-assets.json", "application/json; charset=utf-8", null],
     ["/chart.bms", "chart.bms", "text/plain; charset=utf-8", join(dynamicRoot, "bms", "poppin_shuffle_special.bms.txt")],
-  ]) stageFile(route, name, mime, readFileSync(source), allowlist);
+  ]) stageFile(route, name, mime, source === null
+    ? Buffer.from(JSON.stringify(gameClearAssets))
+    : readFileSync(source), allowlist);
   writeFileSync(join(stage, "allowlist.txt"), allowlist.map((row) => row.join("\t")).join("\n") + "\n");
 }
 
@@ -182,7 +201,8 @@ function verify(value) {
     "natural-completion", "life-warning", "game-over",
     "rehearsal-manual-controls", "rehearsal-life-zero-continuation",
     "rehearsal-forward-five-controls", "rehearsal-return-five-controls",
-    "rehearsal-auto-demo-controls",
+    "rehearsal-auto-demo-controls", "live-manual-full-combo",
+    "rehearsal-manual-base-clear", "rehearsal-auto-all-perfect",
   ]);
   for (const capture of value.scene.captures) {
     required.delete(capture.label);
@@ -216,6 +236,7 @@ function verify(value) {
   for (const cleanup of [
     value.cleanup.auto,
     value.cleanup.manual,
+    value.cleanup.liveManualClear,
     value.cleanup.rehearsalManual,
     value.cleanup.rehearsalAuto,
   ]) {

@@ -677,6 +677,9 @@ class MountedSimulatorEngine implements SimulatorEngine {
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     return this.engine.completeLiveAudio(clearStatus);
   }
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+    return this.engine.advanceNaturalCompletionPresentation(deltaTimeSeconds);
+  }
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
     return this.engine.getNaturalCompletionClearStatus();
   }

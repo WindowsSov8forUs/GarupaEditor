@@ -38,6 +38,7 @@ import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/curren
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { augmentScoreHudProfilesForPause } from "./pauseControlTestResources";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
 import {
   ImmutableLocalParticleResourceProvider,
   PortableParticleResourcePreflightAdapter,
@@ -134,12 +135,22 @@ async function main(): Promise<void> {
   const auto = await createSession(inputs, "ordinary-webview2-auto", "live-auto");
   mount(app, auto);
   requireOk(auto.engine.initialize());
+  assertPersistentHudComponentConsumption(auto);
   captures.push(await capture(app, auto, "initialize", 0));
   await runAutoScenario(app, auto, captures);
   requireOk(auto.engine.completeLiveAudio(3));
   captures.push(await capture(app, auto, "natural-completion", 1401));
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
+
+  const liveManualClear = await createSession(inputs, "ordinary-webview2-live-manual-clear", "live-manual");
+  mount(app, liveManualClear);
+  requireOk(liveManualClear.engine.initialize());
+  await advanceToPlayable(liveManualClear);
+  requireOk(liveManualClear.engine.completeLiveAudio(2));
+  sampleGameClear(liveManualClear, 1.2);
+  captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
+  const liveManualClearCleanup = disposeSession(app, liveManualClear);
 
   const manual = await createSession(inputs, "ordinary-webview2-game-over", "live-manual");
   mount(app, manual);
@@ -160,6 +171,9 @@ async function main(): Promise<void> {
   captures.push(await capture(app, rehearsalManual, "rehearsal-forward-five-controls", 5));
   requireOk(rehearsalManual.controlOverlay!.updateTimeline(0));
   captures.push(await capture(app, rehearsalManual, "rehearsal-return-five-controls", 0));
+  requireOk(rehearsalManual.engine.completeLiveAudio(1));
+  sampleGameClear(rehearsalManual, 1.2);
+  captures.push(await capture(app, rehearsalManual, "rehearsal-manual-base-clear", 0));
   const rehearsalManualCleanup = disposeSession(app, rehearsalManual);
 
   const rehearsalAuto = await createSession(
@@ -170,6 +184,10 @@ async function main(): Promise<void> {
   mount(app, rehearsalAuto);
   requireOk(rehearsalAuto.engine.initialize());
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-demo-controls", 0));
+  await advanceToPlayable(rehearsalAuto);
+  requireOk(rehearsalAuto.engine.completeLiveAudio(3));
+  sampleGameClear(rehearsalAuto, 1.2);
+  captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
   const requiredLabels = [
@@ -178,7 +196,8 @@ async function main(): Promise<void> {
     "pause", "pause-retry-confirm", "pause-abort-confirm", "pause-resume-countdown", "resume", "natural-completion", "life-warning", "game-over",
     "rehearsal-manual-controls", "rehearsal-life-zero-continuation",
     "rehearsal-forward-five-controls", "rehearsal-return-five-controls",
-    "rehearsal-auto-demo-controls",
+    "rehearsal-auto-demo-controls", "live-manual-full-combo",
+    "rehearsal-manual-base-clear", "rehearsal-auto-all-perfect",
   ];
   const labels = new Set(captures.map((entry) => entry.label));
   for (const label of requiredLabels) if (!labels.has(label)) throw new Error(`required browser event was not captured: ${label}`);
@@ -219,6 +238,7 @@ async function main(): Promise<void> {
     cleanup: Object.freeze({
       auto: autoCleanup,
       manual: manualCleanup,
+      liveManualClear: liveManualClearCleanup,
       rehearsalManual: rehearsalManualCleanup,
       rehearsalAuto: rehearsalAutoCleanup,
       initialFontFaces,
@@ -231,6 +251,18 @@ async function main(): Promise<void> {
   });
   app.destroy(true, { children: true, texture: true, textureSource: true });
   globalThis.window.ipc.postMessage(JSON.stringify(result));
+}
+
+function sampleGameClear(session: BrowserSession, elapsedSeconds: number): void {
+  requireOk(session.engine.advanceNaturalCompletionPresentation(Math.fround(elapsedSeconds)));
+}
+
+async function advanceToPlayable(session: BrowserSession): Promise<void> {
+  for (let frame = 0; frame < 120; frame += 1) {
+    if (requireOk(session.engine.snapshot()).managers.startupDirection?.playable !== false) return;
+    requireOk(session.engine.step(DELTA, session.id.includes("manual") ? { touches: [] } : undefined));
+  }
+  throw new Error(`session did not become playable: ${session.id}`);
 }
 
 async function runAutoScenario(
@@ -249,11 +281,23 @@ async function runAutoScenario(
       requireOk(session.engine.pause());
       requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "pause-menu" as const })));
       requireOk(session.engine.step(DELTA));
+      const pauseWindowOwner = session.controlOverlay.root.getChildByLabel("RetryablePauseDialog/Window", true);
+      if (pauseWindowOwner === null) throw new Error("RetryablePauseDialog serialized graph missing");
       captures.push(await capture(app, session, "pause", frame));
       requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "retry-confirm" as const })));
+      if (session.controlOverlay.root.getChildByLabel("SelectableCommonDialog/Window/Header", true) === null) {
+        throw new Error("SelectableCommonDialog serialized component graph missing");
+      }
       captures.push(await capture(app, session, "pause-retry-confirm", frame));
       requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "abort-confirm" as const })));
+      if (session.controlOverlay.root.getChildByLabel("RhythmGameRetireAnnotatedDialog/Window/AnnotatedText", true) === null) {
+        throw new Error("RhythmGameRetireAnnotatedDialog serialized component graph missing");
+      }
       captures.push(await capture(app, session, "pause-abort-confirm", frame));
+      requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "pause-menu" as const })));
+      if (session.controlOverlay.root.getChildByLabel("RetryablePauseDialog/Window", true) !== pauseWindowOwner) {
+        throw new Error("Pause component owner was rebuilt instead of reactivated");
+      }
       requireOk(session.controlOverlay.publishPauseControlState(Object.freeze({ ...playingPauseState, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })));
       captures.push(await capture(app, session, "pause-resume-countdown", frame));
       requireOk(session.engine.resume());
@@ -298,6 +342,21 @@ async function runAutoScenario(
     }
   }
   if (!completed) throw new Error("registered full chart did not reach its bounded completion checkpoint");
+}
+
+function assertPersistentHudComponentConsumption(session: BrowserSession): void {
+  const rows = session.renderer.sceneSnapshot();
+  const addScore = rows.filter((row) => row.renderObjectId.startsWith("render:hud:add-score"));
+  if (addScore.length !== 4 || addScore.some((row) => row.hudSpriteCount !== 7)) {
+    throw new Error(`AddScore fixed 4x7 graph mismatch: ${addScore.map((row) => row.hudSpriteCount).join("|")}`);
+  }
+  const life = rows.find((row) => row.renderObjectId === "render:hud:life");
+  const primary = life?.hudSpriteNodes?.find((node) => node.label === "life-primary");
+  if (life?.visible !== true || life.hudSerializedComponentPaths?.length !== 10 ||
+    life.hudSerializedComponentPaths.filter((path) => path.endsWith("/life_panel/Total")).length !== 1 ||
+    primary?.visible !== true || primary.maskLabel !== "life-primary-fill-mask" || primary.width !== 224) {
+    throw new Error("Life ten-component positive gauge graph is not visibly consumed");
+  }
 }
 
 async function runGameOverScenario(
@@ -591,15 +650,18 @@ async function capture(
 
 async function loadInputs(): Promise<LoadedInputs> {
   const map = await fetchJson<InputMap>("/input-map.json");
-  const [base, visibleRaw, scoreAnimationRaw, chartText] = await Promise.all([
+  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, gameClearAssets, chartText] = await Promise.all([
     fetchJson<RenderResourceProfile>("/render-profile.json"),
     fetchJson("/visible-profile.json"),
     fetchJson("/score-animation.json"),
+    fetchJson("/game-clear-profile.json"),
+    fetchJson<RenderResourceProfile["assets"]>("/game-clear-assets.json"),
     fetchText("/chart.bms"),
   ]);
   const visible = parseCurrentOrdinaryVisibleProfile(visibleRaw);
   const scoreAnimation = parseCurrentScoreGaugeSsAnimationProfile(scoreAnimationRaw);
-  if (visible === null || scoreAnimation === null) throw new Error("current rendering profiles did not parse");
+  const gameClearProfile = parseCurrentGameClearProfile(gameClearRaw);
+  if (visible === null || scoreAnimation === null || gameClearProfile === null) throw new Error("current rendering profiles did not parse");
   const renderProfile: RenderResourceProfile = Object.freeze({
     ...base,
     packIdentity: `${base.packIdentity}+ordinary-visible-webview2+score-webview2`,
@@ -610,9 +672,11 @@ async function loadInputs(): Promise<LoadedInputs> {
       })),
       ...CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((entry) => entry.profile),
       ...augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) => entry.profile)),
+      ...gameClearAssets,
     ]),
     ordinaryVisibleProfile: visible,
     scoreGaugeSsAnimation: scoreAnimation,
+    gameClearProfile,
   });
   const renderResources = await loadMappedBytes(map.render);
   const particleResources = await loadMappedBytes(map.particle);

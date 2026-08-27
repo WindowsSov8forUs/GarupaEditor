@@ -220,16 +220,13 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (surface.status === "rejected") {
       return Object.freeze({ status: "rejected" as const, failure: surface.failure });
     }
-    const stepped = this.engine.step(
-      deltaTimeSeconds,
-      manualFrame ?? undefined,
-    );
-    if (stepped.status !== "ok") return rejectedStep(stepped);
     if (this.engine.getNaturalCompletionClearStatus() !== null) {
       if (this.naturalCompletionPresentationRemainingSeconds === null) {
         this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
         return Object.freeze({ status: "running" as const });
       }
+      const advanced = this.engine.advanceNaturalCompletionPresentation(deltaTimeSeconds);
+      if (advanced.status !== "ok") return rejectedStep(advanced);
       this.naturalCompletionPresentationRemainingSeconds = Math.fround(
         this.naturalCompletionPresentationRemainingSeconds - Math.fround(deltaTimeSeconds),
       );
@@ -237,6 +234,15 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         const report = this.finish("completed", null);
         return Object.freeze({ status: "closed" as const, report });
       }
+      return Object.freeze({ status: "running" as const });
+    }
+    const stepped = this.engine.step(
+      deltaTimeSeconds,
+      manualFrame ?? undefined,
+    );
+    if (stepped.status !== "ok") return rejectedStep(stepped);
+    if (this.engine.getNaturalCompletionClearStatus() !== null) {
+      this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
       return Object.freeze({ status: "running" as const });
     }
     const snapshot = this.engine.snapshot();

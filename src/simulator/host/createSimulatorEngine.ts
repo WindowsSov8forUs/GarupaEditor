@@ -348,6 +348,25 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    if (this.naturalCompletionClearStatus === null || !Number.isFinite(deltaTimeSeconds) ||
+      deltaTimeSeconds < 0) {
+      return integrityFailure(
+        "render.game-clear.invalid-presentation-advance",
+        [],
+        "Game-clear presentation time advances only after natural completion with one finite non-negative host delta.",
+      );
+    }
+    const planned = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
+    if (planned === null) return ok(undefined);
+    if (planned.status !== "ok") return planned;
+    const committed = planned.value.commit();
+    return committed.status === "ok"
+      ? committed
+      : this.inGameManager.latchExternalFault(committed);
+  }
+
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
     return this.naturalCompletionClearStatus;
   }
