@@ -15,11 +15,19 @@ import {
   type PauseControlCommand,
 } from "../scene/pauseControlScene";
 import { consumeRehearsalControlCommand } from "../scene/rehearsalControlScene";
+import {
+  CURRENT_PAUSE_SERIALIZED_GRAPHS,
+  CURRENT_PAUSE_SERIALIZED_SOURCE_COMMIT,
+} from "../backends/resources/currentPauseSerializedProfile";
 
 const FIXTURE = join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4",
 );
+const SECOND_ORACLE = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+), "utf8"));
 const SURFACE = Object.freeze({
   revision: 0,
   viewportWidth: 1600,
@@ -62,6 +70,25 @@ function testFixtureAndParameterizedLayout(): void {
     portable_pause_ui_authorization: true,
     production_authorization: true,
   });
+  assert.equal(contract.closure.production_authorization, true,
+    "the old field is retained only as historical evidence input");
+  assert.equal(SECOND_ORACLE.legacyClosureDisposition.blanketProductionAuthorization, false,
+    "Reverse 1bff69eb revokes the old blanket production authorization");
+  assert.equal(CURRENT_PAUSE_SERIALIZED_SOURCE_COMMIT,
+    "1bff69eb8031cf723e4081f35ece14d0f775a19f");
+  const sourceRetryable = SECOND_ORACLE.pause.graphs.retryable_pause;
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable.window.size,
+    [sourceRetryable.window.width, sourceRetryable.window.height]);
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable.header.position,
+    [sourceRetryable.header.transform.localPosition[0], -sourceRetryable.header.transform.localPosition[1]]);
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable.title.position,
+    [sourceRetryable.title.transform.localPosition[0], -sourceRetryable.title.transform.localPosition[1]]);
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable.content.position,
+    [sourceRetryable.content.transform.localPosition[0], -sourceRetryable.content.transform.localPosition[1]]);
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable.header.position,
+    [0, -SECOND_ORACLE.pause.graphs.selectable_common.header.transform.localPosition[1]]);
+  assert.deepEqual(CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated.annotation.position,
+    [-7, 9]);
   assert.equal(traces.status, "accepted-r1-observation-only-complete-pause-matrix");
   assert.equal(traces.summary.accepted_trace_count, 19);
   assert.deepEqual(traces.summary.confirmed_mode_rows, [

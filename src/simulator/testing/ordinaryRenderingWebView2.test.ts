@@ -598,6 +598,22 @@ async function capture(
   const visibleWorldRecords = worldObservation.records.filter((record) =>
     record.visible && record.renderable && record.worldBounds !== null &&
     intersects(record.worldBounds, [WIDTH, HEIGHT])).length;
+  if (label === "pause") {
+    const record = (name: string) => worldObservation.records.find((row) => row.label === name);
+    const dialog = record("RetryablePauseDialog");
+    const window = record("RetryablePauseDialog/Window");
+    const header = record("RetryablePauseDialog/Window/Header");
+    const title = record("RetryablePauseDialog/Window/Title");
+    const pauseButton = record("original-pause-button");
+    if (dialog === undefined || window === undefined || header === undefined || title === undefined ||
+        pauseButton?.visible !== true ||
+        JSON.stringify(dialog.localMatrix.slice(4)) !== JSON.stringify([WIDTH / 2, HEIGHT / 2]) ||
+        JSON.stringify(window.localMatrix) !== JSON.stringify([1, 0, 0, 1, 0, 0]) ||
+        JSON.stringify(header.localMatrix.slice(4)) !== JSON.stringify([0, -115]) ||
+        JSON.stringify(title.localMatrix.slice(4)) !== JSON.stringify([-391, 1])) {
+      throw new Error(`Pause serialized hierarchy mismatch: ${JSON.stringify({ dialog, window, header, title, pauseButton })}`);
+    }
+  }
   const root = worldObservation.records.find((record) => record.parent === null);
   const stageChildren = worldObservation.records.filter((record) => record.parent === root?.path)
     .map((record) => record.label);

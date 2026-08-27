@@ -35,7 +35,7 @@ import {
   type RehearsalControlSceneLayout,
 } from "../../scene/rehearsalControlScene";
 import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
-import type { PauseControlSceneSnapshot, PauseControlBounds } from "../../scene/pauseControlScene";
+import type { PauseControlSceneSnapshot } from "../../scene/pauseControlScene";
 import {
   COMMON_ORDINARY_VISIBLE_BINDINGS as CURRENT_ORDINARY_VISIBLE_BINDINGS,
   COMMON_PAUSE_CONTROL_BINDINGS as CURRENT_PAUSE_CONTROL_BINDINGS,
@@ -43,6 +43,10 @@ import {
   COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
 } from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
+import {
+  CURRENT_PAUSE_ATLAS_BORDERS,
+  CURRENT_PAUSE_SERIALIZED_GRAPHS,
+} from "../resources/currentPauseSerializedProfile";
 import {
   CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
   CURRENT_PAUSE_COMPONENT_PATHS,
@@ -1906,145 +1910,209 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   }
 
   private rebuildModal(snapshot: PauseControlSceneSnapshot, countdownNumber: number | null): void {
-    const graphKey = snapshot.state === "resume-countdown"
-      ? `resume-countdown:${String(countdownNumber)}`
-      : snapshot.state;
+    const graphKey = snapshot.state === "resume-countdown" ? "resume-countdown" : snapshot.state;
     this.modalRoot.visible = snapshot.state !== "playing";
     for (const [key, graph] of this.persistentModalGraphs) graph.visible = key === graphKey;
     if (snapshot.state === "playing") return;
-    if (this.persistentModalGraphs.has(graphKey)) return;
+    const existing = this.persistentModalGraphs.get(graphKey);
+    if (existing !== undefined) {
+      if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
+        this.updateCountdownGraph(existing, countdownNumber, snapshot);
+      }
+      return;
+    }
 
     const graph = new Container({ label: `pause-prefab:${graphKey}`, sortableChildren: true });
     graph.eventMode = "none";
     this.modalRoot.addChild(graph);
     this.persistentModalGraphs.set(graphKey, graph);
     if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
-      const texture = this.pauseTextures.countdown[countdownNumber - 1];
-      const sprite = new Sprite({ texture, label: `resume-countdown-${countdownNumber}` });
-      const scale = snapshot.layout.controlScale;
-      sprite.width = texture.width * scale;
-      sprite.height = texture.height * scale;
-      sprite.position.set((snapshot.layout.viewportWidth - sprite.width) / 2 + (countdownNumber === 1 ? -5 * scale : 0), (snapshot.layout.viewportHeight - sprite.height) / 2);
-      graph.addChild(sprite);
+      const owner = new Container({ label: "InGameCountDownAnimation" });
+      owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+      owner.scale.set(snapshot.layout.controlScale);
+      const sprite = new Sprite({ texture: this.pauseTextures.countdown[countdownNumber - 1], label: "resume-countdown-sprite" });
+      sprite.anchor.set(0.5);
+      owner.addChild(sprite);
+      graph.addChild(owner);
+      this.updateCountdownGraph(graph, countdownNumber, snapshot);
       return;
     }
-    const directChildrenBefore = new Set(this.modalRoot.children);
+    const coverPath = snapshot.state === "pause-menu"
+      ? CURRENT_PAUSE_COMPONENT_PATHS.cover
+      : snapshot.state === "retry-confirm"
+        ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry.cover
+        : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.cover;
     const cover = new NineSliceSprite({
       texture: this.pauseTextures.cover,
-      leftWidth: 1,
-      rightWidth: 1,
-      topHeight: 1,
-      bottomHeight: 1,
+      ...CURRENT_PAUSE_ATLAS_BORDERS.cover,
       width: snapshot.layout.viewportWidth,
       height: snapshot.layout.viewportHeight,
       tint: 0x000000,
       alpha: 0.5,
-      label: snapshot.state === "pause-menu"
-        ? CURRENT_PAUSE_COMPONENT_PATHS.cover
-        : snapshot.state === "retry-confirm"
-          ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry.cover
-          : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.cover,
+      label: coverPath,
     });
-    this.modalRoot.addChild(cover);
-    if (snapshot.state === "pause-menu") this.buildPauseMenu(snapshot);
-    else this.buildConfirmation(snapshot, snapshot.state === "retry-confirm");
-    for (const child of [...this.modalRoot.children]) {
-      if (!directChildrenBefore.has(child)) graph.addChild(child);
+    cover.zIndex = 0;
+    graph.addChild(cover);
+    if (snapshot.state === "pause-menu") {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable,
+        CURRENT_PAUSE_COMPONENT_PATHS,
+        snapshot.words.pause.title, snapshot.words.pause.message,
+        snapshot.words.pause.buttons,
+        null,
+      );
+    } else if (snapshot.state === "retry-confirm") {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry,
+        snapshot.words.retry.title, snapshot.words.retry.message,
+        snapshot.words.retry.buttons,
+        null,
+      );
+    } else {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort,
+        snapshot.words.abort.title, snapshot.words.abort.message,
+        snapshot.words.abort.buttons,
+        snapshot.words.abort.annotation,
+      );
     }
     graph.sortChildren();
   }
 
-  private buildPauseMenu(snapshot: PauseControlSceneSnapshot): void {
-    const layout = snapshot.layout;
-    this.addWindow(layout.pauseMenu.windowBoundsTopLeft, CURRENT_PAUSE_COMPONENT_PATHS.window);
-    this.addHeader(layout.pauseMenu.windowBoundsTopLeft, 842, 40, 115, layout.controlScale);
-    this.addText(snapshot.words.pause.title,
-      layout.viewportWidth / 2 - 391 * layout.controlScale,
-      layout.pauseMenu.windowBoundsTopLeft.y + layout.pauseMenu.windowBoundsTopLeft.height / 2 - 115 * layout.controlScale,
-      30 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.title, 0, 0.5);
-    this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.content);
-    this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.abortButton);
-    this.addButton(layout.pauseMenu.retryBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[1], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.retryButton);
-    this.addButton(layout.pauseMenu.resumeBoundsTopLeft, this.pauseTextures.pink, snapshot.words.pause.buttons[2], 34 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.resumeButton);
+  private updateCountdownGraph(graph: Container, countdownNumber: number, snapshot: PauseControlSceneSnapshot): void {
+    const owner = graph.getChildByLabel("InGameCountDownAnimation", true) as Container | null;
+    const sprite = owner?.getChildByLabel("resume-countdown-sprite", true) as Sprite | null;
+    if (owner === null || sprite === null) throw new Error("Persistent countdown Prefab graph is incomplete.");
+    sprite.texture = this.pauseTextures.countdown[countdownNumber - 1];
+    sprite.position.set(countdownNumber === 1 ? -5 : 0, 0);
+    owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+    owner.scale.set(snapshot.layout.controlScale);
   }
 
-  private buildConfirmation(snapshot: PauseControlSceneSnapshot, retry: boolean): void {
-    const layout = snapshot.layout;
-    const confirmation = retry ? layout.retryConfirmation : layout.abortConfirmation;
-    const components = retry
-      ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry
-      : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort;
-    this.addWindow(confirmation.windowBoundsTopLeft, components.window, retry ? "retry-confirm-window" : "abort-confirm-window");
-    this.addHeader(confirmation.windowBoundsTopLeft, retry ? 770 : 558, 40, retry ? 239.64999389648438 : 115, layout.controlScale, components.header);
-    const words = retry ? snapshot.words.retry : snapshot.words.abort;
-    this.addText(words.title,
-      layout.viewportWidth / 2 + (retry ? -352.260009765625 : -250) * layout.controlScale,
-      confirmation.windowBoundsTopLeft.y + confirmation.windowBoundsTopLeft.height / 2 -
-        (retry ? 239.64999389648438 : 115) * layout.controlScale,
-      (retry ? 30 : 29) * layout.controlScale, 0x333333,
-      components.title, 0, 0.5, retry ? "retry-confirm-title" : "abort-confirm-title");
-    this.addCenteredText(words.message,
-      layout.viewportWidth / 2 + (retry ? 0 : 5) * layout.controlScale,
-      layout.viewportHeight / 2 - (retry ? 0 : 50) * layout.controlScale,
-      (retry ? 24 : 23) * layout.controlScale, 0x333333,
-      components.content, retry ? "retry-confirm-message" : "abort-confirm-message");
-    if (!retry) this.addCenteredText(snapshot.words.abort.annotation,
-      layout.viewportWidth / 2 - 7 * layout.controlScale,
-      layout.viewportHeight / 2 + 9 * layout.controlScale,
-      19 * layout.controlScale, 0x555555,
-      CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.annotation, "abort-confirm-annotation");
-    this.addButton(confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, components.cancelButton, retry ? "retry-cancel" : "abort-cancel");
-    this.addButton(confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, components.confirmButton, retry ? "retry-confirm" : "abort-confirm");
-  }
+  private buildSerializedDialog(
+    graph: Container,
+    snapshot: PauseControlSceneSnapshot,
+    profile: typeof CURRENT_PAUSE_SERIALIZED_GRAPHS[keyof typeof CURRENT_PAUSE_SERIALIZED_GRAPHS],
+    paths: {
+      readonly window: string; readonly header: string; readonly title: string; readonly content: string;
+      readonly cancelButton?: string; readonly confirmButton?: string;
+      readonly abortButton?: string; readonly retryButton?: string; readonly resumeButton?: string;
+      readonly annotation?: string;
+    },
+    titleText: string,
+    contentText: string,
+    buttonTexts: readonly string[],
+    annotationText: string | null,
+  ): void {
+    const dialog = new Container({ label: profile.identity, sortableChildren: true });
+    dialog.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+    dialog.scale.set(snapshot.layout.controlScale);
+    dialog.zIndex = 5;
+    graph.addChild(dialog);
 
-  private addWindow(value: PauseControlBounds, label: string, explicitPrimitiveLabel?: string): void {
-    const primitiveLabel = explicitPrimitiveLabel ?? (label === CURRENT_PAUSE_COMPONENT_PATHS.window ? "pause-window" : label);
-    const window = new NineSliceSprite({ texture: this.pauseTextures.window, leftWidth: 12, rightWidth: 12, topHeight: 12, bottomHeight: 12, label: primitiveLabel });
-    applyBounds(window, value);
-    const component = new Container({ label });
-    component.addChild(window);
-    this.modalRoot.addChild(component);
-  }
-  private addHeader(window: PauseControlBounds, authoredWidth: number, authoredHeight: number, authoredLocalY: number, scale: number, componentPath: string = CURRENT_PAUSE_COMPONENT_PATHS.header): void {
-    const component = new Container({ label: componentPath });
-    const header = new NineSliceSprite({ texture: this.pauseTextures.header, leftWidth: 28, rightWidth: 4, topHeight: 0, bottomHeight: 0, label: "pause-dialog-header" });
-    const width = Math.fround(authoredWidth * scale);
-    const height = Math.fround(authoredHeight * scale);
-    const centerY = Math.fround(window.y + window.height / 2 - authoredLocalY * scale);
-    applyBounds(header, { x: Math.fround(window.x + (window.width - width) / 2), y: Math.fround(centerY - height / 2), width, height });
-    component.addChild(header);
-    this.modalRoot.addChild(component);
-  }
-  private addButton(value: PauseControlBounds, texture: Texture, text: string, fontSize: number, label: string, explicitPrimitiveLabel?: string): void {
-    const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.abortButton ? "pause-abort"
-      : label === CURRENT_PAUSE_COMPONENT_PATHS.retryButton ? "pause-retry"
-      : label === CURRENT_PAUSE_COMPONENT_PATHS.resumeButton ? "pause-resume"
-      : explicitPrimitiveLabel ?? label;
-    const component = new Container({ label });
-    const button = new NineSliceSprite({ texture, leftWidth: 14, rightWidth: 20, topHeight: 22, bottomHeight: 12, label: legacy });
-    applyBounds(button, value);
-    const caption = this.text(text, fontSize, texture === this.pauseTextures.pink ? 0xffffff : 0x555555, `${legacy}-label`);
-    caption.anchor.set(0.5, 0.5);
-    caption.position.set(value.x + value.width / 2, value.y + value.height / 2);
-    component.addChild(button, caption);
-    this.modalRoot.addChild(component);
-  }
-  private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string, explicitPrimitiveLabel?: string): void {
-    this.addText(text, x, y, size, fill, label, 0.5, 0.5, explicitPrimitiveLabel);
-  }
-  private addText(text: string, x: number, y: number, size: number, fill: number, label: string, anchorX: number, anchorY: number, explicitPrimitiveLabel?: string): void {
-    const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.title ? "pause-title"
-      : label === CURRENT_PAUSE_COMPONENT_PATHS.content ? "pause-message"
-      : explicitPrimitiveLabel ?? label;
-    const component = new Container({ label });
-    const value = this.text(text, size, fill, legacy);
-    value.anchor.set(anchorX, anchorY);
-    value.position.set(x, y);
-    component.addChild(value);
-    this.modalRoot.addChild(component);
+    const windowComponent = new Container({ label: paths.window, sortableChildren: true });
+    windowComponent.position.set(profile.window.position[0], profile.window.position[1]);
+    windowComponent.zIndex = profile.window.depth;
+    const window = new NineSliceSprite({
+      texture: this.pauseTextures.window,
+      ...CURRENT_PAUSE_ATLAS_BORDERS.window,
+      width: profile.window.size[0], height: profile.window.size[1],
+      anchor: { x: 0.5, y: 0.5 },
+      label: profile.identity === "RetryablePauseDialog" ? "pause-window"
+        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-window" : "abort-confirm-window",
+    });
+    windowComponent.addChild(window);
+    dialog.addChild(windowComponent);
+
+    const headerComponent = new Container({ label: paths.header, sortableChildren: true });
+    headerComponent.position.set(profile.header.position[0], profile.header.position[1]);
+    headerComponent.zIndex = profile.header.depth;
+    const header = new NineSliceSprite({
+      texture: this.pauseTextures.header,
+      ...CURRENT_PAUSE_ATLAS_BORDERS.header,
+      width: profile.header.size[0], height: profile.header.size[1],
+      anchor: { x: 0.5, y: 0.5 }, label: "pause-dialog-header",
+    });
+    headerComponent.addChild(header);
+    windowComponent.addChild(headerComponent);
+
+    const titlePath = paths.title;
+    const titleComponent = new Container({ label: titlePath });
+    titleComponent.position.set(profile.title.position[0], profile.title.position[1]);
+    titleComponent.zIndex = profile.title.depth;
+    const title = this.text(titleText, profile.title.fontSize, 0x333333,
+      profile.identity === "RetryablePauseDialog" ? "pause-title"
+        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-title" : "abort-confirm-title");
+    title.anchor.set(profile.title.pivot === "left" ? 0 : 0.5, 0.5);
+    titleComponent.addChild(title);
+    headerComponent.addChild(titleComponent);
+
+    const contentComponent = new Container({ label: paths.content });
+    contentComponent.position.set(profile.content.position[0], profile.content.position[1]);
+    contentComponent.zIndex = profile.content.depth;
+    const content = this.text(contentText, profile.content.fontSize, 0x333333,
+      profile.identity === "RetryablePauseDialog" ? "pause-message"
+        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-message" : "abort-confirm-message");
+    content.anchor.set(profile.content.pivot === "left" ? 0 : 0.5, 0.5);
+    contentComponent.addChild(content);
+    windowComponent.addChild(contentComponent);
+
+    if ("annotation" in profile && annotationText !== null && paths.annotation !== undefined) {
+      const annotationComponent = new Container({ label: paths.annotation });
+      annotationComponent.position.set(profile.annotation.position[0], profile.annotation.position[1]);
+      annotationComponent.zIndex = profile.annotation.depth;
+      const annotation = this.text(annotationText, profile.annotation.fontSize, 0x555555, "abort-confirm-annotation");
+      annotation.anchor.set(0.5);
+      annotationComponent.addChild(annotation);
+      windowComponent.addChild(annotationComponent);
+    }
+
+    const buttonGroup = new Container({ label: `${profile.identity}/Buttons`, sortableChildren: true });
+    windowComponent.addChild(buttonGroup);
+    profile.buttons.forEach((buttonProfile, index) => {
+      const path = "abortButton" in paths && index === 0 ? paths.abortButton
+        : "retryButton" in paths && index === 1 ? paths.retryButton
+        : "resumeButton" in paths && index === 2 ? paths.resumeButton
+        : index === 0 ? paths.cancelButton : paths.confirmButton;
+      if (path === undefined) throw new Error("Pause serialized button component path is missing.");
+      const component = new Container({ label: path, sortableChildren: true });
+      component.position.set(buttonProfile.position[0], buttonProfile.position[1]);
+      component.zIndex = buttonProfile.spriteDepth;
+      const texture = buttonProfile.spriteName === "button_pink" ? this.pauseTextures.pink : this.pauseTextures.gray;
+      const legacy = profile.identity === "RetryablePauseDialog"
+        ? ["pause-abort", "pause-retry", "pause-resume"][index]!
+        : profile.identity === "SelectableCommonDialog"
+          ? ["retry-cancel", "retry-confirm"][index]!
+          : ["abort-cancel", "abort-confirm"][index]!;
+      const button = new NineSliceSprite({
+        texture, ...CURRENT_PAUSE_ATLAS_BORDERS.button,
+        width: buttonProfile.spriteSize[0], height: buttonProfile.spriteSize[1],
+        anchor: { x: 0.5, y: 0.5 }, label: legacy,
+      });
+      button.zIndex = buttonProfile.spriteDepth;
+      const caption = this.text(buttonTexts[index]!, buttonProfile.fontSize,
+        buttonProfile.spriteName === "button_pink" ? 0xffffff : 0x555555, `${legacy}-label`);
+      caption.anchor.set(0.5);
+      caption.position.set(buttonProfile.labelPosition[0], buttonProfile.labelPosition[1]);
+      caption.zIndex = buttonProfile.labelDepth;
+      component.addChild(button, caption);
+      buttonGroup.addChild(component);
+    });
   }
   private text(value: string, size: number, fill: number, label: string): Text {
-    return new Text({ text: value, style: { fill, fontFamily: this.fontFamily, fontSize: size, fontWeight: "normal", align: "center" }, label });
+    return new Text({
+      text: value,
+      style: {
+        fill: linearTintFromSrgbColor(fill),
+        fontFamily: this.fontFamily,
+        fontSize: size,
+        fontWeight: "normal",
+        align: "center",
+      },
+      label,
+    });
   }
   private applyAvailability(): void {
     if (this.returnButton !== null) this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0 ? 0.45 : 1;

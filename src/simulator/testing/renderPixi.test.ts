@@ -13,6 +13,7 @@ import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/p
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../backends/resources/currentOrdinaryHudProfile";
+import { CURRENT_PAUSE_COMPONENT_PATHS } from "../backends/resources/currentFiveVisualCorrectionProfile";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
@@ -195,9 +196,28 @@ async function main(): Promise<void> {
     "Pause does not infer component identity from a Sprite name");
   assert(liveControls.root.getChildByLabel("RetryablePauseDialog/Background", true) instanceof NineSliceSprite,
     "Pause dark cover consumes the serialized fill UISprite rather than Graphics");
-  const persistentPauseWindow = liveControls.root.getChildByLabel("RetryablePauseDialog/Window", true);
+  const persistentPauseWindow = liveControls.root.getChildByLabel("RetryablePauseDialog/Window", true) as Container;
   assert(persistentPauseWindow !== null, "Retryable Pause serialized component owner exists");
+  const pauseDialog = liveControls.root.getChildByLabel("RetryablePauseDialog", true) as Container;
+  equal(JSON.stringify([pauseDialog.position.x, pauseDialog.position.y]), JSON.stringify([800, 360]),
+    "Pause Prefab root is centered once before applying the NGUI scale");
+  equal(JSON.stringify([pauseDialog.scale.x, pauseDialog.scale.y]), JSON.stringify([UI_SCALE, UI_SCALE]),
+    "Pause Prefab owns one UIRoot scale instead of scaling every primitive independently");
+  equal(JSON.stringify([persistentPauseWindow.position.x, persistentPauseWindow.position.y]), JSON.stringify([0, 0]),
+    "Pause Window keeps its serialized local Transform");
+  equal(JSON.stringify([
+    (liveControls.root.getChildByLabel(CURRENT_PAUSE_COMPONENT_PATHS.header, true) as Container).position.x,
+    (liveControls.root.getChildByLabel(CURRENT_PAUSE_COMPONENT_PATHS.header, true) as Container).position.y,
+  ]), JSON.stringify([0, -115]), "Pause Header consumes the exact Unity-to-Pixi local Transform");
+  equal(JSON.stringify([
+    (liveControls.root.getChildByLabel(CURRENT_PAUSE_COMPONENT_PATHS.title, true) as Container).position.x,
+    (liveControls.root.getChildByLabel(CURRENT_PAUSE_COMPONENT_PATHS.title, true) as Container).position.y,
+  ]), JSON.stringify([-391, 1]), "Pause title remains a child of Header with exact local Transform");
+  equal(Number((liveControls.root.getChildByLabel("pause-title", true) as Text).style.fill), 0x080808,
+    "Pause 333333 sRGB label color is linearized before final output transfer");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "retry-confirm" as const })), "publish Retry confirmation");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
+    "Pause Sprite remains visible through Retry confirmation");
   assert(liveControls.root.getChildByLabel("retry-confirm-window", true) !== null, "Retry confirmation is Simulator-owned");
   assert(liveControls.root.getChildByLabel("SelectableCommonDialog/Window/Header", true) !== null,
     "Retry confirmation keeps the SelectableCommonDialog component identity");
@@ -205,10 +225,20 @@ async function main(): Promise<void> {
   equal(liveControls.root.getChildByLabel("RetryablePauseDialog/Window", true), persistentPauseWindow,
     "Pause state mutation reactivates the same serialized component graph without rebuilding it");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "abort-confirm" as const })), "publish Abort confirmation");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
+    "Pause Sprite remains visible through Abort confirmation");
   assert(liveControls.root.getChildByLabel("RhythmGameRetireAnnotatedDialog/Window/AnnotatedText", true) !== null,
     "Abort confirmation keeps the annotated serialized component identity");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })), "publish Resume countdown");
-  assert(liveControls.root.getChildByLabel("resume-countdown-3", true) !== null, "Resume countdown consumes exact Countdown3 texture");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
+    "Pause Sprite remains visible through Resume countdown");
+  const countdownSprite = liveControls.root.getChildByLabel("resume-countdown-sprite", true) as Sprite;
+  assert(countdownSprite !== null, "Resume countdown consumes the serialized countdown Sprite owner");
+  const countdownThreeTexture = countdownSprite.texture;
+  requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(1.4) })), "advance persistent Resume countdown");
+  equal(liveControls.root.getChildByLabel("resume-countdown-sprite", true), countdownSprite,
+    "Countdown 3→2 mutates one persistent Prefab Sprite identity");
+  assert(countdownSprite.texture !== countdownThreeTexture, "Countdown 3→2 switches the exact texture on the same owner");
   requireOk(liveControls.dispose(), "dispose Live controls");
   const manualControls = requireOk(
     renderer.createInGameControlOverlay(REHEARSAL_MANUAL_MODE, 125, CONTROL_SURFACE_LAYOUT),
