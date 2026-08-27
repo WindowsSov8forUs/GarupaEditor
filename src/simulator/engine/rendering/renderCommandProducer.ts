@@ -142,6 +142,7 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly highAspectRatio: RenderFloat32;
   readonly noteStartPositions: readonly RenderVector3[];
   readonly goalPositions: readonly RenderVector3[];
+  readonly tapLaneEffectPositions: readonly RenderVector3[];
   readonly noteTint: RenderColor;
   readonly noteDomainLayer: number;
   readonly syncLineEdgeMargin?: RenderFloat32;
@@ -2651,7 +2652,11 @@ export function validateHabahiroScene(
 export function validateOrdinaryFixedNoteSceneInput(
   scene: OrdinaryFixedNoteSceneInput,
 ): SimulatorResult<void> {
-  const vectors = [...scene.noteStartPositions, ...scene.goalPositions];
+  const vectors = [
+    ...scene.noteStartPositions,
+    ...scene.goalPositions,
+    ...scene.tapLaneEffectPositions,
+  ];
   if (
     !validateRenderFloat32(scene.specificSpeed) ||
     !validateRenderFloat32(scene.noteSettingScale) ||
@@ -2661,6 +2666,7 @@ export function validateOrdinaryFixedNoteSceneInput(
     !validateRenderFloat32(scene.highAspectRatio) ||
     scene.noteStartPositions.length !== 7 ||
     scene.goalPositions.length !== 7 ||
+    scene.tapLaneEffectPositions.length !== 13 ||
     vectors.some((value) => !validateVector3(value)) ||
     !validateColor(scene.noteTint) ||
     !Number.isSafeInteger(scene.noteDomainLayer) ||
@@ -2675,7 +2681,7 @@ export function validateOrdinaryFixedNoteSceneInput(
     return integrityFailure(
       "render.producer.invalid-ordinary-fixed-note-scene",
       ["RPR-D05", "RPR-D13", "PR10", "PR39"],
-      "The fixed ordinary Note scene requires exact speed/scale/aspect values, seven typed start/goal transforms, one color and one portable domain layer.",
+      "The fixed ordinary Note scene requires exact speed/scale/aspect values, seven typed start/goal transforms, thirteen serialized Lane-effect transforms, one color and one portable domain layer.",
     );
   }
   return ok(undefined);

@@ -460,6 +460,27 @@ async function testPixiMapping(profile: any): Promise<void> {
   assert.equal(renderer.commitFrame(visibleFrame).status, "accepted");
   const sprites = liveParticleSprites(renderer);
   assert.equal(sprites.length, visibleSamples.length);
+  assert.deepEqual(
+    (renderer.stage.children as Sprite[]).map((sprite) => sprite.label),
+    visibleSamples.filter((sample) => sample.sortingOrder <= 20).map((sample) => sample.particleId),
+    "low particle stage preserves sortingOrder/system identity/creation order without position.z substitution",
+  );
+  assert.deepEqual(
+    (renderer.highSortingStage.children as Sprite[]).map((sprite) => sprite.label),
+    visibleSamples.filter((sample) => sample.sortingOrder > 20).map((sample) => sample.particleId),
+    "high particle stage preserves sortingOrder/system identity/creation order without position.z substitution",
+  );
+  const sameSystemPair = visibleSamples.find((left, index) => visibleSamples.slice(index + 1).some((right) =>
+    right.systemId === left.systemId && right.sortingOrder === left.sortingOrder && right.position.zBits !== left.position.zBits));
+  if (sameSystemPair !== undefined) {
+    const pair = visibleSamples.find((candidate) => candidate !== sameSystemPair &&
+      candidate.systemId === sameSystemPair.systemId && candidate.sortingOrder === sameSystemPair.sortingOrder &&
+      candidate.position.zBits !== sameSystemPair.position.zBits)!;
+    const left = sprites.find((sprite) => sprite.label === sameSystemPair.particleId)!;
+    const right = sprites.find((sprite) => sprite.label === pair.particleId)!;
+    assert.equal(right.zIndex - left.zIndex, pair.creationSequence - sameSystemPair.creationSequence,
+      "position.z cannot replace the unproven renderer bounds center in particle ordering");
+  }
   const nestedScaleSample = visibleSamples.find((sample) =>
     sample.systemId === "ordinary:effect_tap_perfect/Sring_1")!;
   assert.ok(nestedScaleSample, "visible Perfect root contains the nested Sring_1 renderer");
@@ -557,11 +578,25 @@ async function testPixiMapping(profile: any): Promise<void> {
     ];
     const routeObservation = new Map(renderer.sceneSnapshot().map((row) => [row.particleId, row]));
     for (const sample of routeSamples) {
+      const observed = routeObservation.get(sample.particleId);
       assert.equal(
-        routeObservation.get(sample.particleId)?.sortingStage,
+        observed?.sortingStage,
         sample.sortingOrder > 20 ? "high" : "low",
         `${sample.systemId} is mounted on the evidence side of judge sortingOrder20`,
       );
+      const anchor = scene.buttonAnchors.find((candidate) => candidate.buttonType === sample.instance.buttonType)!;
+      const expectedPosition = [
+        Math.fround(scene.viewportWidth / 2 + Math.fround(
+          Math.fround(particleFloat32FromBits(anchor.position.xBits)! + particleFloat32FromBits(sample.position.xBits)!) *
+            particleFloat32FromBits(scene.pixelsPerWorldUnitBits)!,
+        )),
+        Math.fround(scene.viewportHeight / 2 - Math.fround(
+          Math.fround(particleFloat32FromBits(anchor.position.yBits)! + particleFloat32FromBits(sample.position.yBits)!) *
+            particleFloat32FromBits(scene.pixelsPerWorldUnitBits)!,
+        )),
+      ];
+      assert.deepEqual(observed?.position, expectedPosition,
+        `${root}/${sample.systemId} consumes exact GamePlayButton anchor plus serialized system-parent position`);
     }
     assert.deepEqual(
       (renderer.stage.children as Sprite[]).map((sprite) => sprite.label),

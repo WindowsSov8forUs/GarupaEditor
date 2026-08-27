@@ -1,4 +1,4 @@
-import type { RenderColor, RenderFloat32, RenderOrderingKey, RenderVector2, RenderVector3 } from "../../backends/renderingContracts";
+import type { RenderColor, RenderFloat32, RenderOrderingKey, RenderVector2 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { OneFrameJudgementBatch } from "../data/oneFrameData";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
@@ -73,7 +73,8 @@ export class TapLaneEffectOwner {
   ) {}
 
   preflightInitialize(): SimulatorResult<TapLaneEffectTransaction> {
-    if (this.initialized || typeof this.visible !== "boolean" || this.scene.goalPositions.length !== 7) {
+    if (this.initialized || typeof this.visible !== "boolean" || this.scene.goalPositions.length !== 7 ||
+      this.scene.tapLaneEffectPositions.length !== SLOT_COUNT) {
       return rejected("render.tap-lane-effect.invalid-initialize", "Tap lane effect setup is a single thirteen-owner operation over the fixed seven-lane scene.");
     }
     const renderStates = this.slots.map((state) => this.renderState(state));
@@ -181,7 +182,7 @@ export class TapLaneEffectOwner {
   }
 
   private renderState(state: TapLaneEffectSlotState): TapLaneEffectRenderState {
-    const position = slotPosition(this.scene.goalPositions, state.slot);
+    const position = this.scene.tapLaneEffectPositions[state.slot]!;
     const progress = state.phase === "fading"
       ? Math.fround(state.fadeFrame / FADE_FRAMES)
       : Math.fround(0);
@@ -216,17 +217,6 @@ function judgementSlot(buttonTypes: readonly number[]): number | null {
   const last = buttonTypes[buttonTypes.length - 1]!;
   const slot = first + last;
   return slot >= 0 && slot < SLOT_COUNT ? slot : null;
-}
-
-function slotPosition(goals: readonly RenderVector3[], slot: number): RenderVector3 {
-  if (slot % 2 === 0) return goals[slot / 2]!;
-  const left = goals[(slot - 1) / 2]!;
-  const right = goals[(slot + 1) / 2]!;
-  return Object.freeze({
-    x: f32((left.x.value + right.x.value) / 2),
-    y: f32((left.y.value + right.y.value) / 2),
-    z: f32((left.z.value + right.z.value) / 2),
-  });
 }
 
 function frozenSlot(slot: number, phase: TapLaneEffectPhase, reserveCounter: number, fadeFrame: number): TapLaneEffectSlotState {

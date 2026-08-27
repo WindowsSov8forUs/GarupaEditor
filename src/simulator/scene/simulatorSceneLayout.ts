@@ -43,6 +43,16 @@ const NOTE_WORLD_Z = Math.fround(-13.5);
 const COLLISION_SQUARED = Math.fround(0.23136097192764282);
 const SLIDE_FRAME_SECONDS = Math.fround(1 / 60);
 const SLIDE_TERMINAL_Y_DISTANCE = Math.fround(100);
+// Reverse 1bff69eb: level3 Button1..Button7 and six half-button local X values.
+const AUTHORED_TAP_LANE_EFFECT_X = Object.freeze([
+  Math.fround(-6.599999904632568), Math.fround(-5.5),
+  Math.fround(-4.400000095367432), Math.fround(-3.299999952316284),
+  Math.fround(-2.200000047683716), Math.fround(-1.100000023841858),
+  Math.fround(0), Math.fround(1.100000023841858),
+  Math.fround(2.200000047683716), Math.fround(3.299999952316284),
+  Math.fround(4.400000095367432), Math.fround(5.5),
+  Math.fround(6.599999904632568),
+] as const);
 
 export interface SimulatorSceneVisualConfig {
   readonly specificSpeed: number;
@@ -131,6 +141,12 @@ export function createSimulatorSceneLayout(
     highAspectRatio: values.value.highAspectRatio,
     noteStartPositions: values.value.noteStartPositions,
     goalPositions: values.value.goalPositions,
+    tapLaneEffectPositions: Object.freeze(AUTHORED_TAP_LANE_EFFECT_X.map((authoredX) =>
+      vector3(
+        Math.fround(authoredX * originalLayout.value.gameplay.screenWidthAdjustRate),
+        originalLayout.value.gameplay.targetCenterY,
+        NOTE_WORLD_Z,
+      ))),
     noteTint: white(),
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(config.syncLineEdgeMargin),

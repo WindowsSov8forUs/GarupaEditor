@@ -75,7 +75,7 @@ npm.cmd run simulator:test:original-live-settings
 npm.cmd run simulator:test:original-live-settings-webview2
 ```
 
-第一项覆盖Schema 13、A/B、Pause/Retry/MoveTime、SyncLine/NoteColor、13-slot TapLaneEffect及MvDarkness。第二项验证ordinary四张Lane Sprite on→fade→disabled，digest为`ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534`；另由Garupa product Browser门关闭曾被`ButtonType.None`旁路的整数span→主13槽路由。
+第一项覆盖Schema 13、A/B、Pause/Retry/MoveTime、SyncLine/NoteColor、13-slot TapLaneEffect及MvDarkness。第二项验证ordinary四张Lane Sprite on→fade→disabled，digest为`ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534`；13槽位置现在逐项消费Reverse `1bff69eb`的Button/half-Button Transform而不以相邻full midpoint重算。另由Garupa product Browser门关闭曾被`ButtonType.None`旁路的整数span→主13槽路由。判定粒子actual Pixi逐17 root比较GamePlayButton anchor+完整system-parent position，并按`sortingOrder→system identity→creationSequence`排序；禁止再以particle `position.z`冒充未取证renderer bounds center。
 
 ## Original Skin leaves
 

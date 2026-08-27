@@ -674,7 +674,7 @@ async function capture(
     }
   }
   for (const row of session.particleRenderer.sceneSnapshot()) {
-    const expected = row.zIndex >= 50_000_000 ? "high" : "low";
+    const expected = row.zIndex > 20_000_000_000_000 ? "high" : "low";
     if (row.sortingStage !== expected) throw new Error(`particle sorting-stage mismatch: ${row.particleId}`);
   }
   return Object.freeze({

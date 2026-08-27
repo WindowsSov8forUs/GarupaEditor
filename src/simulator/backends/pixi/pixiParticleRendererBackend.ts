@@ -63,6 +63,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private scene: ParticlePixiSceneProfile | null = null;
   private profile: ParticlePortableProfile | null = null;
   private readonly systems = new Map<string, SystemRenderBinding>();
+  private readonly systemSortOrdinals = new Map<string, number>();
   private readonly textures = new Map<string, Texture>();
   private readonly uniqueBaseTextures = new Set<Texture>();
   private readonly uvTextures = new Map<string, Texture>();
@@ -183,6 +184,9 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       this.scene = validatedScene.value;
       this.profile = prepared.value.profile;
       for (const [identity, binding] of systemBindings.value) this.systems.set(identity, binding);
+      [...systemBindings.value.keys()].sort(compareOrdinal).forEach((identity, ordinal) => {
+        this.systemSortOrdinals.set(identity, ordinal);
+      });
       for (const [logicalId, texture] of decoded) this.textures.set(logicalId, texture);
       for (const texture of identities) this.uniqueBaseTextures.add(texture);
       this.createUvTextures();
@@ -192,6 +196,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       destroyTextureSet(preparingTextures);
       this.resetTextures();
       this.systems.clear();
+      this.systemSortOrdinals.clear();
       this.state = "unprepared";
       return particleRejected(
         "particle-resource-decode",
@@ -372,6 +377,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     ];
     this.pending = null;
     this.systems.clear();
+    this.systemSortOrdinals.clear();
     this.profile = null;
     this.scene = null;
     this.sessionId = null;
@@ -467,9 +473,13 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     sprite.alpha = particleFloat32FromBits(sample.color.alphaBits)!;
     sprite.tint = rgbTint(red, green, blue);
     sprite.blendMode = binding.blend;
-    sprite.zIndex = sample.sortingOrder * 1_000_000 -
-      Math.round(particleFloat32FromBits(sample.position.zBits)! * 1000) +
-      sample.creationSequence;
+    const systemOrdinal = this.systemSortOrdinals.get(sample.systemId);
+    if (systemOrdinal === undefined) throw new Error("particle system sort identity is missing");
+    // Reverse 1bff69eb/particle transform correction: order by renderer
+    // sortingOrder, system identity and creation sequence. Particle position.z is
+    // simulation state, not an invented renderer-bounds sort center.
+    sprite.zIndex = sample.sortingOrder * 1_000_000_000_000 +
+      systemOrdinal * 100_000_000 + sample.creationSequence;
     return sprite;
   }
 
@@ -541,6 +551,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private abortPrepare<T>(result: ParticleOperationResult<T>): ParticleOperationResult<void> {
     this.resetTextures();
     this.systems.clear();
+    this.systemSortOrdinals.clear();
     this.state = "unprepared";
     return result.status === "accepted" ? particleAccepted(undefined) : result;
   }

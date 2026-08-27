@@ -19,6 +19,10 @@ const fixturePath = join(
   "src/simulator/testing/fixtures/reverse-snapshots/lane-particle-same-state/artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json",
 );
 const oracle = JSON.parse(readFileSync(fixturePath, "utf8"));
+const secondOracle = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+), "utf8"));
 
 function main(): void {
   assert.equal(oracle.status, "confirmed-current-lane-judgement-particle-same-state-portable");
@@ -52,6 +56,11 @@ function verifyLaneLifecycle(): void {
   assert.equal(owner.snapshot().slots.length, oracle.lane.fixedOwnerCount);
   assert.equal(updates[0]!.length, 13);
   assert.deepEqual(updates[0]!.map((row) => row.textureIndex), [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1, 0]);
+  assert.deepEqual(updates[0]!.map((row) => [row.position.x.value, row.position.y.value]),
+    secondOracle.lane.owners.map((row: any) => [
+      row.buttonTransform.localPosition[0], row.buttonTransform.localPosition[1],
+    ]),
+  "all thirteen Lane owners consume the exact Button/half-Button Transform positions");
 
   const judgement = requireOk(owner.preflightJudgement(oneFrame(0, [2, 3])));
   assert.notEqual(judgement, null);
@@ -169,10 +178,21 @@ function oneFrame(batchIndex: number, buttonTypes: readonly number[]): any {
 }
 
 function laneScene(): OrdinaryFixedNoteSceneInput {
-  const goals = Array.from({ length: 7 }, (_, lane) => Object.freeze({
-    x: f32(lane - 3), y: f32(-1), z: f32(-13.5),
+  const sourceFullButtons = secondOracle.lane.owners.filter((row: any) => row.slot % 2 === 0);
+  const goals = sourceFullButtons.map((row: any) => Object.freeze({
+    x: f32(row.buttonTransform.localPosition[0]),
+    y: f32(row.buttonTransform.localPosition[1]),
+    z: f32(-13.5),
   }));
-  return Object.freeze({ goalPositions: Object.freeze(goals) }) as unknown as OrdinaryFixedNoteSceneInput;
+  const tapLaneEffectPositions = secondOracle.lane.owners.map((row: any) => Object.freeze({
+    x: f32(row.buttonTransform.localPosition[0]),
+    y: f32(row.buttonTransform.localPosition[1]),
+    z: f32(-13.5),
+  }));
+  return Object.freeze({
+    goalPositions: Object.freeze(goals),
+    tapLaneEffectPositions: Object.freeze(tapLaneEffectPositions),
+  }) as unknown as OrdinaryFixedNoteSceneInput;
 }
 
 function fakeRenderTransaction(): any {

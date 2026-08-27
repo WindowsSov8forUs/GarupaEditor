@@ -66,6 +66,10 @@ for (const forbidden of ["pixi.js", "react", "@tauri", "node:fs", "document.", "
 }
 const pixiParticle = readFileSync(join(simulatorRoot, "backends", "pixi", "pixiParticleRendererBackend.ts"), "utf8");
 check(!/engine[\\/]managers|engine[\\/]notes/.test(pixiParticle), "Pixi does not import domain managers/notes");
+check(!pixiParticle.includes("Math.round(particleFloat32FromBits(sample.position.zBits)"),
+  "particle position.z is not substituted for unproven renderer-bounds ordering");
+check(pixiParticle.includes("systemSortOrdinals") && pixiParticle.includes("sample.creationSequence"),
+  "Pixi particle ordering consumes sortingOrder/system identity/creation sequence");
 const contracts = readFileSync(join(simulatorRoot, "backends", "particleContracts.ts"), "utf8");
 for (const forbidden of ["fixtureId", "evidenceId", "nativePointer", "sourceOrder"]) {
   check(!contracts.includes(forbidden), `particle contracts omit ${forbidden}`);
