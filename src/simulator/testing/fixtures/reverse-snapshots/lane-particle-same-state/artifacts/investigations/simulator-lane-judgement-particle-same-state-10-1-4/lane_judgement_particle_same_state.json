@@ -1,0 +1,2112 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-lane-judgement-particle-same-state-portable",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "authority": {
+    "originalOnly": true,
+    "browserOrGarupaFrameAsOracle": false,
+    "sources": [
+      {
+        "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+        "bytes": 6942833,
+        "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
+      },
+      {
+        "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",
+        "bytes": 114726,
+        "sha256": "051C618D47F36535D1EE0FD55356905B98CB746F5635F3DD81175918D3EAD51E"
+      },
+      {
+        "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
+        "bytes": 5232,
+        "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432"
+      },
+      {
+        "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+        "bytes": 1529609,
+        "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+      },
+      {
+        "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+        "bytes": 9920,
+        "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+      }
+    ]
+  },
+  "defaultSelection": {
+    "skin_effect_id": 1,
+    "asset_bundle_name": "skin00",
+    "ordinary_resource": "ingameskin/tapeffect/skin00",
+    "directional_resources": [
+      "ingameskin/tapeffect/directionalflickskin00normal",
+      "ingameskin/tapeffect/directionalflickskin00light"
+    ]
+  },
+  "lane": {
+    "fixedOwnerCount": 13,
+    "textureRoute": [
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_1"
+    ],
+    "bottomCenterPivot": true,
+    "sortingOrder": 0,
+    "additiveMaterial": true,
+    "offReserveCounter": 2,
+    "fadeNominalFrames": 10,
+    "fade": {
+      "xy": [
+        1.0,
+        0.7
+      ],
+      "redGreen": [
+        1.0,
+        0.0
+      ],
+      "blueAlpha": [
+        1.0,
+        1.0
+      ]
+    },
+    "runtimeCounts": {
+      "GamePlayButton.NoteLaneEffectOn": 696,
+      "GamePlayButton.NoteLaneEffectOffReserve": 696,
+      "GamePlayButton.NoteLaneEffectAnimatedOff": 696,
+      "GamePlayButton.NoteLaneEffectOff": 73
+    },
+    "sameOuterOnOffReservePairs": 696,
+    "firstPairs": [
+      {
+        "owner": 8,
+        "onMs": 18885,
+        "offReserveMs": 18885,
+        "animatedOffMs": 18900,
+        "animatedOffDeltaMs": 15
+      },
+      {
+        "owner": 3,
+        "onMs": 18885,
+        "offReserveMs": 18885,
+        "animatedOffMs": 18900,
+        "animatedOffDeltaMs": 15
+      },
+      {
+        "owner": 7,
+        "onMs": 19035,
+        "offReserveMs": 19035,
+        "animatedOffMs": 19050,
+        "animatedOffDeltaMs": 15
+      },
+      {
+        "owner": 4,
+        "onMs": 19116,
+        "offReserveMs": 19116,
+        "animatedOffMs": 19134,
+        "animatedOffDeltaMs": 18
+      },
+      {
+        "owner": 7,
+        "onMs": 19183,
+        "offReserveMs": 19183,
+        "animatedOffMs": 19200,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 8,
+        "onMs": 19348,
+        "offReserveMs": 19348,
+        "animatedOffMs": 19365,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 2,
+        "onMs": 19348,
+        "offReserveMs": 19348,
+        "animatedOffMs": 19365,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 3,
+        "onMs": 19497,
+        "offReserveMs": 19497,
+        "animatedOffMs": 19514,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 6,
+        "onMs": 19581,
+        "offReserveMs": 19581,
+        "animatedOffMs": 19597,
+        "animatedOffDeltaMs": 16
+      },
+      {
+        "owner": 3,
+        "onMs": 19647,
+        "offReserveMs": 19647,
+        "animatedOffMs": 19663,
+        "animatedOffDeltaMs": 16
+      },
+      {
+        "owner": 7,
+        "onMs": 19813,
+        "offReserveMs": 19813,
+        "animatedOffMs": 19829,
+        "animatedOffDeltaMs": 16
+      },
+      {
+        "owner": 2,
+        "onMs": 19814,
+        "offReserveMs": 19814,
+        "animatedOffMs": 19829,
+        "animatedOffDeltaMs": 15
+      },
+      {
+        "owner": 6,
+        "onMs": 19962,
+        "offReserveMs": 19962,
+        "animatedOffMs": 19979,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 2,
+        "onMs": 20127,
+        "offReserveMs": 20127,
+        "animatedOffMs": 20144,
+        "animatedOffDeltaMs": 17
+      },
+      {
+        "owner": 3,
+        "onMs": 20128,
+        "offReserveMs": 20128,
+        "animatedOffMs": 20144,
+        "animatedOffDeltaMs": 16
+      },
+      {
+        "owner": 3,
+        "onMs": 20193,
+        "offReserveMs": 20193,
+        "animatedOffMs": 20210,
+        "animatedOffDeltaMs": 17
+      }
+    ],
+    "ordering": "Touch Began and successful judgement may retrigger Idle; judgement calls On then OffReserve in one outer frame. Counter 2 is consumed by that same outer update and the next outer update enters AnimatedOff; retrigger restarts Idle. Touch Ended calls AnimatedOff directly.",
+    "cleanup": [
+      "pause",
+      "movetime",
+      "retry",
+      "game-clear",
+      "dispose"
+    ]
+  },
+  "particles": {
+    "routes": [
+      {
+        "root": "ordinary:effect_tap_perfect",
+        "systemCount": 11,
+        "enabledRendererCount": 10,
+        "systems": [
+          {
+            "identity": "ordinary:effect_tap_perfect",
+            "path": "effect_tap_perfect",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": false,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/Smatt_1",
+            "path": "effect_tap_perfect/Smatt_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7071067094802856,
+                "y": -1.4210854715202004e-14,
+                "z": -1.4210854715202004e-14,
+                "w": 0.7071068286895752
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 5,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/Sring_1",
+            "path": "effect_tap_perfect/Sring_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": -0.009999999776482582,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/Sring_2",
+            "path": "effect_tap_perfect/Sring_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": -0.009999990463256836,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/kira",
+            "path": "effect_tap_perfect/kira",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.38999998569488525,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": -0.7071068286895752,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.7071067094802856
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/kira (1)",
+            "path": "effect_tap_perfect/kira (1)",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": -0.039999932050704956,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": -0.7071068286895752,
+                "y": -0.0,
+                "z": -0.0,
+                "w": 0.7071067094802856
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/kira_par_2",
+            "path": "effect_tap_perfect/kira_par_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.38999998569488525,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": -0.7071068286895752,
+                "y": -0.0,
+                "z": -0.0,
+                "w": 0.7071067094802856
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/light_lay_2",
+            "path": "effect_tap_perfect/light_lay_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7071067094802856,
+                "y": -1.4210854715202004e-14,
+                "z": -1.4210854715202004e-14,
+                "w": 0.7071068286895752
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/ring_2",
+            "path": "effect_tap_perfect/ring_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": -0.009999999776482582,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/ring_3",
+            "path": "effect_tap_perfect/ring_3",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": -0.009999999776482582,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "ordinary:effect_tap_perfect/star",
+            "path": "effect_tap_perfect/star",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          }
+        ]
+      },
+      {
+        "root": "ordinary:effect_tap_swipe",
+        "systemCount": 8,
+        "enabledRendererCount": 8,
+        "systems": [
+          {
+            "identity": "ordinary:effect_tap_swipe",
+            "path": "effect_tap_swipe",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/Sring_1[0]",
+            "path": "effect_tap_swipe/Sring_1[0]",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/Sring_1[1]",
+            "path": "effect_tap_swipe/Sring_1[1]",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7071068286895752,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.7071067094802856
+              },
+              "m_LocalScale": {
+                "x": 0.9750000238418579,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 5,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/glow",
+            "path": "effect_tap_swipe/glow",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/kira",
+            "path": "effect_tap_swipe/kira",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/kira_tate",
+            "path": "effect_tap_swipe/kira_tate",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7071067094802856,
+                "y": 2.3040463759116392e-07,
+                "z": 2.3040463759116392e-07,
+                "w": -0.7071068286895752
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/slash",
+            "path": "effect_tap_swipe/slash",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 6.690000057220459,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7249044179916382,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.6888494491577148
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "ordinary:effect_tap_swipe/square",
+            "path": "effect_tap_swipe/square",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 1,
+            "renderMode": 0,
+            "renderAlignment": 0
+          }
+        ]
+      },
+      {
+        "root": "directional:effect_tap_directional_flick_l",
+        "systemCount": 7,
+        "enabledRendererCount": 6,
+        "systems": [
+          {
+            "identity": "directional:effect_tap_directional_flick_l",
+            "path": "effect_tap_directional_flick_l",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": -0.7071068286895752,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.7071068286895752
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": false,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/burtst",
+            "path": "effect_tap_directional_flick_l/burtst",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 1.059999942779541,
+                "y": 0.0,
+                "z": -0.3300000727176666
+              },
+              "m_LocalRotation": {
+                "x": 0.6174865365028381,
+                "y": -0.6174866557121277,
+                "z": 0.3445437252521515,
+                "w": -0.3445436358451843
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/notes",
+            "path": "effect_tap_directional_flick_l/notes",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.23000000417232513,
+                "y": 0.0,
+                "z": 0.04999997466802597
+              },
+              "m_LocalRotation": {
+                "x": 0.5,
+                "y": -0.5,
+                "z": -0.5,
+                "w": 0.5
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/spark_1",
+            "path": "effect_tap_directional_flick_l/spark_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": -0.5,
+                "y": 0.0,
+                "z": 0.7700002193450928
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": -0.45189565420150757,
+                "z": -0.0,
+                "w": 0.8920707702636719
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/star_1",
+            "path": "effect_tap_directional_flick_l/star_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.5100001692771912
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": -0.4384826719760895,
+                "z": -0.0,
+                "w": 0.8987396955490112
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/star_2",
+            "path": "effect_tap_directional_flick_l/star_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.6900004744529724
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": -0.44152095913887024,
+                "z": -0.0,
+                "w": 0.8972508907318115
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l/star_glitter_1",
+            "path": "effect_tap_directional_flick_l/star_glitter_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.09000000357627869,
+                "y": 0.0,
+                "z": 0.41000011563301086
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": -0.4751818776130676,
+                "z": -2.9802318834981634e-08,
+                "w": 0.879887580871582
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          }
+        ]
+      },
+      {
+        "root": "directional:effect_tap_directional_flick_r",
+        "systemCount": 7,
+        "enabledRendererCount": 6,
+        "systems": [
+          {
+            "identity": "directional:effect_tap_directional_flick_r",
+            "path": "effect_tap_directional_flick_r",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": -0.7071068286895752,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.7071068286895752
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": false,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/burtst",
+            "path": "effect_tap_directional_flick_r/burtst",
+            "transform": {
+              "m_LocalPosition": {
+                "x": -1.059999942779541,
+                "y": 0.0,
+                "z": -0.3300000727176666
+              },
+              "m_LocalRotation": {
+                "x": 0.6174865365028381,
+                "y": 0.6174866557121277,
+                "z": -0.3445437252521515,
+                "w": -0.3445436358451843
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/notes",
+            "path": "effect_tap_directional_flick_r/notes",
+            "transform": {
+              "m_LocalPosition": {
+                "x": -0.23000000417232513,
+                "y": 0.0,
+                "z": 0.04999997466802597
+              },
+              "m_LocalRotation": {
+                "x": 0.5,
+                "y": 0.5,
+                "z": 0.5,
+                "w": 0.5
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/spark_1",
+            "path": "effect_tap_directional_flick_r/spark_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.5,
+                "y": 0.0,
+                "z": 0.7700002193450928
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": 0.45189565420150757,
+                "z": -0.0,
+                "w": 0.8920707702636719
+              },
+              "m_LocalScale": {
+                "x": -1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/star_1",
+            "path": "effect_tap_directional_flick_r/star_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.5100001692771912
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": 0.4384826719760895,
+                "z": -0.0,
+                "w": 0.8987396955490112
+              },
+              "m_LocalScale": {
+                "x": -1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/star_2",
+            "path": "effect_tap_directional_flick_r/star_2",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.6900004744529724
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": 0.44152095913887024,
+                "z": -0.0,
+                "w": 0.8972508907318115
+              },
+              "m_LocalScale": {
+                "x": -1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r/star_glitter_1",
+            "path": "effect_tap_directional_flick_r/star_glitter_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": -0.09000000357627869,
+                "y": 0.0,
+                "z": 0.41000011563301086
+              },
+              "m_LocalRotation": {
+                "x": -0.0,
+                "y": 0.4751818776130676,
+                "z": 2.9802318834981634e-08,
+                "w": 0.879887580871582
+              },
+              "m_LocalScale": {
+                "x": -1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": -0.7071068286895752,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 0.7071068286895752
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          }
+        ]
+      },
+      {
+        "root": "directional:effect_tap_directional_flick_l_finger",
+        "systemCount": 4,
+        "enabledRendererCount": 3,
+        "systems": [
+          {
+            "identity": "directional:effect_tap_directional_flick_l_finger",
+            "path": "effect_tap_directional_flick_l_finger",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": false,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l_finger/Sring_1",
+            "path": "effect_tap_directional_flick_l_finger/Sring_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l_finger/glow",
+            "path": "effect_tap_directional_flick_l_finger/glow",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_l_finger/slash",
+            "path": "effect_tap_directional_flick_l_finger/slash",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 6.690000057220459,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7249044179916382,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.6888494491577148
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          }
+        ]
+      },
+      {
+        "root": "directional:effect_tap_directional_flick_r_finger",
+        "systemCount": 4,
+        "enabledRendererCount": 3,
+        "systems": [
+          {
+            "identity": "directional:effect_tap_directional_flick_r_finger",
+            "path": "effect_tap_directional_flick_r_finger",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [],
+            "rendererEnabled": false,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r_finger/Sring_1",
+            "path": "effect_tap_directional_flick_r_finger/Sring_1",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -3.0
+              },
+              "m_LocalRotation": {
+                "x": 0.3907311260700226,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.9205048680305481
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 2
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r_finger/glow",
+            "path": "effect_tap_directional_flick_r_finger/glow",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 0,
+            "renderAlignment": 0
+          },
+          {
+            "identity": "directional:effect_tap_directional_flick_r_finger/slash",
+            "path": "effect_tap_directional_flick_r_finger/slash",
+            "transform": {
+              "m_LocalPosition": {
+                "x": 0.0,
+                "y": 6.690000057220459,
+                "z": 0.0
+              },
+              "m_LocalRotation": {
+                "x": 0.7249044179916382,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.6888494491577148
+              },
+              "m_LocalScale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              }
+            },
+            "parentTransforms": [
+              {
+                "m_LocalPosition": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0
+                },
+                "m_LocalRotation": {
+                  "x": 0.0,
+                  "y": 0.0,
+                  "z": 0.0,
+                  "w": 1.0
+                },
+                "m_LocalScale": {
+                  "x": 1.0,
+                  "y": 1.0,
+                  "z": 1.0
+                }
+              }
+            ],
+            "rendererEnabled": true,
+            "sortingOrder": 50,
+            "renderMode": 1,
+            "renderAlignment": 0
+          }
+        ]
+      }
+    ],
+    "directionalFingerCallsites": [
+      {
+        "owner": "NoteDirectionalFlick.onFinishJudgeFrontNote",
+        "path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030e91c8__NoteDirectionalFlick__onFinishJudgeFrontNote.arm64.tsv",
+        "bytes": 1382,
+        "sha256": "7794A23B6130957CB6B77EAE0411731E39BB0B0F264310F7C18E2406198AB37A"
+      },
+      {
+        "owner": "NoteMultipleDirectionalFlick.onFinishJudgeFrontNote",
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/030ec484__NoteMultipleDirectionalFlick__onFinishJudgeFrontNote.arm64.tsv",
+        "bytes": 1790,
+        "sha256": "32A517DD162B876E129D5BFFEDCAE92A2ACE26DA51E00511BD07372165148C61"
+      },
+      {
+        "owner": "NoteLong.judgeAfterNote",
+        "path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb8d0__NoteLong__judgeAfterNote.arm64.tsv",
+        "bytes": 13597,
+        "sha256": "3D90AB91C2225612DD49ABE4F7AE71793D78A683977AB82D5588FCF706ECC49C"
+      },
+      {
+        "owner": "NoteSlide.playJudgeAnimation",
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321c2bc__NoteSlide__playJudgeAnimation.arm64.tsv",
+        "bytes": 3045,
+        "sha256": "C08F8E2B56759270F1619B3D85BFFF80C674E0E7CC56DE32CA9CEDE5233D1D68"
+      }
+    ],
+    "directionalFinger": {
+      "notOptional": true,
+      "sameJudgementOuterFrame": true,
+      "minimumResult": "Good",
+      "suppressedGameState": 14,
+      "singleOwner": "TargetCenterButton",
+      "longAndSlideOwner": "GetEffectTargetButton",
+      "multipleAutoOwner": {
+        "leftGameNoteType": 10,
+        "leftOwner": "rightmost note button",
+        "rightGameNoteType": 11,
+        "rightOwner": "leftmost note button"
+      },
+      "multipleManualOwner": "TargetCenterButton",
+      "leftAfterNoteTypes": [
+        2,
+        4,
+        9,
+        11
+      ],
+      "rightAfterNoteTypes": [
+        3,
+        5,
+        10,
+        12
+      ]
+    },
+    "worldComposition": {
+      "ownerParent": "exact GamePlayButton Transform selected by the note caller",
+      "systemLocal": "serialized ParticleSystem Transform followed by every serialized parent Transform",
+      "camera": "orthographic world point = GamePlayButton anchor + emitted system-parent-chain point; Pixi top-left projection is x=viewport/2+worldX*height/2 and y=height/2-worldY*height/2",
+      "sorting": "ParticleSystemRenderer sortingOrder, then system identity and creation sequence; lane sortingOrder 0 remains below particle orders 1/5/50",
+      "fallbackAllowed": false
+    },
+    "lifecycle": {
+      "restart": "Stop+Clear+Play when already active",
+      "pause": "simulation freezes and lane is all-off",
+      "moveTime": "clear-all then suppress until whole-engine replay",
+      "retryTerminalDispose": "clear-all"
+    }
+  },
+  "acceptance": {
+    "lane": "all 13 slots, exact On/OffReserve/AnimatedOff/Off, retrigger and all cleanup transitions must be compared as ordered primitive mutations",
+    "particle": "Normal/Flick/Directional/finger must compare root, button owner, system-parent matrix, material, blend, sorting and screen point in the judgement frame",
+    "productionHelperImportAllowed": false
+  },
+  "closure": {
+    "P01": "confirmed",
+    "P02": "confirmed-portable-structural-and-original-frame-anchored",
+    "P03": "confirmed-caller-required",
+    "unknownFields": [],
+    "blockingFindings": []
+  }
+}
