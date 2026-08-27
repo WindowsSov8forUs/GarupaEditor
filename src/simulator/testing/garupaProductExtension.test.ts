@@ -182,7 +182,8 @@ async function main(): Promise<void> {
   assert.equal(head.spriteBindingKey?.endsWith("note_long_0"), true);
   assert.equal(interior.spriteBindingKey?.endsWith("note_slide_among"), true);
   assert.equal(terminal.spriteBindingKey?.endsWith("note_flick_2"), true);
-  assert.equal(firstRows.find((row) => row.renderObjectId === `${head.renderObjectId}:long-flash`)?.activeAnimationRole, "note-long-flash");
+  assert.equal(firstRows.some((row) => row.renderObjectId.startsWith(`render:garupa:slide-flash:${compatibleChain.identity}`)), false,
+    "Slide flash is not created while the head is merely approaching");
   assert.equal(firstRows.some((row) => row.renderObjectId === `${interior.renderObjectId}:long-flash`), false);
   assert.equal(firstRows.find((row) => row.renderObjectId === `${terminal.renderObjectId}:icon`)?.activeAnimationRole, "note-flick");
   const compatibleNodes = compatibleChain.connectionIdentities.map((identity) =>
@@ -229,6 +230,40 @@ async function main(): Promise<void> {
   const syncY = sync!.geometryPositions!.filter((_value, index) => index % 2 === 1);
   assert.ok(Math.max(...syncY) - Math.min(...syncY) < 40);
   assert.ok(firstRows.every((row) => !row.renderObjectId.startsWith("render:garupa:node:garupa-slide:5")));
+
+  const compatibleHead = product.visibleNodes.find((node) => node.identity === headId)!;
+  const flashStarted = requireOk(producer.preflightFrame(
+    compatibleHead.absolutePosition,
+    [compatibleHead],
+    Math.fround(1 / 60),
+  ));
+  assert.ok(flashStarted);
+  requireOk(flashStarted!.commit());
+  const flashRows = renderer.sceneSnapshot();
+  const flashId = `render:garupa:slide-flash:${compatibleChain.identity}`;
+  const flash = flashRows.find((row) => row.renderObjectId === flashId)!;
+  assert.equal(flash.visible, true);
+  assert.equal(flash.activeAnimationRole, "note-long-flash");
+  const target = requireOk(layout.garupaProductScene.projectLaneAtCurve(
+    compatibleHead.spanStart + (compatibleHead.width - 1) / 2,
+    1,
+  ));
+  const expectedFlashPosition = [
+    Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 + target.x.value * layout.surfaceLayout.camera.pixelsPerWorldUnit),
+    Math.fround(layout.surfaceLayout.surface.viewportHeight / 2 - target.y.value * layout.surfaceLayout.camera.pixelsPerWorldUnit),
+  ];
+  assert.ok(Math.abs(flash.position[0] - expectedFlashPosition[0]!) < 0.0001 &&
+    Math.abs(flash.position[1] - expectedFlashPosition[1]!) < 0.0001,
+  `Slide root Flash remains on the independent judgement-line projection: ${flash.position} vs ${expectedFlashPosition}`);
+  const compatibleTerminal = product.visibleNodes.find((node) => node.identity === terminalId)!;
+  const flashStopped = requireOk(producer.preflightFrame(
+    compatibleTerminal.absolutePosition,
+    [compatibleTerminal],
+    Math.fround(1 / 60),
+  ));
+  assert.ok(flashStopped);
+  requireOk(flashStopped!.commit());
+  assert.equal(renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId)?.visible, false);
 
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(

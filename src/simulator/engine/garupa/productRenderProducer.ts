@@ -192,6 +192,85 @@ export class GarupaProductRenderProducer {
       }
     }
 
+    // The original Slide owns one root flash at the judgement line. It starts only
+    // after the head judgement and remains independent from the moving/hidden head
+    // Sprite until the terminal judgement stops it.
+    const judgedIdentities = new Set(judgedNodes.map((node) => node.identity));
+    for (const chain of this.chart.slideChains) {
+      const headIdentity = chain.connectionIdentities[0]!;
+      const terminalIdentity = chain.connectionIdentities[chain.connectionIdentities.length - 1]!;
+      const head = samples.get(headIdentity)!;
+      const flashObjectId = slideFlashObjectId(chain.identity);
+      const headJudged = judgedIdentities.has(headIdentity);
+      const terminalJudged = judgedIdentities.has(terminalIdentity);
+      if (headJudged && !terminalJudged) {
+        if (!plannedCreated.has(flashObjectId)) {
+          commands.push(command(commands.length, {
+            kind: "create-object",
+            renderObjectId: flashObjectId,
+            poolFamily: "garupa-product-note-long-flash",
+            role: "note-intermediate",
+            parentObjectId: null,
+          }));
+          commands.push(command(commands.length, {
+            kind: "bind-resource",
+            renderObjectId: flashObjectId,
+            binding: "sprite",
+            logicalAssetId: this.resources.noteAtlasLogicalAssetId,
+            exactKey: `note_long_flash_${productResourceLane(head.node)}`,
+          }));
+          plannedCreated.add(flashObjectId);
+        }
+        const target = this.scene.projectLaneAtCurve(
+          head.node.spanStart + (head.node.width - 1) / 2,
+          1,
+        );
+        const targetScale = this.scene.projectNoteScaleAtCurve(1, head.node.width);
+        if (target.status !== "ok") return target;
+        if (targetScale.status !== "ok") return targetScale;
+        commands.push(command(commands.length, {
+          kind: "set-transform",
+          renderObjectId: flashObjectId,
+          position: target.value,
+          scale: vector2(targetScale.value.value, targetScale.value.value),
+          rotationDegrees: f32(0),
+          color: white(),
+          ordering: ordering(3, 71, flashObjectId, target.value.z.value),
+          maskObjectId: null,
+        }));
+        if (!plannedVisible.has(flashObjectId)) {
+          commands.push(command(commands.length, { kind: "activate-object", renderObjectId: flashObjectId }));
+          plannedVisible.add(flashObjectId);
+        }
+        commands.push(command(commands.length, {
+          kind: "play-animation",
+          renderObjectId: flashObjectId,
+          animationRole: "note-long-flash",
+          restart: true,
+        }));
+        plannedAnimationElapsed.set(flashObjectId, 0);
+      }
+      if (terminalJudged && plannedAnimationElapsed.delete(flashObjectId)) {
+        commands.push(command(commands.length, {
+          kind: "stop-animation",
+          renderObjectId: flashObjectId,
+          animationRole: "note-long-flash",
+          restart: false,
+        }));
+        commands.push(command(commands.length, { kind: "hide-object", renderObjectId: flashObjectId }));
+        plannedVisible.delete(flashObjectId);
+      } else if (plannedAnimationElapsed.has(flashObjectId)) {
+        const elapsed = plannedAnimationElapsed.get(flashObjectId)!;
+        commands.push(command(commands.length, {
+          kind: "sample-animation",
+          renderObjectId: flashObjectId,
+          animationRole: "note-long-flash",
+          elapsedSeconds: f32(elapsed),
+        }));
+        plannedAnimationElapsed.set(flashObjectId, Math.fround(elapsed + deltaTimeSeconds));
+      }
+    }
+
     for (const node of this.chart.visibleNodes) {
       const sample = samples.get(node.identity)!;
       const objectId = nodeObjectId(node);
@@ -205,7 +284,6 @@ export class GarupaProductRenderProducer {
         node,
         objectId,
         this.resources,
-        this.chainByIdentity,
       );
       if (sample.visible) {
         if (!plannedCreated.has(objectId)) {
@@ -483,7 +561,6 @@ function productAnimationBinding(
   node: GarupaProductNode,
   parentObjectId: string,
   resources: RenderEngineResourceBindings,
-  chains: ReadonlyMap<string, GarupaProductSlideChain>,
 ): ProductAnimationBinding | null {
   if (node.type === "Directional") {
     return Object.freeze({
@@ -501,15 +578,7 @@ function productAnimationBinding(
       animationRole: "note-flick",
     });
   }
-  if (node.chainIdentity === null || !chains.has(node.chainIdentity) || node.connectionIndex !== 0) {
-    return null;
-  }
-  return Object.freeze({
-    ownerObjectId: `${parentObjectId}:long-flash`,
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `note_long_flash_${productResourceLane(node)}`,
-    animationRole: "note-long-flash",
-  });
+  return null;
 }
 
 function productResourceLane(node: GarupaProductNode): number {
@@ -678,6 +747,9 @@ function nodeObjectId(node: GarupaProductNode): string {
 }
 function lineObjectId(chainIdentity: string, segmentIndex: number): string {
   return `render:garupa:line:${chainIdentity}:${segmentIndex}`;
+}
+function slideFlashObjectId(chainIdentity: string): string {
+  return `render:garupa:slide-flash:${chainIdentity}`;
 }
 function syncPairObjectId(identity: string): string {
   return `render:garupa:sync:${identity}`;
