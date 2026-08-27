@@ -228,6 +228,7 @@ export class AutonomousSimulatorModule {
             refreshed.value.mode,
             pauseLayout.value,
             refreshed.value.playable,
+            refreshed.value.terminalPresentationActive === true,
           );
         }
         const published = this.session!.publishPauseControlState(visualSnapshot);

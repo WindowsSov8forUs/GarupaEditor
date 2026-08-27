@@ -45,6 +45,7 @@ export interface SimulatorTimelineControlState {
   readonly playable: boolean;
   readonly paused: boolean;
   readonly moveTimeInProgress: boolean;
+  readonly terminalPresentationActive?: boolean;
 }
 
 export interface SimulatorMoveTimeReceipt {

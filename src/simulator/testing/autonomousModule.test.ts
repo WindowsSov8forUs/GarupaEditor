@@ -428,6 +428,8 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(startedClear.status, "running", "natural completion starts the original clear presentation before close");
   const clearControl = requireAccepted(session.getControlState());
   assert.equal(clearControl.playable, false, "Pause/gameplay input is disabled during GameClearAnimStart");
+  assert.equal(clearControl.terminalPresentationActive, true,
+    "Score/Life/Auto/Pause display remains mounted through the original terminal presentation");
   const beforeFinish = session.step(3.232, null, TEST_SURFACE.revision);
   assert.equal(beforeFinish.status, "running", "clear presentation remains mounted before 3.233 seconds");
   const endpoint = session.step(0.002, null, TEST_SURFACE.revision);

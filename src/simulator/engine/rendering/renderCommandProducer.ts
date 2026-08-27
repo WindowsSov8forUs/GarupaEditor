@@ -260,6 +260,7 @@ export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
+  private readonly fieldObjectIds = new Set<string>();
   private readonly creationSequenceByObjectId = new Map<string, number>();
   private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
   private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
@@ -632,8 +633,8 @@ export class RenderCommandProducer {
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const renderObjectId of [
-      HUD_OBJECTS.score, HUD_OBJECTS.life, HUD_OBJECTS.combo,
-      HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result, ...HUD_OBJECTS.addScore,
+      HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result,
+      ...HUD_OBJECTS.addScore, ...this.fieldObjectIds,
     ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.gameClear,
@@ -891,7 +892,10 @@ export class RenderCommandProducer {
         renderObjectId: plan.renderObjectId,
       });
     }
-    return this.preflight(commands, () => this.recordCreatedObjects(created));
+    return this.preflight(commands, () => {
+      this.recordCreatedObjects(created);
+      for (const renderObjectId of created) this.fieldObjectIds.add(renderObjectId);
+    });
   }
 
   preflightTapLaneEffectSetup(
@@ -2551,6 +2555,7 @@ export class RenderCommandProducer {
     return this.preflight(commands, () => {
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
+      this.fieldObjectIds.clear();
       this.hudAnimationElapsedSeconds.clear();
       this.lifeAnimationElapsedSeconds.clear();
       this.addScoreElapsedSeconds.clear();

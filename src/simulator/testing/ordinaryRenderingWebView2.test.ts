@@ -630,6 +630,21 @@ async function capture(
     throw new Error(`combined root observation mismatch: ${root?.label}/${stageChildren.join("|")}`);
   }
   const renderRows = session.renderer.sceneSnapshot();
+  if (label === "natural-completion") {
+    const score = renderRows.find((row) => row.renderObjectId === "render:hud:score");
+    const terminalLife = renderRows.find((row) => row.renderObjectId === "render:hud:life");
+    const fieldStillVisible = renderRows.some((row) =>
+      row.visible && (row.role === "field-line" || row.role === "judge-line"));
+    const pause = worldObservation.records.find((row) => row.label === "original-pause-button");
+    const autoCaption = worldObservation.records.find((row) => row.label === "AutoLiveCaption");
+    if (score?.visible !== true || terminalLife?.visible !== true || fieldStillVisible ||
+        pause?.visible !== true || autoCaption?.visible !== true) {
+      throw new Error(`terminal persistent HUD/field disposition mismatch: ${JSON.stringify({
+        score: score?.visible, life: terminalLife?.visible, fieldStillVisible,
+        pause: pause?.visible, autoCaption: autoCaption?.visible,
+      })}`);
+    }
+  }
   const life = renderRows.find((row) => row.renderObjectId === "render:hud:life");
   const lifeSprites = new Map(life?.hudSpriteNodes?.map((row) => [row.label, row]));
   const lifeTexts = new Map(life?.hudTextNodes?.map((row) => [row.label, row]));

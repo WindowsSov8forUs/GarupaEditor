@@ -1778,6 +1778,17 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       owner.visible = false;
       owner.zIndex = 20;
       owner.eventMode = "none";
+      const sceneAnchor = new Container({ label: "AutoLiveLabelRoot" });
+      const contentRoot = new Container({ label: "AutoLiveLabelRoot/root" });
+      const prefabRoot = new Container({ label: "AutoLiveCaption", sortableChildren: true });
+      const backgroundOwner = new Container({ label: "AutoLiveCaption/background", sortableChildren: true });
+      const scale = Math.fround(caption.width / 206);
+      prefabRoot.position.set(
+        caption.x + caption.width / 2,
+        caption.y + caption.height / 2 - scale,
+      );
+      prefabRoot.scale.set(scale);
+      backgroundOwner.position.set(0, 1);
       const autoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
       const background = new NineSliceSprite({
         texture: demoBackgroundTexture,
@@ -1785,25 +1796,27 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         topHeight: autoBorder.top,
         rightWidth: autoBorder.right,
         bottomHeight: autoBorder.bottom,
+        width: 206,
+        height: 38,
+        anchor: { x: 0.5, y: 0.5 },
         label: "auto-live-caption-background",
       });
-      applyBounds(background, caption);
       background.tint = linearTintFromSrgbColor(0xff3b72);
       background.zIndex = 10;
       const label = this.text(
         "オートライブ",
-        caption.height * 24 / 38,
+        24,
         0xffffff,
         "auto-live-caption-label",
       );
       label.anchor.set(0.5, 0.5);
-      label.position.set(
-        caption.x + caption.width / 2,
-        caption.y + caption.height / 2,
-      );
+      label.position.set(0, 0);
       label.zIndex = 15;
-      owner.addChild(background, label);
-      owner.sortChildren();
+      backgroundOwner.addChild(background, label);
+      prefabRoot.addChild(backgroundOwner);
+      contentRoot.addChild(prefabRoot);
+      sceneAnchor.addChild(contentRoot);
+      owner.addChild(sceneAnchor);
       this.autoLiveCaptionRoot = owner;
       this.root.addChild(owner);
     } else {
@@ -1883,10 +1896,11 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
     // Original R1 keeps the serialized Pause Sprite visible while the dialog owns input;
     // DisableButton is a setup/terminal mutation, not the menu-open transition.
-    this.pauseButton.visible = snapshot.playable;
-    this.rehearsalRoot.visible = snapshot.playable && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
+    const displayVisible = snapshot.playable || snapshot.terminalPresentationActive;
+    this.pauseButton.visible = displayVisible;
+    this.rehearsalRoot.visible = displayVisible && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
     if (this.autoLiveCaptionRoot !== null) {
-      this.autoLiveCaptionRoot.visible = snapshot.playable && snapshot.mode.isAutoLive;
+      this.autoLiveCaptionRoot.visible = displayVisible && snapshot.mode.isAutoLive;
     }
     const countdownNumber = snapshot.state === "resume-countdown"
       ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
@@ -3717,7 +3731,12 @@ function setHudText(
   fontFamily?: string,
 ): void {
   text.text = value;
-  text.style = { fill, fontSize, fontFamily, fontWeight: fontFamily === undefined ? "bold" : "normal" };
+  text.style = {
+    fill: linearTintFromSrgbColor(fill),
+    fontSize,
+    fontFamily,
+    fontWeight: fontFamily === undefined ? "bold" : "normal",
+  };
   text.anchor.set(0.5);
 }
 

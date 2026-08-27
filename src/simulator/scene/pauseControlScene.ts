@@ -64,6 +64,7 @@ export interface PauseControlSceneSnapshot {
   readonly surfaceRevision: number;
   readonly mode: SimulatorTimelineControlState["mode"];
   readonly playable: boolean;
+  readonly terminalPresentationActive: boolean;
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
   readonly words: {
@@ -214,7 +215,12 @@ export class PauseControlSceneOwner {
     const result = Object.freeze({
       manualFrame: filtered,
       commands: Object.freeze(commands),
-      snapshot: this.snapshot(controlState.mode, layout, controlState.playable),
+      snapshot: this.snapshot(
+        controlState.mode,
+        layout,
+        controlState.playable,
+        controlState.terminalPresentationActive === true,
+      ),
     });
     return hardwareBackProductSemanticsId === null
       ? ok(result)
@@ -227,12 +233,18 @@ export class PauseControlSceneOwner {
         );
   }
 
-  snapshot(mode: SimulatorTimelineControlState["mode"], layout: PauseControlLayout, playable = true): PauseControlSceneSnapshot {
+  snapshot(
+    mode: SimulatorTimelineControlState["mode"],
+    layout: PauseControlLayout,
+    playable = true,
+    terminalPresentationActive = false,
+  ): PauseControlSceneSnapshot {
     return deepFreeze({
       state: this.state,
       surfaceRevision: layout.surfaceRevision,
       mode,
       playable,
+      terminalPresentationActive,
       layout,
       resumeCountdownSecondsRemaining: this.state === "resume-countdown" ? this.countdown : null,
       words: VISIBLE_WORDS,
@@ -415,7 +427,8 @@ function validControlState(value: unknown): value is SimulatorTimelineControlSta
   if (value === null || typeof value !== "object") return false;
   const state = value as SimulatorTimelineControlState;
   return typeof state.playable === "boolean" && typeof state.paused === "boolean" && typeof state.moveTimeInProgress === "boolean" &&
-    Number.isFinite(state.timelineSeconds) && state.timelineSeconds >= 0;
+    Number.isFinite(state.timelineSeconds) && state.timelineSeconds >= 0 &&
+    (state.terminalPresentationActive === undefined || typeof state.terminalPresentationActive === "boolean");
 }
 function validLayout(value: unknown): value is PauseControlLayout {
   if (value === null || typeof value !== "object") return false;

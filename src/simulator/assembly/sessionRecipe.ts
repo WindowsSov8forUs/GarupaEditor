@@ -321,8 +321,8 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const state = this.engine.getTimelineControlState();
     if (state.status !== "ok") return fromEngineFailure(state);
     return accepted(this.naturalCompletionPresentationRemainingSeconds === null
-      ? state.value
-      : Object.freeze({ ...state.value, playable: false }));
+      ? Object.freeze({ ...state.value, terminalPresentationActive: false })
+      : Object.freeze({ ...state.value, playable: false, terminalPresentationActive: true }));
   }
 
   async retry(): Promise<SimulatorAssemblyResult<void>> {

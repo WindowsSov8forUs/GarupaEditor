@@ -165,8 +165,8 @@ async function main(): Promise<void> {
   requireOk(liveControls.publishPauseControlState(playing), "publish visible Pause button");
   assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible, "Live owns visible original Pause button");
   const autoCaptionRoot = liveControls.root.getChildByLabel("auto-live-caption-root") as Container;
-  const autoCaptionBackground = autoCaptionRoot.getChildByLabel("auto-live-caption-background") as NineSliceSprite;
-  const autoCaptionLabel = autoCaptionRoot.getChildByLabel("auto-live-caption-label") as Text;
+  const autoCaptionBackground = autoCaptionRoot.getChildByLabel("auto-live-caption-background", true) as NineSliceSprite;
+  const autoCaptionLabel = autoCaptionRoot.getChildByLabel("auto-live-caption-label", true) as Text;
   assert(autoCaptionRoot.visible, "Live Auto owns the serialized Auto Live caption");
   equal(autoCaptionBackground.tint, 0xff0b2b,
     "Auto Live serialized sRGB pink is linearized before the one final output transfer");
@@ -177,13 +177,14 @@ async function main(): Promise<void> {
     autoCaptionBackground.bottomHeight,
   ]), JSON.stringify([25, 0, 25, 0]), "Auto Live caption maps NGUI left/right/top/bottom into Pixi NineSlice option names");
   equal(autoCaptionLabel.text, "オートライブ", "Auto Live caption keeps serialized label");
-  equal(JSON.stringify([
-    autoCaptionBackground.x,
-    autoCaptionBackground.y,
-    autoCaptionBackground.width,
-    autoCaptionBackground.height,
-  ]), JSON.stringify(CONTROL_SURFACE_LAYOUT.ui.autoLiveCaptionBoundsTopLeft),
-  "Auto Live caption keeps the independent multiaspect bounds");
+  const autoCaptionBounds = autoCaptionBackground.getBounds();
+  [autoCaptionBounds.x, autoCaptionBounds.y, autoCaptionBounds.width, autoCaptionBounds.height]
+    .forEach((value, index) => {
+      assert(Math.abs(value - Object.values(CONTROL_SURFACE_LAYOUT.ui.autoLiveCaptionBoundsTopLeft)[index]!) < 0.00001,
+        `Auto Live serialized parent chain world bound ${index}`);
+    });
+  equal(autoCaptionLabel.parent?.label, "AutoLiveCaption/background",
+    "Auto Live UILabel remains on the serialized background GameObject");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "publish Pause modal");
   assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
     "original Pause Sprite remains visible while the modal owns input");
@@ -239,6 +240,15 @@ async function main(): Promise<void> {
   equal(liveControls.root.getChildByLabel("resume-countdown-sprite", true), countdownSprite,
     "Countdown 3→2 mutates one persistent Prefab Sprite identity");
   assert(countdownSprite.texture !== countdownThreeTexture, "Countdown 3→2 switches the exact texture on the same owner");
+  requireOk(liveControls.publishPauseControlState(Object.freeze({
+    ...playing,
+    playable: false,
+    terminalPresentationActive: true,
+  })), "publish natural terminal presentation controls");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
+    "original terminal frame keeps the Pause Sprite visible until onExit");
+  assert(autoCaptionRoot.visible,
+    "original terminal Auto frame keeps AutoLiveCaption visible until onExit");
   requireOk(liveControls.dispose(), "dispose Live controls");
   const manualControls = requireOk(
     renderer.createInGameControlOverlay(REHEARSAL_MANUAL_MODE, 125, CONTROL_SURFACE_LAYOUT),
