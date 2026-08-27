@@ -40,7 +40,7 @@
     "simulator:test:render-contracts": "node src/simulator/testing/runRenderContractTests.mjs",
     "simulator:test:render-note-geometry": "node src/simulator/testing/runOrdinaryNoteGeometryTests.mjs",
     "simulator:test:render-pixi": "node src/simulator/testing/runRenderPixiTests.mjs",
-    "simulator:test:hud-equivalence": "node src/simulator/testing/runHudEquivalenceTests.mjs",
+    "simulator:test:hud-reaudit-regression": "node src/simulator/testing/runHudEquivalenceTests.mjs",
     "simulator:test:render-production-chart": "node src/simulator/testing/runRenderProductionChartTests.mjs",
     "simulator:test:render-production": "node src/simulator/testing/runRenderProductionTests.mjs",
     "simulator:test:resource-pixi-rendering": "node src/simulator/testing/runResourcePixiRenderingTests.mjs",

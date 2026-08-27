@@ -32,13 +32,13 @@ npm.cmd run simulator:test:total-revalidation:clean
 
 `SIMULATOR_WEBVIEW2_CLEAN_BUILD=1` affects only ignored Cargo build artifacts. It does not alter browser process freshness, scene inputs, capture count, expected digests, or production behavior.
 
-## Complete HUD equivalence leaf
+## HUD re-audit regression leaf
 
 ```powershell
-npm.cmd run simulator:test:hud-equivalence
+npm.cmd run simulator:test:hud-reaudit-regression
 ```
 
-该门消费Reverse `c2187fe3`五项纠错及`818b8db6` Score最终可见fixture。core除19个Score逻辑边界、Score45/Life10组件path、SS 11节点、56/236曲线与SoftClip外，还独立验证TotalScore component1271→UIFont1799→sgm Font75链、拒绝bitmap score-font、双encoded color run、8/9位ShrinkContent，以及NGUI UISpriteData left/right/top/bottom边框（禁止再按Unity Sprite.border重排）。actual Pixi逐组件比较Total/Gauge/Rank owner transform/depth并要求零bitmap digit；真实WebView2使用生产FontFace/ImageBitmap执行D/C/B/A/S/SS/9位七状态矩阵、完整SS动画和逐状态framebuffer，且不得请求`score-font.png`。该门仍不以core单独升级声明；最终另由Windows HD+生产窗口连续186帧覆盖D/C/B/A/S/SS，确认sgm文本、dark Rank track、各Rank NineSlice与SS动画后，ordinary HUD current portable门才恢复`closed-evidence-equivalent`。
+该门保留Reverse `c2187fe3`/`818b8db6` fixture、Score45/Life10路径、字体链、SS节点、曲线、SoftClip和真实Browser执行作为回归与缺陷发现输入，但用户2026-08-27生产观察已证明其expected与覆盖面不足：颜色、Auto标签、AddScore、Rank位置、Life Gauge、Pause、Slide/Lane/粒子、SS时长及自然结束结算均未被同状态原作事实关闭。该门不得再称equivalence，也不得据此把`ordinaryHud`、`ordinaryCommandScene`、`originalLiveSettings`或selected gates升级出`observational-gap`。
 
 ## Original Pause leaves
 

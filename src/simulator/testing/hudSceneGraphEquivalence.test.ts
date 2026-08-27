@@ -73,7 +73,7 @@ for (const [name, actual] of Object.entries(CURRENT_SCORE_GAUGE_SS_WIDGETS)) {
 assert.equal(closure.status, "superseded-production-consumption-authorization-withdrawn");
 assert.equal(closure.production_authorization, false);
 assert.equal(correction.prior_closure_disposition.complete_hud_production_authorization_withdrawn, true);
-console.log(`HUD scene graph equivalence passed: Score=${CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS.length} Life=${CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS.length} high-rank=${sourceNodes.size}`);
+console.log(`HUD historical scene-graph inventory regression passed without production-consumption authorization: Score=${CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS.length} Life=${CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS.length} high-rank=${sourceNodes.size}`);
 
 function read(name: string): any {
   return JSON.parse(readFileSync(join(process.cwd(), root, name), "utf8"));

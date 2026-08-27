@@ -1,5 +1,7 @@
 # Simulator Original Live Settings Contract
 
+> **2026-08-27 re-audit status: `observational-gap`.** User production observation disproved the visible TapLaneEffect placement/lifetime/application closure and exposed adjacent Auto-caption, Slide/particle and Pause/completion mismatches. The schema and previously verified setting-state semantics remain regression facts, but this document no longer authorizes an aggregate portable-visible claim or a release recommendation. New original-equivalence conclusions require the full 10.1.4 object-graph/device-frame re-audit.
+
 ## Runtime policy classification
 
 Reverse owns original-setting claims. Valid product actions outside that proven scope continue through registered product semantics and internal notices rather than `evidence-required`; malformed settings or inconsistent state remain typed action/integrity failures. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
@@ -79,7 +81,7 @@ Manual Began/Ended is preflighted in the same input transaction. Auto and Manual
 
 Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。现在只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
 
-Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Node actual Pixi和3-fresh Browser product engine逐项验证slot6、`NoteLaneEffect_4`、bottom-center pivot、add blend、20:9 bounds及真实PNG framebuffer非零像素。A missing or tampered byte rejects before scene publication, Movie preparation, mount or scheduler start. `visibleTapLaneEffect=false` still creates the fixed owner but publishes no visible updates; particle/audio/judgement/Score digests remain independent.
+Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. 历史Node/Pixi与3-fresh Browser检查仅证明当时实现能够绘制指定PNG和bounds，未证明与原作同判定帧的位置、持续时间、重入/清理和13槽应用顺序一致；用户生产观察已推翻该可见闭环。A missing or tampered byte still rejects before scene publication, and `visibleTapLaneEffect=false` must publish no visible updates, but the ON branch remains `observational-gap` until new original dynamic evidence closes it.
 
 ## MvDarkness
 
@@ -107,6 +109,6 @@ These projections do not change CS-V1, fixed Rank, timeline revision, authored l
 
 ## Acceptance and exclusions
 
-The dedicated semantic/static leaf is `simulator:test:original-live-settings`; actual browser acceptance is `simulator:test:original-live-settings-webview2`. The latter decodes all four current PNGs and exercises a 13-slot on/fade/disabled lifecycle in three fresh WebView2 processes. Ordinary and MV browser leaves independently cover full-session composition and dark-cover output.
+The dedicated semantic/static leaf is `simulator:test:original-live-settings`; the browser leaf is now a regression/discovery harness only. Its four-PNG and 13-slot checks do not authorize visible equivalence because they did not compare original same-state component mutations, placement and lifetime.
 
 This closure does not authorize Stage 9, standalone MVView, 3D, CRI/USM exactness, fixed-device framebuffer/speaker exactness, charter, a global effect kill switch, arbitrary millisecond chart rewrite or runtime setting hot-switch.

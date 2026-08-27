@@ -72,7 +72,7 @@ const states = Array.from({ length: 9 }, (_, index) => {
 assert.deepEqual(states.map((state) => state.poolIndex), [0, 1, 2, 3, 0, 1, 2, 3, 0]);
 assert.deepEqual(states.map((state) => state.depth), [0, 1, 2, 3, 4, 5, 6, 7, 0]);
 
-console.log(`HUD logic equivalence passed: score-boundaries=${scoreOracle.boundaries.length} AP/Life/AddScore owners`);
+console.log(`HUD historical logic regression passed without visible-equivalence authorization: score-boundaries=${scoreOracle.boundaries.length} AP/Life/AddScore owners`);
 
 function ok<T>(result: any): T {
   if (result.status !== "ok") throw new Error(String(result.capability));

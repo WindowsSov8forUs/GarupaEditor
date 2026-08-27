@@ -103,4 +103,4 @@ for (const expected of cases) {
   segments[0].destroy();
   segments[1].destroy();
 }
-console.log(`Score final visible equivalence passed: UIFont1799→sgm75, states=${cases.length}`);
+console.log(`Score historical font/state regression passed; final-visible claim withdrawn: UIFont1799→sgm75, states=${cases.length}`);

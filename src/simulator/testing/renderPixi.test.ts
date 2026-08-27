@@ -607,7 +607,7 @@ async function main(): Promise<void> {
       fullChart,
     }, null, 2));
   }
-  console.log("actual Pixi ordinary visible oracle passed: Note cubic owners + Combo/AP/AddScore/Result/Life resource routes");
+  console.log("actual Pixi historical ordinary-visible regression executed without visible-equivalence authorization: Note cubic owners + Combo/AP/AddScore/Result/Life resource routes");
 }
 
 async function verifyActualPixiSelectedSkin(

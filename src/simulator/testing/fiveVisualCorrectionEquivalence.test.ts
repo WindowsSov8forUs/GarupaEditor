@@ -61,7 +61,7 @@ assert.equal(correction.tap_lane_effect.slot_count, 13);
 assert.equal(correction.tap_lane_effect.bounds_oracles.length, 8);
 assert.ok(correction.tap_lane_effect.bounds_oracles.every((row: any) =>
   row.pivot === "bottom-center" && row.visible_bounds_relative_to_target_top_left[3] > 600));
-console.log("five visual correction equivalence passed: Score45 Life10 Pause3 Slide10 Lane13/8");
+console.log("five-visual historical regression vector passed without visible-equivalence authorization: Score45 Life10 Pause3 Slide10 Lane13/8");
 
 function read(relative: string): any {
   return JSON.parse(readFileSync(join(fixtureRoot, relative), "utf8"));

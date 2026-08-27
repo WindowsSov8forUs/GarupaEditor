@@ -55,7 +55,7 @@ for (const row of primitiveNodes) {
   const component: any = componentNodes.get(row.path.split("/").pop());
   assert.equal(primitive.high_rank_texture_route[row.path], component.resolved_texture_name);
 }
-console.log(`HUD render primitive equivalence passed: widgets=${primitive.widgets.length} SS=11 curves=56/236 SoftClip=20x3`);
+console.log(`HUD historical primitive inventory regression passed without visible-equivalence authorization: widgets=${primitive.widgets.length} SS=11 curves=56/236 SoftClip=20x3`);
 
 function read(name: string): any {
   return JSON.parse(readFileSync(join(base, name), "utf8"));

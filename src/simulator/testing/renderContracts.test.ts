@@ -1342,7 +1342,7 @@ async function testSharedTypedHudValidation(): Promise<void> {
     equal(JSON.stringify(canonical(frozen.state)), JSON.stringify(canonical(route.expected)), `${route.hudRole} full semantic state`);
     requireOk(renderer.dispose(), `${route.hudRole} dispose`);
   }
-  console.log("ok 10 - shared typed HUD states equal the complete evidenced positive state vector");
+  console.log("ok 10 - shared typed HUD states retain the historical regression vector without visible-equivalence authorization");
 }
 
 async function main(): Promise<void> {
