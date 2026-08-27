@@ -38,7 +38,7 @@ npm.cmd run simulator:test:total-revalidation:clean
 npm.cmd run simulator:test:full-visible-lifecycle-oracle
 ```
 
-该门继续消费Reverse `4a61a184`的全量结构化合同与最小R1帧，但其旧聚合授权已由Reverse `1bff69eb`纠错预言机明确撤回。新fixture禁止从录屏取Score颜色，补齐Life 10组件serialized hierarchy、Retryable/Selectable/Annotated每个component的Transform祖先链，以及13槽Button/NoteLaneEffect精确Transform；门只确认原作事实和四向比较输入完整，`productionEquivalenceAuthorization=false`持续成立。它不导入production Score/Slide/particle helper，且不以PNG像素采样产生颜色或位置expected。
+该门继续消费Reverse `4a61a184`的全量结构化合同与最小R1帧，但其旧聚合授权已由Reverse `1bff69eb`纠错预言机明确撤回。新fixture禁止从录屏取Score颜色，补齐Life 10组件serialized hierarchy、三套Pause Transform祖先链及13槽精确Transform；oracle自身仍保持`productionEquivalenceAuthorization=false`，只提供独立expected。能力只能由其外部四向aggregate门恢复：production consumer、actual primitive、fresh Browser与Windows同状态全部通过，不能修改fixture的false来“授权自己”。
 
 ## HUD re-audit regression leaf
 
@@ -46,7 +46,7 @@ npm.cmd run simulator:test:full-visible-lifecycle-oracle
 npm.cmd run simulator:test:hud-reaudit-regression
 ```
 
-该历史门单独仍只证明Score45/Life10、字体、SS曲线与SoftClip回归；能力恢复不依赖它的旧expected。2026-08-28第二次生产复现已证明此前`full-visible-lifecycle-oracle`、`lane-particle-same-state`、B.B.K全时间轴、actual Pixi、四模式27-capture WebView2和Windows截图组合仍会漏过明显错误，因此这些leaf全部降为回归/发现门，当前不授权`ordinaryHud`、`ordinaryCommandScene`、`originalLiveSettings`或已选择ordinary gates恢复。新的完成门必须以独立Reverse primitive/同状态帧逐对象否证旧expected，并由fresh生产窗口覆盖全时间轴。
+该历史门单独仍只证明Score45/Life10、字体、SS曲线与SoftClip回归；能力恢复不依赖它的旧expected。第二次完成门已按Reverse `1bff69eb`/`c5223b25`重建：B.B.K逐50ms tick、Life真实绿色fill、source-pink/旧double-gamma反例、三Pause父链、Lane13、particle17 roots、终局持久HUD/15ms exit均有独立primitive门；再叠加actual Pixi、ordinary 3-fresh×27、全部Browser矩阵、Windows 676 Combo/AP全程及44叶total pass。该完整组合授权ordinary相关门恢复；任一历史leaf或digest仍不能单独授权。
 
 ## Original Pause leaves
 

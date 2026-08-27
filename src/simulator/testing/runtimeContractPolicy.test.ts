@@ -35,9 +35,9 @@ function main(): void {
 
   const capabilities = createSimulatorModuleCapabilitySummary(null, null);
   assert.equal(capabilities.dynamicSurfaceResize, "observational-gap");
-  assert.equal(capabilities.ordinaryCommandScene, "observational-gap");
-  assert.equal(capabilities.ordinaryHud, "observational-gap");
-  assert.equal(capabilities.originalLiveSettings, "observational-gap");
+  assert.equal(capabilities.ordinaryCommandScene, "closed-evidence-equivalent");
+  assert.equal(capabilities.ordinaryHud, "closed-evidence-equivalent");
+  assert.equal(capabilities.originalLiveSettings, "closed-evidence-equivalent");
   assert.equal(capabilities.selectedRenderingGate, "observational-gap");
   assert.equal(capabilities.selectedHudGate, "observational-gap");
   assert.equal(capabilities.selectedBackgroundGate, "observational-gap");
@@ -45,8 +45,8 @@ function main(): void {
     "ordinary-current-portable",
     "standard-current-portable",
   );
-  assert.equal(ordinary.selectedRenderingGate, "observational-gap");
-  assert.equal(ordinary.selectedHudGate, "observational-gap");
+  assert.equal(ordinary.selectedRenderingGate, "closed-evidence-equivalent");
+  assert.equal(ordinary.selectedHudGate, "closed-evidence-equivalent");
   const habahiro = createSimulatorModuleCapabilitySummary(
     "habahiro-current-external-complete",
     "standard-current-portable",

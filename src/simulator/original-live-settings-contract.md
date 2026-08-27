@@ -1,6 +1,6 @@
 # Simulator Original Live Settings Contract
 
-> **2026-08-28 second re-audit status: `observational-gap`.** Fresh Windows production captures from `630a676d` reproduce visible Lane, judgement-particle, Auto-caption, HUD, Pause and Slide failures that the prior object-graph/device-frame contract and Browser acceptance did not detect. Schema 13 and non-visible setting ownership remain regression-covered, but no current visible-equivalence claim is authorized. Fixed-device Unity/GPU output also remains outside the claim.
+> **2026-08-28 second re-audit status: `closed-evidence-equivalent`.** The failed `630a676d` claim remains withdrawn. Reverse `1bff69eb` revoked blanket authorization and added exact consumer chains; `c5223b25` corrected the full B.B.K timeline. The implementation now passes the required four-way original-node→production-consumer→independent-primitive→fresh-frame gate for Lane/AP/Auto/Pause/terminal and the adjacent ordinary scene. This remains portable evidence equivalence; fixed-device Unity/GPU output is outside the claim.
 
 ## Runtime policy classification
 
@@ -79,9 +79,9 @@ _1,_1,_2,_2,_3,_3,_4,_4,_3,_3,_2,_2,_1
 
 Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses ten nominal frames from the committed serialized clip: XY scale 1→0.7 and RG 1→0, with B/A retained, then Disabled. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
 
-Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。当前实现虽为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回13槽owner，fresh生产帧仍显示beam尺度、位置和生命周期异常，因此该可见链重新开放；Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
+Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。当前只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；每槽直接消费Reverse `1bff69eb`的Button/half-Button Transform，不再以相邻full midpoint重算。Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
 
-Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Reverse `f3fde602` remains a candidate for the 13-slot owner map and state transitions, but its prior production-consumption proof is withdrawn: fresh Windows frames show oversized/misplaced effects and apparent retained rings. A missing or tampered byte still rejects before scene publication and `visibleTapLaneEffect=false` still publishes no visible updates; ON-branch geometry, parent transform, PPU, ordering and lifetime require a new independent same-state oracle before any capability restoration.
+Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Reverse `f3fde602` remains the lifecycle source, while `1bff69eb` supplies the missing exact per-slot Transform consumer oracle. A missing or tampered byte rejects before scene publication and `visibleTapLaneEffect=false` publishes no visible updates. The ON branch now compares all thirteen positions, resource route, bottom pivot, additive blend, On/OffReserve/fade/retrigger/cleanup mutations, actual Pixi bounds, three-fresh Browser output and Windows full-chart frames before capability restoration.
 
 ## MvDarkness
 
