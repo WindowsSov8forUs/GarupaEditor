@@ -1,6 +1,6 @@
 # Simulator Original Live Settings Contract
 
-> **2026-08-27 re-audit status: `observational-gap`.** User production observation disproved the visible TapLaneEffect placement/lifetime/application closure and exposed adjacent Auto-caption, Slide/particle and Pause/completion mismatches. The schema and previously verified setting-state semantics remain regression facts, but this document no longer authorizes an aggregate portable-visible claim or a release recommendation. New original-equivalence conclusions require the full 10.1.4 object-graph/device-frame re-audit.
+> **2026-08-28 re-audit status: `closed-evidence-equivalent`.** The 10.1.4 full object-graph/device-frame re-audit and the pushed Lane/judgement-particle same-state contract close the previously withdrawn TapLaneEffect, Auto-caption, particle, Pause and completion consumption paths. This status is portable evidence equivalence only; fixed-device Unity/GPU output remains outside the claim.
 
 ## Runtime policy classification
 
@@ -81,7 +81,7 @@ Manual Began/Ended is preflighted in the same input transaction. Auto and Manual
 
 Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。现在只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
 
-Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. 历史Node/Pixi与3-fresh Browser检查仅证明当时实现能够绘制指定PNG和bounds，未证明与原作同判定帧的位置、持续时间、重入/清理和13槽应用顺序一致；用户生产观察已推翻该可见闭环。A missing or tampered byte still rejects before scene publication, and `visibleTapLaneEffect=false` must publish no visible updates, but the ON branch remains `observational-gap` until new original dynamic evidence closes it.
+Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Reverse `f3fde602` now fixes the 13-slot owner map, same-outer On/OffReserve counter transition, following-update AnimatedOff, ten-frame fade, retrigger and Pause/MoveTime/game-clear/Retry/dispose cleanup. A missing or tampered byte still rejects before scene publication, `visibleTapLaneEffect=false` publishes no visible updates, and the ON branch is covered by independent state mutation plus actual Pixi/WebView2/Windows checks.
 
 ## MvDarkness
 

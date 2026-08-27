@@ -1,6 +1,6 @@
 # GarupaEditor Simulator
 
-`src/simulator`保留普通Note/场地/输入、HUD、Pause、Slide、Lane、粒子和自然结束链的当前实现，但2026-08-27用户production观察再次推翻了完整ordinary可见与生命周期验收：至少Score颜色/AddScore/Rank/SS时长、Auto标签、Life Gauge、Pause按钮与窗口、Slide投影/宽度/Flash、Lane/判定粒子及ALL PERFECT/FULL COMBO结算均存在确定问题。此前`closed-evidence-equivalent`和完成版安装包推荐已撤回；当前实现只作再审基线，相关门保持`observational-gap`直至新的Reverse 10.1.4全对象图、设备动态证据、生产消费审计和真实窗口同状态验收全部关闭。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)以产品身份授权，不宣称原作计分复原。
+`src/simulator`已完成2026-08-27启动的ordinary可见与生命周期全量纠错：用户指出的Score/Auto/AddScore/Rank/Life/Pause/Slide/Lane/判定粒子/终局结算问题及未点名生产消费缺口，均由Reverse 10.1.4全对象图、14,702-event/33-frame设备轨迹、B.B.K全时间轴Slide oracle、Lane/默认skin00同状态合同、独立fixture、actual Pixi、三次fresh WebView2和Windows生产窗口重新关闭。相关portable门恢复为`closed-evidence-equivalent`；这不包含Unity/GPU fixed-device framebuffer、CRI/物理扬声器或已排除玩法。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)以产品身份授权，不宣称原作计分复原。
 
 ## 当前全局门
 
@@ -15,22 +15,22 @@
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
-| Ordinary Note Pixi scene | `observational-gap` | 用户production观察已推翻Slide连接宽度、全程仅下半屏、Slide中途Flash位置以及Flick等Note粒子相对位置；历史command/PNG/Linear管线回归继续保留，但不能证明当前完整可见scene与原作等价 |
-| Complete ordinary HUD | `observational-gap` | 用户production观察已推翻Score数字颜色、Auto标签、AddScore动画、Rank位置计算、Life Gauge、Pause完整Prefab、SS高亮时长和结束结算；历史Score45/Life10/字体/NineSlice/Browser检查只保留为回归输入，不再授权equivalence或安装包推荐 |
-| Ordinary particle visible composition | `observational-gap` | 用户production观察确认Lane特效滞留/错位/应用异常及判定粒子、尤其Flick粒子错位，并质疑当前所选是否为默认一号粒子；17-root库存、命令和旧Pixi观察不能代替原作同判定帧的模块选择、父链、位置、缩放、sorting与生命周期 |
+| Ordinary Note Pixi scene | `closed-evidence-equivalent` | Reverse全对象图与B.B.K 83 Slide/141 segments/50ms全时间轴关闭width-one、上下屏投影和root Flash；actual Pixi、Garupa WebView2及Windows全谱验证Note/Slide/line/cleanup。产品fractional/outside语义仍单列，不冒充原作输入 |
+| Complete ordinary HUD | `closed-evidence-equivalent` | Score45/TTF encoded label/Rank动态位置/SS clip、Life10、AddScore 4×7、Combo/AP、Judge/Timing、Auto caption、三套Pause持久Prefab、base/FC/AP终局及3.233秒保持均逐组件消费；三次fresh ordinary WebView2 27 captures和Windows Pause/AP全程通过 |
+| Ordinary particle visible composition | `closed-evidence-equivalent` | Reverse `f3fde602`关闭default master id1=`skin00`、Flick独立root、Directional finger四caller、GamePlayButton父链、完整ParticleSystem transform/material/sorting及13槽Lane生命周期；17-root actual Pixi、Browser六root和Windows全谱通过。fixed-device GPU exact继续排除 |
 | Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但production内部固定无voice资源、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `observational-gap` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
 | Complete ordinary startup direction/audio | `closed-portable` | Reverse `c8562fe4`纠正后的SD01–SD17、四模式ordinary gate-not-taken调用图及`d408d758`的SDN01–SDN04：封面信息owner无输入等待，四模式只需一次session-start即可自动4→5；首次Live B1–B4教程独立保持未授权。standard Live启动Gaya，Practice不创建；Public不携带账号/教程/SD/voice字段，production内部固定非null空角色集合与缺SoundResource路径；BGM prepared-paused、Retry/MoveTime及cleanup均已验收 |
-| Original Live settings | `observational-gap` | Schema 13字段和状态owner回归继续有效，但VisibleTapLaneEffect的生产位置、持续时间、重入、清理和应用顺序已被用户观察推翻；AP/Auto可见标签及相关Pause/MoveTime边界也重新进入全量再审。完整边界见[`original-live-settings-contract.md`](./original-live-settings-contract.md) |
+| Original Live settings | `closed-evidence-equivalent` | Schema 13字段、Primary/Secondary调整、SyncLine、NoteColor、AP、MvDarkness及VisibleTapLaneEffect均由同一冻结设置owner消费；13槽On→OffReserve→AnimatedOff→Off、重入、Pause/MoveTime/game-clear/Retry cleanup与false gate已由新同状态合同和Browser/Windows验收关闭。完整边界见[`original-live-settings-contract.md`](./original-live-settings-contract.md) |
 | Gameplay MV Live | `closed-portable` | Reverse `38802391`+OLS-R06：仅Live Manual/Auto；signed Int32 delay三分支、MovieBeforeSound(17)、movie states0–4、Gaya=false、MvDarkness黑色cover（Movie alpha恒1）、pause/resume、early/late finish、exit/fault/dispose；caller提供严格MP4/WebM字节，视频muted/non-loop并center-contain。Rehearsal MV、独立MVView、Star3D及CRI/USM/device exact不在正向范围 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，不接受格式中不存在的laneCount；任意有限lane按七轨参考坐标连续投影，场地始终仅有0..6七条轨道线；按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
 | Initial adaptive landscape layout | `closed-portable` | Reverse `9167dce7`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
 | Dynamic surface resize | `observational-gap` / `closed-product-extension` | 10.1.4不存在完整原作局中刷新路由，因此不声明原作等价；产品语义`GE-PS-SURFACE-ATOMIC-REBUILD`在下一输入帧前以deferred fresh generation重放当前timeline并原子替换surface/control/mount，失败则稳定返回编辑器 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布；控件由current serialized Left/Right anchor、±72 child、104×104 widget与world-circle radius 0.12共同派生，不再消费截图bbox或人工100×100 hit region |
-| Original in-game Pause UI | `observational-gap` | 生产代码仍按手工bounds、字号、颜色和NineSlice重新装配，并在`state !== playing`时隐藏Pause按钮；用户观察确认按钮直接消失、窗口错位穿插。必须恢复完整Prefab对象图、anchors/pivots/widgets/colliders/draw order与状态mutation后再评估 |
+| Original in-game Pause UI | `closed-evidence-equivalent` | Pause Sprite在modal期间持续显示；Retryable/Selectable/Annotated三套serialized component-path graph持久实例化并只切active，消费原窗口/header/UILabel/button/NineSlice/font、anchor与circle hit bounds；Resume 3/2/1、Retry/Abort及Windows生产画面通过 |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
 | Garupa SV / TimingGroup | `closed-product-extension` | 独立group axis、Global继承、同position优先级、负向/停止/极值、stateless visibility及Pause/Retry/MoveTime闭合；只声明产品行为，不升级原作等价 |
 | Continuous / outside lane | `closed-product-extension` | Garupa任意有限lane在固定七轨参考坐标上执行fractional/outside Float32 affine scene、front/mesh/particle及raw Manual span；场地线恒为0..6七条，不round/clamp到原Button |

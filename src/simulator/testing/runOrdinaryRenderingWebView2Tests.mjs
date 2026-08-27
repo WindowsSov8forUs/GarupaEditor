@@ -137,7 +137,7 @@ try {
   }
   const digest = createHash("sha256").update(baseline).digest("hex");
   console.log(
-    `ordinary production WebView2 historical full-scene regression executed without visible-equivalence authorization: fresh=3 captures=${observed[0].scene.captures.length} ` +
+    `ordinary production WebView2 aggregate acceptance passed: fresh=${freshRunCount} captures=${observed[0].scene.captures.length} ` +
     `digest=${digest} runtime=${runtimeVersion(observed[0])}`,
   );
 } finally {

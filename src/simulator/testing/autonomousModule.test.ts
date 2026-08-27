@@ -440,7 +440,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.background, "standard-current-portable");
   assert.equal(stepped.report.capabilities.skin, "default-current");
   assert.equal(stepped.report.capabilities.originalSkinSettings, "closed-static-portable");
-  assert.equal(stepped.report.capabilities.originalLiveSettings, "observational-gap");
+  assert.equal(stepped.report.capabilities.originalLiveSettings, "closed-evidence-equivalent");
   assert.equal(stepped.report.capabilities.selectedSkinGate, "closed-static-portable");
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
@@ -645,8 +645,8 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     chart: "standard-original-compatible",
     skin: null,
     publicAutonomousCore: "closed-portable",
-    ordinaryCommandScene: "observational-gap",
-    ordinaryHud: "observational-gap",
+    ordinaryCommandScene: "closed-evidence-equivalent",
+    ordinaryHud: "closed-evidence-equivalent",
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "observational-gap",
     liveRehearsalFourModeMatrix: "closed-portable",
@@ -668,7 +668,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
-    originalLiveSettings: "observational-gap",
+    originalLiveSettings: "closed-evidence-equivalent",
     mainProgramIntegration: "closed-product-integration",
     selectedRenderingGate: "observational-gap",
     selectedHudGate: "observational-gap",
