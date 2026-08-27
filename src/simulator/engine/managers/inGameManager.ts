@@ -208,14 +208,6 @@ export class InGameManager {
     }
     const productUpdate = this.garupaProduct?.update(deltaTimeSeconds) ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
-    const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
-    if (tapLaneEffectAdvance?.status === "integrity-failure") {
-      return this.latchFault(tapLaneEffectAdvance);
-    }
-    if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
-      const committed = tapLaneEffectAdvance.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
-    }
     if (
       !this.degradedHabahiroLaneChanged &&
       this.renderProducer?.isDegradedHabahiro() === true &&
@@ -380,7 +372,9 @@ export class InGameManager {
               return this.latchFault(committed);
           }
         }
-        const tapLaneEffectPlan = this.tapLaneEffect?.preflightJudgement(batch) ?? null;
+        const tapLaneEffectPlan = terminalGameOver
+          ? this.tapLaneEffect?.preflightAllOff() ?? null
+          : this.tapLaneEffect?.preflightJudgement(batch) ?? null;
         if (tapLaneEffectPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
           return this.latchFault(tapLaneEffectPlan);
@@ -398,6 +392,14 @@ export class InGameManager {
           particleAdvanced = true;
         }
       }
+    }
+    const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
+    if (tapLaneEffectAdvance?.status === "integrity-failure") {
+      return this.latchFault(tapLaneEffectAdvance);
+    }
+    if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
+      const committed = tapLaneEffectAdvance.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
     }
     if (!particleAdvanced) {
       const advanced = this.commitParticleAdvance(deltaTimeSeconds, false);
@@ -432,6 +434,24 @@ export class InGameManager {
     return ok(this.noteManager.getAdjustedMusicPosition());
   }
 
+  clearTapLaneEffects(): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized") {
+      return integrityFailure(
+        "render.tap-lane-effect.cleanup-outside-initialized-lifecycle",
+        ["OLS-R05", "OLS-P01"],
+        "Lane-effect all-off cleanup belongs to one initialized session owner.",
+      );
+    }
+    const laneEffect = this.tapLaneEffect?.preflightAllOff() ?? null;
+    if (laneEffect?.status === "integrity-failure") return this.latchFault(laneEffect);
+    if (laneEffect?.status === "ok" && laneEffect.value !== null) {
+      const committed = laneEffect.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
+    return ok(undefined);
+  }
+
   pause(): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
@@ -454,12 +474,8 @@ export class InGameManager {
     if (this.isPaused()) return ok(undefined);
     const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
     if (movie.status !== "ok") return this.latchFault(movie);
-    const laneEffect = this.tapLaneEffect?.preflightAllOff() ?? null;
-    if (laneEffect?.status === "integrity-failure") return this.latchFault(laneEffect);
-    if (laneEffect?.status === "ok" && laneEffect.value !== null) {
-      const committed = laneEffect.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
-    }
+    const laneEffect = this.clearTapLaneEffects();
+    if (laneEffect.status !== "ok") return laneEffect;
     this.currentGameStateValue = GameState.PauseSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);

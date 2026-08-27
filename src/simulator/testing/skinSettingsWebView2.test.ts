@@ -19,6 +19,8 @@ import { particleRejected } from "../backends/particleValidation";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
+import { DeterministicParticleSimulation } from "../engine/particles/particleSimulation";
+import { particleFloat32FromBits } from "../backends/particleValidation";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 
@@ -35,6 +37,7 @@ async function main(): Promise<void> {
   const map = await fetchJson<{ readonly packs: readonly { readonly logicalResource: string; readonly url: string }[] }>("/packs.json");
   const base = await fetchJson<RenderResourceProfile>("/render-profile.json");
   const scenario = await fetchJson<{ readonly kind: "default" | "limited3" }>("/selection.json");
+  const laneParticleOracle = await fetchJson<any>("/lane-particle-oracle.json");
   const recipe = requireOk(resolveOriginalSkinRecipe({
     noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
     directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
@@ -77,7 +80,32 @@ async function main(): Promise<void> {
   if (particleReady.status !== "accepted") throw new Error(particleReady.failure.capability);
   const particleResources = particleRenderer.snapshot().resourceCount;
   if (particleResources <= 2) throw new Error("selected particle resources were not decoded");
-  if (particleRenderer.dispose().status !== "accepted") throw new Error("selected particle renderer dispose");
+  const preparedParticleResult = await particleProvider.readPreparedSkinPack!();
+  if (preparedParticleResult.status !== "accepted") throw new Error(preparedParticleResult.failure.capability);
+  const preparedParticlePack = preparedParticleResult.value;
+  const roots = laneParticleOracle.particles.routes.map((row: any) => row.root) as string[];
+  const systemsByRoot = new Map<string, number>();
+  for (const bundle of preparedParticlePack.profile.bundles) for (const system of bundle.systems) {
+    systemsByRoot.set(system.root, (systemsByRoot.get(system.root) ?? 0) + 1);
+  }
+  for (const route of laneParticleOracle.particles.routes) {
+    if (systemsByRoot.get(route.root) !== route.systemCount) throw new Error(`selected particle system graph mismatch: ${route.root}`);
+  }
+  const particleWorld = new DeterministicParticleSimulation(
+    preparedParticlePack.profile,
+    particleFloat32FromBits(scene.particleScene.gameplayTransformScaleBits)!,
+  );
+  for (const root of roots) particleWorld.playRoot(`webview2:${root}`, Object.freeze({
+    kind: "game-play-button" as const, buttonType: 3, rangeLength: root.includes("directional") ? null : 1,
+  }), root as any);
+  particleWorld.step(Math.fround(1 / 30), false);
+  const particleSamples = particleWorld.samples();
+  const particleBatch = particleRenderer.preflightFrame(Object.freeze({
+    sessionId: "selected-skin-webview2", frame: 0, samples: particleSamples,
+  }));
+  if (particleBatch.status !== "accepted" || particleRenderer.commitFrame(particleBatch.value).status !== "accepted") {
+    throw new Error("selected particle same-state frame commit");
+  }
   const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
   const profile: RenderResourceProfile = {
     ...base,
@@ -136,11 +164,27 @@ async function main(): Promise<void> {
   document.body.appendChild(app.canvas);
   const linearOutput = installPixiLinearOutput(renderer.stage, 1600, 720);
   app.stage.addChild(renderer.stage);
+  app.stage.addChild(particleRenderer.stage);
+  app.stage.addChild(particleRenderer.highSortingStage);
   app.render();
   const pixels = readWebGlFramebufferRgba(app, 1600, 720);
   const rgbaSha256 = await sha256(pixels);
   const alphaPixels = alphaCount(pixels);
   const snapshot = renderer.sceneSnapshot();
+  const particleRows = particleRenderer.sceneSnapshot();
+  const particleViewportRoots = new Set<string>();
+  for (const sample of particleSamples) {
+    const row = particleRows.find((candidate) => candidate.particleId === sample.particleId);
+    if (row === undefined || !row.position.every(Number.isFinite) || !row.scale.every(Number.isFinite) ||
+      !Number.isFinite(row.rotation) || !Number.isFinite(row.alpha) || row.blendMode !== "add" ||
+      row.sortingStage !== (sample.sortingOrder > 20 ? "high" : "low")) {
+      throw new Error(`selected particle primitive mismatch: ${sample.systemId}`);
+    }
+    if (row.position[0] >= 0 && row.position[0] <= 1600 && row.position[1] >= 0 && row.position[1] <= 720) {
+      particleViewportRoots.add(sample.root);
+    }
+  }
+  if (particleViewportRoots.size !== roots.length) throw new Error(`particle root viewport mismatch: ${[...particleViewportRoots].join("|")}`);
   const fieldRows = snapshot.filter((row) => row.renderObjectId.startsWith("render:skin-field:"));
   const judgeRow = snapshot.find((row) => row.renderObjectId === "skin:web:judge");
   const backgroundRow = snapshot.find((row) => row.renderObjectId === "skin:web:background");
@@ -155,8 +199,11 @@ async function main(): Promise<void> {
   requireOk(released.commit());
   const fieldCleanup = renderer.sceneSnapshot().filter((row) => row.renderObjectId.startsWith("render:skin-field:")).length;
   renderer.stage.removeFromParent();
+  particleRenderer.stage.removeFromParent();
+  particleRenderer.highSortingStage.removeFromParent();
   linearOutput.dispose();
   requireOk(renderer.dispose());
+  if (particleRenderer.dispose().status !== "accepted") throw new Error("selected particle renderer dispose");
   const cleanup = renderer.snapshot().objectCount;
   app.destroy(true, { children: true, texture: true, textureSource: true });
   window.ipc.postMessage(JSON.stringify({
@@ -164,7 +211,9 @@ async function main(): Promise<void> {
     actualDrawnRoles: backgroundExpected ? ["note", "field", "judge", "background"] : ["note", "field", "judge"],
     fieldDrawCount: fieldRows.length, judgeDraw: true, backgroundDraw: backgroundExpected,
     rgbaSha256, alphaPixels,
-    particleResources, particleCleanup: particleRenderer.snapshot().nodeCount,
+    particleResources, particleRootCount: roots.length, particleSampleCount: particleSamples.length,
+    particleViewportIntersections: particleViewportRoots.size,
+    particleCleanup: particleRenderer.snapshot().nodeCount,
     fieldCleanup, cleanup,
   }));
 }

@@ -342,6 +342,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       const rendered = particle.value.commitRender();
       if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
     }
+    const laneCleanup = this.inGameManager.clearTapLaneEffects();
+    if (laneCleanup.status !== "ok") return laneCleanup;
     this.naturalCompletionClearStatus = clearStatus;
     return ok(undefined);
   }
@@ -397,9 +399,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     const domain = planned.value.commitDomain();
     if (domain.status !== "ok") return this.inGameManager.latchExternalFault(domain);
     const rendered = planned.value.commitRender();
-    return rendered.status === "ok"
-      ? rendered
-      : this.inGameManager.latchExternalFault(rendered);
+    if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
+    return this.inGameManager.clearTapLaneEffects();
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
@@ -1041,7 +1042,10 @@ function createParticleCoordinator(
       "Particle input contains only one non-empty session identity and requires an explicit prepared backend.",
     );
   }
-  const producer = new ParticleCommandProducer(input.chart);
+  const producer = new ParticleCommandProducer(
+    input.chart,
+    input.runtime.mode.isAutoPlay,
+  );
   const coordinator = new ParticleFrameCoordinator(
     input.particles.sessionId,
     producer,

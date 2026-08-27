@@ -108,7 +108,10 @@ export class ParticleCommandProducer {
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
 
-  constructor(chart: ChartConstructionResult) {
+  constructor(
+    chart: ChartConstructionResult,
+    private readonly isAutoPlay = false,
+  ) {
     if (chart === null || typeof chart !== "object" || !Array.isArray(chart.noteBatches)) {
       this.chartIdentityValid = false;
       return;
@@ -178,6 +181,14 @@ export class ParticleCommandProducer {
               buttonInstance(buttonType, 1),
               routed,
             ));
+            const fingerRoot = compatibleProductDirectionalFingerRoot(node, entry.adjustedResult);
+            if (fingerRoot !== null) {
+              commands.push(playRoot(
+                buttonParticleOwnerKey(buttonType, fingerRoot, null),
+                buttonInstance(buttonType, null),
+                fingerRoot,
+              ));
+            }
           }
           continue;
         }
@@ -231,6 +242,25 @@ export class ParticleCommandProducer {
             routed.value,
           ));
         }
+        if (isDirectionalJudgeNoteType(entry.noteType) && entry.adjustedResult >= NoteResultType.Good) {
+          const fingerRoot = resolveParticleDirectionalFingerRoot({
+            afterNoteType: entry.phase === "tail" ? note.afterNoteType : AfterNoteType.None,
+            gameNoteType: judgementGameNoteType(note, entry),
+          });
+          if (fingerRoot.status !== "ok") return fingerRoot;
+          const fingerButton = directionalFingerButtonType(
+            buttonType,
+            entry.buttonTypes,
+            fingerRoot.value,
+            this.isAutoPlay,
+            entry.multipleDirectionalFlickNoteCount,
+          );
+          commands.push(playRoot(
+            buttonParticleOwnerKey(fingerButton, fingerRoot.value, null),
+            buttonInstance(fingerButton, null),
+            fingerRoot.value,
+          ));
+        }
       }
     }
     if (terminalAfter !== null) {
@@ -240,34 +270,6 @@ export class ParticleCommandProducer {
       projected.terminal = true;
     }
     return this.stage(commands, projected);
-  }
-
-  preflightDirectionalFingerEffect(
-    buttonType: number,
-    result: NoteResultTypeValue,
-    source: Parameters<typeof resolveParticleDirectionalFingerRoot>[0],
-  ): SimulatorResult<ParticleCommandOwnerTransaction> {
-    const available = this.validateAvailable();
-    if (available.status !== "ok") return available;
-    if (!isButtonType(buttonType) || !Number.isInteger(result) ||
-      result < NoteResultType.None || result > NoteResultType.Perfect) {
-      return rejected(
-        "particle.producer.invalid-directional-finger-owner-or-result",
-        "A directional finger particle requires an engine-owned GamePlayButton and closed owner-authored result.",
-      );
-    }
-    const projected = cloneState(this.state);
-    if (projected.suppressedUntilReplay || result < NoteResultType.Good) {
-      return this.stage([], projected);
-    }
-    const root = resolveParticleDirectionalFingerRoot(source);
-    return root.status !== "ok"
-      ? root
-      : this.stage([playRoot(
-          buttonParticleOwnerKey(buttonType, root.value, null),
-          buttonInstance(buttonType, null),
-          root.value,
-        )], projected);
   }
 
   preflightButtonTapKeepStart(
@@ -776,6 +778,36 @@ function compatibleProductParticleRoot(
     : result === NoteResultType.Great
     ? "ordinary:effect_tap_great"
     : "ordinary:effect_tap_good";
+}
+
+function compatibleProductDirectionalFingerRoot(
+  node: GarupaProductNode,
+  result: NoteResultTypeValue,
+): ParticleRootId | null {
+  if (node.width !== 1 || !Number.isInteger(node.spanStart) || node.spanStart < 0 || node.spanStart > 6 ||
+    node.type !== "Directional" || result < NoteResultType.Good) return null;
+  return node.direction === "Left"
+    ? "directional:effect_tap_directional_flick_l_finger"
+    : node.direction === "Right"
+      ? "directional:effect_tap_directional_flick_r_finger"
+      : null;
+}
+
+function isDirectionalJudgeNoteType(noteType: number): boolean {
+  return noteType === 6 || noteType === 7 || noteType === 9 || noteType === 10;
+}
+
+function directionalFingerButtonType(
+  targetCenterButton: number,
+  buttonTypes: readonly number[],
+  root: ParticleRootId,
+  isAutoPlay: boolean,
+  multipleDirectionalFlickNoteCount: number,
+): number {
+  if (!isAutoPlay || multipleDirectionalFlickNoteCount <= 1) return targetCenterButton;
+  return root === "directional:effect_tap_directional_flick_l_finger"
+    ? Math.max(...buttonTypes)
+    : Math.min(...buttonTypes);
 }
 
 function productScoringKey(

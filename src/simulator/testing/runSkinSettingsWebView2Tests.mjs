@@ -16,6 +16,10 @@ const renderProfile = join(
   fixtureRoot, "autonomous-module", "artifacts", "investigations",
   "autonomous-simulator-portable-pack-10-1-4", "ordinary_portable_profile.json",
 );
+const laneParticleOracle = join(
+  fixtureRoot, "lane-particle-same-state", "artifacts", "investigations",
+  "simulator-lane-judgement-particle-same-state-10-1-4", "lane_judgement_particle_same_state.json",
+);
 const scenarios = Object.freeze([
   Object.freeze({ kind: "default", packRoot: join(fixtureRoot, "skin-settings", "default"), packCount: 8,
     roles: Object.freeze(["note", "field", "judge"]), background: false }),
@@ -84,6 +88,7 @@ function prepareStage(scenario) {
   stageFile("/packs.json", "packs.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ packs })), allowlist);
   stageFile("/selection.json", "selection.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ kind: scenario.kind })), allowlist);
   stageFile("/render-profile.json", "render-profile.json", "application/json; charset=utf-8", readFileSync(renderProfile), allowlist);
+  stageFile("/lane-particle-oracle.json", "lane-particle-oracle.json", "application/json; charset=utf-8", readFileSync(laneParticleOracle), allowlist);
   writeFileSync(join(stage, "allowlist.txt"), allowlist.map((row) => row.join("\t")).join("\n") + "\n");
 }
 function stageFile(route, name, mime, bytes, allowlist) {
@@ -96,7 +101,8 @@ function verify(value, scenario) {
       value.fieldDrawCount !== 2 || value.judgeDraw !== true || value.backgroundDraw !== scenario.background ||
       typeof value.rgbaSha256 !== "string" || !/^[0-9a-f]{64}$/.test(value.rgbaSha256) ||
       !Number.isSafeInteger(value.alphaPixels) || value.alphaPixels <= 0 ||
-      value.particleResources <= 2 || value.particleCleanup !== 0 || value.fieldCleanup !== 0 || value.cleanup !== 0) {
+      value.particleResources <= 2 || value.particleRootCount !== 6 || value.particleSampleCount <= 0 ||
+      value.particleViewportIntersections !== 6 || value.particleCleanup !== 0 || value.fieldCleanup !== 0 || value.cleanup !== 0) {
     throw new Error(`selected Skin ${scenario.kind} WebView2 failed: ${JSON.stringify(value)}`);
   }
 }

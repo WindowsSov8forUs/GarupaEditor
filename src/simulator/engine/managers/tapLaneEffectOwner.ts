@@ -39,13 +39,13 @@ export class TapLaneEffectTransaction {
   private state: "pending" | "committed" | "discarded" = "pending";
 
   constructor(
-    private readonly render: RenderOwnerTransaction,
+    private readonly render: RenderOwnerTransaction | null,
     private readonly commitState: () => void,
   ) {}
 
   commit(): SimulatorResult<void> {
     if (this.state !== "pending") return repeated(this.state);
-    const committed = this.render.commit();
+    const committed = this.render?.commit() ?? ok(undefined);
     if (committed.status !== "ok") return committed;
     this.state = "committed";
     this.commitState();
@@ -54,7 +54,7 @@ export class TapLaneEffectTransaction {
 
   discard(): SimulatorResult<void> {
     if (this.state !== "pending") return repeated(this.state);
-    const discarded = this.render.discard();
+    const discarded = this.render?.discard() ?? ok(undefined);
     if (discarded.status === "ok") this.state = "discarded";
     return discarded;
   }
@@ -125,6 +125,7 @@ export class TapLaneEffectOwner {
     if (!this.visible) return ok(null);
     const projected = [...this.slots];
     const changed = new Set<number>();
+    let stateChanged = false;
     for (let slot = 0; slot < projected.length; slot += 1) {
       const current = projected[slot]!;
       if (current.reserveCounter > 0) {
@@ -132,6 +133,7 @@ export class TapLaneEffectOwner {
         projected[slot] = counter === 0
           ? frozenSlot(slot, "fading", -1, 0)
           : frozenSlot(slot, current.phase, counter, current.fadeFrame);
+        stateChanged = true;
         if (counter === 0) changed.add(slot);
         continue;
       }
@@ -141,8 +143,9 @@ export class TapLaneEffectOwner {
         ? frozenSlot(slot, "disabled", -1, 0)
         : frozenSlot(slot, "fading", -1, frame);
       changed.add(slot);
+      stateChanged = true;
     }
-    return this.prepareProjected(projected, changed);
+    return this.prepareProjected(projected, changed, stateChanged);
   }
 
   preflightAllOff(): SimulatorResult<TapLaneEffectTransaction | null> {
@@ -164,8 +167,12 @@ export class TapLaneEffectOwner {
   private prepareProjected(
     projected: TapLaneEffectSlotState[],
     changed: ReadonlySet<number>,
+    stateChanged = changed.size > 0,
   ): SimulatorResult<TapLaneEffectTransaction | null> {
-    if (changed.size === 0) return ok(null);
+    if (!stateChanged) return ok(null);
+    if (changed.size === 0) {
+      return ok(new TapLaneEffectTransaction(null, () => { this.slots = projected; }));
+    }
     const states = [...changed].sort((left, right) => left - right).map((slot) =>
       this.renderState(projected[slot]!));
     const prepared = this.producer.preflightTapLaneEffectUpdate(states);
