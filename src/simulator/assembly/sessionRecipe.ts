@@ -161,6 +161,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private state: "running" | "closed" = "running";
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
   private closeReport: SimulatorModuleCloseReport | null = null;
+  private naturalCompletionPresentationRemainingSeconds: number | null = null;
 
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
@@ -225,8 +226,18 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     );
     if (stepped.status !== "ok") return rejectedStep(stepped);
     if (this.engine.getNaturalCompletionClearStatus() !== null) {
-      const report = this.finish("completed", null);
-      return Object.freeze({ status: "closed" as const, report });
+      if (this.naturalCompletionPresentationRemainingSeconds === null) {
+        this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
+        return Object.freeze({ status: "running" as const });
+      }
+      this.naturalCompletionPresentationRemainingSeconds = Math.fround(
+        this.naturalCompletionPresentationRemainingSeconds - Math.fround(deltaTimeSeconds),
+      );
+      if (this.naturalCompletionPresentationRemainingSeconds <= 0) {
+        const report = this.finish("completed", null);
+        return Object.freeze({ status: "closed" as const, report });
+      }
+      return Object.freeze({ status: "running" as const });
     }
     const snapshot = this.engine.snapshot();
     if (snapshot.status !== "ok") return rejectedStep(snapshot);
@@ -284,7 +295,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const surface = this.checkSurface(this.surface.revision);
     if (surface.status === "rejected") return surface;
     const state = this.engine.getTimelineControlState();
-    return state.status === "ok" ? accepted(state.value) : fromEngineFailure(state);
+    if (state.status !== "ok") return fromEngineFailure(state);
+    return accepted(this.naturalCompletionPresentationRemainingSeconds === null
+      ? state.value
+      : Object.freeze({ ...state.value, playable: false }));
   }
 
   async retry(): Promise<SimulatorAssemblyResult<void>> {

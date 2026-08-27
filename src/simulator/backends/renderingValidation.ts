@@ -4,6 +4,7 @@ import {
   type SimulatorResult,
 } from "../engine/evidence";
 import { parseCurrentOrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
+import { parseCurrentGameClearProfile } from "./resources/currentGameClearProfile";
 import {
   RenderFidelityLabel,
   type RenderAtlasRow,
@@ -163,6 +164,23 @@ export function validateAndFreezeRenderProfile(
     }
     ordinaryVisibleProfile = parsedOrdinaryVisibleProfile;
   }
+  let gameClearProfile: RenderResourceProfile["gameClearProfile"];
+  if (profile.gameClearProfile !== undefined) {
+    const parsedGameClearProfile = parseCurrentGameClearProfile(profile.gameClearProfile);
+    if (parsedGameClearProfile !== null) gameClearProfile = parsedGameClearProfile;
+    else {
+      return reject(
+        "render.profile.invalid-game-clear-profile",
+        "Game-clear object graphs and clips must preserve the current serialized portable profile.",
+      );
+    }
+  }
+  if (profile.gameClearProfile !== undefined && gameClearProfile === undefined) {
+    return reject(
+      "render.profile.invalid-game-clear-profile",
+      "Game-clear object graphs and clips must preserve the current serialized portable profile.",
+    );
+  }
 
   return ok(Object.freeze({
     schemaVersion: 1,
@@ -174,6 +192,7 @@ export function validateAndFreezeRenderProfile(
     assets: Object.freeze(assets),
     scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
     ordinaryVisibleProfile,
+    gameClearProfile,
     scene: Object.freeze({
       profileId: scene.profileId,
       components: Object.freeze(

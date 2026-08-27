@@ -18,6 +18,41 @@ import highRankKiraUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score
 import highRankLongStarUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png?url&no-inline";
 import highRankOverlayUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png?url&no-inline";
 import scoreGaugeSsAnimationProfileUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json?url&no-inline";
+import gameClear0Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png?url&no-inline";
+import gameClear1Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_A-128DBB295661.png?url&no-inline";
+import gameClear2Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_C-4E6E52DFD15A.png?url&no-inline";
+import gameClear3Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_E_1-C9BA0359B42B.png?url&no-inline";
+import gameClear4Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_F-414E7DD71C28.png?url&no-inline";
+import gameClear5Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_L-78BBF7C63D71.png?url&no-inline";
+import gameClear6Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_P-EE4423100630.png?url&no-inline";
+import gameClear7Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_R-412309338FC8.png?url&no-inline";
+import gameClear8Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_T-5618F22BF1EC.png?url&no-inline";
+import gameClear9Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_Thunder-7B2A65ED8D4A.png?url&no-inline";
+import gameClear10Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_e_2-6904C32130BB.png?url&no-inline";
+import gameClear11Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_fu-96000BD8DFBE.png?url&no-inline";
+import gameClear12Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_ku-711F3EF6A5B1.png?url&no-inline";
+import gameClear13Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_o-D502DAE04E88.png?url&no-inline";
+import gameClear14Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_pa-A7BBBE0FAEAA.png?url&no-inline";
+import gameClear15Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_ru-27F859425593.png?url&no-inline";
+import gameClear16Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_star-7FD3FBF99A6E.png?url&no-inline";
+import gameClear17Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_to-F66DAA868FFA.png?url&no-inline";
+import gameClear18Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_B-21DE197D24C2.png?url&no-inline";
+import gameClear19Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_C-6604C59BBF04.png?url&no-inline";
+import gameClear20Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_F-F0202DE6EB77.png?url&no-inline";
+import gameClear21Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_L-001D2D7A72A3.png?url&no-inline";
+import gameClear22Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_M-8F2EB8EC8D8B.png?url&no-inline";
+import gameClear23Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_O-D5D3B618F2B5.png?url&no-inline";
+import gameClear24Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_U-55801FB5E0AB.png?url&no-inline";
+import gameClear25Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_bo-748F555F4EB0.png?url&no-inline";
+import gameClear26Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_fu-0E4B7C573B42.png?url&no-inline";
+import gameClear27Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_ko-B515E2F47FC5.png?url&no-inline";
+import gameClear28Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_ru-102D11889A10.png?url&no-inline";
+import gameClear29Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_star-C44B04E96491.png?url&no-inline";
+import gameClear30Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_thunder-237A4915F2CA.png?url&no-inline";
+import gameClear31Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_un-ED49CDED2ADF.png?url&no-inline";
+import gameClear32Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png?url&no-inline";
+import gameClear33Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png?url&no-inline";
+import gameClearProfileUrl from "../../assets/game/prefabs/bms/gameclear/game-clear-profile.json?url&no-inline";
 import manifestJson from "./simulatorBuiltinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -92,6 +127,43 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png", "high-rank-long-star.png", "image/png", highRankLongStarUrl),
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png", "high-rank-overlay.png", "image/png", highRankOverlayUrl),
     file("game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json", "score-gauge-ss-animation-profile.json", "application/json", scoreGaugeSsAnimationProfileUrl),
+  ]),
+  resource("prefabs/bms/gameclear", "In-game clear presentation resources", "package", [
+    file("game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png", "AllPerfect_--A3BA440F58BA.png", "image/png", gameClear0Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_A-128DBB295661.png", "AllPerfect_A-128DBB295661.png", "image/png", gameClear1Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_C-4E6E52DFD15A.png", "AllPerfect_C-4E6E52DFD15A.png", "image/png", gameClear2Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_E_1-C9BA0359B42B.png", "AllPerfect_E_1-C9BA0359B42B.png", "image/png", gameClear3Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_F-414E7DD71C28.png", "AllPerfect_F-414E7DD71C28.png", "image/png", gameClear4Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_L-78BBF7C63D71.png", "AllPerfect_L-78BBF7C63D71.png", "image/png", gameClear5Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_P-EE4423100630.png", "AllPerfect_P-EE4423100630.png", "image/png", gameClear6Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_R-412309338FC8.png", "AllPerfect_R-412309338FC8.png", "image/png", gameClear7Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_T-5618F22BF1EC.png", "AllPerfect_T-5618F22BF1EC.png", "image/png", gameClear8Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_Thunder-7B2A65ED8D4A.png", "AllPerfect_Thunder-7B2A65ED8D4A.png", "image/png", gameClear9Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_e_2-6904C32130BB.png", "AllPerfect_e_2-6904C32130BB.png", "image/png", gameClear10Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_fu-96000BD8DFBE.png", "AllPerfect_fu-96000BD8DFBE.png", "image/png", gameClear11Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_ku-711F3EF6A5B1.png", "AllPerfect_ku-711F3EF6A5B1.png", "image/png", gameClear12Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_o-D502DAE04E88.png", "AllPerfect_o-D502DAE04E88.png", "image/png", gameClear13Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_pa-A7BBBE0FAEAA.png", "AllPerfect_pa-A7BBBE0FAEAA.png", "image/png", gameClear14Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_ru-27F859425593.png", "AllPerfect_ru-27F859425593.png", "image/png", gameClear15Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_star-7FD3FBF99A6E.png", "AllPerfect_star-7FD3FBF99A6E.png", "image/png", gameClear16Url),
+    file("game/prefabs/bms/gameclear/AllPerfect_to-F66DAA868FFA.png", "AllPerfect_to-F66DAA868FFA.png", "image/png", gameClear17Url),
+    file("game/prefabs/bms/gameclear/FullCombo_B-21DE197D24C2.png", "FullCombo_B-21DE197D24C2.png", "image/png", gameClear18Url),
+    file("game/prefabs/bms/gameclear/FullCombo_C-6604C59BBF04.png", "FullCombo_C-6604C59BBF04.png", "image/png", gameClear19Url),
+    file("game/prefabs/bms/gameclear/FullCombo_F-F0202DE6EB77.png", "FullCombo_F-F0202DE6EB77.png", "image/png", gameClear20Url),
+    file("game/prefabs/bms/gameclear/FullCombo_L-001D2D7A72A3.png", "FullCombo_L-001D2D7A72A3.png", "image/png", gameClear21Url),
+    file("game/prefabs/bms/gameclear/FullCombo_M-8F2EB8EC8D8B.png", "FullCombo_M-8F2EB8EC8D8B.png", "image/png", gameClear22Url),
+    file("game/prefabs/bms/gameclear/FullCombo_O-D5D3B618F2B5.png", "FullCombo_O-D5D3B618F2B5.png", "image/png", gameClear23Url),
+    file("game/prefabs/bms/gameclear/FullCombo_U-55801FB5E0AB.png", "FullCombo_U-55801FB5E0AB.png", "image/png", gameClear24Url),
+    file("game/prefabs/bms/gameclear/FullCombo_bo-748F555F4EB0.png", "FullCombo_bo-748F555F4EB0.png", "image/png", gameClear25Url),
+    file("game/prefabs/bms/gameclear/FullCombo_fu-0E4B7C573B42.png", "FullCombo_fu-0E4B7C573B42.png", "image/png", gameClear26Url),
+    file("game/prefabs/bms/gameclear/FullCombo_ko-B515E2F47FC5.png", "FullCombo_ko-B515E2F47FC5.png", "image/png", gameClear27Url),
+    file("game/prefabs/bms/gameclear/FullCombo_ru-102D11889A10.png", "FullCombo_ru-102D11889A10.png", "image/png", gameClear28Url),
+    file("game/prefabs/bms/gameclear/FullCombo_star-C44B04E96491.png", "FullCombo_star-C44B04E96491.png", "image/png", gameClear29Url),
+    file("game/prefabs/bms/gameclear/FullCombo_thunder-237A4915F2CA.png", "FullCombo_thunder-237A4915F2CA.png", "image/png", gameClear30Url),
+    file("game/prefabs/bms/gameclear/FullCombo_un-ED49CDED2ADF.png", "FullCombo_un-ED49CDED2ADF.png", "image/png", gameClear31Url),
+    file("game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png", "Tex_parSet_1-E114CC275B2B.png", "image/png", gameClear32Url),
+    file("game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png", "Tex_parSet_2-E9CE6B25A9A1.png", "image/png", gameClear33Url),
+    file("game/prefabs/bms/gameclear/game-clear-profile.json", "game-clear-profile.json", "application/json", gameClearProfileUrl),
   ]),
 ]);
 

@@ -12,6 +12,7 @@ export const HUD_PREFAB_OBJECT_IDS = Object.freeze({
   combo: "render:hud:combo",
   comboAllPerfect: "render:hud:combo:all-perfect",
   result: "render:hud:result",
+  gameClear: "render:hud:game-clear",
   addScore: Object.freeze([
     "render:hud:add-score",
     "render:hud:add-score:1",

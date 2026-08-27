@@ -18,6 +18,7 @@ import {
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
+import type { GameClearClipProfile, GameClearGraphObject } from "../resources/currentGameClearProfile";
 import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
 import {
   createRehearsalControlSceneLayout,
@@ -109,7 +110,7 @@ interface PendingPixiBatch {
 }
 
 interface PixiHudVisual {
-  readonly kind: "score" | "combo" | "result" | "life" | "add-score" | "habahiro-flash" | "fidelity-label";
+  readonly kind: "score" | "combo" | "result" | "life" | "add-score" | "game-clear" | "habahiro-flash" | "fidelity-label";
   readonly content: Container;
   readonly text: Text | null;
   readonly lifeTextSegments: readonly [Text, Text, Text] | null;
@@ -142,6 +143,7 @@ type EvidenceAnimationRole =
   | "life-warning"
   | "life-game-over"
   | "score-gauge-ss"
+  | "game-clear"
   | "habahiro-lane-change"
   | "note-flick"
   | "note-directional-flick"
@@ -2051,6 +2053,9 @@ function isEvidenceHud(
         "icon_number_plus",
         ...String(command.state.value).split("").map((digit) => `icon_number_${digit}`),
       ].every((key) => textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, key)));
+    case "game-clear": {
+      return gameClearTexturesAvailable(textures);
+    }
     case "habahiro-flash":
     case "fidelity-label":
       return true;
@@ -2092,6 +2097,10 @@ function applyEvidenceHud(
       applyAddScoreHud(object, visual, command.state, textures, referenceCounts);
       break;
     }
+    case "game-clear": {
+      applyGameClearHud(object, visual, command.state.clearStatus, textures, referenceCounts);
+      break;
+    }
     case "habahiro-flash": {
       object.node.position.set(0, 0);
       if (visual.text !== null) visual.text.visible = false;
@@ -2118,6 +2127,127 @@ function applyEvidenceHud(
       break;
   }
   return visual;
+}
+
+function gameClearTexturesAvailable(textures: ReadonlyMap<string, Texture>): boolean {
+  let count = 0;
+  for (const key of textures.keys()) if (key.startsWith("hud/game-clear/")) count += 1;
+  return count === 34;
+}
+
+function applyGameClearHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  clearStatus: 1 | 2 | 3,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = object.resourceProfile.gameClearProfile;
+  if (profile === undefined) throw new Error("Game-clear runtime profile is missing");
+  object.node.position.set(
+    profileCenter(object.resourceProfile.scene.projection.viewportWidth),
+    profileCenter(object.resourceProfile.scene.projection.viewportHeight),
+  );
+  object.node.scale.set(authoredUiScale(object));
+  if (visual.digitSprites.length > 0 || clearStatus === 1) {
+    visual.content.visible = clearStatus !== 1;
+    return;
+  }
+  const branch = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+  const nodes = visual.serializedComponentNodes as Map<string, Container>;
+  for (const row of branch.graph.objects) {
+    const node = new Container({ label: `game-clear:${row.path}`, sortableChildren: true });
+    applyGameClearInitialTransform(node, row);
+    nodes.set(row.path, node);
+  }
+  for (const row of branch.graph.objects) {
+    const node = nodes.get(row.path)!;
+    const parentPath = row.path.includes("/") ? row.path.slice(0, row.path.lastIndexOf("/")) : null;
+    (parentPath === null ? visual.content : nodes.get(parentPath)!).addChild(node);
+    for (const component of row.components) {
+      if (component.class !== "UITexture" || component.widget === undefined) continue;
+      const widget = component.widget;
+      const logicalAssetId = `hud/game-clear/${widget.asset}`;
+      const binding = requiredTextureBinding(textures, logicalAssetId, widget.asset);
+      const sprite = new Sprite({ texture: binding.texture, label: `game-clear-widget:${row.path}` });
+      const pivot = nguiPivot(widget.pivot);
+      sprite.anchor.set(pivot.x, pivot.y);
+      sprite.width = widget.width;
+      sprite.height = widget.height;
+      sprite.tint = rgbTint(
+        f32FromBits(widget.color_f32_bits[0]),
+        f32FromBits(widget.color_f32_bits[1]),
+        f32FromBits(widget.color_f32_bits[2]),
+      );
+      sprite.alpha = f32FromBits(widget.color_f32_bits[3]);
+      sprite.zIndex = widget.depth;
+      node.addChild(sprite);
+      visual.digitSprites.push(sprite);
+      retainHudBinding(object, binding.key, referenceCounts);
+    }
+  }
+  visual.content.visible = true;
+  sampleGameClearGraph(visual, branch.clip, 0);
+}
+
+function applyGameClearInitialTransform(node: Container, row: GameClearGraphObject): void {
+  node.position.set(row.local_position[0], -row.local_position[1]);
+  node.scale.set(row.local_scale[0], row.local_scale[1]);
+  node.rotation = quaternionZRadians(row.local_rotation);
+  node.visible = row.active;
+}
+function profileCenter(value: number): number { return Math.fround(value / 2); }
+function nguiPivot(value: string): { x: number; y: number } {
+  const map: Record<string, readonly [number, number]> = {
+    TopLeft: [0, 0], Top: [0.5, 0], TopRight: [1, 0], Left: [0, 0.5], Center: [0.5, 0.5], Right: [1, 0.5],
+    BottomLeft: [0, 1], Bottom: [0.5, 1], BottomRight: [1, 1],
+  };
+  const pivot = map[value] ?? map.Center!;
+  return { x: pivot[0], y: pivot[1] };
+}
+function sampleGameClearGraph(visual: PixiHudVisual, clip: GameClearClipProfile, elapsedSeconds: number): void {
+  const phase = Math.min(Math.fround(elapsedSeconds), Math.fround(clip.stop_time - 1 / 6000));
+  const latest = new Map<number, { readonly time: number; readonly coefficients: readonly [number, number, number, number] }>();
+  for (const frame of clip.streamed_frames) {
+    if (frame.time > phase) break;
+    for (const key of frame.keys) latest.set(key.index, { time: frame.time, coefficients: key.coefficients });
+  }
+  const values: number[] = [];
+  for (let index = 0; index < clip.streamed_curve_count; index += 1) {
+    const key = latest.get(index);
+    values.push(key === undefined ? 0 : sampleCubicF32(key.coefficients, Math.fround(phase - key.time)));
+  }
+  values.push(...clip.constants);
+  const channels = clip.bindings.flatMap((binding) => binding.channels);
+  for (let index = 0; index < Math.min(channels.length, values.length); index += 1) {
+    applyGameClearChannel(visual, channels[index]!, values[index]!);
+  }
+}
+function sampleCubicF32(coefficients: readonly [number, number, number, number], delta: number): number {
+  let value = Math.fround(Math.fround(coefficients[0] * delta) + coefficients[1]);
+  value = Math.fround(Math.fround(value * delta) + coefficients[2]);
+  return Math.fround(Math.fround(value * delta) + coefficients[3]);
+}
+function applyGameClearChannel(visual: PixiHudVisual, channel: string, value: number): void {
+  const markers = [".m_LocalPosition.", ".m_LocalScale.", ".localEulerAnglesRaw.", ".mColor.a.", ".m_IsActive."] as const;
+  const marker = markers.find((candidate) => channel.includes(candidate));
+  if (marker === undefined) return;
+  const relative = channel.slice(0, channel.indexOf(marker));
+  const root = [...visual.serializedComponentNodes.keys()].find((path) => !path.includes("/"));
+  if (root === undefined) return;
+  const path = relative.length === 0 ? root : `${root}/${relative}`;
+  const node = visual.serializedComponentNodes.get(path);
+  if (node === undefined) return;
+  const axis = channel.slice(channel.indexOf(marker) + marker.length);
+  if (marker === ".m_LocalPosition.") {
+    if (axis === "x") node.x = value;
+    else if (axis === "y") node.y = -value;
+  } else if (marker === ".m_LocalScale.") {
+    if (axis === "x") node.scale.x = value;
+    else if (axis === "y") node.scale.y = value;
+  } else if (marker === ".localEulerAnglesRaw." && axis === "z") node.rotation = Math.fround(value * Math.PI / 180);
+  else if (marker === ".mColor.a.") for (const child of node.children) child.alpha = value;
+  else if (marker === ".m_IsActive.") node.visible = value >= 0.5;
 }
 
 function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
@@ -3360,6 +3490,18 @@ function applyEvidenceAnimation(
     }
     return;
   }
+  if (role === "game-clear") {
+    const state = object.hudState as { readonly clearStatus?: number } | null;
+    const profile = object.resourceProfile.gameClearProfile;
+    if (state?.clearStatus === undefined || profile === undefined || object.hudVisual === null) {
+      throw new Error("Game-clear animation owner/profile/state is missing");
+    }
+    if (state.clearStatus !== 1) {
+      const branch = state.clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+      sampleGameClearGraph(object.hudVisual, branch.clip, elapsedSeconds);
+    }
+    return;
+  }
   if (role === "habahiro-lane-change") {
     const visual = object.hudVisual;
     if (visual?.primaryFill === null || visual?.primaryFill === undefined) throw new Error("HABAHIRO flash owner missing HUD visual");
@@ -3448,6 +3590,10 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
   }
   if (role === "score-gauge-ss") {
     for (const sprite of object.hudVisual?.scoreHighRankSprites ?? []) sprite.visible = false;
+    return;
+  }
+  if (role === "game-clear") {
+    if (object.hudVisual !== null) object.hudVisual.content.visible = false;
     return;
   }
   if (role === "habahiro-lane-change") {
@@ -3666,7 +3812,7 @@ function boundSpriteExactKey(bindingKey: string | null): string | null {
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
   return role === "combo" || role === "all-perfect" || role === "add-score" ||
     role === "result" || role === "life-warning" || role === "life-game-over" ||
-    role === "score-gauge-ss" || role === "habahiro-lane-change" || role === "note-flick" ||
+    role === "score-gauge-ss" || role === "game-clear" || role === "habahiro-lane-change" || role === "note-flick" ||
     role === "note-directional-flick" || role === "note-long-flash";
 }
 
@@ -3967,7 +4113,7 @@ function applyHudOrdering(object: PixiObjectRecord, command: SetHudCommand): voi
   else if (command.hudRole === "result") sourceZ = profile.result.judgeDepth;
   else if (command.hudRole === "score" || command.hudRole === "life") {
     sourceZ = profile.sorting.frontPanelDepth * 1000;
-  }
+  } else if (command.hudRole === "game-clear") sourceZ = 5000;
   if (sourceZ === null) return;
   object.ordering = Object.freeze([
     profile.sorting.domainLayer,

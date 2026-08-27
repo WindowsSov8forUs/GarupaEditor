@@ -1,5 +1,6 @@
 import type { SimulatorResult } from "../engine/evidence";
 import type { OrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
+import type { GameClearRuntimeProfile } from "./resources/currentGameClearProfile";
 
 export const RenderFidelityLabel = "HABAHIRO" as const;
 
@@ -44,6 +45,7 @@ export type RenderAnimationRole =
   | "life-warning"
   | "life-game-over"
   | "score-gauge-ss"
+  | "game-clear"
   | "habahiro-lane-change";
 
 export type RenderTextureScaleMode = "nearest" | "linear";
@@ -222,6 +224,7 @@ export interface RenderResourceProfile {
   readonly scene: RenderSceneProfile;
   readonly scoreGaugeSsAnimation?: RenderScoreGaugeSsAnimationProfile;
   readonly ordinaryVisibleProfile?: OrdinaryVisibleProfile;
+  readonly gameClearProfile?: GameClearRuntimeProfile;
 }
 
 export interface SimulatorResourceProvider {
@@ -341,6 +344,10 @@ export interface RenderAddScoreHudState {
   readonly depth: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }
 
+export interface RenderGameClearHudState {
+  readonly clearStatus: 1 | 2 | 3;
+}
+
 export interface RenderHabahiroFlashHudState {
   readonly phase: "flash-start";
   readonly progress: RenderFloat32;
@@ -368,6 +375,7 @@ export type RenderObjectRole =
   | "hud-result"
   | "hud-life"
   | "hud-add-score"
+  | "hud-game-clear"
   | "habahiro-flash"
   | "fidelity-label";
 
@@ -425,6 +433,7 @@ export type RenderCommand =
   | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "result"; readonly state: RenderResultHudState })
   | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "life"; readonly state: RenderLifeHudState })
   | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "add-score"; readonly state: RenderAddScoreHudState })
+  | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "game-clear"; readonly state: RenderGameClearHudState })
   | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "habahiro-flash"; readonly state: RenderHabahiroFlashHudState })
   | (RenderObjectCommandBase & { readonly kind: "set-hud"; readonly hudRole: "fidelity-label"; readonly state: RenderFidelityLabelHudState })
   | (RenderObjectCommandBase & {

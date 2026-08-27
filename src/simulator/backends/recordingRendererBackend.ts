@@ -48,7 +48,7 @@ const RENDER_OBJECT_ROLES = new Set([
   "note-root", "note-head", "note-icon", "note-intermediate",
   "note-side-visual", "note-mesh", "sync-line", "multiple-directional-line",
   "field-line", "judge-line", "tap-lane-effect", "mask", "hud-score", "hud-combo",
-  "hud-result", "hud-life", "hud-add-score", "habahiro-flash", "fidelity-label",
+  "hud-result", "hud-life", "hud-add-score", "hud-game-clear", "habahiro-flash", "fidelity-label",
 ]);
 
 export class RecordingSimulatorRendererBackend implements SimulatorRendererBackend {
@@ -478,6 +478,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   private hasAnimationRole(role: RenderAnimationRole): boolean {
     if (this.profile!.assets.some((asset) => asset.animationRole === role)) return true;
     if (role === "score-gauge-ss") return this.profile!.scoreGaugeSsAnimation !== undefined;
+    if (role === "game-clear") return this.profile!.gameClearProfile !== undefined;
     const visible = this.profile!.ordinaryVisibleProfile;
     if (visible !== undefined) {
       if (role === "note-flick") return visible.noteAnimations.clips.some((clip) => clip.clipId === "note-flick-up");
@@ -549,7 +550,8 @@ function validateResourceProvenance(
         asset.provenance !== "current-official-portable";
     }
     return asset.provenance !== "current-external-portable" &&
-      asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
+      asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache" &&
+      !(asset.provenance === "current-official-portable" && asset.logicalAssetId.startsWith("hud/game-clear/"));
   });
   return invalid
     ? integrityFailure(

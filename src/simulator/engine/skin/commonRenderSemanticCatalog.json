@@ -1,1 +1,2620 @@
-{"schemaVersion":1,"status":"semantic-common-render-recipes-source-bytes-excluded","groups":{"ordinaryVisible":[{"file":"combo-number.png","profile":{"logicalAssetId":"hud/ordinary/combo-number-atlas","role":"hud-atlas","mime":"image/png","width":512,"height":512,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"icon_number_big_0","x":336,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_1","x":168,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_2","x":84,"y":42,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_3","x":84,"y":160,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_4","x":84,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_5","x":84,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_6","x":0,"y":42,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_7","x":0,"y":160,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_8","x":0,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_9","x":252,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_0","x":0,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_1","x":252,"y":160,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_2","x":420,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_3","x":336,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_4","x":252,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_5","x":168,"y":42,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_6","x":168,"y":160,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_7","x":168,"y":278,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_8","x":420,"y":396,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_big_AP_9","x":252,"y":42,"width":82,"height":116,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"rhythm-game-additive.png","profile":{"logicalAssetId":"hud/ordinary/rhythm-game-additive-atlas","role":"hud-atlas","mime":"image/png","width":1024,"height":1024,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"hp_meter","x":474,"y":463,"width":17,"height":26,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":8,"borderRight":8,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"tap-lane-effect-1.png","profile":{"logicalAssetId":"field/ordinary/tap-lane-effect-1","role":"lane-effect","mime":"image/png","width":467,"height":500,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"NoteLaneEffect_1","x":0,"y":0,"width":467,"height":500,"pivotX":0.5,"pivotY":1,"pixelsPerUnit":69}],"materialRole":"sprite","animationRole":"none"}},{"file":"tap-lane-effect-2.png","profile":{"logicalAssetId":"field/ordinary/tap-lane-effect-2","role":"lane-effect","mime":"image/png","width":342,"height":500,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"NoteLaneEffect_2","x":0,"y":0,"width":342,"height":500,"pivotX":0.5,"pivotY":1,"pixelsPerUnit":69}],"materialRole":"sprite","animationRole":"none"}},{"file":"tap-lane-effect-3.png","profile":{"logicalAssetId":"field/ordinary/tap-lane-effect-3","role":"lane-effect","mime":"image/png","width":218,"height":500,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"NoteLaneEffect_3","x":0,"y":0,"width":218,"height":500,"pivotX":0.5,"pivotY":1,"pixelsPerUnit":69}],"materialRole":"sprite","animationRole":"none"}},{"file":"tap-lane-effect-4.png","profile":{"logicalAssetId":"field/ordinary/tap-lane-effect-4","role":"lane-effect","mime":"image/png","width":154,"height":500,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"NoteLaneEffect_4","x":0,"y":0,"width":154,"height":500,"pivotX":0.5,"pivotY":1,"pixelsPerUnit":69}],"materialRole":"sprite","animationRole":"none"}},{"file":"ui-additive-effect.png","profile":{"logicalAssetId":"hud/ordinary/ui-additive-effect-atlas","role":"hud-atlas","mime":"image/png","width":256,"height":256,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"add"},"atlasRows":[{"exactKey":"effect_health_caution_inside","x":216,"y":68,"width":16,"height":14,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":6,"borderRight":6,"borderTop":5,"borderBottom":5},{"exactKey":"effect_health_caution_outline","x":0,"y":43,"width":180,"height":83,"pivotX":0.5,"pivotY":0.5,"pixelsPerUnit":100,"borderLeft":15,"borderRight":158,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}}],"scoreHud":[{"file":"rhythm-game-ui.png","profile":{"logicalAssetId":"hud/score/rhythm-game-ui-atlas","role":"hud-atlas","mime":"image/png","width":1024,"height":1024,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"gauge_base_score","x":648,"y":449,"width":236,"height":82,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":216,"borderRight":16,"borderTop":0,"borderBottom":0},{"exactKey":"bg_gauge_score_multi","x":277,"y":195,"width":18,"height":18,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":8,"borderRight":8,"borderTop":8,"borderBottom":8},{"exactKey":"score_meter_blue","x":413,"y":133,"width":40,"height":22,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":4,"borderRight":4,"borderTop":3,"borderBottom":3},{"exactKey":"score_meter_green","x":504,"y":128,"width":40,"height":22,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":5,"borderRight":5,"borderTop":0,"borderBottom":0},{"exactKey":"score_meter_orange","x":586,"y":151,"width":40,"height":22,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":5,"borderRight":5,"borderTop":0,"borderBottom":0},{"exactKey":"score_meter_pink","x":277,"y":125,"width":40,"height":22,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":5,"borderRight":5,"borderTop":0,"borderBottom":0},{"exactKey":"score_meter_s","x":0,"y":393,"width":662,"height":22,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"btn_ingame_time_back","x":909,"y":920,"width":104,"height":104,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"btn_ingame_time_forward","x":899,"y":311,"width":104,"height":104,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"bg_base_r6_inside_rhythm","x":481,"y":616,"width":24,"height":24,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":6,"borderRight":6,"borderTop":6,"borderBottom":6},{"exactKey":"label_round_white","x":302,"y":245,"width":60,"height":40,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":25,"borderRight":25,"borderTop":0,"borderBottom":0},{"exactKey":"bg_health","x":0,"y":329,"width":186,"height":62,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":39,"borderRight":143,"borderTop":0,"borderBottom":0},{"exactKey":"bg_no_health","x":349,"y":668,"width":131,"height":69,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":50,"borderRight":50,"borderTop":0,"borderBottom":0},{"exactKey":"combo","x":592,"y":175,"width":150,"height":42,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"combo_AP","x":837,"y":205,"width":150,"height":42,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"hp_meter","x":208,"y":124,"width":17,"height":26,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":4,"borderRight":4,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_0","x":147,"y":197,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":2,"borderRight":2,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_1","x":98,"y":197,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":8,"borderRight":9,"borderTop":1,"borderBottom":1},{"exactKey":"icon_number_2","x":0,"y":197,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_3","x":49,"y":197,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_4","x":237,"y":269,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_5","x":188,"y":269,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_6","x":953,"y":133,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_7","x":228,"y":137,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_8","x":966,"y":61,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_9","x":917,"y":61,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":2,"borderRight":1,"borderTop":0,"borderBottom":0},{"exactKey":"icon_number_plus","x":432,"y":596,"width":47,"height":70,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"button_pause","x":828,"y":319,"width":64,"height":64,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"rank-label-font.ttf","profile":{"logicalAssetId":"hud/score/rank-label-font","role":"font","mime":"font/ttf","width":null,"height":null,"textureSettings":null,"atlasRows":[],"materialRole":"hud","animationRole":"none"}},{"file":"ui-common.png","profile":{"logicalAssetId":"hud/score/ui-common-atlas","role":"hud-atlas","mime":"image/png","width":512,"height":256,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"level_mark","x":128,"y":4,"width":8,"height":5,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"bg_base_jacket_frame","x":206,"y":92,"width":34,"height":34,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":4,"borderRight":4,"borderTop":4,"borderBottom":4},{"exactKey":"bg_jacket_frame_rank_1_easy","x":206,"y":70,"width":20,"height":20,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1},{"exactKey":"bg_jacket_frame_rank_1_expert","x":228,"y":70,"width":20,"height":20,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1},{"exactKey":"bg_jacket_frame_rank_1_hard","x":250,"y":74,"width":20,"height":20,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1},{"exactKey":"bg_jacket_frame_rank_1_normal","x":244,"y":144,"width":20,"height":20,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1},{"exactKey":"bg_jacket_frame_rank_1_special","x":128,"y":11,"width":20,"height":20,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1},{"exactKey":"icon_fullmusic_gray","x":82,"y":33,"width":70,"height":34,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"jacket_challengeframe","x":82,"y":7,"width":24,"height":24,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":10,"borderRight":10,"borderTop":10,"borderBottom":10},{"exactKey":"label_challenge","x":82,"y":69,"width":122,"height":23,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0},{"exactKey":"label_square_white","x":150,"y":5,"width":12,"height":12,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":4,"borderRight":4,"borderTop":4,"borderBottom":4},{"exactKey":"bg_base_r12","x":164,"y":94,"width":32,"height":32,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":12,"borderRight":12,"borderTop":12,"borderBottom":12},{"exactKey":"bg_header_dialog","x":214,"y":216,"width":40,"height":40,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":28,"borderRight":4,"borderTop":0,"borderBottom":0},{"exactKey":"button_gray","x":164,"y":208,"width":48,"height":48,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":14,"borderRight":20,"borderTop":22,"borderBottom":12},{"exactKey":"button_pink","x":154,"y":19,"width":48,"height":48,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":14,"borderRight":20,"borderTop":22,"borderBottom":12},{"exactKey":"fill","x":211,"y":156,"width":8,"height":8,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":1,"borderRight":1,"borderTop":1,"borderBottom":1}],"materialRole":"hud","animationRole":"none"}},{"file":"high-rank-kira.png","profile":{"logicalAssetId":"hud/score/high-rank-kira","role":"hud-atlas","mime":"image/png","width":64,"height":64,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"high-rank-kira","x":0,"y":0,"width":64,"height":64,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"high-rank-long-star.png","profile":{"logicalAssetId":"hud/score/high-rank-long-star","role":"hud-atlas","mime":"image/png","width":420,"height":24,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"high-rank-long-star","x":0,"y":0,"width":420,"height":24,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"high-rank-overlay.png","profile":{"logicalAssetId":"hud/score/high-rank-overlay","role":"hud-atlas","mime":"image/png","width":64,"height":32,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[{"exactKey":"high-rank-overlay","x":0,"y":0,"width":64,"height":32,"pivotX":0,"pivotY":0,"pixelsPerUnit":100,"borderLeft":0,"borderRight":0,"borderTop":0,"borderBottom":0}],"materialRole":"hud","animationRole":"none"}},{"file":"countdown-1.png","profile":{"logicalAssetId":"ui/pause/countdown-1","role":"hud-atlas","mime":"image/png","width":51,"height":119,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[],"materialRole":"hud","animationRole":"none"}},{"file":"countdown-2.png","profile":{"logicalAssetId":"ui/pause/countdown-2","role":"hud-atlas","mime":"image/png","width":99,"height":120,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[],"materialRole":"hud","animationRole":"none"}},{"file":"countdown-3.png","profile":{"logicalAssetId":"ui/pause/countdown-3","role":"hud-atlas","mime":"image/png","width":99,"height":121,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[],"materialRole":"hud","animationRole":"none"}}],"startupDirection":[{"file":"startup-line-star.png","profile":{"logicalAssetId":"startup/information/line-star","role":"startup-ui","mime":"image/png","width":1346,"height":198,"textureSettings":{"scaleMode":"linear","wrapModeU":"clamp","wrapModeV":"clamp","mipmap":"off","premultiplyAlpha":false,"blendMode":"normal"},"atlasRows":[],"materialRole":"hud","animationRole":"none"}}]}}
+{
+  "schemaVersion": 1,
+  "status": "semantic-common-render-recipes-source-bytes-excluded",
+  "groups": {
+    "ordinaryVisible": [
+      {
+        "file": "combo-number.png",
+        "profile": {
+          "logicalAssetId": "hud/ordinary/combo-number-atlas",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 512,
+          "height": 512,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "icon_number_big_0",
+              "x": 336,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_1",
+              "x": 168,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_2",
+              "x": 84,
+              "y": 42,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_3",
+              "x": 84,
+              "y": 160,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_4",
+              "x": 84,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_5",
+              "x": 84,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_6",
+              "x": 0,
+              "y": 42,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_7",
+              "x": 0,
+              "y": 160,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_8",
+              "x": 0,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_9",
+              "x": 252,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_0",
+              "x": 0,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_1",
+              "x": 252,
+              "y": 160,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_2",
+              "x": 420,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_3",
+              "x": 336,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_4",
+              "x": 252,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_5",
+              "x": 168,
+              "y": 42,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_6",
+              "x": 168,
+              "y": 160,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_7",
+              "x": 168,
+              "y": 278,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_8",
+              "x": 420,
+              "y": 396,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_big_AP_9",
+              "x": 252,
+              "y": 42,
+              "width": 82,
+              "height": 116,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rhythm-game-additive.png",
+        "profile": {
+          "logicalAssetId": "hud/ordinary/rhythm-game-additive-atlas",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 1024,
+          "height": 1024,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "hp_meter",
+              "x": 474,
+              "y": 463,
+              "width": 17,
+              "height": 26,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 8,
+              "borderRight": 8,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "tap-lane-effect-1.png",
+        "profile": {
+          "logicalAssetId": "field/ordinary/tap-lane-effect-1",
+          "role": "lane-effect",
+          "mime": "image/png",
+          "width": 467,
+          "height": 500,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "NoteLaneEffect_1",
+              "x": 0,
+              "y": 0,
+              "width": 467,
+              "height": 500,
+              "pivotX": 0.5,
+              "pivotY": 1,
+              "pixelsPerUnit": 69
+            }
+          ],
+          "materialRole": "sprite",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "tap-lane-effect-2.png",
+        "profile": {
+          "logicalAssetId": "field/ordinary/tap-lane-effect-2",
+          "role": "lane-effect",
+          "mime": "image/png",
+          "width": 342,
+          "height": 500,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "NoteLaneEffect_2",
+              "x": 0,
+              "y": 0,
+              "width": 342,
+              "height": 500,
+              "pivotX": 0.5,
+              "pivotY": 1,
+              "pixelsPerUnit": 69
+            }
+          ],
+          "materialRole": "sprite",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "tap-lane-effect-3.png",
+        "profile": {
+          "logicalAssetId": "field/ordinary/tap-lane-effect-3",
+          "role": "lane-effect",
+          "mime": "image/png",
+          "width": 218,
+          "height": 500,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "NoteLaneEffect_3",
+              "x": 0,
+              "y": 0,
+              "width": 218,
+              "height": 500,
+              "pivotX": 0.5,
+              "pivotY": 1,
+              "pixelsPerUnit": 69
+            }
+          ],
+          "materialRole": "sprite",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "tap-lane-effect-4.png",
+        "profile": {
+          "logicalAssetId": "field/ordinary/tap-lane-effect-4",
+          "role": "lane-effect",
+          "mime": "image/png",
+          "width": 154,
+          "height": 500,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "NoteLaneEffect_4",
+              "x": 0,
+              "y": 0,
+              "width": 154,
+              "height": 500,
+              "pivotX": 0.5,
+              "pivotY": 1,
+              "pixelsPerUnit": 69
+            }
+          ],
+          "materialRole": "sprite",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "ui-additive-effect.png",
+        "profile": {
+          "logicalAssetId": "hud/ordinary/ui-additive-effect-atlas",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 256,
+          "height": 256,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "effect_health_caution_inside",
+              "x": 216,
+              "y": 68,
+              "width": 16,
+              "height": 14,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 6,
+              "borderRight": 6,
+              "borderTop": 5,
+              "borderBottom": 5
+            },
+            {
+              "exactKey": "effect_health_caution_outline",
+              "x": 0,
+              "y": 43,
+              "width": 180,
+              "height": 83,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 15,
+              "borderRight": 158,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      }
+    ],
+    "scoreHud": [
+      {
+        "file": "rhythm-game-ui.png",
+        "profile": {
+          "logicalAssetId": "hud/score/rhythm-game-ui-atlas",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 1024,
+          "height": 1024,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "gauge_base_score",
+              "x": 648,
+              "y": 449,
+              "width": 236,
+              "height": 82,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 216,
+              "borderRight": 16,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "bg_gauge_score_multi",
+              "x": 277,
+              "y": 195,
+              "width": 18,
+              "height": 18,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 8,
+              "borderRight": 8,
+              "borderTop": 8,
+              "borderBottom": 8
+            },
+            {
+              "exactKey": "score_meter_blue",
+              "x": 413,
+              "y": 133,
+              "width": 40,
+              "height": 22,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 4,
+              "borderRight": 4,
+              "borderTop": 3,
+              "borderBottom": 3
+            },
+            {
+              "exactKey": "score_meter_green",
+              "x": 504,
+              "y": 128,
+              "width": 40,
+              "height": 22,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 5,
+              "borderRight": 5,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "score_meter_orange",
+              "x": 586,
+              "y": 151,
+              "width": 40,
+              "height": 22,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 5,
+              "borderRight": 5,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "score_meter_pink",
+              "x": 277,
+              "y": 125,
+              "width": 40,
+              "height": 22,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 5,
+              "borderRight": 5,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "score_meter_s",
+              "x": 0,
+              "y": 393,
+              "width": 662,
+              "height": 22,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "btn_ingame_time_back",
+              "x": 909,
+              "y": 920,
+              "width": 104,
+              "height": 104,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "btn_ingame_time_forward",
+              "x": 899,
+              "y": 311,
+              "width": 104,
+              "height": 104,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "bg_base_r6_inside_rhythm",
+              "x": 481,
+              "y": 616,
+              "width": 24,
+              "height": 24,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 6,
+              "borderRight": 6,
+              "borderTop": 6,
+              "borderBottom": 6
+            },
+            {
+              "exactKey": "label_round_white",
+              "x": 302,
+              "y": 245,
+              "width": 60,
+              "height": 40,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 25,
+              "borderRight": 25,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "bg_health",
+              "x": 0,
+              "y": 329,
+              "width": 186,
+              "height": 62,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 39,
+              "borderRight": 143,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "bg_no_health",
+              "x": 349,
+              "y": 668,
+              "width": 131,
+              "height": 69,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 50,
+              "borderRight": 50,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "combo",
+              "x": 592,
+              "y": 175,
+              "width": 150,
+              "height": 42,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "combo_AP",
+              "x": 837,
+              "y": 205,
+              "width": 150,
+              "height": 42,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "hp_meter",
+              "x": 208,
+              "y": 124,
+              "width": 17,
+              "height": 26,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 4,
+              "borderRight": 4,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_0",
+              "x": 147,
+              "y": 197,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 2,
+              "borderRight": 2,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_1",
+              "x": 98,
+              "y": 197,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 8,
+              "borderRight": 9,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "icon_number_2",
+              "x": 0,
+              "y": 197,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_3",
+              "x": 49,
+              "y": 197,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_4",
+              "x": 237,
+              "y": 269,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_5",
+              "x": 188,
+              "y": 269,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_6",
+              "x": 953,
+              "y": 133,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_7",
+              "x": 228,
+              "y": 137,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_8",
+              "x": 966,
+              "y": 61,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_9",
+              "x": 917,
+              "y": 61,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 2,
+              "borderRight": 1,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_number_plus",
+              "x": 432,
+              "y": 596,
+              "width": 47,
+              "height": 70,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "button_pause",
+              "x": 828,
+              "y": 319,
+              "width": 64,
+              "height": 64,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rank-label-font.ttf",
+        "profile": {
+          "logicalAssetId": "hud/score/rank-label-font",
+          "role": "font",
+          "mime": "font/ttf",
+          "width": null,
+          "height": null,
+          "textureSettings": null,
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "ui-common.png",
+        "profile": {
+          "logicalAssetId": "hud/score/ui-common-atlas",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 512,
+          "height": 256,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "level_mark",
+              "x": 128,
+              "y": 4,
+              "width": 8,
+              "height": 5,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "bg_base_jacket_frame",
+              "x": 206,
+              "y": 92,
+              "width": 34,
+              "height": 34,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 4,
+              "borderRight": 4,
+              "borderTop": 4,
+              "borderBottom": 4
+            },
+            {
+              "exactKey": "bg_jacket_frame_rank_1_easy",
+              "x": 206,
+              "y": 70,
+              "width": 20,
+              "height": 20,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "bg_jacket_frame_rank_1_expert",
+              "x": 228,
+              "y": 70,
+              "width": 20,
+              "height": 20,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "bg_jacket_frame_rank_1_hard",
+              "x": 250,
+              "y": 74,
+              "width": 20,
+              "height": 20,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "bg_jacket_frame_rank_1_normal",
+              "x": 244,
+              "y": 144,
+              "width": 20,
+              "height": 20,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "bg_jacket_frame_rank_1_special",
+              "x": 128,
+              "y": 11,
+              "width": 20,
+              "height": 20,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            },
+            {
+              "exactKey": "icon_fullmusic_gray",
+              "x": 82,
+              "y": 33,
+              "width": 70,
+              "height": 34,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "jacket_challengeframe",
+              "x": 82,
+              "y": 7,
+              "width": 24,
+              "height": 24,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 10,
+              "borderRight": 10,
+              "borderTop": 10,
+              "borderBottom": 10
+            },
+            {
+              "exactKey": "label_challenge",
+              "x": 82,
+              "y": 69,
+              "width": 122,
+              "height": 23,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "label_square_white",
+              "x": 150,
+              "y": 5,
+              "width": 12,
+              "height": 12,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 4,
+              "borderRight": 4,
+              "borderTop": 4,
+              "borderBottom": 4
+            },
+            {
+              "exactKey": "bg_base_r12",
+              "x": 164,
+              "y": 94,
+              "width": 32,
+              "height": 32,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 12,
+              "borderRight": 12,
+              "borderTop": 12,
+              "borderBottom": 12
+            },
+            {
+              "exactKey": "bg_header_dialog",
+              "x": 214,
+              "y": 216,
+              "width": 40,
+              "height": 40,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 28,
+              "borderRight": 4,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "button_gray",
+              "x": 164,
+              "y": 208,
+              "width": 48,
+              "height": 48,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 14,
+              "borderRight": 20,
+              "borderTop": 22,
+              "borderBottom": 12
+            },
+            {
+              "exactKey": "button_pink",
+              "x": 154,
+              "y": 19,
+              "width": 48,
+              "height": 48,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 14,
+              "borderRight": 20,
+              "borderTop": 22,
+              "borderBottom": 12
+            },
+            {
+              "exactKey": "fill",
+              "x": 211,
+              "y": 156,
+              "width": 8,
+              "height": 8,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 1,
+              "borderRight": 1,
+              "borderTop": 1,
+              "borderBottom": 1
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "high-rank-kira.png",
+        "profile": {
+          "logicalAssetId": "hud/score/high-rank-kira",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 64,
+          "height": 64,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "high-rank-kira",
+              "x": 0,
+              "y": 0,
+              "width": 64,
+              "height": 64,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "high-rank-long-star.png",
+        "profile": {
+          "logicalAssetId": "hud/score/high-rank-long-star",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 420,
+          "height": 24,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "high-rank-long-star",
+              "x": 0,
+              "y": 0,
+              "width": 420,
+              "height": 24,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "high-rank-overlay.png",
+        "profile": {
+          "logicalAssetId": "hud/score/high-rank-overlay",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 64,
+          "height": 32,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "high-rank-overlay",
+              "x": 0,
+              "y": 0,
+              "width": 64,
+              "height": 32,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "countdown-1.png",
+        "profile": {
+          "logicalAssetId": "ui/pause/countdown-1",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 51,
+          "height": 119,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "countdown-2.png",
+        "profile": {
+          "logicalAssetId": "ui/pause/countdown-2",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 99,
+          "height": 120,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "countdown-3.png",
+        "profile": {
+          "logicalAssetId": "ui/pause/countdown-3",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 99,
+          "height": 121,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      }
+    ],
+    "startupDirection": [
+      {
+        "file": "startup-line-star.png",
+        "profile": {
+          "logicalAssetId": "startup/information/line-star",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 1346,
+          "height": 198,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      }
+    ],
+    "gameClear": [
+      {
+        "file": "AllPerfect_--A3BA440F58BA.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_--A3BA440F58BA",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 36,
+          "height": 15,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_--A3BA440F58BA",
+              "x": 0,
+              "y": 0,
+              "width": 36,
+              "height": 15,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_A-128DBB295661.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_A-128DBB295661",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 126,
+          "height": 137,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_A-128DBB295661",
+              "x": 0,
+              "y": 0,
+              "width": 126,
+              "height": 137,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_C-4E6E52DFD15A.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_C-4E6E52DFD15A",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 120,
+          "height": 138,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_C-4E6E52DFD15A",
+              "x": 0,
+              "y": 0,
+              "width": 120,
+              "height": 138,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_E_1-C9BA0359B42B.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_E_1-C9BA0359B42B",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 101,
+          "height": 133,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_E_1-C9BA0359B42B",
+              "x": 0,
+              "y": 0,
+              "width": 101,
+              "height": 133,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_F-414E7DD71C28.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_F-414E7DD71C28",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 100,
+          "height": 135,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_F-414E7DD71C28",
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 135,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_L-78BBF7C63D71.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_L-78BBF7C63D71",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 90,
+          "height": 136,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_L-78BBF7C63D71",
+              "x": 0,
+              "y": 0,
+              "width": 90,
+              "height": 136,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_P-EE4423100630.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_P-EE4423100630",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 99,
+          "height": 135,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_P-EE4423100630",
+              "x": 0,
+              "y": 0,
+              "width": 99,
+              "height": 135,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_R-412309338FC8.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_R-412309338FC8",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 100,
+          "height": 135,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_R-412309338FC8",
+              "x": 0,
+              "y": 0,
+              "width": 100,
+              "height": 135,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_T-5618F22BF1EC.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_T-5618F22BF1EC",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 117,
+          "height": 135,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_T-5618F22BF1EC",
+              "x": 0,
+              "y": 0,
+              "width": 117,
+              "height": 135,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_Thunder-7B2A65ED8D4A.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_Thunder-7B2A65ED8D4A",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 95,
+          "height": 143,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_Thunder-7B2A65ED8D4A",
+              "x": 0,
+              "y": 0,
+              "width": 95,
+              "height": 143,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_e_2-6904C32130BB.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_e_2-6904C32130BB",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 39,
+          "height": 31,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_e_2-6904C32130BB",
+              "x": 0,
+              "y": 0,
+              "width": 39,
+              "height": 31,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_fu-96000BD8DFBE.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_fu-96000BD8DFBE",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 39,
+          "height": 36,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_fu-96000BD8DFBE",
+              "x": 0,
+              "y": 0,
+              "width": 39,
+              "height": 36,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_ku-711F3EF6A5B1.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_ku-711F3EF6A5B1",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 41,
+          "height": 37,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_ku-711F3EF6A5B1",
+              "x": 0,
+              "y": 0,
+              "width": 41,
+              "height": 37,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_o-D502DAE04E88.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_o-D502DAE04E88",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 41,
+          "height": 37,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_o-D502DAE04E88",
+              "x": 0,
+              "y": 0,
+              "width": 41,
+              "height": 37,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_pa-A7BBBE0FAEAA.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_pa-A7BBBE0FAEAA",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 45,
+          "height": 38,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_pa-A7BBBE0FAEAA",
+              "x": 0,
+              "y": 0,
+              "width": 45,
+              "height": 38,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_ru-27F859425593.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_ru-27F859425593",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 43,
+          "height": 37,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_ru-27F859425593",
+              "x": 0,
+              "y": 0,
+              "width": 43,
+              "height": 37,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_star-7FD3FBF99A6E.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_star-7FD3FBF99A6E",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 80,
+          "height": 79,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_star-7FD3FBF99A6E",
+              "x": 0,
+              "y": 0,
+              "width": 80,
+              "height": 79,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "AllPerfect_to-F66DAA868FFA.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/AllPerfect_to-F66DAA868FFA",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 33,
+          "height": 38,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "AllPerfect_to-F66DAA868FFA",
+              "x": 0,
+              "y": 0,
+              "width": 33,
+              "height": 38,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_B-21DE197D24C2.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_B-21DE197D24C2",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 106,
+          "height": 135,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_B-21DE197D24C2",
+              "x": 0,
+              "y": 0,
+              "width": 106,
+              "height": 135,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_C-6604C59BBF04.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_C-6604C59BBF04",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 120,
+          "height": 139,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_C-6604C59BBF04",
+              "x": 0,
+              "y": 0,
+              "width": 120,
+              "height": 139,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_F-F0202DE6EB77.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_F-F0202DE6EB77",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 99,
+          "height": 137,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_F-F0202DE6EB77",
+              "x": 0,
+              "y": 0,
+              "width": 99,
+              "height": 137,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_L-001D2D7A72A3.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_L-001D2D7A72A3",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 90,
+          "height": 137,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_L-001D2D7A72A3",
+              "x": 0,
+              "y": 0,
+              "width": 90,
+              "height": 137,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_M-8F2EB8EC8D8B.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_M-8F2EB8EC8D8B",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 151,
+          "height": 139,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_M-8F2EB8EC8D8B",
+              "x": 0,
+              "y": 0,
+              "width": 151,
+              "height": 139,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_O-D5D3B618F2B5.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_O-D5D3B618F2B5",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 137,
+          "height": 139,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_O-D5D3B618F2B5",
+              "x": 0,
+              "y": 0,
+              "width": 137,
+              "height": 139,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_U-55801FB5E0AB.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_U-55801FB5E0AB",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 120,
+          "height": 139,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_U-55801FB5E0AB",
+              "x": 0,
+              "y": 0,
+              "width": 120,
+              "height": 139,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_bo-748F555F4EB0.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_bo-748F555F4EB0",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 56,
+          "height": 51,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_bo-748F555F4EB0",
+              "x": 0,
+              "y": 0,
+              "width": 56,
+              "height": 51,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_fu-0E4B7C573B42.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_fu-0E4B7C573B42",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 52,
+          "height": 49,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_fu-0E4B7C573B42",
+              "x": 0,
+              "y": 0,
+              "width": 52,
+              "height": 49,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_ko-B515E2F47FC5.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_ko-B515E2F47FC5",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 52,
+          "height": 48,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_ko-B515E2F47FC5",
+              "x": 0,
+              "y": 0,
+              "width": 52,
+              "height": 48,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_ru-102D11889A10.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_ru-102D11889A10",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 56,
+          "height": 50,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_ru-102D11889A10",
+              "x": 0,
+              "y": 0,
+              "width": 56,
+              "height": 50,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_star-C44B04E96491.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_star-C44B04E96491",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 80,
+          "height": 79,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_star-C44B04E96491",
+              "x": 0,
+              "y": 0,
+              "width": 80,
+              "height": 79,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_thunder-237A4915F2CA.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_thunder-237A4915F2CA",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 96,
+          "height": 144,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_thunder-237A4915F2CA",
+              "x": 0,
+              "y": 0,
+              "width": 96,
+              "height": 144,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "FullCombo_un-ED49CDED2ADF.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/FullCombo_un-ED49CDED2ADF",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 54,
+          "height": 50,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "FullCombo_un-ED49CDED2ADF",
+              "x": 0,
+              "y": 0,
+              "width": 54,
+              "height": 50,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "Tex_parSet_1-E114CC275B2B.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/Tex_parSet_1-E114CC275B2B",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 1024,
+          "height": 1024,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "Tex_parSet_1-E114CC275B2B",
+              "x": 0,
+              "y": 0,
+              "width": 1024,
+              "height": 1024,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "Tex_parSet_2-E9CE6B25A9A1.png",
+        "profile": {
+          "logicalAssetId": "hud/game-clear/Tex_parSet_2-E9CE6B25A9A1",
+          "role": "hud-atlas",
+          "mime": "image/png",
+          "width": 1024,
+          "height": 1024,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [
+            {
+              "exactKey": "Tex_parSet_2-E9CE6B25A9A1",
+              "x": 0,
+              "y": 0,
+              "width": 1024,
+              "height": 1024,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            }
+          ],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      }
+    ]
+  }
+}

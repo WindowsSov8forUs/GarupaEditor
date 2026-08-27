@@ -1,6 +1,7 @@
 import commonCatalogJson from "../engine/skin/commonRenderSemanticCatalog.json";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
 import {
   ImmutableLocalRenderResourceProvider,
   type LocalRenderResource,
@@ -55,18 +56,21 @@ export async function prepareLeasedCommonRenderResources(
     assets.push(profile);
     local.push(Object.freeze({ logicalAssetId: profile.logicalAssetId, bytes: bytes.value }));
   }
-  const [baseProfile, ordinaryVisible, scoreAnimation] = await Promise.all([
+  const [baseProfile, ordinaryVisible, scoreAnimation, gameClearProfile] = await Promise.all([
     readJson(lease, "portable/profiles/ordinary-render", "profile.json"),
     readJson(lease, "portable/profiles/ordinary-visible", "profile.json"),
     readJson(lease, "prefabs/bms/rhythmgamegauge/score", "score-gauge-ss-animation-profile.json"),
+    readJson(lease, "prefabs/bms/gameclear", "game-clear-profile.json"),
   ]);
   if (baseProfile.status === "rejected") return baseProfile;
   if (ordinaryVisible.status === "rejected") return ordinaryVisible;
   if (scoreAnimation.status === "rejected") return scoreAnimation;
+  if (gameClearProfile.status === "rejected") return gameClearProfile;
   const base = record(baseProfile.value);
   const visible = parseCurrentOrdinaryVisibleProfile(ordinaryVisible.value);
   const score = parseCurrentScoreGaugeSsAnimationProfile(scoreAnimation.value);
-  if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null) {
+  const gameClear = parseCurrentGameClearProfile(gameClearProfile.value);
+  if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null || gameClear === null) {
     return invalid("simulator.resources.common-profile-shape");
   }
   const provider = ImmutableLocalRenderResourceProvider.create(local);
@@ -82,6 +86,7 @@ export async function prepareLeasedCommonRenderResources(
     scene: base.scene as RenderResourceProfile["scene"],
     ordinaryVisibleProfile: visible,
     scoreGaugeSsAnimation: score,
+    gameClearProfile: gameClear,
   });
   return accepted(Object.freeze({ profile, provider: provider.value }));
 }
@@ -109,6 +114,7 @@ function commonLogicalResource(file: string): string | null {
   if (file === "startup-line-star.png") return "prefabs/bms/information";
   if (file.startsWith("countdown-")) return "prefabs/bms/pause";
   if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
+  if (/^(?:AllPerfect|FullCombo|Tex_parSet)_/.test(file)) return "prefabs/bms/gameclear";
   return null;
 }
 
@@ -117,7 +123,7 @@ function parseSemanticCatalog(value: unknown): readonly SemanticEntry[] {
   const groups = record(root?.groups);
   if (root?.schemaVersion !== 1 || groups === null) throw new Error("invalid common render semantic catalog");
   const output: SemanticEntry[] = [];
-  for (const key of ["ordinaryVisible", "scoreHud", "startupDirection"]) {
+  for (const key of ["ordinaryVisible", "scoreHud", "startupDirection", "gameClear"]) {
     const values = groups[key];
     if (!Array.isArray(values)) throw new Error("invalid common render semantic group");
     for (const value of values) {

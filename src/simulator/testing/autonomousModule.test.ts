@@ -422,9 +422,15 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     createFreshEngine: async () => accepted(engineBuild(engine as any)),
   });
   const session = requireAccepted(await factory.create(request()));
-  const stepped = session.step(1 / 60, null, TEST_SURFACE.revision);
+  const startedClear = session.step(1 / 60, null, TEST_SURFACE.revision);
+  assert.equal(startedClear.status, "running", "natural completion starts the original clear presentation before close");
+  const clearControl = requireAccepted(session.getControlState());
+  assert.equal(clearControl.playable, false, "Pause/gameplay input is disabled during GameClearAnimStart");
+  const beforeFinish = session.step(3.232, null, TEST_SURFACE.revision);
+  assert.equal(beforeFinish.status, "running", "clear presentation remains mounted before 3.233 seconds");
+  const stepped = session.step(0.002, null, TEST_SURFACE.revision);
   assert.equal(stepped.status, "closed");
-  if (stepped.status !== "closed") throw new Error("natural completion must close");
+  if (stepped.status !== "closed") throw new Error("natural completion closes only after clear animation finished");
   assert.equal(stepped.report.reason, "completed");
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);

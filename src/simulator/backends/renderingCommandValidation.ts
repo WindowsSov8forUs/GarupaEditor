@@ -107,6 +107,11 @@ export function validateTypedRenderHudCommand(
         Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
         Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8;
     }
+    case "game-clear": {
+      const state = command.state;
+      return objectRole === "hud-game-clear" && exactKeys(state, ["clearStatus"]) &&
+        (state.clearStatus === 1 || state.clearStatus === 2 || state.clearStatus === 3);
+    }
     case "habahiro-flash": {
       const state = command.state;
       return objectRole === "habahiro-flash" && exactKeys(state, ["phase", "progress"]) &&
@@ -154,6 +159,7 @@ export function animationRoleMatchesObject(
     role === "result" ? objectRole === "hud-result" :
     (role === "life-warning" || role === "life-game-over") ? objectRole === "hud-life" :
     role === "score-gauge-ss" ? objectRole === "hud-score" :
+    role === "game-clear" ? objectRole === "hud-game-clear" :
     role === "habahiro-lane-change" ? objectRole === "habahiro-flash" : false;
 }
 
@@ -183,6 +189,7 @@ function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
     "singleGameOver", "warning",
   ];
   if ("poolIndex" in state) return ["depth", "poolIndex", "value"];
+  if ("clearStatus" in state) return ["clearStatus"];
   if ("phase" in state) return ["phase", "progress"];
   return "laneChangePhase" in state
     ? ["absolutePosition", "label", "laneChangePhase", "visible"]

@@ -265,6 +265,7 @@ export class RenderCommandProducer {
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
+  private gameClearElapsedSeconds: number | null = null;
   private readonly hud: InGameHudController;
   private lastCombo = 0;
   private lastAllPerfect = false;
@@ -369,7 +370,7 @@ export class RenderCommandProducer {
     const created: string[] = [];
     const create = (
       renderObjectId: string,
-      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-add-score",
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-add-score" | "hud-game-clear",
     ) => {
       created.push(renderObjectId);
       commands.push({
@@ -387,6 +388,8 @@ export class RenderCommandProducer {
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect });
     create(HUD_OBJECTS.result, "hud-result");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+    create(HUD_OBJECTS.gameClear, "hud-game-clear");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.gameClear });
     create(HUD_OBJECTS.score, "hud-score");
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
@@ -606,6 +609,34 @@ export class RenderCommandProducer {
     });
   }
 
+  preflightGameClear(clearStatus: 1 | 2 | 3): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (this.gameClearElapsedSeconds !== null || ![1, 2, 3].includes(clearStatus)) {
+      return integrityFailure(
+        "render.game-clear.invalid-or-duplicate-start",
+        [],
+        "One natural completion starts exactly one current base/additional clear presentation.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const renderObjectId of [
+      HUD_OBJECTS.score, HUD_OBJECTS.life, HUD_OBJECTS.combo,
+      HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result, ...HUD_OBJECTS.addScore,
+    ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.gameClear,
+      hudRole: "game-clear", state: Object.freeze({ clearStatus }),
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.gameClear });
+    commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.gameClear,
+      animationRole: "game-clear", restart: true,
+    });
+    return this.preflight(commands, () => { this.gameClearElapsedSeconds = 0; });
+  }
+
   preflightHudAnimationAdvance(
     deltaTimeSeconds: number,
   ): SimulatorResult<RenderOwnerTransaction> {
@@ -623,7 +654,8 @@ export class RenderCommandProducer {
         this.lifeAnimationElapsedSeconds.size === 0 &&
         this.addScoreElapsedSeconds.size === 0 &&
         this.resultElapsedSeconds === null &&
-        this.scoreGaugeSsElapsedSeconds === null) ||
+        this.scoreGaugeSsElapsedSeconds === null &&
+        this.gameClearElapsedSeconds === null) ||
       deltaTimeSeconds === 0
     ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
@@ -633,6 +665,7 @@ export class RenderCommandProducer {
     const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
+    let nextGameClearElapsed = this.gameClearElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [owner, elapsed] of this.hudAnimationElapsedSeconds) {
@@ -696,6 +729,15 @@ export class RenderCommandProducer {
         animationRole: "score-gauge-ss", elapsedSeconds: sample.value,
       });
     }
+    if (this.gameClearElapsedSeconds !== null) {
+      nextGameClearElapsed = Math.fround(this.gameClearElapsedSeconds + deltaTimeSeconds);
+      const sample = createRenderFloat32(Math.min(nextGameClearElapsed, Math.fround(3.233)));
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.gameClear,
+        animationRole: "game-clear", elapsedSeconds: sample.value,
+      });
+    }
     if (this.resultElapsedSeconds !== null) {
       nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
       if (nextResultElapsed >= 1) {
@@ -729,6 +771,7 @@ export class RenderCommandProducer {
       }
       this.resultElapsedSeconds = nextResultElapsed;
       this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
+      this.gameClearElapsedSeconds = nextGameClearElapsed;
     });
   }
 

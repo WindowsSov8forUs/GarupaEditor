@@ -309,22 +309,34 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const particle = this.particleCoordinator?.preflightTerminal("natural-end") ?? null;
     if (particle?.status === "integrity-failure") return particle;
+    const rendering = this.renderProducer?.preflightGameClear(clearStatus) ?? null;
+    if (rendering?.status === "integrity-failure") {
+      if (particle?.status === "ok") particle.value.discard();
+      return rendering;
+    }
     const audio = this.audioProducer.preflightCompleteLive(clearStatus);
     if (audio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
+      if (rendering?.status === "ok") rendering.value.discard();
       return audio;
     }
     if (particle?.status === "ok") {
       const domain = particle.value.commitDomain();
       if (domain.status !== "ok") {
         audio.value.discard();
+        if (rendering?.status === "ok") rendering.value.discard();
         return this.inGameManager.latchExternalFault(domain);
       }
     }
     const committedAudio = this.commitAudio(audio.value);
     if (committedAudio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
+      if (rendering?.status === "ok") rendering.value.discard();
       return committedAudio;
+    }
+    if (rendering?.status === "ok") {
+      const renderedClear = rendering.value.commit();
+      if (renderedClear.status !== "ok") return this.inGameManager.latchExternalFault(renderedClear);
     }
     if (particle?.status === "ok") {
       const rendered = particle.value.commitRender();

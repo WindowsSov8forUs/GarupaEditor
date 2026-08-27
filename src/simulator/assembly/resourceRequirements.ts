@@ -48,6 +48,7 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
   requirement("render.score-gauge", "prefabs/bms/rhythmgamegauge/score", [
     "high-rank-kira.png", "high-rank-long-star.png", "high-rank-overlay.png", "score-gauge-ss-animation-profile.json",
   ]),
+  requirement("render.game-clear", "prefabs/bms/gameclear", null),
   requirement("audio.common", "sound/common", [
     "SE_RHYTHM_CLEAR.mp3", "SE_RHYTHM_FULLCOMBO.mp3", "SE_RHYTHM_GAYA.mp3",
     "SE_RHYTHM_TAP_SKILL.mp3", "bad.mp3", "miss.mp3",

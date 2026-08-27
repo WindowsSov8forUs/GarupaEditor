@@ -41,6 +41,7 @@ import { selectResolvedSkinResourceInventory } from "./legacySkinResourceSelecto
 import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
 import { ImmutableSharedStaticResourceStore } from "./legacySharedStaticResourceStore";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
+import { gameClearTestResources } from "./gameClearTestResources";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand
   ? Omit<T, "sessionId" | "sequence" | "frame" | "substep">
@@ -117,6 +118,7 @@ async function main(): Promise<void> {
   )));
   assert(scoreAnimation !== null, "ScoreGaugeSS profile parses");
   const scoreResources = augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile));
+  const gameClear = gameClearTestResources();
   const profile: RenderResourceProfile = {
     ...baseProfile,
     packIdentity: `${baseProfile.packIdentity}+actual-visible+actual-score`,
@@ -124,11 +126,14 @@ async function main(): Promise<void> {
       ...baseProfile.assets,
       ...CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((row) => row.profile),
       ...scoreResources,
+      ...gameClear.assets,
     ]),
     ordinaryVisibleProfile: visibleProfile,
     scoreGaugeSsAnimation: scoreAnimation,
+    gameClearProfile: gameClear.profile,
   };
-  const resources = actualResources(profile.assets);
+  const resources = Object.freeze([...actualResources(profile.assets.filter((asset) =>
+    !asset.logicalAssetId.startsWith("hud/game-clear/"))), ...gameClear.resources]);
   const provider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "actual provider");
   const renderer = new PixiRendererBackend(decoder);
   requireOk(await renderer.prepare(
@@ -263,6 +268,12 @@ async function main(): Promise<void> {
   push({ kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score", state: scoreState(0, 4, 4, false, "none", false) });
   push({ kind: "activate-object", renderObjectId: "hud:score:matrix" });
 
+  push({ kind: "create-object", renderObjectId: "hud:game-clear", poolFamily: "game-clear", role: "hud-game-clear", parentObjectId: null });
+  push({ kind: "set-hud", renderObjectId: "hud:game-clear", hudRole: "game-clear", state: Object.freeze({ clearStatus: 3 as const }) });
+  push({ kind: "activate-object", renderObjectId: "hud:game-clear" });
+  push({ kind: "play-animation", renderObjectId: "hud:game-clear", animationRole: "game-clear", restart: true });
+  push({ kind: "sample-animation", renderObjectId: "hud:game-clear", animationRole: "game-clear", elapsedSeconds: f32(1.2) });
+
   const batch = requireOk(renderer.preflight(commands), "actual visible command preflight");
   requireOk(renderer.commit(batch), "actual visible command commit");
   const scene = renderer.sceneSnapshot();
@@ -275,6 +286,10 @@ async function main(): Promise<void> {
   equal(row("note:left").position[0], Math.fround(-195.00000476837158), "left Flick midpoint converts Unity local units by bound PPU");
   equal(row("note:right").position[0], Math.fround(195.00000476837158), "right Flick midpoint converts Unity local units by bound PPU");
   equal(JSON.stringify(row("note:world").position), JSON.stringify([800, 360]), "ordinary Note world origin projects to the current orthographic viewport center");
+  const clear = row("hud:game-clear");
+  equal(clear.activeAnimationRole, "game-clear", "All Perfect clear graph owns one engine-clock animation");
+  assert((clear.hudSpriteNodes?.length ?? 0) >= 20, "All Perfect clear graph consumes the complete serialized UITexture letter/star inventory");
+  assert(clear.hudSpriteNodes?.some((sprite) => sprite.visible), "All Perfect clear clip publishes visible serialized nodes before exit");
   equal(row("note:world").scale[0], Math.fround(3.6), "ordinary Note Sprite scale consumes camera PPU / Sprite PPU");
   equal(row("note:flash").spriteAlpha, 1, "Long Flash current alpha channel remains one");
   equal(row("note:flash").spriteTint, 0x999999, "Long Flash midpoint RGB=.6 maps to Sprite tint");

@@ -2,7 +2,7 @@ declare function require(name: string): any;
 declare const process: any;
 declare const Buffer: any;
 const assert = require("node:assert/strict");
-const { readFileSync } = require("node:fs");
+const { readFileSync, readdirSync } = require("node:fs");
 const { join } = require("node:path");
 import type { SimulatorResourceFile, SimulatorResourceLease } from "../platform/resourceContracts";
 import { prepareSelectedSkinSourcePackages } from "../resources/sourcePackageDecoder";
@@ -52,13 +52,16 @@ async function testCommonRenderPackages(): Promise<void> {
     ["high-rank-overlay.png", "prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png"],
     ["score-gauge-ss-animation-profile.json", "prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json"],
   ]);
+  add("prefabs/bms/gameclear", readdirSync(join(root, "prefabs/bms/gameclear")).map((file: string) =>
+    [file, `prefabs/bms/gameclear/${file}`] as const));
   const prepared = await prepareLeasedCommonRenderResources(new MemoryLease(packages));
   assert.equal(prepared.status, "accepted", prepared.status === "rejected" ? prepared.failure.capability : "");
   if (prepared.status === "rejected") return;
-  assert.equal(prepared.value.profile.assets.length, 17);
+  assert.equal(prepared.value.profile.assets.length, 51);
   assert.equal(prepared.value.profile.packIdentity, "application-leased-semantic-render-v1");
   assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
   assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
+  assert.equal(prepared.value.profile.gameClearProfile?.allPerfect.clip.curve_count, 129);
   const asset = (id: string) => prepared.value.profile.assets.find((row) => row.logicalAssetId === id)!;
   const atlas = (id: string, key: string) => asset(id).atlasRows.find((row) => row.exactKey === key)!;
   assert.deepEqual(
