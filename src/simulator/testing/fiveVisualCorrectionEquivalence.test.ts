@@ -16,8 +16,8 @@ const fixtureRoot = join(process.cwd(), "src/simulator/testing/fixtures/reverse-
 const correction = read(
   "five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
 );
-const multiaspect = read(
-  "adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+const bbkk = read(
+  "full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/bbkk_slide_full_timeline_oracle.json",
 );
 const superseded = read(
   "hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
@@ -39,21 +39,32 @@ assert.equal(correction.pause.graphics_rectangle_cover_allowed, false);
 assert.equal(superseded.production_authorization, false);
 assert.equal(superseded.status, "superseded-production-consumption-authorization-withdrawn");
 
-for (const oracle of correction.slide.width_one_oracles) {
-  const layout = multiaspect.oracle.find((row: any) => row.id === oracle.case_id);
-  assert.ok(layout, oracle.case_id);
-  for (const sample of oracle.samples) {
-    const uniformScale = f32(sample.uniform_scale_f32_bits);
+assert.equal(bbkk.status, "confirmed-product-input-independent-bbkk-slide-full-timeline-oracle");
+assert.equal(bbkk.chart.slideItems, 83);
+assert.equal(bbkk.chart.segments, 141);
+assert.equal(bbkk.timeline.upperHalfFrames, 1611);
+assert.ok(bbkk.timeline.selectedUpperHalfCases.every((row: any) => row.crossesUpperHalf && row.visibleCurve[0] < 0.5));
+for (const oracle of bbkk.widthOne) {
+  const historical = correction.slide.width_one_oracles.find((row: any) => row.case_id === oracle.caseId);
+  assert.ok(historical, oracle.caseId);
+  for (let index = 0; index < oracle.samples.length; index += 1) {
+    const source = historical.samples[index]!;
+    const expected = oracle.samples[index]!;
     const halfWidth = calculateGarupaProductSlideHalfWidth(
-      uniformScale,
-      oracle.authored_width,
-      layout.star_ui.screen_to_safe_area_ratio,
-      layout.gameplay.screen_width_adjust_rate,
+      f32(source.uniform_scale_f32_bits),
+      historical.authored_width,
+      // Derive the original safe-area factor from the historical sample while
+      // explicitly excluding the disproved second screenWidthAdjustRate factor.
+      f32(source.full_width_world_f32_bits) /
+        (2 * f32(source.uniform_scale_f32_bits) * oracle.screenWidthAdjustRate),
     );
-    const fullPixels = Math.fround(Math.fround(Math.fround(halfWidth * 2) *
-      layout.game_camera.pixels_per_world_unit));
-    assert.equal(bits(fullPixels), sample.full_width_pixels_f32_bits,
-      `${oracle.case_id}:${sample.curve_f32_bits} independent projected width`);
+    const pixelsPerWorldUnit = expected.oldErroneousPixels /
+      (2 * halfWidth * oracle.screenWidthAdjustRate);
+    const fullPixels = Math.fround(halfWidth * 2 * pixelsPerWorldUnit);
+    assert.ok(Math.abs(fullPixels - expected.correctPixels) < 0.0001,
+      `${oracle.caseId}:${expected.curveF32Bits} corrected independent width ${fullPixels}/${expected.correctPixels}`);
+    assert.ok(expected.correctPixels > expected.oldErroneousPixels * 4,
+      "the former duplicated screenWidthAdjustRate must remain detectably rejected");
   }
 }
 
@@ -69,12 +80,4 @@ function read(relative: string): any {
 function f32(value: string): number {
   const bytes = value.match(/../g)!.map((part) => Number.parseInt(part, 16));
   return new DataView(Uint8Array.from(bytes).buffer).getFloat32(0, true);
-}
-function bits(value: number): string {
-  const buffer = new ArrayBuffer(4);
-  new DataView(buffer).setFloat32(0, Math.fround(value), true);
-  return [...new Uint8Array(buffer)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("")
-    .toUpperCase();
 }

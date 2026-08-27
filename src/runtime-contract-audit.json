@@ -14595,7 +14595,7 @@
     {
       "id": "RCB-0694",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 624,
+      "line": 622,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (interval === null) throw new Error(`Invisible product segment reached mesh publication: ${renderObjectId}`);",
@@ -14616,7 +14616,7 @@
     {
       "id": "RCB-0695",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 689,
+      "line": 685,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Garupa product Slide width requires finite non-negative scale and positive authored width/layout rates.\");",
@@ -14637,7 +14637,7 @@
     {
       "id": "RCB-0696",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 717,
+      "line": 711,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Non-finite product curve ${String(sample.curve)} for ${sample.node.identity} cannot publish render geometry.`);",
@@ -14658,7 +14658,7 @@
     {
       "id": "RCB-0697",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 724,
+      "line": 718,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Product Note scale is unavailable for ${sample.node.identity}.`);",
@@ -14679,7 +14679,7 @@
     {
       "id": "RCB-0698",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 774,
+      "line": 768,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(`${created.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);",
@@ -14700,7 +14700,7 @@
     {
       "id": "RCB-0699",
       "file": "src/simulator/engine/garupa/productRenderProducer.ts",
-      "line": 790,
+      "line": 784,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",

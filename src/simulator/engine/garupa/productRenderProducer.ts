@@ -429,7 +429,6 @@ export class GarupaProductRenderProducer {
             from,
             to,
             this.scene.screenToSafeAreaRatio.value,
-            this.scene.screenWidthAdjustRate.value,
           )));
           commands.push(command(commands.length, {
             kind: "set-threshold",
@@ -612,8 +611,7 @@ function slideMesh(
   from: ProductNodeSample,
   to: ProductNodeSample,
   screenToSafeAreaRatio: number,
-  screenWidthAdjustRate: number,
-): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
+): Omit<Extract<RenderCommand, { kind: "set-mesh" }>,  "sessionId" | "sequence" | "frame" | "substep"> {
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
@@ -651,7 +649,6 @@ function slideMesh(
       uniformScale,
       authoredWidth,
       screenToSafeAreaRatio,
-      screenWidthAdjustRate,
     );
     vertices.push(
       vector3(Math.fround(x - halfWidth), y, 0),
@@ -682,17 +679,14 @@ export function calculateGarupaProductSlideHalfWidth(
   uniformScale: number,
   authoredWidth: number,
   screenToSafeAreaRatio: number,
-  screenWidthAdjustRate: number,
 ): number {
-  if (![uniformScale, authoredWidth, screenToSafeAreaRatio, screenWidthAdjustRate].every(Number.isFinite) ||
-    uniformScale < 0 || authoredWidth <= 0 || screenToSafeAreaRatio <= 0 || screenWidthAdjustRate <= 0) {
+  if (![uniformScale, authoredWidth, screenToSafeAreaRatio].every(Number.isFinite) ||
+    uniformScale < 0 || authoredWidth <= 0 || screenToSafeAreaRatio <= 0) {
     throw new Error("Garupa product Slide width requires finite non-negative scale and positive authored width/layout rates.");
   }
   return Math.fround(
-    Math.fround(
-      Math.fround(Math.fround(uniformScale) * Math.fround(authoredWidth)) *
-        Math.fround(screenToSafeAreaRatio),
-    ) * Math.fround(screenWidthAdjustRate),
+    Math.fround(Math.fround(uniformScale) * Math.fround(authoredWidth)) *
+      Math.fround(screenToSafeAreaRatio),
   );
 }
 

@@ -64,9 +64,16 @@ async function main(): Promise<void> {
     process.cwd(),
     "src/simulator/testing/fixtures/reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
   ), "utf8"));
-  assert.equal(visualFifth.note_mesh.product_compatible_width1_must_include_screen_width_adjust_rate, true);
   assert.equal(visualFifth.note_mesh.vertex_count, 22);
   assert.equal(visualFifth.note_mesh.index_count, 60);
+  const bbkkRoot = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4",
+  );
+  const bbkkOracle = JSON.parse(readFileSync(join(bbkkRoot, "bbkk_slide_full_timeline_oracle.json"), "utf8"));
+  const bbkkChart = JSON.parse(readFileSync(join(bbkkRoot, "product-inputs/B.B.K.K.B.K.K..json"), "utf8"));
+  assert.equal(bbkkOracle.authority.rejectedProductionFactor,
+    "screenWidthAdjustRate must not be multiplied a second time after localScale already consumed it");
   const baseProfile = JSON.parse(readFileSync(
     join(fixtureRoot, "ordinary_portable_profile.json"),
     "utf8",
@@ -209,7 +216,6 @@ async function main(): Promise<void> {
         (compatibleSamples[segment + 1]!.scale - compatibleSamples[segment]!.scale) * ratio;
       const expectedWidthPixels = 2 * uniformScale *
         layout.garupaProductScene.screenToSafeAreaRatio.value *
-        layout.garupaProductScene.screenWidthAdjustRate.value *
         layout.surfaceLayout.camera.pixelsPerWorldUnit;
       const offset = section * 4;
       const actualWidthPixels = Math.abs(
@@ -295,6 +301,40 @@ async function main(): Promise<void> {
   requireOk(release!.commit());
   assert.equal(renderer.snapshot().objectCount, 0);
   assert.equal(renderer.stage.children.length, 0);
+
+  const bbkkCopied = requireOk(copyAndFreezeGarupaChartJson(bbkkChart));
+  const bbkkConstructed = requireOk(constructChartFromGarupaChartJson(bbkkCopied.chart));
+  const bbkkProduct = getGarupaProductChartProfile(bbkkConstructed)!;
+  const bbkkAxis = getGarupaProductTimingGroupAxisProfile(bbkkConstructed)!;
+  assert.equal(bbkkProduct.slideChains.length, 83);
+  const bbkkProducer = new GarupaProductRenderProducer(
+    SESSION, renderer, CURRENT_ORDINARY_RENDER_BINDINGS, bbkkProduct, bbkkAxis,
+    layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed, true, true,
+  );
+  const upperHalfBoundary = layout.surfaceLayout.surface.viewportHeight / 2 -
+    ((layout.ordinaryNoteScene.launcherY.value + layout.garupaProductScene.targetCenterY.value) / 2) *
+      layout.surfaceLayout.camera.pixelsPerWorldUnit;
+  for (const sample of bbkkOracle.timeline.selectedUpperHalfCases as readonly any[]) {
+    const currentPosition = sample.timeMs * bbkkOracle.chart.bpm * 48 / 60_000;
+    const transaction = requireOk(bbkkProducer.preflightFrame(currentPosition, [], Math.fround(1 / 60)));
+    if (transaction !== null) requireOk(transaction.commit());
+    const chain = bbkkProduct.slideChains.find((candidate) => candidate.chartItemIndex === sample.slideIndex)!;
+    const row = renderer.sceneSnapshot().find((candidate) =>
+      candidate.renderObjectId === `render:garupa:line:${chain.identity}:${sample.segment}`);
+    assert.ok(row?.geometryPositions, `B.B.K Slide ${sample.slideIndex}:${sample.segment} publishes its evidenced segment`);
+    const ys = row!.geometryPositions!.filter((_value, index) => index % 2 === 1);
+    assert.ok(Math.min(...ys) < upperHalfBoundary,
+      `B.B.K Slide ${sample.slideIndex}:${sample.segment} reaches the upper half at ${sample.timeMs}ms`);
+    const widths = Array.from({ length: 11 }, (_, section) => Math.abs(
+      row!.geometryPositions![section * 4 + 2]! - row!.geometryPositions![section * 4]!,
+    ));
+    const requiredWidth = sample.visibleCurve[1] >= 0.5 ? 50 : 5;
+    assert.ok(Math.max(...widths) > requiredWidth,
+      `corrected width-one Slide rejects the former double-scale result at curve ${sample.visibleCurve}`);
+  }
+  const bbkkRelease = requireOk(bbkkProducer.preflightDispose());
+  if (bbkkRelease !== null) requireOk(bbkkRelease.commit());
+  assert.equal(renderer.snapshot().objectCount, 0);
   requireOk(renderer.dispose());
   console.log("Garupa product actual Pixi passed: selected-field-only/ordinary-scale/scaled-sync/judged-hide/clipped-slide/no-fallback-effect/cleanup");
 }

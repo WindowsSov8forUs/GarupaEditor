@@ -12,6 +12,7 @@ const ROOT = join(
 );
 const contract = JSON.parse(readFileSync(join(ROOT, "full_visible_lifecycle_contract.json"), "utf8"));
 const trace = JSON.parse(gunzipSync(readFileSync(join(ROOT, "runtime/full-visible-lifecycle-r1.trace.json.gz"))).toString("utf8"));
+const bbkk = JSON.parse(readFileSync(join(ROOT, "bbkk_slide_full_timeline_oracle.json"), "utf8"));
 
 assert.equal(contract.status, "confirmed-current-full-visible-lifecycle-reaudit");
 assert.deepEqual(contract.sample, {
@@ -113,6 +114,12 @@ for (const name of [
   assert.deepEqual(pngDimensions(bytes), [1600, 720]);
   assert.match(createHash("sha256").update(bytes).digest("hex"), /^[0-9a-f]{64}$/);
 }
+assert.equal(bbkk.chart.slideItems, 83);
+assert.equal(bbkk.chart.segments, 141);
+assert.equal(bbkk.timeline.upperHalfFrames, 1611);
+assert.equal(bbkk.widthOne[0].samples[4].oldErroneousPixels, 31.54659652709961);
+assert.equal(bbkk.widthOne[0].samples[4].correctPixels, 169.9713592529297);
+assert.equal(bbkk.acceptance.productionHelperImportAllowed, false);
 assert.equal(contract.coverage.user_reported_issue_count, 15);
 assert.equal(contract.coverage.unbounded_audit_domains.length >= 6, true);
 assert.deepEqual(contract.closure.unknown_fields, []);

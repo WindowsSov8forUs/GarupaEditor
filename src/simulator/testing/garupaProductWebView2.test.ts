@@ -113,7 +113,6 @@ async function main(): Promise<void> {
   const maximumSlideSectionWidth = 2 *
     (layout.ordinaryNoteScene.noteSettingScale.value + 0.01) * 2 *
     layout.garupaProductScene.screenToSafeAreaRatio.value *
-    layout.garupaProductScene.screenWidthAdjustRate.value *
     layout.surfaceLayout.camera.pixelsPerWorldUnit;
   const captures = [];
   for (const sample of [
