@@ -38,7 +38,7 @@ npm.cmd run simulator:test:total-revalidation:clean
 npm.cmd run simulator:test:full-visible-lifecycle-oracle
 ```
 
-该门消费Reverse `4a61a184`的全量结构化合同与最小R1帧，独立计算Rank阈值位置并锁定Score编码色来源、Auto双widget、AddScore/Life/Pause对象图、Slide/Lane/default skin00粒子及自然结束3233ms→exit 15ms顺序。它不导入production Score/Slide/particle helper，且不以PNG像素采样产生颜色或位置expected。
+该门继续消费Reverse `4a61a184`的全量结构化合同与最小R1帧，但其旧聚合授权已由Reverse `1bff69eb`纠错预言机明确撤回。新fixture禁止从录屏取Score颜色，补齐Life 10组件serialized hierarchy、Retryable/Selectable/Annotated每个component的Transform祖先链，以及13槽Button/NoteLaneEffect精确Transform；门只确认原作事实和四向比较输入完整，`productionEquivalenceAuthorization=false`持续成立。它不导入production Score/Slide/particle helper，且不以PNG像素采样产生颜色或位置expected。
 
 ## HUD re-audit regression leaf
 

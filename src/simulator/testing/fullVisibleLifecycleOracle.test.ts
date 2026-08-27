@@ -13,6 +13,10 @@ const ROOT = join(
 const contract = JSON.parse(readFileSync(join(ROOT, "full_visible_lifecycle_contract.json"), "utf8"));
 const trace = JSON.parse(gunzipSync(readFileSync(join(ROOT, "runtime/full-visible-lifecycle-r1.trace.json.gz"))).toString("utf8"));
 const bbkk = JSON.parse(readFileSync(join(ROOT, "bbkk_slide_full_timeline_oracle.json"), "utf8"));
+const secondConsumerOracle = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+), "utf8"));
 
 assert.equal(contract.status, "confirmed-current-full-visible-lifecycle-reaudit");
 assert.deepEqual(contract.sample, {
@@ -123,8 +127,41 @@ assert.equal(bbkk.acceptance.productionHelperImportAllowed, false);
 assert.equal(contract.coverage.user_reported_issue_count, 15);
 assert.equal(contract.coverage.unbounded_audit_domains.length >= 6, true);
 assert.deepEqual(contract.closure.unknown_fields, []);
-assert.deepEqual(contract.closure.blocking_findings, []);
-console.log("full visible/lifecycle independent fixture oracle passed: 15 reported + unbounded graph, rank formula, 33-frame R1, clear=3233ms");
+// The old aggregate closure is retained only as historical original-fact extraction.
+// Reverse 1bff69eb explicitly revokes its transitive production authorization.
+assert.equal(secondConsumerOracle.status, "evidence-facts-confirmed-production-equivalence-withdrawn");
+assert.equal(secondConsumerOracle.authority.recordingColorSamplingAllowed, false);
+assert.equal(secondConsumerOracle.authority.browserOrProductOutputAsOracle, false);
+assert.equal(secondConsumerOracle.legacyClosureDisposition.originalFactsRetained, true);
+assert.equal(secondConsumerOracle.legacyClosureDisposition.blanketProductionAuthorization, false);
+assert.deepEqual(secondConsumerOracle.legacyClosureDisposition.requiredFourWayJoin, [
+  "original-evidence-node", "production-consumer", "independent-primitive-oracle", "fresh-production-frame",
+]);
+assert.equal(secondConsumerOracle.score.encoded.leading_color.bbcode, "[BEBEBE]");
+assert.equal(secondConsumerOracle.score.encoded.significant_color.bbcode, "[FF3B72]");
+assert.equal(secondConsumerOracle.addScore.serializedWidgets.length, 28);
+assert.equal(secondConsumerOracle.life.components.length, 10);
+assert.equal(secondConsumerOracle.life.components.every((row: any) =>
+  Array.isArray(row.serializedHierarchy?.ancestorChain) && row.serializedHierarchy.ancestorChain.length > 0
+), true);
+const retryable = secondConsumerOracle.pause.graphs.retryable_pause;
+assert.deepEqual(retryable.header.transform.localPosition, [0, 115, 0]);
+assert.deepEqual(retryable.title.transform.localPosition, [-391, -1, 0]);
+assert.deepEqual(retryable.content.transform.localPosition, [0, 14, 0]);
+assert.equal(retryable.buttons.length, 3);
+assert.equal(secondConsumerOracle.pause.flatGraphRejected, true);
+assert.deepEqual(
+  secondConsumerOracle.lane.owners.map((row: any) => row.buttonTransform.localPosition[0]),
+  [-6.599999904632568, -5.5, -4.400000095367432, -3.299999952316284, -2.200000047683716,
+    -1.100000023841858, 0, 1.100000023841858, 2.200000047683716, 3.299999952316284,
+    4.400000095367432, 5.5, 6.599999904632568],
+);
+assert.equal(secondConsumerOracle.lane.owners.every((row: any) => row.effectTransformChain.length === 2), true);
+assert.equal(Object.keys(secondConsumerOracle.issues).length, 15);
+assert.equal(secondConsumerOracle.acceptance.productionHelperImportAllowed, false);
+assert.equal(secondConsumerOracle.closure.productionEquivalenceAuthorization, false);
+assert.deepEqual(secondConsumerOracle.closure.blockingFindings, ["production-consumer-comparison-required"]);
+console.log("second visible consumer oracle passed: old aggregate authorization revoked; exact Life/Pause/Lane chains require four-way production comparison");
 
 function deriveRankPositions(
   thresholds: Readonly<Record<string, number>>,

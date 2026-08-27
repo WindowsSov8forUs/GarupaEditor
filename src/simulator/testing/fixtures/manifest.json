@@ -1349,6 +1349,13 @@
       "sourcePath": "artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json",
       "bytes": 62962,
       "sha256": "49B7A6D94D4F5FD145B6DD8CBF1CB277D47F1FAA1C6F8840A97EE9FC50B6B7F7"
+    },
+    {
+      "path": "reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+      "sourceReverseCommit": "1bff69eb8031cf723e4081f35ece14d0f775a19f",
+      "sourcePath": "artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+      "bytes": 562579,
+      "sha256": "5B10BD1AB3E502CF37C6CFD9A09710ED852C13BFD30B1285C0FBF293563EA63D"
     }
   ]
 }
