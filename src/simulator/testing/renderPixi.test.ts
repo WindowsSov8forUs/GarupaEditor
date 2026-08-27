@@ -147,6 +147,12 @@ async function main(): Promise<void> {
   const autoCaptionLabel = autoCaptionRoot.getChildByLabel("auto-live-caption-label") as Text;
   assert(autoCaptionRoot.visible, "Live Auto owns the serialized Auto Live caption");
   equal(autoCaptionBackground.tint, 0xff3b72, "Auto Live caption keeps serialized pink tint");
+  equal(JSON.stringify([
+    autoCaptionBackground.leftWidth,
+    autoCaptionBackground.topHeight,
+    autoCaptionBackground.rightWidth,
+    autoCaptionBackground.bottomHeight,
+  ]), JSON.stringify([25, 0, 25, 0]), "Auto Live caption maps NGUI left/right/top/bottom into Pixi NineSlice option names");
   equal(autoCaptionLabel.text, "オートライブ", "Auto Live caption keeps serialized label");
   equal(JSON.stringify([
     autoCaptionBackground.x,
@@ -156,6 +162,8 @@ async function main(): Promise<void> {
   ]), JSON.stringify(CONTROL_SURFACE_LAYOUT.ui.autoLiveCaptionBoundsTopLeft),
   "Auto Live caption keeps the independent multiaspect bounds");
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "pause-menu" as const })), "publish Pause modal");
+  assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
+    "original Pause Sprite remains visible while the modal owns input");
   assert(liveControls.root.getChildByLabel("pause-window", true) !== null, "Pause modal uses serialized window");
   assert((liveControls.root.getChildByLabel("pause-title", true) as Text).text === "一時停止", "Pause modal uses current visible title");
   equal((liveControls.root.getChildByLabel("pause-message", true) as Text).text,

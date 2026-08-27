@@ -1742,9 +1742,13 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       owner.visible = false;
       owner.zIndex = 20;
       owner.eventMode = "none";
+      const autoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
       const background = new NineSliceSprite({
         texture: demoBackgroundTexture,
-        ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption,
+        leftWidth: autoBorder.left,
+        topHeight: autoBorder.top,
+        rightWidth: autoBorder.right,
+        bottomHeight: autoBorder.bottom,
         label: "auto-live-caption-background",
       });
       applyBounds(background, caption);
@@ -1789,7 +1793,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
       if (mode.isDemoPlayMode) {
         const demo = layout.demoBadgeBoundsTopLeft;
-        const badge = new NineSliceSprite({ texture: demoBackgroundTexture, ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption, label: "rehearsal-demo-badge-background" });
+        const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
+        const badge = new NineSliceSprite({
+          texture: demoBackgroundTexture,
+          leftWidth: demoBorder.left,
+          topHeight: demoBorder.top,
+          rightWidth: demoBorder.right,
+          bottomHeight: demoBorder.bottom,
+          label: "rehearsal-demo-badge-background",
+        });
         applyBounds(badge, demo);
         badge.tint = 0xff3b74;
         badge.zIndex = 20;
@@ -1833,7 +1845,9 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       return integrityFailure("render.pause-control.invalid-state", ["PAU-B01", "PAU-B05"], "Pause visuals consume one live scene snapshot bound to the exact initial surface revision.");
     }
     applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
-    this.pauseButton.visible = snapshot.playable && snapshot.state === "playing";
+    // Original R1 keeps the serialized Pause Sprite visible while the dialog owns input;
+    // DisableButton is a setup/terminal mutation, not the menu-open transition.
+    this.pauseButton.visible = snapshot.playable;
     this.rehearsalRoot.visible = snapshot.playable && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
     if (this.autoLiveCaptionRoot !== null) {
       this.autoLiveCaptionRoot.visible = snapshot.playable && snapshot.mode.isAutoLive;
