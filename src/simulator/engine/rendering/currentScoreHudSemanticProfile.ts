@@ -58,5 +58,5 @@ function nguiBorder(
   top: number,
   bottom: number,
 ) {
-  return Object.freeze({ left, top, right, bottom });
+  return Object.freeze({ left, right, top, bottom });
 }

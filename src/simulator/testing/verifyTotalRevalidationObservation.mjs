@@ -79,8 +79,8 @@ assert.equal(half.hudText, "09000000");
 assert.equal(half.hudScoreDigitCount, 0);
 assert.equal(half.hudScoreTextRunCount, 2);
 assert.deepEqual(half.hudScoreTextLayout.map((row) => [row.label, row.text, row.position, row.fontSize, row.fill]), [
-  ["score-leading-segment", "0", [-168, 0], 28, 0xbebebe],
-  ["score-significant-segment", "9000000", [-147, 0], 28, 0xff3b72],
+  ["score-leading-segment", "0", [-168, 0], 28, 0x838383],
+  ["score-significant-segment", "9000000", [-147, 0], 28, 0xff0b2b],
 ]);
 assert.equal(half.animationElapsedSeconds, 0.5);
 assert.equal(continued.animationElapsedSeconds, Math.fround(0.55));

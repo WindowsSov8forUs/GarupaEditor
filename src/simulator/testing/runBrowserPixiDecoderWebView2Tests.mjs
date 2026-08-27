@@ -218,7 +218,11 @@ function littleF32(bits) {
 }
 
 function colorTint(bits) {
-  const channel = (value) => Math.round(littleF32(value) * 255);
+  const channel = (value) => {
+    const srgb = littleF32(value);
+    const linear = srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+    return Math.round(linear * 255);
+  };
   return (channel(bits[0]) << 16) | (channel(bits[1]) << 8) | channel(bits[2]);
 }
 

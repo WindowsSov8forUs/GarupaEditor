@@ -621,9 +621,15 @@ async function capture(
   if (life === undefined || lifeSprites.get("life-gauge-base")?.tint !== 0xffffff ||
       lifeTexts.has("life-current-label") ||
       lifeTexts.get("life-current-segment")?.fontSize !== 18 ||
-      lifeTexts.get("life-current-segment")?.fill !== (Number((life.hudState as any).currentLife) > 0 ? 0x00c000 : 0xfe2349) ||
-      lifeTexts.get("life-separator-segment")?.fill !== 0x505050 ||
-      lifeTexts.get("life-maximum-segment")?.fill !== 0x00c000 ||
+      lifeTexts.get("life-current-segment")?.fill !== (Number((life.hudState as any).currentLife) > 0 ? 0x008600 : 0xfd0411) ||
+      lifeTexts.get("life-separator-segment")?.fill !== 0x141414 ||
+      lifeTexts.get("life-maximum-segment")?.fill !== 0x008600 ||
+      (Number((life.hudState as any).currentLife) > 0 && (
+        lifeSprites.get("life-primary")?.visible !== true ||
+        lifeSprites.get("life-primary")?.parentLabel !== "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge" ||
+        !(lifeSprites.get("life-primary")?.worldBounds[2]! > 0) ||
+        !(lifeSprites.get("life-primary")?.worldBounds[3]! > 0)
+      )) ||
       (judge !== undefined && (judge.ordering[0] !== 2 || judge.ordering[1] !== 20)) ||
       renderRows.some((row) => row.role === "tap-lane-effect" &&
         (row.ordering[0] !== 1 || row.ordering[1] !== 0))) {
@@ -638,6 +644,18 @@ async function capture(
       judgeOrdering: judge?.ordering,
       badTap: renderRows.filter((row) => row.role === "tap-lane-effect").map((row) => row.ordering),
     })}`);
+  }
+  if (label === "initialize") {
+    const sourcePink = countExactRgb(bytes, [255, 59, 114]);
+    const priorDoubleGammaPink = countExactRgb(bytes, [255, 132, 178]);
+    const primaryBounds = lifeSprites.get("life-primary")?.worldBounds;
+    const lifeGreen = primaryBounds === undefined ? 0 : countDominantGreen(bytes, WIDTH, HEIGHT, primaryBounds);
+    if (sourcePink < 32 || priorDoubleGammaPink >= sourcePink ||
+        (Number((life.hudState as any).currentLife) > 0 && lifeGreen < 16)) {
+      throw new Error(`HUD raster transfer/visibility mismatch: ${JSON.stringify({
+        sourcePink, priorDoubleGammaPink, lifeGreen, primaryBounds,
+      })}`);
+    }
   }
   for (const row of session.particleRenderer.sceneSnapshot()) {
     const expected = row.zIndex >= 50_000_000 ? "high" : "low";
@@ -720,6 +738,37 @@ function crop(
     output.set(source.subarray(begin, begin + width * 4), row * width * 4);
   }
   return output;
+}
+
+function countExactRgb(bytes: Uint8Array, rgb: readonly [number, number, number]): number {
+  let count = 0;
+  for (let index = 0; index < bytes.length; index += 4) {
+    if (bytes[index] === rgb[0] && bytes[index + 1] === rgb[1] && bytes[index + 2] === rgb[2] && bytes[index + 3]! > 0) count += 1;
+  }
+  return count;
+}
+
+function countDominantGreen(
+  bytes: Uint8Array,
+  width: number,
+  height: number,
+  bounds: readonly [number, number, number, number],
+): number {
+  const left = Math.max(0, Math.floor(bounds[0]));
+  const top = Math.max(0, Math.floor(bounds[1]));
+  const right = Math.min(width, Math.ceil(bounds[0] + bounds[2]));
+  const bottom = Math.min(height, Math.ceil(bounds[1] + bounds[3]));
+  let count = 0;
+  for (let y = top; y < bottom; y += 1) {
+    for (let x = left; x < right; x += 1) {
+      const offset = (y * width + x) * 4;
+      const red = bytes[offset]!;
+      const green = bytes[offset + 1]!;
+      const blue = bytes[offset + 2]!;
+      if (bytes[offset + 3]! > 0 && green >= 96 && green > red * 1.2 && green > blue * 1.1) count += 1;
+    }
+  }
+  return count;
 }
 
 function alphaObservation(bytes: Uint8Array, width: number, height: number) {

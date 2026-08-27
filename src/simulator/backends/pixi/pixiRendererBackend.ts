@@ -50,6 +50,10 @@ import {
   CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
 } from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
+import {
+  linearTintFromSrgbColor,
+  linearTintFromSrgbChannels,
+} from "./hud/nguiMaterialPipeline";
 import { layoutNguiEncodedLifeLabel } from "./hud/nguiLabelGeometry";
 import { layoutNguiEncodedScoreLabel } from "./hud/nguiEncodedScoreLabel";
 import {
@@ -128,6 +132,7 @@ interface PixiHudVisual {
   readonly secondaryFill: Graphics | null;
   readonly animationLayer: Container;
   readonly serializedComponentNodes: ReadonlyMap<string, Container>;
+  readonly serializedHierarchyNodes: ReadonlyMap<string, Container>;
   readonly digitSprites: Sprite[];
   readonly fillMasks: Graphics[];
   readonly scoreTextSegments: readonly [Text, Text] | null;
@@ -705,6 +710,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly visible: boolean;
       readonly position: readonly [number, number];
       readonly zIndex: number;
+      readonly parentLabel: string | null;
       readonly childLabels: readonly string[];
     }[] | null;
     readonly hudSpriteNodes: readonly {
@@ -718,7 +724,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly tint: number;
       readonly blend: string;
       readonly zIndex: number;
+      readonly parentLabel: string | null;
       readonly maskLabel: string | null;
+      readonly worldBounds: readonly [number, number, number, number];
     }[] | null;
     readonly hudTextNodes: readonly {
       readonly label: string;
@@ -857,6 +865,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             visible: node.visible,
             position: Object.freeze([node.position.x, node.position.y] as const),
             zIndex: node.zIndex,
+            parentLabel: node.parent?.label ?? null,
             childLabels: Object.freeze(node.children.map((child) => child.label)),
           }))),
       hudSpriteNodes: value.hudVisual === null
@@ -872,7 +881,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             tint: Number(sprite.tint),
             blend: String(sprite.blendMode),
             zIndex: sprite.zIndex,
+            parentLabel: sprite.parent?.label ?? null,
             maskLabel: sprite.mask instanceof Container ? sprite.mask.label : null,
+            worldBounds: (() => {
+              const bounds = sprite.getBounds();
+              return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
+            })(),
           }))),
       hudTextNodes: value.hudVisual === null
         ? null
@@ -1770,7 +1784,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         label: "auto-live-caption-background",
       });
       applyBounds(background, caption);
-      background.tint = 0xff3b72;
+      background.tint = linearTintFromSrgbColor(0xff3b72);
       background.zIndex = 10;
       const label = this.text(
         "オートライブ",
@@ -1821,7 +1835,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
           label: "rehearsal-demo-badge-background",
         });
         applyBounds(badge, demo);
-        badge.tint = 0xff3b74;
+        badge.tint = linearTintFromSrgbColor(0xff3b74);
         badge.zIndex = 20;
         const label = this.text("デモプレイ", demo.height * 24 / 38, 0xffffff, "rehearsal-demo-badge");
         label.anchor.set(0.5, 0.5);
@@ -2416,6 +2430,55 @@ function applyGameClearChannel(visual: PixiHudVisual, channel: string, value: nu
   else if (marker === ".m_IsActive.") node.visible = value >= 0.5;
 }
 
+function createLifeSerializedHierarchy(
+  content: Container,
+  components: ReadonlyMap<string, Container>,
+): Map<string, Container> {
+  const current = CURRENT_ORDINARY_HUD_PROFILE.life.hierarchy;
+  const hierarchy = new Map<string, Container>();
+  for (const row of current.intermediate) {
+    const node = new Container({
+      label: `GamePlay/UI_Root/Display/LifeGauge/${row.path}`,
+      sortableChildren: true,
+    });
+    node.eventMode = "none";
+    node.position.set(row.position[0], row.position[1]);
+    node.scale.set(row.scale[0], row.scale[1]);
+    hierarchy.set(row.path, node);
+  }
+  for (const row of current.intermediate) {
+    const node = hierarchy.get(row.path)!;
+    const parent = row.parent === null ? content : hierarchy.get(row.parent);
+    if (parent === undefined) throw new Error(`Life serialized hierarchy parent is missing: ${String(row.parent)}`);
+    parent.addChild(node);
+  }
+  const rows = [
+    ["gauge_base", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG"],
+    ["primary", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge"],
+    ["second", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge"],
+    ["warning_outline", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning"],
+    ["warning_body", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody"],
+    ["game_over_background", "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage"],
+    ["skill_effect", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteBase"],
+    ["skill_effect_icon", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteIcon"],
+    ["total_label", "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total"],
+    ["game_over_text", "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text"],
+  ] as const;
+  for (const [identity, path] of rows) {
+    const profile = current.components[identity];
+    const component = serializedHudComponent(components, path);
+    component.removeFromParent();
+    component.position.set(profile.position[0], profile.position[1]);
+    component.scale.set(profile.scale[0], profile.scale[1]);
+    const parent = profile.parent === null
+      ? content
+      : hierarchy.get(profile.parent) ?? components.get(profile.parent);
+    if (parent === undefined) throw new Error(`Life serialized component parent is missing: ${String(profile.parent)}`);
+    parent.addChild(component);
+  }
+  return hierarchy;
+}
+
 function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
   const content = new Container({ sortableChildren: true });
   const componentPaths = kind === "score"
@@ -2430,6 +2493,9 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     serializedComponentNodes.set(path, component);
     content.addChild(component);
   }
+  const serializedHierarchyNodes = kind === "life"
+    ? createLifeSerializedHierarchy(content, serializedComponentNodes)
+    : new Map<string, Container>();
   const needsText = kind === "fidelity-label";
   const needsFill = kind === "habahiro-flash";
   const secondaryFill = needsFill ? new Graphics() : null;
@@ -2495,6 +2561,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     secondaryFill,
     animationLayer,
     serializedComponentNodes,
+    serializedHierarchyNodes,
     digitSprites: [],
     fillMasks: [],
     scoreGaugeSprites: [],
@@ -2840,10 +2907,6 @@ function applyLifeHud(
     return;
   }
   placeSafeTopAnchoredUiRoot(object, "right");
-  const localFromAuthoredWorld = (position: readonly number[]): readonly [number, number] => Object.freeze([
-    Math.fround(position[0]! - current.rootPosition[0]),
-    Math.fround(-(position[1]! - current.rootPosition[1])),
-  ] as const);
   const add = (
     logicalAssetId: string,
     exactKey: string,
@@ -2866,7 +2929,7 @@ function applyLifeHud(
       topHeight: border[3],
       label,
     });
-    sprite.position.set(...localFromAuthoredWorld(scene.position));
+    sprite.position.set(0, 0);
     sprite.zIndex = scene.depth;
     sprite.visible = visible;
     sprite.tint = tint;
@@ -2893,18 +2956,24 @@ function applyLifeHud(
   };
   const clipLeftToRight = (sprite: NineSliceSprite, ratio: number, label: string): void => {
     const mask = new Graphics({ label }).rect(
-      sprite.position.x - sprite.width / 2,
-      sprite.position.y - sprite.height / 2,
+      -sprite.width / 2,
+      -sprite.height / 2,
       Math.fround(sprite.width * ratio),
       sprite.height,
     ).fill(0xffffff);
     mask.zIndex = sprite.zIndex;
-    visual.content.addChild(mask);
+    const parent = sprite.parent;
+    if (parent === null) throw new Error("Life fill mask requires the serialized component parent.");
+    parent.addChild(mask);
     visual.fillMasks.push(mask);
     sprite.mask = mask;
   };
   const colors = state.singleGameOver ? profile.life.colorsF32Bits.gameOverBase : profile.life.colorsF32Bits[state.color];
-  const tint = rgbTint(f32FromBits(colors[0]), f32FromBits(colors[1]), f32FromBits(colors[2]));
+  const tint = linearTintFromSrgbChannels(
+    f32FromBigEndianBits(colors[0]),
+    f32FromBigEndianBits(colors[1]),
+    f32FromBigEndianBits(colors[2]),
+  );
   add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health", "gauge_base", "life-gauge-base", true, 0xffffff);
   const secondary = add(CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter", "second", "life-secondary", state.secondaryFill.value > 0);
   clipLeftToRight(secondary, state.secondaryFill.value, "life-secondary-fill-mask");
@@ -2923,13 +2992,12 @@ function applyLifeHud(
     throw new Error("Life label requires current/maximum encoded segments");
   }
   const maximum = state.label.slice(separator + 1);
-  const labelPosition = localFromAuthoredWorld(current.lifeLabel.authoredPosition);
   layoutNguiEncodedLifeLabel(
     visual.lifeTextSegments,
     String(state.currentLife),
     maximum,
-    labelPosition[0],
-    labelPosition[1],
+    0,
+    0,
     current.lifeLabel.fontSize,
     font.family,
   );
@@ -2945,7 +3013,7 @@ function applyLifeHud(
     font.family,
   );
   visual.gameOverText.anchor.set(0, 0.5);
-  visual.gameOverText.position.set(...localFromAuthoredWorld(current.gameOverLabel.authoredPosition));
+  visual.gameOverText.position.set(0, 0);
   visual.gameOverText.zIndex = current.gameOverLabel.depth;
   visual.gameOverText.visible = state.singleGameOver;
   serializedHudComponent(
@@ -2994,7 +3062,11 @@ function updatePersistentLifeHud(
   const colors = state.singleGameOver
     ? profile.life.colorsF32Bits.gameOverBase
     : profile.life.colorsF32Bits[state.color];
-  primary.tint = rgbTint(f32FromBits(colors[0]), f32FromBits(colors[1]), f32FromBits(colors[2]));
+  primary.tint = linearTintFromSrgbChannels(
+    f32FromBigEndianBits(colors[0]),
+    f32FromBigEndianBits(colors[1]),
+    f32FromBigEndianBits(colors[2]),
+  );
   secondaryMask.clear().rect(
     secondary.position.x - secondary.width / 2,
     secondary.position.y - secondary.height / 2,
@@ -3019,17 +3091,13 @@ function updatePersistentLifeHud(
   if (separator <= 0 || separator === state.label.length - 1) {
     throw new Error("Life label requires current/maximum encoded segments");
   }
-  const labelPosition = Object.freeze([
-    Math.fround(current.lifeLabel.authoredPosition[0] - current.rootPosition[0]),
-    Math.fround(-(current.lifeLabel.authoredPosition[1] - current.rootPosition[1])),
-  ] as const);
   showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total");
   layoutNguiEncodedLifeLabel(
     visual.lifeTextSegments,
     String(state.currentLife),
     state.label.slice(separator + 1),
-    labelPosition[0],
-    labelPosition[1],
+    0,
+    0,
     current.lifeLabel.fontSize,
     font.family,
   );
@@ -3045,16 +3113,17 @@ function updatePersistentLifeHud(
   visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
 }
 
-function requireOrdinaryVisibleProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["ordinaryVisibleProfile"]> {
-  if (object.ordinaryVisibleProfile === undefined) throw new Error("ordinary visible HUD profile is missing");
-  return object.ordinaryVisibleProfile;
-}
-
-function f32FromBits(bits: string): number {
+function f32FromBigEndianBits(bits: string): number {
+  if (!/^[0-9A-F]{8}$/.test(bits)) throw new Error("HUD profile Float32 requires eight uppercase hexadecimal digits.");
   const buffer = new ArrayBuffer(4);
   const view = new DataView(buffer);
   view.setUint32(0, Number.parseInt(bits, 16), false);
   return view.getFloat32(0, false);
+}
+
+function requireOrdinaryVisibleProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["ordinaryVisibleProfile"]> {
+  if (object.ordinaryVisibleProfile === undefined) throw new Error("ordinary visible HUD profile is missing");
+  return object.ordinaryVisibleProfile;
 }
 
 function f32FromLittleEndianBytes(bits: string): number {
@@ -3584,6 +3653,26 @@ function setHudText(
   text.anchor.set(0.5);
 }
 
+function sampleAddScoreClip(
+  keyframes: readonly { readonly time: number; readonly localY: number; readonly alpha: number }[],
+  elapsedSeconds: number,
+): Readonly<{ localY: number; alpha: number }> {
+  if (keyframes.length < 2 || !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
+    throw new Error("AddScore clip requires ordered source keyframes and finite non-negative time.");
+  }
+  const phase = Math.fround(Math.min(elapsedSeconds, keyframes[keyframes.length - 1]!.time));
+  let rightIndex = 1;
+  while (rightIndex < keyframes.length - 1 && phase > keyframes[rightIndex]!.time) rightIndex += 1;
+  const left = keyframes[rightIndex - 1]!;
+  const right = keyframes[rightIndex]!;
+  if (!(right.time > left.time)) throw new Error("AddScore source keyframes must be strictly ordered.");
+  const progress = Math.fround(Math.fround(phase - left.time) / Math.fround(right.time - left.time));
+  return Object.freeze({
+    localY: Math.fround(left.localY + Math.fround(Math.fround(right.localY - left.localY) * progress)),
+    alpha: Math.fround(left.alpha + Math.fround(Math.fround(right.alpha - left.alpha) * progress)),
+  });
+}
+
 function applyEvidenceAnimation(
   object: PixiObjectRecord,
   role: EvidenceAnimationRole,
@@ -3675,25 +3764,16 @@ function applyEvidenceAnimation(
   }
   if (role === "add-score") {
     const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-    const phaseSeconds = current.phaseSeconds;
-    const phase = Math.min(2, Math.floor(elapsedSeconds / phaseSeconds));
-    const progress = Math.fround((elapsedSeconds - phase * phaseSeconds) / phaseSeconds);
-    const localY = phase === 0
-      ? Math.fround(current.initialLocalY + 8 * progress)
-      : phase === 1
-      ? Math.fround(current.initialLocalY + 8 + progress)
-      : Math.fround(current.initialLocalY + 9 + progress);
+    const sample = sampleAddScoreClip(current.animationKeyframes, elapsedSeconds);
     const layout = object.surfaceLayout;
     const safe = layout.starUi.safeArea;
     const safeTop = Math.fround(
       layout.surface.viewportHeight - Math.fround(safe.y + safe.height),
     );
     object.node.position.y = Math.fround(
-      safeTop - (current.numberBaseAuthoredPosition[1] + localY) * authoredUiScale(object),
+      safeTop - (current.numberBaseAuthoredPosition[1] + sample.localY) * authoredUiScale(object),
     );
-    object.node.alpha = phase === 0
-      ? Math.fround(0.2 + 0.8 * progress)
-      : phase === 1 ? 1 : Math.fround(1 - progress);
+    object.node.alpha = sample.alpha;
     return;
   }
   if (role === "result") {

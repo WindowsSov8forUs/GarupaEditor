@@ -85,6 +85,10 @@ const scoreFinalVisible = JSON.parse(readFileSync(join(
   fixtureRoot,
   "score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
 ), "utf8"));
+const secondVisibleConsumer = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -110,6 +114,14 @@ async function main(): Promise<void> {
   equal(JSON.stringify(visualFifth.world_ordering.required_group_order), JSON.stringify([
     "tap-lane-0", "particle-1", "particle-5", "judge-20", "particle-50", "note-70", "hud-100",
   ]), "fifth evidence independently requires the interleaved world sorting groups");
+  equal(secondVisibleConsumer.addScore.logic.phaseSeconds, CURRENT_ORDINARY_HUD_PROFILE.addScore.phaseSeconds,
+    "AddScore source coroutine phase duration is not hand-timed");
+  equal(JSON.stringify(CURRENT_ORDINARY_HUD_PROFILE.addScore.animationKeyframes), JSON.stringify([
+    { time: 0, localY: -50, alpha: Math.fround(0.2) },
+    { time: Math.fround(0.14000000059604645), localY: -42, alpha: 1 },
+    { time: Math.fround(0.2800000011920929), localY: -41, alpha: 1 },
+    { time: Math.fround(0.42000001668930054), localY: -40, alpha: 0 },
+  ]), "AddScore consumes the source-keyed three-phase position/alpha clip");
   const baseProfile = JSON.parse(readFileSync(join(ordinaryRoot, "ordinary_portable_profile.json"), "utf8")) as RenderResourceProfile;
   const visibleFixture = JSON.parse(readFileSync(join(visibleRoot, "ordinary_visible_rendering_profile.json"), "utf8"));
   const visibleProfile = parseCurrentOrdinaryVisibleProfile(visibleFixture);
@@ -155,7 +167,8 @@ async function main(): Promise<void> {
   const autoCaptionBackground = autoCaptionRoot.getChildByLabel("auto-live-caption-background") as NineSliceSprite;
   const autoCaptionLabel = autoCaptionRoot.getChildByLabel("auto-live-caption-label") as Text;
   assert(autoCaptionRoot.visible, "Live Auto owns the serialized Auto Live caption");
-  equal(autoCaptionBackground.tint, 0xff3b72, "Auto Live caption keeps serialized pink tint");
+  equal(autoCaptionBackground.tint, 0xff0b2b,
+    "Auto Live serialized sRGB pink is linearized before the one final output transfer");
   equal(JSON.stringify([
     autoCaptionBackground.leftWidth,
     autoCaptionBackground.topHeight,
@@ -392,8 +405,14 @@ async function main(): Promise<void> {
   assert(life.hudSpriteLabels?.includes("life-warning-outline"), "Life warning outline Sprite exists");
   assert(life.hudSpriteLabels?.includes("life-warning-body"), "Life warning body Sprite exists");
   const lifeNodes = new Map(life.hudSpriteNodes?.map((node) => [node.label, node]));
-  equal(JSON.stringify(lifeNodes.get("life-gauge-base")?.position), JSON.stringify([-225, 57]), "Life authored-world gauge base is made owner-local exactly once");
-  equal(JSON.stringify(lifeNodes.get("life-primary")?.position), JSON.stringify([-211, 44]), "Life primary gauge is not double-offset by Life root");
+  equal(JSON.stringify(lifeNodes.get("life-gauge-base")?.position), JSON.stringify([0, 0]), "Life GaugeBG Sprite stays local to its serialized component Transform");
+  equal(JSON.stringify(lifeNodes.get("life-primary")?.position), JSON.stringify([0, 0]), "Life FrontGauge Sprite stays local to its serialized component Transform");
+  equal(lifeNodes.get("life-gauge-base")?.parentLabel,
+    "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG",
+    "Life GaugeBG consumes the exact component parent");
+  equal(lifeNodes.get("life-primary")?.parentLabel,
+    "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge",
+    "Life primary consumes the exact component parent");
   equal(lifeNodes.get("life-secondary")?.blend, "add", "Life second gauge consumes additive material blend");
   equal(lifeNodes.get("life-warning-outline")?.blend, "add", "Life warning outline consumes additive material blend");
   equal(lifeNodes.get("life-gauge-base")?.tint, 0xffffff,
@@ -403,22 +422,22 @@ async function main(): Promise<void> {
   equal(lifeNodes.get("life-primary")?.width, 224, "Life primary UISlider preserves authored widget width");
   equal(lifeNodes.get("life-primary")?.maskLabel, "life-primary-fill-mask", "Life primary uses left-to-right clip rather than width shrink");
   const lifeMasks = new Map(life.hudFillMasks?.map((mask) => [mask.label, mask]));
-  equal(JSON.stringify(lifeMasks.get("life-primary-fill-mask")?.bounds), JSON.stringify([-323, 31, Math.fround(44.8), 26]), "Life primary left-to-right mask matches current ratio");
+  equal(JSON.stringify(lifeMasks.get("life-primary-fill-mask")?.bounds), JSON.stringify([-112, -13, Math.fround(44.8), 26]), "Life primary mask is component-local rather than a detached flat-space mask");
   const lifeTexts = new Map(life.hudTextNodes?.map((text) => [text.label, text]));
   equal(lifeTexts.has("life-current-label"), false,
     "Life owns no second root-level fallback Text that can be re-enabled on a persistent update");
   equal(lifeTexts.get("life-current-segment")?.text, "200", "Life encoded UILabel current run is independent");
   equal(lifeTexts.get("life-current-segment")?.fontSize, 18, "Life current segment consumes serialized 18pt");
-  equal(lifeTexts.get("life-current-segment")?.fill, 0x00c000, "positive current Life consumes StringColorType.Green");
+  equal(lifeTexts.get("life-current-segment")?.fill, 0x008600, "positive Life sRGB Green is linearized before final output transfer");
   equal(lifeTexts.get("life-separator-segment")?.text, "/", "Life encoded UILabel separator run is independent");
-  equal(lifeTexts.get("life-separator-segment")?.fill, 0x505050, "Life separator consumes StringColorType.Black");
+  equal(lifeTexts.get("life-separator-segment")?.fill, 0x141414, "Life separator sRGB Black is linearized before final output transfer");
   equal(lifeTexts.get("life-maximum-segment")?.text, "1000", "Life maximum segment preserves the engine maximum");
-  equal(lifeTexts.get("life-maximum-segment")?.fill, 0x00c000, "maximum Life consumes StringColorType.Green");
+  equal(lifeTexts.get("life-maximum-segment")?.fill, 0x008600, "maximum Life sRGB Green is linearized before final output transfer");
   for (const label of ["life-current-segment", "life-separator-segment", "life-maximum-segment"]) {
     equal(JSON.stringify(lifeTexts.get(label)?.anchor), JSON.stringify([0, 0.5]),
       `${label} participates in one sequential encoded UILabel run`);
-    equal(JSON.stringify(lifeTexts.get(label)?.position), JSON.stringify([Math.fround(-103.99990844726562), 74]),
-      `${label} shares the evidence-authored right edge without measuring fallback glyph widths`);
+    equal(JSON.stringify(lifeTexts.get(label)?.position), JSON.stringify([0, 0]),
+      `${label} stays local to the exact double-negative-scale Total UILabel owner`);
   }
   equal(lifeTexts.get("life-game-over-label")?.text, "ライフゼロ!\n獲得スコアDOWN!", "Life owns the current GameOver UILabel text");
   equal(lifeTexts.get("life-game-over-label")?.visible, false, "GameOver label remains hidden before zero Life");
@@ -453,11 +472,11 @@ async function main(): Promise<void> {
   equal(JSON.stringify(scoreAtHalf.hudScoreTextLayout), JSON.stringify([
     {
       label: "score-leading-segment", text: "0", position: [-168, 0], anchor: [0, 0.5],
-      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0xbebebe, visible: true, zIndex: 40,
+      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0x838383, visible: true, zIndex: 40,
     },
     {
       label: "score-significant-segment", text: "9000000", position: [-147, 0], anchor: [0, 0.5],
-      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0xff3b72, visible: true, zIndex: 40,
+      fontFamily: scoreAtHalf.hudFontFamily, fontSize: 28, fill: 0xff0b2b, visible: true, zIndex: 40,
     },
   ]), "TotalScore encoded runs consume independent Reverse TTF advances");
   const scoreComponents = new Map(scoreAtHalf.hudSerializedComponents?.map((row) => [row.path, row]));
@@ -466,6 +485,7 @@ async function main(): Promise<void> {
     visible: true,
     position: [212, 84],
     zIndex: 40,
+    parentLabel: null,
     childLabels: ["score-leading-segment", "score-significant-segment"],
   }), "TotalScore component 1271 owns exact local transform, depth and two color primitives");
   for (const [path, position, zIndex, childLabel] of [
@@ -601,17 +621,17 @@ async function main(): Promise<void> {
   const gameOverSprites = new Map(gameOverLife.hudSpriteNodes?.map((node) => [node.label, node]));
   const gameOverTexts = new Map(gameOverLife.hudTextNodes?.map((text) => [text.label, text]));
   equal(gameOverSprites.get("life-game-over")?.visible, true, "zero Life shows current GameOver background");
-  equal(JSON.stringify(gameOverSprites.get("life-game-over")?.position), JSON.stringify([-220, 140]), "GameOver background authored world position is owner-local");
+  equal(JSON.stringify(gameOverSprites.get("life-game-over")?.position), JSON.stringify([0, 0]), "GameOver background Sprite stays local to its serialized owner");
   equal(gameOverSprites.get("life-warning-outline")?.alpha, Math.fround(0.8), "Life warning PingPong TweenAlpha samples engine time");
-  equal(gameOverTexts.get("life-current-segment")?.fill, 0xfe2349,
-    "zero current Life switches only the current encoded segment to StringColorType.Red");
-  equal(gameOverTexts.get("life-separator-segment")?.fill, 0x505050,
-    "zero Life preserves the Black separator segment");
-  equal(gameOverTexts.get("life-maximum-segment")?.fill, 0x00c000,
-    "zero Life preserves the Green maximum segment");
+  equal(gameOverTexts.get("life-current-segment")?.fill, 0xfd0411,
+    "zero current Life sRGB Red is linearized before output");
+  equal(gameOverTexts.get("life-separator-segment")?.fill, 0x141414,
+    "zero Life preserves the linearized Black separator segment");
+  equal(gameOverTexts.get("life-maximum-segment")?.fill, 0x008600,
+    "zero Life preserves the linearized Green maximum segment");
   equal(gameOverTexts.get("life-game-over-label")?.visible, true, "zero Life shows current GameOver UILabel");
   equal(gameOverTexts.get("life-game-over-label")?.alpha, Math.fround(0.5540000200271606), "GameOver UILabel TweenAlpha samples engine time");
-  equal(JSON.stringify(gameOverTexts.get("life-game-over-label")?.position), JSON.stringify([-314, 142]), "GameOver UILabel authored world position is owner-local");
+  equal(JSON.stringify(gameOverTexts.get("life-game-over-label")?.position), JSON.stringify([0, 0]), "GameOver UILabel stays local to its exact child Transform");
   equal(JSON.stringify(gameOverTexts.get("life-game-over-label")?.anchor), JSON.stringify([0, 0.5]), "GameOver UILabel consumes Left pivot");
 
   const recording = new RecordingSimulatorRendererBackend();

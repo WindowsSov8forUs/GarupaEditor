@@ -1,4 +1,5 @@
 import { Text } from "pixi.js";
+import { linearTintFromSrgbColor } from "./nguiMaterialPipeline";
 
 export interface NguiEncodedScoreLabelLayout {
   readonly displayed: string;
@@ -64,7 +65,7 @@ function configureSegment(
 ): void {
   text.text = value;
   text.style = {
-    fill,
+    fill: linearTintFromSrgbColor(fill),
     fontFamily,
     fontSize,
     fontStyle: "normal",

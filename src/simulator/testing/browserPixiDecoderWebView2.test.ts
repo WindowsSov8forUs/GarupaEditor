@@ -246,8 +246,8 @@ async function captureProductionScoreHud(app: Application): Promise<{
   }
   equal(leadingRun.text, "0", "SS TotalScore leading run");
   equal(significantRun.text, "9000000", "SS TotalScore significant run");
-  equal(Number(leadingRun.style.fill), 0xbebebe, "SS TotalScore leading color");
-  equal(Number(significantRun.style.fill), 0xff3b72, "SS TotalScore significant color");
+  equal(Number(leadingRun.style.fill), 0x838383, "SS TotalScore BEBEBE sRGB is linearized before output");
+  equal(Number(significantRun.style.fill), 0xff0b2b, "SS TotalScore FF3B72 sRGB is linearized before output");
   equal(String(leadingRun.style.fontFamily).startsWith("GarupaScoreRank-949356"), true,
     "SS TotalScore exact sgm FontFace");
   const bounds = mask.getLocalBounds();
@@ -404,8 +404,8 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     equal(`${leading.text}${significant.text}`, expected.text, `Score matrix ${expected.score} encoded value`);
     equal(Number(leading.style.fontSize), expected.size, `Score matrix ${expected.score} leading font size`);
     equal(Number(significant.style.fontSize), expected.size, `Score matrix ${expected.score} significant font size`);
-    equal(Number(leading.style.fill), 0xbebebe, `Score matrix ${expected.score} leading fill`);
-    equal(Number(significant.style.fill), 0xff3b72, `Score matrix ${expected.score} significant fill`);
+    equal(Number(leading.style.fill), 0x838383, `Score matrix ${expected.score} leading linear tint`);
+    equal(Number(significant.style.fill), 0xff0b2b, `Score matrix ${expected.score} significant linear tint`);
     equal(String(leading.style.fontFamily).startsWith("GarupaScoreRank-949356"), true,
       `Score matrix ${expected.score} exact sgm FontFace`);
     const leadingBounds = leading.getBounds();

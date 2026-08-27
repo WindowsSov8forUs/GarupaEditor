@@ -1,4 +1,5 @@
 import type { Text } from "pixi.js";
+import { linearTintFromSrgbColor } from "./nguiMaterialPipeline";
 
 export function layoutNguiEncodedLifeLabel(
   segments: readonly [Text, Text, Text],
@@ -14,7 +15,7 @@ export function layoutNguiEncodedLifeLabel(
   for (let index = 0; index < segments.length; index += 1) {
     const text = segments[index]!;
     text.text = values[index]!;
-    text.style = { fill: fills[index]!, fontSize, fontFamily, fontWeight: "normal" };
+    text.style = { fill: linearTintFromSrgbColor(fills[index]!), fontSize, fontFamily, fontWeight: "normal" };
     text.anchor.set(0, 0.5);
   }
   if (typeof document === "undefined") {

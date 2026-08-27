@@ -90,8 +90,10 @@ for (const expected of cases) {
   assert.deepEqual([segments[0].x, segments[1].x], [expected.leadingX, expected.significantX]);
   assert.deepEqual([segments[0].anchor.x, segments[0].anchor.y], [0, 0.5]);
   assert.deepEqual([segments[1].anchor.x, segments[1].anchor.y], [0, 0.5]);
-  assert.equal(Number(segments[0].style.fill), 0xbebebe);
-  assert.equal(Number(segments[1].style.fill), 0xff3b72);
+  assert.equal(Number(segments[0].style.fill), 0x838383,
+    "serialized BEBEBE sRGB is linearized before the final output transfer");
+  assert.equal(Number(segments[1].style.fill), 0xff0b2b,
+    "serialized FF3B72 sRGB is linearized before the final output transfer");
   assert.equal(String(segments[0].style.fontFamily), "sgm-fixture");
   assert.equal(Number(segments[0].style.fontSize), expected.size);
   assert.equal(segments[0].visible, expected.leading.length > 0);

@@ -44,6 +44,13 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     maxValueDigits: 6,
     initialLocalY: -50,
     phaseSeconds: Math.fround(0.14000000059604645),
+    // Reverse 1bff69eb/full-visible AddScoreObject.playCoroutine: source-keyed three-phase clip.
+    animationKeyframes: Object.freeze([
+      Object.freeze({ time: Math.fround(0), localY: Math.fround(-50), alpha: Math.fround(0.2) }),
+      Object.freeze({ time: Math.fround(0.14000000059604645), localY: Math.fround(-42), alpha: Math.fround(1) }),
+      Object.freeze({ time: Math.fround(0.2800000011920929), localY: Math.fround(-41), alpha: Math.fround(1) }),
+      Object.freeze({ time: Math.fround(0.42000001668930054), localY: Math.fround(-40), alpha: Math.fround(0) }),
+    ]),
     digitInnerWidths: Object.freeze({
       icon_number_plus: 47,
       icon_number_0: 43,
@@ -104,6 +111,28 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
   }),
   life: Object.freeze({
     rootPosition: Object.freeze([411, 309] as const),
+    // Reverse 1bff69eb: exact level3 Transform chains relative to the top-right LifeGauge owner.
+    hierarchy: Object.freeze({
+      intermediate: Object.freeze([
+        Object.freeze({ path: "GaugeObject", parent: null, position: Object.freeze([-225, 57] as const), scale: Object.freeze([1, 1] as const) }),
+        Object.freeze({ path: "GaugeObject/hp_gauge_round", parent: "GaugeObject", position: Object.freeze([0, 0] as const), scale: Object.freeze([1, 1] as const) }),
+        Object.freeze({ path: "GaugeObject/hp_gauge_second", parent: "GaugeObject", position: Object.freeze([0, 0] as const), scale: Object.freeze([1, 1] as const) }),
+        Object.freeze({ path: "GaugeObject/SkillEffect", parent: "GaugeObject", position: Object.freeze([0, 0] as const), scale: Object.freeze([1, 1] as const) }),
+        Object.freeze({ path: "life_panel", parent: null, position: Object.freeze([-162.99990844726562, 72] as const), scale: Object.freeze([-1, 1] as const) }),
+      ]),
+      components: Object.freeze({
+        gauge_base: Object.freeze({ parent: "GaugeObject/hp_gauge_round", position: Object.freeze([0, 0] as const), scale: Object.freeze([1, 1] as const) }),
+        primary: Object.freeze({ parent: "GaugeObject/hp_gauge_round", position: Object.freeze([14, -13] as const), scale: Object.freeze([1, 1] as const) }),
+        second: Object.freeze({ parent: "GaugeObject/hp_gauge_second", position: Object.freeze([14, -13] as const), scale: Object.freeze([1, 1] as const) }),
+        warning_outline: Object.freeze({ parent: "GaugeObject", position: Object.freeze([1, 1] as const), scale: Object.freeze([1, 1] as const) }),
+        warning_body: Object.freeze({ parent: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning", position: Object.freeze([11, -12] as const), scale: Object.freeze([1, 1] as const) }),
+        game_over_background: Object.freeze({ parent: null, position: Object.freeze([-220, 140] as const), scale: Object.freeze([1, 1] as const) }),
+        skill_effect: Object.freeze({ parent: "GaugeObject/SkillEffect", position: Object.freeze([0, 0] as const), scale: Object.freeze([1, 1] as const) }),
+        skill_effect_icon: Object.freeze({ parent: "GaugeObject/SkillEffect", position: Object.freeze([-114, -12] as const), scale: Object.freeze([1, 1] as const) }),
+        total_label: Object.freeze({ parent: "life_panel", position: Object.freeze([-59, 2] as const), scale: Object.freeze([-1, 1] as const) }),
+        game_over_text: Object.freeze({ parent: "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage", position: Object.freeze([-94, 2] as const), scale: Object.freeze([1, 1] as const) }),
+      }),
+    }),
     borders: Object.freeze({
       gauge_base: Object.freeze([39, 143, 0, 0] as const),
       primary: Object.freeze([4, 4, 0, 0] as const),
