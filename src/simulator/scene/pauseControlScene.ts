@@ -46,7 +46,12 @@ export interface PauseControlLayout {
     readonly retryBoundsTopLeft: PauseControlBounds;
     readonly resumeBoundsTopLeft: PauseControlBounds;
   };
-  readonly confirmation: {
+  readonly retryConfirmation: {
+    readonly windowBoundsTopLeft: PauseControlBounds;
+    readonly cancelBoundsTopLeft: PauseControlBounds;
+    readonly confirmBoundsTopLeft: PauseControlBounds;
+  };
+  readonly abortConfirmation: {
     readonly windowBoundsTopLeft: PauseControlBounds;
     readonly cancelBoundsTopLeft: PauseControlBounds;
     readonly confirmBoundsTopLeft: PauseControlBounds;
@@ -88,11 +93,15 @@ const RETRYABLE_BUTTON_Y = Math.fround(-94.00001525878906);
 const ABORT_BUTTON_X = Math.fround(-274);
 const RETRY_BUTTON_X = Math.fround(0);
 const RESUME_BUTTON_X = Math.fround(272.0000305175781);
-const CONFIRM_WINDOW_WIDTH = Math.fround(640);
-const CONFIRM_WINDOW_HEIGHT = Math.fround(318);
-const CONFIRM_BUTTON_Y = RETRYABLE_BUTTON_Y;
+const RETRY_CONFIRM_WINDOW_WIDTH = Math.fround(960);
+const RETRY_CONFIRM_WINDOW_HEIGHT = Math.fround(600);
+const ABORT_CONFIRM_WINDOW_WIDTH = Math.fround(640);
+const ABORT_CONFIRM_WINDOW_HEIGHT = Math.fround(318);
+const RETRY_CONFIRM_BUTTON_Y = Math.fround(-232);
+const ABORT_CONFIRM_BUTTON_Y = Math.fround(-240.00001525878906);
 const CANCEL_BUTTON_X = Math.fround(-136.00001525878906);
-const CONFIRM_BUTTON_X = Math.fround(135);
+const RETRY_CONFIRM_BUTTON_X = Math.fround(136);
+const ABORT_CONFIRM_BUTTON_X = Math.fround(135);
 
 const VISIBLE_WORDS: PauseControlSceneSnapshot["words"] = deepFreeze({
   pause: { title: "一時停止", message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。", buttons: ["中断", "リトライ", "再開"] as const },
@@ -289,8 +298,9 @@ export class PauseControlSceneOwner {
       return null;
     }
     if (this.state === "retry-confirm" || this.state === "abort-confirm") {
-      if (insideBounds(topLeft, layout.confirmation.cancelBoundsTopLeft)) return "cancel";
-      if (insideBounds(topLeft, layout.confirmation.confirmBoundsTopLeft)) return "confirm";
+      const confirmation = this.state === "retry-confirm" ? layout.retryConfirmation : layout.abortConfirmation;
+      if (insideBounds(topLeft, confirmation.cancelBoundsTopLeft)) return "cancel";
+      if (insideBounds(topLeft, confirmation.confirmBoundsTopLeft)) return "confirm";
     }
     return null;
   }
@@ -328,8 +338,10 @@ export function createPauseControlLayout(layout: OriginalSurfaceLayout): Simulat
   };
   const pauseWindowWidth = mul(RETRYABLE_WINDOW_WIDTH, scale);
   const pauseWindowHeight = mul(RETRYABLE_WINDOW_HEIGHT, scale);
-  const confirmWindowWidth = mul(CONFIRM_WINDOW_WIDTH, scale);
-  const confirmWindowHeight = mul(CONFIRM_WINDOW_HEIGHT, scale);
+  const retryConfirmWindowWidth = mul(RETRY_CONFIRM_WINDOW_WIDTH, scale);
+  const retryConfirmWindowHeight = mul(RETRY_CONFIRM_WINDOW_HEIGHT, scale);
+  const abortConfirmWindowWidth = mul(ABORT_CONFIRM_WINDOW_WIDTH, scale);
+  const abortConfirmWindowHeight = mul(ABORT_CONFIRM_WINDOW_HEIGHT, scale);
   return ok(deepFreeze({
     surfaceRevision: layout.surface.revision,
     viewportWidth: width,
@@ -351,10 +363,15 @@ export function createPauseControlLayout(layout: OriginalSurfaceLayout): Simulat
       retryBoundsTopLeft: centered(RETRY_BUTTON_X, RETRYABLE_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
       resumeBoundsTopLeft: centered(RESUME_BUTTON_X, RETRYABLE_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
     },
-    confirmation: {
-      windowBoundsTopLeft: bounds(sub(width / 2, confirmWindowWidth / 2), sub(height / 2, confirmWindowHeight / 2), confirmWindowWidth, confirmWindowHeight),
-      cancelBoundsTopLeft: centered(CANCEL_BUTTON_X, CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
-      confirmBoundsTopLeft: centered(CONFIRM_BUTTON_X, CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
+    retryConfirmation: {
+      windowBoundsTopLeft: bounds(sub(width / 2, retryConfirmWindowWidth / 2), sub(height / 2, retryConfirmWindowHeight / 2), retryConfirmWindowWidth, retryConfirmWindowHeight),
+      cancelBoundsTopLeft: centered(CANCEL_BUTTON_X, RETRY_CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
+      confirmBoundsTopLeft: centered(RETRY_CONFIRM_BUTTON_X, RETRY_CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
+    },
+    abortConfirmation: {
+      windowBoundsTopLeft: bounds(sub(width / 2, abortConfirmWindowWidth / 2), sub(height / 2, abortConfirmWindowHeight / 2), abortConfirmWindowWidth, abortConfirmWindowHeight),
+      cancelBoundsTopLeft: centered(CANCEL_BUTTON_X, ABORT_CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
+      confirmBoundsTopLeft: centered(ABORT_CONFIRM_BUTTON_X, ABORT_CONFIRM_BUTTON_Y, RETRYABLE_BUTTON_WIDTH, RETRYABLE_BUTTON_HEIGHT),
     },
     rehearsal: createRehearsalControlSceneLayout(layout),
   }));

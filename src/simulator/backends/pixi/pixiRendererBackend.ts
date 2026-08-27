@@ -1908,8 +1908,11 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private buildPauseMenu(snapshot: PauseControlSceneSnapshot): void {
     const layout = snapshot.layout;
     this.addWindow(layout.pauseMenu.windowBoundsTopLeft, CURRENT_PAUSE_COMPONENT_PATHS.window);
-    this.addHeader(layout.pauseMenu.windowBoundsTopLeft, Math.fround(842 * layout.controlScale), Math.fround(40 * layout.controlScale));
-    this.addCenteredText(snapshot.words.pause.title, layout.viewportWidth / 2, layout.pauseMenu.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.title);
+    this.addHeader(layout.pauseMenu.windowBoundsTopLeft, 842, 40, 115, layout.controlScale);
+    this.addText(snapshot.words.pause.title,
+      layout.viewportWidth / 2 - 391 * layout.controlScale,
+      layout.viewportHeight / 2 + layout.controlScale,
+      30 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.title, 0, 0.5);
     this.addCenteredText(snapshot.words.pause.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 14 * layout.controlScale, 24 * layout.controlScale, 0x333333, CURRENT_PAUSE_COMPONENT_PATHS.content);
     this.addButton(layout.pauseMenu.abortBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[0], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.abortButton);
     this.addButton(layout.pauseMenu.retryBoundsTopLeft, this.pauseTextures.gray, snapshot.words.pause.buttons[1], 32 * layout.controlScale, CURRENT_PAUSE_COMPONENT_PATHS.retryButton);
@@ -1918,14 +1921,26 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
 
   private buildConfirmation(snapshot: PauseControlSceneSnapshot, retry: boolean): void {
     const layout = snapshot.layout;
-    this.addWindow(layout.confirmation.windowBoundsTopLeft, retry ? "retry-confirm-window" : "abort-confirm-window");
-    this.addHeader(layout.confirmation.windowBoundsTopLeft, Math.fround(558 * layout.controlScale), Math.fround(40 * layout.controlScale));
+    const confirmation = retry ? layout.retryConfirmation : layout.abortConfirmation;
+    this.addWindow(confirmation.windowBoundsTopLeft, retry ? "retry-confirm-window" : "abort-confirm-window");
+    this.addHeader(confirmation.windowBoundsTopLeft, retry ? 770 : 558, 40, retry ? 239.64999389648438 : 115, layout.controlScale);
     const words = retry ? snapshot.words.retry : snapshot.words.abort;
-    this.addCenteredText(words.title, layout.viewportWidth / 2, layout.confirmation.windowBoundsTopLeft.y + 34 * layout.controlScale, 30 * layout.controlScale, 0x333333, retry ? "retry-confirm-title" : "abort-confirm-title");
-    this.addCenteredText(words.message, layout.viewportWidth / 2, layout.viewportHeight / 2 - 38 * layout.controlScale, 24 * layout.controlScale, 0x333333, retry ? "retry-confirm-message" : "abort-confirm-message");
-    if (!retry) this.addCenteredText(snapshot.words.abort.annotation, layout.viewportWidth / 2, layout.viewportHeight / 2 + 52 * layout.controlScale, 19 * layout.controlScale, 0x555555, "abort-confirm-annotation");
-    this.addButton(layout.confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, retry ? "retry-cancel" : "abort-cancel");
-    this.addButton(layout.confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, retry ? "retry-confirm" : "abort-confirm");
+    this.addText(words.title,
+      layout.viewportWidth / 2 + (retry ? -352.260009765625 : -250) * layout.controlScale,
+      layout.viewportHeight / 2 + (retry ? 1 : 0) * layout.controlScale,
+      (retry ? 30 : 29) * layout.controlScale, 0x333333,
+      retry ? "retry-confirm-title" : "abort-confirm-title", 0, 0.5);
+    this.addCenteredText(words.message,
+      layout.viewportWidth / 2 + (retry ? 0 : 5) * layout.controlScale,
+      layout.viewportHeight / 2 - (retry ? 0 : 50) * layout.controlScale,
+      (retry ? 24 : 23) * layout.controlScale, 0x333333,
+      retry ? "retry-confirm-message" : "abort-confirm-message");
+    if (!retry) this.addCenteredText(snapshot.words.abort.annotation,
+      layout.viewportWidth / 2 - 7 * layout.controlScale,
+      layout.viewportHeight / 2 + 9 * layout.controlScale,
+      19 * layout.controlScale, 0x555555, "abort-confirm-annotation");
+    this.addButton(confirmation.cancelBoundsTopLeft, this.pauseTextures.gray, words.buttons[0], 32 * layout.controlScale, retry ? "retry-cancel" : "abort-cancel");
+    this.addButton(confirmation.confirmBoundsTopLeft, this.pauseTextures.pink, words.buttons[1], 32 * layout.controlScale, retry ? "retry-confirm" : "abort-confirm");
   }
 
   private addWindow(value: PauseControlBounds, label: string): void {
@@ -1940,10 +1955,13 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.modalRoot.addChild(window);
     }
   }
-  private addHeader(window: PauseControlBounds, width: number, height: number): void {
+  private addHeader(window: PauseControlBounds, authoredWidth: number, authoredHeight: number, authoredLocalY: number, scale: number): void {
     const component = new Container({ label: CURRENT_PAUSE_COMPONENT_PATHS.header });
     const header = new NineSliceSprite({ texture: this.pauseTextures.header, leftWidth: 28, rightWidth: 4, topHeight: 0, bottomHeight: 0, label: "pause-dialog-header" });
-    applyBounds(header, { x: Math.fround(window.x + (window.width - width) / 2), y: window.y, width, height });
+    const width = Math.fround(authoredWidth * scale);
+    const height = Math.fround(authoredHeight * scale);
+    const centerY = Math.fround(window.y + window.height / 2 - authoredLocalY * scale);
+    applyBounds(header, { x: Math.fround(window.x + (window.width - width) / 2), y: Math.fround(centerY - height / 2), width, height });
     component.addChild(header);
     this.modalRoot.addChild(component);
   }
@@ -1962,12 +1980,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.modalRoot.addChild(component);
   }
   private addCenteredText(text: string, x: number, y: number, size: number, fill: number, label: string): void {
+    this.addText(text, x, y, size, fill, label, 0.5, 0.5);
+  }
+  private addText(text: string, x: number, y: number, size: number, fill: number, label: string, anchorX: number, anchorY: number): void {
     const legacy = label === CURRENT_PAUSE_COMPONENT_PATHS.title ? "pause-title"
       : label === CURRENT_PAUSE_COMPONENT_PATHS.content ? "pause-message"
       : label;
     const component = new Container({ label });
     const value = this.text(text, size, fill, legacy);
-    value.anchor.set(0.5, 0.5);
+    value.anchor.set(anchorX, anchorY);
     value.position.set(x, y);
     component.addChild(value);
     this.modalRoot.addChild(component);

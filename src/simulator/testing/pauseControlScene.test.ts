@@ -142,10 +142,10 @@ function testRetryCancelConfirmAndFreshCommand(): void {
   const owner = pausedOwner(mode);
   click(owner, mode, LAYOUT.pauseMenu.retryBoundsTopLeft);
   assert.equal(snapshot(owner, mode).state, "retry-confirm");
-  click(owner, mode, LAYOUT.confirmation.cancelBoundsTopLeft);
+  click(owner, mode, LAYOUT.retryConfirmation.cancelBoundsTopLeft);
   assert.equal(snapshot(owner, mode).state, "pause-menu");
   click(owner, mode, LAYOUT.pauseMenu.retryBoundsTopLeft);
-  const routed = click(owner, mode, LAYOUT.confirmation.confirmBoundsTopLeft);
+  const routed = click(owner, mode, LAYOUT.retryConfirmation.confirmBoundsTopLeft);
   assert.equal(routed.commands.length, 1);
   const command = routed.commands[0] as PauseControlCommand;
   assert.equal(command.kind, "retry");
@@ -158,10 +158,10 @@ function testAbortCancelConfirm(): void {
   const owner = pausedOwner(mode);
   click(owner, mode, LAYOUT.pauseMenu.abortBoundsTopLeft);
   assert.equal(snapshot(owner, mode).state, "abort-confirm");
-  click(owner, mode, LAYOUT.confirmation.cancelBoundsTopLeft);
+  click(owner, mode, LAYOUT.abortConfirmation.cancelBoundsTopLeft);
   assert.equal(snapshot(owner, mode).state, "pause-menu");
   click(owner, mode, LAYOUT.pauseMenu.abortBoundsTopLeft);
-  const routed = click(owner, mode, LAYOUT.confirmation.confirmBoundsTopLeft);
+  const routed = click(owner, mode, LAYOUT.abortConfirmation.confirmBoundsTopLeft);
   const command = routed.commands[0] as PauseControlCommand;
   assert.equal(command.kind, "abort");
   assert.equal(requireOk(consumePauseControlCommand(command, state(mode, true, true), SURFACE)), "abort");
