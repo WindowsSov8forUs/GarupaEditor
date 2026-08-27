@@ -125,6 +125,7 @@ async function verifyHabahiroCompleteReplay() {
     specificSpeed:f32(11), noteSettingScale:f32(1), launcherY:f32(5.420000076293945), targetCenterY:f32(-3.450000047683716), highAspectRatio:f32(1),
     noteStartPositions:Object.freeze(Array.from({length:7},(_,lane)=>v3(Math.fround((lane-3)*0.11),4.976500511169434,-13.5))),
     goalPositions:Object.freeze(Array.from({length:7},(_,lane)=>v3(Math.fround((lane-3)*2.2),-3.450000047683716,-13.5))),
+    tapLaneEffectPositions:Object.freeze([-6.599999904632568,-5.5,-4.400000095367432,-3.299999952316284,-2.200000047683716,-1.100000023841858,0,1.100000023841858,2.200000047683716,3.299999952316284,4.400000095367432,5.5,6.599999904632568].map(x=>v3(x,-3.450000047683716,-13.5))),
     noteTint:white, noteDomainLayer:3, screenToSafeAreaRatio:f32(1), syncLineEdgeMargin:f32(.2),
     longMeshColor:Object.freeze({red:f32(1),green:f32(1),blue:f32(1),alpha:f32(.8)}),
     habahiro:Object.freeze({
@@ -258,6 +259,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     specificSpeed:f32(11), noteSettingScale:f32(1), launcherY:f32(5.420000076293945), targetCenterY:f32(-3.450000047683716), highAspectRatio:f32(1),
     noteStartPositions:Object.freeze(Array.from({length:7},(_,lane)=>v3(Math.fround((lane-3)*0.11),4.976500511169434,-13.5))),
     goalPositions:Object.freeze(Array.from({length:7},(_,lane)=>v3(Math.fround((lane-3)*2.2),-3.450000047683716,-13.5))),
+    tapLaneEffectPositions:Object.freeze([-6.599999904632568,-5.5,-4.400000095367432,-3.299999952316284,-2.200000047683716,-1.100000023841858,0,1.100000023841858,2.200000047683716,3.299999952316284,4.400000095367432,5.5,6.599999904632568].map(x=>v3(x,-3.450000047683716,-13.5))),
     noteTint:Object.freeze({red:f32(1),green:f32(1),blue:f32(1),alpha:f32(1)}), noteDomainLayer:3,
     screenToSafeAreaRatio:f32(1), longMeshColor:Object.freeze({red:f32(1),green:f32(1),blue:f32(1),alpha:f32(.8)}),
   });
