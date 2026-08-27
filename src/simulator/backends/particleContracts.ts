@@ -344,7 +344,7 @@ export interface ParticleSystemDefinition {
 }
 
 export interface ParticleBundleProfile {
-  readonly key: "ordinary" | "directional";
+  readonly key: "ordinary" | "directional" | "game-clear";
   readonly systems: readonly ParticleSystemDefinition[];
   readonly profiles: Readonly<Record<string, ParticleProfileDefinition>>;
   readonly moduleProfiles: ParticleModuleProfileMap;
@@ -382,7 +382,10 @@ export type ParticleRootId =
   | "directional:effect_tap_directional_flick_r_2"
   | "directional:effect_tap_directional_flick_r_3"
   | "directional:effect_tap_directional_flick_l_finger"
-  | "directional:effect_tap_directional_flick_r_finger";
+  | "directional:effect_tap_directional_flick_r_finger"
+  | "game-clear:base"
+  | "game-clear:full-combo"
+  | "game-clear:all-perfect";
 
 export interface ParticleResourceAllowlistEntry {
   readonly logicalAssetId: string;
@@ -452,6 +455,11 @@ export interface ParticleResourcePreflightAdapter {
 }
 
 export type ParticleInstanceIdentity =
+  | {
+      readonly kind: "game-clear";
+      readonly buttonType: 0;
+      readonly rangeLength: null;
+    }
   | {
       readonly kind: "game-play-button";
       readonly buttonType: number;

@@ -238,8 +238,8 @@
     },
     {
       "path": "game/prefabs/bms/gameclear/game-clear-profile.json",
-      "byteLength": 2200302,
-      "sha256": "319367D3D19D19344FB6F2101245083BD54F54352E1769A45D53854FD025CD53"
+      "byteLength": 2209692,
+      "sha256": "8BCBCDF4276D2304084296A7CF8327983AFE1DED7428E3DD283081420EAC8CF9"
     },
     {
       "path": "game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png",

@@ -18,7 +18,15 @@ import {
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
-import type { GameClearClipProfile, GameClearGraphObject } from "../resources/currentGameClearProfile";
+import { buildGameClearParticleProfile, type GameClearClipProfile, type GameClearGraphObject } from "../resources/currentGameClearProfile";
+import { DeterministicParticleSimulation } from "../../engine/particles/particleSimulation";
+import { particleFloat32FromBits } from "../particleValidation";
+import type {
+  ParticleBundleProfile,
+  ParticlePortableProfile,
+  ParticleProfileDefinition,
+  ParticleUvModule,
+} from "../particleContracts";
 import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
 import {
   createRehearsalControlSceneLayout,
@@ -132,6 +140,12 @@ interface PixiHudVisual {
   scoreHighRankPanelMaskGeneration: number;
   scoreHighRankPanelMaskBounds: readonly [number, number, number, number] | null;
   scoreHighRankGeneration: number;
+  gameClearParticleSimulation: DeterministicParticleSimulation | null;
+  gameClearParticleProfile: ParticlePortableProfile | null;
+  gameClearParticleElapsed: number;
+  gameClearParticleContainer: Container | null;
+  gameClearParticleTextures: ReadonlyMap<string, Texture> | null;
+  gameClearViewportHeight: number;
   fillRatios: readonly [number, number];
 }
 
@@ -2170,8 +2184,24 @@ function applyGameClearHud(
     profileCenter(object.resourceProfile.scene.projection.viewportHeight),
   );
   object.node.scale.set(authoredUiScale(object));
+  if (visual.gameClearParticleSimulation === null) {
+    const particleProfile = buildGameClearParticleProfile(profile, clearStatus);
+    const simulation = new DeterministicParticleSimulation(particleProfile, Math.fround(1));
+    simulation.playRoot(
+      "game-clear",
+      Object.freeze({ kind: "game-clear" as const, buttonType: 0 as const, rangeLength: null }),
+      clearStatus === 1 ? "game-clear:base" : clearStatus === 2 ? "game-clear:full-combo" : "game-clear:all-perfect",
+    );
+    visual.gameClearParticleSimulation = simulation;
+    visual.gameClearParticleProfile = particleProfile;
+    visual.gameClearParticleTextures = textures;
+    visual.gameClearViewportHeight = object.resourceProfile.scene.projection.viewportHeight;
+    visual.gameClearParticleContainer = new Container({ label: "game-clear-particles", sortableChildren: true });
+    visual.content.addChild(visual.gameClearParticleContainer);
+    renderGameClearParticles(visual, textures);
+  }
   if (visual.digitSprites.length > 0 || clearStatus === 1) {
-    visual.content.visible = clearStatus !== 1;
+    visual.content.visible = true;
     return;
   }
   const branch = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
@@ -2209,6 +2239,95 @@ function applyGameClearHud(
   }
   visual.content.visible = true;
   sampleGameClearGraph(visual, branch.clip, 0);
+}
+
+function renderGameClearParticles(
+  visual: PixiHudVisual,
+  textures: ReadonlyMap<string, Texture>,
+): void {
+  const container = visual.gameClearParticleContainer;
+  const simulation = visual.gameClearParticleSimulation;
+  const profile = visual.gameClearParticleProfile;
+  if (container === null || simulation === null || profile === null) return;
+  const bundle = profile.bundles[0]!;
+  container.removeChildren().forEach((child) => {
+    if (child instanceof Sprite && child.texture.label?.startsWith("game-clear:") && !child.texture.destroyed) {
+      child.texture.destroy(false);
+    }
+    child.destroy({ children: true });
+  });
+  for (const sample of simulation.samples()) {
+    if (sample.material === null) continue;
+    const definition = bundle.systems.find((candidate) => candidate.identity === sample.systemId);
+    const particleProfile = definition === undefined ? undefined : bundle.profiles[definition.profile];
+    const renderer = particleProfile === undefined ? undefined : bundle.rendererProfiles[particleProfile.renderer];
+    const material = bundle.materials.find((candidate) => candidate.name === sample.material);
+    if (definition === undefined || particleProfile === undefined || renderer === undefined || material?.texture === null || material === undefined) {
+      throw new Error(`Game-clear particle renderer graph is incomplete: ${sample.systemId}`);
+    }
+    const texture = gameClearParticleTexture(bundle, particleProfile, sample.uvFrame, textures, material.texture);
+    const sprite = new Sprite({ texture, label: `game-clear-particle:${sample.particleId}` });
+    sprite.anchor.set(0.5);
+    const x = particleFloat32FromBits(sample.position.xBits)!;
+    const y = particleFloat32FromBits(sample.position.yBits)!;
+    const localScaleX = Math.abs(definition.transform.m_LocalScale.x);
+    const localScaleY = Math.abs(definition.transform.m_LocalScale.y);
+    let width = Math.abs(particleFloat32FromBits(sample.size.xBits)! * localScaleX);
+    let height = Math.abs(particleFloat32FromBits(sample.size.yBits)! * localScaleY);
+    let rotation = -particleFloat32FromBits(sample.rotation.zBits)!;
+    if (sample.renderMode === 1) {
+      const vx = particleFloat32FromBits(sample.velocity.xBits)!;
+      const vy = particleFloat32FromBits(sample.velocity.yBits)!;
+      height = Math.abs(height * renderer.m_LengthScale + Math.hypot(vx, vy) * renderer.m_VelocityScale);
+      if (vx !== 0 || vy !== 0) rotation = Math.atan2(-vy, vx) - Math.PI / 2 - rotation;
+    }
+    const maximum = renderer.m_MaxParticleSize * visual.gameClearViewportHeight;
+    const largest = Math.max(width, height);
+    if (maximum > 0 && largest > maximum) { const ratio = maximum / largest; width *= ratio; height *= ratio; }
+    sprite.position.set(x, -y);
+    sprite.width = Math.max(width, 0.001);
+    sprite.height = Math.max(height, 0.001);
+    sprite.rotation = rotation;
+    sprite.tint = rgbTint(
+      particleFloat32FromBits(sample.color.redBits)!,
+      particleFloat32FromBits(sample.color.greenBits)!,
+      particleFloat32FromBits(sample.color.blueBits)!,
+    );
+    sprite.alpha = particleFloat32FromBits(sample.color.alphaBits)!;
+    sprite.blendMode = material.blend;
+    sprite.zIndex = sample.sortingOrder * 1_000_000 + sample.creationSequence;
+    container.addChild(sprite);
+  }
+  container.sortChildren();
+}
+
+function gameClearParticleTexture(
+  bundle: ParticleBundleProfile,
+  profile: ParticleProfileDefinition,
+  uvFrame: number,
+  textures: ReadonlyMap<string, Texture>,
+  textureName: string,
+): Texture {
+  const base = textures.get(spriteKey(`hud/game-clear/${textureName}`, textureName));
+  if (base === undefined) throw new Error(`Game-clear particle texture is missing: ${textureName}`);
+  const moduleId = profile.modules.UVModule;
+  if (moduleId === undefined) return base;
+  const modules = bundle.moduleProfiles.UVModule as Readonly<Record<string, ParticleUvModule>> | undefined;
+  const module = modules?.[moduleId];
+  if (module === undefined || module.tilesX <= 1 && module.tilesY <= 1) return base;
+  const width = base.width / module.tilesX;
+  const height = base.height / module.tilesY;
+  if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("Game-clear particle UV tiles are non-integral");
+  const frame = ((uvFrame % (module.tilesX * module.tilesY)) + module.tilesX * module.tilesY) % (module.tilesX * module.tilesY);
+  const column = frame % module.tilesX;
+  const unityRow = Math.floor(frame / module.tilesX);
+  const pixiRow = module.tilesY - 1 - unityRow;
+  return new Texture({
+    source: base.source,
+    frame: new Rectangle(column * width, pixiRow * height, width, height),
+    orig: new Rectangle(0, 0, width, height),
+    label: `game-clear:${textureName}:uv:${frame}`,
+  });
 }
 
 function applyGameClearInitialTransform(node: Container, row: GameClearGraphObject): void {
@@ -2362,6 +2481,12 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreHighRankPanelMaskGeneration: scoreHighRankPanelMask === null ? 0 : 1,
     scoreHighRankPanelMaskBounds: null,
     scoreHighRankGeneration: 0,
+    gameClearParticleSimulation: null,
+    gameClearParticleProfile: null,
+    gameClearParticleElapsed: 0,
+    gameClearParticleContainer: null,
+    gameClearParticleTextures: null,
+    gameClearViewportHeight: 0,
     fillRatios: Object.freeze([0, 0]),
   };
 }
@@ -3517,9 +3642,18 @@ function applyEvidenceAnimation(
     if (state?.clearStatus === undefined || profile === undefined || object.hudVisual === null) {
       throw new Error("Game-clear animation owner/profile/state is missing");
     }
+    const visual = object.hudVisual;
+    const simulation = visual.gameClearParticleSimulation;
+    if (simulation !== null) {
+      const delta = Math.fround(Math.max(0, elapsedSeconds - visual.gameClearParticleElapsed));
+      simulation.step(delta, false);
+      visual.gameClearParticleElapsed = elapsedSeconds;
+      if (visual.gameClearParticleTextures === null) throw new Error("Game-clear particle textures are missing");
+      renderGameClearParticles(visual, visual.gameClearParticleTextures);
+    }
     if (state.clearStatus !== 1) {
       const branch = state.clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
-      sampleGameClearGraph(object.hudVisual, branch.clip, elapsedSeconds);
+      sampleGameClearGraph(visual, branch.clip, elapsedSeconds);
     }
     return;
   }

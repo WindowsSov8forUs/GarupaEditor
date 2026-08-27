@@ -69,6 +69,9 @@ assert.equal(contract.judgement_particles.default_selection.asset_bundle_name, "
 assert.equal(contract.judgement_particles.default_selection.ordinary_resource, "ingameskin/tapeffect/skin00");
 
 assert.equal(contract.game_clear.base_graph.object_count, 43);
+assert.equal(contract.game_clear.base_clip.stop_time, 3);
+assert.equal(contract.game_clear.base_clip.curve_count, 44);
+assert.equal(contract.game_clear.base_clip.bindings.every((row: any) => row.path !== null), true);
 assert.equal(contract.game_clear.full_combo.graph.object_count, 25);
 assert.equal(contract.game_clear.all_perfect.graph.object_count, 36);
 assert.equal(contract.game_clear.full_combo.clip.curve_count, 104);

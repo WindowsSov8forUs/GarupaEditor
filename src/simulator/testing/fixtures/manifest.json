@@ -399,10 +399,10 @@
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
-      "sourceReverseCommit": "dc2a8db819032498d0deb8181c29a6963af8cb3f",
+      "sourceReverseCommit": "3be484bc87b0e3fffe7f349b97fe522d8d5422ca",
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
-      "bytes": 6919505,
-      "sha256": "9492A5B34127EF1D6201D261047607E076CC18207C98E24C3C970B6411E4F819"
+      "bytes": 6942833,
+      "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",

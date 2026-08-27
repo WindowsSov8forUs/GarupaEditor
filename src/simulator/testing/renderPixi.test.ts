@@ -16,6 +16,7 @@ import { CURRENT_ORDINARY_HUD_PROFILE } from "../backends/resources/currentOrdin
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { buildGameClearParticleProfile } from "../backends/resources/currentGameClearProfile";
 import { assertHudPixiRenderingEquivalence } from "./hudPixiRenderingEquivalence.test";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
@@ -119,6 +120,9 @@ async function main(): Promise<void> {
   assert(scoreAnimation !== null, "ScoreGaugeSS profile parses");
   const scoreResources = augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile));
   const gameClear = gameClearTestResources();
+  equal(buildGameClearParticleProfile(gameClear.profile, 1).systemCount, 40, "base clear consumes all 40 serialized ParticleSystems");
+  equal(buildGameClearParticleProfile(gameClear.profile, 2).systemCount, 46, "Full Combo consumes base40 + additional6 ParticleSystems");
+  equal(buildGameClearParticleProfile(gameClear.profile, 3).systemCount, 52, "All Perfect consumes base40 + additional12 ParticleSystems");
   const profile: RenderResourceProfile = {
     ...baseProfile,
     packIdentity: `${baseProfile.packIdentity}+actual-visible+actual-score`,
@@ -273,6 +277,11 @@ async function main(): Promise<void> {
   push({ kind: "activate-object", renderObjectId: "hud:game-clear" });
   push({ kind: "play-animation", renderObjectId: "hud:game-clear", animationRole: "game-clear", restart: true });
   push({ kind: "sample-animation", renderObjectId: "hud:game-clear", animationRole: "game-clear", elapsedSeconds: f32(1.2) });
+  push({ kind: "create-object", renderObjectId: "hud:game-clear:base", poolFamily: "game-clear-base", role: "hud-game-clear", parentObjectId: null });
+  push({ kind: "set-hud", renderObjectId: "hud:game-clear:base", hudRole: "game-clear", state: Object.freeze({ clearStatus: 1 as const }) });
+  push({ kind: "activate-object", renderObjectId: "hud:game-clear:base" });
+  push({ kind: "play-animation", renderObjectId: "hud:game-clear:base", animationRole: "game-clear", restart: true });
+  push({ kind: "sample-animation", renderObjectId: "hud:game-clear:base", animationRole: "game-clear", elapsedSeconds: f32(1.2) });
 
   const batch = requireOk(renderer.preflight(commands), "actual visible command preflight");
   requireOk(renderer.commit(batch), "actual visible command commit");
@@ -290,6 +299,12 @@ async function main(): Promise<void> {
   equal(clear.activeAnimationRole, "game-clear", "All Perfect clear graph owns one engine-clock animation");
   assert((clear.hudSpriteNodes?.length ?? 0) >= 20, "All Perfect clear graph consumes the complete serialized UITexture letter/star inventory");
   assert(clear.hudSpriteNodes?.some((sprite) => sprite.visible), "All Perfect clear clip publishes visible serialized nodes before exit");
+  const allPerfectParticles = renderer.stage.getChildByLabel("game-clear-particles", true) as Container;
+  assert((allPerfectParticles?.children.length ?? 0) >= 180, "All Perfect consumes base plus additional serialized ParticleSystems at the 1.2-second phase");
+  const baseClear = row("hud:game-clear:base");
+  equal(baseClear.activeAnimationRole, "game-clear", "base clear owns game-clear animation");
+  const baseParticleContainers = renderer.stage.getChildrenByLabel("game-clear-particles", true) as Container[];
+  assert(baseParticleContainers.some((container) => container.children.length >= 150), "clearStatus1 consumes the 40-system base clear particle graph and base 3-second activation clip");
   equal(row("note:world").scale[0], Math.fround(3.6), "ordinary Note Sprite scale consumes camera PPU / Sprite PPU");
   equal(row("note:flash").spriteAlpha, 1, "Long Flash current alpha channel remains one");
   equal(row("note:flash").spriteTint, 0x999999, "Long Flash midpoint RGB=.6 maps to Sprite tint");

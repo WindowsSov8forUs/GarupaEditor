@@ -13,8 +13,8 @@ if (rows.length !== 12 || !rows.every((row) => /^[0-9a-f]{40}$/.test(row.sourceR
   throw new Error(`full visible/lifecycle fixture inventory mismatch: ${rows.length}`);
 }
 const contract = rows.find((row) => row.path.endsWith("/full_visible_lifecycle_contract.json"));
-if (contract?.sourceReverseCommit !== "dc2a8db819032498d0deb8181c29a6963af8cb3f" ||
-    contract.bytes !== 6919505 || contract.sha256 !== "9492A5B34127EF1D6201D261047607E076CC18207C98E24C3C970B6411E4F819") {
+if (contract?.sourceReverseCommit !== "3be484bc87b0e3fffe7f349b97fe522d8d5422ca" ||
+    contract.bytes !== 6942833 || contract.sha256 !== "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22") {
   throw new Error("full visible/lifecycle strict-JSON contract provenance mismatch");
 }
 console.log("full visible/lifecycle oracle static independence verified: fixture=12 production-helper-imports=0");

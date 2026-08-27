@@ -129728,6 +129728,822 @@
         }
       ]
     },
+    "base_controller": {
+      "source": {
+        "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/2e7bfa9fdb29148a2a6012f86c47e280",
+        "bytes": 628,
+        "sha256": "075059FF1E725F827A6A778457EF3CE6485075F1620E08BE71D4BE56C1122A1E"
+      },
+      "name": "MusicGameClear",
+      "tos": [
+        [
+          2105523844,
+          "GravityWeight"
+        ],
+        [
+          1104036838,
+          "Base Layer.MusicGameClear"
+        ],
+        [
+          756556552,
+          "Base Layer"
+        ],
+        [
+          0,
+          ""
+        ],
+        [
+          872816904,
+          "MusicGameClear"
+        ]
+      ],
+      "controller": {
+        "m_LayerArray": [
+          {
+            "data": {
+              "m_StateMachineIndex": 0,
+              "m_StateMachineSynchronizedLayerIndex": 0,
+              "m_BodyMask": {
+                "word0": 4294967295,
+                "word1": 4294967295,
+                "word2": 524287
+              },
+              "m_SkeletonMask": {
+                "data": {
+                  "m_Data": []
+                }
+              },
+              "m_Binding": 756556552,
+              "(int&)m_LayerBlendingMode": 0,
+              "m_DefaultWeight": 0.0,
+              "m_IKPass": false,
+              "m_SyncedLayerAffectsTiming": false
+            }
+          }
+        ],
+        "m_StateMachineArray": [
+          {
+            "data": {
+              "m_StateConstantArray": [
+                {
+                  "data": {
+                    "m_TransitionConstantArray": [],
+                    "m_BlendTreeConstantIndexArray": [
+                      0
+                    ],
+                    "m_BlendTreeConstantArray": [
+                      {
+                        "data": {
+                          "m_NodeArray": [
+                            {
+                              "data": {
+                                "m_BlendType": 0,
+                                "m_BlendEventID": 4294967295,
+                                "m_BlendEventYID": 4294967295,
+                                "m_ChildIndices": [],
+                                "m_Blend1dData": {
+                                  "data": {
+                                    "m_ChildThresholdArray": []
+                                  }
+                                },
+                                "m_Blend2dData": {
+                                  "data": {
+                                    "m_ChildPositionArray": [],
+                                    "m_ChildMagnitudeArray": [],
+                                    "m_ChildPairVectorArray": [],
+                                    "m_ChildPairAvgMagInvArray": [],
+                                    "m_ChildNeighborListArray": []
+                                  }
+                                },
+                                "m_BlendDirectData": {
+                                  "data": {
+                                    "m_ChildBlendEventIDArray": [],
+                                    "m_NormalizedBlendValues": false
+                                  }
+                                },
+                                "m_ClipID": 0,
+                                "m_Duration": 1.0,
+                                "m_CycleOffset": 0.0,
+                                "m_Mirror": false
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "m_NameID": 872816904,
+                    "m_PathID": 1104036838,
+                    "m_FullPathID": 1104036838,
+                    "m_TagID": 0,
+                    "m_SpeedParamID": 0,
+                    "m_MirrorParamID": 0,
+                    "m_CycleOffsetParamID": 0,
+                    "m_TimeParamID": 0,
+                    "m_Speed": 1.0,
+                    "m_CycleOffset": 0.0,
+                    "m_IKOnFeet": false,
+                    "m_WriteDefaultValues": true,
+                    "m_Loop": false,
+                    "m_Mirror": false
+                  }
+                }
+              ],
+              "m_AnyStateTransitionConstantArray": [],
+              "m_SelectorStateConstantArray": [
+                {
+                  "data": {
+                    "m_TransitionConstantArray": [
+                      {
+                        "data": {
+                          "m_Destination": 0,
+                          "m_ConditionConstantArray": []
+                        }
+                      }
+                    ],
+                    "m_FullPathID": 756556552,
+                    "m_IsEntry": true
+                  }
+                },
+                {
+                  "data": {
+                    "m_TransitionConstantArray": [
+                      {
+                        "data": {
+                          "m_Destination": 30000,
+                          "m_ConditionConstantArray": []
+                        }
+                      }
+                    ],
+                    "m_FullPathID": 756556552,
+                    "m_IsEntry": false
+                  }
+                }
+              ],
+              "m_DefaultState": 0,
+              "m_SynchronizedLayerCount": 1
+            }
+          }
+        ],
+        "m_Values": {
+          "data": {
+            "m_ValueArray": []
+          }
+        },
+        "m_DefaultValues": {
+          "data": {
+            "m_PositionValues": [],
+            "m_QuaternionValues": [],
+            "m_ScaleValues": [],
+            "m_FloatValues": [],
+            "m_IntValues": [],
+            "m_BoolValues": []
+          }
+        }
+      }
+    },
+    "base_clip": {
+      "source": {
+        "path": "tmp/resource-pixi-rendering-10.1.4_230/apk/assets/bin/Data/061e49379be16470db30192eba79a392",
+        "bytes": 4264,
+        "sha256": "8ED5FA37CA4B39A25DC86DCE923D139ADC5EFFE44C81AB5E187020F1F0C727B7"
+      },
+      "name": "MusicGameClear",
+      "sample_rate": 60.0,
+      "start_time": 0.0,
+      "stop_time": 3.0,
+      "loop_time": false,
+      "wrap_mode": 0,
+      "curve_count": 44,
+      "bindings": [
+        {
+          "path_hash": 3015729898,
+          "path": "GameClearParticle",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 2784262384,
+          "path": "GameClearParticle/effect_par_firework_star_pink1 (1)",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_pink1 (1).m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 1088647566,
+          "path": "GameClearParticle/effect_par_firework_star_purple1 (1)",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_purple1 (1).m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 821146919,
+          "path": "GameClearParticle/effect_par_firework_star_blue1 (1)",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_blue1 (1).m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 752929385,
+          "path": "GameClearParticle/effect_par_firework_star_yellow1 (1)",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_yellow1 (1).m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 1058700522,
+          "path": "GameClearParticle/effect_par_firework_star_green1 (1)",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_green1 (1).m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 863002130,
+          "path": "GameClearParticle/effect_par_firework_star_green1",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_green1.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 2392691806,
+          "path": "GameClearParticle/effect_par_firework_star_yellow1",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_yellow1.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 3825059763,
+          "path": "GameClearParticle/effect_par_firework_star_blue1",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_blue1.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 2810109016,
+          "path": "GameClearParticle/effect_par_firework_star_purple1",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_purple1.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 1089704572,
+          "path": "GameClearParticle/effect_par_firework_star_pink1",
+          "attribute_hash": 2086281974,
+          "attribute": "m_IsActive",
+          "type_id": 1,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_pink1.m_IsActive.value"
+          ]
+        },
+        {
+          "path_hash": 2856714223,
+          "path": "ClearDisplay",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "ClearDisplay.m_LocalPosition.x",
+            "ClearDisplay.m_LocalPosition.y",
+            "ClearDisplay.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 1089704572,
+          "path": "GameClearParticle/effect_par_firework_star_pink1",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_pink1.m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_pink1.m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_pink1.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 2810109016,
+          "path": "GameClearParticle/effect_par_firework_star_purple1",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_purple1.m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_purple1.m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_purple1.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 3825059763,
+          "path": "GameClearParticle/effect_par_firework_star_blue1",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_blue1.m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_blue1.m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_blue1.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 2392691806,
+          "path": "GameClearParticle/effect_par_firework_star_yellow1",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_yellow1.m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_yellow1.m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_yellow1.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 863002130,
+          "path": "GameClearParticle/effect_par_firework_star_green1",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_green1.m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_green1.m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_green1.m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 1058700522,
+          "path": "GameClearParticle/effect_par_firework_star_green1 (1)",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_green1 (1).m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_green1 (1).m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_green1 (1).m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 752929385,
+          "path": "GameClearParticle/effect_par_firework_star_yellow1 (1)",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_yellow1 (1).m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_yellow1 (1).m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_yellow1 (1).m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 821146919,
+          "path": "GameClearParticle/effect_par_firework_star_blue1 (1)",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_blue1 (1).m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_blue1 (1).m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_blue1 (1).m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 1088647566,
+          "path": "GameClearParticle/effect_par_firework_star_purple1 (1)",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_purple1 (1).m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_purple1 (1).m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_purple1 (1).m_LocalPosition.z"
+          ]
+        },
+        {
+          "path_hash": 2784262384,
+          "path": "GameClearParticle/effect_par_firework_star_pink1 (1)",
+          "attribute_hash": 1,
+          "attribute": "m_LocalPosition",
+          "type_id": 4,
+          "custom_type": 0,
+          "script": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "channels": [
+            "GameClearParticle/effect_par_firework_star_pink1 (1).m_LocalPosition.x",
+            "GameClearParticle/effect_par_firework_star_pink1 (1).m_LocalPosition.y",
+            "GameClearParticle/effect_par_firework_star_pink1 (1).m_LocalPosition.z"
+          ]
+        }
+      ],
+      "streamed_curve_count": 11,
+      "streamed_frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3333333432674408,
+          "keys": [
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6000000238418579,
+          "keys": [
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6499999761581421,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.7833333611488342,
+          "keys": [
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.9666666388511658,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.25,
+          "keys": [
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.4166666269302368,
+          "keys": [
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.5499999523162842,
+          "keys": [
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.649999976158142,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ],
+      "dense": {
+        "m_FrameCount": 182,
+        "m_CurveCount": 0,
+        "m_SampleRate": 60.0,
+        "m_BeginTime": 0.0,
+        "m_SampleArray": []
+      },
+      "constants": [
+        0.0,
+        0.0,
+        0.0,
+        -188.0,
+        -79.0,
+        0.0,
+        524.0,
+        99.0,
+        0.0,
+        616.0,
+        -154.0,
+        0.0,
+        -15.0,
+        93.0,
+        0.0,
+        171.0,
+        -29.0,
+        0.0,
+        188.0,
+        -29.0,
+        0.0,
+        -67.0,
+        93.0,
+        0.0,
+        615.0,
+        -124.0,
+        0.0,
+        445.0,
+        99.0,
+        0.0,
+        -122.0,
+        -79.0,
+        0.0
+      ]
+    },
     "full_combo": {
       "graph": {
         "source": {
