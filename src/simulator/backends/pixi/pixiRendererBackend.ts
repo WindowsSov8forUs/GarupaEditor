@@ -787,6 +787,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly softness: readonly [20, 3];
     } | null;
     readonly hudFillRatios: readonly [number, number] | null;
+    readonly hudContentScale: readonly [number, number] | null;
+    readonly hudContentAlpha: number | null;
+    readonly hudResultTimingOwner: {
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly zIndex: number;
+    } | null;
     readonly hudScoreHighRankNodes: readonly {
       readonly name: string;
       readonly visible: boolean;
@@ -976,6 +983,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             softness: Object.freeze([20, 3] as const),
           }),
       hudFillRatios: value.hudVisual?.fillRatios ?? null,
+      hudContentScale: value.hudVisual === null
+        ? null
+        : Object.freeze([value.hudVisual.content.scale.x, value.hudVisual.content.scale.y] as const),
+      hudContentAlpha: value.hudVisual?.content.alpha ?? null,
+      hudResultTimingOwner: value.hudVisual?.kind !== "result"
+        ? null
+        : (() => {
+            const owner = value.hudVisual.content.getChildByLabel("result-timing-owner");
+            return owner === null
+              ? null
+              : Object.freeze({
+                  position: Object.freeze([owner.position.x, owner.position.y] as const),
+                  scale: Object.freeze([owner.scale.x, owner.scale.y] as const),
+                  zIndex: owner.zIndex,
+                });
+          })(),
       hudScoreHighRankNodes: value.hudVisual === null
         ? null
         : Object.freeze(value.hudVisual.scoreHighRankSprites.map((sprite, index) => Object.freeze({
@@ -2922,18 +2945,22 @@ function applyResultHud(
   retainHudBinding(object, judgeBinding.key, referenceCounts);
   {
     const timingBinding = requiredUniqueExactTextureBinding(textures, state.timingKey ?? "judge_fast");
+    const timingOwner = new Container({ label: "result-timing-owner", sortableChildren: true });
+    timingOwner.position.set(
+      CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[0],
+      -CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[1],
+    );
+    timingOwner.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalScale);
+    timingOwner.zIndex = CURRENT_ORDINARY_HUD_PROFILE.result.timingDepth;
     const timing = new Sprite({ texture: timingBinding.texture, label: "result-timing" });
     timing.anchor.set(0.5);
     timing.width = profile.result.timingSize[0];
     timing.height = profile.result.timingSize[1];
-    timing.position.set(
-      CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[0],
-      -CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[1],
-    );
-    timing.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalScale);
-    timing.zIndex = CURRENT_ORDINARY_HUD_PROFILE.result.timingDepth;
+    timing.position.set(0, 0);
+    timing.zIndex = 0;
     timing.visible = state.timingKey !== null;
-    visual.content.addChild(timing);
+    visual.content.addChild(timingOwner);
+    timingOwner.addChild(timing);
     visual.digitSprites.push(timing);
     retainHudBinding(object, timingBinding.key, referenceCounts);
   }
@@ -3863,17 +3890,15 @@ function applyEvidenceAnimation(
     return;
   }
   if (role === "result") {
+    const visual = object.hudVisual;
+    if (visual?.kind !== "result") throw new Error("GameJudge requires the persistent Result/other child graph.");
     const values = sampleOrdinaryHudStreamedClip(
       CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.frames,
       CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.curveCount,
       Math.min(elapsedSeconds, CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.durationSeconds),
     );
-    const uiScale = authoredUiScale(object);
-    object.node.scale.set(
-      Math.fround(values[0]! * uiScale),
-      Math.fround(values[1]! * uiScale),
-    );
-    object.node.alpha = values[3]!;
+    visual.content.scale.set(values[0]!, values[1]!);
+    visual.content.alpha = values[3]!;
     return;
   }
   if (role === "life-warning") {
@@ -3907,10 +3932,9 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
     return;
   }
   if (role === "result") {
-    object.node.scale.set(Math.fround(
-      authoredUiScale(object) * CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
-    ));
-    object.node.alpha = 1;
+    if (object.hudVisual?.kind !== "result") throw new Error("GameJudge stop requires the persistent other child.");
+    object.hudVisual.content.scale.set(1);
+    object.hudVisual.content.alpha = 1;
     return;
   }
   if (role === "all-perfect") {

@@ -49,6 +49,18 @@ for (const root of productionRoots) {
     }
   }
 }
+const pixiRenderer = readFileSync(resolve(simulatorRoot, "backends", "pixi", "pixiRendererBackend.ts"), "utf8");
+for (const required of [
+  'new Container({ label: "result-timing-owner"',
+  "timingOwner.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalScale)",
+  "visual.content.scale.set(values[0]!, values[1]!)",
+  "visual.content.alpha = values[3]!",
+]) {
+  if (!pixiRenderer.includes(required)) violations.push(`pixiRendererBackend.ts: Judge child composition missing ${required}`);
+}
+if (pixiRenderer.includes("timing.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalScale)")) {
+  violations.push("pixiRendererBackend.ts: JudgeTiming Transform still overwrites Sprite widget-size scale");
+}
 const packageJson = JSON.parse(readFileSync(resolve(repositoryRoot, "package.json"), "utf8"));
 for (const [name, command] of Object.entries(packageJson.scripts ?? {})) {
   if (!name.startsWith("simulator:") || typeof command !== "string") continue;

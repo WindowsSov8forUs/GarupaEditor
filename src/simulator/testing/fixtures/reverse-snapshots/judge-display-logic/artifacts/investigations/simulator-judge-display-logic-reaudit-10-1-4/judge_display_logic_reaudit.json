@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-judge-display-logic-portable",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": [
+    {
+      "path": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
+      "bytes": 392619,
+      "sha256": "14F904205BF4D8F662274C6B4970E1E1478A649129CBB8502BE033B45DEF7965"
+    },
+    {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+    },
+    {
+      "path": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
+      "bytes": 233351,
+      "sha256": "A5103670BA69FBDD1A5585DE05756EE9AFDD59FD06A3A1AF5F460E202EDB7D73"
+    },
+    {
+      "path": "static/apktool/base/assets/bin/Data/54116481daaec4ab3a211c8ffa2b047c",
+      "bytes": 3224,
+      "sha256": "FAFC37AE3742E60C2030622551C63C74A33DD3AB06758407B5714B020F89CAEF"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032abeac__CE_Result__Show.arm64.tsv",
+      "bytes": 3546,
+      "sha256": "50E17DB7499DFA129AF8F48F3FA2852E7E32456C5D140A1929E22D3ABAA18497"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032abd80__CE_Result__Hide.arm64.tsv",
+      "bytes": 644,
+      "sha256": "2FBC8EB310746A29E83F595737BA73F8EAE3E480C3DD2BCD41C5FA40BE65AA05"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/032ac710__CE_Result_showCoroutine_d__31__MoveNext.arm64.tsv",
+      "bytes": 1472,
+      "sha256": "884AD4FC6043DC7354C5C8ABDD5394DD77AD8448A18A8A93D3AA6B34C9B6CF4A"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03a6e09c__JudgeTimingController__Show.arm64.tsv",
+      "bytes": 3160,
+      "sha256": "5B7CE617C1D294D2FEE366C56700326675D61D680D6CF360A7E92A08D46C3E4D"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03a6e1dc__JudgeTimingController__setupJudgeTimingSprite.arm64.tsv",
+      "bytes": 1181,
+      "sha256": "CFB4F02F94F127C9CC7938F809003E5273CB24DEE4F53BE46448E67CBC0C5063"
+    }
+  ],
+  "hierarchy": {
+    "result": {
+      "localPosition": [
+        0,
+        -160,
+        0
+      ],
+      "localScale": [
+        0.800000011920929,
+        0.800000011920929,
+        1
+      ],
+      "parent": "Information"
+    },
+    "other": {
+      "localPosition": [
+        0,
+        0,
+        0
+      ],
+      "localScale": [
+        1,
+        1,
+        1
+      ],
+      "parent": "Result",
+      "judgeWidget": {
+        "size": [
+          288,
+          80
+        ],
+        "pivot": "Center",
+        "depth": 5
+      }
+    },
+    "judgeTiming": {
+      "localPosition": [
+        4,
+        -38,
+        0
+      ],
+      "localScale": [
+        1.25,
+        1.25,
+        1
+      ],
+      "parent": "other",
+      "widget": {
+        "size": [
+          80,
+          26
+        ],
+        "pivot": "Center",
+        "depth": 55
+      }
+    }
+  },
+  "clip": {
+    "name": "GameJudge",
+    "sampleRate": 25.0,
+    "durationSeconds": 0.47999998927116394,
+    "loop": false,
+    "curveCount": 4,
+    "bindingPathHash": 3646436640,
+    "resolvedBindingPath": "other",
+    "bindingCount": 5,
+    "bindingTypeIds": [
+      4,
+      114,
+      114,
+      114,
+      114
+    ],
+    "frames": [
+      {
+        "time": 0.0,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              -3125.000244140625,
+              125.00000762939453,
+              7.500000476837158,
+              0.800000011920929
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              -3125.000244140625,
+              125.00000762939453,
+              7.500000476837158,
+              0.800000011920929
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              -3124.999755859375,
+              124.99999237060547,
+              10.0,
+              0.6000000238418579
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.03999999910593033,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              3905.316162109375,
+              -281.212646484375,
+              2.5,
+              1.100000023841858
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              3906.32861328125,
+              -281.253173828125,
+              2.5,
+              1.100000023841858
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              3124.999755859375,
+              -249.99998474121094,
+              5.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.07999999821186066,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.20000000298023224,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0000300407409668
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.23999999463558197,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.9995216131210327
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0000300407409668
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.47999998927116394,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    ],
+    "samples": [
+      {
+        "time": 0.0,
+        "otherScale": [
+          0.800000011920929,
+          0.800000011920929
+        ],
+        "otherAlpha": 0.6000000238418579,
+        "judgeEffectiveSize": [
+          184.32000732421875,
+          51.20000076293945
+        ],
+        "timingEffectiveSize": [
+          64.0,
+          20.80000114440918
+        ],
+        "timingAuthoredWorldPosition": [
+          2.56000018119812,
+          -184.32000732421875
+        ]
+      },
+      {
+        "time": 0.02,
+        "otherScale": [
+          0.9750000238418579,
+          0.9750000238418579
+        ],
+        "otherAlpha": 0.8250000476837158,
+        "judgeEffectiveSize": [
+          224.6400146484375,
+          62.400001525878906
+        ],
+        "timingEffectiveSize": [
+          78.0,
+          25.350000381469727
+        ],
+        "timingAuthoredWorldPosition": [
+          3.120000123977661,
+          -189.63999938964844
+        ]
+      },
+      {
+        "time": 0.04,
+        "otherScale": [
+          1.100000023841858,
+          1.100000023841858
+        ],
+        "otherAlpha": 1.0,
+        "judgeEffectiveSize": [
+          253.44000244140625,
+          70.4000015258789
+        ],
+        "timingEffectiveSize": [
+          88.0,
+          28.600000381469727
+        ],
+        "timingAuthoredWorldPosition": [
+          3.5200002193450928,
+          -193.44000244140625
+        ]
+      },
+      {
+        "time": 0.06,
+        "otherScale": [
+          1.0687575340270996,
+          1.0687494277954102
+        ],
+        "otherAlpha": 1.024999976158142,
+        "judgeEffectiveSize": [
+          246.2417449951172,
+          68.39996337890625
+        ],
+        "timingEffectiveSize": [
+          85.50060272216797,
+          27.787485122680664
+        ],
+        "timingAuthoredWorldPosition": [
+          3.4200241565704346,
+          -192.489990234375
+        ]
+      },
+      {
+        "time": 0.08,
+        "otherScale": [
+          1.0,
+          1.0
+        ],
+        "otherAlpha": 1.0,
+        "judgeEffectiveSize": [
+          230.40000915527344,
+          64.0
+        ],
+        "timingEffectiveSize": [
+          80.0,
+          26.0
+        ],
+        "timingAuthoredWorldPosition": [
+          3.200000047683716,
+          -190.39999389648438
+        ]
+      },
+      {
+        "time": 0.24,
+        "otherScale": [
+          0.9995216131210327,
+          1.0000300407409668
+        ],
+        "otherAlpha": 1.0,
+        "judgeEffectiveSize": [
+          230.28977966308594,
+          64.00192260742188
+        ],
+        "timingEffectiveSize": [
+          79.96173095703125,
+          26.000782012939453
+        ],
+        "timingAuthoredWorldPosition": [
+          3.1984691619873047,
+          -190.40090942382812
+        ]
+      },
+      {
+        "time": 0.48,
+        "otherScale": [
+          1.0,
+          1.0
+        ],
+        "otherAlpha": 1.0,
+        "judgeEffectiveSize": [
+          230.40000915527344,
+          64.0
+        ],
+        "timingEffectiveSize": [
+          80.0,
+          26.0
+        ],
+        "timingAuthoredWorldPosition": [
+          3.200000047683716,
+          -190.39999389648438
+        ]
+      }
+    ],
+    "mutationBoundary": "GameJudge mutates the other child scale and alpha. Result root keeps serialized scale 0.8; applying clip scale to Result replaces rather than composes the parent and makes Judge/Timing too large."
+  },
+  "routes": {
+    "auto": "judge_auto",
+    "miss": "judge_miss",
+    "bad": "judge_bad",
+    "good": "judge_good",
+    "great": "judge_great",
+    "perfect": "judge_perfect"
+  },
+  "timingRoutes": {
+    "none": null,
+    "fast": "judge_fast",
+    "slow": "judge_slow"
+  },
+  "lifecycle": {
+    "show": "change Judge sprite, optionally show FAST/SLOW, enable other, restart GameJudge on other, restart one-second show coroutine",
+    "clipSettlesAtSeconds": 0.47999998927116394,
+    "visibleSeconds": 1.0,
+    "fadeAfterClip": false,
+    "hide": "after one second, other becomes inactive; a later judgement restarts identity and clip",
+    "pause": "HUD/gameplay clock owner pauses the one-second elapsed owner together with gameplay"
+  },
+  "portable": {
+    "rootPlacement": "viewport center + authored Result (0,-160) through common UI scale",
+    "clipTarget": "persistent other child container",
+    "timingPlacement": "persistent JudgeTiming child under animated other; local (4,-38), local scale 1.25",
+    "pixelOffsetAllowed": false,
+    "fixedDeviceFramebufferExact": false
+  },
+  "closure": {
+    "unknown": [],
+    "blocking": []
+  }
+}

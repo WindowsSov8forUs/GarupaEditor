@@ -94,6 +94,10 @@ const addScoreRankLogic = JSON.parse(readFileSync(join(
   fixtureRoot,
   "add-score-rank-logic/artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json",
 ), "utf8"));
+const judgeDisplayLogic = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "judge-display-logic/artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -429,16 +433,32 @@ async function main(): Promise<void> {
   const result = row("hud:result");
   equal(result.hudText, null, "Result creates no system Text");
   equal(result.hudSpriteCount, 2, "Result owns separate judge and timing Sprites");
-  equal(result.alpha, hudOracle.result.gameJudgeSamples[2].values[3], "Result samples GameJudge alpha instead of a no-op animation");
-  equal(
-    result.scale[0],
-    Math.fround(hudOracle.result.gameJudgeSamples[2].values[0] * UI_SCALE),
-    "Result samples GameJudge root scale under UIRoot FitWidth",
-  );
+  equal(result.alpha, 1, "serialized Result root alpha remains unchanged by the child-bound GameJudge clip");
+  equal(result.hudContentAlpha, hudOracle.result.gameJudgeSamples[2].values[3],
+    "GameJudge alpha applies to the persistent other child");
+  equal(result.scale[0], Math.fround(CURRENT_ORDINARY_HUD_PROFILE.result.rootScale * UI_SCALE),
+    "Result retains serialized root scale under UIRoot FitWidth");
+  equal(result.hudContentScale?.[0], hudOracle.result.gameJudgeSamples[2].values[0],
+    "GameJudge scale applies to other rather than replacing Result root scale");
+  equal(judgeDisplayLogic.clip.resolvedBindingPath, "other", "independent clip binding resolves to the child");
   const resultNodes = new Map(result.hudSpriteNodes?.map((node) => [node.label, node]));
-  equal(JSON.stringify(resultNodes.get("result-timing")?.position), JSON.stringify([4, 38]), "JudgeTiming preserves local Y inversion under Result");
-  equal(JSON.stringify(resultNodes.get("result-timing")?.scale), JSON.stringify([1.25, 1.25]), "JudgeTiming preserves local scale that cancels Result prefab scale at rest");
-  equal(resultNodes.get("result-timing")?.zIndex, 55, "JudgeTiming depth remains above the judgement Sprite");
+  equal(JSON.stringify(resultNodes.get("result-timing")?.position), JSON.stringify([0, 0]),
+    "JudgeTiming Sprite remains local to its serialized Transform owner");
+  equal(resultNodes.get("result-timing")?.parentLabel, "result-timing-owner",
+    "JudgeTiming retains the persistent child Transform instead of overwriting Sprite width scale");
+  equal(JSON.stringify(result.hudResultTimingOwner), JSON.stringify({ position: [4, 38], scale: [1.25, 1.25], zIndex: 55 }),
+    "JudgeTiming owner preserves local Y inversion, scale and depth under animated other");
+  const judgeSample = judgeDisplayLogic.clip.samples.find((sample: any) => sample.time === 0.04)!;
+  for (const [label, expectedSize] of [
+    ["result-judge", judgeSample.judgeEffectiveSize],
+    ["result-timing", judgeSample.timingEffectiveSize],
+  ] as const) {
+    const bounds = resultNodes.get(label)?.worldBounds;
+    assert(bounds !== undefined, `${label} has world bounds`);
+    assert(Math.abs(bounds[2] - Math.fround(expectedSize[0] * UI_SCALE)) < 0.001 &&
+      Math.abs(bounds[3] - Math.fround(expectedSize[1] * UI_SCALE)) < 0.001,
+    `${label} composes Result 0.8 × animated other × own widget transform: ${JSON.stringify(bounds)} vs ${JSON.stringify(expectedSize)}`);
+  }
 
   const life = row("hud:life");
   equal(JSON.stringify(life.position), JSON.stringify([
