@@ -433,8 +433,16 @@ export class RenderCommandProducer {
 
   preflightHudReflect(
     plan: ScoreLifeReflectPlan,
+    deltaTimeSeconds: number,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
+    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      return integrityFailure(
+        "render.producer.invalid-hud-reflect-delta",
+        ["RPR-D12", "RPR-D13"],
+        "HUD reflection requires the current finite non-negative outer delta for immediate coroutine first-resume semantics.",
+      );
+    }
     if (validation.status !== "ok") return validation;
     const scoreHud = this.validateScoreHudBindings();
     if (scoreHud.status !== "ok") return scoreHud;
@@ -445,6 +453,7 @@ export class RenderCommandProducer {
     const totalAddScore = plan.reflect.totalScore;
     const addScoreOwnerState = this.hud.addScore.snapshot();
     const addScoreObjectId = HUD_OBJECTS.addScore[addScoreOwnerState.poolIndex]!;
+    const initialAddScoreElapsed = Math.fround(deltaTimeSeconds);
     if (totalAddScore !== 0) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
@@ -455,6 +464,14 @@ export class RenderCommandProducer {
         ...base(commands.length), kind: "play-animation", renderObjectId: addScoreObjectId,
         animationRole: "add-score", restart: true,
       });
+      if (!plan.record.singleGameOver) {
+        const sample = createRenderFloat32(initialAddScoreElapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length), kind: "sample-animation", renderObjectId: addScoreObjectId,
+          animationRole: "add-score", elapsedSeconds: sample.value,
+        });
+      }
     }
     const displayedAllPerfect = this.hud.combo.displayedAllPerfect(plan.record.allPerfect);
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
@@ -577,7 +594,9 @@ export class RenderCommandProducer {
     }
     return this.preflight(commands, () => {
       if (totalAddScore !== 0) {
-        this.addScoreElapsedSeconds.set(addScoreObjectId, 0);
+        if (!plan.record.singleGameOver) {
+          this.addScoreElapsedSeconds.set(addScoreObjectId, initialAddScoreElapsed);
+        }
         this.hud.addScore.commit();
       }
       if (comboChanged) {

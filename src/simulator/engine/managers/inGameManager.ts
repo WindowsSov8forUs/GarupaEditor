@@ -314,7 +314,7 @@ export class InGameManager {
           return this.latchFault(audioPlan);
         }
         const renderPlan = businessPlan?.status === "ok"
-          ? this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null
+          ? this.renderProducer?.preflightHudReflect(businessPlan.value, deltaTimeSeconds) ?? null
           : null;
         if (renderPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();

@@ -90,6 +90,10 @@ const secondVisibleConsumer = JSON.parse(readFileSync(join(
   fixtureRoot,
   "second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
 ), "utf8"));
+const addScoreRankLogic = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "add-score-rank-logic/artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -117,12 +121,14 @@ async function main(): Promise<void> {
   ]), "fifth evidence independently requires the interleaved world sorting groups");
   equal(secondVisibleConsumer.addScore.logic.phaseSeconds, CURRENT_ORDINARY_HUD_PROFILE.addScore.phaseSeconds,
     "AddScore source coroutine phase duration is not hand-timed");
-  equal(JSON.stringify(CURRENT_ORDINARY_HUD_PROFILE.addScore.animationKeyframes), JSON.stringify([
-    { time: 0, localY: -50, alpha: Math.fround(0.2) },
-    { time: Math.fround(0.14000000059604645), localY: -42, alpha: 1 },
-    { time: Math.fround(0.2800000011920929), localY: -41, alpha: 1 },
-    { time: Math.fround(0.42000001668930054), localY: -40, alpha: 0 },
-  ]), "AddScore consumes the source-keyed three-phase position/alpha clip");
+  equal(JSON.stringify(CURRENT_ORDINARY_HUD_PROFILE.addScore.animationPhases), JSON.stringify([
+    { alphaFrom: Math.fround(0.2), alphaTo: 1, localYPerOuterUpdate: 8 },
+    { alphaFrom: 1, alphaTo: 1, localYPerOuterUpdate: 1 },
+    { alphaFrom: 1, alphaTo: 0, localYPerOuterUpdate: 1 },
+  ]), "AddScore preserves source +8/+1/+1 as per-coroutine-resume mutations, not phase endpoints");
+  equal(JSON.stringify(addScoreRankLogic.addScore.coroutine.phases.map((row: any) => row.localYMutationPerCoroutineResume)),
+    JSON.stringify([8, 1, 1]), "independent AddScore oracle owns movement direction and step mutation");
+  equal(addScoreRankLogic.rank.pixelOffsetAllowed, false, "Rank mapping forbids screenshot pixel offsets");
   const baseProfile = JSON.parse(readFileSync(join(ordinaryRoot, "ordinary_portable_profile.json"), "utf8")) as RenderResourceProfile;
   const visibleFixture = JSON.parse(readFileSync(join(visibleRoot, "ordinary_visible_rendering_profile.json"), "utf8"));
   const visibleProfile = parseCurrentOrdinaryVisibleProfile(visibleFixture);
@@ -403,8 +409,8 @@ async function main(): Promise<void> {
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
   equal(JSON.stringify(add.position), JSON.stringify([
     Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + 282 * UI_SCALE),
-    Math.fround(135 * UI_SCALE),
-  ]), "AddScore starts from the post-anchor Offset+UISpriteNumber local position");
+    Math.fround(Math.fround(135 * UI_SCALE) - Math.fround(8 * UI_SCALE)),
+  ]), "AddScore immediate coroutine first resume moves Unity local +Y by 8, hence upward in top-left Pixi coordinates");
   equal(JSON.stringify(add.scale), JSON.stringify([
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
@@ -541,6 +547,16 @@ async function main(): Promise<void> {
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-foreground" && node.zIndex === 5), "Score foreground depth is 5");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-cover" && node.zIndex === 28), "Score cover depth is 28");
   assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-rank-marker-SS" && node.zIndex === 29), "Score marker depth is 29");
+  const productRankOracle = addScoreRankLogic.rank.oracles.find((row: any) => row.name === "product-normalized");
+  assert(productRankOracle !== undefined, "independent product Rank oracle exists");
+  for (let index = 0; index < ["C", "B", "A", "S", "SS"].length; index += 1) {
+    const rank = ["C", "B", "A", "S", "SS"][index]!;
+    const expectedX = productRankOracle.localX[index];
+    equal(JSON.stringify(scoreComponents.get(`GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/Separator`)?.position),
+      JSON.stringify([expectedX, 10]), `${rank} separator consumes calculated Progress-local x exactly once`);
+    equal(JSON.stringify(scoreComponents.get(`GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/${rank}`)?.position),
+      JSON.stringify([expectedX, 2]), `${rank} label consumes calculated Progress-local x exactly once`);
+  }
   const borders = new Map(scoreAtHalf.hudScoreNineSliceBorders?.map((row) => [row.label, row]));
   const backgroundBorder = borders.get("score-gauge-background");
   assert(backgroundBorder !== undefined, "Score background NineSlice exists");

@@ -1547,7 +1547,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const role = requireEvidenceAnimationRole(command.animationRole);
         object.animationElapsedByRole.set(role, command.elapsedSeconds.value);
         object.animationElapsedSeconds = command.elapsedSeconds.value;
-        applyEvidenceAnimation(object, role, command.elapsedSeconds.value);
+        applyEvidenceAnimation(object, role, command.elapsedSeconds.value, true);
         return;
       }
       case "stop-animation": {
@@ -3740,23 +3740,24 @@ function setHudText(
   text.anchor.set(0.5);
 }
 
-function sampleAddScoreClip(
-  keyframes: readonly { readonly time: number; readonly localY: number; readonly alpha: number }[],
+function sampleAddScoreCoroutine(
+  phases: readonly { readonly alphaFrom: number; readonly alphaTo: number; readonly localYPerOuterUpdate: number }[],
+  phaseSeconds: number,
   elapsedSeconds: number,
-): Readonly<{ localY: number; alpha: number }> {
-  if (keyframes.length < 2 || !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
-    throw new Error("AddScore clip requires ordered source keyframes and finite non-negative time.");
+): Readonly<{ alpha: number; localYPerOuterUpdate: number }> {
+  if (phases.length !== 3 || !Number.isFinite(phaseSeconds) || phaseSeconds <= 0 ||
+    !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
+    throw new Error("AddScore coroutine requires three source phases, one positive duration and finite non-negative time.");
   }
-  const phase = Math.fround(Math.min(elapsedSeconds, keyframes[keyframes.length - 1]!.time));
-  let rightIndex = 1;
-  while (rightIndex < keyframes.length - 1 && phase > keyframes[rightIndex]!.time) rightIndex += 1;
-  const left = keyframes[rightIndex - 1]!;
-  const right = keyframes[rightIndex]!;
-  if (!(right.time > left.time)) throw new Error("AddScore source keyframes must be strictly ordered.");
-  const progress = Math.fround(Math.fround(phase - left.time) / Math.fround(right.time - left.time));
+  const total = Math.fround(phaseSeconds * phases.length);
+  const elapsed = Math.fround(Math.min(elapsedSeconds, total));
+  const phaseIndex = Math.min(Math.floor(elapsed / phaseSeconds), phases.length - 1);
+  const phase = phases[phaseIndex]!;
+  const localElapsed = Math.fround(elapsed - Math.fround(phaseIndex * phaseSeconds));
+  const progress = Math.fround(Math.min(localElapsed / phaseSeconds, 1));
   return Object.freeze({
-    localY: Math.fround(left.localY + Math.fround(Math.fround(right.localY - left.localY) * progress)),
-    alpha: Math.fround(left.alpha + Math.fround(Math.fround(right.alpha - left.alpha) * progress)),
+    alpha: Math.fround(phase.alphaFrom + Math.fround(Math.fround(phase.alphaTo - phase.alphaFrom) * progress)),
+    localYPerOuterUpdate: phase.localYPerOuterUpdate,
   });
 }
 
@@ -3764,6 +3765,7 @@ function applyEvidenceAnimation(
   object: PixiObjectRecord,
   role: EvidenceAnimationRole,
   elapsedSeconds: number,
+  committedOuterAdvance = false,
 ): void {
   if (role === "combo") {
     const profile = requireOrdinaryVisibleProfile(object);
@@ -3851,15 +3853,12 @@ function applyEvidenceAnimation(
   }
   if (role === "add-score") {
     const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-    const sample = sampleAddScoreClip(current.animationKeyframes, elapsedSeconds);
-    const layout = object.surfaceLayout;
-    const safe = layout.starUi.safeArea;
-    const safeTop = Math.fround(
-      layout.surface.viewportHeight - Math.fround(safe.y + safe.height),
-    );
-    object.node.position.y = Math.fround(
-      safeTop - (current.numberBaseAuthoredPosition[1] + sample.localY) * authoredUiScale(object),
-    );
+    const sample = sampleAddScoreCoroutine(current.animationPhases, current.phaseSeconds, elapsedSeconds);
+    if (committedOuterAdvance) {
+      object.node.position.y = Math.fround(
+        object.node.position.y - Math.fround(sample.localYPerOuterUpdate * authoredUiScale(object)),
+      );
+    }
     object.node.alpha = sample.alpha;
     return;
   }

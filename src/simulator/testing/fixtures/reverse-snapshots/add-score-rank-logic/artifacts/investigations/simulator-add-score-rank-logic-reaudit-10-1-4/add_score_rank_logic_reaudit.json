@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-add-score-and-rank-logic-portable",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": [
+    {
+      "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "bytes": 6942833,
+      "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
+    },
+    {
+      "path": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
+      "bytes": 8090,
+      "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
+    },
+    {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03879f1c__AddScoreObject__Play.arm64.tsv",
+      "bytes": 3706,
+      "sha256": "4921541E6BC14FC62791D18D85C04935A45CAE3CAE584B28473B61B84D4AF247"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0387a260__AddScoreObject_playCoroutine_d__11__MoveNext.arm64.tsv",
+      "bytes": 7870,
+      "sha256": "D2C8C6C82D7A7E5E775D96E782E7D5DB27E2FA3FEE8FA917BF9BA44E05023654"
+    },
+    {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/decompiled/0322b134__Score_SetupRankObject.c",
+      "bytes": 5509,
+      "sha256": "6C0AD656B00D541FA47CE6C3BD3BDA1FDE15244C0B1161CF28CF6A269C137ED8"
+    },
+    {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/decompiled/0322b634__Score_CalculateScoreReachObjectPositionX.c",
+      "bytes": 2735,
+      "sha256": "4D8EA2FC37ED60EAEE911508296005529DF5DB9902AD917A36AF36FE9F1878E7"
+    }
+  ],
+  "addScore": {
+    "objectGraph": {
+      "poolRoots": 4,
+      "slotsPerRoot": 7,
+      "depthCycle": 8,
+      "rootAnchor": "StarUI left/top safe-area",
+      "ancestorLocalPositions": [
+        [
+          300.0,
+          -84.0,
+          0.0
+        ],
+        [
+          -18.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "numberLocalPositionBeforeCoroutine": [
+        282.0,
+        -85.0,
+        0.0
+      ],
+      "numberScale": 0.6000000238418579,
+      "digitOrder": "least-significant-first then plus"
+    },
+    "playMutationOrder": [
+      "UISpriteNumber.SetNumber(value, zero, showSignWhenType3, 0)",
+      "elapsed=0 and UISpriteNumber alpha=0.6",
+      "AddScoreObject Transform resets to its authored local position",
+      "AddScoreObject localPosition.y += -50",
+      "existing coroutine is stopped",
+      "StartCoroutine executes MoveNext immediately until first yield"
+    ],
+    "coroutine": {
+      "phaseDurationSeconds": 0.14000000059604645,
+      "totalNominalSeconds": 0.42000001668930054,
+      "phases": [
+        {
+          "phase": 1,
+          "alpha": "0.2 + 0.8 * elapsed/0.14",
+          "localYMutationPerCoroutineResume": 8.0
+        },
+        {
+          "phase": 2,
+          "alpha": "1",
+          "localYMutationPerCoroutineResume": 1.0
+        },
+        {
+          "phase": 3,
+          "alpha": "1 - elapsed/0.14",
+          "localYMutationPerCoroutineResume": 1.0
+        }
+      ],
+      "completion": "elapsed=0, alpha=0, ReadyForUse true",
+      "timeAndStepBoundary": "Alpha progress uses Time.deltaTime. Position mutation is a fixed authored local-unit increment on each coroutine resume; +8/+1 are not three total phase endpoint displacements.",
+      "direction": "Unity local +Y on every active resume. A top-left portable renderer inverts the Y axis, therefore the display moves upward; it must never move down, sideways, or by a four-key total +10 interpolation.",
+      "cadenceBoundary": "Original displacement count depends on coroutine resume count. Portable logic preserves one increment per committed outer update; cross-platform pixel displacement equality is not claimed."
+    },
+    "prohibitions": [
+      "Do not reinterpret y+=8,y+=1,y+=1 as total phase endpoint movement.",
+      "Do not add screenshot-derived pixel offsets or viewport-specific corrections.",
+      "Do not destroy/rebuild the four roots while their pool identity is retained."
+    ]
+  },
+  "rank": {
+    "hierarchy": {
+      "scoreRoot": [
+        -411.0,
+        309.0,
+        0.0
+      ],
+      "progress": [
+        25.0,
+        -45.0,
+        0.0
+      ],
+      "foregroundLocalPosition": [
+        41.0,
+        -1.0,
+        0.0
+      ],
+      "foregroundWidth": 421,
+      "rankRootParent": "Progress",
+      "rankRootLocalY": -2.0,
+      "separatorLocalY": -8.0,
+      "flattenedPortableY": {
+        "labelTopLeft": 2.0,
+        "separatorTopLeft": 10.0
+      }
+    },
+    "formula": "Float32(foreground.localPosition.x + Float32(Float32(thresholdScore) * Float32(foreground.width) / Float32(scoreGaugeMaximum)))",
+    "formulaInputs": {
+      "foregroundLocalX": 41.0,
+      "foregroundWidth": 421.0
+    },
+    "placeholderPolicy": "Serialized C/B/A/S/SS x=50/100/150/200/420 are overwritten during SetupRankObject and are not runtime positions.",
+    "coordinatePolicy": "The calculated x is already in Progress local space. A portable renderer applies it once to each Rank root (or an exactly flattened label/separator), then only inherits the common Progress/Score/StarUI parent transform; it must not add foreground x again.",
+    "oracles": [
+      {
+        "name": "master-786",
+        "maximum": 959999,
+        "thresholds": [
+          36000,
+          216000,
+          432000,
+          648000,
+          864000
+        ],
+        "localX": [
+          56.78751754760742,
+          135.72509765625,
+          230.4501953125,
+          325.17529296875,
+          419.900390625
+        ]
+      },
+      {
+        "name": "product-normalized",
+        "maximum": 10001000,
+        "thresholds": [
+          375000,
+          2250000,
+          4500000,
+          6750000,
+          9000000
+        ],
+        "localX": [
+          56.78592300415039,
+          135.7155303955078,
+          230.43106079101562,
+          325.1465759277344,
+          419.86212158203125
+        ]
+      }
+    ],
+    "order": "C < B < A < S < SS for every valid strictly ordered threshold profile",
+    "pixelOffsetAllowed": false
+  },
+  "closure": {
+    "unknown": [],
+    "blocking": [],
+    "fixedDeviceFramebufferExact": false
+  }
+}

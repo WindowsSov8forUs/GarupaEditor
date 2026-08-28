@@ -44,12 +44,11 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     maxValueDigits: 6,
     initialLocalY: -50,
     phaseSeconds: Math.fround(0.14000000059604645),
-    // Reverse 1bff69eb/full-visible AddScoreObject.playCoroutine: source-keyed three-phase clip.
-    animationKeyframes: Object.freeze([
-      Object.freeze({ time: Math.fround(0), localY: Math.fround(-50), alpha: Math.fround(0.2) }),
-      Object.freeze({ time: Math.fround(0.14000000059604645), localY: Math.fround(-42), alpha: Math.fround(1) }),
-      Object.freeze({ time: Math.fround(0.2800000011920929), localY: Math.fround(-41), alpha: Math.fround(1) }),
-      Object.freeze({ time: Math.fround(0.42000001668930054), localY: Math.fround(-40), alpha: Math.fround(0) }),
+    // Reverse 015fb18b: alpha is elapsed-time based, while local Y mutates once per coroutine resume.
+    animationPhases: Object.freeze([
+      Object.freeze({ alphaFrom: Math.fround(0.2), alphaTo: Math.fround(1), localYPerOuterUpdate: Math.fround(8) }),
+      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(1), localYPerOuterUpdate: Math.fround(1) }),
+      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(0), localYPerOuterUpdate: Math.fround(1) }),
     ]),
     digitInnerWidths: Object.freeze({
       icon_number_plus: 47,
