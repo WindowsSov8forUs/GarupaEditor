@@ -78,18 +78,19 @@ function parseClip(
   const bindings: PauseCountdownClipBinding[] = [];
   const channels: string[] = [];
   for (const raw of value.bindings) {
-    if (!record(raw) || !Number.isSafeInteger(raw.pathHash) || typeof raw.path !== "string" ||
-      !Number.isSafeInteger(raw.attributeHash) || typeof raw.attribute !== "string" ||
-      !Number.isSafeInteger(raw.typeId) || !Array.isArray(raw.channels) || raw.channels.length === 0 ||
-      raw.channels.some((channel) => typeof channel !== "string" || channel.length === 0)) return null;
-    channels.push(...raw.channels);
+    if (!record(raw) || typeof raw.pathHash !== "number" || !Number.isSafeInteger(raw.pathHash) || typeof raw.path !== "string" ||
+      typeof raw.attributeHash !== "number" || !Number.isSafeInteger(raw.attributeHash) || typeof raw.attribute !== "string" ||
+      typeof raw.typeId !== "number" || !Number.isSafeInteger(raw.typeId) || !Array.isArray(raw.channels) || raw.channels.length === 0 ||
+      raw.channels.some((channel: unknown) => typeof channel !== "string" || channel.length === 0)) return null;
+    const bindingChannels = raw.channels.map((channel) => channel as string);
+    channels.push(...bindingChannels);
     bindings.push(Object.freeze({
       pathHash: raw.pathHash,
       path: raw.path,
       attributeHash: raw.attributeHash,
       attribute: raw.attribute,
       typeId: raw.typeId,
-      channels: Object.freeze([...raw.channels]),
+      channels: Object.freeze(bindingChannels),
     }));
   }
   if (channels.length !== expected.curves || new Set(channels).size !== channels.length) return null;
@@ -105,7 +106,7 @@ function parseClip(
     const indices = new Set<number>();
     const keys: PauseCountdownClipKey[] = [];
     for (const rawKey of rawFrame.keys) {
-      if (!record(rawKey) || !Number.isInteger(rawKey.index) || rawKey.index < 0 ||
+      if (!record(rawKey) || typeof rawKey.index !== "number" || !Number.isInteger(rawKey.index) || rawKey.index < 0 ||
         rawKey.index >= expected.curves || indices.has(rawKey.index) ||
         !vector(rawKey.coefficients, 4) || rawKey.coefficients.some((entry) => !finiteF32(entry))) return null;
       indices.add(rawKey.index);
@@ -171,7 +172,7 @@ export function samplePauseCountdownClip(
   return sampled;
 }
 
-function record(value: unknown): value is Record<string, any> {
+function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function vector(value: unknown, length: number): value is number[] {
