@@ -45,7 +45,10 @@ async function testCommonRenderPackages(): Promise<void> {
   add("atlas/bms/ui/uicommon", [["ui-common.png", "atlas/bms/ui/uicommon/ui-common.png"]]);
   add("fonts/sgm", [["rank-label-font.ttf", "fonts/sgm/rank-label-font.ttf"]]);
   add("prefabs/bms/information", [["startup-line-star.png", "prefabs/bms/information/startup-line-star.png"]]);
-  add("prefabs/bms/pause", [1, 2, 3].map((index) => [`countdown-${index}.png`, `prefabs/bms/pause/countdown-${index}.png`] as const));
+  add("prefabs/bms/pause", [
+    ...[1, 2, 3].map((index) => [`countdown-${index}.png`, `prefabs/bms/pause/countdown-${index}.png`] as const),
+    ["countdown-animation-profile.json", "prefabs/bms/pause/countdown-animation-profile.json"] as const,
+  ]);
   add("prefabs/bms/rhythmgamegauge/score", [
     ["high-rank-kira.png", "prefabs/bms/rhythmgamegauge/score/high-rank-kira.png"],
     ["high-rank-long-star.png", "prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png"],
@@ -62,6 +65,8 @@ async function testCommonRenderPackages(): Promise<void> {
   assert.equal(prepared.value.profile.ordinaryVisibleProfile?.noteAnimations.clips.length, 4);
   assert.equal(prepared.value.profile.scoreGaugeSsAnimation?.curveCount, 56);
   assert.equal(prepared.value.profile.gameClearProfile?.allPerfect.clip.curve_count, 129);
+  assert.equal(prepared.value.profile.pauseCountdownAnimation?.continueClip.curveCount, 25);
+  assert.equal(prepared.value.profile.pauseCountdownAnimation?.resumeOneSecondClip.curveCount, 10);
   const asset = (id: string) => prepared.value.profile.assets.find((row) => row.logicalAssetId === id)!;
   const atlas = (id: string, key: string) => asset(id).atlasRows.find((row) => row.exactKey === key)!;
   assert.deepEqual(
