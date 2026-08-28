@@ -1099,6 +1099,18 @@ async function verifyActualPixiGarupaProduct(
     "Lane actual Pixi consumes the serialized five right-side flipX owners rather than name-only texture matching");
   assert(allLaneSprites.every((row) => row.spriteMaskInteraction === "visible-outside" && row.spriteMaskBounds !== null),
     "Lane actual Pixi consumes SpriteMaskInteraction.VisibleOutsideMask for every slot");
+  const laneMaskOwners = routedRenderer.stage.children.filter((node) =>
+    node.label === "tap-lane-effect-sprite-mask:MaskImage");
+  const laneMaskConsumers = routedRenderer.stage.children.filter((node) =>
+    node.label.startsWith("render:tap-lane-effect:"));
+  equal(laneMaskOwners.length, 1, "Lane actual Pixi creates exactly one serialized MaskImage scene owner");
+  equal(laneMaskConsumers.length, 13, "all thirteen Lane SpriteRenderers remain direct shared-mask consumers");
+  assert(laneMaskConsumers.every((node) => node.mask === laneMaskOwners[0]),
+    "all thirteen Lane SpriteRenderers reference the same MaskImage identity");
+  equal(laneMaskOwners[0]!.includeInBuild, false,
+    "shared MaskImage is excluded from the ordinary color build");
+  equal(laneMaskOwners[0]!.measurable, false,
+    "shared MaskImage does not inflate ordinary scene bounds");
   const laneOracle = fiveVisualCorrection.tap_lane_effect.bounds_oracles.find((row: any) =>
     row.case_id === "20:9-full" && row.texture === "NoteLaneEffect_4");
   assert(laneOracle !== undefined && routedLane!.spriteWorldBounds !== null, "lane bounds oracle and actual bounds exist");
@@ -1116,7 +1128,9 @@ async function verifyActualPixiGarupaProduct(
     "product lane effect state is owned by the same fixed owner");
   requireOk(routedEngine.dispose(), "product lane engine dispose");
   equal(routedRenderer.snapshot().objectCount, 0, "product lane effect cleanup");
-  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/independent-slide/product-lane-effect/cleanup");
+  equal(routedRenderer.stage.children.length, 0,
+    "shared MaskImage is uniquely released with its renderer generation after all Lane consumers");
+  console.log("actual Pixi Garupa product passed: selected-field/ordinary-scale/scaled-sync/judged-hide/independent-slide/product-lane-effect/shared-mask/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

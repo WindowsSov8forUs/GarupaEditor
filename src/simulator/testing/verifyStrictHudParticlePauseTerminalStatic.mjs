@@ -34,7 +34,16 @@ for (const symbol of [
   "CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER", "componentOwners", "pauseCountdownAnimation",
   "samplePauseCountdownClip", "Contents/Count1Fadeout", "wordWrapWidth: width",
   "snapshot.hudAlpha", "setMask({ mask, inverse: true })", "if (!row.path.includes(\"/\")) node.zIndex = 20",
+  'private tapLaneEffectOutsideMask: Graphics | null = null',
+  'private readonly tapLaneEffectMaskConsumers = new Set<Container>()',
+  'label: "tap-lane-effect-sprite-mask:MaskImage"',
+  'node.mask !== this.tapLaneEffectOutsideMask',
+  'mask.includeInBuild = false',
 ]) if (!pixi.includes(symbol)) throw new Error(`strict Pixi consumer missing ${symbol}`);
+if (pixi.includes('label: `tap-lane-effect-sprite-mask:${object.node.label}`') ||
+    pixi.includes('object.node.setMask({ mask: null, inverse: false })')) {
+  throw new Error("Lane Pixi consumer duplicates MaskImage per slot or clears a serialized mask through the ineffective setMask-null route");
+}
 const particle = read("backends/pixi/pixiParticleRendererBackend.ts");
 for (const symbol of [
   "createPixiParticleLinearColorMesh", "particleLinearColor", "PixiParticleLinearColorMesh",

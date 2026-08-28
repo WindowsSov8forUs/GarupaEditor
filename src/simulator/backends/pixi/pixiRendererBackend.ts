@@ -235,6 +235,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
   private tapLaneEffectOutsideMask: Graphics | null = null;
+  private tapLaneEffectOutsideMaskBounds: readonly [number, number, number, number] | null = null;
   private readonly tapLaneEffectMaskConsumers = new Set<Container>();
   private profile: RenderResourceProfile | null = null;
   private surfaceLayout: OriginalSurfaceLayout | null = null;
@@ -872,10 +873,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       spriteMaskInteraction: value.laneSpriteMaskContent === null ? null : "visible-outside" as const,
       spriteMaskBounds: value.laneSpriteMaskContent === null
         ? null
-        : (() => {
-            const bounds = value.laneSpriteMaskContent.getBounds();
-            return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
-          })(),
+        : value.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+          this.tapLaneEffectOutsideMaskBounds === null
+          ? null
+          : this.tapLaneEffectOutsideMaskBounds,
       spriteWorldBounds: value.spriteContent === null || value.role !== "tap-lane-effect"
         ? null
         : (() => {
@@ -1800,6 +1801,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       mask.zIndex = object.node.zIndex;
       this.stage.addChild(mask);
       this.tapLaneEffectOutsideMask = mask;
+      this.tapLaneEffectOutsideMaskBounds = Object.freeze([left, top, width, height] as const);
     }
     object.node.setMask({ mask, inverse: true });
     object.laneSpriteMaskContent = mask;
@@ -1834,6 +1836,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     for (const consumer of this.tapLaneEffectMaskConsumers) consumer.mask = null;
     this.tapLaneEffectMaskConsumers.clear();
     this.tapLaneEffectOutsideMask = null;
+    this.tapLaneEffectOutsideMaskBounds = null;
     if (mask !== null && !mask.destroyed) {
       mask.removeFromParent();
       mask.destroy();

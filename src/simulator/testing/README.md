@@ -46,7 +46,7 @@ npm.cmd run simulator:test:full-visible-lifecycle-oracle
 npm.cmd run simulator:test:strict-visible-lifecycle
 ```
 
-该门消费Reverse `dbd009e7`的214,523-byte严格合同，静态锁定Score SS 11节点及Flash→BigStar→kira同深度绘制序、Auto Awake owner、Combo/Judge独立消失、Linear Float32粒子颜色、Lane右侧flipX/VisibleOutsideMask、Pause UILabel box、25/10-curve resume profile及base+FC/AP组合。动态部分由actual Pixi、ordinary 3-fresh×27、OLS和selected-Skin fresh门组成；粒子使用共享GlProgram+per-Mesh Float32 uniform，不允许逐样本Filter离屏pass或RGB8 tint。该门不升级native random、GPU framebuffer或physical speaker exact。
+该门消费Reverse `dbd009e7`的214,523-byte严格合同，静态锁定Score SS 11节点及Flash→BigStar→kira同深度绘制序、Auto Awake owner、Combo/Judge独立消失、Linear Float32粒子颜色、Lane右侧flipX/VisibleOutsideMask、Pause UILabel box、25/10-curve resume profile及base+FC/AP组合。动态部分由actual Pixi、ordinary 3-fresh×27、OLS和selected-Skin fresh门组成；Lane专项另断言一个scene-owned MaskImage/13个同identity引用、mask不进入ordinary color build、四角Backdrop sentinel、至少80%背景保留及白色像素上限。粒子使用共享GlProgram+per-Mesh Float32 uniform，不允许逐样本Filter离屏pass或RGB8 tint。该门不升级native random、GPU framebuffer或physical speaker exact。
 
 ## HUD re-audit regression leaf
 
@@ -83,7 +83,7 @@ npm.cmd run simulator:test:original-live-settings
 npm.cmd run simulator:test:original-live-settings-webview2
 ```
 
-第一项覆盖Schema 13、A/B、Pause/Retry/MoveTime、SyncLine/NoteColor、13-slot TapLaneEffect及MvDarkness。第二项验证ordinary四张Lane Sprite on→white-RGB/alpha-only half-fade→disabled，并显式断言中点`tint=FFFFFF, alpha=0.5`，digest为`c91130243fba9e9e6cce385e90403ddb1e4a9ae870219fe59c791df8e4a08d60`；13槽同时断言slots8..12 `flipX`、VisibleOutsideMask及非零active raster，位置逐项消费Reverse `1bff69eb`的Button/half-Button Transform而不以相邻full midpoint重算。另由Garupa product Browser门关闭曾被`ButtonType.None`旁路的整数span→主13槽路由。判定粒子actual Pixi逐17 root比较GamePlayButton anchor+完整system-parent position，并按`sortingOrder→system identity→creationSequence`排序；禁止再以particle `position.z`冒充未取证renderer bounds center。
+第一项覆盖Schema 13、A/B、Pause/Retry/MoveTime、SyncLine/NoteColor、13-slot TapLaneEffect及MvDarkness。第二项验证ordinary四张Lane Sprite on→white-RGB/alpha-only half-fade→disabled，并显式断言中点`tint=FFFFFF, alpha=0.5`，digest为`b5abc6ad2ed3e3421805b90361113a15123ba2a43c8980a15969dc710e863a58`；13槽同时断言slots8..12 `flipX`、共享单一VisibleOutsideMask、非零active raster及背景无遮挡，位置逐项消费Reverse `1bff69eb`的Button/half-Button Transform而不以相邻full midpoint重算。另由Garupa product Browser门关闭曾被`ButtonType.None`旁路的整数span→主13槽路由。判定粒子actual Pixi逐17 root比较GamePlayButton anchor+完整system-parent position，并按`sortingOrder→system identity→creationSequence`排序；禁止再以particle `position.z`冒充未取证renderer bounds center。
 
 ## Original Skin leaves
 

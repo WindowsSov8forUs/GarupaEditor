@@ -66,6 +66,22 @@ async function main(): Promise<void> {
   app.render();
   const activeRaster = await capture(app);
   const activeRows = renderer.sceneSnapshot().filter((row) => row.role === "tap-lane-effect");
+  const maskOwners = renderer.stage.children.filter((node) => node.label === "tap-lane-effect-sprite-mask:MaskImage");
+  const laneNodes = renderer.stage.children.filter((node) => node.label.startsWith("render:tap-lane-effect:"));
+  const sharedMask = maskOwners[0];
+  if (maskOwners.length !== 1 || laneNodes.length !== 13 || sharedMask === undefined ||
+      laneNodes.some((node) => node.mask !== sharedMask) ||
+      sharedMask.includeInBuild !== false || sharedMask.measurable !== false) {
+    throw new Error(`Lane SpriteMask must be one non-color-build scene owner shared by thirteen consumers: ${JSON.stringify({
+      maskOwners: maskOwners.length,
+      laneNodes: laneNodes.length,
+      sharedConsumers: sharedMask === undefined ? 0 : laneNodes.filter((node) => node.mask === sharedMask).length,
+      includeInBuild: sharedMask?.includeInBuild,
+      measurable: sharedMask?.measurable,
+    })}`);
+  }
+  const sharedMaskConsumerCount = laneNodes.filter((node) => node.mask === sharedMask).length;
+  const sharedMaskIncludedInOrdinaryDraw = sharedMask.includeInBuild;
   const center = activeRows.find((row) => row.renderObjectId === "render:tap-lane-effect:6");
   if (center === undefined || !center.visible || !center.spriteBindingKey?.endsWith("NoteLaneEffect_4")) {
     throw new Error("center recovered lane Sprite was not visible");
@@ -75,7 +91,10 @@ async function main(): Promise<void> {
   const flips = ordered.map((row) => (row.spriteLocalScale?.[0] ?? 1) < 0);
   if (JSON.stringify(flips) !== JSON.stringify([false, false, false, false, false, false, false, false, true, true, true, true, true]) ||
       ordered.some((row) => row.spriteMaskInteraction !== "visible-outside" || row.spriteMaskBounds === null) ||
-      activeRaster.nonBackgroundPixels <= 0) {
+      activeRaster.nonBackgroundPixels <= 0 ||
+      activeRaster.backgroundPixels < WIDTH * HEIGHT * 0.8 ||
+      activeRaster.opaqueWhitePixels > WIDTH * HEIGHT * 0.05 ||
+      activeRaster.sentinels.some((sample) => sample.rgba !== "081020ff")) {
     throw new Error(`Lane SpriteRenderer flip/mask/raster mismatch: ${JSON.stringify({ flips, ordered, activeRaster })}`);
   }
   const off = requireOk(owner.preflightInputEvents([{ buttonType: 3, kind: "animated-off" }]));
@@ -118,6 +137,9 @@ async function main(): Promise<void> {
       flipXSequence: flips,
       maskInteraction: center.spriteMaskInteraction,
       maskBounds: center.spriteMaskBounds,
+      maskOwnerCount: maskOwners.length,
+      maskConsumerCount: sharedMaskConsumerCount,
+      maskIncludedInOrdinaryDraw: sharedMaskIncludedInOrdinaryDraw,
     },
     raster: { active: activeRaster, halfFade: halfFadeRaster, disabled: disabledRaster },
     cleanup: { rendererOwners: renderer.snapshot().objectCount, stageChildren: renderer.stage.children.length },
@@ -126,16 +148,40 @@ async function main(): Promise<void> {
   window.ipc.postMessage(JSON.stringify(result));
 }
 
-async function capture(app: Application): Promise<{ rgbaSha256: string; nonBackgroundPixels: number }> {
+async function capture(app: Application): Promise<{
+  rgbaSha256: string;
+  nonBackgroundPixels: number;
+  backgroundPixels: number;
+  opaqueWhitePixels: number;
+  sentinels: readonly { readonly x: number; readonly y: number; readonly rgba: string }[];
+}> {
   const bytes = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonBackgroundPixels = 0;
+  let backgroundPixels = 0;
+  let opaqueWhitePixels = 0;
   for (let offset = 0; offset < bytes.length; offset += 4) {
-    if (bytes[offset] !== 8 || bytes[offset + 1] !== 16 || bytes[offset + 2] !== 32 || bytes[offset + 3] !== 255) nonBackgroundPixels += 1;
+    const background = bytes[offset] === 8 && bytes[offset + 1] === 16 &&
+      bytes[offset + 2] === 32 && bytes[offset + 3] === 255;
+    if (background) backgroundPixels += 1;
+    else nonBackgroundPixels += 1;
+    if (bytes[offset]! >= 250 && bytes[offset + 1]! >= 250 &&
+      bytes[offset + 2]! >= 250 && bytes[offset + 3] === 255) opaqueWhitePixels += 1;
   }
+  const sentinels = Object.freeze([[10, 10], [10, HEIGHT - 11], [WIDTH - 11, 10], [WIDTH - 11, HEIGHT - 11]]
+    .map(([x, y]) => {
+      const offset = (y! * WIDTH + x!) * 4;
+      return Object.freeze({
+        x: x!, y: y!,
+        rgba: [...bytes.slice(offset, offset + 4)].map((value) => value.toString(16).padStart(2, "0")).join(""),
+      });
+    }));
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Object.freeze({
     rgbaSha256: [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, "0")).join(""),
     nonBackgroundPixels,
+    backgroundPixels,
+    opaqueWhitePixels,
+    sentinels,
   });
 }
 function requireOk(result: any): any {

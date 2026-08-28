@@ -16,7 +16,7 @@ const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
 const ordinaryRoot = join(fixtureRoot, "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering", "artifacts", "investigations", "ordinary-visible-rendering-portable-10-1-4");
-const EXPECTED_DIGEST = "c91130243fba9e9e6cce385e90403ddb1e4a9ae870219fe59c791df8e4a08d60";
+const EXPECTED_DIGEST = "b5abc6ad2ed3e3421805b90361113a15123ba2a43c8980a15969dc710e863a58";
 const sources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -97,7 +97,12 @@ function verify(value) {
   if (value.runtime.rendererName !== "webgl" || value.owner.initializedSlots !== 13 || value.owner.activeCount !== 1 ||
     value.owner.disabledCount !== 0 || value.owner.halfFadeTint !== 0xFFFFFF || value.owner.halfFadeAlpha !== 0.5 ||
     value.owner.resourceCount !== 11 || !value.owner.activeBinding.endsWith("NoteLaneEffect_4") ||
+    value.owner.maskOwnerCount !== 1 || value.owner.maskConsumerCount !== 13 ||
+    value.owner.maskIncludedInOrdinaryDraw !== false ||
     value.raster.active.nonBackgroundPixels <= value.raster.disabled.nonBackgroundPixels ||
+    value.raster.active.backgroundPixels < 1600 * 720 * 0.8 ||
+    value.raster.active.opaqueWhitePixels > 1600 * 720 * 0.05 ||
+    value.raster.active.sentinels.some((row) => row.rgba !== "081020ff") ||
     value.cleanup.rendererOwners !== 0 || value.cleanup.stageChildren !== 0) throw new Error(`invalid original settings browser observation: ${JSON.stringify(value)}`);
 }
 function stable(value) {
