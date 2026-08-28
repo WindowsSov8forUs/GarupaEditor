@@ -71,7 +71,15 @@ async function main(): Promise<void> {
     "src/simulator/testing/fixtures/reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4",
   );
   const bbkkOracle = JSON.parse(readFileSync(join(bbkkRoot, "bbkk_slide_full_timeline_oracle.json"), "utf8"));
+  const slideLogicOracle = JSON.parse(readFileSync(join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/slide-connection-logic/artifacts/investigations/simulator-slide-connection-logic-reaudit-10-1-4/slide_connection_logic_reaudit.json",
+  ), "utf8"));
   const bbkkChart = JSON.parse(readFileSync(join(bbkkRoot, "product-inputs/B.B.K.K.B.K.K..json"), "utf8"));
+  assert.equal(slideLogicOracle.original.pixelOffsetAllowed, false);
+  const variableWidthMiddle = slideLogicOracle.variableWidthOracle.sections[5];
+  assert.notEqual(variableWidthMiddle.halfWidth, variableWidthMiddle.rejectedFactorInterpolationHalfWidth,
+    "independent oracle distinguishes boundary-first edges from factor interpolation");
   assert.equal(bbkkOracle.authority.rejectedProductionFactor,
     "screenWidthAdjustRate must not be multiplied a second time after localScale already consumed it");
   const baseProfile = JSON.parse(readFileSync(
@@ -120,6 +128,10 @@ async function main(): Promise<void> {
     ] },
     { type: "Slide", connections: [
       { type: "Hidden", beat: 4, lane: 1, width: 1 },
+    ] },
+    { type: "Slide", connections: [
+      { type: "Single", beat: 1, lane: 0, width: 1 },
+      { type: "Single", beat: 1.25, lane: 2, width: 4 },
     ] },
   ]));
   const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
@@ -242,6 +254,38 @@ async function main(): Promise<void> {
         `compatible Slide width section ${segment}:${section} preserves Reverse widthRate: ${actualWidthPixels} vs ${expectedWidthPixels}`);
     }
   }
+  const variableWidthChain = product.slideChains.find((chain) => chain.chartItemIndex === 7)!;
+  const variableWidthNodes = variableWidthChain.connectionIdentities.map((identity) => product.nodeByIdentity.get(identity)!);
+  const variableWidthSamples = variableWidthNodes.map((node) => {
+    const displacement = requireOk(axis.displacementAtPosition(node.timingGroup, node.absolutePosition, 0));
+    const curve = Math.pow(1.1, -50 * displacement / 500);
+    const position = requireOk(layout.garupaProductScene.projectLaneAtCurve(
+      node.spanStart + (node.width - 1) / 2, curve,
+    ));
+    const scale = requireOk(layout.garupaProductScene.projectNoteScaleAtCurve(curve, node.width)).value;
+    return { node, curve, position, halfWidth: Math.fround(Math.fround(scale * node.width) * layout.garupaProductScene.screenToSafeAreaRatio.value) };
+  });
+  const variableWidthMesh = firstRows.find((row) =>
+    row.renderObjectId === `render:garupa:line:${variableWidthChain.identity}:0`)!;
+  assert.ok(variableWidthMesh.geometryPositions, "variable-width Slide publishes its complete connection");
+  for (let section = 0; section <= 10; section += 1) {
+    const ratio = Math.fround(section / 10);
+    const center = Math.fround(variableWidthSamples[0]!.position.x.value + Math.fround(
+      Math.fround(variableWidthSamples[1]!.position.x.value - variableWidthSamples[0]!.position.x.value) * ratio,
+    ));
+    const halfWidth = Math.fround(
+      Math.fround(variableWidthSamples[0]!.halfWidth * Math.fround(1 - ratio)) +
+      Math.fround(variableWidthSamples[1]!.halfWidth * ratio),
+    );
+    const offset = section * 4;
+    const expected = [
+      Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 + Math.fround(center - halfWidth) * layout.surfaceLayout.camera.pixelsPerWorldUnit),
+      Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 + Math.fround(center + halfWidth) * layout.surfaceLayout.camera.pixelsPerWorldUnit),
+    ];
+    const actual = [variableWidthMesh.geometryPositions![offset]!, variableWidthMesh.geometryPositions![offset + 2]!];
+    assert.ok(actual.every((value, side) => Math.abs(value - expected[side]!) < 0.001),
+      `variable-width section ${section} interpolates complete endpoint boundaries: ${actual} vs ${expected}`);
+  }
   assert.ok(firstRows.filter((row) => row.role === "note-root" &&
     row.renderObjectId.startsWith("render:garupa:node:")).every((row) =>
       row.ordering[0] === 3 && row.ordering[1] === 70));
@@ -334,6 +378,9 @@ async function main(): Promise<void> {
       layout.surfaceLayout.camera.pixelsPerWorldUnit;
   const selectedByTime = new Map<number, any>((bbkkOracle.timeline.selectedUpperHalfCases as readonly any[])
     .map((sample) => [sample.timeMs, sample]));
+  const completeSegmentsByTime = new Map<number, readonly any[]>(
+    slideLogicOracle.productInput.visibleTimeline.map((frame: any) => [frame.timeMs, frame.segments]),
+  );
   const lastSlideBeat = Math.max(...bbkkChart
     .filter((item: any) => item.type === "Slide")
     .flatMap((item: any) => item.connections.map((connection: any) => connection.beat)));
@@ -349,6 +396,13 @@ async function main(): Promise<void> {
     if (transaction !== null) requireOk(transaction.commit());
     const rows = renderer.sceneSnapshot().filter((candidate) =>
       candidate.visible && candidate.renderObjectId.startsWith("render:garupa:line:") && candidate.geometryPositions !== null);
+    const expectedSegmentIds = (completeSegmentsByTime.get(timeMs) ?? []).map((segment: any) => {
+      const [slideIndex, segmentIndex] = segment.identity.split(":").map(Number);
+      const chain = bbkkProduct.slideChains.find((candidate) => candidate.chartItemIndex === slideIndex)!;
+      return `render:garupa:line:${chain.identity}:${segmentIndex}`;
+    }).sort();
+    assert.deepEqual(rows.map((row) => row.renderObjectId).sort(), expectedSegmentIds,
+      `B.B.K ${timeMs}ms publishes the exact independent adjacent-segment identity set`);
     if (rows.length > 0) {
       visibleFrames += 1;
       visibleTicks.push(timeMs);

@@ -632,6 +632,20 @@ function slideMesh(
   const visibleCurveEnd = from.curve <= to.curve
     ? Math.min(1, to.curve)
     : Math.max(0.002, to.curve);
+  const rawFromHalfWidth = rawProjectionAvailable
+    ? calculateGarupaProductSlideHalfWidth(
+        from.uniformScale!.value,
+        from.node.width,
+        scene.screenToSafeAreaRatio.value,
+      )
+    : null;
+  const rawToHalfWidth = rawProjectionAvailable
+    ? calculateGarupaProductSlideHalfWidth(
+        to.uniformScale!.value,
+        to.node.width,
+        scene.screenToSafeAreaRatio.value,
+      )
+    : null;
   for (let section = 0; section <= 10; section += 1) {
     const sectionRatio = Math.fround(section / 10);
     const ratio = Math.fround(
@@ -641,7 +655,7 @@ function slideMesh(
     );
     let x: number;
     let y: number;
-    let uniformScale: number;
+    let halfWidth: number;
     if (rawProjectionAvailable) {
       x = Math.fround(from.position!.x.value + Math.fround(
         Math.fround(to.position!.x.value - from.position!.x.value) * ratio,
@@ -649,9 +663,7 @@ function slideMesh(
       y = Math.fround(from.position!.y.value + Math.fround(
         Math.fround(to.position!.y.value - from.position!.y.value) * ratio,
       ));
-      uniformScale = Math.fround(from.uniformScale!.value + Math.fround(
-        Math.fround(to.uniformScale!.value - from.uniformScale!.value) * ratio,
-      ));
+      halfWidth = interpolateSlideBoundary(rawFromHalfWidth!, rawToHalfWidth!, ratio);
     } else {
       // A negative/zero SV can put one endpoint far beyond Float32 world range while
       // the segment still crosses the complete visible 0.002..1 curve. Re-project
@@ -673,18 +685,18 @@ function slideMesh(
       if (toScale.status !== "ok") return toScale;
       x = projected.value.x.value;
       y = projected.value.y.value;
-      uniformScale = Math.fround(fromScale.value.value + Math.fround(
-        Math.fround(toScale.value.value - fromScale.value.value) * stableRatio,
-      ));
+      const fromBoundary = calculateGarupaProductSlideHalfWidth(
+        fromScale.value.value,
+        from.node.width,
+        scene.screenToSafeAreaRatio.value,
+      );
+      const toBoundary = calculateGarupaProductSlideHalfWidth(
+        toScale.value.value,
+        to.node.width,
+        scene.screenToSafeAreaRatio.value,
+      );
+      halfWidth = interpolateSlideBoundary(fromBoundary, toBoundary, stableRatio);
     }
-    const authoredWidth = Math.fround(
-      from.node.width + Math.fround(Math.fround(to.node.width - from.node.width) * ratio),
-    );
-    const halfWidth = calculateGarupaProductSlideHalfWidth(
-      uniformScale,
-      authoredWidth,
-      scene.screenToSafeAreaRatio.value,
-    );
     vertices.push(
       vector3(Math.fround(x - halfWidth), y, 0),
       vector3(Math.fround(x + halfWidth), y, 0),
@@ -708,6 +720,12 @@ function slideMesh(
     colors: Object.freeze(colors),
     materialRole: "curve-note",
   });
+}
+
+function interpolateSlideBoundary(first: number, second: number, ratio: number): number {
+  return Math.fround(
+    Math.fround(first * Math.fround(1 - ratio)) + Math.fround(second * ratio),
+  );
 }
 
 function stableSegmentRatio(first: number, second: number, target: number): number {
@@ -764,22 +782,19 @@ function requireUniformScale(sample: ProductNodeSample): RenderFloat32 {
   return sample.uniformScale;
 }
 
-const PRODUCT_CURVE_BOUNDARY_EPSILON = 1e-9;
 function visibleSegmentInterval(first: number, second: number): readonly [number, number] | null {
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
   const minimum = Math.min(first, second);
   const maximum = Math.max(first, second);
-  if (maximum < 0.002 - PRODUCT_CURVE_BOUNDARY_EPSILON ||
-      minimum > 1 + PRODUCT_CURVE_BOUNDARY_EPSILON) return null;
-  if (first === second) return first >= 0.002 - PRODUCT_CURVE_BOUNDARY_EPSILON &&
-      first <= 1 + PRODUCT_CURVE_BOUNDARY_EPSILON
+  if (maximum < 0.002 || minimum > 1) return null;
+  if (first === second) return first >= 0.002 && first <= 1
     ? Object.freeze([0, 1] as const)
     : null;
   const lower = (0.002 - first) / (second - first);
   const upper = (1 - first) / (second - first);
   const from = Math.max(0, Math.min(lower, upper));
   const to = Math.min(1, Math.max(lower, upper));
-  return to + PRODUCT_CURVE_BOUNDARY_EPSILON >= from
+  return to >= from
     ? Object.freeze([Math.min(1, from), Math.max(0, to)] as const)
     : null;
 }
