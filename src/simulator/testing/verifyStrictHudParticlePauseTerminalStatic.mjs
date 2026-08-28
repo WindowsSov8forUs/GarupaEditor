@@ -37,9 +37,14 @@ for (const symbol of [
 ]) if (!pixi.includes(symbol)) throw new Error(`strict Pixi consumer missing ${symbol}`);
 const particle = read("backends/pixi/pixiParticleRendererBackend.ts");
 for (const symbol of [
-  "createPixiParticleLinearColorFilter", "sprite.tint = 0xffffff", "linearColorBySprite",
+  "createPixiParticleLinearColorMesh", "particleLinearColor", "PixiParticleLinearColorMesh",
 ]) if (!particle.includes(symbol)) throw new Error(`particle Float32 consumer missing ${symbol}`);
-if (particle.includes("function rgbTint(")) throw new Error("particle renderer retains RGB8 sample tint quantization");
+if (particle.includes("function rgbTint(") || particle.includes("sprite.filters")) {
+  throw new Error("particle renderer retains RGB8 sample tint or per-sample filter render-pass path");
+}
+const particleMesh = read("backends/pixi/pixiParticleLinearColorMesh.ts");
+for (const symbol of ["uParticleColor", "Float32Array(values)", "particle-linear-float-color-mesh"])
+  if (!particleMesh.includes(symbol)) throw new Error(`particle Linear Mesh shader missing ${symbol}`);
 const pause = read("scene/pauseControlScene.ts");
 if (!pause.includes("hudAlpha: Math.fround(hudAlpha)")) throw new Error("Pause/Auto visual snapshot omits startup HUD alpha");
 const runtime = read("runtime/autonomousSimulatorRuntime.ts");

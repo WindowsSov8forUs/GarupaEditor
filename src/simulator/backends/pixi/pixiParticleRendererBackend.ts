@@ -2,9 +2,7 @@ import {
   Container,
   Matrix,
   Rectangle,
-  Sprite,
   Texture,
-  type DestroyOptions,
 } from "pixi.js";
 import type {
   ParticleBundleProfile,
@@ -28,7 +26,11 @@ import {
   particleRejected,
 } from "../particleValidation";
 import { prepareCurrentParticleResources } from "../resources/particleResourcePreparation";
-import { createPixiParticleLinearColorFilter } from "./pixiParticleLinearColorFilter";
+import {
+  createPixiParticleLinearColorMesh,
+  destroyPixiParticleLinearColorMesh,
+  type PixiParticleLinearColorMesh,
+} from "./pixiParticleLinearColorMesh";
 
 export interface ParticlePixiTextureDecoder {
   decodePng(
@@ -50,7 +52,7 @@ interface SystemRenderBinding {
 
 interface PendingParticleFrame {
   readonly capability: ParticleRendererFrameBatch;
-  readonly sprites: readonly Sprite[];
+  readonly sprites: readonly PixiParticleLinearColorMesh[];
   readonly samples: readonly ParticleRenderSample[];
 }
 
@@ -68,8 +70,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private readonly textures = new Map<string, Texture>();
   private readonly uniqueBaseTextures = new Set<Texture>();
   private readonly uvTextures = new Map<string, Texture>();
-  private readonly liveSprites: Sprite[] = [];
-  private readonly linearColorBySprite = new WeakMap<Sprite, readonly [number, number, number, number]>();
+  private readonly liveSprites: PixiParticleLinearColorMesh[] = [];
   private pending: PendingParticleFrame | null = null;
   private nextFrame: number | null = null;
   private lastSampleCount = 0;
@@ -226,7 +227,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     }
     const validation = this.validateSamples(request.samples);
     if (validation.status !== "accepted") return validation;
-    const sprites: Sprite[] = [];
+    const sprites: PixiParticleLinearColorMesh[] = [];
     try {
       for (const sample of request.samples) sprites.push(this.createSprite(sample));
     } catch {
@@ -364,7 +365,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       rotation: sprite.rotation,
       alpha: sprite.alpha,
       tint: Number(sprite.tint),
-      linearColor: this.linearColorBySprite.get(sprite) ?? Object.freeze([1, 1, 1, 1] as const),
+      linearColor: sprite.particleLinearColor,
       blendMode: String(sprite.blendMode),
       textureLabel: sprite.texture.label ?? "",
       sortingStage: sprite.parent === this.highSortingStage ? "high" : "low",
@@ -435,22 +436,29 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     return particleAccepted(undefined);
   }
 
-  private createSprite(sample: ParticleRenderSample): Sprite {
+  private createSprite(sample: ParticleRenderSample): PixiParticleLinearColorMesh {
     const binding = this.systems.get(sample.systemId)!;
     const texture = binding.tilesX === 1 && binding.tilesY === 1
       ? this.textures.get(binding.logicalTextureId)
       : this.uvTextures.get(`${binding.logicalTextureId}\u0000${sample.uvFrame}`);
     if (texture === undefined || texture.destroyed) throw new Error("missing particle texture");
-    const sprite = new Sprite({
+    const red = particleFloat32FromBits(sample.color.redBits)!;
+    const green = particleFloat32FromBits(sample.color.greenBits)!;
+    const blue = particleFloat32FromBits(sample.color.blueBits)!;
+    const alpha = particleFloat32FromBits(sample.color.alphaBits)!;
+    const sprite = createPixiParticleLinearColorMesh(
       texture,
-      label: sample.particleId,
-      roundPixels: false,
-    });
-    sprite.anchor.set(0.5);
+      sample.particleId,
+      red,
+      green,
+      blue,
+      alpha,
+    );
     const anchor = this.scene!.buttonAnchors.find(
       (candidate) => candidate.buttonType === sample.instance.buttonType,
     );
     if (anchor === undefined) {
+      destroyPixiParticleLinearColorMesh(sprite);
       throw new Error("particle button has no evidence-authored scene anchor");
     }
     const gameplayTransformScale = particleFloat32FromBits(this.scene!.gameplayTransformScaleBits)!;
@@ -471,20 +479,12 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       sprite.position.x,
       sprite.position.y,
     ));
-    const red = particleFloat32FromBits(sample.color.redBits)!;
-    const green = particleFloat32FromBits(sample.color.greenBits)!;
-    const blue = particleFloat32FromBits(sample.color.blueBits)!;
-    const alpha = particleFloat32FromBits(sample.color.alphaBits)!;
-    const linearColor = Object.freeze([red, green, blue, alpha] as const);
-    sprite.alpha = 1;
-    sprite.tint = 0xffffff;
-    if (typeof document !== "undefined") {
-      sprite.filters = [createPixiParticleLinearColorFilter(red, green, blue, alpha)];
-    }
-    this.linearColorBySprite.set(sprite, linearColor);
     sprite.blendMode = binding.blend;
     const systemOrdinal = this.systemSortOrdinals.get(sample.systemId);
-    if (systemOrdinal === undefined) throw new Error("particle system sort identity is missing");
+    if (systemOrdinal === undefined) {
+      destroyPixiParticleLinearColorMesh(sprite);
+      throw new Error("particle system sort identity is missing");
+    }
     // Reverse 1bff69eb/particle transform correction: order by renderer
     // sortingOrder, system identity and creation sequence. Particle position.z is
     // simulation state, not an invented renderer-bounds sort center.
@@ -527,8 +527,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     const failures: string[] = [];
     for (const sprite of this.liveSprites.splice(0)) {
       try {
-        sprite.removeFromParent();
-        if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+        destroyPixiParticleLinearColorMesh(sprite);
       } catch {
         failures.push(`live-sprite:${sprite.label}`);
       }
@@ -922,16 +921,13 @@ function addScaledBits(leftBits: string, rightBits: string, scale: number): numb
 }
 
 function destroySprites(
-  sprites: readonly Sprite[],
+  sprites: readonly PixiParticleLinearColorMesh[],
   ownerPrefix = "detached",
 ): readonly string[] {
   const failures: string[] = [];
   for (const sprite of sprites) {
     try {
-      sprite.removeFromParent();
-      for (const filter of sprite.filters ?? []) filter.destroy(true);
-      sprite.filters = null;
-      if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+      destroyPixiParticleLinearColorMesh(sprite);
     } catch {
       failures.push(`${ownerPrefix}-sprite:${sprite.label}`);
     }

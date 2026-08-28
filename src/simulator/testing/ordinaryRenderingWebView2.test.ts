@@ -5,7 +5,7 @@ import {
   REHEARSAL_AUTO_MODE,
   REHEARSAL_MANUAL_MODE,
 } from "./modeFixtures";
-import { Application, Sprite } from "pixi.js";
+import { Application, Mesh } from "pixi.js";
 import type {
   AudioBackendSnapshot,
   AudioCommand,
@@ -738,11 +738,12 @@ async function capture(
     }
   }
   if (label === "particle-peak") {
-    const sprites = [...session.particleRenderer.stage.children, ...session.particleRenderer.highSortingStage.children]
-      .filter((child): child is Sprite => child instanceof Sprite);
-    if (particleRows.length === 0 || sprites.length !== particleRows.length ||
-        sprites.some((sprite) => (sprite.filters?.length ?? 0) !== 1)) {
-      throw new Error(`particle peak did not consume one Float32 Linear color shader per sample: ${particleRows.length}/${sprites.length}`);
+    const meshes = [...session.particleRenderer.stage.children, ...session.particleRenderer.highSortingStage.children]
+      .filter((child): child is Mesh => child instanceof Mesh);
+    if (particleRows.length === 0 || meshes.length !== particleRows.length ||
+        meshes.some((mesh) => mesh.shader === null ||
+          !Array.isArray((mesh as unknown as { readonly particleLinearColor?: unknown }).particleLinearColor))) {
+      throw new Error(`particle peak did not consume one Float32 Linear color Mesh shader per sample: ${particleRows.length}/${meshes.length}`);
     }
   }
   const laneRows = renderRows.filter((row) => row.role === "tap-lane-effect")

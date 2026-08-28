@@ -116,7 +116,7 @@ function visit(
       node.zIndex,
     ] as const),
     mask: node.mask instanceof Container ? node.mask.label : null,
-    texture: node instanceof Sprite
+    texture: node instanceof Sprite || node instanceof Mesh
       ? Object.freeze({
           label: node.texture.label ?? "",
           sourceLabel: node.texture.source.label ?? "",
