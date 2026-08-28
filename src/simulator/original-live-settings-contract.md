@@ -1,6 +1,6 @@
 # Simulator Original Live Settings Contract
 
-> **2026-08-28 second re-audit status: `closed-evidence-equivalent`.** The failed `630a676d` claim remains withdrawn. Reverse `1bff69eb` revoked blanket authorization and added exact consumer chains; `c5223b25` corrected the full B.B.K timeline. The implementation now passes the required four-way original-node→production-consumer→independent-primitive→fresh-frame gate for Lane/AP/Auto/Pause/terminal and the adjacent ordinary scene. This remains portable evidence equivalence; fixed-device Unity/GPU output is outside the claim.
+> **2026-08-28 strict re-audit status: `closed-evidence-equivalent`.** The failed `630a676d`/`329aec79` claims remain withdrawn. Reverse `dbd009e7` joins the exact Score SS sibling order, Auto Awake owner, independent Combo/Judge disappearance, Linear Float32 particle input, Lane flip/mask, Pause/countdown and FC/AP terminal facts. The implementation passes original-node→production-consumer→independent-primitive→actual Pixi/fresh-frame→Windows full-session gates. This remains portable evidence equivalence; fixed-device Unity/GPU output is outside the claim.
 
 ## Runtime policy classification
 
@@ -41,7 +41,7 @@ normal ComboNumber: icon_number_big_* + combo
 AP overlay:         icon_number_big_AP_* + combo_AP
 ```
 
-Both visible child graphs restart the one-second `0.8→1.1→1` scale clip on changed Combo and independently hide after one second without another change. The AP parent continues its 0.8333333-second `alpha 1→0.5→1` loop above the normal graph. The AP texture is never substituted into the normal owner.
+Both visible child graphs restart the one-second `0.8→1.1→1` scale clip on changed Combo. At clip completion scale settles to one and the latest positive Combo remains active; only Combo zero/reset or explicit terminal HideCombo removes it. Judge/Timing has a separate one-second coroutine and may disappear while Combo remains. The AP parent continues its 0.8333333-second `alpha 1→0.5→1` loop above the normal graph. The AP texture is never substituted into the normal owner.
 
 ## Primary and Secondary judgement adjustment
 
@@ -77,11 +77,11 @@ The owner creates thirteen full/half-button slots and binds the four serialized 
 _1,_1,_2,_2,_3,_3,_4,_4,_3,_3,_2,_2,_1
 ```
 
-Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses the committed 0.1666667-second serialized clip: XY scale 1→0.7, RGB remains white, alpha 1→0, then the renderer is disabled. The former RG-only fade that retained blue was a binding-decoding error and is forbidden because it falsely tinted the correct resource cyan. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
+Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses the committed 0.1666667-second serialized clip: XY scale 1→0.7, RGB remains white, alpha 1→0, then the renderer is disabled. The per-slot SpriteRenderer route also preserves `flipX=false` for slots0..7, `flipX=true` for slots8..12, and `SpriteMaskInteraction.VisibleOutsideMask` for all thirteen slots against the serialized MaskImage half-plane. The former RG-only fade that retained blue was a binding-decoding error and is forbidden because it falsely tinted the correct resource cyan. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
 
 Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。当前只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；每槽直接消费Reverse `1bff69eb`的Button/half-Button Transform，不再以相邻full midpoint重算。Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
 
-Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Reverse `f3fde602` remains the lifecycle source, while `1bff69eb` supplies the missing exact per-slot Transform consumer oracle. A missing or tampered byte rejects before scene publication and `visibleTapLaneEffect=false` publishes no visible updates. The ON branch now compares all thirteen positions, resource route, bottom pivot, additive blend, On/OffReserve/fade/retrigger/cleanup mutations, actual Pixi bounds, three-fresh Browser output and Windows full-chart frames before capability restoration.
+Four PNGs are selected and hash-validated with all ordinary-visible resources before renderer preparation. Reverse `f3fde602` remains the lifecycle source, while `1bff69eb` supplies the missing exact per-slot Transform consumer oracle. A missing or tampered byte rejects before scene publication and `visibleTapLaneEffect=false` publishes no visible updates. The ON branch now compares all thirteen positions, resource route, bottom pivot, additive blend, right-side flip, inverse SpriteMask, On/OffReserve/fade/retrigger/cleanup mutations, actual Pixi bounds, OLS three-fresh digest `c9113024…8d60` with nonzero active raster, and Windows full-chart frames before capability restoration.
 
 ## MvDarkness
 
