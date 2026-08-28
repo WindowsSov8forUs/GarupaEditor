@@ -85,7 +85,8 @@ export function verifyOrdinaryPixiWorldObservation(world, fixture) {
   const timing = one(world, "result-timing");
   assert.ok(timing.parent !== root.path && timing.parent !== null, "JudgeTiming retains a descendant parent");
   const resultScale = Math.fround(
-    fixture.hudCorrections.result.gameJudgeSamples.find((sample) => sample.time === 0.04).values[0] *
+    fixture.hudCorrections.result.rootScale[0] *
+      fixture.hudCorrections.result.gameJudgeSamples.find((sample) => sample.time === 0.04).values[0] *
       adaptive.childScale,
   );
   const timingExpected = [
