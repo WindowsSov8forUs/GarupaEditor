@@ -47,6 +47,11 @@ const dynamicRoot = join(
   fixtureRoot,
   "evidence-integrity", "artifacts", "investigations", "simulator-dynamic-acceptance-oracle-10-1-4",
 );
+const strictRoot = join(
+  fixtureRoot,
+  "hud-particle-pause-terminal-strict-reaudit", "artifacts", "investigations",
+  "simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4",
+);
 const renderSources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -160,6 +165,8 @@ function prepareStage() {
     ["/visible-profile.json", "visible-profile.json", "application/json; charset=utf-8", join(repositoryRoot, "src/assets/game/portable/profiles/ordinary-visible/profile.json")],
     ["/score-animation.json", "score-animation.json", "application/json; charset=utf-8", join(scoreRoot, "score_gauge_ss_animation_profile.json")],
     ["/game-clear-profile.json", "game-clear-profile.json", "application/json; charset=utf-8", join(gameClearRoot, "game-clear-profile.json")],
+    ["/pause-countdown-animation.json", "pause-countdown-animation.json", "application/json; charset=utf-8", join(repositoryRoot, "src/assets/game/prefabs/bms/pause/countdown-animation-profile.json")],
+    ["/strict-reaudit.json", "strict-reaudit.json", "application/json; charset=utf-8", join(strictRoot, "strict_reaudit_contract.json")],
     ["/game-clear-assets.json", "game-clear-assets.json", "application/json; charset=utf-8", null],
     ["/chart.bms", "chart.bms", "text/plain; charset=utf-8", join(dynamicRoot, "bms", "poppin_shuffle_special.bms.txt")],
   ]) stageFile(route, name, mime, source === null

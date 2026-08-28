@@ -5,7 +5,7 @@ import {
   REHEARSAL_AUTO_MODE,
   REHEARSAL_MANUAL_MODE,
 } from "./modeFixtures";
-import { Application } from "pixi.js";
+import { Application, Sprite } from "pixi.js";
 import type {
   AudioBackendSnapshot,
   AudioCommand,
@@ -38,6 +38,7 @@ import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/curren
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { augmentScoreHudProfilesForPause } from "./pauseControlTestResources";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
 import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
 import {
   ImmutableLocalParticleResourceProvider,
@@ -70,6 +71,7 @@ interface InputMap {
 
 interface LoadedInputs {
   readonly chartText: string;
+  readonly strict: any;
   readonly renderProfile: RenderResourceProfile;
   readonly renderResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
   readonly particleResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
@@ -138,6 +140,30 @@ async function main(): Promise<void> {
   assertPersistentHudComponentConsumption(auto);
   captures.push(await capture(app, auto, "initialize", 0));
   await runAutoScenario(app, auto, captures);
+  const scoreBeforeAdvance = auto.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:score");
+  if (JSON.stringify(scoreBeforeAdvance?.hudScoreHighRankSiblingOrder) !== JSON.stringify(
+    inputs.strict.scoreHud.siblingDrawOrder.map((row: any) => row.name),
+  )) throw new Error("ScoreGaugeSS fresh browser sibling draw order does not preserve Flash→BigStar→kira");
+  const scoreMotionBefore = JSON.stringify(scoreBeforeAdvance?.hudScoreHighRankNodes);
+  requireOk(auto.engine.step(Math.fround(0.25)));
+  const scoreAfterAdvance = auto.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:score");
+  if (scoreMotionBefore === JSON.stringify(scoreAfterAdvance?.hudScoreHighRankNodes)) {
+    throw new Error("ScoreGaugeSS fresh browser phase did not advance all moving visual state after SS entry");
+  }
+  let independentLifecycleObserved = false;
+  let postJudge: ReturnType<PixiRendererBackend["sceneSnapshot"]> = Object.freeze([]);
+  for (let frame = 0; frame < 300 && !independentLifecycleObserved; frame += 1) {
+    requireOk(auto.engine.step(Math.fround(0.1)));
+    postJudge = auto.renderer.sceneSnapshot();
+    independentLifecycleObserved = postJudge.find((row) => row.renderObjectId === "render:hud:combo")?.visible === true &&
+      postJudge.find((row) => row.renderObjectId === "render:hud:result")?.visible === false;
+  }
+  if (!independentLifecycleObserved) {
+    throw new Error(`Combo and Judge incorrectly share the one-second disappearance owner: ${JSON.stringify({
+      combo: postJudge.find((row) => row.renderObjectId === "render:hud:combo"),
+      result: postJudge.find((row) => row.renderObjectId === "render:hud:result"),
+    })}`);
+  }
   requireOk(auto.engine.completeLiveAudio(3));
   sampleGameClear(auto, 1.2);
   assertGameClearWhite(auto);
@@ -598,6 +624,10 @@ async function capture(
   const visibleWorldRecords = worldObservation.records.filter((record) =>
     record.visible && record.renderable && record.worldBounds !== null &&
     intersects(record.worldBounds, [WIDTH, HEIGHT])).length;
+  if (label === "initialize") {
+    const autoCaption = worldObservation.records.find((row) => row.label === "auto-live-caption-root");
+    if (autoCaption === undefined) throw new Error("Auto Live caption was not instantiated during startup before playable");
+  }
   if (label === "pause") {
     const record = (name: string) => worldObservation.records.find((row) => row.label === name);
     const dialog = record("RetryablePauseDialog");
@@ -612,6 +642,17 @@ async function capture(
         JSON.stringify(header.localMatrix.slice(4)) !== JSON.stringify([0, -115]) ||
         JSON.stringify(title.localMatrix.slice(4)) !== JSON.stringify([-391, 1])) {
       throw new Error(`Pause serialized hierarchy mismatch: ${JSON.stringify({ dialog, window, header, title, pauseButton })}`);
+    }
+    const pauseText = session.controlOverlay.root.getChildByLabel("pause-message", true) as any;
+    if (pauseText?.style.wordWrap !== true || pauseText.style.wordWrapWidth !== 900) {
+      throw new Error("Pause UILabel does not consume its serialized 900x114 text box and wrapping owner");
+    }
+  }
+  if (label === "pause-resume-countdown") {
+    for (const component of ["Contents", "Contents/Count3", "Contents/Count2", "Contents/Count1", "Contents/Count1Fadeout", "Contents/Fill"]) {
+      if (session.controlOverlay.root.getChildByLabel(component, true) === null) {
+        throw new Error(`Resume countdown persistent component is missing: ${component}`);
+      }
     }
   }
   const root = worldObservation.records.find((record) => record.parent === null);
@@ -688,9 +729,29 @@ async function capture(
       })}`);
     }
   }
-  for (const row of session.particleRenderer.sceneSnapshot()) {
+  const particleRows = session.particleRenderer.sceneSnapshot();
+  for (const row of particleRows) {
     const expected = row.zIndex > 20_000_000_000_000 ? "high" : "low";
     if (row.sortingStage !== expected) throw new Error(`particle sorting-stage mismatch: ${row.particleId}`);
+    if (row.tint !== 0xffffff || row.alpha !== 1 || row.linearColor.some((channel) => !Number.isFinite(channel))) {
+      throw new Error(`particle Float32 Linear shader handoff mismatch: ${row.particleId}`);
+    }
+  }
+  if (label === "particle-peak") {
+    const sprites = [...session.particleRenderer.stage.children, ...session.particleRenderer.highSortingStage.children]
+      .filter((child): child is Sprite => child instanceof Sprite);
+    if (particleRows.length === 0 || sprites.length !== particleRows.length ||
+        sprites.some((sprite) => (sprite.filters?.length ?? 0) !== 1)) {
+      throw new Error(`particle peak did not consume one Float32 Linear color shader per sample: ${particleRows.length}/${sprites.length}`);
+    }
+  }
+  const laneRows = renderRows.filter((row) => row.role === "tap-lane-effect")
+    .sort((left, right) => Number(left.renderObjectId.slice(left.renderObjectId.lastIndexOf(":") + 1)) -
+      Number(right.renderObjectId.slice(right.renderObjectId.lastIndexOf(":") + 1)));
+  if (laneRows.length !== 13 || laneRows.some((row, index) =>
+      ((row.spriteLocalScale?.[0] ?? 1) < 0) !== (index >= 8) ||
+      row.spriteMaskInteraction !== "visible-outside")) {
+    throw new Error("fresh browser Lane graph does not consume exact flipX and VisibleOutsideMask owners");
   }
   return Object.freeze({
     label,
@@ -712,18 +773,21 @@ async function capture(
 
 async function loadInputs(): Promise<LoadedInputs> {
   const map = await fetchJson<InputMap>("/input-map.json");
-  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, gameClearAssets, chartText] = await Promise.all([
+  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, pauseCountdownRaw, strict, gameClearAssets, chartText] = await Promise.all([
     fetchJson<RenderResourceProfile>("/render-profile.json"),
     fetchJson("/visible-profile.json"),
     fetchJson("/score-animation.json"),
     fetchJson("/game-clear-profile.json"),
+    fetchJson("/pause-countdown-animation.json"),
+    fetchJson("/strict-reaudit.json"),
     fetchJson<RenderResourceProfile["assets"]>("/game-clear-assets.json"),
     fetchText("/chart.bms"),
   ]);
   const visible = parseCurrentOrdinaryVisibleProfile(visibleRaw);
   const scoreAnimation = parseCurrentScoreGaugeSsAnimationProfile(scoreAnimationRaw);
   const gameClearProfile = parseCurrentGameClearProfile(gameClearRaw);
-  if (visible === null || scoreAnimation === null || gameClearProfile === null) throw new Error("current rendering profiles did not parse");
+  const pauseCountdownAnimation = parseCurrentPauseCountdownAnimationProfile(pauseCountdownRaw);
+  if (visible === null || scoreAnimation === null || gameClearProfile === null || pauseCountdownAnimation === null) throw new Error("current rendering profiles did not parse");
   const renderProfile: RenderResourceProfile = Object.freeze({
     ...base,
     packIdentity: `${base.packIdentity}+ordinary-visible-webview2+score-webview2`,
@@ -739,13 +803,14 @@ async function loadInputs(): Promise<LoadedInputs> {
     ordinaryVisibleProfile: visible,
     scoreGaugeSsAnimation: scoreAnimation,
     gameClearProfile,
+    pauseCountdownAnimation,
   });
   const renderResources = await loadMappedBytes(map.render);
   const particleResources = await loadMappedBytes(map.particle);
   if (renderResources.length !== renderProfile.assets.length || particleResources.length !== 9) {
     throw new Error(`input resource inventory mismatch: ${renderResources.length}/${particleResources.length}`);
   }
-  return Object.freeze({ chartText, renderProfile, renderResources, particleResources });
+  return Object.freeze({ chartText, strict, renderProfile, renderResources, particleResources });
 }
 
 async function loadMappedBytes(rows: readonly { readonly logicalAssetId: string; readonly url: string }[]) {

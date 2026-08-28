@@ -70,6 +70,14 @@ async function main(): Promise<void> {
   if (center === undefined || !center.visible || !center.spriteBindingKey?.endsWith("NoteLaneEffect_4")) {
     throw new Error("center recovered lane Sprite was not visible");
   }
+  const ordered = [...activeRows].sort((left, right) => Number(left.renderObjectId.slice(left.renderObjectId.lastIndexOf(":") + 1)) -
+    Number(right.renderObjectId.slice(right.renderObjectId.lastIndexOf(":") + 1)));
+  const flips = ordered.map((row) => (row.spriteLocalScale?.[0] ?? 1) < 0);
+  if (JSON.stringify(flips) !== JSON.stringify([false, false, false, false, false, false, false, false, true, true, true, true, true]) ||
+      ordered.some((row) => row.spriteMaskInteraction !== "visible-outside" || row.spriteMaskBounds === null) ||
+      activeRaster.nonBackgroundPixels <= 0) {
+    throw new Error(`Lane SpriteRenderer flip/mask/raster mismatch: ${JSON.stringify({ flips, ordered, activeRaster })}`);
+  }
   const off = requireOk(owner.preflightInputEvents([{ buttonType: 3, kind: "animated-off" }]));
   if (off === null) throw new Error("animated off did not preflight");
   requireOk(off.commit());
@@ -107,6 +115,9 @@ async function main(): Promise<void> {
       halfFadeTint: halfFade.spriteTint,
       halfFadeAlpha: halfFade.alpha,
       resourceCount: resources.length,
+      flipXSequence: flips,
+      maskInteraction: center.spriteMaskInteraction,
+      maskBounds: center.spriteMaskBounds,
     },
     raster: { active: activeRaster, halfFade: halfFadeRaster, disabled: disabledRaster },
     cleanup: { rendererOwners: renderer.snapshot().objectCount, stageChildren: renderer.stage.children.length },

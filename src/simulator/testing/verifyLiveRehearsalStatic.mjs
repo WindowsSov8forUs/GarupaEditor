@@ -57,7 +57,7 @@ const autonomous = read("runtime/autonomousSimulatorRuntime.ts");
 for (const symbol of ["synchronizeSurface", "pauseControl.route", "publishPauseControlState", "consumePauseControlCommand", "platform-abort"])
   if (!autonomous.includes(symbol)) throw new Error(`Pause runtime route missing ${symbol}`);
 const pixi = read("backends/pixi/pixiRendererBackend.ts");
-for (const symbol of ["createInGameControlOverlay", "original-pause-button", "pause-modal-root", "resume-countdown-", "pauseTextures.countdown"])
+for (const symbol of ["createInGameControlOverlay", "original-pause-button", "pause-modal-root", "InGameCountDownAnimation", "Contents/Count1Fadeout", "samplePauseCountdownClip"])
   if (!pixi.includes(symbol)) throw new Error(`Pause Pixi owner missing ${symbol}`);
 const builtInWindow = readFileSync(resolve(process.cwd(), "src/app/BuiltInSimulatorWindow.tsx"), "utf8");
 for (const forbiddenSymbol of ["showTemporaryMobileBack", "temporaryMobileBackStyle", "点击开始以解锁音频"])

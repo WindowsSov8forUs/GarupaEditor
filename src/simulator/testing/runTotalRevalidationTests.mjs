@@ -16,6 +16,7 @@ const quick = process.argv.includes("--quick");
 const cleanBrowserBuild = process.argv.includes("--clean-browser-build");
 const baseLeaves = [
   ["runtime-contract-policy", "runRuntimeContractPolicyTests.mjs", {}],
+  ["strict-visible-lifecycle", "verifyStrictHudParticlePauseTerminalStatic.mjs", {}],
   ["chart-boundary", "runChartConstructionBoundaryTests.mjs", {}],
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["chart-batches", "runChartBatchConversionTests.mjs", {}],
@@ -52,6 +53,7 @@ const baseLeaves = [
 ];
 const quickLeaves = [
   ["runtime-contract-policy", "runRuntimeContractPolicyTests.mjs", {}],
+  ["strict-visible-lifecycle", "verifyStrictHudParticlePauseTerminalStatic.mjs", {}],
   ["compiled-unit-and-static-subset", "runQuickCompiledTests.mjs", {}],
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["clock", "runClockSchedulingTests.mjs", {}],

@@ -70,6 +70,7 @@
     "simulator:test": "node src/simulator/testing/runTotalRevalidationTests.mjs --quick",
     "simulator:test:quick": "node src/simulator/testing/runTotalRevalidationTests.mjs --quick",
     "simulator:test:evidence-integrity": "node src/simulator/testing/runEvidenceIntegrityTests.mjs",
+    "simulator:test:strict-visible-lifecycle": "node src/simulator/testing/verifyStrictHudParticlePauseTerminalStatic.mjs",
     "simulator:test:total-revalidation": "node src/simulator/testing/runTotalRevalidationTests.mjs",
     "simulator:test:total-revalidation:clean": "node src/simulator/testing/runTotalRevalidationTests.mjs --clean-browser-build",
     "tauri": "tauri",

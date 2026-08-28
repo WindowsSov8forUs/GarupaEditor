@@ -17,6 +17,7 @@ import { CURRENT_PAUSE_COMPONENT_PATHS } from "../backends/resources/currentFive
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
 import { buildGameClearParticleProfile } from "../backends/resources/currentGameClearProfile";
 import { assertHudPixiRenderingEquivalence } from "./hudPixiRenderingEquivalence.test";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
@@ -102,6 +103,10 @@ const resourceAxisCorrection = JSON.parse(readFileSync(join(
   fixtureRoot,
   "resource-axis-product-visibility/artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/resource_axis_product_visibility_correction.json",
 ), "utf8"));
+const strictReaudit = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "hud-particle-pause-terminal-strict-reaudit/artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -121,7 +126,7 @@ async function main(): Promise<void> {
   equal(hudApReaudit.combo_ownership.parallel_distinct_scene_components, true,
     "HUD/AP evidence requires parallel normal and AP scene graphs");
   equal(hudApReaudit.portable_acceptance.must_hide_each_combo_number_after_one_second_without_change, true,
-    "HUD/AP evidence requires owner-local one-second hide");
+    "historical HUD/AP inventory assertion is retained only as the superseded premise corrected by the strict lifecycle oracle");
   equal(visualFifth.hud.life_label.font_size, 18,
     "fifth evidence independently requires the serialized 18-point Life label");
   equal(JSON.stringify(visualFifth.world_ordering.required_group_order), JSON.stringify([
@@ -152,6 +157,10 @@ async function main(): Promise<void> {
     join(scoreRoot, "score_gauge_ss_animation_profile.json"), "utf8",
   )));
   assert(scoreAnimation !== null, "ScoreGaugeSS profile parses");
+  const pauseCountdownAnimation = parseCurrentPauseCountdownAnimationProfile(JSON.parse(readFileSync(join(
+    process.cwd(), "src/assets/game/prefabs/bms/pause/countdown-animation-profile.json",
+  ), "utf8")));
+  assert(pauseCountdownAnimation !== null, "Pause countdown animation profile parses");
   const scoreResources = augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile));
   const gameClear = gameClearTestResources();
   equal(buildGameClearParticleProfile(gameClear.profile, 1).systemCount, 40, "base clear consumes all 40 serialized ParticleSystems");
@@ -169,6 +178,7 @@ async function main(): Promise<void> {
     ordinaryVisibleProfile: visibleProfile,
     scoreGaugeSsAnimation: scoreAnimation,
     gameClearProfile: gameClear.profile,
+    pauseCountdownAnimation,
   };
   const resources = Object.freeze([...actualResources(profile.assets.filter((asset) =>
     !asset.logicalAssetId.startsWith("hud/game-clear/"))), ...gameClear.resources]);
@@ -182,6 +192,11 @@ async function main(): Promise<void> {
   const liveControls = requireOk(renderer.createInGameControlOverlay(LIVE_AUTO_MODE, 120, CONTROL_SURFACE_LAYOUT), "live controls");
   const pauseLayout = requireOk(createPauseControlLayout(CONTROL_SURFACE_LAYOUT), "Pause visual layout");
   const pauseOwner = new PauseControlSceneOwner();
+  const startupHud = pauseOwner.snapshot(LIVE_AUTO_MODE, pauseLayout, false, false, Math.fround(0.4));
+  requireOk(liveControls.publishPauseControlState(startupHud), "publish Auto Live caption during startup HUD fade");
+  const startupAutoCaption = liveControls.root.getChildByLabel("auto-live-caption-root") as Container;
+  assert(startupAutoCaption.visible && startupAutoCaption.alpha === Math.fround(0.4),
+    "Auto Live caption is instantiated before playable and follows the startup HUD alpha owner");
   const playing = pauseOwner.snapshot(LIVE_AUTO_MODE, pauseLayout, true);
   requireOk(liveControls.publishPauseControlState(playing), "publish visible Pause button");
   assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible, "Live owns visible original Pause button");
@@ -211,9 +226,13 @@ async function main(): Promise<void> {
     "original Pause Sprite remains visible while the modal owns input");
   assert(liveControls.root.getChildByLabel("pause-window", true) !== null, "Pause modal uses serialized window");
   assert((liveControls.root.getChildByLabel("pause-title", true) as Text).text === "一時停止", "Pause modal uses current visible title");
-  equal((liveControls.root.getChildByLabel("pause-message", true) as Text).text,
-    fiveVisualCorrection.pause.visible_message,
+  const pauseMessage = liveControls.root.getChildByLabel("pause-message", true) as Text;
+  equal(pauseMessage.text, fiveVisualCorrection.pause.visible_message,
     "Pause modal consumes the corrected natural-frame three-line UILabel");
+  equal(pauseMessage.style.wordWrap, true,
+    "Pause message consumes the serialized UILabel widget box instead of unconstrained browser Text");
+  equal(pauseMessage.style.wordWrapWidth, strictReaudit.pause.modalPrefabs.retryable_pause.content.width,
+    "Pause message word wrapping uses the serialized 900-unit UILabel width");
   assert(liveControls.root.getChildByLabel(fiveVisualCorrection.pause.background_cover_component.sprite_name, true) === null,
     "Pause does not infer component identity from a Sprite name");
   assert(liveControls.root.getChildByLabel("RetryablePauseDialog/Background", true) instanceof NineSliceSprite,
@@ -254,13 +273,21 @@ async function main(): Promise<void> {
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(2.4) })), "publish Resume countdown");
   assert((liveControls.root.getChildByLabel("original-pause-button") as Sprite).visible,
     "Pause Sprite remains visible through Resume countdown");
-  const countdownSprite = liveControls.root.getChildByLabel("resume-countdown-sprite", true) as Sprite;
-  assert(countdownSprite !== null, "Resume countdown consumes the serialized countdown Sprite owner");
-  const countdownThreeTexture = countdownSprite.texture;
+  const countdownContents = liveControls.root.getChildByLabel("Contents", true) as Container;
+  const count3 = liveControls.root.getChildByLabel("Contents/Count3", true) as Sprite;
+  const count2 = liveControls.root.getChildByLabel("Contents/Count2", true) as Sprite;
+  const count1 = liveControls.root.getChildByLabel("Contents/Count1", true) as Sprite;
+  const count1Fadeout = liveControls.root.getChildByLabel("Contents/Count1Fadeout", true) as Sprite;
+  assert(countdownContents !== null && count3 !== null && count2 !== null && count1 !== null && count1Fadeout !== null,
+    "Resume countdown consumes the complete persistent serialized Contents/3/2/1/1Fadeout graph");
+  const count3Scale = count3.scale.x;
   requireOk(liveControls.publishPauseControlState(Object.freeze({ ...playing, state: "resume-countdown" as const, resumeCountdownSecondsRemaining: Math.fround(1.4) })), "advance persistent Resume countdown");
-  equal(liveControls.root.getChildByLabel("resume-countdown-sprite", true), countdownSprite,
-    "Countdown 3→2 mutates one persistent Prefab Sprite identity");
-  assert(countdownSprite.texture !== countdownThreeTexture, "Countdown 3→2 switches the exact texture on the same owner");
+  equal(liveControls.root.getChildByLabel("Contents/Count3", true), count3,
+    "Countdown clip sampling mutates one persistent Count3 identity");
+  equal(liveControls.root.getChildByLabel("Contents/Count2", true), count2,
+    "Countdown clip sampling mutates one persistent Count2 identity");
+  assert(count3.scale.x !== count3Scale && count2.visible,
+    "Countdown 3→2 advances exact scale/active channels instead of replacing one static Sprite texture");
   requireOk(liveControls.publishPauseControlState(Object.freeze({
     ...playing,
     playable: false,
@@ -383,6 +410,9 @@ async function main(): Promise<void> {
   equal(clear.activeAnimationRole, "game-clear", "All Perfect clear graph owns one engine-clock animation");
   assert((clear.hudSpriteNodes?.length ?? 0) >= 20, "All Perfect clear graph consumes the complete serialized UITexture letter/star inventory");
   assert(clear.hudSpriteNodes?.some((sprite) => sprite.visible), "All Perfect clear clip publishes visible serialized nodes before exit");
+  const allPerfectPanelRoot = renderer.stage.getChildByLabel("game-clear:AllPerfectAnimation", true) as Container;
+  assert(allPerfectPanelRoot !== null && allPerfectPanelRoot.zIndex === strictReaudit.gameClear.allPerfect.panel.depth,
+    "All Perfect root consumes UIPanel depth20 with clipping None instead of a synthetic clip rectangle");
   assert(clear.hudSpriteNodes?.filter((sprite) => sprite.visible).every((sprite) => sprite.tint === 0xffffff),
     "Game-clear UITexture consumes little-endian serialized white color bytes instead of black tint");
   const allPerfectParticles = renderer.stage.getChildByLabel("game-clear-particles", true) as Container;
@@ -535,6 +565,9 @@ async function main(): Promise<void> {
   equal(scoreAtHalf.hudScoreTextRunCount, 2, "Score owns gray-leading and pink-significant runs under one UILabel owner");
   equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
   equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
+  equal(JSON.stringify(scoreAtHalf.hudScoreHighRankSiblingOrder), JSON.stringify(
+    strictReaudit.scoreHud.siblingDrawOrder.map((row: any) => row.name),
+  ), "ScoreGaugeSS preserves Flash→BigStar→kira equal-depth sibling draw order so motion remains above overlay");
   equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
   equal(JSON.stringify(scoreAtHalf.hudSerializedComponentPaths),
     JSON.stringify(fiveVisualCorrection.score_hud.widgets.map((row: any) => row.path)),
@@ -1057,6 +1090,15 @@ async function verifyActualPixiGarupaProduct(
   equal(JSON.stringify(routedLane!.spriteAnchor), JSON.stringify([0.5, 1]),
     "lane effect preserves the serialized bottom-center Sprite pivot");
   equal(routedLane!.spriteBlendMode, "add", "lane effect preserves the additive material");
+  const allLaneSprites = routedRenderer.sceneSnapshot().filter((row) => row.role === "tap-lane-effect")
+    .sort((left, right) => Number(left.renderObjectId.slice(left.renderObjectId.lastIndexOf(":") + 1)) -
+      Number(right.renderObjectId.slice(right.renderObjectId.lastIndexOf(":") + 1)));
+  equal(allLaneSprites.length, 13, "actual Pixi owns all thirteen persistent Lane SpriteRenderers");
+  equal(JSON.stringify(allLaneSprites.map((row) => (row.spriteLocalScale?.[0] ?? 1) < 0)),
+    JSON.stringify(strictReaudit.lane.flipXSequence),
+    "Lane actual Pixi consumes the serialized five right-side flipX owners rather than name-only texture matching");
+  assert(allLaneSprites.every((row) => row.spriteMaskInteraction === "visible-outside" && row.spriteMaskBounds !== null),
+    "Lane actual Pixi consumes SpriteMaskInteraction.VisibleOutsideMask for every slot");
   const laneOracle = fiveVisualCorrection.tap_lane_effect.bounds_oracles.find((row: any) =>
     row.case_id === "20:9-full" && row.texture === "NoteLaneEffect_4");
   assert(laneOracle !== undefined && routedLane!.spriteWorldBounds !== null, "lane bounds oracle and actual bounds exist");
