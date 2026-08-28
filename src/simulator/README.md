@@ -1,6 +1,6 @@
 # GarupaEditor Simulator
 
-`src/simulator`当前正在执行2026-08-29 Lane SpriteMask与舞台背景合成纠错。Reverse `dbd009e7`的HUD/粒子/Lane/Pause/终局严格事实继续有效，但`3ae2d1a7`错误地为13个Lane槽分别复制serialized单一`MaskImage`；13个inverse stencil owner在combined linear-output render target中把Backdrop合成为大块白色。生产实时Pixi树、原始/规范化Backdrop采样以及删除/共享mask的AB帧已确认根因。故`1a08056f`的整体视觉验收、aggregate能力恢复和全部发布包均已撤回；在恢复scene-owned单一MaskImage、补齐背景遮挡门并重新完成Windows全谱前不得推荐。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)以产品身份授权，不宣称原作计分复原。
+`src/simulator`已完成2026-08-29 Lane SpriteMask与舞台背景合成纠错。Reverse `dbd009e7`明确13个Lane SpriteRenderer只共享一个serialized `MaskImage` pathId 540；旧`3ae2d1a7`既按槽复制13个mask，又在同一set-transform末尾以generic null mask清空引用，使Graphics重新进入ordinary color build并把Backdrop合成为大块白色。当前PixiRendererBackend恢复一个scene-owned mask/13个同identity inverse引用，独立管理consumer与generation dispose，且禁止generic command mask覆盖。关闭依据包括生产实时Pixi树和删除/共享AB帧、actual Pixi 656/3900、OLS 3-fresh背景sentinel/white-pixel门、ordinary 3×27、45叶全量回归及Windows 2400×1350 startup→play→Pause→countdown→resume→AP→自然关闭；旧`1a08056f`及其全部产物永久撤回。10M归一化Score、固定Rank和内部ruleset继续由[`scoring-contract.md`](./scoring-contract.md)以产品身份授权，不宣称原作计分复原。
 
 ## 当前全局门
 
@@ -15,22 +15,22 @@
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；四模式合同见独立开放行 |
-| Ordinary Note Pixi scene | `observational-gap` | Note/Slide几何事实继续有效，但13个错误复制的Lane MaskImage污染整幅production合成；待共享mask与Backdrop生命周期门关闭后重判 |
-| Complete ordinary HUD | `observational-gap` | HUD局部事实保留，但旧Windows验收帧存在全屏白色合成污染，不能授权整体可见等价 |
-| Ordinary particle visible composition | `observational-gap` | 粒子资源/route/Float32 Mesh事实保留，但旧整体Framebuffer被Lane mask污染；需在正确Backdrop上重新验收，native random/GPU exact继续排除 |
+| Ordinary Note Pixi scene | `closed-evidence-equivalent` | Reverse `c5223b25`逐tick Note/Slide oracle继续有效；Lane纠错另恢复一个scene-owned MaskImage/13同identity引用并由actual Pixi、背景保留Browser门和Windows全谱关闭，不再污染Backdrop |
+| Complete ordinary HUD | `closed-evidence-equivalent` | Score/Combo/Judge/Life/Auto/Pause/FC/AP严格事实不变；已在正确舞台背景上重新通过ordinary 3×27、45叶和Windows连续帧 |
+| Ordinary particle visible composition | `closed-evidence-equivalent` | 120-system/17-root/Float32 Mesh路径在共享Lane mask和正确Backdrop上重新通过actual Pixi、fresh Browser及Windows全谱；native random/GPU exact继续排除 |
 | Gameplay/Startup Audio、Particle semantic simulation | `closed-portable` | Public BGM字节派生、已登记判定/Note SE、四模式startup callgraph、Live-only Gaya owned loop、原作nullable voice分支但production内部固定无voice资源、prepared BGM、semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含物理speaker输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `observational-gap` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
 | Complete ordinary startup direction/audio | `closed-portable` | Reverse `c8562fe4`纠正后的SD01–SD17、四模式ordinary gate-not-taken调用图及`d408d758`的SDN01–SDN04：封面信息owner无输入等待，四模式只需一次session-start即可自动4→5；首次Live B1–B4教程独立保持未授权。standard Live启动Gaya，Practice不创建；Public不携带账号/教程/SD/voice字段，production内部固定非null空角色集合与缺SoundResource路径；BGM prepared-paused、Retry/MoveTime及cleanup均已验收 |
-| Original Live settings | `observational-gap` | 13槽flipX/VisibleOutside事实有效，但production错误建立13个MaskImage而非一个serialized共享owner，导致背景白色；旧OLS非零raster门不足，待纠错 |
+| Original Live settings | `closed-evidence-equivalent` | Schema 13字段及13槽flipX/white-alpha Fade不变；VisibleOutside现为一个serialized MaskImage/13个同identity引用。OLS 3-fresh断言1 owner、13 consumers、四角`081020ff`、active背景1,148,790/1,152,000且opaque-white=0，Windows全谱共享树与Backdrop均通过 |
 | Gameplay MV Live | `closed-portable` | Reverse `38802391`+OLS-R06：仅Live Manual/Auto；signed Int32 delay三分支、MovieBeforeSound(17)、movie states0–4、Gaya=false、MvDarkness黑色cover（Movie alpha恒1）、pause/resume、early/late finish、exit/fault/dispose；caller提供严格MP4/WebM字节，视频muted/non-loop并center-contain。Rehearsal MV、独立MVView、Star3D及CRI/USM/device exact不在正向范围 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，不接受格式中不存在的laneCount；任意有限lane按七轨参考坐标连续投影，场地始终仅有0..6七条轨道线；按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
 | Initial adaptive landscape layout | `closed-portable` | Reverse `9167dce7`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
 | Dynamic surface resize | `observational-gap` / `closed-product-extension` | 10.1.4不存在完整原作局中刷新路由，因此不声明原作等价；产品语义`GE-PS-SURFACE-ATOMIC-REBUILD`在下一输入帧前以deferred fresh generation重放当前timeline并原子替换surface/control/mount，失败则稳定返回编辑器 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布；控件由current serialized Left/Right anchor、±72 child、104×104 widget与world-circle radius 0.12共同派生，不再消费截图bbox或人工100×100 hit region |
-| Original in-game Pause UI | `observational-gap` | Pause/countdown局部结构事实有效，但旧Windows连续帧背景已被Lane mask污染，整体可见门撤回并待重跑 |
+| Original in-game Pause UI | `closed-evidence-equivalent` | serialized dialog与25-curve countdown事实不变；已在正确Backdrop上重新完成Pause→五阶段countdown→resume连续Windows验收 |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
 | Garupa SV / TimingGroup | `closed-product-extension` | 独立group axis、Global继承、同position优先级、负向/停止/极值、stateless visibility及Pause/Retry/MoveTime闭合；只声明产品行为，不升级原作等价 |
 | Continuous / outside lane | `closed-product-extension` | Garupa任意有限lane在固定七轨参考坐标上执行fractional/outside Float32 affine scene、front/mesh/particle及raw Manual span；场地线恒为0..6七条，不round/clamp到原Button |
@@ -79,7 +79,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：以下digest读取实际WebGL framebuffer，只作锁定browser回归，不是布局authority。最终Linear/parent-particle-scale实现：ordinary 24 captures `5d1f4adc…6ace`；OLS四PNG/13-slot `ca809887…d534`；Skin default/limited3 `bf73d5bd…8de6`/`12619584…6c83`；Garupa initial/negative/zero/restore `b4187892…794`；Startup视觉`5ffd7d40…f3edc`、音频仍`7d537afa…6adc`；MV media `34c34580…3db9`、raster `66c76856…8ddb`。cleanup后Blob/video/Pixi归零；不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：以下digest读取实际WebGL framebuffer，只作锁定browser回归，不是布局authority。当前共享Lane MaskImage实现：ordinary 27 captures×3 `a2d6d4fa…6ad9b`；OLS 1-owner/13-consumer及Backdrop保留 `b5abc6ad…63a58`；Skin default/limited3 `c3921b02…9439`/`0124af99…7f2f`；Garupa `4d61bb02…4ce6d`；Startup视觉`5ffd7d40…f3edc`、音频`7d537afa…6adc`；MV media `34c34580…3db9`、raster `66c76856…8ddb`。cleanup后Blob/video/Pixi归零；不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
