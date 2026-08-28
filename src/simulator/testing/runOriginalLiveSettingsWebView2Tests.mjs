@@ -16,7 +16,7 @@ const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
 const ordinaryRoot = join(fixtureRoot, "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering", "artifacts", "investigations", "ordinary-visible-rendering-portable-10-1-4");
-const EXPECTED_DIGEST = "ca8098873edc7975a42b28cd92cd63cd7231a3f31446f9c8a2cd33538f17d534";
+const EXPECTED_DIGEST = "cfae9f04b3efcd20706ee192842d41d6868a2f719af7a8968695b55ff49cf29c";
 const sources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -95,7 +95,8 @@ function stageFile(route, name, mime, bytes, allowlist) {
 function verify(value) {
   if (value.schema !== "garupa-original-live-settings-webview2-v1" || value.status !== "ok") throw new Error(JSON.stringify(value));
   if (value.runtime.rendererName !== "webgl" || value.owner.initializedSlots !== 13 || value.owner.activeCount !== 1 ||
-    value.owner.disabledCount !== 0 || value.owner.resourceCount !== 11 || !value.owner.activeBinding.endsWith("NoteLaneEffect_4") ||
+    value.owner.disabledCount !== 0 || value.owner.halfFadeTint !== 0xFFFFFF || value.owner.halfFadeAlpha !== 0.5 ||
+    value.owner.resourceCount !== 11 || !value.owner.activeBinding.endsWith("NoteLaneEffect_4") ||
     value.raster.active.nonBackgroundPixels <= value.raster.disabled.nonBackgroundPixels ||
     value.cleanup.rendererOwners !== 0 || value.cleanup.stageChildren !== 0) throw new Error(`invalid original settings browser observation: ${JSON.stringify(value)}`);
 }

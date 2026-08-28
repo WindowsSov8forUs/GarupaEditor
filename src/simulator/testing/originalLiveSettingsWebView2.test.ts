@@ -73,7 +73,17 @@ async function main(): Promise<void> {
   const off = requireOk(owner.preflightInputEvents([{ buttonType: 3, kind: "animated-off" }]));
   if (off === null) throw new Error("animated off did not preflight");
   requireOk(off.commit());
-  for (let frame = 0; frame < 11 && owner.snapshot().activeCount !== 0; frame += 1) {
+  for (let frame = 0; frame < 5; frame += 1) {
+    const advance = requireOk(owner.preflightAdvance(1 / 60));
+    if (advance !== null) requireOk(advance.commit());
+  }
+  app.render();
+  const halfFadeRaster = await capture(app);
+  const halfFade = renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:tap-lane-effect:6");
+  if (halfFade?.spriteTint !== 0xFFFFFF || Math.abs(halfFade.alpha - 0.5) > 0.0001) {
+    throw new Error(`Lane FadeOut must retain white RGB and fade alpha: ${JSON.stringify(halfFade)}`);
+  }
+  for (let frame = 0; frame < 6 && owner.snapshot().activeCount !== 0; frame += 1) {
     const advance = requireOk(owner.preflightAdvance(1 / 60));
     if (advance !== null) requireOk(advance.commit());
   }
@@ -94,9 +104,11 @@ async function main(): Promise<void> {
       activeBinding: center.spriteBindingKey,
       activeCount: 1,
       disabledCount: disabled.activeCount,
+      halfFadeTint: halfFade.spriteTint,
+      halfFadeAlpha: halfFade.alpha,
       resourceCount: resources.length,
     },
-    raster: { active: activeRaster, disabled: disabledRaster },
+    raster: { active: activeRaster, halfFade: halfFadeRaster, disabled: disabledRaster },
     cleanup: { rendererOwners: renderer.snapshot().objectCount, stageChildren: renderer.stage.children.length },
   });
   app.destroy(true, { children: true, texture: true, textureSource: true });
