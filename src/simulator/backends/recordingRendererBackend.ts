@@ -358,6 +358,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           !validateRenderFloat32(command.rotationDegrees) ||
           !validateColor(command.color) ||
           !validateOrdering(command.ordering) ||
+          (command.spriteFlipX !== undefined && typeof command.spriteFlipX !== "boolean") ||
           (command.maskObjectId !== null && !objects.has(command.maskObjectId))
         ) {
           return this.latchFault(

@@ -64,6 +64,7 @@ export interface PauseControlSceneSnapshot {
   readonly surfaceRevision: number;
   readonly mode: SimulatorTimelineControlState["mode"];
   readonly playable: boolean;
+  readonly hudAlpha?: number;
   readonly terminalPresentationActive: boolean;
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
@@ -220,6 +221,7 @@ export class PauseControlSceneOwner {
         layout,
         controlState.playable,
         controlState.terminalPresentationActive === true,
+        controlState.hudAlpha,
       ),
     });
     return hardwareBackProductSemanticsId === null
@@ -238,12 +240,14 @@ export class PauseControlSceneOwner {
     layout: PauseControlLayout,
     playable = true,
     terminalPresentationActive = false,
+    hudAlpha = playable ? Math.fround(1) : Math.fround(0),
   ): PauseControlSceneSnapshot {
     return deepFreeze({
       state: this.state,
       surfaceRevision: layout.surfaceRevision,
       mode,
       playable,
+      hudAlpha: Math.fround(hudAlpha),
       terminalPresentationActive,
       layout,
       resumeCountdownSecondsRemaining: this.state === "resume-countdown" ? this.countdown : null,
@@ -428,6 +432,7 @@ function validControlState(value: unknown): value is SimulatorTimelineControlSta
   const state = value as SimulatorTimelineControlState;
   return typeof state.playable === "boolean" && typeof state.paused === "boolean" && typeof state.moveTimeInProgress === "boolean" &&
     Number.isFinite(state.timelineSeconds) && state.timelineSeconds >= 0 &&
+    (state.hudAlpha === undefined || Number.isFinite(state.hudAlpha) && state.hudAlpha >= 0 && state.hudAlpha <= 1 && Math.fround(state.hudAlpha) === state.hudAlpha) &&
     (state.terminalPresentationActive === undefined || typeof state.terminalPresentationActive === "boolean");
 }
 function validLayout(value: unknown): value is PauseControlLayout {

@@ -43,6 +43,7 @@ export interface SimulatorTimelineControlState {
   }>;
   readonly timelineSeconds: number;
   readonly playable: boolean;
+  readonly hudAlpha?: number;
   readonly paused: boolean;
   readonly moveTimeInProgress: boolean;
   readonly terminalPresentationActive?: boolean;
@@ -443,6 +444,8 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       mode: this.controlMode,
       timelineSeconds: this.timelineSecondsValue,
       playable: snapshot.value.managers.playable && this.active.getNaturalCompletionClearStatus() === null,
+      hudAlpha: snapshot.value.managers.startupDirection?.scene.hudAlpha ??
+        (snapshot.value.managers.playable ? Math.fround(1) : Math.fround(0)),
       paused: snapshot.value.managers.paused,
       moveTimeInProgress: false,
     }));

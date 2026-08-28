@@ -102,6 +102,7 @@ export interface TapLaneEffectRenderState {
   readonly color: RenderColor;
   readonly ordering: RenderOrderingKey;
   readonly active: boolean;
+  readonly flipX: boolean;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -709,9 +710,6 @@ export class RenderCommandProducer {
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole, restart: false,
         });
-        commands.push({
-          ...base(commands.length), kind: "hide-object", renderObjectId,
-        });
       } else {
         const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
@@ -927,6 +925,7 @@ export class RenderCommandProducer {
     if (bindings === undefined || bindings.length !== 4 || states.length !== 13 ||
       states.some((state, index) => state.slot !== index ||
         state.textureIndex !== expectedTextures[index] || state.active ||
+        state.flipX !== (index >= 8) ||
         !validateVector3(state.position) || !validateVector2(state.scale) ||
         !validateColor(state.color) || !validateOrdering(state.ordering))) {
       return integrityFailure(
@@ -948,7 +947,8 @@ export class RenderCommandProducer {
         exactKey: `NoteLaneEffect_${state.textureIndex + 1}` });
       commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
         position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
-        color: state.color, ordering: state.ordering, maskObjectId: null });
+        color: state.color, ordering: state.ordering, maskObjectId: null,
+        spriteFlipX: state.flipX });
       commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
@@ -961,6 +961,7 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     if (!Array.isArray(states) || states.some((state) =>
       !Number.isInteger(state.slot) || state.slot < 0 || state.slot >= 13 ||
+      state.flipX !== (state.slot >= 8) ||
       !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
       !validateVector3(state.position) || !validateVector2(state.scale) ||
       !validateColor(state.color) || !validateOrdering(state.ordering))) {
@@ -980,7 +981,8 @@ export class RenderCommandProducer {
       }
       commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
         position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
-        color: state.color, ordering: state.ordering, maskObjectId: null });
+        color: state.color, ordering: state.ordering, maskObjectId: null,
+        spriteFlipX: state.flipX });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
     }
     return this.preflight(commands);

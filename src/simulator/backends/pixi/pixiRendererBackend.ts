@@ -44,6 +44,14 @@ import {
 } from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
 import {
+  CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER,
+  CURRENT_TAP_LANE_EFFECT_SPRITE_MASK,
+} from "../resources/currentCompleteHudProfile";
+import {
+  samplePauseCountdownClip,
+  type PauseCountdownAnimationProfile,
+} from "../resources/currentPauseCountdownAnimationProfile";
+import {
   CURRENT_PAUSE_ATLAS_BORDERS,
   CURRENT_PAUSE_SERIALIZED_GRAPHS,
 } from "../resources/currentPauseSerializedProfile";
@@ -189,6 +197,7 @@ interface PixiObjectRecord {
   geometryContent: Mesh | null;
   maskContent: Graphics | null;
   thresholdMaskContent: Graphics | null;
+  laneSpriteMaskContent: Graphics | null;
   threshold: number | null;
   maskVertexCount: number | null;
   hudVisual: PixiHudVisual | null;
@@ -335,11 +344,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const coverTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "fill"));
     const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    const pauseCountdownAnimation = this.profile?.pauseCountdownAnimation;
     if (snapshot.state !== "ready" || returnTexture === undefined ||
       advanceTexture === undefined || timeBackgroundTexture === undefined ||
       demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
       headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
+      pauseCountdownAnimation === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return integrityFailure(
         "render.rehearsal-control.resources-unavailable",
@@ -361,6 +372,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       pinkButtonTexture,
       coverTexture,
       countdownTextures as [Texture, Texture, Texture],
+      pauseCountdownAnimation,
       font.family,
       createRehearsalControlSceneLayout(surfaceLayout),
       (root) => {
@@ -703,6 +715,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly spriteTint: number | null;
     readonly spriteBlendMode: string | null;
     readonly spriteAnchor: readonly [number, number] | null;
+    readonly spriteLocalScale: readonly [number, number] | null;
+    readonly spriteMaskInteraction: "visible-outside" | null;
+    readonly spriteMaskBounds: readonly [number, number, number, number] | null;
     readonly spriteWorldBounds: readonly [number, number, number, number] | null;
     readonly hudSpriteLabels: readonly string[] | null;
     readonly hudSpriteAlphas: readonly number[] | null;
@@ -794,6 +809,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly scale: readonly [number, number];
       readonly zIndex: number;
     } | null;
+    readonly hudScoreHighRankSiblingOrder: readonly string[] | null;
     readonly hudScoreHighRankNodes: readonly {
       readonly name: string;
       readonly visible: boolean;
@@ -848,6 +864,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       spriteAnchor: value.spriteContent === null
         ? null
         : Object.freeze([value.spriteContent.anchor.x, value.spriteContent.anchor.y] as const),
+      spriteLocalScale: value.spriteContent === null
+        ? null
+        : Object.freeze([value.spriteContent.scale.x, value.spriteContent.scale.y] as const),
+      spriteMaskInteraction: value.laneSpriteMaskContent === null ? null : "visible-outside" as const,
+      spriteMaskBounds: value.laneSpriteMaskContent === null
+        ? null
+        : (() => {
+            const bounds = value.laneSpriteMaskContent.getBounds();
+            return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
+          })(),
       spriteWorldBounds: value.spriteContent === null || value.role !== "tap-lane-effect"
         ? null
         : (() => {
@@ -999,6 +1025,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
                   zIndex: owner.zIndex,
                 });
           })(),
+      hudScoreHighRankSiblingOrder: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(value.hudVisual.animationLayer.children.map((child) =>
+            child.label.slice(child.label.lastIndexOf("/") + 1))),
       hudScoreHighRankNodes: value.hudVisual === null
         ? null
         : Object.freeze(value.hudVisual.scoreHighRankSprites.map((sprite, index) => Object.freeze({
@@ -1407,6 +1437,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           geometryContent: null,
           maskContent: null,
           thresholdMaskContent: null,
+          laneSpriteMaskContent: null,
           threshold: null,
           maskVertexCount: null,
           hudVisual: null,
@@ -1438,6 +1469,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.hudVisual?.scoreHighRankSoftClipFilter?.destroy();
         if (object.hudVisual !== null) object.hudVisual.scoreHighRankSoftClipFilter = null;
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
+        if (object.laneSpriteMaskContent !== null) {
+          object.node.setMask({ mask: null, inverse: false });
+          object.laneSpriteMaskContent.removeFromParent();
+          object.laneSpriteMaskContent.destroy();
+          object.laneSpriteMaskContent = null;
+        }
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
         this.objectIdsByNode.delete(object.node);
@@ -1497,6 +1534,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         node.alpha = command.color.alpha.value;
         node.tint = rgbTint(command.color.red.value, command.color.green.value, command.color.blue.value);
+        if (command.spriteFlipX !== undefined) {
+          if (object.spriteContent === null) throw new Error("Sprite flip requires a bound Sprite owner.");
+          object.spriteContent.scale.x = command.spriteFlipX ? -1 : 1;
+        }
         node.mask = command.maskObjectId === null
           ? null
           : this.objects.get(command.maskObjectId)!.node;
@@ -1605,7 +1646,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       if (leftRecord === undefined || rightRecord === undefined) {
         const externalLayer = (node: Container): boolean =>
           node.label === "GarupaSimulatorParticles" ||
-          node.label === "GarupaSimulatorParticlesHigh";
+          node.label === "GarupaSimulatorParticlesHigh" ||
+          node.label.startsWith("tap-lane-effect-sprite-mask:");
         if ((leftRecord === undefined && !externalLayer(left)) ||
           (rightRecord === undefined && !externalLayer(right))) {
           throw new Error("Pixi sibling ordering encountered an unowned scene object");
@@ -1628,7 +1670,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     );
     const ownedMasks = new Set(
       [...this.objects.values()].flatMap((value) =>
-        [value.maskContent, value.thresholdMaskContent].filter(
+        [value.maskContent, value.thresholdMaskContent, value.laneSpriteMaskContent].filter(
           (mask): mask is Graphics => mask !== null,
         )),
     );
@@ -1666,6 +1708,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           destroyMesh(value.geometryContent);
         } catch {
           cleanupFailures.push(`${renderObjectId}:geometry`);
+        }
+      }
+      if (value.laneSpriteMaskContent !== null && !value.laneSpriteMaskContent.destroyed) {
+        try {
+          value.node.setMask({ mask: null, inverse: false });
+          value.laneSpriteMaskContent.removeFromParent();
+          value.laneSpriteMaskContent.destroy();
+        } catch {
+          cleanupFailures.push(`${renderObjectId}:lane-sprite-mask`);
         }
       }
       if (!value.node.destroyed) {
@@ -1758,8 +1809,6 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private disposed = false;
   private moveTimeInProgress = false;
   private timelineSeconds = 0;
-  private lastPauseState: PauseControlSceneSnapshot["state"] | null = null;
-  private lastCountdownNumber: number | null = null;
   private readonly surfaceRevision: number;
 
   constructor(
@@ -1776,6 +1825,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     pinkButtonTexture: Texture,
     coverTexture: Texture,
     countdownTextures: readonly [Texture, Texture, Texture],
+    private readonly pauseCountdownAnimation: PauseCountdownAnimationProfile,
     private readonly fontFamily: string,
     layout: RehearsalControlSceneLayout,
     private readonly releaseOwner: (root: Container) => void,
@@ -1798,7 +1848,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     if (mode.isAutoLive) {
       const caption = layout.autoLiveCaptionBoundsTopLeft;
       const owner = new Container({ label: "auto-live-caption-root", sortableChildren: true });
-      owner.visible = false;
+      owner.visible = true;
+      owner.alpha = 0;
       owner.zIndex = 20;
       owner.eventMode = "none";
       const sceneAnchor = new Container({ label: "AutoLiveLabelRoot" });
@@ -1923,16 +1974,14 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.pauseButton.visible = displayVisible;
     this.rehearsalRoot.visible = displayVisible && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
     if (this.autoLiveCaptionRoot !== null) {
-      this.autoLiveCaptionRoot.visible = displayVisible && snapshot.mode.isAutoLive;
+      const hudAlpha = snapshot.hudAlpha ?? (snapshot.playable ? 1 : 0);
+      this.autoLiveCaptionRoot.visible = snapshot.mode.isAutoLive;
+      this.autoLiveCaptionRoot.alpha = snapshot.terminalPresentationActive ? 1 : hudAlpha;
     }
     const countdownNumber = snapshot.state === "resume-countdown"
       ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
       : null;
-    if (this.lastPauseState !== snapshot.state || this.lastCountdownNumber !== countdownNumber) {
-      this.rebuildModal(snapshot, countdownNumber);
-      this.lastPauseState = snapshot.state;
-      this.lastCountdownNumber = countdownNumber;
-    }
+    this.rebuildModal(snapshot, countdownNumber);
     return ok(undefined);
   }
 
@@ -1964,12 +2013,32 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.modalRoot.addChild(graph);
     this.persistentModalGraphs.set(graphKey, graph);
     if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
-      const owner = new Container({ label: "InGameCountDownAnimation" });
+      const owner = new Container({ label: "InGameCountDownAnimation", sortableChildren: true });
       owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
       owner.scale.set(snapshot.layout.controlScale);
-      const sprite = new Sprite({ texture: this.pauseTextures.countdown[countdownNumber - 1], label: "resume-countdown-sprite" });
-      sprite.anchor.set(0.5);
-      owner.addChild(sprite);
+      const contents = new Container({ label: "Contents", sortableChildren: true, visible: false });
+      const fill = new Graphics({ label: "Contents/Fill" }).rect(
+        -snapshot.layout.viewportWidth / snapshot.layout.controlScale / 2,
+        -snapshot.layout.viewportHeight / snapshot.layout.controlScale / 2,
+        snapshot.layout.viewportWidth / snapshot.layout.controlScale,
+        snapshot.layout.viewportHeight / snapshot.layout.controlScale,
+      ).fill(0xffffff);
+      fill.alpha = 0;
+      fill.zIndex = 0;
+      const addCount = (label: string, texture: Texture, x: number): Sprite => {
+        const sprite = new Sprite({ texture, label, visible: false });
+        sprite.anchor.set(0.5);
+        sprite.position.set(x, 0);
+        sprite.zIndex = 10;
+        contents.addChild(sprite);
+        return sprite;
+      };
+      contents.addChild(fill);
+      addCount("Contents/Count3", this.pauseTextures.countdown[2], 0);
+      addCount("Contents/Count2", this.pauseTextures.countdown[1], 0);
+      addCount("Contents/Count1", this.pauseTextures.countdown[0], -5);
+      addCount("Contents/Count1Fadeout", this.pauseTextures.countdown[0], -5);
+      owner.addChild(contents);
       graph.addChild(owner);
       this.updateCountdownGraph(graph, countdownNumber, snapshot);
       return;
@@ -2018,14 +2087,46 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     graph.sortChildren();
   }
 
-  private updateCountdownGraph(graph: Container, countdownNumber: number, snapshot: PauseControlSceneSnapshot): void {
+  private updateCountdownGraph(graph: Container, _countdownNumber: number, snapshot: PauseControlSceneSnapshot): void {
     const owner = graph.getChildByLabel("InGameCountDownAnimation", true) as Container | null;
-    const sprite = owner?.getChildByLabel("resume-countdown-sprite", true) as Sprite | null;
-    if (owner === null || sprite === null) throw new Error("Persistent countdown Prefab graph is incomplete.");
-    sprite.texture = this.pauseTextures.countdown[countdownNumber - 1];
-    sprite.position.set(countdownNumber === 1 ? -5 : 0, 0);
+    const contents = owner?.getChildByLabel("Contents", true) as Container | null;
+    if (owner === null || contents === null) throw new Error("Persistent countdown Prefab graph is incomplete.");
     owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
     owner.scale.set(snapshot.layout.controlScale);
+    const remaining = snapshot.resumeCountdownSecondsRemaining ?? this.pauseCountdownAnimation.callbackSeconds;
+    const elapsed = Math.fround(Math.max(0, this.pauseCountdownAnimation.callbackSeconds - remaining));
+    const sample = samplePauseCountdownClip(this.pauseCountdownAnimation.continueClip, elapsed);
+    const value = (channel: string): number => {
+      const current = sample.get(channel);
+      if (current === undefined) throw new Error(`Pause countdown channel is missing: ${channel}`);
+      return current;
+    };
+    const active = (path: string): boolean => value(`${path}.m_IsActive.value`) >= 0.5;
+    const alpha = (path: string): number => Math.max(0, Math.min(1, value(`${path}.mColor.a.value`)));
+    const transform = (path: string): void => {
+      const node = contents.getChildByLabel(path, true) as Sprite | null;
+      if (node === null) throw new Error(`Pause countdown component is missing: ${path}`);
+      node.visible = active(path);
+      node.scale.set(
+        value(`${path}.m_LocalScale.x`),
+        value(`${path}.m_LocalScale.y`),
+      );
+      node.alpha = alpha(path);
+    };
+    contents.visible = active("Contents");
+    transform("Contents/Count3");
+    transform("Contents/Count2");
+    transform("Contents/Count1");
+    transform("Contents/Count1Fadeout");
+    const fadeout = contents.getChildByLabel("Contents/Count1Fadeout", true) as Sprite | null;
+    if (fadeout === null) throw new Error("Pause Count1Fadeout is missing.");
+    fadeout.position.set(
+      value("Contents/Count1Fadeout.m_LocalPosition.x"),
+      -value("Contents/Count1Fadeout.m_LocalPosition.y"),
+    );
+    const fill = contents.getChildByLabel("Contents/Fill", true) as Graphics | null;
+    if (fill === null) throw new Error("Pause countdown Fill is missing.");
+    fill.alpha = Math.max(0, Math.min(1, value("Contents/Fill.mColor.a.value")));
   }
 
   private buildSerializedDialog(
@@ -2079,9 +2180,10 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const titleComponent = new Container({ label: titlePath });
     titleComponent.position.set(profile.title.position[0], profile.title.position[1]);
     titleComponent.zIndex = profile.title.depth;
-    const title = this.text(titleText, profile.title.fontSize, 0x333333,
+    const title = this.textBox(titleText, profile.title.fontSize, 0x333333,
       profile.identity === "RetryablePauseDialog" ? "pause-title"
-        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-title" : "abort-confirm-title");
+        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-title" : "abort-confirm-title",
+      profile.title.size[0], profile.title.size[1], profile.title.pivot);
     title.anchor.set(profile.title.pivot === "left" ? 0 : 0.5, 0.5);
     titleComponent.addChild(title);
     headerComponent.addChild(titleComponent);
@@ -2089,9 +2191,10 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const contentComponent = new Container({ label: paths.content });
     contentComponent.position.set(profile.content.position[0], profile.content.position[1]);
     contentComponent.zIndex = profile.content.depth;
-    const content = this.text(contentText, profile.content.fontSize, 0x333333,
+    const content = this.textBox(contentText, profile.content.fontSize, 0x333333,
       profile.identity === "RetryablePauseDialog" ? "pause-message"
-        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-message" : "abort-confirm-message");
+        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-message" : "abort-confirm-message",
+      profile.content.size[0], profile.content.size[1], profile.content.pivot);
     content.anchor.set(profile.content.pivot === "left" ? 0 : 0.5, 0.5);
     contentComponent.addChild(content);
     windowComponent.addChild(contentComponent);
@@ -2100,7 +2203,10 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       const annotationComponent = new Container({ label: paths.annotation });
       annotationComponent.position.set(profile.annotation.position[0], profile.annotation.position[1]);
       annotationComponent.zIndex = profile.annotation.depth;
-      const annotation = this.text(annotationText, profile.annotation.fontSize, 0x555555, "abort-confirm-annotation");
+      const annotation = this.textBox(
+        annotationText, profile.annotation.fontSize, 0x555555, "abort-confirm-annotation",
+        profile.annotation.size[0], profile.annotation.size[1], profile.annotation.pivot,
+      );
       annotation.anchor.set(0.5);
       annotationComponent.addChild(annotation);
       windowComponent.addChild(annotationComponent);
@@ -2129,8 +2235,11 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         anchor: { x: 0.5, y: 0.5 }, label: legacy,
       });
       button.zIndex = buttonProfile.spriteDepth;
-      const caption = this.text(buttonTexts[index]!, buttonProfile.fontSize,
-        buttonProfile.spriteName === "button_pink" ? 0xffffff : 0x555555, `${legacy}-label`);
+      const caption = this.textBox(
+        buttonTexts[index]!, buttonProfile.fontSize,
+        buttonProfile.spriteName === "button_pink" ? 0xffffff : 0x555555, `${legacy}-label`,
+        buttonProfile.labelSize[0], buttonProfile.labelSize[1], "center",
+      );
       caption.anchor.set(0.5);
       caption.position.set(buttonProfile.labelPosition[0], buttonProfile.labelPosition[1]);
       caption.zIndex = buttonProfile.labelDepth;
@@ -2150,6 +2259,38 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       },
       label,
     });
+  }
+  private textBox(
+    value: string,
+    size: number,
+    fill: number,
+    label: string,
+    width: number,
+    height: number,
+    pivot: "left" | "center",
+  ): Text {
+    if (![size, width, height].every((entry) => Number.isFinite(entry) && entry > 0)) {
+      throw new Error("Serialized Pause UILabel requires finite positive font and widget dimensions.");
+    }
+    const text = new Text({
+      text: value,
+      style: {
+        fill: linearTintFromSrgbColor(fill),
+        fontFamily: this.fontFamily,
+        fontSize: size,
+        fontWeight: "normal",
+        align: pivot === "left" ? "left" : "center",
+        wordWrap: true,
+        wordWrapWidth: width,
+        breakWords: true,
+        whiteSpace: "pre-line",
+        lineHeight: Math.fround(size * 1.2),
+      },
+      label,
+    });
+    text.anchor.set(pivot === "left" ? 0 : 0.5, 0.5);
+    text.hitArea = new Rectangle(pivot === "left" ? 0 : -width / 2, -height / 2, width, height);
+    return text;
   }
   private applyAvailability(): void {
     if (this.returnButton !== null) this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0 ? 0.45 : 1;
@@ -2350,6 +2491,7 @@ function applyGameClearHud(
   for (const row of branch.graph.objects) {
     const node = new Container({ label: `game-clear:${row.path}`, sortableChildren: true });
     applyGameClearInitialTransform(node, row);
+    if (!row.path.includes("/")) node.zIndex = 20;
     nodes.set(row.path, node);
   }
   for (const row of branch.graph.objects) {
@@ -3605,6 +3747,7 @@ function ensureScoreHighRankSprites(
   visual.animationLayer.position.copyFrom(progress.position);
   visual.animationLayer.visible = true;
   visual.scoreHighRankGeneration += 1;
+  const componentOwners = new Map<string, Container>();
   for (const node of animation.nodes) {
     const assetId = node.textureKey === "high-rank-kira"
       ? CURRENT_SCORE_HUD_BINDINGS.highRankKiraLogicalAssetId
@@ -3632,12 +3775,17 @@ function ensureScoreHighRankSprites(
       visual.serializedComponentNodes,
       `GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/${node.name}`,
     );
-    visual.animationLayer.addChild(componentOwner);
     componentOwner.addChild(sprite);
+    componentOwners.set(node.name, componentOwner);
     visual.scoreHighRankSprites.push(sprite);
     visual.scoreHighRankNodeNames.push(node.name);
     visual.scoreHighRankBaseScales.push(baseScale);
     retainScoreHighRankBinding(object, binding.key, referenceCounts);
+  }
+  for (const name of CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER) {
+    const componentOwner = componentOwners.get(name);
+    if (componentOwner === undefined) throw new Error(`ScoreGaugeSS sibling is missing: ${name}`);
+    visual.animationLayer.addChild(componentOwner);
   }
 }
 
@@ -4239,8 +4387,29 @@ function applySpatialSpriteTransform(
       Math.fround(command.scale.x.value * textureScale),
       Math.fround(command.scale.y.value * textureScale),
     );
+    if (object.role === "tap-lane-effect") ensureTapLaneEffectOutsideMask(object);
   }
   node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
+}
+
+function ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
+  if (object.laneSpriteMaskContent !== null) return;
+  const parent = object.node.parent;
+  if (!(parent instanceof Container)) throw new Error("Tap Lane SpriteMask requires the prepared renderer stage parent.");
+  const projection = object.resourceProfile.scene.projection;
+  const [leftWorld, bottomWorld, rightWorld, topWorld] = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK.worldBounds;
+  const left = Math.fround(projection.viewportWidth / 2 + leftWorld * projection.pixelsPerWorldUnit);
+  const top = Math.fround(projection.viewportHeight / 2 - topWorld * projection.pixelsPerWorldUnit);
+  const width = Math.fround((rightWorld - leftWorld) * projection.pixelsPerWorldUnit);
+  const height = Math.fround((topWorld - bottomWorld) * projection.pixelsPerWorldUnit);
+  const mask = new Graphics({ label: `tap-lane-effect-sprite-mask:${object.node.label}` })
+    .rect(left, top, width, height)
+    .fill(0xffffff);
+  mask.eventMode = "none";
+  mask.zIndex = object.node.zIndex;
+  parent.addChild(mask);
+  object.node.setMask({ mask, inverse: true });
+  object.laneSpriteMaskContent = mask;
 }
 
 function applyNoteSpatialTransform(

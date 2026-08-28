@@ -1,3 +1,19 @@
+export const CURRENT_TAP_LANE_EFFECT_SPRITE_MASK = Object.freeze({
+  interaction: "visible-outside" as const,
+  alphaCutoff: Math.fround(0.20000000298023224),
+  worldBounds: Object.freeze([
+    -3.5062605530564497,
+    -0.7779093277398701,
+    3.5062605530564497,
+    1.19371612133299,
+  ] as const),
+});
+
+export const CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER = Object.freeze([
+  "Flash", "BigStar_1", "BigStar_2",
+  "kira_1", "kira_2", "kira_3", "kira_4", "kira_5", "kira_6", "kira_7", "kira_8",
+] as const);
+
 export interface CurrentScoreGaugeSsWidgetProfile {
   readonly textureKey: "high-rank-kira" | "high-rank-long-star" | "high-rank-overlay";
   readonly width: number;

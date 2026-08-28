@@ -28,6 +28,7 @@ import {
   particleRejected,
 } from "../particleValidation";
 import { prepareCurrentParticleResources } from "../resources/particleResourcePreparation";
+import { createPixiParticleLinearColorFilter } from "./pixiParticleLinearColorFilter";
 
 export interface ParticlePixiTextureDecoder {
   decodePng(
@@ -68,6 +69,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private readonly uniqueBaseTextures = new Set<Texture>();
   private readonly uvTextures = new Map<string, Texture>();
   private readonly liveSprites: Sprite[] = [];
+  private readonly linearColorBySprite = new WeakMap<Sprite, readonly [number, number, number, number]>();
   private pending: PendingParticleFrame | null = null;
   private nextFrame: number | null = null;
   private lastSampleCount = 0;
@@ -349,6 +351,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     readonly rotation: number;
     readonly alpha: number;
     readonly tint: number;
+    readonly linearColor: readonly [number, number, number, number];
     readonly blendMode: string;
     readonly textureLabel: string;
     readonly sortingStage: "low" | "high";
@@ -361,6 +364,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       rotation: sprite.rotation,
       alpha: sprite.alpha,
       tint: Number(sprite.tint),
+      linearColor: this.linearColorBySprite.get(sprite) ?? Object.freeze([1, 1, 1, 1] as const),
       blendMode: String(sprite.blendMode),
       textureLabel: sprite.texture.label ?? "",
       sortingStage: sprite.parent === this.highSortingStage ? "high" : "low",
@@ -470,8 +474,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     const red = particleFloat32FromBits(sample.color.redBits)!;
     const green = particleFloat32FromBits(sample.color.greenBits)!;
     const blue = particleFloat32FromBits(sample.color.blueBits)!;
-    sprite.alpha = particleFloat32FromBits(sample.color.alphaBits)!;
-    sprite.tint = rgbTint(red, green, blue);
+    const alpha = particleFloat32FromBits(sample.color.alphaBits)!;
+    const linearColor = Object.freeze([red, green, blue, alpha] as const);
+    sprite.alpha = 1;
+    sprite.tint = 0xffffff;
+    if (typeof document !== "undefined") {
+      sprite.filters = [createPixiParticleLinearColorFilter(red, green, blue, alpha)];
+    }
+    this.linearColorBySprite.set(sprite, linearColor);
     sprite.blendMode = binding.blend;
     const systemOrdinal = this.systemSortOrdinals.get(sample.systemId);
     if (systemOrdinal === undefined) throw new Error("particle system sort identity is missing");
@@ -911,14 +921,6 @@ function addScaledBits(leftBits: string, rightBits: string, scale: number): numb
   );
 }
 
-function rgbTint(red: number, green: number, blue: number): number {
-  if (![red, green, blue].every((value) => Number.isFinite(value) && value >= 0 && value <= 1)) {
-    throw new Error("particle color outside portable tint domain");
-  }
-  const byte = (value: number) => Math.round(value * 255);
-  return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
-}
-
 function destroySprites(
   sprites: readonly Sprite[],
   ownerPrefix = "detached",
@@ -927,6 +929,8 @@ function destroySprites(
   for (const sprite of sprites) {
     try {
       sprite.removeFromParent();
+      for (const filter of sprite.filters ?? []) filter.destroy(true);
+      sprite.filters = null;
       if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
     } catch {
       failures.push(`${ownerPrefix}-sprite:${sprite.label}`);

@@ -207,6 +207,7 @@ export class TapLaneEffectOwner {
       color: color(1, 1, 1, alpha),
       ordering: ordering(position.z, state.slot),
       active: state.phase !== "disabled",
+      flipX: state.slot >= 8,
     });
   }
 }
