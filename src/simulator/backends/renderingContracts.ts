@@ -1,6 +1,7 @@
 import type { SimulatorResult } from "../engine/evidence";
 import type { OrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import type { GameClearRuntimeProfile } from "./resources/currentGameClearProfile";
+import type { PauseCountdownAnimationProfile } from "./resources/currentPauseCountdownAnimationProfile";
 
 export const RenderFidelityLabel = "HABAHIRO" as const;
 
@@ -225,6 +226,7 @@ export interface RenderResourceProfile {
   readonly scoreGaugeSsAnimation?: RenderScoreGaugeSsAnimationProfile;
   readonly ordinaryVisibleProfile?: OrdinaryVisibleProfile;
   readonly gameClearProfile?: GameClearRuntimeProfile;
+  readonly pauseCountdownAnimation?: PauseCountdownAnimationProfile;
 }
 
 export interface SimulatorResourceProvider {
@@ -403,6 +405,7 @@ export type RenderCommand =
       readonly color: RenderColor;
       readonly ordering: RenderOrderingKey;
       readonly maskObjectId: string | null;
+      readonly spriteFlipX?: boolean;
     })
   | (RenderObjectCommandBase & {
       readonly kind: "set-mesh";

@@ -54,7 +54,9 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
   requirement("render.ui-common", "atlas/bms/ui/uicommon", ["ui-common.png"]),
   requirement("render.rank-label-font", "fonts/sgm", ["rank-label-font.ttf"]),
   requirement("render.startup-information", "prefabs/bms/information", ["startup-line-star.png"]),
-  requirement("render.pause", "prefabs/bms/pause", ["countdown-1.png", "countdown-2.png", "countdown-3.png"]),
+  requirement("render.pause", "prefabs/bms/pause", [
+    "countdown-1.png", "countdown-2.png", "countdown-3.png", "countdown-animation-profile.json",
+  ]),
   requirement("render.score-gauge", "prefabs/bms/rhythmgamegauge/score", [
     "high-rank-kira.png", "high-rank-long-star.png", "high-rank-overlay.png", "score-gauge-ss-animation-profile.json",
   ]),

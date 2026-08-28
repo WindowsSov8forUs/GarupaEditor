@@ -2,6 +2,7 @@ import commonCatalogJson from "../engine/skin/commonRenderSemanticCatalog.json";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
+import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
 import {
   ImmutableLocalRenderResourceProvider,
   type LocalRenderResource,
@@ -56,21 +57,24 @@ export async function prepareLeasedCommonRenderResources(
     assets.push(profile);
     local.push(Object.freeze({ logicalAssetId: profile.logicalAssetId, bytes: bytes.value }));
   }
-  const [baseProfile, ordinaryVisible, scoreAnimation, gameClearProfile] = await Promise.all([
+  const [baseProfile, ordinaryVisible, scoreAnimation, gameClearProfile, pauseCountdownAnimation] = await Promise.all([
     readJson(lease, "portable/profiles/ordinary-render", "profile.json"),
     readJson(lease, "portable/profiles/ordinary-visible", "profile.json"),
     readJson(lease, "prefabs/bms/rhythmgamegauge/score", "score-gauge-ss-animation-profile.json"),
     readJson(lease, "prefabs/bms/gameclear", "game-clear-profile.json"),
+    readJson(lease, "prefabs/bms/pause", "countdown-animation-profile.json"),
   ]);
   if (baseProfile.status === "rejected") return baseProfile;
   if (ordinaryVisible.status === "rejected") return ordinaryVisible;
   if (scoreAnimation.status === "rejected") return scoreAnimation;
   if (gameClearProfile.status === "rejected") return gameClearProfile;
+  if (pauseCountdownAnimation.status === "rejected") return pauseCountdownAnimation;
   const base = record(baseProfile.value);
   const visible = parseCurrentOrdinaryVisibleProfile(ordinaryVisible.value);
   const score = parseCurrentScoreGaugeSsAnimationProfile(scoreAnimation.value);
   const gameClear = parseCurrentGameClearProfile(gameClearProfile.value);
-  if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null || gameClear === null) {
+  const pauseCountdown = parseCurrentPauseCountdownAnimationProfile(pauseCountdownAnimation.value);
+  if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null || gameClear === null || pauseCountdown === null) {
     return invalid("simulator.resources.common-profile-shape");
   }
   const provider = ImmutableLocalRenderResourceProvider.create(local);
@@ -87,6 +91,7 @@ export async function prepareLeasedCommonRenderResources(
     ordinaryVisibleProfile: visible,
     scoreGaugeSsAnimation: score,
     gameClearProfile: gameClear,
+    pauseCountdownAnimation: pauseCountdown,
   });
   return accepted(Object.freeze({ profile, provider: provider.value }));
 }

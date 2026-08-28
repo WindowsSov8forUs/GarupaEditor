@@ -5,6 +5,7 @@ import {
 } from "../engine/evidence";
 import { parseCurrentOrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import { parseCurrentGameClearProfile } from "./resources/currentGameClearProfile";
+import { parseCurrentPauseCountdownAnimationProfile } from "./resources/currentPauseCountdownAnimationProfile";
 import {
   RenderFidelityLabel,
   type RenderAtlasRow,
@@ -181,6 +182,15 @@ export function validateAndFreezeRenderProfile(
       "Game-clear object graphs and clips must preserve the current serialized portable profile.",
     );
   }
+  const pauseCountdownAnimation = profile.pauseCountdownAnimation === undefined
+    ? undefined
+    : parseCurrentPauseCountdownAnimationProfile(profile.pauseCountdownAnimation) ?? undefined;
+  if (profile.pauseCountdownAnimation !== undefined && pauseCountdownAnimation === undefined) {
+    return reject(
+      "render.profile.invalid-pause-countdown-animation",
+      "Pause resume requires the complete current persistent countdown graph and exact 25/10-curve clip profiles.",
+    );
+  }
 
   return ok(Object.freeze({
     schemaVersion: 1,
@@ -193,6 +203,7 @@ export function validateAndFreezeRenderProfile(
     scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
     ordinaryVisibleProfile,
     gameClearProfile,
+    pauseCountdownAnimation,
     scene: Object.freeze({
       profileId: scene.profileId,
       components: Object.freeze(

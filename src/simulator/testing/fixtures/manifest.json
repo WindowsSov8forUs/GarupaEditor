@@ -566,6 +566,13 @@
       "sha256": "2A2C26C9F2FF166777365C132BF66FB6FFA0561D98F125F6518E6F3687FB92B9"
     },
     {
+      "path": "reverse-snapshots/hud-particle-pause-terminal-strict-reaudit/artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json",
+      "sourceReverseCommit": "dbd009e75dc13b0f7de3cc03ab6339504e0355b7",
+      "sourcePath": "artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json",
+      "bytes": 214523,
+      "sha256": "B61BC615295B132540E0100AD9A6289D7C3B2F90185D88259CB89079222D00C2"
+    },
+    {
       "path": "reverse-snapshots/judge-display-logic/artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",
       "sourceReverseCommit": "a7faefdbdfd8eeb4f63c3e4077c7cc25de8357c3",
       "sourcePath": "artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",

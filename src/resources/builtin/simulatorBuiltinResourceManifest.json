@@ -424,6 +424,13 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png"
     },
     {
+      "path": "game/prefabs/bms/pause/countdown-animation-profile.json",
+      "byteLength": 35030,
+      "sha256": "EB6414AFC01AA77FCA63DC7BBEB54BE34A30FD7D1E565BA48CDE09D962114E56",
+      "sourceReverseCommit": "fa9b22a3132593c25de4797503310376edcc20c7",
+      "sourcePath": "artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json"
+    },
+    {
       "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png",
       "byteLength": 2002,
       "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D",
