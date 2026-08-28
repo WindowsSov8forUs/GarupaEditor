@@ -15,7 +15,8 @@ import { prepareSelectedSkinPortablePacks } from "./legacySkinPortablePack";
 import { prepareSkinRenderOverlay } from "../assembly/skinRenderPreparation";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { prepareSkinParticleProvider } from "../assembly/skinParticlePreparation";
-import { particleRejected } from "../backends/particleValidation";
+import { prepareLeasedDefaultParticleProvider } from "../assembly/leasedDefaultParticlePreparation";
+import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
@@ -38,6 +39,9 @@ async function main(): Promise<void> {
   const base = await fetchJson<RenderResourceProfile>("/render-profile.json");
   const scenario = await fetchJson<{ readonly kind: "default" | "limited3" }>("/selection.json");
   const laneParticleOracle = await fetchJson<any>("/lane-particle-oracle.json");
+  const defaultParticleMap = await fetchJson<{ readonly files: readonly {
+    readonly logicalPath: string; readonly mediaType: string; readonly byteLength: number; readonly url: string;
+  }[] }>("/default-particle-map.json");
   const recipe = requireOk(resolveOriginalSkinRecipe({
     noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0,
     directionalFlick: 0, directionalFlickEffect: 0, isFixedBG: false,
@@ -59,10 +63,24 @@ async function main(): Promise<void> {
   const packs = requireAccepted(await prepareSelectedSkinPortablePacks(selected.resources, store));
   const overlay = requireAccepted(await prepareSkinRenderOverlay(recipe, packs, CURRENT_ORDINARY_RENDER_BINDINGS));
   if (overlay === null) throw new Error("selected overlay absent");
+  const defaultParticleLease: SimulatorResourceLease = Object.freeze({
+    listFiles: (logicalResource: string) => logicalResource === "portable/profiles/default-particle"
+      ? Object.freeze(defaultParticleMap.files.map(({ logicalPath, mediaType, byteLength }) =>
+          Object.freeze({ logicalPath, mediaType, byteLength })))
+      : Object.freeze([]),
+    readBytes: async (logicalResource: string, logicalPath: string) => {
+      if (logicalResource !== "portable/profiles/default-particle") throw new Error("unexpected default particle resource");
+      const row = defaultParticleMap.files.find((candidate) => candidate.logicalPath === logicalPath);
+      if (row === undefined) throw new Error(`missing default particle file ${logicalPath}`);
+      return fetchBytes(row.url);
+    },
+    release: async () => {},
+  });
+  const defaultParticles = requireAccepted(await prepareLeasedDefaultParticleProvider(defaultParticleLease));
   const particleProvider = requireAccepted(prepareSkinParticleProvider(
     recipe,
     packs,
-    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+    defaultParticles,
   ));
   const scene = requireOk(createSimulatorSceneLayout({
     revision: 0, viewportWidth: 1600, viewportHeight: 720,

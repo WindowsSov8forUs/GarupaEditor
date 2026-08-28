@@ -16,8 +16,8 @@ const require = createRequire(import.meta.url);
 const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots", "autonomous-module", "artifacts", "investigations", "autonomous-simulator-portable-pack-10-1-4");
 const visibleProfilePath = join(
-  testingRoot,
-  "fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+  repositoryRoot,
+  "src/assets/game/portable/profiles/ordinary-visible/profile.json",
 );
 const visualFifthContractPath = join(
   testingRoot,

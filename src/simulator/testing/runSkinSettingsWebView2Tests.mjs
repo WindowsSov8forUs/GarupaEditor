@@ -20,6 +20,7 @@ const laneParticleOracle = join(
   fixtureRoot, "lane-particle-same-state", "artifacts", "investigations",
   "simulator-lane-judgement-particle-same-state-10-1-4", "lane_judgement_particle_same_state.json",
 );
+const defaultParticleRoot = join(repositoryRoot, "src/assets/game/portable/profiles/default-particle");
 const scenarios = Object.freeze([
   Object.freeze({ kind: "default", packRoot: join(fixtureRoot, "skin-settings", "default"), packCount: 8,
     roles: Object.freeze(["note", "field", "judge"]), background: false }),
@@ -89,7 +90,28 @@ function prepareStage(scenario) {
   stageFile("/selection.json", "selection.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ kind: scenario.kind })), allowlist);
   stageFile("/render-profile.json", "render-profile.json", "application/json; charset=utf-8", readFileSync(renderProfile), allowlist);
   stageFile("/lane-particle-oracle.json", "lane-particle-oracle.json", "application/json; charset=utf-8", readFileSync(laneParticleOracle), allowlist);
+  const defaultParticleFiles = [];
+  for (const source of walkFiles(defaultParticleRoot)) {
+    const logicalPath = source.slice(defaultParticleRoot.length + 1).replaceAll("\\", "/");
+    const name = `default-particle-${String(defaultParticleFiles.length).padStart(2, "0")}${logicalPath.endsWith(".png") ? ".png" : ".json"}`;
+    const route = `/assets/${name}`;
+    const mediaType = logicalPath.endsWith(".png") ? "image/png" : "application/json";
+    const bytes = readFileSync(source);
+    stageFile(route, name, mediaType, bytes, allowlist);
+    defaultParticleFiles.push({ logicalPath, mediaType, byteLength: bytes.byteLength, url: route });
+  }
+  stageFile("/default-particle-map.json", "default-particle-map.json", "application/json; charset=utf-8",
+    Buffer.from(JSON.stringify({ files: defaultParticleFiles })), allowlist);
   writeFileSync(join(stage, "allowlist.txt"), allowlist.map((row) => row.join("\t")).join("\n") + "\n");
+}
+function walkFiles(root) {
+  const output = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) output.push(...walkFiles(path));
+    else if (entry.isFile()) output.push(path);
+  }
+  return output.sort();
 }
 function stageFile(route, name, mime, bytes, allowlist) {
   writeFileSync(join(stage, name), bytes);
