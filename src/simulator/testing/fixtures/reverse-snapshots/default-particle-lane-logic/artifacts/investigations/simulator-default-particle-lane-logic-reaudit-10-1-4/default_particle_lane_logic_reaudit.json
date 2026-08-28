@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-default-particle-and-lane-logic-portable",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": [
+    {
+      "path": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_master_catalog.json",
+      "bytes": 62897,
+      "sha256": "6392D441EB3B57552702A4C765811C76486CFC3BD42389EE9DE5962BECC29BF6"
+    },
+    {
+      "path": "artifacts/investigations/simulator-skin-switching-static-contract-10-1-4/simulator_skin_switching_static_contract.json",
+      "bytes": 35675,
+      "sha256": "55A97339BB44E813C165B45F60C65ECF944359926669128530C2F465040C9DB8"
+    },
+    {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
+      "bytes": 9920,
+      "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
+    },
+    {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_runtime_contract.json",
+      "bytes": 70866,
+      "sha256": "4B0CA31A55B888052C776C82680F628D6CE5EF2EFF9E9FA0C687613B9195C17B"
+    },
+    {
+      "path": "artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json",
+      "bytes": 62962,
+      "sha256": "49B7A6D94D4F5FD145B6DD8CBF1CB277D47F1FAA1C6F8840A97EE9FC50B6B7F7"
+    },
+    {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
+      "bytes": 5232,
+      "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432"
+    },
+    {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/arm64/0387cfd4__GamePlayButton_NoteLaneEffectAnimatedOff.arm64.tsv",
+      "bytes": 1528,
+      "sha256": "A89E0899435758DA402A082360E1722E4090D46E87CDC779E10A8A6ED3D24A92"
+    },
+    {
+      "path": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/arm64/0387e044__GamePlayButton_ExecUpdate.arm64.tsv",
+      "bytes": 334,
+      "sha256": "7B50803BD155F9018880A126B62C73343D17FD536C780063FAA2836ECACA7584"
+    }
+  ],
+  "terminology": {
+    "defaultParticleSelection": "The persisted normal TapEffect setting value 0 resolves through the first current master row to skinEffectId 1 / assetBundleName skin00.",
+    "selectedParticleSelection": "An explicit normal or eligible special component selection replaces the default identity through the component-specific resolver; id 1 is not hard-coded over an explicit selection.",
+    "particleInitialModule": "ParticleSystem InitialModule is per-system emission data and is not the same concept as the default TapEffect skin selection.",
+    "prohibition": "Do not call skin00 an unconditional initial particle, and do not silently fall back to it when an explicit selected package fails validation."
+  },
+  "defaultSelection": {
+    "publicSettingIndex": 0,
+    "masterId": 1,
+    "bundleName": "skin00",
+    "ordinaryLogicalResource": "ingameskin/tapeffect/skin00",
+    "directionalLogicalResources": [
+      "ingameskin/tapeffect/directionalflickskin00normal",
+      "ingameskin/tapeffect/directionalflickskin00light"
+    ],
+    "normalAssembly": "ButtonManager.ExecAwakeStart -> getEffectSkinBundleName -> createTapEffectLoader",
+    "normalIdentity": "InGameCalculatedData.TapEffect -> MasterSkinEffect",
+    "specialIdentity": "selected aggregate effectSkinAssetBundleName",
+    "specialGate": "changeEffectSkinFlg AND specialSkinTapEffectState On AND mode != 6 AND not practice",
+    "rootCount": 6
+  },
+  "lane": {
+    "fixedOwnerCount": 13,
+    "textureRoute": [
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_1",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_4",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_3",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_2",
+      "NoteLaneEffect_1"
+    ],
+    "bottomCenterPivot": true,
+    "onAndOffReserveSameOuter": true,
+    "offReserveCounter": 2,
+    "reserveOrder": [
+      "Judgement calls NoteLaneEffectOn then NoteLaneEffectOffReserve in one outer update.",
+      "The same outer GamePlayButton.ExecUpdate decrements 2 to 1.",
+      "The following outer update decrements 1 to 0 and calls NoteLaneEffectAnimatedOff.",
+      "AnimatedOff enables the Animator and calls Animator.Play(FadeOut, layer 0, normalizedTime 0)."
+    ],
+    "fadeClip": {
+      "name": "NoteLaneEffectAnimationFadeOut",
+      "sampleRate": 60.0,
+      "durationSeconds": 0.1666666716337204,
+      "loop": false,
+      "scaleXY": [
+        1.0,
+        0.699999988079071
+      ],
+      "redGreen": [
+        1.0,
+        0.0
+      ],
+      "blueAlpha": [
+        1.0,
+        1.0
+      ],
+      "timeDomain": "Unity Animator elapsed time after Play; sampleRate describes clip samples and does not authorize one production animation sample per host outer frame.",
+      "portableSampling": [
+        {
+          "elapsedSeconds": 0.0,
+          "normalizedTime": 0.0,
+          "scaleXY": 1.0,
+          "redGreen": 1.0,
+          "blueAlpha": 1.0,
+          "active": true
+        },
+        {
+          "elapsedSeconds": 0.008333333767950535,
+          "normalizedTime": 0.05000000074505806,
+          "scaleXY": 0.9850000143051147,
+          "redGreen": 0.949999988079071,
+          "blueAlpha": 1.0,
+          "active": true
+        },
+        {
+          "elapsedSeconds": 0.01666666753590107,
+          "normalizedTime": 0.10000000149011612,
+          "scaleXY": 0.9700000286102295,
+          "redGreen": 0.8999999761581421,
+          "blueAlpha": 1.0,
+          "active": true
+        },
+        {
+          "elapsedSeconds": 0.0833333358168602,
+          "normalizedTime": 0.5,
+          "scaleXY": 0.8500000238418579,
+          "redGreen": 0.5,
+          "blueAlpha": 1.0,
+          "active": true
+        },
+        {
+          "elapsedSeconds": 0.1666666716337204,
+          "normalizedTime": 1.0,
+          "scaleXY": 0.699999988079071,
+          "redGreen": 0.0,
+          "blueAlpha": 1.0,
+          "active": false
+        }
+      ]
+    },
+    "retrigger": "On restarts Idle immediately and cancels any prior FadeOut phase for the same owner.",
+    "cleanup": [
+      "pause",
+      "movetime",
+      "retry",
+      "game-clear",
+      "dispose"
+    ],
+    "portableRequirement": "Reserve counter remains outer-update ordered, but FadeOut visual mutation advances by finite non-negative elapsed seconds and is cadence independent. No viewport or pixel correction is permitted."
+  },
+  "particle": {
+    "routeRoots": [
+      "ordinary:effect_tap_perfect",
+      "ordinary:effect_tap_swipe",
+      "directional:effect_tap_directional_flick_l",
+      "directional:effect_tap_directional_flick_r",
+      "directional:effect_tap_directional_flick_l_finger",
+      "directional:effect_tap_directional_flick_r_finger"
+    ],
+    "gamePlayButtonAnchorRequired": true,
+    "fullSystemParentChainRequired": true,
+    "sorting": "ParticleSystemRenderer sortingOrder, then system identity and creation sequence; lane sortingOrder 0 remains below particle orders 1/5/50",
+    "flickRoot": "ordinary:effect_tap_swipe",
+    "noFallback": true
+  },
+  "closure": {
+    "unknown": [],
+    "blocking": [],
+    "fixedDeviceFramebufferExact": false
+  }
+}

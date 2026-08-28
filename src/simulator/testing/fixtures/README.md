@@ -8,6 +8,7 @@
 - 新证据必须先进入已推送的 Reverse，再按测试需要提取最小快照；不得从GarupaEditor本地工作记录反向生成证据。
 - `reverse-snapshots/audio/` 仅包含 AU-C01–AU-C40 的 command/PCM oracle、32-byte 项目自制数值输入和 19,264-byte 可移植 PCM expected；不含原作或外部音频资源，也不声明 CRI/browser/hardware 波形等价。
 - `reverse-snapshots/device-closure/` 包含已推送 Reverse `9fb544b2` 的 portable policy/profile/route、command/simulation/semantic-frame oracle、97行双门closure、difference matrix，以及8个逻辑纹理对应的7个去重PNG；PNG解码RGBA与current资源像素SHA一致，但不声明Unity shader、GPU、driver或framebuffer parity。
+- `reverse-snapshots/default-particle-lane-logic/` 只包含已推送Reverse `2f94aa2b`的最小再审合同：区分normal setting 0→master effect id1/`skin00`默认选择、explicit selected Skin和ParticleSystem InitialModule，并关闭13槽reserve outer-order与0.1666667秒Animator elapsed-time FadeOut；不复制1.5MB粒子profile、Skin包、APK或原作帧，不允许截图像素偏移。
 - `reverse-snapshots/score-hud-rank-gauge/` 包含已推送 Reverse `95e629d9` 的普通单人Score HUD/Rank/Gauge portable contract、SS 56-curve动画profile、6个hash锁定PNG及current sgm Rank标签字体，仅用于阈值/Float32边界、动画采样oracle及shared-store资源完整性测试。
 - `reverse-snapshots/ordinary-visible-rendering/` 包含已推送 Reverse `f94947d9` 的普通Note动画与通用单人HUD contract/profile/oracle及4个去重PNG；closure/manifest已按Reverse `7629a508`同步UnityPy导出PNG direct-row坐标纠正，并按Reverse `50bc40b6`登记4个GamePlayButton lane-effect PNG。RhythmGameUI与sgm字体复用既有Score快照身份，不重复保存。该快照授权portable production消费，但不声明设备GPU/framebuffer exact。
 - `reverse-snapshots/visual-layout-correction/` 只包含已推送Reverse `28b6a790`的HUD StarUIAnchor、Field UITexture/Bottom pivot、unclipped UIPanel与Judge Button4父链最小合同；不复制level3、脚本表、截图或Reverse工作输入。

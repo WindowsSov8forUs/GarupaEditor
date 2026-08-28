@@ -12,7 +12,7 @@ import {
 const SLOT_COUNT = 13;
 const TEXTURES = Object.freeze([0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1, 0] as const);
 const OFF_RESERVE_UPDATES = 2;
-const FADE_FRAMES = 10;
+const FADE_DURATION_SECONDS = Math.fround(1 / 6);
 
 export type TapLaneEffectPhase = "disabled" | "idle" | "fading";
 
@@ -20,7 +20,7 @@ interface TapLaneEffectSlotState {
   readonly slot: number;
   readonly phase: TapLaneEffectPhase;
   readonly reserveCounter: number;
-  readonly fadeFrame: number;
+  readonly fadeElapsedSeconds: number;
 }
 
 export interface TapLaneEffectSnapshot {
@@ -97,7 +97,7 @@ export class TapLaneEffectOwner {
       projected[slot] = event.kind === "on"
         ? frozenSlot(slot, "idle", -1, 0)
         : event.kind === "off-reserve"
-          ? frozenSlot(slot, current.phase, OFF_RESERVE_UPDATES, current.fadeFrame)
+          ? frozenSlot(slot, current.phase, OFF_RESERVE_UPDATES, current.fadeElapsedSeconds)
           : frozenSlot(slot, "fading", -1, 0);
       changed.add(slot);
     }
@@ -121,9 +121,16 @@ export class TapLaneEffectOwner {
     return this.prepareProjected(projected, changed);
   }
 
-  preflightAdvance(): SimulatorResult<TapLaneEffectTransaction | null> {
+  preflightAdvance(deltaTimeSeconds: number): SimulatorResult<TapLaneEffectTransaction | null> {
     if (!this.initialized) return unavailable();
+    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      return rejected(
+        "render.tap-lane-effect.invalid-delta",
+        "Lane FadeOut advances by one finite non-negative elapsed-time delta, never by an assumed host-frame count.",
+      );
+    }
     if (!this.visible) return ok(null);
+    const delta = Math.fround(deltaTimeSeconds);
     const projected = [...this.slots];
     const changed = new Set<number>();
     let stateChanged = false;
@@ -133,16 +140,16 @@ export class TapLaneEffectOwner {
         const counter = current.reserveCounter - 1;
         projected[slot] = counter === 0
           ? frozenSlot(slot, "fading", -1, 0)
-          : frozenSlot(slot, current.phase, counter, current.fadeFrame);
+          : frozenSlot(slot, current.phase, counter, current.fadeElapsedSeconds);
         stateChanged = true;
         if (counter === 0) changed.add(slot);
         continue;
       }
-      if (current.phase !== "fading") continue;
-      const frame = current.fadeFrame + 1;
-      projected[slot] = frame >= FADE_FRAMES
+      if (current.phase !== "fading" || delta === 0) continue;
+      const elapsed = Math.fround(current.fadeElapsedSeconds + delta);
+      projected[slot] = elapsed >= FADE_DURATION_SECONDS
         ? frozenSlot(slot, "disabled", -1, 0)
-        : frozenSlot(slot, "fading", -1, frame);
+        : frozenSlot(slot, "fading", -1, elapsed);
       changed.add(slot);
       stateChanged = true;
     }
@@ -184,7 +191,7 @@ export class TapLaneEffectOwner {
   private renderState(state: TapLaneEffectSlotState): TapLaneEffectRenderState {
     const position = this.scene.tapLaneEffectPositions[state.slot]!;
     const progress = state.phase === "fading"
-      ? Math.fround(state.fadeFrame / FADE_FRAMES)
+      ? Math.fround(Math.min(state.fadeElapsedSeconds / FADE_DURATION_SECONDS, 1))
       : Math.fround(0);
     const scale = state.phase === "fading"
       ? Math.fround(Math.fround(1) - Math.fround(Math.fround(0.3) * progress))
@@ -219,8 +226,8 @@ function judgementSlot(buttonTypes: readonly number[]): number | null {
   return slot >= 0 && slot < SLOT_COUNT ? slot : null;
 }
 
-function frozenSlot(slot: number, phase: TapLaneEffectPhase, reserveCounter: number, fadeFrame: number): TapLaneEffectSlotState {
-  return Object.freeze({ slot, phase, reserveCounter, fadeFrame });
+function frozenSlot(slot: number, phase: TapLaneEffectPhase, reserveCounter: number, fadeElapsedSeconds: number): TapLaneEffectSlotState {
+  return Object.freeze({ slot, phase, reserveCounter, fadeElapsedSeconds: Math.fround(fadeElapsedSeconds) });
 }
 function vector2(x: number, y: number): RenderVector2 { return Object.freeze({ x: f32(x), y: f32(y) }); }
 function color(red: number, green: number, blue: number, alpha: number): RenderColor {

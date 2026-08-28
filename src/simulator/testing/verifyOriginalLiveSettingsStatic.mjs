@@ -58,9 +58,13 @@ for (const required of [
   "preflightTapLaneEffectSetup", "preflightTapLaneEffectUpdate", "tap-lane-effect",
 ]) if (!render.includes(required)) throw new Error(`render setting consumer missing: ${required}`);
 for (const required of [
-  "const SLOT_COUNT = 13", "const OFF_RESERVE_UPDATES = 2", "const FADE_FRAMES = 10",
+  "const SLOT_COUNT = 13", "const OFF_RESERVE_UPDATES = 2", "const FADE_DURATION_SECONDS = Math.fround(1 / 6)",
   "[0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1, 0]", "preflightInputEvents", "preflightJudgement", "preflightAllOff",
+  "preflightAdvance(deltaTimeSeconds: number)", "state.fadeElapsedSeconds / FADE_DURATION_SECONDS",
 ]) if (!tap.includes(required)) throw new Error(`tap lane owner missing: ${required}`);
+for (const forbidden of ["FADE_FRAMES", "fadeFrame"]) {
+  if (tap.includes(forbidden)) throw new Error(`host-frame Lane animation remains: ${forbidden}`);
+}
 for (const file of [
   "tap-lane-effect-1.png", "tap-lane-effect-2.png", "tap-lane-effect-3.png", "tap-lane-effect-4.png",
 ]) if (!visibleManifest.includes(file)) throw new Error(`tap lane leased resource identity missing: ${file}`);

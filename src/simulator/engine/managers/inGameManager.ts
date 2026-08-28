@@ -393,7 +393,7 @@ export class InGameManager {
         }
       }
     }
-    const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance() ?? null;
+    const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance(deltaTimeSeconds) ?? null;
     if (tapLaneEffectAdvance?.status === "integrity-failure") {
       return this.latchFault(tapLaneEffectAdvance);
     }

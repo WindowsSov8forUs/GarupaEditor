@@ -73,8 +73,8 @@ async function main(): Promise<void> {
   const off = requireOk(owner.preflightInputEvents([{ buttonType: 3, kind: "animated-off" }]));
   if (off === null) throw new Error("animated off did not preflight");
   requireOk(off.commit());
-  for (let frame = 0; frame < 10; frame += 1) {
-    const advance = requireOk(owner.preflightAdvance());
+  for (let frame = 0; frame < 11 && owner.snapshot().activeCount !== 0; frame += 1) {
+    const advance = requireOk(owner.preflightAdvance(1 / 60));
     if (advance !== null) requireOk(advance.commit());
   }
   app.render();

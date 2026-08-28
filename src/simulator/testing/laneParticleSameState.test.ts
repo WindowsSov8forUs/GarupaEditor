@@ -23,12 +23,22 @@ const secondOracle = JSON.parse(readFileSync(join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
 ), "utf8"));
+const logicOracle = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/default-particle-lane-logic/artifacts/investigations/simulator-default-particle-lane-logic-reaudit-10-1-4/default_particle_lane_logic_reaudit.json",
+), "utf8"));
 
 function main(): void {
   assert.equal(oracle.status, "confirmed-current-lane-judgement-particle-same-state-portable");
   assert.equal(oracle.authority.browserOrGarupaFrameAsOracle, false);
   assert.equal(oracle.defaultSelection.skin_effect_id, 1);
   assert.equal(oracle.defaultSelection.asset_bundle_name, "skin00");
+  assert.deepEqual(
+    [logicOracle.defaultSelection.publicSettingIndex, logicOracle.defaultSelection.masterId, logicOracle.defaultSelection.bundleName],
+    [0, 1, "skin00"],
+  );
+  assert.match(logicOracle.terminology.particleInitialModule, /not the same concept/);
+  assert.match(logicOracle.terminology.prohibition, /explicit selected package/);
   verifyLaneLifecycle();
   verifyDirectionalFingerRoute();
   verifySerializedParticleParents();
@@ -66,19 +76,19 @@ function verifyLaneLifecycle(): void {
   assert.notEqual(judgement, null);
   requireOk(judgement!.commit());
   let slot = owner.snapshot().slots[5]!;
-  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeFrame], ["idle", oracle.lane.offReserveCounter, 0]);
+  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeElapsedSeconds], ["idle", oracle.lane.offReserveCounter, 0]);
 
-  const sameOuter = requireOk(owner.preflightAdvance());
+  const sameOuter = requireOk(owner.preflightAdvance(1 / 60));
   assert.notEqual(sameOuter, null, "the same outer update owns the counter-only mutation");
   requireOk(sameOuter!.commit());
   slot = owner.snapshot().slots[5]!;
   assert.deepEqual([slot.phase, slot.reserveCounter], ["idle", 1]);
 
-  const followingOuter = requireOk(owner.preflightAdvance());
+  const followingOuter = requireOk(owner.preflightAdvance(1 / 60));
   assert.notEqual(followingOuter, null);
   requireOk(followingOuter!.commit());
   slot = owner.snapshot().slots[5]!;
-  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeFrame], ["fading", -1, 0]);
+  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeElapsedSeconds], ["fading", -1, 0]);
   const fadeStart = updates[updates.length - 1]![0]!;
   assert.deepEqual([fadeStart.scale.x.value, fadeStart.scale.y.value], [1, 1]);
   assert.deepEqual([fadeStart.color.red.value, fadeStart.color.green.value, fadeStart.color.blue.value, fadeStart.color.alpha.value], [1, 1, 1, 1]);
@@ -86,17 +96,31 @@ function verifyLaneLifecycle(): void {
   const retrigger = requireOk(owner.preflightJudgement(oneFrame(1, [2, 3])));
   requireOk(retrigger!.commit());
   slot = owner.snapshot().slots[5]!;
-  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeFrame], ["idle", 2, 0]);
+  assert.deepEqual([slot.phase, slot.reserveCounter, slot.fadeElapsedSeconds], ["idle", 2, 0]);
 
   const directOff = requireOk(owner.preflightInputEvents([{ buttonType: 1, kind: "on" }]));
   requireOk(directOff!.commit());
   const animated = requireOk(owner.preflightInputEvents([{ buttonType: 1, kind: "animated-off" }]));
   requireOk(animated!.commit());
-  for (let frame = 0; frame < oracle.lane.fadeNominalFrames; frame += 1) {
-    const advance = requireOk(owner.preflightAdvance());
+  for (let frame = 0; frame < 10; frame += 1) {
+    const advance = requireOk(owner.preflightAdvance(1 / 120));
+    if (advance !== null) requireOk(advance.commit());
+  }
+  assert.equal(owner.snapshot().slots[2]!.phase, "fading",
+    "ten 120 Hz host updates are only half of the 0.1666667-second Animator clip");
+  const halfFade = updates[updates.length - 1]![0]!;
+  assert.ok(Math.abs(halfFade.scale.x.value - 0.85) < 0.00001);
+  assert.ok(Math.abs(halfFade.color.red.value - 0.5) < 0.00001);
+  for (let frame = 0; frame < 11 && owner.snapshot().slots[2]!.phase !== "disabled"; frame += 1) {
+    const advance = requireOk(owner.preflightAdvance(1 / 120));
     if (advance !== null) requireOk(advance.commit());
   }
   assert.equal(owner.snapshot().slots[2]!.phase, "disabled");
+  const invalidDelta = owner.preflightAdvance(Number.NaN);
+  assert.equal(invalidDelta.status, "integrity-failure");
+  if (invalidDelta.status === "integrity-failure") {
+    assert.equal(invalidDelta.capability, "render.tap-lane-effect.invalid-delta");
+  }
   let allOff = requireOk(owner.preflightAllOff());
   if (allOff !== null) requireOk(allOff.commit());
   assert.equal(owner.snapshot().activeCount, 0);
