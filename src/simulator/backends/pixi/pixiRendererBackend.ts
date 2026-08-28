@@ -234,6 +234,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly decodedFonts = new Map<string, PixiDecodedFont>();
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
+  private tapLaneEffectOutsideMask: Graphics | null = null;
+  private readonly tapLaneEffectMaskConsumers = new Set<Container>();
   private profile: RenderResourceProfile | null = null;
   private surfaceLayout: OriginalSurfaceLayout | null = null;
 
@@ -1075,6 +1077,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       if (value.geometryContent !== null) {
         release(`${renderObjectId}:geometry`, () => destroyMesh(value.geometryContent!));
       }
+      if (value.laneSpriteMaskContent !== null) {
+        release(`${renderObjectId}:lane-mask-consumer`, () => this.detachTapLaneEffectMaskConsumer(value));
+      }
       release(`${renderObjectId}:node`, () => {
         value.node.removeFromParent();
         value.node.destroy({ children: true } as DestroyOptions);
@@ -1093,6 +1098,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         release(`pending:${batchIndex}:node:${sequence}`, () => node.destroy({ children: true } as DestroyOptions));
       }
     }
+    release("tap-lane-effect-mask-owner", () => this.destroyTapLaneEffectMaskOwner());
     for (const [bindingKey, texture] of this.spriteTextures) {
       release(`sprite-texture:${bindingKey}`, () => texture.destroy(false));
     }
@@ -1469,12 +1475,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.hudVisual?.scoreHighRankSoftClipFilter?.destroy();
         if (object.hudVisual !== null) object.hudVisual.scoreHighRankSoftClipFilter = null;
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
-        if (object.laneSpriteMaskContent !== null) {
-          object.node.setMask({ mask: null, inverse: false });
-          object.laneSpriteMaskContent.removeFromParent();
-          object.laneSpriteMaskContent.destroy();
-          object.laneSpriteMaskContent = null;
-        }
+        this.detachTapLaneEffectMaskConsumer(object);
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
         this.objectIdsByNode.delete(object.node);
@@ -1518,6 +1519,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         if (command.binding === "sprite" && object.lastTransform !== null && spatialSpriteRole(object.role)) {
           applySpatialSpriteTransform(object, object.lastTransform, this.profile!);
+          if (object.role === "tap-lane-effect") this.ensureTapLaneEffectOutsideMask(object);
         }
         return;
       }
@@ -1538,9 +1540,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           if (object.spriteContent === null) throw new Error("Sprite flip requires a bound Sprite owner.");
           object.spriteContent.scale.x = command.spriteFlipX ? -1 : 1;
         }
-        node.mask = command.maskObjectId === null
-          ? null
-          : this.objects.get(command.maskObjectId)!.node;
+        if (object.role === "tap-lane-effect") {
+          if (command.maskObjectId !== null) {
+            throw new Error("Tap Lane SpriteRenderer uses only the serialized shared MaskImage, not a command-owned mask.");
+          }
+          this.ensureTapLaneEffectOutsideMask(object);
+        } else {
+          node.mask = command.maskObjectId === null
+            ? null
+            : this.objects.get(command.maskObjectId)!.node;
+        }
         object.ordering = Object.freeze([
           command.ordering.domainLayer,
           command.ordering.sourceDepthOrSortingOrder,
@@ -1710,13 +1719,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           cleanupFailures.push(`${renderObjectId}:geometry`);
         }
       }
-      if (value.laneSpriteMaskContent !== null && !value.laneSpriteMaskContent.destroyed) {
+      if (value.laneSpriteMaskContent !== null) {
         try {
-          value.node.setMask({ mask: null, inverse: false });
-          value.laneSpriteMaskContent.removeFromParent();
-          value.laneSpriteMaskContent.destroy();
+          this.detachTapLaneEffectMaskConsumer(value);
         } catch {
-          cleanupFailures.push(`${renderObjectId}:lane-sprite-mask`);
+          cleanupFailures.push(`${renderObjectId}:lane-sprite-mask-consumer`);
         }
       }
       if (!value.node.destroyed) {
@@ -1727,6 +1734,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           cleanupFailures.push(`${renderObjectId}:node`);
         }
       }
+    }
+    try {
+      this.destroyTapLaneEffectMaskOwner();
+    } catch {
+      cleanupFailures.push("tap-lane-effect-mask-owner");
     }
     for (const [batchIndex, pendingValue] of pendingValues.entries()) {
       for (const [sequence, mesh] of pendingValue.reservedGeometry) {
@@ -1759,6 +1771,73 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
     }
     return Object.freeze(cleanupFailures);
+  }
+
+  private ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
+    if (object.laneSpriteMaskContent !== null) {
+      if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+        object.node.mask !== this.tapLaneEffectOutsideMask ||
+        !this.tapLaneEffectMaskConsumers.has(object.node)) {
+        throw new Error("Tap Lane SpriteMask consumer must retain the single scene-owned MaskImage identity.");
+      }
+      return;
+    }
+    if (object.node.parent !== this.stage) {
+      throw new Error("Tap Lane SpriteMask requires the prepared renderer stage parent.");
+    }
+    let mask = this.tapLaneEffectOutsideMask;
+    if (mask === null) {
+      const projection = object.resourceProfile.scene.projection;
+      const [leftWorld, bottomWorld, rightWorld, topWorld] = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK.worldBounds;
+      const left = Math.fround(projection.viewportWidth / 2 + leftWorld * projection.pixelsPerWorldUnit);
+      const top = Math.fround(projection.viewportHeight / 2 - topWorld * projection.pixelsPerWorldUnit);
+      const width = Math.fround((rightWorld - leftWorld) * projection.pixelsPerWorldUnit);
+      const height = Math.fround((topWorld - bottomWorld) * projection.pixelsPerWorldUnit);
+      mask = new Graphics({ label: "tap-lane-effect-sprite-mask:MaskImage" })
+        .rect(left, top, width, height)
+        .fill(0xffffff);
+      mask.eventMode = "none";
+      mask.zIndex = object.node.zIndex;
+      this.stage.addChild(mask);
+      this.tapLaneEffectOutsideMask = mask;
+    }
+    object.node.setMask({ mask, inverse: true });
+    object.laneSpriteMaskContent = mask;
+    this.tapLaneEffectMaskConsumers.add(object.node);
+    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+  }
+
+  private detachTapLaneEffectMaskConsumer(object: PixiObjectRecord): void {
+    if (object.laneSpriteMaskContent === null) return;
+    if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+      !this.tapLaneEffectMaskConsumers.has(object.node)) {
+      throw new Error("Tap Lane SpriteMask consumer identity diverged from the scene-owned MaskImage.");
+    }
+    object.node.mask = null;
+    this.tapLaneEffectMaskConsumers.delete(object.node);
+    object.laneSpriteMaskContent = null;
+    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+  }
+
+  private excludeTapLaneEffectMaskFromOrdinaryDraw(): void {
+    const mask = this.tapLaneEffectOutsideMask;
+    if (mask === null || mask.destroyed) return;
+    // Pixi StencilMask.reset() restores these flags when one of several consumers
+    // is removed. The serialized MaskImage is one shared scene owner and must never
+    // enter the ordinary color pass while another Lane SpriteRenderer still refers to it.
+    mask.includeInBuild = false;
+    mask.measurable = false;
+  }
+
+  private destroyTapLaneEffectMaskOwner(): void {
+    const mask = this.tapLaneEffectOutsideMask;
+    for (const consumer of this.tapLaneEffectMaskConsumers) consumer.mask = null;
+    this.tapLaneEffectMaskConsumers.clear();
+    this.tapLaneEffectOutsideMask = null;
+    if (mask !== null && !mask.destroyed) {
+      mask.removeFromParent();
+      mask.destroy();
+    }
   }
 
   private resetPreparedTextures(): void {
@@ -4387,29 +4466,8 @@ function applySpatialSpriteTransform(
       Math.fround(command.scale.x.value * textureScale),
       Math.fround(command.scale.y.value * textureScale),
     );
-    if (object.role === "tap-lane-effect") ensureTapLaneEffectOutsideMask(object);
   }
   node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
-}
-
-function ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
-  if (object.laneSpriteMaskContent !== null) return;
-  const parent = object.node.parent;
-  if (!(parent instanceof Container)) throw new Error("Tap Lane SpriteMask requires the prepared renderer stage parent.");
-  const projection = object.resourceProfile.scene.projection;
-  const [leftWorld, bottomWorld, rightWorld, topWorld] = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK.worldBounds;
-  const left = Math.fround(projection.viewportWidth / 2 + leftWorld * projection.pixelsPerWorldUnit);
-  const top = Math.fround(projection.viewportHeight / 2 - topWorld * projection.pixelsPerWorldUnit);
-  const width = Math.fround((rightWorld - leftWorld) * projection.pixelsPerWorldUnit);
-  const height = Math.fround((topWorld - bottomWorld) * projection.pixelsPerWorldUnit);
-  const mask = new Graphics({ label: `tap-lane-effect-sprite-mask:${object.node.label}` })
-    .rect(left, top, width, height)
-    .fill(0xffffff);
-  mask.eventMode = "none";
-  mask.zIndex = object.node.zIndex;
-  parent.addChild(mask);
-  object.node.setMask({ mask, inverse: true });
-  object.laneSpriteMaskContent = mask;
 }
 
 function applyNoteSpatialTransform(
