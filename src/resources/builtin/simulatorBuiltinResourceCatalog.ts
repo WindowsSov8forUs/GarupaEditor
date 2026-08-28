@@ -10,6 +10,15 @@ import uiCommonUrl from "../../assets/game/atlas/bms/ui/uicommon/ui-common.png?u
 import rankLabelFontUrl from "../../assets/game/fonts/sgm/rank-label-font.ttf?url&no-inline";
 import ordinaryRenderProfileUrl from "../../assets/game/portable/profiles/ordinary-render/profile.json?url&no-inline";
 import ordinaryVisibleProfileUrl from "../../assets/game/portable/profiles/ordinary-visible/profile.json?url&no-inline";
+import defaultParticleProfileUrl from "../../assets/game/portable/profiles/default-particle/profile.json?url&no-inline";
+import defaultParticleTexturesUrl from "../../assets/game/portable/profiles/default-particle/textures.json?url&no-inline";
+import defaultParticleOrdinaryDefaultUrl from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/ordinary/Default-Particle.png?url&no-inline";
+import defaultParticleOrdinarySet1Url from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_1.png?url&no-inline";
+import defaultParticleOrdinarySet2Url from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_2.png?url&no-inline";
+import defaultParticleOrdinaryCircleUrl from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/ordinary/effect_circle.png?url&no-inline";
+import defaultParticleOrdinaryLightUrl from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/ordinary/light.png?url&no-inline";
+import defaultParticleDirectionalDefaultUrl from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png?url&no-inline";
+import defaultParticleDirectionalSet1Url from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/directional/directional-tex_parSet_1.png?url&no-inline";
 import startupLineStarUrl from "../../assets/game/prefabs/bms/information/startup-line-star.png?url&no-inline";
 import countdown1Url from "../../assets/game/prefabs/bms/pause/countdown-1.png?url&no-inline";
 import countdown2Url from "../../assets/game/prefabs/bms/pause/countdown-2.png?url&no-inline";
@@ -107,6 +116,17 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("fonts/sgm", "Rank label font", "font", [
     file("game/fonts/sgm/rank-label-font.ttf", "rank-label-font.ttf", "font/ttf", rankLabelFontUrl),
+  ]),
+  resource("portable/profiles/default-particle", "Default current exact particle pack", "package", [
+    file("game/portable/profiles/default-particle/profile.json", "profile.json", "application/json", defaultParticleProfileUrl),
+    file("game/portable/profiles/default-particle/textures.json", "textures.json", "application/json", defaultParticleTexturesUrl),
+    file("game/portable/profiles/default-particle/particle-portable-textures/ordinary/Default-Particle.png", "particle-portable-textures/ordinary/Default-Particle.png", "image/png", defaultParticleOrdinaryDefaultUrl),
+    file("game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_1.png", "particle-portable-textures/ordinary/Tex_parSet_1.png", "image/png", defaultParticleOrdinarySet1Url),
+    file("game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_2.png", "particle-portable-textures/ordinary/Tex_parSet_2.png", "image/png", defaultParticleOrdinarySet2Url),
+    file("game/portable/profiles/default-particle/particle-portable-textures/ordinary/effect_circle.png", "particle-portable-textures/ordinary/effect_circle.png", "image/png", defaultParticleOrdinaryCircleUrl),
+    file("game/portable/profiles/default-particle/particle-portable-textures/ordinary/light.png", "particle-portable-textures/ordinary/light.png", "image/png", defaultParticleOrdinaryLightUrl),
+    file("game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png", "particle-portable-textures/directional/Default-ParticleSystem.png", "image/png", defaultParticleDirectionalDefaultUrl),
+    file("game/portable/profiles/default-particle/particle-portable-textures/directional/directional-tex_parSet_1.png", "particle-portable-textures/directional/directional-tex_parSet_1.png", "image/png", defaultParticleDirectionalSet1Url),
   ]),
   resource("portable/profiles/ordinary-render", "Ordinary render semantic profile", "json", [
     file("game/portable/profiles/ordinary-render/profile.json", "profile.json", "application/json", ordinaryRenderProfileUrl),

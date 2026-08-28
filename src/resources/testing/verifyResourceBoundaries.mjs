@@ -36,7 +36,7 @@ const builtinCatalogPaths = new Set([
 const importedBuiltinAssets = new Set();
 for (const [catalogPath, expectedCount] of [
   [applicationBuiltinCatalogPath, 22],
-  [simulatorBuiltinCatalogPath, 55],
+  [simulatorBuiltinCatalogPath, 64],
 ]) {
   const source = readFileSync(catalogPath, "utf8");
   const imports = Array.from(source.matchAll(/^import\s+\w+\s+from\s+["']([^"']*assets\/[^"']+)["'];$/gm));
@@ -52,8 +52,8 @@ for (const [catalogPath, expectedCount] of [
     importedBuiltinAssets.add(resolve(dirname(catalogPath), physicalSpecifier));
   }
 }
-if (importedBuiltinAssets.size !== 77) {
-  throw new Error(`builtin catalogs must own exactly 77 distinct physical assets, got ${importedBuiltinAssets.size}`);
+if (importedBuiltinAssets.size !== 86) {
+  throw new Error(`builtin catalogs must own exactly 86 distinct physical assets, got ${importedBuiltinAssets.size}`);
 }
 for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
   if (builtinCatalogPaths.has(path)) continue;

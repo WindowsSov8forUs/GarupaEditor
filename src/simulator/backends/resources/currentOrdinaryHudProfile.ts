@@ -42,13 +42,14 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     numberScale: Math.fround(0.6000000238418579),
     padding: 1,
     maxValueDigits: 6,
-    initialLocalY: -50,
+    initialLocalX: -50,
     phaseSeconds: Math.fround(0.14000000059604645),
-    // Reverse 015fb18b: alpha is elapsed-time based, while local Y mutates once per coroutine resume.
+    // Reverse 552433d0: alpha is elapsed-time based, while Vector3 lane 0 (local X)
+    // mutates once per coroutine resume. Unity and Pixi share positive screen-right X.
     animationPhases: Object.freeze([
-      Object.freeze({ alphaFrom: Math.fround(0.2), alphaTo: Math.fround(1), localYPerOuterUpdate: Math.fround(8) }),
-      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(1), localYPerOuterUpdate: Math.fround(1) }),
-      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(0), localYPerOuterUpdate: Math.fround(1) }),
+      Object.freeze({ alphaFrom: Math.fround(0.2), alphaTo: Math.fround(1), localXPerOuterUpdate: Math.fround(8) }),
+      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(1), localXPerOuterUpdate: Math.fround(1) }),
+      Object.freeze({ alphaFrom: Math.fround(1), alphaTo: Math.fround(0), localXPerOuterUpdate: Math.fround(1) }),
     ]),
     digitInnerWidths: Object.freeze({
       icon_number_plus: 47,

@@ -30,9 +30,13 @@ import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContra
 import { rejected, type SimulatorAssemblyResult } from "./result";
 import { prepareLeasedAudioResources } from "./leasedAudioPreparation";
 import { prepareLeasedCommonRenderResources } from "./leasedCommonResourcePreparation";
+import { prepareLeasedDefaultParticleProvider } from "./leasedDefaultParticlePreparation";
 import type { SimulatorResourceSelection } from "./resourceRequirements";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
-import { prepareSkinParticleProvider } from "./skinParticlePreparation";
+import {
+  prepareSkinParticleProvider,
+  usesExactDefaultParticlePack,
+} from "./skinParticlePreparation";
 import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface SimulatorResourceAssemblyTargets {
@@ -94,7 +98,12 @@ export async function assembleSimulatorResources(
   }
   const skinSelection = validateSkinResourceSelection(selection);
   if (skinSelection.status === "rejected") return skinSelection;
-  const skinPacks = await prepareSelectedSkinSourcePackages(selection.skin.resources, lease);
+  const exactDefaultParticles = usesExactDefaultParticlePack(selection.skin.resolved);
+  const sourcePackageSelection = exactDefaultParticles
+    ? selection.skin.resources.filter((resource) =>
+        resource.role !== "tap-effect" && resource.role !== "directional-effect")
+    : selection.skin.resources;
+  const skinPacks = await prepareSelectedSkinSourcePackages(sourcePackageSelection, lease);
   if (skinPacks.status === "rejected") return skinPacks;
   const commonAudio = await prepareSourceAudioPackage("sound/common", lease);
   if (commonAudio.status === "rejected") return commonAudio;
@@ -163,20 +172,12 @@ export async function assembleSimulatorResources(
     targets.audio.preflight,
   );
   if (audio.status === "rejected") return audio;
-  const unavailableBaseParticle = Object.freeze({
-    read: async () => ({
-      status: "particle-resource-unavailable" as const,
-      failure: Object.freeze({
-        code: "particle-resource-unavailable" as const,
-        capability: "simulator.particle.no-static-base-provider",
-        boundary: "All production particle bytes must come from selected leased TapEffect packages.",
-      }),
-    }),
-  });
+  const defaultParticles = await prepareLeasedDefaultParticleProvider(lease);
+  if (defaultParticles.status === "rejected") return defaultParticles;
   const particles = prepareSkinParticleProvider(
     selection.skin.resolved,
     skinPacks.value,
-    unavailableBaseParticle,
+    defaultParticles.value,
   );
   if (particles.status === "rejected") return particles;
 

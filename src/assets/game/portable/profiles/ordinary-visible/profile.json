@@ -966,13 +966,13 @@
     },
     "start": {
       "alpha": 0.6000000238418579,
-      "localY": -50.0
+      "localX": -50.0
     },
     "phaseSeconds": 0.14000000059604645,
     "phases": [
-      "alpha=0.2+0.8*progress,y+=8",
-      "alpha=1,y+=1",
-      "alpha=1-progress,y+=1"
+      "alpha=0.2+0.8*progress,x+=8",
+      "alpha=1,x+=1",
+      "alpha=1-progress,x+=1"
     ]
   },
   "result": {

@@ -28,9 +28,7 @@ import {
   validateAndFreezeAudioProfile,
 } from "../backends/audioValidation";
 import { prepareSkinParticleProvider } from "../assembly/skinParticlePreparation";
-import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
 import { particleRejected } from "../backends/particleValidation";
-import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 
 async function main(): Promise<void> {
   testCatalog();
@@ -316,9 +314,14 @@ async function testDefaultPortablePackAndRenderOverlay(): Promise<void> {
   const particleProvider = requireAccepted(prepareSkinParticleProvider(
     recipe,
     packs,
-    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+    {
+      read: async () => particleRejected("particle-resource-unavailable", "base", "base"),
+      readPreparedSkinPack: async () => particleRejected("particle-resource-unavailable", "default-exact", "test owner"),
+    },
   ));
   assert.equal(typeof particleProvider.readPreparedSkinPack, "function");
+  assert.equal((await particleProvider.readPreparedSkinPack!()).status, "particle-resource-unavailable",
+    "default Skin routes to the caller-provided exact 10.1.4 pack rather than rebuilding the unversioned provider package");
 }
 
 async function testPortablePackAndRenderOverlay(): Promise<void> {
@@ -377,21 +380,17 @@ async function testPortablePackAndRenderOverlay(): Promise<void> {
   const validatedAudio = validateAndFreezeAudioProfile(audio.profile);
   assert.equal(validatedAudio.status, "accepted", JSON.stringify(validatedAudio));
   assert.equal((await audio.provider.read(perfect)).status, "accepted");
+  const exactDefaultParticleProvider = Object.freeze({
+    read: async () => particleRejected("particle-resource-unavailable", "base", "base"),
+    readPreparedSkinPack: async () => particleRejected("particle-resource-unavailable", "default-exact", "test owner"),
+  });
   const particleProvider = requireAccepted(prepareSkinParticleProvider(
     recipe,
     packs,
-    { read: async () => particleRejected("particle-resource-unavailable", "base", "base") },
+    exactDefaultParticleProvider,
   ));
-  const particleBackend = new DeterministicSimulatorParticleBackend();
-  const particleReady = await particleBackend.prepare(
-    "selected-skin-particle",
-    Object.freeze({ gameplayTransformScaleBits: "0x3F800000" }),
-    particleProvider,
-    new PortableParticleResourcePreflightAdapter(),
-  );
-  assert.equal(particleReady.status, "accepted", JSON.stringify(particleReady));
-  assert.ok(particleBackend.snapshot().resourceCount > 2);
-  assert.equal(particleBackend.dispose().status, "accepted");
+  assert.equal(particleProvider, exactDefaultParticleProvider,
+    "Limited-3 leaves the effect component on normal skin00 and therefore consumes the exact default pack by identity");
   const tampered = entries.map((entry) => ({ ...entry, bytes: Uint8Array.from(entry.bytes) }));
   tampered[0]!.bytes[0] ^= 0xff;
   const badStore = requireAccepted(ImmutableSharedStaticResourceStore.create(tampered));

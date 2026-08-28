@@ -433,11 +433,6 @@ export class GarupaProductRenderProducer {
           );
           if (mesh.status !== "ok") return mesh;
           commands.push(command(commands.length, mesh.value));
-          commands.push(command(commands.length, {
-            kind: "set-threshold",
-            renderObjectId: objectId,
-            threshold: this.scene.slideMeshThresholdBottomLeft,
-          }));
         } else if (plannedVisible.delete(objectId)) {
           commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
         }

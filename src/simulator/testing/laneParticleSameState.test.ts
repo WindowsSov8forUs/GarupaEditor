@@ -110,7 +110,13 @@ function verifyLaneLifecycle(): void {
     "ten 120 Hz host updates are only half of the 0.1666667-second Animator clip");
   const halfFade = updates[updates.length - 1]![0]!;
   assert.ok(Math.abs(halfFade.scale.x.value - 0.85) < 0.00001);
-  assert.ok(Math.abs(halfFade.color.red.value - 0.5) < 0.00001);
+  assert.deepEqual([
+    halfFade.color.red.value,
+    halfFade.color.green.value,
+    halfFade.color.blue.value,
+  ], [1, 1, 1], "serialized Lane FadeOut keeps the source sprite white");
+  assert.ok(Math.abs(halfFade.color.alpha.value - 0.5) < 0.00001,
+    "serialized Lane FadeOut mutates alpha rather than tinting the effect cyan");
   for (let frame = 0; frame < 11 && owner.snapshot().slots[2]!.phase !== "disabled"; frame += 1) {
     const advance = requireOk(owner.preflightAdvance(1 / 120));
     if (advance !== null) requireOk(advance.commit());

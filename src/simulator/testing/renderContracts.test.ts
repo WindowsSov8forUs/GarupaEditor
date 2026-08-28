@@ -57,10 +57,15 @@ const R4_RESOURCES = Object.freeze({
   multipleDirectionalLineRightLogicalAssetId: "asset.multiple-directional-line-right",
 });
 const BYTES = Uint8Array.from([1, 2, 3, 4]);
-const parsedOrdinaryVisibleProfile = parseCurrentOrdinaryVisibleProfile(JSON.parse(readFileSync(join(
+const ordinaryVisibleFixture = JSON.parse(readFileSync(join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
-), "utf8")));
+), "utf8"));
+ordinaryVisibleFixture.addScore.start = { alpha: ordinaryVisibleFixture.addScore.start.alpha, localX: -50 };
+ordinaryVisibleFixture.addScore.phases = [
+  "alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1",
+];
+const parsedOrdinaryVisibleProfile = parseCurrentOrdinaryVisibleProfile(ordinaryVisibleFixture);
 const ORDINARY_VISIBLE_PROFILE = parsedOrdinaryVisibleProfile === null
   ? (() => { throw new Error("ordinary visible fixture profile must parse"); })()
   : parsedOrdinaryVisibleProfile;

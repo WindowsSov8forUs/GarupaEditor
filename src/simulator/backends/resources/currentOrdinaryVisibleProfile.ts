@@ -60,9 +60,9 @@ export interface OrdinaryVisibleProfile {
     readonly rootPosition: readonly [number, number, number];
     readonly scale: number;
     readonly digits: { readonly plus: "icon_number_plus"; readonly prefix: "icon_number_"; readonly size: readonly [47, 70]; readonly order: "least-significant-first"; readonly alignment: "center" };
-    readonly start: { readonly alpha: 0.6; readonly localY: -50 };
+    readonly start: { readonly alpha: 0.6; readonly localX: -50 };
     readonly phaseSeconds: number;
-    readonly phases: readonly ["alpha=0.2+0.8*progress,y+=8", "alpha=1,y+=1", "alpha=1-progress,y+=1"];
+    readonly phases: readonly ["alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1"];
   };
   readonly result: {
     readonly rootPosition: readonly [number, number, number];
@@ -134,7 +134,7 @@ function validateAddScore(value: unknown): boolean {
   return record(value) && exactKeys(value, ["depthCycle", "digits", "phaseSeconds", "phases", "poolSize", "rootPosition", "scale", "selection", "start"]) &&
     value.poolSize === 4 && value.depthCycle === 8 && value.selection === "round-robin-ready-owner" && finiteTuple(value.rootPosition, 3) && exactF32(value.scale) && value.scale === Math.fround(0.6) && exactF32(value.phaseSeconds) && value.phaseSeconds === Math.fround(0.14) &&
     record(value.digits) && exactKeys(value.digits, ["alignment", "order", "plus", "prefix", "size"]) && value.digits.plus === "icon_number_plus" && value.digits.prefix === "icon_number_" && value.digits.order === "least-significant-first" && value.digits.alignment === "center" && tuple(value.digits.size, [47, 70]) &&
-    record(value.start) && exactKeys(value.start, ["alpha", "localY"]) && value.start.alpha === Math.fround(0.6) && value.start.localY === -50 && tuple(value.phases, ["alpha=0.2+0.8*progress,y+=8", "alpha=1,y+=1", "alpha=1-progress,y+=1"]);
+    record(value.start) && exactKeys(value.start, ["alpha", "localX"]) && value.start.alpha === Math.fround(0.6) && value.start.localX === -50 && tuple(value.phases, ["alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1"]);
 }
 
 function validateResult(value: unknown): boolean {

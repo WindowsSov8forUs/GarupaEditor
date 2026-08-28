@@ -25,9 +25,9 @@ const ROOTS = new Set<string>([
 export function prepareSkinParticleProvider(
   recipe: ResolvedOriginalSkinRecipe,
   packs: readonly PreparedSkinSourcePackage[],
-  base: ParticleResourceProvider,
+  defaultExact: ParticleResourceProvider,
 ): SimulatorAssemblyResult<ParticleResourceProvider> {
-  if (packs.length === 0) return accepted(base);
+  if (usesExactDefaultParticlePack(recipe)) return accepted(defaultExact);
   const ordinary = packs.find((pack) => pack.logicalResource === recipe.tapEffect.logicalResource);
   const directional = packs.find((pack) => pack.logicalResource === recipe.directional.effectLogicalResource);
   if (ordinary === undefined || directional === undefined) {
@@ -36,9 +36,17 @@ export function prepareSkinParticleProvider(
   const built = buildPreparedPack(ordinary, directional);
   if (built.status === "rejected") return built;
   return accepted(Object.freeze({
-    read: (logicalAssetId: string) => base.read(logicalAssetId),
+    read: (logicalAssetId: string) => defaultExact.read(logicalAssetId),
     readPreparedSkinPack: async () => particleAccepted(built.value),
   }));
+}
+
+export function usesExactDefaultParticlePack(recipe: ResolvedOriginalSkinRecipe): boolean {
+  return recipe.tapEffect.route === "normal" &&
+    recipe.tapEffect.logicalResource === "ingameskin/tapeffect/skin00" &&
+    recipe.directional.route === "normal" &&
+    recipe.directional.effectVariant === "normal" &&
+    recipe.directional.effectLogicalResource === "ingameskin/tapeffect/directionalflickskin00normal";
 }
 
 function buildPreparedPack(

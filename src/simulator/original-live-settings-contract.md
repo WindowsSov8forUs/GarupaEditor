@@ -71,13 +71,13 @@ selects `note_normal_16`; all other Normal fronts select `note_normal`, while Sk
 
 This setting controls only the GamePlayButton lane Sprite, never particles, Judge HUD or sound.
 
-The owner creates thirteen full/half-button slots and binds four current APK sprites in this order:
+The owner creates thirteen full/half-button slots and binds the four serialized level3 GamePlayButton sprites (independent of selected field-line Skin resources) in this order:
 
 ```text
 _1,_1,_2,_2,_3,_3,_4,_4,_3,_3,_2,_2,_1
 ```
 
-Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses ten nominal frames from the committed serialized clip: XY scale 1→0.7 and RG 1→0, with B/A retained, then Disabled. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
+Manual Began/Ended is preflighted in the same input transaction. Auto and Manual judgement use the judged button-span center. Long and Slide phases reuse their recovered judgement/button routes. OffReserve is two outer updates. Fade uses the committed 0.1666667-second serialized clip: XY scale 1→0.7, RGB remains white, alpha 1→0, then the renderer is disabled. The former RG-only fade that retained blue was a binding-decoding error and is forbidden because it falsely tinted the correct resource cyan. Pause, MoveTime, GameOver, Retry and dispose clear every active slot.
 
 Reverse `c2187fe3`后的入口纠错确认一项产品桥接缺陷：product-extension的scoring source按设计使用`ButtonType.None`以隔离NoteManager，但此前Lane owner也错误读取该值，导致含负/零SV的整张谱即使使用整数0..6 lane也完全不显示beam。当前只为整数、连续且完整位于0..6的product node按`noteIndex`恢复authored span并送回同一13槽owner；每槽直接消费Reverse `1bff69eb`的Button/half-Button Transform，不再以相邻full midpoint重算。Score/判定source仍保持None，fractional/outside节点不获得原作Lane-effect声明。
 

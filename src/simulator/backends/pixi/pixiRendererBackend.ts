@@ -2874,9 +2874,9 @@ function updatePersistentAddScoreHud(
   placeSafeTopAnchoredUiRoot(object, "left");
   const uiScale = authoredUiScale(object);
   object.node.position.set(
-    Math.fround(object.node.position.x + current.numberBaseAuthoredPosition[0] * uiScale),
-    Math.fround(object.node.position.y -
-      (current.numberBaseAuthoredPosition[1] + current.initialLocalY) * uiScale),
+    Math.fround(object.node.position.x +
+      (current.numberBaseAuthoredPosition[0] + current.initialLocalX) * uiScale),
+    Math.fround(object.node.position.y - current.numberBaseAuthoredPosition[1] * uiScale),
   );
   object.node.scale.set(Math.fround(uiScale * current.numberScale));
   object.node.alpha = profile.addScore.start.alpha;
@@ -3768,10 +3768,10 @@ function setHudText(
 }
 
 function sampleAddScoreCoroutine(
-  phases: readonly { readonly alphaFrom: number; readonly alphaTo: number; readonly localYPerOuterUpdate: number }[],
+  phases: readonly { readonly alphaFrom: number; readonly alphaTo: number; readonly localXPerOuterUpdate: number }[],
   phaseSeconds: number,
   elapsedSeconds: number,
-): Readonly<{ alpha: number; localYPerOuterUpdate: number }> {
+): Readonly<{ alpha: number; localXPerOuterUpdate: number }> {
   if (phases.length !== 3 || !Number.isFinite(phaseSeconds) || phaseSeconds <= 0 ||
     !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
     throw new Error("AddScore coroutine requires three source phases, one positive duration and finite non-negative time.");
@@ -3784,7 +3784,7 @@ function sampleAddScoreCoroutine(
   const progress = Math.fround(Math.min(localElapsed / phaseSeconds, 1));
   return Object.freeze({
     alpha: Math.fround(phase.alphaFrom + Math.fround(Math.fround(phase.alphaTo - phase.alphaFrom) * progress)),
-    localYPerOuterUpdate: phase.localYPerOuterUpdate,
+    localXPerOuterUpdate: phase.localXPerOuterUpdate,
   });
 }
 
@@ -3882,8 +3882,8 @@ function applyEvidenceAnimation(
     const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
     const sample = sampleAddScoreCoroutine(current.animationPhases, current.phaseSeconds, elapsedSeconds);
     if (committedOuterAdvance) {
-      object.node.position.y = Math.fround(
-        object.node.position.y - Math.fround(sample.localYPerOuterUpdate * authoredUiScale(object)),
+      object.node.position.x = Math.fround(
+        object.node.position.x + Math.fround(sample.localXPerOuterUpdate * authoredUiScale(object)),
       );
     }
     object.node.alpha = sample.alpha;

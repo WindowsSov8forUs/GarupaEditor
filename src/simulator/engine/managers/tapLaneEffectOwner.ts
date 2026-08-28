@@ -196,7 +196,7 @@ export class TapLaneEffectOwner {
     const scale = state.phase === "fading"
       ? Math.fround(Math.fround(1) - Math.fround(Math.fround(0.3) * progress))
       : Math.fround(1);
-    const colorChannel = state.phase === "fading"
+    const alpha = state.phase === "fading"
       ? Math.fround(Math.fround(1) - progress)
       : Math.fround(1);
     return Object.freeze({
@@ -204,7 +204,7 @@ export class TapLaneEffectOwner {
       textureIndex: TEXTURES[state.slot]!,
       position,
       scale: vector2(scale, scale),
-      color: color(colorChannel, colorChannel, 1, 1),
+      color: color(1, 1, 1, alpha),
       ordering: ordering(position.z, state.slot),
       active: state.phase !== "disabled",
     });

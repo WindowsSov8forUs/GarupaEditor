@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-resource-axis-and-product-visibility-correction",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": [
+    {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
+      "bytes": 3778,
+      "sha256": "49D8B99F4F192B038A55A2320E0B5E3C5330369744D792FCAB3795BD918811DB"
+    },
+    {
+      "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "bytes": 6942833,
+      "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/03879f1c__AddScoreObject__Play.arm64.tsv",
+      "bytes": 3706,
+      "sha256": "4921541E6BC14FC62791D18D85C04935A45CAE3CAE584B28473B61B84D4AF247"
+    },
+    {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/arm64/0387a260__AddScoreObject_playCoroutine_d__11__MoveNext.arm64.tsv",
+      "bytes": 7870,
+      "sha256": "D2C8C6C82D7A7E5E775D96E782E7D5DB27E2FA3FEE8FA917BF9BA44E05023654"
+    }
+  ],
+  "defaultJudgementParticle": {
+    "selection": {
+      "setting": 0,
+      "masterEffectId": 1,
+      "bundleName": "skin00",
+      "logicalPackage": "ingameskin/tapeffect/skin00"
+    },
+    "ordinaryRoots": [
+      "ordinary:effect_TapKeep",
+      "ordinary:effect_tap",
+      "ordinary:effect_tap_good",
+      "ordinary:effect_tap_great",
+      "ordinary:effect_tap_perfect",
+      "ordinary:effect_tap_skill_good",
+      "ordinary:effect_tap_skill_great",
+      "ordinary:effect_tap_skill_perfect",
+      "ordinary:effect_tap_swipe"
+    ],
+    "directionalRoots": [
+      "directional:effect_tap_directional_flick_l",
+      "directional:effect_tap_directional_flick_l_2",
+      "directional:effect_tap_directional_flick_l_3",
+      "directional:effect_tap_directional_flick_l_finger",
+      "directional:effect_tap_directional_flick_r",
+      "directional:effect_tap_directional_flick_r_2",
+      "directional:effect_tap_directional_flick_r_3",
+      "directional:effect_tap_directional_flick_r_finger"
+    ],
+    "ordinaryTextureIdentity": [
+      {
+        "logicalAssetId": "particle-texture:ordinary:Default-Particle",
+        "width": 64,
+        "height": 64,
+        "rgbaBytes": 16384,
+        "rgbaSha256": "889596BCAF9E14DE7A7181F53F3F07415C22C065CAE5FA9C564B1A0C172A3C63"
+      },
+      {
+        "logicalAssetId": "particle-texture:ordinary:Tex_parSet_1",
+        "width": 1024,
+        "height": 1024,
+        "rgbaBytes": 4194304,
+        "rgbaSha256": "E114CC275B2BD2A7B1BF4ABD80E7538F404A54FB1655CD909F5F42B161445C5B"
+      },
+      {
+        "logicalAssetId": "particle-texture:ordinary:Tex_parSet_2",
+        "width": 1024,
+        "height": 1024,
+        "rgbaBytes": 4194304,
+        "rgbaSha256": "E9CE6B25A9A168CFCB77F01F39ECD6AC4ED0A295307369D9A329A992C3789871"
+      },
+      {
+        "logicalAssetId": "particle-texture:ordinary:effect_circle",
+        "width": 256,
+        "height": 256,
+        "rgbaBytes": 262144,
+        "rgbaSha256": "57ABE43022A204DB0507E36768FDD13BD66322E01ECE34D276A7A874910F15C7"
+      },
+      {
+        "logicalAssetId": "particle-texture:ordinary:light",
+        "width": 128,
+        "height": 128,
+        "rgbaBytes": 65536,
+        "rgbaSha256": "1CA724A895E962609CC5D3CDFCC467CFCE8AD5B70A486AD40626A0CFE429E58A"
+      }
+    ],
+    "productionGate": "Default current equivalence requires these exact decoded RGBA identities and the profile-declared prefab roots; package name alone, a same-looking unversioned provider PNG, or nearest/default fallback is insufficient."
+  },
+  "laneEffect": {
+    "resourceOwner": "serialized level3 GamePlayButton owners, independent of selectable field-line Skin packages",
+    "sprites": [
+      {
+        "name": "NoteLaneEffect_1",
+        "sourceSha256": "D498F3FC6C89E5A6BF270129F800803E873D0A218BEDF2C4E4E61A7F13FF424D",
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_1.png",
+          "bytes": 14137,
+          "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
+          "width": 467,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_2",
+        "sourceSha256": "FD4F9AF0EA4AAB37A87F4AD26B347BE2300BB055BFA8070DB72CF3BE397FD63A",
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_2.png",
+          "bytes": 11402,
+          "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
+          "width": 342,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_3",
+        "sourceSha256": "5E406020F080C52C8FBCBCF9D65AD31354AE8D829AC6DF41B439F51A3D33123F",
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_3.png",
+          "bytes": 7630,
+          "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
+          "width": 218,
+          "height": 500
+        }
+      },
+      {
+        "name": "NoteLaneEffect_4",
+        "sourceSha256": "888172CDA690D441DB70926609787DBE8F9F8D3F3FD551AEFF9884E49C9869B1",
+        "portablePng": {
+          "path": "portable-assets/NoteLaneEffect_4.png",
+          "bytes": 5535,
+          "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
+          "width": 154,
+          "height": 500
+        }
+      }
+    ],
+    "material": {
+      "blend": "additive",
+      "initialColor": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "fadeBindingCrc32": {
+      "m_Color.a": 304273561,
+      "m_Enabled": 3305885265,
+      "m_Color.r": 2526845255,
+      "m_Color.g": 4215373228,
+      "m_Color.b": 2334886179
+    },
+    "fadeMutation": {
+      "localScaleXY": "1 to 0.7",
+      "color": "white remains white",
+      "alpha": "1 to 0",
+      "rendererEnabled": "1 to 0 at completion"
+    },
+    "correction": "The four sprite bytes are correct. Treating the FadeOut rows as RGB 1-to-0 while leaving blue at 1 is wrong and creates a cyan false resource appearance."
+  },
+  "addScore": {
+    "playMutation": "localPosition.x += -50",
+    "resumeMutations": [
+      "localPosition.x += 8",
+      "localPosition.x += 1",
+      "localPosition.x += 1"
+    ],
+    "arm64LaneProof": "Transform.get_localPosition returns Vector3 in v0; mov v8.16b,v0.16b followed by fadd s0,s8 mutates lane 0 (x), not lane 1 (y).",
+    "portableDirection": "screen-right with unchanged Y; Unity local X and Pixi/Tauri top-left X share the same positive direction",
+    "supersedes": "simulator-add-score-rank-logic-reaudit-10-1-4 addScore.direction only; its local-Y/upward interpretation is rejected",
+    "runtimeSupplement": {
+      "frames": [
+        {
+          "path": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/runtime/add-score-555.png",
+          "bytes": 16767,
+          "sha256": "F2B1069839B4C253BA496DE99F245288AB92A9E44717FCA1CEB012A2DED9743C"
+        },
+        {
+          "path": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/runtime/add-score-557.png",
+          "bytes": 17559,
+          "sha256": "5641F22AABFCE3F3CA43AE69E92DD8C45F621DC11ED855D7163FF327F191EC0E"
+        },
+        {
+          "path": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/runtime/add-score-559.png",
+          "bytes": 17729,
+          "sha256": "18349B367F57E82FADA35439F39DEA5E24716161F8CEFE4BA9404417BC240ADE"
+        },
+        {
+          "path": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/runtime/add-score-562.png",
+          "bytes": 17768,
+          "sha256": "3AFDEDFCB68A905B6B0455A44C558D7BF19EB440BF3E88C856C551C658164709"
+        },
+        {
+          "path": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/runtime/add-score-564.png",
+          "bytes": 15189,
+          "sha256": "F39CEC846D8D74CA6EDADC578E0EF10FA963AC8894DE0027742276223FFAE5A0"
+        }
+      ],
+      "observedBounds": [
+        {
+          "frame": 555,
+          "minX": 420,
+          "maxX": 555,
+          "minY": 92,
+          "maxY": 131
+        },
+        {
+          "frame": 557,
+          "minX": 422,
+          "maxX": 559,
+          "minY": 92,
+          "maxY": 133
+        },
+        {
+          "frame": 559,
+          "minX": 426,
+          "maxX": 559,
+          "minY": 92,
+          "maxY": 133
+        },
+        {
+          "frame": 562,
+          "minX": 428,
+          "maxX": 559,
+          "minY": 92,
+          "maxY": 133
+        },
+        {
+          "frame": 564,
+          "minX": 432,
+          "maxX": 559,
+          "minY": 94,
+          "maxY": 131
+        }
+      ],
+      "boundary": "Crops are supplemental device-frame observations; ARM64 lane identity is decisive."
+    }
+  },
+  "slideVisibility": {
+    "originalBoundary": "The original evidence covers ordinary same-axis Note/Slide projection only and does not authorize Garupa TimingGroup or signed/zero SV behavior.",
+    "productRequirement": "For every Garupa product segment, publish exactly the portion whose per-TimingGroup projected curve intersects the same [0.002,1] visible domain used by its endpoint notes.",
+    "prohibited": [
+      "an additional screenshot-derived bottom-left threshold mask",
+      "requiring both endpoint notes to be visible",
+      "using the global timing axis for a non-global TimingGroup",
+      "dropping a finite clipped segment because an off-domain endpoint projection overflowed"
+    ],
+    "productSemanticsId": "simulator.garupa-slide-note-visible-domain-v1"
+  },
+  "closure": {
+    "unknown": [],
+    "blocking": [],
+    "fixedDeviceFramebufferExact": false
+  }
+}

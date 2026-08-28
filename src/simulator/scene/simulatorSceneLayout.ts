@@ -76,7 +76,6 @@ export interface GarupaProductSceneLayout {
   readonly targetCenterY: RenderFloat32;
   readonly screenToSafeAreaRatio: RenderFloat32;
   readonly screenWidthAdjustRate: RenderFloat32;
-  readonly slideMeshThresholdBottomLeft: RenderFloat32;
   readonly fieldLines: readonly GarupaProductFieldLine[];
   readonly projectLaneAtCurve: (lane: number, curve: number) => SimulatorResult<RenderVector3>;
   readonly projectNoteScaleAtCurve: (curve: number, authoredWidth: number) => SimulatorResult<RenderFloat32>;
@@ -351,19 +350,12 @@ function createGarupaProductScene(
     }
     fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
   }
-  // Product semantic `simulator.garupa-slide-threshold-initial-surface-v1`:
-  // preserve the evidence-derived orthographic normalized bottom-left height
-  // on every immutable initial surface; never retain an absolute capture pixel.
-  const slideMeshThresholdBottomLeft = f32(Math.fround(
-    Math.fround(0.7919012904167175) * Math.fround(scene.surfaceLayout.surface.viewportHeight),
-  ));
   return ok(Object.freeze({
     laneSpacingWorld: f32(laneSpacing),
     noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,
     screenToSafeAreaRatio: f32(scene.surfaceLayout.starUi.screenToSafeAreaRatio),
     screenWidthAdjustRate: f32(scene.surfaceLayout.gameplay.screenWidthAdjustRate),
-    slideMeshThresholdBottomLeft,
     fieldLines: Object.freeze(fieldLines),
     projectLaneAtCurve,
     projectNoteScaleAtCurve,

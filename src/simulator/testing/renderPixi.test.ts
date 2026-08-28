@@ -98,6 +98,10 @@ const judgeDisplayLogic = JSON.parse(readFileSync(join(
   fixtureRoot,
   "judge-display-logic/artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",
 ), "utf8"));
+const resourceAxisCorrection = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "resource-axis-product-visibility/artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/resource_axis_product_visibility_correction.json",
+), "utf8"));
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -126,15 +130,22 @@ async function main(): Promise<void> {
   equal(secondVisibleConsumer.addScore.logic.phaseSeconds, CURRENT_ORDINARY_HUD_PROFILE.addScore.phaseSeconds,
     "AddScore source coroutine phase duration is not hand-timed");
   equal(JSON.stringify(CURRENT_ORDINARY_HUD_PROFILE.addScore.animationPhases), JSON.stringify([
-    { alphaFrom: Math.fround(0.2), alphaTo: 1, localYPerOuterUpdate: 8 },
-    { alphaFrom: 1, alphaTo: 1, localYPerOuterUpdate: 1 },
-    { alphaFrom: 1, alphaTo: 0, localYPerOuterUpdate: 1 },
-  ]), "AddScore preserves source +8/+1/+1 as per-coroutine-resume mutations, not phase endpoints");
-  equal(JSON.stringify(addScoreRankLogic.addScore.coroutine.phases.map((row: any) => row.localYMutationPerCoroutineResume)),
-    JSON.stringify([8, 1, 1]), "independent AddScore oracle owns movement direction and step mutation");
+    { alphaFrom: Math.fround(0.2), alphaTo: 1, localXPerOuterUpdate: 8 },
+    { alphaFrom: 1, alphaTo: 1, localXPerOuterUpdate: 1 },
+    { alphaFrom: 1, alphaTo: 0, localXPerOuterUpdate: 1 },
+  ]), "AddScore preserves source local-X +8/+1/+1 as per-coroutine-resume mutations, not phase endpoints");
+  equal(JSON.stringify(resourceAxisCorrection.addScore.resumeMutations), JSON.stringify([
+    "localPosition.x += 8", "localPosition.x += 1", "localPosition.x += 1",
+  ]), "corrected ARM64 scalar-lane oracle owns screen-right movement");
+  equal(resourceAxisCorrection.addScore.supersedes.includes("local-Y/upward"), true,
+    "the prior local-Y interpretation is explicitly superseded rather than silently reclassified");
   equal(addScoreRankLogic.rank.pixelOffsetAllowed, false, "Rank mapping forbids screenshot pixel offsets");
   const baseProfile = JSON.parse(readFileSync(join(ordinaryRoot, "ordinary_portable_profile.json"), "utf8")) as RenderResourceProfile;
   const visibleFixture = JSON.parse(readFileSync(join(visibleRoot, "ordinary_visible_rendering_profile.json"), "utf8"));
+  visibleFixture.addScore.start = { alpha: visibleFixture.addScore.start.alpha, localX: -50 };
+  visibleFixture.addScore.phases = [
+    "alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1",
+  ];
   const visibleProfile = parseCurrentOrdinaryVisibleProfile(visibleFixture);
   assert(visibleProfile !== null, "ordinary visible profile parses");
   const scoreAnimation = parseCurrentScoreGaugeSsAnimationProfile(JSON.parse(readFileSync(
@@ -412,9 +423,9 @@ async function main(): Promise<void> {
   equal(add.hudSpriteCount, 7, "AddScore keeps the serialized seven-Sprite slot graph per pooled root");
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
   equal(JSON.stringify(add.position), JSON.stringify([
-    Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + 282 * UI_SCALE),
-    Math.fround(Math.fround(135 * UI_SCALE) - Math.fround(8 * UI_SCALE)),
-  ]), "AddScore immediate coroutine first resume moves Unity local +Y by 8, hence upward in top-left Pixi coordinates");
+    Math.fround(CONTROL_SURFACE_LAYOUT.starUi.safeArea.x + Math.fround(240 * UI_SCALE)),
+    Math.fround(85 * UI_SCALE),
+  ]), "AddScore starts at authored X-50 and its immediate first resume moves local X +8 screen-right without changing Y");
   equal(JSON.stringify(add.scale), JSON.stringify([
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
     Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),

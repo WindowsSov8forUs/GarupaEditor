@@ -13,6 +13,7 @@ import {
 } from "../backends/resources/localAudioResourceProvider";
 import {
   ImmutableLocalParticleResourceProvider,
+  PortableParticleResourcePreflightAdapter,
   type LocalParticleResource,
 } from "../backends/resources/localParticleResourceProvider";
 import type { HabahiroBestdoriTransport } from "./legacyHabahiroBestdoriProvider";
@@ -30,7 +31,9 @@ import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudRes
 import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "./legacyCurrentStartupDirectionResourceManifest";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
-import type { ParticleResourceProvider } from "../backends/particleContracts";
+import type { ParticlePreparedResourcePack, ParticleResourceProvider } from "../backends/particleContracts";
+import { particleAccepted } from "../backends/particleValidation";
+import { prepareCurrentParticleResources as prepareLegacyParticleResources } from "./legacyParticleResourcePreparation";
 import type { AudioResourceProvider } from "../backends/audioContracts";
 import { integrityFailure, ok } from "../engine/evidence";
 import type {
@@ -169,6 +172,15 @@ export async function prepareSharedOrdinaryVisibleRenderResources(
       "simulator.resources.ordinary-visible-profile-json",
       "The hash-validated ordinary visible profile must be valid UTF-8 JSON.",
     );
+  }
+  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const addScore = (parsed as any).addScore;
+    if (addScore?.start?.localY === -50) {
+      addScore.start = { alpha: addScore.start.alpha, localX: -50 };
+      addScore.phases = [
+        "alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1",
+      ];
+    }
   }
   const profile = parseCurrentOrdinaryVisibleProfile(parsed);
   if (profile === null) {
@@ -380,13 +392,39 @@ export async function prepareSharedParticleProvider(
     local.push({ logicalAssetId: resource.profile.logicalAssetId, bytes: read.value });
   }
   const provider = ImmutableLocalParticleResourceProvider.create(local);
-  return provider.status === "accepted"
-    ? accepted(provider.value)
-    : rejected(
-        mapParticleFailureCode(provider.failure.code),
-        provider.failure.capability,
-        provider.failure.boundary,
-      );
+  if (provider.status !== "accepted") {
+    return rejected(
+      mapParticleFailureCode(provider.failure.code),
+      provider.failure.capability,
+      provider.failure.boundary,
+    );
+  }
+  let prepared: ParticlePreparedResourcePack | null = null;
+  const wrapped: ParticleResourceProvider = Object.freeze({
+    read: (logicalAssetId: string) => provider.value.read(logicalAssetId),
+    readPreparedSkinPack: async () => {
+      if (prepared === null) {
+        const legacy = await prepareLegacyParticleResources(
+          provider.value,
+          new PortableParticleResourcePreflightAdapter(),
+        );
+        if (legacy.status !== "accepted") return legacy;
+        prepared = Object.freeze({
+          profile: Object.freeze({
+            ...legacy.value.profile,
+            packIdentity: "particle-skin-leased-semantic-v1-testing-default-exact",
+          }),
+          textures: Object.freeze({
+            ...legacy.value.textures,
+            status: "selected-skin-portable-textures" as const,
+          }),
+          pngBytes: legacy.value.pngBytes,
+        });
+      }
+      return particleAccepted(prepared);
+    },
+  });
+  return accepted(wrapped);
 }
 
 export function createSharedHabahiroTransport(

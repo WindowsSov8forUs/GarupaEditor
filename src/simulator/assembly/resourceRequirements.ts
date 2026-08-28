@@ -35,6 +35,16 @@ export interface SimulatorResourceSelection {
 const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.freeze([
   requirement("render.ordinary-profile", "portable/profiles/ordinary-render", ["profile.json"]),
   requirement("render.ordinary-visible-profile", "portable/profiles/ordinary-visible", ["profile.json"]),
+  requirement("particle.default-current-exact", "portable/profiles/default-particle", [
+    "profile.json", "textures.json",
+    "particle-portable-textures/ordinary/Default-Particle.png",
+    "particle-portable-textures/ordinary/Tex_parSet_1.png",
+    "particle-portable-textures/ordinary/Tex_parSet_2.png",
+    "particle-portable-textures/ordinary/effect_circle.png",
+    "particle-portable-textures/ordinary/light.png",
+    "particle-portable-textures/directional/Default-ParticleSystem.png",
+    "particle-portable-textures/directional/directional-tex_parSet_1.png",
+  ]),
   requirement("render.combo", "atlas/bms/ui/iconcombonumber", ["combo-number.png"]),
   requirement("render.rhythm-game-ui", "atlas/bms/ui/rhythmgameui", ["rhythm-game-additive.png", "rhythm-game-ui.png"]),
   requirement("render.tap-lane-effect", "atlas/bms/ui/tap-lane-effect", [
@@ -60,9 +70,13 @@ export function selectSimulatorResourceRequirements(
   skinRecipe: ResolvedOriginalSkinRecipe,
 ): SimulatorResourceSelection {
   const skin = selectResolvedSkinResourceInventory(skinRecipe);
+  const leasedSkinResources = usesBuiltInExactDefaultParticles(skin.resolved)
+    ? skin.resources.filter((resource) =>
+        resource.role !== "tap-effect" && resource.role !== "directional-effect")
+    : skin.resources;
   const requirements = [
     ...COMMON_REQUIREMENTS,
-    ...skin.resources.map((resource) => requirement(
+    ...leasedSkinResources.map((resource) => requirement(
       `skin.${resource.role}`,
       resource.logicalResource,
       null,
@@ -105,6 +119,14 @@ export function selectResolvedSkinResourceInventory(
     resolved: recipe,
     resources: Object.freeze(resources),
   });
+}
+
+function usesBuiltInExactDefaultParticles(recipe: ResolvedOriginalSkinRecipe): boolean {
+  return recipe.tapEffect.route === "normal" &&
+    recipe.tapEffect.logicalResource === "ingameskin/tapeffect/skin00" &&
+    recipe.directional.route === "normal" &&
+    recipe.directional.effectVariant === "normal" &&
+    recipe.directional.effectLogicalResource === "ingameskin/tapeffect/directionalflickskin00normal";
 }
 
 function requirement(

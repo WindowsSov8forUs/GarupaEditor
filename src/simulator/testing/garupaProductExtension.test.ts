@@ -86,13 +86,18 @@ async function main(): Promise<void> {
     join(fixtureRoot, "ordinary_portable_profile.json"),
     "utf8",
   )) as RenderResourceProfile;
-  const visibleProfile = parseCurrentOrdinaryVisibleProfile(JSON.parse(readFileSync(
+  const visibleFixture = JSON.parse(readFileSync(
     join(
       process.cwd(),
       "src/simulator/testing/fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
     ),
     "utf8",
-  )));
+  ));
+  visibleFixture.addScore.start = { alpha: visibleFixture.addScore.start.alpha, localX: -50 };
+  visibleFixture.addScore.phases = [
+    "alpha=0.2+0.8*progress,x+=8", "alpha=1,x+=1", "alpha=1-progress,x+=1",
+  ];
+  const visibleProfile = parseCurrentOrdinaryVisibleProfile(visibleFixture);
   if (visibleProfile === null) throw new Error("ordinary visible fixture is invalid");
   const profile: RenderResourceProfile = Object.freeze({
     ...baseProfile,
@@ -146,23 +151,8 @@ async function main(): Promise<void> {
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
-  assert.equal(layout.garupaProductScene.slideMeshThresholdBottomLeft.value,
-    Math.fround(Math.fround(712.711181640625) * Math.fround(720 / 900)),
-    "product Slide threshold preserves the observed normalized height on 1600×720");
-  const productionSurfaceLayout = requireOk(createSimulatorSceneLayout(
-    { revision: 0, viewportWidth: 2400, viewportHeight: 1350, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(2400), height: Math.fround(1350) }, origin: "bottom-left" },
-    {
-      specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-      judgementAdjustValueB: 0, habahiroMeshWidthSetting: Math.fround(1), syncLineEdgeMargin: Math.fround(0),
-    },
-    "ordinary",
-    CURRENT_ORDINARY_RENDER_BINDINGS,
-  ));
-  assert.equal(productionSurfaceLayout.garupaProductScene.slideMeshThresholdBottomLeft.value,
-    Math.fround(Math.fround(712.711181640625) * Math.fround(1350 / 900)),
-    "2400×1350 backing surface no longer clips Slide geometry to the lower half");
-  assert.ok(1350 - productionSurfaceLayout.garupaProductScene.slideMeshThresholdBottomLeft.value < 300,
-    "production threshold leaves only the normalized launcher-top margin rather than 638 lower-half pixels");
+  assert.equal("slideMeshThresholdBottomLeft" in layout.garupaProductScene, false,
+    "product semantic simulator.garupa-slide-note-visible-domain-v1 forbids a second screenshot-derived Slide mask");
   const overflowProjection = layout.garupaProductScene.projectLaneAtCurve(0, Number.MAX_VALUE);
   assert.equal(overflowProjection.status, "integrity-failure");
   if (overflowProjection.status === "integrity-failure") {
@@ -291,13 +281,19 @@ async function main(): Promise<void> {
       row.ordering[0] === 3 && row.ordering[1] === 70));
   assert.ok(firstRows.filter((row) => row.renderObjectId.startsWith("render:garupa:line:")).every((row) =>
     row.geometryVertexCount === 22 && row.geometryMaterialLogicalAssetId === "ordinary/notes/skin00/curve-note-line" &&
-    row.ordering[0] === 3 && row.ordering[1] === 0 &&
-    row.threshold === layout.garupaProductScene.slideMeshThresholdBottomLeft.value));
+    row.ordering[0] === 3 && row.ordering[1] === 0 && row.threshold === null));
   const sync = firstRows.find((row) => row.renderObjectId.startsWith("render:garupa:sync:") && row.visible);
   assert.ok(sync?.geometryPositions);
   const syncY = sync!.geometryPositions!.filter((_value, index) => index % 2 === 1);
   assert.ok(Math.max(...syncY) - Math.min(...syncY) < 40);
   assert.ok(firstRows.every((row) => !row.renderObjectId.startsWith("render:garupa:node:garupa-slide:5")));
+  const signedSvTimingGroupChain = product.slideChains.find((chain) => chain.chartItemIndex === 5)!;
+  const signedSvLines = firstRows.filter((row) =>
+    row.renderObjectId.startsWith(`render:garupa:line:${signedSvTimingGroupChain.identity}:`) && row.visible);
+  assert.ok(signedSvLines.length > 0,
+    "a signed-SV TimingGroup segment that intersects [0.002,1] renders even while its endpoint fronts are outside the domain");
+  assert.ok(signedSvLines.every((row) => row.threshold === null),
+    "signed-SV TimingGroup connections do not receive a second near-judgment-line threshold mask");
 
   const compatibleHead = product.visibleNodes.find((node) => node.identity === headId)!;
   const flashStarted = requireOk(producer.preflightFrame(
@@ -415,8 +411,8 @@ async function main(): Promise<void> {
     for (const row of rows) {
       assert.equal(row.geometryPositions!.length, 44, `B.B.K ${timeMs}ms publishes all 22 vertices`);
       assert.equal(row.geometryIndexCount, 60, `B.B.K ${timeMs}ms publishes all 60 indices`);
-      assert.equal(row.threshold, layout.garupaProductScene.slideMeshThresholdBottomLeft.value,
-        `B.B.K ${timeMs}ms consumes the initial-surface threshold`);
+      assert.equal(row.threshold, null,
+        `B.B.K ${timeMs}ms uses the same projected curve visibility domain as notes without a second mask`);
     }
     const sample = selectedByTime.get(timeMs);
     if (sample !== undefined) {

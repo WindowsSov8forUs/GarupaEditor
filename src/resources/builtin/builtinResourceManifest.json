@@ -67,6 +67,51 @@
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
     },
     {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "byteLength": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/directional-tex_parSet_1.png",
+      "byteLength": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Default-Particle.png",
+      "byteLength": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/effect_circle.png",
+      "byteLength": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/light.png",
+      "byteLength": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "byteLength": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "byteLength": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/profile.json",
+      "byteLength": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/textures.json",
+      "byteLength": 3888,
+      "sha256": "D686C83270716E7299480023B7751CC23EDAC1CF53C4B04D7557B2FC9320808B"
+    },
+    {
       "path": "game/portable/profiles/ordinary-render/profile.json",
       "byteLength": 20287,
       "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
@@ -74,7 +119,7 @@
     {
       "path": "game/portable/profiles/ordinary-visible/profile.json",
       "byteLength": 28809,
-      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+      "sha256": "88F0EEC71F2439D28FBBF0C43105F67F118D034AEE7B25091969E82F02355B3C"
     },
     {
       "path": "game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png",

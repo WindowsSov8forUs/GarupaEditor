@@ -18,6 +18,7 @@ try {
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "skinSettings.test.js")]);
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "skinProductionComposition.test.js")]);
+  run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "leasedDefaultParticlePreparation.test.js")]);
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "sourcePackageDecoder.test.js")]);
   run(process.execPath, [join(testingRoot, "verifySkinSettingsStatic.mjs")]);
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {

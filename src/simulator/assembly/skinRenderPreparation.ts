@@ -37,7 +37,6 @@ export async function prepareSkinRenderOverlay(
   const selected = new Set([
     recipe.note.logicalResource,
     recipe.field.logicalResource,
-    recipe.tapEffect.logicalResource,
     recipe.background.logicalResource,
     recipe.directional.noteLogicalResource,
     recipe.judge.logicalResource,

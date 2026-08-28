@@ -157,7 +157,7 @@ function prepareStage() {
     Buffer.from(JSON.stringify({ render, particle })), allowlist);
   for (const [route, name, mime, source] of [
     ["/render-profile.json", "render-profile.json", "application/json; charset=utf-8", join(ordinaryRoot, "ordinary_portable_profile.json")],
-    ["/visible-profile.json", "visible-profile.json", "application/json; charset=utf-8", join(visibleRoot, "ordinary_visible_rendering_profile.json")],
+    ["/visible-profile.json", "visible-profile.json", "application/json; charset=utf-8", join(repositoryRoot, "src/assets/game/portable/profiles/ordinary-visible/profile.json")],
     ["/score-animation.json", "score-animation.json", "application/json; charset=utf-8", join(scoreRoot, "score_gauge_ss_animation_profile.json")],
     ["/game-clear-profile.json", "game-clear-profile.json", "application/json; charset=utf-8", join(gameClearRoot, "game-clear-profile.json")],
     ["/game-clear-assets.json", "game-clear-assets.json", "application/json; charset=utf-8", null],
