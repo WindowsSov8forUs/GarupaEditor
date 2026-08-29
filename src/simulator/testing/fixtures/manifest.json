@@ -111,6 +111,20 @@
       "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78"
     },
     {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "bytes": 4978,
+      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "bytes": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
+    },
+    {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
       "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
@@ -158,20 +172,6 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
       "bytes": 247,
       "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "bytes": 4978,
-      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "bytes": 20287,
-      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
     },
     {
       "path": "reverse-snapshots/c07-evidence/artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
@@ -251,55 +251,6 @@
       "sha256": "3974D2D58CA4AB34162B405A178DACE153FEE12EA7DDD8893D3B544A5EE63285"
     },
     {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
-      "bytes": 2024,
-      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
-      "bytes": 202371,
-      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
-      "bytes": 4116,
-      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
-      "bytes": 236417,
-      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
-      "bytes": 222637,
-      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
-      "bytes": 40235,
-      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
-    },
-    {
-      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
-      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
-      "bytes": 13393,
-      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
-    },
-    {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
       "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
@@ -361,6 +312,55 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
       "bytes": 127583,
       "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "bytes": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "bytes": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "bytes": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "bytes": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "bytes": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "bytes": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/653_ikuoku_easy.bms.txt",
@@ -923,6 +923,13 @@
       "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41"
     },
     {
+      "path": "reverse-snapshots/particle-lane-slide-one-frame-correction/artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
+      "sourceReverseCommit": "5084e7935977026536844c018b6c246452948654",
+      "sourcePath": "artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
+      "bytes": 28158,
+      "sha256": "64DD565DA8A69D088059A52543A3B5120CFED3145F0DD649AD8E89DE1B0BA339"
+    },
+    {
       "path": "reverse-snapshots/particle-scaling-mode-fifth-correction/artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
       "sourceReverseCommit": "61743e0fca21c6430b2d67ac043d6c709e6cd1e6",
       "sourcePath": "artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
@@ -1147,11 +1154,39 @@
       "sha256": "504699C49C5E2A1164908AFEEBB388203A73E290EB8081CA137E976461EB607A"
     },
     {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
+      "path": "reverse-snapshots/seven-visual-fresh-reconfirmation/artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
+      "sourceReverseCommit": "d4ab8146c1e13f9cfd293dab570677607e99221a",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
+      "bytes": 45031,
+      "sha256": "B713447F873C9EFF1741AEAD79F5A8BACEEDFEA47A40D53E1E312BCAF2321133"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+      "bytes": 152733,
+      "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "bytes": 6494,
+      "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 36197,
-      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
+      "bytes": 504,
+      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
+    },
+    {
+      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 792,
+      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
@@ -1161,11 +1196,11 @@
       "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5"
     },
     {
-      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 41143,
-      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
+      "bytes": 36197,
+      "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
@@ -1182,6 +1217,13 @@
       "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F"
     },
     {
+      "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
+      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
+      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "bytes": 41143,
+      "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6"
+    },
+    {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
       "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
@@ -1194,20 +1236,6 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 12046,
       "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 504,
-      "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D"
-    },
-    {
-      "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
-      "sourceReverseCommit": "2098fe494b1c7446ed01a86067a4853608cc3c95",
-      "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
-      "bytes": 792,
-      "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__fieldskin__skin00.json",
@@ -1398,27 +1426,6 @@
       "sourcePath": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
       "bytes": 8090,
       "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877"
-    },
-    {
-      "path": "reverse-snapshots/particle-lane-slide-one-frame-correction/artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
-      "sourceReverseCommit": "5084e7935977026536844c018b6c246452948654",
-      "sourcePath": "artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
-      "bytes": 28158,
-      "sha256": "64DD565DA8A69D088059A52543A3B5120CFED3145F0DD649AD8E89DE1B0BA339"
-    },
-    {
-      "path": "reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
-      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
-      "sourcePath": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
-      "bytes": 152733,
-      "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
-    },
-    {
-      "path": "reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
-      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
-      "sourcePath": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
-      "bytes": 6494,
-      "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626"
     }
   ]
 }

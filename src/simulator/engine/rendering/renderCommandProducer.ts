@@ -559,7 +559,7 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
       hudRole: "score", state: this.hud.score.createState(plan.record, plan.scoreGauge),
     });
-    if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") commands.push({
+    if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS" && this.scoreGaugeSsElapsedSeconds === null) commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
       animationRole: "score-gauge-ss", restart: true,
     });
@@ -618,7 +618,7 @@ export class RenderCommandProducer {
         this.lastAllPerfect = displayedAllPerfect;
       }
       this.resultElapsedSeconds = 0;
-      if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") {
+      if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS" && this.scoreGaugeSsElapsedSeconds === null) {
         this.scoreGaugeSsElapsedSeconds = 0;
       }
       if (nextLifeState.warning && !this.lastLifeWarning) {
@@ -697,7 +697,6 @@ export class RenderCommandProducer {
     let nextResultElapsed = this.resultElapsedSeconds;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
     let nextGameClearElapsed = this.gameClearElapsedSeconds;
-    let releaseGameClear = false;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [owner, elapsed] of this.hudAnimationElapsedSeconds) {
@@ -759,25 +758,17 @@ export class RenderCommandProducer {
       });
     }
     if (this.gameClearElapsedSeconds !== null) {
+      // SVF-R06: the additional FC/AP controller has no elapsed-time stop or
+      // deactivate path. Continue sampling the scene-owned graph; the backend
+      // clamps non-looping clips to their final frame and session teardown owns
+      // the only release mutation.
       nextGameClearElapsed = Math.fround(this.gameClearElapsedSeconds + deltaTimeSeconds);
-      if (nextGameClearElapsed > Math.fround(3.233)) {
-        commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.gameClear,
-          animationRole: "game-clear", restart: false,
-        });
-        commands.push({
-          ...base(commands.length), kind: "release-object", renderObjectId: HUD_OBJECTS.gameClear,
-        });
-        nextGameClearElapsed = null;
-        releaseGameClear = true;
-      } else {
-        const sample = createRenderFloat32(nextGameClearElapsed);
-        if (sample.status !== "ok") return sample;
-        commands.push({
-          ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.gameClear,
-          animationRole: "game-clear", elapsedSeconds: sample.value,
-        });
-      }
+      const sample = createRenderFloat32(nextGameClearElapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.gameClear,
+        animationRole: "game-clear", elapsedSeconds: sample.value,
+      });
     }
     if (this.resultElapsedSeconds !== null) {
       nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
@@ -813,11 +804,6 @@ export class RenderCommandProducer {
       this.resultElapsedSeconds = nextResultElapsed;
       this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
       this.gameClearElapsedSeconds = nextGameClearElapsed;
-      if (releaseGameClear) {
-        const gameClearIndex = this.createdObjectIds.indexOf(HUD_OBJECTS.gameClear);
-        if (gameClearIndex >= 0) this.createdObjectIds.splice(gameClearIndex, 1);
-        this.creationSequenceByObjectId.delete(HUD_OBJECTS.gameClear);
-      }
     });
   }
 

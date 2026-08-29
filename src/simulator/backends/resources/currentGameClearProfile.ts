@@ -94,12 +94,11 @@ export function buildGameClearParticleProfile(
     ? profile.base.graph.objects
     : [...profile.base.graph.objects, ...(clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects)];
   const byPath = new Map(objects.map((object) => [object.path, object]));
-  const offsets = new Map([
-    ...activationOffsets(profile.base.graph.objects, profile.base.clip),
-    ...(clearStatus === 1 ? [] : activationOffsets(
-      clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects,
-      clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip,
-    )),
+  const additionalObjects = clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects;
+  const additionalClip = clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip;
+  const particleOverrides = new Map([
+    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip),
+    ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip)),
   ]);
   const systems: ParticleSystemDefinition[] = [];
   const profiles: Record<string, ParticleProfileDefinition> = {};
@@ -112,8 +111,6 @@ export function buildGameClearParticleProfile(
     const renderer = rendererComponent?.serializedTree;
     const texture = rendererComponent?.asset ?? null;
     if (particle === undefined || renderer === undefined) continue;
-    const observedOffset = offsets.get(object.path) ?? 0;
-    const activationOffset = Number.isFinite(observedOffset) ? observedOffset : Math.fround(profile.durationSeconds + 1);
     const profileId = `game-clear-profile:${object.path}`;
     const rendererId = `game-clear-renderer:${object.path}`;
     const modules: Record<string, string> = {};
@@ -124,7 +121,10 @@ export function buildGameClearParticleProfile(
       const module = particle[moduleName];
       if (!record(module) || module.enabled !== true) continue;
       const id = `${profileId}:${moduleName}`;
-      (moduleProfiles[moduleName] ??= {})[id] = module;
+      const override = particleOverrides.get(object.path);
+      (moduleProfiles[moduleName] ??= {})[id] = moduleName === "InitialModule" && override?.startRotation !== undefined
+        ? initialModuleWithStartRotation(module, override.startRotation)
+        : module;
       modules[moduleName] = id;
     }
     profiles[profileId] = Object.freeze({
@@ -136,15 +136,12 @@ export function buildGameClearParticleProfile(
         ringBufferMode: 0 as const,
         ringBufferLoopRange: particle.ringBufferLoopRange as ParticleProfileDefinition["system"]["ringBufferLoopRange"],
         emitterVelocityMode: 0 as const,
-        looping: particle.looping === true,
+        looping: particleOverrides.get(object.path)?.looping ?? particle.looping === true,
         prewarm: particle.prewarm === true,
         playOnAwake: false as const,
         useUnscaledTime: false as const,
         autoRandomSeed: true as const,
-        startDelay: delayedCurve(
-          particle.startDelay as ParticleProfileDefinition["system"]["startDelay"],
-          activationOffset,
-        ),
+        startDelay: particle.startDelay as ParticleProfileDefinition["system"]["startDelay"],
         moveWithTransform: 0 as const,
         moveWithCustomTransform: null,
         scalingMode: 1 as const,
@@ -174,8 +171,8 @@ export function buildGameClearParticleProfile(
       identity: `game-clear:${object.path}`,
       root,
       path: object.path,
-      transform: transform(object),
-      parentTransforms: Object.freeze(parentTransforms(object.path, byPath)),
+      transform: transform(object, particleOverrides.get(object.path)),
+      parentTransforms: Object.freeze(parentTransforms(object.path, byPath, particleOverrides)),
       profile: profileId,
       randomStateU32: randomWords(object.path),
     }));
@@ -212,6 +209,34 @@ export function buildGameClearParticleProfile(
     profileCount: systems.length,
     bundles: Object.freeze([bundle]),
   });
+}
+
+export interface GameClearParticleActivation {
+  readonly systemId: string;
+  readonly activateAtSeconds: number;
+}
+
+export function buildGameClearParticleActivationSchedule(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 1 | 2 | 3,
+): readonly GameClearParticleActivation[] {
+  const additionalObjects = clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects;
+  const additionalClip = clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip;
+  const objects = clearStatus === 1
+    ? profile.base.graph.objects
+    : [...profile.base.graph.objects, ...additionalObjects];
+  const offsets = new Map([
+    ...activationOffsets(profile.base.graph.objects, profile.base.clip),
+    ...(clearStatus === 1 ? [] : activationOffsets(additionalObjects, additionalClip)),
+  ]);
+  return Object.freeze(objects
+    .filter((object) => object.components.some((component) => component.class === "ParticleSystem"))
+    .map((object) => Object.freeze({
+      systemId: `game-clear:${object.path}`,
+      activateAtSeconds: Math.fround(offsets.get(object.path) ?? 0),
+    }))
+    .filter((row) => Number.isFinite(row.activateAtSeconds))
+    .sort((left, right) => left.activateAtSeconds - right.activateAtSeconds || left.systemId.localeCompare(right.systemId)));
 }
 function activationOffsets(
   objects: readonly GameClearGraphObject[],
@@ -258,31 +283,94 @@ function clipValue(clip: GameClearClipProfile, index: number, phase: number): nu
   value = Math.fround(Math.fround(value * delta) + latest.coefficients[2]);
   return Math.fround(Math.fround(value * delta) + latest.coefficients[3]);
 }
-function delayedCurve(
-  curve: ParticleProfileDefinition["system"]["startDelay"],
-  delay: number,
-): ParticleProfileDefinition["system"]["startDelay"] {
+interface GameClearParticleChannelOverride {
+  readonly position?: Readonly<{ readonly x?: number; readonly y?: number; readonly z?: number }>;
+  readonly startRotation?: number;
+  readonly looping?: boolean;
+}
+
+function particleChannelOverrides(
+  objects: readonly GameClearGraphObject[],
+  clip: GameClearClipProfile,
+): ReadonlyMap<string, GameClearParticleChannelOverride> {
+  const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
+  const channels = clip.bindings.flatMap((binding) => binding.channels);
+  const mutable = new Map<string, {
+    position?: { x?: number; y?: number; z?: number };
+    startRotation?: number;
+    looping?: boolean;
+  }>();
+  for (let index = 0; index < channels.length; index += 1) {
+    const channel = channels[index]!;
+    const marker = channel.includes(".m_LocalPosition.") ? ".m_LocalPosition."
+      : channel.includes(".attribute_hash:") ? ".attribute_hash:"
+      : null;
+    if (marker === null || !(channel.includes("effect_par") || channel.startsWith("GameClearParticle"))) continue;
+    const markerIndex = channel.indexOf(marker);
+    const relative = channel.slice(0, markerIndex);
+    const path = relative.length === 0 ? root : `${root}/${relative}`;
+    const override = mutable.get(path) ?? {};
+    const value = clipValue(clip, index, 0);
+    if (marker === ".m_LocalPosition.") {
+      const axis = channel.slice(markerIndex + marker.length);
+      if (axis === "x" || axis === "y" || axis === "z") {
+        (override.position ??= {})[axis] = value;
+      }
+    } else if (channel.includes("attribute_hash:1133446416")) {
+      override.startRotation = value;
+    } else if (channel.includes("attribute_hash:925582877")) {
+      override.looping = value >= 0.5;
+    }
+    mutable.set(path, override);
+  }
+  return new Map([...mutable].map(([path, value]) => [path, Object.freeze({
+    ...(value.position === undefined ? {} : { position: Object.freeze(value.position) }),
+    ...(value.startRotation === undefined ? {} : { startRotation: Math.fround(value.startRotation) }),
+    ...(value.looping === undefined ? {} : { looping: value.looping }),
+  })]));
+}
+
+function initialModuleWithStartRotation(
+  module: Readonly<Record<string, unknown>>,
+  value: number,
+): Readonly<Record<string, unknown>> {
+  const startRotation = module.startRotation;
+  if (!record(startRotation)) throw new Error("game-clear animated startRotation owner is missing");
   return Object.freeze({
-    ...curve,
-    scalar: Math.fround(curve.scalar + delay),
-    minScalar: Math.fround(curve.minScalar + delay),
+    ...module,
+    startRotation: Object.freeze({
+      ...startRotation,
+      scalar: Math.fround(value),
+      minScalar: Math.fround(value),
+    }),
   });
 }
 
-function transform(value: GameClearGraphObject): ParticleSystemDefinition["transform"] {
+function transform(
+  value: GameClearGraphObject,
+  override?: GameClearParticleChannelOverride,
+): ParticleSystemDefinition["transform"] {
   return Object.freeze({
-    m_LocalPosition: Object.freeze({ x: value.local_position[0], y: value.local_position[1], z: value.local_position[2] }),
+    m_LocalPosition: Object.freeze({
+      x: override?.position?.x ?? value.local_position[0],
+      y: override?.position?.y ?? value.local_position[1],
+      z: override?.position?.z ?? value.local_position[2],
+    }),
     m_LocalRotation: Object.freeze({ x: value.local_rotation[0], y: value.local_rotation[1], z: value.local_rotation[2], w: value.local_rotation[3] }),
     m_LocalScale: Object.freeze({ x: value.local_scale[0], y: value.local_scale[1], z: value.local_scale[2] }),
   });
 }
-function parentTransforms(path: string, objects: ReadonlyMap<string, GameClearGraphObject>): ParticleSystemDefinition["parentTransforms"] {
+function parentTransforms(
+  path: string,
+  objects: ReadonlyMap<string, GameClearGraphObject>,
+  overrides: ReadonlyMap<string, GameClearParticleChannelOverride>,
+): ParticleSystemDefinition["parentTransforms"] {
   const output = [];
   let current = path;
   while (current.includes("/")) {
     current = current.slice(0, current.lastIndexOf("/"));
     const parent = objects.get(current);
-    if (parent !== undefined) output.push(transform(parent));
+    if (parent !== undefined) output.push(transform(parent, overrides.get(current)));
   }
   return output;
 }

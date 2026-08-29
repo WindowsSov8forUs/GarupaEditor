@@ -189,7 +189,7 @@ function verify(value) {
   equal(value.cleanup.owners, 0, "owner cleanup");
   equal(value.cleanup.rendererChildren, 0, "renderer child cleanup");
   equal(value.cleanup.applicationChildren, 0, "application child cleanup");
-  if (!value.slideLifecycle.exactKey.endsWith("note_long_flash_1") ||
+  if (!value.slideLifecycle.exactKey.endsWith("note_long_flash_3") ||
     value.slideLifecycle.positions.length !== 3 || value.slideLifecycle.terminalVisible !== false ||
     value.slideLifecycle.acceptedFramebuffer.sha256 === value.slideLifecycle.rejectedHeadFramebuffer.sha256 ||
     value.slideLifecycle.acceptedFramebuffer.nonTransparentPixels <= 0 ||

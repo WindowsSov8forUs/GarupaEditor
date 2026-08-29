@@ -136,19 +136,39 @@ export class DeterministicParticleSimulation {
       .filter(([, record]) => record.definition.root === root)
       .map(([identity]) => identity)
       .sort();
-    if (selected.length === 0) {
-      throw fault("particle.simulation.unknown-root", "Play requires one prepared semantic particle root.");
+    // Root Play preserves the original restart-if-active contract. The
+    // incremental API below is reserved for serialized child GameObject
+    // activation under one already-playing root.
+    this.owners.delete(ownerKey);
+    this.playRootSystems(ownerKey, instance, root, selected);
+  }
+
+  playRootSystems(
+    ownerKey: string,
+    instance: ParticleInstanceIdentity,
+    root: ParticleRootId,
+    selectedSystemIds: readonly string[],
+  ): void {
+    if (!Array.isArray(selectedSystemIds) || selectedSystemIds.length === 0) {
+      throw fault("particle.simulation.unknown-root", "Play requires at least one prepared semantic particle system owner.");
     }
-    const systems = new Map<string, OwnerSystemRuntime>();
-    const owner: OwnerRuntime = {
-      ownerKey,
-      instance: Object.freeze({ ...instance }),
-      root,
-      systems,
-    };
-    this.owners.set(ownerKey, owner);
-    for (const identity of selected) {
-      const record = this.definitions.get(identity)!;
+    let owner = this.owners.get(ownerKey);
+    if (owner === undefined) {
+      owner = {
+        ownerKey,
+        instance: Object.freeze({ ...instance }),
+        root,
+        systems: new Map<string, OwnerSystemRuntime>(),
+      };
+      this.owners.set(ownerKey, owner);
+    } else if (owner.root !== root || !sameParticleInstance(owner.instance, instance)) {
+      throw fault("particle.simulation.owner-identity-mismatch", "Incremental ParticleSystem activation requires the same stable root owner identity.");
+    }
+    for (const identity of [...new Set(selectedSystemIds)].sort()) {
+      const record = this.definitions.get(identity);
+      if (record === undefined || record.definition.root !== root || owner.systems.has(identity)) {
+        throw fault("particle.simulation.invalid-system-activation", "Every incremental activation must name one inactive prepared ParticleSystem under the selected root.");
+      }
       const profile = record.bundle.profiles[record.definition.profile];
       if (profile === undefined) throw fault("particle.simulation.missing-profile", "Every selected system profile must resolve.");
       const runtime: OwnerSystemRuntime = {
@@ -157,7 +177,7 @@ export class DeterministicParticleSimulation {
         first: true,
         particles: [],
       };
-      systems.set(identity, runtime);
+      owner.systems.set(identity, runtime);
       if (profile.system.prewarm) {
         const duration = f32(profile.system.lengthInSec);
         const events = this.events(record.bundle, profile, -duration, 0, true).filter((at) => at < 0);
@@ -609,6 +629,14 @@ function quaternionRotate(vector: Vector3, quaternion: ParticleTransformProfile[
     add(y, add(multiply(qw, ty), subtract(multiply(qz, tx), multiply(qx, tz)))),
     add(z, add(multiply(qw, tz), subtract(multiply(qx, ty), multiply(qy, tx)))),
   ];
+}
+
+function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
+  if (left.kind !== right.kind || left.buttonType !== right.buttonType || left.rangeLength !== right.rangeLength) return false;
+  if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
+  return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
+    left.rootPositionXBits === right.rootPositionXBits && left.rootPositionYBits === right.rootPositionYBits &&
+    left.rootScaleBits === right.rootScaleBits;
 }
 
 function cloneOwner(owner: OwnerRuntime): OwnerRuntime {

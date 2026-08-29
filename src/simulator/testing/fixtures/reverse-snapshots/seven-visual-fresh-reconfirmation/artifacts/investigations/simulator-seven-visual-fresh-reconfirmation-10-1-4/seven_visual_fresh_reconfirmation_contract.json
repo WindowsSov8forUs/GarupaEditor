@@ -1,0 +1,1357 @@
+{
+  "schema_version": 1,
+  "status": "portable-requirements-authorized-product-visible-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "full_visible_lifecycle": {
+      "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "bytes": 6942833,
+      "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
+    },
+    "withdrawn_seven_visual_oracle": {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+      "bytes": 152733,
+      "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
+    },
+    "withdrawn_production_gap_disposition": {
+      "path": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "bytes": 6494,
+      "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626"
+    },
+    "particle_portable_profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "particle_renderer_handoff": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_renderer_handoff_static.json",
+      "bytes": 16341,
+      "sha256": "3914D11B7CC4ED29DD49AF34C7169741B568FE6DE0A896654D3F54A959C5F562"
+    },
+    "score_gauge_ss_animation": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "slide_flash_lane_size_profile": {
+      "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/slide_flash_lane_size_profile.json",
+      "bytes": 6004,
+      "sha256": "5F48C0717609C3F99115992FF2162A7AC843B8F76B2C5DCDD0B896A4A1781059"
+    },
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/03219f9c__NoteSlide__Activate.arm64.tsv",
+        "bytes": 14966,
+        "sha256": "71E53D497BC860B4CF13CF34BE026EE7EFFCCF7EB16D3D24CC7C658A71AA0F2B"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321a774__NoteSlide__changeCurrentNote.arm64.tsv",
+        "bytes": 3541,
+        "sha256": "BD50233E5A7046423CCF8DF26CC48FCE5B427B1A91FC6B45B4A651D637B49824"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321a95c__NoteSlide__stopFlashAnimation.arm64.tsv",
+        "bytes": 781,
+        "sha256": "B5C50A3E6CD1826186B2942276436C0D0DE4F973143D688E312EE31DFD76625A"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321a9a0__NoteSlide__stopSlideNoteParticle.arm64.tsv",
+        "bytes": 1960,
+        "sha256": "46438D1E7B529D4EE0FAC378330788E8F6AC814B8BB16021576B8B97AD1318BD"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321ac60__NoteSlide__slidingMove.arm64.tsv",
+        "bytes": 6641,
+        "sha256": "F8FB99EE0F7E501CB507653B9D0848126643B222099396FAE41E5EA0F0C6C4D9"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321c46c__NoteSlide__playFlashAnimation.arm64.tsv",
+        "bytes": 1549,
+        "sha256": "6B17F2B2AEFC58541E72BF19BF12555188237881C8014DF33F04C632969C1972"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321c4fc__NoteSlide__playSlideNoteParticle.arm64.tsv",
+        "bytes": 3824,
+        "sha256": "43BB433B4147D6768915A6FD25CBE16E41F90A6085BD528D497DA81F260BD1D2"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321e0c4__NoteSlide__deactivate.arm64.tsv",
+        "bytes": 3487,
+        "sha256": "56472169AE339BF9A9D94A9D7682299FAE88A3BC434AAA375FE0C954760E6DCC"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321f674__NoteSlide__ctor.arm64.tsv",
+        "bytes": 9575,
+        "sha256": "77D20191AA51A0E93195F7F6E08D2A8E476AC37491A4D7164D7CCEB2AA0196B2"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386ee14__RhythmGameAnimationController__PlayGameClearAnimation.arm64.tsv",
+        "bytes": 314,
+        "sha256": "3121C9DE96E3A046F8C0BFCDD284DE84FA82BE3DF93BEE5B9292691A2126E6F3"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386ee24__RhythmGameAnimationController__playDefaultClearAdditionalAnimation.arm64.tsv",
+        "bytes": 3495,
+        "sha256": "B11250EDEB4D8104DA3AEEBE499FFED03F6E59C93289DC8E745C1E27AE8A1467"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f688__RhythmGameClearAdditionalAnimationController__Play.arm64.tsv",
+        "bytes": 980,
+        "sha256": "5E9E14221843E44DC8E9A51B25D3CAA9E427FF3C52FF9697DC1929B7570FE10D"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f938__RhythmGameClearAnimController__ClearAnimationFinished.arm64.tsv",
+        "bytes": 298,
+        "sha256": "A6A92C1987D62E5390472D5A07CB508FC31B9A226161F6758B94C539B99C4FA3"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f960__RhythmGameClearAnimController_PlayAnimation_MoveNext.arm64.tsv",
+        "bytes": 2233,
+        "sha256": "046636BE4EAAA21ECAEF4CD4D2C89399E25FFC3FB444874F0C4DA471590E8615"
+      }
+    ]
+  },
+  "authority": {
+    "portable_reconstruction_authorization": true,
+    "production_consumption_equivalence_authorization": false,
+    "fixed_device_gpu_exact_authorization": false,
+    "reason": "The committed Prefab/AnimationClip/ARM64/device facts authorize a corrected portable consumer, not a claim that the current GarupaEditor production framebuffer already consumes them correctly or equals Unity/GPU output."
+  },
+  "R01_particle_resource_consumption": {
+    "retained": {
+      "texture": {
+        "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+        "bytes": 236417,
+        "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+      },
+      "material": "Mat_parSet_1",
+      "tiles": [
+        4,
+        4
+      ],
+      "uv_frame_11_top_left_tile": {
+        "column": 3,
+        "row_from_top": 2,
+        "rgba_sha256": "C0F52F2624542475038C1E669BB56E363E8C7C9D9AD6731B93A0353FCEE9BF34",
+        "observed_shape": "solid five-point star with glow"
+      },
+      "blend_factors_rgb": [
+        "SRC_ALPHA",
+        "ONE"
+      ]
+    },
+    "corrected_requirement": "The PNG is the material's full atlas, not a standalone tile Sprite. Per-particle UV selects a sub-rectangle while the particle quad remains centered on the particle and obtains world size/rotation from the renderer record. The ParticleSystem Transform/parent chain, simulation-space/scaling-mode and owner Transform are each consumed exactly once; atlas pixel dimensions do not become authored world size. Straight-alpha texture RGB is sampled through the material and particle alpha is applied once by SRC_ALPHA,ONE blending.",
+    "rejected_shortcuts": [
+      "A correct tile hash alone does not prove renderer consumption.",
+      "Pre-cropping a tile and treating its pixel rectangle as the particle's authored geometry is not equivalent.",
+      "Pre-baking an owner/parent scale into particle state and then applying the owner scale again at draw is rejected.",
+      "Rebuilding a detached tile mesh without material/Transform/pivot/sorting identity is not a complete consumer."
+    ],
+    "profile_system_count": 120,
+    "renderer_handoff_status": "current-renderer-consumer-and-static-geometry-handoff-closed-physical-onset-open"
+  },
+  "R02_slide_flash": {
+    "serialized_owner": "NoteSlide.slideNoteFlashAnimator@0x188 + NoteSlide.slideNoteFlashSprite@0x190; NoteSlideAfter owns no flash component.",
+    "resource_selection_time": "once during NoteSlide.Activate before the flash is disabled",
+    "resource_selection_source": "the Slide root/front NoteInformation span length and center ButtonType, not the first current after-node and not the terminal after-node",
+    "selection_table": [
+      {
+        "span_length": 1,
+        "variants": [
+          {
+            "field": "laneSize1",
+            "offset": "0x1F0",
+            "values": [
+              3
+            ],
+            "initializer": "direct ARM64 write",
+            "get_note_file_name_exact_key": "note_long_flash_3"
+          }
+        ]
+      },
+      {
+        "span_length": 2,
+        "variants": [
+          {
+            "field": "laneSize2Left",
+            "offset": "0x1F8",
+            "values": [
+              2,
+              3
+            ],
+            "initializer": "direct ARM64 writes",
+            "get_note_file_name_exact_key": "note_long_flash_2_3"
+          },
+          {
+            "field": "laneSize2Right",
+            "offset": "0x200",
+            "values": [
+              3,
+              4
+            ],
+            "initializer": "direct ARM64 writes",
+            "get_note_file_name_exact_key": "note_long_flash_3_4"
+          }
+        ],
+        "branch": "left when center<=3, otherwise right"
+      },
+      {
+        "span_length": 3,
+        "variants": [
+          {
+            "field": "laneSize3",
+            "offset": "0x208",
+            "values": [
+              2,
+              3,
+              4
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "A10494D90314704E24CA5786F6376A6097558F10BB7880B539C8B80312DCA080",
+            "field_metadata_address": "0x6F719E8",
+            "metadata_data_offset": "0xE8E4D8",
+            "get_note_file_name_exact_key": "note_long_flash_2_3_4"
+          }
+        ]
+      },
+      {
+        "span_length": 4,
+        "variants": [
+          {
+            "field": "laneSize4Left",
+            "offset": "0x210",
+            "values": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "CF97ADEEDB59E05BFD73A2B4C2A8885708C4F4F70C84C64B27120E72AB733B72",
+            "field_metadata_address": "0x6F71AD0",
+            "metadata_data_offset": "0x1020920",
+            "get_note_file_name_exact_key": "note_long_flash_1_2_3_4"
+          },
+          {
+            "field": "laneSize4Right",
+            "offset": "0x218",
+            "values": [
+              2,
+              3,
+              4,
+              5
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "5B3F9EC0646608DAE43294162F92F82B97E7011A2BFA51A25FE477D18BDC6B21",
+            "field_metadata_address": "0x6F71998",
+            "metadata_data_offset": "0xE63B68",
+            "get_note_file_name_exact_key": "note_long_flash_2_3_4_5"
+          }
+        ],
+        "branch": "left when center<=3, otherwise right"
+      },
+      {
+        "span_length": 5,
+        "variants": [
+          {
+            "field": "laneSize5",
+            "offset": "0x220",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "4F6ADDC9659D6FB90FE94B6688A79F2A1FA8D36EC43F8F3E1D9B6528C448A384",
+            "field_metadata_address": "0x6F71990",
+            "metadata_data_offset": "0xE63B50",
+            "get_note_file_name_exact_key": "note_long_flash_1_2_3_4_5"
+          }
+        ]
+      },
+      {
+        "span_length": 6,
+        "variants": [
+          {
+            "field": "laneSize6Left",
+            "offset": "0x228",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "CD9A54ED1F18BF97DB08914E280EA7349E11CA2C4885A4D8052552CEBA84208D",
+            "field_metadata_address": "0x6F71A10",
+            "metadata_data_offset": "0x1020900",
+            "get_note_file_name_exact_key": "note_long_flash_0_1_2_3_4_5"
+          },
+          {
+            "field": "laneSize6Right",
+            "offset": "0x230",
+            "values": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "90D856B7ECAC90C26898AF8A46404297AA0EF65768F62FDF8C3F08294BCBEE49",
+            "field_metadata_address": "0x6F719C8",
+            "metadata_data_offset": "0xE8E470",
+            "get_note_file_name_exact_key": "note_long_flash_1_2_3_4_5_6"
+          }
+        ],
+        "branch": "left when center<=3, otherwise right"
+      },
+      {
+        "span_length": 7,
+        "variants": [
+          {
+            "field": "laneSize7",
+            "offset": "0x238",
+            "values": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "initializer": "RuntimeHelpers.InitializeArray",
+            "private_implementation_field": "E1A613AA4B331588D97B5FEEF1FAABE8E8138D8C488EE9122B8533BFDDA3C189",
+            "field_metadata_address": "0x6F71A28",
+            "metadata_data_offset": "0x1020958",
+            "get_note_file_name_exact_key": "note_long_flash_0_1_2_3_4_5_6"
+          }
+        ]
+      }
+    ],
+    "resource_boundary": {
+      "skin00_flash_keys": [
+        "note_long_flash_0",
+        "note_long_flash_1",
+        "note_long_flash_2",
+        "note_long_flash_3",
+        "note_long_flash_4",
+        "note_long_flash_5",
+        "note_long_flash_6"
+      ],
+      "habahiro_flash_key_count": 28,
+      "all_lane_size_exact_keys_present_in_habahiro": true,
+      "all_lane_size_exact_keys_present_in_skin00": false,
+      "conclusion": "The original laneSize arrays generate exact multi-lane keys. The current HABAHIRO package owns them; current skin00 owns only seven single-lane flash keys. A non-HAB product consumer must not claim that a missing multi-lane skin00 key is an original resource."
+    },
+    "motion": "The stable flash is a child of the NoteSlide root. slidingMove reads the current NoteSlideAfter TargetCenterButton, writes the NoteSlide root localPosition and copies target localScale multiplied by NoteSlide.screenPosToWorldDistanceRate. It is not parented to an authored after-note visual Transform.",
+    "lifecycle": "play enables flash GameObject and Animator and calls Animator.Play; stop disables Animator and GameObject.",
+    "correction": "The prior first-current resource conclusion is withdrawn. A consumer that binds note_long_flash from a current/tail node or attaches it to that note's moving visual is rejected.",
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/03219f9c__NoteSlide__Activate.arm64.tsv",
+        "bytes": 14966,
+        "sha256": "71E53D497BC860B4CF13CF34BE026EE7EFFCCF7EB16D3D24CC7C658A71AA0F2B"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321ac60__NoteSlide__slidingMove.arm64.tsv",
+        "bytes": 6641,
+        "sha256": "F8FB99EE0F7E501CB507653B9D0848126643B222099396FAE41E5EA0F0C6C4D9"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321c46c__NoteSlide__playFlashAnimation.arm64.tsv",
+        "bytes": 1549,
+        "sha256": "6B17F2B2AEFC58541E72BF19BF12555188237881C8014DF33F04C632969C1972"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321a95c__NoteSlide__stopFlashAnimation.arm64.tsv",
+        "bytes": 781,
+        "sha256": "B5C50A3E6CD1826186B2942276436C0D0DE4F973143D688E312EE31DFD76625A"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321f674__NoteSlide__ctor.arm64.tsv",
+        "bytes": 9575,
+        "sha256": "77D20191AA51A0E93195F7F6E08D2A8E476AC37491A4D7164D7CCEB2AA0196B2"
+      }
+    ]
+  },
+  "R03_slide_tap_keep": {
+    "owner": "one pooled effect_TapKeep acquired by NoteInstanceContainer.GetSlideNoteTapKeepEffect and stored at NoteSlide.tapLongNoteParticle@0x1D0",
+    "play_mutation_order": [
+      "acquire",
+      "store",
+      "GameObject.SetActive(true)",
+      "set_parent(NoteSlide Transform)",
+      "set serialized static localPosition",
+      "set serialized static localScale",
+      "ParticleSystem.Play"
+    ],
+    "motion": "TapKeep remains a child of the same stable NoteSlide Transform and therefore receives the same current-button localPosition/localScale mutation as the flash. It is not recreated or rebound per after-node.",
+    "terminal_order": [
+      "ParticleSystem.Stop",
+      "ParticleSystem.Clear",
+      "GameObject.SetActive(false)"
+    ],
+    "portable_requirement": "Simulation samples remain local to this pooled ParticleSystem/NoteSlide owner until renderer handoff. The current NoteSlide owner Transform is composed exactly once at draw; a second range/root scale or a per-node particle restart is rejected.",
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321c4fc__NoteSlide__playSlideNoteParticle.arm64.tsv",
+        "bytes": 3824,
+        "sha256": "43BB433B4147D6768915A6FD25CBE16E41F90A6085BD528D497DA81F260BD1D2"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321a9a0__NoteSlide__stopSlideNoteParticle.arm64.tsv",
+        "bytes": 1960,
+        "sha256": "46438D1E7B529D4EE0FAC378330788E8F6AC814B8BB16021576B8B97AD1318BD"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0321e0c4__NoteSlide__deactivate.arm64.tsv",
+        "bytes": 3487,
+        "sha256": "56472169AE339BF9A9D94A9D7682299FAE88A3BC434AAA375FE0C954760E6DCC"
+      }
+    ]
+  },
+  "R04_score_above_ss_range": {
+    "panel_clip_rows": [
+      {
+        "t_ms": 93614,
+        "score": 872726,
+        "clip_f32_bits": [
+          "43658001",
+          "C0BFFFE8",
+          "43BB8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 95900,
+        "score": 915926,
+        "clip_f32_bits": [
+          "436F0001",
+          "C0BFFFE8",
+          "43C50000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 98237,
+        "score": 939899,
+        "clip_f32_bits": [
+          "43748001",
+          "C0BFFFE8",
+          "43CA8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 99166,
+        "score": 950189,
+        "clip_f32_bits": [
+          "43768001",
+          "C0BFFFE8",
+          "43CC8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 102430,
+        "score": 982088,
+        "clip_f32_bits": [
+          "437B0001",
+          "C0BFFFE8",
+          "43D10000",
+          "421C0000"
+        ]
+      }
+    ],
+    "ss_entry_t_ms": 93580,
+    "score_updates_after_entry": 58,
+    "conclusion": "The HighRankEffect UIPanel starts at the gauge origin and its right edge continues to the current score indicator after SS. It is not frozen at the SS boundary. The panel clip and the indicator are separate serialized consumers and both mutate after SS."
+  },
+  "R05_score_ss_highlight": {
+    "clip_name": "ScoreGaugeSS",
+    "sample_rate": 60.0,
+    "stop_time": 3.0,
+    "loop_time": true,
+    "curve_count": 56,
+    "conclusion": "Rank transition to SS enables the ScoreGaugeSS sibling highlight and starts its 3-second loop once. Later rank-5 score updates continue the loop and do not restart or disable it; the ordinary HUD keeps the high-rank highlight for the remainder of play."
+  },
+  "R06_terminal_hold": {
+    "additional_clip_stop_time": {
+      "full_combo": 2.2833333015441895,
+      "all_perfect": 2.2833333015441895
+    },
+    "base_clip_stop_time": 3.0,
+    "observed_base_callback_ms": 3233,
+    "exit_after_callback_ms": 15,
+    "arm64_fact": "RhythmGameClearAdditionalAnimationController.Play only activates the additional GameObject, enables its Animator and calls Animator.Play at normalized time zero. It has no stop/deactivate/release path. Scene exit is driven by the separate base RhythmGameClearAnimController.ClearAnimationFinished callback.",
+    "conclusion": "The non-looping FC/AP additional clip holds its final sampled state after 2.2833333015441895 seconds until the base-clear callback begins scene exit. There is no independent 3.233-second release mutation for the additional graph. Portable ownership ends at scene/session teardown, not at a synthetic elapsed threshold.",
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f688__RhythmGameClearAdditionalAnimationController__Play.arm64.tsv",
+        "bytes": 980,
+        "sha256": "5E9E14221843E44DC8E9A51B25D3CAA9E427FF3C52FF9697DC1929B7570FE10D"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f938__RhythmGameClearAnimController__ClearAnimationFinished.arm64.tsv",
+        "bytes": 298,
+        "sha256": "A6A92C1987D62E5390472D5A07CB508FC31B9A226161F6758B94C539B99C4FA3"
+      },
+      {
+        "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/arm64/0386f960__RhythmGameClearAnimController_PlayAnimation_MoveNext.arm64.tsv",
+        "bytes": 2233,
+        "sha256": "046636BE4EAAA21ECAEF4CD4D2C89399E25FFC3FB444874F0C4DA471590E8615"
+      }
+    ]
+  },
+  "R07_complete_fc_ap_animation": {
+    "clear_status_mapping": {
+      "1": "base clear only",
+      "2": "base + FullCombo_text_in",
+      "3": "base + AllPerfect_text_in"
+    },
+    "base": {
+      "object_count": 43,
+      "particle_system_count": 40,
+      "curve_count": 44
+    },
+    "full_combo": {
+      "object_count": 25,
+      "particle_graph_rows": [
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star",
+          "active": false,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystem",
+            "ParticleSystemRenderer",
+            "SpriteRendererOrder"
+          ]
+        },
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star_b",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star/effect_fullcombo_ring",
+          "active": true,
+          "local_position": [
+            0.0,
+            -0.009999999776482582,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star/effect_fullcombo_star_center",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.3826834559440613,
+            0.9238795042037964
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "FullComboAnimation/content/effect_par_firework_star/effect_light_lay",
+          "active": false,
+          "local_position": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "local_rotation": [
+            0.7071067094802856,
+            -1.4210854715202004e-14,
+            -1.4210854715202004e-14,
+            0.7071068286895752
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystem",
+            "ParticleSystemRenderer",
+            "SpriteRendererOrder"
+          ]
+        }
+      ],
+      "particle_channel_count": 10,
+      "particle_channels": [
+        {
+          "index": 92,
+          "channel": "content/effect_par_firework_star.m_IsActive.value"
+        },
+        {
+          "index": 93,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.attribute_hash:1133446416.value"
+        },
+        {
+          "index": 96,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_ring.m_IsActive.value"
+        },
+        {
+          "index": 97,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.m_IsActive.value"
+        },
+        {
+          "index": 98,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star.m_IsActive.value"
+        },
+        {
+          "index": 99,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star_b.m_IsActive.value"
+        },
+        {
+          "index": 100,
+          "channel": "content/effect_par_firework_star.attribute_hash:925582877.value"
+        },
+        {
+          "index": 101,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.x"
+        },
+        {
+          "index": 102,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.y"
+        },
+        {
+          "index": 103,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.z"
+        }
+      ],
+      "phase_matrix": [
+        {
+          "phase_seconds": 0.0,
+          "particle_channel_f32_bits": [
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.25,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.5,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.75,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 1.0,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 1.5,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 2.0,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 2.2831666469573975,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        }
+      ],
+      "clip_stop_time": 2.2833333015441895,
+      "clip_loop_time": false,
+      "curve_count": 104
+    },
+    "all_perfect": {
+      "object_count": 36,
+      "particle_graph_rows": [
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystem",
+            "ParticleSystemRenderer",
+            "SpriteRendererOrder"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star (1)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star (2)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star (3)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star_b",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star_b (1)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star_b (2)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_firework_star_b (3)",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_ring",
+          "active": true,
+          "local_position": [
+            0.0,
+            -0.009999999776482582,
+            0.0
+          ],
+          "local_rotation": [
+            -0.0,
+            -0.0,
+            -0.0,
+            1.0
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_fullcombo_star_center",
+          "active": true,
+          "local_position": [
+            0.0,
+            0.14000000059604645,
+            0.0
+          ],
+          "local_rotation": [
+            0.0,
+            0.0,
+            0.3826834559440613,
+            0.9238795042037964
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystemRenderer",
+            "ParticleSystem"
+          ]
+        },
+        {
+          "path": "AllPerfectAnimation/content/effect_par_firework_star/effect_light_lay",
+          "active": false,
+          "local_position": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "local_rotation": [
+            0.7071067094802856,
+            -1.4210854715202004e-14,
+            -1.4210854715202004e-14,
+            0.7071068286895752
+          ],
+          "local_scale": [
+            0.1850000023841858,
+            0.1850000023841858,
+            0.1850000023841858
+          ],
+          "components": [
+            "Transform",
+            "ParticleSystem",
+            "ParticleSystemRenderer",
+            "SpriteRendererOrder"
+          ]
+        }
+      ],
+      "particle_channel_count": 10,
+      "particle_channels": [
+        {
+          "index": 75,
+          "channel": "content/effect_par_firework_star.m_IsActive.value"
+        },
+        {
+          "index": 76,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.attribute_hash:1133446416.value"
+        },
+        {
+          "index": 77,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_ring.m_IsActive.value"
+        },
+        {
+          "index": 78,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.m_IsActive.value"
+        },
+        {
+          "index": 79,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star.m_IsActive.value"
+        },
+        {
+          "index": 80,
+          "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star_b.m_IsActive.value"
+        },
+        {
+          "index": 81,
+          "channel": "content/effect_par_firework_star.attribute_hash:925582877.value"
+        },
+        {
+          "index": 126,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.x"
+        },
+        {
+          "index": 127,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.y"
+        },
+        {
+          "index": 128,
+          "channel": "content/effect_par_firework_star.m_LocalPosition.z"
+        }
+      ],
+      "phase_matrix": [
+        {
+          "phase_seconds": 0.0,
+          "particle_channel_f32_bits": [
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "00000000",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.25,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.5,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 0.75,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 1.0,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 1.5,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 2.0,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        },
+        {
+          "phase_seconds": 2.2831666469573975,
+          "particle_channel_f32_bits": [
+            "0000803F",
+            "00000000",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "0000803F",
+            "00000000",
+            "F47D3742",
+            "00000000"
+          ]
+        }
+      ],
+      "clip_stop_time": 2.2833333015441895,
+      "clip_loop_time": false,
+      "curve_count": 129
+    },
+    "required_consumer": [
+      "Instantiate and parent every serialized Transform/UITexture/ParticleSystem/ParticleSystemRenderer owner before sampling the clip.",
+      "Apply every m_IsActive channel to the owning GameObject and couple false->true to the owning playOnAwake ParticleSystem lifecycle; visibility of an empty proxy Container is insufficient.",
+      "Apply particle-subtree localPosition/localRotation/localScale before renderer handoff; constant particle channels are still geometry state and are not ignorable.",
+      "Apply UI local position/rotation/scale, widget alpha, pivot, depth/material and parent clipping to the exact serialized owner.",
+      "Sample all 104 FC or 129 AP channels with binary32 phase semantics, then hold the final state until scene exit.",
+      "Unknown, missing, proxy-only or globally-started particle channels fail closed."
+    ],
+    "correction": "The prior eight-phase/channel-count partition proved only value sampling. It did not prove that particle activation and particle Transform channels reached their real ParticleSystem owners; that production closure is withdrawn."
+  },
+  "product_semantics_boundary": {
+    "original_natural_auto": "clear status 1/base-only",
+    "garupa_editor_development_policy": "Auto Live may deliberately request FC/AP presentation for visibility testing under a separate stable product policy; this is not original Auto semantics and is not Reverse evidence."
+  },
+  "closure": {
+    "requirements": [
+      "SVF-R01",
+      "SVF-R02",
+      "SVF-R03",
+      "SVF-R04",
+      "SVF-R05",
+      "SVF-R06",
+      "SVF-R07"
+    ],
+    "portable_requirements_closed": true,
+    "garupa_editor_product_visible_closed": false,
+    "unity_gpu_production_equivalence": "open_not_claimed"
+  }
+}

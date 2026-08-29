@@ -134,8 +134,11 @@ export class ParticleCommandProducer {
           const key = productScoringKey(
             node.scoringSource.index,
             node.absolutePosition,
-            node.scoringSource.buttonTypesArray,
           );
+          if (this.productScoringKeys.has(key) && this.productScoringNodes.get(key) !== node) {
+            this.chartIdentityValid = false;
+            continue;
+          }
           this.productScoringKeys.add(key);
           this.productScoringNodes.set(key, node);
         }
@@ -171,7 +174,6 @@ export class ParticleCommandProducer {
         const productKey = productScoringKey(
           entry.noteIndex,
           entry.absolutePosition,
-          entry.buttonTypes,
         );
         if (this.productScoringKeys.has(productKey)) {
           const node = this.productScoringNodes.get(productKey);
@@ -963,9 +965,14 @@ function directionalFingerButtonType(
 function productScoringKey(
   noteIndex: number,
   absolutePosition: number,
-  buttonTypes: readonly number[],
 ): string {
-  return `${noteIndex}|${judgementKey(absolutePosition, buttonTypes)}`;
+  // Garupa product scoring sources intentionally retain an internal sentinel
+  // button span because Public lanes are finite continuous positions rather
+  // than an original seven-button domain. The runtime OneFrame owner publishes
+  // its projected button span. Match the immutable source index+absolute
+  // position pair and fail constructor validation on collision instead of
+  // accidentally routing the product node through the legacy BMS Slide path.
+  return `${noteIndex}|${absolutePosition}`;
 }
 
 function particleEquivalentNote(
@@ -1022,7 +1029,6 @@ function isJudgementButtonSpan(
   return entry.buttonTypes.every(isButtonType) || productScoringKeys.has(productScoringKey(
     entry.noteIndex,
     entry.absolutePosition,
-    entry.buttonTypes,
   ));
 }
 

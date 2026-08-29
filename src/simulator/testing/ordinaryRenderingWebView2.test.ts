@@ -19,6 +19,9 @@ import type {
 import { audioAccepted, audioRejected } from "../backends/audioValidation";
 import type { SimulatorBackends } from "../backends/contracts";
 import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
+import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
+import type { ChartConstructionResult } from "../engine/chart/types";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import {
@@ -77,6 +80,7 @@ interface LoadedInputs {
   readonly chartText: string;
   readonly strict: any;
   readonly sevenVisual: any;
+  readonly freshSevenVisual: any;
   readonly renderProfile: RenderResourceProfile;
   readonly renderResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
   readonly particleResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
@@ -86,6 +90,7 @@ interface BrowserSession {
   readonly id: string;
   readonly engine: SimulatorEngine;
   readonly renderer: PixiRendererBackend;
+  readonly particle: DeterministicSimulatorParticleBackend;
   readonly particleRenderer: PixiParticleRendererBackend;
   readonly combined: PixiCombinedScene;
   readonly layout: SimulatorSceneLayout;
@@ -195,6 +200,8 @@ async function main(): Promise<void> {
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
 
+  const tapKeepSameState = await verifySlideTapKeepSameState(app, inputs);
+
   const liveManualClear = await createSession(inputs, "ordinary-webview2-live-manual-clear", "live-manual");
   mount(app, liveManualClear);
   requireOk(liveManualClear.engine.initialize());
@@ -205,11 +212,12 @@ async function main(): Promise<void> {
     liveManualClear,
     inputs.sevenVisual,
     inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo,
+    inputs.freshSevenVisual.R07_complete_fc_ap_animation.full_combo,
     true,
   );
   assertGameClearWhite(liveManualClear);
   captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
-  assertGameClearSceneExit(liveManualClear);
+  assertGameClearSceneOwnedHold(liveManualClear);
   const liveManualClearCleanup = disposeSession(app, liveManualClear);
 
   const manual = await createSession(inputs, "ordinary-webview2-game-over", "live-manual");
@@ -252,11 +260,12 @@ async function main(): Promise<void> {
     rehearsalAuto,
     inputs.sevenVisual,
     inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect,
+    inputs.freshSevenVisual.R07_complete_fc_ap_animation.all_perfect,
     false,
   );
   assertGameClearWhite(rehearsalAuto);
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
-  assertGameClearSceneExit(rehearsalAuto);
+  assertGameClearSceneOwnedHold(rehearsalAuto);
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
   const requiredLabels = [
@@ -303,7 +312,9 @@ async function main(): Promise<void> {
       chartBatchCount: 656,
       captures: Object.freeze(captures),
       naturalClearStatus,
+      tapKeepSameState,
       sevenVisualLifecycle: Object.freeze({
+        freshStatus: inputs.freshSevenVisual.status,
         status: inputs.sevenVisual.status,
         fullComboChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo.clip.curve_count,
         allPerfectChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect.clip.curve_count,
@@ -341,6 +352,7 @@ async function assertGameClearAnimationMatrix(
   session: BrowserSession,
   sevenVisual: any,
   branch: any,
+  freshBranch: any,
   verifyUvFrame: boolean,
 ): Promise<Readonly<{ readonly animationKey: string; readonly phaseDigests: readonly string[] }>> {
   let previousPhase = 0;
@@ -360,6 +372,7 @@ async function assertGameClearAnimationMatrix(
     if (JSON.stringify(clear.hudGameClearChannelDispositionCounts) !== JSON.stringify(branch.clip.disposition_counts)) {
       throw new Error(`SVL-R07 ${branch.animation_key} channel dispositions are incomplete`);
     }
+    assertFreshParticleOwnerPhase(session, clear, freshBranch, phaseIndex);
     if (clear.hudSerializedComponentPaths?.length !== branch.object_count ||
         clear.hudGameClearParticleSystemCount !== 40 + branch.particle_system_count ||
         clear.hudGameClearChannelValuesBits?.length !== branch.clip.curve_count) {
@@ -400,22 +413,75 @@ async function assertGameClearAnimationMatrix(
   return Object.freeze({ animationKey: branch.animation_key, phaseDigests: Object.freeze(phaseDigests) });
 }
 
-function assertGameClearSceneExit(session: BrowserSession): void {
+function assertFreshParticleOwnerPhase(
+  session: BrowserSession,
+  clear: ReturnType<PixiRendererBackend["sceneSnapshot"]>[number],
+  freshBranch: any,
+  phaseIndex: number,
+): void {
+  const phase = freshBranch.phase_matrix[phaseIndex];
+  if (phase === undefined || !Array.isArray(freshBranch.particle_graph_rows) ||
+      freshBranch.particle_graph_rows.length <= 0) {
+    throw new Error("SVF-R07 fresh ParticleSystem phase fixture is incomplete");
+  }
+  const rootPath = String(freshBranch.particle_graph_rows[0].path).split("/")[0];
+  for (let index = 0; index < freshBranch.particle_channels.length; index += 1) {
+    const channel = freshBranch.particle_channels[index];
+    if (!String(channel.channel).endsWith(".m_IsActive.value")) continue;
+    const relative = String(channel.channel).slice(0, -".m_IsActive.value".length);
+    const path = relative.length === 0 ? rootPath : `${rootPath}/${relative}`;
+    const node = session.renderer.stage.getChildByLabel(`game-clear:${path}`, true);
+    const expected = phase.particle_channel_f32_bits[index] === "0000803F";
+    if (node === null || node.visible !== expected) {
+      throw new Error(`SVF-R07 m_IsActive did not mutate its serialized owner: ${path}/${expected}`);
+    }
+  }
+  const activated = clear.hudGameClearActivatedParticleSystemIds ?? [];
+  const branchPrefix = `game-clear:${rootPath}/`;
+  const branchActivated = activated.filter((identity) => identity.startsWith(branchPrefix));
+  const expectedActivated = new Set<string>();
+  for (let priorIndex = 0; priorIndex <= phaseIndex; priorIndex += 1) {
+    const prior = freshBranch.phase_matrix[priorIndex];
+    const activeByPath = new Map<string, boolean>(freshBranch.particle_graph_rows.map((row: any) =>
+      [String(row.path), row.active === true] as const));
+    for (let channelIndex = 0; channelIndex < freshBranch.particle_channels.length; channelIndex += 1) {
+      const channel = freshBranch.particle_channels[channelIndex];
+      if (!String(channel.channel).endsWith(".m_IsActive.value")) continue;
+      const relative = String(channel.channel).slice(0, -".m_IsActive.value".length);
+      const path = relative.length === 0 ? rootPath : `${rootPath}/${relative}`;
+      activeByPath.set(path, prior.particle_channel_f32_bits[channelIndex] === "0000803F");
+    }
+    for (const row of freshBranch.particle_graph_rows) {
+      let path = String(row.path);
+      let effective = activeByPath.get(path) === true;
+      while (effective && path.includes("/")) {
+        path = path.slice(0, path.lastIndexOf("/"));
+        if (activeByPath.has(path)) effective = activeByPath.get(path) === true;
+      }
+      if (effective) expectedActivated.add(`game-clear:${row.path}`);
+    }
+  }
+  if (branchActivated.length !== expectedActivated.size ||
+      [...expectedActivated].some((identity) => !branchActivated.includes(identity))) {
+    throw new Error(`SVF-R07 m_IsActive did not couple to real playOnAwake ParticleSystems: ${JSON.stringify({ phaseIndex, branchActivated, expectedActivated: [...expectedActivated] })}`);
+  }
+}
+
+function assertGameClearSceneOwnedHold(session: BrowserSession): void {
   const held = requiredGameClearSnapshot(session);
   const threshold = Math.fround(3.233);
   if (held.animationElapsedSeconds === null || held.animationElapsedSeconds === undefined ||
       held.animationElapsedSeconds >= threshold) {
-    throw new Error(`SVL-R06 pre-exit final hold is not below 3.233 seconds: ${JSON.stringify(held)}`);
+    throw new Error(`SVF-R06 pre-callback final hold is not below 3.233 seconds: ${JSON.stringify(held)}`);
   }
+  const finalBits = JSON.stringify(held.hudGameClearChannelValuesBits);
   sampleGameClear(session, Math.fround(threshold - held.animationElapsedSeconds));
-  const atThreshold = requiredGameClearSnapshot(session);
-  if (atThreshold.visible !== true || atThreshold.animationElapsedSeconds !== threshold) {
-    throw new Error(`SVL-R06 exact Float32 3.233-second threshold did not retain the final frame: ${JSON.stringify(atThreshold)}`);
-  }
-  sampleGameClear(session, Math.fround(0.000001));
-  const clear = session.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:game-clear");
-  if (clear !== undefined) {
-    throw new Error(`SVL-R06 first Float32 value above 3.233-second scene exit did not release the branch graph: ${JSON.stringify(clear)}`);
+  sampleGameClear(session, Math.fround(1));
+  const afterFormerThreshold = requiredGameClearSnapshot(session);
+  if (afterFormerThreshold.visible !== true || afterFormerThreshold.activeAnimationRole !== "game-clear" ||
+      afterFormerThreshold.animationElapsedSeconds === null || afterFormerThreshold.animationElapsedSeconds <= threshold ||
+      JSON.stringify(afterFormerThreshold.hudGameClearChannelValuesBits) !== finalBits) {
+    throw new Error(`SVF-R06 scene-owned final frame was released by the withdrawn synthetic threshold: ${JSON.stringify(afterFormerThreshold)}`);
   }
 }
 
@@ -496,17 +562,16 @@ async function verifyGameClearUv11Framebuffer(
     orig: new Rectangle(0, 0, tileWidth, tileHeight),
     label: "svl-r01-rejected-vertical-inversion-tile",
   });
-  const selectedDigest = await renderIsolatedGameClearTile(
-    app, selected, tileWidth, tileHeight, particleColor as readonly [number, number, number, number],
+  const restoreProductionIsolation = isolateProductionNode(sourceNode, session.renderer.stage);
+  app.render();
+  const selectedDigest = await captureFullProductionFramebuffer(app);
+  const rejectedDigest = await renderProductionParticleVariant(
+    app, sourceNode, rejected, particleColor as readonly [number, number, number, number],
   );
-  const rejectedDigest = await renderIsolatedGameClearTile(
-    app, rejected, tileWidth, tileHeight, particleColor as readonly [number, number, number, number],
-  );
-  const rejectedTwiceAlphaDigest = await renderIsolatedGameClearTile(
+  const rejectedTwiceAlphaDigest = await renderProductionParticleVariant(
     app,
+    sourceNode,
     selected,
-    tileWidth,
-    tileHeight,
     Object.freeze([
       particleColor[0]! * particleColor[3]!,
       particleColor[1]! * particleColor[3]!,
@@ -514,57 +579,89 @@ async function verifyGameClearUv11Framebuffer(
       particleColor[3]!,
     ] as const),
   );
+  const fullAtlas = new Texture({
+    source: selected.source,
+    frame: new Rectangle(0, 0, selected.source.width, selected.source.height),
+    orig: new Rectangle(0, 0, selected.source.width, selected.source.height),
+    label: "svf-r01-rejected-atlas-pixels-as-world-geometry",
+  });
+  const rejectedAtlasGeometryDigest = await renderProductionParticleVariant(
+    app, sourceNode, fullAtlas, particleColor as readonly [number, number, number, number],
+  );
+  restoreProductionIsolation();
+  app.render();
   rejected.destroy(false);
-  if (new Set([selectedDigest.sha256, rejectedDigest.sha256, rejectedTwiceAlphaDigest.sha256]).size !== 3 ||
-      selectedDigest.nonBlackPixels <= 0 || rejectedDigest.nonBlackPixels <= 0 ||
-      rejectedTwiceAlphaDigest.nonBlackPixels <= 0) {
-    throw new Error(`SVL-R01 production particle framebuffer did not reject wrong-row and twice-alpha variants: ${JSON.stringify({ selectedDigest, rejectedDigest, rejectedTwiceAlphaDigest })}`);
+  fullAtlas.destroy(false);
+  if (new Set([
+    selectedDigest.sha256,
+    rejectedDigest.sha256,
+    rejectedTwiceAlphaDigest.sha256,
+    rejectedAtlasGeometryDigest.sha256,
+  ]).size !== 4 || [
+    selectedDigest,
+    rejectedDigest,
+    rejectedTwiceAlphaDigest,
+    rejectedAtlasGeometryDigest,
+  ].some((digest) => digest.nonBlackPixels <= 0)) {
+    throw new Error(`SVF-R01 complete production framebuffer did not reject wrong-row, twice-alpha and atlas-geometry variants: ${JSON.stringify({ selectedDigest, rejectedDigest, rejectedTwiceAlphaDigest, rejectedAtlasGeometryDigest })}`);
   }
   return true;
 }
 
-async function renderIsolatedGameClearTile(
+function isolateProductionNode(node: Container, root: Container): () => void {
+  const changed: { readonly node: Container; readonly visible: boolean }[] = [];
+  let current: Container = node;
+  while (current !== root) {
+    const parent = current.parent;
+    if (parent === null) throw new Error("SVF-R01 production particle owner escaped its renderer root");
+    for (const sibling of parent.children) {
+      if (sibling === current) continue;
+      changed.push({ node: sibling, visible: sibling.visible });
+      sibling.visible = false;
+    }
+    current = parent;
+  }
+  return () => {
+    for (const entry of changed) entry.node.visible = entry.visible;
+  };
+}
+
+async function renderProductionParticleVariant(
   app: Application,
+  source: Mesh,
   texture: Texture,
-  width: number,
-  height: number,
   color: readonly [number, number, number, number],
 ): Promise<{ readonly sha256: string; readonly nonBlackPixels: number }> {
-  const previousVisibility = app.stage.children.map((child) => child.visible);
-  for (const child of app.stage.children) child.visible = false;
-  const root = new Container({ label: "svl-r01-isolated-game-clear-tile" });
-  const background = new Sprite(Texture.WHITE);
-  background.tint = 0x000000;
-  background.width = width;
-  background.height = height;
-  const sprite = createPixiParticleLinearColorMesh(
+  const parent = source.parent;
+  if (parent === null) throw new Error("SVF-R01 production particle owner is detached");
+  const index = parent.getChildIndex(source);
+  const replacement = createPixiParticleLinearColorMesh(
     texture,
-    "svl-r01-production-variant",
-    color[0],
-    color[1],
-    color[2],
-    color[3],
+    "svf-r01-complete-production-variant",
+    color[0], color[1], color[2], color[3],
   );
-  sprite.scale.set(width / texture.width, height / texture.height);
-  sprite.blendMode = "add";
-  root.addChild(background, sprite);
-  const output = installPixiLinearOutput(root, WIDTH, HEIGHT);
-  app.stage.addChild(root);
+  replacement.setFromMatrix(source.localTransform.clone());
+  replacement.blendMode = source.blendMode;
+  replacement.zIndex = source.zIndex;
+  source.visible = false;
+  parent.addChildAt(replacement, index + 1);
   app.render();
-  const framebuffer = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
-  const pixels = crop(framebuffer, WIDTH, 0, 0, width, height);
+  const result = await captureFullProductionFramebuffer(app);
+  source.visible = true;
+  destroyPixiParticleLinearColorMesh(replacement);
+  app.render();
+  return result;
+}
+
+async function captureFullProductionFramebuffer(
+  app: Application,
+): Promise<{ readonly sha256: string; readonly nonBlackPixels: number }> {
+  const pixels = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
   let nonBlackPixels = 0;
   for (let index = 0; index < pixels.length; index += 4) {
     if (pixels[index] !== 0 || pixels[index + 1] !== 0 || pixels[index + 2] !== 0) nonBlackPixels += 1;
   }
-  const result = Object.freeze({ sha256: await sha256(pixels), nonBlackPixels });
-  output.dispose();
-  root.removeFromParent();
-  destroyPixiParticleLinearColorMesh(sprite);
-  background.destroy({ texture: false, textureSource: false });
-  root.destroy({ children: true });
-  app.stage.children.forEach((child, index) => { child.visible = previousVisibility[index] ?? child.visible; });
-  return result;
+  return Object.freeze({ sha256: await sha256(pixels), nonBlackPixels });
 }
 
 function findDescendantTexturedNode(
@@ -751,12 +848,149 @@ async function runRehearsalLifeZeroScenario(
   ));
 }
 
+async function verifySlideTapKeepSameState(
+  app: Application,
+  inputs: LoadedInputs,
+): Promise<Readonly<Record<string, unknown>>> {
+  const chart = requireOk(constructChartFromGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "Slide", connections: [
+      { type: "Single", beat: 1, lane: 0, width: 2 },
+      { type: "Single", beat: 2, lane: 1, width: 1 },
+      { type: "Single", beat: 3, lane: 3, width: 1 },
+      { type: "Flick", beat: 4, lane: 2, width: 1 },
+    ] },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 100, lane: 0.25, width: 1 },
+    ] },
+  ]));
+  const product = getGarupaProductChartProfile(chart);
+  if (product === undefined || product.route !== "product-extension") {
+    throw new Error("SVF-R03 Garupa product-extension profile is absent");
+  }
+  const session = await createSession(
+    inputs,
+    "ordinary-webview2-slide-tap-keep-auto",
+    "live-auto",
+    chart,
+  );
+  mount(app, session);
+  requireOk(session.engine.initialize());
+  await advanceToPlayable(session);
+  const root = "ordinary:effect_TapKeep";
+  let stableOwnerKey: string | null = null;
+  let acceptedFramebuffer: Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }> | null = null;
+  let rejectedDoubleScaleFramebuffer: Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }> | null = null;
+  const rootTransforms = new Set<string>();
+  let maximumVisibleMeshes = 0;
+  let terminalObserved = false;
+  for (let frame = 0; frame < 600; frame += 1) {
+    requireOk(session.engine.step(Math.fround(1 / 120)));
+    const particleSnapshot = session.particle.snapshot();
+    const owner = particleSnapshot.activeOwners.find((candidate) => candidate.root === root);
+    const tapMeshes = [...session.particleRenderer.stage.children, ...session.particleRenderer.highSortingStage.children]
+      .filter((child): child is Mesh => child instanceof Mesh && child.label.startsWith(root));
+    maximumVisibleMeshes = Math.max(maximumVisibleMeshes, tapMeshes.length);
+    if (owner !== undefined) {
+      if (owner.instance.kind !== "note-slide" || owner.restartCount !== 0 ||
+          owner.instance.rootPositionXBits === null || owner.instance.rootPositionYBits === null ||
+          owner.instance.rootScaleBits === null) {
+        throw new Error(`SVF-R03 production TapKeep owner tuple mismatch: ${JSON.stringify({
+          owner,
+          oneFrame: requireOk(session.engine.snapshot()).managers.oneFrame.lastJudgementBatch,
+          particleFrame: session.particle.snapshot().frames[session.particle.snapshot().frames.length - 1],
+          productNodes: product.visibleNodes.map((node) => ({
+            identity: node.identity,
+            absolutePosition: node.absolutePosition,
+            source: node.scoringSource === null ? null : {
+              index: node.scoringSource.index,
+              buttonTypes: node.scoringSource.buttonTypesArray,
+              absolutePosition: node.scoringSource.absolutePos,
+            },
+          })),
+        })}`);
+      }
+      stableOwnerKey ??= owner.ownerKey;
+      if (owner.ownerKey !== stableOwnerKey) {
+        throw new Error(`SVF-R03 production TapKeep owner was recreated: ${stableOwnerKey}/${owner.ownerKey}`);
+      }
+      rootTransforms.add(JSON.stringify([
+        owner.instance.rootPositionXBits,
+        owner.instance.rootPositionYBits,
+        owner.instance.rootScaleBits,
+      ]));
+      if (acceptedFramebuffer === null && tapMeshes.length > 0) {
+        const nonParticleChildren = session.renderer.stage.children.filter((child) =>
+          child !== session.particleRenderer.stage && child !== session.particleRenderer.highSortingStage);
+        const priorVisibility = nonParticleChildren.map((child) => child.visible);
+        for (const child of nonParticleChildren) child.visible = false;
+        app.render();
+        acceptedFramebuffer = await captureMeshUnionFramebuffer(app, tapMeshes);
+        const rejected = tapMeshes[0]!;
+        const scale = [rejected.scale.x, rejected.scale.y] as const;
+        rejected.scale.set(Math.fround(scale[0] * 2), Math.fround(scale[1] * 2));
+        app.render();
+        rejectedDoubleScaleFramebuffer = await captureMeshUnionFramebuffer(app, tapMeshes);
+        rejected.scale.set(scale[0], scale[1]);
+        nonParticleChildren.forEach((child, index) => { child.visible = priorVisibility[index] ?? child.visible; });
+        app.render();
+      }
+    } else if (stableOwnerKey !== null) {
+      const stop = [...particleSnapshot.frames].reverse()
+        .flatMap((entry) => [...entry.commands].reverse())
+        .find((command) => command.kind === "stop-clear-deactivate-root" && command.root === root);
+      if (stop === undefined || stop.kind !== "stop-clear-deactivate-root" ||
+          stop.ownerKey !== stableOwnerKey || tapMeshes.length !== 0) {
+        throw new Error(`SVF-R03 terminal Stop/Clear/deactivate did not clear the production owner: ${JSON.stringify({ stop, tapMeshes: tapMeshes.length })}`);
+      }
+      terminalObserved = true;
+      break;
+    }
+  }
+  if (stableOwnerKey === null || rootTransforms.size < 2 || maximumVisibleMeshes <= 0 ||
+      acceptedFramebuffer === null || rejectedDoubleScaleFramebuffer === null ||
+      acceptedFramebuffer.nonTransparentPixels <= 0 || rejectedDoubleScaleFramebuffer.nonTransparentPixels <= 0 ||
+      acceptedFramebuffer.sha256 === rejectedDoubleScaleFramebuffer.sha256 || !terminalObserved) {
+    throw new Error(`SVF-R03 complete production TapKeep gate failed: ${JSON.stringify({
+      stableOwnerKey, rootTransforms: [...rootTransforms], maximumVisibleMeshes,
+      acceptedFramebuffer, rejectedDoubleScaleFramebuffer, terminalObserved,
+    })}`);
+  }
+  const cleanup = disposeSession(app, session);
+  return Object.freeze({
+    stableOwnerKey,
+    rootTransformCount: rootTransforms.size,
+    maximumVisibleMeshes,
+    acceptedFramebuffer,
+    rejectedDoubleScaleFramebuffer,
+    terminalObserved,
+    cleanup,
+  });
+}
+
+async function captureMeshUnionFramebuffer(
+  app: Application,
+  meshes: readonly Mesh[],
+): Promise<Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }>> {
+  const bounds = meshes.map((mesh) => mesh.getBounds());
+  const x = Math.max(0, Math.floor(Math.min(...bounds.map((value) => value.x))) - 2);
+  const y = Math.max(0, Math.floor(Math.min(...bounds.map((value) => value.y))) - 2);
+  const right = Math.min(WIDTH, Math.ceil(Math.max(...bounds.map((value) => value.x + value.width))) + 2);
+  const bottom = Math.min(HEIGHT, Math.ceil(Math.max(...bounds.map((value) => value.y + value.height))) + 2);
+  if (right <= x || bottom <= y) throw new Error("SVF-R03 TapKeep meshes are outside the physical framebuffer");
+  const pixels = crop(readWebGlFramebufferRgba(app, WIDTH, HEIGHT), WIDTH, x, y, right - x, bottom - y);
+  let nonTransparentPixels = 0;
+  for (let index = 3; index < pixels.length; index += 4) if (pixels[index] !== 0) nonTransparentPixels += 1;
+  return Object.freeze({ sha256: await sha256(pixels), nonTransparentPixels });
+}
+
 type BrowserSessionMode = "live-auto" | "live-manual" | "rehearsal-auto" | "rehearsal-manual";
 
 async function createSession(
   inputs: LoadedInputs,
   id: string,
   mode: BrowserSessionMode,
+  chartOverride?: ChartConstructionResult,
 ): Promise<BrowserSession> {
   const identity = mode === "live-auto"
     ? LIVE_AUTO_MODE
@@ -799,7 +1033,7 @@ async function createSession(
     particlePreflight,
   ));
   requireParticle(await particleRenderer.prepare(id, layout.particleScene, particleProvider, particlePreflight));
-  const chart = requireOk(createNoteBatchInformationList({ musicScoreData: inputs.chartText }));
+  const chart = chartOverride ?? requireOk(createNoteBatchInformationList({ musicScoreData: inputs.chartText }));
   const tracing = createRecordingSimulatorBackends(renderer, particle, particleRenderer);
   const visualLifecycleAudio = new VisualLifecycleAudioBackend(id, "browser-visual-lifecycle-bgm");
   const backends: SimulatorBackends = Object.freeze({
@@ -831,6 +1065,7 @@ async function createSession(
       sessionId: id,
       resources: CURRENT_ORDINARY_RENDER_BINDINGS,
       ordinaryNoteScene: layout.ordinaryNoteScene,
+      garupaProductScene: layout.garupaProductScene,
     },
     audio: {
       sessionId: id,
@@ -850,7 +1085,7 @@ async function createSession(
     particleRenderer.highSortingStage,
   ));
   const linearOutput = installPixiLinearOutput(combined.root, WIDTH, HEIGHT);
-  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, linearOutput, audio: visualLifecycleAudio, mounted: false };
+  return { id, engine, renderer, particle, particleRenderer, combined, layout, controlOverlay, linearOutput, audio: visualLifecycleAudio, mounted: false };
 }
 
 function mount(app: Application, session: BrowserSession): void {
@@ -1067,7 +1302,7 @@ async function capture(
 
 async function loadInputs(): Promise<LoadedInputs> {
   const map = await fetchJson<InputMap>("/input-map.json");
-  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, pauseCountdownRaw, strict, sevenVisual, gameClearAssets, chartText] = await Promise.all([
+  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, pauseCountdownRaw, strict, sevenVisual, freshSevenVisual, gameClearAssets, chartText] = await Promise.all([
     fetchJson<RenderResourceProfile>("/render-profile.json"),
     fetchJson("/visible-profile.json"),
     fetchJson("/score-animation.json"),
@@ -1075,6 +1310,7 @@ async function loadInputs(): Promise<LoadedInputs> {
     fetchJson("/pause-countdown-animation.json"),
     fetchJson("/strict-reaudit.json"),
     fetchJson<any>("/seven-visual-oracle.json"),
+    fetchJson<any>("/seven-visual-fresh.json"),
     fetchJson<RenderResourceProfile["assets"]>("/game-clear-assets.json"),
     fetchText("/chart.bms"),
   ]);
@@ -1105,10 +1341,13 @@ async function loadInputs(): Promise<LoadedInputs> {
   if (renderResources.length !== renderProfile.assets.length || particleResources.length !== 9) {
     throw new Error(`input resource inventory mismatch: ${renderResources.length}/${particleResources.length}`);
   }
-  if (sevenVisual.status !== "confirmed-current-seven-visual-lifecycle-reconfirmation") {
-    throw new Error("SVL-R01..R07 independent fixture status mismatch");
+  if (sevenVisual.status !== "confirmed-current-seven-visual-lifecycle-reconfirmation" ||
+      freshSevenVisual.status !== "portable-requirements-authorized-product-visible-open" ||
+      freshSevenVisual.authority?.portable_reconstruction_authorization !== true ||
+      freshSevenVisual.authority?.production_consumption_equivalence_authorization !== false) {
+    throw new Error("SVL/SVF-R01..R07 independent fixture status mismatch");
   }
-  return Object.freeze({ chartText, strict, sevenVisual, renderProfile, renderResources, particleResources });
+  return Object.freeze({ chartText, strict, sevenVisual, freshSevenVisual, renderProfile, renderResources, particleResources });
 }
 
 async function loadMappedBytes(rows: readonly { readonly logicalAssetId: string; readonly url: string }[]) {

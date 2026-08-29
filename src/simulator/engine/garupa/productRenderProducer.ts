@@ -194,10 +194,10 @@ export class GarupaProductRenderProducer {
       }
     }
 
-    // PLSO-S01/SVL-R02: changeCurrentNote selects the first remaining after-node
-    // before flash/tap-keep start. Flash binds that current node's resource once,
-    // then slidingMove rewrites the shared root X/scale without rebinding it.
-    // The root Y remains the judgement line.
+    // SVF-R02/SVF-R03: NoteSlide.Activate binds one laneSize1..7 flash from
+    // the root/front span before disabling it. changeCurrentNote then moves the
+    // same NoteSlide root (and its stable Flash/TapKeep children) to each current
+    // after-node without rebinding or recreating either child.
     for (const chain of this.chart.slideChains) {
       const headIdentity = chain.visibleConnectionIdentities[0];
       const terminalIdentity = chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1];
@@ -216,6 +216,7 @@ export class GarupaProductRenderProducer {
       if (active) {
         const current = samples.get(currentIdentity!)!;
         if (!plannedCreated.has(flashObjectId)) {
+          const front = samples.get(headIdentity)!;
           commands.push(command(commands.length, {
             kind: "create-object",
             renderObjectId: flashObjectId,
@@ -223,12 +224,13 @@ export class GarupaProductRenderProducer {
             role: "note-intermediate",
             parentObjectId: null,
           }));
+          const flashBinding = resolveProductSlideFlashBinding(front.node, this.resources);
           commands.push(command(commands.length, {
             kind: "bind-resource",
             renderObjectId: flashObjectId,
             binding: "sprite",
-            logicalAssetId: this.resources.noteAtlasLogicalAssetId,
-            exactKey: `note_long_flash_${productResourceLane(current.node)}`,
+            logicalAssetId: flashBinding.logicalAssetId,
+            exactKey: flashBinding.exactKey,
           }));
           plannedCreated.add(flashObjectId);
         }
@@ -596,6 +598,39 @@ function productResourceLane(node: GarupaProductNode): number {
   // the selected family. This is neither a nearest-lane lookup nor an
   // original-equivalence claim; integer source owners always retain their key.
   return 3;
+}
+
+export function originalSlideFlashExactKey(front: GarupaProductNode): string {
+  const center = front.spanStart + (front.width - 1) / 2;
+  const suffix = front.width === 1 ? "3"
+    : front.width === 2 ? center <= 3 ? "2_3" : "3_4"
+    : front.width === 3 ? "2_3_4"
+    : front.width === 4 ? center <= 3 ? "1_2_3_4" : "2_3_4_5"
+    : front.width === 5 ? "1_2_3_4_5"
+    : front.width === 6 ? center <= 3 ? "0_1_2_3_4_5" : "1_2_3_4_5_6"
+    : front.width === 7 ? "0_1_2_3_4_5_6"
+    : "3";
+  return `note_long_flash_${suffix}`;
+}
+
+export function resolveProductSlideFlashBinding(
+  front: GarupaProductNode,
+  resources: RenderEngineResourceBindings,
+): Readonly<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  if (resources.habahiroAtlasLogicalAssetIds !== undefined && front.width <= 7) {
+    return Object.freeze({
+      logicalAssetId: resources.habahiroAtlasLogicalAssetIds.longFlash,
+      exactKey: originalSlideFlashExactKey(front),
+    });
+  }
+  // simulator.product-compatible-node-visual-routing-v1: current skin00 owns
+  // only seven single-lane Flash rows. Standard Garupa/ExGarupa therefore binds
+  // the fixed root/front glyph selected by productResourceLane; it never asks
+  // for a missing multi-lane skin00 row or silently substitutes after rejection.
+  return Object.freeze({
+    logicalAssetId: resources.noteAtlasLogicalAssetId,
+    exactKey: `note_long_flash_${productResourceLane(front)}`,
+  });
 }
 
 function nodeTransform(

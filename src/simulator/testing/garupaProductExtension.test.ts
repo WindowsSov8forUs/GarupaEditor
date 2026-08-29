@@ -13,8 +13,15 @@ import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/curren
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import type { RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
 import { ok } from "../engine/evidence";
-import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
-import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
+import {
+  getGarupaProductChartProfile,
+  type GarupaProductNode,
+} from "../engine/garupa/productChartProfile";
+import {
+  GarupaProductRenderProducer,
+  originalSlideFlashExactKey,
+  resolveProductSlideFlashBinding,
+} from "../engine/garupa/productRenderProducer";
 import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 
@@ -60,6 +67,48 @@ async function main(): Promise<void> {
   assert.equal(noteHierarchy.slide_scene_ownership.root_flash_owner_count, 1);
   assert.equal(noteHierarchy.slide_scene_ownership.intermediate_long_flash_owner_count, 0);
   assert.equal(noteHierarchy.portable_acceptance.must_preserve_front_70_icon_71_and_mesh_before_front, true);
+  const flashKey = (spanStart: number, width: number): string => originalSlideFlashExactKey(
+    { spanStart, width } as GarupaProductNode,
+  );
+  assert.deepEqual([
+    flashKey(5, 1),
+    flashKey(2, 2), flashKey(5, 2),
+    flashKey(2, 3),
+    flashKey(0, 4), flashKey(3, 4),
+    flashKey(1, 5),
+    flashKey(0, 6), flashKey(1, 6),
+    flashKey(0, 7),
+  ], [
+    "note_long_flash_3",
+    "note_long_flash_2_3", "note_long_flash_3_4",
+    "note_long_flash_2_3_4",
+    "note_long_flash_1_2_3_4", "note_long_flash_2_3_4_5",
+    "note_long_flash_1_2_3_4_5",
+    "note_long_flash_0_1_2_3_4_5", "note_long_flash_1_2_3_4_5_6",
+    "note_long_flash_0_1_2_3_4_5_6",
+  ], "SVF-R02 consumes the root/front laneSize1..7 table once, including left/right variants");
+  const habahiroResources = Object.freeze({
+    ...CURRENT_ORDINARY_RENDER_BINDINGS,
+    habahiroAtlasLogicalAssetIds: Object.freeze({
+      normal: "habahiro/normal", normal16: "habahiro/normal16", skill: "habahiro/skill",
+      flick: "habahiro/flick", long: "habahiro/long",
+      longFlash: "habahiro/long-flash", slideAmong: "habahiro/slide-among",
+    }),
+  });
+  assert.deepEqual(resolveProductSlideFlashBinding(
+    { spanStart: 0, width: 2 } as GarupaProductNode,
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+  ), {
+    logicalAssetId: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+    exactKey: "note_long_flash_3",
+  }, "skin00's explicit product route uses its root/front single-lane glyph and never requests an absent multi-lane row");
+  assert.deepEqual(resolveProductSlideFlashBinding(
+    { spanStart: 0, width: 2 } as GarupaProductNode,
+    habahiroResources,
+  ), {
+    logicalAssetId: "habahiro/long-flash",
+    exactKey: "note_long_flash_2_3",
+  }, "HABAHIRO consumes the original laneSize2Left exact key from its owned long-Flash atlas");
   const visualFifth = JSON.parse(readFileSync(join(
     process.cwd(),
     "src/simulator/testing/fixtures/reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
@@ -308,8 +357,8 @@ async function main(): Promise<void> {
   const flash = flashRows.find((row) => row.renderObjectId === flashId)!;
   assert.equal(flash.visible, true);
   assert.equal(flash.activeAnimationRole, "note-long-flash");
-  assert.equal(flash.spriteBindingKey?.endsWith("note_long_flash_1"), true,
-    "SVL-R02 binds the stable Slide Flash from the first current after-node rather than the lane-0 head");
+  assert.equal(flash.spriteBindingKey?.endsWith("note_long_flash_0"), true,
+    "SVF-R02 standard product semantics bind the root/front single-lane skin00 glyph instead of the first current after-node");
   const compatibleIntermediate = product.visibleNodes.find((node) => node.identity === interiorId)!;
   const target = requireOk(layout.garupaProductScene.projectLaneAtCurve(
     compatibleIntermediate.spanStart + (compatibleIntermediate.width - 1) / 2,
@@ -321,7 +370,7 @@ async function main(): Promise<void> {
   ];
   assert.ok(Math.abs(flash.position[0] - expectedFlashPosition[0]!) < 0.0001 &&
     Math.abs(flash.position[1] - expectedFlashPosition[1]!) < 0.0001,
-  `PLSO-S01 selects the first after-node before Slide Flash starts: ${flash.position} vs ${expectedFlashPosition}`);
+  `SVF-R02 slidingMove places the stable root on the first current after-node: ${flash.position} vs ${expectedFlashPosition}`);
   const moved = requireOk(producer.preflightFrame(
     compatibleIntermediate.absolutePosition,
     [compatibleIntermediate],
@@ -338,7 +387,7 @@ async function main(): Promise<void> {
   const expectedMovedX = Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 +
     terminalTarget.x.value * layout.surfaceLayout.camera.pixelsPerWorldUnit);
   assert.ok(Math.abs(movedFlash.position[0] - expectedMovedX) < 0.0001,
-    `PLSO-S01 slidingMove follows the next current after-node without restarting the root: ${movedFlash.position[0]} vs ${expectedMovedX}`);
+    `SVF-R02 slidingMove follows the next current after-node without restarting or rebinding the root: ${movedFlash.position[0]} vs ${expectedMovedX}`);
   const flashStopped = requireOk(producer.preflightFrame(
     compatibleTerminal.absolutePosition,
     [compatibleTerminal],

@@ -57,6 +57,11 @@ const sevenVisualOracle = join(
   "seven-visual-lifecycle", "artifacts", "investigations",
   "simulator-seven-visual-lifecycle-reconfirmation-10-1-4", "seven_visual_lifecycle_oracle.json",
 );
+const sevenVisualFreshContract = join(
+  fixtureRoot,
+  "seven-visual-fresh-reconfirmation", "artifacts", "investigations",
+  "simulator-seven-visual-fresh-reconfirmation-10-1-4", "seven_visual_fresh_reconfirmation_contract.json",
+);
 const renderSources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -173,6 +178,7 @@ function prepareStage() {
     ["/pause-countdown-animation.json", "pause-countdown-animation.json", "application/json; charset=utf-8", join(repositoryRoot, "src/assets/game/prefabs/bms/pause/countdown-animation-profile.json")],
     ["/strict-reaudit.json", "strict-reaudit.json", "application/json; charset=utf-8", join(strictRoot, "strict_reaudit_contract.json")],
     ["/seven-visual-oracle.json", "seven-visual-oracle.json", "application/json; charset=utf-8", sevenVisualOracle],
+    ["/seven-visual-fresh.json", "seven-visual-fresh.json", "application/json; charset=utf-8", sevenVisualFreshContract],
     ["/game-clear-assets.json", "game-clear-assets.json", "application/json; charset=utf-8", null],
     ["/chart.bms", "chart.bms", "text/plain; charset=utf-8", join(dynamicRoot, "bms", "poppin_shuffle_special.bms.txt")],
   ]) stageFile(route, name, mime, source === null
@@ -211,6 +217,7 @@ function verify(value) {
   equal(value.scene.naturalClearStatus, 3, "Auto AP product terminal status");
   const { fullComboPhaseMatrix, allPerfectPhaseMatrix, ...sevenVisualBase } = value.scene.sevenVisualLifecycle;
   equal(JSON.stringify(sevenVisualBase), JSON.stringify({
+    freshStatus: "portable-requirements-authorized-product-visible-open",
     status: "confirmed-current-seven-visual-lifecycle-reconfirmation",
     fullComboChannels: 104,
     allPerfectChannels: 129,
@@ -218,6 +225,17 @@ function verify(value) {
     scoreGaugeSsContinuousSeconds: 7.5,
     uvFrame: 11,
   }), "SVL-R01/R05/R06/R07 actual WebView2 matrix");
+  const tapKeep = value.scene.tapKeepSameState;
+  if (typeof tapKeep?.stableOwnerKey !== "string" || tapKeep.rootTransformCount < 2 ||
+      tapKeep.maximumVisibleMeshes <= 0 || tapKeep.terminalObserved !== true ||
+      !/^[0-9a-f]{64}$/.test(tapKeep.acceptedFramebuffer?.sha256 ?? "") ||
+      !/^[0-9a-f]{64}$/.test(tapKeep.rejectedDoubleScaleFramebuffer?.sha256 ?? "") ||
+      tapKeep.acceptedFramebuffer.sha256 === tapKeep.rejectedDoubleScaleFramebuffer.sha256 ||
+      tapKeep.acceptedFramebuffer.nonTransparentPixels <= 0 ||
+      tapKeep.rejectedDoubleScaleFramebuffer.nonTransparentPixels <= 0 ||
+      tapKeep.cleanup?.particleOwners !== 0 || tapKeep.cleanup?.renderOwners !== 0) {
+    throw new Error(`SVF-R03 invalid complete production TapKeep same-state gate: ${JSON.stringify(tapKeep)}`);
+  }
   for (const [key, matrix] of [["FullCombo_text_in", fullComboPhaseMatrix], ["AllPerfect_text_in", allPerfectPhaseMatrix]]) {
     if (matrix?.animationKey !== key || matrix.phaseDigests.length !== 8 ||
         new Set(matrix.phaseDigests).size !== 6 || matrix.phaseDigests.some((digest) => !/^[0-9a-f]{64}$/.test(digest))) {

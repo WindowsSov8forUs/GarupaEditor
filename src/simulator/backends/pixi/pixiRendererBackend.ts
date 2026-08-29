@@ -18,7 +18,13 @@ import {
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
-import { buildGameClearParticleProfile, type GameClearClipProfile, type GameClearGraphObject } from "../resources/currentGameClearProfile";
+import {
+  buildGameClearParticleActivationSchedule,
+  buildGameClearParticleProfile,
+  type GameClearClipProfile,
+  type GameClearGraphObject,
+  type GameClearParticleActivation,
+} from "../resources/currentGameClearProfile";
 import { DeterministicParticleSimulation } from "../../engine/particles/particleSimulation";
 import { particleFloat32FromBits } from "../particleValidation";
 import {
@@ -166,6 +172,8 @@ interface PixiHudVisual {
   scoreHighRankGeneration: number;
   gameClearParticleSimulation: DeterministicParticleSimulation | null;
   gameClearParticleProfile: ParticlePortableProfile | null;
+  gameClearParticleActivationSchedule: readonly GameClearParticleActivation[];
+  readonly gameClearParticleActivatedSystems: Set<string>;
   gameClearParticleElapsed: number;
   gameClearParticleContainer: Container | null;
   gameClearParticleTextures: ReadonlyMap<string, Texture> | null;
@@ -835,6 +843,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudGameClearChannelValuesBits: readonly string[] | null;
     readonly hudGameClearChannelDispositionCounts: Readonly<Record<string, number>> | null;
     readonly hudGameClearParticleSystemCount: number | null;
+    readonly hudGameClearActivatedParticleSystemIds: readonly string[] | null;
   }[] {
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
       renderObjectId,
@@ -1077,6 +1086,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : null,
       hudGameClearParticleSystemCount: value.hudVisual?.kind === "game-clear"
         ? value.hudVisual.gameClearParticleProfile?.systemCount ?? null
+        : null,
+      hudGameClearActivatedParticleSystemIds: value.hudVisual?.kind === "game-clear"
+        ? Object.freeze([...value.hudVisual.gameClearParticleActivatedSystems].sort())
         : null,
     })));
   }
@@ -2581,13 +2593,10 @@ function applyGameClearHud(
   if (visual.gameClearParticleSimulation === null) {
     const particleProfile = buildGameClearParticleProfile(profile, clearStatus);
     const simulation = new DeterministicParticleSimulation(particleProfile, Math.fround(1));
-    simulation.playRoot(
-      "game-clear",
-      Object.freeze({ kind: "game-clear" as const, buttonType: 0 as const, rangeLength: null }),
-      clearStatus === 1 ? "game-clear:base" : clearStatus === 2 ? "game-clear:full-combo" : "game-clear:all-perfect",
-    );
     visual.gameClearParticleSimulation = simulation;
     visual.gameClearParticleProfile = particleProfile;
+    visual.gameClearParticleActivationSchedule = buildGameClearParticleActivationSchedule(profile, clearStatus);
+    advanceGameClearParticleSimulation(visual, clearStatus, 0);
     visual.gameClearParticleTextures = textures;
     visual.gameClearViewportHeight = object.resourceProfile.scene.projection.viewportHeight;
     visual.gameClearParticleContainer = new Container({ label: "game-clear-particles", sortableChildren: true });
@@ -2634,6 +2643,39 @@ function applyGameClearHud(
   }
   visual.content.visible = true;
   sampleGameClearGraph(visual, branch.clip, 0);
+}
+
+function advanceGameClearParticleSimulation(
+  visual: PixiHudVisual,
+  clearStatus: 1 | 2 | 3,
+  elapsedSeconds: number,
+): void {
+  const simulation = visual.gameClearParticleSimulation;
+  if (simulation === null || !Number.isFinite(elapsedSeconds) || elapsedSeconds < visual.gameClearParticleElapsed) {
+    throw new Error("Game-clear ParticleSystem sampling requires one monotonic finite scene phase");
+  }
+  const target = Math.fround(elapsedSeconds);
+  let cursor = Math.fround(visual.gameClearParticleElapsed);
+  const root = clearStatus === 1
+    ? "game-clear:base" as const
+    : clearStatus === 2 ? "game-clear:full-combo" as const : "game-clear:all-perfect" as const;
+  const instance = Object.freeze({ kind: "game-clear" as const, buttonType: 0 as const, rangeLength: null });
+  const due = visual.gameClearParticleActivationSchedule.filter((row) =>
+    !visual.gameClearParticleActivatedSystems.has(row.systemId) && row.activateAtSeconds <= target);
+  for (let index = 0; index < due.length;) {
+    const activateAt = Math.max(cursor, due[index]!.activateAtSeconds);
+    if (activateAt > cursor) simulation.step(Math.fround(activateAt - cursor), false);
+    const systems: string[] = [];
+    while (index < due.length && due[index]!.activateAtSeconds <= activateAt) {
+      systems.push(due[index]!.systemId);
+      visual.gameClearParticleActivatedSystems.add(due[index]!.systemId);
+      index += 1;
+    }
+    simulation.playRootSystems("game-clear", instance, root, systems);
+    cursor = Math.fround(activateAt);
+  }
+  if (target > cursor) simulation.step(Math.fround(target - cursor), false);
+  visual.gameClearParticleElapsed = target;
 }
 
 function renderGameClearParticles(
@@ -2731,13 +2773,13 @@ function projectGameClearParticleSample(
 ): Readonly<{ readonly x: number; readonly y: number; readonly hierarchyScaleX: number; readonly hierarchyScaleY: number }> {
   const transforms = [definition.transform, ...definition.parentTransforms];
   let origin: readonly [number, number, number] = [0, 0, 0];
-  let hierarchyScaleX = Math.fround(1);
-  let hierarchyScaleY = Math.fround(1);
-  for (const transform of transforms) {
-    origin = applyGameClearParticleTransform(origin, transform);
-    hierarchyScaleX = Math.fround(hierarchyScaleX * Math.abs(transform.m_LocalScale.x));
-    hierarchyScaleY = Math.fround(hierarchyScaleY * Math.abs(transform.m_LocalScale.y));
-  }
+  for (const transform of transforms) origin = applyGameClearParticleTransform(origin, transform);
+  // SVF-R01 + Local scaling-mode correction: simulation positions consume the
+  // full parent chain, while billboard size consumes the emitting
+  // ParticleSystem's own local scale once. Multiplying parent×child scales here
+  // collapsed the serialized 0.185 firework subtree to 0.185².
+  const hierarchyScaleX = Math.abs(definition.transform.m_LocalScale.x);
+  const hierarchyScaleY = Math.abs(definition.transform.m_LocalScale.y);
   return Object.freeze({
     x: Math.fround(origin[0] + Math.fround(Math.fround(sampleX - origin[0]) * authoredPixelsPerWorldUnit)),
     y: Math.fround(origin[1] + Math.fround(Math.fround(sampleY - origin[1]) * authoredPixelsPerWorldUnit)),
@@ -3113,6 +3155,8 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreHighRankGeneration: 0,
     gameClearParticleSimulation: null,
     gameClearParticleProfile: null,
+    gameClearParticleActivationSchedule: Object.freeze([]),
+    gameClearParticleActivatedSystems: new Set<string>(),
     gameClearParticleElapsed: 0,
     gameClearParticleContainer: null,
     gameClearParticleTextures: null,
@@ -4309,9 +4353,7 @@ function applyEvidenceAnimation(
     const visual = object.hudVisual;
     const simulation = visual.gameClearParticleSimulation;
     if (simulation !== null) {
-      const delta = Math.fround(Math.max(0, elapsedSeconds - visual.gameClearParticleElapsed));
-      simulation.step(delta, false);
-      visual.gameClearParticleElapsed = elapsedSeconds;
+      advanceGameClearParticleSimulation(visual, state.clearStatus as 1 | 2 | 3, elapsedSeconds);
       if (visual.gameClearParticleTextures === null) throw new Error("Game-clear particle textures are missing");
       renderGameClearParticles(visual, visual.gameClearParticleTextures);
     }

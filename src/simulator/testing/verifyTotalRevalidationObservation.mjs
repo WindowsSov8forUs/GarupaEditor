@@ -37,15 +37,22 @@ for (const row of matrix) {
     ? 422
     : Math.trunc(Math.fround(state.ratio.value * Math.fround(422)));
   assert.equal(state.indicatorLocalX, indicator);
-  const right = 38 + indicator;
-  const width = Math.max(2, indicator - 4);
-  const left = (42 + right) / 2 - width / 2;
+  const right = Math.fround(38 + indicator);
+  const width = Math.fround(Math.max(2, right - 42));
+  const center = Math.fround(
+    Math.fround(Math.fround(42 + right) / 2) + Math.fround(0.0000152587890625),
+  );
+  const left = Math.fround(center - Math.fround(width / 2));
+  const centerY = Math.fround(
+    -Math.fround(Math.fround(13.5 - 25.5) / 2) - Math.fround(0.000011444091796875),
+  );
+  const top = Math.fround(centerY - Math.fround(39 / 2));
   assert.deepEqual(row.observation.hudScoreIndicatorMask, {
     owner: "score-high-rank-panel-mask",
     consumer: "score-high-rank-animation-layer",
     generation: 1,
     position: [25, 45],
-    bounds: [left, -13.5, width, 39],
+    bounds: [left, top, width, 39],
     softness: [20, 3],
   });
   const foreground = row.observation.hudScoreNineSliceBorders.find((entry) => entry.label === "score-gauge-foreground");
@@ -100,7 +107,7 @@ assert.deepEqual(half.hudScoreIndicatorMask, {
   consumer: "score-high-rank-animation-layer",
   generation: 1,
   position: [25, 45],
-  bounds: [42, -13.5, 375, 39],
+  bounds: [42.00001525878906, -13.500011444091797, 375, 39],
   softness: [20, 3],
 });
 assert.equal(continued.hudScoreIndicatorMask.generation, 1);

@@ -14,8 +14,13 @@ const GAP_FIXTURE = join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
 );
+const FRESH_FIXTURE = join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/seven-visual-fresh-reconfirmation/artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
+);
 const oracle = JSON.parse(readFileSync(FIXTURE, "utf8"));
 const gap = JSON.parse(readFileSync(GAP_FIXTURE, "utf8"));
+const fresh = JSON.parse(readFileSync(FRESH_FIXTURE, "utf8"));
 
 assert.equal(oracle.schema_version, 1);
 assert.equal(oracle.status, "confirmed-current-seven-visual-lifecycle-reconfirmation");
@@ -157,7 +162,65 @@ assert.deepEqual(complete.resolved_attribute_hashes, {
 assert.equal(complete.unknown_channel_count, 0);
 assert.match(complete.portable_requirement, /Every one of 104 FC and 129 AP channels/);
 
-console.log("seven visual portable oracle retained; product-visible closure withdrawn: Auto=base-only status 1, SVL-R01..R07 open");
+assert.equal(fresh.schema_version, 1);
+assert.equal(fresh.status, "portable-requirements-authorized-product-visible-open");
+assert.equal(fresh.authority.portable_reconstruction_authorization, true);
+assert.equal(fresh.authority.production_consumption_equivalence_authorization, false);
+assert.equal(fresh.R01_particle_resource_consumption.retained.texture.sha256,
+  "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9");
+assert.match(fresh.R01_particle_resource_consumption.corrected_requirement, /full atlas/);
+assert.match(fresh.R01_particle_resource_consumption.corrected_requirement, /exactly once/);
+assert.deepEqual(fresh.R02_slide_flash.selection_table.map((row: any) => row.span_length), [1, 2, 3, 4, 5, 6, 7]);
+assert.deepEqual(
+  fresh.R02_slide_flash.selection_table.flatMap((row: any) =>
+    row.variants.map((variant: any) => variant.get_note_file_name_exact_key)),
+  [
+    "note_long_flash_3", "note_long_flash_2_3", "note_long_flash_3_4",
+    "note_long_flash_2_3_4", "note_long_flash_1_2_3_4", "note_long_flash_2_3_4_5",
+    "note_long_flash_1_2_3_4_5", "note_long_flash_0_1_2_3_4_5",
+    "note_long_flash_1_2_3_4_5_6", "note_long_flash_0_1_2_3_4_5_6",
+  ],
+);
+assert.equal(fresh.R02_slide_flash.resource_boundary.all_lane_size_exact_keys_present_in_habahiro, true);
+assert.equal(fresh.R02_slide_flash.resource_boundary.all_lane_size_exact_keys_present_in_skin00, false);
+assert.match(fresh.R02_slide_flash.resource_selection_source, /root\/front.*not the first current/);
+assert.match(fresh.R02_slide_flash.motion, /stable flash is a child of the NoteSlide root/);
+assert.deepEqual(fresh.R03_slide_tap_keep.play_mutation_order, [
+  "acquire", "store", "GameObject.SetActive(true)", "set_parent(NoteSlide Transform)",
+  "set serialized static localPosition", "set serialized static localScale", "ParticleSystem.Play",
+]);
+assert.deepEqual(fresh.R03_slide_tap_keep.terminal_order, [
+  "ParticleSystem.Stop", "ParticleSystem.Clear", "GameObject.SetActive(false)",
+]);
+assert.equal(fresh.R04_score_above_ss_range.score_updates_after_entry, 58);
+assert.match(fresh.R04_score_above_ss_range.conclusion, /continues to the current score indicator after SS/);
+assert.deepEqual({
+  name: fresh.R05_score_ss_highlight.clip_name,
+  stop: fresh.R05_score_ss_highlight.stop_time,
+  loop: fresh.R05_score_ss_highlight.loop_time,
+  curves: fresh.R05_score_ss_highlight.curve_count,
+}, { name: "ScoreGaugeSS", stop: 3, loop: true, curves: 56 });
+assert.deepEqual(fresh.R06_terminal_hold.additional_clip_stop_time, {
+  full_combo: 2.2833333015441895,
+  all_perfect: 2.2833333015441895,
+});
+assert.match(fresh.R06_terminal_hold.conclusion, /no independent 3\.233-second release mutation/);
+for (const branch of [fresh.R07_complete_fc_ap_animation.full_combo, fresh.R07_complete_fc_ap_animation.all_perfect]) {
+  assert.equal(branch.particle_channel_count, 10);
+  assert.equal(branch.particle_channels.length, 10);
+  assert.equal(branch.phase_matrix.every((row: any) => row.particle_channel_f32_bits.length === 10), true);
+}
+assert.equal(fresh.R07_complete_fc_ap_animation.full_combo.curve_count, 104);
+assert.equal(fresh.R07_complete_fc_ap_animation.all_perfect.curve_count, 129);
+assert.match(fresh.R07_complete_fc_ap_animation.required_consumer.join(" "), /owning playOnAwake ParticleSystem lifecycle/);
+assert.equal(fresh.product_semantics_boundary.original_natural_auto, "clear status 1/base-only");
+assert.match(fresh.product_semantics_boundary.garupa_editor_development_policy, /separate stable product policy/);
+assert.deepEqual(fresh.closure.requirements, [
+  "SVF-R01", "SVF-R02", "SVF-R03", "SVF-R04", "SVF-R05", "SVF-R06", "SVF-R07",
+]);
+assert.equal(fresh.closure.garupa_editor_product_visible_closed, false);
+
+console.log("seven visual corrected portable requirements loaded from Reverse d4ab8146; fixture production-consumption authorization remains false");
 
 function verifyBranch(
   branch: any,
