@@ -1,0 +1,912 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-correction-oracle",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "particle_atlas": {
+    "source_profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "source_atlas": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    "source_device_frame": {
+      "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-044-particle-route-playNormalNoteParticle.png",
+      "bytes": 716844,
+      "sha256": "91521B34880F77D981882DCEF62F3111CA11570DD1F4E949CC0379E082F9EA2B"
+    },
+    "system_identity": "ordinary:effect_tap_perfect/kira",
+    "system_path": "effect_tap_perfect/kira",
+    "material": "Mat_parSet_1",
+    "tiles": [
+      4,
+      4
+    ],
+    "frame_over_time_scalar_f32": "0000303F",
+    "start_frame_scalar_f32": "00000000",
+    "cycles_f32": "0000803F",
+    "uv_frame": 11,
+    "whole_sheet_raster_origin": "top-left",
+    "selected_raster_tile": {
+      "column": 3,
+      "row_from_top": 2,
+      "rgba_sha256": "C0F52F2624542475038C1E669BB56E363E8C7C9D9AD6731B93A0353FCEE9BF34",
+      "observed_shape": "solid five-point star with glow"
+    },
+    "rejected_vertical_inversion_tile": {
+      "column": 3,
+      "row_from_top": 1,
+      "rgba_sha256": "D9457AB0619FA54AB660A6A48F38D4C548AB152FD6AADF33E367043779169B4B",
+      "observed_shape": "radial burst, not the kira star"
+    },
+    "device_observation": {
+      "crop_box_xyxy": [
+        280,
+        330,
+        500,
+        555
+      ],
+      "visible_shape": "multiple solid five-point kira stars around the normal-note impact",
+      "contact_sheet": "particle_atlas_top_left_contact_sheet.png",
+      "device_crop": "particle_device_star_crop.png"
+    },
+    "portable_conclusion": "Map uvFrame row directly from the top raster row. A browser subtexture implementation must not vertically invert the frame row."
+  },
+  "tap_lane_effect": {
+    "source_level3": {
+      "path": "static/apktool/base/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "slots": [
+      {
+        "button": "Button1",
+        "button_local_position_f32": [
+          "3333D3C0",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_1",
+        "sprite_source_file": "2d93a39353c29401e9d74baead0ee4f6",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 0
+      },
+      {
+        "button": "Button1_5",
+        "button_local_position_f32": [
+          "0000B0C0",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_1",
+        "sprite_source_file": "2d93a39353c29401e9d74baead0ee4f6",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 1
+      },
+      {
+        "button": "Button2",
+        "button_local_position_f32": [
+          "CDCC8CC0",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_2",
+        "sprite_source_file": "427cca15e588a402e95de70b00a443e0",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 2
+      },
+      {
+        "button": "Button2_5",
+        "button_local_position_f32": [
+          "333353C0",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_2",
+        "sprite_source_file": "427cca15e588a402e95de70b00a443e0",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 3
+      },
+      {
+        "button": "Button3",
+        "button_local_position_f32": [
+          "CDCC0CC0",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_3",
+        "sprite_source_file": "03a0932a885754baa804975b120c8015",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 4
+      },
+      {
+        "button": "Button3_5",
+        "button_local_position_f32": [
+          "CDCC8CBF",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_3",
+        "sprite_source_file": "03a0932a885754baa804975b120c8015",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 5
+      },
+      {
+        "button": "Button4",
+        "button_local_position_f32": [
+          "00000000",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_4",
+        "sprite_source_file": "18cb136c2c5a344d5a696a66bc45a878",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 6
+      },
+      {
+        "button": "Button4_5",
+        "button_local_position_f32": [
+          "CDCC8C3F",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_4",
+        "sprite_source_file": "18cb136c2c5a344d5a696a66bc45a878",
+        "flip_x": false,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 7
+      },
+      {
+        "button": "Button5",
+        "button_local_position_f32": [
+          "CDCC0C40",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_3",
+        "sprite_source_file": "03a0932a885754baa804975b120c8015",
+        "flip_x": true,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 8
+      },
+      {
+        "button": "Button5_5",
+        "button_local_position_f32": [
+          "33335340",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_3",
+        "sprite_source_file": "03a0932a885754baa804975b120c8015",
+        "flip_x": true,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 9
+      },
+      {
+        "button": "Button6",
+        "button_local_position_f32": [
+          "CDCC8C40",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_2",
+        "sprite_source_file": "427cca15e588a402e95de70b00a443e0",
+        "flip_x": true,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 10
+      },
+      {
+        "button": "Button6_5",
+        "button_local_position_f32": [
+          "0000B040",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_2",
+        "sprite_source_file": "427cca15e588a402e95de70b00a443e0",
+        "flip_x": true,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 11
+      },
+      {
+        "button": "Button7",
+        "button_local_position_f32": [
+          "3333D340",
+          "CDCC5CC0",
+          "00007041"
+        ],
+        "effect_local_position_f32": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ],
+        "effect_local_scale_f32": [
+          "0000803F",
+          "0000803F",
+          "0000803F"
+        ],
+        "sprite": "NoteLaneEffect_1",
+        "sprite_source_file": "2d93a39353c29401e9d74baead0ee4f6",
+        "flip_x": true,
+        "flip_y": false,
+        "renderer_material": [
+          [
+            1,
+            2
+          ]
+        ],
+        "mask_interaction": 2,
+        "sorting_order": 0,
+        "slot": 12
+      }
+    ],
+    "slot_texture_sequence": [
+      1,
+      1,
+      2,
+      2,
+      3,
+      3,
+      4,
+      4,
+      3,
+      3,
+      2,
+      2,
+      1
+    ],
+    "slot_flip_x_sequence": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "mirror_boundary": {
+      "last_unflipped_slot": 7,
+      "last_unflipped_button": "Button4_5",
+      "first_flipped_slot": 8,
+      "first_flipped_button": "Button5"
+    },
+    "sprites": [
+      {
+        "name": "NoteLaneEffect_1",
+        "source": {
+          "path": "static/apktool/base/assets/bin/Data/2d93a39353c29401e9d74baead0ee4f6",
+          "bytes": 1549104,
+          "sha256": "D498F3FC6C89E5A6BF270129F800803E873D0A218BEDF2C4E4E61A7F13FF424D"
+        },
+        "rect_f32": [
+          "00000000",
+          "00000000",
+          "00804144",
+          "0000FA43"
+        ],
+        "texture_rect_f32": [
+          "EB889943",
+          "00000000",
+          "1577E943",
+          "0000FA43"
+        ],
+        "texture_rect_offset_f32": [
+          "EB889943",
+          "00000000"
+        ],
+        "serialized_pivot_f32": [
+          "0000003F",
+          "00000000"
+        ],
+        "portable_cropped_png_pivot_f32": [
+          "7B4A2F3E",
+          "0000803F"
+        ],
+        "pixels_to_units_f32": "00008A42"
+      },
+      {
+        "name": "NoteLaneEffect_2",
+        "source": {
+          "path": "static/apktool/base/assets/bin/Data/427cca15e588a402e95de70b00a443e0",
+          "bytes": 1053104,
+          "sha256": "FD4F9AF0EA4AAB37A87F4AD26B347BE2300BB055BFA8070DB72CF3BE397FD63A"
+        },
+        "rect_f32": [
+          "00000000",
+          "00000000",
+          "00800344",
+          "0000FA43"
+        ],
+        "texture_rect_f32": [
+          "38363843",
+          "00000000",
+          "E4E4AA43",
+          "0000FA43"
+        ],
+        "texture_rect_offset_f32": [
+          "38363843",
+          "00000000"
+        ],
+        "serialized_pivot_f32": [
+          "0000003F",
+          "00000000"
+        ],
+        "portable_cropped_png_pivot_f32": [
+          "D00C6C3E",
+          "0000803F"
+        ],
+        "pixels_to_units_f32": "00008A42"
+      },
+      {
+        "name": "NoteLaneEffect_3",
+        "source": {
+          "path": "static/apktool/base/assets/bin/Data/03a0932a885754baa804975b120c8015",
+          "bytes": 557072,
+          "sha256": "5E406020F080C52C8FBCBCF9D65AD31354AE8D829AC6DF41B439F51A3D33123F"
+        },
+        "rect_f32": [
+          "00000000",
+          "00000000",
+          "00008B43",
+          "0000FA43"
+        ],
+        "texture_rect_f32": [
+          "ABF27042",
+          "00000000",
+          "55C35943",
+          "0000FA43"
+        ],
+        "texture_rect_offset_f32": [
+          "ABF27042",
+          "00000000"
+        ],
+        "serialized_pivot_f32": [
+          "0000003F",
+          "00000000"
+        ],
+        "portable_cropped_png_pivot_f32": [
+          "9F2FB93E",
+          "0000803F"
+        ],
+        "pixels_to_units_f32": "00008A42"
+      },
+      {
+        "name": "NoteLaneEffect_4",
+        "source": {
+          "path": "static/apktool/base/assets/bin/Data/18cb136c2c5a344d5a696a66bc45a878",
+          "bytes": 309104,
+          "sha256": "888172CDA690D441DB70926609787DBE8F9F8D3F3FD551AEFF9884E49C9869B1"
+        },
+        "rect_f32": [
+          "00000000",
+          "00000000",
+          "00001A43",
+          "0000FA43"
+        ],
+        "texture_rect_f32": [
+          "00000000",
+          "00000000",
+          "00001A43",
+          "0000FA43"
+        ],
+        "texture_rect_offset_f32": [
+          "00000000",
+          "00000000"
+        ],
+        "serialized_pivot_f32": [
+          "0000003F",
+          "00000000"
+        ],
+        "portable_cropped_png_pivot_f32": [
+          "0000003F",
+          "0000803F"
+        ],
+        "pixels_to_units_f32": "00008A42"
+      }
+    ],
+    "material": {
+      "external_reference": [
+        1,
+        2
+      ],
+      "name": "Sprites-Default",
+      "shader_path_id": 52,
+      "shader_name": "Sprites/Default",
+      "rt_blend0": {
+        "src_blend": 1,
+        "dest_blend": 10,
+        "src_blend_alpha": 1,
+        "dest_blend_alpha": 10,
+        "blend_op": 0
+      },
+      "portable_blend": "normal-premultiplied-alpha",
+      "additive": false,
+      "joined_split_sha256": "0BC8C5FEE5F2885EE4EC6C072B6EA5FA4AE66B3C2E6BD6EAC282963B4706D839",
+      "split_sources": [
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split0",
+          "bytes": 1048576,
+          "sha256": "3C41A132FE7C8414704651A7739246828E7DC2735E9142C5A051DAB0C0310FD6"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split1",
+          "bytes": 1048576,
+          "sha256": "A6BA2FC3C5F2ACEB016F4B8B5F1EB81D458C116E3D00566BCBC14EF341EC9323"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split2",
+          "bytes": 1048576,
+          "sha256": "53EBCABDF1A6797848AB3A5862518B5ACB0A52667D7E387A5E3CDC370C3DE0B9"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split3",
+          "bytes": 1048576,
+          "sha256": "AA2EB6545F36734512E028A96BD544D0E33DBE1455FD4B081C933B46E8DF422F"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split4",
+          "bytes": 1048576,
+          "sha256": "629F490735D6A6341D182ECDA77B43301D73075D21190F974B2ACF0B514F0892"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split5",
+          "bytes": 1048576,
+          "sha256": "7797A13F2CE492D4BE901FECA29FFDFF19631A2D27FFB022F9406E1F6BE87DF3"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split6",
+          "bytes": 1048576,
+          "sha256": "48422BF3A7BF468BE19540929AC6630DD38FB0B999C9CF9BE3979779B1E5DFE1"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split7",
+          "bytes": 1048576,
+          "sha256": "AF633C7D3FDF660306CB05C9F02D5CE794674A03A0EAF4927EE97178ED8154BC"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split8",
+          "bytes": 1048576,
+          "sha256": "D4ECBAE619EB46211E0934D7898D36E862A0A4702075717FBE4305D88DB41363"
+        },
+        {
+          "path": "static/apktool/base/assets/bin/Data/globalgamemanagers.assets.split9",
+          "bytes": 227812,
+          "sha256": "A61139CFDC2B32A2C3A35F13509AD481F02FD93D7B5BF60404E4B1CC93F3E8A0"
+        }
+      ]
+    },
+    "shared_mask": {
+      "count": 1,
+      "game_object": "MaskImage",
+      "sprite_mask_enabled": true,
+      "alpha_cutoff_f32": "CDCC4C3E",
+      "mask_renderer_enabled": false,
+      "mask_renderer_interaction": 1,
+      "consumer_interaction": 2,
+      "portable_semantic": "one shared visible-outside mask owner for all thirteen consumers"
+    },
+    "portable_conclusion": "Use each sprite's visible textureRect crop with its crop-adjusted pivot, serialized slot>=8 mirroring, one shared visible-outside mask, and normal premultiplied-alpha blend."
+  },
+  "slide": {
+    "sources": {
+      "change_current": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321a774__NoteSlide__changeCurrentNote.arm64.tsv",
+        "bytes": 3541,
+        "sha256": "BD50233E5A7046423CCF8DF26CC48FCE5B427B1A91FC6B45B4A651D637B49824"
+      },
+      "on_update": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321ab5c__NoteSlide__OnUpdate.arm64.tsv",
+        "bytes": 2735,
+        "sha256": "13875C47736007355AFBED3E007E4A48E8314391DDB04E616825762B7702247D"
+      },
+      "sliding_move": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321ac60__NoteSlide__slidingMove.arm64.tsv",
+        "bytes": 6641,
+        "sha256": "F8FB99EE0F7E501CB507653B9D0848126643B222099396FAE41E5EA0F0C6C4D9"
+      },
+      "touch_began": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv",
+        "bytes": 17885,
+        "sha256": "47BE828D451D8B41C8A95BC9326C6704F8339D247BC8CDC199376FF00A81A148"
+      },
+      "touch_moved": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv",
+        "bytes": 47327,
+        "sha256": "CDF4923BBFCE7E2D6F2BBEF97E2D286C29D716091842998661A04CFE7FD22CCB"
+      },
+      "play_flash": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321c46c__NoteSlide__playFlashAnimation.arm64.tsv",
+        "bytes": 1524,
+        "sha256": "60A2D1E2B81B050A779753A046EC84F4B28A53197BCBF88F6647C72D558AE5F6"
+      },
+      "play_particle": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321c4fc__NoteSlide__playSlideNoteParticle.arm64.tsv",
+        "bytes": 3793,
+        "sha256": "759025CE7D755EA2A535CAA830F1277C3FF613484A55BBCA8A121A697EFA8896"
+      },
+      "stop_particle": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321a9a0__NoteSlide__stopSlideNoteParticle.arm64.tsv",
+        "bytes": 1897,
+        "sha256": "08F2726A9542101F9D50C8336B2F467CFF73615B45B12EDADD833DF8167A43CF"
+      },
+      "deactivate": {
+        "path": "artifacts/investigations/audio-runtime-contract-10-1-4/arm64/0321e0c4__NoteSlide__deactivate.arm64.tsv",
+        "bytes": 3487,
+        "sha256": "56472169AE339BF9A9D94A9D7682299FAE88A3BC434AAA375FE0C954760E6DCC"
+      }
+    },
+    "fields": {
+      "slideNoteFlashAnimator": "0x188",
+      "slideNoteFlashSprite": "0x190",
+      "currentNote": "0x198",
+      "nextNote": "0x1A0",
+      "prevNote": "0x1A8",
+      "noteAfterList": "0x1B8",
+      "tapLongNoteParticle": "0x1D0"
+    },
+    "head_judgement_call_order": {
+      "targets": [
+        "NoteSlide$$changeCurrentNote",
+        "NoteSlide$$playFlashAnimation",
+        "NoteSlide$$playSlideNoteParticle"
+      ],
+      "positions_in_resolved_call_stream": [
+        22,
+        23,
+        24
+      ]
+    },
+    "outer_update_call_order": {
+      "targets": [
+        "NoteBase$$OnUpdate",
+        "NoteSlide$$slidingMove",
+        "System.Collections.Generic.List<object>$$get_Item",
+        "NoteBase$$ExecuteUpdate"
+      ],
+      "positions_in_resolved_call_stream": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "intermediate_transition": {
+      "intermediate_judge_count": 2,
+      "change_current_count": 2,
+      "intermediate_positions_in_resolved_call_stream": [
+        19,
+        23
+      ],
+      "change_current_positions_in_resolved_call_stream": [
+        20,
+        25
+      ],
+      "order": "intermediateNoteJudge then changeCurrentNote on each successful branch"
+    },
+    "root_motion": {
+      "active_states": [
+        1,
+        2
+      ],
+      "target_source": "noteAfterList[0]",
+      "horizontal_source": "the selected NoteSlideAfter target-center button / virtual-lane X",
+      "vertical_source": "the existing NoteSlide root local Y is preserved",
+      "scale_source": "selected target-center button local scale multiplied by NoteSlide noteSettingScale",
+      "flash_parent": "NoteSlide root",
+      "tap_keep_parent": "NoteSlide root",
+      "corrected_semantic": "The root stays on the judgement-line Y but is not locked to the head lane: slidingMove updates root X/scale to the current first NoteSlideAfter before child ExecuteUpdate. Flash and tap-keep therefore follow that root mutation."
+    },
+    "tap_keep": {
+      "acquire": "NoteInstanceContainer.GetSlideNoteTapKeepEffect",
+      "activate": true,
+      "parent": "NoteSlide transform",
+      "local_position": "method static Vector3 constant",
+      "local_scale": "method static Vector3 constant",
+      "play": "ParticleSystem.Play",
+      "stop": "ParticleSystem.Stop + Clear + GameObject.SetActive(false)"
+    },
+    "terminal_call_order": {
+      "targets": [
+        "NoteFrontBase$$Deactivate",
+        "NoteSlide$$FadeoutSlideNoteSound",
+        "NoteSlide$$stopFlashAnimation",
+        "NoteSlide$$stopSlideNoteParticle"
+      ],
+      "positions_in_resolved_call_stream": [
+        0,
+        3,
+        4,
+        5
+      ]
+    },
+    "portable_conclusion": "After a successful head, select current after-node before flash/tap-keep start; update flash and persistent tap-keep at judgement-line Y/current-node X; advance on each current-node transition; stop both on terminal/deactivate."
+  },
+  "one_frame": {
+    "sources": {
+      "init": {
+        "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/arm64/03303d84__InGameOneFrameJudgementController__InitOneFrameDataList.arm64.tsv",
+        "bytes": 2351,
+        "sha256": "DBE856E42380871569BDF4BDB5EC2E8BF41A94C66E2A3871785224B18844361F"
+      },
+      "usable": {
+        "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/arm64/03303e68__InGameOneFrameJudgementController__GetUsableOneFrameData.arm64.tsv",
+        "bytes": 2296,
+        "sha256": "F6E18012BCAB5624671DDC7521A9AB0D5F1E6254698479D162826492B3A264E8"
+      },
+      "reflect": {
+        "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/arm64/03303ff0__InGameOneFrameJudgementController__ReflectOneFrameData.arm64.tsv",
+        "bytes": 13177,
+        "sha256": "96DA7CA9FF778ECDBB6DF384E423D642E2741A352B99BE36ED3B910B78BA979E"
+      }
+    },
+    "capacity": 5,
+    "allocation": "InitOneFrameDataList constructs exactly five persistent OneFrameData objects.",
+    "reservation": "GetUsableOneFrameData scans in list order and returns the first entry whose in-use byte at +0x10 is false; no sixth slot exists.",
+    "reflection": "ReflectOneFrameData scans list order, clears each consumed entry's in-use byte before applying combo/score/life/judge effects, and publishes OneFrameTotalData after the scan.",
+    "release_effect_total_instruction_order": [
+      58,
+      73,
+      312
+    ],
+    "original_input_boundary": "This fixed pool is an original-engine fact. It does not establish semantics for product-only Garupa/ExGarupa inputs that can legally submit more than five due judgements in one host update.",
+    "consumer_requirement": "A product extension may preserve the five-slot pool only by explicit bounded batches: reserve at most five ordered judgements, atomically preflight/commit all gameplay and visible side effects for that batch, reflect/release, then continue the same due set without loss, overwrite, clamp, or reordering.",
+    "original_equivalence_claim_for_product_batching": false
+  },
+  "evidence_ids": {
+    "PLSO-P01": "particle_atlas top-left uvFrame-to-raster mapping and device-star rejection of vertical inversion",
+    "PLSO-L01": "tap_lane_effect thirteen serialized slots, Sprite crop rectangles, offsets, pivots, and slot>=8 mirroring",
+    "PLSO-L02": "tap_lane_effect Sprites-Default material and normal premultiplied-alpha blend",
+    "PLSO-L03": "tap_lane_effect one shared MaskImage and thirteen visible-outside consumers",
+    "PLSO-S01": "slide head/intermediate/outer-update order and current-after-node root X/scale motion",
+    "PLSO-S02": "slide persistent tap-keep Play and terminal Stop/Clear/deactivate lifecycle",
+    "PLSO-O01": "one_frame fixed five-slot allocation, first-free reservation, release/effect/total order",
+    "PLSO-B01": "portable and product-only claim boundary"
+  },
+  "claim_boundary": {
+    "portable_mapping_authorized": true,
+    "portable_browser_equivalence_requires_consumer_validation": true,
+    "fixed_device_framebuffer_exact": false,
+    "particle_native_random_and_lower_mip_exact": false,
+    "garupa_batching_identity": "product-semantics-required"
+  }
+}

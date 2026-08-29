@@ -355,7 +355,7 @@
             "wrapModeV": "clamp",
             "mipmap": "off",
             "premultiplyAlpha": false,
-            "blendMode": "add"
+            "blendMode": "normal"
           },
           "atlasRows": [
             {
@@ -364,7 +364,7 @@
               "y": 0,
               "width": 467,
               "height": 500,
-              "pivotX": 0.5,
+              "pivotX": 0.1711825579404831,
               "pivotY": 1,
               "pixelsPerUnit": 69
             }
@@ -387,7 +387,7 @@
             "wrapModeV": "clamp",
             "mipmap": "off",
             "premultiplyAlpha": false,
-            "blendMode": "add"
+            "blendMode": "normal"
           },
           "atlasRows": [
             {
@@ -396,7 +396,7 @@
               "y": 0,
               "width": 342,
               "height": 500,
-              "pivotX": 0.5,
+              "pivotX": 0.23051762580871582,
               "pivotY": 1,
               "pixelsPerUnit": 69
             }
@@ -419,7 +419,7 @@
             "wrapModeV": "clamp",
             "mipmap": "off",
             "premultiplyAlpha": false,
-            "blendMode": "add"
+            "blendMode": "normal"
           },
           "atlasRows": [
             {
@@ -428,7 +428,7 @@
               "y": 0,
               "width": 218,
               "height": 500,
-              "pivotX": 0.5,
+              "pivotX": 0.3616914451122284,
               "pivotY": 1,
               "pixelsPerUnit": 69
             }
@@ -451,7 +451,7 @@
             "wrapModeV": "clamp",
             "mipmap": "off",
             "premultiplyAlpha": false,
-            "blendMode": "add"
+            "blendMode": "normal"
           },
           "atlasRows": [
             {

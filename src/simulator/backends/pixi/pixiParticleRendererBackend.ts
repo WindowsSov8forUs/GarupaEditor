@@ -412,6 +412,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       if (sample === null || typeof sample !== "object" || typeof sample.particleId !== "string" ||
         sample.particleId.length === 0 || ids.has(sample.particleId) || typeof sample.ownerKey !== "string" ||
         sample.ownerKey.length === 0 || !isInstance(sample.instance) ||
+        (sample.instance.kind !== "note-slide" || sample.instance.rootPositionXBits === null) &&
         !this.scene?.buttonAnchors.some((anchor) => anchor.buttonType === sample.instance.buttonType)) {
         return this.reject("particle.pixi.invalid-sample-identity", "Every sample requires one unique stable particle and typed owner instance identity.");
       }
@@ -457,13 +458,21 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     const anchor = this.scene!.buttonAnchors.find(
       (candidate) => candidate.buttonType === sample.instance.buttonType,
     );
-    if (anchor === undefined) {
+    const explicitSlideTransform = sample.instance.kind === "note-slide" &&
+      sample.instance.rootPositionXBits !== null && sample.instance.rootPositionYBits !== null &&
+      sample.instance.rootScaleBits !== null;
+    if (anchor === undefined && !explicitSlideTransform) {
       destroyPixiParticleLinearColorMesh(sprite);
       throw new Error("particle button has no evidence-authored scene anchor");
     }
-    const gameplayTransformScale = particleFloat32FromBits(this.scene!.gameplayTransformScaleBits)!;
-    const worldX = addScaledBits(anchor.position.xBits, sample.position.xBits, 1);
-    const worldY = addScaledBits(anchor.position.yBits, sample.position.yBits, 1);
+    const gameplayTransformScale = explicitSlideTransform
+      ? particleFloat32FromBits(sample.instance.rootScaleBits!)!
+      : particleFloat32FromBits(this.scene!.gameplayTransformScaleBits)!;
+    const rootXBits = explicitSlideTransform ? sample.instance.rootPositionXBits! : anchor!.position.xBits;
+    const rootYBits = explicitSlideTransform ? sample.instance.rootPositionYBits! : anchor!.position.yBits;
+    const rootPositionScale = explicitSlideTransform ? gameplayTransformScale : 1;
+    const worldX = addScaledBits(rootXBits, sample.position.xBits, rootPositionScale);
+    const worldY = addScaledBits(rootYBits, sample.position.yBits, rootPositionScale);
     const pixelsPerUnit = particleFloat32FromBits(this.scene!.pixelsPerWorldUnitBits)!;
     sprite.position.set(
       Math.fround(this.scene!.viewportWidth / 2 + Math.fround(worldX * pixelsPerUnit)),
@@ -510,11 +519,10 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("non-integral UV tiles");
       for (let frame = 0; frame < tilesX * tilesY; frame += 1) {
         const column = frame % tilesX;
-        const unityRow = Math.floor(frame / tilesX);
-        const pixiRow = tilesY - 1 - unityRow;
+        const rasterRowFromTop = Math.floor(frame / tilesX);
         const texture = new Texture({
           source: base.source,
-          frame: new Rectangle(column * width, pixiRow * height, width, height),
+          frame: new Rectangle(column * width, rasterRowFromTop * height, width, height),
           orig: new Rectangle(0, 0, width, height),
           label: `${logicalId}:uv:${frame}`,
         });
@@ -687,9 +695,20 @@ function isInstance(value: ParticleInstanceIdentity): boolean {
       Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
   }
   const rangeLength = value.rangeLength;
-  return value.kind === "note-slide" && Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
-    Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
-    typeof rangeLength === "number" && Number.isInteger(rangeLength) && rangeLength >= 1 && rangeLength <= 7;
+  if (value.kind !== "note-slide" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
+    !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
+    typeof value.buttonType !== "number" || !Number.isFinite(value.buttonType) ||
+    typeof rangeLength !== "number" || !Number.isInteger(rangeLength) || rangeLength < 1) return false;
+  if (value.rootPositionXBits === null || value.rootPositionYBits === null || value.rootScaleBits === null) {
+    return value.rootPositionXBits === null && value.rootPositionYBits === null && value.rootScaleBits === null &&
+      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15;
+  }
+  if (typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
+    typeof value.rootScaleBits !== "string") return false;
+  const rootX = particleFloat32FromBits(value.rootPositionXBits);
+  const rootY = particleFloat32FromBits(value.rootPositionYBits);
+  const rootScale = particleFloat32FromBits(value.rootScaleBits);
+  return rootX !== null && rootY !== null && rootScale !== null && rootScale > 0;
 }
 
 function sampleBitsFinite(sample: ParticleRenderSample): boolean {

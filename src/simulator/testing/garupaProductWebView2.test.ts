@@ -22,6 +22,7 @@ interface InputMap {
   readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[];
   readonly visualFifthContractUrl: string;
   readonly fiveVisualCorrectionUrl: string;
+  readonly particleLaneSlideCorrectionUrl: string;
 }
 const WIDTH = 1600;
 const HEIGHT = 720;
@@ -45,11 +46,11 @@ async function main(): Promise<void> {
   const map = await mapResponse.json() as InputMap;
   const [contractResponse, correctionResponse] = await Promise.all([
     fetch(map.visualFifthContractUrl),
-    fetch(map.fiveVisualCorrectionUrl),
+    fetch(map.particleLaneSlideCorrectionUrl),
   ]);
   if (!contractResponse.ok || !correctionResponse.ok) throw new Error("staged visual correction contracts unavailable");
   const visualFifth = await contractResponse.json() as any;
-  const fiveVisualCorrection = await correctionResponse.json() as any;
+  const particleLaneSlideCorrection = await correctionResponse.json() as any;
   if (visualFifth.note_mesh.product_compatible_width1_must_include_screen_width_adjust_rate !== true) {
     throw new Error("fifth Reverse width contract mismatch");
   }
@@ -141,7 +142,7 @@ async function main(): Promise<void> {
   renderer.stage.removeFromParent();
   linearOutput.dispose();
   requireOk(renderer.dispose());
-  const laneEffect = await verifyProductLaneEffect(app, profile, renderResources, fiveVisualCorrection);
+  const laneEffect = await verifyProductLaneEffect(app, profile, renderResources, particleLaneSlideCorrection);
   const cleanup = Object.freeze({
     rendererState: renderer.snapshot().state,
     owners: renderer.snapshot().objectCount,
@@ -226,17 +227,21 @@ async function verifyProductLaneEffect(
   if (lane === undefined || lane.spriteWorldBounds === null ||
     !lane.spriteBindingKey?.endsWith("NoteLaneEffect_4") ||
     JSON.stringify(lane.spriteAnchor) !== JSON.stringify([0.5, 1]) ||
-    lane.spriteBlendMode !== "add") {
+    lane.spriteBlendMode !== "normal") {
     throw new Error(`product entry did not publish the original-compatible center beam: ${JSON.stringify(lane)}`);
   }
-  const oracle = correction.tap_lane_effect.bounds_oracles.find((row: any) =>
-    row.case_id === "20:9-full" && row.texture === "NoteLaneEffect_4");
-  if (oracle === undefined) throw new Error("lane correction oracle unavailable");
+  const oracle = correction.tap_lane_effect.sprites.find((row: any) =>
+    row.name === "NoteLaneEffect_4");
+  if (oracle === undefined) throw new Error("PLSO-L01 Lane Sprite correction oracle unavailable");
+  const width = float32LittleEndianHex(oracle.texture_rect_f32[2]);
+  const height = float32LittleEndianHex(oracle.texture_rect_f32[3]);
+  const pivotX = float32LittleEndianHex(oracle.portable_cropped_png_pivot_f32[0]);
+  const pivotY = float32LittleEndianHex(oracle.portable_cropped_png_pivot_f32[1]);
   const expected = [
-    WIDTH / 2 + oracle.visible_bounds_relative_to_target_top_left[0],
-    oracle.target_top_left_y + oracle.visible_bounds_relative_to_target_top_left[1],
-    oracle.visible_bounds_relative_to_target_top_left[2],
-    oracle.visible_bounds_relative_to_target_top_left[3],
+    lane.position[0] - width * pivotX * lane.scale[0],
+    lane.position[1] - height * pivotY * lane.scale[1],
+    width * lane.scale[0],
+    height * lane.scale[1],
   ];
   lane.spriteWorldBounds.forEach((value, index) => {
     if (Math.abs(value - expected[index]!) >= 0.02) {
@@ -320,6 +325,11 @@ async function capture(
     world: observePixiWorld(renderer.stage),
     owners: renderer.snapshot().objectCount,
   });
+}
+function float32LittleEndianHex(hex: string): number {
+  if (!/^[0-9A-F]{8}$/u.test(hex)) throw new Error(`invalid oracle Float32 bytes ${hex}`);
+  const bytes = Uint8Array.from(hex.match(/../gu)!.map((pair) => Number.parseInt(pair, 16)));
+  return new DataView(bytes.buffer).getFloat32(0, true);
 }
 async function sha256(bytes: Uint8Array): Promise<string> {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]

@@ -346,6 +346,12 @@ export function validateParticleCommandShape(
         command.restartIfActive === true
         ? particleAccepted(undefined)
         : reject("particle.command.invalid-play", "Play requires a stable owner, exact route root and explicit restart-if-active semantics.");
+    case "move-note-slide-root":
+      return hasExactKeys(command, ["kind", "ownerKey", "instance"]) &&
+        isNonEmpty(command.ownerKey) && isParticleInstanceIdentity(command.instance) &&
+        command.instance.kind === "note-slide"
+        ? particleAccepted(undefined)
+        : reject("particle.command.invalid-slide-move", "Slide root movement requires the exact active pooled Slide owner and current-node transform identity.");
     case "stop-clear-deactivate-root":
       return hasExactKeys(command, ["kind", "ownerKey", "instance", "root"]) &&
         isNonEmpty(command.ownerKey) && isParticleInstanceIdentity(command.instance) &&
@@ -432,12 +438,24 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
         (typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) &&
           value.rangeLength >= 1 && value.rangeLength <= 7));
   }
-  return value.kind === "note-slide" &&
-    hasExactKeys(value, ["kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength"]) &&
-    typeof value.noteIndex === "number" && Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
-    typeof value.absolutePosition === "number" && Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
-    typeof value.buttonType === "number" && Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
-    typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
+  if (value.kind !== "note-slide" ||
+    !hasExactKeys(value, ["kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength", "rootPositionXBits", "rootPositionYBits", "rootScaleBits"]) ||
+    typeof value.noteIndex !== "number" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
+    typeof value.absolutePosition !== "number" || !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
+    typeof value.buttonType !== "number" || !Number.isFinite(value.buttonType) ||
+    typeof value.rangeLength !== "number" || !Number.isInteger(value.rangeLength) || value.rangeLength < 1) {
+    return false;
+  }
+  if (value.rootPositionXBits === null || value.rootPositionYBits === null || value.rootScaleBits === null) {
+    return value.rootPositionXBits === null && value.rootPositionYBits === null && value.rootScaleBits === null &&
+      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15;
+  }
+  if (typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
+    typeof value.rootScaleBits !== "string") return false;
+  const rootX = particleFloat32FromBits(value.rootPositionXBits);
+  const rootY = particleFloat32FromBits(value.rootPositionYBits);
+  const rootScale = particleFloat32FromBits(value.rootScaleBits);
+  return rootX !== null && rootY !== null && rootScale !== null && rootScale > 0;
 }
 
 function isInstanceCompatibleWithRoot(

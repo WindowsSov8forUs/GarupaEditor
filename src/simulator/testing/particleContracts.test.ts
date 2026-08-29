@@ -500,8 +500,8 @@ async function testPixiMapping(profile: any): Promise<void> {
   assert.equal(uvSprite.texture.frame.x, (uvSample.uvFrame % uv.tilesX) * uvTileWidth);
   assert.equal(
     uvSprite.texture.frame.y,
-    (uv.tilesY - 1 - Math.floor(uvSample.uvFrame / uv.tilesX)) * uvTileHeight,
-    "Unity bottom-up texture-sheet row maps to the corresponding top-down Pixi frame",
+    Math.floor(uvSample.uvFrame / uv.tilesX) * uvTileHeight,
+    "PLSO-P01 maps the selected texture-sheet frame directly from the top raster row",
   );
   assert.equal(uvSprite.texture.frame.width, uvTileWidth);
   assert.equal(uvSprite.texture.frame.height, uvTileHeight);

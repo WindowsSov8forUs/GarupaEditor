@@ -308,8 +308,9 @@ async function main(): Promise<void> {
   const flash = flashRows.find((row) => row.renderObjectId === flashId)!;
   assert.equal(flash.visible, true);
   assert.equal(flash.activeAnimationRole, "note-long-flash");
+  const compatibleIntermediate = product.visibleNodes.find((node) => node.identity === interiorId)!;
   const target = requireOk(layout.garupaProductScene.projectLaneAtCurve(
-    compatibleHead.spanStart + (compatibleHead.width - 1) / 2,
+    compatibleIntermediate.spanStart + (compatibleIntermediate.width - 1) / 2,
     1,
   ));
   const expectedFlashPosition = [
@@ -318,8 +319,24 @@ async function main(): Promise<void> {
   ];
   assert.ok(Math.abs(flash.position[0] - expectedFlashPosition[0]!) < 0.0001 &&
     Math.abs(flash.position[1] - expectedFlashPosition[1]!) < 0.0001,
-  `Slide root Flash remains on the independent judgement-line projection: ${flash.position} vs ${expectedFlashPosition}`);
+  `PLSO-S01 selects the first after-node before Slide Flash starts: ${flash.position} vs ${expectedFlashPosition}`);
+  const moved = requireOk(producer.preflightFrame(
+    compatibleIntermediate.absolutePosition,
+    [compatibleIntermediate],
+    Math.fround(1 / 60),
+  ));
+  assert.ok(moved);
+  requireOk(moved!.commit());
   const compatibleTerminal = product.visibleNodes.find((node) => node.identity === terminalId)!;
+  const terminalTarget = requireOk(layout.garupaProductScene.projectLaneAtCurve(
+    compatibleTerminal.spanStart + (compatibleTerminal.width - 1) / 2,
+    1,
+  ));
+  const movedFlash = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId)!;
+  const expectedMovedX = Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 +
+    terminalTarget.x.value * layout.surfaceLayout.camera.pixelsPerWorldUnit);
+  assert.ok(Math.abs(movedFlash.position[0] - expectedMovedX) < 0.0001,
+    `PLSO-S01 slidingMove follows the next current after-node without restarting the root: ${movedFlash.position[0]} vs ${expectedMovedX}`);
   const flashStopped = requireOk(producer.preflightFrame(
     compatibleTerminal.absolutePosition,
     [compatibleTerminal],

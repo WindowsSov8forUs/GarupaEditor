@@ -194,18 +194,27 @@ export class GarupaProductRenderProducer {
       }
     }
 
-    // The original Slide owns one root flash at the judgement line. It starts only
-    // after the head judgement and remains independent from the moving/hidden head
-    // Sprite until the terminal judgement stops it.
-    const judgedIdentities = new Set(judgedNodes.map((node) => node.identity));
+    // PLSO-S01: changeCurrentNote selects the first remaining after-node before
+    // flash/tap-keep start, and slidingMove rewrites the shared Slide root X/scale
+    // before child update. The root Y remains the judgement line.
     for (const chain of this.chart.slideChains) {
-      const headIdentity = chain.connectionIdentities[0]!;
-      const terminalIdentity = chain.connectionIdentities[chain.connectionIdentities.length - 1]!;
+      const headIdentity = chain.visibleConnectionIdentities[0];
+      const terminalIdentity = chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1];
+      if (headIdentity === undefined || terminalIdentity === undefined) continue;
       const head = samples.get(headIdentity)!;
       const flashObjectId = slideFlashObjectId(chain.identity);
-      const headJudged = judgedIdentities.has(headIdentity);
-      const terminalJudged = judgedIdentities.has(terminalIdentity);
-      if (headJudged && !terminalJudged) {
+      const active = plannedJudged.has(headIdentity) && !plannedJudged.has(terminalIdentity);
+      const currentIdentity = active
+        ? chain.visibleConnectionIdentities.find((identity) => !plannedJudged.has(identity))
+        : undefined;
+      if (active && currentIdentity === undefined) {
+        return rejected(
+          "render.garupa-product.slide-current-node-missing",
+          "An active product Slide must retain the first unjudged visible after-node selected by changeCurrentNote.",
+        );
+      }
+      if (active) {
+        const current = samples.get(currentIdentity!)!;
         if (!plannedCreated.has(flashObjectId)) {
           commands.push(command(commands.length, {
             kind: "create-object",
@@ -224,10 +233,10 @@ export class GarupaProductRenderProducer {
           plannedCreated.add(flashObjectId);
         }
         const target = this.scene.projectLaneAtCurve(
-          head.node.spanStart + (head.node.width - 1) / 2,
+          current.node.spanStart + (current.node.width - 1) / 2,
           1,
         );
-        const targetScale = this.scene.projectNoteScaleAtCurve(1, head.node.width);
+        const targetScale = this.scene.projectNoteScaleAtCurve(1, current.node.width);
         if (target.status !== "ok") return target;
         if (targetScale.status !== "ok") return targetScale;
         commands.push(command(commands.length, {
@@ -244,15 +253,17 @@ export class GarupaProductRenderProducer {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: flashObjectId }));
           plannedVisible.add(flashObjectId);
         }
-        commands.push(command(commands.length, {
-          kind: "play-animation",
-          renderObjectId: flashObjectId,
-          animationRole: "note-long-flash",
-          restart: true,
-        }));
-        plannedAnimationElapsed.set(flashObjectId, 0);
+        if (!plannedAnimationElapsed.has(flashObjectId)) {
+          commands.push(command(commands.length, {
+            kind: "play-animation",
+            renderObjectId: flashObjectId,
+            animationRole: "note-long-flash",
+            restart: true,
+          }));
+          plannedAnimationElapsed.set(flashObjectId, 0);
+        }
       }
-      if (terminalJudged && plannedAnimationElapsed.delete(flashObjectId)) {
+      if (!active && plannedAnimationElapsed.delete(flashObjectId)) {
         commands.push(command(commands.length, {
           kind: "stop-animation",
           renderObjectId: flashObjectId,

@@ -471,6 +471,10 @@ export type ParticleInstanceIdentity =
       readonly absolutePosition: number;
       readonly buttonType: number;
       readonly rangeLength: number;
+      /** Product Slide roots may carry their exact continuous judgement-line X/scale. */
+      readonly rootPositionXBits: string | null;
+      readonly rootPositionYBits: string | null;
+      readonly rootScaleBits: string | null;
     };
 
 export type ParticleCommand =
@@ -480,6 +484,11 @@ export type ParticleCommand =
       readonly instance: ParticleInstanceIdentity;
       readonly root: ParticleRootId;
       readonly restartIfActive: true;
+    }
+  | {
+      readonly kind: "move-note-slide-root";
+      readonly ownerKey: string;
+      readonly instance: Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }>;
     }
   | {
       readonly kind: "stop-clear-deactivate-root";

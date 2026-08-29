@@ -27,6 +27,10 @@ const fiveVisualCorrectionPath = join(
   testingRoot,
   "fixtures/reverse-snapshots/five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
 );
+const particleLaneSlideCorrectionPath = join(
+  testingRoot,
+  "fixtures/reverse-snapshots/particle-lane-slide-one-frame-correction/artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
+);
 const commonRenderCatalogPath = join(repositoryRoot, "src/simulator/engine/skin/commonRenderSemanticCatalog.json");
 const sources = [
   ["ordinary/notes/skin00/atlas", "rhythm-game-sprites.png"],
@@ -129,7 +133,20 @@ function prepareStage() {
     readFileSync(fiveVisualCorrectionPath),
     allowlist,
   );
-  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({ render, visualFifthContractUrl, fiveVisualCorrectionUrl })), allowlist);
+  const particleLaneSlideCorrectionUrl = "/particle-lane-slide-correction.json";
+  stageFile(
+    particleLaneSlideCorrectionUrl,
+    "particle-lane-slide-correction.json",
+    "application/json; charset=utf-8",
+    readFileSync(particleLaneSlideCorrectionPath),
+    allowlist,
+  );
+  stageFile("/input-map.json", "input-map.json", "application/json; charset=utf-8", Buffer.from(JSON.stringify({
+    render,
+    visualFifthContractUrl,
+    fiveVisualCorrectionUrl,
+    particleLaneSlideCorrectionUrl,
+  })), allowlist);
   const renderProfile = JSON.parse(readFileSync(join(fixtureRoot, "ordinary_portable_profile.json"), "utf8"));
   renderProfile.ordinaryVisibleProfile = JSON.parse(readFileSync(visibleProfilePath, "utf8"));
   renderProfile.assets.push(...laneProfiles.map((row) => row.profile));
@@ -174,7 +191,7 @@ function verify(value) {
   equal(value.cleanup.applicationChildren, 0, "application child cleanup");
   equal(value.laneEffect.binding.endsWith("NoteLaneEffect_4"), true, "product entry lane binding");
   equal(JSON.stringify(value.laneEffect.anchor), JSON.stringify([0.5, 1]), "product entry lane pivot");
-  equal(value.laneEffect.blendMode, "add", "product entry lane blend");
+  equal(value.laneEffect.blendMode, "normal", "PLSO-L02 product entry lane blend");
   if (!/^[0-9a-f]{64}$/.test(value.laneEffect.rgbaSha256) || value.laneEffect.nonTransparentPixels <= 0) {
     throw new Error(`product lane effect has no real-resource framebuffer pixels: ${JSON.stringify(value.laneEffect)}`);
   }

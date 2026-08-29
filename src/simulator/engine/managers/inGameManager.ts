@@ -272,12 +272,14 @@ export class InGameManager {
       if (committed.status !== "ok") return this.latchFault(committed);
     }
     let particleAdvanced = false;
-    if (this.oneFrameJudgementController.existsOneFrameData()) {
+    let firstJudgementBatch = true;
+    while (this.oneFrameJudgementController.existsOneFrameData()) {
       const reflectPlan =
         this.oneFrameJudgementController.preflightReflectOneFrameData();
       if (reflectPlan.status !== "ok") return this.latchFault(reflectPlan);
       if (reflectPlan.value !== null) {
         const batch = reflectPlan.value.batch;
+        const batchDeltaTimeSeconds = firstJudgementBatch ? deltaTimeSeconds : Math.fround(0);
         const lifeBefore = this.scoreLifeStateManager?.record.currentLife ?? null;
         const businessPlan = this.scoreLifeStateManager?.preflightReflect(batch) ?? null;
         if (businessPlan?.status === "integrity-failure") {
@@ -291,7 +293,7 @@ export class InGameManager {
         const terminalGameOver = gameOver &&
           this.noteManager.snapshot().calculatedData.sessionMode === "live";
         const particlePlan = this.particleCoordinator?.preflightJudgement(
-          deltaTimeSeconds,
+          batchDeltaTimeSeconds,
           batch,
           terminalGameOver,
         ) ?? null;
@@ -314,7 +316,7 @@ export class InGameManager {
           return this.latchFault(audioPlan);
         }
         const renderPlan = businessPlan?.status === "ok"
-          ? this.renderProducer?.preflightHudReflect(businessPlan.value, deltaTimeSeconds) ?? null
+          ? this.renderProducer?.preflightHudReflect(businessPlan.value, batchDeltaTimeSeconds) ?? null
           : null;
         if (renderPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
@@ -390,6 +392,20 @@ export class InGameManager {
           const committed = particlePlan.value.commitRender();
           if (committed.status !== "ok") return this.latchFault(committed);
           particleAdvanced = true;
+        }
+        firstJudgementBatch = false;
+        const nextProductBatch = this.garupaProduct?.submitPendingJudgementBatch() ?? ok({
+          submitted: 0,
+          remaining: 0,
+        });
+        if (nextProductBatch.status !== "ok") return this.latchFault(nextProductBatch);
+        if (nextProductBatch.value.remaining > 0 && nextProductBatch.value.submitted === 0 &&
+          !this.oneFrameJudgementController.existsOneFrameData()) {
+          return this.latchFault(integrityFailure(
+            "one-frame.product-batch-no-progress",
+            ["PLSO-O01", "PLSO-B01"],
+            "A product due set must reserve at least one free fixed-pool slot after Reflect/release.",
+          ));
         }
       }
     }

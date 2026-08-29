@@ -18,6 +18,7 @@ try {
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "publicGarupaJsonChart.test.js")]);
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "garupaProductExtension.test.js")]);
+  run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "particleLaneSlideOneFrameCorrection.test.js")]);
   run(process.execPath, [join(testingRoot, "verifyGarupaProductExtensionStatic.mjs")]);
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
     run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);

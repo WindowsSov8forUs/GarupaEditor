@@ -1064,6 +1064,7 @@ function createParticleCoordinator(
   const producer = new ParticleCommandProducer(
     input.chart,
     input.runtime.mode.isAutoPlay,
+    input.garupaProductScene ?? input.rendering?.garupaProductScene ?? null,
   );
   const coordinator = new ParticleFrameCoordinator(
     input.particles.sessionId,

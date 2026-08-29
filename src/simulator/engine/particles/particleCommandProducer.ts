@@ -3,6 +3,7 @@ import type {
   ParticleInstanceIdentity,
   ParticleRootId,
 } from "../../backends/particleContracts";
+import { particleFloat32ToBits } from "../../backends/particleValidation";
 import {
   AfterNoteType,
   ButtonType,
@@ -19,6 +20,7 @@ import {
   getGarupaProductChartProfile,
   type GarupaProductNode,
 } from "../garupa/productChartProfile";
+import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import {
   isTapKeepStartJudgeNoteType,
   isTapKeepStopJudgeNoteType,
@@ -104,6 +106,7 @@ export class ParticleCommandProducer {
   private readonly registeredNotes = new WeakSet<NoteInformation>();
   private readonly productScoringKeys = new Set<string>();
   private readonly productScoringNodes = new Map<string, GarupaProductNode>();
+  private readonly productSlideNodesByIdentity = new Map<string, readonly GarupaProductNode[]>();
   private chartIdentityValid = true;
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
@@ -111,6 +114,7 @@ export class ParticleCommandProducer {
   constructor(
     chart: ChartConstructionResult,
     private readonly isAutoPlay = false,
+    private readonly productScene: GarupaProductSceneLayout | null = null,
   ) {
     if (chart === null || typeof chart !== "object" || !Array.isArray(chart.noteBatches)) {
       this.chartIdentityValid = false;
@@ -121,6 +125,10 @@ export class ParticleCommandProducer {
     }
     const product = getGarupaProductChartProfile(chart);
     if (product?.route === "product-extension") {
+      for (const chain of product.slideChains) {
+        const nodes = chain.visibleConnectionIdentities.map((identity) => product.nodeByIdentity.get(identity)!);
+        for (const node of nodes) this.productSlideNodesByIdentity.set(node.identity, Object.freeze(nodes));
+      }
       for (const node of product.visibleNodes) {
         if (node.scoringSource !== null) {
           const key = productScoringKey(
@@ -173,6 +181,8 @@ export class ParticleCommandProducer {
               "A registered product scoring key must retain its exact immutable chart node owner.",
             );
           }
+          const slideLifecycle = this.routeProductSlideTapKeep(node, entry, projected, commands);
+          if (slideLifecycle.status !== "ok") return slideLifecycle;
           const routed = compatibleProductParticleRoot(node, entry.adjustedResult);
           if (routed !== null) {
             const buttonType = node.spanStart;
@@ -213,15 +223,24 @@ export class ParticleCommandProducer {
         const slideRoot = this.slideRootByNode.get(note);
         if (slideRoot !== undefined && entry.phase === "tail") {
           stopSlideTapKeep(slideIdentity(slideRoot), projected, commands);
-        }
-        if (slideRoot !== undefined && entry.phase === "head" && entry.adjustedResult > 0) {
-          playSlideTapKeep(
-            slideIdentity(slideRoot),
-            buttonType,
-            entry.buttonTypes.length,
-            projected,
-            commands,
-          );
+        } else if (slideRoot !== undefined && entry.adjustedResult > 0) {
+          const target = nextOriginalSlideTarget(slideRoot, note, entry.phase);
+          if (target !== null) {
+            const targetButton = targetCenterButtonType(target);
+            const targetRange = target.buttonTypesArray.length;
+            if (targetButton === null || !isRangeLength(targetRange)) {
+              return rejected(
+                "particle.producer.invalid-slide-current-node",
+                "Slide tap-keep movement requires the exact current after-node target-center button and 1..7 range.",
+              );
+            }
+            const identity = slideIdentity(slideRoot);
+            if (entry.phase === "head") {
+              playSlideTapKeep(identity, targetButton, targetRange, projected, commands);
+            } else {
+              moveSlideTapKeep(identity, targetButton, targetRange, null, null, null, projected, commands);
+            }
+          }
         }
         const routed = resolveParticleJudgementRoot({
           result: entry.adjustedResult,
@@ -455,6 +474,77 @@ export class ParticleCommandProducer {
     });
   }
 
+  private routeProductSlideTapKeep(
+    node: GarupaProductNode,
+    entry: OneFrameJudgementEntry,
+    projected: MutableParticleOwnerState,
+    commands: ParticleCommand[],
+  ): SimulatorResult<void> {
+    const nodes = this.productSlideNodesByIdentity.get(node.identity);
+    if (nodes === undefined) return ok(undefined);
+    const nodeIndex = nodes.indexOf(node);
+    const head = nodes[0];
+    if (nodeIndex < 0 || head?.scoringSource === null || head === undefined) {
+      return rejected(
+        "particle.producer.invalid-product-slide-owner",
+        "A product Slide chain must retain its ordered visible nodes and one stable head owner.",
+      );
+    }
+    const identity = slideIdentity(head.scoringSource);
+    if (nodeIndex === nodes.length - 1) {
+      stopSlideTapKeep(identity, projected, commands);
+      return ok(undefined);
+    }
+    if (entry.adjustedResult <= 0) return ok(undefined);
+    const target = nodes[nodeIndex + 1]!;
+    if (this.productScene === null) {
+      return rejected(
+        "particle.producer.product-slide-scene-missing",
+        "Product Slide tap-keep movement requires the same continuous scene projection used by its visible root.",
+      );
+    }
+    const position = this.productScene.projectLaneAtCurve(
+      target.spanStart + (target.width - 1) / 2,
+      1,
+    );
+    if (position.status !== "ok") return position;
+    const scale = this.productScene.projectNoteScaleAtCurve(1, target.width);
+    if (scale.status !== "ok") return scale;
+    const rootPositionXBits = particleFloat32ToBits(position.value.x.value);
+    const rootPositionYBits = particleFloat32ToBits(position.value.y.value);
+    const rootScaleBits = particleFloat32ToBits(scale.value.value);
+    if (rootPositionXBits === null || rootPositionYBits === null || rootScaleBits === null || scale.value.value <= 0) {
+      return rejected(
+        "particle.producer.invalid-product-slide-transform",
+        "The current product Slide after-node must project to finite positive binary32 root position/scale.",
+      );
+    }
+    if (nodeIndex === 0) {
+      playSlideTapKeep(
+        identity,
+        target.spanStart,
+        target.width,
+        projected,
+        commands,
+        rootPositionXBits,
+        rootPositionYBits,
+        rootScaleBits,
+      );
+    } else {
+      moveSlideTapKeep(
+        identity,
+        target.spanStart,
+        target.width,
+        rootPositionXBits,
+        rootPositionYBits,
+        rootScaleBits,
+        projected,
+        commands,
+      );
+    }
+    return ok(undefined);
+  }
+
   private stage(
     commands: readonly ParticleCommand[],
     projected: MutableParticleOwnerState,
@@ -570,16 +660,59 @@ function playSlideTapKeep(
   rangeLength: number,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
+  rootPositionXBits: string | null = null,
+  rootPositionYBits: string | null = null,
+  rootScaleBits: string | null = null,
 ): void {
   const semanticKey = slideSemanticKey(identity);
   const ownerKey = slideTapKeepOwnerKey(identity, buttonType, rangeLength);
-  const instance = slideInstance(identity, buttonType, rangeLength);
+  const instance = slideInstance(
+    identity,
+    buttonType,
+    rangeLength,
+    rootPositionXBits,
+    rootPositionYBits,
+    rootScaleBits,
+  );
   const before = state.slideTapKeep.get(semanticKey);
   if (before !== undefined && before.ownerKey !== ownerKey) {
     commands.push(stopRoot(before.ownerKey, before.instance, "ordinary:effect_TapKeep"));
   }
   commands.push(playRoot(ownerKey, instance, "ordinary:effect_TapKeep"));
   state.slideTapKeep.set(semanticKey, Object.freeze({ ownerKey, instance, rangeLength }));
+}
+
+function moveSlideTapKeep(
+  identity: SlideSemanticIdentity,
+  buttonType: number,
+  rangeLength: number,
+  rootPositionXBits: string | null,
+  rootPositionYBits: string | null,
+  rootScaleBits: string | null,
+  state: MutableParticleOwnerState,
+  commands: ParticleCommand[],
+): void {
+  const semanticKey = slideSemanticKey(identity);
+  const active = state.slideTapKeep.get(semanticKey);
+  if (active === undefined) return;
+  const instance = slideInstance(
+    identity,
+    buttonType,
+    rangeLength,
+    rootPositionXBits,
+    rootPositionYBits,
+    rootScaleBits,
+  );
+  commands.push(Object.freeze({
+    kind: "move-note-slide-root",
+    ownerKey: active.ownerKey,
+    instance,
+  }));
+  state.slideTapKeep.set(semanticKey, Object.freeze({
+    ownerKey: active.ownerKey,
+    instance,
+    rangeLength,
+  }));
 }
 
 function stopSlideTapKeep(
@@ -659,13 +792,19 @@ function slideInstance(
   identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
-): ParticleInstanceIdentity {
+  rootPositionXBits: string | null,
+  rootPositionYBits: string | null,
+  rootScaleBits: string | null,
+): Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }> {
   return Object.freeze({
     kind: "note-slide",
     noteIndex: identity.noteIndex,
     absolutePosition: identity.absolutePosition,
     buttonType,
     rangeLength,
+    rootPositionXBits,
+    rootPositionYBits,
+    rootScaleBits,
   });
 }
 
@@ -697,6 +836,17 @@ function slideSemanticKey(identity: SlideSemanticIdentity): string {
 
 function slideIdentity(note: NoteInformation): SlideSemanticIdentity {
   return Object.freeze({ noteIndex: note.index, absolutePosition: note.absolutePos });
+}
+
+function nextOriginalSlideTarget(
+  slideRoot: NoteInformation,
+  judgedNote: NoteInformation,
+  phase: OneFrameJudgementEntry["phase"],
+): NoteInformation | null {
+  if (phase === "head") return slideRoot.slideNoteList[0] ?? null;
+  if (phase !== "intermediate") return null;
+  const index = slideRoot.slideNoteList.indexOf(judgedNote);
+  return index < 0 ? null : slideRoot.slideNoteList[index + 1] ?? null;
 }
 
 function targetCenterButtonType(note: NoteInformation): number | null {

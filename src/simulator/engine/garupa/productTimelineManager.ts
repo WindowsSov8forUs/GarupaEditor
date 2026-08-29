@@ -1,4 +1,7 @@
-import type { AutoLiveJudgementOwnership } from "../data/autoLiveJudgement";
+import type {
+  AutoLiveJudgementOwnership,
+  AutoLiveJudgementRequest,
+} from "../data/autoLiveJudgement";
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import {
   ManualTouchPhase,
@@ -13,6 +16,7 @@ import {
   judgeManualNote,
   type JudgeTimingValue,
   type ManualJudgementOwnership,
+  type ManualJudgementRequest,
   type NoteResultTypeValue,
 } from "../data/manualJudgement";
 import type { NoteInformation } from "../chart/types";
@@ -30,6 +34,20 @@ interface PendingGesture {
   readonly timing: JudgeTimingValue;
 }
 
+type PendingProductJudgement =
+  | {
+      readonly kind: "auto";
+      readonly node: GarupaProductNode;
+      readonly missed: false;
+      readonly request: AutoLiveJudgementRequest;
+    }
+  | {
+      readonly kind: "manual";
+      readonly node: GarupaProductNode;
+      readonly missed: boolean;
+      readonly request: ManualJudgementRequest;
+    };
+
 interface ProductFingerOwner {
   readonly fingerId: number;
   readonly began: ManualInputPosition;
@@ -45,6 +63,7 @@ export interface GarupaProductTimelineSnapshot {
   readonly missedNodeCount: number;
   readonly nextAutoIndex: number;
   readonly activeFingerCount: number;
+  readonly pendingJudgementCount: number;
   readonly render: ReturnType<GarupaProductRenderProducer["snapshot"]> | null;
 }
 
@@ -52,10 +71,12 @@ export class GarupaProductTimelineManager {
   private readonly orderedVisibleNodes: readonly GarupaProductNode[];
   private readonly judgedSources = new WeakSet<NoteInformation>();
   private readonly missedSources = new WeakSet<NoteInformation>();
+  private readonly queuedSources = new WeakSet<NoteInformation>();
   private readonly fingers = new Map<number, ProductFingerOwner>();
   private readonly chainFinger = new Map<string, number>();
   private readonly nextVisibleIndexByChain = new Map<string, number>();
   private pendingManualFrame: ManualInputFrame | null = null;
+  private readonly pendingJudgements: PendingProductJudgement[] = [];
   private judgedNodeCount = 0;
   private missedNodeCount = 0;
   private nextAutoIndex = 0;
@@ -151,6 +172,12 @@ export class GarupaProductTimelineManager {
         "Product timeline updates require one initialized non-disposed owner.",
       );
     }
+    if (this.pendingJudgements.length !== 0) {
+      return rejected(
+        "simulator.garupa-extension.undrained-product-batch",
+        "Every product-only due set must be fully drained through bounded OneFrame batches before the next host update.",
+      );
+    }
     const visualPosition = this.music.musicPosition;
     const judgementPosition = this.music.getAdjustedMusicPosition(this.judgementAdjustValueB);
     if (!Number.isFinite(visualPosition) || visualPosition < 0 || !Number.isFinite(judgementPosition) ||
@@ -194,7 +221,52 @@ export class GarupaProductTimelineManager {
       if (committed.status !== "ok") return committed;
     }
     this.pendingManualFrame = null;
-    return ok(undefined);
+    const submitted = this.submitPendingJudgementBatch();
+    return submitted.status === "ok" ? ok(undefined) : submitted;
+  }
+
+  submitPendingJudgementBatch(): SimulatorResult<{
+    readonly submitted: number;
+    readonly remaining: number;
+  }> {
+    if (!this.initialized || this.disposed) {
+      return rejected(
+        "simulator.garupa-extension.batch-outside-lifecycle",
+        "Product OneFrame batches require one initialized non-disposed timeline owner.",
+      );
+    }
+    if (this.pendingJudgements.length === 0) {
+      return ok(Object.freeze({ submitted: 0, remaining: 0 }));
+    }
+    const capacity = this.oneFrame.availableCapacity();
+    if (capacity === 0) {
+      return ok(Object.freeze({ submitted: 0, remaining: this.pendingJudgements.length }));
+    }
+    const count = Math.min(capacity, 5, this.pendingJudgements.length);
+    const entries = this.pendingJudgements.slice(0, count);
+    if (entries.some((entry) => entry.kind !== (this.mode.inputMode === "auto" ? "auto" : "manual"))) {
+      return rejected(
+        "simulator.garupa-extension.mixed-product-batch",
+        "One product session cannot mix Auto and Manual judgement requests in a bounded batch.",
+      );
+    }
+    if (this.mode.inputMode === "auto") {
+      const requests = entries.map((entry) => (entry as Extract<PendingProductJudgement, { kind: "auto" }>).request);
+      const transaction = this.oneFrame.preflightAutoLiveJudgementBatch(requests);
+      if (transaction.status !== "ok") return transaction;
+      const committed = transaction.value.commit();
+      if (committed.status !== "ok") return committed;
+    } else {
+      const requests = entries.map((entry) =>
+        (entry as Extract<PendingProductJudgement, { kind: "manual" }>).request);
+      const transaction = this.oneFrame.preflightManualJudgementBatch(requests);
+      if (transaction.status !== "ok") return transaction;
+      const committed = transaction.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    for (const entry of entries) this.markJudged(entry.node, entry.missed);
+    this.pendingJudgements.splice(0, count);
+    return ok(Object.freeze({ submitted: count, remaining: this.pendingJudgements.length }));
   }
 
   private processManualFrame(
@@ -210,15 +282,13 @@ export class GarupaProductTimelineManager {
     }
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
-      if (this.judgedSources.has(source) || this.missedSources.has(source) ||
+      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source) ||
         judgementPosition <= node.absolutePosition) continue;
       const timing = this.judgeNode(node, judgementPosition);
       if (timing.status !== "ok") return timing;
       if (timing.value.result !== NoteResultType.None) continue;
       const missed = this.submitManual(node, NoteResultType.Miss, JudgeTiming.None);
       if (missed.status !== "ok") return missed;
-      this.missedSources.add(source);
-      this.missedNodeCount += 1;
       this.advanceChain(node);
       this.clearPendingGesture(node);
     }
@@ -265,7 +335,6 @@ export class GarupaProductTimelineManager {
         const pending = owner.pendingGesture;
         const submitted = this.submitManual(pending.node, pending.result, pending.timing);
         if (submitted.status !== "ok") return submitted;
-        this.markJudged(pending.node, false);
         judged.push(pending.node);
         owner.pendingGesture = null;
         this.advanceChain(pending.node);
@@ -310,7 +379,6 @@ export class GarupaProductTimelineManager {
       timing.value.timing,
     );
     if (submitted.status !== "ok") return submitted;
-    this.markJudged(node, false);
     judged.push(node);
     this.advanceChain(node);
     if (owner.chainIdentity === null) {
@@ -363,7 +431,7 @@ export class GarupaProductTimelineManager {
     const candidates: GarupaProductNode[] = [];
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
-      if (this.judgedSources.has(source) || this.missedSources.has(source)) continue;
+      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
       if (chainIdentity === null) {
         if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
         if (node.chainIdentity !== null && this.chainFinger.has(node.chainIdentity)) continue;
@@ -393,21 +461,26 @@ export class GarupaProductTimelineManager {
 
   private submitAuto(node: GarupaProductNode): SimulatorResult<void> {
     const source = node.scoringSource;
-    if (source === null || this.judgedSources.has(source) || this.missedSources.has(source)) {
+    if (source === null || this.judgedSources.has(source) || this.missedSources.has(source) ||
+      this.queuedSources.has(source)) {
       return rejected(
         "simulator.garupa-extension.invalid-auto-source",
         "Every due non-Hidden product node must own one unconsumed CS-V1 source.",
       );
     }
-    const submitted = this.oneFrame.setupAutoLiveJudgement({
-      noteInformation: source,
-      phase: "head",
-      noteType: productJudgeNoteType(node),
-      absolutePosition: node.absolutePosition,
-      multipleDirectionalFlickNoteCount: 0,
-    });
-    if (submitted.status !== "ok") return submitted;
-    this.markJudged(node, false);
+    this.pendingJudgements.push(Object.freeze({
+      kind: "auto",
+      node,
+      missed: false,
+      request: Object.freeze({
+        noteInformation: source,
+        phase: "head",
+        noteType: productJudgeNoteType(node),
+        absolutePosition: node.absolutePosition,
+        multipleDirectionalFlickNoteCount: 0,
+      }),
+    }));
+    this.queuedSources.add(source);
     return ok(undefined);
   }
 
@@ -417,22 +490,24 @@ export class GarupaProductTimelineManager {
     timing: JudgeTimingValue,
   ): SimulatorResult<void> {
     const source = node.scoringSource;
-    if (source === null) return rejected("simulator.garupa-extension.hidden-manual-source", "Hidden geometry cannot submit Manual judgement.");
-    const transaction = this.oneFrame.createManualJudgementTransaction();
-    const planned = transaction.preflight({
-      noteInformation: source,
-      phase: "head",
-      noteType: result === NoteResultType.Miss ? 0 : productJudgeNoteType(node),
-      rawResult: result,
-      rawTiming: timing,
-      absolutePosition: node.absolutePosition,
-    });
-    if (planned.status !== "ok") {
-      transaction.abort();
-      return planned;
+    if (source === null || this.judgedSources.has(source) || this.missedSources.has(source) ||
+      this.queuedSources.has(source)) {
+      return rejected("simulator.garupa-extension.hidden-or-consumed-manual-source", "Product Manual requires one visible unconsumed scoring source.");
     }
-    transaction.commit(planned.value);
-    transaction.finish();
+    this.pendingJudgements.push(Object.freeze({
+      kind: "manual",
+      node,
+      missed: result === NoteResultType.Miss,
+      request: Object.freeze({
+        noteInformation: source,
+        phase: "head",
+        noteType: result === NoteResultType.Miss ? 0 : productJudgeNoteType(node),
+        rawResult: result,
+        rawTiming: timing,
+        absolutePosition: node.absolutePosition,
+      }),
+    }));
+    this.queuedSources.add(source);
     return ok(undefined);
   }
 
@@ -518,6 +593,7 @@ export class GarupaProductTimelineManager {
 
   commitDispose(): void {
     this.pendingManualFrame = null;
+    this.pendingJudgements.length = 0;
     this.fingers.clear();
     this.chainFinger.clear();
     this.initialized = false;
@@ -532,6 +608,7 @@ export class GarupaProductTimelineManager {
       missedNodeCount: this.missedNodeCount,
       nextAutoIndex: this.nextAutoIndex,
       activeFingerCount: this.fingers.size,
+      pendingJudgementCount: this.pendingJudgements.length,
       render: this.render?.snapshot() ?? null,
     });
   }

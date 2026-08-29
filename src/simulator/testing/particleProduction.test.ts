@@ -196,6 +196,12 @@ function projectCommand(command: ParticleCommand): Record<string, unknown> {
         root: command.root,
         restartIfActive: command.restartIfActive,
       };
+    case "move-note-slide-root":
+      return {
+        kind: command.kind,
+        ownerKey: command.ownerKey,
+        instance: command.instance,
+      };
     case "stop-clear-deactivate-root":
       return {
         kind: command.kind,

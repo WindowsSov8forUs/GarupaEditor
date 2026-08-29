@@ -34,7 +34,7 @@ import {
 
 interface MutableOwner {
   readonly root: ParticleRootId;
-  readonly instance: ParticleInstanceIdentity;
+  instance: ParticleInstanceIdentity;
   restartCount: number;
 }
 
@@ -350,6 +350,18 @@ function applyCommand(
       simulation.playRoot(command.ownerKey, command.instance, command.root);
       return particleAccepted(false);
     }
+    case "move-note-slide-root": {
+      const owner = owners.get(command.ownerKey);
+      if (owner === undefined || owner.root !== "ordinary:effect_TapKeep" ||
+        owner.instance.kind !== "note-slide" ||
+        owner.instance.noteIndex !== command.instance.noteIndex ||
+        owner.instance.absolutePosition !== command.instance.absolutePosition) {
+        return transitionRejected("particle.command.missing-active-slide-owner", "Slide movement requires the exact active persistent TapKeep owner.");
+      }
+      owner.instance = Object.freeze({ ...command.instance });
+      simulation.moveOwner(command.ownerKey, command.instance);
+      return particleAccepted(suppressedUntilReplay);
+    }
     case "stop-clear-deactivate-root": {
       const owner = owners.get(command.ownerKey);
       if (owner === undefined || owner.root !== command.root || !sameInstance(owner.instance, command.instance)) {
@@ -378,7 +390,8 @@ function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIde
     ? left.buttonType === right.buttonType
     : left.kind === "note-slide" && right.kind === "note-slide" &&
       left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
-      left.buttonType === right.buttonType;
+      left.buttonType === right.buttonType && left.rootPositionXBits === right.rootPositionXBits &&
+      left.rootPositionYBits === right.rootPositionYBits && left.rootScaleBits === right.rootScaleBits;
 }
 
 function cloneOwners(source: ReadonlyMap<string, MutableOwner>): Map<string, MutableOwner> {

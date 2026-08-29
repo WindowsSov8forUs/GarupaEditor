@@ -50,6 +50,7 @@ async function main(): Promise<void> {
   testCanonicalBmsDifferentialProjection();
   testAutoAndManualEngineOutcomes();
   testProductAutoEngineOutcome();
+  testProductAutoBoundedOneFrameBatches();
   testProductManualChainOwner();
   testProductManualEngineOutcome();
   await testProductReplayLifecycle();
@@ -499,6 +500,52 @@ function testProductAutoEngineOutcome(): void {
   assert.equal(record.resultCounts[4], 4);
   assert.equal(snapshot.managers.garupaProduct?.visibleNodeCount, 4);
   assert.equal(snapshot.managers.garupaProduct?.judgedNodeCount, 4);
+  requireOk(engine.dispose());
+}
+
+function testProductAutoBoundedOneFrameBatches(): void {
+  const denseNotes = Array.from({ length: 12 }, (_, index) => ({
+    type: "Single" as const,
+    beat: 1,
+    lane: 0.25 + index * 0.5,
+    width: 1,
+  }));
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    ...denseNotes,
+  ])));
+  const mode = createSimulatorModeIdentity("live", "auto");
+  const engine = requireOk(createSimulatorEngine({
+    chart,
+    runtime: { originalLiveSettings: DEFAULT_ORIGINAL_LIVE_SETTINGS, mode },
+    scoreLifeState: {
+      schemaVersion: 3,
+      sessionId: "garupa-product-dense-bounded-one-frame",
+      mode,
+      life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+    },
+  }, createRecordingSimulatorBackends()));
+  requireOk(engine.initialize());
+  let firstPositiveJudgedCount: number | null = null;
+  for (let frame = 0; frame < 120; frame += 1) {
+    requireOk(engine.step(Math.fround(1 / 60)));
+    const judged = requireOk(engine.snapshot()).managers.garupaProduct!.judgedNodeCount;
+    if (judged > 0 && firstPositiveJudgedCount === null) firstPositiveJudgedCount = judged;
+  }
+  const snapshot = requireOk(engine.snapshot());
+  assert.equal(firstPositiveJudgedCount, 12,
+    "the same host update drains every ordered product batch instead of leaking pending due entries to the next update");
+  assert.equal(snapshot.managers.garupaProduct?.pendingJudgementCount, 0);
+  assert.equal(snapshot.managers.garupaProduct?.judgedNodeCount, 12);
+  assert.equal(snapshot.managers.scoreLifeState?.record.resultCounts[4], 12);
+  const reflectedSizes = snapshot.managers.oneFrame.trace
+    .filter((entry) => entry.kind === "one-frame.reflect")
+    .map((entry) => entry.kind === "one-frame.reflect" ? entry.containerIds.length : 0);
+  assert.deepEqual(reflectedSizes, [5, 5, 2],
+    "PLSO-B01 keeps the native five-slot pool and drains a legal dense due set as ordered 5/5/2 batches");
+  assert.ok(snapshot.managers.oneFrame.trace.every((entry) =>
+    entry.kind !== "one-frame.get-usable" || Number(entry.containerId.split(":")[1]) < 5),
+  "bounded product batches never resize or address outside the five original slots");
   requireOk(engine.dispose());
 }
 

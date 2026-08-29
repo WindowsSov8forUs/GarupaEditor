@@ -127,6 +127,13 @@ export type OriginalLiveSettingsEvidenceId =
   | "OLS-P01"
   | "OLS-C01";
 
+export type ParticleLaneSlideOneFrameCorrectionEvidenceId =
+  | "PLSO-P01"
+  | `PLSO-L0${"1" | "2" | "3"}`
+  | `PLSO-S0${"1" | "2"}`
+  | "PLSO-O01"
+  | "PLSO-B01";
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -144,7 +151,8 @@ export type SimulatorEvidenceId =
   | MvLiveEvidenceId
   | MultiaspectLayoutEvidenceId
   | PauseUiEvidenceId
-  | OriginalLiveSettingsEvidenceId;
+  | OriginalLiveSettingsEvidenceId
+  | ParticleLaneSlideOneFrameCorrectionEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

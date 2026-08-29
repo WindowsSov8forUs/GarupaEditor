@@ -64,7 +64,7 @@ interface OwnerSystemRuntime {
 
 interface OwnerRuntime {
   readonly ownerKey: string;
-  readonly instance: ParticleInstanceIdentity;
+  instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systems: Map<string, OwnerSystemRuntime>;
 }
@@ -164,6 +164,16 @@ export class DeterministicParticleSimulation {
         for (const at of events) this.spawn(owner, record, profile, runtime, at, subtract(0, at));
       }
     }
+  }
+
+  moveOwner(ownerKey: string, instance: Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }>): void {
+    const owner = this.owners.get(ownerKey);
+    if (owner === undefined || owner.instance.kind !== "note-slide" ||
+      owner.instance.noteIndex !== instance.noteIndex ||
+      owner.instance.absolutePosition !== instance.absolutePosition) {
+      throw fault("particle.simulation.missing-slide-owner", "Slide root movement requires the exact active persistent owner.");
+    }
+    owner.instance = Object.freeze({ ...instance });
   }
 
   stopOwner(ownerKey: string): void {
