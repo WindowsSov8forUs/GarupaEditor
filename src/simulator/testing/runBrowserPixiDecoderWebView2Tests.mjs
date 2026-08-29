@@ -126,6 +126,10 @@ function verify(value) {
   closeTuple(scoreHud.leadingRunWorldTransform, adaptive.leadingRun, 1e-4,
     "CS-V1 SS-threshold TotalScore leading sgm run world transform");
   verifyHighRankNodes(scoreHud);
+  if (scoreHud.loopFramebuffer.phase075Sha256 !== scoreHud.loopFramebuffer.phase375Sha256 ||
+      scoreHud.loopFramebuffer.phase375Sha256 === scoreHud.loopFramebuffer.rejectedRestart0Sha256) {
+    throw new Error(`SVL-R05 ScoreGaugeSS framebuffer loop/restart counterexample mismatch: ${JSON.stringify(scoreHud.loopFramebuffer)}`);
+  }
   verifyScoreStateMatrix(value.raster.scoreStateMatrix);
   verifyParticleAdditiveFramebuffer(value.raster.particleAdditiveFramebuffer);
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
@@ -207,8 +211,11 @@ function verifyScoreStateMatrix(rows) {
     equal(row.score, source.score, `SVL-R04 row${index} score`);
     equal(JSON.stringify(row.panelClipF32Bits), JSON.stringify(source.clip_f32_bits),
       `SVL-R04 row${index} exact runtime UIPanel Float32 clip`);
-    if (!/^[0-9a-f]{64}$/.test(row.sha256) || row.nonTransparentPixels <= 0) {
-      throw new Error(`SVL-R04 row${index} actual framebuffer is invalid: ${JSON.stringify(row)}`);
+    const rejectedValid = index === 0
+      ? row.rejectedFrozenSsSha256 === null
+      : /^[0-9a-f]{64}$/.test(row.rejectedFrozenSsSha256) && row.rejectedFrozenSsSha256 !== row.sha256;
+    if (!/^[0-9a-f]{64}$/.test(row.sha256) || row.nonTransparentPixels <= 0 || !rejectedValid) {
+      throw new Error(`SVL-R04 row${index} actual framebuffer/frozen-width counterexample is invalid: ${JSON.stringify(row)}`);
     }
   });
   equal(new Set(aboveSs.map((row) => row.panelClipF32Bits[2])).size, 5,

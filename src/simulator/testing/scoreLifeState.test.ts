@@ -17,6 +17,10 @@ import {
 } from "../engine/chart/types";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import type { OneFrameBusinessData, OneFrameJudgementBatch, OneFrameJudgementData } from "../engine/data/oneFrameData";
+import {
+  AUTO_LIVE_ALL_PERFECT_TERMINAL_PRODUCT_SEMANTICS_ID,
+  resolveNaturalCompletionPresentation,
+} from "../engine/data/naturalCompletionPresentation";
 import { LiveClearRank } from "../engine/data/singlePlayScoreGauge";
 import { InGameRecord } from "../engine/managers/inGameRecord";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
@@ -34,6 +38,15 @@ import {
 } from "./firstSliceFixtures";
 
 const BASE = 10_000_000;
+
+assert.deepEqual(resolveNaturalCompletionPresentation(LIVE_AUTO_MODE, 1), {
+  clearStatus: 3,
+  productSemanticsId: AUTO_LIVE_ALL_PERFECT_TERMINAL_PRODUCT_SEMANTICS_ID,
+});
+assert.deepEqual(resolveNaturalCompletionPresentation(LIVE_MANUAL_MODE, 3), {
+  clearStatus: 3,
+  productSemanticsId: null,
+});
 
 for (const count of [1, 3, 540, 731, 979]) {
   const actual = Array.from({ length: count }, (_, index) => {
@@ -119,6 +132,10 @@ const perfectPlan = requireOk(ordinary.preflightReflect(batch(4, perfect, 4, 1))
 assert.ok(perfectPlan.record.score >= ordinary.snapshot().record.score);
 assert.equal(ordinary.commitReflect(perfectPlan).status, "ok");
 assert.equal(ordinary.snapshot().initialization.consumedScoringUnitCount, 3);
+assert.deepEqual(ordinary.getNaturalCompletionPresentation(), {
+  clearStatus: 1,
+  productSemanticsId: null,
+});
 
 const auto = createManager("auto-score", chart, "auto-live", "auto-live");
 for (let index = 0; index < sources.length; index += 1) {
@@ -131,7 +148,10 @@ assert.equal(auto.snapshot().record.score, BASE + 3);
 assert.equal(auto.snapshot().record.currentCombo, 3);
 assert.equal(auto.snapshot().scoreGauge.sliderValue, 1);
 assert.equal(auto.getClearStatus(), 3, "Auto record counters retain their Perfect result facts");
-assert.equal(auto.getNaturalCompletionClearStatus(), 1, "natural Auto Live is base-clear-only");
+assert.deepEqual(auto.getNaturalCompletionPresentation(), {
+  clearStatus: 3,
+  productSemanticsId: AUTO_LIVE_ALL_PERFECT_TERMINAL_PRODUCT_SEMANTICS_ID,
+});
 
 const gauge = requireOk(SinglePlayScoreGauge.create(Object.freeze({
   profileIdentity: "garupa-editor-normalized-10m-v1",

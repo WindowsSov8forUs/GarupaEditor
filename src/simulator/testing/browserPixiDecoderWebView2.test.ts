@@ -2,6 +2,7 @@ import {
   Application,
   BufferImageSource,
   Container,
+  Graphics,
   NineSliceSprite,
   Rectangle,
   Sprite,
@@ -177,6 +178,11 @@ async function captureProductionScoreHud(app: Application): Promise<{
   readonly leadingRunWorldTransform: readonly [number, number];
   readonly highRankNodes: readonly unknown[];
   readonly highRankGeneration: number;
+  readonly loopFramebuffer: Readonly<{
+    readonly phase075Sha256: string;
+    readonly phase375Sha256: string;
+    readonly rejectedRestart0Sha256: string;
+  }>;
   readonly pngDataUrl: string;
 }> {
   const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
@@ -278,6 +284,30 @@ async function captureProductionScoreHud(app: Application): Promise<{
   const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
   const alpha = alphaObservation(pixels, frame.width, frame.height);
   const canvas = app.renderer.extract.canvas({ target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0] });
+  let nextSequence = 5;
+  const sampleHighRankFramebuffer = async (elapsedSeconds: number): Promise<string> => {
+    requireOk(backend.commit(requireOk(backend.preflight([{
+      sessionId: "production-score-hud-webview2",
+      sequence: nextSequence++,
+      frame: 0,
+      substep: 0,
+      kind: "sample-animation",
+      renderObjectId: "hud:score",
+      animationRole: "score-gauge-ss",
+      elapsedSeconds: float32(elapsedSeconds),
+    }]))));
+    app.render();
+    const sampled = app.renderer.extract.pixels({
+      target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
+    });
+    return sha256(new Uint8Array(sampled.pixels.buffer, sampled.pixels.byteOffset, sampled.pixels.byteLength));
+  };
+  const phase075Sha256 = await sampleHighRankFramebuffer(0.75);
+  const phase375Sha256 = await sampleHighRankFramebuffer(3.75);
+  const rejectedRestart0Sha256 = await sampleHighRankFramebuffer(0);
+  if (phase075Sha256 !== phase375Sha256 || phase375Sha256 === rejectedRestart0Sha256) {
+    throw new Error(`SVL-R05 production framebuffer failed loop/restart counterexample: ${JSON.stringify({ phase075Sha256, phase375Sha256, rejectedRestart0Sha256 })}`);
+  }
   const result = Object.freeze({
     sha256: await sha256(pixels),
     nonTransparentPixels: alpha.nonTransparentPixels,
@@ -288,6 +318,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
     leadingRunWorldTransform,
     highRankNodes: hudObservation.highRankNodes,
     highRankGeneration: hudObservation.highRankGeneration,
+    loopFramebuffer: Object.freeze({ phase075Sha256, phase375Sha256, rejectedRestart0Sha256 }),
     pngDataUrl: (canvas as HTMLCanvasElement).toDataURL("image/png"),
   });
   linearOutput.dispose();
@@ -314,6 +345,7 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
   readonly nonTransparentPixels: number;
   readonly alphaBounds: readonly [number, number, number, number];
   readonly panelClipF32Bits: readonly [string, string, string, string];
+  readonly rejectedFrozenSsSha256: string | null;
 }[]> {
   const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
   const animation = parseCurrentScoreGaugeSsAnimationProfile(await fetchJson("/score-animation.json"));
@@ -370,6 +402,7 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     { score: 982_088, before: 5, rank: 5, high: true, text: "00982088", size: 28, originalAboveSs: true },
   ] as const;
   const rows = [];
+  let ssEntryPanelBounds: readonly [number, number, number, number] | null = null;
   for (let index = 0; index < cases.length; index += 1) {
     const expected = cases[index]!;
     const commands: RenderCommand[] = [{
@@ -436,6 +469,34 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     const panelBounds = scoreObservation?.hudScoreIndicatorMask?.bounds;
     if (panelBounds === undefined) throw new Error(`Score matrix ${expected.score} panel clip is absent`);
     const [panelLeft, panelTop, panelWidth, panelHeight] = panelBounds;
+    const acceptedSha256 = await sha256(pixels);
+    let rejectedFrozenSsSha256: string | null = null;
+    if ("originalAboveSs" in expected && expected.originalAboveSs) {
+      if (ssEntryPanelBounds === null) {
+        ssEntryPanelBounds = Object.freeze([...panelBounds] as [number, number, number, number]);
+      } else {
+        const mask = findLabel(backend.stage, "score-high-rank-panel-mask");
+        if (!(mask instanceof Graphics)) throw new Error("SVL-R04 production panel mask is not a Graphics owner");
+        mask.clear().rect(
+          ssEntryPanelBounds[0], ssEntryPanelBounds[1], ssEntryPanelBounds[2], ssEntryPanelBounds[3],
+        ).fill(0xffffff);
+        app.render();
+        const rejectedOutput = app.renderer.extract.pixels({
+          target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
+        });
+        const rejectedPixels = new Uint8Array(
+          rejectedOutput.pixels.buffer,
+          rejectedOutput.pixels.byteOffset,
+          rejectedOutput.pixels.byteLength,
+        );
+        rejectedFrozenSsSha256 = await sha256(rejectedPixels);
+        mask.clear().rect(panelLeft, panelTop, panelWidth, panelHeight).fill(0xffffff);
+        app.render();
+        if (rejectedFrozenSsSha256 === acceptedSha256) {
+          throw new Error(`SVL-R04 score ${expected.score} framebuffer accepted the frozen-SS-width variant`);
+        }
+      }
+    }
     const panelClipF32Bits = Object.freeze([
       float32BigEndianBits(Math.fround(panelLeft + panelWidth / 2)),
       float32BigEndianBits(Math.fround(-(panelTop + panelHeight / 2))),
@@ -456,10 +517,11 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
       significantWorldBounds: Object.freeze([significantBounds.x, significantBounds.y, significantBounds.width, significantBounds.height] as const),
       backgroundBorder: Object.freeze([background.leftWidth, background.topHeight, background.rightWidth, background.bottomHeight] as const),
       foregroundBorder: Object.freeze([foreground.leftWidth, foreground.topHeight, foreground.rightWidth, foreground.bottomHeight] as const),
-      sha256: await sha256(pixels),
+      sha256: acceptedSha256,
       nonTransparentPixels: alpha.nonTransparentPixels,
       alphaBounds: alpha.bounds,
       panelClipF32Bits,
+      rejectedFrozenSsSha256,
     }));
   }
   linearOutput.dispose();

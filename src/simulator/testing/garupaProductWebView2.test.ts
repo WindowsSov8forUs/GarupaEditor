@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { Application, Rectangle, Sprite, Texture } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
@@ -96,6 +96,14 @@ async function main(): Promise<void> {
       { type: "Hidden", beat: 7, lane: 7, width: 1 },
     ] },
     { type: "Slide", connections: [{ type: "Hidden", beat: 4, lane: 1, width: 1 }] },
+    // SVL-R02/R03 same-state chain: head lane 0 intentionally differs from
+    // first current lane 1, then crosses lane 3 before terminal lane 2.
+    { type: "Slide", connections: [
+      { type: "Single", beat: 8, lane: 0, width: 1 },
+      { type: "Single", beat: 8.25, lane: 1, width: 1 },
+      { type: "Single", beat: 8.5, lane: 3, width: 1 },
+      { type: "Flick", beat: 8.75, lane: 2, width: 1 },
+    ] },
   ]));
   const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
   const product = getGarupaProductChartProfile(chart)!;
@@ -137,6 +145,13 @@ async function main(): Promise<void> {
       maximumSlideSectionWidth,
     ));
   }
+  const slideLifecycle = await verifySlideFlashSameState(
+    app,
+    renderer,
+    producer,
+    product,
+    profile,
+  );
   const release = requireOk(producer.preflightDispose());
   if (release !== null) requireOk(release.commit());
   renderer.stage.removeFromParent();
@@ -173,6 +188,7 @@ async function main(): Promise<void> {
       groups: axis.groups.map((group) => [group.id, group.changes.length]),
     }),
     captures: Object.freeze(captures),
+    slideLifecycle,
     laneEffect,
     cleanup,
     isolation: Object.freeze({
@@ -181,6 +197,103 @@ async function main(): Promise<void> {
   });
   app.destroy(true, { children: true, texture: true, textureSource: true });
   globalThis.window.ipc.postMessage(JSON.stringify(result));
+}
+
+async function verifySlideFlashSameState(
+  app: Application,
+  renderer: PixiRendererBackend,
+  producer: GarupaProductRenderProducer,
+  product: NonNullable<ReturnType<typeof getGarupaProductChartProfile>>,
+  profile: RenderResourceProfile,
+) {
+  const chain = product.slideChains.find((candidate) => candidate.chartItemIndex === 8);
+  if (chain === undefined || chain.visibleConnectionIdentities.length !== 4) {
+    throw new Error("SVL-R02 fixed Slide chain is absent");
+  }
+  const nodes = chain.visibleConnectionIdentities.map((identity) => product.nodeByIdentity.get(identity)!);
+  const [head, firstCurrent, secondCurrent, terminal] = nodes;
+  if (head === undefined || firstCurrent === undefined || secondCurrent === undefined || terminal === undefined ||
+      head.spanStart !== 0 || firstCurrent.spanStart !== 1 || secondCurrent.spanStart !== 3 || terminal.spanStart !== 2) {
+    throw new Error(`SVL-R02 fixed Slide tuple mismatch: ${JSON.stringify(nodes.map((node) => [node?.identity, node?.spanStart]))}`);
+  }
+  const commitFrame = (position: number, judged: readonly (typeof nodes)[number][]): void => {
+    const transaction = requireOk(producer.preflightFrame(position, judged, Math.fround(1 / 60)));
+    if (transaction !== null) requireOk(transaction.commit());
+  };
+  commitFrame(head.absolutePosition, [head]);
+  app.render();
+  const flashId = `render:garupa:slide-flash:${chain.identity}`;
+  const accepted = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
+  const sprite = renderer.stage.getChildByLabel(`${flashId}:sprite`, true);
+  if (accepted === undefined || !(sprite instanceof Sprite) ||
+      accepted.spriteBindingKey?.endsWith("note_long_flash_1") !== true || !accepted.visible) {
+    throw new Error(`SVL-R02 first-current Flash production tuple mismatch: ${JSON.stringify(accepted)}`);
+  }
+  const acceptedFramebuffer = await captureDisplayObjectFramebuffer(app, sprite);
+  const noteAtlas = profile.assets.find((asset) => asset.logicalAssetId === CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId);
+  const rejectedRow = noteAtlas?.atlasRows.find((row) => row.exactKey === "note_long_flash_0");
+  if (rejectedRow === undefined) throw new Error("SVL-R02 rejected head-resource atlas row is absent");
+  const acceptedTexture = sprite.texture;
+  const rejectedTexture = new Texture({
+    source: acceptedTexture.source,
+    frame: new Rectangle(rejectedRow.x, rejectedRow.y, rejectedRow.width, rejectedRow.height),
+    orig: new Rectangle(0, 0, rejectedRow.width, rejectedRow.height),
+    label: "svl-r02-rejected-head-resource",
+  });
+  sprite.texture = rejectedTexture;
+  app.render();
+  const rejectedHeadFramebuffer = await captureDisplayObjectFramebuffer(app, sprite);
+  sprite.texture = acceptedTexture;
+  rejectedTexture.destroy(false);
+  if (acceptedFramebuffer.sha256 === rejectedHeadFramebuffer.sha256 ||
+      acceptedFramebuffer.nonTransparentPixels <= 0 || rejectedHeadFramebuffer.nonTransparentPixels <= 0) {
+    throw new Error(`SVL-R02 framebuffer did not reject the head resource: ${JSON.stringify({ acceptedFramebuffer, rejectedHeadFramebuffer })}`);
+  }
+
+  const firstPosition = accepted.position;
+  commitFrame(firstCurrent.absolutePosition, [firstCurrent]);
+  app.render();
+  const movedOnce = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
+  commitFrame(secondCurrent.absolutePosition, [secondCurrent]);
+  app.render();
+  const movedTwice = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
+  if (movedOnce === undefined || movedTwice === undefined ||
+      movedOnce.spriteBindingKey !== accepted.spriteBindingKey || movedTwice.spriteBindingKey !== accepted.spriteBindingKey ||
+      JSON.stringify(firstPosition) === JSON.stringify(movedOnce.position) ||
+      JSON.stringify(movedOnce.position) === JSON.stringify(movedTwice.position)) {
+    throw new Error(`SVL-R02 stable owner did not move through two current nodes: ${JSON.stringify({ accepted, movedOnce, movedTwice })}`);
+  }
+  commitFrame(terminal.absolutePosition, [terminal]);
+  app.render();
+  const stopped = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
+  if (stopped?.visible !== false) throw new Error(`SVL-R02 terminal Flash remained visible: ${JSON.stringify(stopped)}`);
+  return Object.freeze({
+    chainIdentity: chain.identity,
+    headIdentity: head.identity,
+    firstCurrentIdentity: firstCurrent.identity,
+    secondCurrentIdentity: secondCurrent.identity,
+    terminalIdentity: terminal.identity,
+    stableOwnerId: flashId,
+    exactKey: "note_long_flash_1",
+    positions: Object.freeze([firstPosition, movedOnce.position, movedTwice.position]),
+    acceptedFramebuffer,
+    rejectedHeadFramebuffer,
+    terminalVisible: false,
+  });
+}
+
+async function captureDisplayObjectFramebuffer(app: Application, object: Sprite) {
+  const bounds = object.getBounds();
+  const x = Math.max(0, Math.floor(bounds.x) - 2);
+  const y = Math.max(0, Math.floor(bounds.y) - 2);
+  const right = Math.min(WIDTH, Math.ceil(bounds.x + bounds.width) + 2);
+  const bottom = Math.min(HEIGHT, Math.ceil(bounds.y + bounds.height) + 2);
+  if (right <= x || bottom <= y) throw new Error(`SVL-R02 Flash bounds are outside the framebuffer: ${JSON.stringify(bounds)}`);
+  const rgba = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+  const cropped = cropRgba(rgba, WIDTH, x, y, right - x, bottom - y);
+  let nonTransparentPixels = 0;
+  for (let index = 3; index < cropped.length; index += 4) if (cropped[index] !== 0) nonTransparentPixels += 1;
+  return Object.freeze({ sha256: await sha256(cropped), nonTransparentPixels, bounds: Object.freeze([x, y, right - x, bottom - y]) });
 }
 
 async function verifyProductLaneEffect(

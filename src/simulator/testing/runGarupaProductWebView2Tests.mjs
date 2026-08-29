@@ -189,6 +189,13 @@ function verify(value) {
   equal(value.cleanup.owners, 0, "owner cleanup");
   equal(value.cleanup.rendererChildren, 0, "renderer child cleanup");
   equal(value.cleanup.applicationChildren, 0, "application child cleanup");
+  if (!value.slideLifecycle.exactKey.endsWith("note_long_flash_1") ||
+    value.slideLifecycle.positions.length !== 3 || value.slideLifecycle.terminalVisible !== false ||
+    value.slideLifecycle.acceptedFramebuffer.sha256 === value.slideLifecycle.rejectedHeadFramebuffer.sha256 ||
+    value.slideLifecycle.acceptedFramebuffer.nonTransparentPixels <= 0 ||
+    value.slideLifecycle.rejectedHeadFramebuffer.nonTransparentPixels <= 0) {
+    throw new Error(`invalid SVL-R02 same-state Slide lifecycle: ${JSON.stringify(value.slideLifecycle)}`);
+  }
   equal(value.laneEffect.binding.endsWith("NoteLaneEffect_4"), true, "product entry lane binding");
   equal(JSON.stringify(value.laneEffect.anchor), JSON.stringify([0.5, 1]), "product entry lane pivot");
   equal(value.laneEffect.blendMode, "normal", "PLSO-L02 product entry lane blend");
@@ -201,7 +208,7 @@ function verify(value) {
   }
 }
 function stableProjection(value) {
-  return { runtime: value.runtime, productionDecoder: value.productionDecoder, chart: value.chart, captures: value.captures, laneEffect: value.laneEffect, cleanup: value.cleanup, isolation: value.isolation };
+  return { runtime: value.runtime, productionDecoder: value.productionDecoder, chart: value.chart, captures: value.captures, slideLifecycle: value.slideLifecycle, laneEffect: value.laneEffect, cleanup: value.cleanup, isolation: value.isolation };
 }
 function canonical(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);

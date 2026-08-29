@@ -13,6 +13,10 @@ import {
   validateSimulatorModeIdentity,
   type SimulatorModeIdentity,
 } from "../data/inGameCalculatedData";
+import {
+  resolveNaturalCompletionPresentation,
+  type NaturalCompletionPresentation,
+} from "../data/naturalCompletionPresentation";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   ScoreGaugeThresholdProfile,
@@ -127,8 +131,8 @@ export class ScoreLifeStateManager {
     return this.record.getClearStatus(this.scoringPlan.totalScoringUnitCount);
   }
 
-  getNaturalCompletionClearStatus(): 1 | 2 | 3 {
-    return this.mode.isAutoLive ? 1 : this.getClearStatus();
+  getNaturalCompletionPresentation(): NaturalCompletionPresentation {
+    return resolveNaturalCompletionPresentation(this.mode, this.getClearStatus());
   }
 
   freezeOneFrame(

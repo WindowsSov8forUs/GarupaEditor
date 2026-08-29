@@ -51,3 +51,16 @@ The constructed-chart adapter owns unit identity, phase, ordinal, quota, and `N`
 Normal play and Rehearsal forward MoveTime preserve the current timeline revision. Rehearsal backward MoveTime atomically commits a new revision restored at the target timeline: Score, Combo, Life, result counts, HUD and consumed scoring-unit identities all return together. Discarded-future units may then be consumed again only in the new revision. Score remains monotonic and units remain exactly-once within each revision.
 
 This is a narrow product reconciliation with original MoveTime record restoration (LR-R03/LR-C04). It does not claim original score-formula parity. The original Game Over score-decrease formula remains excluded; CS-V1 numeric Score never applies it.
+
+## Auto Live AP terminal presentation product semantic
+
+This is a separate visible product semantic; it is not inferred as an original fact from CS-V1.
+
+- `productSemanticsId`: `simulator.auto-live-all-perfect-terminal-presentation-v1`.
+- Valid trigger: natural **Live Auto** completion of a valid running session. The product transition does not reinterpret the original Record method or require it to authorize an original AP branch.
+- Visible transition: commit the existing All Perfect terminal presentation (`clearStatus=3`), including the AP object graph, particle branch and bounded scene-exit lifecycle. The underlying Record counters remain unchanged and independently inspectable.
+- Evidence notice: internal boundary only; no user-facing notice and no Public request field.
+- Atomic behavior: the existing `completeLiveAudio` rendering/audio preflight remains authoritative. A failed preflight commits neither terminal owner; the running session retains its prior stable state or follows its existing typed terminal-fault cleanup.
+- Executable tests: `scoreLifeState.test.ts` requires the stable ID and status `3`; `ordinaryRenderingWebView2.test.ts` reaches the same transition through natural BGM end and requires the AP branch rather than base clear.
+
+Reverse device evidence continues to classify original natural Auto clear status `1` as base-only. This product semantic deliberately preserves GarupaEditor’s Auto AP feedback without reclassifying it as an observed original Auto terminal branch or as natural Manual FC/AP evidence.

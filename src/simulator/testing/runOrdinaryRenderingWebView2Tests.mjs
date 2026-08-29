@@ -208,8 +208,9 @@ function verify(value) {
   equal(value.scene.rootLabel, "GarupaSimulatorCombinedScene", "combined scene root");
   equal(JSON.stringify(value.scene.stageOrder), JSON.stringify(["GarupaSimulatorRoot", "GarupaSimulatorRoot/GarupaSimulatorParticles"]), "combined stage order");
   equal(value.scene.chartBatchCount, 656, "registered full chart batch count");
-  equal(value.scene.naturalClearStatus, 1, "natural Auto completion must remain base-only");
-  equal(JSON.stringify(value.scene.sevenVisualLifecycle), JSON.stringify({
+  equal(value.scene.naturalClearStatus, 3, "Auto AP product terminal status");
+  const { fullComboPhaseMatrix, allPerfectPhaseMatrix, ...sevenVisualBase } = value.scene.sevenVisualLifecycle;
+  equal(JSON.stringify(sevenVisualBase), JSON.stringify({
     status: "confirmed-current-seven-visual-lifecycle-reconfirmation",
     fullComboChannels: 104,
     allPerfectChannels: 129,
@@ -217,6 +218,12 @@ function verify(value) {
     scoreGaugeSsContinuousSeconds: 7.5,
     uvFrame: 11,
   }), "SVL-R01/R05/R06/R07 actual WebView2 matrix");
+  for (const [key, matrix] of [["FullCombo_text_in", fullComboPhaseMatrix], ["AllPerfect_text_in", allPerfectPhaseMatrix]]) {
+    if (matrix?.animationKey !== key || matrix.phaseDigests.length !== 8 ||
+        new Set(matrix.phaseDigests).size !== 6 || matrix.phaseDigests.some((digest) => !/^[0-9a-f]{64}$/.test(digest))) {
+      throw new Error(`SVL-R07 invalid eight-phase/six-state production framebuffer matrix: ${JSON.stringify(matrix)}`);
+    }
+  }
   const required = new Set([
     "initialize", "note-spawn", "note-animation", "judgement", "combo-add-score",
     "rank-c", "rank-b", "rank-a", "rank-s", "rank-ss", "particle-peak", "pause", "resume",

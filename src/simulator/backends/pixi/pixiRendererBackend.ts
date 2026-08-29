@@ -30,6 +30,7 @@ import type {
   ParticleBundleProfile,
   ParticlePortableProfile,
   ParticleProfileDefinition,
+  ParticleSystemDefinition,
   ParticleUvModule,
 } from "../particleContracts";
 import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
@@ -2672,13 +2673,26 @@ function renderGameClearParticles(
           alpha,
         );
     if (sprite instanceof Sprite) sprite.anchor.set(0.5);
-    const pixelsPerWorldUnit = Math.fround(visual.gameClearViewportHeight / 2);
-    const x = particleFloat32FromBits(sample.position.xBits)!;
-    const y = particleFloat32FromBits(sample.position.yBits)!;
-    const localScaleX = Math.abs(definition.transform.m_LocalScale.x);
-    const localScaleY = Math.abs(definition.transform.m_LocalScale.y);
-    let width = Math.abs(particleFloat32FromBits(sample.size.xBits)! * localScaleX * pixelsPerWorldUnit);
-    let height = Math.abs(particleFloat32FromBits(sample.size.yBits)! * localScaleY * pixelsPerWorldUnit);
+    // The serialized game-clear graph is under the 1334x750 NGUI surface.
+    // Its Transform translations are authored UI units, while particle shape,
+    // velocity and size remain Unity world units. Project only the offset from
+    // the transformed emitter origin by the authored 375 px/world-unit camera;
+    // multiplying the already-authored origin by the runtime camera made every
+    // base-clear emitter hundreds of thousands of pixels off-screen. The outer
+    // persistent HUD owner applies screenToSafeChildScale exactly once.
+    const authoredPixelsPerWorldUnit = Math.fround(375);
+    const projection = projectGameClearParticleSample(
+      definition,
+      particleFloat32FromBits(sample.position.xBits)!,
+      particleFloat32FromBits(sample.position.yBits)!,
+      authoredPixelsPerWorldUnit,
+    );
+    let width = Math.abs(
+      particleFloat32FromBits(sample.size.xBits)! * projection.hierarchyScaleX * authoredPixelsPerWorldUnit,
+    );
+    let height = Math.abs(
+      particleFloat32FromBits(sample.size.yBits)! * projection.hierarchyScaleY * authoredPixelsPerWorldUnit,
+    );
     let rotation = -particleFloat32FromBits(sample.rotation.zBits)!;
     if (sample.renderMode === 1) {
       const vx = particleFloat32FromBits(sample.velocity.xBits)!;
@@ -2686,13 +2700,10 @@ function renderGameClearParticles(
       height = Math.abs(height * renderer.m_LengthScale + Math.hypot(vx, vy) * renderer.m_VelocityScale);
       if (vx !== 0 || vy !== 0) rotation = Math.atan2(-vy, vx) - Math.PI / 2 - rotation;
     }
-    const maximum = renderer.m_MaxParticleSize * visual.gameClearViewportHeight;
+    const maximum = renderer.m_MaxParticleSize * authoredPixelsPerWorldUnit * 2;
     const largest = Math.max(width, height);
     if (maximum > 0 && largest > maximum) { const ratio = maximum / largest; width *= ratio; height *= ratio; }
-    sprite.position.set(
-      Math.fround(x * pixelsPerWorldUnit),
-      Math.fround(-y * pixelsPerWorldUnit),
-    );
+    sprite.position.set(projection.x, Math.fround(-projection.y));
     if (sprite instanceof Sprite) {
       sprite.width = Math.max(width, 0.001);
       sprite.height = Math.max(height, 0.001);
@@ -2710,6 +2721,65 @@ function renderGameClearParticles(
     container.addChild(sprite);
   }
   container.sortChildren();
+}
+
+function projectGameClearParticleSample(
+  definition: ParticleSystemDefinition,
+  sampleX: number,
+  sampleY: number,
+  authoredPixelsPerWorldUnit: number,
+): Readonly<{ readonly x: number; readonly y: number; readonly hierarchyScaleX: number; readonly hierarchyScaleY: number }> {
+  const transforms = [definition.transform, ...definition.parentTransforms];
+  let origin: readonly [number, number, number] = [0, 0, 0];
+  let hierarchyScaleX = Math.fround(1);
+  let hierarchyScaleY = Math.fround(1);
+  for (const transform of transforms) {
+    origin = applyGameClearParticleTransform(origin, transform);
+    hierarchyScaleX = Math.fround(hierarchyScaleX * Math.abs(transform.m_LocalScale.x));
+    hierarchyScaleY = Math.fround(hierarchyScaleY * Math.abs(transform.m_LocalScale.y));
+  }
+  return Object.freeze({
+    x: Math.fround(origin[0] + Math.fround(Math.fround(sampleX - origin[0]) * authoredPixelsPerWorldUnit)),
+    y: Math.fround(origin[1] + Math.fround(Math.fround(sampleY - origin[1]) * authoredPixelsPerWorldUnit)),
+    hierarchyScaleX,
+    hierarchyScaleY,
+  });
+}
+
+function applyGameClearParticleTransform(
+  point: readonly [number, number, number],
+  transform: ParticleSystemDefinition["transform"],
+): readonly [number, number, number] {
+  const scaled = [
+    Math.fround(point[0] * transform.m_LocalScale.x),
+    Math.fround(point[1] * transform.m_LocalScale.y),
+    Math.fround(point[2] * transform.m_LocalScale.z),
+  ] as const;
+  const q = transform.m_LocalRotation;
+  const tx = Math.fround(2 * Math.fround(Math.fround(q.y * scaled[2]) - Math.fround(q.z * scaled[1])));
+  const ty = Math.fround(2 * Math.fround(Math.fround(q.z * scaled[0]) - Math.fround(q.x * scaled[2])));
+  const tz = Math.fround(2 * Math.fround(Math.fround(q.x * scaled[1]) - Math.fround(q.y * scaled[0])));
+  const rotatedX = gameClearParticleAdd(
+    scaled[0],
+    gameClearParticleAdd(Math.fround(q.w * tx), Math.fround(Math.fround(q.y * tz) - Math.fround(q.z * ty))),
+  );
+  const rotatedY = gameClearParticleAdd(
+    scaled[1],
+    gameClearParticleAdd(Math.fround(q.w * ty), Math.fround(Math.fround(q.z * tx) - Math.fround(q.x * tz))),
+  );
+  const rotatedZ = gameClearParticleAdd(
+    scaled[2],
+    gameClearParticleAdd(Math.fround(q.w * tz), Math.fround(Math.fround(q.x * ty) - Math.fround(q.y * tx))),
+  );
+  return Object.freeze([
+    gameClearParticleAdd(rotatedX, transform.m_LocalPosition.x),
+    gameClearParticleAdd(rotatedY, transform.m_LocalPosition.y),
+    gameClearParticleAdd(rotatedZ, transform.m_LocalPosition.z),
+  ] as const);
+}
+
+function gameClearParticleAdd(left: number, right: number): number {
+  return Math.fround(Math.fround(left) + Math.fround(right));
 }
 
 function clearGameClearParticleMeshes(container: Container): void {

@@ -18,7 +18,7 @@ import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/curren
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
-import { buildGameClearParticleProfile } from "../backends/resources/currentGameClearProfile";
+import { buildGameClearParticleProfile, parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
 import { assertHudPixiRenderingEquivalence } from "./hudPixiRenderingEquivalence.test";
 import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import type { RenderCommand, RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
@@ -162,6 +162,17 @@ async function main(): Promise<void> {
   ), "utf8")));
   assert(pauseCountdownAnimation !== null, "Pause countdown animation profile parses");
   const scoreResources = augmentScoreHudProfilesForPause(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile));
+  const rawGameClearProfile = JSON.parse(readFileSync(join(
+    process.cwd(), "src/assets/game/prefabs/bms/gameclear/game-clear-profile.json",
+  ), "utf8"));
+  const omittedGameClearChannel = structuredClone(rawGameClearProfile);
+  omittedGameClearChannel.fullCombo.clip.bindings[0].channels = [];
+  equal(parseCurrentGameClearProfile(omittedGameClearChannel), null,
+    "SVL-R07 rejects an omitted Full Combo AnimationClip channel before production consumption");
+  const unknownGameClearChannel = structuredClone(rawGameClearProfile);
+  unknownGameClearChannel.allPerfect.clip.bindings[0].channels[0] = "content/01_AllPerfect_A.unknown.value";
+  equal(parseCurrentGameClearProfile(unknownGameClearChannel), null,
+    "SVL-R07 rejects an unclassified All Perfect AnimationClip channel before production consumption");
   const gameClear = gameClearTestResources();
   equal(buildGameClearParticleProfile(gameClear.profile, 1).systemCount, 40, "base clear consumes all 40 serialized ParticleSystems");
   equal(buildGameClearParticleProfile(gameClear.profile, 2).systemCount, 46, "Full Combo consumes base40 + additional6 ParticleSystems");

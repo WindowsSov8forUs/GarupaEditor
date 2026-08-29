@@ -28,6 +28,10 @@ import {
 import { createPixiCombinedScene, type PixiCombinedScene } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
 import {
+  createPixiParticleLinearColorMesh,
+  destroyPixiParticleLinearColorMesh,
+} from "../backends/pixi/pixiParticleLinearColorMesh";
+import {
   PixiRendererBackend,
   type PixiInGameControlOverlay,
 } from "../backends/pixi/pixiRendererBackend";
@@ -180,9 +184,9 @@ async function main(): Promise<void> {
   sampleGameClear(auto, 1.2);
   assertGameClearWhite(auto);
   const naturalClear = requiredGameClearSnapshot(auto);
-  if (naturalClear.hudGameClearParticleSystemCount !== 40 ||
-      (naturalClear.hudGameClearChannelValuesBits?.length ?? 0) !== 0) {
-    throw new Error(`natural Auto status 1 was reclassified as FC/AP: ${JSON.stringify({
+  if (naturalClear.hudGameClearParticleSystemCount !== 52 ||
+      naturalClear.hudGameClearChannelValuesBits?.length !== 129) {
+    throw new Error(`Auto AP product terminal presentation is incomplete: ${JSON.stringify({
       particles: naturalClear.hudGameClearParticleSystemCount,
       channels: naturalClear.hudGameClearChannelValuesBits?.length,
     })}`);
@@ -196,7 +200,7 @@ async function main(): Promise<void> {
   requireOk(liveManualClear.engine.initialize());
   await advanceToPlayable(liveManualClear);
   requireOk(liveManualClear.engine.completeLiveAudio(2));
-  await assertGameClearAnimationMatrix(
+  const fullComboPhaseMatrix = await assertGameClearAnimationMatrix(
     app,
     liveManualClear,
     inputs.sevenVisual,
@@ -205,6 +209,7 @@ async function main(): Promise<void> {
   );
   assertGameClearWhite(liveManualClear);
   captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
+  assertGameClearSceneExit(liveManualClear);
   const liveManualClearCleanup = disposeSession(app, liveManualClear);
 
   const manual = await createSession(inputs, "ordinary-webview2-game-over", "live-manual");
@@ -242,7 +247,7 @@ async function main(): Promise<void> {
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-demo-controls", 0));
   await advanceToPlayable(rehearsalAuto);
   requireOk(rehearsalAuto.engine.completeLiveAudio(3));
-  await assertGameClearAnimationMatrix(
+  const allPerfectPhaseMatrix = await assertGameClearAnimationMatrix(
     app,
     rehearsalAuto,
     inputs.sevenVisual,
@@ -251,6 +256,7 @@ async function main(): Promise<void> {
   );
   assertGameClearWhite(rehearsalAuto);
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
+  assertGameClearSceneExit(rehearsalAuto);
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
   const requiredLabels = [
@@ -267,7 +273,7 @@ async function main(): Promise<void> {
   if (captures.some((entry) => entry.nonTransparentPixels <= 0 || entry.owners.visibleWorldRecords <= 0)) {
     throw new Error("every complete-scene event requires visible actual Pixi pixels and world records");
   }
-  if (naturalClearStatus !== 1) throw new Error(`natural Auto completion must remain base-only status 1: ${naturalClearStatus}`);
+  if (naturalClearStatus !== 3) throw new Error(`Auto AP product terminal status mismatch: ${naturalClearStatus}`);
   const finalFontFaces = Array.from(document.fonts).length;
   if (finalFontFaces !== initialFontFaces || app.stage.children.length !== 0) {
     throw new Error(`browser owner cleanup mismatch fonts=${initialFontFaces}->${finalFontFaces} stage=${app.stage.children.length}`);
@@ -304,6 +310,8 @@ async function main(): Promise<void> {
         terminalHoldBoundarySeconds: 3.232,
         scoreGaugeSsContinuousSeconds: 7.5,
         uvFrame: inputs.sevenVisual.particle_texture_material_color_blend.uv_frame,
+        fullComboPhaseMatrix,
+        allPerfectPhaseMatrix,
       }),
     }),
     cleanup: Object.freeze({
@@ -334,15 +342,18 @@ async function assertGameClearAnimationMatrix(
   sevenVisual: any,
   branch: any,
   verifyUvFrame: boolean,
-): Promise<void> {
+): Promise<Readonly<{ readonly animationKey: string; readonly phaseDigests: readonly string[] }>> {
   let previousPhase = 0;
   let uvFramebufferVerified = false;
+  const phaseDigests: string[] = [];
+  const phaseChannelSignatures: string[] = [];
   for (let phaseIndex = 0; phaseIndex < branch.clip.phase_seconds.length; phaseIndex += 1) {
     const phase = branch.clip.phase_seconds[phaseIndex] as number;
     if (phaseIndex > 0) sampleGameClear(session, Math.fround(phase - previousPhase));
     previousPhase = phase;
     const clear = requiredGameClearSnapshot(session);
     const expectedBits = branch.clip.channels.map((channel: any) => channel.phase_f32_bits[phaseIndex]);
+    phaseChannelSignatures.push(JSON.stringify(expectedBits));
     if (JSON.stringify(clear.hudGameClearChannelValuesBits) !== JSON.stringify(expectedBits)) {
       throw new Error(`SVL-R07 ${branch.animation_key} channel phase ${phase} differs from the independent ${branch.clip.curve_count}-channel matrix`);
     }
@@ -361,17 +372,85 @@ async function assertGameClearAnimationMatrix(
     if (verifyUvFrame && !uvFramebufferVerified) {
       uvFramebufferVerified = await verifyGameClearUv11Framebuffer(app, session, sevenVisual);
     }
+    const phaseFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
+    phaseDigests.push(phaseFramebuffer.sha256);
+  }
+  const framebufferPartition = phaseDigests.map((digest) => phaseDigests.indexOf(digest));
+  const channelPartition = phaseChannelSignatures.map((signature) => phaseChannelSignatures.indexOf(signature));
+  if (phaseDigests.length !== 8 || new Set(phaseDigests).size !== 6 ||
+      JSON.stringify(framebufferPartition) !== JSON.stringify(channelPartition)) {
+    throw new Error(`SVL-R07 ${branch.animation_key} production branch did not materialize the independent eight-phase/six-state matrix: ${JSON.stringify({ phaseDigests, framebufferPartition, channelPartition })}`);
   }
   const finalBits = JSON.stringify(requiredGameClearSnapshot(session).hudGameClearChannelValuesBits);
+  const finalFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
   sampleGameClear(session, Math.fround(3.232 - previousPhase));
   const held = requiredGameClearSnapshot(session);
+  const heldFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
+  const rejectedEarlyHideFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, true);
   if (held.visible !== true || held.activeAnimationRole !== "game-clear" ||
-      JSON.stringify(held.hudGameClearChannelValuesBits) !== finalBits) {
-    throw new Error(`SVL-R06 ${branch.animation_key} final frame was not held through the 3.232-second pre-exit boundary`);
+      JSON.stringify(held.hudGameClearChannelValuesBits) !== finalBits ||
+      finalFramebuffer.sha256 !== heldFramebuffer.sha256 ||
+      heldFramebuffer.sha256 === rejectedEarlyHideFramebuffer.sha256 ||
+      heldFramebuffer.nonTransparentPixels <= 0) {
+    throw new Error(`SVL-R06 ${branch.animation_key} production framebuffer did not hold its final branch or reject clip-stop disappearance: ${JSON.stringify({ finalFramebuffer, heldFramebuffer, rejectedEarlyHideFramebuffer })}`);
   }
   if (verifyUvFrame && !uvFramebufferVerified) {
     throw new Error("SVL-R01 uvFrame=11 was not materialized during the complete Full Combo phase matrix");
   }
+  return Object.freeze({ animationKey: branch.animation_key, phaseDigests: Object.freeze(phaseDigests) });
+}
+
+function assertGameClearSceneExit(session: BrowserSession): void {
+  const held = requiredGameClearSnapshot(session);
+  const threshold = Math.fround(3.233);
+  if (held.animationElapsedSeconds === null || held.animationElapsedSeconds === undefined ||
+      held.animationElapsedSeconds >= threshold) {
+    throw new Error(`SVL-R06 pre-exit final hold is not below 3.233 seconds: ${JSON.stringify(held)}`);
+  }
+  sampleGameClear(session, Math.fround(threshold - held.animationElapsedSeconds));
+  const atThreshold = requiredGameClearSnapshot(session);
+  if (atThreshold.visible !== true || atThreshold.animationElapsedSeconds !== threshold) {
+    throw new Error(`SVL-R06 exact Float32 3.233-second threshold did not retain the final frame: ${JSON.stringify(atThreshold)}`);
+  }
+  sampleGameClear(session, Math.fround(0.000001));
+  const clear = session.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:game-clear");
+  if (clear !== undefined) {
+    throw new Error(`SVL-R06 first Float32 value above 3.233-second scene exit did not release the branch graph: ${JSON.stringify(clear)}`);
+  }
+}
+
+async function captureGameClearBranchFramebuffer(
+  app: Application,
+  session: BrowserSession,
+  animationKey: string,
+  hideBranch: boolean,
+): Promise<Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }>> {
+  const rootLabel = animationKey === "FullCombo_text_in"
+    ? "game-clear:FullComboAnimation"
+    : "game-clear:AllPerfectAnimation";
+  const branchRoot = session.renderer.stage.getChildByLabel(rootLabel, true);
+  const particles = session.renderer.stage.getChildByLabel("game-clear-particles", true);
+  if (branchRoot === null || particles === null) {
+    throw new Error(`SVL-R06 production branch framebuffer owner is absent: ${rootLabel}`);
+  }
+  const branchVisible = branchRoot.visible;
+  const particlesVisible = particles.visible;
+  particles.visible = false;
+  if (hideBranch) branchRoot.visible = false;
+  app.render();
+  const framebuffer = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+  let nonTransparentPixels = 0;
+  for (let index = 3; index < framebuffer.length; index += 4) {
+    if (framebuffer[index] !== 0) nonTransparentPixels += 1;
+  }
+  const result = Object.freeze({
+    sha256: await sha256(framebuffer),
+    nonTransparentPixels,
+  });
+  branchRoot.visible = branchVisible;
+  particles.visible = particlesVisible;
+  app.render();
+  return result;
 }
 
 function requiredGameClearSnapshot(session: BrowserSession): ReturnType<PixiRendererBackend["sceneSnapshot"]>[number] {
@@ -393,6 +472,11 @@ async function verifyGameClearUv11Framebuffer(
     throw new Error("SVL-R01 game-clear uvFrame=11 did not consume the shared non-unit-alpha Linear Float32 particle mesh");
   }
   const selected = sourceNode.texture;
+  const worldBounds = sourceNode.getBounds();
+  if (worldBounds.x + worldBounds.width <= 0 || worldBounds.x >= WIDTH ||
+      worldBounds.y + worldBounds.height <= 0 || worldBounds.y >= HEIGHT) {
+    throw new Error(`SVL-R01 production game-clear particle stayed outside the physical framebuffer: ${JSON.stringify(worldBounds)}`);
+  }
   const contract = sevenVisual.particle_texture_material_color_blend;
   const tileWidth = selected.source.width / contract.tiles[0];
   const tileHeight = selected.source.height / contract.tiles[1];
@@ -412,12 +496,29 @@ async function verifyGameClearUv11Framebuffer(
     orig: new Rectangle(0, 0, tileWidth, tileHeight),
     label: "svl-r01-rejected-vertical-inversion-tile",
   });
-  const selectedDigest = await renderIsolatedGameClearTile(app, selected, tileWidth, tileHeight);
-  const rejectedDigest = await renderIsolatedGameClearTile(app, rejected, tileWidth, tileHeight);
+  const selectedDigest = await renderIsolatedGameClearTile(
+    app, selected, tileWidth, tileHeight, particleColor as readonly [number, number, number, number],
+  );
+  const rejectedDigest = await renderIsolatedGameClearTile(
+    app, rejected, tileWidth, tileHeight, particleColor as readonly [number, number, number, number],
+  );
+  const rejectedTwiceAlphaDigest = await renderIsolatedGameClearTile(
+    app,
+    selected,
+    tileWidth,
+    tileHeight,
+    Object.freeze([
+      particleColor[0]! * particleColor[3]!,
+      particleColor[1]! * particleColor[3]!,
+      particleColor[2]! * particleColor[3]!,
+      particleColor[3]!,
+    ] as const),
+  );
   rejected.destroy(false);
-  if (selectedDigest.sha256 === rejectedDigest.sha256 || selectedDigest.nonBlackPixels <= 0 ||
-      rejectedDigest.nonBlackPixels <= 0) {
-    throw new Error(`SVL-R01 actual Pixi framebuffer did not distinguish top-left row 2 from rejected row 1: ${JSON.stringify({ selectedDigest, rejectedDigest })}`);
+  if (new Set([selectedDigest.sha256, rejectedDigest.sha256, rejectedTwiceAlphaDigest.sha256]).size !== 3 ||
+      selectedDigest.nonBlackPixels <= 0 || rejectedDigest.nonBlackPixels <= 0 ||
+      rejectedTwiceAlphaDigest.nonBlackPixels <= 0) {
+    throw new Error(`SVL-R01 production particle framebuffer did not reject wrong-row and twice-alpha variants: ${JSON.stringify({ selectedDigest, rejectedDigest, rejectedTwiceAlphaDigest })}`);
   }
   return true;
 }
@@ -427,6 +528,7 @@ async function renderIsolatedGameClearTile(
   texture: Texture,
   width: number,
   height: number,
+  color: readonly [number, number, number, number],
 ): Promise<{ readonly sha256: string; readonly nonBlackPixels: number }> {
   const previousVisibility = app.stage.children.map((child) => child.visible);
   for (const child of app.stage.children) child.visible = false;
@@ -435,9 +537,15 @@ async function renderIsolatedGameClearTile(
   background.tint = 0x000000;
   background.width = width;
   background.height = height;
-  const sprite = new Sprite(texture);
-  sprite.width = width;
-  sprite.height = height;
+  const sprite = createPixiParticleLinearColorMesh(
+    texture,
+    "svl-r01-production-variant",
+    color[0],
+    color[1],
+    color[2],
+    color[3],
+  );
+  sprite.scale.set(width / texture.width, height / texture.height);
   sprite.blendMode = "add";
   root.addChild(background, sprite);
   const output = installPixiLinearOutput(root, WIDTH, HEIGHT);
@@ -452,7 +560,7 @@ async function renderIsolatedGameClearTile(
   const result = Object.freeze({ sha256: await sha256(pixels), nonBlackPixels });
   output.dispose();
   root.removeFromParent();
-  sprite.destroy({ texture: false, textureSource: false });
+  destroyPixiParticleLinearColorMesh(sprite);
   background.destroy({ texture: false, textureSource: false });
   root.destroy({ children: true });
   app.stage.children.forEach((child, index) => { child.visible = previousVisibility[index] ?? child.visible; });

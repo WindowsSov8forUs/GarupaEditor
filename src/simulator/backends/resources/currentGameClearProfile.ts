@@ -298,11 +298,40 @@ function randomWords(value: string): readonly [number, number, number, number] {
 function numberValue(value: unknown): number { if (typeof value !== "number" || !Number.isFinite(value)) throw new Error("invalid game-clear particle number"); return Math.fround(value); }
 
 function validBranch(value: unknown, curves: number, objects: number, duration: number): boolean {
-  if (!record(value) || !record(value.graph) || !Array.isArray(value.graph.objects) || value.graph.objects.length !== objects || !record(value.clip)) return false;
+  if (!record(value) || !record(value.graph) || !Array.isArray(value.graph.objects) ||
+      value.graph.objects.length !== objects || !record(value.clip)) return false;
+  const graphObjects = value.graph.objects as readonly unknown[];
   const clip = value.clip;
-  return clip.stop_time === duration && clip.curve_count === curves &&
-    Array.isArray(clip.bindings) && Array.isArray(clip.streamed_frames) && Array.isArray(clip.constants) &&
-    clip.bindings.every((binding: unknown) => record(binding) && Array.isArray(binding.channels));
+  if (clip.stop_time !== duration || clip.curve_count !== curves || !Array.isArray(clip.bindings) ||
+      !Array.isArray(clip.streamed_frames) || !Array.isArray(clip.constants) ||
+      !clip.bindings.every((binding: unknown) => record(binding) && Array.isArray(binding.channels))) return false;
+  const channels = clip.bindings.flatMap((binding) => (binding as { readonly channels: readonly unknown[] }).channels);
+  return channels.length === curves && channels.every((channel) =>
+    typeof channel === "string" && validGameClearChannelOwner(channel, graphObjects));
+}
+
+function validGameClearChannelOwner(channel: string, objects: readonly unknown[]): boolean {
+  const rows = objects.filter((value): value is GameClearGraphObject => record(value) && validObject(value));
+  if (rows.length !== objects.length) return false;
+  const root = [...rows].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]?.path;
+  if (root === undefined) return false;
+  const markers = [
+    [".m_IsActive.", new Set(["value"])],
+    [".mColor.a.", new Set(["value"])],
+    [".m_LocalPosition.", new Set(["x", "y", "z"])],
+    [".m_LocalScale.", new Set(["x", "y", "z"])],
+    [".localEulerAnglesRaw.", new Set(["x", "y", "z"])],
+    [".attribute_hash:", new Set(["1133446416.value", "925582877.value"])],
+  ] as const;
+  for (const [marker, suffixes] of markers) {
+    const markerIndex = channel.indexOf(marker);
+    if (markerIndex < 0) continue;
+    const relative = channel.slice(0, markerIndex);
+    const suffix = channel.slice(markerIndex + marker.length);
+    const path = relative.length === 0 ? root : `${root}/${relative}`;
+    return suffixes.has(suffix as never) && rows.some((row) => row.path === path);
+  }
+  return false;
 }
 function validObject(value: unknown): boolean {
   return record(value) && typeof value.path === "string" && typeof value.active === "boolean" &&
