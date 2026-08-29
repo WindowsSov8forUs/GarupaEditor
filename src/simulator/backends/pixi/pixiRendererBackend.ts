@@ -21,6 +21,11 @@ import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisiblePro
 import { buildGameClearParticleProfile, type GameClearClipProfile, type GameClearGraphObject } from "../resources/currentGameClearProfile";
 import { DeterministicParticleSimulation } from "../../engine/particles/particleSimulation";
 import { particleFloat32FromBits } from "../particleValidation";
+import {
+  createPixiParticleLinearColorMesh,
+  destroyPixiParticleLinearColorMesh,
+  type PixiParticleLinearColorMesh,
+} from "./pixiParticleLinearColorMesh";
 import type {
   ParticleBundleProfile,
   ParticlePortableProfile,
@@ -164,6 +169,9 @@ interface PixiHudVisual {
   gameClearParticleContainer: Container | null;
   gameClearParticleTextures: ReadonlyMap<string, Texture> | null;
   gameClearViewportHeight: number;
+  gameClearSampledPhaseSeconds: number | null;
+  gameClearChannelValuesBits: readonly string[];
+  gameClearChannelDispositionCounts: Readonly<Record<string, number>>;
   fillRatios: readonly [number, number];
 }
 
@@ -822,6 +830,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }[] | null;
     readonly activeAnimationRole: EvidenceAnimationRole | null;
     readonly animationElapsedSeconds: number | null;
+    readonly hudGameClearSampledPhaseSeconds: number | null;
+    readonly hudGameClearChannelValuesBits: readonly string[] | null;
+    readonly hudGameClearChannelDispositionCounts: Readonly<Record<string, number>> | null;
+    readonly hudGameClearParticleSystemCount: number | null;
   }[] {
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
       renderObjectId,
@@ -1053,6 +1065,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }))),
       activeAnimationRole: value.activeAnimationRole,
       animationElapsedSeconds: value.animationElapsedSeconds,
+      hudGameClearSampledPhaseSeconds: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearSampledPhaseSeconds
+        : null,
+      hudGameClearChannelValuesBits: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearChannelValuesBits
+        : null,
+      hudGameClearChannelDispositionCounts: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearChannelDispositionCounts
+        : null,
+      hudGameClearParticleSystemCount: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearParticleProfile?.systemCount ?? null
+        : null,
     })));
   }
 
@@ -1077,6 +1101,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       if (value.geometryContent !== null) {
         release(`${renderObjectId}:geometry`, () => destroyMesh(value.geometryContent!));
+      }
+      if (value.hudVisual?.gameClearParticleContainer !== null &&
+          value.hudVisual?.gameClearParticleContainer !== undefined) {
+        release(`${renderObjectId}:game-clear-particles`, () =>
+          clearGameClearParticleMeshes(value.hudVisual!.gameClearParticleContainer!));
       }
       if (value.laneSpriteMaskContent !== null) {
         release(`${renderObjectId}:lane-mask-consumer`, () => this.detachTapLaneEffectMaskConsumer(value));
@@ -2615,12 +2644,7 @@ function renderGameClearParticles(
   const profile = visual.gameClearParticleProfile;
   if (container === null || simulation === null || profile === null) return;
   const bundle = profile.bundles[0]!;
-  container.removeChildren().forEach((child) => {
-    if (child instanceof Sprite && child.texture.label?.startsWith("game-clear:") && !child.texture.destroyed) {
-      child.texture.destroy(false);
-    }
-    child.destroy({ children: true });
-  });
+  clearGameClearParticleMeshes(container);
   for (const sample of simulation.samples()) {
     if (sample.material === null) continue;
     const definition = bundle.systems.find((candidate) => candidate.identity === sample.systemId);
@@ -2631,8 +2655,23 @@ function renderGameClearParticles(
       throw new Error(`Game-clear particle renderer graph is incomplete: ${sample.systemId}`);
     }
     const texture = gameClearParticleTexture(bundle, particleProfile, sample.uvFrame, textures, material.texture);
-    const sprite = new Sprite({ texture, label: `game-clear-particle:${sample.particleId}` });
-    sprite.anchor.set(0.5);
+    const red = particleFloat32FromBits(sample.color.redBits)!;
+    const green = particleFloat32FromBits(sample.color.greenBits)!;
+    const blue = particleFloat32FromBits(sample.color.blueBits)!;
+    const alpha = particleFloat32FromBits(sample.color.alphaBits)!;
+    // SVL-R01: ordinary and game-clear particles share the straight-alpha
+    // Linear Float32 shader; add-npm applies alpha once in the blend state.
+    const sprite = typeof document === "undefined"
+      ? new Sprite({ texture, label: `game-clear-particle:${sample.particleId}` })
+      : createPixiParticleLinearColorMesh(
+          texture,
+          `game-clear-particle:${sample.particleId}`,
+          red,
+          green,
+          blue,
+          alpha,
+        );
+    if (sprite instanceof Sprite) sprite.anchor.set(0.5);
     const pixelsPerWorldUnit = Math.fround(visual.gameClearViewportHeight / 2);
     const x = particleFloat32FromBits(sample.position.xBits)!;
     const y = particleFloat32FromBits(sample.position.yBits)!;
@@ -2654,20 +2693,42 @@ function renderGameClearParticles(
       Math.fround(x * pixelsPerWorldUnit),
       Math.fround(-y * pixelsPerWorldUnit),
     );
-    sprite.width = Math.max(width, 0.001);
-    sprite.height = Math.max(height, 0.001);
+    if (sprite instanceof Sprite) {
+      sprite.width = Math.max(width, 0.001);
+      sprite.height = Math.max(height, 0.001);
+      sprite.tint = rgbTint(red, green, blue);
+      sprite.alpha = alpha;
+    } else {
+      sprite.scale.set(
+        Math.max(width, 0.001) / texture.width,
+        Math.max(height, 0.001) / texture.height,
+      );
+    }
     sprite.rotation = rotation;
-    sprite.tint = rgbTint(
-      particleFloat32FromBits(sample.color.redBits)!,
-      particleFloat32FromBits(sample.color.greenBits)!,
-      particleFloat32FromBits(sample.color.blueBits)!,
-    );
-    sprite.alpha = particleFloat32FromBits(sample.color.alphaBits)!;
     sprite.blendMode = material.blend;
     sprite.zIndex = sample.sortingOrder * 1_000_000 + sample.creationSequence;
     container.addChild(sprite);
   }
   container.sortChildren();
+}
+
+function clearGameClearParticleMeshes(container: Container): void {
+  container.removeChildren().forEach((child) => {
+    if (child instanceof Mesh && "particleLinearColor" in child) {
+      const mesh = child as PixiParticleLinearColorMesh;
+      const texture = mesh.texture;
+      destroyPixiParticleLinearColorMesh(mesh);
+      if (texture.label?.startsWith("game-clear:") && !texture.destroyed) texture.destroy(false);
+      return;
+    }
+    if (child instanceof Sprite) {
+      const texture = child.texture;
+      child.destroy({ children: true });
+      if (texture.label?.startsWith("game-clear:") && !texture.destroyed) texture.destroy(false);
+      return;
+    }
+    child.destroy({ children: true });
+  });
 }
 
 function gameClearParticleTexture(
@@ -2689,11 +2750,11 @@ function gameClearParticleTexture(
   if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("Game-clear particle UV tiles are non-integral");
   const frame = ((uvFrame % (module.tilesX * module.tilesY)) + module.tilesX * module.tilesY) % (module.tilesX * module.tilesY);
   const column = frame % module.tilesX;
-  const unityRow = Math.floor(frame / module.tilesX);
-  const pixiRow = module.tilesY - 1 - unityRow;
+  // SVL-R01: decoded PNG rows stay in top-left raster order for every particle consumer.
+  const rasterRowFromTop = Math.floor(frame / module.tilesX);
   return new Texture({
     source: base.source,
-    frame: new Rectangle(column * width, pixiRow * height, width, height),
+    frame: new Rectangle(column * width, rasterRowFromTop * height, width, height),
     orig: new Rectangle(0, 0, width, height),
     label: `game-clear:${textureName}:uv:${frame}`,
   });
@@ -2714,7 +2775,22 @@ function nguiPivot(value: string): { x: number; y: number } {
   const pivot = map[value] ?? map.Center!;
   return { x: pivot[0], y: pivot[1] };
 }
+type GameClearChannelDisposition =
+  | "particle-activation"
+  | "particle-profile-static"
+  | "particle-static-transform"
+  | "pixi-local-position"
+  | "pixi-local-rotation-z"
+  | "pixi-local-scale"
+  | "pixi-visible"
+  | "pixi-widget-alpha"
+  | "portable-2d-projected-z"
+  | "portable-2d-redundant-euler"
+  | "portable-2d-redundant-z";
+
 function sampleGameClearGraph(visual: PixiHudVisual, clip: GameClearClipProfile, elapsedSeconds: number): void {
+  // SVL-R06/SVL-R07: the additional clip holds its last sample until scene exit,
+  // and every serialized channel is classified rather than silently discarded.
   const phase = Math.min(Math.fround(elapsedSeconds), Math.fround(clip.stop_time - 1 / 6000));
   const latest = new Map<number, { readonly time: number; readonly coefficients: readonly [number, number, number, number] }>();
   for (const frame of clip.streamed_frames) {
@@ -2726,37 +2802,99 @@ function sampleGameClearGraph(visual: PixiHudVisual, clip: GameClearClipProfile,
     const key = latest.get(index);
     values.push(key === undefined ? 0 : sampleCubicF32(key.coefficients, Math.fround(phase - key.time)));
   }
-  values.push(...clip.constants);
+  values.push(...clip.constants.map(Math.fround));
   const channels = clip.bindings.flatMap((binding) => binding.channels);
-  for (let index = 0; index < Math.min(channels.length, values.length); index += 1) {
-    applyGameClearChannel(visual, channels[index]!, values[index]!);
+  if (channels.length !== clip.curve_count || values.length !== clip.curve_count) {
+    throw new Error(`Game-clear clip channel/value coverage mismatch: ${channels.length}/${values.length}/${clip.curve_count}`);
   }
+  const counts: Record<string, number> = {};
+  for (let index = 0; index < channels.length; index += 1) {
+    const disposition = applyGameClearChannel(visual, channels[index]!, values[index]!);
+    counts[disposition] = (counts[disposition] ?? 0) + 1;
+  }
+  visual.gameClearSampledPhaseSeconds = phase;
+  visual.gameClearChannelValuesBits = Object.freeze(values.map(float32LittleEndianBytesHex));
+  visual.gameClearChannelDispositionCounts = Object.freeze(Object.fromEntries(
+    Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
+  ));
 }
 function sampleCubicF32(coefficients: readonly [number, number, number, number], delta: number): number {
   let value = Math.fround(Math.fround(coefficients[0] * delta) + coefficients[1]);
   value = Math.fround(Math.fround(value * delta) + coefficients[2]);
   return Math.fround(Math.fround(value * delta) + coefficients[3]);
 }
-function applyGameClearChannel(visual: PixiHudVisual, channel: string, value: number): void {
-  const markers = [".m_LocalPosition.", ".m_LocalScale.", ".localEulerAnglesRaw.", ".mColor.a.", ".m_IsActive."] as const;
-  const marker = markers.find((candidate) => channel.includes(candidate));
-  if (marker === undefined) return;
-  const relative = channel.slice(0, channel.indexOf(marker));
+function applyGameClearChannel(
+  visual: PixiHudVisual,
+  channel: string,
+  value: number,
+): GameClearChannelDisposition {
+  if (!Number.isFinite(value)) throw new Error(`Game-clear clip produced a non-finite channel: ${channel}`);
+  const particleChannel = channel.includes("effect_par") || channel.startsWith("GameClearParticle");
+  if (channel.includes(".m_IsActive.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_IsActive.");
+    node.visible = value >= 0.5;
+    return particleChannel ? "particle-activation" : "pixi-visible";
+  }
+  if (channel.includes(".mColor.a.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".mColor.a.");
+    for (const child of node.children) child.alpha = value;
+    return "pixi-widget-alpha";
+  }
+  if (channel.includes(".m_LocalPosition.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_LocalPosition.");
+    const axis = channel.slice(channel.indexOf(".m_LocalPosition.") + ".m_LocalPosition.".length);
+    if (particleChannel) return "particle-static-transform";
+    if (axis === "x") { node.x = value; return "pixi-local-position"; }
+    if (axis === "y") { node.y = -value; return "pixi-local-position"; }
+    if (axis === "z") return "portable-2d-redundant-z";
+  }
+  if (channel.includes(".m_LocalScale.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_LocalScale.");
+    const axis = channel.slice(channel.indexOf(".m_LocalScale.") + ".m_LocalScale.".length);
+    if (axis === "x") { node.scale.x = value; return "pixi-local-scale"; }
+    if (axis === "y") { node.scale.y = value; return "pixi-local-scale"; }
+    if (axis === "z") return "portable-2d-projected-z";
+  }
+  if (channel.includes(".localEulerAnglesRaw.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".localEulerAnglesRaw.");
+    const axis = channel.slice(channel.indexOf(".localEulerAnglesRaw.") + ".localEulerAnglesRaw.".length);
+    if (axis === "z") {
+      node.rotation = Math.fround(value * Math.PI / 180);
+      return "pixi-local-rotation-z";
+    }
+    if (axis === "x" || axis === "y") return "portable-2d-redundant-euler";
+  }
+  if (channel.includes("attribute_hash:1133446416")) {
+    requiredGameClearChannelNode(visual, channel, ".attribute_hash:");
+    if (!Object.is(value, Math.fround(0))) throw new Error("Game-clear startRotation static channel diverged from its particle profile");
+    return "particle-profile-static";
+  }
+  if (channel.includes("attribute_hash:925582877")) {
+    requiredGameClearChannelNode(visual, channel, ".attribute_hash:");
+    if (!Object.is(value, Math.fround(1))) throw new Error("Game-clear looping static channel diverged from its particle profile");
+    return "particle-profile-static";
+  }
+  throw new Error(`Game-clear AnimationClip channel is unclassified: ${channel}`);
+}
+function requiredGameClearChannelNode(
+  visual: PixiHudVisual,
+  channel: string,
+  marker: string,
+): Container {
+  const markerIndex = channel.indexOf(marker);
+  if (markerIndex < 0) throw new Error(`Game-clear channel marker is absent: ${channel}`);
+  const relative = channel.slice(0, markerIndex);
   const root = [...visual.serializedComponentNodes.keys()].find((path) => !path.includes("/"));
-  if (root === undefined) return;
+  if (root === undefined) throw new Error("Game-clear branch graph has no serialized root");
   const path = relative.length === 0 ? root : `${root}/${relative}`;
   const node = visual.serializedComponentNodes.get(path);
-  if (node === undefined) return;
-  const axis = channel.slice(channel.indexOf(marker) + marker.length);
-  if (marker === ".m_LocalPosition.") {
-    if (axis === "x") node.x = value;
-    else if (axis === "y") node.y = -value;
-  } else if (marker === ".m_LocalScale.") {
-    if (axis === "x") node.scale.x = value;
-    else if (axis === "y") node.scale.y = value;
-  } else if (marker === ".localEulerAnglesRaw." && axis === "z") node.rotation = Math.fround(value * Math.PI / 180);
-  else if (marker === ".mColor.a.") for (const child of node.children) child.alpha = value;
-  else if (marker === ".m_IsActive.") node.visible = value >= 0.5;
+  if (node === undefined) throw new Error(`Game-clear channel owner is absent: ${path}`);
+  return node;
+}
+function float32LittleEndianBytesHex(value: number): string {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setFloat32(0, Math.fround(value), true);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 function createLifeSerializedHierarchy(
@@ -2909,6 +3047,9 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     gameClearParticleContainer: null,
     gameClearParticleTextures: null,
     gameClearViewportHeight: 0,
+    gameClearSampledPhaseSeconds: null,
+    gameClearChannelValuesBits: Object.freeze([]),
+    gameClearChannelDispositionCounts: Object.freeze({}),
     fillRatios: Object.freeze([0, 0]),
   };
 }
@@ -3650,13 +3791,18 @@ function applyScoreHud(
     throw new Error("Score high-rank panel mask owner is missing");
   }
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
-  const panelRight = panel.targetLeftX + state.indicatorLocalX;
-  const authoredLeft = panel.targetLeftX + panel.leftAbsolute;
-  const panelWidth = Math.max(panel.minimumWidth, panelRight - authoredLeft);
-  const panelCenter = (authoredLeft + panelRight) / 2;
-  const panelLeft = panelCenter - panelWidth / 2;
-  const panelTop = -panel.topY;
-  const panelHeight = panel.topY - panel.bottomY;
+  const panelRight = Math.fround(panel.targetLeftX + state.indicatorLocalX);
+  const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
+  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
+  const panelCenter = Math.fround(
+    Math.fround(Math.fround(authoredLeft + panelRight) / 2) + panel.clipRangeCenterF32Correction[0],
+  );
+  const panelHeight = Math.fround(panel.topY - panel.bottomY);
+  const panelCenterY = Math.fround(
+    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2) - panel.clipRangeCenterF32Correction[1],
+  );
+  const panelLeft = Math.fround(panelCenter - Math.fround(panelWidth / 2));
+  const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
   visual.scoreHighRankPanelMask.clear()
     .rect(panelLeft, panelTop, panelWidth, panelHeight)
     .fill(0xffffff);
@@ -3759,13 +3905,18 @@ function updateScorePanelClip(
   if (visual.scoreHighRankPanelMask === null) throw new Error("Score high-rank panel mask owner is missing");
   const panel = CURRENT_SCORE_HUD_SCENE_PROFILE.gauge.highRankPanel;
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
-  const panelRight = panel.targetLeftX + indicatorLocalX;
-  const authoredLeft = panel.targetLeftX + panel.leftAbsolute;
-  const panelWidth = Math.max(panel.minimumWidth, panelRight - authoredLeft);
-  const panelCenter = (authoredLeft + panelRight) / 2;
-  const panelLeft = panelCenter - panelWidth / 2;
-  const panelTop = -panel.topY;
-  const panelHeight = panel.topY - panel.bottomY;
+  const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
+  const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
+  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
+  const panelCenter = Math.fround(
+    Math.fround(Math.fround(authoredLeft + panelRight) / 2) + panel.clipRangeCenterF32Correction[0],
+  );
+  const panelHeight = Math.fround(panel.topY - panel.bottomY);
+  const panelCenterY = Math.fround(
+    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2) - panel.clipRangeCenterF32Correction[1],
+  );
+  const panelLeft = Math.fround(panelCenter - Math.fround(panelWidth / 2));
+  const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
   visual.scoreHighRankPanelMask.clear().rect(panelLeft, panelTop, panelWidth, panelHeight).fill(0xffffff);
   visual.scoreHighRankPanelMaskBounds = Object.freeze([panelLeft, panelTop, panelWidth, panelHeight] as const);
   updateScoreSoftClipFilter(visual, panelWidth, panelHeight, panel.softness);

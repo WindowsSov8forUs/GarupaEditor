@@ -308,6 +308,8 @@ async function main(): Promise<void> {
   const flash = flashRows.find((row) => row.renderObjectId === flashId)!;
   assert.equal(flash.visible, true);
   assert.equal(flash.activeAnimationRole, "note-long-flash");
+  assert.equal(flash.spriteBindingKey?.endsWith("note_long_flash_1"), true,
+    "SVL-R02 binds the stable Slide Flash from the first current after-node rather than the lane-0 head");
   const compatibleIntermediate = product.visibleNodes.find((node) => node.identity === interiorId)!;
   const target = requireOk(layout.garupaProductScene.projectLaneAtCurve(
     compatibleIntermediate.spanStart + (compatibleIntermediate.width - 1) / 2,

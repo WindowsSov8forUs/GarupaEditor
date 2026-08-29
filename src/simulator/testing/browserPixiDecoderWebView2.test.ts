@@ -12,6 +12,11 @@ import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDe
 import { installPixiLinearOutput } from "../backends/pixi/pixiLinearColorPipeline";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+import {
+  createPixiParticleLinearColorMesh,
+  destroyPixiParticleLinearColorMesh,
+} from "../backends/pixi/pixiParticleLinearColorMesh";
+import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { captureHudRenderingWebView2Observation } from "./hudRenderingWebView2.test";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "./legacyCurrentScoreHudResourceManifest";
@@ -115,6 +120,7 @@ async function main(): Promise<void> {
   }
   const scoreHud = await captureProductionScoreHud(app);
   const scoreStateMatrix = await captureProductionScoreHudStateMatrix(app);
+  const particleAdditiveFramebuffer = verifyParticleAdditiveFramebuffer(app);
 
   const source = texture.source;
   texture.destroy(true);
@@ -152,7 +158,7 @@ async function main(): Promise<void> {
       transparentRgbCompositePreserved: true,
       textureResourceAfterDestroy: resourceAfterDestroy == null ? null : resourceAfterDestroy.constructor?.name ?? "unknown",
     },
-    raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud, scoreStateMatrix },
+    raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud, scoreStateMatrix, particleAdditiveFramebuffer },
     isolation: {
       resourceUrls: performance.getEntriesByType("resource").map((entry) => entry.name).sort(),
     },
@@ -307,6 +313,7 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
   readonly sha256: string;
   readonly nonTransparentPixels: number;
   readonly alphaBounds: readonly [number, number, number, number];
+  readonly panelClipF32Bits: readonly [string, string, string, string];
 }[]> {
   const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
   const animation = parseCurrentScoreGaugeSsAnimationProfile(await fetchJson("/score-animation.json"));
@@ -354,6 +361,13 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     { score: 6_750_000, before: 1, rank: 0, high: false, text: "06750000", size: 28 },
     { score: 9_000_000, before: 0, rank: 5, high: true, text: "09000000", size: 28 },
     { score: 900_000_000, before: 5, rank: 5, high: true, text: "900000000", size: 27 },
+    // SVL-R04: independent runtime UIPanel rows above SS. The indicator values
+    // are the observed dynamic right edges (clip width + authored left inset).
+    { score: 872_726, before: 5, rank: 5, high: true, text: "00872726", size: 28, originalAboveSs: true },
+    { score: 915_926, before: 5, rank: 5, high: true, text: "00915926", size: 28, originalAboveSs: true },
+    { score: 939_899, before: 5, rank: 5, high: true, text: "00939899", size: 28, originalAboveSs: true },
+    { score: 950_189, before: 5, rank: 5, high: true, text: "00950189", size: 28, originalAboveSs: true },
+    { score: 982_088, before: 5, rank: 5, high: true, text: "00982088", size: 28, originalAboveSs: true },
   ] as const;
   const rows = [];
   for (let index = 0; index < cases.length; index += 1) {
@@ -368,6 +382,7 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
         expected.before !== expected.rank,
         expected.score === 9_000_000 ? "ScoreGaugeSS" : "none",
         expected.high,
+        "originalAboveSs" in expected && expected.originalAboveSs,
       ),
     }];
     if (index === 0) commands.push({
@@ -417,6 +432,16 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
     const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
     const alpha = alphaObservation(pixels, frame.width, frame.height);
     if (alpha.nonTransparentPixels <= 0) throw new Error(`Score matrix ${expected.score} raster is empty`);
+    const scoreObservation = backend.sceneSnapshot().find((row) => row.renderObjectId === "hud:score:matrix");
+    const panelBounds = scoreObservation?.hudScoreIndicatorMask?.bounds;
+    if (panelBounds === undefined) throw new Error(`Score matrix ${expected.score} panel clip is absent`);
+    const [panelLeft, panelTop, panelWidth, panelHeight] = panelBounds;
+    const panelClipF32Bits = Object.freeze([
+      float32BigEndianBits(Math.fround(panelLeft + panelWidth / 2)),
+      float32BigEndianBits(Math.fround(-(panelTop + panelHeight / 2))),
+      float32BigEndianBits(panelWidth),
+      float32BigEndianBits(panelHeight),
+    ] as const);
     rows.push(Object.freeze({
       score: expected.score,
       rank: expected.rank,
@@ -434,6 +459,7 @@ async function captureProductionScoreHudStateMatrix(app: Application): Promise<r
       sha256: await sha256(pixels),
       nonTransparentPixels: alpha.nonTransparentPixels,
       alphaBounds: alpha.bounds,
+      panelClipF32Bits,
     }));
   }
   linearOutput.dispose();
@@ -449,9 +475,16 @@ function scoreState(
   rankChanged: boolean,
   highRankEffect: "none" | "ScoreGaugeSS",
   highRankEffectActive: boolean,
+  originalAboveSs = false,
 ) {
-  const scoreMax = 10_001_000;
-  const thresholds = Object.freeze({
+  // 969500 is a test-only valid score maximum inside the independently frozen
+  // SVL-R04 indicator interval; it drives the typed production formula without
+  // injecting the expected panel width into the HUD state.
+  const scoreMax = originalAboveSs ? 969_500 : 10_001_000;
+  const thresholds = Object.freeze(originalAboveSs ? {
+    scoreC: 36_300, scoreB: 217_800, scoreA: 435_600,
+    scoreS: 653_400, scoreSS: 871_200,
+  } : {
     scoreC: 375_000, scoreB: 2_250_000, scoreA: 4_500_000,
     scoreS: 6_750_000, scoreSS: 9_000_000,
   });
@@ -472,14 +505,20 @@ function scoreState(
     ratio: float32(ratio), sliderValue: float32(Math.fround(Math.min(Math.max(ratio, 0), 1))),
     foregroundActive: ratio > 0,
     indicatorLocalX: ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422))),
-    rankMarkerCLocalX: marker(375_000), rankMarkerBLocalX: marker(2_250_000),
-    rankMarkerALocalX: marker(4_500_000), rankMarkerSLocalX: marker(6_750_000),
-    rankMarkerSSLocalX: marker(9_000_000), highRankEffect, highRankEffectActive,
+    rankMarkerCLocalX: marker(thresholds.scoreC), rankMarkerBLocalX: marker(thresholds.scoreB),
+    rankMarkerALocalX: marker(thresholds.scoreA), rankMarkerSLocalX: marker(thresholds.scoreS),
+    rankMarkerSSLocalX: marker(thresholds.scoreSS), highRankEffect, highRankEffectActive,
   });
 }
 
 function float32(value: number) {
   return requireOk(createRenderFloat32(Math.fround(value)));
+}
+
+function float32BigEndianBits(value: number): string {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setFloat32(0, Math.fround(value), false);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 function findLabel(root: Container, label: string): Container | null {
@@ -555,6 +594,96 @@ async function fetchBytes(path: string): Promise<Uint8Array> {
   const response = await fetch(path, { cache: "no-store", credentials: "omit", redirect: "error" });
   if (!response.ok) throw new Error(`fixture fetch failed: ${path} ${response.status}`);
   return new Uint8Array(await response.arrayBuffer());
+}
+
+function verifyParticleAdditiveFramebuffer(app: Application): {
+  readonly sourceRgba: readonly [number, number, number, number];
+  readonly particleColor: readonly [number, number, number, number];
+  readonly observedCenterRgba: readonly [number, number, number, number];
+  readonly onceAlphaExpectedRgb: readonly [number, number, number];
+  readonly rejectedTwiceAlphaRgb: readonly [number, number, number];
+  readonly blendMode: string;
+  readonly textureScaleMode: string;
+} {
+  const width = 16;
+  const height = 16;
+  app.renderer.resize(width, height);
+  const sourceRgba = Object.freeze([128, 64, 32, 128] as const);
+  const texture = new Texture({
+    source: new BufferImageSource({
+      resource: Uint8Array.from(sourceRgba),
+      width: 1,
+      height: 1,
+      format: "rgba8unorm-srgb",
+      alphaMode: "no-premultiply-alpha",
+      scaleMode: "linear",
+    }),
+  });
+  const particleColor = Object.freeze([1, 1, 1, 0.5] as const);
+  const mesh = createPixiParticleLinearColorMesh(
+    texture,
+    "svl-r01-non-unit-alpha-framebuffer",
+    ...particleColor,
+  );
+  mesh.position.set(width / 2, height / 2);
+  mesh.scale.set(width, height);
+  mesh.blendMode = "add";
+  const root = new Container();
+  const opaqueDestination = new Sprite(Texture.WHITE);
+  opaqueDestination.tint = 0x000000;
+  opaqueDestination.width = width;
+  opaqueDestination.height = height;
+  root.addChild(opaqueDestination, mesh);
+  const linearOutput = installPixiLinearOutput(root, width, height);
+  app.stage.addChild(root);
+  app.render();
+  const framebuffer = readWebGlFramebufferRgba(app, width, height);
+  const offset = ((height / 2) * width + width / 2) * 4;
+  const observedCenterRgba = Object.freeze([
+    framebuffer[offset]!, framebuffer[offset + 1]!, framebuffer[offset + 2]!, framebuffer[offset + 3]!,
+  ] as const);
+  const sourceAlpha = sourceRgba[3] / 255;
+  const particleAlpha = particleColor[3];
+  const onceAlphaExpectedRgb = Object.freeze(sourceRgba.slice(0, 3).map((byte) => encodeSrgb(
+    decodeSrgb(byte) * sourceAlpha * particleAlpha,
+  )) as [number, number, number]);
+  const rejectedTwiceAlphaRgb = Object.freeze(sourceRgba.slice(0, 3).map((byte) => encodeSrgb(
+    decodeSrgb(byte) * sourceAlpha * particleAlpha * particleAlpha,
+  )) as [number, number, number]);
+  for (let channel = 0; channel < 3; channel += 1) {
+    if (Math.abs(observedCenterRgba[channel]! - onceAlphaExpectedRgb[channel]!) > 2) {
+      throw new Error(`SVL-R01 additive framebuffer channel ${channel}: ${observedCenterRgba[channel]} != ${onceAlphaExpectedRgb[channel]} (twice=${rejectedTwiceAlphaRgb[channel]})`);
+    }
+    if (Math.abs(observedCenterRgba[channel]! - rejectedTwiceAlphaRgb[channel]!) <= 2) {
+      throw new Error(`SVL-R01 additive framebuffer accepted the rejected twice-alpha RGB channel ${channel}`);
+    }
+  }
+  const result = Object.freeze({
+    sourceRgba,
+    particleColor,
+    observedCenterRgba,
+    onceAlphaExpectedRgb,
+    rejectedTwiceAlphaRgb,
+    blendMode: String(mesh.blendMode),
+    textureScaleMode: String(texture.source.scaleMode),
+  });
+  if (observedCenterRgba[3] !== 255) {
+    throw new Error(`SVL-R01 additive framebuffer lost its opaque composed destination: ${observedCenterRgba[3]}`);
+  }
+  linearOutput.dispose();
+  root.removeFromParent();
+  destroyPixiParticleLinearColorMesh(mesh);
+  texture.destroy(true);
+  root.destroy({ children: true });
+  return result;
+}
+
+function decodeSrgb(byte: number): number {
+  const value = byte / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+function encodeSrgb(value: number): number {
+  return Math.round(255 * (value <= 0.0031308 ? value * 12.92 : 1.055 * value ** (1 / 2.4) - 0.055));
 }
 
 function verifyLinearSrgbComposite(app: Application): void {

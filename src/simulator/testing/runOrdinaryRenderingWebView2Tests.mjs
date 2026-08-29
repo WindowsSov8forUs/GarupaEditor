@@ -52,6 +52,11 @@ const strictRoot = join(
   "hud-particle-pause-terminal-strict-reaudit", "artifacts", "investigations",
   "simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4",
 );
+const sevenVisualOracle = join(
+  fixtureRoot,
+  "seven-visual-lifecycle", "artifacts", "investigations",
+  "simulator-seven-visual-lifecycle-reconfirmation-10-1-4", "seven_visual_lifecycle_oracle.json",
+);
 const renderSources = [
   ["ordinary/notes/skin00/atlas", join(ordinaryRoot, "ordinary-portable-assets", "rhythm-game-sprites.png")],
   ["ordinary/notes/skin00/long-note-line", join(ordinaryRoot, "ordinary-portable-assets", "long-note-line.png")],
@@ -167,6 +172,7 @@ function prepareStage() {
     ["/game-clear-profile.json", "game-clear-profile.json", "application/json; charset=utf-8", join(gameClearRoot, "game-clear-profile.json")],
     ["/pause-countdown-animation.json", "pause-countdown-animation.json", "application/json; charset=utf-8", join(repositoryRoot, "src/assets/game/prefabs/bms/pause/countdown-animation-profile.json")],
     ["/strict-reaudit.json", "strict-reaudit.json", "application/json; charset=utf-8", join(strictRoot, "strict_reaudit_contract.json")],
+    ["/seven-visual-oracle.json", "seven-visual-oracle.json", "application/json; charset=utf-8", sevenVisualOracle],
     ["/game-clear-assets.json", "game-clear-assets.json", "application/json; charset=utf-8", null],
     ["/chart.bms", "chart.bms", "text/plain; charset=utf-8", join(dynamicRoot, "bms", "poppin_shuffle_special.bms.txt")],
   ]) stageFile(route, name, mime, source === null
@@ -203,6 +209,14 @@ function verify(value) {
   equal(JSON.stringify(value.scene.stageOrder), JSON.stringify(["GarupaSimulatorRoot", "GarupaSimulatorRoot/GarupaSimulatorParticles"]), "combined stage order");
   equal(value.scene.chartBatchCount, 656, "registered full chart batch count");
   equal(value.scene.naturalClearStatus, 3, "natural completion status");
+  equal(JSON.stringify(value.scene.sevenVisualLifecycle), JSON.stringify({
+    status: "confirmed-current-seven-visual-lifecycle-reconfirmation",
+    fullComboChannels: 104,
+    allPerfectChannels: 129,
+    terminalHoldBoundarySeconds: 3.232,
+    scoreGaugeSsContinuousSeconds: 7.5,
+    uvFrame: 11,
+  }), "SVL-R01/R05/R06/R07 actual WebView2 matrix");
   const required = new Set([
     "initialize", "note-spawn", "note-animation", "judgement", "combo-add-score",
     "rank-c", "rank-b", "rank-a", "rank-s", "rank-ss", "particle-peak", "pause", "resume",

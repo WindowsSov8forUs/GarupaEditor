@@ -194,14 +194,14 @@ export class GarupaProductRenderProducer {
       }
     }
 
-    // PLSO-S01: changeCurrentNote selects the first remaining after-node before
-    // flash/tap-keep start, and slidingMove rewrites the shared Slide root X/scale
-    // before child update. The root Y remains the judgement line.
+    // PLSO-S01/SVL-R02: changeCurrentNote selects the first remaining after-node
+    // before flash/tap-keep start. Flash binds that current node's resource once,
+    // then slidingMove rewrites the shared root X/scale without rebinding it.
+    // The root Y remains the judgement line.
     for (const chain of this.chart.slideChains) {
       const headIdentity = chain.visibleConnectionIdentities[0];
       const terminalIdentity = chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1];
       if (headIdentity === undefined || terminalIdentity === undefined) continue;
-      const head = samples.get(headIdentity)!;
       const flashObjectId = slideFlashObjectId(chain.identity);
       const active = plannedJudged.has(headIdentity) && !plannedJudged.has(terminalIdentity);
       const currentIdentity = active
@@ -228,7 +228,7 @@ export class GarupaProductRenderProducer {
             renderObjectId: flashObjectId,
             binding: "sprite",
             logicalAssetId: this.resources.noteAtlasLogicalAssetId,
-            exactKey: `note_long_flash_${productResourceLane(head.node)}`,
+            exactKey: `note_long_flash_${productResourceLane(current.node)}`,
           }));
           plannedCreated.add(flashObjectId);
         }

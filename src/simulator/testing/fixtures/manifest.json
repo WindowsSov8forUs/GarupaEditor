@@ -1405,6 +1405,13 @@
       "sourcePath": "artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
       "bytes": 28158,
       "sha256": "64DD565DA8A69D088059A52543A3B5120CFED3145F0DD649AD8E89DE1B0BA339"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+      "sourceReverseCommit": "e5a15b823193f09e8262d4152e2e8ec7da2af9b7",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+      "bytes": 152585,
+      "sha256": "242049AAE84007E9E580423F929D2C1164F7091A9473C7A47CAD355DC55077B2"
     }
   ]
 }

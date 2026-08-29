@@ -38,6 +38,12 @@ export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
       bottomY: -25.5,
       topY: 13.5,
       minimumWidth: 2,
+      // SVL-R04: runtime UIPanel mClipRange retains these binary32 center
+      // residues while its width follows the current score indicator.
+      clipRangeCenterF32Correction: Object.freeze([
+        Math.fround(0.0000152587890625),
+        Math.fround(0.000011444091796875),
+      ] as const),
       softness: Object.freeze([20, 3] as const),
     }),
   }),

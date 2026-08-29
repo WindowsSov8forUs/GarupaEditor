@@ -5,7 +5,7 @@ import {
   REHEARSAL_AUTO_MODE,
   REHEARSAL_MANUAL_MODE,
 } from "./modeFixtures";
-import { Application, Mesh } from "pixi.js";
+import { Application, Container, Mesh, Rectangle, Sprite, Texture } from "pixi.js";
 import type {
   AudioBackendSnapshot,
   AudioCommand,
@@ -72,6 +72,7 @@ interface InputMap {
 interface LoadedInputs {
   readonly chartText: string;
   readonly strict: any;
+  readonly sevenVisual: any;
   readonly renderProfile: RenderResourceProfile;
   readonly renderResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
   readonly particleResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
@@ -145,10 +146,19 @@ async function main(): Promise<void> {
     inputs.strict.scoreHud.siblingDrawOrder.map((row: any) => row.name),
   )) throw new Error("ScoreGaugeSS fresh browser sibling draw order does not preserve Flash→BigStar→kira");
   const scoreMotionBefore = JSON.stringify(scoreBeforeAdvance?.hudScoreHighRankNodes);
-  requireOk(auto.engine.step(Math.fround(0.25)));
+  const scoreGeneration = scoreBeforeAdvance?.hudScoreHighRankGeneration;
+  const ssLoopPhases = new Set<string>();
+  for (let phaseIndex = 0; phaseIndex < 30; phaseIndex += 1) {
+    requireOk(auto.engine.step(Math.fround(0.25)));
+    const row = auto.renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "render:hud:score");
+    if (row === undefined || row.hudScoreHighRankGeneration !== scoreGeneration || row.activeAnimationRole !== "score-gauge-ss") {
+      throw new Error(`SVL-R05 ScoreGaugeSS restarted or stopped during 7.5-second loop: ${JSON.stringify(row)}`);
+    }
+    ssLoopPhases.add(JSON.stringify(row.hudScoreHighRankNodes));
+  }
   const scoreAfterAdvance = auto.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:score");
-  if (scoreMotionBefore === JSON.stringify(scoreAfterAdvance?.hudScoreHighRankNodes)) {
-    throw new Error("ScoreGaugeSS fresh browser phase did not advance all moving visual state after SS entry");
+  if (scoreMotionBefore === JSON.stringify(scoreAfterAdvance?.hudScoreHighRankNodes) || ssLoopPhases.size < 6) {
+    throw new Error("SVL-R05 ScoreGaugeSS did not retain changing loop phases for 7.5 seconds");
   }
   let independentLifecycleObserved = false;
   let postJudge: ReturnType<PixiRendererBackend["sceneSnapshot"]> = Object.freeze([]);
@@ -176,7 +186,13 @@ async function main(): Promise<void> {
   requireOk(liveManualClear.engine.initialize());
   await advanceToPlayable(liveManualClear);
   requireOk(liveManualClear.engine.completeLiveAudio(2));
-  sampleGameClear(liveManualClear, 1.2);
+  await assertGameClearAnimationMatrix(
+    app,
+    liveManualClear,
+    inputs.sevenVisual,
+    inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo,
+    true,
+  );
   assertGameClearWhite(liveManualClear);
   captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
   const liveManualClearCleanup = disposeSession(app, liveManualClear);
@@ -216,7 +232,13 @@ async function main(): Promise<void> {
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-demo-controls", 0));
   await advanceToPlayable(rehearsalAuto);
   requireOk(rehearsalAuto.engine.completeLiveAudio(3));
-  sampleGameClear(rehearsalAuto, 1.2);
+  await assertGameClearAnimationMatrix(
+    app,
+    rehearsalAuto,
+    inputs.sevenVisual,
+    inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect,
+    false,
+  );
   assertGameClearWhite(rehearsalAuto);
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
@@ -265,6 +287,14 @@ async function main(): Promise<void> {
       chartBatchCount: 656,
       captures: Object.freeze(captures),
       naturalClearStatus,
+      sevenVisualLifecycle: Object.freeze({
+        status: inputs.sevenVisual.status,
+        fullComboChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo.clip.curve_count,
+        allPerfectChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect.clip.curve_count,
+        terminalHoldBoundarySeconds: 3.232,
+        scoreGaugeSsContinuousSeconds: 7.5,
+        uvFrame: inputs.sevenVisual.particle_texture_material_color_blend.uv_frame,
+      }),
     }),
     cleanup: Object.freeze({
       auto: autoCleanup,
@@ -286,6 +316,151 @@ async function main(): Promise<void> {
 
 function sampleGameClear(session: BrowserSession, elapsedSeconds: number): void {
   requireOk(session.engine.advanceNaturalCompletionPresentation(Math.fround(elapsedSeconds)));
+}
+
+async function assertGameClearAnimationMatrix(
+  app: Application,
+  session: BrowserSession,
+  sevenVisual: any,
+  branch: any,
+  verifyUvFrame: boolean,
+): Promise<void> {
+  let previousPhase = 0;
+  let uvFramebufferVerified = false;
+  for (let phaseIndex = 0; phaseIndex < branch.clip.phase_seconds.length; phaseIndex += 1) {
+    const phase = branch.clip.phase_seconds[phaseIndex] as number;
+    if (phaseIndex > 0) sampleGameClear(session, Math.fround(phase - previousPhase));
+    previousPhase = phase;
+    const clear = requiredGameClearSnapshot(session);
+    const expectedBits = branch.clip.channels.map((channel: any) => channel.phase_f32_bits[phaseIndex]);
+    if (JSON.stringify(clear.hudGameClearChannelValuesBits) !== JSON.stringify(expectedBits)) {
+      throw new Error(`SVL-R07 ${branch.animation_key} channel phase ${phase} differs from the independent ${branch.clip.curve_count}-channel matrix`);
+    }
+    if (JSON.stringify(clear.hudGameClearChannelDispositionCounts) !== JSON.stringify(branch.clip.disposition_counts)) {
+      throw new Error(`SVL-R07 ${branch.animation_key} channel dispositions are incomplete`);
+    }
+    if (clear.hudSerializedComponentPaths?.length !== branch.object_count ||
+        clear.hudGameClearParticleSystemCount !== 40 + branch.particle_system_count ||
+        clear.hudGameClearChannelValuesBits?.length !== branch.clip.curve_count) {
+      throw new Error(`SVL-R07 ${branch.animation_key} object/particle/channel graph mismatch: ${JSON.stringify({
+        objects: clear.hudSerializedComponentPaths?.length,
+        particles: clear.hudGameClearParticleSystemCount,
+        channels: clear.hudGameClearChannelValuesBits?.length,
+      })}`);
+    }
+    if (verifyUvFrame && !uvFramebufferVerified) {
+      uvFramebufferVerified = await verifyGameClearUv11Framebuffer(app, session, sevenVisual);
+    }
+  }
+  const finalBits = JSON.stringify(requiredGameClearSnapshot(session).hudGameClearChannelValuesBits);
+  sampleGameClear(session, Math.fround(3.232 - previousPhase));
+  const held = requiredGameClearSnapshot(session);
+  if (held.visible !== true || held.activeAnimationRole !== "game-clear" ||
+      JSON.stringify(held.hudGameClearChannelValuesBits) !== finalBits) {
+    throw new Error(`SVL-R06 ${branch.animation_key} final frame was not held through the 3.232-second pre-exit boundary`);
+  }
+  if (verifyUvFrame && !uvFramebufferVerified) {
+    throw new Error("SVL-R01 uvFrame=11 was not materialized during the complete Full Combo phase matrix");
+  }
+}
+
+function requiredGameClearSnapshot(session: BrowserSession): ReturnType<PixiRendererBackend["sceneSnapshot"]>[number] {
+  const clear = session.renderer.sceneSnapshot().find((row) => row.renderObjectId === "render:hud:game-clear");
+  if (clear === undefined) throw new Error("game-clear production owner is absent");
+  return clear;
+}
+
+async function verifyGameClearUv11Framebuffer(
+  app: Application,
+  session: BrowserSession,
+  sevenVisual: any,
+): Promise<boolean> {
+  const sourceNode = findDescendantTexturedNode(session.renderer.stage, (texture) =>
+    texture.label?.includes("Tex_parSet_1") === true && texture.label.endsWith(":uv:11"));
+  if (sourceNode === null) return false;
+  const particleColor = (sourceNode as unknown as { readonly particleLinearColor?: readonly number[] }).particleLinearColor;
+  if (!(sourceNode instanceof Mesh) || particleColor === undefined || particleColor[3] === 1) {
+    throw new Error("SVL-R01 game-clear uvFrame=11 did not consume the shared non-unit-alpha Linear Float32 particle mesh");
+  }
+  const selected = sourceNode.texture;
+  const contract = sevenVisual.particle_texture_material_color_blend;
+  const tileWidth = selected.source.width / contract.tiles[0];
+  const tileHeight = selected.source.height / contract.tiles[1];
+  if (selected.frame.x !== contract.selected_tile.column * tileWidth ||
+      selected.frame.y !== contract.selected_tile.row_from_top * tileHeight ||
+      String(selected.source.scaleMode) !== "linear") {
+    throw new Error(`SVL-R01 game-clear uvFrame=11 selected the wrong top-left raster tile: ${JSON.stringify(selected.frame)}`);
+  }
+  const rejected = new Texture({
+    source: selected.source,
+    frame: new Rectangle(
+      contract.rejected_vertical_inversion_tile.column * tileWidth,
+      contract.rejected_vertical_inversion_tile.row_from_top * tileHeight,
+      tileWidth,
+      tileHeight,
+    ),
+    orig: new Rectangle(0, 0, tileWidth, tileHeight),
+    label: "svl-r01-rejected-vertical-inversion-tile",
+  });
+  const selectedDigest = await renderIsolatedGameClearTile(app, selected, tileWidth, tileHeight);
+  const rejectedDigest = await renderIsolatedGameClearTile(app, rejected, tileWidth, tileHeight);
+  rejected.destroy(false);
+  if (selectedDigest.sha256 === rejectedDigest.sha256 || selectedDigest.nonBlackPixels <= 0 ||
+      rejectedDigest.nonBlackPixels <= 0) {
+    throw new Error(`SVL-R01 actual Pixi framebuffer did not distinguish top-left row 2 from rejected row 1: ${JSON.stringify({ selectedDigest, rejectedDigest })}`);
+  }
+  return true;
+}
+
+async function renderIsolatedGameClearTile(
+  app: Application,
+  texture: Texture,
+  width: number,
+  height: number,
+): Promise<{ readonly sha256: string; readonly nonBlackPixels: number }> {
+  const previousVisibility = app.stage.children.map((child) => child.visible);
+  for (const child of app.stage.children) child.visible = false;
+  const root = new Container({ label: "svl-r01-isolated-game-clear-tile" });
+  const background = new Sprite(Texture.WHITE);
+  background.tint = 0x000000;
+  background.width = width;
+  background.height = height;
+  const sprite = new Sprite(texture);
+  sprite.width = width;
+  sprite.height = height;
+  sprite.blendMode = "add";
+  root.addChild(background, sprite);
+  const output = installPixiLinearOutput(root, WIDTH, HEIGHT);
+  app.stage.addChild(root);
+  app.render();
+  const framebuffer = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+  const pixels = crop(framebuffer, WIDTH, 0, 0, width, height);
+  let nonBlackPixels = 0;
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index] !== 0 || pixels[index + 1] !== 0 || pixels[index + 2] !== 0) nonBlackPixels += 1;
+  }
+  const result = Object.freeze({ sha256: await sha256(pixels), nonBlackPixels });
+  output.dispose();
+  root.removeFromParent();
+  sprite.destroy({ texture: false, textureSource: false });
+  background.destroy({ texture: false, textureSource: false });
+  root.destroy({ children: true });
+  app.stage.children.forEach((child, index) => { child.visible = previousVisibility[index] ?? child.visible; });
+  return result;
+}
+
+function findDescendantTexturedNode(
+  root: Container,
+  predicate: (texture: Texture) => boolean,
+): Sprite | Mesh | null {
+  for (const child of root.children) {
+    if ((child instanceof Sprite || child instanceof Mesh) && predicate(child.texture)) return child;
+    if (child instanceof Container) {
+      const nested = findDescendantTexturedNode(child, predicate);
+      if (nested !== null) return nested;
+    }
+  }
+  return null;
 }
 
 function assertGameClearWhite(session: BrowserSession): void {
@@ -774,13 +949,14 @@ async function capture(
 
 async function loadInputs(): Promise<LoadedInputs> {
   const map = await fetchJson<InputMap>("/input-map.json");
-  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, pauseCountdownRaw, strict, gameClearAssets, chartText] = await Promise.all([
+  const [base, visibleRaw, scoreAnimationRaw, gameClearRaw, pauseCountdownRaw, strict, sevenVisual, gameClearAssets, chartText] = await Promise.all([
     fetchJson<RenderResourceProfile>("/render-profile.json"),
     fetchJson("/visible-profile.json"),
     fetchJson("/score-animation.json"),
     fetchJson("/game-clear-profile.json"),
     fetchJson("/pause-countdown-animation.json"),
     fetchJson("/strict-reaudit.json"),
+    fetchJson<any>("/seven-visual-oracle.json"),
     fetchJson<RenderResourceProfile["assets"]>("/game-clear-assets.json"),
     fetchText("/chart.bms"),
   ]);
@@ -811,7 +987,10 @@ async function loadInputs(): Promise<LoadedInputs> {
   if (renderResources.length !== renderProfile.assets.length || particleResources.length !== 9) {
     throw new Error(`input resource inventory mismatch: ${renderResources.length}/${particleResources.length}`);
   }
-  return Object.freeze({ chartText, strict, renderProfile, renderResources, particleResources });
+  if (sevenVisual.status !== "confirmed-current-seven-visual-lifecycle-reconfirmation") {
+    throw new Error("SVL-R01..R07 independent fixture status mismatch");
+  }
+  return Object.freeze({ chartText, strict, sevenVisual, renderProfile, renderResources, particleResources });
 }
 
 async function loadMappedBytes(rows: readonly { readonly logicalAssetId: string; readonly url: string }[]) {

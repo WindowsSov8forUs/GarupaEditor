@@ -29,8 +29,9 @@ uniform sampler2D uTexture;
 uniform vec4 uParticleColor;
 void main(void) {
   vec4 sampled = texture(uTexture, vTextureCoord);
+  // SVL-R01: add-npm applies source alpha in the blend state exactly once.
   finalColor = vec4(
-    sampled.rgb * uParticleColor.rgb * uParticleColor.a,
+    sampled.rgb * uParticleColor.rgb,
     sampled.a * uParticleColor.a
   );
 }`;

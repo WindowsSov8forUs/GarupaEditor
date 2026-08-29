@@ -38,6 +38,10 @@ const scoreFinalVisible = JSON.parse(readFileSync(join(
   testingRoot,
   "fixtures/reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
 ), "utf8"));
+const sevenVisual = JSON.parse(readFileSync(join(
+  testingRoot,
+  "fixtures/reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+), "utf8"));
 
 try {
   if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
@@ -123,6 +127,7 @@ function verify(value) {
     "CS-V1 SS-threshold TotalScore leading sgm run world transform");
   verifyHighRankNodes(scoreHud);
   verifyScoreStateMatrix(value.raster.scoreStateMatrix);
+  verifyParticleAdditiveFramebuffer(value.raster.particleAdditiveFramebuffer);
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }
@@ -148,6 +153,19 @@ function verify(value) {
   console.log(`production BrowserPixiTextureDecoder WebView2 passed: runtime=${versions.get("Microsoft Edge WebView2")} png=${value.raster.pngOnly.sha256} font=${value.raster.fontOnly.sha256} scoreHud=${scoreHud.sha256} pixels=${scoreHud.nonTransparentPixels}`);
 }
 
+function verifyParticleAdditiveFramebuffer(value) {
+  equal(JSON.stringify(value.sourceRgba), "[128,64,32,128]", "SVL-R01 straight-alpha source texel");
+  equal(JSON.stringify(value.particleColor), "[1,1,1,0.5]", "SVL-R01 non-unit particle alpha");
+  equal(value.blendMode, "add", "SVL-R01 production additive blend request");
+  equal(value.textureScaleMode, "linear", "SVL-R01 linear particle sampling");
+  closeTuple(value.observedCenterRgba.slice(0, 3), value.onceAlphaExpectedRgb, 2,
+    "SVL-R01 actual WebGL framebuffer applies particle alpha once");
+  if (value.observedCenterRgba.slice(0, 3).every((channel, index) =>
+    Math.abs(channel - value.rejectedTwiceAlphaRgb[index]) <= 2)) {
+    throw new Error(`SVL-R01 actual WebGL framebuffer matches rejected twice-alpha result: ${JSON.stringify(value)}`);
+  }
+}
+
 function verifyScoreStateMatrix(rows) {
   equal(scoreFinalVisible.status, "confirmed-current-score-hud-final-visible-closure",
     "final Score fixture status");
@@ -160,9 +178,9 @@ function verifyScoreStateMatrix(rows) {
     [9000000, 5, "09000000", 28, "0", "9000000", -168, -147, [0, 0, 0, 0]],
     [900000000, 5, "900000000", 27, "", "900000000", -182.25, -182.25, [0, 0, 0, 0]],
   ];
-  equal(rows.length, expected.length, "Score Browser state count");
+  equal(rows.length, expected.length + 5, "Score Browser state count including SVL-R04 rows");
   const digests = new Set();
-  rows.forEach((row, index) => {
+  rows.slice(0, expected.length).forEach((row, index) => {
     const [score, rank, text, size, leading, significant, leadingX, significantX, foregroundBorder] = expected[index];
     equal(row.score, score, `Score Browser row${index} score`);
     equal(row.rank, rank, `Score Browser row${index} rank`);
@@ -181,6 +199,20 @@ function verifyScoreStateMatrix(rows) {
     digests.add(row.sha256);
   });
   if (digests.size < 6) throw new Error(`Score Browser state rasters aliased: ${[...digests].join(",")}`);
+  equal(sevenVisual.status, "confirmed-current-seven-visual-lifecycle-reconfirmation", "SVL fixture status");
+  const aboveSs = rows.slice(expected.length);
+  equal(aboveSs.length, sevenVisual.score_above_ss_clip.selected_clip_rows.length, "SVL-R04 row count");
+  aboveSs.forEach((row, index) => {
+    const source = sevenVisual.score_above_ss_clip.selected_clip_rows[index];
+    equal(row.score, source.score, `SVL-R04 row${index} score`);
+    equal(JSON.stringify(row.panelClipF32Bits), JSON.stringify(source.clip_f32_bits),
+      `SVL-R04 row${index} exact runtime UIPanel Float32 clip`);
+    if (!/^[0-9a-f]{64}$/.test(row.sha256) || row.nonTransparentPixels <= 0) {
+      throw new Error(`SVL-R04 row${index} actual framebuffer is invalid: ${JSON.stringify(row)}`);
+    }
+  });
+  equal(new Set(aboveSs.map((row) => row.panelClipF32Bits[2])).size, 5,
+    "SVL-R04 panel width continues changing above SS");
   equal(scoreFinalVisible.encoded_text.portable_ttf_advance_at_28["00000000"], 168,
     "independent Reverse sgm eight-digit advance");
   equal(scoreFinalVisible.encoded_text.portable_ttf_advance_at_28["009000000"], 189,

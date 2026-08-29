@@ -134,8 +134,8 @@ fn load_allowlist(stage: &Path) -> HashMap<String, Resource> {
     }).is_none(), "duplicate allowlist route");
   }
   assert!(
-    result.len() == 76 || result.len() == 74 || result.len() == 38 || result.len() == 36 || result.len() == 32 || result.len() == 13 || result.len() == 22 || result.len() == 23 || result.len() == 4,
-    "rendering allowlist must contain exactly 76/74/38/36/32 ordinary, 13 original-settings, 22/23 exact-particle selected-Skin, or 4 startup routes"
+    result.len() == 77 || result.len() == 76 || result.len() == 74 || result.len() == 38 || result.len() == 36 || result.len() == 32 || result.len() == 13 || result.len() == 22 || result.len() == 23 || result.len() == 4,
+    "rendering allowlist must contain exactly 77/76/74/38/36/32 ordinary, 13 original-settings, 22/23 exact-particle selected-Skin, or 4 startup routes"
   );
   result
 }

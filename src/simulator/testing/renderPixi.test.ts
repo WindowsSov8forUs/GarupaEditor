@@ -8,7 +8,7 @@ declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
 const { join } = require("node:path");
 
-import { Container, Graphics, NineSliceSprite, Sprite, Text, Texture, TextureSource } from "pixi.js";
+import { Container, Graphics, Mesh, NineSliceSprite, Sprite, Text, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "./legacyCurrentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "./legacyCurrentOrdinaryVisibleResourceManifest";
@@ -417,12 +417,13 @@ async function main(): Promise<void> {
     "Game-clear UITexture consumes little-endian serialized white color bytes instead of black tint");
   const allPerfectParticles = renderer.stage.getChildByLabel("game-clear-particles", true) as Container;
   assert((allPerfectParticles?.children.length ?? 0) >= 180, "All Perfect consumes base plus additional serialized ParticleSystems at the 1.2-second phase");
-  const visibleClearParticle = allPerfectParticles.children.find((child) => child instanceof Sprite &&
+  const visibleClearParticle = allPerfectParticles.children.find((child) =>
+    (child instanceof Sprite || child instanceof Mesh) &&
     Math.max(child.width, child.height) > 8 && child.getBounds().maxX > 0 && child.getBounds().minX < 1600 &&
     child.getBounds().maxY > 0 && child.getBounds().minY < 720);
   assert(visibleClearParticle !== undefined,
     `Game-clear particles consume orthographic height/2 PPU and visibly intersect the production viewport: ${JSON.stringify(
-      allPerfectParticles.children.slice(0, 8).map((child) => child instanceof Sprite ? {
+      allPerfectParticles.children.slice(0, 8).map((child) => child instanceof Sprite || child instanceof Mesh ? {
         p: [child.x, child.y], s: [child.width, child.height], b: child.getBounds(), a: child.alpha,
       } : { label: child.label }),
     )}`);
@@ -634,7 +635,7 @@ async function main(): Promise<void> {
     consumer: "score-high-rank-animation-layer",
     generation: 1,
     position: [25, 45],
-    bounds: [42, -13.5, 375, 39],
+    bounds: [42.00001525878906, -13.500011444091797, 375, 39],
     softness: [20, 3],
   }), "indicator drives the persistent Score high-rank panel mask owner");
   equal(scoreAtHalf.animationElapsedSeconds, Math.fround(0.5), "ScoreGaugeSS reaches the direct half-second sample");
@@ -1252,10 +1253,13 @@ async function verifyActualPixiFullChart(
   let apOverlaySampleCount = 0;
   let frames = 0;
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
-  for (; frames < 7200; frames += 1) {
-    const stepped = engine.step(1 / 30);
+  // Keep the same two-second observation cadence while avoiding the historical
+  // 7200-step wall-clock regression; OneFrame drains all due atomic sub-batches
+  // inside each host update, so 0.1-second engine steps preserve event coverage.
+  for (; frames < 2400; frames += 1) {
+    const stepped = engine.step(0.1);
     if (stepped.status !== "ok") throw new Error(`full-chart render blocker ${stepped.capability}: ${stepped.boundary}`);
-    if (frames % 60 !== 0) continue;
+    if (frames % 20 !== 0) continue;
     finalSnapshot = requireOk(engine.snapshot(), `full-chart snapshot ${frames}`);
     const visible = renderer.sceneSnapshot();
     for (const row of visible) {
@@ -1350,7 +1354,7 @@ async function verifyActualPixiFullChart(
     },
   }, createRecordingSimulatorBackends(disabledRenderer)), "disabled tap lane engine create");
   requireOk(disabledEngine.initialize(), "disabled tap lane initialize");
-  for (let frame = 0; frame < 300; frame += 1) requireOk(disabledEngine.step(1 / 30), `disabled tap lane frame ${frame}`);
+  for (let frame = 0; frame < 100; frame += 1) requireOk(disabledEngine.step(0.1), `disabled tap lane frame ${frame}`);
   const disabledSnapshot = requireOk(disabledEngine.snapshot(), "disabled tap lane snapshot");
   equal(disabledSnapshot.managers.tapLaneEffect?.visible, false, "setting false remains frozen in the owner");
   equal(disabledSnapshot.managers.tapLaneEffect?.activeCount, 0, "setting false activates no lane effect");

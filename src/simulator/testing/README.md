@@ -40,6 +40,16 @@ npm.cmd run simulator:test:full-visible-lifecycle-oracle
 
 该门继续消费Reverse `4a61a184`的全量结构化合同与最小R1帧，但其旧聚合授权已由Reverse `1bff69eb`纠错预言机明确撤回。新fixture禁止从录屏取Score颜色，补齐Life 10组件serialized hierarchy、三套Pause Transform祖先链及13槽精确Transform；oracle自身仍保持`productionEquivalenceAuthorization=false`，只提供独立expected。能力只能由其外部四向aggregate门恢复：production consumer、actual primitive、fresh Browser与Windows同状态全部通过，不能修改fixture的false来“授权自己”。
 
+## Seven visual lifecycle reconfirmation
+
+```powershell
+npm.cmd run simulator:test:seven-visual-lifecycle
+npm.cmd run simulator:test:browser-webview2
+npm.cmd run simulator:test:ordinary-rendering-webview2
+```
+
+第一项只读取Reverse `e5a15b82`晋升的单一独立fixture，锁定`SVL-R01..SVL-R07`、Slide稳定owner、五个`> SS` UIPanel Float32行、3秒SS循环、2.2833333秒附加clip、3.233秒终局及FC/AP 104/129逐channel矩阵。Browser门读取实际WebGL合成framebuffer，以非单位alpha反例区分一次alpha与错误二次alpha；ordinary三fresh门进一步要求game-clear `uvFrame=11`为top-left row 2、实际Pixi framebuffer区别被拒绝的row 1、ScoreGaugeSS 7.5秒不重启，以及FC/AP所有channel在最终帧保持至3.232秒。上述仅授权portable Browser/Pixi消费，不声明Unity/GPU fixed-device逐像素一致。
+
 ## Strict HUD/particle/Pause/terminal leaf
 
 ```powershell

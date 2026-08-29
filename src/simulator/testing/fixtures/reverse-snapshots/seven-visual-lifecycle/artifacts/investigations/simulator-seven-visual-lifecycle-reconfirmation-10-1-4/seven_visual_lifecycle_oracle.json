@@ -1,0 +1,4514 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-seven-visual-lifecycle-reconfirmation",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "unity_version": "2022.3.62f1"
+  },
+  "sources": {
+    "full_visible_lifecycle": {
+      "path": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
+      "bytes": 6942833,
+      "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22"
+    },
+    "particle_lane_slide_correction": {
+      "path": "artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
+      "bytes": 28158,
+      "sha256": "64DD565DA8A69D088059A52543A3B5120CFED3145F0DD649AD8E89DE1B0BA339"
+    },
+    "score_ss_clip": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "particle_profile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "note_hierarchy": {
+      "path": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
+      "bytes": 17234,
+      "sha256": "C6E15ACDE7DBD2829ED1166E1C8D533D66ED1BD15C87F781E4EE021A7267C832"
+    },
+    "runtime_trace": {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/trace.json.gz",
+      "bytes": 27255,
+      "sha256": "EAC34E165F1F8D38E96AFC757BEBEFA9544E1718E8966FDD0274B4A237EFED21"
+    },
+    "capture_script": {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/capture_device_auto_r1.py",
+      "bytes": 8120,
+      "sha256": "C0D987E87CE8AF00974AE8751C2F75BCA4BCF58258D146C84B87C31DF4441C20"
+    },
+    "ss_contact_sheet": {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/ss-loop-contact-sheet.jpg",
+      "bytes": 784439,
+      "sha256": "ED242A4E2A06759216E87953B15A20217B5AA5A96E7B99A329C05EBFA32D6963"
+    },
+    "level3": {
+      "path": "static/apktool/base/assets/bin/Data/level3",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "managed_dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    }
+  },
+  "authority": {
+    "runtime_policy": "Natural Auto Live observation only: no return replacement, managed invocation, target-memory write, judgement injection or native input injection.",
+    "device_scope": "Device frames validate current object/resource/lifecycle composition; portable Browser/Pixi equivalence does not claim fixed-device GPU framebuffer identity.",
+    "manual_branch_disposition": "Rejected manual five-touch diagnostics were deleted and are not evidence. Auto clear status 1 is not reclassified as FC/AP."
+  },
+  "selected_device_frames": [
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0002-particle-normal.png",
+      "bytes": 489544,
+      "sha256": "F82AEDA4508D0BCD02FE32895145BB96D3043B0E515312E06BE9DB4C571063A9"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0003-particle-particle-play.png",
+      "bytes": 818077,
+      "sha256": "A5BB50DF6227E748C28BCF3723B3C126B9C5BE4D8D1668810D68BD634F915141"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0014-rank-3-score-38073.png",
+      "bytes": 898670,
+      "sha256": "D9C0E0F7E9E1EB2B3A87E5F0DFAEC140E2EF58E81A24034E0EA82083C895AC77"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0015-rank-2-score-221283.png",
+      "bytes": 517679,
+      "sha256": "6B9A81DFEC89E205EC0CB81046263EB767BDE803D89F5CA5E5344744EB4CC368"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0016-rank-1-score-435678.png",
+      "bytes": 934574,
+      "sha256": "8A78F84A1F00B2B512EE763DBBD9F00E286CE9D36D9C0D28D3410E0D41A30B42"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0017-rank-0-score-653595.png",
+      "bytes": 807041,
+      "sha256": "68123C7EF0798FE149D3A0BA355FA5F36D8F3B2E733E1605F02F67F8D31F58D7"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0018-rank-5-score-872726.png",
+      "bytes": 1106116,
+      "sha256": "00E2EEFA6430CFA1C27D8E1DF144679F74A8B7327853B0A32A70CF909109F721"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0019-ss-loop-0.00s.png",
+      "bytes": 952334,
+      "sha256": "F361706D428843527FA9DE14B27C2D69B7525179BA02D5DA38D7567FC4722E63"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0020-ss-loop-0.75s.png",
+      "bytes": 1010496,
+      "sha256": "B116135F61735865DE8DC18C80B10C6A8C661824711FC5A4A3CF9AABDDC2D16A"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0021-ss-loop-1.50s.png",
+      "bytes": 1278050,
+      "sha256": "99AA937D9C8E8214AE974CD7524070B8B315CAF79BD8CBE598F968CCB6FEDEF0"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0022-ss-loop-2.25s.png",
+      "bytes": 956375,
+      "sha256": "CDA411DC23338144114C4D6F4DDD9CD8A3A7978C98A57B4FB3BE7F19E7890142"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0023-ss-loop-3.00s.png",
+      "bytes": 1062691,
+      "sha256": "1DF9F181E766265A5B612221BF599F2D54F56C5F5D7B6250AF0382E87DF58490"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0024-ss-loop-3.75s.png",
+      "bytes": 965587,
+      "sha256": "25C9D73EFDFA0B59B67B9198C380643D196B4982CA69C76DE837EC80904CFDF3"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0025-ss-loop-4.50s.png",
+      "bytes": 1018350,
+      "sha256": "B25BED98C7668E5F9DE6F1700052650F83E27E7703BFF43C596186029798C665"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0026-ss-loop-5.25s.png",
+      "bytes": 1001082,
+      "sha256": "B8F378A388C85645C5EE3096C3C9C340E71C11DEE761DBEACEF419DD7704B231"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0027-ss-loop-6.00s.png",
+      "bytes": 1056249,
+      "sha256": "AA52248421F752EC7F3EFE4FE69204ACBF7E8C98A6DB3A68AFAC5844381BCACA"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0028-ss-loop-6.75s.png",
+      "bytes": 964942,
+      "sha256": "AD9D4F04655F1E04D8A93B6D8CC67D7D80DDB4451CCEB284762ABD43FA986D76"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0029-ss-loop-7.50s.png",
+      "bytes": 682249,
+      "sha256": "CC8B998C27B21CAAEE2BEEE436E8FADB49D7EBB89E3A6DBF19E90F807D91C5D3"
+    },
+    {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0035-clear-phase-0.25s.png",
+      "bytes": 120373,
+      "sha256": "DD20C36E3B438E3AF5EDB2EC9CE2E41B730536899F0C43E5F74DD740BDAE3494"
+    }
+  ],
+  "particle_texture_material_color_blend": {
+    "texture": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    "material": "Mat_parSet_1",
+    "shader": "Mobile/Particles/Additive",
+    "tiles": [
+      4,
+      4
+    ],
+    "uv_frame": 11,
+    "raster_origin": "top-left",
+    "selected_tile": {
+      "column": 3,
+      "row_from_top": 2,
+      "rgba_sha256": "C0F52F2624542475038C1E669BB56E363E8C7C9D9AD6731B93A0353FCEE9BF34",
+      "observed_shape": "solid five-point star with glow"
+    },
+    "rejected_vertical_inversion_tile": {
+      "column": 3,
+      "row_from_top": 1,
+      "rgba_sha256": "D9457AB0619FA54AB660A6A48F38D4C548AB152FD6AADF33E367043779169B4B",
+      "observed_shape": "radial burst, not the kira star"
+    },
+    "ordinary_and_game_clear_rule": "Decoded PNG rows remain top-left raster rows. uvFrame 11 selects column 3,row-from-top 2 for both ordinary and game-clear consumers; game-clear must not invert it to row 1.",
+    "texture_storage": "straight-alpha sRGB RGBA",
+    "linear_sampling": true,
+    "blend_equation_rgb": "source.rgb * source.alpha + destination.rgb",
+    "blend_factors_rgb": [
+      "SRC_ALPHA",
+      "ONE"
+    ],
+    "particle_color_contract": "Shader RGB is sampled-linear RGB multiplied by particle RGB only. Shader alpha is sampled alpha multiplied by particle alpha. The blend state applies alpha exactly once; multiplying particle alpha into shader RGB would square particle alpha and is rejected.",
+    "framebuffer_gate": "Actual Browser/WebGL tests must read the composed framebuffer for a non-unit-alpha edge sample; primitive state alone is insufficient."
+  },
+  "slide_flash": {
+    "binding_count": 100,
+    "binding_button_types_observed": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "activate_count": 14,
+    "current_transition_count": 34,
+    "lifecycle_counts": {
+      "flash-play": 14,
+      "flash-stop": 28,
+      "tapkeep-play": 14,
+      "tapkeep-stop": 28
+    },
+    "roots": [
+      {
+        "owner_ordinal": 0,
+        "activate_t_ms": 14551,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 8,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 1,
+        "activate_t_ms": 15174,
+        "front_position": 6,
+        "front_button_types": [
+          6
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 8,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 2,
+        "activate_t_ms": 27600,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 2,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 3,
+        "activate_t_ms": 45947,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 4,
+        "activate_t_ms": 45948,
+        "front_position": 4,
+        "front_button_types": [
+          4
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 5,
+        "activate_t_ms": 46411,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 6,
+        "activate_t_ms": 46412,
+        "front_position": 4,
+        "front_button_types": [
+          4
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 7,
+        "activate_t_ms": 46876,
+        "front_position": 2,
+        "front_button_types": [
+          2
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 3,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 8,
+        "activate_t_ms": 46877,
+        "front_position": 5,
+        "front_button_types": [
+          5
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 3,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 9,
+        "activate_t_ms": 50919,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 10,
+        "activate_t_ms": 50920,
+        "front_position": 4,
+        "front_button_types": [
+          4
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 11,
+        "activate_t_ms": 51384,
+        "front_position": 0,
+        "front_button_types": [
+          0
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 12,
+        "activate_t_ms": 51385,
+        "front_position": 4,
+        "front_button_types": [
+          4
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 1,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      },
+      {
+        "owner_ordinal": 13,
+        "activate_t_ms": 52477,
+        "front_position": 6,
+        "front_button_types": [
+          6
+        ],
+        "flash_binding_button_types": [
+          3
+        ],
+        "flash_prefix": "note_long_flash",
+        "current_transition_count": 2,
+        "lifecycle_order": [
+          "flash-stop",
+          "tapkeep-stop",
+          "flash-play",
+          "tapkeep-play",
+          "flash-stop",
+          "tapkeep-stop"
+        ],
+        "tap_keep_identity_materialized_before_terminal_stop": true
+      }
+    ],
+    "portable_conclusion": "note_long_flash is bound once from the first current after-node ButtonTypesArray, may differ from the head, and keeps that resource while the stable root/flash/tap-keep identities move through later current nodes."
+  },
+  "slide_tap_keep": {
+    "static_profile": {
+      "acquire": "NoteInstanceContainer.GetSlideNoteTapKeepEffect",
+      "activate": true,
+      "parent": "NoteSlide transform",
+      "local_position": "method static Vector3 constant",
+      "local_scale": "method static Vector3 constant",
+      "play": "ParticleSystem.Play",
+      "stop": "ParticleSystem.Stop + Clear + GameObject.SetActive(false)"
+    },
+    "runtime_lifecycle_counts": {
+      "flash-play": 14,
+      "flash-stop": 28,
+      "tapkeep-play": 14,
+      "tapkeep-stop": 28
+    },
+    "runtime_roots_with_materialized_identity": 14,
+    "portable_conclusion": "GetSlideNoteTapKeepEffect creates effect_TapKeep, parents it to the stable NoteSlide Transform with serialized local transform, plays after first changeCurrentNote, moves with current-node slidingMove, and stops/clears on terminal teardown without recreating the owner per node."
+  },
+  "score_above_ss_clip": {
+    "ss_entry_t_ms": 93580,
+    "ss_entry_score": 872726,
+    "score_update_count_after_entry": 58,
+    "rank_five_change_count": 1,
+    "selected_clip_rows": [
+      {
+        "t_ms": 93614,
+        "score": 872726,
+        "clip_f32_bits": [
+          "43658001",
+          "C0BFFFE8",
+          "43BB8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 95900,
+        "score": 915926,
+        "clip_f32_bits": [
+          "436F0001",
+          "C0BFFFE8",
+          "43C50000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 98237,
+        "score": 939899,
+        "clip_f32_bits": [
+          "43748001",
+          "C0BFFFE8",
+          "43CA8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 99166,
+        "score": 950189,
+        "clip_f32_bits": [
+          "43768001",
+          "C0BFFFE8",
+          "43CC8000",
+          "421C0000"
+        ]
+      },
+      {
+        "t_ms": 102430,
+        "score": 982088,
+        "clip_f32_bits": [
+          "437B0001",
+          "C0BFFFE8",
+          "43D10000",
+          "421C0000"
+        ]
+      }
+    ],
+    "portable_conclusion": "The high-rank UIPanel right edge continues to follow the current score indicator after SS; it is not clamped to the SS marker."
+  },
+  "score_ss_highlight_loop": {
+    "clip_source": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    "clip_name": "ScoreGaugeSS",
+    "sample_rate": 60.0,
+    "stop_time_seconds": 3.0,
+    "loop_time": true,
+    "device_phase_seconds": [
+      0,
+      0.75,
+      1.5,
+      2.25,
+      3,
+      3.75,
+      4.5,
+      5.25,
+      6,
+      6.75,
+      7.5
+    ],
+    "rank_five_change_count": 1,
+    "score_update_count_after_entry": 58,
+    "portable_conclusion": "Entering SS starts the 3-second 60-FPS looping sibling highlight once. Later score updates in rank 5 do not restart it; device frames retain visible phase changes through 7.5 seconds."
+  },
+  "terminal_final_frame_hold": {
+    "global_presentation_duration_seconds": 3.233,
+    "additional_clip_stop_time_seconds": 2.2833333015441895,
+    "hold_window_seconds": 0.9496666789054871,
+    "hold_scope": "The sampled final FC/AP frame remains on the persistent branch graph from clip stop until natural scene exit; this is not an infinite residency claim.",
+    "base_runtime": {
+      "ordered_events": [
+        "game-clear",
+        "play-clear",
+        "play-additional",
+        "base-controller-play",
+        "clear-finished",
+        "clear-callback",
+        "exit"
+      ],
+      "game_clear_t_ms": 104551,
+      "clear_finished_t_ms": 107784,
+      "exit_t_ms": 107800,
+      "clear_duration_ms": 3233,
+      "exit_after_finished_ms": 16,
+      "additional_controller_observed": false,
+      "route_scope": "Auto Live clear status 1 confirms only the base controller; it is not used as an FC/AP branch observation."
+    },
+    "branch_authority": "Serialized FC/AP controllers/clips plus the clear-status callgraph confirm branch selection and final-frame sampling. No Auto status-1 frame is presented as an FC/AP device frame."
+  },
+  "full_combo_all_perfect_complete_animation": {
+    "clear_status_mapping": {
+      "1": "base clear only",
+      "2": "base + FullCombo_text_in",
+      "3": "base + AllPerfect_text_in"
+    },
+    "base": {
+      "object_count": 43,
+      "particle_system_count": 40,
+      "clip_stop_time": 3.0,
+      "curve_count": 44
+    },
+    "full_combo": {
+      "object_count": 25,
+      "particle_system_count": 6,
+      "animation_key": "FullCombo_text_in",
+      "clip": {
+        "name": "FullCombo_text_in",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 2.2833333015441895,
+        "loop_time": false,
+        "curve_count": 104,
+        "phase_seconds": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.5,
+          2.0,
+          2.2831666469573975
+        ],
+        "disposition_counts": {
+          "particle-activation": 5,
+          "particle-profile-static": 2,
+          "particle-static-transform": 3,
+          "pixi-local-position": 22,
+          "pixi-local-rotation-z": 2,
+          "pixi-local-scale": 14,
+          "pixi-visible": 17,
+          "pixi-widget-alpha": 17,
+          "portable-2d-projected-z": 7,
+          "portable-2d-redundant-euler": 4,
+          "portable-2d-redundant-z": 11
+        },
+        "all_channels_classified": true,
+        "channel_matrix_sha256": "791CBE88BC41BC4BB7C4B2D91DCD244587615614CCA75EB365FD0EF8FB029F1A",
+        "channels": [
+          {
+            "index": 0,
+            "channel": "content/FullCombo_C.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000AEC2",
+              "0000AEC2",
+              "0000AEC2",
+              "0000AEC2",
+              "0000AEC2",
+              "0000AEC2",
+              "0000AEC2"
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "content/FullCombo_C.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "AAAA2A42",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "content/FullCombo_C.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "content/FullCombo_L2.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00003EC3",
+              "00003EC3",
+              "00003EC3",
+              "00003EC3",
+              "00003EC3",
+              "00003EC3",
+              "00003EC3"
+            ]
+          },
+          {
+            "index": 4,
+            "channel": "content/FullCombo_L2.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 5,
+            "channel": "content/FullCombo_L2.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 6,
+            "channel": "content/FullCombo_M.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000FA42",
+              "0000FA42",
+              "0000FA42",
+              "0000FA42",
+              "0000FA42",
+              "0000FA42",
+              "0000FA42"
+            ]
+          },
+          {
+            "index": 7,
+            "channel": "content/FullCombo_M.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00008042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 8,
+            "channel": "content/FullCombo_M.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 9,
+            "channel": "content/FullCombo_L1.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "000080C3",
+              "000080C3",
+              "000080C3",
+              "000080C3",
+              "000080C3",
+              "000080C3",
+              "000080C3"
+            ]
+          },
+          {
+            "index": 10,
+            "channel": "content/FullCombo_L1.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "AAAAAA41",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 11,
+            "channel": "content/FullCombo_L1.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 12,
+            "channel": "content/FullCombo_U.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000A9C3",
+              "0000A9C3",
+              "0000A9C3",
+              "0000A9C3",
+              "0000A9C3",
+              "0000A9C3",
+              "0000A9C3"
+            ]
+          },
+          {
+            "index": 13,
+            "channel": "content/FullCombo_U.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "A8AA2A41",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 14,
+            "channel": "content/FullCombo_U.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 15,
+            "channel": "content/FullCombo_F.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3",
+              "0080D4C3"
+            ]
+          },
+          {
+            "index": 16,
+            "channel": "content/FullCombo_F.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 17,
+            "channel": "content/FullCombo_F.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 18,
+            "channel": "content/FullCombo_O1.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000041",
+              "00000041",
+              "00000041",
+              "00000041",
+              "00000041",
+              "00000041",
+              "00000041"
+            ]
+          },
+          {
+            "index": 19,
+            "channel": "content/FullCombo_O1.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "55555542",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 20,
+            "channel": "content/FullCombo_O1.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 21,
+            "channel": "content/FullCombo_O2.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "0080A343",
+              "0080A343",
+              "0080A343",
+              "0080A343",
+              "0080A343",
+              "0080A343"
+            ]
+          },
+          {
+            "index": 22,
+            "channel": "content/FullCombo_O2.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "A0AAAA40",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 23,
+            "channel": "content/FullCombo_O2.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 24,
+            "channel": "content/FullCombo_B.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "00006643",
+              "00006643",
+              "00006643",
+              "00006643",
+              "00006643",
+              "00006643",
+              "00006643"
+            ]
+          },
+          {
+            "index": 25,
+            "channel": "content/FullCombo_B.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00000000",
+              "55559542",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 26,
+            "channel": "content/FullCombo_B.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 27,
+            "channel": "content/FullCombo_Thunder.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000BE43",
+              "2176CB43",
+              "64FFD343",
+              "15B0BA43",
+              "0000BE43",
+              "0000BE43",
+              "0000BE43",
+              "0000BE43"
+            ]
+          },
+          {
+            "index": 28,
+            "channel": "content/FullCombo_Thunder.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000090C2",
+              "6EE209C2",
+              "ECC52AC1",
+              "DB77A2C2",
+              "000090C2",
+              "000090C2",
+              "000090C2",
+              "000090C2"
+            ]
+          },
+          {
+            "index": 29,
+            "channel": "content/FullCombo_Thunder.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 30,
+            "channel": "content/FullCombo_Star.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000080C1",
+              "000080C1",
+              "46A02D43",
+              "0080C443",
+              "0080C443",
+              "0080C443",
+              "0080C443",
+              "0080C443"
+            ]
+          },
+          {
+            "index": 31,
+            "channel": "content/FullCombo_Star.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000F041",
+              "0000F041",
+              "A99D86C1",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2"
+            ]
+          },
+          {
+            "index": 32,
+            "channel": "content/FullCombo_Star.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 33,
+            "channel": "content/FullCombo_Thunder.localEulerAnglesRaw.x",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 34,
+            "channel": "content/FullCombo_Thunder.localEulerAnglesRaw.y",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 35,
+            "channel": "content/FullCombo_Thunder.localEulerAnglesRaw.z",
+            "disposition": "pixi-local-rotation-z",
+            "portable_reason": "Unity local Euler Z maps to Pixi local rotation in radians.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "750468C0",
+              "F5566440",
+              "F5566440",
+              "F5566440",
+              "F5566440"
+            ]
+          },
+          {
+            "index": 36,
+            "channel": "content/FullCombo_Star.localEulerAnglesRaw.x",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 37,
+            "channel": "content/FullCombo_Star.localEulerAnglesRaw.y",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 38,
+            "channel": "content/FullCombo_Star.localEulerAnglesRaw.z",
+            "disposition": "pixi-local-rotation-z",
+            "portable_reason": "Unity local Euler Z maps to Pixi local rotation in radians.",
+            "phase_f32_bits": [
+              "00003443",
+              "6BE7E542",
+              "A87C2542",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 39,
+            "channel": "content/FullCombo_Un.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "FE8F803E",
+              "02C013BF",
+              "00D096BE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 40,
+            "channel": "content/FullCombo_Un.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 41,
+            "channel": "content/FullCombo_Un.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 42,
+            "channel": "content/FullCombo_Ko.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "FE8F803E",
+              "02C013BF",
+              "00D096BE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 43,
+            "channel": "content/FullCombo_Ko.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 44,
+            "channel": "content/FullCombo_Ko.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 45,
+            "channel": "content/FullCombo_Ru.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "FE8F803E",
+              "02C013BF",
+              "00D096BE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 46,
+            "channel": "content/FullCombo_Ru.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 47,
+            "channel": "content/FullCombo_Ru.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 48,
+            "channel": "content/FullCombo_Fu.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "FE8F803E",
+              "02C013BF",
+              "00D096BE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 49,
+            "channel": "content/FullCombo_Fu.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 50,
+            "channel": "content/FullCombo_Fu.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 51,
+            "channel": "content/FullCombo_Bo.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "FE8F803E",
+              "02C013BF",
+              "00D096BE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 52,
+            "channel": "content/FullCombo_Bo.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 53,
+            "channel": "content/FullCombo_Bo.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 54,
+            "channel": "content/FullCombo_Star.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "D8666E40",
+              "C1560640",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 55,
+            "channel": "content/FullCombo_Star.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "DA666E40",
+              "C0560640",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 56,
+            "channel": "content/FullCombo_Star.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "DA666E40",
+              "C0560640",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 57,
+            "channel": "content/FullCombo_Star_transparent.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "00C0563F",
+              "FFFF253F",
+              "00405E3F",
+              "F0A70640",
+              "00004040",
+              "00004040",
+              "00004040"
+            ]
+          },
+          {
+            "index": 58,
+            "channel": "content/FullCombo_Star_transparent.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "00C0563F",
+              "FFFF253F",
+              "00405E3F",
+              "F0A70640",
+              "00004040",
+              "00004040",
+              "00004040"
+            ]
+          },
+          {
+            "index": 59,
+            "channel": "content/FullCombo_Star_transparent.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 60,
+            "channel": "content/FullCombo_F.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 61,
+            "channel": "content/FullCombo_U.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "FFE45B3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 62,
+            "channel": "content/FullCombo_B.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "88211A3D",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 63,
+            "channel": "content/FullCombo_C.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "A4F3CC3E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 64,
+            "channel": "content/FullCombo_L1.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "F20E353F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 65,
+            "channel": "content/FullCombo_L2.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "E04F0D3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 66,
+            "channel": "content/FullCombo_M.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "96430B3E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 67,
+            "channel": "content/FullCombo_O1.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "A2BD843E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 68,
+            "channel": "content/FullCombo_O2.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "1000F0BC",
+              "02676E3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 69,
+            "channel": "content/FullCombo_Thunder.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "69CC68BF",
+              "FC2494BF",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 70,
+            "channel": "content/FullCombo_Thunder.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 71,
+            "channel": "content/FullCombo_C.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 72,
+            "channel": "content/FullCombo_L2.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 73,
+            "channel": "content/FullCombo_L1.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 74,
+            "channel": "content/FullCombo_U.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 75,
+            "channel": "content/FullCombo_F.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 76,
+            "channel": "content/FullCombo_Un.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 77,
+            "channel": "content/FullCombo_Ko.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 78,
+            "channel": "content/FullCombo_Ru.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 79,
+            "channel": "content/FullCombo_Fu.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 80,
+            "channel": "content/FullCombo_M.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 81,
+            "channel": "content/FullCombo_O1.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 82,
+            "channel": "content/FullCombo_B.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 83,
+            "channel": "content/FullCombo_O2.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 84,
+            "channel": "content/FullCombo_Star.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 85,
+            "channel": "content/FullCombo_Bo.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 86,
+            "channel": "content/FullCombo_Un.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "811B4BBE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 87,
+            "channel": "content/FullCombo_Ko.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "811B4BBE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 88,
+            "channel": "content/FullCombo_Ru.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "811B4BBE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 89,
+            "channel": "content/FullCombo_Fu.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "811B4BBE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 90,
+            "channel": "content/FullCombo_Star.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "8AEA8D3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 91,
+            "channel": "content/FullCombo_Bo.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "811B4BBE",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 92,
+            "channel": "content/effect_par_firework_star.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 93,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.attribute_hash:1133446416.value",
+            "disposition": "particle-profile-static",
+            "portable_reason": "CRC32 1133446416 resolves to InitialModule.startRotation.scalar; the clip value is constant zero and equals the serialized ParticleSystem profile.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 94,
+            "channel": "content/FullCombo_Star_transparent.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 95,
+            "channel": "content/FullCombo_Star_transparent.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "0000803F",
+              "4114633F",
+              "BBF54A3F",
+              "52A21F3F",
+              "6B9B793E",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 96,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_ring.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 97,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 98,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 99,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star_b.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 100,
+            "channel": "content/effect_par_firework_star.attribute_hash:925582877.value",
+            "disposition": "particle-profile-static",
+            "portable_reason": "CRC32 925582877 resolves to looping; the clip value is constant one and equals the serialized ParticleSystem profile.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 101,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.x",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 102,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.y",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742"
+            ]
+          },
+          {
+            "index": 103,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.z",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          }
+        ]
+      }
+    },
+    "all_perfect": {
+      "object_count": 36,
+      "particle_system_count": 12,
+      "animation_key": "AllPerfect_text_in",
+      "clip": {
+        "name": "AllPerfect_text_in",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 2.2833333015441895,
+        "loop_time": false,
+        "curve_count": 129,
+        "phase_seconds": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.5,
+          2.0,
+          2.2831666469573975
+        ],
+        "disposition_counts": {
+          "particle-activation": 5,
+          "particle-profile-static": 2,
+          "particle-static-transform": 3,
+          "pixi-local-position": 24,
+          "pixi-local-rotation-z": 2,
+          "pixi-local-scale": 22,
+          "pixi-visible": 22,
+          "pixi-widget-alpha": 22,
+          "portable-2d-projected-z": 11,
+          "portable-2d-redundant-euler": 4,
+          "portable-2d-redundant-z": 12
+        },
+        "all_channels_classified": true,
+        "channel_matrix_sha256": "FD10736EECE84E6C49EAE17AACD0BFB4AABD4518B20178C58D5026AF6786AD51",
+        "channels": [
+          {
+            "index": 0,
+            "channel": "content/01_AllPerfect_A.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3",
+              "0000C3C3"
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "content/01_AllPerfect_A.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "content/01_AllPerfect_A.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "content/02_AllPerfect_L_1.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000098C3",
+              "000098C3",
+              "000098C3",
+              "000098C3",
+              "000098C3",
+              "000098C3",
+              "000098C3",
+              "000098C3"
+            ]
+          },
+          {
+            "index": 4,
+            "channel": "content/02_AllPerfect_L_1.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "A8AA2A41",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 5,
+            "channel": "content/02_AllPerfect_L_1.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 6,
+            "channel": "content/03_AllPerfect_L_2.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00006DC3",
+              "00006DC3",
+              "00006DC3",
+              "00006DC3",
+              "00006DC3",
+              "00006DC3",
+              "00006DC3",
+              "00006DC3"
+            ]
+          },
+          {
+            "index": 7,
+            "channel": "content/03_AllPerfect_L_2.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "AAAAAA41",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 8,
+            "channel": "content/03_AllPerfect_L_2.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 9,
+            "channel": "content/AllPerfect_Star.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000080C1",
+              "F62DA7C1",
+              "DEF5E842",
+              "0080C443",
+              "0080C443",
+              "0080C443",
+              "0080C443",
+              "0080C443"
+            ]
+          },
+          {
+            "index": 10,
+            "channel": "content/AllPerfect_Star.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000F041",
+              "D6ACF941",
+              "48C52DC0",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2",
+              "00008EC2"
+            ]
+          },
+          {
+            "index": 11,
+            "channel": "content/AllPerfect_Star.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 12,
+            "channel": "content/AllPerfect_Thunder.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000BE43",
+              "7920C843",
+              "48C5D343",
+              "A654BC43",
+              "B51DBD43",
+              "0000BE43",
+              "0000BE43",
+              "0000BE43"
+            ]
+          },
+          {
+            "index": 13,
+            "channel": "content/AllPerfect_Thunder.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000090C2",
+              "00122FC2",
+              "ECE534C1",
+              "D24E99C2",
+              "C8ED94C2",
+              "000090C2",
+              "000090C2",
+              "000090C2"
+            ]
+          },
+          {
+            "index": 14,
+            "channel": "content/AllPerfect_Thunder.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 15,
+            "channel": "content/04_AllPerfect_P.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "000009C3",
+              "000009C3",
+              "000009C3",
+              "000009C3",
+              "000009C3",
+              "000009C3",
+              "000009C3",
+              "000009C3"
+            ]
+          },
+          {
+            "index": 16,
+            "channel": "content/04_AllPerfect_P.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "00000042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 17,
+            "channel": "content/04_AllPerfect_P.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 18,
+            "channel": "content/05_AllPerfect_E.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00006CC2",
+              "00006CC2",
+              "00006CC2",
+              "00006CC2",
+              "00006CC2",
+              "00006CC2",
+              "00006CC2",
+              "00006CC2"
+            ]
+          },
+          {
+            "index": 19,
+            "channel": "content/05_AllPerfect_E.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "AAAA2A42",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 20,
+            "channel": "content/05_AllPerfect_E.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 21,
+            "channel": "content/06_AllPerfect_R.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00009841",
+              "00009841",
+              "00009841",
+              "00009841",
+              "00009841",
+              "00009841",
+              "00009841",
+              "00009841"
+            ]
+          },
+          {
+            "index": 22,
+            "channel": "content/06_AllPerfect_R.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "55555542",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 23,
+            "channel": "content/06_AllPerfect_R.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 24,
+            "channel": "content/07_AllPerfect_F.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000C242",
+              "0000C242",
+              "0000C242",
+              "0000C242",
+              "0000C242",
+              "0000C242",
+              "0000C242",
+              "0000C242"
+            ]
+          },
+          {
+            "index": 25,
+            "channel": "content/07_AllPerfect_F.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "00008042",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 26,
+            "channel": "content/07_AllPerfect_F.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 27,
+            "channel": "content/08_AllPerfect_E_1.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00003143",
+              "00003143",
+              "00003143",
+              "00003143",
+              "00003143",
+              "00003143",
+              "00003143",
+              "00003143"
+            ]
+          },
+          {
+            "index": 28,
+            "channel": "content/08_AllPerfect_E_1.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "55559542",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 29,
+            "channel": "content/08_AllPerfect_E_1.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 30,
+            "channel": "content/09_AllPerfect_C.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "00808243",
+              "00808243",
+              "00808243",
+              "00808243",
+              "00808243",
+              "00808243",
+              "00808243",
+              "00808243"
+            ]
+          },
+          {
+            "index": 31,
+            "channel": "content/09_AllPerfect_C.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "0000A042",
+              "A0AAAA40",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 32,
+            "channel": "content/09_AllPerfect_C.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 33,
+            "channel": "content/10_AllPerfect_T.m_LocalPosition.x",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0080B243",
+              "0080B243",
+              "0080B243",
+              "0080B243",
+              "0080B243",
+              "0080B243",
+              "0080B243",
+              "0080B243"
+            ]
+          },
+          {
+            "index": 34,
+            "channel": "content/10_AllPerfect_T.m_LocalPosition.y",
+            "disposition": "pixi-local-position",
+            "portable_reason": "Unity local X/Y maps to Pixi local X/-Y on the same serialized parent chain.",
+            "phase_f32_bits": [
+              "0000A042",
+              "0000A042",
+              "02008041",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 35,
+            "channel": "content/10_AllPerfect_T.m_LocalPosition.z",
+            "disposition": "portable-2d-redundant-z",
+            "portable_reason": "The channel is constant zero; it has no additional 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 36,
+            "channel": "content/AllPerfect_Star.localEulerAnglesRaw.x",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 37,
+            "channel": "content/AllPerfect_Star.localEulerAnglesRaw.y",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 38,
+            "channel": "content/AllPerfect_Star.localEulerAnglesRaw.z",
+            "disposition": "pixi-local-rotation-z",
+            "portable_reason": "Unity local Euler Z maps to Pixi local rotation in radians.",
+            "phase_f32_bits": [
+              "00003443",
+              "0000F042",
+              "447B4942",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 39,
+            "channel": "content/AllPerfect_Thunder.localEulerAnglesRaw.x",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 40,
+            "channel": "content/AllPerfect_Thunder.localEulerAnglesRaw.y",
+            "disposition": "portable-2d-redundant-euler",
+            "portable_reason": "Euler X/Y is constant zero and has no independent 2D framebuffer effect.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 41,
+            "channel": "content/AllPerfect_Thunder.localEulerAnglesRaw.z",
+            "disposition": "pixi-local-rotation-z",
+            "portable_reason": "Unity local Euler Z maps to Pixi local rotation in radians.",
+            "phase_f32_bits": [
+              "F5566440",
+              "D0FB0541",
+              "E3E15241",
+              "F5566440",
+              "B07E183F",
+              "F5566440",
+              "F5566440",
+              "F5566440"
+            ]
+          },
+          {
+            "index": 42,
+            "channel": "content/AllPerfect_Star.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "F07D6440",
+              "099E1C40",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 43,
+            "channel": "content/AllPerfect_Star.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "F67D6440",
+              "0A9E1C40",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 44,
+            "channel": "content/AllPerfect_Star.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "F67D6440",
+              "0A9E1C40",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 45,
+            "channel": "content/AllPerfect_Star_transparent.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "8E235F3F",
+              "8DE3283F",
+              "8EA34C3F",
+              "0200F03F",
+              "00004040",
+              "00004040",
+              "00004040"
+            ]
+          },
+          {
+            "index": 46,
+            "channel": "content/AllPerfect_Star_transparent.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "8E235F3F",
+              "8DE3283F",
+              "8EA34C3F",
+              "0200F03F",
+              "00004040",
+              "00004040",
+              "00004040"
+            ]
+          },
+          {
+            "index": 47,
+            "channel": "content/AllPerfect_Star_transparent.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 48,
+            "channel": "content/11_AllPerfect_O.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 49,
+            "channel": "content/11_AllPerfect_O.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 50,
+            "channel": "content/11_AllPerfect_O.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 51,
+            "channel": "content/19_AllPerfect_To.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 52,
+            "channel": "content/19_AllPerfect_To.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 53,
+            "channel": "content/19_AllPerfect_To.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 54,
+            "channel": "content/18_AllPerfect_Ku.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 55,
+            "channel": "content/18_AllPerfect_Ku.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 56,
+            "channel": "content/18_AllPerfect_Ku.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 57,
+            "channel": "content/17_AllPerfect_E_2.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 58,
+            "channel": "content/17_AllPerfect_E_2.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 59,
+            "channel": "content/17_AllPerfect_E_2.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 60,
+            "channel": "content/16_AllPerfect_Fu.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 61,
+            "channel": "content/16_AllPerfect_Fu.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 62,
+            "channel": "content/16_AllPerfect_Fu.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 63,
+            "channel": "content/15_AllPerfect_-_2.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 64,
+            "channel": "content/15_AllPerfect_-_2.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 65,
+            "channel": "content/15_AllPerfect_-_2.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 66,
+            "channel": "content/14_AllPerfect_Pa.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 67,
+            "channel": "content/14_AllPerfect_Pa.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 68,
+            "channel": "content/14_AllPerfect_Pa.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 69,
+            "channel": "content/13_AllPerfect_Ru.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 70,
+            "channel": "content/13_AllPerfect_Ru.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 71,
+            "channel": "content/13_AllPerfect_Ru.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 72,
+            "channel": "content/12_AllPerfect_-_1.m_LocalScale.x",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 73,
+            "channel": "content/12_AllPerfect_-_1.m_LocalScale.y",
+            "disposition": "pixi-local-scale",
+            "portable_reason": "Unity local X/Y scale maps to the persistent Pixi node.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 74,
+            "channel": "content/12_AllPerfect_-_1.m_LocalScale.z",
+            "disposition": "portable-2d-projected-z",
+            "portable_reason": "The animated Z scale is classified and sampled but has no independent effect in the evidence-bounded orthographic 2D sprite projection.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 75,
+            "channel": "content/effect_par_firework_star.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 76,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.attribute_hash:1133446416.value",
+            "disposition": "particle-profile-static",
+            "portable_reason": "CRC32 1133446416 resolves to InitialModule.startRotation.scalar; the clip value is constant zero and equals the serialized ParticleSystem profile.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 77,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_ring.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 78,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_star_center.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 79,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 80,
+            "channel": "content/effect_par_firework_star/effect_fullcombo_firework_star_b.m_IsActive.value",
+            "disposition": "particle-activation",
+            "portable_reason": "Particle-system activation is converted to an exact clip-derived start offset while preserving the serialized graph owner.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 81,
+            "channel": "content/effect_par_firework_star.attribute_hash:925582877.value",
+            "disposition": "particle-profile-static",
+            "portable_reason": "CRC32 925582877 resolves to looping; the clip value is constant one and equals the serialized ParticleSystem profile.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 82,
+            "channel": "content/01_AllPerfect_A.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 83,
+            "channel": "content/02_AllPerfect_L_1.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 84,
+            "channel": "content/02_AllPerfect_L_1.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "DEDD5D3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 85,
+            "channel": "content/03_AllPerfect_L_2.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 86,
+            "channel": "content/03_AllPerfect_L_2.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "BCBB3B3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 87,
+            "channel": "content/01_AllPerfect_A.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 88,
+            "channel": "content/AllPerfect_Star.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 89,
+            "channel": "content/AllPerfect_Star.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "BDC1573F",
+              "0C5E913F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 90,
+            "channel": "content/AllPerfect_Star_transparent.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0EF56F3F",
+              "2445573F",
+              "FAB8293F",
+              "43DEA43E",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 91,
+            "channel": "content/AllPerfect_Star_transparent.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 92,
+            "channel": "content/AllPerfect_Thunder.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "C4C03EBF",
+              "D4EBA5BF",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 93,
+            "channel": "content/AllPerfect_Thunder.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 94,
+            "channel": "content/10_AllPerfect_T.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 95,
+            "channel": "content/07_AllPerfect_F.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 96,
+            "channel": "content/04_AllPerfect_P.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 97,
+            "channel": "content/06_AllPerfect_R.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 98,
+            "channel": "content/05_AllPerfect_E.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 99,
+            "channel": "content/08_AllPerfect_E_1.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 100,
+            "channel": "content/09_AllPerfect_C.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 101,
+            "channel": "content/10_AllPerfect_T.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "CCCC4C3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 102,
+            "channel": "content/07_AllPerfect_F.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "CECC4C3E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 103,
+            "channel": "content/04_AllPerfect_P.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "9A99193F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 104,
+            "channel": "content/06_AllPerfect_R.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "ABAAAA3E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 105,
+            "channel": "content/05_AllPerfect_E.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "F0EEEE3E",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 106,
+            "channel": "content/08_AllPerfect_E_1.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "8988883D",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 107,
+            "channel": "content/09_AllPerfect_C.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "F0EE6E3F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 108,
+            "channel": "content/11_AllPerfect_O.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 109,
+            "channel": "content/11_AllPerfect_O.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 110,
+            "channel": "content/19_AllPerfect_To.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 111,
+            "channel": "content/18_AllPerfect_Ku.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 112,
+            "channel": "content/17_AllPerfect_E_2.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 113,
+            "channel": "content/16_AllPerfect_Fu.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 114,
+            "channel": "content/15_AllPerfect_-_2.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 115,
+            "channel": "content/14_AllPerfect_Pa.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 116,
+            "channel": "content/13_AllPerfect_Ru.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 117,
+            "channel": "content/12_AllPerfect_-_1.mColor.a.value",
+            "disposition": "pixi-widget-alpha",
+            "portable_reason": "Serialized NGUI widget alpha maps to the object's visual children without replacing RGB.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 118,
+            "channel": "content/19_AllPerfect_To.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 119,
+            "channel": "content/18_AllPerfect_Ku.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 120,
+            "channel": "content/17_AllPerfect_E_2.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 121,
+            "channel": "content/16_AllPerfect_Fu.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 122,
+            "channel": "content/15_AllPerfect_-_2.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 123,
+            "channel": "content/14_AllPerfect_Pa.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 124,
+            "channel": "content/13_AllPerfect_Ru.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 125,
+            "channel": "content/12_AllPerfect_-_1.m_IsActive.value",
+            "disposition": "pixi-visible",
+            "portable_reason": "GameObject active state maps to the persistent portable node's visible state.",
+            "phase_f32_bits": [
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F",
+              "0000803F"
+            ]
+          },
+          {
+            "index": 126,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.x",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          },
+          {
+            "index": 127,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.y",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742",
+              "F47D3742"
+            ]
+          },
+          {
+            "index": 128,
+            "channel": "content/effect_par_firework_star.m_LocalPosition.z",
+            "disposition": "particle-static-transform",
+            "portable_reason": "The channel is constant and equal to the serialized particle graph transform consumed before simulation.",
+            "phase_f32_bits": [
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000",
+              "00000000"
+            ]
+          }
+        ]
+      }
+    },
+    "resolved_attribute_hashes": {
+      "1133446416": "InitialModule.startRotation.scalar",
+      "925582877": "looping"
+    },
+    "unknown_channel_count": 0,
+    "portable_requirement": "Every one of 104 FC and 129 AP channels must be classified and sampled from the independent fixture. Particle activation/static transform/profile channels are consumed by the particle profile; planar Transform, alpha and active channels are consumed by the persistent serialized graph; redundant 3D channels are admitted only under the stated constant/redundant 2D projection proof."
+  },
+  "closure": {
+    "user_issue_count": 7,
+    "closed_issue_ids": [
+      "SVL-R01",
+      "SVL-R02",
+      "SVL-R03",
+      "SVL-R04",
+      "SVL-R05",
+      "SVL-R06",
+      "SVL-R07"
+    ],
+    "production_authorization": true,
+    "authorization_boundary": "Portable Browser/Pixi reconstruction after independent fixture and framebuffer tests; no fixed-device Unity/GPU pixel-exact claim.",
+    "open_not_claimed": [
+      "natural-manual-FC-device-frame",
+      "natural-manual-AP-device-frame",
+      "fixed-device-GPU-framebuffer-exact"
+    ]
+  }
+}
