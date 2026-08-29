@@ -1408,10 +1408,17 @@
     },
     {
       "path": "reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
-      "sourceReverseCommit": "e5a15b823193f09e8262d4152e2e8ec7da2af9b7",
+      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
       "sourcePath": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
-      "bytes": 152585,
-      "sha256": "242049AAE84007E9E580423F929D2C1164F7091A9473C7A47CAD355DC55077B2"
+      "bytes": 152733,
+      "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "bytes": 6494,
+      "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626"
     }
   ]
 }

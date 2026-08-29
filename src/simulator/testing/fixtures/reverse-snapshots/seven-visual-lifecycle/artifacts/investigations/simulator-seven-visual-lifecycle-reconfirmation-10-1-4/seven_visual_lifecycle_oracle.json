@@ -4503,8 +4503,9 @@
       "SVL-R06",
       "SVL-R07"
     ],
-    "production_authorization": true,
-    "authorization_boundary": "Portable Browser/Pixi reconstruction after independent fixture and framebuffer tests; no fixed-device Unity/GPU pixel-exact claim.",
+    "portable_reconstruction_authorization": true,
+    "production_consumption_equivalence_authorization": false,
+    "authorization_boundary": "Authorizes portable Browser/Pixi implementation work only. It does not verify a GarupaEditor production consumer or a fresh Windows same-state visual change; no fixed-device Unity/GPU pixel-exact claim.",
     "open_not_claimed": [
       "natural-manual-FC-device-frame",
       "natural-manual-AP-device-frame",

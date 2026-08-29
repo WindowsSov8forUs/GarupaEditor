@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "status": "portable-evidence-retained-product-visible-closure-withdrawn",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "source_oracle": {
+    "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
+    "bytes": 152733,
+    "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
+  },
+  "correction": {
+    "retained": "SVL-R01..SVL-R07 remain valid original-behaviour and portable reconstruction requirements.",
+    "withdrawn": "The source oracle does not verify that any GarupaEditor production build consumed those requirements or that a fresh production window visibly changed.",
+    "reason": "Its acceptance inputs are original-device observations and reconstruction profiles only. They contain no before/after candidate capture, no fresh-release module identity, and no same-state original-versus-candidate framebuffer comparison.",
+    "forbidden_shortcuts": [
+      "object-count-only",
+      "command-presence-only",
+      "stable-digest-without-independent-expected",
+      "nonzero-pixel-only",
+      "animation-generation-only",
+      "candidate-generated-expected"
+    ]
+  },
+  "route_correction": {
+    "natural_auto_clear_status": 1,
+    "meaning": "base-clear-only",
+    "forbidden_reclassification": [
+      "full-combo",
+      "all-perfect"
+    ],
+    "device_anchor": {
+      "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0035-clear-phase-0.25s.png",
+      "bytes": 120373,
+      "sha256": "DD20C36E3B438E3AF5EDB2EC9CE2E41B730536899F0C43E5F74DD740BDAE3494"
+    },
+    "implementation_requirement": "An Auto Live implementation must not derive FC/AP clear status from synthetic Perfect judgements. FC/AP production rendering must be tested through an explicit isolated presentation route until natural Manual evidence exists."
+  },
+  "same_state_acceptance": {
+    "fresh_product_window_required": true,
+    "production_module_identity_required": true,
+    "capture_state_identity": [
+      "mode",
+      "manual-or-auto",
+      "chart-and-timeline-position",
+      "score-and-rank",
+      "slide-owner-and-current-node",
+      "effect-or-clip-phase",
+      "terminal-clear-status",
+      "viewport-css-size-and-device-pixel-ratio"
+    ],
+    "original_device_anchors": {
+      "ordinary_particle": {
+        "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0003-particle-particle-play.png",
+        "bytes": 818077,
+        "sha256": "A5BB50DF6227E748C28BCF3723B3C126B9C5BE4D8D1668810D68BD634F915141"
+      },
+      "rank_five_entry": {
+        "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0018-rank-5-score-872726.png",
+        "bytes": 1106116,
+        "sha256": "00E2EEFA6430CFA1C27D8E1DF144679F74A8B7327853B0A32A70CF909109F721"
+      },
+      "base_clear": {
+        "path": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/runtime/auto-expert-ss-r1/frame-0035-clear-phase-0.25s.png",
+        "bytes": 120373,
+        "sha256": "DD20C36E3B438E3AF5EDB2EC9CE2E41B730536899F0C43E5F74DD740BDAE3494"
+      }
+    },
+    "pixel_rule": "A product-visible closure requires an independently selected original-device crop or an independently derived portable primitive/framebuffer oracle at the same state. Candidate A/B screenshots alone prove only that code changed, not original equivalence."
+  },
+  "issue_disposition": [
+    {
+      "id": "SVL-R01",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-unverified",
+      "required_counterexample": "Render the same ordinary judgement and base-clear particle state with a deliberately double-alpha/wrong-atlas-row variant; the accepted production framebuffer must reject both variants and consume the fresh production path."
+    },
+    {
+      "id": "SVL-R02",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-unverified",
+      "required_counterexample": "Use a Slide whose head button type differs from its first current after-node, then prove the fresh product window binds the first-current resource and visibly moves the same owner."
+    },
+    {
+      "id": "SVL-R03",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-unverified",
+      "required_counterexample": "Prove one TapKeep owner remains visible and follows at least two current-node transitions before one terminal stop/clear in the fresh product path."
+    },
+    {
+      "id": "SVL-R04",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-unverified",
+      "required_counterexample": "Capture rank-five entry at score 872726 and the five committed above-SS score rows; reject a frozen-SS-width panel in an independently observed framebuffer crop."
+    },
+    {
+      "id": "SVL-R05",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-unverified",
+      "required_counterexample": "Observe the same ScoreGaugeSS owner through at least two 3-second cycles and reject a same-rank restart variant using framebuffer phase, not generation alone."
+    },
+    {
+      "id": "SVL-R06",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-original-device-branch-unavailable",
+      "required_counterexample": "Use the isolated FC/AP presentation route to reject disappearance at 2.2833333 seconds and retain the final frame until 3.233 seconds; do not call an Auto status-1 frame FC/AP evidence."
+    },
+    {
+      "id": "SVL-R07",
+      "portable_requirement_status": "retained",
+      "product_visible_status": "open-original-device-branch-unavailable",
+      "required_counterexample": "Use the isolated FC and AP presentation routes to consume every 104/129 channel and reject an omitted-channel variant; natural Manual device pixels remain open_not_claimed."
+    }
+  ],
+  "claim_boundary": {
+    "portable_reconstruction_authorized": true,
+    "garupa_production_consumption_verified": false,
+    "fresh_windows_visible_equivalence_verified": false,
+    "natural_manual_fc_ap_device_frame": "open_not_claimed",
+    "fixed_device_gpu_framebuffer_exact": "open_not_claimed"
+  }
+}

@@ -10,7 +10,12 @@ const FIXTURE = join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
 );
+const GAP_FIXTURE = join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+);
 const oracle = JSON.parse(readFileSync(FIXTURE, "utf8"));
+const gap = JSON.parse(readFileSync(GAP_FIXTURE, "utf8"));
 
 assert.equal(oracle.schema_version, 1);
 assert.equal(oracle.status, "confirmed-current-seven-visual-lifecycle-reconfirmation");
@@ -25,9 +30,24 @@ assert.equal(oracle.closure.user_issue_count, 7);
 assert.deepEqual(oracle.closure.closed_issue_ids, [
   "SVL-R01", "SVL-R02", "SVL-R03", "SVL-R04", "SVL-R05", "SVL-R06", "SVL-R07",
 ]);
-assert.equal(oracle.closure.production_authorization, true);
-assert.match(oracle.closure.authorization_boundary, /Portable Browser\/Pixi/);
+assert.equal(oracle.closure.portable_reconstruction_authorization, true);
+assert.equal(oracle.closure.production_consumption_equivalence_authorization, false);
+assert.match(oracle.closure.authorization_boundary, /does not verify a GarupaEditor production consumer/);
 assert.match(oracle.authority.device_scope, /does not claim fixed-device GPU framebuffer identity/);
+
+assert.equal(gap.status, "portable-evidence-retained-product-visible-closure-withdrawn");
+assert.equal(gap.route_correction.natural_auto_clear_status, 1);
+assert.equal(gap.route_correction.meaning, "base-clear-only");
+assert.deepEqual(gap.issue_disposition.map((row: any) => row.id), oracle.closure.closed_issue_ids);
+assert.equal(gap.issue_disposition.every((row: any) =>
+  row.portable_requirement_status === "retained" && row.product_visible_status.startsWith("open-")), true);
+assert.equal(gap.claim_boundary.portable_reconstruction_authorized, true);
+assert.equal(gap.claim_boundary.garupa_production_consumption_verified, false);
+assert.equal(gap.claim_boundary.fresh_windows_visible_equivalence_verified, false);
+assert.deepEqual(new Set(gap.correction.forbidden_shortcuts), new Set([
+  "object-count-only", "command-presence-only", "stable-digest-without-independent-expected",
+  "nonzero-pixel-only", "animation-generation-only", "candidate-generated-expected",
+]));
 
 const particle = oracle.particle_texture_material_color_blend;
 assert.deepEqual(particle.tiles, [4, 4]);
@@ -137,7 +157,7 @@ assert.deepEqual(complete.resolved_attribute_hashes, {
 assert.equal(complete.unknown_channel_count, 0);
 assert.match(complete.portable_requirement, /Every one of 104 FC and 129 AP channels/);
 
-console.log("seven visual lifecycle independent oracle passed: SVL-R01..SVL-R07 channels=104/129 fixture-only expected values");
+console.log("seven visual portable oracle retained; product-visible closure withdrawn: Auto=base-only status 1, SVL-R01..R07 open");
 
 function verifyBranch(
   branch: any,

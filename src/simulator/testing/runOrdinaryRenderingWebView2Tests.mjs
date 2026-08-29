@@ -208,7 +208,7 @@ function verify(value) {
   equal(value.scene.rootLabel, "GarupaSimulatorCombinedScene", "combined scene root");
   equal(JSON.stringify(value.scene.stageOrder), JSON.stringify(["GarupaSimulatorRoot", "GarupaSimulatorRoot/GarupaSimulatorParticles"]), "combined stage order");
   equal(value.scene.chartBatchCount, 656, "registered full chart batch count");
-  equal(value.scene.naturalClearStatus, 3, "natural completion status");
+  equal(value.scene.naturalClearStatus, 1, "natural Auto completion must remain base-only");
   equal(JSON.stringify(value.scene.sevenVisualLifecycle), JSON.stringify({
     status: "confirmed-current-seven-visual-lifecycle-reconfirmation",
     fullComboChannels: 104,

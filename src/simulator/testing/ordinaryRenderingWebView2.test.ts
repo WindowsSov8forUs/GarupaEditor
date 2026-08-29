@@ -87,6 +87,7 @@ interface BrowserSession {
   readonly layout: SimulatorSceneLayout;
   readonly controlOverlay: PixiInGameControlOverlay;
   readonly linearOutput: PixiLinearOutputOwner;
+  readonly audio: VisualLifecycleAudioBackend;
   mounted: boolean;
 }
 
@@ -174,9 +175,18 @@ async function main(): Promise<void> {
       result: postJudge.find((row) => row.renderObjectId === "render:hud:result"),
     })}`);
   }
-  requireOk(auto.engine.completeLiveAudio(3));
+  auto.audio.markBgmEnded();
+  requireOk(auto.engine.step(Math.fround(0.001)));
   sampleGameClear(auto, 1.2);
   assertGameClearWhite(auto);
+  const naturalClear = requiredGameClearSnapshot(auto);
+  if (naturalClear.hudGameClearParticleSystemCount !== 40 ||
+      (naturalClear.hudGameClearChannelValuesBits?.length ?? 0) !== 0) {
+    throw new Error(`natural Auto status 1 was reclassified as FC/AP: ${JSON.stringify({
+      particles: naturalClear.hudGameClearParticleSystemCount,
+      channels: naturalClear.hudGameClearChannelValuesBits?.length,
+    })}`);
+  }
   captures.push(await capture(app, auto, "natural-completion", 1401));
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
@@ -257,7 +267,7 @@ async function main(): Promise<void> {
   if (captures.some((entry) => entry.nonTransparentPixels <= 0 || entry.owners.visibleWorldRecords <= 0)) {
     throw new Error("every complete-scene event requires visible actual Pixi pixels and world records");
   }
-  if (naturalClearStatus !== 3) throw new Error(`natural completion clear status mismatch: ${naturalClearStatus}`);
+  if (naturalClearStatus !== 1) throw new Error(`natural Auto completion must remain base-only status 1: ${naturalClearStatus}`);
   const finalFontFaces = Array.from(document.fonts).length;
   if (finalFontFaces !== initialFontFaces || app.stage.children.length !== 0) {
     throw new Error(`browser owner cleanup mismatch fonts=${initialFontFaces}->${finalFontFaces} stage=${app.stage.children.length}`);
@@ -732,7 +742,7 @@ async function createSession(
     particleRenderer.highSortingStage,
   ));
   const linearOutput = installPixiLinearOutput(combined.root, WIDTH, HEIGHT);
-  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, linearOutput, mounted: false };
+  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, linearOutput, audio: visualLifecycleAudio, mounted: false };
 }
 
 function mount(app: Application, session: BrowserSession): void {
@@ -1101,6 +1111,7 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
   private nextSequence = 0;
   private pending: { readonly batch: AudioCommandBatch; readonly commands: readonly AudioCommand[] } | null = null;
   private readonly commands: AudioCommand[] = [];
+  private bgmEnded = false;
 
   constructor(
     private readonly sessionId: string,
@@ -1152,7 +1163,12 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
     return batch.status === "accepted" ? this.commit(batch.value) : batch;
   }
 
-  getBgmPlaybackState() { return audioAccepted("playing" as const); }
+  markBgmEnded(): void {
+    if (this.state !== "ready") throw new Error("visual lifecycle BGM may end only while ready");
+    this.bgmEnded = true;
+  }
+
+  getBgmPlaybackState() { return audioAccepted(this.bgmEnded ? "ended" as const : "playing" as const); }
 
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never> {
     this.state = "faulted";

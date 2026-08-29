@@ -551,7 +551,7 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Natural BGM completion requires the recovered InGameRecord clear-status owner; a default clear status is forbidden.",
       );
     }
-    return this.completeLiveAudio(scoreLife.getClearStatus());
+    return this.completeLiveAudio(scoreLife.getNaturalCompletionClearStatus());
   }
 
   private pollMovieFault(): SimulatorResult<void> {

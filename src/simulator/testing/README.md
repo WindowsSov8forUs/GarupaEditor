@@ -48,7 +48,7 @@ npm.cmd run simulator:test:browser-webview2
 npm.cmd run simulator:test:ordinary-rendering-webview2
 ```
 
-第一项只读取Reverse `e5a15b82`晋升的单一独立fixture，锁定`SVL-R01..SVL-R07`、Slide稳定owner、五个`> SS` UIPanel Float32行、3秒SS循环、2.2833333秒附加clip、3.233秒终局及FC/AP 104/129逐channel矩阵。Browser门读取实际WebGL合成framebuffer，以非单位alpha反例区分一次alpha与错误二次alpha；ordinary三fresh门进一步要求game-clear `uvFrame=11`为top-left row 2、实际Pixi framebuffer区别被拒绝的row 1、ScoreGaugeSS 7.5秒不重启，以及FC/AP所有channel在最终帧保持至3.232秒。上述仅授权portable Browser/Pixi消费，不声明Unity/GPU fixed-device逐像素一致。
+第一项读取Reverse `9c627f1f`晋升的两个独立fixture：152,733-byte重建oracle保留`SVL-R01..SVL-R07`、Slide稳定owner、五个`> SS` UIPanel Float32行、3秒SS循环、2.2833333秒附加clip、3.233秒终局及FC/AP 104/129逐channel矩阵；6,494-byte gap disposition则强制`production_consumption_equivalence_authorization=false`、自然Auto base-only status 1，并将七项产品可见状态全部保持open。Browser/WebView2仍验证受控alpha/atlas错误variant、SS loop和隔离FC/AP channel/final-hold route，但这些门不再被表述为fresh产品窗口同状态原作等价。对象数、命令、generation、自产digest与非零像素均不能单独关闭可见问题。
 
 ## Strict HUD/particle/Pause/terminal leaf
 

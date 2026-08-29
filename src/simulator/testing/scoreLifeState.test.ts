@@ -130,7 +130,8 @@ for (let index = 0; index < sources.length; index += 1) {
 assert.equal(auto.snapshot().record.score, BASE + 3);
 assert.equal(auto.snapshot().record.currentCombo, 3);
 assert.equal(auto.snapshot().scoreGauge.sliderValue, 1);
-assert.equal(auto.getClearStatus(), 3);
+assert.equal(auto.getClearStatus(), 3, "Auto record counters retain their Perfect result facts");
+assert.equal(auto.getNaturalCompletionClearStatus(), 1, "natural Auto Live is base-clear-only");
 
 const gauge = requireOk(SinglePlayScoreGauge.create(Object.freeze({
   profileIdentity: "garupa-editor-normalized-10m-v1",

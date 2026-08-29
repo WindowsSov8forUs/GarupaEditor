@@ -127,6 +127,10 @@ export class ScoreLifeStateManager {
     return this.record.getClearStatus(this.scoringPlan.totalScoringUnitCount);
   }
 
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 {
+    return this.mode.isAutoLive ? 1 : this.getClearStatus();
+  }
+
   freezeOneFrame(
     judgement: OneFrameJudgementData,
     source: NoteInformation,
