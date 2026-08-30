@@ -53,6 +53,8 @@ assert.deepEqual(new Set(gap.correction.forbidden_shortcuts), new Set([
   "object-count-only", "command-presence-only", "stable-digest-without-independent-expected",
   "nonzero-pixel-only", "animation-generation-only", "candidate-generated-expected",
 ]));
+assert.match(gap.same_state_acceptance.pixel_rule, /independently selected original-device crop/);
+assert.match(gap.same_state_acceptance.pixel_rule, /Candidate A\/B screenshots alone prove only that code changed/);
 
 const particle = oracle.particle_texture_material_color_blend;
 assert.deepEqual(particle.tiles, [4, 4]);
@@ -220,7 +222,7 @@ assert.deepEqual(fresh.closure.requirements, [
 ]);
 assert.equal(fresh.closure.garupa_editor_product_visible_closed, false);
 
-console.log("seven visual corrected portable requirements loaded from Reverse d4ab8146; fixture production-consumption authorization remains false");
+console.log("seven visual portable requirements loaded from Reverse d4ab8146; candidate observations do not close product-visible reconstruction");
 
 function verifyBranch(
   branch: any,

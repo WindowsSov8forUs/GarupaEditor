@@ -152,7 +152,7 @@ try {
   }
   const digest = createHash("sha256").update(baseline).digest("hex");
   console.log(
-    `ordinary production WebView2 aggregate acceptance passed: fresh=${freshRunCount} captures=${observed[0].scene.captures.length} ` +
+    `ordinary production WebView2 candidate observation passed (product-visible closure remains open): fresh=${freshRunCount} captures=${observed[0].scene.captures.length} ` +
     `digest=${digest} runtime=${runtimeVersion(observed[0])}`,
   );
 } finally {
