@@ -202,6 +202,7 @@ export class GarupaProductRenderProducer {
       const headIdentity = chain.visibleConnectionIdentities[0];
       const terminalIdentity = chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1];
       if (headIdentity === undefined || terminalIdentity === undefined) continue;
+      const slideRootObjectId = slideOwnerObjectId(chain.identity);
       const flashObjectId = slideFlashObjectId(chain.identity);
       const active = plannedJudged.has(headIdentity) && !plannedJudged.has(terminalIdentity);
       const currentIdentity = active
@@ -215,6 +216,16 @@ export class GarupaProductRenderProducer {
       }
       if (active) {
         const current = samples.get(currentIdentity!)!;
+        if (!plannedCreated.has(slideRootObjectId)) {
+          commands.push(command(commands.length, {
+            kind: "create-object",
+            renderObjectId: slideRootObjectId,
+            poolFamily: "garupa-product-note-slide-root",
+            role: "note-root",
+            parentObjectId: null,
+          }));
+          plannedCreated.add(slideRootObjectId);
+        }
         if (!plannedCreated.has(flashObjectId)) {
           const front = samples.get(headIdentity)!;
           commands.push(command(commands.length, {
@@ -222,7 +233,7 @@ export class GarupaProductRenderProducer {
             renderObjectId: flashObjectId,
             poolFamily: "garupa-product-note-long-flash",
             role: "note-intermediate",
-            parentObjectId: null,
+            parentObjectId: slideRootObjectId,
           }));
           const flashBinding = resolveProductSlideFlashBinding(front.node, this.resources);
           commands.push(command(commands.length, {
@@ -243,14 +254,28 @@ export class GarupaProductRenderProducer {
         if (targetScale.status !== "ok") return targetScale;
         commands.push(command(commands.length, {
           kind: "set-transform",
-          renderObjectId: flashObjectId,
+          renderObjectId: slideRootObjectId,
           position: target.value,
+          scale: vector2(1, 1),
+          rotationDegrees: f32(0),
+          color: white(),
+          ordering: ordering(3, 70, slideRootObjectId, target.value.z.value),
+          maskObjectId: null,
+        }));
+        commands.push(command(commands.length, {
+          kind: "set-transform",
+          renderObjectId: flashObjectId,
+          position: vector3(0, 0, 0),
           scale: vector2(targetScale.value.value, targetScale.value.value),
           rotationDegrees: f32(0),
           color: white(),
           ordering: ordering(3, 71, flashObjectId, target.value.z.value),
           maskObjectId: null,
         }));
+        if (!plannedVisible.has(slideRootObjectId)) {
+          commands.push(command(commands.length, { kind: "activate-object", renderObjectId: slideRootObjectId }));
+          plannedVisible.add(slideRootObjectId);
+        }
         if (!plannedVisible.has(flashObjectId)) {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: flashObjectId }));
           plannedVisible.add(flashObjectId);
@@ -273,7 +298,9 @@ export class GarupaProductRenderProducer {
           restart: false,
         }));
         commands.push(command(commands.length, { kind: "hide-object", renderObjectId: flashObjectId }));
+        commands.push(command(commands.length, { kind: "hide-object", renderObjectId: slideRootObjectId }));
         plannedVisible.delete(flashObjectId);
+        plannedVisible.delete(slideRootObjectId);
       } else if (plannedAnimationElapsed.has(flashObjectId)) {
         const elapsed = plannedAnimationElapsed.get(flashObjectId)!;
         commands.push(command(commands.length, {
@@ -849,6 +876,9 @@ function nodeObjectId(node: GarupaProductNode): string {
 }
 function lineObjectId(chainIdentity: string, segmentIndex: number): string {
   return `render:garupa:line:${chainIdentity}:${segmentIndex}`;
+}
+function slideOwnerObjectId(chainIdentity: string): string {
+  return `render:garupa:slide-owner:${chainIdentity}`;
 }
 function slideFlashObjectId(chainIdentity: string): string {
   return `render:garupa:slide-flash:${chainIdentity}`;

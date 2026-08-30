@@ -222,11 +222,14 @@ async function verifySlideFlashSameState(
   };
   commitFrame(head.absolutePosition, [head]);
   app.render();
+  const slideOwnerId = `render:garupa:slide-owner:${chain.identity}`;
   const flashId = `render:garupa:slide-flash:${chain.identity}`;
+  const acceptedOwner = renderer.sceneSnapshot().find((row) => row.renderObjectId === slideOwnerId);
   const accepted = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
   const sprite = renderer.stage.getChildByLabel(`${flashId}:sprite`, true);
-  if (accepted === undefined || !(sprite instanceof Sprite) ||
-      accepted.spriteBindingKey?.endsWith("note_long_flash_3") !== true || !accepted.visible) {
+  if (acceptedOwner === undefined || accepted === undefined || !(sprite instanceof Sprite) ||
+      accepted.parent !== slideOwnerId || accepted.spriteBindingKey?.endsWith("note_long_flash_3") !== true ||
+      !acceptedOwner.visible || !accepted.visible) {
     throw new Error(`SVF-R02 root-span Flash production tuple mismatch: ${JSON.stringify(accepted)}`);
   }
   const acceptedFramebuffer = await captureDisplayObjectFramebuffer(app, sprite);
@@ -250,32 +253,42 @@ async function verifySlideFlashSameState(
     throw new Error(`SVF-R02 framebuffer did not reject the first-current resource: ${JSON.stringify({ acceptedFramebuffer, rejectedHeadFramebuffer })}`);
   }
 
-  const firstPosition = accepted.position;
+  const firstPosition = acceptedOwner.position;
   commitFrame(firstCurrent.absolutePosition, [firstCurrent]);
   app.render();
-  const movedOnce = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
+  const movedOnceRows = renderer.sceneSnapshot();
+  const movedOnceOwner = movedOnceRows.find((row) => row.renderObjectId === slideOwnerId);
+  const movedOnce = movedOnceRows.find((row) => row.renderObjectId === flashId);
   commitFrame(secondCurrent.absolutePosition, [secondCurrent]);
   app.render();
-  const movedTwice = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
-  if (movedOnce === undefined || movedTwice === undefined ||
+  const movedTwiceRows = renderer.sceneSnapshot();
+  const movedTwiceOwner = movedTwiceRows.find((row) => row.renderObjectId === slideOwnerId);
+  const movedTwice = movedTwiceRows.find((row) => row.renderObjectId === flashId);
+  if (movedOnceOwner === undefined || movedTwiceOwner === undefined || movedOnce === undefined || movedTwice === undefined ||
       movedOnce.spriteBindingKey !== accepted.spriteBindingKey || movedTwice.spriteBindingKey !== accepted.spriteBindingKey ||
-      JSON.stringify(firstPosition) === JSON.stringify(movedOnce.position) ||
-      JSON.stringify(movedOnce.position) === JSON.stringify(movedTwice.position)) {
-    throw new Error(`SVF-R02 stable owner did not move through two current nodes: ${JSON.stringify({ accepted, movedOnce, movedTwice })}`);
+      movedOnce.parent !== slideOwnerId || movedTwice.parent !== slideOwnerId ||
+      JSON.stringify(firstPosition) === JSON.stringify(movedOnceOwner.position) ||
+      JSON.stringify(movedOnceOwner.position) === JSON.stringify(movedTwiceOwner.position)) {
+    throw new Error(`SVF-R02 stable owner did not move through two current nodes: ${JSON.stringify({ acceptedOwner, movedOnceOwner, movedTwiceOwner, accepted, movedOnce, movedTwice })}`);
   }
   commitFrame(terminal.absolutePosition, [terminal]);
   app.render();
-  const stopped = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId);
-  if (stopped?.visible !== false) throw new Error(`SVF-R02 terminal Flash remained visible: ${JSON.stringify(stopped)}`);
+  const stoppedRows = renderer.sceneSnapshot();
+  const stoppedOwner = stoppedRows.find((row) => row.renderObjectId === slideOwnerId);
+  const stopped = stoppedRows.find((row) => row.renderObjectId === flashId);
+  if (stoppedOwner?.visible !== false || stopped?.visible !== false) {
+    throw new Error(`SVF-R02 terminal Slide owner/Flash remained visible: ${JSON.stringify({ stoppedOwner, stopped })}`);
+  }
   return Object.freeze({
     chainIdentity: chain.identity,
     headIdentity: head.identity,
     firstCurrentIdentity: firstCurrent.identity,
     secondCurrentIdentity: secondCurrent.identity,
     terminalIdentity: terminal.identity,
-    stableOwnerId: flashId,
+    stableOwnerId: slideOwnerId,
+    flashChildId: flashId,
     exactKey: "note_long_flash_3",
-    positions: Object.freeze([firstPosition, movedOnce.position, movedTwice.position]),
+    positions: Object.freeze([firstPosition, movedOnceOwner.position, movedTwiceOwner.position]),
     acceptedFramebuffer,
     rejectedHeadFramebuffer,
     terminalVisible: false,

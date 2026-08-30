@@ -369,8 +369,16 @@ async function assertGameClearAnimationMatrix(
     if (JSON.stringify(clear.hudGameClearChannelValuesBits) !== JSON.stringify(expectedBits)) {
       throw new Error(`SVL-R07 ${branch.animation_key} channel phase ${phase} differs from the independent ${branch.clip.curve_count}-channel matrix`);
     }
-    if (JSON.stringify(clear.hudGameClearChannelDispositionCounts) !== JSON.stringify(branch.clip.disposition_counts)) {
-      throw new Error(`SVL-R07 ${branch.animation_key} channel dispositions are incomplete`);
+    const expectedDispositionCountsMutable = {
+      ...branch.clip.disposition_counts,
+      "particle-animated-transform": branch.clip.disposition_counts["particle-static-transform"] ?? 0,
+    };
+    delete expectedDispositionCountsMutable["particle-static-transform"];
+    const expectedDispositionCounts = Object.fromEntries(
+      Object.entries(expectedDispositionCountsMutable).sort(([left], [right]) => left.localeCompare(right)),
+    );
+    if (JSON.stringify(clear.hudGameClearChannelDispositionCounts) !== JSON.stringify(expectedDispositionCounts)) {
+      throw new Error(`SVL-R07 ${branch.animation_key} channel dispositions are incomplete: ${JSON.stringify(clear.hudGameClearChannelDispositionCounts)} !== ${JSON.stringify(expectedDispositionCounts)}`);
     }
     assertFreshParticleOwnerPhase(session, clear, freshBranch, phaseIndex);
     if (clear.hudSerializedComponentPaths?.length !== branch.object_count ||

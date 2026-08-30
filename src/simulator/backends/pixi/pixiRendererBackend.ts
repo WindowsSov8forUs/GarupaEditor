@@ -19,11 +19,13 @@ import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
 import {
-  buildGameClearParticleActivationSchedule,
+  buildGameClearParticleLifecycleSchedule,
   buildGameClearParticleProfile,
+  sampleGameClearParticleTransforms,
   type GameClearClipProfile,
   type GameClearGraphObject,
-  type GameClearParticleActivation,
+  type GameClearParticleLifecycleMutation,
+  type GameClearRuntimeProfile,
 } from "../resources/currentGameClearProfile";
 import { DeterministicParticleSimulation } from "../../engine/particles/particleSimulation";
 import { particleFloat32FromBits } from "../particleValidation";
@@ -172,7 +174,7 @@ interface PixiHudVisual {
   scoreHighRankGeneration: number;
   gameClearParticleSimulation: DeterministicParticleSimulation | null;
   gameClearParticleProfile: ParticlePortableProfile | null;
-  gameClearParticleActivationSchedule: readonly GameClearParticleActivation[];
+  gameClearParticleLifecycleSchedule: readonly GameClearParticleLifecycleMutation[];
   readonly gameClearParticleActivatedSystems: Set<string>;
   gameClearParticleElapsed: number;
   gameClearParticleContainer: Container | null;
@@ -1697,6 +1699,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
       if (leftRecord === undefined || rightRecord === undefined) {
         const externalLayer = (node: Container): boolean =>
+          node === spriteChild(parent) ||
           node.label === "GarupaSimulatorParticles" ||
           node.label === "GarupaSimulatorParticlesHigh" ||
           node.label.startsWith("tap-lane-effect-sprite-mask:");
@@ -2595,8 +2598,8 @@ function applyGameClearHud(
     const simulation = new DeterministicParticleSimulation(particleProfile, Math.fround(1));
     visual.gameClearParticleSimulation = simulation;
     visual.gameClearParticleProfile = particleProfile;
-    visual.gameClearParticleActivationSchedule = buildGameClearParticleActivationSchedule(profile, clearStatus);
-    advanceGameClearParticleSimulation(visual, clearStatus, 0);
+    visual.gameClearParticleLifecycleSchedule = buildGameClearParticleLifecycleSchedule(profile, clearStatus);
+    advanceGameClearParticleSimulation(visual, profile, clearStatus, 0);
     visual.gameClearParticleTextures = textures;
     visual.gameClearViewportHeight = object.resourceProfile.scene.projection.viewportHeight;
     visual.gameClearParticleContainer = new Container({ label: "game-clear-particles", sortableChildren: true });
@@ -2647,6 +2650,7 @@ function applyGameClearHud(
 
 function advanceGameClearParticleSimulation(
   visual: PixiHudVisual,
+  profile: GameClearRuntimeProfile,
   clearStatus: 1 | 2 | 3,
   elapsedSeconds: number,
 ): void {
@@ -2660,20 +2664,35 @@ function advanceGameClearParticleSimulation(
     ? "game-clear:base" as const
     : clearStatus === 2 ? "game-clear:full-combo" as const : "game-clear:all-perfect" as const;
   const instance = Object.freeze({ kind: "game-clear" as const, buttonType: 0 as const, rangeLength: null });
-  const due = visual.gameClearParticleActivationSchedule.filter((row) =>
-    !visual.gameClearParticleActivatedSystems.has(row.systemId) && row.activateAtSeconds <= target);
+  const due = visual.gameClearParticleLifecycleSchedule.filter((row) =>
+    row.atSeconds > visual.gameClearParticleElapsed && row.atSeconds <= target ||
+    visual.gameClearParticleElapsed === 0 && row.atSeconds === 0 &&
+      row.active !== visual.gameClearParticleActivatedSystems.has(row.systemId));
   for (let index = 0; index < due.length;) {
-    const activateAt = Math.max(cursor, due[index]!.activateAtSeconds);
-    if (activateAt > cursor) simulation.step(Math.fround(activateAt - cursor), false);
-    const systems: string[] = [];
-    while (index < due.length && due[index]!.activateAtSeconds <= activateAt) {
-      systems.push(due[index]!.systemId);
-      visual.gameClearParticleActivatedSystems.add(due[index]!.systemId);
+    const mutationAt = Math.max(cursor, due[index]!.atSeconds);
+    if (mutationAt > cursor) {
+      simulation.updateSystemTransforms(sampleGameClearParticleTransforms(profile, clearStatus, mutationAt));
+      simulation.step(Math.fround(mutationAt - cursor), false);
+    }
+    simulation.updateSystemTransforms(sampleGameClearParticleTransforms(profile, clearStatus, mutationAt));
+    const deactivate: string[] = [];
+    const activate: string[] = [];
+    while (index < due.length && due[index]!.atSeconds <= mutationAt) {
+      const mutation = due[index]!;
+      (mutation.active ? activate : deactivate).push(mutation.systemId);
       index += 1;
     }
-    simulation.playRootSystems("game-clear", instance, root, systems);
-    cursor = Math.fround(activateAt);
+    if (deactivate.length > 0) {
+      simulation.deactivateRootSystems("game-clear", deactivate);
+      for (const identity of deactivate) visual.gameClearParticleActivatedSystems.delete(identity);
+    }
+    if (activate.length > 0) {
+      simulation.playRootSystems("game-clear", instance, root, activate);
+      for (const identity of activate) visual.gameClearParticleActivatedSystems.add(identity);
+    }
+    cursor = Math.fround(mutationAt);
   }
+  simulation.updateSystemTransforms(sampleGameClearParticleTransforms(profile, clearStatus, target));
   if (target > cursor) simulation.step(Math.fround(target - cursor), false);
   visual.gameClearParticleElapsed = target;
 }
@@ -2690,11 +2709,11 @@ function renderGameClearParticles(
   clearGameClearParticleMeshes(container);
   for (const sample of simulation.samples()) {
     if (sample.material === null) continue;
-    const definition = bundle.systems.find((candidate) => candidate.identity === sample.systemId);
-    const particleProfile = definition === undefined ? undefined : bundle.profiles[definition.profile];
+    const definition = simulation.currentSystemDefinition(sample.systemId);
+    const particleProfile = bundle.profiles[definition.profile];
     const renderer = particleProfile === undefined ? undefined : bundle.rendererProfiles[particleProfile.renderer];
     const material = bundle.materials.find((candidate) => candidate.name === sample.material);
-    if (definition === undefined || particleProfile === undefined || renderer === undefined || material?.texture === null || material === undefined) {
+    if (particleProfile === undefined || renderer === undefined || material?.texture === null || material === undefined) {
       throw new Error(`Game-clear particle renderer graph is incomplete: ${sample.systemId}`);
     }
     const texture = gameClearParticleTexture(bundle, particleProfile, sample.uvFrame, textures, material.texture);
@@ -2724,6 +2743,7 @@ function renderGameClearParticles(
     // persistent HUD owner applies screenToSafeChildScale exactly once.
     const authoredPixelsPerWorldUnit = Math.fround(375);
     const projection = projectGameClearParticleSample(
+      simulation.particleEmitterOrigin(sample.particleId),
       definition,
       particleFloat32FromBits(sample.position.xBits)!,
       particleFloat32FromBits(sample.position.yBits)!,
@@ -2766,62 +2786,24 @@ function renderGameClearParticles(
 }
 
 function projectGameClearParticleSample(
+  emitterOrigin: readonly [number, number, number],
   definition: ParticleSystemDefinition,
   sampleX: number,
   sampleY: number,
   authoredPixelsPerWorldUnit: number,
 ): Readonly<{ readonly x: number; readonly y: number; readonly hierarchyScaleX: number; readonly hierarchyScaleY: number }> {
-  const transforms = [definition.transform, ...definition.parentTransforms];
-  let origin: readonly [number, number, number] = [0, 0, 0];
-  for (const transform of transforms) origin = applyGameClearParticleTransform(origin, transform);
-  // SVF-R01 + Local scaling-mode correction: simulation positions consume the
-  // full parent chain, while billboard size consumes the emitting
-  // ParticleSystem's own local scale once. Multiplying parent×child scales here
-  // collapsed the serialized 0.185 firework subtree to 0.185².
+  // moveWithTransform=0 keeps already-emitted particles in the Transform state
+  // captured at birth. Use that per-particle origin rather than the emitter's
+  // current animated position when splitting authored UI translation from
+  // world-unit displacement.
   const hierarchyScaleX = Math.abs(definition.transform.m_LocalScale.x);
   const hierarchyScaleY = Math.abs(definition.transform.m_LocalScale.y);
   return Object.freeze({
-    x: Math.fround(origin[0] + Math.fround(Math.fround(sampleX - origin[0]) * authoredPixelsPerWorldUnit)),
-    y: Math.fround(origin[1] + Math.fround(Math.fround(sampleY - origin[1]) * authoredPixelsPerWorldUnit)),
+    x: Math.fround(emitterOrigin[0] + Math.fround(Math.fround(sampleX - emitterOrigin[0]) * authoredPixelsPerWorldUnit)),
+    y: Math.fround(emitterOrigin[1] + Math.fround(Math.fround(sampleY - emitterOrigin[1]) * authoredPixelsPerWorldUnit)),
     hierarchyScaleX,
     hierarchyScaleY,
   });
-}
-
-function applyGameClearParticleTransform(
-  point: readonly [number, number, number],
-  transform: ParticleSystemDefinition["transform"],
-): readonly [number, number, number] {
-  const scaled = [
-    Math.fround(point[0] * transform.m_LocalScale.x),
-    Math.fround(point[1] * transform.m_LocalScale.y),
-    Math.fround(point[2] * transform.m_LocalScale.z),
-  ] as const;
-  const q = transform.m_LocalRotation;
-  const tx = Math.fround(2 * Math.fround(Math.fround(q.y * scaled[2]) - Math.fround(q.z * scaled[1])));
-  const ty = Math.fround(2 * Math.fround(Math.fround(q.z * scaled[0]) - Math.fround(q.x * scaled[2])));
-  const tz = Math.fround(2 * Math.fround(Math.fround(q.x * scaled[1]) - Math.fround(q.y * scaled[0])));
-  const rotatedX = gameClearParticleAdd(
-    scaled[0],
-    gameClearParticleAdd(Math.fround(q.w * tx), Math.fround(Math.fround(q.y * tz) - Math.fround(q.z * ty))),
-  );
-  const rotatedY = gameClearParticleAdd(
-    scaled[1],
-    gameClearParticleAdd(Math.fround(q.w * ty), Math.fround(Math.fround(q.z * tx) - Math.fround(q.x * tz))),
-  );
-  const rotatedZ = gameClearParticleAdd(
-    scaled[2],
-    gameClearParticleAdd(Math.fround(q.w * tz), Math.fround(Math.fround(q.x * ty) - Math.fround(q.y * tx))),
-  );
-  return Object.freeze([
-    gameClearParticleAdd(rotatedX, transform.m_LocalPosition.x),
-    gameClearParticleAdd(rotatedY, transform.m_LocalPosition.y),
-    gameClearParticleAdd(rotatedZ, transform.m_LocalPosition.z),
-  ] as const);
-}
-
-function gameClearParticleAdd(left: number, right: number): number {
-  return Math.fround(Math.fround(left) + Math.fround(right));
 }
 
 function clearGameClearParticleMeshes(container: Container): void {
@@ -2890,7 +2872,7 @@ function nguiPivot(value: string): { x: number; y: number } {
 type GameClearChannelDisposition =
   | "particle-activation"
   | "particle-profile-static"
-  | "particle-static-transform"
+  | "particle-animated-transform"
   | "pixi-local-position"
   | "pixi-local-rotation-z"
   | "pixi-local-scale"
@@ -2955,10 +2937,9 @@ function applyGameClearChannel(
   if (channel.includes(".m_LocalPosition.")) {
     const node = requiredGameClearChannelNode(visual, channel, ".m_LocalPosition.");
     const axis = channel.slice(channel.indexOf(".m_LocalPosition.") + ".m_LocalPosition.".length);
-    if (particleChannel) return "particle-static-transform";
-    if (axis === "x") { node.x = value; return "pixi-local-position"; }
-    if (axis === "y") { node.y = -value; return "pixi-local-position"; }
-    if (axis === "z") return "portable-2d-redundant-z";
+    if (axis === "x") { node.x = value; return particleChannel ? "particle-animated-transform" : "pixi-local-position"; }
+    if (axis === "y") { node.y = -value; return particleChannel ? "particle-animated-transform" : "pixi-local-position"; }
+    if (axis === "z") return particleChannel ? "particle-animated-transform" : "portable-2d-redundant-z";
   }
   if (channel.includes(".m_LocalScale.")) {
     const node = requiredGameClearChannelNode(visual, channel, ".m_LocalScale.");
@@ -3155,7 +3136,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreHighRankGeneration: 0,
     gameClearParticleSimulation: null,
     gameClearParticleProfile: null,
-    gameClearParticleActivationSchedule: Object.freeze([]),
+    gameClearParticleLifecycleSchedule: Object.freeze([]),
     gameClearParticleActivatedSystems: new Set<string>(),
     gameClearParticleElapsed: 0,
     gameClearParticleContainer: null,
@@ -3900,32 +3881,8 @@ function applyScoreHud(
     visual.scoreRankSprites.push(rankLabel);
   }
 
-  const panel = scene.gauge.highRankPanel;
-  if (visual.scoreHighRankPanelMask === null) {
-    throw new Error("Score high-rank panel mask owner is missing");
-  }
-  visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
-  const panelRight = Math.fround(panel.targetLeftX + state.indicatorLocalX);
-  const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
-  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
-  const panelCenter = Math.fround(
-    Math.fround(Math.fround(authoredLeft + panelRight) / 2) + panel.clipRangeCenterF32Correction[0],
-  );
-  const panelHeight = Math.fround(panel.topY - panel.bottomY);
-  const panelCenterY = Math.fround(
-    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2) - panel.clipRangeCenterF32Correction[1],
-  );
-  const panelLeft = Math.fround(panelCenter - Math.fround(panelWidth / 2));
-  const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
-  visual.scoreHighRankPanelMask.clear()
-    .rect(panelLeft, panelTop, panelWidth, panelHeight)
-    .fill(0xffffff);
-  visual.scoreHighRankPanelMaskBounds = Object.freeze([
-    panelLeft, panelTop, panelWidth, panelHeight,
-  ] as const);
-  updateScoreSoftClipFilter(visual, panelWidth, panelHeight, panel.softness);
-
-  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts, progress);
+  updateScorePanelClip(visual, progress, state.indicatorLocalX);
+  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
 }
 
@@ -4007,7 +3964,7 @@ function updatePersistentScoreHud(
     ).position.set(markerPositions[index]!, 2);
   }
   updateScorePanelClip(visual, progress, state.indicatorLocalX);
-  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts, progress);
+  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
 }
 
@@ -4019,6 +3976,7 @@ function updateScorePanelClip(
   if (visual.scoreHighRankPanelMask === null) throw new Error("Score high-rank panel mask owner is missing");
   const panel = CURRENT_SCORE_HUD_SCENE_PROFILE.gauge.highRankPanel;
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
+  visual.animationLayer.position.copyFrom(progress.position);
   const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
   const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
   const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
@@ -4079,7 +4037,6 @@ function ensureScoreHighRankSprites(
   state: RenderScoreHudState,
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
-  progress: Container,
 ): void {
   if (!state.highRankEffectActive) return;
   const animation = currentScoreGaugeSsAnimation(object);
@@ -4091,7 +4048,6 @@ function ensureScoreHighRankSprites(
   }
   visual.animationLayer.visible = true;
   if (visual.scoreHighRankSprites.length > 0) return;
-  visual.animationLayer.position.copyFrom(progress.position);
   visual.animationLayer.visible = true;
   visual.scoreHighRankGeneration += 1;
   const componentOwners = new Map<string, Container>();
@@ -4353,7 +4309,7 @@ function applyEvidenceAnimation(
     const visual = object.hudVisual;
     const simulation = visual.gameClearParticleSimulation;
     if (simulation !== null) {
-      advanceGameClearParticleSimulation(visual, state.clearStatus as 1 | 2 | 3, elapsedSeconds);
+      advanceGameClearParticleSimulation(visual, profile, state.clearStatus as 1 | 2 | 3, elapsedSeconds);
       if (visual.gameClearParticleTextures === null) throw new Error("Game-clear particle textures are missing");
       renderGameClearParticles(visual, visual.gameClearParticleTextures);
     }
@@ -4753,6 +4709,23 @@ function applyNoteSpatialTransform(
       ? 1
       : profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit;
     node.position.set(projected[0], projected[1]);
+    node.scale.set(
+      Math.fround(command.scale.x.value * textureScale),
+      Math.fround(command.scale.y.value * textureScale),
+    );
+  } else if (object.parentObjectId.startsWith("render:garupa:slide-owner:")) {
+    // NoteSlide owns Flash as a stable child. The owner is projected once at
+    // the current after-node; child coordinates stay in scene world units and
+    // the atlas pixels-per-unit conversion belongs to the Flash sprite itself.
+    // This preserves the former world size without applying current-node scale
+    // to both parent and child.
+    const textureScale = row === null
+      ? 1
+      : profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit;
+    node.position.set(
+      Math.fround(command.position.x.value * profile.scene.projection.pixelsPerWorldUnit),
+      Math.fround(-command.position.y.value * profile.scene.projection.pixelsPerWorldUnit),
+    );
     node.scale.set(
       Math.fround(command.scale.x.value * textureScale),
       Math.fround(command.scale.y.value * textureScale),

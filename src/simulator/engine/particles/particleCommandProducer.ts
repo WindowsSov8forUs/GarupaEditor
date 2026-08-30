@@ -187,10 +187,11 @@ export class ParticleCommandProducer {
           if (slideLifecycle.status !== "ok") return slideLifecycle;
           const routed = compatibleProductParticleRoot(node, entry.adjustedResult);
           if (routed !== null) {
-            const buttonType = node.spanStart;
+            const buttonType = compatibleProductParticleButton(node)!;
+            const rangeLength = routed.startsWith("directional:") ? null : node.width;
             commands.push(playRoot(
-              buttonParticleOwnerKey(buttonType, routed, 1),
-              buttonInstance(buttonType, 1),
+              buttonParticleOwnerKey(buttonType, routed, rangeLength),
+              buttonInstance(buttonType, rangeLength),
               routed,
             ));
             const fingerRoot = compatibleProductDirectionalFingerRoot(node, entry.adjustedResult);
@@ -510,12 +511,15 @@ export class ParticleCommandProducer {
       1,
     );
     if (position.status !== "ok") return position;
-    const scale = this.productScene.projectNoteScaleAtCurve(1, target.width);
-    if (scale.status !== "ok") return scale;
+    // The selected effect_tap_keep_laneSizeN prefab already owns its span
+    // geometry. Note visual scale includes authoredWidth and must not be
+    // applied again to the particle owner; only the outer NoteSetting scene
+    // scale belongs to the stable NoteSlide root.
+    const rootScale = this.productScene.noteSettingScale.value;
     const rootPositionXBits = particleFloat32ToBits(position.value.x.value);
     const rootPositionYBits = particleFloat32ToBits(position.value.y.value);
-    const rootScaleBits = particleFloat32ToBits(scale.value.value);
-    if (rootPositionXBits === null || rootPositionYBits === null || rootScaleBits === null || scale.value.value <= 0) {
+    const rootScaleBits = particleFloat32ToBits(rootScale);
+    if (rootPositionXBits === null || rootPositionYBits === null || rootScaleBits === null || rootScale <= 0) {
       return rejected(
         "particle.producer.invalid-product-slide-transform",
         "The current product Slide after-node must project to finite positive binary32 root position/scale.",
@@ -901,14 +905,18 @@ function judgementKey(
   return `${absolutePosition}|${buttonTypes.join(",")}`;
 }
 
+function compatibleProductParticleButton(node: GarupaProductNode): number | null {
+  const center = node.spanStart + (node.width - 1) / 2;
+  return node.width >= 1 && node.width <= 7 && Number.isInteger(center) && center >= 0 && center <= 6
+    ? center
+    : null;
+}
+
 function compatibleProductParticleRoot(
   node: GarupaProductNode,
   result: NoteResultTypeValue,
 ): ParticleRootId | null {
-  if (
-    node.width !== 1 || !Number.isInteger(node.spanStart) ||
-    node.spanStart < 0 || node.spanStart > 6 || result < NoteResultType.Good
-  ) return null;
+  if (compatibleProductParticleButton(node) === null || result < NoteResultType.Good) return null;
   if (node.type === "Skill") {
     return result === NoteResultType.Perfect
       ? "ordinary:effect_tap_skill_perfect"
@@ -936,7 +944,7 @@ function compatibleProductDirectionalFingerRoot(
   node: GarupaProductNode,
   result: NoteResultTypeValue,
 ): ParticleRootId | null {
-  if (node.width !== 1 || !Number.isInteger(node.spanStart) || node.spanStart < 0 || node.spanStart > 6 ||
+  if (compatibleProductParticleButton(node) === null ||
     node.type !== "Directional" || result < NoteResultType.Good) return null;
   return node.direction === "Left"
     ? "directional:effect_tap_directional_flick_l_finger"

@@ -749,8 +749,14 @@ export class RenderCommandProducer {
       }
     }
     if (this.scoreGaugeSsElapsedSeconds !== null) {
-      nextScoreGaugeSsElapsed = Math.fround(this.scoreGaugeSsElapsedSeconds + deltaTimeSeconds);
-      const sample = createRenderFloat32(Math.fround(nextScoreGaugeSsElapsed % 3));
+      // ScoreGaugeSS is one persistent three-second Animator loop. Keep the
+      // committed owner clock in clip phase instead of allowing an unbounded
+      // Float32 elapsed value to lose sub-frame precision after many cycles;
+      // score updates still never restart or replace the owner.
+      nextScoreGaugeSsElapsed = Math.fround(
+        Math.fround(this.scoreGaugeSsElapsedSeconds + deltaTimeSeconds) % 3,
+      );
+      const sample = createRenderFloat32(nextScoreGaugeSsElapsed);
       if (sample.status !== "ok") return sample;
       commands.push({
         ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.score,

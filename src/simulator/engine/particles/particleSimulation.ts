@@ -45,6 +45,7 @@ interface GlobalSystemState {
 interface SimulatedParticle {
   readonly particleId: string;
   readonly creationSequence: number;
+  readonly emitterOrigin: Vector3;
   age: number;
   readonly lifetime: number;
   position: Vector3;
@@ -67,6 +68,12 @@ interface OwnerRuntime {
   instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systems: Map<string, OwnerSystemRuntime>;
+}
+
+export interface ParticleSystemTransformUpdate {
+  readonly systemId: string;
+  readonly transform: ParticleTransformProfile;
+  readonly parentTransforms: readonly ParticleTransformProfile[];
 }
 
 export class ParticleSimulationFault extends Error {
@@ -184,6 +191,54 @@ export class DeterministicParticleSimulation {
         for (const at of events) this.spawn(owner, record, profile, runtime, at, subtract(0, at));
       }
     }
+  }
+
+  updateSystemTransforms(updates: readonly ParticleSystemTransformUpdate[]): void {
+    if (!Array.isArray(updates)) {
+      throw fault("particle.simulation.invalid-transform-updates", "Animated ParticleSystem Transforms require one immutable update list.");
+    }
+    const staged = new Map<string, SystemRecord>();
+    for (const update of updates) {
+      const record = this.definitions.get(update.systemId);
+      if (record === undefined || staged.has(update.systemId) ||
+        !validTransform(update.transform) || !Array.isArray(update.parentTransforms) ||
+        update.parentTransforms.some((transform: ParticleTransformProfile) => !validTransform(transform))) {
+        throw fault("particle.simulation.invalid-transform-update", "Every animated Transform update must target one unique prepared ParticleSystem with finite serialized local state.");
+      }
+      staged.set(update.systemId, {
+        bundle: record.bundle,
+        definition: Object.freeze({
+          ...record.definition,
+          transform: freezeTransform(update.transform),
+          parentTransforms: Object.freeze(update.parentTransforms.map(freezeTransform)),
+        }),
+      });
+    }
+    for (const [identity, record] of staged) this.definitions.set(identity, record);
+  }
+
+  particleEmitterOrigin(particleId: string): readonly [number, number, number] {
+    for (const owner of this.owners.values()) {
+      for (const runtime of owner.systems.values()) {
+        const particle = runtime.particles.find((candidate) => candidate.particleId === particleId);
+        if (particle !== undefined) return Object.freeze([...particle.emitterOrigin] as const);
+      }
+    }
+    throw fault("particle.simulation.particle-origin-missing", "A rendered particle must retain the emitter Transform origin captured at birth.");
+  }
+
+  currentSystemDefinition(systemId: string): ParticleSystemDefinition {
+    const record = this.definitions.get(systemId);
+    if (record === undefined) throw fault("particle.simulation.system-definition-missing", "A rendered particle must retain its prepared system definition.");
+    return record.definition;
+  }
+
+  deactivateRootSystems(ownerKey: string, systemIds: readonly string[]): void {
+    const owner = this.owners.get(ownerKey);
+    if (owner === undefined || !Array.isArray(systemIds) || systemIds.some((identity) => !owner.systems.has(identity))) {
+      throw fault("particle.simulation.invalid-system-deactivation", "Serialized GameObject deactivation requires active ParticleSystems under the same stable root owner.");
+    }
+    for (const identity of new Set(systemIds)) owner.systems.delete(identity);
   }
 
   moveOwner(ownerKey: string, instance: Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }>): void {
@@ -406,6 +461,11 @@ export class DeterministicParticleSimulation {
       }
     }
     let velocity = direction.map((value) => multiply(value, speed)) as Vector3;
+    let emitterOrigin: Vector3 = [0, 0, 0];
+    emitterOrigin = applyTransform(emitterOrigin, record.definition.transform, true, this.gameplayTransformScale);
+    for (const parent of record.definition.parentTransforms) {
+      emitterOrigin = applyTransform(emitterOrigin, parent, true, this.gameplayTransformScale);
+    }
     position = applyTransform(position, record.definition.transform, true, this.gameplayTransformScale);
     velocity = applyTransform(velocity, record.definition.transform, false, this.gameplayTransformScale);
     for (const parent of record.definition.parentTransforms) {
@@ -417,6 +477,7 @@ export class DeterministicParticleSimulation {
     const particle: SimulatedParticle = {
       particleId: `${record.definition.identity}#${global.birthCount}`,
       creationSequence: this.creationSequence,
+      emitterOrigin: emitterOrigin.map(f32) as Vector3,
       age: f32(0),
       lifetime,
       position: position.map(f32) as Vector3,
@@ -650,6 +711,7 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
       first: runtime.first,
       particles: runtime.particles.map((particle) => ({
         ...particle,
+        emitterOrigin: [...particle.emitterOrigin] as Vector3,
         position: [...particle.position] as Vector3,
         velocity: [...particle.velocity] as Vector3,
         baseSize: [...particle.baseSize] as Vector3,
@@ -659,6 +721,22 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
       })),
     }])),
   };
+}
+
+function validTransform(transform: ParticleTransformProfile): boolean {
+  return transform !== null && typeof transform === "object" && [
+    transform.m_LocalPosition.x, transform.m_LocalPosition.y, transform.m_LocalPosition.z,
+    transform.m_LocalRotation.x, transform.m_LocalRotation.y, transform.m_LocalRotation.z, transform.m_LocalRotation.w,
+    transform.m_LocalScale.x, transform.m_LocalScale.y, transform.m_LocalScale.z,
+  ].every((value) => Number.isFinite(value) && value === Math.fround(value));
+}
+
+function freezeTransform(transform: ParticleTransformProfile): ParticleTransformProfile {
+  return Object.freeze({
+    m_LocalPosition: Object.freeze({ ...transform.m_LocalPosition }),
+    m_LocalRotation: Object.freeze({ ...transform.m_LocalRotation }),
+    m_LocalScale: Object.freeze({ ...transform.m_LocalScale }),
+  });
 }
 
 function vectorBits(value: Vector3) {

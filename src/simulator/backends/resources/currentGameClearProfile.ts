@@ -28,6 +28,7 @@ import type {
   ParticleRendererProfile,
   ParticleRootId,
   ParticleSystemDefinition,
+  ParticleTransformProfile,
 } from "../particleContracts";
 
 export interface GameClearGraphObject {
@@ -97,8 +98,8 @@ export function buildGameClearParticleProfile(
   const additionalObjects = clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects;
   const additionalClip = clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip;
   const particleOverrides = new Map([
-    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip),
-    ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip)),
+    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip, 0),
+    ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip, 0)),
   ]);
   const systems: ParticleSystemDefinition[] = [];
   const profiles: Record<string, ParticleProfileDefinition> = {};
@@ -216,58 +217,121 @@ export interface GameClearParticleActivation {
   readonly activateAtSeconds: number;
 }
 
-export function buildGameClearParticleActivationSchedule(
+export interface GameClearParticleLifecycleMutation {
+  readonly systemId: string;
+  readonly atSeconds: number;
+  readonly active: boolean;
+}
+
+export interface GameClearParticleTransformSample {
+  readonly systemId: string;
+  readonly transform: ParticleTransformProfile;
+  readonly parentTransforms: readonly ParticleTransformProfile[];
+}
+
+/** Samples animated emitter/parent Transforms for the real ParticleSystem owners. */
+export function sampleGameClearParticleTransforms(
   profile: GameClearRuntimeProfile,
   clearStatus: 1 | 2 | 3,
-): readonly GameClearParticleActivation[] {
+  elapsedSeconds: number,
+): readonly GameClearParticleTransformSample[] {
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
+    throw new Error("Game-clear particle Transform sampling requires one finite monotonic scene phase");
+  }
   const additionalObjects = clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects;
   const additionalClip = clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip;
   const objects = clearStatus === 1
     ? profile.base.graph.objects
     : [...profile.base.graph.objects, ...additionalObjects];
-  const offsets = new Map([
-    ...activationOffsets(profile.base.graph.objects, profile.base.clip),
-    ...(clearStatus === 1 ? [] : activationOffsets(additionalObjects, additionalClip)),
+  const overrides = new Map([
+    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip, elapsedSeconds),
+    ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip, elapsedSeconds)),
   ]);
+  const byPath = new Map(objects.map((object) => [object.path, object]));
   return Object.freeze(objects
     .filter((object) => object.components.some((component) => component.class === "ParticleSystem"))
     .map((object) => Object.freeze({
       systemId: `game-clear:${object.path}`,
-      activateAtSeconds: Math.fround(offsets.get(object.path) ?? 0),
+      transform: transform(object, overrides.get(object.path)),
+      parentTransforms: Object.freeze(parentTransforms(object.path, byPath, overrides)),
     }))
-    .filter((row) => Number.isFinite(row.activateAtSeconds))
+    .sort((left, right) => left.systemId.localeCompare(right.systemId)));
+}
+
+export function buildGameClearParticleLifecycleSchedule(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 1 | 2 | 3,
+): readonly GameClearParticleLifecycleMutation[] {
+  const additional = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+  const phaseSet = new Set<number>([
+    0,
+    ...profile.base.clip.streamed_frames.map((frame) => frame.time),
+    ...(clearStatus === 1 ? [] : additional.clip.streamed_frames.map((frame) => frame.time)),
+  ]);
+  const phases = [...phaseSet].sort((left, right) => left - right);
+  let before = new Set<string>();
+  const mutations: GameClearParticleLifecycleMutation[] = [];
+  for (const phase of phases) {
+    const active = activeGameClearParticleSystems(profile, clearStatus, phase);
+    for (const systemId of [...before].filter((identity) => !active.has(identity)).sort()) {
+      mutations.push(Object.freeze({ systemId, atSeconds: Math.fround(phase), active: false }));
+    }
+    for (const systemId of [...active].filter((identity) => !before.has(identity)).sort()) {
+      mutations.push(Object.freeze({ systemId, atSeconds: Math.fround(phase), active: true }));
+    }
+    before = active;
+  }
+  return Object.freeze(mutations.sort((left, right) => left.atSeconds - right.atSeconds ||
+    Number(left.active) - Number(right.active) || left.systemId.localeCompare(right.systemId)));
+}
+
+export function buildGameClearParticleActivationSchedule(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 1 | 2 | 3,
+): readonly GameClearParticleActivation[] {
+  const first = new Map<string, number>();
+  for (const mutation of buildGameClearParticleLifecycleSchedule(profile, clearStatus)) {
+    if (mutation.active && !first.has(mutation.systemId)) first.set(mutation.systemId, mutation.atSeconds);
+  }
+  return Object.freeze([...first].map(([systemId, activateAtSeconds]) => Object.freeze({ systemId, activateAtSeconds }))
     .sort((left, right) => left.activateAtSeconds - right.activateAtSeconds || left.systemId.localeCompare(right.systemId)));
 }
-function activationOffsets(
-  objects: readonly GameClearGraphObject[],
-  clip: GameClearClipProfile,
-): ReadonlyMap<string, number> {
-  const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
-  const own = new Map(objects.map((object) => [object.path, object.active ? 0 : Number.POSITIVE_INFINITY]));
-  const channels = clip.bindings.flatMap((binding) => binding.channels);
-  const activeChannels = channels.map((channel, index) => ({ channel, index }))
-    .filter((row) => row.channel.endsWith(".m_IsActive.value"));
-  const phases = Object.freeze([0, ...clip.streamed_frames.map((frame) => frame.time), Math.fround(clip.stop_time - 1 / 6000)]);
-  for (const row of activeChannels) {
-    const relative = row.channel.slice(0, -".m_IsActive.value".length);
-    const path = relative.length === 0 ? root : `${root}/${relative}`;
-    let first = Number.POSITIVE_INFINITY;
-    for (const phase of phases) {
-      const value = clipValue(clip, row.index, phase);
-      if (value >= 0.5) { first = phase; break; }
+
+function activeGameClearParticleSystems(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 1 | 2 | 3,
+  phase: number,
+): Set<string> {
+  const branches = [profile.base, ...(clearStatus === 1 ? [] : [clearStatus === 2 ? profile.fullCombo : profile.allPerfect])];
+  const active = new Set<string>();
+  for (const branch of branches) {
+    const objects = branch.graph.objects;
+    const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
+    const own = new Map(objects.map((object) => [object.path, object.active]));
+    const channels = branch.clip.bindings.flatMap((binding) => binding.channels);
+    for (let index = 0; index < channels.length; index += 1) {
+      const channel = channels[index]!;
+      if (!channel.endsWith(".m_IsActive.value")) continue;
+      const relative = channel.slice(0, -".m_IsActive.value".length);
+      const path = relative.length === 0 ? root : `${root}/${relative}`;
+      own.set(path, clipValue(branch.clip, index, Math.min(phase, branch.clip.stop_time - 1 / 6000)) >= 0.5);
     }
-    own.set(path, first);
+    const effective = new Map<string, boolean>();
+    const resolve = (path: string): boolean => {
+      const cached = effective.get(path); if (cached !== undefined) return cached;
+      const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : null;
+      const value = (own.get(path) ?? true) && (parentPath === null || !own.has(parentPath) || resolve(parentPath));
+      effective.set(path, value); return value;
+    };
+    for (const object of objects) {
+      if (object.components.some((component) => component.class === "ParticleSystem") && resolve(object.path)) {
+        active.add(`game-clear:${object.path}`);
+      }
+    }
   }
-  const effective = new Map<string, number>();
-  const resolve = (path: string): number => {
-    const cached = effective.get(path); if (cached !== undefined) return cached;
-    const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : null;
-    const value = Math.max(own.get(path) ?? 0, parentPath !== null && own.has(parentPath) ? resolve(parentPath) : 0);
-    effective.set(path, value); return value;
-  };
-  for (const object of objects) resolve(object.path);
-  return effective;
+  return active;
 }
+
 function clipValue(clip: GameClearClipProfile, index: number, phase: number): number {
   if (index >= clip.streamed_curve_count) return clip.constants[index - clip.streamed_curve_count] ?? 0;
   let latest: GameClearClipKey | null = null;
@@ -292,6 +356,7 @@ interface GameClearParticleChannelOverride {
 function particleChannelOverrides(
   objects: readonly GameClearGraphObject[],
   clip: GameClearClipProfile,
+  elapsedSeconds: number,
 ): ReadonlyMap<string, GameClearParticleChannelOverride> {
   const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
   const channels = clip.bindings.flatMap((binding) => binding.channels);
@@ -310,7 +375,8 @@ function particleChannelOverrides(
     const relative = channel.slice(0, markerIndex);
     const path = relative.length === 0 ? root : `${root}/${relative}`;
     const override = mutable.get(path) ?? {};
-    const value = clipValue(clip, index, 0);
+    const phase = Math.min(Math.fround(elapsedSeconds), Math.fround(clip.stop_time - 1 / 6000));
+    const value = clipValue(clip, index, phase);
     if (marker === ".m_LocalPosition.") {
       const axis = channel.slice(markerIndex + marker.length);
       if (axis === "x" || axis === "y" || axis === "z") {

@@ -353,8 +353,11 @@ async function main(): Promise<void> {
   assert.ok(flashStarted);
   requireOk(flashStarted!.commit());
   const flashRows = renderer.sceneSnapshot();
+  const slideOwnerId = `render:garupa:slide-owner:${compatibleChain.identity}`;
   const flashId = `render:garupa:slide-flash:${compatibleChain.identity}`;
+  const slideOwner = flashRows.find((row) => row.renderObjectId === slideOwnerId)!;
   const flash = flashRows.find((row) => row.renderObjectId === flashId)!;
+  assert.equal(slideOwner.visible, true);
   assert.equal(flash.visible, true);
   assert.equal(flash.activeAnimationRole, "note-long-flash");
   assert.equal(flash.spriteBindingKey?.endsWith("note_long_flash_0"), true,
@@ -368,9 +371,10 @@ async function main(): Promise<void> {
     Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 + target.x.value * layout.surfaceLayout.camera.pixelsPerWorldUnit),
     Math.fround(layout.surfaceLayout.surface.viewportHeight / 2 - target.y.value * layout.surfaceLayout.camera.pixelsPerWorldUnit),
   ];
-  assert.ok(Math.abs(flash.position[0] - expectedFlashPosition[0]!) < 0.0001 &&
-    Math.abs(flash.position[1] - expectedFlashPosition[1]!) < 0.0001,
-  `SVF-R02 slidingMove places the stable root on the first current after-node: ${flash.position} vs ${expectedFlashPosition}`);
+  assert.ok(Math.abs(slideOwner.position[0] - expectedFlashPosition[0]!) < 0.0001 &&
+    Math.abs(slideOwner.position[1] - expectedFlashPosition[1]!) < 0.0001,
+  `SVF-R02 slidingMove places the stable root on the first current after-node: ${slideOwner.position} vs ${expectedFlashPosition}`);
+  assert.deepEqual(flash.position, [0, 0], "Flash remains the stable NoteSlide owner's local child");
   const moved = requireOk(producer.preflightFrame(
     compatibleIntermediate.absolutePosition,
     [compatibleIntermediate],
@@ -383,11 +387,14 @@ async function main(): Promise<void> {
     compatibleTerminal.spanStart + (compatibleTerminal.width - 1) / 2,
     1,
   ));
-  const movedFlash = renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId)!;
+  const movedRows = renderer.sceneSnapshot();
+  const movedOwner = movedRows.find((row) => row.renderObjectId === slideOwnerId)!;
+  const movedFlash = movedRows.find((row) => row.renderObjectId === flashId)!;
   const expectedMovedX = Math.fround(layout.surfaceLayout.surface.viewportWidth / 2 +
     terminalTarget.x.value * layout.surfaceLayout.camera.pixelsPerWorldUnit);
-  assert.ok(Math.abs(movedFlash.position[0] - expectedMovedX) < 0.0001,
-    `SVF-R02 slidingMove follows the next current after-node without restarting or rebinding the root: ${movedFlash.position[0]} vs ${expectedMovedX}`);
+  assert.ok(Math.abs(movedOwner.position[0] - expectedMovedX) < 0.0001,
+    `SVF-R02 slidingMove follows the next current after-node without restarting or rebinding the root: ${movedOwner.position[0]} vs ${expectedMovedX}`);
+  assert.deepEqual(movedFlash.position, [0, 0]);
   const flashStopped = requireOk(producer.preflightFrame(
     compatibleTerminal.absolutePosition,
     [compatibleTerminal],
@@ -395,7 +402,9 @@ async function main(): Promise<void> {
   ));
   assert.ok(flashStopped);
   requireOk(flashStopped!.commit());
-  assert.equal(renderer.sceneSnapshot().find((row) => row.renderObjectId === flashId)?.visible, false);
+  const stoppedRows = renderer.sceneSnapshot();
+  assert.equal(stoppedRows.find((row) => row.renderObjectId === flashId)?.visible, false);
+  assert.equal(stoppedRows.find((row) => row.renderObjectId === slideOwnerId)?.visible, false);
 
   const judged = product.visibleNodes[0]!;
   const effect = requireOk(producer.preflightFrame(
