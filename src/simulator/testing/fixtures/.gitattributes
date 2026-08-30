@@ -7,6 +7,7 @@
 *.bin binary
 
 reverse-snapshots/audio/artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json binary !eol
+reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/original_visible_anchor_contract.json binary !eol
 reverse-snapshots/add-score-rank-logic/artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json text eol=crlf
 reverse-snapshots/default-particle-lane-logic/artifacts/investigations/simulator-default-particle-lane-logic-reaudit-10-1-4/default_particle_lane_logic_reaudit.json text eol=crlf
 reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json text eol=crlf

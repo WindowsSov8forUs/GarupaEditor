@@ -1168,6 +1168,125 @@
       "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879"
     },
     {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/original_visible_anchor_contract.json",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/original_visible_anchor_contract.json",
+      "bytes": 14839,
+      "sha256": "F702E950A7D0CD676A36E16368978DF6A123025F9377F86919B4D884BBE45DC8"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0003-particle-01-particle-play.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0003-particle-01-particle-play.png",
+      "bytes": 780240,
+      "sha256": "64B6910571B2C2D4F1D7C100604988673B3C3F00B825E88AD5A4118B28844A90"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0013-slide-play-00-flash-play.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0013-slide-play-00-flash-play.png",
+      "bytes": 744781,
+      "sha256": "01FD5FB43C035FA36458D2E5E644DD23BD7C0760823A8113E9EDE0CD7F2695CF"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0014-slide-play-01-tapkeep-play.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0014-slide-play-01-tapkeep-play.png",
+      "bytes": 825662,
+      "sha256": "DDC2F9117409F52E25D8BD144C7FB09AB9743EE4D7BB5B67477B751AF8BFCBA4"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0015-slide-current-03.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0015-slide-current-03.png",
+      "bytes": 952421,
+      "sha256": "38FC5161CFD260904EA20B82C50C99E29499E7E67F929F72DEAE22757F142C1E"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0018-slide-current-06.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0018-slide-current-06.png",
+      "bytes": 809583,
+      "sha256": "CBCD2D2672886BCA5583D249A82CF2B58F511F8478005C78D0006B0B13C16309"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0023-slide-play-02-flash-play.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0023-slide-play-02-flash-play.png",
+      "bytes": 753471,
+      "sha256": "7A53AEB485AD2908731751AE153E6FED3476AEA9D42EEA5F8D09FE53237ECDCC"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0024-slide-play-03-tapkeep-play.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0024-slide-play-03-tapkeep-play.png",
+      "bytes": 558581,
+      "sha256": "A4A730721EDD65DC582710D54F47186B5930CD349A917FE9500FA4DB21841356"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0038-rank-5-score-872315.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0038-rank-5-score-872315.png",
+      "bytes": 1105472,
+      "sha256": "0A420222B3FCA5D8304D4174ACE181E7303FE6DEA4BBF6674DBD9BCC199C1758"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0039-clear-phase-0.00s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0039-clear-phase-0.00s.png",
+      "bytes": 242057,
+      "sha256": "5687A0E0202D101CD7CE05C4073A6C2CFAF616DBD4C3D363A488B5BEE183C1F4"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0040-clear-phase-0.10s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0040-clear-phase-0.10s.png",
+      "bytes": 318024,
+      "sha256": "0996D04E8F75D818DF0F41E02895B0EF619FCA19FFC74536AC0D265A6CCD8D7D"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0041-clear-phase-0.25s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0041-clear-phase-0.25s.png",
+      "bytes": 297914,
+      "sha256": "0578784E71E1CB441020A513E1B84050B4F13EA52F59065BB4D78B4F3D23DCE4"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0042-clear-phase-0.50s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0042-clear-phase-0.50s.png",
+      "bytes": 320316,
+      "sha256": "C9A2DCFD1F53811A2897EBC469BF9190D403D8651DA145D0309C4F2F7272041F"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0043-clear-phase-0.90s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0043-clear-phase-0.90s.png",
+      "bytes": 285191,
+      "sha256": "16734DE68E0EA13DC43B5CA686C37DA541E9CBA5346C47A818A3CFF323A2043F"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0044-clear-phase-1.40s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0044-clear-phase-1.40s.png",
+      "bytes": 167738,
+      "sha256": "2F333BDC0C635289B0D30399F2A1183F3D6E3C798E8227F14C792C4F3393FE21"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0045-clear-phase-2.00s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0045-clear-phase-2.00s.png",
+      "bytes": 107644,
+      "sha256": "8629BE16FA7CC07908F0C35DBC7C998DDC5D7FFF7AC57AE1686E6A20F7FF7E8A"
+    },
+    {
+      "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0047-clear-phase-3.10s.png",
+      "sourceReverseCommit": "50205bc49f923551f05ea9aeb5d12e0c6898b076",
+      "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0047-clear-phase-3.10s.png",
+      "bytes": 6243,
+      "sha256": "77BF1AC8EE6FA710C90F82F15773831C76B803285AC20C9B1D262302E0950DE3"
+    },
+    {
       "path": "reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
       "sourceReverseCommit": "9c627f1f7d67491d637d6780da8da27357d86dbe",
       "sourcePath": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",

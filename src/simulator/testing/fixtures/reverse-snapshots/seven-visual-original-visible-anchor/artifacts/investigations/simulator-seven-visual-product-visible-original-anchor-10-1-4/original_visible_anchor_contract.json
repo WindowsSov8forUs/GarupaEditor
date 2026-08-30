@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "status": "current-original-visible-anchors-confirmed-product-equivalence-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "capture_identity": {
+    "mode": "ordinary-live",
+    "manual_or_auto": "auto",
+    "auto_live_ui": "on",
+    "chart": {
+      "music": "Ichininaru",
+      "difficulty": "expert",
+      "level": 26
+    },
+    "viewport_device_pixels": [
+      1600,
+      720
+    ],
+    "selinux": "Enforcing",
+    "observation_only": true,
+    "trace": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/trace.json.gz",
+      "bytes": 13074,
+      "sha256": "99E8BD901A283B2BCAA6F146E57CBE83862A166C6938F1D7ECE7F9A38D8A2953"
+    }
+  },
+  "predecessors": {
+    "fresh_static_consumer_contract": {
+      "path": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
+      "bytes": 45031,
+      "sha256": "B713447F873C9EFF1741AEAD79F5A8BACEEDFEA47A40D53E1E312BCAF2321133"
+    },
+    "withdrawal_and_same_state_rule": {
+      "path": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
+      "bytes": 6494,
+      "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626"
+    }
+  },
+  "original_device_visible_anchors": {
+    "ordinary_particle": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0003-particle-01-particle-play.png",
+      "semantic": "particle-01-particle-play",
+      "event_sequence": 7,
+      "bytes": 780240,
+      "sha256": "64B6910571B2C2D4F1D7C100604988673B3C3F00B825E88AD5A4118B28844A90",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "slide_flash_play": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0013-slide-play-00-flash-play.png",
+      "semantic": "slide-play-00-flash-play",
+      "event_sequence": 43,
+      "bytes": 744781,
+      "sha256": "01FD5FB43C035FA36458D2E5E644DD23BD7C0760823A8113E9EDE0CD7F2695CF",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "tapkeep_play": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0014-slide-play-01-tapkeep-play.png",
+      "semantic": "slide-play-01-tapkeep-play",
+      "event_sequence": 44,
+      "bytes": 825662,
+      "sha256": "DDC2F9117409F52E25D8BD144C7FB09AB9743EE4D7BB5B67477B751AF8BFCBA4",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "slide_current_1": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0015-slide-current-03.png",
+      "semantic": "slide-current-03",
+      "event_sequence": 48,
+      "bytes": 952421,
+      "sha256": "38FC5161CFD260904EA20B82C50C99E29499E7E67F929F72DEAE22757F142C1E",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "slide_current_2": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0018-slide-current-06.png",
+      "semantic": "slide-current-06",
+      "event_sequence": 60,
+      "bytes": 809583,
+      "sha256": "CBCD2D2672886BCA5583D249A82CF2B58F511F8478005C78D0006B0B13C16309",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "slide_flash_play_second_owner": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0023-slide-play-02-flash-play.png",
+      "semantic": "slide-play-02-flash-play",
+      "event_sequence": 76,
+      "bytes": 753471,
+      "sha256": "7A53AEB485AD2908731751AE153E6FED3476AEA9D42EEA5F8D09FE53237ECDCC",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "tapkeep_play_second_owner": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0024-slide-play-03-tapkeep-play.png",
+      "semantic": "slide-play-03-tapkeep-play",
+      "event_sequence": 77,
+      "bytes": 558581,
+      "sha256": "A4A730721EDD65DC582710D54F47186B5930CD349A917FE9500FA4DB21841356",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "rank_five_entry": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0038-rank-5-score-872315.png",
+      "semantic": "rank-5-score-872315",
+      "event_sequence": 1470,
+      "bytes": 1105472,
+      "sha256": "0A420222B3FCA5D8304D4174ACE181E7303FE6DEA4BBF6674DBD9BCC199C1758",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_0_00": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0039-clear-phase-0.00s.png",
+      "semantic": "clear-phase-0.00s",
+      "event_sequence": null,
+      "bytes": 242057,
+      "sha256": "5687A0E0202D101CD7CE05C4073A6C2CFAF616DBD4C3D363A488B5BEE183C1F4",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_0_10": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0040-clear-phase-0.10s.png",
+      "semantic": "clear-phase-0.10s",
+      "event_sequence": null,
+      "bytes": 318024,
+      "sha256": "0996D04E8F75D818DF0F41E02895B0EF619FCA19FFC74536AC0D265A6CCD8D7D",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_0_25": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0041-clear-phase-0.25s.png",
+      "semantic": "clear-phase-0.25s",
+      "event_sequence": null,
+      "bytes": 297914,
+      "sha256": "0578784E71E1CB441020A513E1B84050B4F13EA52F59065BB4D78B4F3D23DCE4",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_0_50": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0042-clear-phase-0.50s.png",
+      "semantic": "clear-phase-0.50s",
+      "event_sequence": null,
+      "bytes": 320316,
+      "sha256": "C9A2DCFD1F53811A2897EBC469BF9190D403D8651DA145D0309C4F2F7272041F",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_0_90": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0043-clear-phase-0.90s.png",
+      "semantic": "clear-phase-0.90s",
+      "event_sequence": null,
+      "bytes": 285191,
+      "sha256": "16734DE68E0EA13DC43B5CA686C37DA541E9CBA5346C47A818A3CFF323A2043F",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_1_40": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0044-clear-phase-1.40s.png",
+      "semantic": "clear-phase-1.40s",
+      "event_sequence": null,
+      "bytes": 167738,
+      "sha256": "2F333BDC0C635289B0D30399F2A1183F3D6E3C798E8227F14C792C4F3393FE21",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_2_00": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0045-clear-phase-2.00s.png",
+      "semantic": "clear-phase-2.00s",
+      "event_sequence": null,
+      "bytes": 107644,
+      "sha256": "8629BE16FA7CC07908F0C35DBC7C998DDC5D7FFF7AC57AE1686E6A20F7FF7E8A",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    },
+    "base_clear_3_10": {
+      "path": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0047-clear-phase-3.10s.png",
+      "semantic": "clear-phase-3.10s",
+      "event_sequence": null,
+      "bytes": 6243,
+      "sha256": "77BF1AC8EE6FA710C90F82F15773831C76B803285AC20C9B1D262302E0950DE3",
+      "raster": {
+        "width": 1600,
+        "height": 720,
+        "orientation": "landscape",
+        "origin": "top-left"
+      }
+    }
+  },
+  "runtime_consumer_witness": {
+    "slide_owner_alias": "slide-owner-A",
+    "flash_sprite_alias": "slide-flash-A",
+    "tapkeep_alias": "tapkeep-A",
+    "play_sequences": {
+      "flash": 43,
+      "tapkeep": 44
+    },
+    "current_transition_sequences": [
+      48,
+      52,
+      60
+    ],
+    "distinct_current_nodes": 3,
+    "same_slide_owner": true,
+    "same_flash_sprite": true,
+    "same_non_null_tapkeep_after_acquire": true,
+    "meaning": "The visible device frames are tied to the actual NoteSlide consumer. The same owner, Flash sprite and acquired TapKeep survive distinct current-node transitions; object existence alone is not the visible oracle."
+  },
+  "natural_auto_base_clear_witness": {
+    "clear_status": 1,
+    "play_clear_sequence": 1642,
+    "play_additional_sequence": 1643,
+    "base_clear_finished_after_ms": 3232,
+    "scene_exit_after_finished_ms": 16,
+    "visible_frame_sequence_seconds": [
+      0.0,
+      0.1,
+      0.25,
+      0.5,
+      0.9,
+      1.4,
+      2.0,
+      3.1
+    ],
+    "meaning": "The original natural Auto branch is base-only status 1. Its multicolour ring/star particle composition is visibly present from 0.10 through 1.40 seconds and the field remains scene-owned until the 3.232-second callback."
+  },
+  "product_visible_comparison_requirements": {
+    "independent_original_pixels_required": true,
+    "ancestor_effective_visibility_required": true,
+    "same_state_tuple_required": [
+      "mode",
+      "manual-or-auto",
+      "chart-and-timeline-position",
+      "score-and-rank",
+      "slide-owner-and-current-node",
+      "effect-or-clip-phase",
+      "terminal-clear-status",
+      "viewport-css-size-and-device-pixel-ratio"
+    ],
+    "ordinary_particle": "A candidate must reproduce the visible fine star/spark cluster together with the larger judgement glow; a translucent circle or nonzero particle count alone fails.",
+    "slide_flash_tapkeep": "A candidate must compare an effect-only crop against slide_flash_play/tapkeep_play and prove the same visible owner follows at least two current-node transitions. Resource-key, generation and active flags alone fail.",
+    "rank_and_ss": "A candidate must compare the rank-five HUD crop and the already committed 0..7.5-second SS loop anchors; score/rank state alone fails.",
+    "base_clear": "A candidate natural Auto status-1 frame must visibly contain the original base-clear multicolour rings/stars at the corresponding phase. A blank dark cover or AP text without the base system fails.",
+    "fc_ap": "FC/AP product presentation must render the base system plus the serialized additional branch. Original natural Manual FC/AP device pixels remain unavailable and must stay open_not_claimed.",
+    "candidate_ab_only_forbidden": true,
+    "object_count_only_forbidden": true,
+    "self_generated_expected_forbidden": true
+  },
+  "issue_disposition": [
+    {
+      "id": "SVL-R01",
+      "original_visible_anchor": "ordinary_particle + base_clear_0_10..1_40",
+      "status": "original-visible-anchor-confirmed-product-comparison-open"
+    },
+    {
+      "id": "SVL-R02",
+      "original_visible_anchor": "slide_flash_play + runtime consumer witness",
+      "status": "original-visible-anchor-confirmed-product-comparison-open"
+    },
+    {
+      "id": "SVL-R03",
+      "original_visible_anchor": "tapkeep_play + slide_current_1/2 + runtime consumer witness",
+      "status": "original-visible-anchor-confirmed-product-comparison-open"
+    },
+    {
+      "id": "SVL-R04",
+      "original_visible_anchor": "rank_five_entry",
+      "status": "original-visible-anchor-confirmed-product-comparison-open"
+    },
+    {
+      "id": "SVL-R05",
+      "original_visible_anchor": "predecessor SS loop frames",
+      "status": "original-visible-anchor-confirmed-product-comparison-open"
+    },
+    {
+      "id": "SVL-R06",
+      "original_visible_anchor": "base clear hold only",
+      "status": "original-natural-manual-fc-ap-open_not_claimed"
+    },
+    {
+      "id": "SVL-R07",
+      "original_visible_anchor": "serialized consumer predecessor only",
+      "status": "original-natural-manual-fc-ap-open_not_claimed"
+    }
+  ],
+  "authorization": {
+    "portable_reconstruction_requirements_retained": true,
+    "garupa_product_equivalence_authorized": false,
+    "fixed_device_gpu_exact_authorized": false,
+    "reason": "This contract supplies independent original-device pixels and consumer identity; it does not inspect or authorize any GarupaEditor production build."
+  }
+}

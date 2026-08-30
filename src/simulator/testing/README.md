@@ -44,11 +44,12 @@ npm.cmd run simulator:test:full-visible-lifecycle-oracle
 
 ```powershell
 npm.cmd run simulator:test:seven-visual-lifecycle
+npm.cmd run simulator:test:original-visible-anchor
 npm.cmd run simulator:test:browser-webview2
 npm.cmd run simulator:test:ordinary-rendering-webview2
 ```
 
-第一项当前读取三份独立fixture：Reverse `9c627f1f`的152,733-byte历史oracle与6,494-byte撤回disposition保留审计边界；静态要求以Reverse `d4ab8146`的45,031-byte fresh合同为准。fixture自身继续记录`production_consumption_equivalence_authorization=false`与原作自然Auto base-only status 1，不能被生产测试改写。外部aggregate曾以完整Garupa runtime primitive流、实际WebGL自产错误variant、3次fresh WebView2和fresh Windows对象存在性观察声明关闭GarupaEditor产品portable回归；2026-08-30用户以相同`desktop:dev -- --release`路径确认画面未实质变化，该关闭结论已撤回。Reverse `50205bc4`随后补齐14,839-byte独立原作可见锚点合同（SHA-256 `F702E950A7D0CD676A36E16368978DF6A123025F9377F86919B4D884BBE45DC8`）；它尚待下一批以最小fixture晋升并接入原作对照门。当前这些门只保留candidate observation：没有独立原作同状态可见expected时，对象数、命令、generation、自产digest、错误variant与非零像素均不能关闭可见问题。
+第一项当前读取三份独立fixture：Reverse `9c627f1f`的152,733-byte历史oracle与6,494-byte撤回disposition保留审计边界；静态要求以Reverse `d4ab8146`的45,031-byte fresh合同为准。fixture自身继续记录`production_consumption_equivalence_authorization=false`与原作自然Auto base-only status 1，不能被生产测试改写。外部aggregate曾以完整Garupa runtime primitive流、实际WebGL自产错误variant、3次fresh WebView2和fresh Windows对象存在性观察声明关闭GarupaEditor产品portable回归；2026-08-30用户以相同`desktop:dev -- --release`路径确认画面未实质变化，该关闭结论已撤回。Reverse `50205bc4`随后补齐14,839-byte独立原作可见锚点合同（SHA-256 `F702E950A7D0CD676A36E16368978DF6A123025F9377F86919B4D884BBE45DC8`）；当前已最小晋升合同及其引用的16张1600×720原作设备PNG。`simulator:test:original-visible-anchor`只在testing侧直接解码RGBA并验证逐帧SHA、ordinary glow+细星、Slide/TapKeep、rank 5与base-clear相位特征，不调用production helper，输出状态仍为`product-equivalence-open`。当前这些门只保留candidate observation：没有锁定chart/timeline、effect phase、terminal status和viewport的同状态actual时，对象数、命令、generation、自产digest、错误variant与非零像素均不能关闭可见问题。
 
 ## Strict HUD/particle/Pause/terminal leaf
 

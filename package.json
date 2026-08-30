@@ -67,6 +67,7 @@
     "simulator:test:mv-live-webview2": "node src/simulator/testing/runMvLiveWebView2Tests.mjs",
     "simulator:test:startup-direction-webview2": "node src/simulator/testing/runStartupDirectionWebView2Tests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
+    "simulator:test:original-visible-anchor": "node src/simulator/testing/verifyOriginalVisibleAnchorPixels.mjs",
     "simulator:test:evidence-integrity:static": "node src/simulator/testing/verifyEvidenceIntegrityStatic.mjs",
     "simulator:test": "node src/simulator/testing/runTotalRevalidationTests.mjs --quick",
     "simulator:test:quick": "node src/simulator/testing/runTotalRevalidationTests.mjs --quick",
