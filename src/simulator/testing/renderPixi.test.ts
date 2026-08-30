@@ -442,6 +442,46 @@ async function main(): Promise<void> {
   equal(baseClear.activeAnimationRole, "game-clear", "base clear owns game-clear animation");
   const baseParticleContainers = renderer.stage.getChildrenByLabel("game-clear-particles", true) as Container[];
   assert(baseParticleContainers.some((container) => container.children.length >= 150), "clearStatus1 consumes the 40-system base clear particle graph and base 3-second activation clip");
+
+  requireOk(renderer.execute({
+    kind: "sample-animation", sessionId: SESSION, sequence: sequence++, frame: 1, substep: 0,
+    renderObjectId: "hud:game-clear", animationRole: "game-clear", elapsedSeconds: f32(2.45),
+  }), "sample AllPerfect text-out midpoint");
+  const textOut = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:game-clear")!;
+  equal(textOut.hudGameClearAdditionalState, "text-out", "AllPerfect controller exits text-in into text-out");
+  equal(textOut.hudGameClearAdditionalClipName, "AllPerfect_text_out", "AllPerfect state 2 owns the text-out clip");
+  equal(textOut.hudGameClearChannelValuesBits?.length, 44, "AllPerfect text-out consumes all 44 serialized channels");
+  assert((textOut.hudSpriteNodes ?? []).some((sprite) => sprite.alpha > 0 && sprite.alpha < 1),
+    "AllPerfect text-out visibly fades serialized UITexture owners");
+
+  const textOutTerminalSeconds = Math.fround(2.2833333015441895 + 0.3333333432674408);
+  requireOk(renderer.execute({
+    kind: "sample-animation", sessionId: SESSION, sequence: sequence++, frame: 1, substep: 1,
+    renderObjectId: "hud:game-clear", animationRole: "game-clear", elapsedSeconds: f32(textOutTerminalSeconds),
+  }), "sample AllPerfect text-out terminal");
+  const textOutTerminal = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:game-clear")!;
+  equal(textOutTerminal.hudGameClearAdditionalState, "text-out-terminal", "AllPerfect controller remains in terminal text-out state");
+  equal(textOutTerminal.hudGameClearSampledPhaseSeconds, Math.fround(0.3333333432674408),
+    "AllPerfect terminal consumes the exact inclusive stop-time keyframe");
+  const allPerfectTextOutOwners = gameClear.profile.allPerfect.textOutClip.bindings
+    .flatMap((binding) => binding.channels)
+    .filter((channel) => channel.endsWith(".mColor.a.value"))
+    .map((channel) => `game-clear:AllPerfectAnimation/${channel.slice(0, -".mColor.a.value".length)}`);
+  assert(allPerfectTextOutOwners.every((label) => {
+    const owner = renderer.stage.getChildByLabel(label, true);
+    return owner !== null && owner.visible && owner.children.length > 0 && owner.children.every((child) => child.alpha === 0);
+  }), "AllPerfect text-out terminal keeps all 22 owners active with exact alpha zero");
+  const terminalBits = JSON.stringify(textOutTerminal.hudGameClearChannelValuesBits);
+  requireOk(renderer.execute({
+    kind: "sample-animation", sessionId: SESSION, sequence: sequence++, frame: 1, substep: 2,
+    renderObjectId: "hud:game-clear", animationRole: "game-clear", elapsedSeconds: f32(3.232),
+  }), "sample AllPerfect before independent base callback");
+  const beforeBaseCallback = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:game-clear")!;
+  equal(beforeBaseCallback.hudGameClearAdditionalState, "text-out-terminal",
+    "additional controller stays in alpha-zero text-out before the independent base callback");
+  equal(JSON.stringify(beforeBaseCallback.hudGameClearChannelValuesBits), terminalBits,
+    "3.233-second base callback does not restore the text-in final pose");
+
   equal(row("note:world").scale[0], Math.fround(3.6), "ordinary Note Sprite scale consumes camera PPU / Sprite PPU");
   equal(row("note:flash").spriteAlpha, 1, "Long Flash current alpha channel remains one");
   equal(row("note:flash").spriteTint, 0x999999, "Long Flash midpoint RGB=.6 maps to Sprite tint");

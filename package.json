@@ -43,6 +43,7 @@
     "simulator:test:hud-reaudit-regression": "node src/simulator/testing/runHudEquivalenceTests.mjs",
     "simulator:test:full-visible-lifecycle-oracle": "node src/simulator/testing/runFullVisibleLifecycleOracleTests.mjs",
     "simulator:test:seven-visual-lifecycle": "node src/simulator/testing/runSevenVisualLifecycleReconfirmationTests.mjs",
+    "simulator:test:game-clear-terminal-focused": "node src/simulator/testing/runGameClearTerminalFocusedTests.mjs",
     "simulator:test:lane-particle-same-state": "node src/simulator/testing/runLaneParticleSameStateTests.mjs",
     "simulator:test:render-production-chart": "node src/simulator/testing/runRenderProductionChartTests.mjs",
     "simulator:test:render-production": "node src/simulator/testing/runRenderProductionTests.mjs",

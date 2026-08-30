@@ -8,34 +8,14 @@ import { fileURLToPath } from "node:url";
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
-const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-particle-tests-"));
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-game-clear-terminal-focused-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
-
 try {
-  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
-    run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
-  }
   if (sharedOutputRoot === undefined) {
-    run(process.execPath, [
-      typeScriptCli,
-      "-p",
-      join(testingRoot, "tsconfig.tests.json"),
-      "--outDir",
-      outputRoot,
-    ]);
+    run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
   }
-  for (const test of [
-    "particleContracts.test.js",
-    "ordinaryParticleFocused.test.js",
-    "particleProduction.test.js",
-  ]) {
-    run(process.execPath, [join(outputRoot, "src", "simulator", "testing", test)]);
-  }
-  run(process.execPath, [join(testingRoot, "verifyParticleStatic.mjs")]);
-  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
-    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
-  }
+  run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "gameClearTerminalFocused.test.js")]);
 } finally {
   if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }

@@ -29,7 +29,15 @@ uniform sampler2D uTexture;
 uniform vec4 uParticleColor;
 void main(void) {
   vec4 sampled = texture(uTexture, vTextureCoord);
-  // SVL-R01: add-npm applies source alpha in the blend state exactly once.
+  // Reverse 4dec93f9: Tex_parSet_1/2 are straight-alpha additive
+  // atlases whose empty cells are opaque exact black. An additive zero is a
+  // semantic no-op; discarding it also prevents Pixi's ancillary alpha blend
+  // from turning the empty atlas rectangle into a visible compositing block.
+  if (sampled.a <= 0.0 || max(max(sampled.r, sampled.g), sampled.b) <= 0.0) {
+    discard;
+  }
+  // add-npm applies sampled alpha * particle alpha in the blend state once;
+  // straight RGB must not be multiplied by particle alpha in this shader.
   finalColor = vec4(
     sampled.rgb * uParticleColor.rgb,
     sampled.a * uParticleColor.a

@@ -221,10 +221,28 @@ function verify(value) {
     status: "confirmed-current-seven-visual-lifecycle-reconfirmation",
     fullComboChannels: 104,
     allPerfectChannels: 129,
-    terminalHoldBoundarySeconds: 3.232,
+    additionalInvisibleBoundarySeconds: 2.616666555404663,
+    baseCallbackBoundarySeconds: 3.233,
     scoreGaugeSsContinuousSeconds: 7.5,
     uvFrame: 11,
   }), "SVL-R01/R05/R06/R07 actual WebView2 matrix");
+  const bbkk = value.scene.bbkkSingleWidthFramebuffer;
+  if (bbkk?.status !== "portable-product-complete-framebuffer-feature-gate-passed-original-equivalence-open" ||
+      bbkk.productSemanticsId !== "simulator.bbkk-single-width-ordinary-particle-visible-regression-v1" ||
+      bbkk.inputSha256 !== "54938A6CA7509D1C0286C756AC44EA643FBD755236BC5F2D1B543FE894F221F8" ||
+      bbkk.allAuditedVisibleWidthsAreOne !== true || bbkk.threshold !== 220 ||
+      bbkk.accepted?.particleNodeCount < 12 ||
+      bbkk.accepted?.metrics?.leftStarAndGlow?.fineComponentCountArea2To160 < 2 ||
+      bbkk.accepted?.metrics?.rightStarAndGlow?.fineComponentCountArea2To160 < 2 ||
+      bbkk.accepted?.metrics?.leftJudgementGlow?.largeComponentCountAreaOver160 < 1 ||
+      bbkk.accepted?.metrics?.rightJudgementGlow?.largeComponentCountAreaOver160 < 1 ||
+      bbkk.accepted?.additiveBackdrop?.decreasedRgbChannelCount !== 0 ||
+      !/^[0-9a-f]{64}$/.test(bbkk.accepted?.additiveBackdrop?.baselineSha256 ?? "") ||
+      !/^[0-9a-f]{64}$/.test(bbkk.accepted?.additiveBackdrop?.composedSha256 ?? "") ||
+      !/^[0-9a-f]{64}$/.test(bbkk.accepted?.rgbaSha256 ?? "") ||
+      bbkk.originalEquivalenceAuthorized !== false || bbkk.cleanup?.renderOwners !== 0 || bbkk.cleanup?.particleOwners !== 0) {
+    throw new Error(`focused R01 invalid B.B.K single-width WebGL feature gate: ${JSON.stringify(bbkk)}`);
+  }
   const tapKeep = value.scene.tapKeepSameState;
   if (typeof tapKeep?.stableOwnerKey !== "string" || tapKeep.rootTransformCount < 2 ||
       tapKeep.maximumVisibleMeshes <= 0 || tapKeep.terminalObserved !== true ||
@@ -238,8 +256,11 @@ function verify(value) {
   }
   for (const [key, matrix] of [["FullCombo_text_in", fullComboPhaseMatrix], ["AllPerfect_text_in", allPerfectPhaseMatrix]]) {
     if (matrix?.animationKey !== key || matrix.phaseDigests.length !== 8 ||
-        new Set(matrix.phaseDigests).size !== 6 || matrix.phaseDigests.some((digest) => !/^[0-9a-f]{64}$/.test(digest))) {
-      throw new Error(`SVL-R07 invalid eight-phase/six-state production framebuffer matrix: ${JSON.stringify(matrix)}`);
+        new Set(matrix.phaseDigests).size !== 6 || matrix.phaseDigests.some((digest) => !/^[0-9a-f]{64}$/.test(digest)) ||
+        matrix.textOutPhaseDigests?.length !== 5 ||
+        matrix.textOutPhaseDigests.some((digest) => !/^[0-9a-f]{64}$/.test(digest)) ||
+        matrix.textOutPhaseDigests[1] === matrix.textOutPhaseDigests[4]) {
+      throw new Error(`SVL-R07/focused-R06 invalid text-in/text-out production framebuffer matrix: ${JSON.stringify(matrix)}`);
     }
   }
   const required = new Set([

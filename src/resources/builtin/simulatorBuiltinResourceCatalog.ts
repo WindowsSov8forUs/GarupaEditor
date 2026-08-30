@@ -262,7 +262,9 @@ function file(
 }
 
 async function fetchBuiltinBytes(url: string): Promise<Uint8Array> {
-  const response = await fetch(url, { cache: "force-cache" });
+  // Development Vite URLs are stable across source revisions; the manifest's
+  // integrity identity, not a persistent WebView HTTP cache entry, owns bytes.
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error(`Simulator builtin fetch failed: ${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (bytes.byteLength === 0) throw new Error("Simulator builtin fetch returned empty bytes");

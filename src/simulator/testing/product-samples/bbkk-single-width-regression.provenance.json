@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "identity": "user-reported-bbkk-product-regression-input",
+  "sourceObservedPath": "HOST________/B.B.K.K.B.K.K..json",
+  "byteLength": 57513,
+  "sha256": "54938A6CA7509D1C0286C756AC44EA643FBD755236BC5F2D1B543FE894F221F8",
+  "authority": "product regression input only; not original evidence or oracle",
+  "directRowCount": 778,
+  "auditedVisibleNodeCount": 676,
+  "allAuditedVisibleWidthsAreOne": true
+}

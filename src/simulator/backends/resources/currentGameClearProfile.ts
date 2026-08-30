@@ -4,11 +4,15 @@ export interface GameClearClipBinding {
 export interface GameClearClipKey { readonly index: number; readonly coefficients: readonly [number, number, number, number]; }
 export interface GameClearClipFrame { readonly time: number; readonly keys: readonly GameClearClipKey[]; }
 export interface GameClearClipProfile {
+  readonly name: string;
+  readonly sample_rate: number;
   readonly stop_time: number;
   readonly curve_count: number;
   readonly bindings: readonly GameClearClipBinding[];
   readonly streamed_curve_count: number;
   readonly streamed_frames: readonly GameClearClipFrame[];
+  /** Includes the serialized stop-time keyframe when the clip owns one. */
+  readonly streamed_frames_inclusive?: readonly GameClearClipFrame[];
   readonly constants: readonly number[];
 }
 export interface GameClearWidgetProfile {
@@ -44,23 +48,40 @@ export interface GameClearGraphObject {
     readonly asset?: string;
   }[];
 }
+export interface GameClearAdditionalBranch {
+  readonly graph: { readonly objects: readonly GameClearGraphObject[] };
+  /** Animator state 1: *_text_in. */
+  readonly clip: GameClearClipProfile;
+  /** Animator state 2: *_text_out; this terminal state has no outgoing transition. */
+  readonly textOutClip: GameClearClipProfile;
+}
+
 export interface GameClearRuntimeProfile {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly durationSeconds: number;
   readonly exitAfterFinishedSeconds: number;
   readonly clearStatusMapping: Readonly<Record<"1" | "2" | "3", string>>;
   readonly assets: readonly { readonly logical_key: string; readonly file: string; readonly width: number; readonly height: number }[];
   readonly base: { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile };
-  readonly fullCombo: { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile };
-  readonly allPerfect: { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile };
+  readonly fullCombo: GameClearAdditionalBranch;
+  readonly allPerfect: GameClearAdditionalBranch;
+}
+
+export type GameClearAdditionalState = "text-in" | "text-out" | "text-out-terminal";
+export interface GameClearAdditionalAnimationSample {
+  readonly state: GameClearAdditionalState;
+  readonly clipName: string;
+  readonly phaseSeconds: number;
+  readonly channels: readonly string[];
+  readonly values: readonly number[];
 }
 
 export function parseCurrentGameClearProfile(value: unknown): GameClearRuntimeProfile | null {
-  if (!record(value) || value.schemaVersion !== 1 || value.durationSeconds !== 3.233 ||
+  if (!record(value) || value.schemaVersion !== 2 || value.durationSeconds !== 3.233 ||
       value.exitAfterFinishedSeconds !== 0.015 || !Array.isArray(value.assets) || value.assets.length !== 34 ||
-      !validBranch(value.fullCombo, 104, 25, 2.2833333015441895) ||
-      !validBranch(value.allPerfect, 129, 36, 2.2833333015441895) ||
-      !validBranch(value.base, 44, 43, 3)) return null;
+      !validAdditionalBranch(value.fullCombo, "FullCombo_text_in", 104, "FullCombo_text_out", 32, 25) ||
+      !validAdditionalBranch(value.allPerfect, "AllPerfect_text_in", 129, "AllPerfect_text_out", 44, 36) ||
+      !validBranch(value.base, "MusicGameClear", 44, 43, 3)) return null;
   const keys = new Set<string>();
   for (const asset of value.assets) {
     if (!record(asset) || typeof asset.logical_key !== "string" || keys.has(asset.logical_key) ||
@@ -84,6 +105,39 @@ export function parseCurrentGameClearProfile(value: unknown): GameClearRuntimePr
   }
   return deepFreeze(value as unknown as GameClearRuntimeProfile);
 }
+
+/**
+ * Samples the serialized additional AnimatorController sequence. State 1 exits
+ * unconditionally at normalized time 1 into state 2; state 2 holds its exact
+ * alpha-zero stop-time pose and never returns to default.
+ */
+export function sampleGameClearAdditionalAnimation(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 2 | 3,
+  elapsedSeconds: number,
+): GameClearAdditionalAnimationSample {
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
+    throw new Error("Game-clear additional animation requires one finite non-negative scene phase");
+  }
+  const branch = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+  const elapsed = Math.fround(elapsedSeconds);
+  if (elapsed < branch.clip.stop_time) {
+    return sampleGameClearClip(branch.clip, elapsed, "text-in");
+  }
+  const terminalAt = Math.fround(branch.clip.stop_time + branch.textOutClip.stop_time);
+  if (elapsed >= terminalAt) {
+    return sampleGameClearClip(branch.textOutClip, branch.textOutClip.stop_time, "text-out-terminal");
+  }
+  return sampleGameClearClip(
+    branch.textOutClip,
+    canonicalClipPhase(
+      Math.fround(elapsed - branch.clip.stop_time),
+      branch.textOutClip.sample_rate,
+    ),
+    "text-out",
+  );
+}
+
 export function buildGameClearParticleProfile(
   profile: GameClearRuntimeProfile,
   clearStatus: 1 | 2 | 3,
@@ -332,11 +386,49 @@ function activeGameClearParticleSystems(
   return active;
 }
 
-function clipValue(clip: GameClearClipProfile, index: number, phase: number): number {
+function canonicalClipPhase(phase: number, sampleRate: number): number {
+  // The outer owner publishes Float32 total elapsed time, while Animator state
+  // 2 owns a fresh local clock. Recover exact authored frame boundaries after
+  // the Float32 subtraction (for example 5/60 must not become 0.0833332538).
+  const authoredFrame = Math.fround(Math.round(phase * sampleRate) / sampleRate);
+  return Math.abs(phase - authoredFrame) <= 1e-6 ? authoredFrame : phase;
+}
+
+function sampleGameClearClip(
+  clip: GameClearClipProfile,
+  requestedPhase: number,
+  state: GameClearAdditionalState,
+): GameClearAdditionalAnimationSample {
+  const phase = Math.min(Math.fround(requestedPhase), Math.fround(clip.stop_time));
+  const frames = clip.streamed_frames_inclusive ?? clip.streamed_frames;
+  const values: number[] = [];
+  for (let index = 0; index < clip.streamed_curve_count; index += 1) {
+    values.push(clipValue(clip, index, phase, frames));
+  }
+  values.push(...clip.constants.map(Math.fround));
+  const channels = clip.bindings.flatMap((binding) => binding.channels);
+  if (channels.length !== clip.curve_count || values.length !== clip.curve_count) {
+    throw new Error(`Game-clear clip channel/value coverage mismatch: ${channels.length}/${values.length}/${clip.curve_count}`);
+  }
+  return Object.freeze({
+    state,
+    clipName: clip.name,
+    phaseSeconds: phase,
+    channels: Object.freeze(channels),
+    values: Object.freeze(values),
+  });
+}
+
+function clipValue(
+  clip: GameClearClipProfile,
+  index: number,
+  phase: number,
+  frames: readonly GameClearClipFrame[] = clip.streamed_frames,
+): number {
   if (index >= clip.streamed_curve_count) return clip.constants[index - clip.streamed_curve_count] ?? 0;
   let latest: GameClearClipKey | null = null;
   let time = 0;
-  for (const frame of clip.streamed_frames) {
+  for (const frame of frames) {
     if (frame.time > phase) break;
     const key = frame.keys.find((candidate) => candidate.index === index);
     if (key !== undefined) { latest = key; time = frame.time; }
@@ -451,15 +543,40 @@ function randomWords(value: string): readonly [number, number, number, number] {
 }
 function numberValue(value: unknown): number { if (typeof value !== "number" || !Number.isFinite(value)) throw new Error("invalid game-clear particle number"); return Math.fround(value); }
 
-function validBranch(value: unknown, curves: number, objects: number, duration: number): boolean {
+function validAdditionalBranch(
+  value: unknown,
+  textInName: string,
+  textInCurves: number,
+  textOutName: string,
+  textOutCurves: number,
+  objects: number,
+): boolean {
+  return validBranch(value, textInName, textInCurves, objects, 2.2833333015441895) &&
+    record(value) && record(value.graph) && Array.isArray(value.graph.objects) &&
+    validClip(value.textOutClip, textOutName, textOutCurves, 0.3333333432674408, value.graph.objects, true);
+}
+
+function validBranch(value: unknown, name: string, curves: number, objects: number, duration: number): boolean {
   if (!record(value) || !record(value.graph) || !Array.isArray(value.graph.objects) ||
-      value.graph.objects.length !== objects || !record(value.clip)) return false;
-  const graphObjects = value.graph.objects as readonly unknown[];
-  const clip = value.clip;
-  if (clip.stop_time !== duration || clip.curve_count !== curves || !Array.isArray(clip.bindings) ||
-      !Array.isArray(clip.streamed_frames) || !Array.isArray(clip.constants) ||
-      !clip.bindings.every((binding: unknown) => record(binding) && Array.isArray(binding.channels))) return false;
-  const channels = clip.bindings.flatMap((binding) => (binding as { readonly channels: readonly unknown[] }).channels);
+      value.graph.objects.length !== objects) return false;
+  return validClip(value.clip, name, curves, duration, value.graph.objects, false);
+}
+
+function validClip(
+  value: unknown,
+  name: string,
+  curves: number,
+  duration: number,
+  graphObjects: readonly unknown[],
+  requireInclusiveStopFrame: boolean,
+): boolean {
+  if (!record(value) || value.name !== name || value.sample_rate !== 60 || value.stop_time !== duration ||
+      value.curve_count !== curves || !Array.isArray(value.bindings) ||
+      !Array.isArray(value.streamed_frames) || !Array.isArray(value.constants) ||
+      !value.bindings.every((binding: unknown) => record(binding) && Array.isArray(binding.channels)) ||
+      requireInclusiveStopFrame && (!Array.isArray(value.streamed_frames_inclusive) ||
+        !value.streamed_frames_inclusive.some((frame: unknown) => record(frame) && frame.time === duration))) return false;
+  const channels = value.bindings.flatMap((binding) => (binding as { readonly channels: readonly unknown[] }).channels);
   return channels.length === curves && channels.every((channel) =>
     typeof channel === "string" && validGameClearChannelOwner(channel, graphObjects));
 }

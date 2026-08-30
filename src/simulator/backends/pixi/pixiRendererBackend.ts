@@ -21,8 +21,10 @@ import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisiblePro
 import {
   buildGameClearParticleLifecycleSchedule,
   buildGameClearParticleProfile,
+  sampleGameClearAdditionalAnimation,
   sampleGameClearParticleTransforms,
-  type GameClearClipProfile,
+  type GameClearAdditionalAnimationSample,
+  type GameClearAdditionalState,
   type GameClearGraphObject,
   type GameClearParticleLifecycleMutation,
   type GameClearRuntimeProfile,
@@ -181,6 +183,8 @@ interface PixiHudVisual {
   gameClearParticleTextures: ReadonlyMap<string, Texture> | null;
   gameClearViewportHeight: number;
   gameClearSampledPhaseSeconds: number | null;
+  gameClearAdditionalState: GameClearAdditionalState | "base-only";
+  gameClearAdditionalClipName: string | null;
   gameClearChannelValuesBits: readonly string[];
   gameClearChannelDispositionCounts: Readonly<Record<string, number>>;
   fillRatios: readonly [number, number];
@@ -842,6 +846,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly activeAnimationRole: EvidenceAnimationRole | null;
     readonly animationElapsedSeconds: number | null;
     readonly hudGameClearSampledPhaseSeconds: number | null;
+    readonly hudGameClearAdditionalState: GameClearAdditionalState | "base-only" | null;
+    readonly hudGameClearAdditionalClipName: string | null;
     readonly hudGameClearChannelValuesBits: readonly string[] | null;
     readonly hudGameClearChannelDispositionCounts: Readonly<Record<string, number>> | null;
     readonly hudGameClearParticleSystemCount: number | null;
@@ -1079,6 +1085,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       animationElapsedSeconds: value.animationElapsedSeconds,
       hudGameClearSampledPhaseSeconds: value.hudVisual?.kind === "game-clear"
         ? value.hudVisual.gameClearSampledPhaseSeconds
+        : null,
+      hudGameClearAdditionalState: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearAdditionalState
+        : null,
+      hudGameClearAdditionalClipName: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearAdditionalClipName
         : null,
       hudGameClearChannelValuesBits: value.hudVisual?.kind === "game-clear"
         ? value.hudVisual.gameClearChannelValuesBits
@@ -2645,7 +2657,10 @@ function applyGameClearHud(
     }
   }
   visual.content.visible = true;
-  sampleGameClearGraph(visual, branch.clip, 0);
+  applyGameClearGraphSample(
+    visual,
+    sampleGameClearAdditionalAnimation(profile, clearStatus as 2 | 3, 0),
+  );
 }
 
 function advanceGameClearParticleSimulation(
@@ -2882,40 +2897,25 @@ type GameClearChannelDisposition =
   | "portable-2d-redundant-euler"
   | "portable-2d-redundant-z";
 
-function sampleGameClearGraph(visual: PixiHudVisual, clip: GameClearClipProfile, elapsedSeconds: number): void {
-  // SVL-R06/SVL-R07: the additional clip holds its last sample until scene exit,
-  // and every serialized channel is classified rather than silently discarded.
-  const phase = Math.min(Math.fround(elapsedSeconds), Math.fround(clip.stop_time - 1 / 6000));
-  const latest = new Map<number, { readonly time: number; readonly coefficients: readonly [number, number, number, number] }>();
-  for (const frame of clip.streamed_frames) {
-    if (frame.time > phase) break;
-    for (const key of frame.keys) latest.set(key.index, { time: frame.time, coefficients: key.coefficients });
-  }
-  const values: number[] = [];
-  for (let index = 0; index < clip.streamed_curve_count; index += 1) {
-    const key = latest.get(index);
-    values.push(key === undefined ? 0 : sampleCubicF32(key.coefficients, Math.fround(phase - key.time)));
-  }
-  values.push(...clip.constants.map(Math.fround));
-  const channels = clip.bindings.flatMap((binding) => binding.channels);
-  if (channels.length !== clip.curve_count || values.length !== clip.curve_count) {
-    throw new Error(`Game-clear clip channel/value coverage mismatch: ${channels.length}/${values.length}/${clip.curve_count}`);
-  }
+function applyGameClearGraphSample(
+  visual: PixiHudVisual,
+  sample: GameClearAdditionalAnimationSample,
+): void {
+  // Focused 10.1.4 controller evidence: text-in exits unconditionally at
+  // normalized time 1 into text-out. The text-out stop-time keyframe keeps all
+  // UI owners active while setting every visible owner alpha to exact zero.
   const counts: Record<string, number> = {};
-  for (let index = 0; index < channels.length; index += 1) {
-    const disposition = applyGameClearChannel(visual, channels[index]!, values[index]!);
+  for (let index = 0; index < sample.channels.length; index += 1) {
+    const disposition = applyGameClearChannel(visual, sample.channels[index]!, sample.values[index]!);
     counts[disposition] = (counts[disposition] ?? 0) + 1;
   }
-  visual.gameClearSampledPhaseSeconds = phase;
-  visual.gameClearChannelValuesBits = Object.freeze(values.map(float32LittleEndianBytesHex));
+  visual.gameClearSampledPhaseSeconds = sample.phaseSeconds;
+  visual.gameClearAdditionalState = sample.state;
+  visual.gameClearAdditionalClipName = sample.clipName;
+  visual.gameClearChannelValuesBits = Object.freeze(sample.values.map(float32LittleEndianBytesHex));
   visual.gameClearChannelDispositionCounts = Object.freeze(Object.fromEntries(
     Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
   ));
-}
-function sampleCubicF32(coefficients: readonly [number, number, number, number], delta: number): number {
-  let value = Math.fround(Math.fround(coefficients[0] * delta) + coefficients[1]);
-  value = Math.fround(Math.fround(value * delta) + coefficients[2]);
-  return Math.fround(Math.fround(value * delta) + coefficients[3]);
 }
 function applyGameClearChannel(
   visual: PixiHudVisual,
@@ -3143,6 +3143,8 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     gameClearParticleTextures: null,
     gameClearViewportHeight: 0,
     gameClearSampledPhaseSeconds: null,
+    gameClearAdditionalState: "base-only",
+    gameClearAdditionalClipName: null,
     gameClearChannelValuesBits: Object.freeze([]),
     gameClearChannelDispositionCounts: Object.freeze({}),
     fillRatios: Object.freeze([0, 0]),
@@ -4314,8 +4316,10 @@ function applyEvidenceAnimation(
       renderGameClearParticles(visual, visual.gameClearParticleTextures);
     }
     if (state.clearStatus !== 1) {
-      const branch = state.clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
-      sampleGameClearGraph(visual, branch.clip, elapsedSeconds);
+      applyGameClearGraphSample(
+        visual,
+        sampleGameClearAdditionalAnimation(profile, state.clearStatus as 2 | 3, elapsedSeconds),
+      );
     }
     return;
   }

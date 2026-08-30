@@ -764,10 +764,9 @@ export class RenderCommandProducer {
       });
     }
     if (this.gameClearElapsedSeconds !== null) {
-      // SVF-R06: the additional FC/AP controller has no elapsed-time stop or
-      // deactivate path. Continue sampling the scene-owned graph; the backend
-      // clamps non-looping clips to their final frame and session teardown owns
-      // the only release mutation.
+      // Focused 10.1.4 controller evidence: the backend consumes the complete
+      // text-in -> text-out -> alpha-zero terminal state sequence. This clock
+      // remains independent from the base 3.233-second callback and 15ms exit.
       nextGameClearElapsed = Math.fround(this.gameClearElapsedSeconds + deltaTimeSeconds);
       const sample = createRenderFloat32(nextGameClearElapsed);
       if (sample.status !== "ok") return sample;

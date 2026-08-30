@@ -276,7 +276,12 @@ export class DeterministicParticleSimulation {
         for (const particle of [...runtime.particles]) {
           this.updateParticle(record.bundle, profile, particle, delta);
         }
-        runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
+        // Reverse 4dec93f9 focused phase oracle: Unity evaluates this outer
+        // update's emissions against the still-owned particle list, then
+        // removes expired particles for publication. Removing expired rows
+        // before emission incorrectly frees maxNumParticles capacity in the
+        // same update (the looping Swipe/kira 2.0 s phase becomes 15 instead
+        // of the evidenced 12).
         for (const at of this.events(record.bundle, profile, before, after, runtime.first)) {
           this.spawn(owner, record, profile, runtime, at, subtract(after, at));
         }

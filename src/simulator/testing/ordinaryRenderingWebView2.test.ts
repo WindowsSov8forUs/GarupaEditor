@@ -66,10 +66,15 @@ import { createPauseControlLayout, PauseControlSceneOwner } from "../scene/pause
 import { observePixiWorld } from "./pixiWorldObserver";
 import { readWebGlFramebufferRgba } from "./readWebGlFramebuffer";
 import { applicationLeaseParticleProviderForTesting } from "./legacyApplicationParticleProvider";
+import focusedTerminalFixture from "./fixtures/reverse-snapshots/ordinary-particle-terminal-focused/artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/focused_particle_terminal_contract.json";
+import bbkkChartFixture from "./product-samples/bbkk-single-width-regression.json";
+import bbkkProvenanceFixture from "./product-samples/bbkk-single-width-regression.provenance.json";
 
 const WIDTH = 1600;
 const HEIGHT = 720;
 const DELTA = 0.1;
+const BBKK_SINGLE_WIDTH_PARTICLE_VISIBLE_PRODUCT_SEMANTICS_ID =
+  "simulator.bbkk-single-width-ordinary-particle-visible-regression-v1";
 
 interface InputMap {
   readonly render: readonly { readonly logicalAssetId: string; readonly url: string }[];
@@ -81,6 +86,9 @@ interface LoadedInputs {
   readonly strict: any;
   readonly sevenVisual: any;
   readonly freshSevenVisual: any;
+  readonly focusedTerminal: any;
+  readonly bbkkChart: readonly Readonly<Record<string, unknown>>[];
+  readonly bbkkProvenance: any;
   readonly renderProfile: RenderResourceProfile;
   readonly renderResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
   readonly particleResources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[];
@@ -201,6 +209,7 @@ async function main(): Promise<void> {
   const autoCleanup = disposeSession(app, auto);
 
   const tapKeepSameState = await verifySlideTapKeepSameState(app, inputs);
+  const bbkkSingleWidthFramebuffer = await verifyBbkkSingleWidthOrdinaryFramebuffer(app, inputs);
 
   const liveManualClear = await createSession(inputs, "ordinary-webview2-live-manual-clear", "live-manual");
   mount(app, liveManualClear);
@@ -213,11 +222,11 @@ async function main(): Promise<void> {
     inputs.sevenVisual,
     inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo,
     inputs.freshSevenVisual.R07_complete_fc_ap_animation.full_combo,
+    inputs.focusedTerminal.terminalAdditional.fullCombo,
     true,
   );
   assertGameClearWhite(liveManualClear);
   captures.push(await capture(app, liveManualClear, "live-manual-full-combo", 0));
-  assertGameClearSceneOwnedHold(liveManualClear);
   const liveManualClearCleanup = disposeSession(app, liveManualClear);
 
   const manual = await createSession(inputs, "ordinary-webview2-game-over", "live-manual");
@@ -261,11 +270,11 @@ async function main(): Promise<void> {
     inputs.sevenVisual,
     inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect,
     inputs.freshSevenVisual.R07_complete_fc_ap_animation.all_perfect,
+    inputs.focusedTerminal.terminalAdditional.allPerfect,
     false,
   );
   assertGameClearWhite(rehearsalAuto);
   captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-all-perfect", 0));
-  assertGameClearSceneOwnedHold(rehearsalAuto);
   const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
   const requiredLabels = [
@@ -313,12 +322,14 @@ async function main(): Promise<void> {
       captures: Object.freeze(captures),
       naturalClearStatus,
       tapKeepSameState,
+      bbkkSingleWidthFramebuffer,
       sevenVisualLifecycle: Object.freeze({
         freshStatus: inputs.freshSevenVisual.status,
         status: inputs.sevenVisual.status,
         fullComboChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.full_combo.clip.curve_count,
         allPerfectChannels: inputs.sevenVisual.full_combo_all_perfect_complete_animation.all_perfect.clip.curve_count,
-        terminalHoldBoundarySeconds: 3.232,
+        additionalInvisibleBoundarySeconds: inputs.focusedTerminal.terminalAdditional.fullCombo.timeline.additionalInvisibleFromSeconds,
+        baseCallbackBoundarySeconds: inputs.focusedTerminal.terminalAdditional.sessionOrder.baseCallbackSecondsObservedNaturalAutoStatus1,
         scoreGaugeSsContinuousSeconds: 7.5,
         uvFrame: inputs.sevenVisual.particle_texture_material_color_blend.uv_frame,
         fullComboPhaseMatrix,
@@ -353,8 +364,13 @@ async function assertGameClearAnimationMatrix(
   sevenVisual: any,
   branch: any,
   freshBranch: any,
+  focusedBranch: any,
   verifyUvFrame: boolean,
-): Promise<Readonly<{ readonly animationKey: string; readonly phaseDigests: readonly string[] }>> {
+): Promise<Readonly<{
+  readonly animationKey: string;
+  readonly phaseDigests: readonly string[];
+  readonly textOutPhaseDigests: readonly string[];
+}>> {
   let previousPhase = 0;
   let uvFramebufferVerified = false;
   const phaseDigests: string[] = [];
@@ -402,23 +418,112 @@ async function assertGameClearAnimationMatrix(
       JSON.stringify(framebufferPartition) !== JSON.stringify(channelPartition)) {
     throw new Error(`SVL-R07 ${branch.animation_key} production branch did not materialize the independent eight-phase/six-state matrix: ${JSON.stringify({ phaseDigests, framebufferPartition, channelPartition })}`);
   }
-  const finalBits = JSON.stringify(requiredGameClearSnapshot(session).hudGameClearChannelValuesBits);
-  const finalFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
+  const textOutPhaseDigests: string[] = [];
+  const textOutChannels = focusedBranch.clips.text_out.bindings.flatMap((binding: any) => binding.channels);
+  let terminalBits: string | null = null;
+  let terminalFramebuffer: Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }> | null = null;
+  let visibleTextOutFramebuffer: Readonly<{ readonly sha256: string; readonly nonTransparentPixels: number }> | null = null;
+  for (let phaseIndex = 0; phaseIndex < focusedBranch.textOutOracle.phases.length; phaseIndex += 1) {
+    const expected = focusedBranch.textOutOracle.phases[phaseIndex];
+    const localPhase = float32FromBigEndianBits(expected.secondsBits);
+    const target = phaseIndex === focusedBranch.textOutOracle.phases.length - 1
+      ? focusedBranch.timeline.additionalInvisibleFromSeconds
+      : Math.fround(focusedBranch.timeline.textInSeconds + localPhase);
+    sampleGameClear(session, Math.fround(target - previousPhase));
+    previousPhase = target;
+    const clear = requiredGameClearSnapshot(session);
+    const expectedBits = textOutChannels.map((channel: string) => bigEndianBitsToLittleEndianBytes(expected.channelBits[channel]));
+    const expectedState = phaseIndex === focusedBranch.textOutOracle.phases.length - 1
+      ? "text-out-terminal"
+      : "text-out";
+    if (clear.hudGameClearAdditionalState !== expectedState ||
+        clear.hudGameClearAdditionalClipName !== focusedBranch.clips.text_out.name ||
+        clear.hudGameClearSampledPhaseSeconds !== localPhase ||
+        JSON.stringify(clear.hudGameClearChannelValuesBits) !== JSON.stringify(expectedBits)) {
+      throw new Error(`focused R06 ${branch.animation_key} text-out phase mismatch: ${JSON.stringify({ clear, expectedState, localPhase })}`);
+    }
+    assertFocusedTextOutOwners(session, branch.animation_key, focusedBranch, expected);
+    const framebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
+    textOutPhaseDigests.push(framebuffer.sha256);
+    if (phaseIndex === 1) visibleTextOutFramebuffer = framebuffer;
+    if (expected.visibleOwnerCount === 0) {
+      terminalBits = JSON.stringify(clear.hudGameClearChannelValuesBits);
+      terminalFramebuffer = framebuffer;
+      const hidden = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, true);
+      if (framebuffer.sha256 !== hidden.sha256) {
+        throw new Error(`focused R06 ${branch.animation_key} alpha-zero terminal differs from hidden branch: ${JSON.stringify({ framebuffer, hidden })}`);
+      }
+    }
+  }
+  if (terminalBits === null || terminalFramebuffer === null || visibleTextOutFramebuffer === null ||
+      visibleTextOutFramebuffer.sha256 === terminalFramebuffer.sha256) {
+    throw new Error(`focused R06 ${branch.animation_key} did not materialize visible text-out then alpha-zero terminal`);
+  }
   sampleGameClear(session, Math.fround(3.232 - previousPhase));
-  const held = requiredGameClearSnapshot(session);
-  const heldFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
-  const rejectedEarlyHideFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, true);
-  if (held.visible !== true || held.activeAnimationRole !== "game-clear" ||
-      JSON.stringify(held.hudGameClearChannelValuesBits) !== finalBits ||
-      finalFramebuffer.sha256 !== heldFramebuffer.sha256 ||
-      heldFramebuffer.sha256 === rejectedEarlyHideFramebuffer.sha256 ||
-      heldFramebuffer.nonTransparentPixels <= 0) {
-    throw new Error(`SVL-R06 ${branch.animation_key} production framebuffer did not hold its final branch or reject clip-stop disappearance: ${JSON.stringify({ finalFramebuffer, heldFramebuffer, rejectedEarlyHideFramebuffer })}`);
+  const beforeBaseCallback = requiredGameClearSnapshot(session);
+  const beforeBaseFramebuffer = await captureGameClearBranchFramebuffer(app, session, branch.animation_key, false);
+  if (beforeBaseCallback.hudGameClearAdditionalState !== "text-out-terminal" ||
+      JSON.stringify(beforeBaseCallback.hudGameClearChannelValuesBits) !== terminalBits ||
+      beforeBaseFramebuffer.sha256 !== terminalFramebuffer.sha256) {
+    throw new Error(`focused R06 ${branch.animation_key} additional terminal did not remain alpha-zero before the independent base callback`);
   }
   if (verifyUvFrame && !uvFramebufferVerified) {
     throw new Error("SVL-R01 uvFrame=11 was not materialized during the complete Full Combo phase matrix");
   }
-  return Object.freeze({ animationKey: branch.animation_key, phaseDigests: Object.freeze(phaseDigests) });
+  return Object.freeze({
+    animationKey: branch.animation_key,
+    phaseDigests: Object.freeze(phaseDigests),
+    textOutPhaseDigests: Object.freeze(textOutPhaseDigests),
+  });
+}
+
+function assertFocusedTextOutOwners(
+  session: BrowserSession,
+  animationKey: string,
+  focusedBranch: any,
+  expectedPhase: any,
+): void {
+  const root = animationKey === "FullCombo_text_in" ? "FullComboAnimation" : "AllPerfectAnimation";
+  const channels = focusedBranch.clips.text_out.bindings.flatMap((binding: any) => binding.channels) as string[];
+  const activeOwners = new Set<string>();
+  const visibleOwners = new Set<string>();
+  for (const channel of channels) {
+    const isActive = channel.endsWith(".m_IsActive.value");
+    const isAlpha = channel.endsWith(".mColor.a.value");
+    if (!isActive && !isAlpha) throw new Error(`focused R06 unexpected text-out channel: ${channel}`);
+    const suffix = isActive ? ".m_IsActive.value" : ".mColor.a.value";
+    const relative = channel.slice(0, -suffix.length);
+    const node = session.renderer.stage.getChildByLabel(`game-clear:${root}/${relative}`, true);
+    if (node === null) throw new Error(`focused R06 text-out owner is absent: ${root}/${relative}`);
+    const value = float32FromBigEndianBits(expectedPhase.channelBits[channel]);
+    if (isActive) {
+      if (node.visible !== (value >= 0.5)) {
+        throw new Error(`focused R06 m_IsActive mutation mismatch: ${relative}/${node.visible}/${value}`);
+      }
+      if (value >= 0.5) activeOwners.add(relative);
+    } else {
+      if (node.children.length === 0 || node.children.some((child) => child.alpha !== value)) {
+        throw new Error(`focused R06 widget alpha mutation mismatch: ${relative}/${value}`);
+      }
+      if (value > 0) visibleOwners.add(relative);
+    }
+  }
+  const visibleAndActive = [...visibleOwners].filter((owner) => activeOwners.has(owner));
+  if (activeOwners.size !== expectedPhase.activeOwnerCount ||
+      visibleAndActive.length !== expectedPhase.visibleOwnerCount ||
+      JSON.stringify(visibleAndActive.sort()) !== JSON.stringify([...expectedPhase.visibleOwners].sort())) {
+    throw new Error(`focused R06 owner count mismatch: ${JSON.stringify({ activeOwners: [...activeOwners], visibleAndActive, expectedPhase })}`);
+  }
+}
+
+function float32FromBigEndianBits(bits: string): number {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setUint32(0, Number.parseInt(bits.slice(2), 16) >>> 0, false);
+  return new DataView(bytes.buffer).getFloat32(0, false);
+}
+
+function bigEndianBitsToLittleEndianBytes(bits: string): string {
+  return bits.slice(2).match(/../g)!.reverse().join("").toUpperCase();
 }
 
 function assertFreshParticleOwnerPhase(
@@ -472,24 +577,6 @@ function assertFreshParticleOwnerPhase(
   if (branchActivated.length !== expectedActivated.size ||
       [...expectedActivated].some((identity) => !branchActivated.includes(identity))) {
     throw new Error(`SVF-R07 m_IsActive did not couple to real playOnAwake ParticleSystems: ${JSON.stringify({ phaseIndex, branchActivated, expectedActivated: [...expectedActivated] })}`);
-  }
-}
-
-function assertGameClearSceneOwnedHold(session: BrowserSession): void {
-  const held = requiredGameClearSnapshot(session);
-  const threshold = Math.fround(3.233);
-  if (held.animationElapsedSeconds === null || held.animationElapsedSeconds === undefined ||
-      held.animationElapsedSeconds >= threshold) {
-    throw new Error(`SVF-R06 pre-callback final hold is not below 3.233 seconds: ${JSON.stringify(held)}`);
-  }
-  const finalBits = JSON.stringify(held.hudGameClearChannelValuesBits);
-  sampleGameClear(session, Math.fround(threshold - held.animationElapsedSeconds));
-  sampleGameClear(session, Math.fround(1));
-  const afterFormerThreshold = requiredGameClearSnapshot(session);
-  if (afterFormerThreshold.visible !== true || afterFormerThreshold.activeAnimationRole !== "game-clear" ||
-      afterFormerThreshold.animationElapsedSeconds === null || afterFormerThreshold.animationElapsedSeconds <= threshold ||
-      JSON.stringify(afterFormerThreshold.hudGameClearChannelValuesBits) !== finalBits) {
-    throw new Error(`SVF-R06 scene-owned final frame was released by the withdrawn synthetic threshold: ${JSON.stringify(afterFormerThreshold)}`);
   }
 }
 
@@ -854,6 +941,232 @@ async function runRehearsalLifeZeroScenario(
     "rehearsal-life-zero-continuation",
     lifeZeroFrame + 30,
   ));
+}
+
+async function verifyBbkkSingleWidthOrdinaryFramebuffer(
+  app: Application,
+  inputs: LoadedInputs,
+): Promise<Readonly<Record<string, unknown>>> {
+  const chart = requireOk(constructChartFromGarupaChartJson(inputs.bbkkChart as any));
+  const product = getGarupaProductChartProfile(chart);
+  if (product === undefined || product.route !== "product-extension" ||
+      product.visibleNodes.filter((node) => node.scoringSource !== null).some((node) => node.width !== 1)) {
+    throw new Error("focused R01 B.B.K product regression chart is not the audited all-single-width route");
+  }
+  const originalFramebuffer = focusedTerminalFixture.ordinaryParticles.originalFramebuffer;
+  if (originalFramebuffer.captureAttribution.singleRootOrSingleLaneAttribution !== false ||
+      originalFramebuffer.featureGate.crossTupleUseForbidden !== true ||
+      originalFramebuffer.featureGate.componentThresholdTransferToBbkkAuthorized !== false ||
+      originalFramebuffer.featureGate.transformOrRandomCorrectionAuthorizedByThisFrame !== false) {
+    throw new Error("focused Reverse original-frame attribution boundary changed");
+  }
+  const session = await createSession(inputs, "ordinary-webview2-bbkk-single-width", "live-auto", chart);
+  mount(app, session);
+  requireOk(session.engine.initialize());
+  await advanceToPlayable(session);
+
+  // This is a product regression semantic, not an original-equivalence oracle.
+  // Reverse proves that its committed complete frame cannot be attributed to a
+  // single root/lane/random draw, so its bilateral >=40 component counts are
+  // intentionally not transferred to this different B.B.K tuple. The product
+  // gate instead requires the reported width-1 route to publish complete Pixi
+  // particles plus same-frame bilateral fine sparks and judgement glow. Exact
+  // alpha/blend consumption remains independently gated on an opaque backdrop.
+  // Beats 353..356 are the audited dense bilateral width-1 product interval.
+  const finePhaseStartAbsolutePosition = Math.fround(354 * 48);
+  const targetAbsolutePosition = Math.fround(354 * 48);
+  const endAbsolutePosition = Math.fround(356 * 48);
+  let best: Readonly<Record<string, unknown>> | null = null;
+  let accepted: Readonly<Record<string, unknown>> | null = null;
+  const diagnostics: Record<string, unknown>[] = [];
+  for (let frame = 1; frame <= 4_000; frame += 1) {
+    const beforeStep = requireOk(session.engine.snapshot());
+    const delta = beforeStep.adjustedMusicPosition < finePhaseStartAbsolutePosition
+      ? Math.fround(0.1)
+      : Math.fround(1 / 60);
+    requireOk(session.engine.step(delta));
+    const engine = requireOk(session.engine.snapshot());
+    if (engine.adjustedMusicPosition > endAbsolutePosition) break;
+    const activeOwners = session.particle.snapshot().activeOwners.filter((owner) =>
+      owner.root === "ordinary:effect_tap_perfect" ||
+      owner.root === "ordinary:effect_tap_skill_perfect" ||
+      owner.root === "ordinary:effect_tap_swipe");
+    if (engine.adjustedMusicPosition < targetAbsolutePosition || activeOwners.length < 4) continue;
+    app.render();
+    const rgba = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+    const metrics = Object.freeze({
+      leftStarAndGlow: brightComponentMetrics(rgba, [250, 250, 650, 540]),
+      rightStarAndGlow: brightComponentMetrics(rgba, [1100, 250, 1350, 540]),
+      leftJudgementGlow: brightComponentMetrics(rgba, [180, 400, 700, 710]),
+      rightJudgementGlow: brightComponentMetrics(rgba, [930, 400, 1420, 710]),
+    });
+    let exactBlackNonZeroAlphaPixels = 0;
+    for (let index = 0; index < rgba.length; index += 4) {
+      if (rgba[index] === 0 && rgba[index + 1] === 0 && rgba[index + 2] === 0 && rgba[index + 3]! > 0) {
+        exactBlackNonZeroAlphaPixels += 1;
+      }
+    }
+    const score = Math.min(
+      metrics.leftStarAndGlow.fineComponentCountArea2To160 / 2,
+      metrics.rightStarAndGlow.fineComponentCountArea2To160 / 2,
+      metrics.leftJudgementGlow.largeComponentCountAreaOver160,
+      metrics.rightJudgementGlow.largeComponentCountAreaOver160,
+    );
+    const featurePassed = session.particleRenderer.snapshot().nodeCount >= 12 &&
+      metrics.leftStarAndGlow.fineComponentCountArea2To160 >= 2 &&
+      metrics.rightStarAndGlow.fineComponentCountArea2To160 >= 2 &&
+      metrics.leftJudgementGlow.largeComponentCountAreaOver160 >= 1 &&
+      metrics.rightJudgementGlow.largeComponentCountAreaOver160 >= 1;
+    const additiveBackdrop = featurePassed
+      ? await verifyParticleAdditiveBackdropNoOp(app, session)
+      : null;
+    const observation = Object.freeze({
+      frame,
+      adjustedMusicPosition: engine.adjustedMusicPosition,
+      activeRoots: Object.freeze(activeOwners.map((owner) => owner.root).sort()),
+      particleNodeCount: session.particleRenderer.snapshot().nodeCount,
+      rgbaSha256: await sha256(rgba),
+      exactBlackNonZeroAlphaPixels,
+      additiveBackdrop,
+      metrics,
+      score,
+    });
+    if (best === null || score > Number(best.score)) best = observation;
+    diagnostics.push({
+      frame,
+      adjustedMusicPosition: engine.adjustedMusicPosition,
+      particleNodeCount: session.particleRenderer.snapshot().nodeCount,
+      activeOwnerCount: activeOwners.length,
+      leftFine: metrics.leftStarAndGlow.fineComponentCountArea2To160,
+      rightFine: metrics.rightStarAndGlow.fineComponentCountArea2To160,
+      leftLarge: metrics.leftJudgementGlow.largeComponentCountAreaOver160,
+      rightLarge: metrics.rightJudgementGlow.largeComponentCountAreaOver160,
+    });
+    diagnostics.sort((left, right) =>
+      Math.min(Number(right.leftFine), Number(right.rightFine)) -
+      Math.min(Number(left.leftFine), Number(left.rightFine)) ||
+      Number(right.particleNodeCount) - Number(left.particleNodeCount));
+    if (diagnostics.length > 12) diagnostics.length = 12;
+    if (featurePassed && additiveBackdrop?.decreasedRgbChannelCount === 0) {
+      accepted = observation;
+      break;
+    }
+  }
+  app.render();
+  const cleanup = disposeSession(app, session);
+  if (accepted === null) {
+    throw new Error(`focused R01 B.B.K single-width actual WebGL product feature gate failed: ${JSON.stringify({ best, diagnostics })}`);
+  }
+  return Object.freeze({
+    status: "portable-product-complete-framebuffer-feature-gate-passed-original-equivalence-open",
+    productSemanticsId: BBKK_SINGLE_WIDTH_PARTICLE_VISIBLE_PRODUCT_SEMANTICS_ID,
+    inputSha256: inputs.bbkkProvenance.sha256,
+    directRowCount: inputs.bbkkProvenance.directRowCount,
+    allAuditedVisibleWidthsAreOne: true,
+    threshold: 220,
+    excludedJudgementLineYInclusive: Object.freeze([548, 575]),
+    featureRequirement: "complete Pixi particle publication (>=12 nodes), same-frame bilateral fine components>=2 and bilateral large components>=1; opaque-backdrop additive composition never decreases RGB",
+    reverseBoundary: "the original Ichininaru frame's component counts, native random tuple, and single-root attribution are not transferred",
+    accepted,
+    cleanup,
+    originalEquivalenceAuthorized: false,
+  });
+}
+
+async function verifyParticleAdditiveBackdropNoOp(
+  app: Application,
+  session: BrowserSession,
+): Promise<Readonly<{
+  readonly baselineSha256: string;
+  readonly composedSha256: string;
+  readonly decreasedRgbChannelCount: number;
+}>> {
+  const backdrop = new Sprite(Texture.WHITE);
+  backdrop.label = "focused-r01-additive-no-op-backdrop";
+  backdrop.tint = 0x202020;
+  backdrop.width = WIDTH;
+  backdrop.height = HEIGHT;
+  session.combined.root.addChildAt(backdrop, 0);
+  const lowVisible = session.particleRenderer.stage.visible;
+  const highVisible = session.particleRenderer.highSortingStage.visible;
+  session.particleRenderer.stage.visible = false;
+  session.particleRenderer.highSortingStage.visible = false;
+  app.render();
+  const baseline = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+  session.particleRenderer.stage.visible = lowVisible;
+  session.particleRenderer.highSortingStage.visible = highVisible;
+  app.render();
+  const composed = readWebGlFramebufferRgba(app, WIDTH, HEIGHT);
+  let decreasedRgbChannelCount = 0;
+  for (let index = 0; index < composed.length; index += 4) {
+    for (let channel = 0; channel < 3; channel += 1) {
+      if (composed[index + channel]! < baseline[index + channel]!) decreasedRgbChannelCount += 1;
+    }
+  }
+  backdrop.removeFromParent();
+  backdrop.destroy({ children: true, texture: false, textureSource: false });
+  return Object.freeze({
+    baselineSha256: await sha256(baseline),
+    composedSha256: await sha256(composed),
+    decreasedRgbChannelCount,
+  });
+}
+
+function brightComponentMetrics(
+  rgba: Uint8Array,
+  box: readonly [number, number, number, number],
+): Readonly<{
+  readonly whitePixelCount: number;
+  readonly componentCount: number;
+  readonly fineComponentCountArea2To160: number;
+  readonly largeComponentCountAreaOver160: number;
+  readonly largestComponentAreas: readonly number[];
+}> {
+  const [left, top, right, bottom] = box;
+  const width = right - left;
+  const height = bottom - top;
+  const bright = new Uint8Array(width * height);
+  let whitePixelCount = 0;
+  for (let y = top; y < bottom; y += 1) {
+    if (y >= 548 && y <= 575) continue;
+    for (let x = left; x < right; x += 1) {
+      const offset = (y * WIDTH + x) * 4;
+      if (rgba[offset]! >= 220 && rgba[offset + 1]! >= 220 && rgba[offset + 2]! >= 220 && rgba[offset + 3]! > 0) {
+        bright[(y - top) * width + x - left] = 1;
+        whitePixelCount += 1;
+      }
+    }
+  }
+  const areas: number[] = [];
+  const queue = new Int32Array(width * height);
+  for (let index = 0; index < bright.length; index += 1) {
+    if (bright[index] !== 1) continue;
+    bright[index] = 2;
+    let read = 0;
+    let write = 1;
+    queue[0] = index;
+    while (read < write) {
+      const current = queue[read++]!;
+      const x = current % width;
+      const neighbours = [current - width, current + width, current - 1, current + 1];
+      for (let direction = 0; direction < neighbours.length; direction += 1) {
+        const candidate = neighbours[direction]!;
+        if (candidate < 0 || candidate >= bright.length ||
+            direction === 2 && x === 0 || direction === 3 && x === width - 1 || bright[candidate] !== 1) continue;
+        bright[candidate] = 2;
+        queue[write++] = candidate;
+      }
+    }
+    areas.push(write);
+  }
+  areas.sort((leftArea, rightArea) => rightArea - leftArea);
+  return Object.freeze({
+    whitePixelCount,
+    componentCount: areas.length,
+    fineComponentCountArea2To160: areas.filter((area) => area >= 2 && area <= 160).length,
+    largeComponentCountAreaOver160: areas.filter((area) => area > 160).length,
+    largestComponentAreas: Object.freeze(areas.slice(0, 16)),
+  });
 }
 
 async function verifySlideTapKeepSameState(
@@ -1322,6 +1635,9 @@ async function loadInputs(): Promise<LoadedInputs> {
     fetchJson<RenderResourceProfile["assets"]>("/game-clear-assets.json"),
     fetchText("/chart.bms"),
   ]);
+  const focusedTerminal: any = focusedTerminalFixture;
+  const bbkkChart = bbkkChartFixture as readonly Readonly<Record<string, unknown>>[];
+  const bbkkProvenance: any = bbkkProvenanceFixture;
   const visible = parseCurrentOrdinaryVisibleProfile(visibleRaw);
   const scoreAnimation = parseCurrentScoreGaugeSsAnimationProfile(scoreAnimationRaw);
   const gameClearProfile = parseCurrentGameClearProfile(gameClearRaw);
@@ -1352,10 +1668,17 @@ async function loadInputs(): Promise<LoadedInputs> {
   if (sevenVisual.status !== "confirmed-current-seven-visual-lifecycle-reconfirmation" ||
       freshSevenVisual.status !== "portable-requirements-authorized-product-visible-open" ||
       freshSevenVisual.authority?.portable_reconstruction_authorization !== true ||
-      freshSevenVisual.authority?.production_consumption_equivalence_authorization !== false) {
-    throw new Error("SVL/SVF-R01..R07 independent fixture status mismatch");
+      freshSevenVisual.authority?.production_consumption_equivalence_authorization !== false ||
+      focusedTerminal.status !== "focused-current-evidence-closed-product-consumption-open" ||
+      focusedTerminal.authorization?.productionConsumptionEquivalenceAuthorization !== false ||
+      bbkkProvenance.identity !== "user-reported-bbkk-product-regression-input" ||
+      bbkkProvenance.allAuditedVisibleWidthsAreOne !== true || bbkkChart.length !== 778) {
+    throw new Error("SVL/SVF/focused R01..R07 or B.B.K product regression input status mismatch");
   }
-  return Object.freeze({ chartText, strict, sevenVisual, freshSevenVisual, renderProfile, renderResources, particleResources });
+  return Object.freeze({
+    chartText, strict, sevenVisual, freshSevenVisual, focusedTerminal, bbkkChart, bbkkProvenance,
+    renderProfile, renderResources, particleResources,
+  });
 }
 
 async function loadMappedBytes(rows: readonly { readonly logicalAssetId: string; readonly url: string }[]) {
