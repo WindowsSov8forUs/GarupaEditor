@@ -1,0 +1,94 @@
+import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join, resolve } from "node:path";
+
+const [compiledSimulatorRoot, outputPath] = process.argv.slice(2);
+if (!compiledSimulatorRoot || !outputPath) {
+  throw new Error("usage: node updateAutoLiveMultipleGroupingProductSnapshot.mjs <compiled-simulator-root> <output-json>");
+}
+
+const repositoryRoot = resolve(import.meta.dirname, "..", "..", "..", "..");
+const fixtureRoot = join(
+  repositoryRoot,
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
+  "chart-construction",
+  "fixtures",
+);
+const require = createRequire(import.meta.url);
+const construction = require(join(
+  resolve(compiledSimulatorRoot),
+  "engine",
+  "chart",
+  "construction.js",
+));
+
+function deriveSourceOrderRuns(informationList) {
+  const groups = [];
+  let current = [];
+  for (const information of informationList) {
+    if (information.buttonType === -1) continue;
+    if (information.fireNoteType !== 6) {
+      if (current.length > 0) groups.push(current);
+      current = [];
+      continue;
+    }
+    const previous = current.at(-1);
+    if (
+      previous &&
+      previous.gameNoteType === information.gameNoteType &&
+      Math.abs(previous.buttonType - information.buttonType) === 1
+    ) {
+      current.push(information);
+    } else {
+      if (current.length > 0) groups.push(current);
+      current = [information];
+    }
+  }
+  if (current.length > 0) groups.push(current);
+  return groups;
+}
+
+const charts = [
+  "poppin_shuffle_special.txt",
+  "786_miracle_april_habahiro_special.txt",
+].map((file) => {
+  const bytes = readFileSync(join(fixtureRoot, file));
+  const result = construction.createNoteBatchInformationList({
+    musicScoreData: bytes.toString("utf8"),
+  });
+  if (result.status !== "ok") throw new Error(JSON.stringify(result));
+  const batches = result.value.noteBatches.flatMap((batch, batchIndex) => {
+    const groups = deriveSourceOrderRuns(batch.informationList);
+    if (groups.length === 0) return [];
+    return [{
+      batch_index: batchIndex,
+      absolute_position: batch.absolutePos,
+      groups: groups.map((group) => group.map((information) => ({
+        source_slot: batch.informationList.indexOf(information),
+        note_index: information.index,
+        button_type: information.buttonType,
+        game_note_type: information.gameNoteType,
+      }))),
+    }];
+  });
+  return {
+    file,
+    source_sha256: createHash("sha256").update(bytes).digest("hex").toUpperCase(),
+    group_count: batches.reduce((sum, batch) => sum + batch.groups.length, 0),
+    member_count: batches.reduce((sum, batch) => sum + batch.groups.reduce(
+      (groupSum, group) => groupSum + group.length,
+      0,
+    ), 0),
+    batches,
+  };
+});
+
+writeFileSync(resolve(outputPath), `${JSON.stringify({
+  kind: "product-derived-regression-snapshot",
+  derivedWithProductionCode: true,
+  originalBehaviorAuthority: false,
+  productSemanticsId: "simulator.auto-live-multiple-source-order-regression-v1",
+  generator: "src/simulator/testing/support/updateAutoLiveMultipleGroupingProductSnapshot.mjs",
+  charts,
+}, null, 2)}\n`);

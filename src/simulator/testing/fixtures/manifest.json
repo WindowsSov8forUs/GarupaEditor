@@ -357,7 +357,8 @@
       "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE",
       "consumerRole": "historical-superseded",
       "supersededBy": "reverse-snapshots/particle-box-direction-native/artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_simulation_box_corrected_oracle.json",
-      "authorityNote": "historical type-5 +Y simulation oracle; immutable and intentionally retained; current native +Z authority is supersededBy"
+      "authorityNote": "historical type-5 +Y simulation oracle; immutable and intentionally retained; current native +Z authority is supersededBy",
+      "supersededFor": "ParticleSystem ShapeModule type 5 local emission direction authority"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
