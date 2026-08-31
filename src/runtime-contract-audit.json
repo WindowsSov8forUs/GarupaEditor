@@ -31,9 +31,9 @@
       "product-semantic-call": 1,
       "terminal-close": 0,
       "exact-prototype": 0,
-      "exact-key-order": 8,
+      "exact-key-order": 9,
       "rejected-call": 48,
-      "throw-error": 726,
+      "throw-error": 732,
       "rust-error-return": 0,
       "rust-result-error": 0
     }

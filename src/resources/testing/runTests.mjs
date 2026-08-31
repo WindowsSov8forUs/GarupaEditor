@@ -12,6 +12,7 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
 try {
+  run(process.execPath, [join(repositoryRoot, "scripts", "build-builtin-resource-catalog.mjs"), "--check"]);
   run(process.execPath, [join(testingRoot, "verifyResourceBoundaries.mjs")]);
   run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.json"), "--outDir", outputRoot]);
   const outputDataRoot = join(outputRoot, "src", "data");

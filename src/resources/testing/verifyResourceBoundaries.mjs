@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, extname, join, relative, resolve } from "node:path";
+import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -27,34 +27,20 @@ for (const path of runtimeFiles) {
 
 const repositoryRoot = resolve(root, "..", "..");
 const sourceRoot = join(repositoryRoot, "src");
+const assetsRoot = join(sourceRoot, "assets");
 const applicationBuiltinCatalogPath = join(root, "builtin", "builtinResourceCatalog.ts");
 const simulatorBuiltinCatalogPath = join(root, "builtin", "simulatorBuiltinResourceCatalog.ts");
 const builtinCatalogPaths = new Set([
   applicationBuiltinCatalogPath,
   simulatorBuiltinCatalogPath,
 ]);
-const importedBuiltinAssets = new Set();
-for (const [catalogPath, expectedCount] of [
-  [applicationBuiltinCatalogPath, 22],
-  [simulatorBuiltinCatalogPath, 65],
-]) {
-  const source = readFileSync(catalogPath, "utf8");
-  const imports = Array.from(source.matchAll(/^import\s+\w+\s+from\s+["']([^"']*assets\/[^"']+)["'];$/gm));
-  if (imports.length !== expectedCount) {
-    throw new Error(`${relative(root, catalogPath)} must import exactly ${expectedCount} physical builtins, got ${imports.length}`);
-  }
-  for (const match of imports) {
-    const specifier = match[1];
-    if (specifier === undefined || !specifier.endsWith("?url&no-inline")) {
-      throw new Error(`${relative(root, catalogPath)} must force every physical builtin through ?url&no-inline: ${specifier}`);
-    }
-    const physicalSpecifier = specifier.slice(0, -"?url&no-inline".length);
-    importedBuiltinAssets.add(resolve(dirname(catalogPath), physicalSpecifier));
-  }
+const applicationCatalogAssets = readCatalogAssetSet(applicationBuiltinCatalogPath);
+const simulatorCatalogAssets = readCatalogAssetSet(simulatorBuiltinCatalogPath);
+const catalogOverlap = intersection(applicationCatalogAssets, simulatorCatalogAssets);
+if (catalogOverlap.size > 0) {
+  throw new Error(`application and Simulator builtin catalogs overlap: ${formatSet(catalogOverlap)}`);
 }
-if (importedBuiltinAssets.size !== 87) {
-  throw new Error(`builtin catalogs must own exactly 87 distinct physical assets, got ${importedBuiltinAssets.size}`);
-}
+const importedBuiltinAssets = union(applicationCatalogAssets, simulatorCatalogAssets);
 for (const path of walk(sourceRoot).filter((candidate) => [".ts", ".tsx"].includes(extname(candidate)))) {
   if (builtinCatalogPaths.has(path)) continue;
   const source = readFileSync(path, "utf8");
@@ -200,19 +186,28 @@ const chartCoreSource = readFileSync(join(sourceRoot, "chartCore.ts"), "utf8");
 for (const token of ["bgmDataUrl", "coverDataUrl", "mvDataUrl"]) {
   if (chartCoreSource.includes(token)) throw new Error(`ChartMetadata still owns legacy URL field ${token}`);
 }
-const assetsRoot = join(sourceRoot, "assets");
 const manifest = JSON.parse(readFileSync(join(root, "builtin", "builtinResourceManifest.json"), "utf8"));
-const actualAssets = walk(assetsRoot).filter((path) => statSync(path).isFile());
-if (
-  actualAssets.length !== importedBuiltinAssets.size ||
-  actualAssets.some((path) => !importedBuiltinAssets.has(resolve(path)))
-) {
-  throw new Error("builtin catalogs do not import the exact source asset inventory through no-inline URLs");
+const simulatorManifest = JSON.parse(readFileSync(join(root, "builtin", "simulatorBuiltinResourceManifest.json"), "utf8"));
+if (manifest.storageSchema !== 1 || !Array.isArray(manifest.entries)) {
+  throw new Error("builtin resource manifest has an invalid schema");
 }
-if (manifest.storageSchema !== 1 || manifest.entries.length !== actualAssets.length) {
-  throw new Error("builtin resource manifest does not cover the exact source asset inventory");
+if (simulatorManifest.schemaVersion !== 1 || !Array.isArray(simulatorManifest.entries)) {
+  throw new Error("Simulator builtin provenance manifest has an invalid schema");
 }
-const byPath = new Map(manifest.entries.map((entry) => [entry.path, entry]));
+
+const actualAssets = new Set(walk(assetsRoot).filter((path) => statSync(path).isFile()).map((path) => resolve(path)));
+const gameAssets = new Set([...actualAssets].filter((path) => path.startsWith(`${join(assetsRoot, "game")}${sep}`)));
+const manifestAssets = manifestAssetSet(manifest.entries, "application source manifest");
+const simulatorManifestAssets = manifestAssetSet(simulatorManifest.entries, "Simulator provenance manifest");
+const applicationOnlyManifestAssets = difference(manifestAssets, simulatorManifestAssets);
+
+assertSetEqual(manifestAssets, actualAssets, "application source manifest", "source asset inventory");
+assertSetEqual(simulatorManifestAssets, gameAssets, "Simulator provenance manifest", "game asset inventory");
+assertSetEqual(applicationCatalogAssets, applicationOnlyManifestAssets, "application catalog", "application-only manifest set");
+assertSetEqual(simulatorCatalogAssets, simulatorManifestAssets, "Simulator catalog", "Simulator manifest set");
+assertSetEqual(importedBuiltinAssets, manifestAssets, "catalog union", "application source manifest");
+
+const byPath = uniqueEntriesByPath(manifest.entries, "application source manifest");
 for (const path of actualAssets) {
   const logicalPath = relative(assetsRoot, path).replaceAll("\\", "/");
   const bytes = readFileSync(path);
@@ -222,13 +217,7 @@ for (const path of actualAssets) {
     throw new Error(`builtin resource manifest mismatch: ${logicalPath}`);
   }
 }
-const simulatorManifest = JSON.parse(readFileSync(join(root, "builtin", "simulatorBuiltinResourceManifest.json"), "utf8"));
-const gameAssets = actualAssets.filter((path) => path.startsWith(join(assetsRoot, "game")));
-if (simulatorManifest.schemaVersion !== 1 || simulatorManifest.entries.length !== gameAssets.length) {
-  throw new Error("Simulator builtin provenance manifest does not cover the exact game asset inventory");
-}
-const simulatorByPath = new Map(simulatorManifest.entries.map((entry) => [entry.path, entry]));
-const simulatorBuiltinCatalogSource = readFileSync(join(root, "builtin", "simulatorBuiltinResourceCatalog.ts"), "utf8");
+const simulatorByPath = uniqueEntriesByPath(simulatorManifest.entries, "Simulator provenance manifest");
 for (const path of gameAssets) {
   const logicalPath = relative(assetsRoot, path).replaceAll("\\", "/");
   const bytes = readFileSync(path);
@@ -237,12 +226,85 @@ for (const path of gameAssets) {
   if (
     !entry || entry.byteLength !== bytes.length || entry.sha256 !== digest ||
     !/^[0-9a-f]{40}$/.test(entry.sourceReverseCommit) ||
-    typeof entry.sourcePath !== "string" || !entry.sourcePath.startsWith("artifacts/investigations/") ||
-    !simulatorBuiltinCatalogSource.includes(entry.path)
-  ) throw new Error(`Simulator builtin provenance/catalog mismatch: ${logicalPath}`);
+    typeof entry.sourcePath !== "string" || !entry.sourcePath.startsWith("artifacts/investigations/")
+  ) throw new Error(`Simulator builtin provenance mismatch: ${logicalPath}`);
 }
 
-console.log(`resource boundaries: ok (${runtimeFiles.length} runtime files, ${actualAssets.length} builtins)`);
+console.log(
+  `resource boundaries: ok (${runtimeFiles.length} runtime files; ` +
+  `application-only=${applicationCatalogAssets.size}, Simulator=${simulatorCatalogAssets.size}, ` +
+  `union=${manifestAssets.size})`,
+);
+
+function readCatalogAssetSet(catalogPath) {
+  const source = readFileSync(catalogPath, "utf8");
+  const imports = Array.from(source.matchAll(/^import\s+\w+\s+from\s+["']([^"']*assets\/[^"']+)["'];$/gm));
+  if (imports.length === 0) throw new Error(`${relative(root, catalogPath)} imports no physical builtins`);
+  const output = new Set();
+  for (const match of imports) {
+    const specifier = match[1];
+    if (specifier === undefined || !specifier.endsWith("?url&no-inline")) {
+      throw new Error(`${relative(root, catalogPath)} must force every physical builtin through ?url&no-inline: ${specifier}`);
+    }
+    const path = resolve(dirname(catalogPath), specifier.slice(0, -"?url&no-inline".length));
+    if (!path.startsWith(`${assetsRoot}${sep}`)) {
+      throw new Error(`${relative(root, catalogPath)} imports an asset outside src/assets: ${specifier}`);
+    }
+    if (output.has(path)) throw new Error(`${relative(root, catalogPath)} imports a physical asset twice: ${specifier}`);
+    output.add(path);
+  }
+  return output;
+}
+
+function manifestAssetSet(entries, label) {
+  const output = new Set();
+  for (const entry of entries) {
+    if (typeof entry.path !== "string" || entry.path.length === 0) {
+      throw new Error(`${label} contains an invalid path`);
+    }
+    const path = resolve(assetsRoot, entry.path);
+    if (!path.startsWith(`${assetsRoot}${sep}`)) throw new Error(`${label} path escapes src/assets: ${entry.path}`);
+    if (output.has(path)) throw new Error(`${label} contains a duplicate path: ${entry.path}`);
+    output.add(path);
+  }
+  return output;
+}
+
+function uniqueEntriesByPath(entries, label) {
+  const output = new Map();
+  for (const entry of entries) {
+    if (output.has(entry.path)) throw new Error(`${label} contains a duplicate path: ${entry.path}`);
+    output.set(entry.path, entry);
+  }
+  return output;
+}
+
+function union(left, right) {
+  return new Set([...left, ...right]);
+}
+
+function intersection(left, right) {
+  return new Set([...left].filter((value) => right.has(value)));
+}
+
+function difference(left, right) {
+  return new Set([...left].filter((value) => !right.has(value)));
+}
+
+function assertSetEqual(actual, expected, actualLabel, expectedLabel) {
+  const missing = difference(expected, actual);
+  const unexpected = difference(actual, expected);
+  if (missing.size > 0 || unexpected.size > 0) {
+    throw new Error(
+      `${actualLabel} differs from ${expectedLabel}; ` +
+      `missing=[${formatSet(missing)}] unexpected=[${formatSet(unexpected)}]`,
+    );
+  }
+}
+
+function formatSet(values) {
+  return [...values].map((path) => relative(assetsRoot, path).replaceAll("\\", "/")).sort().join(", ");
+}
 
 function walk(directory) {
   const output = [];
