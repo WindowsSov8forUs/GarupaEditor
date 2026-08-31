@@ -109,6 +109,6 @@ These projections do not change CS-V1, fixed Rank, timeline revision, authored l
 
 ## Acceptance and exclusions
 
-The dedicated semantic/static leaf is `simulator:test:original-live-settings`; the browser leaf is now a regression/discovery harness only. Its four-PNG and 13-slot checks do not authorize visible equivalence because they did not compare original same-state component mutations, placement and lifetime.
+The suite manifest owns `session.original-live-settings`, `session.original-settings.static` and `platform.original-settings`. Development covers semantic/static behavior; the serial browser profile adds actual framebuffer regression with complete mode/input/chart/timeline/score/rank/owner/phase/terminal/viewport/DPR identity. These gates close the current portable product regression but do not authorize original Unity/GPU visible equivalence.
 
-This closure does not authorize Stage 9, standalone MVView, 3D, CRI/USM exactness, fixed-device framebuffer/speaker exactness, charter, a global effect kill switch, arbitrary millisecond chart rewrite or runtime setting hot-switch.
+This closure does not authorize standalone MVView, 3D, CRI/USM exactness, fixed-device framebuffer/speaker exactness, charter, a global effect kill switch, arbitrary millisecond chart rewrite or runtime setting hot-switch.
