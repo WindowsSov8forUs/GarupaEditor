@@ -89,7 +89,8 @@
     "simulator:test:habahiro": "node src/simulator/testing/runHabahiroTests.mjs",
     "simulator:test:c07-evidence-consumption": "node src/simulator/testing/runC07EvidenceConsumptionTests.mjs",
     "simulator:test:browser-webview2": "node src/simulator/testing/runBrowserPixiDecoderWebView2Tests.mjs",
-    "simulator:test:ordinary-rendering-webview2": "node src/simulator/testing/runOrdinaryRenderingWebView2Tests.mjs"
+    "simulator:test:ordinary-rendering-webview2": "node src/simulator/testing/runOrdinaryRenderingWebView2Tests.mjs",
+    "app:test": "node src/app/testing/run.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",

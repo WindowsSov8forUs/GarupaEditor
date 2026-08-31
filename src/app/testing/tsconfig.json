@@ -1,0 +1,18 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "noEmit": false,
+    "rootDir": "../../..",
+    "types": []
+  },
+  "include": [
+    "../../chartCore.ts",
+    "../editorHelpers.ts",
+    "../slideHiddenMoveOffsets.ts",
+    "./*.test.ts"
+  ]
+}
