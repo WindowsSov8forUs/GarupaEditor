@@ -3,7 +3,9 @@
 这些是隔离测试所需的最小离线快照，不是生产资源，也不是新的行为来源。
 
 - 原始逆向证据统一在 `HOST________\VSCode\GirlsBandParty-Reverse` 获取、校验、提交和推送。
-- 每个快照的来源、Reverse 提交、相对路径、字节数和 SHA-256 记录在 `manifest.json`。
+- 每个快照的来源、Reverse 提交、相对路径、字节数、SHA-256 与 `consumerRole` 记录在 Schema 2 `manifest.json`。
+- 角色分为 `reverse-contract`、`reverse-oracle`、`reverse-resource`、`reverse-observation`、`historical-superseded`、`product-input` 与 `product-probe`；角色只描述消费边界，不改变原字节或 provenance。
+- `historical-superseded` 必须显式指向 current `reverse-oracle`。历史 type-5 `+Y` simulation 与 current native `+Z` oracle 因此并存，禁止重写或删除历史文件。
 - 生产代码不得读取本目录；只有 `src/simulator/testing/` 测试旁路可以读取。
 - 新证据必须先进入已推送的 Reverse，再按测试需要提取最小快照；不得从GarupaEditor本地工作记录反向生成证据。
 - `reverse-snapshots/audio/` 仅包含 AU-C01–AU-C40 的 command/PCM oracle、32-byte 项目自制数值输入和 19,264-byte 可移植 PCM expected；不含原作或外部音频资源，也不声明 CRI/browser/hardware 波形等价。

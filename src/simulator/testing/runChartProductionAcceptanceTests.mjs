@@ -17,7 +17,7 @@ import {
   projectPlayableSpecs,
   slideSignature,
   sourceLanes,
-} from "./chartProductionOracle.mjs";
+} from "./expected/independent/chartProductionProjection.mjs";
 import { projectSyncConnectionCount } from "./chartSyncProjection.mjs";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));

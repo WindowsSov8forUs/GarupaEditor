@@ -6,6 +6,25 @@ import { fileURLToPath } from "node:url";
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = join(testingRoot, "fixtures");
 const manifest = JSON.parse(readFileSync(join(fixtureRoot, "manifest.json"), "utf8"));
+const consumerRoles = new Set([
+  "reverse-contract",
+  "reverse-oracle",
+  "reverse-resource",
+  "reverse-observation",
+  "historical-superseded",
+  "product-input",
+  "product-probe",
+]);
+if (manifest.schemaVersion !== 2) {
+  throw new Error("testing fixture manifest must use Schema 2");
+}
+if (
+  typeof manifest.consumerRoles !== "object" || manifest.consumerRoles === null ||
+  Object.keys(manifest.consumerRoles).length !== consumerRoles.size ||
+  [...consumerRoles].some((role) => typeof manifest.consumerRoles[role] !== "string")
+) {
+  throw new Error("testing fixture consumer-role definitions are incomplete");
+}
 if (manifest.sourceRepository !== "HOST________/VSCode/GirlsBandParty-Reverse") {
   throw new Error("testing fixture source repository changed");
 }
@@ -22,6 +41,7 @@ for (const entry of manifest.entries) {
     typeof entry.sourcePath !== "string" || !/^[0-9a-f]{40}$/i.test(entry.sourceReverseCommit) ||
     !Number.isSafeInteger(entry.bytes) || entry.bytes <= 0 ||
     !/^[0-9A-F]{64}$/.test(entry.sha256) ||
+    !consumerRoles.has(entry.consumerRole) ||
     (!entry.sourcePath.startsWith("artifacts/") && !entry.sourcePath.startsWith("runtime/") &&
       !entry.sourcePath.startsWith("samples/") && !entry.sourcePath.startsWith("static/"))
   ) {
@@ -30,6 +50,13 @@ for (const entry of manifest.entries) {
   if (entry.path.startsWith("reverse-snapshots/evidence-integrity/") &&
     entry.sourceReverseCommit !== manifest.sourceHead) {
     throw new Error(`current evidence-integrity fixture is not pinned to sourceHead: ${entry.path}`);
+  }
+  if (entry.consumerRole === "historical-superseded") {
+    if (typeof entry.supersededBy !== "string" || typeof entry.authorityNote !== "string") {
+      throw new Error(`historical fixture lacks explicit supersession: ${entry.path}`);
+    }
+  } else if (entry.supersededBy !== undefined) {
+    throw new Error(`only historical fixtures may declare supersededBy: ${entry.path}`);
   }
   manifestPaths.add(entry.path);
   const path = join(fixtureRoot, entry.path);
@@ -40,6 +67,13 @@ for (const entry of manifest.entries) {
   const hash = createHash("sha256").update(actual).digest("hex").toUpperCase();
   if (hash !== entry.sha256) {
     throw new Error(`fixture SHA-256 mismatch: ${entry.path}`);
+  }
+}
+for (const entry of manifest.entries) {
+  if (entry.consumerRole !== "historical-superseded") continue;
+  const replacement = manifest.entries.find((candidate) => candidate.path === entry.supersededBy);
+  if (!replacement || replacement.consumerRole !== "reverse-oracle") {
+    throw new Error(`historical fixture replacement is absent or not a current oracle: ${entry.path}`);
   }
 }
 for (const path of walk(fixtureRoot)) {

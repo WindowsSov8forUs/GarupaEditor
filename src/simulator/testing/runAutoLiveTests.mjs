@@ -34,9 +34,11 @@ const supplementOraclePath = join(
   "fixtures",
   "auto-live-supplement-fixed-event-trace.json",
 );
-const productionMultipleOraclePath = join(
+const productionMultipleSnapshotPath = join(
   testingRoot,
-  "autoLiveProductionMultipleOracle.json",
+  "expected",
+  "product-derived",
+  "auto-live-multiple-source-order.snapshot.json",
 );
 const actualReplayPath = join(
   repositoryRoot,
@@ -136,11 +138,14 @@ function validateAutoLive() {
   const oracle = JSON.parse(readFileSync(oraclePath, "utf8"));
   const failureOracle = JSON.parse(readFileSync(failurePath, "utf8"));
   const supplementOracle = JSON.parse(readFileSync(supplementOraclePath, "utf8"));
-  const productionMultipleOracle = JSON.parse(
-    readFileSync(productionMultipleOraclePath, "utf8"),
+  const productionMultipleSnapshot = JSON.parse(
+    readFileSync(productionMultipleSnapshotPath, "utf8"),
   );
-  assert.equal(productionMultipleOracle.status,
-    "fixed-independent-source-order-production-oracle");
+  assert.equal(productionMultipleSnapshot.status,
+    "product-derived-regression-snapshot");
+  assert.equal(productionMultipleSnapshot.productSemanticsId,
+    "simulator.auto-live-multiple-source-order-regression-v1");
+  assert.match(productionMultipleSnapshot.authority, /not independent Reverse evidence/);
   const actualReplay = JSON.parse(readFileSync(actualReplayPath, "utf8"));
   assert.equal(actualReplay.status, "confirmed-committed-production-replay-input");
   assert.equal(actualReplay.production_owner,
@@ -1247,7 +1252,7 @@ function validateAutoLive() {
 
       const multipleGroups = chart.noteBatches.flatMap((entry) =>
         groupMultipleDirectionalInformationList(entry.informationList));
-      const expectedTopology = productionMultipleOracle.charts[chartIndex];
+      const expectedTopology = productionMultipleSnapshot.charts[chartIndex];
       assert.equal(expectedTopology.file, chartFiles[chartIndex]);
       assert.equal(
         createHash("sha256").update(readFileSync(
