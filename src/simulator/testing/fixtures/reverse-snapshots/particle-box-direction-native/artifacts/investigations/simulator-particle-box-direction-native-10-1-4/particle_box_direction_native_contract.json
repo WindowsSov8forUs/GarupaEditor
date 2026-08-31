@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "status": "current-native-box-direction-closed-portable-consumption-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a",
+    "unityVersion": "2022.3.62f1"
+  },
+  "sources": {
+    "particleProfile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "routeLifecycle": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_lifecycle_static.json",
+      "bytes": 12608,
+      "sha256": "389280BF73C77A29D3D722D7C5AFA843D6219A861B2F5778727919C3DDA5B7AF"
+    },
+    "historicalPortableReference": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_reference.py",
+      "bytes": 23534,
+      "sha256": "A8B20CB298732EAAF434658E28B962DE6AE0B06264FC3AAE2C9BED68301B6F6A"
+    },
+    "correctedPortableReference": {
+      "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_portable_reference_box_corrected.py",
+      "bytes": 23534,
+      "sha256": "7188AEB222CA954A57FA274BD5B057F53638B247793F44CDB3F7C7F7DC0147AD"
+    },
+    "shapeDispatchDecompiler": {
+      "path": "artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/decompiled-libunity/012357f0__ParticleSystem_shape_dispatch.c",
+      "bytes": 37653,
+      "sha256": "DE7D7582328D19828DBDD0A84B7DF1B9762306375D4A96B729E25A1E67A39951"
+    },
+    "shapeTransformHandoffDecompiler": {
+      "path": "artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/decompiled-libunity/01241914__ParticleSystem_shape_transform_handoff.c",
+      "bytes": 30593,
+      "sha256": "41404EC2A7D788706AF4BF7E547921B8343817692D9718414340473C1248C3C1"
+    },
+    "arm64": [
+      {
+        "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/arm64/012357f0__ParticleSystem_shape_box_case5_entry.arm64.tsv",
+        "bytes": 980,
+        "sha256": "9D3C49A21B1976A23D0CD3E8E59AE2A027F55FBE282C17D597BC607D7D5523CB"
+      },
+      {
+        "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/arm64/012357f0__ParticleSystem_shape_box_case5_body.arm64.tsv",
+        "bytes": 3654,
+        "sha256": "43CF182E7FFADEC1213F4697788FF556E793D02110D396741EB605B20118EAA5"
+      },
+      {
+        "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/arm64/01241914__ParticleSystem_shape_position_direction_handoff.arm64.tsv",
+        "bytes": 6077,
+        "sha256": "345A224F7660DABEB105ED3669DBA85245A3AF13AEC04CE3C02CC4249135F881"
+      }
+    ]
+  },
+  "nativeFacts": {
+    "shapeType": 5,
+    "dispatcher": {
+      "function": "0x012357F0",
+      "caseEntry": "0x01235C78",
+      "caseBody": "0x012365F0..0x01236754",
+      "positionArgument": "x5 points at sp+0x120: three independent centered random SoA lanes; current shape matrix applies serialized m_Scale/m_Position/m_Rotation",
+      "directionArgument": "x6 points at sp+0x60: X and Y SoA lanes are zero; Z SoA lane is the fmov #1.0 vector reloaded from sp+0x40",
+      "handoffCall": "0x01236730 -> 0x01241914",
+      "localDirection": [
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "handoff": {
+      "function": "0x01241914",
+      "position": "x5 is transformed by the shape matrix and emitting-system matrix, then added to particle position arrays at owner offsets 0x00/0x20/0x40",
+      "direction": "x6 is shape-transformed, normalized, emitting-system transformed, then stored to direction arrays at owner offsets 0x60/0x80/0xA0",
+      "positionDirectionInterchangeForbidden": true
+    },
+    "conclusion": "Current Unity ShapeModule type 5 emits along local +Z. Local +Y is not authorized and was a shared portable-reference defect."
+  },
+  "focusedInventory": {
+    "roots": [
+      "ordinary:effect_tap",
+      "ordinary:effect_tap_good",
+      "ordinary:effect_tap_great",
+      "ordinary:effect_tap_perfect",
+      "ordinary:effect_tap_skill_good",
+      "ordinary:effect_tap_skill_great",
+      "ordinary:effect_tap_skill_perfect",
+      "ordinary:effect_tap_swipe"
+    ],
+    "type5SystemCount": 24,
+    "criticalVisibleMotionCount": 12,
+    "criticalSystemIds": [
+      "ordinary:effect_tap/kira",
+      "ordinary:effect_tap_good/kira",
+      "ordinary:effect_tap_great/kira",
+      "ordinary:effect_tap_perfect/kira",
+      "ordinary:effect_tap_perfect/kira (1)",
+      "ordinary:effect_tap_perfect/kira_par_2",
+      "ordinary:effect_tap_skill_good/kira",
+      "ordinary:effect_tap_skill_great/kira",
+      "ordinary:effect_tap_skill_perfect/kira (1)",
+      "ordinary:effect_tap_skill_perfect/kira[0]",
+      "ordinary:effect_tap_skill_perfect/kira[1]",
+      "ordinary:effect_tap_swipe/kira_tate"
+    ],
+    "directionOracle": {
+      "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_oracle.json",
+      "bytes": 32228,
+      "sha256": "DE5ED6B88E44E1162D2CD1C6045BB4D8310BAF969B3F257AD91840A8DD175E2A"
+    },
+    "correctedSimulationOracle": {
+      "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_simulation_box_corrected_oracle.json",
+      "bytes": 127981,
+      "sha256": "FB17C438C7A55E767559755ED1453E07AED766C4AA98649C82D92F0CB54E568B"
+    }
+  },
+  "restartLifecycle": {
+    "nullPredicate": "0x65BDF88 is UnityEngine.Object.op_Equality, not ParticleSystem.IsAlive",
+    "nonNullOrder": [
+      "clearParticle",
+      "Play(withChildren=true)"
+    ],
+    "clearParticleWhenPlaying": [
+      "get_isPlaying",
+      "Stop(withChildren=false)",
+      "Clear(withChildren=false)"
+    ],
+    "portableRequired": "restart the existing owner atomically without resetting the per-system global random stream",
+    "sourceFact": {
+      "null": "return",
+      "non_null_not_playing": [
+        "Play"
+      ],
+      "non_null_playing": [
+        "Stop",
+        "Clear",
+        "Play"
+      ],
+      "with_children": true,
+      "classification": "restart-if-active-not-already-playing-suppression"
+    }
+  },
+  "correction": {
+    "supersedesReverseCommit": "8fe5877092a6246f07408a5cd1f6faae2358de71",
+    "supersededPortableAxis": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "correctCurrentNativeAxis": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "reasonOldPhaseOracleCouldNotCloseThis": "The old focused oracle imported the historical device-closure particle_portable_reference.py, so Python and TypeScript shared the same +Y assumption; cross-language equality was not independent Unity evidence.",
+    "historicalDeviceClosureDisposition": "retained byte-for-byte as historical evidence; this append-only correction owns the replacement reference and corrected simulation oracle"
+  },
+  "productionScope": {
+    "authorizedChange": "replace only ShapeModule type-5 local direction +Y with +Z before the already-evidenced Transform handoff",
+    "mustRemainUnchanged": [
+      "type-5 centered random birth position and serialized shape scale",
+      "emitting-system plus complete parent Transform chain",
+      "Local billboard size consumption",
+      "full atlas and per-particle UV selection",
+      "straight-alpha additive blend",
+      "renderer pivot/alignment/mode and portable sorting tuple",
+      "outer-frame emission/update/expiry/publication order",
+      "restart Stop/Clear/Play and global random continuity"
+    ],
+    "crossTupleFramebufferThresholdTransferAuthorized": false,
+    "productionConsumptionAllowedAfterCommittedVerifierAndOriginSync": true
+  },
+  "openClaims": {
+    "nativeRandomDrawAssignment": "open_not_claimed",
+    "fullUnityModuleByteParity": "open_not_claimed",
+    "rendererBoundsGpuQuantization": "open_not_claimed",
+    "singleRootSingleLaneAtomicOriginalFramebuffer": "open_not_claimed",
+    "fixedDeviceGpuExact": "open_not_claimed"
+  }
+}

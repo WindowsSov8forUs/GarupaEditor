@@ -62,7 +62,16 @@ const fixtureRoot = join(
   fixtureBase, "device-closure", "artifacts", "investigations", "device-runtime-closure-10-1-4",
 );
 const commandOracle = fixtureJson("particle_command_oracle.json");
-const simulationOracle = fixtureJson("particle_simulation_oracle.json");
+const historicalSimulationOracle = fixtureJson("particle_simulation_oracle.json");
+const boxDirectionFixtureRoot = join(
+  fixtureBase,
+  "particle-box-direction-native", "artifacts", "investigations",
+  "simulator-particle-box-direction-native-10-1-4",
+);
+const simulationOracle = JSON.parse(readFileSync(join(
+  boxDirectionFixtureRoot,
+  "particle_simulation_box_corrected_oracle.json",
+), "utf8"));
 const semanticOracle = fixtureJson("particle_semantic_frame_oracle.json");
 const closure = fixtureJson("particle_portable_closure.json");
 const visualReconciliation = JSON.parse(readFileSync(join(
@@ -131,11 +140,22 @@ function verifyClosureAndOracleIdentity(): void {
   assert.equal(commandOracle.generatedBeforeTypescript, true);
   assert.equal(commandOracle.caseCount, 32);
   assert.equal(commandOracle.projectionSha256, "3A04C1042AA0CBEECDFB8480EA30E9B02A3E83FE50D4C704A28FC61C67D162D3");
-  assert.equal(simulationOracle.generatedBeforeTypescript, true);
+  assert.equal(historicalSimulationOracle.generatedBeforeTypescript, true);
+  assert.equal(historicalSimulationOracle.projectionSha256, "B874672BDFA53B65D4C406C91E16F7775B365B4CC1DA8FF44447F1EAC758568D");
+  assert.equal(historicalSimulationOracle.corpusProjectionSha256, "96D1CABE8ED5AD65B9BBAAAE81230C47BE5F905E30C8C82E975A2C6987107246");
+  assert.equal(simulationOracle.generatedBeforeGarupaTypescriptConsumption, true);
+  assert.equal(
+    simulationOracle.classification,
+    "corrected-portable-simulation-oracle-consuming-current-native-box-plus-z-not-native-random-or-gpu-oracle",
+  );
   assert.equal(simulationOracle.caseCount, 5);
   assert.equal(simulationOracle.corpusRootCount, 17);
-  assert.equal(simulationOracle.projectionSha256, "B874672BDFA53B65D4C406C91E16F7775B365B4CC1DA8FF44447F1EAC758568D");
-  assert.equal(simulationOracle.corpusProjectionSha256, "96D1CABE8ED5AD65B9BBAAAE81230C47BE5F905E30C8C82E975A2C6987107246");
+  assert.equal(simulationOracle.projectionSha256, "FB3E92914436FF0349F79569466D1C6E720580B5657D8332D1AD77A0C6B516AC");
+  assert.equal(simulationOracle.corpusProjectionSha256, "A57057F090A3972EA30B0785173FC24C2A7DF1012987714F6100EAA1BA92B93A");
+  assert.equal(
+    simulationOracle.supersedesHistoricalSimulationOracle.sha256,
+    "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE",
+  );
   assert.equal(semanticOracle.generatedBeforeTypescript, true);
   assert.equal(semanticOracle.physicalOrderingClaimed, false);
   assert.deepEqual(semanticOracle.commitOrder, [

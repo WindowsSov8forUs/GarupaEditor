@@ -143,8 +143,10 @@ export class DeterministicParticleSimulation {
       .filter(([, record]) => record.definition.root === root)
       .map(([identity]) => identity)
       .sort();
-    // Root Play preserves the original restart-if-active contract. The
-    // incremental API below is reserved for serialized child GameObject
+    // A non-null root restarts as clearParticle (Stop/Clear only while
+    // playing) followed by Play(withChildren=true). Owner particles reset,
+    // while the per-system global random stream deliberately continues.
+    // The incremental API below is reserved for serialized child GameObject
     // activation under one already-playing root.
     this.owners.delete(ownerKey);
     this.playRootSystems(ownerKey, instance, root, selected);
@@ -458,6 +460,7 @@ export class DeterministicParticleSimulation {
           multiply(subtract(slots[10]!, 0.5), shape.m_Scale.y),
           multiply(subtract(slots[11]!, 0.5), shape.m_Scale.z),
         ];
+        direction = [0, 0, 1];
       } else if (shape.type === 10) {
         position = [multiply(radial, cosine), multiply(radial, sine), 0];
         direction = [cosine, sine, 0];

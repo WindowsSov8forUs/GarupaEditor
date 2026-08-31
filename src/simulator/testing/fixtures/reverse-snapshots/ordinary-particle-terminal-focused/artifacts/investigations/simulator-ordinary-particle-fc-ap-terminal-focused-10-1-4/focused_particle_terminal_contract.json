@@ -29,10 +29,20 @@
       "bytes": 16341,
       "sha256": "3914D11B7CC4ED29DD49AF34C7169741B568FE6DE0A896654D3F54A959C5F562"
     },
-    "particleReference": {
+    "historicalParticleReference": {
       "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_reference.py",
       "bytes": 23534,
       "sha256": "A8B20CB298732EAAF434658E28B962DE6AE0B06264FC3AAE2C9BED68301B6F6A"
+    },
+    "particleReference": {
+      "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_portable_reference_box_corrected.py",
+      "bytes": 23534,
+      "sha256": "7188AEB222CA954A57FA274BD5B057F53638B247793F44CDB3F7C7F7DC0147AD"
+    },
+    "particleBoxDirection": {
+      "path": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_native_contract.json",
+      "bytes": 8038,
+      "sha256": "C00C139DB88989A005B9812C4F97984DBC1FB744D3CF5BC4A171C8487AA005EC"
     },
     "particleTransform": {
       "path": "artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
@@ -181,7 +191,7 @@
   },
   "authority": {
     "serializedSnapshots": "The ten promoted snapshots are owned committed evidence; the ignored APK extraction is not a verifier input.",
-    "particleRandomBoundary": "Serialized graph/modules/renderers/materials are original evidence. Deterministic random assignment and phase samples are an independent portable oracle, not a native random witness.",
+    "particleRandomBoundary": "Serialized graph/modules/renderers/materials and Box/type-5 local +Z are original current evidence. Deterministic random assignment and remaining phase samples are an independent portable oracle, not a native random witness.",
     "visibleBoundary": "The original device frame is independent framebuffer evidence. It may close a product visible gate only under the complete same-state tuple."
   },
   "ordinaryParticles": {
@@ -27163,12 +27173,12 @@
     ],
     "phaseOracle": {
       "path": "artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/ordinary_particle_phase_oracle.json",
-      "bytes": 1132323,
-      "sha256": "F1EB49E310AADE9CD5711C969D27F1A095E196B1C74F5C23C7DFA365D2DA56E8"
+      "bytes": 1132348,
+      "sha256": "5F5A8595FB1F95B050D141F64E6DBEFF337D32F008142F009002FAA6A33A5CDD"
     },
     "shapeAxis": {
       "coneType4": "native helper 0x123C050 constructs local position in XY with Z=0 and direction in XY plus positive Z, then calls 0x1241914",
-      "boxType5": "dispatcher 0x12357F0 constructs centered XYZ components from three random lanes before 0x1241914",
+      "boxType5": "dispatcher 0x12357F0 passes centered random XYZ as local position and exact SoA [0,0,1] as local direction to 0x1241914; +Y is superseded",
       "circleType10": "native helper 0x123F830 constructs local position and radial direction in XY with Z=0, then calls 0x1241914",
       "transform": "0x1241914 is the shape-to-particle transform handoff; portable position/velocity continue to consume the full serialized Transform parent chain"
     },
@@ -47183,6 +47193,7 @@
     ]
   },
   "openClaims": {
+    "boxType5LocalDirection": "closed_current_native_plus_z",
     "nativeRandomDrawAndUnityModuleByteParity": "open_not_claimed",
     "singleRootSingleLaneOriginalDeviceFramebuffer": "open_not_claimed",
     "bbkkComponentThresholdProductPolicy": "requires an independently registered product semantic; not authorized by the original Ichininaru frame",

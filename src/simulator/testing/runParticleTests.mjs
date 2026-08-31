@@ -27,6 +27,7 @@ try {
   }
   for (const test of [
     "particleContracts.test.js",
+    "particleBoxDirectionNative.test.js",
     "ordinaryParticleFocused.test.js",
     "particleProduction.test.js",
   ]) {

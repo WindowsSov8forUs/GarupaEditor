@@ -42,8 +42,10 @@ function verifyFocusedEvidenceBoundary(): void {
   assert.equal(contract.authorization.garupaProductEquivalenceAuthorized, false);
   assert.equal(
     oracle.classification,
-    "independent-python-portable-oracle-not-original-native-random-witness",
+    "independent-python-portable-oracle-with-current-native-box-direction-not-native-random-witness",
   );
+  assert.match(contract.ordinaryParticles.shapeAxis.boxType5, /exact SoA \[0,0,1\].*\+Y is superseded/);
+  assert.match(contract.ordinaryParticles.shapeAxis.transform, /full serialized Transform parent chain/);
   assert.deepEqual(oracle.sortProjection, [
     "sortingOrder", "systemSemanticIdentity", "particleCreationSequence",
   ]);

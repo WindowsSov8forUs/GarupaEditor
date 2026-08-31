@@ -1,0 +1,1317 @@
+{
+  "schemaVersion": 1,
+  "classification": "native-local-direction-plus-independent-float32-serialized-transform-oracle-not-native-random-or-gpu-oracle",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a",
+    "unityVersion": "2022.3.62f1"
+  },
+  "localDirectionBits": [
+    "0x00000000",
+    "0x00000000",
+    "0x3F800000"
+  ],
+  "caseCount": 24,
+  "criticalVisibleMotionCount": 12,
+  "cases": [
+    {
+      "systemId": "ordinary:effect_tap/Sring_1",
+      "root": "ordinary:effect_tap",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap/Sring_2",
+      "root": "ordinary:effect_tap",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap/kira",
+      "root": "ordinary:effect_tap",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 15.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_good/Sring_1",
+      "root": "ordinary:effect_tap_good",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_good/kira",
+      "root": "ordinary:effect_tap_good",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 15.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_great/Sring_1[0]",
+      "root": "ordinary:effect_tap_great",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_great/kira",
+      "root": "ordinary:effect_tap_great",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 15.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_great/light_lay",
+      "root": "ordinary:effect_tap_great",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA93504F3",
+        "0xBF7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x1D800000",
+        "0x34400000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.7881393432617188e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_perfect/Smatt_1",
+      "root": "ordinary:effect_tap_perfect",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA93504F3",
+        "0xBF7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x1D800000",
+        "0x34400000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.7881393432617188e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_perfect/kira",
+      "root": "ordinary:effect_tap_perfect",
+      "shapeScale": {
+        "x": 2.5,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 40.0,
+        "minScalar": 1.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_perfect/kira (1)",
+      "root": "ordinary:effect_tap_perfect",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 16.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_perfect/kira_par_2",
+      "root": "ordinary:effect_tap_perfect",
+      "shapeScale": {
+        "x": 2.5,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 40.0,
+        "minScalar": 1.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_perfect/light_lay_2",
+      "root": "ordinary:effect_tap_perfect",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA93504F3",
+        "0xBF7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x1D800000",
+        "0x34400000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.7881393432617188e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_good/Sring_1",
+      "root": "ordinary:effect_tap_skill_good",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_good/kira",
+      "root": "ordinary:effect_tap_skill_good",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 15.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_great/Sring_1[0]",
+      "root": "ordinary:effect_tap_skill_great",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_great/kira",
+      "root": "ordinary:effect_tap_skill_great",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 15.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_perfect/Smatt_1[0]",
+      "root": "ordinary:effect_tap_skill_perfect",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA93504F3",
+        "0xBF7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x1D800000",
+        "0x34400000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.7881393432617188e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_perfect/Smatt_1[1]",
+      "root": "ordinary:effect_tap_skill_perfect",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA93504F3",
+        "0xBF7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x1D800000",
+        "0x34400000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.7881393432617188e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_perfect/kira (1)",
+      "root": "ordinary:effect_tap_skill_perfect",
+      "shapeScale": {
+        "x": 2.1700000762939453,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 16.0,
+        "minScalar": 4.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_perfect/kira[0]",
+      "root": "ordinary:effect_tap_skill_perfect",
+      "shapeScale": {
+        "x": 2.5,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 40.0,
+        "minScalar": 1.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_skill_perfect/kira[1]",
+      "root": "ordinary:effect_tap_skill_perfect",
+      "shapeScale": {
+        "x": 2.5,
+        "y": 0.0,
+        "z": 0.7200000286102295
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 40.0,
+        "minScalar": 1.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0x3F7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": true
+    },
+    {
+      "systemId": "ordinary:effect_tap_swipe/Sring_1[1]",
+      "root": "ordinary:effect_tap_swipe",
+      "shapeScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 0,
+        "scalar": 0.009999999776482582,
+        "minScalar": 5.0,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0x00000000",
+        "0xBF7FFFFF",
+        "0xB4000000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x00000000",
+        "0xB4000000",
+        "0x3F7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 1.1920928955078125e-07,
+      "criticalVisibleMotion": false
+    },
+    {
+      "systemId": "ordinary:effect_tap_swipe/kira_tate",
+      "root": "ordinary:effect_tap_swipe",
+      "shapeScale": {
+        "x": 2.5,
+        "y": 0.0,
+        "z": 1.2000000476837158
+      },
+      "shapePosition": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "shapeRotationEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "startSpeed": {
+        "minMaxState": 3,
+        "scalar": 35.0,
+        "minScalar": 0.5,
+        "maxCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        },
+        "minCurve": {
+          "m_Curve": [],
+          "m_PreInfinity": 2,
+          "m_PostInfinity": 2,
+          "m_RotationOrder": 4
+        }
+      },
+      "originalLocalDirectionBits": [
+        "0x00000000",
+        "0x00000000",
+        "0x3F800000"
+      ],
+      "portableHierarchyDirectionBits": [
+        "0xA9800000",
+        "0x3F7FFFFF",
+        "0x34400000"
+      ],
+      "supersededPlusYHierarchyDirectionBits": [
+        "0x352EEF4C",
+        "0x34400000",
+        "0xBF7FFFFF"
+      ],
+      "screenPlaneMagnitudeOriginal": 0.9999999403953552,
+      "screenPlaneMagnitudeSupersededPlusY": 6.757697974535404e-07,
+      "criticalVisibleMotion": true
+    }
+  ],
+  "projectionSha256": "60201108D90355B5CB031DF5DF60C31CD5946872CADC14963DBC40DF283FBF9A"
+}
