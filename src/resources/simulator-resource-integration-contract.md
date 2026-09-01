@@ -10,6 +10,8 @@ The main program owns every production resource identity, source, catalog, trans
 
 This is a GarupaEditor product architecture contract. Original logical resource names and current consumer behavior are evidence-backed by pushed Reverse commit `f461b287`; the application storage layout itself is not claimed as original-game behavior.
 
+The Simulator Builtin provenance manifest points to the sanitized Reverse history and independently fixes its remapped metadata tuple and payload-only tuple. `sourceRelation=byte-identical` means the rewritten source blob still equals the shipped asset; `source-derived-projection` records the four pre-existing profile/container projections without pretending that the whole source document equals the shipped payload. Neither relation changes runtime bytes or makes production read Reverse.
+
 ## Physical and logical boundary
 
 The observed original Android cache stores `AssetBundleInfo` and hash-named payloads under `files/data`. Names such as `ingameskin/noteskin/skin00`, `sound/common`, `sound/bgm003`, `musicjacket/...` and `movie/mv/...` are logical Bundle names.

@@ -194,6 +194,42 @@ if (manifest.storageSchema !== 1 || !Array.isArray(manifest.entries)) {
 if (simulatorManifest.schemaVersion !== 1 || !Array.isArray(simulatorManifest.entries)) {
   throw new Error("Simulator builtin provenance manifest has an invalid schema");
 }
+const simulatorSourceRelations = new Set(["byte-identical", "source-derived-projection"]);
+const simulatorMetadataTuple = simulatorManifest.entries.map((entry) => ({
+  path: entry.path,
+  sourceReverseCommit: entry.sourceReverseCommit,
+  sourcePath: entry.sourcePath,
+  byteLength: entry.byteLength,
+  sha256: entry.sha256,
+}));
+const simulatorPayloadTuple = simulatorManifest.entries.map((entry) => ({
+  path: entry.path,
+  byteLength: entry.byteLength,
+  sha256: entry.sha256,
+}));
+const simulatorMetadataTupleSha256 = createHash("sha256")
+  .update(JSON.stringify(simulatorMetadataTuple)).digest("hex");
+const simulatorPayloadTupleSha256 = createHash("sha256")
+  .update(JSON.stringify(simulatorPayloadTuple)).digest("hex");
+if (
+  simulatorManifest.sourceRepository !== "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse" ||
+  simulatorManifest.sourceHead !== "343c09cc06ee97f3f2532518eff6192913de2b19" ||
+  simulatorManifest.identity?.legacyMetadataTupleSha256 !== "07a2265ad7c798494a2d3fce405f9ccc7acaf7ae5bbabfd80fdb19a4b0558b82" ||
+  simulatorManifest.identity.currentMetadataTupleSha256 !== simulatorMetadataTupleSha256 ||
+  simulatorMetadataTupleSha256 !== "c53067e33b78d8c8e8020248116cfb405517bf97516a22cdf9c6fe77e52820e9" ||
+  simulatorManifest.identity.payloadTupleSha256 !== simulatorPayloadTupleSha256 ||
+  simulatorPayloadTupleSha256 !== "8ae2e167b8c303da535e675e7b3f28a52a0dfd94f6a87f35b3de0274317e4362" ||
+  simulatorMetadataTupleSha256 === simulatorManifest.identity.legacyMetadataTupleSha256 ||
+  JSON.stringify(simulatorManifest.identity.metadataProjection) !== JSON.stringify([
+    "path", "sourceReverseCommit", "sourcePath", "byteLength", "sha256",
+  ]) ||
+  JSON.stringify(simulatorManifest.identity.payloadProjection) !== JSON.stringify([
+    "path", "byteLength", "sha256",
+  ]) ||
+  simulatorManifest.identity.serialization !== "JSON.stringify(entry-order object projection)"
+) {
+  throw new Error("Simulator builtin provenance and immutable payload identities are not independently fixed");
+}
 
 const actualAssets = new Set(walk(assetsRoot).filter((path) => statSync(path).isFile()).map((path) => resolve(path)));
 const gameAssets = new Set([...actualAssets].filter((path) => path.startsWith(`${join(assetsRoot, "game")}${sep}`)));
@@ -226,7 +262,8 @@ for (const path of gameAssets) {
   if (
     !entry || entry.byteLength !== bytes.length || entry.sha256 !== digest ||
     !/^[0-9a-f]{40}$/.test(entry.sourceReverseCommit) ||
-    typeof entry.sourcePath !== "string" || !entry.sourcePath.startsWith("artifacts/investigations/")
+    typeof entry.sourcePath !== "string" || !entry.sourcePath.startsWith("artifacts/investigations/") ||
+    !simulatorSourceRelations.has(entry.sourceRelation)
   ) throw new Error(`Simulator builtin provenance mismatch: ${logicalPath}`);
 }
 

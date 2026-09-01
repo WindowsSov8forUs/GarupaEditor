@@ -33,7 +33,7 @@
       "exact-prototype": 0,
       "exact-key-order": 9,
       "rejected-call": 48,
-      "throw-error": 732,
+      "throw-error": 734,
       "rust-error-return": 0,
       "rust-result-error": 0
     }

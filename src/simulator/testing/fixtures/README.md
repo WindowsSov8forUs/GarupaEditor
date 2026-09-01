@@ -3,7 +3,9 @@
 这些是隔离测试所需的最小离线快照，不是生产资源，也不是新的行为来源。
 
 - 原始逆向证据统一在 [`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 获取、校验、提交和推送；本地checkout只由显式参数或`GARUPA_REVERSE_ROOT`定位。
-- 每个快照的来源、Reverse 提交、相对路径、字节数、SHA-256 与 `consumerRole` 记录在 Schema 2 `manifest.json`。
+- 每个快照的来源、重写后Reverse提交、相对路径、字节数、SHA-256、`consumerRole`与`sourceRelation`记录在Schema 2 `manifest.json`。
+- 旧metadata tuple `d9a9abdd…71f22`包含重写前commit，因此只保留为legacy baseline；manifest分别固定当前metadata tuple与仅由`path/bytes/sha256`组成的payload tuple。历史重写不得通过修改225个payload来迁就新提交身份；快照正文内部的历史commit字符串属于受保护payload内容，不冒充当前`sourceReverseCommit`。
+- `sourceRelation`区分新源仍逐字节相同、只因历史净化规范化、既有历史快照、从源容器提取以及由tracked source manifest的logicalResource/bytes/SHA记录授权五种情况；它不把既有非直接复制关系伪装成byte-identical，所有当前`sourceReverseCommit:sourcePath`均可解析。
 - 角色分为 `reverse-contract`、`reverse-oracle`、`reverse-resource`、`reverse-observation`、`historical-superseded`、`product-input` 与 `product-probe`；角色只描述消费边界，不改变原字节或 provenance。
 - `historical-superseded` 必须显式指向 current `reverse-oracle`。历史 type-5 `+Y` simulation 与 current native `+Z` oracle 因此并存，禁止重写或删除历史文件。
 - 生产代码不得读取本目录；只有 `src/simulator/testing/` 测试旁路可以读取。

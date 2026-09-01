@@ -59,7 +59,7 @@ Fixture roles are defined by `fixtures/manifest.json` Schema 2:
 - `product-input`
 - `product-probe`
 
-`checks/verifyTestingFixtures.mjs` validates every path, source commit, byte count and SHA-256. Historical particle `+Y` and current native `+Z` fixtures are both required and have mutually explicit consumption identities.
+`checks/verifyTestingFixtures.mjs` validates every path, remapped source commit, byte count, SHA-256 and `sourceRelation`. The pre-rewrite metadata tuple is retained only as a legacy baseline because it contains old commit IDs; a separate payload-only tuple proves that all 225 immutable payloads survived provenance remapping. Historical particle `+Y` and current native `+Z` fixtures are both required and have mutually explicit consumption identities.
 
 Code under `expected/independent/` is scanned with the TypeScript AST and may not import production implementation. Production code may not import anything under `testing/`. The Auto Live grouping snapshot under `product-samples/` declares:
 

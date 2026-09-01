@@ -16,6 +16,14 @@ const consumerRoles = new Set([
   "product-input",
   "product-probe",
 ]);
+const sourceRelations = new Set([
+  "byte-identical",
+  "history-rewrite-normalized",
+  "historical-snapshot",
+  "source-container-extract",
+  "source-manifest-record",
+]);
+const sourceHead = "343c09cc06ee97f3f2532518eff6192913de2b19";
 if (manifest.schemaVersion !== 2) {
   throw new Error("testing fixture manifest must use Schema 2");
 }
@@ -29,11 +37,11 @@ if (
 if (manifest.sourceRepository !== "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse") {
   throw new Error("testing fixture source repository is not the canonical remote identity");
 }
-if (!/^[0-9a-f]{40}$/i.test(manifest.sourceHead)) {
-  throw new Error("testing fixture source commit must be a full Reverse commit");
+if (manifest.sourceHead !== sourceHead) {
+  throw new Error("testing fixture sourceHead is not the sanitized Reverse remote head");
 }
-if (!Array.isArray(manifest.entries) || manifest.entries.length === 0) {
-  throw new Error("testing fixture manifest is empty");
+if (!Array.isArray(manifest.entries) || manifest.entries.length !== 225) {
+  throw new Error("testing fixture manifest must preserve the 225 immutable payload entries");
 }
 const manifestPaths = new Set();
 for (const entry of manifest.entries) {
@@ -42,7 +50,7 @@ for (const entry of manifest.entries) {
     typeof entry.sourcePath !== "string" || !/^[0-9a-f]{40}$/i.test(entry.sourceReverseCommit) ||
     !Number.isSafeInteger(entry.bytes) || entry.bytes <= 0 ||
     !/^[0-9A-F]{64}$/.test(entry.sha256) ||
-    !consumerRoles.has(entry.consumerRole) ||
+    !consumerRoles.has(entry.consumerRole) || !sourceRelations.has(entry.sourceRelation) ||
     (!entry.sourcePath.startsWith("artifacts/") && !entry.sourcePath.startsWith("runtime/") &&
       !entry.sourcePath.startsWith("samples/") && !entry.sourcePath.startsWith("static/"))
   ) {
@@ -72,6 +80,35 @@ for (const entry of manifest.entries) {
   if (hash !== entry.sha256) {
     throw new Error(`fixture SHA-256 mismatch: ${entry.path}`);
   }
+}
+const metadataTuple = manifest.entries.map((entry) => ({
+  path: entry.path,
+  sourceReverseCommit: entry.sourceReverseCommit,
+  sourcePath: entry.sourcePath,
+  bytes: entry.bytes,
+  sha256: entry.sha256,
+}));
+const payloadTuple = manifest.entries.map((entry) => ({
+  path: entry.path,
+  bytes: entry.bytes,
+  sha256: entry.sha256,
+}));
+const metadataTupleSha256 = createHash("sha256").update(JSON.stringify(metadataTuple)).digest("hex");
+const payloadTupleSha256 = createHash("sha256").update(JSON.stringify(payloadTuple)).digest("hex");
+if (
+  manifest.identity?.legacyMetadataTupleSha256 !== "d9a9abdd1d0caf0cdc32fb6d86f9403f48ed1d4393517b72b99ee6bcece71f22" ||
+  manifest.identity.currentMetadataTupleSha256 !== metadataTupleSha256 ||
+  metadataTupleSha256 !== "10d701d3f123c21158448dc0456f16f6e6174fb10d3f780a0c6309641893c0ad" ||
+  manifest.identity.payloadTupleSha256 !== payloadTupleSha256 ||
+  payloadTupleSha256 !== "49fd39c3c9f791fce1707c768168b48df05bfebd8047d532c4e0b56da8db4ac0" ||
+  metadataTupleSha256 === manifest.identity.legacyMetadataTupleSha256 ||
+  JSON.stringify(manifest.identity.metadataProjection) !== JSON.stringify([
+    "path", "sourceReverseCommit", "sourcePath", "bytes", "sha256",
+  ]) ||
+  JSON.stringify(manifest.identity.payloadProjection) !== JSON.stringify(["path", "bytes", "sha256"]) ||
+  manifest.identity.serialization !== "JSON.stringify(entry-order object projection)"
+) {
+  throw new Error("testing fixture legacy provenance and immutable payload identities are not independently fixed");
 }
 for (const entry of manifest.entries) {
   if (entry.consumerRole !== "historical-superseded") continue;

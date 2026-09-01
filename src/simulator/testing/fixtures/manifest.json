@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",
-  "sourceHead": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+  "sourceHead": "343c09cc06ee97f3f2532518eff6192913de2b19",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -10,7 +10,8 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_external_atlas_profile.json",
       "bytes": 50294,
       "sha256": "5B8BB2BDF01D8DBEC7D916400E25C1654AA4CEA69E79F973C168EB1959667C81",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "habahiro-snapshots/difference-matrix.json",
@@ -18,7 +19,8 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_approximation_difference_matrix.json",
       "bytes": 2318,
       "sha256": "DADAAE3D83EDDDECC0E7921761CDF1B64BFE2A584823A91854760D190383CE84",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
@@ -26,7 +28,8 @@
       "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
       "bytes": 732,
       "sha256": "43C0097F729D0888DB0FD853EFE2015762090711FDE355B4620B3D1DA956A9FF",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
@@ -34,7 +37,8 @@
       "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
       "bytes": 39710,
       "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/add-score-rank-logic/artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json",
@@ -42,7 +46,8 @@
       "sourcePath": "artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json",
       "bytes": 6768,
       "sha256": "8A73F3C586F1B65A0EA3D245F8CC09DC56553A12407B514A126B72D0E211A23F",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/audio_command_oracle.json",
@@ -50,7 +55,8 @@
       "sourcePath": "artifacts/investigations/audio-runtime-evidence-10-1-4/audio_command_oracle.json",
       "bytes": 30404,
       "sha256": "CDA8ED00CD3382601B87903148D71A663739B41F5B66B5108046B2478BC49043",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/audio_pcm_oracle.json",
@@ -58,7 +64,8 @@
       "sourcePath": "artifacts/investigations/audio-runtime-evidence-10-1-4/audio_pcm_oracle.json",
       "bytes": 4752,
       "sha256": "53BE9F084F7AFB12AA7B156DE79EC7C46D06BEB07E06F9FDDBAB6647AFC1C430",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/portable-mix-expected-f32le-stereo.bin",
@@ -67,7 +74,8 @@
       "bytes": 19264,
       "sha256": "3A5E38BF7DF5C02BF884D493D48732BC36B8EA811340BBDAF2E25D6AA37211E5",
       "extraction": "base64-decoded exact portable PCM expected",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/synthetic-mono-f32le.bin",
@@ -75,7 +83,8 @@
       "sourcePath": "artifacts/investigations/audio-portable-lifecycle-pcm-contract-10-1-4/fixtures/synthetic-mono-f32le.bin",
       "bytes": 32,
       "sha256": "2CAA3FC0F1CC321947DEEAC3DF261AEE15F17A8C50383B487B4B76FECC358BF8",
-      "consumerRole": "product-probe"
+      "consumerRole": "product-probe",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/audio/artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json",
@@ -83,7 +92,8 @@
       "sourcePath": "artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json",
       "bytes": 9866,
       "sha256": "E0105E47EF036857A5838409483CF6CA3EDD2F330E2AEF8BC2EDD1DEC1051DC7",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay-chart.txt",
@@ -91,7 +101,8 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay.json",
@@ -99,7 +110,8 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
       "bytes": 37635,
       "sha256": "226041C1A182641C79EB43882988B905F064524F83A6F7AED7256D15D2DA5BE7",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-failure-cases.json",
@@ -107,7 +119,8 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract/auto_live_failure_cases.json",
       "bytes": 1884,
       "sha256": "2EC743C8A33E3C73EBACBBA3F8C894803449AA6B174F004FEFC348AFEF208E6B",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-fixed-event-trace.json",
@@ -115,7 +128,8 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract/auto_live_fixed_event_trace.json",
       "bytes": 26558,
       "sha256": "789B726369B91390C144693CF53B660427C52F674835CDB01A1727EAE37C4249",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-supplement-fixed-event-trace.json",
@@ -123,7 +137,8 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
       "bytes": 14124,
       "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
@@ -131,7 +146,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
       "bytes": 4978,
       "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
@@ -139,7 +155,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
       "bytes": 20287,
       "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
@@ -147,7 +164,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
       "bytes": 1905,
       "sha256": "09F8E06F160A34D95B337590BCBED1A88C914396B7EF3B4E8373CE29F8527FBE",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
@@ -155,7 +173,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
       "bytes": 264263,
       "sha256": "9B16438FEFA28997D7B813421A8683B42D9BFECD378CC419F1E688239FD82365",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
@@ -163,7 +182,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
       "bytes": 190,
       "sha256": "6B9A27F589A65CBF9F36D1F73690B95D8304BC95DC3F8BE3A580B8AEB47C478B",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
@@ -171,7 +191,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
       "bytes": 191,
       "sha256": "19654D4B306230CC770ED37E2CD763239AC2A5F253064123DBF3862DBD271886",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
@@ -179,7 +200,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
       "bytes": 1976,
       "sha256": "D4011A1FF77407E3E3EA224C6C81B5BFC3122AC65E4A1A2FC99CFA667E1ECA2D",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
@@ -187,7 +209,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
       "bytes": 1190293,
       "sha256": "E3D8EDE1D3CEC31D0250D41E0DF2EDE9822A9BDC981D2B69585F5875C5A9618F",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
@@ -195,7 +218,8 @@
       "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
       "bytes": 247,
       "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/c07-evidence/artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
@@ -203,7 +227,8 @@
       "sourcePath": "artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
       "bytes": 7323,
       "sha256": "8588E6FE5CE15B06A0B4EDEC4862CE47BD82FE618DE39B2AD5CDE9AE8137DDEB",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/c07-evidence/artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
@@ -211,7 +236,8 @@
       "sourcePath": "artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
       "bytes": 13172,
       "sha256": "BF3AAFCCCDD2A2ECE1A9A01928FB89A91B9C5018723B709E5B5E65DB633DF84D",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
@@ -219,7 +245,8 @@
       "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
       "bytes": 4527,
       "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
@@ -227,7 +254,8 @@
       "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
       "bytes": 4859,
       "sha256": "ECBAF86B547FED5426CD0A59F1D8401AB8A1E1714B78BF8EED974A923BCEE951",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/fixtures/786_miracle_april_habahiro_special.json",
@@ -235,7 +263,8 @@
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
       "bytes": 58170,
       "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/fixtures/786_miracle_april_habahiro_special.txt",
@@ -243,7 +272,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/fixtures/poppin_shuffle_special.json",
@@ -251,7 +281,8 @@
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
       "bytes": 50591,
       "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/chart-construction/fixtures/poppin_shuffle_special.txt",
@@ -259,7 +290,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/clock-scheduling/artifacts/investigations/clock-scheduling-runtime-oracle/sources/087_thesis_easy.bms.txt",
@@ -267,7 +299,8 @@
       "sourcePath": "artifacts/investigations/clock-scheduling-runtime-oracle/sources/087_thesis_easy.bms.txt",
       "bytes": 2463,
       "sha256": "06FDD68C34D6CE51B16BD5D0E42DC8283AD8284C8A54234DCC70CFA438FF3206",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/clock-scheduling/artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
@@ -275,7 +308,8 @@
       "sourcePath": "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/default-particle-lane-logic/artifacts/investigations/simulator-default-particle-lane-logic-reaudit-10-1-4/default_particle_lane_logic_reaudit.json",
@@ -283,7 +317,8 @@
       "sourcePath": "artifacts/investigations/simulator-default-particle-lane-logic-reaudit-10-1-4/default_particle_lane_logic_reaudit.json",
       "bytes": 7918,
       "sha256": "3974D2D58CA4AB34162B405A178DACE153FEE12EA7DDD8893D3B544A5EE63285",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
@@ -291,7 +326,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
       "bytes": 8235,
       "sha256": "5BDA0080BA954CEBE7FE8966E756F101359F74E78D5CD31D30E1A9736435197F",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_closure.json",
@@ -299,7 +335,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_closure.json",
       "bytes": 30977,
       "sha256": "245A0768BC19EE6D415C9AC2B7EC0F813495A4E6CF0F933F2A38B49FEAC7F2F7",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_difference_matrix.json",
@@ -307,7 +344,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_difference_matrix.json",
       "bytes": 3120,
       "sha256": "E8F8A2A69CF97493E5BEA8271D6F5464E7EEB890A47E2877DFCE18674D67DC4E",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
@@ -315,7 +353,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
       "bytes": 10430,
       "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
@@ -323,7 +362,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
       "bytes": 1529609,
       "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
@@ -331,7 +371,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
       "bytes": 3778,
       "sha256": "49D8B99F4F192B038A55A2320E0B5E3C5330369744D792FCAB3795BD918811DB",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
@@ -339,7 +380,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
       "bytes": 5232,
       "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_semantic_frame_oracle.json",
@@ -347,7 +389,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_semantic_frame_oracle.json",
       "bytes": 1740,
       "sha256": "8EACC3B0F58E2E353F796EADED5750CDFDE3237A216E2A2BDC292BAC85CE802D",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
@@ -358,7 +401,8 @@
       "consumerRole": "historical-superseded",
       "supersededBy": "reverse-snapshots/particle-box-direction-native/artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_simulation_box_corrected_oracle.json",
       "authorityNote": "historical type-5 +Y simulation oracle; immutable and intentionally retained; current native +Z authority is supersededBy",
-      "supersededFor": "ParticleSystem ShapeModule type 5 local emission direction authority"
+      "supersededFor": "ParticleSystem ShapeModule type 5 local emission direction authority",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
@@ -366,7 +410,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
       "bytes": 2024,
       "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
@@ -374,7 +419,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
       "bytes": 202371,
       "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
@@ -382,7 +428,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
       "bytes": 4116,
       "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
@@ -390,7 +437,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
       "bytes": 40235,
       "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
@@ -398,7 +446,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
       "bytes": 13393,
       "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
@@ -406,7 +455,8 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
       "bytes": 236417,
       "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
@@ -414,55 +464,62 @@
       "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
       "bytes": 222637,
       "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/653_ikuoku_easy.bms.txt",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/786_miracle_april_habahiro_special.bms.txt",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/poppin_shuffle_special.bms.txt",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
       "bytes": 58170,
       "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
       "bytes": 50591,
       "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
-      "sourceReverseCommit": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
+      "sourceReverseCommit": "343c09cc06ee97f3f2532518eff6192913de2b19",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
       "bytes": 3921,
       "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/five-visual-correction/artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
@@ -470,7 +527,8 @@
       "sourcePath": "artifacts/investigations/simulator-five-visual-correction-10-1-4/five_visual_correction_contract.json",
       "bytes": 78848,
       "sha256": "228A536C54FE99293A3F8F759B917B95D501B76ABD83F2D8AA9B61B6E6474A8B",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/bbkk_slide_full_timeline_oracle.json",
@@ -478,7 +536,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/bbkk_slide_full_timeline_oracle.json",
       "bytes": 51238,
       "sha256": "2B0046FD37351548A5A8D9244A795DCF2F7D82AED1FEB5663D9CD3AD15E24D9F",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
@@ -486,7 +545,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/full_visible_lifecycle_contract.json",
       "bytes": 6942833,
       "sha256": "639C7C45FDED4DC586C14E667A41E4B5BEA9B9148AFCDB806462254C4D36CB22",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/product-inputs/B.B.K.K.B.K.K..json",
@@ -495,7 +555,8 @@
       "bytes": 57513,
       "sha256": "54938A6CA7509D1C0286C756AC44EA643FBD755236BC5F2D1B543FE894F221F8",
       "consumerRole": "product-input",
-      "authorityNote": "product regression input only; identical product-sample bytes do not make this an original-behavior oracle"
+      "authorityNote": "product regression input only; identical product-sample bytes do not make this an original-behavior oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",
@@ -503,7 +564,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/full-visible-lifecycle-r1.trace.json.gz",
       "bytes": 114726,
       "sha256": "051C618D47F36535D1EE0FD55356905B98CB746F5635F3DD81175918D3EAD51E",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-039-life-UpdateView.png",
@@ -511,7 +573,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-039-life-UpdateView.png",
       "bytes": 832823,
       "sha256": "3D48BAB2C2ABC5A99F66BE31D07CE27AA46177BEC8393C299E394749112C1317",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-043-playing-start.png",
@@ -519,7 +582,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-043-playing-start.png",
       "bytes": 865632,
       "sha256": "01276A310B65230745AB8BC3F555BBFFCBAE8ADAB2829C90E5ECDF87DFFC267A",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-050-add-score-Play.png",
@@ -527,7 +591,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-050-add-score-Play.png",
       "bytes": 608737,
       "sha256": "4E3D5034BA62358527D097CD6B8E7D6FF40D7E4CB293067DDC6EA273C2468186",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-060-particle-route-playParticle.png",
@@ -535,7 +600,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-060-particle-route-playParticle.png",
       "bytes": 1031296,
       "sha256": "B27BEB9EB200E933183600DA1924B867C4C0E69A4BB424FA00F9E8C5754B6E4A",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-070-pause-open.png",
@@ -543,7 +609,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-070-pause-open.png",
       "bytes": 392075,
       "sha256": "A8CA59F12F4A3AC4725233D98DB7B7D6AD095DAE6E4BAAFEF15FCB83F2A7E2A6",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-077-playing-periodic.png",
@@ -551,7 +618,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-077-playing-periodic.png",
       "bytes": 628251,
       "sha256": "DD1D84E94ECEF27A8DA549F46663843AF5E142AE75273F94810DFC57C4936891",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-090-playing-periodic.png",
@@ -559,7 +627,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-090-playing-periodic.png",
       "bytes": 815532,
       "sha256": "238B92B568F9A92E933B534C02D462F64D783910986B134195C2C335D1198A7A",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-108-completion-onGameClear.png",
@@ -567,7 +636,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-108-completion-onGameClear.png",
       "bytes": 242304,
       "sha256": "EAEC91FE7C8DBC2A88C37D9A5235ADE2ABE5CB6A7E59477BFD570037E74467C5",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-112-completion-PlayAnimation.png",
@@ -575,7 +645,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-112-completion-PlayAnimation.png",
       "bytes": 262337,
       "sha256": "D9B310FDE9AB3307BFE1585A8E04B2F3FFBF174282BC164008A6B597B29BE28E",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/full-visible-lifecycle/artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-115-completion-ClearAnimationFinished.png",
@@ -583,7 +654,8 @@
       "sourcePath": "artifacts/investigations/simulator-full-visible-lifecycle-reaudit-10-1-4/runtime/r1-115-completion-ClearAnimationFinished.png",
       "bytes": 107893,
       "sha256": "CE445A0B5F9C11FA858A3E2F4A673DDC49A5E595DFBF732EC6103C5B55B8049C",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
@@ -591,7 +663,8 @@
       "sourcePath": "artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json",
       "bytes": 19748,
       "sha256": "845076846C0F32531A5AC490765D4946574FD2EE7DDC0B77AB39B8F9A81CEBF0",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
@@ -599,7 +672,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/closure.json",
       "bytes": 4738,
       "sha256": "63595C8F0BEAB71271EF6D707B05F367F531D70E330C621DADC48F97074D8102",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
@@ -607,7 +681,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_component_profile.json",
       "bytes": 233351,
       "sha256": "A5103670BA69FBDD1A5585DE05756EE9AFDD59FD06A3A1AF5F460E202EDB7D73",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
@@ -615,7 +690,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_logic_oracle.json",
       "bytes": 899952,
       "sha256": "FE863BE15EDCE743E0B74ACD7BD41F57EA500352075BA74A22CFA727FADA0171",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
@@ -623,7 +699,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_render_primitive_oracle.json",
       "bytes": 256931,
       "sha256": "B6AC060A6ADEA9FA333E4ECC456D52A352B5B216D3BCFFFD16FEF0CD1E8887F3",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
@@ -631,7 +708,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_resource_manifest.json",
       "bytes": 58363,
       "sha256": "CF9B4D9AC741E650059D1739C19BAC1BEE60AE43499FB9A325D24A216AAC4D0B",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
@@ -639,7 +717,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_runtime_frame_manifest.json",
       "bytes": 6166,
       "sha256": "1C0A265E591500C129DBB05C87EE23213D27B685C344EDD4C059B761C99457E9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-complete/artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
@@ -647,7 +726,8 @@
       "sourcePath": "artifacts/investigations/simulator-complete-hud-reconstruction-10-1-4/hud_scene_graph.json",
       "bytes": 31749,
       "sha256": "2A2C26C9F2FF166777365C132BF66FB6FFA0561D98F125F6518E6F3687FB92B9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/hud-particle-pause-terminal-strict-reaudit/artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json",
@@ -655,7 +735,8 @@
       "sourcePath": "artifacts/investigations/simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4/strict_reaudit_contract.json",
       "bytes": 214523,
       "sha256": "B61BC615295B132540E0100AD9A6289D7C3B2F90185D88259CB89079222D00C2",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/judge-display-logic/artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",
@@ -663,7 +744,8 @@
       "sourcePath": "artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json",
       "bytes": 13277,
       "sha256": "3EE344ECC642BF4BDFDEF170640764D37237684E511D5CE9A8E0CB2FE90B0B34",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/lane-particle-same-state/artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json",
@@ -671,7 +753,8 @@
       "sourcePath": "artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json",
       "bytes": 62962,
       "sha256": "49B7A6D94D4F5FD145B6DD8CBF1CB277D47F1FAA1C6F8840A97EE9FC50B6B7F7",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
@@ -679,7 +762,8 @@
       "sourcePath": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
       "bytes": 18976,
       "sha256": "445A756E9F87A00D2561629D27ED2B79AA83E395BD49C83A969EB1A1819B7303",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
@@ -687,7 +771,8 @@
       "sourcePath": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
       "bytes": 4805,
       "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
@@ -695,7 +780,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
       "bytes": 2382,
       "sha256": "9196AEE211234CF1B69DCE05CA53501C2E4F015EE4BA14D80BA02BFD8CEAFFC6",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eac6c__NoteLong__execOverWaitState.arm64.tsv",
@@ -703,7 +789,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eac6c__NoteLong__execOverWaitState.arm64.tsv",
       "bytes": 1143,
       "sha256": "3710502F32A7EC0C184431382D4B1F22412B3149D2BEC17F862F4EB91BD62A79",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eacd8__NoteLong__StopState.arm64.tsv",
@@ -711,7 +798,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eacd8__NoteLong__StopState.arm64.tsv",
       "bytes": 3296,
       "sha256": "26E4EC8281AB101528488ABD1F89C6D34FE0AAECD34D4AC78C0AC07EB87C808D",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eae08__NoteLong__execOverStopState.arm64.tsv",
@@ -719,7 +807,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eae08__NoteLong__execOverStopState.arm64.tsv",
       "bytes": 2259,
       "sha256": "8ECB9AF4228DBAC65C793D23AD848E839A234509BB8569A3AFFA1A5C61386C8F",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eaedc__NoteLong__ExecTouchBegan.arm64.tsv",
@@ -727,7 +816,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eaedc__NoteLong__ExecTouchBegan.arm64.tsv",
       "bytes": 6257,
       "sha256": "0C397F222725EC8DF401F7F0364443C9C656B9EBA718E463CB4BF9C82F915548",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb210__NoteLong__ExecTouchMoved.arm64.tsv",
@@ -735,7 +825,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb210__NoteLong__ExecTouchMoved.arm64.tsv",
       "bytes": 12617,
       "sha256": "96C58E289472076297EE509ED766C0FE0642BF7730BB393A2B7DB2518EC38552",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb8d0__NoteLong__judgeAfterNote.arm64.tsv",
@@ -743,7 +834,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb8d0__NoteLong__judgeAfterNote.arm64.tsv",
       "bytes": 13597,
       "sha256": "3D90AB91C2225612DD49ABE4F7AE71793D78A683977AB82D5588FCF706ECC49C",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030ec820__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
@@ -751,7 +843,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030ec820__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
       "bytes": 4683,
       "sha256": "29849AB2001C0886A721DE958A70671E0383A1D7D5E847A1EB7A97AB6F23E9A4",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eca54__NoteMultipleDirectionalFlick__getMultipleDirectionalFlickNoteCount.arm64.tsv",
@@ -759,7 +852,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eca54__NoteMultipleDirectionalFlick__getMultipleDirectionalFlickNoteCount.arm64.tsv",
       "bytes": 673,
       "sha256": "AABDD996D9CCC48A728139DF483B98650F9B541B2FE392BA58CDA093F9FFC532",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ab5c__NoteSlide__OnUpdate.arm64.tsv",
@@ -767,7 +861,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ab5c__NoteSlide__OnUpdate.arm64.tsv",
       "bytes": 2735,
       "sha256": "13875C47736007355AFBED3E007E4A48E8314391DDB04E616825762B7702247D",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b414__NoteSlide__WaitState.arm64.tsv",
@@ -775,7 +870,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b414__NoteSlide__WaitState.arm64.tsv",
       "bytes": 5482,
       "sha256": "8054265CE4A20753CA083EE6E348E68C343A5671438F14FDADF3C20892ACC531",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b628__NoteSlide__execOverWaitState.arm64.tsv",
@@ -783,7 +879,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b628__NoteSlide__execOverWaitState.arm64.tsv",
       "bytes": 1291,
       "sha256": "C0E28381AEBD0D00C86EC5BE352FF2470530CC1EF9374229F4B82BC7B9F473F6",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b69c__NoteSlide__StopState.arm64.tsv",
@@ -791,7 +888,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b69c__NoteSlide__StopState.arm64.tsv",
       "bytes": 7362,
       "sha256": "44669140C70003A4ED6A5F9907CFED1FEE2BD493E1EF004C1CB0E02EA47AC476",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv",
@@ -799,7 +897,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv",
       "bytes": 17885,
       "sha256": "47BE828D451D8B41C8A95BC9326C6704F8339D247BC8CDC199376FF00A81A148",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv",
@@ -807,7 +906,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv",
       "bytes": 47327,
       "sha256": "CDF4923BBFCE7E2D6F2BBEF97E2D286C29D716091842998661A04CFE7FD22CCB",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321d96c__SlideNoteManager__Judge.arm64.tsv",
@@ -815,7 +915,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321d96c__SlideNoteManager__Judge.arm64.tsv",
       "bytes": 4587,
       "sha256": "53F13E831839CE0EEEB839247020714D2B62845AF26AE59018C38A20B93CAD31",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ec88__NoteSlide__onMiss.arm64.tsv",
@@ -823,7 +924,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ec88__NoteSlide__onMiss.arm64.tsv",
       "bytes": 4526,
       "sha256": "1C60954A61E34C13FA4C08724A75609C9855FD88AC56CAE1A2CD3A6C421828BE",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ee48__NoteSlide__killFromInvisibleNotesToVisibleNote.arm64.tsv",
@@ -831,7 +933,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ee48__NoteSlide__killFromInvisibleNotesToVisibleNote.arm64.tsv",
       "bytes": 1943,
       "sha256": "6D79D1DFD1BD853D442AE11D357C3BC4EBDF5321861C289AFE872DC1775AAEC4",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321f47c__NoteSlide__onMissAfterNote.arm64.tsv",
@@ -839,7 +942,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321f47c__NoteSlide__onMissAfterNote.arm64.tsv",
       "bytes": 2188,
       "sha256": "83509AE4E53A760A228675AB0504AA4D811944224592F787030A9CA36D661942",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03223820__SlideNoteManager__GetNearJudgeLineNote.arm64.tsv",
@@ -847,7 +951,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03223820__SlideNoteManager__GetNearJudgeLineNote.arm64.tsv",
       "bytes": 3674,
       "sha256": "A507FF5342956718DA7D83A3606DD48544902C88F2FFEF32F77C401CAE3DA323",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a76878__NoteFlickBase__WaitState.arm64.tsv",
@@ -855,7 +960,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a76878__NoteFlickBase__WaitState.arm64.tsv",
       "bytes": 731,
       "sha256": "CF4521054FF5DA58A1C5C54BF82D1B2753630AC3DEA3AB0E92096C82B6E1E38A",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
@@ -863,7 +969,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
       "bytes": 769,
       "sha256": "FAFEE4CC23D778B9CB5E162707566F506CCA6C4F9D27009EA4CCDA3E91B0D29A",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
@@ -871,7 +978,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
       "bytes": 3734,
       "sha256": "5663C186B67F62E6BEEFB62E67983DE878FD5FEB68590154C7596A4FC3FD5DC2",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
@@ -879,7 +987,8 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
       "bytes": 30331,
       "sha256": "25646D696863910173F85A723ECAEE7A6B86D934F80F3ABB39FDD6B9755E2323",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-portable-media-profile-10-1-4/mv_live_portable_media_profile.json",
@@ -887,7 +996,8 @@
       "sourcePath": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/mv_live_portable_media_profile.json",
       "bytes": 37637,
       "sha256": "7522A1B6ABD5C4521BF1132FE0E9BC60A7CED898A7AEE16F4100B98C76D55356",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.mp4",
@@ -895,7 +1005,8 @@
       "sourcePath": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.mp4",
       "bytes": 20933,
       "sha256": "21B9A3F026C249AE9745C08B1C5028C2DF4BFD66B2D2F58B7BB76A82957EEF6B",
-      "consumerRole": "product-probe"
+      "consumerRole": "product-probe",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.webm",
@@ -903,7 +1014,8 @@
       "sourcePath": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.webm",
       "bytes": 46404,
       "sha256": "CB0A28382483B13B08C365EAE7E184232B83CAF09B28BEB1BE559FBD9A979CE9",
-      "consumerRole": "product-probe"
+      "consumerRole": "product-probe",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_closure.json",
@@ -911,7 +1023,8 @@
       "sourcePath": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_closure.json",
       "bytes": 1052,
       "sha256": "451B0763648E0FC5B0A68586246794A03C459C52ED24BBB84EDC5BD0C0A4EA8E",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_command_oracle.json",
@@ -919,7 +1032,8 @@
       "sourcePath": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_command_oracle.json",
       "bytes": 5415,
       "sha256": "B1CA55EE9043CE3D4C8E3F38902012F0E63719B38CD8B176B63EE3776D70F131",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/mv-live/artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_runtime_contract.json",
@@ -927,7 +1041,8 @@
       "sourcePath": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_runtime_contract.json",
       "bytes": 12913,
       "sha256": "FE1C42F70B83376CB6C8DC5250E25485119325ABDA2134542E2244554D757FDE",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/note-hierarchy-fourth-reaudit/artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
@@ -935,7 +1050,8 @@
       "sourcePath": "artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json",
       "bytes": 17234,
       "sha256": "C6E15ACDE7DBD2829ED1166E1C8D533D66ED1BD15C87F781E4EE021A7267C832",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
@@ -944,7 +1060,8 @@
       "bytes": 392619,
       "sha256": "14F904205BF4D8F662274C6B4970E1E1478A649129CBB8502BE033B45DEF7965",
       "consumerRole": "reverse-observation",
-      "authorityNote": "immutable Reverse candidate observation; retained for provenance and never promoted to an original-behavior oracle"
+      "authorityNote": "immutable Reverse candidate observation; retained for provenance and never promoted to an original-behavior oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
@@ -952,7 +1069,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "bytes": 740,
       "sha256": "EDCA1824447C5F35120132BE6ECC66429EBB822172B8C37565F88C89B336EECA",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
@@ -960,7 +1078,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
       "bytes": 19511,
       "sha256": "AA3AD83EE90B127FC817EA66ADF0A32BDBD10994128B93356280531697AE6794",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_contract.json",
@@ -968,7 +1087,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_contract.json",
       "bytes": 3003,
       "sha256": "5024B0CE0B3BA0ED1B0AED20F6615F4BCD090D295A494017EC222F95F88CEB65",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
@@ -976,7 +1096,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
       "bytes": 24396,
       "sha256": "E2EEDCB153D1263FB585004FF4ACB90A93FAA1905A30D9D5559ACE60E966283B",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
@@ -984,7 +1105,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
       "bytes": 28809,
       "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
@@ -992,7 +1114,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
       "bytes": 137053,
       "sha256": "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/judge-skin00.png",
@@ -1000,7 +1123,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/judge-skin00.png",
       "bytes": 97258,
       "sha256": "1FACA23DE96039095EF2CE5970335C560DC6A365070C601A1C53AF5A1457E205",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/rhythm-game-additive.png",
@@ -1008,7 +1132,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/rhythm-game-additive.png",
       "bytes": 464153,
       "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-1.png",
@@ -1016,7 +1141,8 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_1.png",
       "bytes": 14137,
       "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-2.png",
@@ -1024,7 +1150,8 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_2.png",
       "bytes": 11402,
       "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-3.png",
@@ -1032,7 +1159,8 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_3.png",
       "bytes": 7630,
       "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/tap-lane-effect-4.png",
@@ -1040,7 +1168,8 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/portable-assets/NoteLaneEffect_4.png",
       "bytes": 5535,
       "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
@@ -1048,7 +1177,8 @@
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
       "bytes": 20188,
       "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/original-live-settings/artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
@@ -1056,7 +1186,8 @@
       "sourcePath": "artifacts/investigations/simulator-original-live-settings-runtime-contract-10-1-4/original_live_settings_portable_profile.json",
       "bytes": 9920,
       "sha256": "BE1EF27CF31CB0599C2433025A6BAC6A267DB5720A3F3B14BC7F888903ABAC41",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/particle-lane-slide-one-frame-correction/artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
@@ -1064,7 +1195,8 @@
       "sourcePath": "artifacts/investigations/simulator-particle-lane-slide-one-frame-correction-10-1-4/correction_oracle.json",
       "bytes": 28158,
       "sha256": "64DD565DA8A69D088059A52543A3B5120CFED3145F0DD649AD8E89DE1B0BA339",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/particle-scaling-mode-fifth-correction/artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
@@ -1072,7 +1204,8 @@
       "sourcePath": "artifacts/investigations/simulator-particle-scaling-mode-fifth-correction-10-1-4/particle_scaling_mode_fifth_correction.json",
       "bytes": 3898,
       "sha256": "0A5F5C90DE060C81509EDF1BF1ED159D48EE21127ECEC9B9DD9857966872CAA9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/particle-transform-fourth-reaudit/artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
@@ -1080,7 +1213,8 @@
       "sourcePath": "artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json",
       "bytes": 59152,
       "sha256": "A5C2E8348BAFBC63885EB9EDBC4E22BAED6ACA3791692EEDFA736B39413D55B2",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
@@ -1088,7 +1222,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/in_game_pause_ui_runtime_contract.json",
       "bytes": 56331,
       "sha256": "E10089EC5C9F7B5CF4FDC8F0B3B881D2F1E9F6DFA1215C97F4772AB8C80C0930",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
@@ -1096,7 +1231,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_runtime_trace_manifest.json",
       "bytes": 28975,
       "sha256": "7F5DD3146C9F74AA258636A15204D9A10E7C01907EACD4D835423C08C5BBE086",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
@@ -1104,7 +1240,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/pause_serialized_resource_profile.json",
       "bytes": 43843,
       "sha256": "AC907D731479277FB1C3E32FEE8257AC32945B0C6FE08F4F4F23E6637F5356F1",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
@@ -1112,7 +1249,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-1.png",
       "bytes": 2024,
       "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
@@ -1120,7 +1258,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-2.png",
       "bytes": 10393,
       "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pause-ui/artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
@@ -1128,7 +1267,8 @@
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/countdown-3.png",
       "bytes": 12514,
       "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/pixi-particle-visual/artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
@@ -1136,7 +1276,8 @@
       "sourcePath": "artifacts/investigations/simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json",
       "bytes": 5440,
       "sha256": "F589ED66B176B8ACB6788D13D41E1FAB7FD7A47C31DC5BEE1FB41124DF539BD9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/production-visual-third-reaudit/artifacts/investigations/simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json",
@@ -1144,7 +1285,8 @@
       "sourcePath": "artifacts/investigations/simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json",
       "bytes": 33076,
       "sha256": "C04E8023A9C3BD0B4B416F559C4E3159DD366ADB8C3E1EE2D74AB41DE6E18136",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/public-life-profile/artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
@@ -1152,7 +1294,8 @@
       "sourcePath": "artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
       "bytes": 5162,
       "sha256": "37FB2C539072939D7DEF0DA090E2C2BB411765416381D5CBA04FBD0B9761696B",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/resource-axis-product-visibility/artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/resource_axis_product_visibility_correction.json",
@@ -1160,7 +1303,8 @@
       "sourcePath": "artifacts/investigations/simulator-resource-axis-product-visibility-correction-10-1-4/resource_axis_product_visibility_correction.json",
       "bytes": 10156,
       "sha256": "5319DF2B64141F559993C6D157596540B515C05FDB972CC6C3FDF9939DE742A9",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
@@ -1168,7 +1312,8 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
       "bytes": 3726,
       "sha256": "089317E751F5F65E4FAF968874A19EE12F694DE509FFF3C2CE6AAC70B911EFAE",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_delivery_oracle.json",
@@ -1176,7 +1321,8 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_delivery_oracle.json",
       "bytes": 7734,
       "sha256": "03DEE2153F0E700448D87DD5D9DF977AE163C9BEE1333A578A79AF210C28EDEB",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
@@ -1184,7 +1330,8 @@
       "sourcePath": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/runtime/score-rank-3-total-crop-r1.png",
       "bytes": 46841,
       "sha256": "77E8C28C50E148BFCD7279CEB9B3CD38D04C2AB406F75C4E4267B90BC1B82724",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-final-visible/artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
@@ -1192,7 +1339,8 @@
       "sourcePath": "artifacts/investigations/simulator-score-hud-final-visible-closure-10-1-4/score_hud_final_visible_closure.json",
       "bytes": 14124,
       "sha256": "8974B69F99FA5992B15CF073E6A954A566A973A55763D05B00FAA1201A51302C",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
@@ -1200,7 +1348,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
       "bytes": 2002,
       "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png",
@@ -1208,7 +1357,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png",
       "bytes": 5658,
       "sha256": "2F2BBA614FA19EA9D013D880687AF8F4EFC420A86B45E69412F41331671C2A4E",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png",
@@ -1216,7 +1366,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png",
       "bytes": 908,
       "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
@@ -1224,7 +1375,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
       "bytes": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
@@ -1232,7 +1384,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
       "bytes": 641969,
       "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
@@ -1240,7 +1393,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
       "bytes": 48359,
       "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
@@ -1248,7 +1402,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
       "bytes": 43935,
       "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
@@ -1256,7 +1411,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
       "bytes": 81471,
       "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
@@ -1264,7 +1420,8 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
       "bytes": 23582,
       "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
@@ -1272,7 +1429,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
       "bytes": 5363,
       "sha256": "AF922AECF249403DA4A5CA12CDB9A73672486230883353311D04D930138492A5",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
@@ -1280,7 +1438,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
@@ -1288,7 +1447,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "consumerRole": "product-input"
+      "consumerRole": "product-input",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
@@ -1296,7 +1456,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
       "bytes": 150524,
       "sha256": "0B46D57F72E544939B63A68D0D956AB2474A2F5C999BBB95A9335354C29933E7",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
@@ -1304,7 +1465,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
       "bytes": 56029,
       "sha256": "574C247CF50AA973C7732AB4707BAF9A6D1BB9D26A1CC8EB13F0EEB61D62BD1C",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
@@ -1312,7 +1474,8 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
       "bytes": 128440,
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/second-visible-consumer/artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
@@ -1320,7 +1483,8 @@
       "sourcePath": "artifacts/investigations/simulator-second-visible-consumer-oracle-10-1-4/second_visible_consumer_oracle.json",
       "bytes": 617684,
       "sha256": "504699C49C5E2A1164908AFEEBB388203A73E290EB8081CA137E976461EB607A",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/seven-visual-fresh-reconfirmation/artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
@@ -1328,7 +1492,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-fresh-reconfirmation-10-1-4/seven_visual_fresh_reconfirmation_contract.json",
       "bytes": 45031,
       "sha256": "B713447F873C9EFF1741AEAD79F5A8BACEEDFEA47A40D53E1E312BCAF2321133",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/seven-visual-lifecycle/artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
@@ -1336,7 +1501,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-lifecycle-reconfirmation-10-1-4/seven_visual_lifecycle_oracle.json",
       "bytes": 152733,
       "sha256": "73D9F78A491FE3E533A3AC9E11EBDF237235B4162D428B6A09390DD41AF8B879",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/original_visible_anchor_contract.json",
@@ -1344,7 +1510,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/original_visible_anchor_contract.json",
       "bytes": 14839,
       "sha256": "F702E950A7D0CD676A36E16368978DF6A123025F9377F86919B4D884BBE45DC8",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "historical-snapshot"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0003-particle-01-particle-play.png",
@@ -1352,7 +1519,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0003-particle-01-particle-play.png",
       "bytes": 780240,
       "sha256": "64B6910571B2C2D4F1D7C100604988673B3C3F00B825E88AD5A4118B28844A90",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0013-slide-play-00-flash-play.png",
@@ -1360,7 +1528,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0013-slide-play-00-flash-play.png",
       "bytes": 744781,
       "sha256": "01FD5FB43C035FA36458D2E5E644DD23BD7C0760823A8113E9EDE0CD7F2695CF",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0014-slide-play-01-tapkeep-play.png",
@@ -1368,7 +1537,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0014-slide-play-01-tapkeep-play.png",
       "bytes": 825662,
       "sha256": "DDC2F9117409F52E25D8BD144C7FB09AB9743EE4D7BB5B67477B751AF8BFCBA4",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0015-slide-current-03.png",
@@ -1376,7 +1546,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0015-slide-current-03.png",
       "bytes": 952421,
       "sha256": "38FC5161CFD260904EA20B82C50C99E29499E7E67F929F72DEAE22757F142C1E",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0018-slide-current-06.png",
@@ -1384,7 +1555,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0018-slide-current-06.png",
       "bytes": 809583,
       "sha256": "CBCD2D2672886BCA5583D249A82CF2B58F511F8478005C78D0006B0B13C16309",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0023-slide-play-02-flash-play.png",
@@ -1392,7 +1564,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0023-slide-play-02-flash-play.png",
       "bytes": 753471,
       "sha256": "7A53AEB485AD2908731751AE153E6FED3476AEA9D42EEA5F8D09FE53237ECDCC",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0024-slide-play-03-tapkeep-play.png",
@@ -1400,7 +1573,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0024-slide-play-03-tapkeep-play.png",
       "bytes": 558581,
       "sha256": "A4A730721EDD65DC582710D54F47186B5930CD349A917FE9500FA4DB21841356",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0038-rank-5-score-872315.png",
@@ -1408,7 +1582,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0038-rank-5-score-872315.png",
       "bytes": 1105472,
       "sha256": "0A420222B3FCA5D8304D4174ACE181E7303FE6DEA4BBF6674DBD9BCC199C1758",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0039-clear-phase-0.00s.png",
@@ -1416,7 +1591,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0039-clear-phase-0.00s.png",
       "bytes": 242057,
       "sha256": "5687A0E0202D101CD7CE05C4073A6C2CFAF616DBD4C3D363A488B5BEE183C1F4",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0040-clear-phase-0.10s.png",
@@ -1424,7 +1600,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0040-clear-phase-0.10s.png",
       "bytes": 318024,
       "sha256": "0996D04E8F75D818DF0F41E02895B0EF619FCA19FFC74536AC0D265A6CCD8D7D",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0041-clear-phase-0.25s.png",
@@ -1432,7 +1609,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0041-clear-phase-0.25s.png",
       "bytes": 297914,
       "sha256": "0578784E71E1CB441020A513E1B84050B4F13EA52F59065BB4D78B4F3D23DCE4",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0042-clear-phase-0.50s.png",
@@ -1440,7 +1618,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0042-clear-phase-0.50s.png",
       "bytes": 320316,
       "sha256": "C9A2DCFD1F53811A2897EBC469BF9190D403D8651DA145D0309C4F2F7272041F",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0043-clear-phase-0.90s.png",
@@ -1448,7 +1627,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0043-clear-phase-0.90s.png",
       "bytes": 285191,
       "sha256": "16734DE68E0EA13DC43B5CA686C37DA541E9CBA5346C47A818A3CFF323A2043F",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0044-clear-phase-1.40s.png",
@@ -1456,7 +1636,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0044-clear-phase-1.40s.png",
       "bytes": 167738,
       "sha256": "2F333BDC0C635289B0D30399F2A1183F3D6E3C798E8227F14C792C4F3393FE21",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0045-clear-phase-2.00s.png",
@@ -1464,7 +1645,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0045-clear-phase-2.00s.png",
       "bytes": 107644,
       "sha256": "8629BE16FA7CC07908F0C35DBC7C998DDC5D7FFF7AC57AE1686E6A20F7FF7E8A",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-original-visible-anchor/artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0047-clear-phase-3.10s.png",
@@ -1472,7 +1654,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-product-visible-original-anchor-10-1-4/runtime/original-visible-auto-r1-promoted/frame-0047-clear-phase-3.10s.png",
       "bytes": 6243,
       "sha256": "77BF1AC8EE6FA710C90F82F15773831C76B803285AC20C9B1D262302E0950DE3",
-      "consumerRole": "reverse-observation"
+      "consumerRole": "reverse-observation",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/seven-visual-production-gap/artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
@@ -1480,7 +1663,8 @@
       "sourcePath": "artifacts/investigations/simulator-seven-visual-production-gap-disposition-10-1-4/seven_visual_production_gap_disposition.json",
       "bytes": 6494,
       "sha256": "81E44FB00360B96C4614C04E8CB9F259A63A7C0DC62E819E11A22B5C622BE626",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/bad.mp3",
@@ -1488,7 +1672,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 504,
       "sha256": "CF82488C460F11D15EF397FB2092BD69D7A36B531F439CEB59CA40253518764D",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/miss.mp3",
@@ -1496,7 +1681,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 792,
       "sha256": "AB46E1F81AFAB357A77CD50B12E3764FB5CD660D14295B3C45EA13CFE17C5FCF",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR_VO.mp3",
@@ -1504,7 +1690,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 37081,
       "sha256": "13CBEDA60E8668E3B9CA9ECE0D714207F47EE522F117C64CD5E40BCD111C08F5",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CLEAR.mp3",
@@ -1512,7 +1699,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 36197,
       "sha256": "8E57D46360A45A3F1BD27A108D5F567803FA4CCD024E1AB66ACF5E7F3B1AD7A4",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_AUDIENCE.mp3",
@@ -1520,7 +1708,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 48550,
       "sha256": "ABD069B4FADB057AAA9E48012D6DCB28DF3C3B0C7BDB55894B717FDE13C62776",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN_SKILL.mp3",
@@ -1528,7 +1717,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 42310,
       "sha256": "CF0339FC1C2291D803455076403E963D612A7B6B6E9A456A6BB48737014C3C2F",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_CUTIN.mp3",
@@ -1536,7 +1726,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 41143,
       "sha256": "B2BD8E974D0EF1E869C64E73BD93A8D3989CE7AC360B887B2C3523C891EAA7A6",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_FULLCOMBO.mp3",
@@ -1544,7 +1735,8 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 16740,
       "sha256": "084A1A8ED5255C61B63BFA1CE87F373DCEECDF7875321BF652EB3EE71395BC0F",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/composition-audio/SE_RHYTHM_TAP_SKILL.mp3",
@@ -1552,71 +1744,80 @@
       "sourcePath": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
       "bytes": 12046,
       "sha256": "7467C6E498B3784DDC9C8E0C25B66937E6D60B9F00E510760CA3793EEB684CEA",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__fieldskin__skin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/52ebaedc47441fb827146e12b74a9485a96e265acde4c3e9ee2c7e26d509ec52.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 178936,
       "sha256": "BADFA231AD71F6EFB323F84ED06393B47494EC20C2051B4CE30AD29A84BD71F6",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__judgeskin__skin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/da06e6d246e3a236cba1a47bd87680fed31113f09aad2fe0f006104ebae8bb43.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 133225,
       "sha256": "C20B4AF555D289006AE0C6B5468B7C20498FF81738FEF2E72D7A966C6C3476EC",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__directionalflickskin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/6d1d827e2f1dcea38864b5b5e8e57599230462b8abdcafac3b19e2ec22cd61a6.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 364249,
       "sha256": "1A53F8E67F5CCAF5E471FD8DAB4839A1686DAD94DD3FE48F6D3F527F02DF1953",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__noteskin__skin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/ee9df8c9bb9620b5dcf8d0de9aa2060cc3b6a842bdd899d00cc332d8478c5d45.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 1616664,
       "sha256": "AC2F7760E27A9E694071764E8CD00CDE51B991DB2932E4978C4670FFB4F2FB84",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__directionalflickskin00normal.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/b81d70849ea4efa389e3fd50b7d3cd8d4922b76d2a69f220456b157d4dc55083.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 750923,
       "sha256": "77678B8828543A0E5ECE3067BDFDCB4419D63505A9321201A1FDD4E5A313E9AA",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/ingameskin__tapeffect__skin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/9ac7f458347bf5219024e1d1cbf6b3fdc69a7672384c9dda09403db21f490c28.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 1172896,
       "sha256": "BB699D469BA1B49D5EB769E92EE5A521D868B092F9D71473A6B2DE52D1513CF3",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__directionalflickskin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/d7424a72151ce5361809cca1c1be78d3c78912b3b51b9dd029f85cd32b53b74a.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 88263,
       "sha256": "D65A2627BDCC29B05008214B9957A0D36F72B9E0269839F511A9FBACC1157435",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/default/sound__tapseskin__skin00.json",
       "sourceReverseCommit": "977f5e7153257e5bb4cabb2904790408f5452aa7",
-      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/runtime/portable-packs/8130c39c597d7615461cd9786f54c3916fb0bcda8f06111393c58193413a702b.json",
+      "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_portable_pack_manifest.json",
       "bytes": 128402,
       "sha256": "E31C3493979C7E37759D7E70B21ED75AF2E648BD201ED21DD5AAC2101F7FDA0E",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-manifest-record"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__bgskin__skin_april2021.json",
@@ -1624,7 +1825,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__bgskin__skin_april2021.json",
       "bytes": 1869261,
       "sha256": "3A4685F031292B643A9C1B9EF8CD811C42B067F7C8502A635B465BD9ABABE9B7",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__fieldskin__skin_april2021.json",
@@ -1632,7 +1834,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__fieldskin__skin_april2021.json",
       "bytes": 279160,
       "sha256": "7DA98A6A9929F4F1DABDBFF813FB9B316290CFB2E9BF592AF75AA1213561D6BB",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__judgeskin__skinapril2021.json",
@@ -1640,7 +1843,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__judgeskin__skinapril2021.json",
       "bytes": 160441,
       "sha256": "F441BEB943FD6DCC62628A4C16E9DCC8AD3FA2ABF86893043D4EA5311075BCB5",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__noteskin__directionalflickskin00.json",
@@ -1648,7 +1852,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__noteskin__directionalflickskin00.json",
       "bytes": 364249,
       "sha256": "1A53F8E67F5CCAF5E471FD8DAB4839A1686DAD94DD3FE48F6D3F527F02DF1953",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__noteskin__skin_april2021.json",
@@ -1656,7 +1861,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__noteskin__skin_april2021.json",
       "bytes": 1246221,
       "sha256": "59C3C9BD211976E3368FEC97BFD3884A91A26670C80BA0E3B1E9AE2087A2F5C0",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__tapeffect__directionalflickskin00normal.json",
@@ -1664,7 +1870,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__tapeffect__directionalflickskin00normal.json",
       "bytes": 750923,
       "sha256": "77678B8828543A0E5ECE3067BDFDCB4419D63505A9321201A1FDD4E5A313E9AA",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/ingameskin__tapeffect__skin00.json",
@@ -1672,7 +1879,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/ingameskin__tapeffect__skin00.json",
       "bytes": 1172896,
       "sha256": "BB699D469BA1B49D5EB769E92EE5A521D868B092F9D71473A6B2DE52D1513CF3",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/sound__tapseskin__directionalflickskin00.json",
@@ -1680,7 +1888,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/sound__tapseskin__directionalflickskin00.json",
       "bytes": 88263,
       "sha256": "D65A2627BDCC29B05008214B9957A0D36F72B9E0269839F511A9FBACC1157435",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/skin-settings/limited3/sound__tapseskin__skinapril2021.json",
@@ -1688,7 +1897,8 @@
       "sourcePath": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/portable-pack-samples/limited3/sound__tapseskin__skinapril2021.json",
       "bytes": 209190,
       "sha256": "16181D497D66114D5F142C942AE9FB88A132A6D7637437E9E41612CEBFBFE597",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/slide-connection-logic/artifacts/investigations/simulator-slide-connection-logic-reaudit-10-1-4/slide_connection_logic_reaudit.json",
@@ -1696,7 +1906,8 @@
       "sourcePath": "artifacts/investigations/simulator-slide-connection-logic-reaudit-10-1-4/slide_connection_logic_reaudit.json",
       "bytes": 1453528,
       "sha256": "CD1FCD181EE920EA9BBACD6CD46166AFCDE20602FE65EFC1CC40680A89589475",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/portable-assets/SE_RHYTHM_GAYA.mp3",
@@ -1705,7 +1916,8 @@
       "bytes": 151033,
       "sha256": "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554",
       "extraction": "minimum offline byte snapshot of the contract's external-reference/no-redistribution Gaya URL; exact identity and decoded metadata are committed in sourcePath",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "source-container-extract"
     },
     {
       "path": "reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
@@ -1713,7 +1925,8 @@
       "sourcePath": "artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
       "bytes": 73542,
       "sha256": "79B346D0A0EA48AD0FB6124C8F9919962DCC2257854143100C64A3B1FF07F4EC",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
@@ -1721,7 +1934,8 @@
       "sourcePath": "artifacts/investigations/startup-direction-null-session-assets-10-1-4/startup_direction_null_session_assets_contract.json",
       "bytes": 5407,
       "sha256": "020799421EF7C69B684660A08BE5106BECA281A206556B6B46003661246C043F",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
@@ -1729,7 +1943,8 @@
       "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
       "bytes": 10967,
       "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D",
-      "consumerRole": "reverse-resource"
+      "consumerRole": "reverse-resource",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
@@ -1737,7 +1952,8 @@
       "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
       "bytes": 18387,
       "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
@@ -1745,7 +1961,8 @@
       "sourcePath": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
       "bytes": 17501,
       "sha256": "7DC13FE97466219744D3921A35A7DB8BCB5B6FF33CBBC32501855C91D12D7452",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/startup-live-tutorial-gate/artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
@@ -1753,7 +1970,8 @@
       "sourcePath": "artifacts/investigations/startup-live-tutorial-gate-10-1-4/startup_live_tutorial_gate_contract.json",
       "bytes": 29804,
       "sha256": "212F47528CEE3381CEE594733244182677991E771C7CC26FE36CDFD8D1E64C1D",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/visual-fifth-reaudit/artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
@@ -1761,7 +1979,8 @@
       "sourcePath": "artifacts/investigations/simulator-visual-fifth-reaudit-10-1-4/visual_fifth_correction_contract.json",
       "bytes": 7027,
       "sha256": "056678DF2F61E74D788BB22A726323CA3FA056C29119726A15DDFA6B58DCFFC1",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/visual-layout-correction/artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
@@ -1769,7 +1988,8 @@
       "sourcePath": "artifacts/investigations/simulator-production-visual-layout-correction-10-1-4/visual_layout_correction.json",
       "bytes": 8090,
       "sha256": "24AB499DFBCFBD2509D19694F761E0C9A4DE657201BB4F13D7EF451284130877",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/ordinary-particle-terminal-focused/artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/focused_particle_terminal_contract.json",
@@ -1777,7 +1997,8 @@
       "sourcePath": "artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/focused_particle_terminal_contract.json",
       "bytes": 1348209,
       "sha256": "D86FA1C98BDC8F6E72F3B26C6C370224D7B5EC775CC4791788589D44D57F6974",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/ordinary-particle-terminal-focused/artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/ordinary_particle_phase_oracle.json",
@@ -1785,7 +2006,8 @@
       "sourcePath": "artifacts/investigations/simulator-ordinary-particle-fc-ap-terminal-focused-10-1-4/ordinary_particle_phase_oracle.json",
       "bytes": 1132348,
       "sha256": "5F5A8595FB1F95B050D141F64E6DBEFF337D32F008142F009002FAA6A33A5CDD",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/particle-box-direction-native/artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_native_contract.json",
@@ -1793,7 +2015,8 @@
       "sourcePath": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_native_contract.json",
       "bytes": 8038,
       "sha256": "C00C139DB88989A005B9812C4F97984DBC1FB744D3CF5BC4A171C8487AA005EC",
-      "consumerRole": "reverse-contract"
+      "consumerRole": "reverse-contract",
+      "sourceRelation": "history-rewrite-normalized"
     },
     {
       "path": "reverse-snapshots/particle-box-direction-native/artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_oracle.json",
@@ -1801,7 +2024,8 @@
       "sourcePath": "artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_box_direction_oracle.json",
       "bytes": 32228,
       "sha256": "DE5ED6B88E44E1162D2CD1C6045BB4D8310BAF969B3F257AD91840A8DD175E2A",
-      "consumerRole": "reverse-oracle"
+      "consumerRole": "reverse-oracle",
+      "sourceRelation": "byte-identical"
     },
     {
       "path": "reverse-snapshots/particle-box-direction-native/artifacts/investigations/simulator-particle-box-direction-native-10-1-4/particle_simulation_box_corrected_oracle.json",
@@ -1810,7 +2034,8 @@
       "bytes": 127981,
       "sha256": "FB17C438C7A55E767559755ED1453E07AED766C4AA98649C82D92F0CB54E568B",
       "consumerRole": "reverse-oracle",
-      "authorityNote": "current type-5 local +Z simulation oracle derived after native ARM64 closure"
+      "authorityNote": "current type-5 local +Z simulation oracle derived after native ARM64 closure",
+      "sourceRelation": "byte-identical"
     }
   ],
   "consumerRoles": {
@@ -1821,5 +2046,23 @@
     "historical-superseded": "immutable historical evidence retained for versioned comparison but not current authority",
     "product-input": "test chart/input bytes; not original-behavior authority by themselves",
     "product-probe": "project-created portable media/numeric probe; not original content or authority"
+  },
+  "identity": {
+    "legacyMetadataTupleSha256": "d9a9abdd1d0caf0cdc32fb6d86f9403f48ed1d4393517b72b99ee6bcece71f22",
+    "currentMetadataTupleSha256": "10d701d3f123c21158448dc0456f16f6e6174fb10d3f780a0c6309641893c0ad",
+    "payloadTupleSha256": "49fd39c3c9f791fce1707c768168b48df05bfebd8047d532c4e0b56da8db4ac0",
+    "metadataProjection": [
+      "path",
+      "sourceReverseCommit",
+      "sourcePath",
+      "bytes",
+      "sha256"
+    ],
+    "payloadProjection": [
+      "path",
+      "bytes",
+      "sha256"
+    ],
+    "serialization": "JSON.stringify(entry-order object projection)"
   }
 }
