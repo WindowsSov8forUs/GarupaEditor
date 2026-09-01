@@ -2,7 +2,7 @@
 
 这些是隔离测试所需的最小离线快照，不是生产资源，也不是新的行为来源。
 
-- 原始逆向证据统一在 `HOST________\VSCode\GirlsBandParty-Reverse` 获取、校验、提交和推送。
+- 原始逆向证据统一在 [`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 获取、校验、提交和推送；本地checkout只由显式参数或`GARUPA_REVERSE_ROOT`定位。
 - 每个快照的来源、Reverse 提交、相对路径、字节数、SHA-256 与 `consumerRole` 记录在 Schema 2 `manifest.json`。
 - 角色分为 `reverse-contract`、`reverse-oracle`、`reverse-resource`、`reverse-observation`、`historical-superseded`、`product-input` 与 `product-probe`；角色只描述消费边界，不改变原字节或 provenance。
 - `historical-superseded` 必须显式指向 current `reverse-oracle`。历史 type-5 `+Y` simulation 与 current native `+Z` oracle 因此并存，禁止重写或删除历史文件。

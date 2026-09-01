@@ -11,6 +11,7 @@
     "resources:test": "node src/resources/testing/runTests.mjs",
     "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
     "resources:verify-production-assets": "node scripts/verify-builtin-production-assets.mjs",
+    "repository:hygiene:check": "python scripts/verify_host_path_policy.py --tree",
     "contracts:audit": "node scripts/audit-runtime-contract-blockers.mjs",
     "contracts:audit:check": "node scripts/audit-runtime-contract-blockers.mjs --check",
     "tauri": "tauri",

@@ -28,6 +28,19 @@ App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/l
 
 开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
 
+## 仓库路径与本地数据边界
+
+Tracked 文件只记录工具角色、版本、字节与摘要，不记录 checkout 机器上的绝对路径。Reverse 证据以 [`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 为 canonical identity；仅维护脚本需要本地 checkout 时，由显式参数或 `GARUPA_REVERSE_ROOT` 注入。
+
+仓库根 `.local/` 专用于私有工具、灾备和历史维护报告。它被根锚定 ignore，禁止强制加入 Git、发布附件或公开日志。提交前可执行：
+
+```powershell
+npm.cmd run repository:hygiene:check
+python scripts/verify_host_path_policy.py --staged
+```
+
+`--tree`/`--staged` 读取 Git 对象而不遍历工作树；迁移维护所需的全历史审计必须显式提供冻结 ref ledger。
+
 ## 安装
 
 目前 GarupaEditor 提供 Windows、macOS、Linux 与 Android 平台的安装包。桌面端优先推荐使用对应平台的安装器或软件包，Android 端目前提供未签名 APK。

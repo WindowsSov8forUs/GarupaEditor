@@ -1,0 +1,61 @@
+name: Repository hygiene
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full_history:
+        description: Scan every fetched branch, tag, note, and pull-request ref
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  current-tree:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: true
+      - name: Test host-path classifier
+        run: python scripts/verify_host_path_policy.py --self-test
+      - name: Scan current Git tree
+        run: python scripts/verify_host_path_policy.py --tree --report "$RUNNER_TEMP/host-path-tree.json"
+
+  full-history:
+    if: github.event_name == 'workflow_dispatch' && inputs.full_history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Fetch auditable remote refs and LFS payloads
+        shell: bash
+        run: |
+          git fetch --force origin \
+            '+refs/heads/*:refs/remotes/origin/*' \
+            '+refs/tags/*:refs/tags/*' \
+            '+refs/notes/*:refs/notes/*' \
+            '+refs/pull/*/head:refs/pull/*/head' \
+            '+refs/pull/*/merge:refs/pull/*/merge'
+          git lfs fetch --all
+      - name: Freeze fetched ref ledger
+        shell: bash
+        run: |
+          git for-each-ref \
+            --format='%(objectname)%09%(refname)' \
+            refs/remotes/origin refs/tags refs/notes refs/pull \
+            > "$RUNNER_TEMP/host-path-refs.tsv"
+          test -s "$RUNNER_TEMP/host-path-refs.tsv"
+      - name: Scan fetched history
+        run: >-
+          python scripts/verify_host_path_policy.py
+          --history
+          --refs-file "$RUNNER_TEMP/host-path-refs.tsv"
+          --report "$RUNNER_TEMP/host-path-history.json"

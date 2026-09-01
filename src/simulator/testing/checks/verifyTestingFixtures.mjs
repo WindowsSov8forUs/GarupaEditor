@@ -26,8 +26,8 @@ if (
 ) {
   throw new Error("testing fixture consumer-role definitions are incomplete");
 }
-if (manifest.sourceRepository !== "HOST________/VSCode/GirlsBandParty-Reverse") {
-  throw new Error("testing fixture source repository changed");
+if (manifest.sourceRepository !== "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse") {
+  throw new Error("testing fixture source repository is not the canonical remote identity");
 }
 if (!/^[0-9a-f]{40}$/i.test(manifest.sourceHead)) {
   throw new Error("testing fixture source commit must be a full Reverse commit");

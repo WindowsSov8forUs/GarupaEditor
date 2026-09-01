@@ -1,3 +1,6 @@
+# Repository-local private tools, backups, and maintenance data. Never track this root.
+/.local/
+
 # Logs
 logs
 *.log
@@ -11,6 +14,8 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__/
+*.pyc
 
 # Editor directories and files
 .vscode/

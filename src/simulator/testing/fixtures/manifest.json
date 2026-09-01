@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "purpose": "offline simulator test fixtures",
-  "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
+  "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",
   "sourceHead": "e7e419bcc91433bf058d06b9548fa9729e6e49e1",
   "entries": [
     {

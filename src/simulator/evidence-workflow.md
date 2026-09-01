@@ -2,8 +2,8 @@
 
 ## 强制来源与目录
 
-- 唯一行为依据：`HOST________\VSCode\GirlsBandParty-Reverse`。
-- 逆向获取、反编译、runtime capture、oracle、closure、profile和verifier均在Reverse对应目录完成。
+- 唯一行为依据：[`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 已验证、已提交且已推送的证据。
+- 逆向获取、反编译、runtime capture、oracle、closure、profile和verifier均在Reverse checkout完成；维护工具如需定位本地checkout，必须由显式参数或`GARUPA_REVERSE_ROOT`注入，不记录宿主安装位置。
 - Reverse未提交工作树、`.claude/`、`runtime/tools/`和未登记临时输出不属于证据。
 - GarupaEditor的`tmp/`只保存本地任务书、验收日志、发布记录和工作笔记；生产代码和提交测试不得读取它。
 

@@ -5,8 +5,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string[]]$ImagePaths,
 
-    [Parameter(Mandatory = $false)]
-    [string]$OutputRoot = "HOST________/Downloads/sprites_sliced",
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$OutputRoot,
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipFullyTransparent

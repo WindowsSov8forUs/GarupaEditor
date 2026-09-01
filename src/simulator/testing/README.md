@@ -42,7 +42,7 @@ For inspection or focused diagnosis, invoke the runner directly:
 node src/simulator/testing/suite/run.mjs --list
 node src/simulator/testing/suite/run.mjs --profile portable --capability render-hud-particles
 node src/simulator/testing/suite/run.mjs --profile release --case platform.ordinary-rendering
-node src/simulator/testing/suite/run.mjs --case product-chart.external -- HOST_____________:/chart-b.json
+node src/simulator/testing/suite/run.mjs --case product-chart.external -- ../charts/chart-a.json ../charts/chart-b.json
 ```
 
 A focused success does not replace its containing profile.
