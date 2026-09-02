@@ -39,6 +39,15 @@ LFS_POINTER = re.compile(
 # root also prevents reports from persisting user names or local directory names.
 HOST_SEGMENT_TEXT = r"[a-z0-9_ .@$()+~=-]{2,}"
 HOST_SEGMENT_BYTES = rb"[a-z0-9_ .@$()+~=-]{2,}"
+HOST_LONG_SEGMENT_BYTES = rb"[a-z0-9_ .@$()+~=-]{8,}"
+# Binary path roots must carry either one substantial component or two ordinary components.
+# This catches raw paths embedded in object/debug metadata without treating an arbitrary
+# five-byte drive-like sequence as sufficient evidence.
+BINARY_DRIVE_TAIL = (
+    rb"(?:" + HOST_LONG_SEGMENT_BYTES + rb"|" + HOST_SEGMENT_BYTES + rb"[\\/]" + HOST_SEGMENT_BYTES + rb")"
+    rb"(?:[\\/]" + HOST_SEGMENT_BYTES + rb")*"
+)
+BINARY_PATH_TAIL = HOST_SEGMENT_BYTES + rb"(?:[\\/]" + HOST_SEGMENT_BYTES + rb")*"
 TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("file-uri", re.compile(rf"(?i)file:/+[a-z]:(?:[\\/]+){HOST_SEGMENT_TEXT}")),
     (
@@ -57,18 +66,21 @@ TEXT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("wsl-drive", re.compile(rf"(?i)/(?:mnt|cygdrive)/[a-z]/{HOST_SEGMENT_TEXT}")),
 )
 BYTE_PATTERNS: tuple[tuple[str, re.Pattern[bytes]], ...] = (
-    ("file-uri", re.compile(rb"(?i)file:/+[a-z]:(?:[\\/]+)" + HOST_SEGMENT_BYTES)),
+    ("file-uri", re.compile(rb"(?i)file:/+[a-z]:(?:[\\/]+)" + BINARY_DRIVE_TAIL)),
     (
         "windows-extended-drive",
-        re.compile(rb"(?i)(?<![a-z0-9+.-])(?:\\{2,}\\?\\)[a-z]:(?:[\\/]+)" + HOST_SEGMENT_BYTES),
+        re.compile(rb"(?i)(?<![a-z0-9+.-])(?:\\{2,}\\?\\)[a-z]:(?:[\\/]+)" + BINARY_DRIVE_TAIL),
     ),
-    ("windows-drive", re.compile(rb"(?i)(?<![a-z0-9+.-])[a-z]:(?:[\\/]+)" + HOST_SEGMENT_BYTES)),
+    ("windows-drive", re.compile(rb"(?i)(?<![a-z0-9+.-])[a-z]:(?:[\\/]+)" + BINARY_DRIVE_TAIL)),
     (
         "windows-unc",
-        re.compile(rb"(?i)(?<![a-z0-9])\\{2,}[a-z0-9][a-z0-9._$-]+[\\/]+[a-z0-9][a-z0-9._$-]+(?:[\\/]+)?"),
+        re.compile(
+            rb"(?i)(?<![a-z0-9])\\{2,}[a-z0-9][a-z0-9._$-]+[\\/]+[a-z0-9][a-z0-9._$-]+"
+            rb"(?:[\\/]" + HOST_SEGMENT_BYTES + rb")*"
+        ),
     ),
-    ("posix-home", re.compile(rb"(?i)/(?:home|users)/[^/\\\s\"']+/")),
-    ("wsl-drive", re.compile(rb"(?i)/(?:mnt|cygdrive)/[a-z]/" + HOST_SEGMENT_BYTES)),
+    ("posix-home", re.compile(rb"(?i)/(?:home|users)/[^/\\\s\"']+/(?:" + BINARY_PATH_TAIL + rb")?")),
+    ("wsl-drive", re.compile(rb"(?i)/(?:mnt|cygdrive)/[a-z]/" + BINARY_PATH_TAIL)),
 )
 CONTAINER_SUFFIXES = (".gz", ".gzip", ".zip", ".tar", ".xz")
 
@@ -85,8 +97,17 @@ _HOST_ROOT_TEXT = (
     "/mnt/",
     "/cygdrive/",
 )
+# The ASCII prefilter includes enough root context to reject URL schemes before scanning a
+# potentially large binary. The previous generic `:/` trigger made every embedded https URL walk
+# the complete Rust artifact even though the drive classifier's lookbehind would later reject it.
 ASCII_HOST_ROOT = re.compile(
-    b"(?:" + b"|".join(re.escape(value.encode("ascii")) for value in _HOST_ROOT_TEXT) + b")",
+    rb"(?:"
+    + rb"file:" + rb"/+" + rb"[a-z]:[\\/]"
+    + rb"|(?<![a-z0-9+.-])[a-z]:[\\/]"
+    + rb"|\\{2,}[a-z0-9]"
+    + rb"|/" + rb"(?:home|users)" + rb"/"
+    + rb"|/" + rb"(?:mnt|cygdrive)" + rb"/[a-z]/"
+    + rb")",
     re.IGNORECASE,
 )
 UTF16_HOST_ROOT = re.compile(
@@ -215,18 +236,19 @@ def scan_scalar_bytes(data: bytes, source: str) -> list[dict[str, object]]:
             run_data = run.group(0)
             for category, pattern in BYTE_PATTERNS:
                 for match in pattern.finditer(run_data):
-                    minimum = 12 if category in {"windows-drive", "file-uri"} else 16 if category == "windows-unc" else 14
-                    if len(match.group(0)) < minimum:
-                        continue
                     absolute_offset = run.start() + match.start()
-                    line, column = byte_location(data, absolute_offset)
+                    # Raw binary offsets are authoritative. Re-counting every preceding newline
+                    # for thousands of embedded paths makes one blob O(matches * bytes) and caused
+                    # a 36 MiB object to take ~42 seconds. Line/column are intentionally omitted
+                    # for binary payloads; the byte offset remains exact and redacted reports do
+                    # not need a synthetic text coordinate.
                     rows.append(
                         match_row(
                             category=category,
                             encoding="raw-ascii",
                             offset=absolute_offset,
-                            line=line,
-                            column=column,
+                            line=None,
+                            column=None,
                             value=match.group(0),
                             source=source,
                         )
@@ -256,6 +278,7 @@ def scan_scalar_bytes(data: bytes, source: str) -> list[dict[str, object]]:
     for row in rows:
         key = (
             row["category"],
+            row["offset"],
             row["line"],
             row["column"],
             row["matchSha256"],
@@ -809,6 +832,13 @@ def self_test() -> None:
     utf16 = drive_path.encode("utf-16le")
     if not any(row["encoding"].startswith("utf-16") for row in scan_scalar_bytes(utf16, "self-test")):
         raise AssertionError("UTF-16 path classifier case was missed")
+    binary_drive = b"\x00\xffprefix:" + (chr(88) + ":" + separator + "Users" + separator + "account" + separator + "tool").encode("ascii") + b"\x00suffix"
+    binary_rows = scan_scalar_bytes(binary_drive, "self-test-binary")
+    if not any(row["encoding"] == "raw-ascii" and row["category"] == "windows-drive" for row in binary_rows):
+        raise AssertionError("raw-ASCII binary path classifier case was missed")
+    binary_posix = b"\x00\xffprefix:" + ("/" + "Users" + "/" + "user" + "/cache/tool").encode("ascii") + b"\x00suffix"
+    if not any(row["encoding"] == "raw-ascii" and row["category"] == "posix-home" for row in scan_scalar_bytes(binary_posix, "self-test-binary")):
+        raise AssertionError("raw-ASCII binary POSIX path classifier case was missed")
     compressed = gzip.compress(drive_path.encode("utf-8"), mtime=0)
     rows, errors = scan_payload(compressed, source="self-test")
     if errors or not any("!gzip" in str(row["source"]) for row in rows):
