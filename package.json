@@ -16,7 +16,8 @@
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
     "ios:build": "tauri ios build",
-    "sprites:map": "node ./scripts/build-sprite-source-map.mjs"
+    "sprites:map": "node ./scripts/build-sprite-source-map.mjs",
+    "repository:hygiene:check": "python scripts/verify_host_path_policy.py --tree"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",

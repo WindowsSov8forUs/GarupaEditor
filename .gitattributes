@@ -1,0 +1,26 @@
+* text=auto eol=lf
+
+*.png binary
+*.ttf binary
+*.mp3 binary
+*.mp4 binary
+*.webm binary
+*.gz binary
+*.bin binary
+*.jar binary
+*.dll binary
+*.ico binary
+*.icns binary
+src/assets/game/portable/profiles/default-particle/textures.json text eol=crlf
+src/assets/icons/apply-action.svg text eol=crlf
+src/assets/icons/back-arrow.svg text eol=crlf
+src/assets/icons/clear-action.svg text eol=crlf
+src/assets/icons/copy-action.svg text eol=crlf
+src/assets/icons/edit.svg text eol=crlf
+src/assets/icons/image-export.svg text eol=crlf
+src/assets/icons/mirror-action.svg text eol=crlf
+src/assets/icons/paste-action.svg text eol=crlf
+src/assets/icons/preview.svg text eol=crlf
+src/assets/icons/simulator-pause.svg text eol=crlf
+src/assets/icons/simulator-play.svg text eol=crlf
+src/assets/icons/undo-action.svg text eol=crlf

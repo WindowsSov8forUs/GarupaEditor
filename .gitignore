@@ -49,3 +49,6 @@ dist-ssr
 
 # Local dialogue/state snapshot (not for VCS)
 /LOCAL_DIALOGUE_FULL_SNAPSHOT.md
+
+# Project-local tools, backups, and maintenance evidence
+/.local/
