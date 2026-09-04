@@ -302,15 +302,30 @@ export function validateSelectedSkinParticlePack(
 ): ParticleOperationResult<ParticlePreparedResourcePack> {
   const profile = pack.profile;
   const textures = pack.textures;
-  if (!profile.packIdentity.startsWith("particle-skin-leased-semantic-v1-") ||
+  if (!profile.packIdentity.startsWith("particle-skin-source-bound-v2-") ||
     profile.fidelity !== "current-static-portable" || profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false || profile.bundles.length !== 2 ||
     profile.systemCount !== profile.bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0) ||
     profile.profileCount !== profile.bundles.reduce((sum, bundle) => sum + Object.keys(bundle.profiles).length, 0) ||
     textures.status !== "selected-skin-portable-textures" ||
     textures.logicalTextureCount !== textures.entries.length ||
-    textures.uniquePngCount !== pack.pngBytes.size) {
-    return reject("particle.skin-pack.invalid-root", "Selected Skin particle pack counts, fidelity, network and whole inventory must remain exact.");
+    textures.uniquePngCount !== pack.pngBytes.size || pack.source === undefined ||
+    pack.source.kind !== "application-snapshot" || pack.source.resources.length === 0) {
+    return reject("particle.skin-pack.invalid-root", "Selected Skin particle pack counts, source identity, fidelity, network and whole inventory must remain exact.");
+  }
+  const sourceResources = new Set<string>();
+  for (const resource of pack.source.resources) {
+    if (!isNonEmpty(resource.logicalResource) || sourceResources.has(resource.logicalResource) ||
+      !isNonEmpty(resource.applicationRevision) || resource.files.length === 0 ||
+      resource.files.some((file) => !isNonEmpty(file.logicalPath) || !isPositiveInteger(file.byteLength) ||
+        typeof file.sha256 !== "string" || !SHA256_PATTERN.test(file.sha256))) {
+      return reject("particle.skin-pack.invalid-source", "Prepared particle source identities require unique resources, application revisions and exact file receipt tuples.");
+    }
+    sourceResources.add(resource.logicalResource);
+    if (resource.officialUnityFs !== null &&
+      (!isPositiveInteger(resource.officialUnityFs.bytes) || !SHA256_PATTERN.test(resource.officialUnityFs.sha256))) {
+      return reject("particle.skin-pack.invalid-official-source", "Official UnityFS semantic source identities require exact bytes and SHA-256 when present.");
+    }
   }
   const bundleKeys = new Set<string>();
   for (const bundle of profile.bundles) {
@@ -321,10 +336,38 @@ export function validateSelectedSkinParticlePack(
       return reject("particle.skin-pack.invalid-bundle", "Selected Skin ordinary/directional particle bundles must each be complete and unique.");
     }
     bundleKeys.add(bundle.key);
+    const materialNames = new Set<string>();
+    for (const material of bundle.materials) {
+      if (!isNonEmpty(material.name) || materialNames.has(material.name) || !isNonEmpty(material.shader) ||
+        (material.texture !== null && !isNonEmpty(material.texture)) ||
+        (material.blend !== "add" && material.blend !== "normal")) {
+        return reject("particle.skin-pack.invalid-material", "Every selected Skin material requires unique identity, resolved current shader, texture relation and explicit blend projection.");
+      }
+      materialNames.add(material.name);
+    }
+    const textureNames = new Set(bundle.textures.map((texture) => texture.name));
+    if (textureNames.size !== bundle.textures.length ||
+      bundle.materials.some((material) => material.texture !== null && !textureNames.has(material.texture))) {
+      return reject("particle.skin-pack.invalid-material-texture", "Every selected Skin material texture must resolve exactly once in its own bundle.");
+    }
     for (const system of bundle.systems) {
       if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
-        system.randomStateU32.length !== 4 || !system.randomStateU32.every(isUint32)) {
-        return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known semantic root, profile and deterministic random stream.");
+        !isTransform(system.transform) || !Array.isArray(system.parentTransforms) ||
+        !system.parentTransforms.every(isTransform) || system.randomStateU32.length !== 4 ||
+        !system.randomStateU32.every(isUint32)) {
+        return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known root, source-bound profile/TRS and temporary version-1 random state.");
+      }
+    }
+    for (const profile of Object.values(bundle.profiles)) {
+      if (!isRecord(profile) || !isRecord(profile.system) || !isRecord(profile.modules) ||
+        !isNonEmpty(profile.renderer) || !owns(bundle.rendererProfiles, profile.renderer)) {
+        return reject("particle.skin-pack.invalid-profile", "Every selected Skin profile requires exact system, module and renderer relations.");
+      }
+      for (const [moduleName, moduleIdentity] of Object.entries(profile.modules)) {
+        const map = bundle.moduleProfiles[moduleName as keyof typeof bundle.moduleProfiles];
+        if (!isNonEmpty(moduleIdentity) || !isRecord(map) || !owns(map, moduleIdentity)) {
+          return reject("particle.skin-pack.invalid-module", "Every selected Skin enabled module must resolve in its own source-bound module map.");
+        }
       }
     }
   }

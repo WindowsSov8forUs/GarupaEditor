@@ -314,10 +314,8 @@ export interface ParticleRendererProfile {
 
 export interface ParticleMaterialProfile {
   readonly name: string;
-  readonly shader:
-    | "Legacy Shaders/Particles/Alpha Blended Premultiply"
-    | "Mobile/Particles/Additive"
-    | "Particles/Standard Unlit";
+  /** Exact resolved serialized shader name; renderer support is validated separately. */
+  readonly shader: string;
   readonly texture: string | null;
   readonly blend: "add" | "normal";
 }
@@ -433,10 +431,33 @@ export interface ParticleTextureManifest {
   readonly productionBoundary: string;
 }
 
+export interface ParticlePreparedSourceFileIdentity {
+  readonly logicalPath: string;
+  readonly byteLength: number;
+  readonly sha256: string;
+}
+
+export interface ParticlePreparedSourceResourceIdentity {
+  readonly logicalResource: string;
+  readonly applicationRevision: string;
+  readonly officialUnityFs: Readonly<{ readonly bytes: number; readonly sha256: string }> | null;
+  readonly files: readonly ParticlePreparedSourceFileIdentity[];
+}
+
+export interface ParticlePreparedSourceIdentity {
+  readonly kind: "application-snapshot";
+  readonly semanticsSource:
+    | "current-official-unityfs-profile"
+    | "built-in-default-evidence-profile";
+  readonly resources: readonly ParticlePreparedSourceResourceIdentity[];
+}
+
 export interface ParticlePreparedResourcePack {
   readonly profile: ParticlePortableProfile;
   readonly textures: ParticleTextureManifest;
   readonly pngBytes: ReadonlyMap<string, Uint8Array>;
+  /** Optional only for legacy compile compatibility; production validation requires it. */
+  readonly source?: ParticlePreparedSourceIdentity;
 }
 
 export interface ParticleResourceProvider {

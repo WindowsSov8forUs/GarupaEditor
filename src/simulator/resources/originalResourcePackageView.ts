@@ -7,10 +7,15 @@ import {
   simulatorResourceAccepted,
   simulatorResourceRejected,
 } from "../platform/resourceContracts";
+import { sha256UpperHex } from "../backends/resources/sha256";
+
+const SHA256_PATTERN = /^[0-9A-F]{64}$/;
+const REVISION_PATTERN = /^[A-Za-z0-9._:/-]{1,512}$/;
 
 export class OriginalResourcePackageView {
   private constructor(
     readonly logicalResource: string,
+    readonly revision: string,
     readonly files: readonly SimulatorResourceFile[],
     private readonly bytesByPath: ReadonlyMap<string, Uint8Array>,
     private readonly pathByBasename: ReadonlyMap<string, string>,
@@ -20,6 +25,10 @@ export class OriginalResourcePackageView {
     lease: SimulatorResourceLease,
     logicalResource: string,
   ): Promise<SimulatorResourceResult<OriginalResourcePackageView>> {
+    const revision = lease.revision?.(logicalResource) ?? null;
+    if (revision === null || !REVISION_PATTERN.test(revision)) {
+      return reject("snapshot-revision", `Logical resource ${logicalResource} has no valid application-snapshot revision.`);
+    }
     const files = lease.listFiles(logicalResource);
     if (files.length === 0) return reject("empty", `Logical resource ${logicalResource} has no leased files.`);
     const bytesByPath = new Map<string, Uint8Array>();
@@ -28,8 +37,9 @@ export class OriginalResourcePackageView {
     for (const file of files) {
       const pathKey = file.logicalPath.toLocaleLowerCase("en-US");
       const basenameKey = basename(file.logicalPath).toLocaleLowerCase("en-US");
-      if (foldedPaths.has(pathKey) || pathByBasename.has(basenameKey)) {
-        return reject("ambiguous-file", `Logical resource ${logicalResource} contains a duplicate path or ambiguous basename.`);
+      if (foldedPaths.has(pathKey) || pathByBasename.has(basenameKey) ||
+        typeof file.sha256 !== "string" || !SHA256_PATTERN.test(file.sha256)) {
+        return reject("ambiguous-or-unbound-file", `Logical resource ${logicalResource} contains a duplicate path, ambiguous basename, or file without one application-snapshot SHA-256.`);
       }
       foldedPaths.add(pathKey);
       pathByBasename.set(basenameKey, file.logicalPath);
@@ -43,13 +53,15 @@ export class OriginalResourcePackageView {
           error instanceof Error ? error.message : String(error),
         );
       }
-      if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0 || bytes.byteLength !== file.byteLength) {
-        return reject("invalid-file-bytes", `Logical resource ${logicalResource}/${file.logicalPath} did not preserve its leased byte length.`);
+      if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0 || bytes.byteLength !== file.byteLength ||
+        sha256UpperHex(bytes) !== file.sha256) {
+        return reject("invalid-file-bytes", `Logical resource ${logicalResource}/${file.logicalPath} did not preserve its application-snapshot byte length and SHA-256.`);
       }
       bytesByPath.set(file.logicalPath, Uint8Array.from(bytes));
     }
     return simulatorResourceAccepted(new OriginalResourcePackageView(
       logicalResource,
+      revision,
       Object.freeze(files.map((file) => Object.freeze({ ...file }))),
       bytesByPath,
       pathByBasename,
@@ -68,12 +80,21 @@ export class OriginalResourcePackageView {
       .sort());
   }
 
-  requireBytes(pathOrBasename: string): SimulatorResourceResult<Uint8Array> {
-    const direct = this.bytesByPath.get(pathOrBasename);
+  requireFile(pathOrBasename: string): SimulatorResourceResult<SimulatorResourceFile> {
+    const direct = this.files.find((file) => file.logicalPath === pathOrBasename);
     const path = direct === undefined ? this.findBasename(pathOrBasename) : pathOrBasename;
-    const bytes = direct ?? (path === null ? undefined : this.bytesByPath.get(path));
-    return bytes === undefined
+    const file = direct ?? (path === null ? undefined : this.files.find((candidate) => candidate.logicalPath === path));
+    return file === undefined
       ? reject("required-file-missing", `${this.logicalResource} is missing exact file ${pathOrBasename}.`)
+      : simulatorResourceAccepted(file);
+  }
+
+  requireBytes(pathOrBasename: string): SimulatorResourceResult<Uint8Array> {
+    const file = this.requireFile(pathOrBasename);
+    if (file.status === "rejected") return file;
+    const bytes = this.bytesByPath.get(file.value.logicalPath);
+    return bytes === undefined
+      ? reject("required-file-bytes-missing", `${this.logicalResource} lost validated bytes for ${file.value.logicalPath}.`)
       : simulatorResourceAccepted(Uint8Array.from(bytes));
   }
 

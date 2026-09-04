@@ -60,7 +60,7 @@ export async function prepareLeasedDefaultParticleProvider(
   }
   const profile = Object.freeze({
     ...rawProfile.value,
-    packIdentity: "particle-skin-leased-semantic-v1-default-current-exact-10.1.4",
+    packIdentity: `particle-skin-source-bound-v2-default-current-exact-10.1.4@${view.value.revision}`,
     fidelity: "current-static-portable",
   }) as unknown as ParticlePortableProfile;
   const textures = Object.freeze({
@@ -68,7 +68,25 @@ export async function prepareLeasedDefaultParticleProvider(
     status: "selected-skin-portable-textures",
     productionBoundary: "Default particle publication consumes only the application-leased exact 10.1.4 encoded PNG and decoded-RGBA identities; provider package names and same-looking rasters are insufficient.",
   }) as unknown as ParticleTextureManifest;
-  const pack: ParticlePreparedResourcePack = Object.freeze({ profile, textures, pngBytes });
+  const pack: ParticlePreparedResourcePack = Object.freeze({
+    profile,
+    textures,
+    pngBytes,
+    source: Object.freeze({
+      kind: "application-snapshot" as const,
+      semanticsSource: "built-in-default-evidence-profile" as const,
+      resources: Object.freeze([Object.freeze({
+        logicalResource: LOGICAL_RESOURCE,
+        applicationRevision: view.value.revision,
+        officialUnityFs: null,
+        files: Object.freeze(view.value.files.map((file) => Object.freeze({
+          logicalPath: file.logicalPath,
+          byteLength: file.byteLength,
+          sha256: file.sha256!,
+        }))),
+      })]),
+    }),
+  });
   const validated = validateSelectedSkinParticlePack(pack);
   if (validated.status !== "accepted") {
     return rejected("resource-integrity", validated.failure.capability, validated.failure.boundary);

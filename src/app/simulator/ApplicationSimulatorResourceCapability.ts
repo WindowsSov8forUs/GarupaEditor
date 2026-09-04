@@ -82,7 +82,14 @@ class ApplicationSimulatorResourceLease implements SimulatorResourceLease {
       logicalPath: file.logicalPath,
       mediaType: file.mediaType,
       byteLength: file.integrity.byteLength,
+      sha256: file.integrity.sha256,
     })));
+  }
+
+  revision(logicalResource: string): string | null {
+    if (this.released) return null;
+    const slot = this.slotsByLogicalResource.get(logicalResource);
+    return slot === undefined ? null : this.lease.revisions[slot] ?? null;
   }
 
   async readBytes(logicalResource: string, logicalPath: string): Promise<Uint8Array> {

@@ -1,6 +1,5 @@
 import particleCatalogJson from "../engine/skin/currentParticleSemanticCatalog.json";
 import renderCatalogJson from "../engine/skin/currentRenderSemanticCatalog.json";
-import { sha256UpperHex } from "../backends/resources/sha256";
 import { inspectMp3FirstFrame } from "../assembly/sessionBgmDerivation";
 import type { CurrentSkinResourceRole } from "./sourcePackageContracts";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
@@ -29,10 +28,16 @@ interface RenderSemanticResource {
 }
 
 interface ParticleSemanticResource {
+  readonly role: CurrentSkinResourceRole;
+  readonly officialUnityFs: Readonly<{ readonly bytes: number; readonly sha256: string }>;
+  readonly serializedAsset: Readonly<{ readonly bytes: number; readonly sha256: string }>;
   readonly systems: readonly unknown[];
   readonly materials: readonly unknown[];
   readonly textures: readonly unknown[];
 }
+
+const SHA256_PATTERN = /^[0-9A-F]{64}$/;
+const CURRENT_PARTICLE_SOURCE_COMMIT = "117de63b13d86e9f3eb4dbf8172a42d6bed0b5a3";
 
 const renderCatalog = parseRenderCatalog(renderCatalogJson);
 const particleCatalog = parseParticleCatalog(particleCatalogJson);
@@ -100,8 +105,13 @@ function decodeSourcePackage(
       const exact = pngPaths.find((path) => basenameWithoutExtension(path).toLocaleLowerCase("en-US") === texture.name.toLocaleLowerCase("en-US"));
       const path = exact ?? (render.textures.length === 1 && pngPaths.length === 1 ? pngPaths[0] : undefined);
       if (path === undefined) return invalid("simulator.skin.source-texture-file-missing", `${logicalResource} is missing exact PNG for semantic texture ${texture.name}.`);
+      const leasedFile = view.requireFile(path);
       const png = view.inspectPng(path);
+      if (leasedFile.status === "rejected") return invalid(leasedFile.failure.capability, leasedFile.failure.boundary);
       if (png.status === "rejected") return invalid(png.failure.capability, png.failure.boundary);
+      if (leasedFile.value.mediaType !== "image/png" || typeof leasedFile.value.sha256 !== "string") {
+        return invalid("simulator.skin.source-texture-lease-identity", `${logicalResource}/${path} has no application-snapshot PNG identity.`);
+      }
       if (png.value.width !== texture.width || png.value.height !== texture.height) {
         return invalid("simulator.skin.source-texture-dimensions", `${logicalResource}/${path} dimensions do not match its semantic texture recipe.`);
       }
@@ -109,9 +119,10 @@ function decodeSourcePackage(
       textureIds.set(texture.name, sourceId);
       files.push(Object.freeze({
         id: `texture:${sourceId}`,
+        logicalPath: leasedFile.value.logicalPath,
         mime: "image/png" as const,
         bytes: png.value.bytes,
-        sha256: sha256UpperHex(png.value.bytes),
+        sha256: leasedFile.value.sha256,
         width: png.value.width,
         height: png.value.height,
       }));
@@ -129,8 +140,13 @@ function decodeSourcePackage(
   if (spriteRows.status === "rejected") return spriteRows;
   const portableAudio: Array<Readonly<Record<string, unknown>>> = [];
   for (const path of view.pathsWithSuffix(".mp3")) {
+    const leasedFile = view.requireFile(path);
     const bytes = view.requireBytes(path);
+    if (leasedFile.status === "rejected") return invalid(leasedFile.failure.capability, leasedFile.failure.boundary);
     if (bytes.status === "rejected") return invalid(bytes.failure.capability, bytes.failure.boundary);
+    if (leasedFile.value.mediaType !== "audio/mpeg" || typeof leasedFile.value.sha256 !== "string") {
+      return invalid("simulator.skin.source-audio-lease-identity", `${logicalResource}/${path} has no application-snapshot MP3 identity.`);
+    }
     const cue = basenameWithoutExtension(path);
     const mp3 = inspectMp3FirstFrame(bytes.value);
     if (mp3.status === "rejected") {
@@ -138,9 +154,10 @@ function decodeSourcePackage(
     }
     files.push(Object.freeze({
       id: `cue:${cue}`,
+      logicalPath: leasedFile.value.logicalPath,
       mime: "audio/mpeg" as const,
       bytes: bytes.value,
-      sha256: sha256UpperHex(bytes.value),
+      sha256: leasedFile.value.sha256,
       width: null,
       height: null,
     }));
@@ -156,6 +173,11 @@ function decodeSourcePackage(
       ngui_atlases: spriteRows.value.ngui,
     }),
     particle: particle === null ? null : Object.freeze({
+      source_binding: Object.freeze({
+        application_revision: view.revision,
+        official_unityfs: particle.officialUnityFs,
+        serialized_asset: particle.serializedAsset,
+      }),
       systems: particle.systems,
       profiles: particleCatalog.profiles,
       module_profiles: particleCatalog.moduleProfiles,
@@ -167,8 +189,15 @@ function decodeSourcePackage(
   });
   return accepted(Object.freeze({
     logicalResource,
+    revision: view.revision,
     role,
     profile,
+    sourceFiles: Object.freeze(view.files.map((file) => Object.freeze({
+      logicalPath: file.logicalPath,
+      mediaType: file.mediaType,
+      byteLength: file.byteLength,
+      sha256: file.sha256!,
+    }))),
     files: Object.freeze(files),
   }));
 }
@@ -307,17 +336,70 @@ function parseParticleCatalog(value: unknown): {
   readonly rendererProfiles: Readonly<Record<string, unknown>>;
 } {
   const root = record(reviveNonFinite(value));
+  const source = record(root?.source);
   const resources = record(root?.resources);
   const profiles = record(root?.profiles);
   const modules = record(root?.moduleProfiles);
   const renderers = record(root?.rendererProfiles);
-  if (root?.schemaVersion !== 1 || resources === null || profiles === null || modules === null || renderers === null) throw new Error("invalid Skin particle semantic catalog");
+  if (root?.schemaVersion !== 2 ||
+    root.status !== "current-source-bound-particle-semantics-provider-raster-separate" ||
+    source?.reverseCommit !== CURRENT_PARTICLE_SOURCE_COMMIT ||
+    typeof source.resourceProfileSha256 !== "string" || !SHA256_PATTERN.test(source.resourceProfileSha256) ||
+    typeof source.currentDomainContractSha256 !== "string" || !SHA256_PATTERN.test(source.currentDomainContractSha256) ||
+    typeof source.boundary !== "string" || source.boundary.length === 0 ||
+    resources === null || profiles === null || modules === null || renderers === null) {
+    throw new Error("invalid source-bound Skin particle semantic catalog");
+  }
   const output = new Map<string, ParticleSemanticResource>();
   for (const [logicalResource, raw] of Object.entries(resources)) {
     const row = record(raw);
-    if (row === null || !Array.isArray(row.systems) || !Array.isArray(row.materials) || !Array.isArray(row.textures)) throw new Error("invalid Skin particle semantic row");
-    output.set(logicalResource, Object.freeze({ systems: Object.freeze(row.systems), materials: Object.freeze(row.materials), textures: Object.freeze(row.textures) }));
+    const official = record(row?.officialUnityFs);
+    const serialized = record(row?.serializedAsset);
+    if (row === null || (row.role !== "tap-effect" && row.role !== "directional-effect") ||
+      official === null || !positive(official.bytes) || typeof official.sha256 !== "string" || !SHA256_PATTERN.test(official.sha256) ||
+      serialized === null || !positive(serialized.bytes) || typeof serialized.sha256 !== "string" || !SHA256_PATTERN.test(serialized.sha256) ||
+      !Array.isArray(row.systems) || !Array.isArray(row.materials) || !Array.isArray(row.textures) ||
+      row.systems.length === 0 || row.materials.length === 0 || row.textures.length === 0) {
+      throw new Error(`invalid source-bound Skin particle semantic row: ${logicalResource}`);
+    }
+    for (const system of row.systems) {
+      const item = record(system);
+      if (item === null || !Number.isSafeInteger(item.sourceOrdinal) || item.sourceOrdinal < 0 ||
+        typeof item.semanticIdentity !== "string" || item.semanticIdentity.length === 0 ||
+        !record(item.sourcePathIds) || !Array.isArray(item.componentHierarchy) ||
+        !positive(item.serializedParticleBytes) || typeof item.serializedParticleSha256 !== "string" ||
+        !SHA256_PATTERN.test(item.serializedParticleSha256)) {
+        throw new Error(`invalid source-bound ParticleSystem row: ${logicalResource}`);
+      }
+    }
+    for (const material of row.materials) {
+      const item = record(material);
+      const shader = record(item?.resolvedShader);
+      if (item === null || typeof item.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(item.sourcePathId) ||
+        !positive(item.serializedBytes) || typeof item.serializedSha256 !== "string" || !SHA256_PATTERN.test(item.serializedSha256) ||
+        shader === null || typeof shader.name !== "string" || shader.name.length === 0) {
+        throw new Error(`invalid source-bound particle material row: ${logicalResource}`);
+      }
+    }
+    for (const texture of row.textures) {
+      const item = record(texture);
+      if (item === null || typeof item.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(item.sourcePathId) ||
+        !positive(item.serializedBytes) || typeof item.serializedSha256 !== "string" || !SHA256_PATTERN.test(item.serializedSha256) ||
+        !positive(item.rgbaBytes) || typeof item.rgbaSha256 !== "string" || !SHA256_PATTERN.test(item.rgbaSha256) ||
+        !positive(item.m_Width) || !positive(item.m_Height)) {
+        throw new Error(`invalid source-bound particle texture row: ${logicalResource}`);
+      }
+    }
+    output.set(logicalResource, Object.freeze({
+      role: row.role as CurrentSkinResourceRole,
+      officialUnityFs: Object.freeze({ bytes: official.bytes as number, sha256: official.sha256 as string }),
+      serializedAsset: Object.freeze({ bytes: serialized.bytes as number, sha256: serialized.sha256 as string }),
+      systems: Object.freeze(row.systems),
+      materials: Object.freeze(row.materials),
+      textures: Object.freeze(row.textures),
+    }));
   }
+  if (output.size !== 27) throw new Error("source-bound current particle resource inventory must contain 27 resources");
   return Object.freeze({ resources: output, profiles: Object.freeze(profiles), moduleProfiles: Object.freeze(modules), rendererProfiles: Object.freeze(renderers) });
 }
 

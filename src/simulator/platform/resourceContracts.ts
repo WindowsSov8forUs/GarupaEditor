@@ -8,10 +8,14 @@ export interface SimulatorResourceFile {
   readonly logicalPath: string;
   readonly mediaType: string;
   readonly byteLength: number;
+  /** Application-snapshot expected digest; production source-package reads require it. */
+  readonly sha256?: string;
 }
 
 export interface SimulatorResourceLease {
   listFiles(logicalResource: string): readonly SimulatorResourceFile[];
+  /** Application-snapshot revision; production source-package reads require it. */
+  revision?(logicalResource: string): string | null;
   readBytes(logicalResource: string, logicalPath: string): Promise<Uint8Array>;
   release(): Promise<void>;
 }

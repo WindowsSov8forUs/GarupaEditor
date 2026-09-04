@@ -5,7 +5,7 @@
   "status": "classified",
   "classificationRule": "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault, or test-only-assertion before final acceptance.",
   "summary": {
-    "productionEntryCount": 1348,
+    "productionEntryCount": 1352,
     "pendingClassificationCount": 0,
     "markerCounts": {
       "evidence-required-call": 0,
@@ -18,7 +18,7 @@
       "exact-prototype": 0,
       "exact-key-order": 0,
       "rejected-call": 221,
-      "throw-error": 455,
+      "throw-error": 459,
       "rust-error-return": 82,
       "rust-result-error": 30
     },
@@ -3549,7 +3549,7 @@
     {
       "id": "RCB-0168",
       "file": "src/app/simulator/ApplicationSimulatorResourceCapability.ts",
-      "line": 89,
+      "line": 96,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.released) throw new Error(\"Simulator application resource lease is closed\");",
@@ -3570,7 +3570,7 @@
     {
       "id": "RCB-0169",
       "file": "src/app/simulator/ApplicationSimulatorResourceCapability.ts",
-      "line": 91,
+      "line": 98,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (slot === undefined) throw new Error(`Simulator logical resource is not leased: ${logicalResource}`);",
@@ -8694,7 +8694,7 @@
     {
       "id": "RCB-0413",
       "file": "src/simulator/assembly/leasedDefaultParticlePreparation.ts",
-      "line": 74,
+      "line": 92,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"resource-integrity\", validated.failure.capability, validated.failure.boundary);",
@@ -8715,7 +8715,7 @@
     {
       "id": "RCB-0414",
       "file": "src/simulator/assembly/leasedDefaultParticlePreparation.ts",
-      "line": 96,
+      "line": 114,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(",
@@ -9849,7 +9849,7 @@
     {
       "id": "RCB-0468",
       "file": "src/simulator/assembly/skinParticlePreparation.ts",
-      "line": 226,
+      "line": 383,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",
@@ -10563,7 +10563,7 @@
     {
       "id": "RCB-0502",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 536,
+      "line": 579,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -26922,7 +26922,7 @@
     {
       "id": "RCB-1281",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 46,
+      "line": 51,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -26943,7 +26943,7 @@
     {
       "id": "RCB-1282",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 65,
+      "line": 70,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -26964,7 +26964,7 @@
     {
       "id": "RCB-1283",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 285,
+      "line": 314,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (root?.schemaVersion !== 1 || resources === null) throw new Error(\"invalid Skin render semantic catalog\");",
@@ -26985,7 +26985,7 @@
     {
       "id": "RCB-1284",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 289,
+      "line": 318,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (row === null || !Array.isArray(row.textures) || typeof row.role !== \"string\") throw new Error(\"invalid Skin render semantic row\");",
@@ -27006,7 +27006,7 @@
     {
       "id": "RCB-1285",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 295,
+      "line": 324,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof item?.name !== \"string\" || !positive(item.width) || !positive(item.height) || !positive(item.mipCount) || settings === null) throw new Error(\"invalid Skin render semantic texture\");",
@@ -27027,10 +27027,10 @@
     {
       "id": "RCB-1286",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 314,
+      "line": 351,
       "marker": "throw-error",
       "symbol": "if",
-      "source": "if (root?.schemaVersion !== 1 || resources === null || profiles === null || modules === null || renderers === null) throw new Error(\"invalid Skin particle semantic catalog\");",
+      "source": "throw new Error(\"invalid source-bound Skin particle semantic catalog\");",
       "productSemanticsId": null,
       "trigger": "internal invariant or backend exception that cannot return a typed partial result",
       "userReachability": "caught internal exception boundary",
@@ -27048,10 +27048,10 @@
     {
       "id": "RCB-1287",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 318,
+      "line": 363,
       "marker": "throw-error",
       "symbol": "if",
-      "source": "if (row === null || !Array.isArray(row.systems) || !Array.isArray(row.materials) || !Array.isArray(row.textures)) throw new Error(\"invalid Skin particle semantic row\");",
+      "source": "throw new Error(`invalid source-bound Skin particle semantic row: ${logicalResource}`);",
       "productSemanticsId": null,
       "trigger": "internal invariant or backend exception that cannot return a typed partial result",
       "userReachability": "caught internal exception boundary",
@@ -27069,7 +27069,91 @@
     {
       "id": "RCB-1288",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 350,
+      "line": 372,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(`invalid source-bound ParticleSystem row: ${logicalResource}`);",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "module targeted exception/atomic-cleanup test"
+    },
+    {
+      "id": "RCB-1289",
+      "file": "src/simulator/resources/sourcePackageDecoder.ts",
+      "line": 381,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(`invalid source-bound particle material row: ${logicalResource}`);",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "module targeted exception/atomic-cleanup test"
+    },
+    {
+      "id": "RCB-1290",
+      "file": "src/simulator/resources/sourcePackageDecoder.ts",
+      "line": 390,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(`invalid source-bound particle texture row: ${logicalResource}`);",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "module targeted exception/atomic-cleanup test"
+    },
+    {
+      "id": "RCB-1291",
+      "file": "src/simulator/resources/sourcePackageDecoder.ts",
+      "line": 402,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "if (output.size !== 27) throw new Error(\"source-bound current particle resource inventory must contain 27 resources\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "module targeted exception/atomic-cleanup test"
+    },
+    {
+      "id": "RCB-1292",
+      "file": "src/simulator/resources/sourcePackageDecoder.ts",
+      "line": 432,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",
@@ -27088,7 +27172,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1289",
+      "id": "RCB-1293",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 118,
       "marker": "terminal-close",
@@ -27109,7 +27193,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1290",
+      "id": "RCB-1294",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 133,
       "marker": "terminal-close",
@@ -27130,7 +27214,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1291",
+      "id": "RCB-1295",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 134,
       "marker": "integrity-failure-string",
@@ -27151,7 +27235,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1292",
+      "id": "RCB-1296",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 148,
       "marker": "terminal-close",
@@ -27172,7 +27256,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1293",
+      "id": "RCB-1297",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 153,
       "marker": "terminal-close",
@@ -27193,7 +27277,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1294",
+      "id": "RCB-1298",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 158,
       "marker": "terminal-close",
@@ -27214,7 +27298,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1295",
+      "id": "RCB-1299",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 167,
       "marker": "terminal-close",
@@ -27235,7 +27319,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1296",
+      "id": "RCB-1300",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 171,
       "marker": "terminal-close",
@@ -27256,7 +27340,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1297",
+      "id": "RCB-1301",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 172,
       "marker": "integrity-failure-string",
@@ -27277,7 +27361,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1298",
+      "id": "RCB-1302",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 184,
       "marker": "terminal-close",
@@ -27298,7 +27382,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1299",
+      "id": "RCB-1303",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 192,
       "marker": "terminal-close",
@@ -27319,91 +27403,91 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1300",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 197,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1301",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 197,
-      "marker": "terminal-close",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
-      "productSemanticsId": null,
-      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
-      "userReachability": "session-internal terminal boundary",
-      "currentEffect": "session-terminal-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "autonomousModule.test.ts cleanup and single-close assertions"
-    },
-    {
-      "id": "RCB-1302",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 208,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1303",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 208,
-      "marker": "terminal-close",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
-      "productSemanticsId": null,
-      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
-      "userReachability": "session-internal terminal boundary",
-      "currentEffect": "session-terminal-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "autonomousModule.test.ts cleanup and single-close assertions"
-    },
-    {
       "id": "RCB-1304",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 197,
+      "marker": "integrity-failure-string",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1305",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 197,
+      "marker": "terminal-close",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
+      "productSemanticsId": null,
+      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
+      "userReachability": "session-internal terminal boundary",
+      "currentEffect": "session-terminal-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "autonomousModule.test.ts cleanup and single-close assertions"
+    },
+    {
+      "id": "RCB-1306",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 208,
+      "marker": "integrity-failure-string",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1307",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 208,
+      "marker": "terminal-close",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
+      "productSemanticsId": null,
+      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
+      "userReachability": "session-internal terminal boundary",
+      "currentEffect": "session-terminal-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "autonomousModule.test.ts cleanup and single-close assertions"
+    },
+    {
+      "id": "RCB-1308",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 215,
       "marker": "terminal-close",
@@ -27424,7 +27508,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1305",
+      "id": "RCB-1309",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 224,
       "marker": "terminal-close",
@@ -27445,7 +27529,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1306",
+      "id": "RCB-1310",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 237,
       "marker": "terminal-close",
@@ -27466,7 +27550,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1307",
+      "id": "RCB-1311",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 247,
       "marker": "terminal-close",
@@ -27487,7 +27571,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1308",
+      "id": "RCB-1312",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 253,
       "marker": "terminal-close",
@@ -27508,7 +27592,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1309",
+      "id": "RCB-1313",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 269,
       "marker": "rejected-call",
@@ -27529,7 +27613,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1310",
+      "id": "RCB-1314",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 270,
       "marker": "integrity-failure-string",
@@ -27550,91 +27634,91 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1311",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 294,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1312",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 294,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity/atomicity test"
-    },
-    {
-      "id": "RCB-1313",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 313,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1314",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 313,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity/atomicity test"
-    },
-    {
       "id": "RCB-1315",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 294,
+      "marker": "integrity-failure-string",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1316",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 294,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity/atomicity test"
+    },
+    {
+      "id": "RCB-1317",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 313,
+      "marker": "integrity-failure-string",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1318",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 313,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity/atomicity test"
+    },
+    {
+      "id": "RCB-1319",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 319,
       "marker": "rejected-call",
@@ -27655,7 +27739,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1316",
+      "id": "RCB-1320",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 320,
       "marker": "integrity-failure-string",
@@ -27676,7 +27760,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1317",
+      "id": "RCB-1321",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 352,
       "marker": "terminal-close",
@@ -27697,7 +27781,7 @@
       "regression": "autonomousModule.test.ts cleanup and single-close assertions"
     },
     {
-      "id": "RCB-1318",
+      "id": "RCB-1322",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 14,
       "marker": "rejected-call",
@@ -27718,7 +27802,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1319",
+      "id": "RCB-1323",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 21,
       "marker": "rejected-call",
@@ -27739,7 +27823,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1320",
+      "id": "RCB-1324",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 35,
       "marker": "rejected-call",
@@ -27760,7 +27844,7 @@
       "regression": "module integrity/atomicity test"
     },
     {
-      "id": "RCB-1321",
+      "id": "RCB-1325",
       "file": "src/simulator/scene/originalSurfaceLayout.ts",
       "line": 345,
       "marker": "integrity-failure-call",
@@ -27781,7 +27865,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1322",
+      "id": "RCB-1326",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 142,
       "marker": "integrity-failure-call",
@@ -27802,7 +27886,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1323",
+      "id": "RCB-1327",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 229,
       "marker": "product-semantic-call",
@@ -27823,7 +27907,7 @@
       "regression": "behavior-level product semantic test required"
     },
     {
-      "id": "RCB-1324",
+      "id": "RCB-1328",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 325,
       "marker": "integrity-failure-call",
@@ -27844,7 +27928,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1325",
+      "id": "RCB-1329",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 332,
       "marker": "integrity-failure-call",
@@ -27865,7 +27949,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1326",
+      "id": "RCB-1330",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 404,
       "marker": "integrity-failure-call",
@@ -27886,7 +27970,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1327",
+      "id": "RCB-1331",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 410,
       "marker": "integrity-failure-call",
@@ -27907,7 +27991,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1328",
+      "id": "RCB-1332",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 88,
       "marker": "integrity-failure-call",
@@ -27928,7 +28012,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1329",
+      "id": "RCB-1333",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 132,
       "marker": "integrity-failure-call",
@@ -27949,7 +28033,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1330",
+      "id": "RCB-1334",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 144,
       "marker": "integrity-failure-call",
@@ -27970,7 +28054,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1331",
+      "id": "RCB-1335",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 160,
       "marker": "integrity-failure-call",
@@ -27991,7 +28075,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1332",
+      "id": "RCB-1336",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 288,
       "marker": "integrity-failure-call",
@@ -28012,7 +28096,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1333",
+      "id": "RCB-1337",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 346,
       "marker": "integrity-failure-call",
@@ -28033,7 +28117,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1334",
+      "id": "RCB-1338",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 349,
       "marker": "integrity-failure-call",
@@ -28054,7 +28138,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1335",
+      "id": "RCB-1339",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 384,
       "marker": "throw-error",
@@ -28075,7 +28159,7 @@
       "regression": "module targeted exception/atomic-cleanup test"
     },
     {
-      "id": "RCB-1336",
+      "id": "RCB-1340",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 512,
       "marker": "throw-error",
@@ -28096,7 +28180,7 @@
       "regression": "module targeted exception/atomic-cleanup test"
     },
     {
-      "id": "RCB-1337",
+      "id": "RCB-1341",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 520,
       "marker": "throw-error",
@@ -28117,7 +28201,7 @@
       "regression": "module targeted exception/atomic-cleanup test"
     },
     {
-      "id": "RCB-1338",
+      "id": "RCB-1342",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 714,
       "marker": "throw-error",
@@ -28138,7 +28222,7 @@
       "regression": "module targeted exception/atomic-cleanup test"
     },
     {
-      "id": "RCB-1339",
+      "id": "RCB-1343",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 744,
       "marker": "integrity-failure-call",
@@ -28159,7 +28243,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1340",
+      "id": "RCB-1344",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 139,
       "marker": "throw-error",
@@ -28180,7 +28264,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1341",
+      "id": "RCB-1345",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 146,
       "marker": "throw-error",
@@ -28201,7 +28285,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1342",
+      "id": "RCB-1346",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 299,
       "marker": "throw-error",
@@ -28222,7 +28306,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1343",
+      "id": "RCB-1347",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 320,
       "marker": "throw-error",
@@ -28243,7 +28327,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1344",
+      "id": "RCB-1348",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 364,
       "marker": "throw-error",
@@ -28264,7 +28348,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1345",
+      "id": "RCB-1349",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 370,
       "marker": "throw-error",
@@ -28285,7 +28369,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1346",
+      "id": "RCB-1350",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 379,
       "marker": "throw-error",
@@ -28306,7 +28390,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1347",
+      "id": "RCB-1351",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 388,
       "marker": "throw-error",
@@ -28327,7 +28411,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1348",
+      "id": "RCB-1352",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 394,
       "marker": "throw-error",
