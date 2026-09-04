@@ -48,7 +48,7 @@ const RENDER_OBJECT_ROLES = new Set([
   "note-root", "note-head", "note-icon", "note-intermediate",
   "note-side-visual", "note-mesh", "sync-line", "multiple-directional-line",
   "field-line", "judge-line", "tap-lane-effect", "mask", "hud-score", "hud-combo",
-  "hud-result", "hud-life", "hud-add-score", "hud-game-clear", "habahiro-flash", "fidelity-label",
+  "hud-result", "hud-life", "hud-add-score", "hud-game-clear", "habahiro-root-effect", "habahiro-flash-mesh", "fidelity-label",
 ]);
 
 export class RecordingSimulatorRendererBackend implements SimulatorRendererBackend {
@@ -377,7 +377,13 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           command.uv.some((value) => !validateVector2(value)) ||
           command.colors.some((value) => !validateColor(value)) ||
           command.indices.some((value) =>
-            !isNonNegativeInteger(value) || value >= command.vertices.length)
+            !isNonNegativeInteger(value) || value >= command.vertices.length) ||
+          (objects.get(command.renderObjectId)?.role === "habahiro-flash-mesh"
+            ? command.materialRole !== "habahiro-flash" || command.coordinateSpace !== "authored-ui" ||
+              typeof command.meshIdentity !== "string" || !/^int64:-?[0-9]+$/.test(command.meshIdentity)
+            : command.materialRole !== "long-note" && command.materialRole !== "curve-note" ||
+              (command.coordinateSpace !== undefined && command.coordinateSpace !== "world") ||
+              command.meshIdentity !== undefined)
         ) {
           return this.latchFault(
             "render.command.invalid-mesh",
@@ -552,7 +558,7 @@ function validateResourceProvenance(
     }
     return asset.provenance !== "current-external-portable" &&
       asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache" &&
-      !(asset.provenance === "current-official-portable" && asset.logicalAssetId.startsWith("hud/game-clear/"));
+      asset.provenance !== "current-official-portable";
   });
   return invalid
     ? integrityFailure(

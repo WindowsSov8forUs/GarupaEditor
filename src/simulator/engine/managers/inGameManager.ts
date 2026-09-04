@@ -55,6 +55,11 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly garupaProduct: GarupaProductTimelineSnapshot | null;
   readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentSnapshot | null;
   readonly tapLaneEffect: TapLaneEffectSnapshot | null;
+  readonly habahiro: Readonly<{
+    readonly phase: "idle" | "playing-before-change" | "playing-after-change" | "complete";
+    readonly elapsedSeconds: number;
+    readonly laneChanged: boolean;
+  }> | null;
   readonly playable: boolean;
 }
 
@@ -64,7 +69,7 @@ export class InGameManager {
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: SimulatorIntegrityFailure | null = null;
   private degradedHabahiroLaneChanged = false;
-  private habahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
+  private habahiroLanePhase: "idle" | "playing-before-change" | "playing-after-change" | "complete" = "idle";
   private habahiroFlashElapsed = Math.fround(0);
 
   constructor(
@@ -237,30 +242,36 @@ export class InGameManager {
         if (flash.status !== "ok") return this.latchFault(flash);
         const committed = flash.value.commit();
         if (committed.status !== "ok") return this.latchFault(committed);
-        this.habahiroLanePhase = "flashing";
+        this.habahiroLanePhase = "playing-before-change";
         this.habahiroFlashElapsed = Math.fround(0);
-      } else if (this.habahiroLanePhase === "flashing") {
-        const nextElapsed = Math.fround(this.habahiroFlashElapsed + deltaTimeSeconds);
-        if (nextElapsed >= this.renderScene.habahiro.flashDurationSeconds.value) {
-          const laneChange = this.renderProducer.preflightHabahiroLaneChange(
-            this.habahiroChangeAbsolutePos,
-            this.renderScene,
-          );
-          if (laneChange.status !== "ok") return this.latchFault(laneChange);
-          const committed = laneChange.value.commit();
-          if (committed.status !== "ok") return this.latchFault(committed);
-          this.noteManager.commitHabahiroLaneChangeGeometry();
-          this.habahiroLanePhase = "complete";
-          this.habahiroFlashElapsed = nextElapsed;
-        } else {
-          const elapsed = createRenderFloat32(nextElapsed);
-          if (elapsed.status !== "ok") return this.latchFault(elapsed);
-          const sample = this.renderProducer.preflightHabahiroFlashAdvance(elapsed.value);
-          if (sample.status !== "ok") return this.latchFault(sample);
-          const committed = sample.value.commit();
-          if (committed.status !== "ok") return this.latchFault(committed);
-          this.habahiroFlashElapsed = nextElapsed;
-        }
+      } else if (this.habahiroLanePhase === "playing-before-change" ||
+        this.habahiroLanePhase === "playing-after-change") {
+        const previousElapsed = this.habahiroFlashElapsed;
+        const nextElapsed = Math.fround(Math.min(
+          this.renderScene.habahiro.animationCompleteSeconds.value,
+          Math.fround(previousElapsed + deltaTimeSeconds),
+        ));
+        const previous = createRenderFloat32(previousElapsed);
+        const next = createRenderFloat32(nextElapsed);
+        if (previous.status !== "ok") return this.latchFault(previous);
+        if (next.status !== "ok") return this.latchFault(next);
+        const advanced = this.renderProducer.preflightHabahiroAnimationAdvance(
+          previous.value,
+          next.value,
+          this.renderScene,
+        );
+        if (advanced.status !== "ok") return this.latchFault(advanced);
+        const committed = advanced.value.commit();
+        if (committed.status !== "ok") return this.latchFault(committed);
+        const changed = previousElapsed < this.renderScene.habahiro.changeLaneSeconds.value &&
+          nextElapsed >= this.renderScene.habahiro.changeLaneSeconds.value;
+        if (changed) this.noteManager.commitHabahiroLaneChangeGeometry();
+        this.habahiroFlashElapsed = nextElapsed;
+        this.habahiroLanePhase = nextElapsed >= this.renderScene.habahiro.animationCompleteSeconds.value
+          ? "complete"
+          : changed || this.habahiroLanePhase === "playing-after-change"
+            ? "playing-after-change"
+            : "playing-before-change";
       }
     }
     const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
@@ -631,6 +642,13 @@ export class InGameManager {
       garupaProduct: this.garupaProduct?.snapshot() ?? null,
       primaryJudgementAdjustment: this.primaryJudgementAdjustment?.snapshot() ?? null,
       tapLaneEffect: this.tapLaneEffect?.snapshot() ?? null,
+      habahiro: this.renderProducer?.isCompleteHabahiro() === true
+        ? Object.freeze({
+            phase: this.habahiroLanePhase,
+            elapsedSeconds: this.habahiroFlashElapsed,
+            laneChanged: this.habahiroLanePhase === "playing-after-change" || this.habahiroLanePhase === "complete",
+          })
+        : null,
       playable: (this.startupDirection?.snapshot().playable ?? true) &&
         this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
     };

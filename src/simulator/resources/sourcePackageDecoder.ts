@@ -1,5 +1,9 @@
 import particleCatalogJson from "../engine/skin/currentParticleSemanticCatalog.json";
 import renderCatalogJson from "../engine/skin/currentRenderSemanticCatalog.json";
+import {
+  CURRENT_HABAHIRO_SEMANTIC_PROFILE,
+  HABAHIRO_FLASH_SPRITE_NAMES,
+} from "../engine/rendering/habahiroFlashAnimation";
 import { inspectMp3FirstFrame } from "../assembly/sessionBgmDerivation";
 import type { CurrentSkinResourceRole } from "./sourcePackageContracts";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
@@ -87,8 +91,9 @@ function decodeSourcePackage(
 ): SimulatorAssemblyResult<PreparedSkinSourcePackage> {
   const role = portableRole(selectedRole);
   const render = renderCatalog.get(logicalResource) ?? null;
-  const particle = particleCatalog.resources.get(logicalResource) ?? null;
-  const bundle = validateSourceBundle(view, logicalResource, particle);
+  const catalogParticle = particleCatalog.resources.get(logicalResource) ?? null;
+  const particle = role === "habahiro-change-flash" ? null : catalogParticle;
+  const bundle = validateSourceBundle(view, logicalResource, particle, role);
   if (bundle.status === "rejected") return bundle;
   if (isRenderRole(role) && render === null) {
     return invalid("simulator.skin.source-render-recipe-missing", `No evidence-backed render semantic recipe exists for ${logicalResource}.`);
@@ -97,14 +102,20 @@ function decodeSourcePackage(
     return invalid("simulator.skin.source-particle-recipe-missing", `No evidence-backed particle semantic recipe exists for ${logicalResource}.`);
   }
   const files: PreparedSkinSourceFile[] = [];
-  const textureIds = new Map<string, number>();
+  const textureIds = new Map<string, number | string>();
   const unityTextures: Record<string, unknown>[] = [];
   if (render !== null) {
     const pngPaths = view.pathsWithSuffix(".png");
-    for (let index = 0; index < render.textures.length; index += 1) {
-      const texture = render.textures[index]!;
+    const renderTextures = role === "habahiro-change-flash"
+      ? render.textures.filter((texture) => HABAHIRO_FLASH_SPRITE_NAMES.includes(texture.name as typeof HABAHIRO_FLASH_SPRITE_NAMES[number]))
+      : render.textures;
+    if (role === "habahiro-change-flash" && renderTextures.length !== HABAHIRO_FLASH_SPRITE_NAMES.length) {
+      return invalid("simulator.skin.habahiro-flash-texture-inventory", "The HABAHIRO flash package requires all four exact Root_effect textures.");
+    }
+    for (let index = 0; index < renderTextures.length; index += 1) {
+      const texture = renderTextures[index]!;
       const exact = pngPaths.find((path) => basenameWithoutExtension(path).toLocaleLowerCase("en-US") === texture.name.toLocaleLowerCase("en-US"));
-      const path = exact ?? (render.textures.length === 1 && pngPaths.length === 1 ? pngPaths[0] : undefined);
+      const path = exact ?? (renderTextures.length === 1 && pngPaths.length === 1 ? pngPaths[0] : undefined);
       if (path === undefined) return invalid("simulator.skin.source-texture-file-missing", `${logicalResource} is missing exact PNG for semantic texture ${texture.name}.`);
       const leasedFile = view.requireFile(path);
       const png = view.inspectPng(path);
@@ -116,10 +127,10 @@ function decodeSourcePackage(
       if (png.value.width !== texture.width || png.value.height !== texture.height) {
         return invalid("simulator.skin.source-texture-dimensions", `${logicalResource}/${path} dimensions do not match its semantic texture recipe.`);
       }
-      const sourceId = index + 1;
+      const sourceId = habahiroTexturePathId(logicalResource, texture.name) ?? index + 1;
       textureIds.set(texture.name, sourceId);
       files.push(Object.freeze({
-        id: `texture:${sourceId}`,
+        id: `texture:${typeof sourceId === "string" ? sourceId.slice(6) : sourceId}`,
         logicalPath: leasedFile.value.logicalPath,
         mime: "image/png" as const,
         bytes: png.value.bytes,
@@ -167,6 +178,7 @@ function decodeSourcePackage(
   if (role === "tap-se" && portableAudio.length === 0) {
     return invalid("simulator.skin.source-audio-empty", `${logicalResource} contains no MP3 cue files.`);
   }
+  const habahiroSource = habahiroOfficialSource(logicalResource);
   const profile = Object.freeze({
     unity: Object.freeze({
       textures: Object.freeze(unityTextures),
@@ -186,6 +198,17 @@ function decodeSourcePackage(
       mesh_profiles: particleCatalog.meshProfiles,
       materials: particle.materials,
       textures: particle.textures,
+    }),
+    habahiroSourceBinding: habahiroSource === null ? null : Object.freeze({
+      application_revision: view.revision,
+      official_unityfs: habahiroSource,
+    }),
+    habahiroFlash: role !== "habahiro-change-flash" ? null : Object.freeze({
+      source_binding: Object.freeze({
+        application_revision: view.revision,
+        official_unityfs: CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.officialUnityFs,
+      }),
+      semantic: CURRENT_HABAHIRO_SEMANTIC_PROFILE,
     }),
     portableAudio: Object.freeze(portableAudio),
   });
@@ -208,6 +231,7 @@ function validateSourceBundle(
   view: OriginalResourcePackageView,
   logicalResource: string,
   particle: ParticleSemanticResource | null,
+  role: CurrentSkinResourceRole,
 ): SimulatorAssemblyResult<void> {
   const bundles = view.pathsWithSuffix(".bundle");
   if (bundles.length === 0) return invalid("simulator.skin.source-bundle-missing", `${logicalResource} requires its source .bundle manifest.`);
@@ -223,6 +247,13 @@ function validateSourceBundle(
   }
   if (matchingContainer === null) {
     return invalid("simulator.skin.source-bundle-identity", `${logicalResource} has no .bundle manifest with its exact logical Bundle identity.`);
+  }
+  if (role === "habahiro-change-flash") {
+    const containerPaths = new Set(Object.keys(matchingContainer).map((path) => path.toLocaleLowerCase("en-US")));
+    if (![...containerPaths].some((path) => path.endsWith("/root_effect.prefab")) ||
+      ![...containerPaths].some((path) => path.endsWith("/game_line_flash.anim"))) {
+      return invalid("simulator.skin.habahiro-flash-root-missing", "The source package must publish Root_effect and game_line_flash before HABAHIRO assembly.");
+    }
   }
   if (particle !== null) {
     const assets = view.pathsWithSuffix(".asset");
@@ -248,11 +279,14 @@ function validateSourceBundle(
 function buildSpriteRows(
   role: CurrentSkinResourceRole,
   view: OriginalResourcePackageView,
-  textureIds: ReadonlyMap<string, number>,
+  textureIds: ReadonlyMap<string, number | string>,
 ): SimulatorAssemblyResult<{
   readonly sprites: readonly Readonly<Record<string, unknown>>[];
   readonly ngui: readonly Readonly<Record<string, unknown>>[];
 }> {
+  if (role === "habahiro-change-flash") {
+    return accepted(Object.freeze({ sprites: Object.freeze([]), ngui: Object.freeze([]) }));
+  }
   if (role === "judge") {
     const asset = view.requireSingleSuffix(".asset");
     if (asset.status === "rejected") return invalid(asset.failure.capability, asset.failure.boundary);
@@ -298,9 +332,39 @@ function buildSpriteRows(
   return accepted(Object.freeze({ sprites: Object.freeze(rows), ngui: Object.freeze([]) }));
 }
 
+function habahiroTexturePathId(logicalResource: string, textureName: string): string | null {
+  if (logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.logicalResource) {
+    return CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites.find(
+      (sprite) => sprite.textureName === textureName,
+    )?.texturePathId ?? null;
+  }
+  const field = logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldBefore.logicalResource
+    ? CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldBefore
+    : logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldAfter.logicalResource
+      ? CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldAfter
+      : null;
+  return field?.assets.find((asset) => asset.name === textureName)?.pathId ?? null;
+}
+
+function habahiroOfficialSource(
+  logicalResource: string,
+): Readonly<{ readonly bytes: number; readonly sha256: string }> | null {
+  if (logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.logicalResource) {
+    return CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.officialUnityFs;
+  }
+  if (logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldBefore.logicalResource) {
+    return CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldBefore.officialUnityFs;
+  }
+  if (logicalResource === CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldAfter.logicalResource) {
+    return CURRENT_HABAHIRO_SEMANTIC_PROFILE.fieldAfter.officialUnityFs;
+  }
+  return null;
+}
+
 function portableRole(role: SelectedSkinResourceRole): CurrentSkinResourceRole {
   if (role === "note") return "notes";
-  if (role === "habahiro-change-flash") return "tap-effect";
+  if (role === "habahiro-before-field") return "field";
+  if (role === "habahiro-change-flash") return "habahiro-change-flash";
   if (role === "background") return "special-background";
   if (role === "tap-se" || role === "directional-se") return "tap-se";
   return role;

@@ -26,7 +26,7 @@ const RESOURCE_ROLES = new Set([
 ]);
 const MATERIAL_ROLES = new Set([
   "none", "sprite", "long-note", "curve-note", "sync-line",
-  "multiple-directional-line", "mask", "hud",
+  "multiple-directional-line", "habahiro-flash", "mask", "hud",
 ]);
 const ANIMATION_ROLES = new Set([
   "none", "note-flick", "note-directional-flick", "note-long-flash",

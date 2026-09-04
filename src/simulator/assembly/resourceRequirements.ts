@@ -5,6 +5,7 @@ import type { SimulatorResourceRequirement } from "../platform/resourceContracts
 export type SelectedSkinResourceRole =
   | "note"
   | "field"
+  | "habahiro-before-field"
   | "tap-effect"
   | "habahiro-change-flash"
   | "background"
@@ -98,6 +99,7 @@ export function selectResolvedSkinResourceInventory(
   const rows: Array<readonly [SelectedSkinResourceRole, string | null]> = [
     ["note", recipe.note.logicalResource],
     ["field", recipe.field.logicalResource],
+    ["habahiro-before-field", recipe.chartMode === "habahiro" ? "ingameskin/fieldskin/skin00" : null],
     ["tap-effect", recipe.tapEffect.logicalResource],
     ["habahiro-change-flash", recipe.chartMode === "habahiro" ? "ingameskin/tapeffect/habahiro" : null],
     ["background", recipe.background.logicalResource],

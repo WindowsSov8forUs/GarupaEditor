@@ -31,6 +31,7 @@ export type RenderMaterialRole =
   | "curve-note"
   | "sync-line"
   | "multiple-directional-line"
+  | "habahiro-flash"
   | "mask"
   | "hud";
 
@@ -379,6 +380,8 @@ export type RenderObjectRole =
   | "hud-add-score"
   | "hud-game-clear"
   | "habahiro-flash"
+  | "habahiro-root-effect"
+  | "habahiro-flash-mesh"
   | "fidelity-label";
 
 export type RenderCommand =
@@ -414,6 +417,9 @@ export type RenderCommand =
       readonly uv: readonly RenderVector2[];
       readonly colors: readonly RenderColor[];
       readonly materialRole: RenderMaterialRole;
+      /** Native HABAHIRO meshes use authored RhythmGameLines coordinates. */
+      readonly coordinateSpace?: "world" | "authored-ui";
+      readonly meshIdentity?: string;
     })
   | (RenderObjectCommandBase & {
       readonly kind: "set-line";

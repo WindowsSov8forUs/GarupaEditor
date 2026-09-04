@@ -16,7 +16,6 @@ import { particleFloat32ToBits } from "../backends/particleValidation";
 import type {
   RenderColor,
   RenderFloat32,
-  RenderOrderingKey,
   RenderVector2,
   RenderVector3,
 } from "../backends/renderingContracts";
@@ -126,7 +125,7 @@ export function createSimulatorSceneLayout(
   const arrival = getOrdinaryNoteArrivalSeconds(values.value.specificSpeed);
   if (arrival.status !== "ok") return arrival;
   const habahiro = renderingKind === "habahiro"
-    ? createPortableHabahiroScene(resources, config.habahiroMeshWidthSetting)
+    ? createPortableHabahiroScene(resources, config.habahiroMeshWidthSetting, originalLayout.value)
     : ok<HabahiroSceneInput | undefined>(undefined);
   if (habahiro.status !== "ok") return habahiro;
   const field = renderingKind === "ordinary" && fieldBindings !== null
@@ -668,29 +667,44 @@ function createOriginalSkinFieldScene(
 function createPortableHabahiroScene(
   resources: RenderEngineResourceBindings,
   meshWidthSetting: number,
+  layout: OriginalSurfaceLayout,
 ): SimulatorResult<HabahiroSceneInput> {
-  const atlas = resources.habahiroAtlasLogicalAssetIds?.normal;
-  if (atlas === undefined) {
-    return reject("scene.habahiro-resource-binding-missing", "HABAHIRO field assembly requires the internally selected normal source atlas.");
+  const bindings = resources.habahiroPackage;
+  if (bindings === undefined) {
+    return reject("scene.habahiro-resource-binding-missing", "HABAHIRO requires its exact flash, field-before and field-after package bindings.");
   }
-  const beforeField = fieldObject("render:habahiro:field", "field-line", atlas, "note_normal_0", 0, 0, "render:habahiro:field-mask", 1, 0);
-  const beforeJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, "note_normal_0", 0, -3.45, null, 1, 1);
-  const afterField = fieldObject("render:habahiro:field", "field-line", atlas, "note_normal_0", 0, -0.25, "render:habahiro:field-mask", 1.05, 0);
-  const afterJudge = fieldObject("render:habahiro:judge-line", "judge-line", atlas, "note_normal_0", 0, -3.2, null, 1.05, 1);
-  const mask: RenderFieldMaskPlan = Object.freeze({
-    renderObjectId: "render:habahiro:field-mask",
-    polygon: Object.freeze([vector2(-4, -5), vector2(4, -5), vector2(4, 5), vector2(-4, 5)]),
-    position: vector3(0, 0, 0),
-    scale: vector2(1, 1),
-    rotationDegrees: f32(0),
-    ordering: ordering(0, -1),
-  });
+  const judgeScale = Math.fround(
+    layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
+  );
+  const plans = (field: typeof bindings.fieldBefore): readonly RenderFieldObjectPlan[] => Object.freeze([
+    fieldObject(
+      "render:habahiro:rhythm-lines", "field-line",
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, -240, null, 1, 0,
+    ),
+    fieldObject(
+      "render:habahiro:sudden-area-lines", "field-line",
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, -240, null, 1, 1,
+      1, 1, 1, false,
+    ),
+    fieldObject(
+      "render:habahiro:judge-line", "judge-line",
+      field.judgeLineLogicalAssetId, "game_play_line", 0, layout.gameplay.targetCenterY,
+      null, judgeScale, 2, judgeScale, 2, 20,
+    ),
+    fieldObject(
+      "render:habahiro:judge-skill-line", "judge-line",
+      field.judgeSkillLineLogicalAssetId, "game_play_line_skill_adjust_effect", 0,
+      layout.gameplay.targetCenterY, null, judgeScale, 3, judgeScale, 2, 21, false,
+    ),
+  ]);
   return ok(Object.freeze({
     meshWidthSetting: f32(meshWidthSetting),
-    flashDurationSeconds: f32(0.25),
-    fieldBefore: Object.freeze([beforeField, beforeJudge]),
-    fieldAfter: Object.freeze([afterField, afterJudge]),
-    fieldMasks: Object.freeze([mask]),
+    suddenLane: false as const,
+    changeLaneSeconds: f32(Math.fround(0.4166666567325592)),
+    animationCompleteSeconds: f32(Math.fround(1)),
+    fieldBefore: plans(bindings.fieldBefore),
+    fieldAfter: plans(bindings.fieldAfter),
+    fieldMasks: Object.freeze([] as RenderFieldMaskPlan[]),
   }));
 }
 
@@ -707,9 +721,11 @@ function fieldObject(
   scaleY = 1,
   domainLayer = depth + 1,
   sourceSortingOrder = depth,
+  initiallyActive = true,
 ): RenderFieldObjectPlan {
   return Object.freeze({
     renderObjectId,
+    initiallyActive,
     role,
     logicalAssetId,
     exactKey,
@@ -767,15 +783,6 @@ function color(red: number, green: number, blue: number, alpha: number): RenderC
 
 function white(): RenderColor {
   return color(1, 1, 1, 1);
-}
-
-function ordering(sequence: number, depth: number): RenderOrderingKey {
-  return Object.freeze({
-    domainLayer: 1,
-    sourceDepthOrSortingOrder: depth,
-    sourceZ: f32(0),
-    creationSequence: sequence,
-  });
 }
 
 function reject(capability: string, boundary: string) {

@@ -30,6 +30,9 @@ import {
   type GameClearRuntimeProfile,
 } from "../resources/currentGameClearProfile";
 import { DeterministicParticleSimulation } from "../../engine/particles/particleSimulation";
+import {
+  CURRENT_HABAHIRO_SEMANTIC_PROFILE,
+} from "../../engine/rendering/habahiroFlashAnimation";
 import { particleFloat32FromBits } from "../particleValidation";
 import {
   createPixiParticleLinearColorMesh,
@@ -104,6 +107,7 @@ import type {
   RenderCommand,
   RenderCommandBatch,
   RenderAtlasRow,
+  RenderColor,
   RenderOrthographicProjectionProfile,
   RenderObjectRole,
   RenderResourceAssetProfile,
@@ -199,7 +203,6 @@ type EvidenceAnimationRole =
   | "life-game-over"
   | "score-gauge-ss"
   | "game-clear"
-  | "habahiro-lane-change"
   | "note-flick"
   | "note-directional-flick"
   | "note-long-flash";
@@ -577,6 +580,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           reservedGeometry.set(command.sequence, createEvidenceMesh(
             command,
             this.profile!.scene.projection,
+            this.surfaceLayout!,
           ));
         } else if (command.kind === "set-line") {
           reservedGeometry.set(command.sequence, createEvidenceLine(
@@ -1262,12 +1266,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           );
           return (asset?.materialRole === "sync-line" ||
             asset?.materialRole === "multiple-directional-line" ||
-            asset?.materialRole === "long-note" || asset?.materialRole === "curve-note") &&
+            asset?.materialRole === "long-note" || asset?.materialRole === "curve-note" ||
+            asset?.materialRole === "habahiro-flash") &&
             this.baseTextures.has(command.logicalAssetId);
         }
         return false;
       case "set-mesh":
-        return command.materialRole === "long-note" || command.materialRole === "curve-note";
+        return command.materialRole === "long-note" || command.materialRole === "curve-note" ||
+          command.materialRole === "habahiro-flash";
       case "set-line":
         return command.materialRole === "sync-line" ||
           command.materialRole === "multiple-directional-line";
@@ -1373,18 +1379,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             maskConfigured: true,
           });
           break;
-        case "set-mesh":
-          if (
-            shadow.get(command.renderObjectId)!.role !== "note-mesh" ||
-            !shadow.get(command.renderObjectId)!.materialBound ||
-            !isEvidenceMesh(command)
-          ) {
+        case "set-mesh": {
+          const object = shadow.get(command.renderObjectId)!;
+          const roleMatches = object.role === "note-mesh"
+            ? command.materialRole === "long-note" || command.materialRole === "curve-note"
+            : object.role === "habahiro-flash-mesh" && command.materialRole === "habahiro-flash";
+          if (!roleMatches || !object.materialBound || !isEvidenceMesh(command)) {
             return reject(
-              "render.pixi.mesh-outside-r7-profile",
-              "Pixi accepts the current ordinary R7 base/advanced uniform-color NoteMesh profiles.",
+              "render.pixi.mesh-outside-current-profile",
+              "Pixi accepts only current ordinary NoteMesh or exact package-backed HABAHIRO Sprite mesh geometry.",
             );
           }
           break;
+        }
         case "set-line":
           if (
             (shadow.get(command.renderObjectId)!.role === "sync-line"
@@ -4323,14 +4330,6 @@ function applyEvidenceAnimation(
     }
     return;
   }
-  if (role === "habahiro-lane-change") {
-    const visual = object.hudVisual;
-    if (visual?.primaryFill === null || visual?.primaryFill === undefined) throw new Error("HABAHIRO flash owner missing HUD visual");
-    visual.primaryFill.alpha = Math.fround(Math.sin(
-      Math.min(1, elapsedSeconds / 0.25) * Math.PI,
-    ));
-    return;
-  }
   if (role === "add-score") {
     const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
     const sample = sampleAddScoreCoroutine(current.animationPhases, current.phaseSeconds, elapsedSeconds);
@@ -4400,10 +4399,6 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
   }
   if (role === "game-clear") {
     if (object.hudVisual !== null) object.hudVisual.content.visible = false;
-    return;
-  }
-  if (role === "habahiro-lane-change") {
-    if (object.hudVisual?.primaryFill !== null && object.hudVisual?.primaryFill !== undefined) object.hudVisual.primaryFill.alpha = 0;
     return;
   }
   if (role === "add-score") {
@@ -4618,7 +4613,7 @@ function boundSpriteExactKey(bindingKey: string | null): string | null {
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
   return role === "combo" || role === "all-perfect" || role === "add-score" ||
     role === "result" || role === "life-warning" || role === "life-game-over" ||
-    role === "score-gauge-ss" || role === "game-clear" || role === "habahiro-lane-change" || role === "note-flick" ||
+    role === "score-gauge-ss" || role === "game-clear" || role === "note-flick" ||
     role === "note-directional-flick" || role === "note-long-flash";
 }
 
@@ -4801,37 +4796,50 @@ function createEvidenceLine(
 }
 
 function isEvidenceMesh(command: SetMeshCommand): boolean {
+  if (command.uv.length !== command.vertices.length || command.colors.length !== command.vertices.length ||
+    command.vertices.some((vertex) => vertex.z.bits !== "00000000")) return false;
+  const first = command.colors[0];
+  if (first === undefined || !command.colors.every((color) =>
+    color.red.bits === first.red.bits && color.green.bits === first.green.bits &&
+    color.blue.bits === first.blue.bits && color.alpha.bits === first.alpha.bits)) return false;
+  if (command.materialRole === "habahiro-flash") {
+    if (command.coordinateSpace !== "authored-ui" || typeof command.meshIdentity !== "string") return false;
+    const source = CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites.find(
+      (sprite) => sprite.rendererPathId === command.meshIdentity,
+    );
+    return source !== undefined && command.vertices.length === source.verticesAuthored.length &&
+      command.indices.length === source.indicesScreenYReflected.length &&
+      command.indices.every((value, index) => value === source.indicesScreenYReflected[index]) &&
+      command.vertices.every((vertex, index) => {
+        const expected = source.verticesAuthored[index]!;
+        return vertex.x.value === expected[0] && vertex.y.value === expected[1] && vertex.z.value === expected[2];
+      }) && command.uv.every((uv, index) => {
+        const expected = source.uvTopLeft[index]!;
+        return uv.x.value === expected[0] && uv.y.value === expected[1];
+      });
+  }
   const base = command.vertices.length === 22 && command.indices.length === 60;
   const advanced = command.vertices.length === 42 && command.indices.length === 120;
-  if (
-    (!base && !advanced) ||
-    command.uv.length !== command.vertices.length ||
-    command.colors.length !== command.vertices.length ||
-    command.vertices.some((vertex) => vertex.z.bits !== "00000000")
-  ) {
-    return false;
-  }
-  const first = command.colors[0]!;
-  return command.colors.every((color) =>
-    color.red.bits === first.red.bits &&
-    color.green.bits === first.green.bits &&
-    color.blue.bits === first.blue.bits &&
-    color.alpha.bits === first.alpha.bits);
+  return (base || advanced) && command.coordinateSpace !== "authored-ui" && command.meshIdentity === undefined;
 }
 
 function createEvidenceMesh(
   command: SetMeshCommand,
   projection: RenderOrthographicProjectionProfile,
+  surfaceLayout: OriginalSurfaceLayout,
 ): Mesh {
-  if (!isEvidenceMesh(command)) throw new Error("mesh outside R7 profile");
+  if (!isEvidenceMesh(command)) throw new Error("mesh outside current source-bound profile");
   const positions = new Float32Array(command.vertices.length * 2);
   const uvs = new Float32Array(command.uv.length * 2);
+  const authoredScale = surfaceLayout.ui.screenToSafeChildScale;
   for (let index = 0; index < command.vertices.length; index += 1) {
-    const projected = projectWorldPoint(
-      command.vertices[index]!.x.value,
-      command.vertices[index]!.y.value,
-      projection,
-    );
+    const vertex = command.vertices[index]!;
+    const projected = command.coordinateSpace === "authored-ui"
+      ? [
+          Math.fround(projection.viewportWidth / 2 + Math.fround(vertex.x.value * authoredScale)),
+          Math.fround(projection.viewportHeight / 2 - Math.fround(vertex.y.value * authoredScale)),
+        ] as const
+      : projectWorldPoint(vertex.x.value, vertex.y.value, projection);
     positions[index * 2] = projected[0];
     positions[index * 2 + 1] = projected[1];
     uvs[index * 2] = command.uv[index]!.x.value;
@@ -4845,10 +4853,15 @@ function createEvidenceMesh(
     shrinkBuffersToFit: true,
   });
   const mesh = new Mesh({ geometry, texture: Texture.WHITE, roundPixels: false });
-  const color = command.colors[0]!;
-  mesh.tint = rgbTint(color.red.value, color.green.value, color.blue.value);
-  mesh.alpha = color.alpha.value;
+  mesh.tint = rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value);
+  mesh.alpha = firstColor(command).alpha.value;
   return mesh;
+}
+
+function firstColor(command: SetMeshCommand): RenderColor {
+  const color = command.colors[0];
+  if (color === undefined) throw new Error("validated mesh lost its uniform color");
+  return color;
 }
 
 function destroyMesh(mesh: Mesh): void {

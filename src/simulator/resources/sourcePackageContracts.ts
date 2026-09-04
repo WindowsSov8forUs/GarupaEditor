@@ -2,6 +2,7 @@ export type CurrentSkinResourceRole =
   | "notes"
   | "directional-note"
   | "field"
+  | "habahiro-change-flash"
   | "tap-effect"
   | "directional-effect"
   | "special-background"

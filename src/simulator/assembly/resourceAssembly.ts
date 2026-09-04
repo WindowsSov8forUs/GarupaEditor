@@ -130,7 +130,19 @@ export async function assembleSimulatorResources(
     profile: Object.freeze({
       ...commonRender.value.profile,
       packIdentity: `application-leased-render-v1+${selection.skin.recipeIdentity}`,
+      fidelity: selection.renderingKind === "habahiro"
+        ? Object.freeze({ mode: "habahiro" as const, fidelity: "current-external-complete" as const })
+        : commonRender.value.profile.fidelity,
       assets: combinedAssets,
+      scene: selection.renderingKind === "habahiro"
+        ? Object.freeze({
+            ...commonRender.value.profile.scene,
+            projection: Object.freeze({
+              ...commonRender.value.profile.scene.projection,
+              mode: "habahiro-current-external" as const,
+            }),
+          })
+        : commonRender.value.profile.scene,
     }),
     provider: mergeRenderProviders(
       commonRender.value.provider,

@@ -28,6 +28,8 @@ export function validateTypedRenderResourceBinding(
   if (command.binding === "material") {
     return objectRole === "note-mesh"
       ? asset.materialRole === "long-note" || asset.materialRole === "curve-note"
+      : objectRole === "habahiro-flash-mesh"
+      ? asset.materialRole === "habahiro-flash"
       : objectRole === "sync-line"
       ? asset.materialRole === "sync-line"
       : objectRole === "multiple-directional-line" && asset.materialRole === "multiple-directional-line";
