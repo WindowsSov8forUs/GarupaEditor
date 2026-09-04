@@ -164,6 +164,7 @@ export type SimulatorCapabilityGateStatus =
   | "open-objective-environment-blocked"
   | "closed-original-unreachable"
   | "closed-evidence-equivalent"
+  | "closed-native-algorithm-equivalent"
   | "authorized-in-progress"
   | "closed-product-integration"
   | "unauthorized-stage-9";
@@ -174,9 +175,9 @@ export interface SimulatorModuleCapabilitySummary {
   readonly chart: SimulatorChartFidelity;
   readonly skin: SimulatorSkinFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
-  readonly ordinaryCommandScene: "closed-evidence-equivalent" | "observational-gap";
-  readonly ordinaryHud: "closed-evidence-equivalent" | "observational-gap";
-  readonly habahiroCurrentExternalComplete: "closed-portable";
+  readonly ordinaryCommandScene: "closed-native-algorithm-equivalent" | "observational-gap";
+  readonly ordinaryHud: "closed-native-algorithm-equivalent" | "closed-product-extension" | "observational-gap";
+  readonly habahiroCurrentExternalComplete: "closed-native-algorithm-equivalent" | "degraded-explicit";
   readonly habahiroOriginalParity: "observational-gap";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
   readonly startupDirectionPortable: "closed-portable";
@@ -197,10 +198,10 @@ export interface SimulatorModuleCapabilitySummary {
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly originalSkinSettings: "closed-static-portable";
-  readonly originalLiveSettings: "closed-evidence-equivalent" | "observational-gap";
+  readonly originalLiveSettings: "closed-native-algorithm-equivalent" | "observational-gap";
   readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
-  readonly selectedRenderingGate: "closed-portable" | "closed-evidence-equivalent" | "observational-gap";
-  readonly selectedHudGate: "closed-evidence-equivalent" | "observational-gap";
+  readonly selectedRenderingGate: "closed-native-algorithm-equivalent" | "degraded-explicit" | "observational-gap";
+  readonly selectedHudGate: "closed-native-algorithm-equivalent" | "closed-product-extension" | "observational-gap";
   readonly selectedBackgroundGate: "closed-portable" | "observational-gap";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";
   readonly selectedSkinGate: "closed-static-portable" | "observational-gap";
