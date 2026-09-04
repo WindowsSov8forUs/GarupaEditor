@@ -48,7 +48,7 @@ interface PendingFrame {
 }
 
 export class DeterministicSimulatorParticleBackend implements SimulatorParticleBackend {
-  readonly id = "deterministic-particle-portable-v1";
+  readonly id = "current-native-particle-semantic-v2";
 
   private state: ParticleBackendSnapshot["state"] = "unprepared";
   private sessionId: string | null = null;
@@ -72,7 +72,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     const terminal = this.terminalResult<void>();
     if (terminal !== null) return terminal;
     if (this.state !== "unprepared") {
-      return this.reject("particle.prepare.invalid-state", "A deterministic particle backend prepares one session exactly once.");
+      return this.reject("particle.prepare.invalid-state", "A native-semantic particle executor prepares one session exactly once.");
     }
     if (typeof sessionId !== "string" || sessionId.length === 0) {
       return this.reject("particle.prepare.invalid-session", "Prepare requires one non-empty host-authored session identity.");
@@ -86,7 +86,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     if (provider === null || typeof provider !== "object" || typeof provider.read !== "function" ||
       preflight === null || typeof preflight !== "object" || typeof preflight.sha256 !== "function" ||
       typeof preflight.inspectPng !== "function") {
-      return this.reject("particle.prepare.missing-provider", "Deterministic preparation requires explicit offline provider and preflight capabilities.");
+      return this.reject("particle.prepare.missing-provider", "Native-semantic preparation requires explicit offline provider and preflight capabilities.");
     }
     this.state = "preparing";
     try {
@@ -114,15 +114,15 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     const terminal = this.terminalResult<ParticleFrameBatch>();
     if (terminal !== null) return terminal;
     if (this.state !== "ready" || this.sessionId === null || this.profile === null || this.simulation === null) {
-      return this.reject("particle.frame.backend-not-ready", "Particle frames require a fully prepared deterministic session.");
+      return this.reject("particle.frame.backend-not-ready", "Particle frames require a fully prepared native-semantic session.");
     }
     if (this.pendingFrame !== null) {
-      return this.reject("particle.frame.overlapping-batch", "Only one one-use deterministic frame capability may be pending.");
+      return this.reject("particle.frame.overlapping-batch", "Only one one-use native-semantic frame capability may be pending.");
     }
     const validated = validateParticleFrameRequest(request);
     if (validated.status !== "accepted") return validated;
     if (this.nextFrame !== null && request.frame !== this.nextFrame) {
-      return this.reject("particle.frame.non-contiguous", "After its first host index, deterministic outer frames commit contiguously exactly once.");
+      return this.reject("particle.frame.non-contiguous", "After its first host index, native-semantic outer frames commit contiguously exactly once.");
     }
     if (this.suppressedUntilReplay && request.commands.length !== 0) {
       return this.reject("particle.frame.suppressed-command", "MoveTime suppression can only end through whole-engine checkpoint/replay reconstruction.");
@@ -173,7 +173,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
         ? this.latchFault(error.capability, error.boundary)
         : this.latchFault(
             "particle.simulation.unexpected-exception",
-            "An unexpected deterministic simulation exception is the first terminal particle backend fault.",
+            "An unexpected native-semantic simulation exception is the first terminal particle backend fault.",
           );
     }
   }
@@ -292,7 +292,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     return particleRejected(
       "terminal-disposed",
       "particle.lifecycle.terminal-disposed",
-      "Disposed deterministic particle sessions reject every API except idempotent repeated dispose.",
+      "Disposed native-semantic particle sessions reject every API except idempotent repeated dispose.",
     );
   }
 

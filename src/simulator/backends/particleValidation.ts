@@ -37,7 +37,8 @@ export const CURRENT_PARTICLE_ROOTS: readonly ParticleRootId[] = Object.freeze([
 const ROOT_SET: ReadonlySet<string> = new Set(CURRENT_PARTICLE_ROOTS);
 const MODULE_TYPES = Object.freeze([
   "InitialModule", "EmissionModule", "ShapeModule", "ColorModule", "SizeModule",
-  "RotationModule", "RotationBySpeedModule", "ClampVelocityModule", "UVModule",
+  "RotationModule", "RotationBySpeedModule", "ClampVelocityModule", "VelocityModule",
+  "ForceModule", "CustomDataModule", "UVModule",
 ]);
 const MODULE_SET: ReadonlySet<string> = new Set(MODULE_TYPES);
 
@@ -302,8 +303,8 @@ export function validateSelectedSkinParticlePack(
 ): ParticleOperationResult<ParticlePreparedResourcePack> {
   const profile = pack.profile;
   const textures = pack.textures;
-  if (!profile.packIdentity.startsWith("particle-skin-source-bound-v2-") ||
-    profile.fidelity !== "current-static-portable" || profile.networkAllowed !== false ||
+  if (!profile.packIdentity.startsWith("particle-skin-source-bound-v2-") || profile.schemaVersion !== 2 ||
+    profile.fidelity !== "current-native-semantic-v2" || profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false || profile.bundles.length !== 2 ||
     profile.systemCount !== profile.bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0) ||
     profile.profileCount !== profile.bundles.reduce((sum, bundle) => sum + Object.keys(bundle.profiles).length, 0) ||
@@ -350,23 +351,33 @@ export function validateSelectedSkinParticlePack(
       bundle.materials.some((material) => material.texture !== null && !textureNames.has(material.texture))) {
       return reject("particle.skin-pack.invalid-material-texture", "Every selected Skin material texture must resolve exactly once in its own bundle.");
     }
-    for (const system of bundle.systems) {
+    for (const renderer of Object.values(bundle.rendererProfiles)) {
+      if (!isCurrentRendererProfile(renderer, materialNames)) {
+        return reject("particle.skin-pack.invalid-renderer", "Every selected Skin renderer must retain its exact current mode, alignment, ordering, size, pivot and complete material slots.");
+      }
+    }
+    for (let sourceOrdinal = 0; sourceOrdinal < bundle.systems.length; sourceOrdinal += 1) {
+      const system = bundle.systems[sourceOrdinal]!;
       if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
-        !isTransform(system.transform) || !Array.isArray(system.parentTransforms) ||
-        !system.parentTransforms.every(isTransform) || system.randomStateU32.length !== 4 ||
-        !system.randomStateU32.every(isUint32)) {
-        return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known root, source-bound profile/TRS and temporary version-1 random state.");
+        system.sourceOrdinal !== sourceOrdinal || !isTransform(system.transform) ||
+        !Array.isArray(system.parentTransforms) || !system.parentTransforms.every(isTransform) ||
+        !Array.isArray(system.parentParticleSystemFlags) ||
+        system.parentParticleSystemFlags.length !== system.parentTransforms.length ||
+        !system.parentParticleSystemFlags.every((flag) => typeof flag === "boolean")) {
+        return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known root, contiguous source ordinal and source-bound profile/TRS; runtime random state is allocated only for the concrete instance.");
       }
     }
     for (const profile of Object.values(bundle.profiles)) {
       if (!isRecord(profile) || !isRecord(profile.system) || !isRecord(profile.modules) ||
-        !isNonEmpty(profile.renderer) || !owns(bundle.rendererProfiles, profile.renderer)) {
-        return reject("particle.skin-pack.invalid-profile", "Every selected Skin profile requires exact system, module and renderer relations.");
+        !isNonEmpty(profile.renderer) || !owns(bundle.rendererProfiles, profile.renderer) ||
+        !isCurrentSystemProfile(profile.system)) {
+        return reject("particle.skin-pack.invalid-profile", "Every selected Skin profile requires exact current system, module and renderer relations.");
       }
       for (const [moduleName, moduleIdentity] of Object.entries(profile.modules)) {
         const map = bundle.moduleProfiles[moduleName as keyof typeof bundle.moduleProfiles];
-        if (!isNonEmpty(moduleIdentity) || !isRecord(map) || !owns(map, moduleIdentity)) {
-          return reject("particle.skin-pack.invalid-module", "Every selected Skin enabled module must resolve in its own source-bound module map.");
+        if (!MODULE_SET.has(moduleName) || !isNonEmpty(moduleIdentity) || !isRecord(map) || !owns(map, moduleIdentity) ||
+          !isCurrentModuleProfile(moduleName, map[moduleIdentity])) {
+          return reject("particle.skin-pack.invalid-module", `Selected Skin module ${moduleName}:${String(moduleIdentity)} does not match its current native-semantic branch contract.`);
         }
       }
     }
@@ -428,7 +439,7 @@ export function validateParticleFrameRequest(
     return reject("particle.frame.invalid-delta", "Particle delta must be a finite non-negative binary32 bit pattern.");
   }
   if (request.paused && request.commands.length !== 0) {
-    return reject("particle.frame.paused-command", "Portable pause freezes particle samples and consumes no commands or random draws.");
+    return reject("particle.frame.paused-command", "The managed pause branch does not issue gameplay particle commands; already-playing native systems continue on the outer particle delta.");
   }
   for (const command of request.commands) {
     const result = validateParticleCommandShape(command);
@@ -457,6 +468,192 @@ export function particleFloat32FromBits(bits: string): number | null {
   view.setUint32(0, Number.parseInt(bits.slice(2), 16), false);
   const value = view.getFloat32(0, false);
   return Number.isFinite(value) ? value : null;
+}
+
+function isCurrentSystemProfile(value: Record<string, unknown>): boolean {
+  return isFloat32(value.lengthInSec) && value.lengthInSec > 0 && value.simulationSpeed === 1 &&
+    value.stopAction === 0 && (value.cullingMode === 0 || value.cullingMode === 1 || value.cullingMode === 3) &&
+    value.ringBufferMode === 0 && isVector2(value.ringBufferLoopRange) && value.emitterVelocityMode === 0 &&
+    typeof value.looping === "boolean" && typeof value.prewarm === "boolean" && value.playOnAwake === false &&
+    value.useUnscaledTime === false && typeof value.autoRandomSeed === "boolean" && isConstantCurve(value.startDelay) &&
+    value.moveWithTransform === 0 && value.moveWithCustomTransform === null &&
+    (value.scalingMode === 0 || value.scalingMode === 1) && value.randomSeed === 0;
+}
+
+function isCurrentRendererProfile(value: unknown, materialNames: ReadonlySet<string>): boolean {
+  if (!isRecord(value) || typeof value.m_Enabled !== "boolean" || !Array.isArray(value.m_Materials) ||
+    !value.m_Materials.every((material) => material === null ||
+      (isRecord(material) && material.type === "Material" && isNonEmpty(material.name) && materialNames.has(material.name))) ||
+    (value.m_RenderMode !== 0 && value.m_RenderMode !== 1 && value.m_RenderMode !== 4) ||
+    (value.m_RenderAlignment !== 0 && value.m_RenderAlignment !== 2) || value.m_SortMode !== 0 ||
+    !Number.isSafeInteger(value.m_SortingOrder) || !isFloat32(value.m_MinParticleSize) || value.m_MinParticleSize !== 0 ||
+    !isFloat32(value.m_MaxParticleSize) || value.m_MaxParticleSize <= 0 || !isFloat32(value.m_VelocityScale) ||
+    !isFloat32(value.m_LengthScale) || !isFloat32(value.m_NormalDirection) ||
+    typeof value.m_ApplyActiveColorSpace !== "boolean" || value.m_RotateWithStretchDirection !== true ||
+    !isVector3(value.m_Pivot)) return false;
+  return true;
+}
+
+function isCurrentModuleProfile(name: string, value: unknown): boolean {
+  if (!isRecord(value) || value.enabled !== true) return false;
+  switch (name) {
+    case "InitialModule":
+      return ["startLifetime", "startSpeed", "startSize", "startSizeY", "startSizeZ",
+        "startRotation", "startRotationX", "startRotationY", "gravityModifier"]
+        .every((key) => isMinMaxCurve(value[key])) && isConstantCurve(value.gravityModifier) &&
+        isMinMaxGradient(value.startColor) && isPositiveInteger(value.maxNumParticles) && typeof value.size3D === "boolean" &&
+        typeof value.rotation3D === "boolean" && value.randomizeRotationDirection === 0 &&
+        value.gravitySource === 0 && isZeroVector3(value.customEmitterVelocity);
+    case "EmissionModule":
+      return isCurrentRateCurve(value.rateOverTime) && isZeroCurve(value.rateOverDistance) &&
+        typeof value.m_BurstCount === "number" && Number.isSafeInteger(value.m_BurstCount) && value.m_BurstCount >= 0 && Array.isArray(value.m_Bursts) &&
+        value.m_BurstCount === value.m_Bursts.length && value.m_Bursts.every((burst) =>
+          isRecord(burst) && isFloat32(burst.time) && isCurveInStates(burst.countCurve, [0, 3]) &&
+          burst.cycleCount === 1 && isFloat32(burst.repeatInterval) && burst.repeatInterval > 0 && burst.probability === 1);
+    case "ShapeModule":
+      return [0, 4, 5, 8, 10].includes(value.type as number) && value.placementMode === 0 &&
+        isShapeScalar(value.radius, false) && isShapeScalar(value.arc, true) && isFloat32(value.radiusThickness) &&
+        value.radiusThickness >= 0 && value.radiusThickness <= 1 && isFloat32(value.angle) && isFloat32(value.length) &&
+        isZeroVector3(value.boxThickness) && value.donutRadius === Math.fround(0.2) &&
+        value.m_MeshMaterialIndex === 0 && value.m_MeshNormalOffset === 0 && isShapeSpawn(value.m_MeshSpawn) &&
+        ["m_Mesh", "m_MeshRenderer", "m_SkinnedMeshRenderer", "m_Sprite", "m_SpriteRenderer", "m_Texture"]
+          .every((key) => value[key] === null) && value.m_UseMeshMaterialIndex === false && value.m_UseMeshColors === true &&
+        value.m_TextureClipChannel === 3 && value.m_TextureClipThreshold === 0 && value.m_TextureUVChannel === 0 &&
+        value.m_TextureColorAffectsParticles === true && value.m_TextureAlphaAffectsParticles === true &&
+        value.m_TextureBilinearFiltering === false && isZeroVector3(value.m_Position) && isVector3(value.m_Rotation) &&
+        (value.m_Rotation as Record<string, unknown>).y === 0 && (value.m_Rotation as Record<string, unknown>).z === 0 &&
+        isVector3(value.m_Scale) && value.alignToDirection === false &&
+        (value.randomDirectionAmount === 0 || value.randomDirectionAmount === 1) &&
+        value.sphericalDirectionAmount === 0 && value.randomPositionAmount === 0;
+    case "ColorModule": return isMinMaxGradient(value.gradient);
+    case "SizeModule":
+      return isMinMaxCurve(value.curve) && isMinMaxCurve(value.y) && isMinMaxCurve(value.z) &&
+        typeof value.separateAxes === "boolean";
+    case "RotationModule":
+    case "RotationBySpeedModule":
+      return isMinMaxCurve(value.curve) && isMinMaxCurve(value.x) && isMinMaxCurve(value.y) &&
+        typeof value.separateAxes === "boolean" &&
+        (name === "RotationModule" || (value.separateAxes === false && isVector2(value.range)));
+    case "ClampVelocityModule":
+      return ["x", "y", "z", "magnitude", "drag"].every((key) => isConstantCurve(value[key])) &&
+        typeof value.separateAxis === "boolean" && typeof value.inWorldSpace === "boolean" &&
+        typeof value.multiplyDragByParticleSize === "boolean" && typeof value.multiplyDragByParticleVelocity === "boolean" &&
+        isFloat32(value.dampen) && value.dampen >= 0 && value.dampen <= 1 && isZeroCurve(value.drag);
+    case "VelocityModule": {
+      if (!["x", "y", "z"].every((key) => isCurveInStates(value[key], [0, 1])) ||
+        !["orbitalX", "orbitalY", "orbitalZ", "orbitalOffsetX", "orbitalOffsetY",
+          "orbitalOffsetZ", "radial", "speedModifier"].every((key) => isConstantCurve(value[key])) ||
+        typeof value.inWorldSpace !== "boolean") return false;
+      const orbitalX = constantScalar(value.orbitalX);
+      const orbitalY = constantScalar(value.orbitalY);
+      const orbitalZ = constantScalar(value.orbitalZ);
+      const speedModifier = constantScalar(value.speedModifier);
+      const offsetsAndRadial = [value.orbitalOffsetX, value.orbitalOffsetY, value.orbitalOffsetZ, value.radial]
+        .every((curve) => constantScalar(curve) === 0);
+      return orbitalX === 0 && orbitalY === 0 && offsetsAndRadial &&
+        (speedModifier === 1 || speedModifier === 2) &&
+        (orbitalZ === 0 || (orbitalZ === -4 && value.inWorldSpace && speedModifier === 1));
+    }
+    case "ForceModule":
+      return ["x", "y", "z"].every((key) => isConstantCurve(value[key])) &&
+        typeof value.inWorldSpace === "boolean" && value.randomizePerFrame === false;
+    case "CustomDataModule":
+      return value.mode0 === 1 && value.mode1 === 0 && value.vectorComponentCount0 === 4 &&
+        value.vectorComponentCount1 === 4 && isMinMaxGradient(value.color0) && isMinMaxGradient(value.color1) &&
+        ["vector0_0", "vector0_1", "vector0_2", "vector0_3", "vector1_0", "vector1_1", "vector1_2", "vector1_3"]
+          .every((key) => isMinMaxCurve(value[key]));
+    case "UVModule":
+      return isMinMaxCurve(value.frameOverTime) && isMinMaxCurve(value.startFrame) &&
+        isPositiveInteger(value.tilesX) && isPositiveInteger(value.tilesY) && value.animationType === 0 &&
+        (value.rowMode === 0 || value.rowMode === 1) && value.rowIndex === 0 && value.cycles === 1 &&
+        value.timeMode === 0 && value.fps === 30 && value.uvChannelMask === -1 && value.flipU === 0 &&
+        value.flipV === 0 && value.mode === 0 && Array.isArray(value.sprites) && isVector2(value.speedRange);
+    default: return false;
+  }
+}
+
+function isShapeScalar(value: unknown, arc: boolean): boolean {
+  return isRecord(value) && isFloat32(value.value) && (value.mode === 0 || (arc && value.mode === 3)) &&
+    value.spread === 0 && isConstantCurve(value.speed);
+}
+
+function isShapeSpawn(value: unknown): boolean {
+  return isRecord(value) && value.mode === 0 && value.spread === 0 && isConstantCurve(value.speed);
+}
+
+function isMinMaxCurve(value: unknown): boolean {
+  return isRecord(value) && [0, 1, 2, 3].includes(value.minMaxState as number) &&
+    isFloat32(value.scalar) && isFloat32(value.minScalar) &&
+    isAnimationCurve(value.maxCurve) && isAnimationCurve(value.minCurve);
+}
+
+function isCurrentRateCurve(value: unknown): boolean {
+  return isConstantCurve(value) || (isCurveInStates(value, [3]) &&
+    (value as Record<string, unknown>).minScalar === 0 && (value as Record<string, unknown>).scalar === 0);
+}
+
+function isCurveInStates(value: unknown, states: readonly number[]): boolean {
+  return isMinMaxCurve(value) && states.includes((value as Record<string, unknown>).minMaxState as number);
+}
+
+function isConstantCurve(value: unknown): boolean {
+  return isCurveInStates(value, [0]);
+}
+
+function constantScalar(value: unknown): number | null {
+  return isConstantCurve(value) ? (value as Record<string, number>).scalar : null;
+}
+
+function isZeroCurve(value: unknown): boolean {
+  return isConstantCurve(value) && (value as Record<string, unknown>).scalar === 0;
+}
+
+function isAnimationCurve(value: unknown): boolean {
+  return isRecord(value) && Array.isArray(value.m_Curve) && value.m_PreInfinity === 2 &&
+    value.m_PostInfinity === 2 && (value.m_RotationOrder === 0 || value.m_RotationOrder === 4) && value.m_Curve.every((key) =>
+      isRecord(key) && ["time", "value", "inWeight", "outWeight"].every((field) => isFloat32(key[field])) &&
+      isCurveSlope(key.inSlope) && isCurveSlope(key.outSlope) && key.weightedMode === 0);
+}
+
+function isMinMaxGradient(value: unknown): boolean {
+  return isRecord(value) && [0, 1, 2, 3, 4].includes(value.minMaxState as number) &&
+    isColor(value.minColor) && isColor(value.maxColor) && isGradient(value.minGradient) && isGradient(value.maxGradient);
+}
+
+function isGradient(value: unknown): boolean {
+  if (!isRecord(value) || (value.m_Mode !== 0 && value.m_Mode !== 1) || value.m_ColorSpace !== -1 ||
+    typeof value.m_NumColorKeys !== "number" || typeof value.m_NumAlphaKeys !== "number" ||
+    !Number.isSafeInteger(value.m_NumColorKeys) || !Number.isSafeInteger(value.m_NumAlphaKeys) ||
+    value.m_NumColorKeys < 1 || value.m_NumColorKeys > 8 || value.m_NumAlphaKeys < 1 || value.m_NumAlphaKeys > 8) return false;
+  for (let index = 0; index < 8; index += 1) {
+    if (!isColor(value[`key${index}`]) || !isUint16(value[`ctime${index}`]) || !isUint16(value[`atime${index}`])) return false;
+  }
+  return true;
+}
+
+function isColor(value: unknown): boolean {
+  return isRecord(value) && ["r", "g", "b", "a"].every((key) => isFloat32(value[key]));
+}
+
+function isZeroVector3(value: unknown): boolean {
+  return isVector3(value) && (value as Record<string, unknown>).x === 0 &&
+    (value as Record<string, unknown>).y === 0 && (value as Record<string, unknown>).z === 0;
+}
+
+function isVector2(value: unknown): boolean {
+  return isRecord(value) && isFloat32(value.x) && isFloat32(value.y);
+}
+
+function isCurveSlope(value: unknown): boolean {
+  return isFloat32(value) || value === "number:+infinity" || value === "number:-infinity";
+}
+
+function isFloat32(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && Math.fround(value) === value;
+}
+
+function isUint16(value: unknown): boolean {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 0xffff;
 }
 
 function parseJson(bytes: Uint8Array, capability: string): ParticleOperationResult<unknown> {

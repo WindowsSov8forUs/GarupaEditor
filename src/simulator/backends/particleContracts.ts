@@ -50,11 +50,13 @@ export interface ParticleTransformProfile {
   readonly m_LocalScale: ParticleVector3;
 }
 
+export type ParticleCurveSlope = number | "number:+infinity" | "number:-infinity";
+
 export interface ParticleCurveKey {
   readonly time: number;
   readonly value: number;
-  readonly inSlope: number;
-  readonly outSlope: number;
+  readonly inSlope: ParticleCurveSlope;
+  readonly outSlope: ParticleCurveSlope;
   readonly weightedMode: number;
   readonly inWeight: number;
   readonly outWeight: number;
@@ -107,7 +109,7 @@ export interface ParticleGradient {
   readonly atime5: number;
   readonly atime6: number;
   readonly atime7: number;
-  readonly m_Mode: 0;
+  readonly m_Mode: 0 | 1;
   readonly m_ColorSpace: -1;
   readonly m_NumColorKeys: number;
   readonly m_NumAlphaKeys: number;
@@ -123,22 +125,22 @@ export interface ParticleMinMaxGradient {
 
 export interface ParticleSystemProfile {
   readonly lengthInSec: number;
-  readonly simulationSpeed: 1;
-  readonly stopAction: 0;
+  readonly simulationSpeed: number;
+  readonly stopAction: number;
   readonly cullingMode: 0 | 1 | 3;
-  readonly ringBufferMode: 0;
+  readonly ringBufferMode: number;
   readonly ringBufferLoopRange: ParticleVector2;
-  readonly emitterVelocityMode: 0;
+  readonly emitterVelocityMode: number;
   readonly looping: boolean;
   readonly prewarm: boolean;
-  readonly playOnAwake: false;
-  readonly useUnscaledTime: false;
-  readonly autoRandomSeed: true;
+  readonly playOnAwake: boolean;
+  readonly useUnscaledTime: boolean;
+  readonly autoRandomSeed: boolean;
   readonly startDelay: ParticleMinMaxCurve;
-  readonly moveWithTransform: 0;
-  readonly moveWithCustomTransform: null;
-  readonly scalingMode: 1;
-  readonly randomSeed: 0;
+  readonly moveWithTransform: number;
+  readonly moveWithCustomTransform: unknown;
+  readonly scalingMode: 0 | 1;
+  readonly randomSeed: number;
 }
 
 export interface ParticleInitialModule {
@@ -155,50 +157,70 @@ export interface ParticleInitialModule {
   readonly gravityModifier: ParticleMinMaxCurve;
   readonly maxNumParticles: number;
   readonly size3D: boolean;
-  readonly rotation3D: false;
-  readonly randomizeRotationDirection: 0;
-  readonly gravitySource: 0;
+  readonly rotation3D: boolean;
+  readonly randomizeRotationDirection: number;
+  readonly gravitySource: number;
   readonly customEmitterVelocity: ParticleVector3;
 }
 
 export interface ParticleBurstProfile {
   readonly time: number;
   readonly countCurve: ParticleMinMaxCurve;
-  readonly cycleCount: 1;
+  readonly cycleCount: number;
   readonly repeatInterval: number;
-  readonly probability: 1;
+  readonly probability: number;
 }
 
 export interface ParticleEmissionModule {
   readonly enabled: true;
   readonly rateOverTime: ParticleMinMaxCurve;
   readonly rateOverDistance: ParticleMinMaxCurve;
-  readonly m_BurstCount: 1 | 2;
+  readonly m_BurstCount: number;
   readonly m_Bursts: readonly ParticleBurstProfile[];
 }
 
 export interface ParticleShapeScalar {
   readonly value: number;
-  readonly mode: 0;
-  readonly spread: 0;
+  readonly mode: number;
+  readonly spread: number;
   readonly speed: ParticleMinMaxCurve;
 }
 
 export interface ParticleShapeModule {
   readonly enabled: true;
-  readonly type: 4 | 5 | 10;
+  readonly type: 0 | 4 | 5 | 8 | 10;
   readonly radius: ParticleShapeScalar;
-  readonly radiusThickness: 0 | 1;
+  readonly radiusThickness: number;
   readonly angle: number;
   readonly length: number;
+  readonly boxThickness: ParticleVector3;
+  readonly donutRadius: number;
   readonly arc: ParticleShapeScalar;
+  readonly placementMode: 0;
+  readonly m_MeshMaterialIndex: number;
+  readonly m_MeshNormalOffset: number;
+  readonly m_MeshSpawn: Omit<ParticleShapeScalar, "value">;
+  readonly m_Mesh: null;
+  readonly m_MeshRenderer: null;
+  readonly m_SkinnedMeshRenderer: null;
+  readonly m_Sprite: null;
+  readonly m_SpriteRenderer: null;
+  readonly m_UseMeshMaterialIndex: boolean;
+  readonly m_UseMeshColors: boolean;
   readonly m_Position: ParticleVector3;
   readonly m_Rotation: ParticleVector3;
   readonly m_Scale: ParticleVector3;
-  readonly alignToDirection: false;
-  readonly randomDirectionAmount: 0;
-  readonly sphericalDirectionAmount: 0;
-  readonly randomPositionAmount: 0;
+  readonly alignToDirection: boolean;
+  readonly randomDirectionAmount: number;
+  readonly sphericalDirectionAmount: number;
+  readonly randomPositionAmount: number;
+  readonly m_Texture: null;
+  readonly m_TextureClipChannel: number;
+  readonly m_TextureClipThreshold: number;
+  readonly m_TextureUVChannel: number;
+  readonly m_TextureColorAffectsParticles: boolean;
+  readonly m_TextureAlphaAffectsParticles: boolean;
+  readonly m_TextureBilinearFiltering: boolean;
 }
 
 export interface ParticleColorModule {
@@ -209,7 +231,7 @@ export interface ParticleColorModule {
 export interface ParticleSizeModule {
   readonly enabled: true;
   readonly curve: ParticleMinMaxCurve;
-  readonly separateAxes: false;
+  readonly separateAxes: boolean;
   readonly y: ParticleMinMaxCurve;
   readonly z: ParticleMinMaxCurve;
 }
@@ -223,7 +245,6 @@ export interface ParticleRotationModule {
 }
 
 export interface ParticleRotationBySpeedModule extends ParticleRotationModule {
-  readonly separateAxes: false;
   readonly range: ParticleVector2;
 }
 
@@ -231,32 +252,75 @@ export interface ParticleClampVelocityModule {
   readonly enabled: true;
   readonly magnitude: ParticleMinMaxCurve;
   readonly dampen: number;
-  readonly separateAxis: false;
-  readonly inWorldSpace: false;
+  readonly separateAxis: boolean;
+  readonly inWorldSpace: boolean;
   readonly x: ParticleMinMaxCurve;
   readonly y: ParticleMinMaxCurve;
   readonly z: ParticleMinMaxCurve;
   readonly drag: ParticleMinMaxCurve;
-  readonly multiplyDragByParticleSize: true;
-  readonly multiplyDragByParticleVelocity: true;
+  readonly multiplyDragByParticleSize: boolean;
+  readonly multiplyDragByParticleVelocity: boolean;
+}
+
+export interface ParticleVelocityModule {
+  readonly enabled: true;
+  readonly x: ParticleMinMaxCurve;
+  readonly y: ParticleMinMaxCurve;
+  readonly z: ParticleMinMaxCurve;
+  readonly orbitalX: ParticleMinMaxCurve;
+  readonly orbitalY: ParticleMinMaxCurve;
+  readonly orbitalZ: ParticleMinMaxCurve;
+  readonly orbitalOffsetX: ParticleMinMaxCurve;
+  readonly orbitalOffsetY: ParticleMinMaxCurve;
+  readonly orbitalOffsetZ: ParticleMinMaxCurve;
+  readonly radial: ParticleMinMaxCurve;
+  readonly speedModifier: ParticleMinMaxCurve;
+  readonly inWorldSpace: boolean;
+}
+
+export interface ParticleForceModule {
+  readonly enabled: true;
+  readonly x: ParticleMinMaxCurve;
+  readonly y: ParticleMinMaxCurve;
+  readonly z: ParticleMinMaxCurve;
+  readonly inWorldSpace: boolean;
+  readonly randomizePerFrame: boolean;
+}
+
+export interface ParticleCustomDataModule {
+  readonly enabled: true;
+  readonly mode0: number;
+  readonly vectorComponentCount0: number;
+  readonly color0: ParticleMinMaxGradient;
+  readonly vector0_0: ParticleMinMaxCurve;
+  readonly vector0_1: ParticleMinMaxCurve;
+  readonly vector0_2: ParticleMinMaxCurve;
+  readonly vector0_3: ParticleMinMaxCurve;
+  readonly mode1: number;
+  readonly vectorComponentCount1: number;
+  readonly color1: ParticleMinMaxGradient;
+  readonly vector1_0: ParticleMinMaxCurve;
+  readonly vector1_1: ParticleMinMaxCurve;
+  readonly vector1_2: ParticleMinMaxCurve;
+  readonly vector1_3: ParticleMinMaxCurve;
 }
 
 export interface ParticleUvModule {
   readonly enabled: true;
   readonly frameOverTime: ParticleMinMaxCurve;
   readonly startFrame: ParticleMinMaxCurve;
-  readonly tilesX: 4;
-  readonly tilesY: 4;
-  readonly animationType: 0;
-  readonly rowMode: 1;
-  readonly rowIndex: 0;
-  readonly cycles: 1;
-  readonly timeMode: 0;
-  readonly fps: 30;
-  readonly uvChannelMask: -1;
-  readonly flipU: 0;
-  readonly flipV: 0;
-  readonly mode: 0;
+  readonly tilesX: number;
+  readonly tilesY: number;
+  readonly animationType: number;
+  readonly rowMode: number;
+  readonly rowIndex: number;
+  readonly cycles: number;
+  readonly timeMode: number;
+  readonly fps: number;
+  readonly uvChannelMask: number;
+  readonly flipU: number;
+  readonly flipV: number;
+  readonly mode: number;
   readonly sprites: readonly unknown[];
   readonly speedRange: ParticleVector2;
 }
@@ -276,6 +340,9 @@ export type ParticleModuleType =
   | "RotationModule"
   | "RotationBySpeedModule"
   | "ClampVelocityModule"
+  | "VelocityModule"
+  | "ForceModule"
+  | "CustomDataModule"
   | "UVModule";
 
 export interface ParticleModuleProfileMap {
@@ -287,6 +354,9 @@ export interface ParticleModuleProfileMap {
   readonly RotationModule?: Readonly<Record<string, ParticleRotationModule>>;
   readonly RotationBySpeedModule?: Readonly<Record<string, ParticleRotationBySpeedModule>>;
   readonly ClampVelocityModule?: Readonly<Record<string, ParticleClampVelocityModule>>;
+  readonly VelocityModule?: Readonly<Record<string, ParticleVelocityModule>>;
+  readonly ForceModule?: Readonly<Record<string, ParticleForceModule>>;
+  readonly CustomDataModule?: Readonly<Record<string, ParticleCustomDataModule>>;
   readonly UVModule?: Readonly<Record<string, ParticleUvModule>>;
 }
 
@@ -299,16 +369,16 @@ export interface ParticleRendererProfile {
   readonly m_Enabled: boolean;
   readonly m_Materials: readonly (ParticleRendererMaterialReference | null)[];
   readonly m_SortingOrder: number;
-  readonly m_RenderMode: 0 | 1;
+  readonly m_RenderMode: 0 | 1 | 4;
   readonly m_RenderAlignment: 0 | 2;
-  readonly m_MinParticleSize: 0;
+  readonly m_MinParticleSize: number;
   readonly m_MaxParticleSize: number;
   readonly m_VelocityScale: number;
   readonly m_LengthScale: number;
   readonly m_NormalDirection: number;
-  readonly m_SortMode: 0;
+  readonly m_SortMode: number;
   readonly m_ApplyActiveColorSpace: boolean;
-  readonly m_RotateWithStretchDirection: true;
+  readonly m_RotateWithStretchDirection: boolean;
   readonly m_Pivot: ParticleVector3;
 }
 
@@ -333,12 +403,16 @@ export interface ParticleTextureProfile {
 
 export interface ParticleSystemDefinition {
   readonly identity: string;
+  readonly sourceOrdinal?: number;
   readonly root: ParticleRootId;
   readonly path: string;
   readonly transform: ParticleTransformProfile;
   readonly parentTransforms: readonly ParticleTransformProfile[];
+  /** root→immediate-parent flags identifying which ancestor Transforms receive ParticleSystem setup scale g. */
+  readonly parentParticleSystemFlags?: readonly boolean[];
   readonly profile: string;
-  readonly randomStateU32: readonly [number, number, number, number];
+  /** Legacy Schema-1 fixture field; native-semantic Schema 2 allocates runtime state per concrete instance. */
+  readonly randomStateU32?: readonly [number, number, number, number];
 }
 
 export interface ParticleBundleProfile {
@@ -352,10 +426,10 @@ export interface ParticleBundleProfile {
 }
 
 export interface ParticlePortableProfile {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 1 | 2;
   readonly sample: ParticleSampleIdentity;
   readonly packIdentity: string;
-  readonly fidelity: "current-static-portable";
+  readonly fidelity: "current-static-portable" | "current-native-semantic-v2";
   readonly networkAllowed: false;
   readonly automaticFallbackAllowed: false;
   readonly systemCount: number;
@@ -553,6 +627,13 @@ export interface ParticleFloat32Color {
   readonly alphaBits: string;
 }
 
+export interface ParticleFloat32Vector4 {
+  readonly xBits: string;
+  readonly yBits: string;
+  readonly zBits: string;
+  readonly wBits: string;
+}
+
 export interface ParticleRenderSample {
   readonly particleId: string;
   readonly ownerKey: string;
@@ -569,9 +650,11 @@ export interface ParticleRenderSample {
   readonly lifetimeBits: string;
   readonly uvFrame: number;
   readonly sortingOrder: number;
-  readonly renderMode: 0 | 1;
+  readonly renderMode: 0 | 1 | 4;
   readonly renderAlignment: 0 | 2;
   readonly material: string | null;
+  readonly customData0: ParticleFloat32Vector4 | null;
+  readonly customData1: ParticleFloat32Vector4 | null;
 }
 
 export interface ParticleFrameSnapshot {
@@ -597,7 +680,14 @@ export interface ParticleBackendFault {
 
 export interface ParticleRandomStateSnapshot {
   readonly systemId: string;
+  readonly ownerKey: string;
+  readonly ownerGeneration: number;
+  readonly seed: number;
   readonly stateU32: readonly [number, number, number, number];
+  readonly emissionStateU32: readonly [number, number, number, number];
+  readonly initialModuleStateU32: readonly (readonly [number, number, number, number])[];
+  readonly shapeModuleStateU32: readonly (readonly [number, number, number, number])[];
+  readonly rateAccumulatorBits: string;
   readonly birthCount: number;
 }
 

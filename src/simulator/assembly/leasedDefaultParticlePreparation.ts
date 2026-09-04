@@ -58,10 +58,16 @@ export async function prepareLeasedDefaultParticleProvider(
     }
     pngBytes.set(rawEntry.logicalAssetId, Uint8Array.from(bytes.value));
   }
+  const legacyBundles = Array.isArray(rawProfile.value.bundles) ? rawProfile.value.bundles : null;
+  if (legacyBundles === null || legacyBundles.some((bundle: unknown) => !record(bundle) || !Array.isArray(bundle.systems))) {
+    return invalid("simulator.particle.default-profile-bundles");
+  }
   const profile = Object.freeze({
     ...rawProfile.value,
+    schemaVersion: 2,
     packIdentity: `particle-skin-source-bound-v2-default-current-exact-10.1.4@${view.value.revision}`,
-    fidelity: "current-static-portable",
+    fidelity: "current-native-semantic-v2",
+    bundles: Object.freeze(legacyBundles.map(upgradeDefaultBundle)),
   }) as unknown as ParticlePortableProfile;
   const textures = Object.freeze({
     ...rawTextures.value,
@@ -105,6 +111,25 @@ export async function prepareLeasedDefaultParticleProvider(
     readPreparedSkinPack: async () => particleAccepted(validated.value),
   });
   return accepted(provider);
+}
+
+function upgradeDefaultBundle(bundle: Record<string, any>): Readonly<Record<string, unknown>> {
+  const particlePaths = new Set(bundle.systems
+    .filter(record)
+    .map((system: Record<string, unknown>) => system.path)
+    .filter((path: unknown): path is string => typeof path === "string" && path.length > 0));
+  return Object.freeze({
+    ...bundle,
+    systems: Object.freeze(bundle.systems.map((system: unknown, sourceOrdinal: number) => {
+      const source = record(system) ? { ...system } : {};
+      delete source.randomStateU32;
+      const path = typeof source.path === "string" ? source.path : "";
+      const segments = path.split("/");
+      const parentParticleSystemFlags = segments.slice(0, -1).map((_segment, index) =>
+        particlePaths.has(segments.slice(0, index + 1).join("/")));
+      return Object.freeze({ ...source, sourceOrdinal, parentParticleSystemFlags: Object.freeze(parentParticleSystemFlags) });
+    })),
+  });
 }
 
 function record(value: unknown): value is Record<string, any> {

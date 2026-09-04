@@ -3,7 +3,9 @@ import type {
   ParticleBundleProfile,
   ParticleClampVelocityModule,
   ParticleColorModule,
+  ParticleCustomDataModule,
   ParticleEmissionModule,
+  ParticleForceModule,
   ParticleInitialModule,
   ParticleInstanceIdentity,
   ParticleMinMaxCurve,
@@ -20,26 +22,71 @@ import type {
   ParticleSystemDefinition,
   ParticleTransformProfile,
   ParticleUvModule,
+  ParticleVelocityModule,
 } from "../../backends/particleContracts";
 import {
-  particleRandomSlots,
+  PARTICLE_AUTO_SEED_INITIAL_STATE,
+  particleSimdRandomValues,
+  particleSimdStateFromSeed,
+  particleSeedRatio,
+  particleStateFromSeed,
+  particleWordRatio,
+  particleXorshift128,
+  type ParticleRandomSimdState,
   type ParticleRandomStateU32,
 } from "./particleRandom";
 
-const TWO_PI = 6.283185307179586;
+const TWO_PI = float32FromBits(0x40C90FDB);
+const DEG_TO_RAD = float32FromBits(0x3C8EFA35);
+const INVERSE_TWO_PI = float32FromBits(0x3E22F983);
+const TRIG_POLY_1 = float32FromBits(0x42255DDC);
+const TRIG_POLY_2 = float32FromBits(0x42A33422);
+const TRIG_POLY_3 = float32FromBits(0x42992322);
+const TRIG_POLY_4 = float32FromBits(0x421EA0CD);
+const TRIG_POLY_TWO_PI = float32FromBits(0x40C90FDA);
+const CUBE_LOG_LINEAR = float32FromBits(0x3FB80D57);
+const CUBE_LOG_QUADRATIC = float32FromBits(0xBF21DDA4);
+const CUBE_LOG_CUBIC = float32FromBits(0x3E470BD9);
+const CUBE_EXP_LINEAR = float32FromBits(0x3F2EA941);
+const CUBE_EXP_QUADRATIC = float32FromBits(0x3EA2AD7F);
+const ONE_THIRD = float32FromBits(0x3EAAAAAB);
 const MIN_LIFETIME = Math.fround(1e-6);
+const SHAPE_DIRECTION_EPSILON_SQUARED = float32FromBits(0x0da24260);
 
 type Vector3 = [number, number, number];
 type Color4 = [number, number, number, number];
+type ColorBytes = [number, number, number, number];
+type ParticleSimdDraws = ReturnType<typeof particleSimdRandomValues>;
 
 interface SystemRecord {
   readonly bundle: ParticleBundleProfile;
   readonly definition: ParticleSystemDefinition;
+  readonly ordinal: number;
 }
 
-interface GlobalSystemState {
+interface InstanceSystemState {
+  readonly key: string;
+  readonly ownerKey: string;
+  readonly ownerGeneration: number;
+  readonly systemId: string;
+  readonly seed: number;
   stream: ParticleRandomStateU32;
+  emissionStream: ParticleRandomStateU32;
+  initialModuleStream: ParticleRandomSimdState;
+  shapeModuleStream: ParticleRandomSimdState;
+  rateAccumulator: number;
   birthCount: number;
+}
+
+interface EmissionBatch {
+  readonly at: number;
+  readonly count: number;
+}
+
+interface BirthRandomSample {
+  readonly particleSeed: number;
+  readonly slots: readonly number[];
+  readonly shapeValues: readonly number[];
 }
 
 interface SimulatedParticle {
@@ -48,15 +95,18 @@ interface SimulatedParticle {
   readonly emitterOrigin: Vector3;
   age: number;
   readonly lifetime: number;
+  readonly randomSeed: number;
   position: Vector3;
   velocity: Vector3;
+  renderVelocity: Vector3;
   readonly baseSize: Vector3;
-  readonly baseColor: Color4;
+  readonly baseColor: ColorBytes;
   rotation: Vector3;
   readonly slots: readonly number[];
 }
 
 interface OwnerSystemRuntime {
+  readonly instanceStateKey: string;
   playing: boolean;
   elapsed: number;
   first: boolean;
@@ -65,6 +115,7 @@ interface OwnerSystemRuntime {
 
 interface OwnerRuntime {
   readonly ownerKey: string;
+  readonly generation: number;
   instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systems: Map<string, OwnerSystemRuntime>;
@@ -87,8 +138,11 @@ export class ParticleSimulationFault extends Error {
 
 export class DeterministicParticleSimulation {
   private readonly definitions = new Map<string, SystemRecord>();
-  private readonly global = new Map<string, GlobalSystemState>();
+  private readonly instanceStates = new Map<string, InstanceSystemState>();
   private readonly owners = new Map<string, OwnerRuntime>();
+  private readonly constructedOwners = new Map<string, ParticleRootId>();
+  private autoSeedState: ParticleRandomStateU32 = PARTICLE_AUTO_SEED_INITIAL_STATE;
+  private ownerGenerationSequence = 0;
   private creationSequence = 0;
 
   constructor(
@@ -99,16 +153,18 @@ export class DeterministicParticleSimulation {
       gameplayTransformScale !== Math.fround(gameplayTransformScale)) {
       throw fault("particle.simulation.invalid-gameplay-transform-scale", "ParticleSystem hierarchy scale must be one positive binary32 value.");
     }
+    let ordinal = 0;
     for (const bundle of profile.bundles) {
-      for (const definition of bundle.systems) {
+      for (let bundleOrdinal = 0; bundleOrdinal < bundle.systems.length; bundleOrdinal += 1) {
+        const definition = bundle.systems[bundleOrdinal]!;
         if (this.definitions.has(definition.identity)) {
           throw fault("particle.simulation.duplicate-system", "System semantic identities must be globally unique.");
         }
-        this.definitions.set(definition.identity, { bundle, definition });
-        this.global.set(definition.identity, {
-          stream: Object.freeze([...definition.randomStateU32]) as ParticleRandomStateU32,
-          birthCount: 0,
-        });
+        if (profile.schemaVersion === 2 && definition.sourceOrdinal !== bundleOrdinal) {
+          throw fault("particle.simulation.source-ordinal-drift", "Native-semantic Schema 2 requires contiguous serialized/component order in every bundle.");
+        }
+        this.definitions.set(definition.identity, { bundle, definition, ordinal });
+        ordinal += 1;
       }
     }
     if (this.definitions.size !== profile.systemCount || profile.systemCount <= 0) {
@@ -121,15 +177,30 @@ export class DeterministicParticleSimulation {
     Object.defineProperty(cloned, "profile", { value: this.profile, enumerable: true });
     Object.defineProperty(cloned, "gameplayTransformScale", { value: this.gameplayTransformScale, enumerable: true });
     Object.defineProperty(cloned, "definitions", { value: new Map(this.definitions) });
-    Object.defineProperty(cloned, "global", {
-      value: new Map([...this.global].map(([identity, state]) => [identity, {
+    Object.defineProperty(cloned, "instanceStates", {
+      value: new Map([...this.instanceStates].map(([key, state]) => [key, {
+        key: state.key,
+        ownerKey: state.ownerKey,
+        ownerGeneration: state.ownerGeneration,
+        systemId: state.systemId,
+        seed: state.seed,
         stream: Object.freeze([...state.stream]) as ParticleRandomStateU32,
+        emissionStream: Object.freeze([...state.emissionStream]) as ParticleRandomStateU32,
+        initialModuleStream: cloneSimdState(state.initialModuleStream),
+        shapeModuleStream: cloneSimdState(state.shapeModuleStream),
+        rateAccumulator: state.rateAccumulator,
         birthCount: state.birthCount,
       }])),
     });
     Object.defineProperty(cloned, "owners", {
       value: new Map([...this.owners].map(([ownerKey, owner]) => [ownerKey, cloneOwner(owner)])),
     });
+    Object.defineProperty(cloned, "constructedOwners", { value: new Map(this.constructedOwners) });
+    Object.defineProperty(cloned, "autoSeedState", {
+      value: Object.freeze([...this.autoSeedState]) as ParticleRandomStateU32,
+      writable: true,
+    });
+    Object.defineProperty(cloned, "ownerGenerationSequence", { value: this.ownerGenerationSequence, writable: true });
     Object.defineProperty(cloned, "creationSequence", { value: this.creationSequence, writable: true });
     return cloned;
   }
@@ -139,16 +210,20 @@ export class DeterministicParticleSimulation {
     instance: ParticleInstanceIdentity,
     root: ParticleRootId,
   ): void {
-    const selected = [...this.definitions]
-      .filter(([, record]) => record.definition.root === root)
-      .map(([identity]) => identity)
-      .sort();
-    // A non-null root restarts as clearParticle (Stop/Clear only while
-    // playing) followed by Play(withChildren=true). Owner particles reset,
-    // while the per-system global random stream deliberately continues.
-    // The incremental API below is reserved for serialized child GameObject
-    // activation under one already-playing root.
-    this.owners.delete(ownerKey);
+    const selected = [...this.definitions.values()]
+      .filter((record) => record.definition.root === root)
+      .sort((left, right) => left.ordinal - right.ordinal)
+      .map((record) => record.definition.identity);
+    const owner = this.owners.get(ownerKey);
+    if (owner !== undefined) {
+      if (owner.root !== root || !sameParticleInstance(owner.instance, instance)) {
+        throw fault("particle.simulation.owner-identity-mismatch", "A live native ParticleSystem instance cannot switch owner/root identity during Stop/Clear/Play restart.");
+      }
+      // The managed routes execute Stop(withChildren) + Clear(withChildren)
+      // before Play. Native fresh Play observes an empty particle store and
+      // re-runs 0x108F26C for each component, consuming a new auto seed.
+      this.removeOwnerRuntime(owner);
+    }
     this.playRootSystems(ownerKey, instance, root, selected);
   }
 
@@ -159,12 +234,15 @@ export class DeterministicParticleSimulation {
     selectedSystemIds: readonly string[],
   ): void {
     if (!Array.isArray(selectedSystemIds) || selectedSystemIds.length === 0) {
-      throw fault("particle.simulation.unknown-root", "Play requires at least one prepared semantic particle system owner.");
+      throw fault("particle.simulation.unknown-root", "Play requires at least one prepared semantic ParticleSystem owner.");
     }
     let owner = this.owners.get(ownerKey);
     if (owner === undefined) {
+      this.ensureConstructedOwner(ownerKey, root);
+      this.ownerGenerationSequence += 1;
       owner = {
         ownerKey,
+        generation: this.ownerGenerationSequence,
         instance: Object.freeze({ ...instance }),
         root,
         systems: new Map<string, OwnerSystemRuntime>(),
@@ -173,26 +251,104 @@ export class DeterministicParticleSimulation {
     } else if (owner.root !== root || !sameParticleInstance(owner.instance, instance)) {
       throw fault("particle.simulation.owner-identity-mismatch", "Incremental ParticleSystem activation requires the same stable root owner identity.");
     }
-    for (const identity of [...new Set(selectedSystemIds)].sort()) {
+    const selected = [...new Set(selectedSystemIds)].map((identity) => {
       const record = this.definitions.get(identity);
-      if (record === undefined || record.definition.root !== root || owner.systems.has(identity)) {
+      if (record === undefined || record.definition.root !== root || owner!.systems.has(identity)) {
         throw fault("particle.simulation.invalid-system-activation", "Every incremental activation must name one inactive prepared ParticleSystem under the selected root.");
       }
+      return record;
+    }).sort((left, right) => left.ordinal - right.ordinal);
+    for (const record of selected) {
       const profile = record.bundle.profiles[record.definition.profile];
       if (profile === undefined) throw fault("particle.simulation.missing-profile", "Every selected system profile must resolve.");
-      const runtime: OwnerSystemRuntime = {
-        playing: true,
-        elapsed: f32(0),
-        first: true,
-        particles: [],
-      };
-      owner.systems.set(identity, runtime);
-      if (profile.system.prewarm) {
-        const duration = f32(profile.system.lengthInSec);
-        const events = this.events(record.bundle, profile, -duration, 0, true).filter((at) => at < 0);
-        for (const at of events) this.spawn(owner, record, profile, runtime, at, subtract(0, at));
+      const runtime = this.createSystemRuntime(owner, record, profile);
+      owner.systems.set(record.definition.identity, runtime);
+      this.prewarm(owner, record, profile, runtime);
+    }
+  }
+
+  private ensureConstructedOwner(ownerKey: string, root: ParticleRootId): void {
+    const existing = this.constructedOwners.get(ownerKey);
+    if (existing !== undefined) {
+      if (existing !== root) {
+        throw fault("particle.simulation.constructed-owner-root-mismatch", "A concrete pooled particle owner cannot change its serialized prefab root.");
+      }
+      return;
+    }
+    const records = [...this.definitions.values()]
+      .filter((record) => record.definition.root === root)
+      .sort((left, right) => left.ordinal - right.ordinal);
+    for (const record of records) {
+      const profile = record.bundle.profiles[record.definition.profile];
+      if (profile === undefined) throw fault("particle.simulation.missing-profile", "Every constructed system profile must resolve.");
+      if (profile.system.autoRandomSeed) {
+        const constructionSeed = particleXorshift128(this.autoSeedState);
+        this.autoSeedState = constructionSeed.state;
       }
     }
+    this.constructedOwners.set(ownerKey, root);
+  }
+
+  private createSystemRuntime(
+    owner: OwnerRuntime,
+    record: SystemRecord,
+    profile: ParticleProfileDefinition,
+  ): OwnerSystemRuntime {
+    const instanceStateKey = `${owner.ownerKey}\u0000${owner.generation}\u0000${record.definition.identity}`;
+    let seed: number;
+    if (profile.system.autoRandomSeed) {
+      const assigned = particleXorshift128(this.autoSeedState);
+      this.autoSeedState = assigned.state;
+      seed = assigned.value;
+    } else {
+      seed = profile.system.randomSeed >>> 0;
+    }
+    this.instanceStates.set(instanceStateKey, {
+      key: instanceStateKey,
+      ownerKey: owner.ownerKey,
+      ownerGeneration: owner.generation,
+      systemId: record.definition.identity,
+      seed,
+      stream: particleStateFromSeed(seed),
+      emissionStream: particleStateFromSeed(seed),
+      initialModuleStream: particleSimdStateFromSeed(seed),
+      shapeModuleStream: particleSimdStateFromSeed(seed),
+      rateAccumulator: f32(0),
+      birthCount: 0,
+    });
+    return {
+      instanceStateKey,
+      playing: true,
+      elapsed: f32(0),
+      first: true,
+      particles: [],
+    };
+  }
+
+  private prewarm(
+    owner: OwnerRuntime,
+    record: SystemRecord,
+    profile: ParticleProfileDefinition,
+    runtime: OwnerSystemRuntime,
+  ): void {
+    if (!profile.system.prewarm) return;
+    const duration = f32(profile.system.lengthInSec);
+    const events = this.events(record.bundle, profile, runtime, -duration, 0, true)
+      .filter((batch) => batch.at < 0);
+    let cursor = f32(-duration);
+    for (const batch of events) {
+      const segment = subtract(batch.at, cursor);
+      if (segment > 0) {
+        for (const particle of runtime.particles) this.updateParticle(record, particle, segment);
+      }
+      this.spawnBatch(owner, record, profile, runtime, batch, batch.at);
+      cursor = batch.at;
+    }
+    const finalSegment = subtract(0, cursor);
+    if (finalSegment > 0) {
+      for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
+    }
+    runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
   }
 
   updateSystemTransforms(updates: readonly ParticleSystemTransformUpdate[]): void {
@@ -209,6 +365,7 @@ export class DeterministicParticleSimulation {
       }
       staged.set(update.systemId, {
         bundle: record.bundle,
+        ordinal: record.ordinal,
         definition: Object.freeze({
           ...record.definition,
           transform: freezeTransform(update.transform),
@@ -240,7 +397,11 @@ export class DeterministicParticleSimulation {
     if (owner === undefined || !Array.isArray(systemIds) || systemIds.some((identity) => !owner.systems.has(identity))) {
       throw fault("particle.simulation.invalid-system-deactivation", "Serialized GameObject deactivation requires active ParticleSystems under the same stable root owner.");
     }
-    for (const identity of new Set(systemIds)) owner.systems.delete(identity);
+    for (const identity of new Set(systemIds)) {
+      const runtime = owner.systems.get(identity)!;
+      this.instanceStates.delete(runtime.instanceStateKey);
+      owner.systems.delete(identity);
+    }
   }
 
   moveOwner(ownerKey: string, instance: Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }>): void {
@@ -254,11 +415,17 @@ export class DeterministicParticleSimulation {
   }
 
   stopOwner(ownerKey: string): void {
-    this.owners.delete(ownerKey);
+    const owner = this.owners.get(ownerKey);
+    if (owner !== undefined) this.removeOwnerRuntime(owner);
   }
 
   clearAll(): void {
-    this.owners.clear();
+    for (const owner of [...this.owners.values()]) this.removeOwnerRuntime(owner);
+  }
+
+  private removeOwnerRuntime(owner: OwnerRuntime): void {
+    for (const runtime of owner.systems.values()) this.instanceStates.delete(runtime.instanceStateKey);
+    this.owners.delete(owner.ownerKey);
   }
 
   step(deltaTime: number, paused: boolean): void {
@@ -266,27 +433,37 @@ export class DeterministicParticleSimulation {
     if (!Number.isFinite(delta) || delta < 0) {
       throw fault("particle.simulation.invalid-delta", "Simulation accepts one finite non-negative binary32 outer-frame delta.");
     }
-    if (paused) return;
+    // Current managed pause does not call ParticleSystem.Pause. The gameplay,
+    // input and score clocks may be frozen while native ParticleSystem jobs
+    // continue to consume the supplied outer-frame delta.
+    void paused;
     for (const owner of this.owners.values()) {
-      for (const identity of [...owner.systems.keys()].sort()) {
+      const orderedSystems = [...owner.systems.keys()].sort((left, right) =>
+        this.definitions.get(left)!.ordinal - this.definitions.get(right)!.ordinal);
+      for (const identity of orderedSystems) {
         const runtime = owner.systems.get(identity)!;
         if (!runtime.playing) continue;
         const record = this.definitions.get(identity)!;
         const profile = record.bundle.profiles[record.definition.profile]!;
+        const effectiveDelta = multiply(delta, profile.system.simulationSpeed);
         const before = runtime.elapsed;
-        const after = add(before, multiply(delta, profile.system.simulationSpeed));
-        for (const particle of [...runtime.particles]) {
-          this.updateParticle(record.bundle, profile, particle, delta);
+        const after = add(before, effectiveDelta);
+        const batches = this.events(record.bundle, profile, runtime, before, after, runtime.first);
+        let cursor = before;
+        for (const batch of batches) {
+          const segment = subtract(batch.at, cursor);
+          if (segment > 0) {
+            for (const particle of runtime.particles) this.updateParticle(record, particle, segment);
+          }
+          this.spawnBatch(owner, record, profile, runtime, batch, batch.at);
+          cursor = batch.at;
         }
-        // Reverse 4dec93f9 focused phase oracle: Unity evaluates this outer
-        // update's emissions against the still-owned particle list, then
-        // removes expired particles for publication. Removing expired rows
-        // before emission incorrectly frees maxNumParticles capacity in the
-        // same update (the looping Swipe/kira 2.0 s phase becomes 15 instead
-        // of the evidenced 12).
-        for (const at of this.events(record.bundle, profile, before, after, runtime.first)) {
-          this.spawn(owner, record, profile, runtime, at, subtract(after, at));
+        const finalSegment = subtract(after, cursor);
+        if (finalSegment > 0) {
+          for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
         }
+        // Native admission observes the still-owned outer-update list. Expired
+        // rows therefore do not free maxNumParticles until publication.
         runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
         runtime.elapsed = after;
         runtime.first = false;
@@ -302,7 +479,9 @@ export class DeterministicParticleSimulation {
   samples(): readonly ParticleRenderSample[] {
     const samples: ParticleRenderSample[] = [];
     for (const owner of this.owners.values()) {
-      for (const identity of [...owner.systems.keys()].sort()) {
+      const orderedSystems = [...owner.systems.keys()].sort((left, right) =>
+        this.definitions.get(left)!.ordinal - this.definitions.get(right)!.ordinal);
+      for (const identity of orderedSystems) {
         const runtime = owner.systems.get(identity)!;
         const record = this.definitions.get(identity)!;
         const profile = record.bundle.profiles[record.definition.profile]!;
@@ -315,23 +494,43 @@ export class DeterministicParticleSimulation {
           let size: Vector3 = [...particle.baseSize];
           const sizeModule = getModule(record.bundle, profile, "SizeModule");
           if (sizeModule !== null) {
-            const scale = minMax(sizeModule.curve, normalizedAge, particle.slots[2]!);
-            size = size.map((value) => multiply(value, scale)) as Vector3;
+            const sizeRandom = particleSeedRatio((particle.randomSeed + 0x8D2C8431) >>> 0);
+            if (sizeModule.separateAxes) {
+              size = [
+                multiply(size[0], Math.max(0, minMax(sizeModule.curve, normalizedAge, sizeRandom))),
+                multiply(size[1], Math.max(0, minMax(sizeModule.y, normalizedAge, sizeRandom))),
+                multiply(size[2], Math.max(0, minMax(sizeModule.z, normalizedAge, sizeRandom))),
+              ];
+            } else {
+              const scale = Math.max(0, minMax(sizeModule.curve, normalizedAge, sizeRandom));
+              size = size.map((value) => multiply(value, scale)) as Vector3;
+            }
           }
-          let color: Color4 = [...particle.baseColor];
+          const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, this.gameplayTransformScale);
+          size = size.map((value, index) => multiply(value, transformSize[index]!)) as Vector3;
+          let colorBytes: ColorBytes = [...particle.baseColor];
           const colorModule = getModule(record.bundle, profile, "ColorModule");
           if (colorModule !== null) {
-            const sampled = minMaxColor(colorModule.gradient, normalizedAge, particle.slots[5]!);
-            color = color.map((value, index) => multiply(value, sampled[index]!)) as Color4;
+            const sampled = colorToBytes(minMaxColor(
+              colorModule.gradient,
+              normalizedAge,
+              particleSeedRatio((particle.randomSeed + 0x591BC05C) >>> 0),
+            ));
+            colorBytes = colorBytes.map((value, index) => multiplyColorByte(value, sampled[index]!)) as ColorBytes;
           }
+          const color = colorBytes.map((value) => divide(value, 255)) as Color4;
           const uv = getModule(record.bundle, profile, "UVModule");
           let uvFrame = 0;
           if (uv !== null) {
-            const frame = minMax(uv.frameOverTime, normalizedAge, particle.slots[9]!);
-            const start = minMax(uv.startFrame, normalizedAge, particle.slots[8]!);
+            const uvRandom = particleSeedRatio((particle.randomSeed + 0x13740583) >>> 0);
+            const frame = minMax(uv.frameOverTime, normalizedAge, uvRandom);
+            const start = minMax(uv.startFrame, normalizedAge, uvRandom);
             const tileCount = uv.tilesX * uv.tilesY;
             uvFrame = modulo(Math.floor((start + frame * uv.cycles) * tileCount), tileCount);
           }
+          const custom = getModule(record.bundle, profile, "CustomDataModule");
+          const customData0 = custom === null ? null : customData(custom, 0, normalizedAge, particle.randomSeed);
+          const customData1 = custom === null ? null : customData(custom, 1, normalizedAge, particle.randomSeed);
           samples.push(Object.freeze({
             particleId: particle.particleId,
             ownerKey: owner.ownerKey,
@@ -340,7 +539,7 @@ export class DeterministicParticleSimulation {
             systemId: identity,
             creationSequence: particle.creationSequence,
             position: vectorBits(particle.position),
-            velocity: vectorBits(particle.velocity),
+            velocity: vectorBits(particle.renderVelocity),
             size: vectorBits(size),
             rotation: vectorBits(particle.rotation),
             color: colorBits(color),
@@ -351,21 +550,33 @@ export class DeterministicParticleSimulation {
             renderMode: renderer.m_RenderMode,
             renderAlignment: renderer.m_RenderAlignment,
             material: material?.name ?? null,
+            customData0: customData0 === null ? null : vector4Bits(customData0),
+            customData1: customData1 === null ? null : vector4Bits(customData1),
           }));
         }
       }
     }
     samples.sort((left, right) => left.sortingOrder - right.sortingOrder ||
-      compareOrdinal(left.systemId, right.systemId) || left.creationSequence - right.creationSequence);
+      this.definitions.get(left.systemId)!.ordinal - this.definitions.get(right.systemId)!.ordinal ||
+      left.creationSequence - right.creationSequence);
     return Object.freeze(samples);
   }
 
   randomStateSnapshot(): readonly ParticleRandomStateSnapshot[] {
-    return Object.freeze([...this.global]
-      .sort(([left], [right]) => compareOrdinal(left, right))
-      .map(([systemId, state]) => Object.freeze({
-        systemId,
+    return Object.freeze([...this.instanceStates.values()]
+      .sort((left, right) => left.ownerGeneration - right.ownerGeneration ||
+        this.definitions.get(left.systemId)!.ordinal - this.definitions.get(right.systemId)!.ordinal ||
+        compareOrdinal(left.ownerKey, right.ownerKey))
+      .map((state) => Object.freeze({
+        ownerKey: state.ownerKey,
+        ownerGeneration: state.ownerGeneration,
+        systemId: state.systemId,
+        seed: state.seed,
         stateU32: Object.freeze([...state.stream]) as ParticleRandomStateU32,
+        emissionStateU32: Object.freeze([...state.emissionStream]) as ParticleRandomStateU32,
+        initialModuleStateU32: cloneSimdState(state.initialModuleStream),
+        shapeModuleStateU32: cloneSimdState(state.shapeModuleStream),
+        rateAccumulatorBits: bits(state.rateAccumulator),
         birthCount: state.birthCount,
       })));
   }
@@ -373,40 +584,119 @@ export class DeterministicParticleSimulation {
   private events(
     bundle: ParticleBundleProfile,
     profile: ParticleProfileDefinition,
+    runtime: OwnerSystemRuntime,
     before: number,
     after: number,
-    includeZero: boolean,
-  ): number[] {
+    includeLowerBoundary: boolean,
+  ): EmissionBatch[] {
     const emission = getModule(bundle, profile, "EmissionModule");
     if (emission === null) return [];
-    const delay = f32(profile.system.startDelay.scalar);
+    const state = this.instanceStates.get(runtime.instanceStateKey);
+    if (state === undefined) {
+      throw fault("particle.simulation.instance-random-state-missing", "Emission requires the concrete ParticleSystem random owner.");
+    }
+    const drawWord = (): number => {
+      const step = particleXorshift128(state.emissionStream);
+      state.emissionStream = step.state;
+      state.stream = step.state;
+      return step.value;
+    };
+    const draw = (): number => particleWordRatio(drawWord());
+    // 0x103DFE8 advances the runtime stream once on every emission pass,
+    // before rate integration and any burst probability/count draws.
+    const rateRandom = draw();
+    const delay = minMax(profile.system.startDelay, 0, 0);
     const duration = f32(profile.system.lengthInSec);
     const firstLoop = Math.floor((before - delay) / duration) - 1;
     const lastLoopExclusive = Math.floor((after - delay) / duration) + 2;
-    const events: number[] = [];
+    const counts = new Map<number, number>();
+    const activeIntervals: Array<readonly [number, number]> = [];
+    const append = (at: number, count: number): void => {
+      if (count <= 0) return;
+      counts.set(at, (counts.get(at) ?? 0) + count);
+    };
     for (let loop = profile.system.looping ? firstLoop : 0;
       loop < (profile.system.looping ? lastLoopExclusive : 1);
       loop += 1) {
       const base = add(delay, multiply(loop, duration));
+      const activeStart = Math.max(before, base);
+      const activeEnd = Math.min(after, add(base, duration));
+      if (activeEnd > activeStart) activeIntervals.push(Object.freeze([activeStart, activeEnd] as const));
       for (const burst of emission.m_Bursts) {
-        const at = add(base, burst.time);
-        const lower = includeZero && before === 0 ? at >= before : at > before;
-        if (lower && at <= after) {
-          const count = Math.trunc(f32(burst.countCurve.scalar));
-          for (let index = 0; index < count; index += 1) events.push(at);
-        }
-      }
-      const rate = f32(emission.rateOverTime.scalar);
-      if (rate > 0) {
-        const interval = divide(1, rate);
-        for (let n = 1; ; n += 1) {
-          const at = add(base, multiply(n, interval));
-          if (at > after || at > add(base, duration)) break;
-          if (at > before) events.push(at);
+        for (let cycle = 0; cycle < burst.cycleCount; cycle += 1) {
+          const at = add(add(base, burst.time), multiply(cycle, burst.repeatInterval));
+          const lower = includeLowerBoundary ? at >= before : at > before;
+          if (!lower || at >= after || at > add(base, duration)) continue;
+          if (burst.probability < 1 && draw() >= burst.probability) continue;
+          append(at, currentBurstCount(
+            burst.countCurve,
+            clamp01(divide(subtract(at, base), duration)),
+            drawWord,
+          ));
         }
       }
     }
-    return events.sort((left, right) => left - right);
+    const rate = minMax(emission.rateOverTime, 0, rateRandom);
+    if (rate > 0) {
+      const interval = divide(1, rate);
+      const initial = getModule(bundle, profile, "InitialModule");
+      const boundedCandidates = initial?.maxNumParticles ?? 0;
+      let emittedCandidates = 0;
+      for (const [activeStart, activeEnd] of activeIntervals) {
+        const activeDelta = subtract(activeEnd, activeStart);
+        const previousAccumulator = state.rateAccumulator;
+        const total = add(previousAccumulator, multiply(activeDelta, rate));
+        const emitted = Math.max(0, Math.floor(total));
+        const firstOffset = divide(subtract(1, previousAccumulator), rate);
+        for (let index = 0; index < emitted && emittedCandidates < boundedCandidates; index += 1) {
+          append(add(activeStart, add(firstOffset, multiply(index, interval))), 1);
+          emittedCandidates += 1;
+        }
+        state.rateAccumulator = subtract(total, emitted);
+      }
+    }
+    return [...counts].sort(([left], [right]) => left - right)
+      .map(([at, count]) => Object.freeze({ at, count }));
+  }
+
+  private spawnBatch(
+    owner: OwnerRuntime,
+    record: SystemRecord,
+    profile: ParticleProfileDefinition,
+    runtime: OwnerSystemRuntime,
+    batch: EmissionBatch,
+    frameEnd: number,
+  ): void {
+    const initial = getModule(record.bundle, profile, "InitialModule");
+    if (initial === null) return;
+    const state = this.instanceStates.get(runtime.instanceStateKey);
+    if (state === undefined) {
+      throw fault("particle.simulation.instance-random-state-missing", "Birth admission requires the concrete ParticleSystem random owner.");
+    }
+    const admitted = Math.max(0, Math.min(batch.count, initial.maxNumParticles - runtime.particles.length));
+    const shape = getModule(record.bundle, profile, "ShapeModule");
+    for (let groupStart = 0; groupStart < admitted; groupStart += 4) {
+      const initialRandom = particleSimdRandomValues(state.initialModuleStream, initialModuleRandomDrawCount(initial));
+      state.initialModuleStream = initialRandom.state;
+      const shapeRandom = particleSimdRandomValues(state.shapeModuleStream, shapeRandomDrawCount(shape));
+      state.shapeModuleStream = shapeRandom.state;
+      const groupCount = Math.min(4, admitted - groupStart);
+      for (let lane = 0; lane < groupCount; lane += 1) {
+        const sample = buildBirthRandomSample(initial, initialRandom, shapeRandom, lane);
+        const batchIndex = groupStart + lane;
+        this.spawn(
+          owner,
+          record,
+          profile,
+          runtime,
+          batch.at,
+          subtract(frameEnd, batch.at),
+          batchIndex,
+          admitted,
+          sample,
+        );
+      }
+    }
   }
 
   private spawn(
@@ -415,125 +705,174 @@ export class DeterministicParticleSimulation {
     profile: ParticleProfileDefinition,
     runtime: OwnerSystemRuntime,
     _eventTime: number,
-    initialAge = 0,
+    initialAge: number,
+    batchIndex: number,
+    batchCount: number,
+    random: BirthRandomSample,
   ): void {
     const initial = getModule(record.bundle, profile, "InitialModule");
     if (initial === null || runtime.particles.length >= initial.maxNumParticles) return;
-    const global = this.global.get(record.definition.identity)!;
-    const random = particleRandomSlots(global.stream);
-    global.stream = random.state;
+    const instanceState = this.instanceStates.get(runtime.instanceStateKey);
+    if (instanceState === undefined) {
+      throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
+    }
     const slots = random.slots;
     const lifetime = Math.max(MIN_LIFETIME, minMax(initial.startLifetime, 0, slots[0]!));
     const speed = minMax(initial.startSpeed, 0, slots[1]!);
-    const sx = minMax(initial.startSize, 0, slots[2]!);
-    const sy = initial.size3D ? minMax(initial.startSizeY, 0, slots[3]!) : sx;
-    const sz = initial.size3D ? minMax(initial.startSizeZ, 0, slots[4]!) : sx;
-    const baseColor = minMaxColor(initial.startColor, 0, slots[5]!);
+    const sx = Math.max(0, minMax(initial.startSize, 0, slots[2]!));
+    const sy = initial.size3D ? Math.max(0, minMax(initial.startSizeY, 0, slots[3]!)) : sx;
+    const sz = initial.size3D ? Math.max(0, minMax(initial.startSizeZ, 0, slots[4]!)) : sx;
+    const baseColor = colorToBytes(minMaxColor(initial.startColor, 0, slots[5]!));
     const rotation: Vector3 = [
       minMax(initial.startRotationX, 0, slots[6]!),
       minMax(initial.startRotationY, 0, slots[7]!),
       minMax(initial.startRotation, 0, slots[8]!),
     ];
     const shape = getModule(record.bundle, profile, "ShapeModule");
-    let position: Vector3 = [0, 0, 0];
-    let direction: Vector3 = [0, 1, 0];
-    if (shape !== null) {
-      const theta = multiply(TWO_PI, slots[11]!);
-      const cosine = f32(Math.cos(theta));
-      const sine = f32(Math.sin(theta));
-      const radius = f32(shape.radius.value);
-      const radial = multiply(radius, add(
-        subtract(1, shape.radiusThickness),
-        multiply(shape.radiusThickness, f32(Math.sqrt(slots[10]!))),
-      ));
-      if (shape.type === 4) {
-        const angle = f32(shape.angle * Math.PI / 180);
-        position = [multiply(radial, cosine), multiply(radial, sine), 0];
-        direction = [
-          multiply(f32(Math.sin(angle)), cosine),
-          multiply(f32(Math.sin(angle)), sine),
-          f32(Math.cos(angle)),
-        ];
-      } else if (shape.type === 5) {
-        position = [
-          multiply(subtract(slots[9]!, 0.5), shape.m_Scale.x),
-          multiply(subtract(slots[10]!, 0.5), shape.m_Scale.y),
-          multiply(subtract(slots[11]!, 0.5), shape.m_Scale.z),
-        ];
-        direction = [0, 0, 1];
-      } else if (shape.type === 10) {
-        position = [multiply(radial, cosine), multiply(radial, sine), 0];
-        direction = [cosine, sine, 0];
-      } else {
-        throw fault("particle.simulation.unsupported-shape", "Only current shape types 4, 5 and 10 are portable.");
-      }
-    }
-    let velocity = direction.map((value) => multiply(value, speed)) as Vector3;
+    const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
+    let position: Vector3 = birth.position;
+    let velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
     let emitterOrigin: Vector3 = [0, 0, 0];
     emitterOrigin = applyTransform(emitterOrigin, record.definition.transform, true, this.gameplayTransformScale);
-    for (const parent of record.definition.parentTransforms) {
-      emitterOrigin = applyTransform(emitterOrigin, parent, true, this.gameplayTransformScale);
+    for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
+      const parent = record.definition.parentTransforms[index]!;
+      const setupScale = parentSetupScale(record.definition, index, this.gameplayTransformScale);
+      emitterOrigin = applyTransform(emitterOrigin, parent, true, setupScale);
     }
     position = applyTransform(position, record.definition.transform, true, this.gameplayTransformScale);
     velocity = applyTransform(velocity, record.definition.transform, false, this.gameplayTransformScale);
-    for (const parent of record.definition.parentTransforms) {
-      position = applyTransform(position, parent, true, this.gameplayTransformScale);
-      velocity = applyTransform(velocity, parent, false, this.gameplayTransformScale);
+    for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
+      const parent = record.definition.parentTransforms[index]!;
+      const setupScale = parentSetupScale(record.definition, index, this.gameplayTransformScale);
+      position = applyTransform(position, parent, true, setupScale);
+      velocity = applyTransform(velocity, parent, false, setupScale);
     }
-    global.birthCount += 1;
+    instanceState.birthCount += 1;
     this.creationSequence += 1;
     const particle: SimulatedParticle = {
-      particleId: `${record.definition.identity}#${global.birthCount}`,
+      particleId: `${owner.ownerKey}\u0000${owner.generation}\u0000${record.definition.identity}#${instanceState.birthCount}`,
       creationSequence: this.creationSequence,
       emitterOrigin: emitterOrigin.map(f32) as Vector3,
       age: f32(0),
       lifetime,
+      randomSeed: random.particleSeed,
       position: position.map(f32) as Vector3,
       velocity: velocity.map(f32) as Vector3,
+      renderVelocity: velocity.map(f32) as Vector3,
       baseSize: [sx, sy, sz],
       baseColor,
       rotation,
       slots,
     };
     runtime.particles.push(particle);
-    if (initialAge > 0) this.updateParticle(record.bundle, profile, particle, f32(initialAge));
+    if (initialAge > 0) this.updateParticle(record, particle, f32(initialAge));
     void owner;
   }
 
   private updateParticle(
-    bundle: ParticleBundleProfile,
-    profile: ParticleProfileDefinition,
+    record: SystemRecord,
     particle: SimulatedParticle,
     delta: number,
   ): void {
+    const { bundle, definition } = record;
+    const profile = bundle.profiles[definition.profile]!;
     const initial = getModule(bundle, profile, "InitialModule");
     if (initial === null) throw fault("particle.simulation.missing-initial-module", "Every emitted current particle requires InitialModule.");
-    const gravity = minMax(initial.gravityModifier, divide(particle.age, particle.lifetime), particle.slots[9]!);
+    const normalizedAge = divide(particle.age, particle.lifetime);
+
+    // 0x109669C phase 1: Initial/gravity owner.
+    const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
     particle.velocity[1] = add(particle.velocity[1], multiply(multiply(-9.81, gravity), delta));
-    const clamp = getModule(bundle, profile, "ClampVelocityModule");
-    if (clamp !== null) {
-      const speed = f32(Math.sqrt(particle.velocity.reduce((sum, value) => sum + multiply(value, value), 0)));
-      const limit = minMax(clamp.magnitude, divide(particle.age, particle.lifetime), particle.slots[10]!);
-      if (speed > limit && speed > 0) {
-        const target = lerp(speed, limit, clamp.dampen);
-        const factor = divide(target, speed);
-        particle.velocity = particle.velocity.map((value) => multiply(value, factor)) as Vector3;
-      }
-    }
-    particle.position = particle.position.map((value, index) =>
-      add(value, multiply(particle.velocity[index]!, delta))) as Vector3;
+
+    // 0x109669C phase 2: RotationModule.
     const rotation = getModule(bundle, profile, "RotationModule");
     if (rotation !== null) {
-      const normalizedAge = divide(particle.age, particle.lifetime);
+      const rotationRandom = particleSeedRatio((particle.randomSeed + 0x6AED452E) >>> 0);
       if (rotation.separateAxes) {
-        particle.rotation[0] = add(particle.rotation[0], multiply(minMax(rotation.x, normalizedAge, particle.slots[6]!), delta));
-        particle.rotation[1] = add(particle.rotation[1], multiply(minMax(rotation.y, normalizedAge, particle.slots[7]!), delta));
+        particle.rotation[0] = add(particle.rotation[0], multiply(minMax(rotation.x, normalizedAge, rotationRandom), delta));
+        particle.rotation[1] = add(particle.rotation[1], multiply(minMax(rotation.y, normalizedAge, rotationRandom), delta));
       }
-      particle.rotation[2] = add(particle.rotation[2], multiply(minMax(rotation.curve, normalizedAge, particle.slots[8]!), delta));
+      particle.rotation[2] = add(particle.rotation[2], multiply(minMax(rotation.curve, normalizedAge, rotationRandom), delta));
     }
+
+    // 0x109669C phase 3: VelocityModule.
+    const velocity = getModule(bundle, profile, "VelocityModule");
+    let moduleVelocity: Vector3 = [0, 0, 0];
+    let speedModifier = f32(1);
+    if (velocity !== null) {
+      moduleVelocity = [
+        minMax(velocity.x, normalizedAge, particle.slots[9]!),
+        minMax(velocity.y, normalizedAge, particle.slots[10]!),
+        minMax(velocity.z, normalizedAge, particle.slots[11]!),
+      ];
+      const offset: Vector3 = [
+        minMax(velocity.orbitalOffsetX, normalizedAge, particle.slots[6]!),
+        minMax(velocity.orbitalOffsetY, normalizedAge, particle.slots[7]!),
+        minMax(velocity.orbitalOffsetZ, normalizedAge, particle.slots[8]!),
+      ];
+      const angular: Vector3 = [
+        minMax(velocity.orbitalX, normalizedAge, particle.slots[6]!),
+        minMax(velocity.orbitalY, normalizedAge, particle.slots[7]!),
+        minMax(velocity.orbitalZ, normalizedAge, particle.slots[8]!),
+      ];
+      let centerOffset = offset;
+      if (!velocity.inWorldSpace) {
+        moduleVelocity = applySystemVector(moduleVelocity, definition, this.gameplayTransformScale);
+        centerOffset = applySystemVector(centerOffset, definition, this.gameplayTransformScale);
+      }
+      const relative = particle.position.map((value, index) =>
+        subtract(value, add(particle.emitterOrigin[index]!, centerOffset[index]!))) as Vector3;
+      speedModifier = minMax(velocity.speedModifier, normalizedAge, particle.slots[4]!);
+      const orbitalStep: Vector3 = angular.map((value) =>
+        multiply(multiply(value, delta), speedModifier)) as Vector3;
+      const rotatedRelative = rotateEulerRadians(relative, orbitalStep);
+      const orbitalDuration = multiply(delta, speedModifier);
+      let orbital: Vector3 = Math.abs(orbitalDuration) > 0
+        ? scaleVector(subtractVector(rotatedRelative, relative), divide(1, orbitalDuration))
+        : [0, 0, 0];
+      if (!velocity.inWorldSpace) orbital = applySystemVector(orbital, definition, this.gameplayTransformScale);
+      const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
+      const radial = scaleVector(normalizeOrZero(rotatedRelative), radialAmount);
+      moduleVelocity = addVector(moduleVelocity, addVector(orbital, radial));
+    }
+
+    // 0x109669C phase 4: ForceModule. Current active Force curves are
+    // constants, so accumulating force*delta in base velocity is equivalent
+    // to the native age-integrated transient velocity owner.
+    const force = getModule(bundle, profile, "ForceModule");
+    if (force !== null) {
+      let acceleration: Vector3 = [
+        minMax(force.x, normalizedAge, particle.slots[9]!),
+        minMax(force.y, normalizedAge, particle.slots[10]!),
+        minMax(force.z, normalizedAge, particle.slots[11]!),
+      ];
+      if (!force.inWorldSpace) acceleration = applySystemVector(acceleration, definition, this.gameplayTransformScale);
+      particle.velocity = particle.velocity.map((value, index) =>
+        add(value, multiply(acceleration[index]!, delta))) as Vector3;
+    }
+
+    // 0x109669C phase 5: ClampVelocityModule.
+    let combinedVelocity = addVector(particle.velocity, moduleVelocity);
+    const clamp = getModule(bundle, profile, "ClampVelocityModule");
+    if (clamp !== null) {
+      if (clamp.inWorldSpace) {
+        combinedVelocity = limitVelocity(combinedVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize);
+      } else {
+        const localVelocity = inverseSystemVector(combinedVelocity, definition, this.gameplayTransformScale);
+        combinedVelocity = applySystemVector(
+          limitVelocity(localVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize),
+          definition,
+          this.gameplayTransformScale,
+        );
+      }
+    }
+    const effectiveVelocity = scaleVector(combinedVelocity, speedModifier);
+    particle.renderVelocity = effectiveVelocity;
+
+    // 0x109669C phase 6: RotationBySpeedModule observes clamped velocity.
     const bySpeed = getModule(bundle, profile, "RotationBySpeedModule");
     if (bySpeed !== null) {
-      const speed = f32(Math.sqrt(particle.velocity.reduce((sum, value) => sum + multiply(value, value), 0)));
+      const speed = vectorLength(effectiveVelocity);
       const lower = bySpeed.range.x;
       const upper = bySpeed.range.y;
       const normalizedSpeed = upper !== lower
@@ -542,9 +881,13 @@ export class DeterministicParticleSimulation {
       particle.rotation[2] = add(particle.rotation[2], multiply(minMax(
         bySpeed.curve,
         normalizedSpeed,
-        particle.slots[7]!,
+        particleSeedRatio((particle.randomSeed + 0xDEC4AEA1) >>> 0),
       ), delta));
     }
+
+    // 0x108AF6C integration follows the complete module pipeline.
+    particle.position = particle.position.map((value, index) =>
+      add(value, multiply(effectiveVelocity[index]!, delta))) as Vector3;
     particle.age = add(particle.age, delta);
   }
 }
@@ -557,6 +900,9 @@ function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefini
 function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "RotationModule"): ParticleRotationModule | null;
 function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "RotationBySpeedModule"): ParticleRotationBySpeedModule | null;
 function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "ClampVelocityModule"): ParticleClampVelocityModule | null;
+function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "VelocityModule"): ParticleVelocityModule | null;
+function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "ForceModule"): ParticleForceModule | null;
+function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "CustomDataModule"): ParticleCustomDataModule | null;
 function getModule(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, name: "UVModule"): ParticleUvModule | null;
 function getModule(
   bundle: ParticleBundleProfile,
@@ -581,6 +927,10 @@ function curve(value: ParticleAnimationCurve, time: number): number {
     const left = keys[index]!;
     const right = keys[index + 1]!;
     if (t <= right.time) {
+      if (left.outSlope === "number:+infinity" || left.outSlope === "number:-infinity" ||
+        right.inSlope === "number:+infinity" || right.inSlope === "number:-infinity") {
+        return f32(t === right.time ? right.value : left.value);
+      }
       const width = subtract(right.time, left.time);
       const u = divide(subtract(t, left.time), width);
       const u2 = multiply(u, u);
@@ -626,7 +976,10 @@ function gradient(value: ParticleMinMaxGradient["maxGradient"], time: number): C
     if (t16 <= times[0]!) return f32(values[0]!);
     for (let index = 1; index < count; index += 1) {
       if (t16 <= times[index]!) {
-        if (times[index] === times[index - 1]) return f32(values[index]!);
+        if (times[index] === times[index - 1] || (value.m_Mode === 1 && t16 === times[index])) {
+          return f32(values[index]!);
+        }
+        if (value.m_Mode === 1) return f32(values[index - 1]!);
         return lerp(
           values[index - 1]!,
           values[index]!,
@@ -658,6 +1011,486 @@ function minMaxColor(value: ParticleMinMaxGradient, time: number, ratio: number)
     case 4: return gradient(value.maxGradient, ratio);
     default: throw fault("particle.simulation.unsupported-gradient-state", "Only current MinMaxGradient states 0..4 are portable.");
   }
+}
+
+function colorToBytes(color: Color4): ColorBytes {
+  return color.map((value) => Math.max(0, Math.min(255, roundHalfEven(f32(value) * 255)))) as ColorBytes;
+}
+
+function multiplyColorByte(left: number, right: number): number {
+  const product = left * right + 128;
+  return (product + (product >>> 8)) >>> 8;
+}
+
+function nativeSinCos(radians: number): readonly [number, number] {
+  const turns = multiply(radians, INVERSE_TWO_PI);
+  const evaluate = (phase: number): number => {
+    const sign = uint32Bits(phase) & 0x80000000;
+    const magic = float32FromBits(sign | 0x4B000000);
+    const nearestInteger = subtract(add(phase, magic), magic);
+    const quarterWave = subtract(0.25, Math.abs(subtract(phase, nearestInteger)));
+    const square = multiply(quarterWave, quarterWave);
+    const fourth = multiply(square, square);
+    const eighth = multiply(fourth, fourth);
+    return multiply(quarterWave, add(
+      multiply(eighth, TRIG_POLY_4),
+      add(
+        subtract(TRIG_POLY_TWO_PI, multiply(square, TRIG_POLY_1)),
+        multiply(fourth, subtract(TRIG_POLY_2, multiply(square, TRIG_POLY_3))),
+      ),
+    ));
+  };
+  return Object.freeze([
+    evaluate(turns),
+    evaluate(add(turns, -0.25)),
+  ] as const);
+}
+
+function nativeCubeRoot(value: number): number {
+  const sourceBits = uint32Bits(value);
+  const mantissa = add(float32FromBits((sourceBits & 0x807FFFFF) | 0x3F800000), -1);
+  const square = multiply(mantissa, mantissa);
+  const exponent = f32((sourceBits >>> 23) - 127);
+  const log2Approximation = add(
+    exponent,
+    add(
+      multiply(mantissa, CUBE_LOG_LINEAR),
+      multiply(square, add(multiply(mantissa, CUBE_LOG_CUBIC), CUBE_LOG_QUADRATIC)),
+    ),
+  );
+  const divided = Math.max(-127, multiply(log2Approximation, ONE_THIRD));
+  const truncated = Math.trunc(divided);
+  const integral = truncated - (truncated > divided ? 1 : 0);
+  const fraction = subtract(divided, integral);
+  const exponential = add(
+    multiply(multiply(fraction, fraction), CUBE_EXP_QUADRATIC),
+    add(multiply(fraction, CUBE_EXP_LINEAR), 1),
+  );
+  return multiply(exponential, float32FromBits((0x3F800000 + (integral << 23)) >>> 0));
+}
+
+function initialModuleRandomDrawCount(initial: ParticleInitialModule): number {
+  // 0x105FD50: particle seed, lifetime, size[X,(Y,Z)], rotation[Z,(X,Y)], color.
+  // startSpeed is sampled from the stored per-particle seed in the following
+  // 0x1091C7C initialization phase and does not advance InitialModule SIMD state.
+  return 5 + (initial.size3D ? 2 : 0) + (initial.rotation3D ? 2 : 0);
+}
+
+function shapeRandomDrawCount(shape: ParticleShapeModule | null): number {
+  if (shape === null) return 0;
+  let count: number;
+  switch (shape.type) {
+    case 0: count = 3; break;
+    case 4: count = shape.arc.mode === 3 ? 1 : 2; break;
+    case 5: count = 3; break;
+    case 8: count = shape.arc.mode === 3 ? 2 : 3; break;
+    case 10: count = shape.arc.mode === 3 ? 1 : 2; break;
+    default: throw fault("particle.simulation.unsupported-shape", "Current native semantic profiles admit only Shape types 0, 4, 5, 8 and 10.");
+  }
+  if (shape.randomDirectionAmount > 0) count += 2;
+  if (shape.randomPositionAmount > 0) count += 2;
+  return count;
+}
+
+function buildBirthRandomSample(
+  initial: ParticleInitialModule,
+  initialRandom: ParticleSimdDraws,
+  shapeRandom: ParticleSimdDraws,
+  lane: number,
+): BirthRandomSample {
+  let cursor = 0;
+  const next = (): number => initialRandom.values[cursor++]![lane]!;
+  const nextWord = (): number => initialRandom.words[cursor++]![lane]!;
+  const particleSeed = nextWord();
+  const lifetime = next();
+  const sizeX = next();
+  const sizeY = initial.size3D ? next() : sizeX;
+  const sizeZ = initial.size3D ? next() : sizeX;
+  const rotationZ = next();
+  const rotationX = initial.rotation3D ? next() : 0;
+  const rotationY = initial.rotation3D ? next() : 0;
+  const color = next();
+  if (cursor !== initialModuleRandomDrawCount(initial)) {
+    throw fault("particle.simulation.initial-random-schedule", "InitialModule random draw ownership must consume its exact current branch schedule.");
+  }
+  const seeded = (salt: number): number => particleSeedRatio((particleSeed + salt) >>> 0);
+  return Object.freeze({
+    particleSeed,
+    slots: Object.freeze([
+      lifetime, seeded(0x96AA4DE3), sizeX, sizeY, sizeZ, color, rotationX, rotationY, rotationZ,
+      seeded(0xE2B7C3C3), seeded(0xBA821F34), seeded(0x12460F3B),
+    ]),
+    shapeValues: Object.freeze(shapeRandom.values.map((row) => row[lane]!)),
+  });
+}
+
+function sampleShape(
+  shape: ParticleShapeModule | null,
+  values: readonly number[],
+  batchIndex: number,
+  batchCount: number,
+): { readonly position: Vector3; readonly direction: Vector3 } {
+  if (shape === null) return Object.freeze({ position: [0, 0, 0], direction: [0, 0, 1] });
+  let cursor = 0;
+  const next = (): number => {
+    const value = values[cursor];
+    if (value === undefined) {
+      throw fault("particle.simulation.shape-random-schedule", "Shape branch consumed more random values than its current native schedule owns.");
+    }
+    cursor += 1;
+    return value;
+  };
+  const arcAngle = (): number => {
+    const spreadDenominator = shape.arc.value === 360
+      ? batchCount
+      : (batchCount === 1 ? 1 : batchCount - 1);
+    const ratio = shape.arc.mode === 3
+      ? (spreadDenominator > 0 ? f32(batchIndex / spreadDenominator) : 0)
+      : next();
+    return multiply(multiply(shape.arc.value, DEG_TO_RAD), ratio);
+  };
+  const radius = f32(shape.radius.value);
+  const inner = clamp01(subtract(1, shape.radiusThickness));
+  let position: Vector3;
+  let direction: Vector3;
+  switch (shape.type) {
+    case 0: {
+      const theta = multiply(TWO_PI, next());
+      const [cosine, sine] = nativeSinCos(theta);
+      const z = subtract(multiply(2, next()), 1);
+      const radial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(z, z)))));
+      direction = [multiply(radial, cosine), multiply(radial, sine), z];
+      const innerCubed = multiply(multiply(inner, inner), inner);
+      const radiusDraw = next();
+      const radiusRatio = nativeCubeRoot(add(multiply(innerCubed, radiusDraw), subtract(1, radiusDraw)));
+      position = scaleVector(direction, multiply(radius, radiusRatio));
+      break;
+    }
+    case 4: {
+      const theta = arcAngle();
+      const [cosine, sine] = nativeSinCos(theta);
+      const radiusDraw = next();
+      const radial = multiply(radius, f32(Math.sqrt(add(
+        multiply(Math.max(inner, 0.001), radiusDraw),
+        subtract(1, radiusDraw),
+      ))));
+      const angle = multiply(shape.angle, DEG_TO_RAD);
+      const [cosAngle, sinAngle] = nativeSinCos(angle);
+      position = [multiply(radial, cosine), multiply(radial, sine), 0];
+      direction = [
+        multiply(sinAngle, cosine),
+        multiply(sinAngle, sine),
+        cosAngle,
+      ];
+      break;
+    }
+    case 5:
+      position = [subtract(next(), 0.5), subtract(next(), 0.5), subtract(next(), 0.5)];
+      direction = [0, 0, 1];
+      break;
+    case 8: {
+      const theta = arcAngle();
+      const [cosine, sine] = nativeSinCos(theta);
+      const radiusDraw = next();
+      const radial = multiply(radius, f32(Math.sqrt(add(
+        multiply(Math.max(inner, 0.001), radiusDraw),
+        subtract(1, radiusDraw),
+      ))));
+      const angle = multiply(shape.angle, DEG_TO_RAD);
+      const [cosAngle, sinAngle] = nativeSinCos(angle);
+      direction = [
+        multiply(sinAngle, cosine),
+        multiply(sinAngle, sine),
+        cosAngle,
+      ];
+      position = addVector(
+        [multiply(radial, cosine), multiply(radial, sine), 0],
+        scaleVector(normalizeOrFallback(direction), multiply(shape.length, next())),
+      );
+      break;
+    }
+    case 10: {
+      const theta = arcAngle();
+      const [cosine, sine] = nativeSinCos(theta);
+      const innerSquared = multiply(inner, inner);
+      const radial = multiply(radius, f32(Math.sqrt(add(innerSquared, multiply(subtract(1, innerSquared), next())))));
+      position = [multiply(radial, cosine), multiply(radial, sine), 0];
+      direction = [cosine, sine, 0];
+      break;
+    }
+    default:
+      throw fault("particle.simulation.unsupported-shape", "Current native semantic profiles admit only Shape types 0, 4, 5, 8 and 10.");
+  }
+  direction = normalizeOrFallback(direction);
+  if (shape.randomDirectionAmount > 0) {
+    const randomTheta = multiply(TWO_PI, next());
+    const randomZ = subtract(multiply(2, next()), 1);
+    const randomRadial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(randomZ, randomZ)))));
+    const [randomCosine, randomSine] = nativeSinCos(randomTheta);
+    const randomDirection: Vector3 = [
+      multiply(randomRadial, randomCosine),
+      multiply(randomRadial, randomSine),
+      randomZ,
+    ];
+    direction = direction.map((value, index) =>
+      lerp(value, randomDirection[index]!, shape.randomDirectionAmount)) as Vector3;
+  }
+  if (shape.sphericalDirectionAmount > 0) {
+    const radialDirection = normalizeOrFallback(position);
+    direction = direction.map((value, index) =>
+      lerp(value, radialDirection[index]!, shape.sphericalDirectionAmount)) as Vector3;
+  }
+  if (shape.randomPositionAmount > 0) {
+    const randomTheta = multiply(TWO_PI, next());
+    const randomZ = subtract(multiply(2, next()), 1);
+    const randomRadial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(randomZ, randomZ)))));
+    const [randomCosine, randomSine] = nativeSinCos(randomTheta);
+    const randomPosition: Vector3 = [
+      multiply(randomRadial, randomCosine),
+      multiply(randomRadial, randomSine),
+      randomZ,
+    ];
+    position = addVector(position, scaleVector(randomPosition, shape.randomPositionAmount));
+  }
+  if (cursor !== values.length) {
+    throw fault("particle.simulation.shape-random-schedule", "Shape branch must consume every random value assigned by its current native schedule.");
+  }
+  position = rotateEulerDegrees([
+    multiply(position[0], shape.m_Scale.x),
+    multiply(position[1], shape.m_Scale.y),
+    multiply(position[2], shape.m_Scale.z),
+  ], shape.m_Rotation);
+  position = [
+    add(position[0], shape.m_Position.x),
+    add(position[1], shape.m_Position.y),
+    add(position[2], shape.m_Position.z),
+  ];
+  direction = rotateEulerDegrees([
+    multiply(direction[0], shape.m_Scale.x),
+    multiply(direction[1], shape.m_Scale.y),
+    multiply(direction[2], shape.m_Scale.z),
+  ], shape.m_Rotation);
+  return Object.freeze({ position, direction: normalizeOrFallback(direction) });
+}
+
+function customData(
+  module: ParticleCustomDataModule,
+  stream: 0 | 1,
+  time: number,
+  particleSeed: number,
+): Color4 | null {
+  const mode = stream === 0 ? module.mode0 : module.mode1;
+  if (mode === 0) return null;
+  if (mode === 2) {
+    return minMaxColor(
+      stream === 0 ? module.color0 : module.color1,
+      time,
+      particleSeedRatio((particleSeed + ((4 * stream) | 0x73A7F7BB)) >>> 0),
+    );
+  }
+  if (mode !== 1) {
+    throw fault("particle.simulation.unsupported-custom-data-mode", "Current CustomData streams admit only disabled, vector and color modes.");
+  }
+  const count = stream === 0 ? module.vectorComponentCount0 : module.vectorComponentCount1;
+  const curves = stream === 0
+    ? [module.vector0_0, module.vector0_1, module.vector0_2, module.vector0_3]
+    : [module.vector1_0, module.vector1_1, module.vector1_2, module.vector1_3];
+  return curves.map((value, index) => index < count
+    ? minMax(
+        value!,
+        time,
+        particleSeedRatio((particleSeed + (((4 * stream) | 0x73A7F7BB) + index)) >>> 0),
+      )
+    : 0) as Color4;
+}
+
+function limitVelocity(
+  velocity: Vector3,
+  module: ParticleClampVelocityModule,
+  time: number,
+  slots: readonly number[],
+  delta: number,
+  size: Vector3,
+): Vector3 {
+  let result: Vector3 = [...velocity];
+  const dampen = module.dampen > 0
+    ? subtract(1, f32(Math.pow(subtract(1, module.dampen), multiply(Math.abs(delta), 30))))
+    : 0;
+  if (module.separateAxis) {
+    const limits = [
+      minMax(module.x, time, slots[9]!),
+      minMax(module.y, time, slots[10]!),
+      minMax(module.z, time, slots[11]!),
+    ];
+    result = result.map((value, index) => {
+      const limit = Math.max(0, limits[index]!);
+      if (Math.abs(value) <= limit) return value;
+      return lerp(value, Math.sign(value) * limit, dampen);
+    }) as Vector3;
+  } else {
+    const speed = vectorLength(result);
+    const limit = Math.max(0, minMax(module.magnitude, time, slots[10]!));
+    if (speed > limit && speed > 0) {
+      result = scaleVector(result, divide(lerp(speed, limit, dampen), speed));
+    }
+  }
+  let drag = Math.max(0, minMax(module.drag, time, slots[11]!));
+  if (module.multiplyDragByParticleSize) drag = multiply(drag, Math.max(size[0], size[1], size[2]));
+  if (module.multiplyDragByParticleVelocity) drag = multiply(drag, vectorLength(result));
+  if (drag > 0) result = scaleVector(result, Math.max(0, subtract(1, multiply(drag, delta))));
+  return result;
+}
+
+function parentSetupScale(
+  definition: ParticleSystemDefinition,
+  parentIndex: number,
+  gameplayTransformScale: number,
+): number {
+  const flags = definition.parentParticleSystemFlags;
+  return flags === undefined || flags[parentIndex] === true ? gameplayTransformScale : 1;
+}
+
+function inverseSystemVector(
+  vector: Vector3,
+  definition: ParticleSystemDefinition,
+  gameplayTransformScale: number,
+): Vector3 {
+  let result: Vector3 = [...vector];
+  for (let index = 0; index < definition.parentTransforms.length; index += 1) {
+    result = inverseTransformVector(
+      result,
+      definition.parentTransforms[index]!,
+      parentSetupScale(definition, index, gameplayTransformScale),
+    );
+  }
+  return inverseTransformVector(result, definition.transform, gameplayTransformScale);
+}
+
+function inverseTransformVector(
+  vector: Vector3,
+  transform: ParticleTransformProfile,
+  gameplayTransformScale: number,
+): Vector3 {
+  const rotation = transform.m_LocalRotation;
+  const unrotated = quaternionRotate(vector, {
+    x: -rotation.x,
+    y: -rotation.y,
+    z: -rotation.z,
+    w: rotation.w,
+  });
+  return [
+    divide(unrotated[0], multiply(transform.m_LocalScale.x, gameplayTransformScale)),
+    divide(unrotated[1], multiply(transform.m_LocalScale.y, gameplayTransformScale)),
+    divide(unrotated[2], multiply(transform.m_LocalScale.z, gameplayTransformScale)),
+  ];
+}
+
+function particleSizeScale(
+  definition: ParticleSystemDefinition,
+  scalingMode: 0 | 1,
+  gameplayTransformScale: number,
+): Vector3 {
+  let result: Vector3 = [
+    multiply(definition.transform.m_LocalScale.x, gameplayTransformScale),
+    multiply(definition.transform.m_LocalScale.y, gameplayTransformScale),
+    multiply(definition.transform.m_LocalScale.z, gameplayTransformScale),
+  ];
+  if (scalingMode === 0) {
+    for (let index = definition.parentTransforms.length - 1; index >= 0; index -= 1) {
+      const parent = definition.parentTransforms[index]!;
+      const setupScale = parentSetupScale(definition, index, gameplayTransformScale);
+      result = [
+        multiply(result[0], multiply(parent.m_LocalScale.x, setupScale)),
+        multiply(result[1], multiply(parent.m_LocalScale.y, setupScale)),
+        multiply(result[2], multiply(parent.m_LocalScale.z, setupScale)),
+      ];
+    }
+  }
+  return result;
+}
+
+function applySystemVector(
+  vector: Vector3,
+  definition: ParticleSystemDefinition,
+  gameplayTransformScale: number,
+): Vector3 {
+  let result = applyTransform(vector, definition.transform, false, gameplayTransformScale);
+  for (let index = definition.parentTransforms.length - 1; index >= 0; index -= 1) {
+    result = applyTransform(
+      result,
+      definition.parentTransforms[index]!,
+      false,
+      parentSetupScale(definition, index, gameplayTransformScale),
+    );
+  }
+  return result;
+}
+
+function rotateEulerDegrees(vector: Vector3, rotation: ParticleVector3Like): Vector3 {
+  return rotateEulerRadians(vector, [
+    multiply(rotation.x, DEG_TO_RAD),
+    multiply(rotation.y, DEG_TO_RAD),
+    multiply(rotation.z, DEG_TO_RAD),
+  ]);
+}
+
+function rotateEulerRadians(vector: Vector3, rotation: Vector3): Vector3 {
+  const [x, y, z] = rotation;
+  let result: Vector3 = [...vector];
+  if (x !== 0) {
+    const [cosine, sine] = nativeSinCos(x);
+    result = [result[0], subtract(multiply(result[1], cosine), multiply(result[2], sine)), add(multiply(result[1], sine), multiply(result[2], cosine))];
+  }
+  if (y !== 0) {
+    const [cosine, sine] = nativeSinCos(y);
+    result = [add(multiply(result[0], cosine), multiply(result[2], sine)), result[1], subtract(multiply(result[2], cosine), multiply(result[0], sine))];
+  }
+  if (z !== 0) {
+    const [cosine, sine] = nativeSinCos(z);
+    result = [subtract(multiply(result[0], cosine), multiply(result[1], sine)), add(multiply(result[0], sine), multiply(result[1], cosine)), result[2]];
+  }
+  return result;
+}
+
+type ParticleVector3Like = { readonly x: number; readonly y: number; readonly z: number };
+
+function addVector(left: Vector3, right: Vector3): Vector3 {
+  return left.map((value, index) => add(value, right[index]!)) as Vector3;
+}
+function subtractVector(left: Vector3, right: Vector3): Vector3 {
+  return left.map((value, index) => subtract(value, right[index]!)) as Vector3;
+}
+function scaleVector(vector: Vector3, scalar: number): Vector3 {
+  return vector.map((value) => multiply(value, scalar)) as Vector3;
+}
+function vectorLengthSquared(vector: Vector3): number {
+  return add(multiply(vector[0], vector[0]), add(multiply(vector[1], vector[1]), multiply(vector[2], vector[2])));
+}
+function vectorLength(vector: Vector3): number {
+  return f32(Math.sqrt(Math.max(0, vectorLengthSquared(vector))));
+}
+function normalizeOrZero(vector: Vector3): Vector3 {
+  const squared = vectorLengthSquared(vector);
+  if (!(squared > SHAPE_DIRECTION_EPSILON_SQUARED)) return [0, 0, 0];
+  return scaleVector(vector, divide(1, f32(Math.sqrt(squared))));
+}
+function normalizeOrFallback(vector: Vector3): Vector3 {
+  const normalized = normalizeOrZero(vector);
+  return vectorLengthSquared(normalized) > 0 ? normalized : [0, 0, 1];
+}
+function currentBurstCount(
+  value: ParticleMinMaxCurve,
+  time: number,
+  drawWord: () => number,
+): number {
+  if (value.minMaxState === 3) {
+    const minimum = Math.trunc(Math.min(value.minScalar, value.scalar));
+    const maximum = Math.trunc(Math.max(value.minScalar, value.scalar));
+    const range = maximum - minimum + 1;
+    return Math.max(0, minimum + (range > 0 ? drawWord() % range : 0));
+  }
+  const ratio = value.minMaxState === 2 ? particleWordRatio(drawWord()) : 0;
+  return Math.max(0, Math.trunc(minMax(value, time, ratio)));
 }
 
 function applyTransform(
@@ -700,6 +1533,10 @@ function quaternionRotate(vector: Vector3, quaternion: ParticleTransformProfile[
   ];
 }
 
+function cloneSimdState(state: ParticleRandomSimdState): ParticleRandomSimdState {
+  return Object.freeze(state.map((lane) => Object.freeze([...lane]) as ParticleRandomStateU32)) as ParticleRandomSimdState;
+}
+
 function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
   if (left.kind !== right.kind || left.buttonType !== right.buttonType || left.rangeLength !== right.rangeLength) return false;
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
@@ -711,9 +1548,11 @@ function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleIns
 function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
   return {
     ownerKey: owner.ownerKey,
+    generation: owner.generation,
     instance: Object.freeze({ ...owner.instance }),
     root: owner.root,
     systems: new Map([...owner.systems].map(([identity, runtime]) => [identity, {
+      instanceStateKey: runtime.instanceStateKey,
       playing: runtime.playing,
       elapsed: runtime.elapsed,
       first: runtime.first,
@@ -722,8 +1561,9 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
         emitterOrigin: [...particle.emitterOrigin] as Vector3,
         position: [...particle.position] as Vector3,
         velocity: [...particle.velocity] as Vector3,
+        renderVelocity: [...particle.renderVelocity] as Vector3,
         baseSize: [...particle.baseSize] as Vector3,
-        baseColor: [...particle.baseColor] as Color4,
+        baseColor: [...particle.baseColor] as ColorBytes,
         rotation: [...particle.rotation] as Vector3,
         slots: [...particle.slots],
       })),
@@ -751,6 +1591,10 @@ function vectorBits(value: Vector3) {
   return Object.freeze({ xBits: bits(value[0]), yBits: bits(value[1]), zBits: bits(value[2]) });
 }
 
+function vector4Bits(value: Color4) {
+  return Object.freeze({ xBits: bits(value[0]), yBits: bits(value[1]), zBits: bits(value[2]), wBits: bits(value[3]) });
+}
+
 function colorBits(value: Color4) {
   return Object.freeze({
     redBits: bits(value[0]),
@@ -758,6 +1602,18 @@ function colorBits(value: Color4) {
     blueBits: bits(value[2]),
     alphaBits: bits(value[3]),
   });
+}
+
+function uint32Bits(value: number): number {
+  const view = new DataView(new ArrayBuffer(4));
+  view.setFloat32(0, f32(value), true);
+  return view.getUint32(0, true);
+}
+
+function float32FromBits(value: number): number {
+  const view = new DataView(new ArrayBuffer(4));
+  view.setUint32(0, value >>> 0, true);
+  return view.getFloat32(0, true);
 }
 
 function bits(value: number): string {

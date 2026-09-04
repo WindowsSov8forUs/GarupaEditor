@@ -81,13 +81,13 @@ function buildPreparedPack(
     return invalid("simulator.skin.particle-texture-identity-collision", "Ordinary and directional selected textures require disjoint logical identities.");
   }
   const profile: ParticlePortableProfile = Object.freeze({
-    schemaVersion: 1,
+    schemaVersion: 2,
     sample: Object.freeze({
       package: "jp.co.craftegg.band", versionName: "10.1.4", versionCode: 230,
       abi: "arm64-v8a", unityVersion: "2022.3.62f1",
     }),
     packIdentity: `particle-skin-source-bound-v2-${ordinary.logicalResource}@${first.value.source.applicationRevision}+${directional.logicalResource}@${second.value.source.applicationRevision}`,
-    fidelity: "current-static-portable",
+    fidelity: "current-native-semantic-v2",
     networkAllowed: false,
     automaticFallbackAllowed: false,
     systemCount: bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0),
@@ -152,17 +152,20 @@ function convertBundle(
       !owns(raw.profiles, item.profile)) {
       return invalid("simulator.skin.particle-system-source-relation", `Selected particle system row ${ordinal} is not a complete source-bound current component.`);
     }
+    const parentParticleSystemFlags = parentParticleFlags(item.componentHierarchy, item.parent_transforms.length);
+    if (parentParticleSystemFlags === null) {
+      return invalid("simulator.skin.particle-parent-component-relation", `Selected particle system row ${ordinal} has no exact root-to-parent ParticleSystem component mask.`);
+    }
     rootSet.add(item.prefab);
     systems.push(Object.freeze({
       identity: `${key}:${item.path}`,
+      sourceOrdinal: ordinal,
       root: `${key}:${item.prefab}` as ParticleRootId,
       path: item.path,
       transform: freezeTransform(item.transform),
       parentTransforms: Object.freeze(item.parent_transforms.map(freezeTransform)),
+      parentParticleSystemFlags,
       profile: item.profile,
-      // Removed by the native random-owner refactor; retained only until that
-      // versioned runtime contract lands in the immediately following batch.
-      randomStateU32: randomWords(`${pack.logicalResource}:${item.path}:${item.profile}`),
     }));
   }
   if (rootSet.size !== roots.length || roots.some((root) => !rootSet.has(root))) {
@@ -302,6 +305,23 @@ function convertBundle(
   }));
 }
 
+function parentParticleFlags(hierarchy: unknown[], parentCount: number): readonly boolean[] | null {
+  if (hierarchy.length !== parentCount + 1) return null;
+  const flags: boolean[] = [];
+  for (const node of hierarchy.slice(0, -1)) {
+    const row = record(node);
+    if (row === null || !Array.isArray(row.components) || row.components.some((component: unknown) => {
+      const item = record(component);
+      return item === null || typeof item.type !== "string";
+    })) return null;
+    flags.push(row.components.some((component: unknown) => {
+      const item = record(component);
+      return item !== null && item.type === "ParticleSystem";
+    }));
+  }
+  return Object.freeze(flags);
+}
+
 function mainTexture(material: Record<string, unknown>): string | null {
   const saved = record(material.m_SavedProperties);
   if (saved === null || !Array.isArray(saved.m_TexEnvs)) return null;
@@ -351,22 +371,6 @@ function wrap(value: unknown): value is 0 | 1 {
 
 function owns(value: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(value, key);
-}
-
-function randomWords(value: string): readonly [number, number, number, number] {
-  const words: number[] = [];
-  let seed = 2166136261;
-  for (let lane = 0; lane < 4; lane += 1) {
-    let hash = (seed ^ lane) >>> 0;
-    for (let index = 0; index < value.length; index += 1) {
-      hash ^= value.charCodeAt(index);
-      hash = Math.imul(hash, 16777619) >>> 0;
-    }
-    if (hash === 0) hash = (0x9E3779B9 ^ lane) >>> 0;
-    words.push(hash);
-    seed = hash;
-  }
-  return Object.freeze(words) as unknown as readonly [number, number, number, number];
 }
 
 function pathId(value: unknown): string | null {
