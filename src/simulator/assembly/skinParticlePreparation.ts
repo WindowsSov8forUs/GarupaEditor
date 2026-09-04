@@ -1,6 +1,7 @@
 import type {
   ParticleBundleProfile,
   ParticleMaterialProfile,
+  ParticleMeshProfile,
   ParticleModuleProfileMap,
   ParticlePreparedResourcePack,
   ParticlePreparedSourceResourceIdentity,
@@ -132,13 +133,14 @@ function convertBundle(
     official === null || !positiveInteger(official.bytes) || typeof official.sha256 !== "string" || !SHA256_PATTERN.test(official.sha256) ||
     serialized === null || !positiveInteger(serialized.bytes) || typeof serialized.sha256 !== "string" || !SHA256_PATTERN.test(serialized.sha256) ||
     !Array.isArray(raw.systems) || !record(raw.profiles) ||
-    !record(raw.module_profiles) || !record(raw.renderer_profiles) ||
+    !record(raw.module_profiles) || !record(raw.renderer_profiles) || !record(raw.mesh_profiles) ||
     !Array.isArray(raw.materials) || !Array.isArray(raw.textures)) {
     return invalid("simulator.skin.particle-profile-shape", "Selected particle semantics require exact source binding, systems, profiles, modules, renderers, materials and textures.");
   }
   const roots = key === "ordinary" ? ORDINARY_ROOTS : DIRECTIONAL_ROOTS;
   const rootSet = new Set<string>();
   const systems: ParticleSystemDefinition[] = [];
+  const preparedProfiles: Record<string, ParticleProfileDefinition> = {};
   for (let ordinal = 0; ordinal < raw.systems.length; ordinal += 1) {
     const item = record(raw.systems[ordinal]);
     if (item === null || item.sourceOrdinal !== ordinal ||
@@ -149,13 +151,32 @@ function convertBundle(
       !positiveInteger(item.serializedParticleBytes) || typeof item.serializedParticleSha256 !== "string" ||
       !SHA256_PATTERN.test(item.serializedParticleSha256) || !validTransform(item.transform) ||
       !Array.isArray(item.parent_transforms) || !item.parent_transforms.every(validTransform) ||
-      !owns(raw.profiles, item.profile)) {
+      typeof item.rendererProfile !== "string" || !owns(raw.renderer_profiles, item.rendererProfile) ||
+      !(item.meshProfile === null || typeof item.meshProfile === "string" && owns(raw.mesh_profiles, item.meshProfile)) ||
+      typeof item.rendererSourcePathId !== "string" || !INT64_PATTERN.test(item.rendererSourcePathId) ||
+      !positiveInteger(item.rendererSerializedBytes) || typeof item.rendererSerializedSha256 !== "string" ||
+      !SHA256_PATTERN.test(item.rendererSerializedSha256) || !owns(raw.profiles, item.profile)) {
       return invalid("simulator.skin.particle-system-source-relation", `Selected particle system row ${ordinal} is not a complete source-bound current component.`);
     }
     const parentParticleSystemFlags = parentParticleFlags(item.componentHierarchy, item.parent_transforms.length);
     if (parentParticleSystemFlags === null) {
       return invalid("simulator.skin.particle-parent-component-relation", `Selected particle system row ${ordinal} has no exact root-to-parent ParticleSystem component mask.`);
     }
+    const sourceProfile = record(raw.profiles[item.profile]);
+    if (sourceProfile === null || !record(sourceProfile.system) || !record(sourceProfile.modules)) {
+      return invalid("simulator.skin.particle-profile-reference", `Selected particle profile ${item.profile} has no native simulation fields.`);
+    }
+    const preparedProfileIdentity = `${item.profile}:${item.rendererProfile}`;
+    const preparedProfile = Object.freeze({
+      system: sourceProfile.system,
+      modules: sourceProfile.modules,
+      renderer: item.rendererProfile,
+    }) as unknown as ParticleProfileDefinition;
+    const priorProfile = preparedProfiles[preparedProfileIdentity];
+    if (priorProfile !== undefined && JSON.stringify(priorProfile) !== JSON.stringify(preparedProfile)) {
+      return invalid("simulator.skin.particle-profile-collision", `Selected particle profile ${preparedProfileIdentity} is not canonical.`);
+    }
+    preparedProfiles[preparedProfileIdentity] = preparedProfile;
     rootSet.add(item.prefab);
     systems.push(Object.freeze({
       identity: `${key}:${item.path}`,
@@ -165,17 +186,30 @@ function convertBundle(
       transform: freezeTransform(item.transform),
       parentTransforms: Object.freeze(item.parent_transforms.map(freezeTransform)),
       parentParticleSystemFlags,
-      profile: item.profile,
+      profile: preparedProfileIdentity,
+      meshProfile: item.meshProfile,
+      rendererSourcePathId: item.rendererSourcePathId,
+      rendererSerializedBytes: item.rendererSerializedBytes,
+      rendererSerializedSha256: item.rendererSerializedSha256,
     }));
   }
   if (rootSet.size !== roots.length || roots.some((root) => !rootSet.has(root))) {
     return invalid("simulator.skin.particle-root-inventory", "Selected Skin particle bundle must retain every exact gameplay root.");
   }
 
-  const profiles = raw.profiles as unknown as Readonly<Record<string, ParticleProfileDefinition>>;
+  const profiles = Object.freeze(preparedProfiles) as Readonly<Record<string, ParticleProfileDefinition>>;
   const modules = raw.module_profiles as unknown as ParticleModuleProfileMap;
-  const renderers = raw.renderer_profiles as unknown as Readonly<Record<string, ParticleRendererProfile>>;
-  for (const [identity, value] of Object.entries(raw.profiles)) {
+  const allRenderers = raw.renderer_profiles as unknown as Readonly<Record<string, ParticleRendererProfile>>;
+  const referencedRendererIds = new Set(Object.values(preparedProfiles).map((profile) => profile.renderer));
+  const renderers = Object.freeze(Object.fromEntries(
+    [...referencedRendererIds].sort().map((identity) => [identity, allRenderers[identity]!]),
+  )) as Readonly<Record<string, ParticleRendererProfile>>;
+  const allMeshes = raw.mesh_profiles as unknown as Readonly<Record<string, ParticleMeshProfile>>;
+  const referencedMeshIds = new Set(systems.flatMap((system) => system.meshProfile === null || system.meshProfile === undefined ? [] : [system.meshProfile]));
+  const meshes = Object.freeze(Object.fromEntries(
+    [...referencedMeshIds].sort().map((identity) => [identity, allMeshes[identity]!]),
+  )) as Readonly<Record<string, ParticleMeshProfile>>;
+  for (const [identity, value] of Object.entries(preparedProfiles)) {
     const profile = record(value);
     if (profile === null || !record(profile.system) || !record(profile.modules) ||
       typeof profile.renderer !== "string" || !owns(raw.renderer_profiles, profile.renderer)) {
@@ -194,19 +228,40 @@ function convertBundle(
   for (let index = 0; index < raw.materials.length; index += 1) {
     const item = record(raw.materials[index]);
     const shader = record(item?.resolvedShader);
+    const semantics = record(item?.rendererSemantics);
+    const texture = item === null ? null : mainTexture(item);
     if (item === null || typeof item.m_Name !== "string" || item.m_Name.length === 0 || materialNames.has(item.m_Name) ||
       !INT64_PATTERN.test(item.sourcePathId) || !positiveInteger(item.serializedBytes) ||
       typeof item.serializedSha256 !== "string" || !SHA256_PATTERN.test(item.serializedSha256) ||
-      shader === null || typeof shader.name !== "string" || !CURRENT_SHADERS.has(shader.name)) {
-      return invalid("simulator.skin.particle-material-source-relation", `Selected particle material row ${index} is incomplete or has an unresolved current shader.`);
+      shader === null || typeof shader.name !== "string" || !CURRENT_SHADERS.has(shader.name) ||
+      semantics === null || semantics.name !== item.m_Name || semantics.shader !== shader.name || semantics.texture !== texture ||
+      semantics.sourcePathId !== item.sourcePathId || semantics.serializedBytes !== item.serializedBytes ||
+      semantics.serializedSha256 !== item.serializedSha256 || semantics.renderQueue !== 3000 ||
+      (semantics.sourceBlendFactor !== 1 && semantics.sourceBlendFactor !== 5) ||
+      (semantics.destinationBlendFactor !== 1 && semantics.destinationBlendFactor !== 10) ||
+      semantics.zWrite !== false || semantics.cull !== "off" ||
+      !["straight-rgba-modulate", "premultiply-rgb-after-rgba-modulate", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(semantics.fragment) ||
+      !vector2(semantics.mainTextureScale) || !vector2(semantics.mainTextureOffset)) {
+      return invalid("simulator.skin.particle-material-source-relation", `Selected particle material row ${index} is incomplete or has an unresolved current shader/pass.`);
     }
     materialNames.add(item.m_Name);
     materials.push(Object.freeze({
-      name: item.m_Name,
-      shader: shader.name,
-      texture: mainTexture(item),
-      blend: shader.name === "Mobile/Particles/Additive" ? "add" : "normal",
-    }));
+      name: semantics.name,
+      shader: semantics.shader,
+      texture: semantics.texture,
+      sourcePathId: semantics.sourcePathId,
+      serializedBytes: semantics.serializedBytes,
+      serializedSha256: semantics.serializedSha256,
+      renderQueue: 3000 as const,
+      sourceBlendFactor: semantics.sourceBlendFactor,
+      destinationBlendFactor: semantics.destinationBlendFactor,
+      zWrite: false as const,
+      cull: "off" as const,
+      fragment: semantics.fragment,
+      mainTextureScale: Object.freeze({ ...semantics.mainTextureScale }),
+      mainTextureOffset: Object.freeze({ ...semantics.mainTextureOffset }),
+      blend: semantics.destinationBlendFactor === 1 ? "add" as const : "normal" as const,
+    } as ParticleMaterialProfile));
   }
 
   const unity = record(pack.profile.unity);
@@ -291,6 +346,7 @@ function convertBundle(
       profiles,
       moduleProfiles: modules,
       rendererProfiles: renderers,
+      meshProfiles: meshes,
       materials: Object.freeze(materials),
       textures: Object.freeze(textureProfiles),
     }),
@@ -345,6 +401,11 @@ function freezeTransform(value: unknown): ParticleTransformProfile {
     m_LocalRotation: Object.freeze({ ...transform.m_LocalRotation }),
     m_LocalScale: Object.freeze({ ...transform.m_LocalScale }),
   });
+}
+
+function vector2(value: unknown): boolean {
+  const item = record(value);
+  return item !== null && finite(item.x) && finite(item.y);
 }
 
 function vector3(value: unknown): boolean {

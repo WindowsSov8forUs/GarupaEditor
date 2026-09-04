@@ -363,12 +363,27 @@ export interface ParticleModuleProfileMap {
 export interface ParticleRendererMaterialReference {
   readonly type: "Material";
   readonly name: string;
+  /** Schema-2 renderer authority; optional only for legacy compile compatibility. */
+  readonly fileId?: number;
+  readonly pathId?: string;
+}
+
+export interface ParticleRendererObjectReference {
+  readonly fileId: number;
+  readonly pathId: string;
+  readonly external?: string;
+  readonly type?: string;
+  readonly name?: string;
 }
 
 export interface ParticleRendererProfile {
   readonly m_Enabled: boolean;
   readonly m_Materials: readonly (ParticleRendererMaterialReference | null)[];
+  readonly m_SortingLayerID?: number;
+  readonly m_SortingLayer?: number;
   readonly m_SortingOrder: number;
+  readonly m_SortingFudge?: number;
+  readonly m_RendererPriority?: number;
   readonly m_RenderMode: 0 | 1 | 4;
   readonly m_RenderAlignment: 0 | 2;
   readonly m_MinParticleSize: number;
@@ -380,6 +395,45 @@ export interface ParticleRendererProfile {
   readonly m_ApplyActiveColorSpace: boolean;
   readonly m_RotateWithStretchDirection: boolean;
   readonly m_Pivot: ParticleVector3;
+  readonly m_ShadowBias?: number;
+  readonly m_Flip?: ParticleVector3;
+  readonly m_EnableGPUInstancing?: boolean;
+  readonly m_UseCustomVertexStreams?: boolean;
+  readonly m_VertexStreams?: readonly number[];
+  readonly m_UseCustomTrailVertexStreams?: boolean;
+  readonly m_TrailVertexStreams?: readonly number[];
+  readonly m_Mesh?: ParticleRendererObjectReference | null;
+  readonly m_Mesh1?: ParticleRendererObjectReference | null;
+  readonly m_Mesh2?: ParticleRendererObjectReference | null;
+  readonly m_Mesh3?: ParticleRendererObjectReference | null;
+  readonly m_MeshWeighting?: number;
+  readonly m_MeshWeighting1?: number;
+  readonly m_MeshWeighting2?: number;
+  readonly m_MeshWeighting3?: number;
+  readonly m_MaskInteraction?: number;
+}
+
+export interface ParticleMeshSubMeshProfile {
+  readonly firstByte: number;
+  readonly indexCount: number;
+  readonly topology: 0;
+  readonly baseVertex: number;
+  readonly firstVertex: number;
+  readonly vertexCount: number;
+}
+
+export interface ParticleMeshProfile {
+  readonly kind: "builtin" | "embedded";
+  readonly sourcePathId: string;
+  readonly name: string;
+  readonly serializedBytes: number;
+  readonly serializedSha256: string;
+  readonly vertices: readonly (readonly [number, number, number])[];
+  readonly uv0: readonly (readonly [number, number])[];
+  readonly normals: readonly (readonly [number, number, number])[];
+  readonly indices: readonly number[];
+  readonly screenYReflectionIndices: readonly number[];
+  readonly subMeshes: readonly ParticleMeshSubMeshProfile[];
 }
 
 export interface ParticleMaterialProfile {
@@ -388,6 +442,20 @@ export interface ParticleMaterialProfile {
   readonly shader: string;
   readonly texture: string | null;
   readonly blend: "add" | "normal";
+  readonly sourcePathId?: string;
+  readonly serializedBytes?: number;
+  readonly serializedSha256?: string;
+  readonly renderQueue?: 3000;
+  readonly sourceBlendFactor?: 1 | 5;
+  readonly destinationBlendFactor?: 1 | 10;
+  readonly zWrite?: false;
+  readonly cull?: "off";
+  readonly fragment?:
+    | "straight-rgba-modulate"
+    | "premultiply-rgb-after-rgba-modulate"
+    | "straight-rgba-modulate-custom0-yx-uv-offset";
+  readonly mainTextureScale?: ParticleVector2;
+  readonly mainTextureOffset?: ParticleVector2;
 }
 
 export interface ParticleTextureProfile {
@@ -411,6 +479,11 @@ export interface ParticleSystemDefinition {
   /** root→immediate-parent flags identifying which ancestor Transforms receive ParticleSystem setup scale g. */
   readonly parentParticleSystemFlags?: readonly boolean[];
   readonly profile: string;
+  /** Exact renderer/mesh object relation introduced by the current renderer-domain authority. */
+  readonly meshProfile?: string | null;
+  readonly rendererSourcePathId?: string;
+  readonly rendererSerializedBytes?: number;
+  readonly rendererSerializedSha256?: string;
   /** Legacy Schema-1 fixture field; native-semantic Schema 2 allocates runtime state per concrete instance. */
   readonly randomStateU32?: readonly [number, number, number, number];
 }
@@ -421,6 +494,8 @@ export interface ParticleBundleProfile {
   readonly profiles: Readonly<Record<string, ParticleProfileDefinition>>;
   readonly moduleProfiles: ParticleModuleProfileMap;
   readonly rendererProfiles: Readonly<Record<string, ParticleRendererProfile>>;
+  /** Required for native-semantic production; optional only for legacy fixture source compatibility. */
+  readonly meshProfiles?: Readonly<Record<string, ParticleMeshProfile>>;
   readonly materials: readonly ParticleMaterialProfile[];
   readonly textures: readonly ParticleTextureProfile[];
 }
@@ -549,6 +624,16 @@ export interface ParticleResourcePreflightAdapter {
   inspectPng(bytes: Uint8Array): Promise<ParticleOperationResult<ParticleDecodedResourceMetadata>>;
 }
 
+export interface ParticleOwnerTransform {
+  readonly source:
+    | "game-play-button"
+    | "original-note-slide"
+    | "product-extension-note-slide";
+  readonly position: ParticleFloat32Vector3;
+  readonly rotation: ParticleFloat32Quaternion;
+  readonly scale: ParticleFloat32Vector3;
+}
+
 export type ParticleInstanceIdentity =
   | {
       readonly kind: "game-clear";
@@ -559,6 +644,9 @@ export type ParticleInstanceIdentity =
       readonly kind: "game-play-button";
       readonly buttonType: number;
       readonly rangeLength: number | null;
+      /** Required by Schema-2 production; optional only for legacy source compilation. */
+      readonly ownerTransform?: ParticleOwnerTransform;
+      readonly particleSystemSetupScaleBits?: string;
     }
   | {
       readonly kind: "note-slide";
@@ -566,7 +654,12 @@ export type ParticleInstanceIdentity =
       readonly absolutePosition: number;
       readonly buttonType: number;
       readonly rangeLength: number;
-      /** Product Slide roots may carry their exact continuous judgement-line X/scale. */
+      /** Required by Schema-2 production; optional only for legacy source compilation. */
+      readonly ownerTransform?: ParticleOwnerTransform;
+      readonly particleSystemSetupScaleBits?: string;
+      readonly poolSlot?: number;
+      readonly route?: "original" | "product-extension";
+      /** Deprecated compile-only fields; production command validation rejects nullable transform ownership. */
       readonly rootPositionXBits: string | null;
       readonly rootPositionYBits: string | null;
       readonly rootScaleBits: string | null;
@@ -620,6 +713,10 @@ export interface ParticleFloat32Vector3 {
   readonly zBits: string;
 }
 
+export interface ParticleFloat32Quaternion extends ParticleFloat32Vector3 {
+  readonly wBits: string;
+}
+
 export interface ParticleFloat32Color {
   readonly redBits: string;
   readonly greenBits: string;
@@ -640,6 +737,9 @@ export interface ParticleRenderSample {
   readonly instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systemId: string;
+  readonly sourceOrdinal?: number;
+  readonly ownerGeneration?: number;
+  readonly ownerSortOrdinal?: number;
   readonly creationSequence: number;
   readonly position: ParticleFloat32Vector3;
   readonly velocity: ParticleFloat32Vector3;
@@ -650,9 +750,13 @@ export interface ParticleRenderSample {
   readonly lifetimeBits: string;
   readonly uvFrame: number;
   readonly sortingOrder: number;
+  readonly sortingLayerId?: number;
+  readonly sortingFudgeBits?: string;
+  readonly rendererPriority?: number;
   readonly renderMode: 0 | 1 | 4;
   readonly renderAlignment: 0 | 2;
   readonly material: string | null;
+  readonly meshProfile?: string | null;
   readonly customData0: ParticleFloat32Vector4 | null;
   readonly customData1: ParticleFloat32Vector4 | null;
 }
@@ -710,6 +814,23 @@ export interface ParticlePixiButtonAnchor {
   readonly position: ParticleFloat32Vector3;
 }
 
+export interface ParticlePixiButtonOwner {
+  readonly buttonType: number;
+  readonly transform: ParticleOwnerTransform;
+  readonly particleSystemSetupScaleBits: string;
+}
+
+export interface ParticleSlidePoolSceneProfile {
+  readonly poolSize: 8;
+  readonly initialCursor: 0;
+  readonly firstAcquiredSlot: 1;
+  readonly outerScaleBits: string;
+  readonly particleSystemSetupScaleBits: string;
+  readonly childLocalPosition: ParticleFloat32Vector3;
+  readonly childLocalRotation: ParticleFloat32Quaternion;
+  readonly childLocalScale: ParticleFloat32Vector3;
+}
+
 export interface ParticleSimulationSceneProfile {
   readonly gameplayTransformScaleBits: string;
 }
@@ -723,6 +844,9 @@ export interface ParticlePixiSceneProfile {
   readonly gameplayTransformScaleBits: string;
   readonly roundPixels: false;
   readonly buttonAnchors: readonly ParticlePixiButtonAnchor[];
+  /** Required by production owner resolution; optional only for legacy source compilation. */
+  readonly buttonOwners?: readonly ParticlePixiButtonOwner[];
+  readonly slidePool?: ParticleSlidePoolSceneProfile;
 }
 
 export interface ParticleRendererFrameRequest {

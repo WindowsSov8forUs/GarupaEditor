@@ -553,6 +553,7 @@ function createParticleScene(
   layout: OriginalSurfaceLayout,
 ): SimulatorResult<ParticlePixiSceneProfile> {
   const anchors = [];
+  const buttonOwners = [];
   for (let buttonType = 0; buttonType < 16; buttonType += 1) {
     const lane = laneIndex(buttonType);
     if (lane === null) continue;
@@ -563,16 +564,40 @@ function createParticleScene(
     if (xBits === null || yBits === null || zBits === null) {
       return reject("scene.invalid-particle-anchor", "Particle anchors require finite exact Float32 scene positions.");
     }
-    anchors.push(Object.freeze({
+    const position = Object.freeze({ xBits, yBits, zBits });
+    anchors.push(Object.freeze({ buttonType, position }));
+    buttonOwners.push(Object.freeze({
       buttonType,
-      position: Object.freeze({ xBits, yBits, zBits }),
+      transform: Object.freeze({
+        source: "game-play-button" as const,
+        position,
+        rotation: Object.freeze({
+          xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
+        }),
+        scale: Object.freeze({
+          xBits: "0x3F800000", yBits: "0x3F800000", zBits: "0x3F800000",
+        }),
+      }),
+      particleSystemSetupScaleBits: "",
     }));
   }
   const pixelsPerWorldUnitBits = particleFloat32ToBits(layout.camera.pixelsPerWorldUnit);
   const gameplayTransformScaleBits = particleFloat32ToBits(layout.gameplay.particleTransformScale);
-  if (pixelsPerWorldUnitBits === null || gameplayTransformScaleBits === null) {
+  const slideWidthScale = layout.gameplay.screenWidthAdjustRate < 1
+    ? layout.gameplay.screenWidthAdjustRate
+    : Math.fround(1);
+  const slideParticleSystemSetupScaleBits = particleFloat32ToBits(Math.fround(
+    slideWidthScale * layout.gameplay.normalizedNoteSize,
+  ));
+  const slideOuterScaleBits = particleFloat32ToBits(layout.gameplay.noteSettingScale);
+  if (pixelsPerWorldUnitBits === null || gameplayTransformScaleBits === null ||
+    slideParticleSystemSetupScaleBits === null || slideOuterScaleBits === null) {
     return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
   }
+  const resolvedButtonOwners = Object.freeze(buttonOwners.map((owner) => Object.freeze({
+    ...owner,
+    particleSystemSetupScaleBits: gameplayTransformScaleBits,
+  })));
   return ok(Object.freeze({
     viewportWidth: layout.surface.viewportWidth,
     viewportHeight: layout.surface.viewportHeight,
@@ -582,6 +607,19 @@ function createParticleScene(
     gameplayTransformScaleBits,
     roundPixels: false,
     buttonAnchors: Object.freeze(anchors),
+    buttonOwners: resolvedButtonOwners,
+    slidePool: Object.freeze({
+      poolSize: 8 as const,
+      initialCursor: 0 as const,
+      firstAcquiredSlot: 1 as const,
+      outerScaleBits: slideOuterScaleBits,
+      particleSystemSetupScaleBits: slideParticleSystemSetupScaleBits,
+      childLocalPosition: Object.freeze({ xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000" }),
+      childLocalRotation: Object.freeze({
+        xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
+      }),
+      childLocalScale: Object.freeze({ xBits: "0x3F800000", yBits: "0x3F800000", zBits: "0x3F800000" }),
+    }),
   }));
 }
 

@@ -24,6 +24,7 @@ import type {
   ParticleUvModule,
   ParticleVelocityModule,
 } from "../../backends/particleContracts";
+import { particleFloat32FromBits } from "../../backends/particleValidation";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
   particleSimdRandomValues,
@@ -93,6 +94,7 @@ interface SimulatedParticle {
   readonly particleId: string;
   readonly creationSequence: number;
   readonly emitterOrigin: Vector3;
+  readonly particleSystemSetupScale: number;
   age: number;
   readonly lifetime: number;
   readonly randomSeed: number;
@@ -116,6 +118,7 @@ interface OwnerSystemRuntime {
 interface OwnerRuntime {
   readonly ownerKey: string;
   readonly generation: number;
+  readonly particleSystemSetupScale: number;
   instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systems: Map<string, OwnerSystemRuntime>;
@@ -216,7 +219,8 @@ export class DeterministicParticleSimulation {
       .map((record) => record.definition.identity);
     const owner = this.owners.get(ownerKey);
     if (owner !== undefined) {
-      if (owner.root !== root || !sameParticleInstance(owner.instance, instance)) {
+      if (owner.root !== root || !sameParticleInstance(owner.instance, instance) ||
+        owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
         throw fault("particle.simulation.owner-identity-mismatch", "A live native ParticleSystem instance cannot switch owner/root identity during Stop/Clear/Play restart.");
       }
       // The managed routes execute Stop(withChildren) + Clear(withChildren)
@@ -238,17 +242,19 @@ export class DeterministicParticleSimulation {
     }
     let owner = this.owners.get(ownerKey);
     if (owner === undefined) {
-      this.ensureConstructedOwner(ownerKey, root);
+      this.ensureConstructedOwner(ownerKey, instance, root);
       this.ownerGenerationSequence += 1;
       owner = {
         ownerKey,
         generation: this.ownerGenerationSequence,
+        particleSystemSetupScale: instanceParticleSystemSetupScale(instance, this.gameplayTransformScale),
         instance: Object.freeze({ ...instance }),
         root,
         systems: new Map<string, OwnerSystemRuntime>(),
       };
       this.owners.set(ownerKey, owner);
-    } else if (owner.root !== root || !sameParticleInstance(owner.instance, instance)) {
+    } else if (owner.root !== root || !sameParticleInstance(owner.instance, instance) ||
+      owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
       throw fault("particle.simulation.owner-identity-mismatch", "Incremental ParticleSystem activation requires the same stable root owner identity.");
     }
     const selected = [...new Set(selectedSystemIds)].map((identity) => {
@@ -267,8 +273,13 @@ export class DeterministicParticleSimulation {
     }
   }
 
-  private ensureConstructedOwner(ownerKey: string, root: ParticleRootId): void {
-    const existing = this.constructedOwners.get(ownerKey);
+  private ensureConstructedOwner(
+    ownerKey: string,
+    instance: ParticleInstanceIdentity,
+    root: ParticleRootId,
+  ): void {
+    const constructionKey = particleConstructionKey(ownerKey, instance);
+    const existing = this.constructedOwners.get(constructionKey);
     if (existing !== undefined) {
       if (existing !== root) {
         throw fault("particle.simulation.constructed-owner-root-mismatch", "A concrete pooled particle owner cannot change its serialized prefab root.");
@@ -286,7 +297,7 @@ export class DeterministicParticleSimulation {
         this.autoSeedState = constructionSeed.state;
       }
     }
-    this.constructedOwners.set(ownerKey, root);
+    this.constructedOwners.set(constructionKey, root);
   }
 
   private createSystemRuntime(
@@ -408,7 +419,9 @@ export class DeterministicParticleSimulation {
     const owner = this.owners.get(ownerKey);
     if (owner === undefined || owner.instance.kind !== "note-slide" ||
       owner.instance.noteIndex !== instance.noteIndex ||
-      owner.instance.absolutePosition !== instance.absolutePosition) {
+      owner.instance.absolutePosition !== instance.absolutePosition ||
+      owner.instance.poolSlot !== instance.poolSlot || owner.instance.route !== instance.route ||
+      owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
       throw fault("particle.simulation.missing-slide-owner", "Slide root movement requires the exact active persistent owner.");
     }
     owner.instance = Object.freeze({ ...instance });
@@ -488,7 +501,7 @@ export class DeterministicParticleSimulation {
         const renderer = record.bundle.rendererProfiles[profile.renderer];
         if (renderer === undefined) throw fault("particle.simulation.missing-renderer", "Every current profile renderer must resolve.");
         if (!renderer.m_Enabled) continue;
-        const material = renderer.m_Materials.find((candidate) => candidate !== null) ?? null;
+        const material = renderer.m_Materials[0] ?? null;
         for (const particle of runtime.particles) {
           const normalizedAge = clamp01(divide(particle.age, particle.lifetime));
           let size: Vector3 = [...particle.baseSize];
@@ -506,7 +519,11 @@ export class DeterministicParticleSimulation {
               size = size.map((value) => multiply(value, scale)) as Vector3;
             }
           }
-          const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, this.gameplayTransformScale);
+          const transformSize = particleSizeScale(
+            record.definition,
+            profile.system.scalingMode,
+            owner.particleSystemSetupScale,
+          );
           size = size.map((value, index) => multiply(value, transformSize[index]!)) as Vector3;
           let colorBytes: ColorBytes = [...particle.baseColor];
           const colorModule = getModule(record.bundle, profile, "ColorModule");
@@ -537,6 +554,9 @@ export class DeterministicParticleSimulation {
             instance: Object.freeze({ ...owner.instance }),
             root: owner.root,
             systemId: identity,
+            sourceOrdinal: record.definition.sourceOrdinal!,
+            ownerGeneration: owner.generation,
+            ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
             position: vectorBits(particle.position),
             velocity: vectorBits(particle.renderVelocity),
@@ -547,17 +567,25 @@ export class DeterministicParticleSimulation {
             lifetimeBits: bits(particle.lifetime),
             uvFrame,
             sortingOrder: renderer.m_SortingOrder,
+            sortingLayerId: renderer.m_SortingLayerID!,
+            sortingFudgeBits: bits(renderer.m_SortingFudge!),
+            rendererPriority: renderer.m_RendererPriority!,
             renderMode: renderer.m_RenderMode,
             renderAlignment: renderer.m_RenderAlignment,
             material: material?.name ?? null,
+            meshProfile: record.definition.meshProfile ?? null,
             customData0: customData0 === null ? null : vector4Bits(customData0),
             customData1: customData1 === null ? null : vector4Bits(customData1),
           }));
         }
       }
     }
-    samples.sort((left, right) => left.sortingOrder - right.sortingOrder ||
-      this.definitions.get(left.systemId)!.ordinal - this.definitions.get(right.systemId)!.ordinal ||
+    samples.sort((left, right) => left.sortingLayerId! - right.sortingLayerId! ||
+      left.sortingOrder - right.sortingOrder ||
+      particleFloat32FromBits(left.sortingFudgeBits!)! - particleFloat32FromBits(right.sortingFudgeBits!)! ||
+      left.rendererPriority! - right.rendererPriority! ||
+      left.ownerSortOrdinal! - right.ownerSortOrdinal! ||
+      left.sourceOrdinal! - right.sourceOrdinal! ||
       left.creationSequence - right.creationSequence);
     return Object.freeze(samples);
   }
@@ -733,17 +761,18 @@ export class DeterministicParticleSimulation {
     let position: Vector3 = birth.position;
     let velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
     let emitterOrigin: Vector3 = [0, 0, 0];
-    emitterOrigin = applyTransform(emitterOrigin, record.definition.transform, true, this.gameplayTransformScale);
+    const particleSystemSetupScale = owner.particleSystemSetupScale;
+    emitterOrigin = applyTransform(emitterOrigin, record.definition.transform, true, particleSystemSetupScale);
     for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
       const parent = record.definition.parentTransforms[index]!;
-      const setupScale = parentSetupScale(record.definition, index, this.gameplayTransformScale);
+      const setupScale = parentSetupScale(record.definition, index, particleSystemSetupScale);
       emitterOrigin = applyTransform(emitterOrigin, parent, true, setupScale);
     }
-    position = applyTransform(position, record.definition.transform, true, this.gameplayTransformScale);
-    velocity = applyTransform(velocity, record.definition.transform, false, this.gameplayTransformScale);
+    position = applyTransform(position, record.definition.transform, true, particleSystemSetupScale);
+    velocity = applyTransform(velocity, record.definition.transform, false, particleSystemSetupScale);
     for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
       const parent = record.definition.parentTransforms[index]!;
-      const setupScale = parentSetupScale(record.definition, index, this.gameplayTransformScale);
+      const setupScale = parentSetupScale(record.definition, index, particleSystemSetupScale);
       position = applyTransform(position, parent, true, setupScale);
       velocity = applyTransform(velocity, parent, false, setupScale);
     }
@@ -753,6 +782,7 @@ export class DeterministicParticleSimulation {
       particleId: `${owner.ownerKey}\u0000${owner.generation}\u0000${record.definition.identity}#${instanceState.birthCount}`,
       creationSequence: this.creationSequence,
       emitterOrigin: emitterOrigin.map(f32) as Vector3,
+      particleSystemSetupScale,
       age: f32(0),
       lifetime,
       randomSeed: random.particleSeed,
@@ -817,8 +847,8 @@ export class DeterministicParticleSimulation {
       ];
       let centerOffset = offset;
       if (!velocity.inWorldSpace) {
-        moduleVelocity = applySystemVector(moduleVelocity, definition, this.gameplayTransformScale);
-        centerOffset = applySystemVector(centerOffset, definition, this.gameplayTransformScale);
+        moduleVelocity = applySystemVector(moduleVelocity, definition, particle.particleSystemSetupScale);
+        centerOffset = applySystemVector(centerOffset, definition, particle.particleSystemSetupScale);
       }
       const relative = particle.position.map((value, index) =>
         subtract(value, add(particle.emitterOrigin[index]!, centerOffset[index]!))) as Vector3;
@@ -830,7 +860,7 @@ export class DeterministicParticleSimulation {
       let orbital: Vector3 = Math.abs(orbitalDuration) > 0
         ? scaleVector(subtractVector(rotatedRelative, relative), divide(1, orbitalDuration))
         : [0, 0, 0];
-      if (!velocity.inWorldSpace) orbital = applySystemVector(orbital, definition, this.gameplayTransformScale);
+      if (!velocity.inWorldSpace) orbital = applySystemVector(orbital, definition, particle.particleSystemSetupScale);
       const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
       const radial = scaleVector(normalizeOrZero(rotatedRelative), radialAmount);
       moduleVelocity = addVector(moduleVelocity, addVector(orbital, radial));
@@ -846,7 +876,7 @@ export class DeterministicParticleSimulation {
         minMax(force.y, normalizedAge, particle.slots[10]!),
         minMax(force.z, normalizedAge, particle.slots[11]!),
       ];
-      if (!force.inWorldSpace) acceleration = applySystemVector(acceleration, definition, this.gameplayTransformScale);
+      if (!force.inWorldSpace) acceleration = applySystemVector(acceleration, definition, particle.particleSystemSetupScale);
       particle.velocity = particle.velocity.map((value, index) =>
         add(value, multiply(acceleration[index]!, delta))) as Vector3;
     }
@@ -858,11 +888,15 @@ export class DeterministicParticleSimulation {
       if (clamp.inWorldSpace) {
         combinedVelocity = limitVelocity(combinedVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize);
       } else {
-        const localVelocity = inverseSystemVector(combinedVelocity, definition, this.gameplayTransformScale);
+        const localVelocity = inverseSystemVector(
+          combinedVelocity,
+          definition,
+          particle.particleSystemSetupScale,
+        );
         combinedVelocity = applySystemVector(
           limitVelocity(localVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize),
           definition,
-          this.gameplayTransformScale,
+          particle.particleSystemSetupScale,
         );
       }
     }
@@ -1539,16 +1573,57 @@ function cloneSimdState(state: ParticleRandomSimdState): ParticleRandomSimdState
 
 function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
   if (left.kind !== right.kind || left.buttonType !== right.buttonType || left.rangeLength !== right.rangeLength) return false;
+  if (left.kind === "game-clear" || right.kind === "game-clear") return left.kind === right.kind;
+  if (!sameOwnerTransform(left.ownerTransform, right.ownerTransform) ||
+    left.particleSystemSetupScaleBits !== right.particleSystemSetupScaleBits) return false;
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
   return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
-    left.rootPositionXBits === right.rootPositionXBits && left.rootPositionYBits === right.rootPositionYBits &&
-    left.rootScaleBits === right.rootScaleBits;
+    left.poolSlot === right.poolSlot && left.route === right.route;
+}
+
+function sameOwnerTransform(
+  left: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+  right: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  return left.source === right.source &&
+    left.position.xBits === right.position.xBits && left.position.yBits === right.position.yBits && left.position.zBits === right.position.zBits &&
+    left.rotation.xBits === right.rotation.xBits && left.rotation.yBits === right.rotation.yBits &&
+    left.rotation.zBits === right.rotation.zBits && left.rotation.wBits === right.rotation.wBits &&
+    left.scale.xBits === right.scale.xBits && left.scale.yBits === right.scale.yBits && left.scale.zBits === right.scale.zBits;
+}
+
+function instanceParticleSystemSetupScale(
+  instance: ParticleInstanceIdentity,
+  legacyFallback: number,
+): number {
+  if (instance.kind === "game-clear") return legacyFallback;
+  const value = instance.particleSystemSetupScaleBits === undefined
+    ? legacyFallback
+    : particleFloat32FromBits(instance.particleSystemSetupScaleBits);
+  if (value === null || value <= 0) {
+    throw fault("particle.simulation.invalid-owner-setup-scale", "Every current gameplay particle owner requires one positive binary32 ParticleSystem setup scale.");
+  }
+  return value;
+}
+
+function particleConstructionKey(ownerKey: string, instance: ParticleInstanceIdentity): string {
+  return instance.kind === "note-slide" && instance.poolSlot !== undefined
+    ? `note-slide-pool:${instance.poolSlot}`
+    : ownerKey;
+}
+
+function particleOwnerSortOrdinal(instance: ParticleInstanceIdentity): number {
+  if (instance.kind === "game-clear") return 10_000;
+  if (instance.kind === "game-play-button") return instance.buttonType;
+  return 32 + (instance.poolSlot ?? 0);
 }
 
 function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
   return {
     ownerKey: owner.ownerKey,
     generation: owner.generation,
+    particleSystemSetupScale: owner.particleSystemSetupScale,
     instance: Object.freeze({ ...owner.instance }),
     root: owner.root,
     systems: new Map([...owner.systems].map(([identity, runtime]) => [identity, {

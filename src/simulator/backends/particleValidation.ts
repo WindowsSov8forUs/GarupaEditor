@@ -332,17 +332,15 @@ export function validateSelectedSkinParticlePack(
   for (const bundle of profile.bundles) {
     if ((bundle.key !== "ordinary" && bundle.key !== "directional") || bundleKeys.has(bundle.key) ||
       bundle.systems.length === 0 || Object.keys(bundle.profiles).length === 0 ||
-      Object.keys(bundle.rendererProfiles).length === 0 || bundle.materials.length === 0 ||
-      bundle.textures.length === 0) {
+      Object.keys(bundle.rendererProfiles).length === 0 || bundle.meshProfiles === undefined ||
+      bundle.materials.length === 0 || bundle.textures.length === 0) {
       return reject("particle.skin-pack.invalid-bundle", "Selected Skin ordinary/directional particle bundles must each be complete and unique.");
     }
     bundleKeys.add(bundle.key);
     const materialNames = new Set<string>();
     for (const material of bundle.materials) {
-      if (!isNonEmpty(material.name) || materialNames.has(material.name) || !isNonEmpty(material.shader) ||
-        (material.texture !== null && !isNonEmpty(material.texture)) ||
-        (material.blend !== "add" && material.blend !== "normal")) {
-        return reject("particle.skin-pack.invalid-material", "Every selected Skin material requires unique identity, resolved current shader, texture relation and explicit blend projection.");
+      if (!isCurrentMaterialProfile(material) || materialNames.has(material.name)) {
+        return reject("particle.skin-pack.invalid-material", "Every selected Skin material requires unique source identity, shader equation, texture transform and exact blend factors.");
       }
       materialNames.add(material.name);
     }
@@ -353,7 +351,12 @@ export function validateSelectedSkinParticlePack(
     }
     for (const renderer of Object.values(bundle.rendererProfiles)) {
       if (!isCurrentRendererProfile(renderer, materialNames)) {
-        return reject("particle.skin-pack.invalid-renderer", "Every selected Skin renderer must retain its exact current mode, alignment, ordering, size, pivot and complete material slots.");
+        return reject("particle.skin-pack.invalid-renderer", "Every selected Skin renderer must retain its exact current mode, alignment, ordering, streams, mesh pointers, size, pivot and complete material slots.");
+      }
+    }
+    for (const mesh of Object.values(bundle.meshProfiles)) {
+      if (!isCurrentMeshProfile(mesh)) {
+        return reject("particle.skin-pack.invalid-mesh", "Every selected current mesh requires exact source identity, vertices, UV, normals, submeshes and reflected winding.");
       }
     }
     for (let sourceOrdinal = 0; sourceOrdinal < bundle.systems.length; sourceOrdinal += 1) {
@@ -363,7 +366,11 @@ export function validateSelectedSkinParticlePack(
         !Array.isArray(system.parentTransforms) || !system.parentTransforms.every(isTransform) ||
         !Array.isArray(system.parentParticleSystemFlags) ||
         system.parentParticleSystemFlags.length !== system.parentTransforms.length ||
-        !system.parentParticleSystemFlags.every((flag) => typeof flag === "boolean")) {
+        !system.parentParticleSystemFlags.every((flag) => typeof flag === "boolean") ||
+        typeof system.rendererSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(system.rendererSourcePathId) ||
+        !isPositiveInteger(system.rendererSerializedBytes) || typeof system.rendererSerializedSha256 !== "string" ||
+        !SHA256_PATTERN.test(system.rendererSerializedSha256) ||
+        !(system.meshProfile === null || typeof system.meshProfile === "string" && owns(bundle.meshProfiles, system.meshProfile))) {
         return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known root, contiguous source ordinal and source-bound profile/TRS; runtime random state is allocated only for the concrete instance.");
       }
     }
@@ -379,6 +386,14 @@ export function validateSelectedSkinParticlePack(
           !isCurrentModuleProfile(moduleName, map[moduleIdentity])) {
           return reject("particle.skin-pack.invalid-module", `Selected Skin module ${moduleName}:${String(moduleIdentity)} does not match its current native-semantic branch contract.`);
         }
+      }
+    }
+    for (const system of bundle.systems) {
+      const definition = bundle.profiles[system.profile]!;
+      const renderer = bundle.rendererProfiles[definition.renderer]!;
+      if ((renderer.m_RenderMode === 4) !== (system.meshProfile !== null) ||
+        renderer.m_RenderMode === 4 && bundle.meshProfiles[system.meshProfile!] === undefined) {
+        return reject("particle.skin-pack.renderer-mesh-relation", "Mode 4 and source-bound mesh geometry must correspond exactly for every current system.");
       }
     }
   }
@@ -450,8 +465,23 @@ export function validateParticleFrameRequest(
 
 export function freezeParticleCommand(command: ParticleCommand): ParticleCommand {
   return "instance" in command
-    ? Object.freeze({ ...command, instance: Object.freeze({ ...command.instance }) }) as ParticleCommand
+    ? Object.freeze({ ...command, instance: freezeParticleInstance(command.instance) }) as ParticleCommand
     : Object.freeze({ ...command }) as ParticleCommand;
+}
+
+function freezeParticleInstance(instance: ParticleInstanceIdentity): ParticleInstanceIdentity {
+  if (instance.kind === "game-clear" || instance.ownerTransform === undefined) {
+    return Object.freeze({ ...instance });
+  }
+  return Object.freeze({
+    ...instance,
+    ownerTransform: Object.freeze({
+      ...instance.ownerTransform,
+      position: Object.freeze({ ...instance.ownerTransform.position }),
+      rotation: Object.freeze({ ...instance.ownerTransform.rotation }),
+      scale: Object.freeze({ ...instance.ownerTransform.scale }),
+    }),
+  });
 }
 
 export function particleFloat32ToBits(value: number): string | null {
@@ -480,17 +510,96 @@ function isCurrentSystemProfile(value: Record<string, unknown>): boolean {
     (value.scalingMode === 0 || value.scalingMode === 1) && value.randomSeed === 0;
 }
 
+function isCurrentMaterialProfile(value: unknown): boolean {
+  if (!isRecord(value) || !isNonEmpty(value.name) || !isNonEmpty(value.shader) || !isNonEmpty(value.texture) ||
+    typeof value.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(value.sourcePathId) ||
+    !isPositiveInteger(value.serializedBytes) || typeof value.serializedSha256 !== "string" ||
+    !SHA256_PATTERN.test(value.serializedSha256) || value.renderQueue !== 3000 || value.zWrite !== false ||
+    value.cull !== "off" || (value.sourceBlendFactor !== 1 && value.sourceBlendFactor !== 5) ||
+    (value.destinationBlendFactor !== 1 && value.destinationBlendFactor !== 10) ||
+    !isVector2(value.mainTextureScale) || !isVector2(value.mainTextureOffset) ||
+    (value.blend !== "add" && value.blend !== "normal") ||
+    value.blend !== (value.destinationBlendFactor === 1 ? "add" : "normal") ||
+    !["straight-rgba-modulate", "premultiply-rgb-after-rgba-modulate", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(value.fragment as string)) {
+    return false;
+  }
+  if (value.fragment === "premultiply-rgb-after-rgba-modulate") {
+    return value.sourceBlendFactor === 1 && value.destinationBlendFactor === 10 &&
+      value.shader === "Legacy Shaders/Particles/Alpha Blended Premultiply";
+  }
+  if (value.fragment === "straight-rgba-modulate-custom0-yx-uv-offset") {
+    return value.sourceBlendFactor === 5 && (value.destinationBlendFactor === 1 || value.destinationBlendFactor === 10) &&
+      value.shader === "star/Customdata_CurveUVScroll";
+  }
+  return value.sourceBlendFactor === 5 && (value.destinationBlendFactor === 1 || value.destinationBlendFactor === 10) &&
+    ["Mobile/Particles/Additive", "Mobile/Particles/Alpha Blended", "Particles/Standard Unlit"].includes(value.shader as string);
+}
+
+function isCurrentMeshProfile(value: unknown): boolean {
+  if (!isRecord(value) || (value.kind !== "builtin" && value.kind !== "embedded") ||
+    typeof value.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(value.sourcePathId) || !isNonEmpty(value.name) ||
+    !isPositiveInteger(value.serializedBytes) || typeof value.serializedSha256 !== "string" ||
+    !SHA256_PATTERN.test(value.serializedSha256) || !Array.isArray(value.vertices) ||
+    !Array.isArray(value.uv0) || !Array.isArray(value.normals) || !Array.isArray(value.indices) ||
+    !Array.isArray(value.screenYReflectionIndices) || !Array.isArray(value.subMeshes)) return false;
+  const vertices = value.vertices;
+  const uv0 = value.uv0;
+  const normals = value.normals;
+  const indices = value.indices;
+  const reflected = value.screenYReflectionIndices;
+  const subMeshes = value.subMeshes;
+  if (vertices.length < 4 || uv0.length !== vertices.length || normals.length !== vertices.length ||
+    indices.length < 3 || indices.length % 3 !== 0 || reflected.length !== indices.length || subMeshes.length !== 1 ||
+    !vertices.every(isFloat32Vector3Array) || !normals.every(isFloat32Vector3Array) || !uv0.every(isFloat32Vector2Array) ||
+    !indices.every((index) => Number.isSafeInteger(index) && index >= 0 && index < vertices.length) ||
+    !reflected.every((index) => Number.isSafeInteger(index) && index >= 0 && index < vertices.length)) return false;
+  for (let index = 0; index < indices.length; index += 3) {
+    if (reflected[index] !== indices[index] || reflected[index + 1] !== indices[index + 2] ||
+      reflected[index + 2] !== indices[index + 1]) return false;
+  }
+  const subMesh = subMeshes[0];
+  return isRecord(subMesh) && subMesh.firstByte === 0 && subMesh.indexCount === indices.length &&
+    subMesh.topology === 0 && subMesh.baseVertex === 0 && subMesh.firstVertex === 0 &&
+    subMesh.vertexCount === vertices.length;
+}
+
 function isCurrentRendererProfile(value: unknown, materialNames: ReadonlySet<string>): boolean {
   if (!isRecord(value) || typeof value.m_Enabled !== "boolean" || !Array.isArray(value.m_Materials) ||
-    !value.m_Materials.every((material) => material === null ||
-      (isRecord(material) && material.type === "Material" && isNonEmpty(material.name) && materialNames.has(material.name))) ||
+    !Array.isArray(value.m_VertexStreams) || !Array.isArray(value.m_TrailVertexStreams)) return false;
+  const materials = value.m_Materials;
+  const vertexStreams = value.m_VertexStreams;
+  const trailStreams = value.m_TrailVertexStreams;
+  if ((materials.length !== 1 && materials.length !== 2) ||
+    !materials.every((material) => material === null ||
+      (isRecord(material) && material.type === "Material" && isNonEmpty(material.name) && materialNames.has(material.name) &&
+        Number.isSafeInteger(material.fileId) && typeof material.pathId === "string" && /^int64:-?[0-9]+$/.test(material.pathId))) ||
+    value.m_CastShadows !== 0 && value.m_CastShadows !== 1 ||
+    value.m_ReceiveShadows !== 0 && value.m_ReceiveShadows !== 1 || value.m_DynamicOccludee !== 1 ||
+    value.m_StaticShadowCaster !== 0 || value.m_MotionVectors !== 1 ||
+    value.m_LightProbeUsage !== 0 && value.m_LightProbeUsage !== 1 || value.m_ReflectionProbeUsage !== 0 ||
+    value.m_RayTracingMode !== 0 || value.m_RayTraceProcedural !== 0 || value.m_RenderingLayerMask !== 1 ||
+    value.m_RendererPriority !== 0 || value.m_SortingLayerID !== 0 || value.m_SortingLayer !== 0 ||
     (value.m_RenderMode !== 0 && value.m_RenderMode !== 1 && value.m_RenderMode !== 4) ||
-    (value.m_RenderAlignment !== 0 && value.m_RenderAlignment !== 2) || value.m_SortMode !== 0 ||
-    !Number.isSafeInteger(value.m_SortingOrder) || !isFloat32(value.m_MinParticleSize) || value.m_MinParticleSize !== 0 ||
-    !isFloat32(value.m_MaxParticleSize) || value.m_MaxParticleSize <= 0 || !isFloat32(value.m_VelocityScale) ||
-    !isFloat32(value.m_LengthScale) || !isFloat32(value.m_NormalDirection) ||
-    typeof value.m_ApplyActiveColorSpace !== "boolean" || value.m_RotateWithStretchDirection !== true ||
-    !isVector3(value.m_Pivot)) return false;
+    (value.m_RenderAlignment !== 0 && value.m_RenderAlignment !== 2) || value.m_SortMode !== 0 || value.m_MeshDistribution !== 0 ||
+    !Number.isSafeInteger(value.m_SortingOrder) || !isFloat32(value.m_SortingFudge) ||
+    (value.m_SortingFudge !== 0 && value.m_SortingFudge !== -10) ||
+    !isFloat32(value.m_MinParticleSize) || value.m_MinParticleSize !== 0 ||
+    !isFloat32(value.m_MaxParticleSize) || value.m_MaxParticleSize <= 0 || !isFloat32(value.m_CameraVelocityScale) ||
+    !isFloat32(value.m_VelocityScale) || !isFloat32(value.m_LengthScale) || !isFloat32(value.m_NormalDirection) ||
+    value.m_ShadowBias !== 0 || typeof value.m_ApplyActiveColorSpace !== "boolean" || value.m_AllowRoll !== true ||
+    value.m_FreeformStretching !== false || value.m_RotateWithStretchDirection !== true ||
+    typeof value.m_EnableGPUInstancing !== "boolean" || typeof value.m_UseCustomVertexStreams !== "boolean" ||
+    typeof value.m_UseCustomTrailVertexStreams !== "boolean" || value.m_UseCustomTrailVertexStreams !== false ||
+    ![[0, 1, 3, 4], [0, 1, 3, 4, 5], [0, 1, 3, 4, 34]]
+      .some((expected) => expected.length === vertexStreams.length && expected.every((item, index) => item === vertexStreams[index])) ||
+    value.m_UseCustomVertexStreams !== vertexStreams.includes(34) ||
+    trailStreams.length !== 4 || !trailStreams.every((item, index) => item === [0, 1, 3, 4][index]) ||
+    !isZeroVector3(value.m_Flip) || !isVector3(value.m_Pivot) || value.m_MaskInteraction !== 0 ||
+    value.m_StaticBatchRoot !== null || value.m_ProbeAnchor !== null || value.m_LightProbeVolumeOverride !== null ||
+    !["m_Mesh", "m_Mesh1", "m_Mesh2", "m_Mesh3"].every((key) => isRendererObjectReferenceOrNull(value[key])) ||
+    value.m_Mesh1 !== null || value.m_Mesh2 !== null || value.m_Mesh3 !== null ||
+    ![value.m_MeshWeighting, value.m_MeshWeighting1, value.m_MeshWeighting2, value.m_MeshWeighting3]
+      .every((weight) => weight === 1)) return false;
   return true;
 }
 
@@ -640,6 +749,22 @@ function isZeroVector3(value: unknown): boolean {
     (value as Record<string, unknown>).y === 0 && (value as Record<string, unknown>).z === 0;
 }
 
+function isFloat32Vector2Array(value: unknown): boolean {
+  return Array.isArray(value) && value.length === 2 && value.every(isFloat32);
+}
+
+function isFloat32Vector3Array(value: unknown): boolean {
+  return Array.isArray(value) && value.length === 3 && value.every(isFloat32);
+}
+
+function isRendererObjectReferenceOrNull(value: unknown): boolean {
+  return value === null || isRecord(value) && Number.isSafeInteger(value.fileId) &&
+    typeof value.pathId === "string" && /^int64:-?[0-9]+$/.test(value.pathId) &&
+    (value.type === undefined || typeof value.type === "string") &&
+    (value.name === undefined || typeof value.name === "string") &&
+    (value.external === undefined || typeof value.external === "string");
+}
+
 function isVector2(value: unknown): boolean {
   return isRecord(value) && isFloat32(value.x) && isFloat32(value.y);
 }
@@ -671,31 +796,51 @@ function parseJson(bytes: Uint8Array, capability: string): ParticleOperationResu
 function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceIdentity {
   if (!isRecord(value) || typeof value.kind !== "string") return false;
   if (value.kind === "game-play-button") {
-    return hasExactKeys(value, ["kind", "buttonType", "rangeLength"]) &&
-      typeof value.buttonType === "number" && Number.isInteger(value.buttonType) &&
-      value.buttonType >= 0 && value.buttonType <= 15 &&
-      (value.rangeLength === null ||
-        (typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) &&
-          value.rangeLength >= 1 && value.rangeLength <= 7));
+    return hasExactKeys(value, ["kind", "buttonType", "rangeLength", "ownerTransform", "particleSystemSetupScaleBits"]) &&
+      typeof value.buttonType === "number" && Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
+      (value.rangeLength === null || typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) &&
+        value.rangeLength >= 1 && value.rangeLength <= 7) &&
+      isOwnerTransform(value.ownerTransform, "game-play-button") && positiveFloat32Bits(value.particleSystemSetupScaleBits);
   }
   if (value.kind !== "note-slide" ||
-    !hasExactKeys(value, ["kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength", "rootPositionXBits", "rootPositionYBits", "rootScaleBits"]) ||
+    !hasExactKeys(value, [
+      "kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength", "ownerTransform",
+      "particleSystemSetupScaleBits", "poolSlot", "route", "rootPositionXBits", "rootPositionYBits", "rootScaleBits",
+    ]) ||
     typeof value.noteIndex !== "number" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
     typeof value.absolutePosition !== "number" || !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
     typeof value.buttonType !== "number" || !Number.isFinite(value.buttonType) ||
-    typeof value.rangeLength !== "number" || !Number.isInteger(value.rangeLength) || value.rangeLength < 1) {
-    return false;
-  }
-  if (value.rootPositionXBits === null || value.rootPositionYBits === null || value.rootScaleBits === null) {
-    return value.rootPositionXBits === null && value.rootPositionYBits === null && value.rootScaleBits === null &&
-      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15;
-  }
-  if (typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
+    typeof value.rangeLength !== "number" || !Number.isInteger(value.rangeLength) || value.rangeLength < 1 ||
+    typeof value.poolSlot !== "number" || !Number.isInteger(value.poolSlot) || value.poolSlot < 0 || value.poolSlot >= 8 ||
+    (value.route !== "original" && value.route !== "product-extension") ||
+    !positiveFloat32Bits(value.particleSystemSetupScaleBits) ||
+    !isOwnerTransform(value.ownerTransform, value.route === "original" ? "original-note-slide" : "product-extension-note-slide") ||
+    typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
     typeof value.rootScaleBits !== "string") return false;
-  const rootX = particleFloat32FromBits(value.rootPositionXBits);
-  const rootY = particleFloat32FromBits(value.rootPositionYBits);
-  const rootScale = particleFloat32FromBits(value.rootScaleBits);
-  return rootX !== null && rootY !== null && rootScale !== null && rootScale > 0;
+  const owner = value.ownerTransform as Record<string, unknown>;
+  const position = owner.position as Record<string, unknown>;
+  const scale = owner.scale as Record<string, unknown>;
+  return value.rootPositionXBits === position.xBits && value.rootPositionYBits === position.yBits &&
+    value.rootScaleBits === scale.xBits && positiveFloat32Bits(value.rootScaleBits) &&
+    (value.route === "product-extension" || Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15);
+}
+
+function isOwnerTransform(value: unknown, source: string): boolean {
+  if (!isRecord(value) || value.source !== source || !isRecord(value.position) ||
+    !isRecord(value.rotation) || !isRecord(value.scale)) return false;
+  const position = value.position;
+  const rotation = value.rotation;
+  const scale = value.scale;
+  return [position.xBits, position.yBits, position.zBits, rotation.xBits, rotation.yBits,
+    rotation.zBits, rotation.wBits, scale.xBits, scale.yBits, scale.zBits]
+    .every((bits) => typeof bits === "string" && particleFloat32FromBits(bits) !== null) &&
+    [scale.xBits, scale.yBits, scale.zBits].every(positiveFloat32Bits);
+}
+
+function positiveFloat32Bits(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const decoded = particleFloat32FromBits(value);
+  return decoded !== null && decoded > 0;
 }
 
 function isInstanceCompatibleWithRoot(

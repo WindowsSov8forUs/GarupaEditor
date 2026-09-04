@@ -103,8 +103,8 @@
     },
     {
       "path": "game/portable/profiles/default-particle/profile.json",
-      "byteLength": 1529609,
-      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+      "byteLength": 694547,
+      "sha256": "4F1A57C5933454D86B1326377C03118903EBC748269850EDB0B20C3439C50F74"
     },
     {
       "path": "game/portable/profiles/default-particle/textures.json",

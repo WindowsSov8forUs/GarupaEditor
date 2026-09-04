@@ -141,11 +141,11 @@
     },
     {
       "path": "game/portable/profiles/default-particle/profile.json",
-      "byteLength": 1529609,
-      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29",
-      "sourceReverseCommit": "552433d0dea66a0aa67c28f335e3430a9db323c6",
-      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
-      "sourceRelation": "byte-identical"
+      "byteLength": 694547,
+      "sha256": "4F1A57C5933454D86B1326377C03118903EBC748269850EDB0B20C3439C50F74",
+      "sourceReverseCommit": "e43dded8890260806001fbcb5ab519cfb019a379",
+      "sourcePath": "artifacts/investigations/simulator-particle-renderer-native-domain-10-1-4/particle_renderer_native_domain_contract.json",
+      "sourceRelation": "derived-source-bound-native-renderer-profile"
     },
     {
       "path": "game/portable/profiles/default-particle/textures.json",

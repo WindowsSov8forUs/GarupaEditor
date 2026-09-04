@@ -439,7 +439,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         bgmGainBits: gains.value.bgm,
         seGainBits: gains.value.se,
       },
-      particles: { sessionId },
+      particles: {
+        sessionId,
+        scene: assembly.value.sceneLayout.particleScene,
+      },
       ...(movie === null || mvResource.value === null
         ? {}
         : {

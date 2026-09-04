@@ -37,7 +37,8 @@ interface ParticleSemanticResource {
 }
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
-const CURRENT_PARTICLE_SOURCE_COMMIT = "117de63b13d86e9f3eb4dbf8172a42d6bed0b5a3";
+const CURRENT_PARTICLE_SOURCE_COMMIT = "e43dded8890260806001fbcb5ab519cfb019a379";
+const CURRENT_PARTICLE_RENDERER_CONTRACT_SHA256 = "7F1F19B26F6E8271D1A800645BFD7E1ECD0D5CAF322631E79474E63B3A47B307";
 
 const renderCatalog = parseRenderCatalog(renderCatalogJson);
 const particleCatalog = parseParticleCatalog(particleCatalogJson);
@@ -182,6 +183,7 @@ function decodeSourcePackage(
       profiles: particleCatalog.profiles,
       module_profiles: particleCatalog.moduleProfiles,
       renderer_profiles: particleCatalog.rendererProfiles,
+      mesh_profiles: particleCatalog.meshProfiles,
       materials: particle.materials,
       textures: particle.textures,
     }),
@@ -334,6 +336,7 @@ function parseParticleCatalog(value: unknown): {
   readonly profiles: Readonly<Record<string, unknown>>;
   readonly moduleProfiles: Readonly<Record<string, unknown>>;
   readonly rendererProfiles: Readonly<Record<string, unknown>>;
+  readonly meshProfiles: Readonly<Record<string, unknown>>;
 } {
   const root = record(reviveNonFinite(value));
   const source = record(root?.source);
@@ -341,16 +344,20 @@ function parseParticleCatalog(value: unknown): {
   const profiles = record(root?.profiles);
   const modules = record(root?.moduleProfiles);
   const renderers = record(root?.rendererProfiles);
+  const meshes = record(root?.meshProfiles);
   if (root?.schemaVersion !== 2 ||
-    root.status !== "current-source-bound-particle-semantics-provider-raster-separate" ||
+    root.status !== "current-source-bound-particle-renderer-semantics-provider-raster-separate" ||
     source?.reverseCommit !== CURRENT_PARTICLE_SOURCE_COMMIT ||
+    source.rendererDomainContractSha256 !== CURRENT_PARTICLE_RENDERER_CONTRACT_SHA256 ||
     typeof source.resourceProfileSha256 !== "string" || !SHA256_PATTERN.test(source.resourceProfileSha256) ||
     typeof source.currentDomainContractSha256 !== "string" || !SHA256_PATTERN.test(source.currentDomainContractSha256) ||
     typeof source.boundary !== "string" || source.boundary.length === 0 ||
-    resources === null || profiles === null || modules === null || renderers === null) {
+    resources === null || profiles === null || modules === null || renderers === null || meshes === null) {
     throw new Error("invalid source-bound Skin particle semantic catalog");
   }
   const output = new Map<string, ParticleSemanticResource>();
+  const referencedRenderers = new Set<string>();
+  const referencedMeshes = new Set<string>();
   for (const [logicalResource, raw] of Object.entries(resources)) {
     const row = record(raw);
     const official = record(row?.officialUnityFs);
@@ -367,17 +374,29 @@ function parseParticleCatalog(value: unknown): {
       if (item === null || !Number.isSafeInteger(item.sourceOrdinal) || item.sourceOrdinal < 0 ||
         typeof item.semanticIdentity !== "string" || item.semanticIdentity.length === 0 ||
         !record(item.sourcePathIds) || !Array.isArray(item.componentHierarchy) ||
+        typeof item.rendererProfile !== "string" || !Object.prototype.hasOwnProperty.call(renderers, item.rendererProfile) ||
+        !(item.meshProfile === null || typeof item.meshProfile === "string" && Object.prototype.hasOwnProperty.call(meshes, item.meshProfile)) ||
+        typeof item.rendererSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(item.rendererSourcePathId) ||
+        !positive(item.rendererSerializedBytes) || typeof item.rendererSerializedSha256 !== "string" ||
+        !SHA256_PATTERN.test(item.rendererSerializedSha256) ||
         !positive(item.serializedParticleBytes) || typeof item.serializedParticleSha256 !== "string" ||
         !SHA256_PATTERN.test(item.serializedParticleSha256)) {
         throw new Error(`invalid source-bound ParticleSystem row: ${logicalResource}`);
       }
+      referencedRenderers.add(item.rendererProfile);
+      if (typeof item.meshProfile === "string") referencedMeshes.add(item.meshProfile);
     }
     for (const material of row.materials) {
       const item = record(material);
       const shader = record(item?.resolvedShader);
+      const semantics = record(item?.rendererSemantics);
       if (item === null || typeof item.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(item.sourcePathId) ||
         !positive(item.serializedBytes) || typeof item.serializedSha256 !== "string" || !SHA256_PATTERN.test(item.serializedSha256) ||
-        shader === null || typeof shader.name !== "string" || shader.name.length === 0) {
+        shader === null || typeof shader.name !== "string" || shader.name.length === 0 ||
+        semantics === null || semantics.sourcePathId !== item.sourcePathId ||
+        semantics.serializedBytes !== item.serializedBytes || semantics.serializedSha256 !== item.serializedSha256 ||
+        semantics.name !== item.m_Name || semantics.shader !== shader.name ||
+        !positive(semantics.renderQueue) || !record(semantics.mainTextureScale) || !record(semantics.mainTextureOffset)) {
         throw new Error(`invalid source-bound particle material row: ${logicalResource}`);
       }
     }
@@ -399,8 +418,20 @@ function parseParticleCatalog(value: unknown): {
       textures: Object.freeze(row.textures),
     }));
   }
-  if (output.size !== 27) throw new Error("source-bound current particle resource inventory must contain 27 resources");
-  return Object.freeze({ resources: output, profiles: Object.freeze(profiles), moduleProfiles: Object.freeze(modules), rendererProfiles: Object.freeze(renderers) });
+  const rendererKeys = Object.keys(renderers);
+  const meshKeys = Object.keys(meshes);
+  if (output.size !== Object.keys(resources).length || output.size === 0 ||
+    referencedRenderers.size !== rendererKeys.length || rendererKeys.some((identity) => !referencedRenderers.has(identity)) ||
+    referencedMeshes.size !== meshKeys.length || meshKeys.some((identity) => !referencedMeshes.has(identity))) {
+    throw new Error("The source-bound particle catalog must derive a non-empty complete renderer/mesh set from its exact system relations.");
+  }
+  return Object.freeze({
+    resources: output,
+    profiles: Object.freeze(profiles),
+    moduleProfiles: Object.freeze(modules),
+    rendererProfiles: Object.freeze(renderers),
+    meshProfiles: Object.freeze(meshes),
+  });
 }
 
 function reviveNonFinite(value: unknown): unknown {

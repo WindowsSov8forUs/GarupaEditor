@@ -4,9 +4,10 @@ import {
   Mesh,
   MeshGeometry,
   Shader,
+  Texture,
   UniformGroup,
-  type Texture,
 } from "pixi.js";
+import type { ParticleNativeRenderPrimitive } from "../../engine/particles/particleGeometry";
 
 const VERTEX = `
 in vec2 aPosition;
@@ -27,21 +28,13 @@ in vec2 vTextureCoord;
 out vec4 finalColor;
 uniform sampler2D uTexture;
 uniform vec4 uParticleColor;
+uniform float uPremultiplyOutput;
 void main(void) {
-  vec4 sampled = texture(uTexture, vTextureCoord);
-  // Reverse 4dec93f9: Tex_parSet_1/2 are straight-alpha additive
-  // atlases whose empty cells are opaque exact black. An additive zero is a
-  // semantic no-op; discarding it also prevents Pixi's ancillary alpha blend
-  // from turning the empty atlas rectangle into a visible compositing block.
-  if (sampled.a <= 0.0 || max(max(sampled.r, sampled.g), sampled.b) <= 0.0) {
-    discard;
+  vec4 value = texture(uTexture, vTextureCoord) * uParticleColor;
+  if (uPremultiplyOutput > 0.5) {
+    value.rgb *= value.a;
   }
-  // add-npm applies sampled alpha * particle alpha in the blend state once;
-  // straight RGB must not be multiplied by particle alpha in this shader.
-  finalColor = vec4(
-    sampled.rgb * uParticleColor.rgb,
-    sampled.a * uParticleColor.a
-  );
+  finalColor = value;
 }`;
 
 let program: GlProgram | null = null;
@@ -53,15 +46,49 @@ function currentProgram(): GlProgram {
   program ??= GlProgram.from({
     vertex: VERTEX,
     fragment: FRAGMENT,
-    name: "particle-linear-float-color-mesh",
+    name: "particle-native-primitive-linear-color-mesh",
   });
   return program;
 }
 
 export interface PixiParticleLinearColorMesh extends Mesh<MeshGeometry, Shader> {
   readonly particleLinearColor: readonly [number, number, number, number];
+  readonly particleTextureLabel: string;
+  readonly particleMaterialName: string;
 }
 
+export function createPixiParticleNativePrimitiveMesh(
+  texture: Texture,
+  primitive: ParticleNativeRenderPrimitive,
+): PixiParticleLinearColorMesh {
+  const premultiplyOutput = primitive.fragment === "premultiply-rgb-after-rgba-modulate";
+  const mesh = createMesh(
+    texture,
+    primitive.particleId,
+    primitive.materialName,
+    primitive.positions,
+    primitive.uvs,
+    primitive.indices,
+    primitive.linearColor,
+    premultiplyOutput,
+  );
+  if (primitive.sourceBlendFactor === 5 && primitive.destinationBlendFactor === 1) {
+    mesh.blendMode = "add-npm";
+  } else if (primitive.sourceBlendFactor === 5 && primitive.destinationBlendFactor === 10) {
+    mesh.blendMode = "normal-npm";
+  } else if (primitive.sourceBlendFactor === 1 && primitive.destinationBlendFactor === 10 && premultiplyOutput) {
+    // MeshPipe derives state adjustment from mesh.texture. A premultiplied
+    // pipeline texture keeps native Blend One/OneMinusSrcAlpha while the
+    // shader samples the separately bound exact source texture.
+    mesh.blendMode = "normal";
+  } else {
+    destroyPixiParticleLinearColorMesh(mesh);
+    throw new Error("Unsupported current particle blend tuple");
+  }
+  return mesh;
+}
+
+/** Legacy source-compile helper; production uses native primitive geometry. */
 export function createPixiParticleLinearColorMesh(
   texture: Texture,
   particleId: string,
@@ -70,22 +97,48 @@ export function createPixiParticleLinearColorMesh(
   blue: number,
   alpha: number,
 ): PixiParticleLinearColorMesh {
-  const values = [red, green, blue, alpha].map(Math.fround);
-  if (texture.destroyed || typeof particleId !== "string" || particleId.length === 0 ||
-    values.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) {
-    throw new Error("Particle Linear mesh requires one live texture, identity and four Float32 unit color channels.");
-  }
   const halfWidth = Math.fround(texture.width / 2);
   const halfHeight = Math.fround(texture.height / 2);
-  const geometry = new MeshGeometry({
-    positions: new Float32Array([
+  return createMesh(
+    texture,
+    particleId,
+    "legacy-compile-only",
+    new Float32Array([
       -halfWidth, -halfHeight,
       halfWidth, -halfHeight,
-      halfWidth, halfHeight,
       -halfWidth, halfHeight,
+      halfWidth, halfHeight,
     ]),
-    uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
-    indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+    new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]),
+    new Uint32Array([0, 1, 3, 3, 2, 0]),
+    Object.freeze([red, green, blue, alpha].map(Math.fround)) as readonly [number, number, number, number],
+    false,
+  );
+}
+
+function createMesh(
+  texture: Texture,
+  particleId: string,
+  materialName: string,
+  positions: Float32Array,
+  uvs: Float32Array,
+  indices: Uint32Array,
+  color: readonly [number, number, number, number],
+  premultiplyOutput: boolean,
+): PixiParticleLinearColorMesh {
+  const values = [...color].map(Math.fround);
+  if (texture.destroyed || typeof particleId !== "string" || particleId.length === 0 ||
+    positions.length < 8 || positions.length % 2 !== 0 || uvs.length !== positions.length ||
+    indices.length < 3 || indices.length % 3 !== 0 ||
+    [...positions, ...uvs].some((value) => !Number.isFinite(value)) ||
+    [...indices].some((value) => !Number.isSafeInteger(value) || value < 0 || value >= positions.length / 2) ||
+    values.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) {
+    throw new Error("Particle native mesh requires exact finite primitive, source texture and unit color fields.");
+  }
+  const geometry = new MeshGeometry({
+    positions: new Float32Array(positions),
+    uvs: new Float32Array(uvs),
+    indices: new Uint32Array(indices),
   });
   const shader = typeof document === "undefined"
     ? null
@@ -97,24 +150,33 @@ export function createPixiParticleLinearColorMesh(
           textureUniforms: {
             uTextureMatrix: { type: "mat3x3<f32>", value: texture.textureMatrix.mapCoord ?? new Matrix() },
           },
-          particleColorUniforms: new UniformGroup({
+          particleUniforms: new UniformGroup({
             uParticleColor: {
               value: new Float32Array(values),
               type: "vec4<f32>",
             },
+            uPremultiplyOutput: {
+              value: premultiplyOutput ? 1 : 0,
+              type: "f32",
+            },
           }),
         },
       });
+  const pipelineTexture = premultiplyOutput ? Texture.WHITE : texture;
   const mesh = new Mesh({
     geometry,
     ...(shader === null ? {} : { shader }),
-    texture,
+    texture: pipelineTexture,
     label: particleId,
     roundPixels: false,
   }) as PixiParticleLinearColorMesh;
-  Object.defineProperty(mesh, "particleLinearColor", {
-    value: Object.freeze(values) as readonly [number, number, number, number],
-    enumerable: true,
+  Object.defineProperties(mesh, {
+    particleLinearColor: {
+      value: Object.freeze(values) as readonly [number, number, number, number],
+      enumerable: true,
+    },
+    particleTextureLabel: { value: texture.label ?? "", enumerable: true },
+    particleMaterialName: { value: materialName, enumerable: true },
   });
   return mesh;
 }

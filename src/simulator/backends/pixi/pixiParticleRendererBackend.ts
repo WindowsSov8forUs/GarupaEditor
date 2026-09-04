@@ -1,9 +1,4 @@
-import {
-  Container,
-  Matrix,
-  Rectangle,
-  Texture,
-} from "pixi.js";
+import { Container, Texture } from "pixi.js";
 import type {
   ParticleBundleProfile,
   ParticleInstanceIdentity,
@@ -27,7 +22,12 @@ import {
 } from "../particleValidation";
 import { prepareCurrentParticleResources } from "../resources/particleResourcePreparation";
 import {
-  createPixiParticleLinearColorMesh,
+  buildCurrentParticlePrimitives,
+  ParticleGeometryFault,
+  type ParticleNativeRenderPrimitive,
+} from "../../engine/particles/particleGeometry";
+import {
+  createPixiParticleNativePrimitiveMesh,
   destroyPixiParticleLinearColorMesh,
   type PixiParticleLinearColorMesh,
 } from "./pixiParticleLinearColorMesh";
@@ -45,32 +45,29 @@ interface SystemRenderBinding {
   readonly renderer: ParticleRendererProfile;
   readonly materialName: string;
   readonly logicalTextureId: string;
-  readonly blend: "normal" | "add";
-  readonly tilesX: number;
-  readonly tilesY: number;
 }
 
 interface PendingParticleFrame {
   readonly capability: ParticleRendererFrameBatch;
-  readonly sprites: readonly PixiParticleLinearColorMesh[];
-  readonly samples: readonly ParticleRenderSample[];
+  readonly meshes: readonly PixiParticleLinearColorMesh[];
+  readonly primitives: readonly ParticleNativeRenderPrimitive[];
 }
 
 export class PixiParticleRendererBackend implements SimulatorParticleRendererBackend {
-  readonly id = "pixi-v8-particle-portable-v1";
-  readonly stage = new Container({ label: "GarupaSimulatorParticles", sortableChildren: true });
-  readonly highSortingStage = new Container({ label: "GarupaSimulatorParticlesHigh", sortableChildren: true });
+  readonly id = "pixi-v8-current-native-particle-primitives-v2";
+  readonly stage = new Container({ label: "GarupaSimulatorParticles", sortableChildren: false });
+  /** Kept as an empty compatibility mount only; native ordering uses one primitive sequence. */
+  readonly highSortingStage = new Container({ label: "GarupaSimulatorParticlesHigh", sortableChildren: false });
 
   private state: ParticleRendererBackendSnapshot["state"] = "unprepared";
   private sessionId: string | null = null;
   private scene: ParticlePixiSceneProfile | null = null;
   private profile: ParticlePortableProfile | null = null;
   private readonly systems = new Map<string, SystemRenderBinding>();
-  private readonly systemSortOrdinals = new Map<string, number>();
   private readonly textures = new Map<string, Texture>();
   private readonly uniqueBaseTextures = new Set<Texture>();
-  private readonly uvTextures = new Map<string, Texture>();
-  private readonly liveSprites: PixiParticleLinearColorMesh[] = [];
+  private readonly liveMeshes: PixiParticleLinearColorMesh[] = [];
+  private readonly livePrimitives: ParticleNativeRenderPrimitive[] = [];
   private pending: PendingParticleFrame | null = null;
   private nextFrame: number | null = null;
   private lastSampleCount = 0;
@@ -100,7 +97,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (validatedScene.status !== "accepted") return validatedScene;
     if (this.stage.destroyed || this.highSortingStage.destroyed ||
       this.stage.children.length !== 0 || this.highSortingStage.children.length !== 0) {
-      return this.reject("particle.pixi.stage-not-empty-or-destroyed", "Both particle sorting stages must be live and empty before atomic prepare.");
+      return this.reject("particle.pixi.stage-not-empty-or-destroyed", "Particle stages must be live and empty before atomic prepare.");
     }
 
     this.state = "preparing";
@@ -108,14 +105,13 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     try {
       const prepared = await prepareCurrentParticleResources(provider, preflight);
       if (prepared.status !== "accepted") return this.abortPrepare(prepared);
-      const decoded = new Map<string, Texture>();
-      const identities = preparingTextures;
       if (prepared.value.textures.status !== "selected-skin-portable-textures") {
         return this.abortPrepare(this.reject(
           "particle.pixi.application-leased-textures-required",
-          "Production Pixi particles require selected application-leased Skin textures; fixed manifest fallback is removed.",
+          "Production Pixi particles require selected application-leased Skin textures.",
         ));
       }
+      const decoded = new Map<string, Texture>();
       const textureResources = prepared.value.textures.entries
         .filter((entry): entry is Exclude<typeof entry, { readonly aliasOf: string }> => !("aliasOf" in entry))
         .map((entry) => ({
@@ -128,90 +124,83 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         }));
       for (const resource of textureResources) {
         const bytes = prepared.value.pngBytes.get(resource.logicalAssetId);
-        if (bytes === undefined) return this.abortPrepare(this.reject(
-          "particle.pixi.validated-png-unavailable",
-          "Pixi decode consumes only the exact bytes validated during the same atomic prepare.",
-        ));
+        if (bytes === undefined) {
+          destroyTextureSet(preparingTextures);
+          return this.abortPrepare(this.reject(
+            "particle.pixi.validated-png-unavailable",
+            "Pixi decode consumes only the exact bytes validated during the same atomic prepare.",
+          ));
+        }
         const result = await this.decoder.decodePng(resource, Uint8Array.from(bytes));
         if (result.status !== "accepted") {
-          destroyTextureSet(identities);
+          destroyTextureSet(preparingTextures);
           return this.abortPrepare(result);
         }
         const texture = result.value;
-        if (!(texture instanceof Texture) || identities.has(texture) ||
-          texture.destroyed || texture.source.width !== resource.width || texture.source.height !== resource.height) {
-          if (texture instanceof Texture && !identities.has(texture) && !texture.destroyed) texture.destroy(true);
-          destroyTextureSet(identities);
+        if (!(texture instanceof Texture) || preparingTextures.has(texture) || texture.destroyed ||
+          texture.source.width !== resource.width || texture.source.height !== resource.height) {
+          if (texture instanceof Texture && !preparingTextures.has(texture) && !texture.destroyed) texture.destroy(true);
+          destroyTextureSet(preparingTextures);
           return this.abortPrepare(particleRejected(
             "particle-resource-decode",
             "particle.pixi.decoder-identity-or-dimensions",
             "Each unique PNG requires one live independently owned Texture with exact validated dimensions.",
           ));
         }
-        identities.add(texture);
+        preparingTextures.add(texture);
         decoded.set(resource.logicalAssetId, texture);
       }
-      const alias = prepared.value.textures.entries.find((entry) => "aliasOf" in entry);
-      if (alias === undefined) {
-        if (prepared.value.textures.status !== "selected-skin-portable-textures") {
-          destroyTextureSet(identities);
-          return this.abortPrepare(this.reject("particle.pixi.texture-alias-missing", "The exact current directional effect_circle alias must be present."));
+      for (const alias of prepared.value.textures.entries.filter(
+        (entry): entry is Extract<typeof entry, { readonly aliasOf: string }> => "aliasOf" in entry,
+      )) {
+        const target = decoded.get(alias.aliasOf);
+        if (target === undefined) {
+          destroyTextureSet(preparingTextures);
+          return this.abortPrepare(this.reject("particle.pixi.texture-alias-target-missing", "Every texture alias must resolve inside the same prepared token."));
         }
-      } else {
-        const aliasedTexture = decoded.get(alias.aliasOf);
-        if (aliasedTexture === undefined) {
-          destroyTextureSet(identities);
-          return this.abortPrepare(this.reject("particle.pixi.texture-alias-target-missing", "The exact texture alias target must resolve before commit."));
-        }
-        decoded.set(alias.logicalAssetId, aliasedTexture);
+        decoded.set(alias.logicalAssetId, target);
       }
-
-      const systemBindings = buildSystemBindings(prepared.value.profile);
-      if (systemBindings.status !== "accepted") {
-        destroyTextureSet(identities);
-        return this.abortPrepare(systemBindings);
+      const bindings = buildSystemBindings(prepared.value.profile);
+      if (bindings.status !== "accepted") {
+        destroyTextureSet(preparingTextures);
+        return this.abortPrepare(bindings);
       }
-      for (const bundle of prepared.value.profile.bundles) {
-        for (const textureProfile of bundle.textures) {
-          const logicalId = `particle-texture:${bundle.key}:${textureProfile.name}`;
-          const texture = decoded.get(logicalId);
-          if (texture === undefined) {
-            destroyTextureSet(identities);
-            return this.abortPrepare(this.reject("particle.pixi.profile-texture-missing", "Every material texture must resolve to its prepared PNG or exact alias."));
-          }
-          applyTextureSettings(texture, textureProfile.wrapU, textureProfile.wrapV);
+      for (const binding of bindings.value.values()) {
+        const texture = decoded.get(binding.logicalTextureId);
+        const profileTexture = binding.bundle.textures.find(
+          (candidate) => `particle-texture:${binding.bundle.key}:${candidate.name}` === binding.logicalTextureId,
+        );
+        if (texture === undefined || profileTexture === undefined) {
+          destroyTextureSet(preparingTextures);
+          return this.abortPrepare(this.reject("particle.pixi.profile-texture-missing", "Every slot-0 material texture must resolve to one prepared PNG."));
         }
+        applyTextureSettings(texture, profileTexture.wrapU, profileTexture.wrapV);
       }
 
       this.sessionId = sessionId;
       this.scene = validatedScene.value;
       this.profile = prepared.value.profile;
-      for (const [identity, binding] of systemBindings.value) this.systems.set(identity, binding);
-      [...systemBindings.value.keys()].sort(compareOrdinal).forEach((identity, ordinal) => {
-        this.systemSortOrdinals.set(identity, ordinal);
-      });
+      for (const [identity, binding] of bindings.value) this.systems.set(identity, binding);
       for (const [logicalId, texture] of decoded) this.textures.set(logicalId, texture);
-      for (const texture of identities) this.uniqueBaseTextures.add(texture);
-      this.createUvTextures();
+      for (const texture of preparingTextures) this.uniqueBaseTextures.add(texture);
       this.state = "ready";
       return particleAccepted(undefined);
-    } catch {
+    } catch (error) {
       destroyTextureSet(preparingTextures);
       this.resetTextures();
       this.systems.clear();
-      this.systemSortOrdinals.clear();
       this.state = "unprepared";
-      return particleRejected(
-        "particle-resource-decode",
-        "particle.pixi.prepare-threw",
-        "Particle resource decode/subtexture construction failure rolls back every texture and remains unprepared.",
-      );
+      return error instanceof ParticleGeometryFault
+        ? particleRejected("particle-resource-decode", error.capability, error.boundary)
+        : particleRejected(
+            "particle-resource-decode",
+            "particle.pixi.prepare-threw",
+            "Particle resource decode or native binding construction failure rolls back every texture.",
+          );
     }
   }
 
-  preflightFrame(
-    request: ParticleRendererFrameRequest,
-  ): ParticleOperationResult<ParticleRendererFrameBatch> {
+  preflightFrame(request: ParticleRendererFrameRequest): ParticleOperationResult<ParticleRendererFrameBatch> {
     const terminal = this.terminalResult<ParticleRendererFrameBatch>();
     if (terminal !== null) return terminal;
     if (this.state !== "ready" || this.sessionId === null || this.scene === null || this.profile === null) {
@@ -227,28 +216,37 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     }
     const validation = this.validateSamples(request.samples);
     if (validation.status !== "accepted") return validation;
-    const sprites: PixiParticleLinearColorMesh[] = [];
+    const meshes: PixiParticleLinearColorMesh[] = [];
+    let primitives: readonly ParticleNativeRenderPrimitive[];
     try {
-      for (const sample of request.samples) sprites.push(this.createSprite(sample));
-    } catch {
-      const cleanupFailures = destroySprites(sprites);
-      return this.latchFault(
-        "particle.pixi.sample-allocation-threw",
-        cleanupFailures.length === 0
-          ? "Detached Sprite allocation, texture or mapping failure is the first terminal Pixi particle fault and consumes no frame."
-          : `Detached Sprite allocation failed and cleanup continued; failed identities: ${cleanupFailures.join(",")}.`,
-      );
+      primitives = buildCurrentParticlePrimitives(this.profile, this.scene, request.samples);
+      for (let index = 0; index < primitives.length; index += 1) {
+        const primitive = primitives[index]!;
+        const texture = this.textures.get(primitive.logicalTextureId);
+        if (texture === undefined || texture.destroyed) throw new Error("missing primitive texture");
+        const mesh = createPixiParticleNativePrimitiveMesh(texture, primitive);
+        // One native order sequence replaces the old sortingOrder>20 stage split
+        // and arbitrary large-radix zIndex mapping.
+        mesh.zIndex = index;
+        meshes.push(mesh);
+      }
+    } catch (error) {
+      const cleanupFailures = destroyMeshes(meshes);
+      return error instanceof ParticleGeometryFault
+        ? this.latchFault(error.capability, error.boundary)
+        : this.latchFault(
+            "particle.pixi.primitive-allocation-threw",
+            cleanupFailures.length === 0
+              ? "Detached native primitive allocation failed before any scene mutation."
+              : `Detached primitive cleanup continued; failed identities: ${cleanupFailures.join(",")}.`,
+          );
     }
     const capability = Object.freeze({
       sessionId: this.sessionId,
       frame: request.frame,
       sampleCount: request.samples.length,
     });
-    this.pending = Object.freeze({
-      capability,
-      sprites: Object.freeze(sprites),
-      samples: Object.freeze([...request.samples]),
-    });
+    this.pending = Object.freeze({ capability, meshes: Object.freeze(meshes), primitives });
     return particleAccepted(capability);
   }
 
@@ -257,36 +255,24 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (terminal !== null) return terminal;
     const pending = this.pending;
     if (pending === null || pending.capability !== batch || batch.sessionId !== this.sessionId ||
-      batch.sampleCount !== pending.sprites.length ||
       (this.nextFrame !== null && batch.frame !== this.nextFrame)) {
-      return this.latchFault(
-        "particle.pixi.invalid-batch-capability",
-        "Pixi accepts only its exact one-use detached sample capability.",
-      );
+      return this.latchFault("particle.pixi.invalid-batch-capability", "Pixi accepts only its exact one-use detached primitive capability.");
     }
     try {
-      const priorCleanupFailures = this.clearLiveSprites();
-      if (priorCleanupFailures.length > 0) {
-        throw new Error(`failed prior live Sprite cleanup: ${priorCleanupFailures.join(",")}`);
+      const failures = this.clearLiveMeshes();
+      if (failures.length > 0) throw new Error(failures.join(","));
+      for (let index = 0; index < pending.meshes.length; index += 1) {
+        this.stage.addChild(pending.meshes[index]!);
+        this.liveMeshes.push(pending.meshes[index]!);
+        this.livePrimitives.push(pending.primitives[index]!);
       }
-      for (let index = 0; index < pending.sprites.length; index += 1) {
-        const sprite = pending.sprites[index]!;
-        const sample = pending.samples[index]!;
-        (sample.sortingOrder > 20 ? this.highSortingStage : this.stage).addChild(sprite);
-        this.liveSprites.push(sprite);
-      }
-      this.stage.sortChildren();
-      this.highSortingStage.sortChildren();
     } catch {
       this.pending = null;
-      const cleanupFailures = [
-        ...destroySprites(pending.sprites),
-        ...this.clearLiveSprites(),
-      ];
+      const cleanupFailures = [...destroyMeshes(pending.meshes), ...this.clearLiveMeshes()];
       return this.latchFault(
         "particle.pixi.scene-mutation-threw",
         cleanupFailures.length === 0
-          ? "A Pixi particle scene mutation is terminal and clears every live/detached sample node."
+          ? "A Pixi particle scene mutation is terminal and clears every live/detached primitive."
           : `A Pixi particle scene mutation is terminal; cleanup continued with failed identities: ${cleanupFailures.join(",")}.`,
       );
     }
@@ -302,14 +288,11 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (this.pending?.capability !== batch) {
       return this.reject("particle.pixi.invalid-discard-capability", "Only the exact pending Pixi particle frame may be discarded.");
     }
-    const cleanupFailures = destroySprites(this.pending.sprites);
+    const cleanupFailures = destroyMeshes(this.pending.meshes);
     this.pending = null;
     return cleanupFailures.length === 0
       ? particleAccepted(undefined)
-      : this.latchFault(
-          "particle.pixi.discard-owner-threw",
-          `Discard continued across every detached Sprite; failed identities: ${cleanupFailures.join(",")}.`,
-        );
+      : this.latchFault("particle.pixi.discard-owner-threw", `Discard cleanup failures: ${cleanupFailures.join(",")}.`);
   }
 
   recordTerminalFault(capability: string, boundary: string): ParticleOperationResult<never> {
@@ -321,12 +304,6 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   notifyContextLoss(): ParticleOperationResult<never> {
     if (this.state === "disposed") return this.disposedResult();
     if (this.fault !== null) return this.faultResult();
-    if (this.state !== "ready") {
-      return this.latchFault(
-        "particle.pixi.context-loss-outside-ready-session",
-        "Context loss is accepted only for a ready particle renderer.",
-      );
-    }
     return this.latchFault(
       "particle.pixi.context-lost",
       "WebGL/WebGPU context loss is terminal and never triggers a software/network/resource fallback.",
@@ -339,7 +316,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       sessionId: this.sessionId,
       nextFrame: this.nextFrame,
       resourceCount: this.uniqueBaseTextures.size,
-      nodeCount: this.liveSprites.length,
+      nodeCount: this.liveMeshes.length,
       lastSampleCount: this.lastSampleCount,
       fault: this.fault === null ? null : Object.freeze({ ...this.fault }),
     });
@@ -358,31 +335,39 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     readonly sortingStage: "low" | "high";
     readonly zIndex: number;
   }[] {
-    return Object.freeze(this.liveSprites.map((sprite) => Object.freeze({
-      particleId: sprite.label,
-      position: Object.freeze([sprite.position.x, sprite.position.y] as const),
-      scale: Object.freeze([sprite.scale.x, sprite.scale.y] as const),
-      rotation: sprite.rotation,
-      alpha: sprite.alpha,
-      tint: Number(sprite.tint),
-      linearColor: sprite.particleLinearColor,
-      blendMode: String(sprite.blendMode),
-      textureLabel: sprite.texture.label ?? "",
-      sortingStage: sprite.parent === this.highSortingStage ? "high" : "low",
-      zIndex: sprite.zIndex,
-    })));
+    return Object.freeze(this.liveMeshes.map((mesh, index) => {
+      const primitive = this.livePrimitives[index]!;
+      return Object.freeze({
+        particleId: mesh.label,
+        position: Object.freeze([
+          Math.fround((primitive.bounds.left + primitive.bounds.right) / 2),
+          Math.fround((primitive.bounds.top + primitive.bounds.bottom) / 2),
+        ] as const),
+        scale: Object.freeze([
+          Math.fround(primitive.bounds.right - primitive.bounds.left),
+          Math.fround(primitive.bounds.bottom - primitive.bounds.top),
+        ] as const),
+        rotation: 0,
+        alpha: primitive.linearColor[3],
+        tint: 0xffffff,
+        linearColor: mesh.particleLinearColor,
+        blendMode: String(mesh.blendMode),
+        textureLabel: mesh.particleTextureLabel,
+        sortingStage: "low" as const,
+        zIndex: mesh.zIndex,
+      });
+    }));
   }
 
   dispose(): ParticleOperationResult<void> {
     if (this.state === "disposed") return particleAccepted(undefined);
     const cleanupFailures = [
-      ...(this.pending === null ? [] : destroySprites(this.pending.sprites, "pending")),
-      ...this.clearLiveSprites(),
+      ...(this.pending === null ? [] : destroyMeshes(this.pending.meshes, "pending")),
+      ...this.clearLiveMeshes(),
       ...this.resetTextures(),
     ];
     this.pending = null;
     this.systems.clear();
-    this.systemSortOrdinals.clear();
     this.profile = null;
     this.scene = null;
     this.sessionId = null;
@@ -392,173 +377,64 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       this.fault = Object.freeze({
         code: "particle-backend-fault" as const,
         capability: "particle.pixi.dispose-owner-threw",
-        boundary: `Pixi particle disposal continued across every owner; failed cleanup identities: ${cleanupFailures.join(",")}.`,
+        boundary: `Pixi particle disposal continued across every owner: ${cleanupFailures.join(",")}.`,
       });
     }
     this.state = "disposed";
     return cleanupFailures.length === 0
       ? particleAccepted(undefined)
-      : particleRejected(
-          "particle-backend-fault",
-          "particle.pixi.dispose-owner-threw",
-          `Pixi particle disposal continued across every owner; failed cleanup identities: ${cleanupFailures.join(",")}.`,
-        );
+      : particleRejected("particle-backend-fault", "particle.pixi.dispose-owner-threw", this.fault!.boundary);
   }
 
   private validateSamples(samples: readonly ParticleRenderSample[]): ParticleOperationResult<void> {
     const ids = new Set<string>();
     let previous: ParticleRenderSample | null = null;
     for (const sample of samples) {
+      const binding = sample === null || typeof sample !== "object" ? undefined : this.systems.get(sample.systemId);
       if (sample === null || typeof sample !== "object" || typeof sample.particleId !== "string" ||
         sample.particleId.length === 0 || ids.has(sample.particleId) || typeof sample.ownerKey !== "string" ||
-        sample.ownerKey.length === 0 || !isInstance(sample.instance) ||
-        (sample.instance.kind !== "note-slide" || sample.instance.rootPositionXBits === null) &&
-        !this.scene?.buttonAnchors.some((anchor) => anchor.buttonType === sample.instance.buttonType)) {
-        return this.reject("particle.pixi.invalid-sample-identity", "Every sample requires one unique stable particle and typed owner instance identity.");
+        sample.ownerKey.length === 0 || !isNativeInstance(sample.instance) || binding === undefined) {
+        return this.reject("particle.pixi.invalid-sample-identity", "Every sample requires one unique particle, explicit native owner transform and exact prepared system.");
       }
       ids.add(sample.particleId);
-      const binding = this.systems.get(sample.systemId);
-      if (binding === undefined || sample.root !== binding.bundle.systems.find(
-        (system) => system.identity === sample.systemId,
-      )?.root || sample.material !== binding.materialName ||
-        sample.sortingOrder !== binding.renderer.m_SortingOrder ||
-        sample.renderMode !== binding.renderer.m_RenderMode ||
+      const profile = binding.bundle.profiles[binding.system.profile]!;
+      const uvKey = profile.modules.UVModule;
+      const uv = uvKey === undefined ? null : binding.bundle.moduleProfiles.UVModule?.[uvKey] ?? null;
+      if (sample.root !== binding.system.root || sample.material !== binding.materialName ||
+        sample.sortingOrder !== binding.renderer.m_SortingOrder || sample.renderMode !== binding.renderer.m_RenderMode ||
         sample.renderAlignment !== binding.renderer.m_RenderAlignment ||
+        sample.meshProfile !== (binding.system.meshProfile ?? null) ||
+        sample.sortingLayerId !== binding.renderer.m_SortingLayerID ||
+        particleFloat32FromBits(sample.sortingFudgeBits ?? "") !== binding.renderer.m_SortingFudge ||
+        sample.rendererPriority !== binding.renderer.m_RendererPriority ||
+        sample.sourceOrdinal !== binding.system.sourceOrdinal || !Number.isSafeInteger(sample.ownerGeneration) || sample.ownerGeneration! < 1 ||
+        !Number.isSafeInteger(sample.ownerSortOrdinal) || sample.ownerSortOrdinal! < 0 ||
         !Number.isSafeInteger(sample.creationSequence) || sample.creationSequence < 1 ||
-        !Number.isInteger(sample.uvFrame) || sample.uvFrame < 0 ||
-        sample.uvFrame >= binding.tilesX * binding.tilesY || !sampleBitsFinite(sample)) {
-        return this.reject("particle.pixi.sample-profile-mismatch", "Samples must match their exact current system renderer/material/UV profile and finite binary32 state.");
+        !Number.isInteger(sample.uvFrame) || sample.uvFrame < 0 || sample.uvFrame >= (uv?.tilesX ?? 1) * (uv?.tilesY ?? 1) ||
+        !sampleBitsFinite(sample)) {
+        return this.reject("particle.pixi.sample-profile-mismatch", "Samples must match exact current renderer/material/mesh/UV/source-order and finite binary32 state.");
       }
       if (previous !== null && compareSamples(previous, sample) > 0) {
-        return this.reject("particle.pixi.sample-order-mismatch", "Particle handoff order is sortingOrder/system identity/creation sequence and never Pixi default zIndex.");
+        return this.reject("particle.pixi.sample-order-mismatch", "Particle handoff order is renderer order, concrete owner, source ordinal and native storage creation order.");
       }
       previous = sample;
     }
     return particleAccepted(undefined);
   }
 
-  private createSprite(sample: ParticleRenderSample): PixiParticleLinearColorMesh {
-    const binding = this.systems.get(sample.systemId)!;
-    const texture = binding.tilesX === 1 && binding.tilesY === 1
-      ? this.textures.get(binding.logicalTextureId)
-      : this.uvTextures.get(`${binding.logicalTextureId}\u0000${sample.uvFrame}`);
-    if (texture === undefined || texture.destroyed) throw new Error("missing particle texture");
-    const red = particleFloat32FromBits(sample.color.redBits)!;
-    const green = particleFloat32FromBits(sample.color.greenBits)!;
-    const blue = particleFloat32FromBits(sample.color.blueBits)!;
-    const alpha = particleFloat32FromBits(sample.color.alphaBits)!;
-    const sprite = createPixiParticleLinearColorMesh(
-      texture,
-      sample.particleId,
-      red,
-      green,
-      blue,
-      alpha,
-    );
-    const anchor = this.scene!.buttonAnchors.find(
-      (candidate) => candidate.buttonType === sample.instance.buttonType,
-    );
-    const explicitSlideTransform = sample.instance.kind === "note-slide" &&
-      sample.instance.rootPositionXBits !== null && sample.instance.rootPositionYBits !== null &&
-      sample.instance.rootScaleBits !== null;
-    if (anchor === undefined && !explicitSlideTransform) {
-      destroyPixiParticleLinearColorMesh(sprite);
-      throw new Error("particle button has no evidence-authored scene anchor");
-    }
-    const gameplayTransformScale = explicitSlideTransform
-      ? particleFloat32FromBits(sample.instance.rootScaleBits!)!
-      : particleFloat32FromBits(this.scene!.gameplayTransformScaleBits)!;
-    const rootXBits = explicitSlideTransform ? sample.instance.rootPositionXBits! : anchor!.position.xBits;
-    const rootYBits = explicitSlideTransform ? sample.instance.rootPositionYBits! : anchor!.position.yBits;
-    const rootPositionScale = explicitSlideTransform ? gameplayTransformScale : 1;
-    const worldX = addScaledBits(rootXBits, sample.position.xBits, rootPositionScale);
-    const worldY = addScaledBits(rootYBits, sample.position.yBits, rootPositionScale);
-    const pixelsPerUnit = particleFloat32FromBits(this.scene!.pixelsPerWorldUnitBits)!;
-    sprite.position.set(
-      Math.fround(this.scene!.viewportWidth / 2 + Math.fround(worldX * pixelsPerUnit)),
-      Math.fround(this.scene!.viewportHeight / 2 - Math.fround(worldY * pixelsPerUnit)),
-    );
-    sprite.setFromMatrix(particleSpriteMatrix(
-      sample,
-      binding,
-      texture,
-      pixelsPerUnit,
-      gameplayTransformScale,
-      this.scene!.viewportHeight,
-      sprite.position.x,
-      sprite.position.y,
-    ));
-    sprite.blendMode = binding.blend;
-    const systemOrdinal = this.systemSortOrdinals.get(sample.systemId);
-    if (systemOrdinal === undefined) {
-      destroyPixiParticleLinearColorMesh(sprite);
-      throw new Error("particle system sort identity is missing");
-    }
-    // Reverse 1bff69eb/particle transform correction: order by renderer
-    // sortingOrder, system identity and creation sequence. Particle position.z is
-    // simulation state, not an invented renderer-bounds sort center.
-    sprite.zIndex = sample.sortingOrder * 1_000_000_000_000 +
-      systemOrdinal * 100_000_000 + sample.creationSequence;
-    return sprite;
-  }
-
-  private createUvTextures(): void {
-    const tileProfiles = new Map<string, readonly [number, number]>();
-    for (const binding of this.systems.values()) {
-      if (binding.tilesX === 1 && binding.tilesY === 1) continue;
-      const current = tileProfiles.get(binding.logicalTextureId);
-      if (current !== undefined && (current[0] !== binding.tilesX || current[1] !== binding.tilesY)) {
-        throw new Error("inconsistent UV tile profile");
-      }
-      tileProfiles.set(binding.logicalTextureId, [binding.tilesX, binding.tilesY]);
-    }
-    for (const [logicalId, [tilesX, tilesY]] of tileProfiles) {
-      const base = this.textures.get(logicalId)!;
-      const width = base.width / tilesX;
-      const height = base.height / tilesY;
-      if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("non-integral UV tiles");
-      for (let frame = 0; frame < tilesX * tilesY; frame += 1) {
-        const column = frame % tilesX;
-        const rasterRowFromTop = Math.floor(frame / tilesX);
-        const texture = new Texture({
-          source: base.source,
-          frame: new Rectangle(column * width, rasterRowFromTop * height, width, height),
-          orig: new Rectangle(0, 0, width, height),
-          label: `${logicalId}:uv:${frame}`,
-        });
-        this.uvTextures.set(`${logicalId}\u0000${frame}`, texture);
-      }
-    }
-  }
-
-  private clearLiveSprites(): readonly string[] {
+  private clearLiveMeshes(): readonly string[] {
     const failures: string[] = [];
-    for (const sprite of this.liveSprites.splice(0)) {
-      try {
-        destroyPixiParticleLinearColorMesh(sprite);
-      } catch {
-        failures.push(`live-sprite:${sprite.label}`);
-      }
+    for (const mesh of this.liveMeshes.splice(0)) {
+      try { destroyPixiParticleLinearColorMesh(mesh); } catch { failures.push(`live-mesh:${mesh.label}`); }
     }
+    this.livePrimitives.splice(0);
     return failures;
   }
 
   private resetTextures(): readonly string[] {
     const failures: string[] = [];
-    for (const [key, texture] of this.uvTextures) {
-      try {
-        if (!texture.destroyed) texture.destroy(false);
-      } catch {
-        failures.push(`uv-texture:${key}`);
-      }
-    }
-    this.uvTextures.clear();
     for (const texture of this.uniqueBaseTextures) {
-      try {
-        if (!texture.destroyed) texture.destroy(true);
-      } catch {
-        failures.push(`base-texture:${texture.label ?? "unlabelled"}`);
-      }
+      try { if (!texture.destroyed) texture.destroy(true); } catch { failures.push(`base-texture:${texture.label ?? "unlabelled"}`); }
     }
     this.uniqueBaseTextures.clear();
     this.textures.clear();
@@ -568,7 +444,6 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private abortPrepare<T>(result: ParticleOperationResult<T>): ParticleOperationResult<void> {
     this.resetTextures();
     this.systems.clear();
-    this.systemSortOrdinals.clear();
     this.state = "unprepared";
     return result.status === "accepted" ? particleAccepted(undefined) : result;
   }
@@ -581,16 +456,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
 
   private latchFault(capability: string, boundary: string): ParticleOperationResult<never> {
     if (this.fault === null) {
-      const cleanupFailures = [
-        ...(this.pending === null ? [] : destroySprites(this.pending.sprites, "pending")),
-        ...this.clearLiveSprites(),
+      const failures = [
+        ...(this.pending === null ? [] : destroyMeshes(this.pending.meshes, "pending")),
+        ...this.clearLiveMeshes(),
       ];
       this.fault = Object.freeze({
         code: "particle-backend-fault",
         capability,
-        boundary: cleanupFailures.length === 0
-          ? boundary
-          : `${boundary} Secondary cleanup failures: ${cleanupFailures.join(",")}.`,
+        boundary: failures.length === 0 ? boundary : `${boundary} Secondary cleanup failures: ${failures.join(",")}.`,
       });
       this.pending = null;
       this.state = "faulted";
@@ -603,11 +476,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   }
 
   private disposedResult<T = never>(): ParticleOperationResult<T> {
-    return particleRejected(
-      "terminal-disposed",
-      "particle.pixi.terminal-disposed",
-      "Disposed Pixi particle sessions reject every API except idempotent repeated dispose.",
-    );
+    return particleRejected("terminal-disposed", "particle.pixi.terminal-disposed", "Disposed Pixi particle sessions reject every API except repeated dispose.");
   }
 
   private reject(capability: string, boundary: string): ParticleOperationResult<never> {
@@ -615,100 +484,95 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   }
 }
 
-function buildSystemBindings(
-  profile: ParticlePortableProfile,
-): ParticleOperationResult<ReadonlyMap<string, SystemRenderBinding>> {
+function buildSystemBindings(profile: ParticlePortableProfile): ParticleOperationResult<ReadonlyMap<string, SystemRenderBinding>> {
   const bindings = new Map<string, SystemRenderBinding>();
+  let enabledCount = 0;
   for (const bundle of profile.bundles) {
     const materials = new Map(bundle.materials.map((material) => [material.name, material]));
     for (const system of bundle.systems) {
       const definition = bundle.profiles[system.profile];
       const renderer = definition === undefined ? undefined : bundle.rendererProfiles[definition.renderer];
       if (definition === undefined || renderer === undefined) {
-        return particleRejected("integrity-failure", "particle.pixi.missing-system-renderer", "Every system must resolve its current profile and renderer.");
+        return particleRejected("integrity-failure", "particle.pixi.missing-system-renderer", "Every system must resolve its current profile and complete renderer.");
       }
       if (!renderer.m_Enabled) continue;
-      const reference = renderer.m_Materials.find((material) => material !== null);
-      const material = reference === null || reference === undefined ? undefined : materials.get(reference.name);
-      if (material === undefined || material.texture === null) {
-        return particleRejected("integrity-failure", "particle.pixi.missing-visible-material", "Every enabled current renderer requires its exact material and texture.");
+      enabledCount += 1;
+      const reference = renderer.m_Materials[0] ?? null;
+      const material = reference === null ? undefined : materials.get(reference.name);
+      if (material === undefined || material.texture === null || material.fragment === undefined ||
+        material.sourceBlendFactor === undefined || material.destinationBlendFactor === undefined) {
+        return particleRejected("integrity-failure", "particle.pixi.missing-visible-material", "Every enabled current renderer requires exact slot-0 material semantics and texture.");
       }
-      const uvKey = definition.modules.UVModule;
-      const uv = uvKey === undefined ? null : bundle.moduleProfiles.UVModule?.[uvKey] ?? null;
+      if (renderer.m_RenderMode === 4 && (system.meshProfile === null || system.meshProfile === undefined ||
+        bundle.meshProfiles?.[system.meshProfile] === undefined)) {
+        return particleRejected("integrity-failure", "particle.pixi.missing-visible-mesh", "Every enabled current mode-4 renderer requires exact source mesh geometry.");
+      }
       bindings.set(system.identity, Object.freeze({
         bundle,
         system,
         renderer,
         materialName: material.name,
         logicalTextureId: `particle-texture:${bundle.key}:${material.texture}`,
-        blend: material.blend,
-        tilesX: uv?.tilesX ?? 1,
-        tilesY: uv?.tilesY ?? 1,
       }));
     }
   }
-  return bindings.size === 104
+  return bindings.size === enabledCount && enabledCount > 0
     ? particleAccepted(bindings)
-    : particleRejected("integrity-failure", "particle.pixi.renderer-binding-count-mismatch", "Exactly 104 of the 120 current systems have enabled renderer bindings.");
+    : particleRejected("integrity-failure", "particle.pixi.renderer-binding-relation", "Enabled bindings are derived from the complete prepared inventory without a literal count.");
 }
 
 function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult<ParticlePixiSceneProfile> {
-  const pixelsPerWorldUnit = scene === null || typeof scene !== "object"
-    ? null
-    : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
-  const gameplayTransformScale = scene === null || typeof scene !== "object"
-    ? null
-    : particleFloat32FromBits(scene.gameplayTransformScaleBits);
-  if (scene === null || typeof scene !== "object" ||
-    !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
-    !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 ||
-    scene.viewportWidth < scene.viewportHeight ||
+  const ppu = scene === null || typeof scene !== "object" ? null : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
+  const legacyScale = scene === null || typeof scene !== "object" ? null : particleFloat32FromBits(scene.gameplayTransformScaleBits);
+  if (scene === null || typeof scene !== "object" || !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
+    !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 || scene.viewportWidth < scene.viewportHeight ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
-    pixelsPerWorldUnit !== Math.fround(scene.viewportHeight / 2) ||
-    gameplayTransformScale === null || gameplayTransformScale <= 0 || scene.roundPixels !== false ||
+    ppu !== Math.fround(scene.viewportHeight / 2) || legacyScale === null || legacyScale <= 0 || scene.roundPixels !== false ||
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
-    scene.buttonAnchors.some((anchor, index) =>
-      anchor.buttonType !== (index < 7 ? index : index + 1) ||
-      particleFloat32FromBits(anchor.position.xBits) === null ||
-      particleFloat32FromBits(anchor.position.yBits) === null ||
-      particleFloat32FromBits(anchor.position.zBits) === null)) {
+    !Array.isArray(scene.buttonOwners) || scene.buttonOwners.length !== 15 || scene.slidePool === undefined ||
+    scene.slidePool.poolSize !== 8 || scene.slidePool.initialCursor !== 0 || scene.slidePool.firstAcquiredSlot !== 1 ||
+    positiveBits(scene.slidePool.outerScaleBits) === null || positiveBits(scene.slidePool.particleSystemSetupScaleBits) === null ||
+    scene.buttonOwners.some((owner, index) => owner.buttonType !== (index < 7 ? index : index + 1) ||
+      owner.transform.source !== "game-play-button" || positiveBits(owner.particleSystemSetupScaleBits) === null ||
+      !finiteOwnerTransform(owner.transform))) {
     return particleRejected(
       "integrity-failure",
       "particle.pixi.invalid-scene-profile",
-      "Particle projection requires the current landscape orthographic height/2 PPU, positive GamePlayButton parent scale and 15 ordered engine-authored anchors; unsupported Button_07 fails closed without a fixed-device viewport fallback.",
+      "Particle projection requires exact camera, 15 typed GamePlayButton owners and current eight-slot NoteSlide pool transforms.",
     );
   }
-  return particleAccepted(Object.freeze({
-    ...scene,
-    buttonAnchors: Object.freeze(scene.buttonAnchors.map((anchor) => Object.freeze({
-      buttonType: anchor.buttonType,
-      position: Object.freeze({ ...anchor.position }),
-    }))),
-  }));
+  return particleAccepted(scene);
 }
 
-function isInstance(value: ParticleInstanceIdentity): boolean {
-  if (value === null || typeof value !== "object" ||
-    !Number.isInteger(value.buttonType) || value.buttonType < 0 || value.buttonType > 15) return false;
+function isNativeInstance(value: ParticleInstanceIdentity): boolean {
+  if (value === null || typeof value !== "object" || value.kind === "game-clear" || value.ownerTransform === undefined ||
+    positiveBits(value.particleSystemSetupScaleBits ?? "") === null || !finiteOwnerTransform(value.ownerTransform)) return false;
   if (value.kind === "game-play-button") {
-    return value.rangeLength === null ||
-      Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
+    return Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
+      (value.rangeLength === null || Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7) &&
+      value.ownerTransform.source === "game-play-button";
   }
-  const rangeLength = value.rangeLength;
-  if (value.kind !== "note-slide" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
-    !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
-    typeof value.buttonType !== "number" || !Number.isFinite(value.buttonType) ||
-    typeof rangeLength !== "number" || !Number.isInteger(rangeLength) || rangeLength < 1) return false;
-  if (value.rootPositionXBits === null || value.rootPositionYBits === null || value.rootScaleBits === null) {
-    return value.rootPositionXBits === null && value.rootPositionYBits === null && value.rootScaleBits === null &&
-      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15;
-  }
-  if (typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
-    typeof value.rootScaleBits !== "string") return false;
-  const rootX = particleFloat32FromBits(value.rootPositionXBits);
-  const rootY = particleFloat32FromBits(value.rootPositionYBits);
-  const rootScale = particleFloat32FromBits(value.rootScaleBits);
-  return rootX !== null && rootY !== null && rootScale !== null && rootScale > 0;
+  return Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
+    Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 && Number.isInteger(value.rangeLength) && value.rangeLength >= 1 &&
+    Number.isInteger(value.poolSlot) && value.poolSlot! >= 0 && value.poolSlot! < 8 &&
+    (value.route === "original" || value.route === "product-extension") &&
+    value.ownerTransform.source === (value.route === "original" ? "original-note-slide" : "product-extension-note-slide") &&
+    value.rootPositionXBits === value.ownerTransform.position.xBits && value.rootPositionYBits === value.ownerTransform.position.yBits &&
+    value.rootScaleBits === value.ownerTransform.scale.xBits;
+}
+
+function finiteOwnerTransform(transform: NonNullable<Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"]>): boolean {
+  return [transform.position.xBits, transform.position.yBits, transform.position.zBits,
+    transform.rotation.xBits, transform.rotation.yBits, transform.rotation.zBits, transform.rotation.wBits,
+    transform.scale.xBits, transform.scale.yBits, transform.scale.zBits]
+    .every((bits) => particleFloat32FromBits(bits) !== null) &&
+    [transform.scale.xBits, transform.scale.yBits, transform.scale.zBits]
+      .every((bits) => positiveBits(bits) !== null);
+}
+
+function positiveBits(bits: string): number | null {
+  const value = particleFloat32FromBits(bits);
+  return value !== null && value > 0 ? value : null;
 }
 
 function sampleBitsFinite(sample: ParticleRenderSample): boolean {
@@ -723,203 +587,12 @@ function sampleBitsFinite(sample: ParticleRenderSample): boolean {
 }
 
 function compareSamples(left: ParticleRenderSample, right: ParticleRenderSample): number {
-  return left.sortingOrder - right.sortingOrder || compareOrdinal(left.systemId, right.systemId) ||
+  return left.sortingLayerId! - right.sortingLayerId! || left.sortingOrder - right.sortingOrder ||
+    particleFloat32FromBits(left.sortingFudgeBits!)! - particleFloat32FromBits(right.sortingFudgeBits!)! ||
+    left.rendererPriority! - right.rendererPriority! ||
+    left.ownerSortOrdinal! - right.ownerSortOrdinal! ||
+    left.sourceOrdinal! - right.sourceOrdinal! ||
     left.creationSequence - right.creationSequence;
-}
-
-type ParticleVector = readonly [number, number, number];
-
-function particleSpriteMatrix(
-  sample: ParticleRenderSample,
-  binding: SystemRenderBinding,
-  texture: Texture,
-  pixelsPerUnit: number,
-  gameplayTransformScale: number,
-  viewportHeight: number,
-  positionX: number,
-  positionY: number,
-): Matrix {
-  const sizeX = particleFloat32FromBits(sample.size.xBits)!;
-  const sizeY = particleFloat32FromBits(sample.size.yBits)!;
-  const rotation = particleFloat32FromBits(sample.rotation.zBits)!;
-  if (sample.renderMode === 1) {
-    const velocity: ParticleVector = [
-      particleFloat32FromBits(sample.velocity.xBits)!,
-      particleFloat32FromBits(sample.velocity.yBits)!,
-      particleFloat32FromBits(sample.velocity.zBits)!,
-    ];
-    const hierarchyScale = localParticleScale(binding, gameplayTransformScale);
-    const speedSquared = velocity.reduce(
-      (sum, component) => renderAdd(sum, renderMultiply(component, component)),
-      renderF32(0),
-    );
-    const speed = renderF32(Math.sqrt(speedSquared));
-    const width = Math.abs(renderMultiply(
-      renderMultiply(sizeX, hierarchyScale[0]),
-      pixelsPerUnit,
-    ));
-    const signedHeightWorld = renderAdd(
-      renderMultiply(renderMultiply(Math.abs(sizeY), hierarchyScale[1]), binding.renderer.m_LengthScale),
-      renderMultiply(speed, binding.renderer.m_VelocityScale),
-    );
-    const dimensions = clampParticleDimensions(
-      width,
-      Math.abs(renderMultiply(signedHeightWorld, pixelsPerUnit)),
-      binding.renderer.m_MaxParticleSize * viewportHeight,
-    );
-    const signedHeight = signedHeightWorld < 0 ? -dimensions[1] : dimensions[1];
-    const screenRotation = velocity[0] === 0 && velocity[1] === 0
-      ? Math.fround(-rotation)
-      : Math.fround(
-          Math.atan2(-velocity[1], velocity[0]) - Math.PI / 2 -
-          (binding.renderer.m_RotateWithStretchDirection ? rotation : 0),
-        );
-    return viewAlignedMatrix(
-      texture,
-      dimensions[0],
-      signedHeight,
-      screenRotation,
-      positionX,
-      positionY,
-    );
-  }
-  if (sample.renderAlignment === 2) {
-    const cosine = renderF32(Math.cos(rotation));
-    const sine = renderF32(Math.sin(rotation));
-    const localX: ParticleVector = [
-      renderMultiply(cosine, sizeX),
-      renderMultiply(sine, sizeX),
-      0,
-    ];
-    const localY: ParticleVector = [
-      renderMultiply(-sine, sizeY),
-      renderMultiply(cosine, sizeY),
-      0,
-    ];
-    let worldX = applyLocalScalingModeLinear(localX, binding, gameplayTransformScale);
-    let worldY = applyLocalScalingModeLinear(localY, binding, gameplayTransformScale);
-    const dimensions = clampParticleDimensions(
-      renderMultiply(Math.hypot(worldX[0], worldX[1], worldX[2]), pixelsPerUnit),
-      renderMultiply(Math.hypot(worldY[0], worldY[1], worldY[2]), pixelsPerUnit),
-      binding.renderer.m_MaxParticleSize * viewportHeight,
-    );
-    const sourceX = Math.max(Math.hypot(worldX[0], worldX[1], worldX[2]) * pixelsPerUnit, Number.EPSILON);
-    const sourceY = Math.max(Math.hypot(worldY[0], worldY[1], worldY[2]) * pixelsPerUnit, Number.EPSILON);
-    worldX = worldX.map((value) => value * dimensions[0] / sourceX) as unknown as ParticleVector;
-    worldY = worldY.map((value) => value * dimensions[1] / sourceY) as unknown as ParticleVector;
-    return new Matrix(
-      renderMultiply(worldX[0], pixelsPerUnit) / texture.width,
-      renderMultiply(-worldX[1], pixelsPerUnit) / texture.width,
-      renderMultiply(worldY[0], pixelsPerUnit) / texture.height,
-      renderMultiply(-worldY[1], pixelsPerUnit) / texture.height,
-      positionX,
-      positionY,
-    );
-  }
-  const hierarchyScale = localParticleScale(binding, gameplayTransformScale);
-  const dimensions = clampParticleDimensions(
-    Math.abs(renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit)),
-    Math.abs(renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit)),
-    binding.renderer.m_MaxParticleSize * viewportHeight,
-  );
-  return viewAlignedMatrix(
-    texture,
-    dimensions[0],
-    dimensions[1],
-    Math.fround(-rotation),
-    positionX,
-    positionY,
-  );
-}
-
-function clampParticleDimensions(
-  width: number,
-  height: number,
-  maximum: number,
-): readonly [number, number] {
-  const largest = Math.max(Math.abs(width), Math.abs(height));
-  if (!(maximum > 0) || largest <= maximum) return Object.freeze([width, height] as const);
-  const ratio = maximum / largest;
-  return Object.freeze([width * ratio, height * ratio] as const);
-}
-
-function viewAlignedMatrix(
-  texture: Texture,
-  width: number,
-  height: number,
-  rotation: number,
-  positionX: number,
-  positionY: number,
-): Matrix {
-  const cosine = Math.cos(rotation);
-  const sine = Math.sin(rotation);
-  return new Matrix(
-    cosine * width / texture.width,
-    sine * width / texture.width,
-    -sine * height / texture.height,
-    cosine * height / texture.height,
-    positionX,
-    positionY,
-  );
-}
-
-function localParticleScale(
-  binding: SystemRenderBinding,
-  gameplayTransformScale: number,
-): readonly [number, number] {
-  const x = applyLocalScalingModeLinear([1, 0, 0], binding, gameplayTransformScale);
-  const y = applyLocalScalingModeLinear([0, 1, 0], binding, gameplayTransformScale);
-  return Object.freeze([
-    renderF32(Math.hypot(x[0], x[1], x[2])),
-    renderF32(Math.hypot(y[0], y[1], y[2])),
-  ] as const);
-}
-
-function applyLocalScalingModeLinear(
-  vector: ParticleVector,
-  binding: SystemRenderBinding,
-  gameplayTransformScale: number,
-): ParticleVector {
-  const emitting = binding.system.transform;
-  let value = quaternionRotate([
-    renderMultiply(vector[0], renderMultiply(emitting.m_LocalScale.x, gameplayTransformScale)),
-    renderMultiply(vector[1], renderMultiply(emitting.m_LocalScale.y, gameplayTransformScale)),
-    renderMultiply(vector[2], renderMultiply(emitting.m_LocalScale.z, gameplayTransformScale)),
-  ], emitting.m_LocalRotation);
-  for (const parent of binding.system.parentTransforms) {
-    value = quaternionRotate(value, parent.m_LocalRotation);
-  }
-  return value;
-}
-
-function quaternionRotate(
-  vector: ParticleVector,
-  quaternion: ParticleBundleProfile["systems"][number]["transform"]["m_LocalRotation"],
-): ParticleVector {
-  const [x, y, z] = vector.map(renderF32) as [number, number, number];
-  const qx = renderF32(quaternion.x);
-  const qy = renderF32(quaternion.y);
-  const qz = renderF32(quaternion.z);
-  const qw = renderF32(quaternion.w);
-  const tx = renderMultiply(2, renderSubtract(renderMultiply(qy, z), renderMultiply(qz, y)));
-  const ty = renderMultiply(2, renderSubtract(renderMultiply(qz, x), renderMultiply(qx, z)));
-  const tz = renderMultiply(2, renderSubtract(renderMultiply(qx, y), renderMultiply(qy, x)));
-  return [
-    renderAdd(x, renderAdd(renderMultiply(qw, tx), renderSubtract(renderMultiply(qy, tz), renderMultiply(qz, ty)))),
-    renderAdd(y, renderAdd(renderMultiply(qw, ty), renderSubtract(renderMultiply(qz, tx), renderMultiply(qx, tz)))),
-    renderAdd(z, renderAdd(renderMultiply(qw, tz), renderSubtract(renderMultiply(qx, ty), renderMultiply(qy, tx)))),
-  ];
-}
-
-function renderF32(value: number): number { return Math.fround(value); }
-function renderAdd(left: number, right: number): number {
-  return renderF32(renderF32(left) + renderF32(right));
-}
-function renderSubtract(left: number, right: number): number {
-  return renderF32(renderF32(left) - renderF32(right));
-}
-function renderMultiply(left: number, right: number): number {
-  return renderF32(renderF32(left) * renderF32(right));
 }
 
 function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): void {
@@ -932,24 +605,10 @@ function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): voi
   texture.source.format = "rgba8unorm-srgb";
 }
 
-function addScaledBits(leftBits: string, rightBits: string, scale: number): number {
-  return Math.fround(
-    particleFloat32FromBits(leftBits)! +
-    Math.fround(particleFloat32FromBits(rightBits)! * scale),
-  );
-}
-
-function destroySprites(
-  sprites: readonly PixiParticleLinearColorMesh[],
-  ownerPrefix = "detached",
-): readonly string[] {
+function destroyMeshes(meshes: readonly PixiParticleLinearColorMesh[], ownerPrefix = "detached"): readonly string[] {
   const failures: string[] = [];
-  for (const sprite of sprites) {
-    try {
-      destroyPixiParticleLinearColorMesh(sprite);
-    } catch {
-      failures.push(`${ownerPrefix}-sprite:${sprite.label}`);
-    }
+  for (const mesh of meshes) {
+    try { destroyPixiParticleLinearColorMesh(mesh); } catch { failures.push(`${ownerPrefix}-mesh:${mesh.label}`); }
   }
   return failures;
 }
@@ -957,15 +616,7 @@ function destroySprites(
 function destroyTextureSet(textures: ReadonlySet<Texture>): readonly string[] {
   const failures: string[] = [];
   for (const texture of textures) {
-    try {
-      if (!texture.destroyed) texture.destroy(true);
-    } catch {
-      failures.push(`texture:${texture.label ?? "unlabelled"}`);
-    }
+    try { if (!texture.destroyed) texture.destroy(true); } catch { failures.push(`texture:${texture.label ?? "unlabelled"}`); }
   }
   return failures;
-}
-
-function compareOrdinal(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -1053,8 +1053,9 @@ function createParticleCoordinator(
       : ok(null);
   }
   if (input.particles === null || typeof input.particles !== "object" ||
-    Object.keys(input.particles).length !== 1 ||
+    Object.keys(input.particles).length !== 2 ||
     typeof input.particles.sessionId !== "string" || input.particles.sessionId.length === 0 ||
+    input.particles.scene === undefined || input.particles.scene === null ||
     backends.particles === undefined) {
     return integrityFailure(
       "particle.session.invalid-host-binding",
@@ -1066,6 +1067,7 @@ function createParticleCoordinator(
     input.chart,
     input.runtime.mode.isAutoPlay,
     input.garupaProductScene ?? input.rendering?.garupaProductScene ?? null,
+    input.particles.scene,
   );
   const coordinator = new ParticleFrameCoordinator(
     input.particles.sessionId,

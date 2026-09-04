@@ -1,9 +1,14 @@
 import type {
   ParticleCommand,
   ParticleInstanceIdentity,
+  ParticleOwnerTransform,
+  ParticlePixiSceneProfile,
   ParticleRootId,
 } from "../../backends/particleContracts";
-import { particleFloat32ToBits } from "../../backends/particleValidation";
+import {
+  particleFloat32FromBits,
+  particleFloat32ToBits,
+} from "../../backends/particleValidation";
 import {
   AfterNoteType,
   ButtonType,
@@ -42,6 +47,7 @@ interface SlideSemanticIdentity {
 interface MutableParticleOwnerState {
   readonly buttonTapKeep: Map<number, Map<number, TapKeepOwner>>;
   readonly slideTapKeep: Map<string, TapKeepOwner>;
+  slidePoolCursor: number;
   suppressedUntilReplay: boolean;
   terminal: boolean;
   disposed: boolean;
@@ -56,6 +62,7 @@ export interface ParticleCommandProducerSnapshot {
     readonly rangeLength: number;
     readonly ownerKey: string;
   }[];
+  readonly slidePoolCursor: number;
   readonly activeSlideTapKeepOwners: readonly {
     readonly noteIndex: number;
     readonly absolutePosition: number;
@@ -115,6 +122,7 @@ export class ParticleCommandProducer {
     chart: ChartConstructionResult,
     private readonly isAutoPlay = false,
     private readonly productScene: GarupaProductSceneLayout | null = null,
+    private readonly particleScene: ParticlePixiSceneProfile | null = null,
   ) {
     if (chart === null || typeof chart !== "object" || !Array.isArray(chart.noteBatches)) {
       this.chartIdentityValid = false;
@@ -147,11 +155,17 @@ export class ParticleCommandProducer {
   }
 
   validate(): SimulatorResult<void> {
-    return this.chartIdentityValid
+    if (!this.chartIdentityValid) {
+      return rejected(
+        "particle.producer.invalid-chart-identity",
+        "Particle ownership requires complete chart-semantic judgement keys; source note indices are not treated as globally unique identities.",
+      );
+    }
+    return validOwnerScene(this.particleScene)
       ? ok(undefined)
       : rejected(
-          "particle.producer.invalid-chart-identity",
-          "Particle ownership requires complete chart-semantic judgement keys; source note indices are not treated as globally unique identities.",
+          "particle.producer.native-owner-scene-required",
+          "Production particle ownership requires exact GamePlayButton transforms and the current eight-slot NoteSlide pool profile; nullable renderer reconstruction is forbidden.",
         );
   }
 
@@ -191,14 +205,14 @@ export class ParticleCommandProducer {
             const rangeLength = routed.startsWith("directional:") ? null : node.width;
             commands.push(playRoot(
               buttonParticleOwnerKey(buttonType, routed, rangeLength),
-              buttonInstance(buttonType, rangeLength),
+              buttonInstance(buttonType, rangeLength, this.particleScene!),
               routed,
             ));
             const fingerRoot = compatibleProductDirectionalFingerRoot(node, entry.adjustedResult);
             if (fingerRoot !== null) {
               commands.push(playRoot(
                 buttonParticleOwnerKey(buttonType, fingerRoot, null),
-                buttonInstance(buttonType, null),
+                buttonInstance(buttonType, null, this.particleScene!),
                 fingerRoot,
               ));
             }
@@ -221,7 +235,7 @@ export class ParticleCommandProducer {
         }
         if (isTapKeepStartJudgeNoteType(entry.noteType) ||
           (note.fireNoteType === FrontNoteType.Long && entry.phase === "head" && entry.adjustedResult > 0)) {
-          playButtonTapKeep(buttonType, entry.buttonTypes.length, projected, commands);
+          playButtonTapKeep(buttonType, entry.buttonTypes.length, this.particleScene!, projected, commands);
         }
         const slideRoot = this.slideRootByNode.get(note);
         if (slideRoot !== undefined && entry.phase === "tail") {
@@ -238,10 +252,17 @@ export class ParticleCommandProducer {
               );
             }
             const identity = slideIdentity(slideRoot);
+            const transform = originalSlideTransform(targetButton, this.particleScene!);
             if (entry.phase === "head") {
-              playSlideTapKeep(identity, targetButton, targetRange, projected, commands);
+              playSlideTapKeep(
+                identity, targetButton, targetRange, transform,
+                "original", this.particleScene!, projected, commands,
+              );
             } else {
-              moveSlideTapKeep(identity, targetButton, targetRange, null, null, null, projected, commands);
+              moveSlideTapKeep(
+                identity, targetButton, targetRange, transform,
+                "original", this.particleScene!, projected, commands,
+              );
             }
           }
         }
@@ -260,7 +281,7 @@ export class ParticleCommandProducer {
             : entry.buttonTypes.length;
           commands.push(playRoot(
             buttonParticleOwnerKey(buttonType, routed.value, rangeLength),
-            buttonInstance(buttonType, rangeLength),
+            buttonInstance(buttonType, rangeLength, this.particleScene!),
             routed.value,
           ));
         }
@@ -279,7 +300,7 @@ export class ParticleCommandProducer {
           );
           commands.push(playRoot(
             buttonParticleOwnerKey(fingerButton, fingerRoot.value, null),
-            buttonInstance(fingerButton, null),
+            buttonInstance(fingerButton, null, this.particleScene!),
             fingerRoot.value,
           ));
         }
@@ -309,7 +330,7 @@ export class ParticleCommandProducer {
     const projected = cloneState(this.state);
     if (projected.suppressedUntilReplay) return this.stage([], projected);
     const commands: ParticleCommand[] = [];
-    playButtonTapKeep(buttonType, rangeLength, projected, commands);
+    playButtonTapKeep(buttonType, rangeLength, this.particleScene!, projected, commands);
     return this.stage(commands, projected);
   }
 
@@ -349,7 +370,11 @@ export class ParticleCommandProducer {
     const projected = cloneState(this.state);
     if (projected.suppressedUntilReplay) return this.stage([], projected);
     const commands: ParticleCommand[] = [];
-    playSlideTapKeep(slideIdentity(note), buttonType, rangeLength, projected, commands);
+    playSlideTapKeep(
+      slideIdentity(note), buttonType, rangeLength,
+      originalSlideTransform(buttonType, this.particleScene!),
+      "original", this.particleScene!, projected, commands,
+    );
     return this.stage(commands, projected);
   }
 
@@ -469,6 +494,7 @@ export class ParticleCommandProducer {
       .sort((left, right) => left.noteIndex - right.noteIndex ||
         left.absolutePosition - right.absolutePosition);
     return Object.freeze({
+      slidePoolCursor: this.state.slidePoolCursor,
       suppressedUntilReplay: this.state.suppressedUntilReplay,
       terminal: this.state.terminal,
       disposed: this.state.disposed,
@@ -511,41 +537,29 @@ export class ParticleCommandProducer {
       1,
     );
     if (position.status !== "ok") return position;
-    // The selected effect_tap_keep_laneSizeN prefab already owns its span
-    // geometry. Note visual scale includes authoredWidth and must not be
-    // applied again to the particle owner; only the outer NoteSetting scene
-    // scale belongs to the stable NoteSlide root.
-    const rootScale = this.productScene.noteSettingScale.value;
-    const rootPositionXBits = particleFloat32ToBits(position.value.x.value);
-    const rootPositionYBits = particleFloat32ToBits(position.value.y.value);
-    const rootScaleBits = particleFloat32ToBits(rootScale);
-    if (rootPositionXBits === null || rootPositionYBits === null || rootScaleBits === null || rootScale <= 0) {
+    // Product continuous X remains a product adapter, while the current
+    // NoteSlide pool setup scale and outer NoteSetting scale stay original-owned.
+    const transform = slideTransform(
+      position.value.x.value,
+      position.value.y.value,
+      "product-extension-note-slide",
+      this.particleScene!,
+    );
+    if (transform === null) {
       return rejected(
         "particle.producer.invalid-product-slide-transform",
-        "The current product Slide after-node must project to finite positive binary32 root position/scale.",
+        "The current product Slide after-node must project to one finite typed owner transform.",
       );
     }
     if (nodeIndex === 0) {
       playSlideTapKeep(
-        identity,
-        target.spanStart,
-        target.width,
-        projected,
-        commands,
-        rootPositionXBits,
-        rootPositionYBits,
-        rootScaleBits,
+        identity, target.spanStart, target.width, transform,
+        "product-extension", this.particleScene!, projected, commands,
       );
     } else {
       moveSlideTapKeep(
-        identity,
-        target.spanStart,
-        target.width,
-        rootPositionXBits,
-        rootPositionYBits,
-        rootScaleBits,
-        projected,
-        commands,
+        identity, target.spanStart, target.width, transform,
+        "product-extension", this.particleScene!, projected, commands,
       );
     }
     return ok(undefined);
@@ -664,24 +678,20 @@ function playSlideTapKeep(
   identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
+  transform: ParticleOwnerTransform,
+  route: "original" | "product-extension",
+  scene: ParticlePixiSceneProfile,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
-  rootPositionXBits: string | null = null,
-  rootPositionYBits: string | null = null,
-  rootScaleBits: string | null = null,
 ): void {
+  const pool = scene.slidePool!;
+  state.slidePoolCursor = (state.slidePoolCursor + 1) % pool.poolSize;
+  const poolSlot = state.slidePoolCursor;
   const semanticKey = slideSemanticKey(identity);
-  const ownerKey = slideTapKeepOwnerKey(identity, buttonType, rangeLength);
-  const instance = slideInstance(
-    identity,
-    buttonType,
-    rangeLength,
-    rootPositionXBits,
-    rootPositionYBits,
-    rootScaleBits,
-  );
+  const ownerKey = slideTapKeepOwnerKey(identity, poolSlot);
+  const instance = slideInstance(identity, buttonType, rangeLength, transform, route, poolSlot, scene);
   const before = state.slideTapKeep.get(semanticKey);
-  if (before !== undefined && before.ownerKey !== ownerKey) {
+  if (before !== undefined) {
     commands.push(stopRoot(before.ownerKey, before.instance, "ordinary:effect_TapKeep"));
   }
   commands.push(playRoot(ownerKey, instance, "ordinary:effect_TapKeep"));
@@ -692,22 +702,17 @@ function moveSlideTapKeep(
   identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
-  rootPositionXBits: string | null,
-  rootPositionYBits: string | null,
-  rootScaleBits: string | null,
+  transform: ParticleOwnerTransform,
+  route: "original" | "product-extension",
+  scene: ParticlePixiSceneProfile,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
 ): void {
   const semanticKey = slideSemanticKey(identity);
   const active = state.slideTapKeep.get(semanticKey);
-  if (active === undefined) return;
+  if (active === undefined || active.instance.kind !== "note-slide" || active.instance.poolSlot === undefined) return;
   const instance = slideInstance(
-    identity,
-    buttonType,
-    rangeLength,
-    rootPositionXBits,
-    rootPositionYBits,
-    rootScaleBits,
+    identity, buttonType, rangeLength, transform, route, active.instance.poolSlot, scene,
   );
   commands.push(Object.freeze({
     kind: "move-note-slide-root",
@@ -736,12 +741,13 @@ function stopSlideTapKeep(
 function playButtonTapKeep(
   buttonType: number,
   rangeLength: number,
+  scene: ParticlePixiSceneProfile,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
 ): void {
   const owners = state.buttonTapKeep.get(buttonType) ?? new Map<number, TapKeepOwner>();
   const ownerKey = buttonTapKeepOwnerKey(buttonType, rangeLength);
-  const instance = buttonInstance(buttonType, rangeLength);
+  const instance = buttonInstance(buttonType, rangeLength, scene);
   commands.push(playRoot(ownerKey, instance, "ordinary:effect_TapKeep"));
   owners.set(rangeLength, Object.freeze({ ownerKey, instance, rangeLength }));
   state.buttonTapKeep.set(buttonType, owners);
@@ -768,7 +774,7 @@ function playRoot(
   return Object.freeze({
     kind: "play-root",
     ownerKey,
-    instance: Object.freeze({ ...instance }),
+    instance,
     root,
     restartIfActive: true,
   });
@@ -782,7 +788,7 @@ function stopRoot(
   return Object.freeze({
     kind: "stop-clear-deactivate-root",
     ownerKey,
-    instance: Object.freeze({ ...instance }),
+    instance,
     root,
   });
 }
@@ -790,17 +796,26 @@ function stopRoot(
 function buttonInstance(
   buttonType: number,
   rangeLength: number | null,
+  scene: ParticlePixiSceneProfile,
 ): ParticleInstanceIdentity {
-  return Object.freeze({ kind: "game-play-button", buttonType, rangeLength });
+  const owner = scene.buttonOwners!.find((candidate) => candidate.buttonType === buttonType)!;
+  return Object.freeze({
+    kind: "game-play-button",
+    buttonType,
+    rangeLength,
+    ownerTransform: owner.transform,
+    particleSystemSetupScaleBits: owner.particleSystemSetupScaleBits,
+  });
 }
 
 function slideInstance(
   identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
-  rootPositionXBits: string | null,
-  rootPositionYBits: string | null,
-  rootScaleBits: string | null,
+  transform: ParticleOwnerTransform,
+  route: "original" | "product-extension",
+  poolSlot: number,
+  scene: ParticlePixiSceneProfile,
 ): Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }> {
   return Object.freeze({
     kind: "note-slide",
@@ -808,9 +823,13 @@ function slideInstance(
     absolutePosition: identity.absolutePosition,
     buttonType,
     rangeLength,
-    rootPositionXBits,
-    rootPositionYBits,
-    rootScaleBits,
+    ownerTransform: transform,
+    particleSystemSetupScaleBits: scene.slidePool!.particleSystemSetupScaleBits,
+    poolSlot,
+    route,
+    rootPositionXBits: transform.position.xBits,
+    rootPositionYBits: transform.position.yBits,
+    rootScaleBits: transform.scale.xBits,
   });
 }
 
@@ -830,14 +849,98 @@ function buttonTapKeepOwnerKey(buttonType: number, rangeLength: number): string 
 
 function slideTapKeepOwnerKey(
   identity: SlideSemanticIdentity,
-  buttonType: number,
-  rangeLength: number,
+  poolSlot: number,
 ): string {
-  return `note-slide:${identity.noteIndex}@${identity.absolutePosition}/button:${buttonType}/particle:ordinary:effect_TapKeep/range:${rangeLength}`;
+  return `note-slide-pool:${poolSlot}/note:${identity.noteIndex}@${identity.absolutePosition}/particle:ordinary:effect_TapKeep`;
 }
 
 function slideSemanticKey(identity: SlideSemanticIdentity): string {
   return `${identity.noteIndex}@${identity.absolutePosition}`;
+}
+
+function originalSlideTransform(
+  buttonType: number,
+  scene: ParticlePixiSceneProfile,
+): ParticleOwnerTransform {
+  const owner = scene.buttonOwners!.find((candidate) => candidate.buttonType === buttonType)!;
+  return Object.freeze({
+    source: "original-note-slide" as const,
+    position: owner.transform.position,
+    rotation: Object.freeze({
+      xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
+    }),
+    scale: Object.freeze({
+      xBits: scene.slidePool!.outerScaleBits,
+      yBits: scene.slidePool!.outerScaleBits,
+      zBits: scene.slidePool!.outerScaleBits,
+    }),
+  });
+}
+
+function slideTransform(
+  x: number,
+  y: number,
+  source: "original-note-slide" | "product-extension-note-slide",
+  scene: ParticlePixiSceneProfile,
+): ParticleOwnerTransform | null {
+  const xBits = particleFloat32ToBits(x);
+  const yBits = particleFloat32ToBits(y);
+  const scaleBits = scene.slidePool?.outerScaleBits ?? null;
+  if (xBits === null || yBits === null || scaleBits === null || particleFloat32FromBits(scaleBits) === null) return null;
+  return Object.freeze({
+    source,
+    position: Object.freeze({ xBits, yBits, zBits: "0x00000000" }),
+    rotation: Object.freeze({
+      xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
+    }),
+    scale: Object.freeze({ xBits: scaleBits, yBits: scaleBits, zBits: scaleBits }),
+  });
+}
+
+function validOwnerScene(scene: ParticlePixiSceneProfile | null): scene is ParticlePixiSceneProfile {
+  if (scene === null || !Array.isArray(scene.buttonOwners) || scene.buttonOwners.length !== 15 ||
+    !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 || scene.slidePool === undefined ||
+    scene.slidePool.poolSize !== 8 || scene.slidePool.initialCursor !== 0 || scene.slidePool.firstAcquiredSlot !== 1 ||
+    positiveBits(scene.slidePool.outerScaleBits) === null || positiveBits(scene.slidePool.particleSystemSetupScaleBits) === null ||
+    !zeroVector(scene.slidePool.childLocalPosition) || !identityQuaternion(scene.slidePool.childLocalRotation) ||
+    !oneVector(scene.slidePool.childLocalScale)) return false;
+  const seen = new Set<number>();
+  for (const owner of scene.buttonOwners) {
+    const anchor = scene.buttonAnchors.find((candidate) => candidate.buttonType === owner.buttonType);
+    if (seen.has(owner.buttonType) || anchor === undefined || owner.transform.source !== "game-play-button" ||
+      !validOwnerTransform(owner.transform) || positiveBits(owner.particleSystemSetupScaleBits) === null ||
+      owner.transform.position.xBits !== anchor.position.xBits ||
+      owner.transform.position.yBits !== anchor.position.yBits ||
+      owner.transform.position.zBits !== anchor.position.zBits ||
+      !identityQuaternion(owner.transform.rotation) || !oneVector(owner.transform.scale)) return false;
+    seen.add(owner.buttonType);
+  }
+  return true;
+}
+
+function validOwnerTransform(transform: ParticleOwnerTransform): boolean {
+  return [transform.position.xBits, transform.position.yBits, transform.position.zBits,
+    transform.rotation.xBits, transform.rotation.yBits, transform.rotation.zBits, transform.rotation.wBits,
+    transform.scale.xBits, transform.scale.yBits, transform.scale.zBits]
+    .every((bits) => particleFloat32FromBits(bits) !== null);
+}
+
+function positiveBits(bits: string): number | null {
+  const value = particleFloat32FromBits(bits);
+  return value !== null && value > 0 ? value : null;
+}
+
+function zeroVector(value: { readonly xBits: string; readonly yBits: string; readonly zBits: string }): boolean {
+  return value.xBits === "0x00000000" && value.yBits === "0x00000000" && value.zBits === "0x00000000";
+}
+
+function oneVector(value: { readonly xBits: string; readonly yBits: string; readonly zBits: string }): boolean {
+  return value.xBits === "0x3F800000" && value.yBits === "0x3F800000" && value.zBits === "0x3F800000";
+}
+
+function identityQuaternion(value: { readonly xBits: string; readonly yBits: string; readonly zBits: string; readonly wBits: string }): boolean {
+  return value.xBits === "0x00000000" && value.yBits === "0x00000000" &&
+    value.zBits === "0x00000000" && value.wBits === "0x3F800000";
 }
 
 function slideIdentity(note: NoteInformation): SlideSemanticIdentity {
@@ -1069,6 +1172,7 @@ function createEmptyState(): MutableParticleOwnerState {
   return {
     buttonTapKeep: new Map(),
     slideTapKeep: new Map(),
+    slidePoolCursor: 0,
     suppressedUntilReplay: false,
     terminal: false,
     disposed: false,
@@ -1079,6 +1183,7 @@ function cloneState(source: MutableParticleOwnerState): MutableParticleOwnerStat
   return {
     buttonTapKeep: new Map([...source.buttonTapKeep].map(([button, owners]) => [button, new Map(owners)])),
     slideTapKeep: new Map(source.slideTapKeep),
+    slidePoolCursor: source.slidePoolCursor,
     suppressedUntilReplay: source.suppressedUntilReplay,
     terminal: source.terminal,
     disposed: source.disposed,

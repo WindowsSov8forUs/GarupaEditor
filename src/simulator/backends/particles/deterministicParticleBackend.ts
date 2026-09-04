@@ -385,13 +385,26 @@ function applyCommand(
 }
 
 function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
-  if (left.kind !== right.kind || left.rangeLength !== right.rangeLength) return false;
-  return left.kind === "game-play-button" && right.kind === "game-play-button"
-    ? left.buttonType === right.buttonType
-    : left.kind === "note-slide" && right.kind === "note-slide" &&
+  if (left.kind !== right.kind || left.rangeLength !== right.rangeLength || left.buttonType !== right.buttonType) return false;
+  if (left.kind === "game-clear" || right.kind === "game-clear") return left.kind === right.kind;
+  if (left.particleSystemSetupScaleBits !== right.particleSystemSetupScaleBits ||
+    !sameOwnerTransform(left.ownerTransform, right.ownerTransform)) return false;
+  return left.kind === "game-play-button" && right.kind === "game-play-button" ||
+    left.kind === "note-slide" && right.kind === "note-slide" &&
       left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
-      left.buttonType === right.buttonType && left.rootPositionXBits === right.rootPositionXBits &&
-      left.rootPositionYBits === right.rootPositionYBits && left.rootScaleBits === right.rootScaleBits;
+      left.poolSlot === right.poolSlot && left.route === right.route;
+}
+
+function sameOwnerTransform(
+  left: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+  right: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  return left.source === right.source &&
+    left.position.xBits === right.position.xBits && left.position.yBits === right.position.yBits && left.position.zBits === right.position.zBits &&
+    left.rotation.xBits === right.rotation.xBits && left.rotation.yBits === right.rotation.yBits &&
+    left.rotation.zBits === right.rotation.zBits && left.rotation.wBits === right.rotation.wBits &&
+    left.scale.xBits === right.scale.xBits && left.scale.yBits === right.scale.yBits && left.scale.zBits === right.scale.zBits;
 }
 
 function cloneOwners(source: ReadonlyMap<string, MutableOwner>): Map<string, MutableOwner> {

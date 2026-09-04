@@ -16,6 +16,7 @@ import type { MovieBackendSnapshot } from "../backends/movieContracts";
 import type { RenderBackendSnapshot } from "../backends/renderingContracts";
 import type {
   ParticleBackendSnapshot,
+  ParticlePixiSceneProfile,
   ParticleRendererBackendSnapshot,
 } from "../backends/particleContracts";
 import type { SimulatorAudioSessionInput } from "../engine/audio/audioCommandProducer";
@@ -44,6 +45,8 @@ export interface SimulatorRenderingSessionInput {
 
 export interface SimulatorParticleSessionInput {
   readonly sessionId: string;
+  /** Required by production; optional only for legacy source compilation. */
+  readonly scene?: ParticlePixiSceneProfile;
 }
 
 export interface SimulatorEngineInput {
