@@ -6,7 +6,7 @@ Reverse证据用于标注原作事实；未覆盖分支必须绑定显式产品�
 
 ## Authority
 
-- Reverse模式/生命周期：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`。
+- Reverse模式/生命周期：原始合同`6c0dfb76`，当前消费于已同步tip `6cddb142806ffdb933cc6a237f69f4dd16e9ca97`；`live_rehearsal_runtime_contract.json` SHA-256 `71F35CF156DE56EAB1075E607D039879961B979CEBC8AB7E8E730D629EC5349F`。
 - Reverse多比例布局与真实控件owner：`9167dce77d0472a000b509f993b0e66e44e4797f`，`simulator-multiaspect-layout-runtime-contract-10-1-4/`；旧`rehearsal-control-rendering-10-1-4`截图geometry仅作observation，不再是production authority。
 - Life初始化/Full伤害：Reverse `2cbea93d`，`artifacts/investigations/simulator-public-life-profile-10-1-4/`，PLP-E01–PLP-E07。
 - 谱面MV Live：Reverse `38802391`，`mv-live-runtime-contract-10-1-4/`与`mv-live-portable-media-profile-10-1-4/`；完整合同见[`mv-live-contract.md`](./mv-live-contract.md)。
@@ -32,7 +32,7 @@ Canonical identity由模拟器一次性生成：
 | rehearsal | manual | Practice | true | false | false | false |
 | rehearsal | auto | Practice | true | true | false | true |
 
-依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
+依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。该四行身份、Life-zero、pause particle clock、natural terminal与MoveTime owner路由在当前CPU/lifecycle范围为`closed-native-algorithm-equivalent`；它不包含physical A/V或fixed-device raster。
 
 ## 启动方向与普通路线完整音频调用图
 
@@ -72,6 +72,14 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 - Note、Command、Record、chart-owned Skill appearance、render、particle和audio必须作为一个事务恢复；不允许clock-only seek。
 
 依据：LR-E03–LR-E20、LR-R03–LR-R05、LR-C03。
+
+## 帧级多域发布
+
+OneFrame reflection、Score/Life、product-reflect、ParticleSystem state、audio semantic schedule、HUD与tap-lane采用同一个detached `FrameMutationPlan`。所有资源检查、命令验证、对象/mesh分配与backend preflight先完成；可能失败的portable/physical backend先提交，全部成功后才按OneFrame → Score/Life → product-reflect → particle → audio owner → render owner → tap-lane顺序发布Simulator状态。任一preflight或external commit失败时，尚未发布的OneFrame/Score/particle/HUD/lane状态保持上一提交点。
+
+WebAudio的AudioNode/AudioParam和Pixi/GPU context属于不可物理回滚的external side-effect boundary。它们可能在terminal fault前产生局部设备效果，但不允许semantic audio或Simulator-owned frame state提前发布，也不形成跨设备原子性声明。Particle Pixi使用完整detached hidden generation，candidate attach失败时旧generation仍有效。
+
+Product continuous timeline保持`PRODUCT_ONLY`，但同样遵守事务：可变状态可恢复，提交到OneFrame的节点先保持`inFlight`，只有下游同一reflection frame成功才转为judged。Natural completion把Game-clear particle、audio、NGUI、lane all-off与completion flag放在同一plan；MoveTime把particle suppression和lane cleanup预检后才进入fresh whole-engine reconstruction。
 
 ## Visible controls
 

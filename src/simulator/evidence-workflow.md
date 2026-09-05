@@ -15,12 +15,15 @@
 4. 确认所引用的Reverse证据提交已存在于远端。
 5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知原作表现登记为内部evidence notice并绑定显式产品语义，不得以`evidence-required`阻断合法动作，也不得把产品语义写成Reverse事实。
 
-## 当前原作 Skin 证据
+## 当前 Skin / Particle / HUD / Game-clear 证据
 
-- Reverse资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与后验可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`均已push、远端`0 0`。完整证据profile冻结42 normal rows、30 Collaboration、4 Limited、16-row mode/HAB/MV矩阵、133 official UnityFS/133 whole packs/635 files；其中3个structural-stage pack只经未开放的Live2D owner可达，当前Standard/MV production manifest必须过滤为130 packs/576 files。
-- 29 Collaboration与4 Limited包有完整resource profile；过期Collabo 36的六个`skinapril2019`路径不可得。选择该包时当前Skin切换动作不可用并保留既有Skin；内部记录证据notice，禁止用`skin_april2019`替代。
-- Default八包与Limited-3九包为隔离fixture，逐项登记来源提交、路径、字节和SHA；production composition另登记九个existing current audio最小MP3快照。Production只从platform static store读取simulator-selected whole-pack key，不读取fixture、Reverse或网络；default-current同样必须装配并校验八包，不得旁路。
-- `4312a8ad`正向确认既有Field startup consumer；structural stage不属于当前Standard/MV recipe，禁止为了验收绘制Live2D/3D placeholder。非默认特殊包accepted device trace仍为0，fidelity仅`closed-static-portable`。特殊ParticleSystem动态模块图已由whole-pack profile成为deterministic backend/Pixi renderer consumer；auto-random stream是canonical identity派生portable policy，仍不升级非默认device/frame parity。
+- Skin资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`继续拥有master/包选择。过期Collabo 36的六个`skinapril2019`路径仍不可得且没有`skin_april2019`别名；三项Live2D-only structural stage仍不进入Standard/MV recipe。
+- 当前source-bound粒子证据由已推送批次`dccbfab9`/`d707d922`/`c52355e9`、native core `1ea7e35b1584809ffb695a2033e4e8f38579f443`和renderer/Slide `e43dded8890260806001fbcb5ab519cfb019a379`共同拥有。覆盖27 resources、1,375 concrete systems、1,147 enabled renderers、114 renderer signatures、4 meshes和152 reachable ordinary/directional pairs；Shape 0/4/5/8/10/no-Shape、per-instance random、module/time/capacity、root→parent TRS、Slide `n`/`g`与mode 0/1/4 GPU前图元均以独立差分关闭。
+- Production semantic catalog以exact logical resource、application revision、official UnityFS/serialized asset digest、component PathID、renderer/material/mesh/texture relation绑定leased bytes。Default和selected进入同一Schema-2 validator；expected PNG digest来自application snapshot receipt而非被测bytes自产。Simulation与Pixi只消费同一个cached immutable prepared token；禁止path/name hash random、literal renderer count、first-non-null material或unknown-current fallback。
+- HAB authority为`4fc0b23c433bd294dbcdda97658b565c059590f6`：`fieldskin/skin00`、`fieldskin/habahiro`与`tapeffect/habahiro`三包，Root_effect 9 objects / 4 Sprite meshes / 0 ParticleSystems，frame25只换四项资源，frame60无game callback。旧0.25秒synthetic white sine不属于original-compatible route。
+- Score/NGUI authority为`dddab345825dbff6d2a5cf65f5fbbcf771b00e07`：64-object/45-widget完整图、source-bound `sgm` metrics、SoftClip GLES3、rank5/6/12与SS/SSS clips。Native ScoreRankData和产品CS-V1输入必须保持不同identity；presentation等价不能升级产品计分。
+- Game-clear authority为`6cddb142806ffdb933cc6a237f69f4dd16e9ca97`：base 40/30、FC 6/5、AP 12/11 systems/enabled renderers、34 assets、完整Animator和3.233秒callback/15ms exit。它在launch前并入同一particle token/world/geometry/Pixi executor；typed outer scale仅为`screenToSafeChildScale / pixelsPerWorldUnit`，不得恢复375常量、birth-origin拆分或Pixi-owned第二套simulation。
+- 以上`closed-native-algorithm-equivalent`只覆盖当前ARM64/serialized/CPU与GPU前hand-off。Browser字体raster、GPU/driver量化、fixed-device framebuffer、CRI/USM和physical speaker继续`OUT_OF_SCOPE`；fixture manifest仍锁定`343c09cc…`，后续证据不为迎合产品测试复制成fixture。
 
 ## 当前启动方向与音频证据
 

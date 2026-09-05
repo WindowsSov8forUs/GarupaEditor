@@ -10,6 +10,8 @@
 
 Every physical Builtin import uses `?url&no-inline`. Vite may rename the emitted file but must preserve the source-manifest bytes. The application catalog, Simulator catalog, generated manifest and Simulator provenance manifest have separate owners and are not merged merely because bytes or names overlap.
 
+Simulator particle preparation is source-bound: each leased logical resource exposes an immutable snapshot revision plus file receipt byte length/SHA-256; the consumer rehashes reads before relating them to official UnityFS/component semantics. Default and selected Skin use one Schema-2 validator, and ordinary, directional and Game-clear bundles enter one cached prepared token shared by simulation and Pixi. A semantic profile self-hash, package name, same-looking raster or successful decode cannot replace the independent application receipt.
+
 ## Persistence and lifecycle
 
 Global reusable resources use storage schema 2 under `app_data/resources/`; current-session workspace resources use schema 1 under `app_data/cache/session/project-media/`. Both share the content-addressed `resources/blobs/` pool, while only reusable Builtin/Network records receive a `resources/library/` projection.

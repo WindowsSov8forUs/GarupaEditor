@@ -179,7 +179,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly ordinaryHud: "closed-native-algorithm-equivalent" | "closed-product-extension" | "observational-gap";
   readonly habahiroCurrentExternalComplete: "closed-native-algorithm-equivalent" | "degraded-explicit";
   readonly habahiroOriginalParity: "observational-gap";
-  readonly liveRehearsalFourModeMatrix: "closed-portable";
+  readonly liveRehearsalFourModeMatrix: "closed-portable" | "closed-native-algorithm-equivalent";
   readonly startupDirectionPortable: "closed-portable";
   readonly mvLivePortable: "closed-portable";
   readonly standaloneMvView: "excluded";
@@ -197,14 +197,14 @@ export interface SimulatorModuleCapabilitySummary {
   readonly dynamicSurfaceResize: "observational-gap";
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
-  readonly originalSkinSettings: "closed-static-portable";
+  readonly originalSkinSettings: "closed-static-portable" | "closed-native-algorithm-equivalent";
   readonly originalLiveSettings: "closed-native-algorithm-equivalent" | "observational-gap";
   readonly mainProgramIntegration: "authorized-in-progress" | "closed-product-integration";
   readonly selectedRenderingGate: "closed-native-algorithm-equivalent" | "degraded-explicit" | "observational-gap";
   readonly selectedHudGate: "closed-native-algorithm-equivalent" | "closed-product-extension" | "observational-gap";
   readonly selectedBackgroundGate: "closed-portable" | "observational-gap";
   readonly selectedChartGate: "closed-portable" | "closed-product-extension";
-  readonly selectedSkinGate: "closed-static-portable" | "observational-gap";
+  readonly selectedSkinGate: "closed-static-portable" | "closed-native-algorithm-equivalent" | "observational-gap";
 }
 
 export interface SimulatorModuleCloseReport {

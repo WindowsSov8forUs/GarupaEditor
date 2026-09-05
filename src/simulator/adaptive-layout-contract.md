@@ -89,9 +89,13 @@ noteSettingScale      = screenWidthAdjustRate * normalizedNoteSize
 particleTransformScale = noteSettingScale * ScreenToSafeAreaRatio
 ```
 
-`particleTransformScale` is not one final world scalar. Original `setupParticleScale` multiplies every include-inactive ParticleSystem component's own Transform localScale. Of the 104 enabled current renderers, 103 are child systems under a root ParticleSystem and therefore compose two scaled transforms (`g²`); only enabled root `ordinary:effect_tap_swipe` composes one (`g`). Child local positions consume ancestor scale, while emitted shape/velocity/size also consume the emitting system's scale.
+`particleTransformScale` is not one final world scalar. Original `setupParticleScale` multiplies every include-inactive ParticleSystem component's own Transform localScale. The source-bound per-system hierarchy records which ancestor Transforms own ParticleSystem components; local-to-world consumes emitting self then immediate parent through root, applying `g` only at those exact owners. Inventory size is derived from the selected ordinary/directional bundles and is never fixed to the old default-only count 104.
 
-Button/launcher positions, seven original lane goals, thirteen full/half tap-lane-effect owners, note starts, manual inverse projection, Long/Slide width and the decomposed particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
+Regular GamePlayButton, original NoteSlide and product Slide carry distinct typed outer transforms. NoteSlide displacement uses live target-button scale × outer `n`; copied ParticleSystems retain their separate setup `g`, and Local billboard size consumes only the emitting system's post-setup scale. Product continuous X remains a product adapter and cannot redefine either scalar.
+
+Game-clear serialized transforms remain in authored UI units. Its only outer scale is `screenToSafeChildScale / pixelsPerWorldUnit`, with zero position and identity rotation; shared native primitive projection then runs once. A hard-coded 375 displacement, birth-origin split or HUD-owned second simulation is forbidden. These current particle/owner formulas are `closed-native-algorithm-equivalent`; initial layout as a whole remains `closed-portable` and arbitrary mid-session resize remains a product rebuild semantic.
+
+Button/launcher positions, seven original lane goals, thirteen full/half tap-lane-effect owners, note starts, manual inverse projection, Long/Slide width and particle projection consume this state. Garupa continuous/outside lane remains its approved affine product extension over the resulting original seven-lane world spacing. It never creates extra field lines or snaps authored lane values.
 
 ## NGUI, HUD and Rehearsal controls
 

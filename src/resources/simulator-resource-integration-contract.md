@@ -10,7 +10,7 @@ The main program owns every production resource identity, source, catalog, trans
 
 This is a GarupaEditor product architecture contract. Original logical resource names and current consumer behavior are evidence-backed by pushed Reverse commit `f461b287`; the application storage layout itself is not claimed as original-game behavior.
 
-The Simulator Builtin provenance manifest points to the sanitized Reverse history and independently fixes its remapped metadata tuple and payload-only tuple. `sourceRelation=byte-identical` means the rewritten source blob still equals the shipped asset; `source-derived-projection` records the four pre-existing profile/container projections without pretending that the whole source document equals the shipped payload. Neither relation changes runtime bytes or makes production read Reverse.
+The Simulator Builtin provenance manifest points to the sanitized Reverse history and independently fixes its remapped metadata tuple and payload-only tuple. `sourceRelation=byte-identical` means the rewritten source blob still equals the shipped asset; `source-derived-projection` records a committed semantic/profile projection without pretending that the whole source document equals the shipped payload. Neither relation changes runtime bytes or makes production read Reverse.
 
 ## Physical and logical boundary
 
@@ -51,7 +51,13 @@ The current dynamic JP catalog covers all 133 locked Skin-package logical identi
 
 Future resources may be catalogued, installed and retained without a new application release. A current Simulator consumer may use one only when its evidence-backed resolver and semantic structure checks accept it. Compatibility rejection does not delete the record and never triggers a default, alias or old-revision fallback.
 
-All source files in selected SE and particle packages may be installed. Simulator publishes only Reverse-confirmed cues and its current 17 gameplay particle roots. Resource presence does not authorize character, CutIn, Fever, multiplayer or Live2D behavior.
+All source files in selected SE and particle packages may be installed. Simulator publishes only Reverse-confirmed cues and registered current particle roots. Resource presence does not authorize character, CutIn, Fever, multiplayer or Live2D behavior.
+
+### Source-bound particle preparation
+
+For each selected particle logical resource the neutral lease exposes one snapshot revision and complete file receipt list. Simulator rehashes every source read and binds semantics to the exact official UnityFS/serialized-asset identity, component PathIDs, renderer/material/mesh relations and texture settings. Application receipts own encoded PNG expected SHA-256; committed profiles own decoded-RGBA identity. A sidecar self-hash or successfully decoded image is not provenance.
+
+Default and non-default ordinary/directional packages pass the same Schema-2 validator. Game-clear is prepared from its committed 58-system semantic sidecar and merged before backend creation. The resulting immutable token, including its PNG byte owner, is cached by exact provider+preflight identity and shared by native-semantic simulation and Pixi primitive rendering. Any source revision mismatch, missing component/material/mesh/texture, duplicate identity or unknown current signature rejects before scene mount; no fixed resource count or partial skip is permitted.
 
 ## Storage and projection
 

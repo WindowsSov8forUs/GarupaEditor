@@ -1,6 +1,6 @@
 # Simulator Original Live Settings Contract
 
-> **2026-08-28 strict re-audit status: `closed-evidence-equivalent`.** The failed `630a676d`/`329aec79` claims remain withdrawn. Reverse `dbd009e7` joins the exact Score SS sibling order, Auto Awake owner, independent Combo/Judge disappearance, Linear Float32 particle input, Lane flip/mask, Pause/countdown and FC/AP terminal facts. The implementation passes original-node→production-consumer→independent-primitive→actual Pixi/fresh-frame→Windows full-session gates. This remains portable evidence equivalence; fixed-device Unity/GPU output is outside the claim.
+> **Current 10.1.4 status: `closed-native-algorithm-equivalent`.** The failed `630a676d`/`329aec79` claims remain withdrawn. In addition to the original settings evidence, current native particle core/renderer, source-bound Skin, complete Score NGUI, HAB and Game-clear authorities close the CPU state, Float32 and GPU-pre primitive consumers. CS-V1/continuous lanes remain product-only; browser/GPU driver raster and fixed-device output remain outside the claim.
 
 ## Runtime policy classification
 
@@ -109,6 +109,6 @@ These projections do not change CS-V1, fixed Rank, timeline revision, authored l
 
 ## Acceptance and exclusions
 
-The suite manifest owns `session.original-live-settings`, `session.original-settings.static` and `platform.original-settings`. Development covers semantic/static behavior; the serial browser profile adds actual framebuffer regression with complete mode/input/chart/timeline/score/rank/owner/phase/terminal/viewport/DPR identity. These gates close the current portable product regression but do not authorize original Unity/GPU visible equivalence.
+Original settings are frozen before backend creation and participate in the same source-bound resource assembly and frame publication boundaries as particles/HUD/lane effects. Current original-compatible consumers are algorithm-equivalent for the locked ARM64/serialized domain; product CS-V1, continuous-lane adapters and Live Auto AP remain explicitly identified product semantics.
 
-This closure does not authorize standalone MVView, 3D, CRI/USM exactness, fixed-device framebuffer/speaker exactness, charter, a global effect kill switch, arbitrary millisecond chart rewrite or runtime setting hot-switch.
+Existing suite/browser/framebuffer gates remain regression information only and were not used to generate native expected values. Browser font raster, Pixi/GPU driver quantization and fixed-device pixels are independent exclusions. This closure does not authorize standalone MVView, 3D, CRI/USM/speaker exactness, character owners, a global effect kill switch, arbitrary millisecond chart rewrite or runtime setting hot-switch.

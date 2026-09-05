@@ -24,7 +24,9 @@
 
 App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/library/`只为Builtin和可复用Network包维护原作逻辑Bundle投影，不宣称复刻原作Android物理缓存。当前谱面媒体由`cache/session/project-media/`拥有，并在`chart-resources.v5.json`绑定落盘、旧Lease释放后回收；共享Blob不等于永久媒体库。Simulator的Skin、SE、粒子和歌曲媒体仍使用同一Snapshot/Lease链。
 
-内置Simulator已通过Public Schema 13与transport Schema 3接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。当前验证已覆盖Windows installer、Android APK/AAB、Desktop独立播放器与Android单WebView实体Pause/Back/Retry/Abort/background流程；`mainProgramIntegration`为`closed-product-integration`。fixed-device物理exact及CRI/USM/speaker等排除项不因产品接入升级。
+内置Simulator已通过Public Schema 13与transport Schema 3接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。当前验证已覆盖Windows installer、Android APK/AAB、Desktop独立播放器与Android单WebView实体Pause/Back/Retry/Abort/background流程；`mainProgramIntegration`为`closed-product-integration`。
+
+当前10.1.4/230 ARM64兼容域已将ordinary粒子、全部current Skin分支、Slide owner、HAB、Score NGUI presentation、base/FC/AP及多域owner发布闭合为`closed-native-algorithm-equivalent`。该状态只覆盖source-bound资源、CPU状态/Float32算法、生命周期和GPU前图元；CS-V1、连续轨道与Live Auto AP仍为明确产品语义，browser字体/GPU driver raster、fixed-device framebuffer、CRI/USM与physical speaker仍不在等价声明内。
 
 开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
 

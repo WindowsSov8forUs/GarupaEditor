@@ -18,11 +18,11 @@ export function createSimulatorModuleCapabilitySummary(
     chart,
     skin,
     publicAutonomousCore: "closed-portable" as const,
-    ordinaryCommandScene: "observational-gap" as const,
-    ordinaryHud: "observational-gap" as const,
-    habahiroCurrentExternalComplete: "degraded-explicit" as const,
+    ordinaryCommandScene: "closed-native-algorithm-equivalent" as const,
+    ordinaryHud: "closed-product-extension" as const,
+    habahiroCurrentExternalComplete: "closed-native-algorithm-equivalent" as const,
     habahiroOriginalParity: "observational-gap" as const,
-    liveRehearsalFourModeMatrix: "closed-portable" as const,
+    liveRehearsalFourModeMatrix: "closed-native-algorithm-equivalent" as const,
     startupDirectionPortable: "closed-portable" as const,
     mvLivePortable: "closed-portable" as const,
     standaloneMvView: "excluded" as const,
@@ -40,13 +40,15 @@ export function createSimulatorModuleCapabilitySummary(
     dynamicSurfaceResize: "observational-gap" as const,
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
-    originalSkinSettings: "closed-static-portable" as const,
-    originalLiveSettings: "observational-gap" as const,
+    originalSkinSettings: "closed-native-algorithm-equivalent" as const,
+    originalLiveSettings: "closed-native-algorithm-equivalent" as const,
     mainProgramIntegration: "closed-product-integration" as const,
-    selectedRenderingGate: rendering === "habahiro-current-external-complete"
-      ? "degraded-explicit" as const
-      : "observational-gap" as const,
-    selectedHudGate: "observational-gap" as const,
+    selectedRenderingGate: rendering === null
+      ? "observational-gap" as const
+      : "closed-native-algorithm-equivalent" as const,
+    selectedHudGate: rendering === null
+      ? "observational-gap" as const
+      : "closed-product-extension" as const,
     selectedBackgroundGate: background === null
       ? "observational-gap" as const
       : "closed-portable" as const,
@@ -55,6 +57,6 @@ export function createSimulatorModuleCapabilitySummary(
       : "closed-portable" as const,
     selectedSkinGate: skin === null
       ? "observational-gap" as const
-      : "closed-static-portable" as const,
+      : "closed-native-algorithm-equivalent" as const,
   });
 }
