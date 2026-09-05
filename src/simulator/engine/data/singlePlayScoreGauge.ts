@@ -5,6 +5,13 @@ export const LiveClearRank = {
   C: 3,
   D: 4,
   SS: 5,
+  SSS: 6,
+  SPlus: 7,
+  APlus: 8,
+  BPlus: 9,
+  CPlus: 10,
+  DPlus: 11,
+  SSPlus: 12,
 } as const;
 
 export type LiveClearRankValue =
@@ -17,8 +24,22 @@ export type SinglePlayScoreGaugeMeterKey =
   | "score_meter_pink"
   | "score_meter_s";
 
+export type ScoreGaugeThresholdSource =
+  | Readonly<{
+      readonly kind: "native-score-rank-data";
+      readonly musicId: number;
+      readonly difficulty: string;
+    }>
+  | Readonly<{
+      readonly kind: "product-cs-v1";
+      readonly rulesetId: "garupa-editor-normalized-10m-v1";
+      readonly scoringUnitCount: number;
+    }>;
+
 export interface ScoreGaugeThresholdProfile {
   readonly profileIdentity: string;
+  /** Optional only so stale test callers remain source-compilable; production validation requires it. */
+  readonly source?: ScoreGaugeThresholdSource;
   readonly scoreC: number;
   readonly scoreB: number;
   readonly scoreA: number;
@@ -45,6 +66,8 @@ export interface SinglePlayScoreGaugeSnapshot {
   readonly rankMarkerSLocalX: number;
   readonly rankMarkerSSLocalX: number;
   readonly rankChanged: boolean;
-  readonly highRankEffect: "none" | "ScoreGaugeSS";
+  readonly highRankEffect: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
   readonly highRankEffectActive: boolean;
+  readonly highRankEffectClip: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
+  readonly inGameMode: number;
 }

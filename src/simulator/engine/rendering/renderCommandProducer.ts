@@ -294,6 +294,7 @@ export class RenderCommandProducer {
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
+  private scoreGaugeHighRankClip: "ScoreGaugeSS" | "ScoreGaugeSSS" | null = null;
   private gameClearElapsedSeconds: number | null = null;
   private readonly hud: InGameHudController;
   private lastCombo = 0;
@@ -586,7 +587,8 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
       hudRole: "score", state: this.hud.score.createState(plan.record, plan.scoreGauge),
     });
-    if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS" && this.scoreGaugeSsElapsedSeconds === null) commands.push({
+    if (plan.scoreGauge.highRankEffect !== "none" &&
+      plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
       animationRole: "score-gauge-ss", restart: true,
     });
@@ -645,8 +647,10 @@ export class RenderCommandProducer {
         this.lastAllPerfect = displayedAllPerfect;
       }
       this.resultElapsedSeconds = 0;
-      if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS" && this.scoreGaugeSsElapsedSeconds === null) {
+      if (plan.scoreGauge.highRankEffect !== "none" &&
+        plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) {
         this.scoreGaugeSsElapsedSeconds = 0;
+        this.scoreGaugeHighRankClip = plan.scoreGauge.highRankEffect;
       }
       if (nextLifeState.warning && !this.lastLifeWarning) {
         this.lifeAnimationElapsedSeconds.set("life-warning", 0);
@@ -2682,6 +2686,7 @@ export class RenderCommandProducer {
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;
       this.scoreGaugeSsElapsedSeconds = null;
+      this.scoreGaugeHighRankClip = null;
     });
   }
 

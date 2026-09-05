@@ -5,6 +5,7 @@ import {
   NineSliceSprite,
   MeshGeometry,
   Rectangle,
+  RenderLayer,
   Sprite,
   Text,
   Texture,
@@ -33,6 +34,7 @@ import { DeterministicParticleSimulation } from "../../engine/particles/particle
 import {
   CURRENT_HABAHIRO_SEMANTIC_PROFILE,
 } from "../../engine/rendering/habahiroFlashAnimation";
+import { sampleScoreHighRankPresentation } from "../../engine/hud/scoreHighRankAnimation";
 import { particleFloat32FromBits } from "../particleValidation";
 import {
   createPixiParticleLinearColorMesh,
@@ -62,10 +64,7 @@ import {
   COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
 } from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
-import {
-  CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER,
-  CURRENT_TAP_LANE_EFFECT_SPRITE_MASK,
-} from "../resources/currentCompleteHudProfile";
+import { CURRENT_TAP_LANE_EFFECT_SPRITE_MASK } from "../resources/currentCompleteHudProfile";
 import {
   samplePauseCountdownClip,
   type PauseCountdownAnimationProfile,
@@ -78,7 +77,6 @@ import {
   CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
   CURRENT_PAUSE_COMPONENT_PATHS,
   CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS,
-  CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS,
 } from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
 import {
@@ -87,15 +85,13 @@ import {
 } from "./hud/nguiMaterialPipeline";
 import { layoutNguiEncodedLifeLabel } from "./hud/nguiLabelGeometry";
 import { layoutNguiEncodedScoreLabel } from "./hud/nguiEncodedScoreLabel";
+import { createNguiScoreSceneGraph } from "./hud/nguiSceneGraph";
 import {
   createNguiSoftClipFilter,
   updateNguiSoftClipFilter,
   type NguiSoftClipFilter,
 } from "./hud/nguiPanelClip";
-import {
-  CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
-  CURRENT_SCORE_HUD_SCENE_PROFILE,
-} from "../../engine/rendering/currentScoreHudSemanticProfile";
+import { CURRENT_SCORE_HUD_NINE_SLICE_BORDERS } from "../../engine/rendering/currentScoreHudSemanticProfile";
 import {
   animationBindingMatchesProfile,
   animationRoleMatchesObject,
@@ -167,10 +163,11 @@ interface PixiHudVisual {
   readonly serializedHierarchyNodes: ReadonlyMap<string, Container>;
   readonly digitSprites: Sprite[];
   readonly fillMasks: Graphics[];
-  readonly scoreTextSegments: readonly [Text, Text] | null;
+  readonly scoreTextSegments: readonly Text[] | null;
   readonly scoreGaugeSprites: Container[];
   readonly scoreRankSprites: Container[];
   readonly scoreHighRankSprites: Sprite[];
+  readonly scoreWidgetRenderLayer: RenderLayer | null;
   readonly scoreHighRankNodeNames: string[];
   readonly scoreHighRankBaseScales: (readonly [number, number])[];
   readonly scoreHighRankPanelMask: Graphics | null;
@@ -229,6 +226,7 @@ interface PixiObjectRecord {
   hudVisual: PixiHudVisual | null;
   readonly resourceProfile: RenderResourceProfile;
   readonly scoreGaugeSsAnimation: RenderResourceProfile["scoreGaugeSsAnimation"];
+  readonly scoreHudNativeProfile: RenderResourceProfile["scoreHudNativeProfile"];
   readonly ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
   readonly surfaceLayout: OriginalSurfaceLayout;
   activeAnimationRole: EvidenceAnimationRole | null;
@@ -1068,23 +1066,24 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             child.label.slice(child.label.lastIndexOf("/") + 1))),
       hudScoreHighRankNodes: value.hudVisual === null
         ? null
-        : Object.freeze(value.hudVisual.scoreHighRankSprites.map((sprite, index) => Object.freeze({
-            name: value.hudVisual!.scoreHighRankNodeNames[index]!,
-            textureKey: value.scoreGaugeSsAnimation?.nodes[index]?.textureKey ?? null,
-            visible: sprite.visible,
-            position: Object.freeze([sprite.position.x, sprite.position.y] as const),
-            scale: Object.freeze([sprite.scale.x, sprite.scale.y] as const),
-            size: Object.freeze([sprite.width, sprite.height] as const),
-            widgetSize: Object.freeze([
-              value.scoreGaugeSsAnimation?.nodes[index]?.widgetWidth ?? null,
-              value.scoreGaugeSsAnimation?.nodes[index]?.widgetHeight ?? null,
-            ] as const),
-            anchor: Object.freeze([sprite.anchor.x, sprite.anchor.y] as const),
-            tint: Number(sprite.tint),
-            alpha: sprite.alpha,
-            blend: String(sprite.blendMode),
-            rotation: sprite.rotation,
-          }))),
+        : Object.freeze(value.hudVisual.scoreHighRankSprites.map((sprite, index) => {
+            const profile = value.scoreHudNativeProfile?.highRank.nodes[index];
+            const owner = profile === undefined ? null : value.hudVisual!.serializedHierarchyNodes.get(profile.path) ?? null;
+            return Object.freeze({
+              name: value.hudVisual!.scoreHighRankNodeNames[index]!,
+              textureKey: profile?.textureKey ?? null,
+              visible: owner?.visible ?? sprite.visible,
+              position: Object.freeze([owner?.position.x ?? sprite.position.x, owner?.position.y ?? sprite.position.y] as const),
+              scale: Object.freeze([owner?.scale.x ?? sprite.scale.x, owner?.scale.y ?? sprite.scale.y] as const),
+              size: Object.freeze([sprite.width, sprite.height] as const),
+              widgetSize: Object.freeze([profile?.width ?? null, profile?.height ?? null] as const),
+              anchor: Object.freeze([sprite.anchor.x, sprite.anchor.y] as const),
+              tint: Number(sprite.tint),
+              alpha: sprite.alpha,
+              blend: String(sprite.blendMode),
+              rotation: owner?.rotation ?? sprite.rotation,
+            });
+          })),
       activeAnimationRole: value.activeAnimationRole,
       animationElapsedSeconds: value.animationElapsedSeconds,
       hudGameClearSampledPhaseSeconds: value.hudVisual?.kind === "game-clear"
@@ -1513,6 +1512,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           hudVisual: null,
           resourceProfile: this.profile!,
           scoreGaugeSsAnimation: this.profile?.scoreGaugeSsAnimation,
+          scoreHudNativeProfile: this.profile?.scoreHudNativeProfile,
           ordinaryVisibleProfile: this.profile?.ordinaryVisibleProfile,
           surfaceLayout: this.surfaceLayout!,
           activeAnimationRole: null,
@@ -2532,7 +2532,7 @@ function applyEvidenceHud(
   referenceCounts: Map<string, number>,
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): PixiHudVisual {
-  const visual = object.hudVisual ?? createHudVisual(object.node, command.hudRole);
+  const visual = object.hudVisual ?? createHudVisual(object.node, command.hudRole, object.scoreHudNativeProfile);
   if (visual.kind !== command.hudRole) throw new Error("HUD visual route cannot change owner kind");
   for (const node of visual.serializedComponentNodes.values()) node.visible = false;
   if (visual.text !== null) visual.text.visible = true;
@@ -3046,10 +3046,14 @@ function createLifeSerializedHierarchy(
   return hierarchy;
 }
 
-function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
+function createHudVisual(
+  node: Container,
+  kind: PixiHudVisual["kind"],
+  scoreProfile: RenderResourceProfile["scoreHudNativeProfile"],
+): PixiHudVisual {
   const content = new Container({ sortableChildren: true });
   const componentPaths = kind === "score"
-    ? CURRENT_SCORE_SERIALIZED_COMPONENT_PATHS
+    ? scoreProfile?.scene.widgets.map((widget) => widget.path) ?? []
     : kind === "life"
     ? CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS
     : Object.freeze([] as const);
@@ -3060,9 +3064,23 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     serializedComponentNodes.set(path, component);
     content.addChild(component);
   }
+  if (kind === "score" && scoreProfile === undefined) throw new Error("Score HUD source-bound native profile is missing");
+  const scoreGraph = kind === "score"
+    ? createNguiScoreSceneGraph(content, serializedComponentNodes, scoreProfile!)
+    : null;
   const serializedHierarchyNodes = kind === "life"
     ? createLifeSerializedHierarchy(content, serializedComponentNodes)
-    : new Map<string, Container>();
+    : scoreGraph?.gameObjects ?? new Map<string, Container>();
+  const scoreWidgetRenderLayer = scoreGraph === null ? null : new RenderLayer({
+    sortableChildren: true,
+    sortFunction: (left, right) => left.zIndex - right.zIndex,
+  });
+  if (scoreWidgetRenderLayer !== null) {
+    content.addChildAt(scoreWidgetRenderLayer, 0);
+    for (const [path, component] of serializedComponentNodes) {
+      if (!path.includes("/Progress/Panel/HighRankEffect/")) scoreWidgetRenderLayer.attach(component);
+    }
+  }
   const needsText = kind === "fidelity-label";
   const needsFill = kind === "habahiro-flash";
   const secondaryFill = needsFill ? new Graphics() : null;
@@ -3073,10 +3091,8 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     label: "fidelity-label",
   }) : null;
   const scoreTextSegments = kind === "score"
-    ? Object.freeze([
-        new Text({ text: "", style: { fill: 0xbebebe, fontSize: 28 }, label: "score-leading-segment" }),
-        new Text({ text: "", style: { fill: 0xff3b72, fontSize: 28 }, label: "score-significant-segment" }),
-      ] as const)
+    ? Object.freeze(Array.from({ length: 10 }, (_, index) =>
+        new Text({ text: "", style: { fill: 0xffffff, fontSize: 28 }, label: `score-glyph-${index}` })))
     : null;
   const lifeTextSegments = kind === "life"
     ? Object.freeze([
@@ -3088,10 +3104,12 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
   const gameOverText = kind === "life"
     ? new Text({ text: "", style: { fill: 0xff0000, fontSize: 22 }, label: "life-game-over-label" })
     : null;
-  const animationLayer = new Container({ visible: false, label: "score-high-rank-animation-layer" });
+  const animationLayer = scoreGraph?.highRankEffect ??
+    new Container({ visible: false, label: "score-high-rank-animation-layer" });
+  animationLayer.visible = false;
   animationLayer.zIndex = 30;
   const scoreHighRankPanelMask = kind === "score"
-    ? new Graphics({ label: "score-high-rank-panel-mask" })
+    ? new Graphics({ label: "score-high-rank-panel-mask", visible: false })
     : null;
   if (secondaryFill !== null) content.addChild(secondaryFill);
   if (primaryFill !== null) content.addChild(primaryFill);
@@ -3111,11 +3129,8 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text")
       .addChild(gameOverText);
   }
-  content.addChild(animationLayer);
-  if (scoreHighRankPanelMask !== null) {
-    content.addChild(scoreHighRankPanelMask);
-    animationLayer.mask = scoreHighRankPanelMask;
-  }
+  if (scoreGraph === null) content.addChild(animationLayer);
+  if (scoreHighRankPanelMask !== null) content.addChild(scoreHighRankPanelMask);
   node.addChild(content);
   return {
     kind,
@@ -3134,6 +3149,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreGaugeSprites: [],
     scoreRankSprites: [],
     scoreHighRankSprites: [],
+    scoreWidgetRenderLayer,
     scoreHighRankNodeNames: [],
     scoreHighRankBaseScales: [],
     scoreHighRankPanelMask,
@@ -3704,6 +3720,26 @@ function requireOrdinaryVisibleProfile(object: PixiObjectRecord): NonNullable<Re
   return object.ordinaryVisibleProfile;
 }
 
+function requireScoreNativeProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["scoreHudNativeProfile"]> {
+  if (object.scoreHudNativeProfile === undefined) throw new Error("source-bound Score/NGUI native profile is missing");
+  return object.scoreHudNativeProfile;
+}
+
+function scoreGameObject(visual: PixiHudVisual, path: string): Container {
+  const node = visual.serializedHierarchyNodes.get(path);
+  if (node === undefined) throw new Error(`Score GameObject is missing: ${path}`);
+  return node;
+}
+
+function scoreWidget(
+  profile: NonNullable<RenderResourceProfile["scoreHudNativeProfile"]>,
+  path: string,
+) {
+  const widget = profile.scene.widgets.find((candidate) => candidate.path === path);
+  if (widget === undefined) throw new Error(`Score NGUI widget is missing: ${path}`);
+  return widget;
+}
+
 function f32FromLittleEndianBytes(bits: string): number {
   if (!/^[0-9A-Fa-f]{8}$/.test(bits)) throw new Error("invalid little-endian Float32 bytes");
   const buffer = new ArrayBuffer(4);
@@ -3727,80 +3763,71 @@ function applyScoreHud(
     return;
   }
   if (visual.text !== null) visual.text.visible = false;
-  const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
-  placeSafeTopAnchoredUiRoot(object, "left");
+  const nativeProfile = requireScoreNativeProfile(object);
+  const scoreRoot = nativeProfile.scene.objects.find((row) => row.path === nativeProfile.scene.rootPath)!;
+  const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
+  const backgroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background`);
+  const coverProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background_Cover`);
+  const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
+  const foregroundGraph = nativeProfile.scene.objects.find((row) => row.path === foregroundProfile.path)!;
+  placeAuthoredUiRoot(object, scoreRoot.localPosition[0], scoreRoot.localPosition[1]);
   showScoreBaselineComponents(visual, state.foregroundActive);
 
-  const scoreFont = decodedFonts.get(scene.totalScoreFontLogicalAssetId);
-  if (scoreFont === undefined || visual.scoreTextSegments === null) {
+  const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null || totalScoreProfile.font_size === undefined) {
     throw new Error("Score TotalScore sgm UILabel font owner is missing");
   }
   const totalScoreOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   );
-  totalScoreOwner.position.set(
-    scene.totalScoreLocalPosition[0],
-    -scene.totalScoreLocalPosition[1],
-  );
-  totalScoreOwner.zIndex = scene.totalScoreDepth;
+  totalScoreOwner.zIndex = totalScoreProfile.depth;
   layoutNguiEncodedScoreLabel(
     visual.scoreTextSegments,
-    state.score,
+    state.scoreText,
     0,
     0,
-    scene.totalScoreWidgetWidth,
-    scene.totalScoreFontSize,
+    totalScoreProfile.width,
+    totalScoreProfile.font_size,
     scoreFont.family,
-    scene.totalScoreDepth,
+    totalScoreProfile.depth,
+    nativeProfile.label.sfnt.hintedAdvancePixelsByFontSize,
   );
 
-  const progress = new Container({ label: "score-gauge-progress", sortableChildren: true });
-  progress.position.set(scene.progressLocalPosition[0], -scene.progressLocalPosition[1]);
-  visual.content.addChild(progress);
+  const progress = scoreGameObject(visual, `${nativeProfile.scene.rootPath}/Progress`);
   visual.scoreGaugeSprites.push(progress);
   const gaugeAssetId = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
   const background = scoreNineSlice(
     requiredTextureBinding(textures, gaugeAssetId, "gauge_base_score"),
-    scene.gauge.background.width,
-    scene.gauge.background.height,
+    backgroundProfile.width,
+    backgroundProfile.height,
     CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase,
     "score-gauge-background",
   );
   background.position.set(0, 0);
-  background.zIndex = scene.gauge.background.depth;
+  background.zIndex = backgroundProfile.depth;
   const backgroundOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Background",
   );
-  backgroundOwner.position.set(
-    scene.gauge.background.position[0],
-    -scene.gauge.background.position[1],
-  );
-  backgroundOwner.zIndex = scene.gauge.background.depth;
-  progress.addChild(backgroundOwner);
+  backgroundOwner.zIndex = backgroundProfile.depth;
   backgroundOwner.addChild(background);
   retainHudBinding(object, spriteKey(gaugeAssetId, "gauge_base_score"), referenceCounts);
 
   const cover = scoreNineSlice(
     requiredTextureBinding(textures, gaugeAssetId, "bg_gauge_score_multi"),
-    scene.gauge.cover.width,
-    scene.gauge.cover.height,
+    coverProfile.width,
+    coverProfile.height,
     CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeCover,
     "score-gauge-cover",
   );
   cover.position.set(0, 0);
-  cover.zIndex = scene.gauge.cover.depth;
+  cover.zIndex = coverProfile.depth;
   const coverOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
   );
-  coverOwner.position.set(
-    scene.gauge.cover.position[0],
-    -scene.gauge.cover.position[1],
-  );
-  coverOwner.zIndex = scene.gauge.cover.depth;
-  progress.addChild(coverOwner);
+  coverOwner.zIndex = coverProfile.depth;
   coverOwner.addChild(cover);
   retainHudBinding(object, spriteKey(gaugeAssetId, "bg_gauge_score_multi"), referenceCounts);
 
@@ -3809,30 +3836,25 @@ function applyScoreHud(
   const borders = scoreMeterNineSliceBorders(meterKey);
   const foreground = scoreNineSlice(
     foregroundBinding,
-    scene.gauge.foreground.width,
-    scene.gauge.foreground.height,
+    foregroundProfile.width,
+    foregroundProfile.height,
     borders,
     "score-gauge-foreground",
   );
   foreground.position.set(0, 0);
   foreground.visible = state.foregroundActive as boolean;
-  foreground.zIndex = scene.gauge.foreground.depth;
+  foreground.zIndex = foregroundProfile.depth;
   const foregroundOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Progress/Foreground",
   );
-  foregroundOwner.position.set(
-    scene.gauge.foreground.position[0],
-    -scene.gauge.foreground.position[1],
-  );
-  foregroundOwner.zIndex = scene.gauge.foreground.depth;
-  progress.addChild(foregroundOwner);
+  foregroundOwner.zIndex = foregroundProfile.depth;
   foregroundOwner.addChild(foreground);
   const foregroundMask = new Graphics({ label: "score-gauge-foreground-fill-mask" }).rect(
-    scene.gauge.foreground.position[0],
-    -scene.gauge.foreground.position[1] - scene.gauge.foreground.height / 2,
-    Math.fround(scene.gauge.foreground.width * state.sliderValue.value),
-    scene.gauge.foreground.height,
+    foregroundGraph.localPosition[0],
+    -foregroundGraph.localPosition[1] - foregroundProfile.height / 2,
+    Math.fround(foregroundProfile.width * state.sliderValue.value),
+    foregroundProfile.height,
   ).fill(0xffffff);
   foregroundMask.zIndex = foreground.zIndex;
   progress.addChild(foregroundMask);
@@ -3846,51 +3868,47 @@ function applyScoreHud(
     S: state.rankMarkerSLocalX.value,
     SS: state.rankMarkerSSLocalX.value,
   } as const;
-  for (const row of scene.rankRoots) {
-    const x = markerPositions[row.rank];
+  for (const rank of ["C", "B", "A", "S", "SS"] as const) {
+    const x = markerPositions[rank];
+    const separatorPath = `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}/Separator`;
+    const labelPath = `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}/${rank}`;
+    const separatorProfile = scoreWidget(nativeProfile, separatorPath);
+    const rankLabelProfile = scoreWidget(nativeProfile, labelPath);
+    if (rankLabelProfile.font_size === undefined) throw new Error("Score Rank UILabel font size is missing");
     const levelMarkBinding = requiredTextureBinding(
       textures,
       CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId,
       "level_mark",
     );
-    const levelMark = new Sprite({ texture: levelMarkBinding.texture, label: `score-rank-marker-${row.rank}` });
+    const levelMark = new Sprite({ texture: levelMarkBinding.texture, label: `score-rank-marker-${rank}` });
     levelMark.anchor.set(0.5, 0.5);
-    levelMark.width = 8;
-    levelMark.height = 6;
+    levelMark.width = separatorProfile.width;
+    levelMark.height = separatorProfile.height;
     levelMark.position.set(0, 0);
-    levelMark.zIndex = scene.gauge.markerDepth;
-    const separatorOwner = serializedHudComponent(
-      visual.serializedComponentNodes,
-      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/Separator`,
-    );
-    separatorOwner.position.set(x, 10);
-    separatorOwner.zIndex = scene.gauge.markerDepth;
-    progress.addChild(separatorOwner);
+    levelMark.zIndex = separatorProfile.depth;
+    scoreGameObject(visual, `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}`).position.x = x;
+    const separatorOwner = serializedHudComponent(visual.serializedComponentNodes, separatorPath);
+    separatorOwner.zIndex = separatorProfile.depth;
     separatorOwner.addChild(levelMark);
     visual.scoreRankSprites.push(levelMark);
     retainHudBinding(object, levelMarkBinding.key, referenceCounts);
     const rankFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     if (rankFont === undefined) throw new Error("Score Rank label font is missing");
     const rankLabel = new Text({
-      text: row.rank,
-      style: { fill: 0xffffff, fontFamily: rankFont.family, fontSize: 12 },
-      label: `score-rank-${row.rank}`,
+      text: rank,
+      style: { fill: 0xffffff, fontFamily: rankFont.family, fontSize: rankLabelProfile.font_size },
+      label: `score-rank-${rank}`,
     });
     rankLabel.anchor.set(0.5, 0.5);
     rankLabel.position.set(0, 0);
-    rankLabel.zIndex = 40;
-    const rankLabelOwner = serializedHudComponent(
-      visual.serializedComponentNodes,
-      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${row.rank}/${row.rank}`,
-    );
-    rankLabelOwner.position.set(x, 2);
-    rankLabelOwner.zIndex = 40;
-    progress.addChild(rankLabelOwner);
+    rankLabel.zIndex = rankLabelProfile.depth;
+    const rankLabelOwner = serializedHudComponent(visual.serializedComponentNodes, labelPath);
+    rankLabelOwner.zIndex = rankLabelProfile.depth;
     rankLabelOwner.addChild(rankLabel);
     visual.scoreRankSprites.push(rankLabel);
   }
 
-  updateScorePanelClip(visual, progress, state.indicatorLocalX);
+  updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
 }
@@ -3903,31 +3921,32 @@ function updatePersistentScoreHud(
   referenceCounts: Map<string, number>,
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): void {
-  const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
-  placeSafeTopAnchoredUiRoot(object, "left");
+  const nativeProfile = requireScoreNativeProfile(object);
+  const scoreRoot = nativeProfile.scene.objects.find((row) => row.path === nativeProfile.scene.rootPath)!;
+  const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
+  const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
+  const foregroundGraph = nativeProfile.scene.objects.find((row) => row.path === foregroundProfile.path)!;
+  placeAuthoredUiRoot(object, scoreRoot.localPosition[0], scoreRoot.localPosition[1]);
   showScoreBaselineComponents(visual, state.foregroundActive);
-  const scoreFont = decodedFonts.get(scene.totalScoreFontLogicalAssetId);
-  if (scoreFont === undefined || visual.scoreTextSegments === null) {
+  const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null || totalScoreProfile.font_size === undefined) {
     throw new Error("Persistent Score TotalScore sgm UILabel owner is incomplete");
   }
   const totalScoreOwner = serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   );
-  totalScoreOwner.position.set(
-    scene.totalScoreLocalPosition[0],
-    -scene.totalScoreLocalPosition[1],
-  );
-  totalScoreOwner.zIndex = scene.totalScoreDepth;
+  totalScoreOwner.zIndex = totalScoreProfile.depth;
   layoutNguiEncodedScoreLabel(
     visual.scoreTextSegments,
-    state.score,
+    state.scoreText,
     0,
     0,
-    scene.totalScoreWidgetWidth,
-    scene.totalScoreFontSize,
+    totalScoreProfile.width,
+    totalScoreProfile.font_size,
     scoreFont.family,
-    scene.totalScoreDepth,
+    totalScoreProfile.depth,
+    nativeProfile.label.sfnt.hintedAdvancePixelsByFontSize,
   );
 
   const progress = visual.scoreGaugeSprites[0]!;
@@ -3947,10 +3966,10 @@ function updatePersistentScoreHud(
   foreground.bottomHeight = foregroundBorders.bottom;
   foreground.visible = state.foregroundActive;
   foregroundMask.clear().rect(
-    scene.gauge.foreground.position[0],
-    -scene.gauge.foreground.position[1] - scene.gauge.foreground.height / 2,
-    Math.fround(scene.gauge.foreground.width * state.sliderValue.value),
-    scene.gauge.foreground.height,
+    foregroundGraph.localPosition[0],
+    -foregroundGraph.localPosition[1] - foregroundProfile.height / 2,
+    Math.fround(foregroundProfile.width * state.sliderValue.value),
+    foregroundProfile.height,
   ).fill(0xffffff);
   retainHudBindingOnce(object, foregroundBinding.key, referenceCounts);
 
@@ -3961,31 +3980,27 @@ function updatePersistentScoreHud(
     state.rankMarkerSLocalX.value,
     state.rankMarkerSSLocalX.value,
   ];
-  for (let index = 0; index < scene.rankRoots.length; index += 1) {
-    const rank = scene.rankRoots[index]!.rank;
-    serializedHudComponent(
-      visual.serializedComponentNodes,
-      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/Separator`,
-    ).position.set(markerPositions[index]!, 10);
-    serializedHudComponent(
-      visual.serializedComponentNodes,
-      `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/${rank}`,
-    ).position.set(markerPositions[index]!, 2);
+  for (let index = 0; index < markerPositions.length; index += 1) {
+    const rank = (["C", "B", "A", "S", "SS"] as const)[index]!;
+    scoreGameObject(
+      visual,
+      `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}`,
+    ).position.x = markerPositions[index]!;
   }
-  updateScorePanelClip(visual, progress, state.indicatorLocalX);
+  updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
 }
 
 function updateScorePanelClip(
+  object: PixiObjectRecord,
   visual: PixiHudVisual,
   progress: Container,
   indicatorLocalX: number,
 ): void {
   if (visual.scoreHighRankPanelMask === null) throw new Error("Score high-rank panel mask owner is missing");
-  const panel = CURRENT_SCORE_HUD_SCENE_PROFILE.gauge.highRankPanel;
+  const panel = requireScoreNativeProfile(object).panel;
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
-  visual.animationLayer.position.copyFrom(progress.position);
   const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
   const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
   const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
@@ -4000,11 +4015,23 @@ function updateScorePanelClip(
   const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
   visual.scoreHighRankPanelMask.clear().rect(panelLeft, panelTop, panelWidth, panelHeight).fill(0xffffff);
   visual.scoreHighRankPanelMaskBounds = Object.freeze([panelLeft, panelTop, panelWidth, panelHeight] as const);
-  updateScoreSoftClipFilter(visual, panelWidth, panelHeight, panel.softness);
+  const uiScale = authoredUiScale(object);
+  const globalCenterX = Math.fround(object.node.position.x + Math.fround((progress.position.x + panelCenter) * uiScale));
+  const globalCenterY = Math.fround(object.node.position.y + Math.fround((progress.position.y + panelCenterY) * uiScale));
+  updateScoreSoftClipFilter(
+    visual,
+    globalCenterX,
+    globalCenterY,
+    Math.fround(panelWidth * uiScale),
+    Math.fround(panelHeight * uiScale),
+    Object.freeze([Math.fround(panel.softness[0] * uiScale), Math.fround(panel.softness[1] * uiScale)]),
+  );
 }
 
 function updateScoreSoftClipFilter(
   visual: PixiHudVisual,
+  centerX: number,
+  centerY: number,
   panelWidth: number,
   panelHeight: number,
   softness: readonly [number, number],
@@ -4012,12 +4039,14 @@ function updateScoreSoftClipFilter(
   if (typeof document === "undefined") return;
   if (visual.scoreHighRankSoftClipFilter === null) {
     visual.scoreHighRankSoftClipFilter = createNguiSoftClipFilter(
-      panelWidth, panelHeight, softness[0], softness[1],
+      centerX, centerY, panelWidth, panelHeight, softness[0], softness[1],
     );
-    visual.animationLayer.filters = [visual.scoreHighRankSoftClipFilter];
+    for (const sprite of visual.scoreHighRankSprites) sprite.filters = [visual.scoreHighRankSoftClipFilter];
   } else {
     updateNguiSoftClipFilter(
       visual.scoreHighRankSoftClipFilter,
+      centerX,
+      centerY,
       panelWidth,
       panelHeight,
       softness[0],
@@ -4048,7 +4077,7 @@ function ensureScoreHighRankSprites(
   referenceCounts: Map<string, number>,
 ): void {
   if (!state.highRankEffectActive) return;
-  const animation = currentScoreGaugeSsAnimation(object);
+  const animation = requireScoreNativeProfile(object).highRank;
   for (const node of animation.nodes) {
     showSerializedHudComponent(
       visual,
@@ -4069,19 +4098,17 @@ function ensureScoreHighRankSprites(
     const binding = requiredTextureBinding(textures, assetId, node.textureKey);
     const sprite = new Sprite({ texture: binding.texture, label: `score-gauge-ss:${node.name}` });
     const baseScale = applyNguiSpriteWidget(sprite, {
-      width: node.widgetWidth,
-      height: node.widgetHeight,
-      pivot: node.pivot,
+      width: node.width,
+      height: node.height,
+      pivot: node.pivot === "Left" ? "left" : "center",
       colorF32Bits: node.colorF32Bits,
-      blendMode: node.blendMode,
+      blendMode: "normal",
     });
-    sprite.position.set(node.initialPosition[0], -node.initialPosition[1]);
-    sprite.scale.set(
-      Math.fround(baseScale[0] * node.initialScale[0]),
-      Math.fround(baseScale[1] * node.initialScale[1]),
-    );
-    sprite.rotation = quaternionZRadians(node.initialRotationQuaternion);
+    sprite.position.set(0, 0);
+    sprite.scale.set(baseScale[0], baseScale[1]);
+    sprite.rotation = 0;
     sprite.visible = false;
+    if (visual.scoreHighRankSoftClipFilter !== null) sprite.filters = [visual.scoreHighRankSoftClipFilter];
     sprite.zIndex = 30;
     const componentOwner = serializedHudComponent(
       visual.serializedComponentNodes,
@@ -4094,10 +4121,8 @@ function ensureScoreHighRankSprites(
     visual.scoreHighRankBaseScales.push(baseScale);
     retainScoreHighRankBinding(object, binding.key, referenceCounts);
   }
-  for (const name of CURRENT_SCORE_GAUGE_SS_SIBLING_ORDER) {
-    const componentOwner = componentOwners.get(name);
-    if (componentOwner === undefined) throw new Error(`ScoreGaugeSS sibling is missing: ${name}`);
-    visual.animationLayer.addChild(componentOwner);
+  for (const name of animation.siblingOrder) {
+    if (!componentOwners.has(name)) throw new Error(`Score high-rank sibling is missing: ${name}`);
   }
 }
 
@@ -4280,32 +4305,28 @@ function applyEvidenceAnimation(
   }
   if (role === "score-gauge-ss") {
     const visual = object.hudVisual;
-    const animation = currentScoreGaugeSsAnimation(object);
-    if (visual === null || visual.scoreHighRankSprites.length !== animation.nodes.length) {
-      throw new Error("ScoreGaugeSS resource-backed visual is missing");
+    const profile = requireScoreNativeProfile(object);
+    const clipName = (object.hudState as RenderScoreHudState | null)?.highRankEffectClip;
+    const clip = profile.highRank.clips.find((candidate) => candidate.name === clipName);
+    if (visual === null || clip === undefined || visual.scoreHighRankSprites.length !== profile.highRank.nodes.length) {
+      throw new Error("Score high-rank source-backed visual/clip is missing");
     }
-    const values = sampleScoreGaugeSsAnimation(animation, elapsedSeconds);
-    const positionNodes = ["kira_1", "kira_2", "kira_3", "kira_4", "kira_5", "kira_6", "kira_7", "kira_8"];
-    const rotationNodes = ["kira_4", "kira_7", "kira_1"];
-    const scaleNodes = ["kira_1", "kira_2", "kira_4", "kira_7"];
-    for (let index = 0; index < animation.nodes.length; index += 1) {
-      const node = animation.nodes[index]!;
+    const samples = sampleScoreHighRankPresentation(
+      clip,
+      profile.highRank.nodes,
+      profile.highRank.tweenAlpha,
+      elapsedSeconds,
+    );
+    for (let index = 0; index < samples.length; index += 1) {
+      const sample = samples[index]!;
+      const node = profile.highRank.nodes[index]!;
       const sprite = visual.scoreHighRankSprites[index]!;
-      const positionIndex = positionNodes.indexOf(node.name);
-      const rotationIndex = rotationNodes.indexOf(node.name);
-      const scaleIndex = scaleNodes.indexOf(node.name);
-      const position = positionIndex < 0 ? node.initialPosition : values.slice(positionIndex * 3, positionIndex * 3 + 3);
-      const scale = scaleIndex < 0 ? node.initialScale : values.slice(33 + scaleIndex * 3, 36 + scaleIndex * 3);
-      sprite.position.set(position[0]!, -position[1]!);
-      const baseScale = visual.scoreHighRankBaseScales[index]!;
-      sprite.scale.set(
-        Math.fround(baseScale[0] * scale[0]!),
-        Math.fround(baseScale[1] * scale[1]!),
-      );
-      sprite.rotation = rotationIndex < 0
-        ? quaternionZRadians(node.initialRotationQuaternion)
-        : Math.fround(values[24 + rotationIndex * 3 + 2]! * Math.PI / 180);
-      sprite.visible = values[45 + index]! >= 0.5;
+      const owner = scoreGameObject(visual, node.path);
+      owner.position.set(sample.position[0], -sample.position[1]);
+      owner.scale.set(sample.scale[0], sample.scale[1]);
+      owner.rotation = sample.rotationRadiansScreen;
+      owner.visible = sample.active;
+      if (sample.tweenAlpha !== null) sprite.alpha = sample.tweenAlpha;
     }
     return;
   }
@@ -4565,38 +4586,6 @@ function samplePingPongAlpha(
     ? Math.fround(phase / profile.durationSeconds)
     : Math.fround((period - phase) / profile.durationSeconds);
   return Math.fround(profile.fromAlpha + Math.fround((profile.toAlpha - profile.fromAlpha) * factor));
-}
-
-function currentScoreGaugeSsAnimation(
-  object: PixiObjectRecord,
-): NonNullable<RenderResourceProfile["scoreGaugeSsAnimation"]> {
-  const profile = object.scoreGaugeSsAnimation;
-  if (profile === undefined) throw new Error("ScoreGaugeSS animation profile is not prepared");
-  return profile;
-}
-
-function sampleScoreGaugeSsAnimation(
-  profile: NonNullable<RenderResourceProfile["scoreGaugeSsAnimation"]>,
-  elapsedSeconds: number,
-): readonly number[] {
-  const phase = Math.fround(elapsedSeconds % profile.durationSeconds);
-  const times = new Float32Array(profile.curveCount);
-  const coefficients: Array<readonly [number, number, number, number] | null> =
-    Array.from({ length: profile.curveCount }, () => null);
-  for (const frame of profile.frames) {
-    if (frame.time > phase) break;
-    for (const key of frame.keys) {
-      times[key.index] = frame.time;
-      coefficients[key.index] = key.coefficients;
-    }
-  }
-  return Object.freeze(coefficients.map((curve, index) => {
-    if (curve === null) throw new Error("ScoreGaugeSS curve has no initial value");
-    const delta = Math.fround(phase - times[index]!);
-    let value = Math.fround(Math.fround(curve[0] * delta) + curve[1]);
-    value = Math.fround(Math.fround(value * delta) + curve[2]);
-    return Math.fround(Math.fround(value * delta) + curve[3]);
-  }));
 }
 
 function quaternionZRadians(quaternion: readonly [number, number, number, number]): number {

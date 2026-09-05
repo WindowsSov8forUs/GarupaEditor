@@ -516,20 +516,20 @@
       "sourceRelation": "byte-identical"
     },
     {
-      "path": "game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json",
-      "byteLength": 81471,
-      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05",
-      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
-      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
-      "sourceRelation": "byte-identical"
+      "path": "game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json",
+      "byteLength": 139347,
+      "sha256": "2E78E5C26FCA61848018D63A9E7E5EEC0E5BE5B3A5D355994937E5E0285B7DE1",
+      "sourceReverseCommit": "dddab345825dbff6d2a5cf65f5fbbcf771b00e07",
+      "sourcePath": "artifacts/investigations/simulator-score-ngui-native-domain-10-1-4/score_ngui_native_domain_contract.json",
+      "sourceRelation": "source-derived-projection"
     }
   ],
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",
   "sourceHead": "343c09cc06ee97f3f2532518eff6192913de2b19",
   "identity": {
     "legacyMetadataTupleSha256": "07a2265ad7c798494a2d3fce405f9ccc7acaf7ae5bbabfd80fdb19a4b0558b82",
-    "currentMetadataTupleSha256": "c53067e33b78d8c8e8020248116cfb405517bf97516a22cdf9c6fe77e52820e9",
-    "payloadTupleSha256": "8ae2e167b8c303da535e675e7b3f28a52a0dfd94f6a87f35b3de0274317e4362",
+    "currentMetadataTupleSha256": "4ce1e654dbb681df99a275684320ea5d82e21a1e70809f43c803a20419772988",
+    "payloadTupleSha256": "363e04fe04e6e8a0c87279391b17a153e11ed8b947fd4490c8c4a2107e166357",
     "metadataProjection": [
       "path",
       "sourceReverseCommit",

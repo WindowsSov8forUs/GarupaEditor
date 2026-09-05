@@ -2,6 +2,7 @@ import type { SimulatorResult } from "../engine/evidence";
 import type { OrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import type { GameClearRuntimeProfile } from "./resources/currentGameClearProfile";
 import type { PauseCountdownAnimationProfile } from "./resources/currentPauseCountdownAnimationProfile";
+import type { CurrentScoreHudNativeProfile } from "./resources/currentScoreHudNativeProfile";
 
 export const RenderFidelityLabel = "HABAHIRO" as const;
 
@@ -224,7 +225,9 @@ export interface RenderResourceProfile {
   readonly automaticFallbackAllowed: false;
   readonly assets: readonly RenderResourceAssetProfile[];
   readonly scene: RenderSceneProfile;
+  /** Legacy single-clip profile retained only for source compatibility. */
   readonly scoreGaugeSsAnimation?: RenderScoreGaugeSsAnimationProfile;
+  readonly scoreHudNativeProfile?: CurrentScoreHudNativeProfile;
   readonly ordinaryVisibleProfile?: OrdinaryVisibleProfile;
   readonly gameClearProfile?: GameClearRuntimeProfile;
   readonly pauseCountdownAnimation?: PauseCountdownAnimationProfile;
@@ -296,6 +299,10 @@ export interface RenderScoreGaugeThresholds {
 
 export interface RenderScoreHudState {
   readonly thresholds: RenderScoreGaugeThresholds;
+  /** Optional only for legacy source compilation; production validation requires it. */
+  readonly thresholdSource?:
+    | Readonly<{ readonly kind: "native-score-rank-data"; readonly musicId: number; readonly difficulty: string }>
+    | Readonly<{ readonly kind: "product-cs-v1"; readonly rulesetId: "garupa-editor-normalized-10m-v1"; readonly scoringUnitCount: number }>;
   readonly score: number;
   readonly scoreText: string;
   readonly scoreMax: number;
@@ -312,8 +319,11 @@ export interface RenderScoreHudState {
   readonly rankMarkerALocalX: RenderFloat32;
   readonly rankMarkerSLocalX: RenderFloat32;
   readonly rankMarkerSSLocalX: RenderFloat32;
-  readonly highRankEffect: "none" | "ScoreGaugeSS";
+  readonly highRankEffect: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
   readonly highRankEffectActive: boolean;
+  /** Optional only for legacy source compilation; production validation requires both. */
+  readonly highRankEffectClip?: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
+  readonly inGameMode?: number;
 }
 
 export interface RenderComboHudState {

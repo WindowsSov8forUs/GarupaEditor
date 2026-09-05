@@ -337,9 +337,9 @@
       "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594"
     },
     {
-      "path": "game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json",
-      "byteLength": 81471,
-      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+      "path": "game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json",
+      "byteLength": 139347,
+      "sha256": "2E78E5C26FCA61848018D63A9E7E5EEC0E5BE5B3A5D355994937E5E0285B7DE1"
     },
     {
       "path": "icons/apply-action.svg",

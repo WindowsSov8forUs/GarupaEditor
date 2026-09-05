@@ -9,50 +9,98 @@ export interface NguiEncodedScoreLabelLayout {
   readonly totalWidth: number;
   readonly leadingWidth: number;
   readonly significantWidth: number;
+  readonly glyphAdvances: readonly number[];
 }
 
-const SCORE_ADVANCE_PER_FONT_SIZE = Math.fround(0.75);
-
-/** Current 10.1.4 sgm UILabel component 1271: one owner with two NGUI color runs. */
+/** Current UILabel 1271: encoding is parsed first and exact source-bound CharacterInfo advances own layout. */
 export function layoutNguiEncodedScoreLabel(
-  segments: readonly [Text, Text],
-  score: number,
+  segments: readonly Text[],
+  encodedText: string | number,
   rightX: number,
   centerY: number,
   maximumWidth: number,
   requestedFontSize: number,
   fontFamily: string,
   depth: number,
+  metricsByFontSize?: Readonly<Record<string, Readonly<Record<string, number>>>>,
 ): NguiEncodedScoreLabelLayout {
-  const significant = String(score);
-  const leading = "0".repeat(Math.max(8 - significant.length, 0));
-  const displayed = `${leading}${significant}`;
-  let fontSize = requestedFontSize;
-  while (fontSize > 0 && scoreRunWidth(displayed.length, fontSize) > maximumWidth) {
-    fontSize -= 1;
+  if (metricsByFontSize === undefined || typeof encodedText !== "string") {
+    throw new Error("Score UILabel source-bound encoded text/CharacterInfo metrics are missing.");
   }
-  const leadingWidth = scoreRunWidth(leading.length, fontSize);
-  const significantWidth = scoreRunWidth(significant.length, fontSize);
+  const calculated = calculateNguiEncodedScoreLabelLayout(
+    encodedText, maximumWidth, requestedFontSize, metricsByFontSize,
+  );
+  const { leading, displayed, fontSize, totalWidth, glyphAdvances } = calculated;
+  if (segments.length < displayed.length) throw new Error("Score UILabel persistent glyph pool is too small.");
+  let cursor = Math.fround(rightX - totalWidth);
+  for (let index = 0; index < segments.length; index += 1) {
+    const glyph = segments[index]!;
+    const char = displayed[index];
+    if (char === undefined) {
+      glyph.visible = false;
+      continue;
+    }
+    configureSegment(glyph, char, index < leading.length ? 0xbebebe : 0xff3b72, fontSize, fontFamily, depth);
+    glyph.position.set(cursor, centerY);
+    glyph.visible = true;
+    cursor = Math.fround(cursor + glyphAdvances[index]!);
+  }
+  return calculated;
+}
+
+export function calculateNguiEncodedScoreLabelLayout(
+  encodedText: string,
+  maximumWidth: number,
+  requestedFontSize: number,
+  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
+): NguiEncodedScoreLabelLayout {
+  const parsed = parseEncodedScoreText(encodedText);
+  let fontSize = requestedFontSize;
+  while (fontSize > 0 && runWidth(parsed.displayed, fontSize, metricsByFontSize) > maximumWidth) fontSize -= 1;
+  if (fontSize <= 0) throw new Error("Score UILabel source metrics cannot fit the encoded digit run.");
+  const leadingWidth = runWidth(parsed.leading, fontSize, metricsByFontSize);
+  const significantWidth = runWidth(parsed.significant, fontSize, metricsByFontSize);
   const totalWidth = Math.fround(leadingWidth + significantWidth);
-  configureSegment(segments[0], leading, 0xbebebe, fontSize, fontFamily, depth);
-  configureSegment(segments[1], significant, 0xff3b72, fontSize, fontFamily, depth);
-  segments[0].position.set(Math.fround(rightX - totalWidth), centerY);
-  segments[1].position.set(Math.fround(rightX - significantWidth), centerY);
-  segments[0].visible = leading.length > 0;
-  segments[1].visible = true;
   return Object.freeze({
-    displayed,
-    leading,
-    significant,
+    ...parsed,
     fontSize,
     totalWidth,
     leadingWidth,
     significantWidth,
+    glyphAdvances: Object.freeze([...parsed.displayed].map((char) => metric(char, fontSize, metricsByFontSize))),
   });
 }
 
-function scoreRunWidth(length: number, fontSize: number): number {
-  return Math.fround(Math.fround(length * fontSize) * SCORE_ADVANCE_PER_FONT_SIZE);
+export function parseEncodedScoreText(encodedText: string): {
+  readonly displayed: string;
+  readonly leading: string;
+  readonly significant: string;
+} {
+  const match = /^\[BEBEBE\](0*)\[-\]\[FF3B72\]([0-9]+)\[-\]$/.exec(encodedText);
+  if (match === null) throw new Error("Score UILabel requires the exact two-run encoded score string.");
+  return Object.freeze({ leading: match[1]!, significant: match[2]!, displayed: `${match[1]}${match[2]}` });
+}
+
+function runWidth(
+  value: string,
+  fontSize: number,
+  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
+): number {
+  let width = Math.fround(0);
+  for (const char of value) width = Math.fround(width + metric(char, fontSize, metricsByFontSize));
+  return width;
+}
+
+function metric(
+  char: string,
+  fontSize: number,
+  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
+): number {
+  const value = metricsByFontSize[String(fontSize)]?.[char];
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    throw new Error(`Score UILabel has no source-bound CharacterInfo advance for ${char}@${fontSize}.`);
+  }
+  return Math.fround(value);
 }
 
 function configureSegment(
@@ -70,6 +118,7 @@ function configureSegment(
     fontSize,
     fontStyle: "normal",
     fontWeight: "normal",
+    letterSpacing: 0,
   };
   text.anchor.set(0, 0.5);
   text.alpha = 1;

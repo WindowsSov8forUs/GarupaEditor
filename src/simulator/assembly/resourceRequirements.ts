@@ -59,7 +59,7 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
     "countdown-1.png", "countdown-2.png", "countdown-3.png", "countdown-animation-profile.json",
   ]),
   requirement("render.score-gauge", "prefabs/bms/rhythmgamegauge/score", [
-    "high-rank-kira.png", "high-rank-long-star.png", "high-rank-overlay.png", "score-gauge-ss-animation-profile.json",
+    "high-rank-kira.png", "high-rank-long-star.png", "high-rank-overlay.png", "score-hud-native-profile.json",
   ]),
   requirement("render.game-clear", "prefabs/bms/gameclear", null),
   requirement("audio.common", "sound/common", [

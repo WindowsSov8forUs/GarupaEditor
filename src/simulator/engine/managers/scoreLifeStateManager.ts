@@ -120,7 +120,9 @@ export class ScoreLifeStateManager {
     }
     const scoreGauge = SinglePlayScoreGauge.create(thresholdProfile);
     if (scoreGauge.status !== "ok") return scoreGauge;
-    const initializedGauge = scoreGauge.value.update(0);
+    const initializedGauge = scoreGauge.value.update(0, {
+      inGameMode: validation.value.mode.isEnablePractice ? 10 : 1,
+    });
     if (initializedGauge.status !== "ok") return initializedGauge;
     return ok(new ScoreLifeStateManager(validation.value, scoringPlan, scoreGauge.value));
   }
@@ -232,7 +234,9 @@ export class ScoreLifeStateManager {
         comboAfter: stagedRecord.currentCombo,
       }));
     }
-    const gauge = stagedScoreGauge.update(stagedRecord.snapshot().score);
+    const gauge = stagedScoreGauge.update(stagedRecord.snapshot().score, {
+      inGameMode: this.profile.mode.isEnablePractice ? 10 : 1,
+    });
     if (gauge.status !== "ok") return gauge;
     const reflect: ScoreLifeReflectBatch = Object.freeze({
       batchIndex: batch.batchIndex,
@@ -352,6 +356,11 @@ function normalizedScoreGaugeThresholdProfile(
   if (scoreMaximum === null) return null;
   return Object.freeze({
     profileIdentity: NORMALIZED_SCORE_RULESET_ID,
+    source: Object.freeze({
+      kind: "product-cs-v1" as const,
+      rulesetId: NORMALIZED_SCORE_RULESET_ID,
+      scoringUnitCount: totalScoringUnitCount,
+    }),
     scoreC: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreC,
     scoreB: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreB,
     scoreA: NORMALIZED_SCORE_RANK_THRESHOLDS.scoreA,

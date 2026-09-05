@@ -27,7 +27,7 @@ import countdownAnimationProfileUrl from "../../assets/game/prefabs/bms/pause/co
 import highRankKiraUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png?url&no-inline";
 import highRankLongStarUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png?url&no-inline";
 import highRankOverlayUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png?url&no-inline";
-import scoreGaugeSsAnimationProfileUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json?url&no-inline";
+import scoreHudNativeProfileUrl from "../../assets/game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json?url&no-inline";
 import gameClear0Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png?url&no-inline";
 import gameClear1Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_A-128DBB295661.png?url&no-inline";
 import gameClear2Url from "../../assets/game/prefabs/bms/gameclear/AllPerfect_C-4E6E52DFD15A.png?url&no-inline";
@@ -148,7 +148,7 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png", "high-rank-long-star.png", "image/png", highRankLongStarUrl),
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png", "high-rank-overlay.png", "image/png", highRankOverlayUrl),
-    file("game/prefabs/bms/rhythmgamegauge/score/score-gauge-ss-animation-profile.json", "score-gauge-ss-animation-profile.json", "application/json", scoreGaugeSsAnimationProfileUrl),
+    file("game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json", "score-hud-native-profile.json", "application/json", scoreHudNativeProfileUrl),
   ]),
   resource("prefabs/bms/gameclear", "In-game clear presentation resources", "package", [
     file("game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png", "AllPerfect_--A3BA440F58BA.png", "image/png", gameClear0Url),

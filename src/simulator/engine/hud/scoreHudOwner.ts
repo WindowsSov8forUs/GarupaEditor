@@ -8,6 +8,7 @@ export class ScoreHudOwner {
     gauge: SinglePlayScoreGaugeSnapshot,
   ): RenderScoreHudState {
     const thresholds = gauge.thresholdProfile;
+    if (thresholds.source === undefined) throw new Error("Score HUD threshold source was not validated by the Gauge owner.");
     return Object.freeze({
       thresholds: Object.freeze({
         scoreC: thresholds.scoreC,
@@ -16,6 +17,7 @@ export class ScoreHudOwner {
         scoreS: thresholds.scoreS,
         scoreSS: thresholds.scoreSS,
       }),
+      thresholdSource: Object.freeze({ ...thresholds.source }),
       score: record.score,
       scoreText: zeroFilledScoreText(record.score),
       scoreMax: gauge.scoreMax,
@@ -34,6 +36,8 @@ export class ScoreHudOwner {
       rankMarkerSSLocalX: float32State(gauge.rankMarkerSSLocalX),
       highRankEffect: gauge.highRankEffect,
       highRankEffectActive: gauge.highRankEffectActive,
+      highRankEffectClip: gauge.highRankEffectClip,
+      inGameMode: gauge.inGameMode,
     });
   }
 }

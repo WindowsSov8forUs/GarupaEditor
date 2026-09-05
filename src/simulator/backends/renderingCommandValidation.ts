@@ -46,16 +46,16 @@ export function validateTypedRenderHudCommand(
     case "score": {
       const state = command.state;
       return objectRole === "hud-score" && exactKeys(state, [
-        "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
+        "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "highRankEffectClip", "inGameMode", "indicatorLocalX",
         "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
         "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
-        "scoreMax", "scoreText", "sliderValue", "thresholds",
+        "scoreMax", "scoreText", "sliderValue", "thresholds", "thresholdSource",
       ]) &&
-        validScoreThresholds(state.thresholds, state.scoreMax) &&
-        isUInt32(state.score) && isUInt32(state.scoreMax) &&
+        validScoreThresholds(state.thresholds, state.scoreMax) && validThresholdSource(state.thresholdSource) &&
+        isUInt32(state.score) && isUInt32(state.scoreMax) && Number.isInteger(state.inGameMode) && (state.inGameMode as number) >= 0 &&
         state.scoreText === expectedScoreText(state.score) &&
-        isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
-        state.rank === scoreRank(state.score, state.thresholds) &&
+        isLiveClearRank(state.beforeRank) && isLiveClearRank(state.rank) &&
+        (state.rank <= 5 ? state.rank === scoreRank(state.score, state.thresholds) : state.thresholdSource.kind === "native-score-rank-data") &&
         state.rankChanged === (state.beforeRank !== state.rank) &&
         isScoreMeterKey(state.meterKey) && state.meterKey === scoreMeterKeyForRank(state.rank) &&
         validateRenderFloat32(state.ratio) && state.ratio.value === expectedScoreRatio(state.score, state.scoreMax) &&
@@ -69,9 +69,11 @@ export function validateTypedRenderHudCommand(
         state.rankMarkerALocalX.value === expectedRankMarkerX(state.thresholds.scoreA, state.scoreMax) &&
         state.rankMarkerSLocalX.value === expectedRankMarkerX(state.thresholds.scoreS, state.scoreMax) &&
         state.rankMarkerSSLocalX.value === expectedRankMarkerX(state.thresholds.scoreSS, state.scoreMax) &&
-        (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS") &&
-        (state.highRankEffect !== "ScoreGaugeSS" || state.rank === 5 && state.rankChanged) &&
-        (state.highRankEffect !== "ScoreGaugeSS" || state.highRankEffectActive);
+        (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS" || state.highRankEffect === "ScoreGaugeSSS") &&
+        state.highRankEffect === expectedHighRankEffect(state.rank, state.inGameMode as number, state.rankChanged) &&
+        (state.highRankEffect === "none" || state.highRankEffectActive) &&
+        (state.highRankEffectClip === "none" || state.highRankEffectClip === "ScoreGaugeSS" || state.highRankEffectClip === "ScoreGaugeSSS") &&
+        state.highRankEffectActive === (state.highRankEffectClip !== "none");
     }
     case "combo": {
       const state = command.state;
@@ -179,10 +181,10 @@ export function freezeTypedHudState<T extends SetHudCommand["state"]>(state: T):
 
 function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
   if ("thresholds" in state) return [
-    "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
+    "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "highRankEffectClip", "inGameMode", "indicatorLocalX",
     "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX", "rankMarkerCLocalX",
     "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score", "scoreMax", "scoreText",
-    "sliderValue", "thresholds",
+    "sliderValue", "thresholds", "thresholdSource",
   ];
   if ("combo" in state) return ["allPerfect", "combo"];
   if ("judgeKey" in state) return ["judgeKey", "timingKey"];
@@ -212,8 +214,25 @@ function isUInt32(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 0xffffffff;
 }
 
-function isOrdinaryScoreRank(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 5;
+function isLiveClearRank(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 12;
+}
+
+function validThresholdSource(value: unknown): value is { readonly kind: "native-score-rank-data" | "product-cs-v1" } {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const source = value as Record<string, unknown>;
+  return source.kind === "product-cs-v1"
+    ? exactKeys(source, ["kind", "rulesetId", "scoringUnitCount"]) && source.rulesetId === "garupa-editor-normalized-10m-v1" &&
+      Number.isSafeInteger(source.scoringUnitCount) && (source.scoringUnitCount as number) > 0
+    : source.kind === "native-score-rank-data" && exactKeys(source, ["difficulty", "kind", "musicId"]) &&
+      isUInt32(source.musicId) && typeof source.difficulty === "string" && source.difficulty.length > 0;
+}
+
+function expectedHighRankEffect(rank: number, inGameMode: number, changed: boolean): "none" | "ScoreGaugeSS" | "ScoreGaugeSSS" {
+  if (!changed) return "none";
+  if (rank === 6) return "ScoreGaugeSSS";
+  if (rank === 12 || rank === 5 && inGameMode !== 11) return "ScoreGaugeSS";
+  return "none";
 }
 
 function isScoreMeterKey(value: unknown): value is string {

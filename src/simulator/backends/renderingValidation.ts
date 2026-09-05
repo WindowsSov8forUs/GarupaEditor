@@ -6,6 +6,7 @@ import {
 import { parseCurrentOrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import { parseCurrentGameClearProfile } from "./resources/currentGameClearProfile";
 import { parseCurrentPauseCountdownAnimationProfile } from "./resources/currentPauseCountdownAnimationProfile";
+import { parseCurrentScoreHudNativeProfile } from "./resources/currentScoreHudNativeProfile";
 import {
   RenderFidelityLabel,
   type RenderAtlasRow,
@@ -154,6 +155,15 @@ export function validateAndFreezeRenderProfile(
 
   const scoreGaugeSsAnimation = validateScoreGaugeSsAnimation(profile.scoreGaugeSsAnimation);
   if (scoreGaugeSsAnimation.status !== "ok") return scoreGaugeSsAnimation;
+  const scoreHudNativeProfile = profile.scoreHudNativeProfile === undefined
+    ? undefined
+    : parseCurrentScoreHudNativeProfile(profile.scoreHudNativeProfile) ?? null;
+  if (scoreHudNativeProfile === null) {
+    return reject(
+      "render.profile.invalid-score-hud-native-profile",
+      "Score HUD requires the source-bound current ARM64/serialized/NGUI/GLES3 profile without inferred graph or clip fields.",
+    );
+  }
   let ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
   if (profile.ordinaryVisibleProfile !== undefined) {
     const parsedOrdinaryVisibleProfile = parseCurrentOrdinaryVisibleProfile(profile.ordinaryVisibleProfile);
@@ -201,6 +211,7 @@ export function validateAndFreezeRenderProfile(
     automaticFallbackAllowed: false,
     assets: Object.freeze(assets),
     scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
+    scoreHudNativeProfile,
     ordinaryVisibleProfile,
     gameClearProfile,
     pauseCountdownAnimation,
