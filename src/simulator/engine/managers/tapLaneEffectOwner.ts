@@ -36,32 +36,73 @@ export interface TapLaneEffectInputEvent {
 }
 
 export class TapLaneEffectTransaction {
-  private state: "pending" | "committed" | "discarded" = "pending";
+  private state: "pending" | "backend-committed" | "committed" | "discarded" = "pending";
 
   constructor(
     private readonly render: RenderOwnerTransaction | null,
     private readonly commitState: () => void,
+    private readonly discardState: () => void = () => {},
   ) {}
 
-  commit(): SimulatorResult<void> {
+  commitBackend(): SimulatorResult<void> {
     if (this.state !== "pending") return repeated(this.state);
-    const committed = this.render?.commit() ?? ok(undefined);
-    if (committed.status !== "ok") return committed;
+    const committed = this.render?.commitBackend() ?? ok(undefined);
+    if (committed.status === "ok") this.state = "backend-committed";
+    return committed;
+  }
+
+  publishOwner(): SimulatorResult<void> {
+    if (this.state !== "backend-committed") return repeated(this.state);
+    const renderOwner = this.render?.publishOwner() ?? ok(undefined);
+    if (renderOwner.status !== "ok") return renderOwner;
     this.state = "committed";
     this.commitState();
     return ok(undefined);
   }
 
+  commit(): SimulatorResult<void> {
+    const backend = this.commitBackend();
+    return backend.status === "ok" ? this.publishOwner() : backend;
+  }
+
   discard(): SimulatorResult<void> {
     if (this.state !== "pending") return repeated(this.state);
     const discarded = this.render?.discard() ?? ok(undefined);
-    if (discarded.status === "ok") this.state = "discarded";
+    if (discarded.status === "ok") {
+      this.state = "discarded";
+      this.discardState();
+    }
     return discarded;
+  }
+}
+
+export class TapLaneEffectStateTransaction {
+  private state: "pending" | "committed" | "discarded" = "pending";
+
+  constructor(
+    readonly renderStates: readonly TapLaneEffectRenderState[],
+    private readonly publish: () => void,
+    private readonly release: () => void,
+  ) {}
+
+  publishOwner(): SimulatorResult<void> {
+    if (this.state !== "pending") return repeated(this.state);
+    this.state = "committed";
+    this.publish();
+    return ok(undefined);
+  }
+
+  discard(): SimulatorResult<void> {
+    if (this.state !== "pending") return repeated(this.state);
+    this.state = "discarded";
+    this.release();
+    return ok(undefined);
   }
 }
 
 export class TapLaneEffectOwner {
   private initialized = false;
+  private pendingState: TapLaneEffectStateTransaction | null = null;
   private slots: TapLaneEffectSlotState[] = Array.from({ length: SLOT_COUNT }, (_, slot) =>
     frozenSlot(slot, "disabled", -1, 0));
 
@@ -107,6 +148,13 @@ export class TapLaneEffectOwner {
   preflightJudgement(
     batch: OneFrameJudgementBatch,
   ): SimulatorResult<TapLaneEffectTransaction | null> {
+    const detached = this.preflightJudgementState(batch);
+    return detached.status === "ok" ? this.materialize(detached.value) : detached;
+  }
+
+  preflightJudgementState(
+    batch: OneFrameJudgementBatch,
+  ): SimulatorResult<TapLaneEffectStateTransaction | null> {
     if (!this.initialized || batch === null || !Array.isArray(batch.entries)) return unavailable();
     if (!this.visible) return ok(null);
     const projected = [...this.slots];
@@ -118,7 +166,7 @@ export class TapLaneEffectOwner {
       projected[slot] = frozenSlot(slot, "idle", OFF_RESERVE_UPDATES, 0);
       changed.add(slot);
     }
-    return this.prepareProjected(projected, changed);
+    return this.prepareDetached(projected, changed);
   }
 
   preflightAdvance(deltaTimeSeconds: number): SimulatorResult<TapLaneEffectTransaction | null> {
@@ -157,10 +205,15 @@ export class TapLaneEffectOwner {
   }
 
   preflightAllOff(): SimulatorResult<TapLaneEffectTransaction | null> {
+    const detached = this.preflightAllOffState();
+    return detached.status === "ok" ? this.materialize(detached.value) : detached;
+  }
+
+  preflightAllOffState(): SimulatorResult<TapLaneEffectStateTransaction | null> {
     if (!this.initialized) return unavailable();
     const projected = this.slots.map((_, slot) => frozenSlot(slot, "disabled", -1, 0));
     const changed = new Set(this.slots.filter((slot) => slot.phase !== "disabled").map((slot) => slot.slot));
-    return this.prepareProjected(projected, changed);
+    return this.prepareDetached(projected, changed);
   }
 
   snapshot(): TapLaneEffectSnapshot {
@@ -177,15 +230,59 @@ export class TapLaneEffectOwner {
     changed: ReadonlySet<number>,
     stateChanged = changed.size > 0,
   ): SimulatorResult<TapLaneEffectTransaction | null> {
-    if (!stateChanged) return ok(null);
-    if (changed.size === 0) {
-      return ok(new TapLaneEffectTransaction(null, () => { this.slots = projected; }));
+    const detached = this.prepareDetached(projected, changed, stateChanged);
+    return detached.status === "ok" ? this.materialize(detached.value) : detached;
+  }
+
+  private prepareDetached(
+    projected: TapLaneEffectSlotState[],
+    changed: ReadonlySet<number>,
+    stateChanged = changed.size > 0,
+  ): SimulatorResult<TapLaneEffectStateTransaction | null> {
+    if (this.pendingState !== null) {
+      return rejected("render.tap-lane-effect.overlapping-state-plan", "Only one detached lane-effect state plan may be pending.");
     }
-    const states = [...changed].sort((left, right) => left - right).map((slot) =>
-      this.renderState(projected[slot]!));
-    const prepared = this.producer.preflightTapLaneEffectUpdate(states);
-    if (prepared.status !== "ok") return prepared;
-    return ok(new TapLaneEffectTransaction(prepared.value, () => { this.slots = projected; }));
+    if (!stateChanged) return ok(null);
+    const states = Object.freeze([...changed].sort((left, right) => left - right).map((slot) =>
+      this.renderState(projected[slot]!)));
+    let transaction!: TapLaneEffectStateTransaction;
+    transaction = new TapLaneEffectStateTransaction(
+      states,
+      () => {
+        if (this.pendingState !== transaction) throw new Error("Tap-lane state publication lost its one-use capability");
+        this.slots = projected;
+        this.pendingState = null;
+      },
+      () => {
+        if (this.pendingState !== transaction) throw new Error("Tap-lane state discard lost its one-use capability");
+        this.pendingState = null;
+      },
+    );
+    this.pendingState = transaction;
+    return ok(transaction);
+  }
+
+  private materialize(
+    detached: TapLaneEffectStateTransaction | null,
+  ): SimulatorResult<TapLaneEffectTransaction | null> {
+    if (detached === null) return ok(null);
+    if (detached.renderStates.length === 0) {
+      return ok(new TapLaneEffectTransaction(
+        null,
+        () => { detached.publishOwner(); },
+        () => { detached.discard(); },
+      ));
+    }
+    const prepared = this.producer.preflightTapLaneEffectUpdate(detached.renderStates);
+    if (prepared.status !== "ok") {
+      detached.discard();
+      return prepared;
+    }
+    return ok(new TapLaneEffectTransaction(
+      prepared.value,
+      () => { detached.publishOwner(); },
+      () => { detached.discard(); },
+    ));
   }
 
   private renderState(state: TapLaneEffectSlotState): TapLaneEffectRenderState {

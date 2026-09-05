@@ -446,8 +446,8 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       );
     }
     this.ownedPlans.delete(ownedPlan);
-    const laneEffect = ownedPlan.tapLaneEffectTransaction?.commit() ?? ok(undefined);
-    if (laneEffect.status !== "ok") return laneEffect;
+    const laneEffectExternal = ownedPlan.tapLaneEffectTransaction?.commitBackend() ?? ok(undefined);
+    if (laneEffectExternal.status !== "ok") return laneEffectExternal;
     for (const operation of ownedPlan.operations) {
       if (operation.inputButton !== null) {
         this.buttonWithFingerId[operation.fingerId] = operation.inputButton;
@@ -459,7 +459,8 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       }
     }
     ownedPlan.judgementTransaction.finish();
-    return ok(undefined);
+    const laneEffectOwner = ownedPlan.tapLaneEffectTransaction?.publishOwner() ?? ok(undefined);
+    return laneEffectOwner;
   }
 
   snapshot(): GamePlayInputDispatcherSnapshot {

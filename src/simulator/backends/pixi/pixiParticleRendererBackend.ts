@@ -50,8 +50,14 @@ interface SystemRenderBinding {
 
 interface PendingParticleFrame {
   readonly capability: ParticleRendererFrameBatch;
+  readonly generation: Container;
   readonly meshes: readonly PixiParticleLinearColorMesh[];
   readonly primitives: readonly ParticleNativeRenderPrimitive[];
+}
+
+interface RetiredParticleGeneration {
+  readonly generation: Container;
+  readonly meshes: readonly PixiParticleLinearColorMesh[];
 }
 
 export class PixiParticleRendererBackend implements SimulatorParticleRendererBackend {
@@ -67,6 +73,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private readonly systems = new Map<string, SystemRenderBinding>();
   private readonly textures = new Map<string, Texture>();
   private readonly uniqueBaseTextures = new Set<Texture>();
+  private liveGeneration: Container | null = null;
+  private readonly retiredGenerations: RetiredParticleGeneration[] = [];
   private readonly liveMeshes: PixiParticleLinearColorMesh[] = [];
   private readonly livePrimitives: ParticleNativeRenderPrimitive[] = [];
   private pending: PendingParticleFrame | null = null;
@@ -210,6 +218,13 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (this.pending !== null) {
       return this.reject("particle.pixi.overlapping-frame", "Only one detached Pixi particle frame reservation may be pending.");
     }
+    const retiredCleanup = this.clearRetiredGenerations();
+    if (retiredCleanup.length > 0) {
+      return this.latchFaultPreservingLive(
+        "particle.pixi.retired-generation-cleanup-threw",
+        `Hidden retired generation cleanup failed before preflight: ${retiredCleanup.join(",")}.`,
+      );
+    }
     if (request === null || typeof request !== "object" || request.sessionId !== this.sessionId ||
       !Number.isSafeInteger(request.frame) || request.frame < 0 || !Array.isArray(request.samples) ||
       (this.nextFrame !== null && request.frame !== this.nextFrame)) {
@@ -218,6 +233,11 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     const validation = this.validateSamples(request.samples);
     if (validation.status !== "accepted") return validation;
     const meshes: PixiParticleLinearColorMesh[] = [];
+    const generation = new Container({
+      label: `GarupaSimulatorParticleGeneration:${request.frame}`,
+      sortableChildren: false,
+      visible: false,
+    });
     let primitives: readonly ParticleNativeRenderPrimitive[];
     try {
       primitives = buildCurrentParticlePrimitives(this.profile, this.scene, request.samples);
@@ -229,13 +249,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         // One native order sequence replaces the old sortingOrder>20 stage split
         // and arbitrary large-radix zIndex mapping.
         mesh.zIndex = index;
+        generation.addChild(mesh);
         meshes.push(mesh);
       }
     } catch (error) {
-      const cleanupFailures = destroyMeshes(meshes);
+      const cleanupFailures = destroyGeneration(generation, meshes, "detached");
       return error instanceof ParticleGeometryFault
-        ? this.latchFault(error.capability, error.boundary)
-        : this.latchFault(
+        ? this.latchFaultPreservingLive(error.capability, error.boundary)
+        : this.latchFaultPreservingLive(
             "particle.pixi.primitive-allocation-threw",
             cleanupFailures.length === 0
               ? "Detached native primitive allocation failed before any scene mutation."
@@ -247,7 +268,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       frame: request.frame,
       sampleCount: request.samples.length,
     });
-    this.pending = Object.freeze({ capability, meshes: Object.freeze(meshes), primitives });
+    this.pending = Object.freeze({ capability, generation, meshes: Object.freeze(meshes), primitives });
     return particleAccepted(capability);
   }
 
@@ -260,23 +281,30 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       return this.latchFault("particle.pixi.invalid-batch-capability", "Pixi accepts only its exact one-use detached primitive capability.");
     }
     try {
-      const failures = this.clearLiveMeshes();
-      if (failures.length > 0) throw new Error(failures.join(","));
-      for (let index = 0; index < pending.meshes.length; index += 1) {
-        this.stage.addChild(pending.meshes[index]!);
-        this.liveMeshes.push(pending.meshes[index]!);
-        this.livePrimitives.push(pending.primitives[index]!);
-      }
+      // The complete candidate is detached and hidden. The only allocating
+      // scene operation runs while the previous generation is still visible.
+      this.stage.addChild(pending.generation);
     } catch {
       this.pending = null;
-      const cleanupFailures = [...destroyMeshes(pending.meshes), ...this.clearLiveMeshes()];
-      return this.latchFault(
-        "particle.pixi.scene-mutation-threw",
+      const cleanupFailures = destroyGeneration(pending.generation, pending.meshes, "candidate");
+      return this.latchFaultPreservingLive(
+        "particle.pixi.generation-attach-threw",
         cleanupFailures.length === 0
-          ? "A Pixi particle scene mutation is terminal and clears every live/detached primitive."
-          : `A Pixi particle scene mutation is terminal; cleanup continued with failed identities: ${cleanupFailures.join(",")}.`,
+          ? "Candidate attachment failed while the previous particle generation remained valid."
+          : `Candidate attachment failed; previous generation remained valid and candidate cleanup reported: ${cleanupFailures.join(",")}.`,
       );
     }
+    pending.generation.visible = true;
+    if (this.liveGeneration !== null) {
+      this.liveGeneration.visible = false;
+      this.retiredGenerations.push(Object.freeze({
+        generation: this.liveGeneration,
+        meshes: Object.freeze([...this.liveMeshes]),
+      }));
+    }
+    this.liveGeneration = pending.generation;
+    this.liveMeshes.splice(0, this.liveMeshes.length, ...pending.meshes);
+    this.livePrimitives.splice(0, this.livePrimitives.length, ...pending.primitives);
     this.pending = null;
     this.nextFrame = batch.frame + 1;
     this.lastSampleCount = batch.sampleCount;
@@ -289,7 +317,11 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (this.pending?.capability !== batch) {
       return this.reject("particle.pixi.invalid-discard-capability", "Only the exact pending Pixi particle frame may be discarded.");
     }
-    const cleanupFailures = destroyMeshes(this.pending.meshes);
+    const cleanupFailures = destroyGeneration(
+      this.pending.generation,
+      this.pending.meshes,
+      "detached",
+    );
     this.pending = null;
     return cleanupFailures.length === 0
       ? particleAccepted(undefined)
@@ -363,7 +395,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   dispose(): ParticleOperationResult<void> {
     if (this.state === "disposed") return particleAccepted(undefined);
     const cleanupFailures = [
-      ...(this.pending === null ? [] : destroyMeshes(this.pending.meshes, "pending")),
+      ...(this.pending === null ? [] : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
       ...this.clearLiveMeshes(),
       ...this.resetTextures(),
     ];
@@ -425,10 +457,21 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
 
   private clearLiveMeshes(): readonly string[] {
     const failures: string[] = [];
-    for (const mesh of this.liveMeshes.splice(0)) {
-      try { destroyPixiParticleLinearColorMesh(mesh); } catch { failures.push(`live-mesh:${mesh.label}`); }
+    if (this.liveGeneration !== null) {
+      failures.push(...destroyGeneration(this.liveGeneration, this.liveMeshes, "live"));
+      this.liveGeneration = null;
     }
+    failures.push(...this.clearRetiredGenerations());
+    this.liveMeshes.splice(0);
     this.livePrimitives.splice(0);
+    return failures;
+  }
+
+  private clearRetiredGenerations(): readonly string[] {
+    const failures: string[] = [];
+    for (const retired of this.retiredGenerations.splice(0)) {
+      failures.push(...destroyGeneration(retired.generation, retired.meshes, "retired"));
+    }
     return failures;
   }
 
@@ -458,7 +501,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private latchFault(capability: string, boundary: string): ParticleOperationResult<never> {
     if (this.fault === null) {
       const failures = [
-        ...(this.pending === null ? [] : destroyMeshes(this.pending.meshes, "pending")),
+        ...(this.pending === null ? [] : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
         ...this.clearLiveMeshes(),
       ];
       this.fault = Object.freeze({
@@ -466,6 +509,15 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         capability,
         boundary: failures.length === 0 ? boundary : `${boundary} Secondary cleanup failures: ${failures.join(",")}.`,
       });
+      this.pending = null;
+      this.state = "faulted";
+    }
+    return this.faultResult();
+  }
+
+  private latchFaultPreservingLive(capability: string, boundary: string): ParticleOperationResult<never> {
+    if (this.fault === null) {
+      this.fault = Object.freeze({ code: "particle-backend-fault", capability, boundary });
       this.pending = null;
       this.state = "faulted";
     }
@@ -621,6 +673,17 @@ function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): voi
   texture.source.autoGenerateMipmaps = false;
   texture.source.alphaMode = "no-premultiply-alpha";
   texture.source.format = "rgba8unorm-srgb";
+}
+
+function destroyGeneration(
+  generation: Container,
+  meshes: readonly PixiParticleLinearColorMesh[],
+  ownerPrefix: string,
+): readonly string[] {
+  const failures = [...destroyMeshes(meshes, ownerPrefix)];
+  try { generation.removeFromParent(); } catch { failures.push(`${ownerPrefix}-generation-parent`); }
+  try { if (!generation.destroyed) generation.destroy({ children: false }); } catch { failures.push(`${ownerPrefix}-generation`); }
+  return failures;
 }
 
 function destroyMeshes(meshes: readonly PixiParticleLinearColorMesh[], ownerPrefix = "detached"): readonly string[] {

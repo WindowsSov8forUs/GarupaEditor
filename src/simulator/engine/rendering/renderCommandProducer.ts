@@ -218,7 +218,7 @@ export interface RenderFieldMaskPlan {
 }
 
 export class RenderOwnerTransaction {
-  private state: "pending" | "committed" | "discarded" = "pending";
+  private state: "pending" | "backend-committed" | "committed" | "discarded" = "pending";
 
   constructor(
     private readonly renderer: SimulatorRendererBackend,
@@ -226,18 +226,25 @@ export class RenderOwnerTransaction {
     private readonly onCommit: () => void = () => {},
   ) {}
 
-  commit(): SimulatorResult<void> {
-    if (this.state !== "pending") {
-      return transactionRejected("commit", this.state);
-    }
+  commitBackend(): SimulatorResult<void> {
+    if (this.state !== "pending") return transactionRejected("backend commit", this.state);
     const committed = this.batch === null
       ? ok(undefined)
       : this.renderer.commit(this.batch);
-    if (committed.status === "ok") {
-      this.state = "committed";
-      this.onCommit();
-    }
+    if (committed.status === "ok") this.state = "backend-committed";
     return committed;
+  }
+
+  publishOwner(): SimulatorResult<void> {
+    if (this.state !== "backend-committed") return transactionRejected("owner publish", this.state);
+    this.state = "committed";
+    this.onCommit();
+    return ok(undefined);
+  }
+
+  commit(): SimulatorResult<void> {
+    const backend = this.commitBackend();
+    return backend.status === "ok" ? this.publishOwner() : backend;
   }
 
   discard(): SimulatorResult<void> {
@@ -463,6 +470,7 @@ export class RenderCommandProducer {
   preflightHudReflect(
     plan: ScoreLifeReflectPlan,
     deltaTimeSeconds: number,
+    tapLaneEffectStates: readonly TapLaneEffectRenderState[] = Object.freeze([]),
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
@@ -622,6 +630,10 @@ export class RenderCommandProducer {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       }
     }
+    const laneEffectCommands = this.appendTapLaneEffectUpdateCommands(
+      commands, base, tapLaneEffectStates,
+    );
+    if (laneEffectCommands.status !== "ok") return laneEffectCommands;
     return this.preflight(commands, () => {
       if (totalAddScore !== 0) {
         if (!plan.record.singleGameOver) {
@@ -671,7 +683,10 @@ export class RenderCommandProducer {
     });
   }
 
-  preflightGameClear(clearStatus: 1 | 2 | 3): SimulatorResult<RenderOwnerTransaction> {
+  preflightGameClear(
+    clearStatus: 1 | 2 | 3,
+    tapLaneEffectStates: readonly TapLaneEffectRenderState[] = Object.freeze([]),
+  ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (this.gameClearElapsedSeconds !== null || ![1, 2, 3].includes(clearStatus)) {
@@ -687,6 +702,10 @@ export class RenderCommandProducer {
       HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result,
       ...HUD_OBJECTS.addScore, ...this.fieldObjectIds,
     ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    const laneEffectCommands = this.appendTapLaneEffectUpdateCommands(
+      commands, base, tapLaneEffectStates,
+    );
+    if (laneEffectCommands.status !== "ok") return laneEffectCommands;
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.gameClear,
       hudRole: "game-clear", state: Object.freeze({ clearStatus }),
@@ -1000,33 +1019,13 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (!Array.isArray(states) || states.some((state) =>
-      !Number.isInteger(state.slot) || state.slot < 0 || state.slot >= 13 ||
-      state.flipX !== (state.slot >= 8) ||
-      !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
-      !validateVector3(state.position) || !validateVector2(state.scale) ||
-      !validateColor(state.color) || !validateOrdering(state.ordering))) {
-      return integrityFailure(
-        "render.tap-lane-effect.invalid-update",
-        ["OLS-R05", "OLS-P01"],
-        "Tap lane effect updates require setup-owned slots and finite serialized animation samples.",
-      );
-    }
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
-    for (const state of states) {
-      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
-      if (!state.active) {
-        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
-        continue;
-      }
-      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
-        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
-        color: state.color, ordering: state.ordering, maskObjectId: null,
-        spriteFlipX: state.flipX });
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
-    }
-    return this.preflight(commands);
+    const appended = this.appendTapLaneEffectUpdateCommands(commands, base, states);
+    if (appended.status !== "ok") return appended;
+    return commands.length === 0
+      ? ok(new RenderOwnerTransaction(this.renderer, null))
+      : this.preflight(commands);
   }
 
   preflightPoolSetup(
@@ -2729,6 +2728,44 @@ export class RenderCommandProducer {
     }
   }
 
+  private appendTapLaneEffectUpdateCommands(
+    commands: RenderCommand[],
+    base: (offset: number) => {
+      readonly sessionId: string;
+      readonly sequence: number;
+      readonly frame: number;
+      readonly substep: number;
+    },
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<void> {
+    if (!Array.isArray(states) || new Set(states.map((state) => state.slot)).size !== states.length ||
+      states.some((state) =>
+        !Number.isInteger(state.slot) || state.slot < 0 || state.slot >= 13 ||
+        state.flipX !== (state.slot >= 8) ||
+        !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
+        !validateVector3(state.position) || !validateVector2(state.scale) ||
+        !validateColor(state.color) || !validateOrdering(state.ordering))) {
+      return integrityFailure(
+        "render.tap-lane-effect.invalid-update",
+        ["OLS-R05", "OLS-P01"],
+        "Tap lane effect updates require unique setup-owned slots and finite serialized animation samples.",
+      );
+    }
+    for (const state of states) {
+      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
+      if (!state.active) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+        continue;
+      }
+      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
+        color: state.color, ordering: state.ordering, maskObjectId: null,
+        spriteFlipX: state.flipX });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    }
+    return ok(undefined);
+  }
+
   private preflight(
     commands: readonly RenderCommand[],
     onCommit: () => void = () => {},
@@ -3316,7 +3353,7 @@ function float32State(value: number): RenderFloat32 {
 
 function transactionRejected(
   operation: string,
-  state: "committed" | "discarded",
+  state: string,
 ) {
   return integrityFailure(
     `render.producer.transaction-${operation}-after-${state}`,

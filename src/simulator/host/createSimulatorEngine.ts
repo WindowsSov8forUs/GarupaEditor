@@ -65,6 +65,7 @@ import {
 } from "../engine/particles/particleCommandProducer";
 import { ParticleFrameCoordinator } from "../engine/particles/particleFrameCoordinator";
 import { GameClearParticleOwner } from "../engine/particles/gameClearParticleOwner";
+import { FrameMutationPlan, type FrameMutationParticipant } from "../engine/managers/frameMutationPlan";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -237,15 +238,26 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audio = this.audioProducer?.preflightPause() ?? null;
     if (audio !== null && audio.status !== "ok") return audio;
-    const pauseResult = this.inGameManager.pause();
-    if (pauseResult.status !== "ok") {
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
       if (audio?.status === "ok") audio.value.discard();
-      return pauseResult;
+      return tapLane;
+    }
+    if (audio?.status === "ok") {
+      const external = audio.value.commitBackend();
+      if (external.status !== "ok") {
+        tapLane.value?.discard();
+        return this.inGameManager.latchExternalFault(external);
+      }
+    }
+    const pauseResult = this.inGameManager.pause(tapLane.value);
+    if (pauseResult.status !== "ok") return pauseResult;
+    if (audio?.status === "ok") {
+      const published = audio.value.publishOwner();
+      if (published.status !== "ok") return this.inGameManager.latchExternalFault(published);
     }
     this.backends.lifecycle.recordState("paused");
-    return audio?.status === "ok"
-      ? this.commitAudio(audio.value)
-      : ok(undefined);
+    return ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
@@ -272,15 +284,18 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audio = this.audioProducer?.preflightResume() ?? null;
     if (audio !== null && audio.status !== "ok") return audio;
+    if (audio?.status === "ok") {
+      const external = audio.value.commitBackend();
+      if (external.status !== "ok") return this.inGameManager.latchExternalFault(external);
+    }
     const resumeResult = this.inGameManager.resume();
-    if (resumeResult.status !== "ok") {
-      if (audio?.status === "ok") audio.value.discard();
-      return resumeResult;
+    if (resumeResult.status !== "ok") return resumeResult;
+    if (audio?.status === "ok") {
+      const published = audio.value.publishOwner();
+      if (published.status !== "ok") return this.inGameManager.latchExternalFault(published);
     }
     this.backends.lifecycle.recordState("running");
-    return audio?.status === "ok"
-      ? this.commitAudio(audio.value)
-      : ok(undefined);
+    return ok(undefined);
   }
 
   continueLive(): SimulatorResult<void> {
@@ -310,8 +325,17 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const particle = this.particleCoordinator?.preflightGameClearStart(clearStatus) ?? null;
     if (particle?.status === "integrity-failure") return particle;
-    const rendering = this.renderProducer?.preflightGameClear(clearStatus) ?? null;
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOffState();
+    if (tapLane.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      return tapLane;
+    }
+    const rendering = this.renderProducer?.preflightGameClear(
+      clearStatus,
+      tapLane.value?.renderStates ?? Object.freeze([]),
+    ) ?? null;
     if (rendering?.status === "integrity-failure") {
+      tapLane.value?.discard();
       if (particle?.status === "ok") particle.value.discard();
       return rendering;
     }
@@ -319,34 +343,52 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (audio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
       if (rendering?.status === "ok") rendering.value.discard();
+      tapLane.value?.discard();
       return audio;
     }
-    if (particle?.status === "ok") {
-      const domain = particle.value.commitDomain();
-      if (domain.status !== "ok") {
-        audio.value.discard();
-        if (rendering?.status === "ok") rendering.value.discard();
-        return this.inGameManager.latchExternalFault(domain);
-      }
+    const participants: FrameMutationParticipant[] = [];
+    if (particle?.status === "ok") participants.push(Object.freeze({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "audio",
+      commitExternal: () => audio.value.commitBackend(),
+      publishOwner: () => audio.value.publishOwner(),
+      discard: () => audio.value.discard(),
+    }));
+    if (rendering?.status === "ok") participants.push(Object.freeze({
+      identity: "render",
+      commitExternal: () => rendering.value.commitBackend(),
+      publishOwner: () => rendering.value.publishOwner(),
+      discard: () => rendering.value.discard(),
+    }));
+    if (tapLane.value !== null) participants.push(Object.freeze({
+      identity: "tap-lane",
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "completion-owner",
+      publishOwner: () => {
+        this.naturalCompletionClearStatus = clearStatus;
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    }));
+    const ownerOrder = ["particle", "audio", "render", "tap-lane", "completion-owner"]
+      .filter((identity) => participants.some((participant) => participant.identity === identity));
+    const externalOrder = ["audio", "render", "particle"]
+      .filter((identity) => participants.some((participant) => participant.identity === identity));
+    const framePlan = FrameMutationPlan.create(participants, externalOrder, ownerOrder);
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
     }
-    const committedAudio = this.commitAudio(audio.value);
-    if (committedAudio.status !== "ok") {
-      if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
-      if (rendering?.status === "ok") rendering.value.discard();
-      return committedAudio;
-    }
-    if (rendering?.status === "ok") {
-      const renderedClear = rendering.value.commit();
-      if (renderedClear.status !== "ok") return this.inGameManager.latchExternalFault(renderedClear);
-    }
-    if (particle?.status === "ok") {
-      const rendered = particle.value.commitRender();
-      if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
-    }
-    const laneCleanup = this.inGameManager.clearTapLaneEffects();
-    if (laneCleanup.status !== "ok") return laneCleanup;
-    this.naturalCompletionClearStatus = clearStatus;
-    return ok(undefined);
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
   advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
@@ -368,25 +410,31 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (particle?.status === "ok") particle.value.discard();
       return planned;
     }
-    if (particle?.status === "ok") {
-      const domain = particle.value.commitDomain();
-      if (domain.status !== "ok") {
-        if (planned?.status === "ok") planned.value.discard();
-        return this.inGameManager.latchExternalFault(domain);
-      }
+    const participants: FrameMutationParticipant[] = [];
+    if (particle?.status === "ok") participants.push(Object.freeze({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    }));
+    if (planned?.status === "ok") participants.push(Object.freeze({
+      identity: "render",
+      commitExternal: () => planned.value.commitBackend(),
+      publishOwner: () => planned.value.publishOwner(),
+      discard: () => planned.value.discard(),
+    }));
+    if (participants.length === 0) return ok(undefined);
+    const framePlan = FrameMutationPlan.create(
+      participants,
+      ["render", "particle"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+      ["particle", "render"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+    );
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
     }
-    if (planned?.status === "ok") {
-      const committed = planned.value.commit();
-      if (committed.status !== "ok") {
-        if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
-        return this.inGameManager.latchExternalFault(committed);
-      }
-    }
-    if (particle?.status === "ok") {
-      const rendered = particle.value.commitRender();
-      if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
-    }
-    return ok(undefined);
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
@@ -437,11 +485,34 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const planned = this.particleCoordinator.preflightMoveTime();
     if (planned.status !== "ok") return planned;
-    const domain = planned.value.commitDomain();
-    if (domain.status !== "ok") return this.inGameManager.latchExternalFault(domain);
-    const rendered = planned.value.commitRender();
-    if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
-    return this.inGameManager.clearTapLaneEffects();
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
+      planned.value.discard();
+      return tapLane;
+    }
+    const participants: FrameMutationParticipant[] = [Object.freeze({
+      identity: "particle",
+      commitExternal: () => planned.value.commitExternal(),
+      publishOwner: () => planned.value.publishDomain(),
+      discard: () => planned.value.discard(),
+    })];
+    if (tapLane.value !== null) participants.push(Object.freeze({
+      identity: "tap-lane",
+      commitExternal: () => tapLane.value!.commitBackend(),
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    }));
+    const framePlan = FrameMutationPlan.create(
+      participants,
+      ["tap-lane", "particle"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+      ["particle", "tap-lane"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+    );
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
+    }
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
@@ -506,24 +577,20 @@ class SimulatorEngineHost implements SimulatorEngine {
           );
     }
     if (particle?.status === "ok") {
-      const domain = particle.value.commitDomain();
-      if (domain.status !== "ok") return domain;
+      const external = particle.value.commitExternal();
+      if (external.status !== "ok") return external;
     }
     const release = this.renderProducer?.preflightSessionRelease() ?? null;
-    if (release?.status === "integrity-failure") {
-      if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
-      return release;
-    }
+    if (release?.status === "integrity-failure") return release;
     if (release?.status === "ok") {
-      const committed = release.value.commit();
-      if (committed.status !== "ok") {
-        if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
-        return committed;
-      }
+      const external = release.value.commitBackend();
+      if (external.status !== "ok") return external;
+      const published = release.value.publishOwner();
+      if (published.status !== "ok") return published;
     }
     if (particle?.status === "ok") {
-      const rendered = particle.value.commitRender();
-      if (rendered.status !== "ok") return rendered;
+      const published = particle.value.publishDomain();
+      if (published.status !== "ok") return published;
     }
     return this.disposePhysicalBackends();
   }

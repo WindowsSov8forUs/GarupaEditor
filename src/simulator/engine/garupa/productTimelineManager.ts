@@ -20,10 +20,15 @@ import {
   type NoteResultTypeValue,
 } from "../data/manualJudgement";
 import type { NoteInformation } from "../chart/types";
+import type { OneFrameJudgementBatch } from "../data/oneFrameData";
 import type { InGameMusicScoreController } from "../managers/inGameMusicScoreController";
-import type { InGameOneFrameJudgementController } from "../managers/inGameOneFrameJudgementController";
+import type {
+  InGameOneFrameJudgementController,
+  OneFrameJudgementBatchTransaction,
+} from "../managers/inGameOneFrameJudgementController";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
+import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/frameMutationPlan";
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaProductRenderProducer } from "./productRenderProducer";
 
@@ -48,6 +53,33 @@ type PendingProductJudgement =
       readonly request: ManualJudgementRequest;
     };
 
+export interface ProductJudgementReflectTransaction {
+  publishOwner(): SimulatorResult<void>;
+  discard(): SimulatorResult<void>;
+}
+
+interface ProductJudgementSubmission {
+  readonly submitted: number;
+  readonly remaining: number;
+  publishOwner(): SimulatorResult<void>;
+  discard(): SimulatorResult<void>;
+}
+
+interface ProductTimelineMutableSnapshot {
+  readonly judgedSources: readonly NoteInformation[];
+  readonly missedSources: readonly NoteInformation[];
+  readonly queuedSources: readonly NoteInformation[];
+  readonly fingers: readonly (readonly [number, ProductFingerOwner])[];
+  readonly chainFinger: readonly (readonly [string, number])[];
+  readonly nextVisibleIndexByChain: readonly (readonly [string, number])[];
+  readonly pendingManualFrame: ManualInputFrame | null;
+  readonly pendingJudgements: readonly PendingProductJudgement[];
+  readonly inFlightJudgements: readonly PendingProductJudgement[];
+  readonly judgedNodeCount: number;
+  readonly missedNodeCount: number;
+  readonly nextAutoIndex: number;
+}
+
 interface ProductFingerOwner {
   readonly fingerId: number;
   readonly began: ManualInputPosition;
@@ -69,14 +101,16 @@ export interface GarupaProductTimelineSnapshot {
 
 export class GarupaProductTimelineManager {
   private readonly orderedVisibleNodes: readonly GarupaProductNode[];
-  private readonly judgedSources = new WeakSet<NoteInformation>();
-  private readonly missedSources = new WeakSet<NoteInformation>();
-  private readonly queuedSources = new WeakSet<NoteInformation>();
+  private readonly judgedSources = new Set<NoteInformation>();
+  private readonly missedSources = new Set<NoteInformation>();
+  private readonly queuedSources = new Set<NoteInformation>();
   private readonly fingers = new Map<number, ProductFingerOwner>();
   private readonly chainFinger = new Map<string, number>();
   private readonly nextVisibleIndexByChain = new Map<string, number>();
   private pendingManualFrame: ManualInputFrame | null = null;
   private readonly pendingJudgements: PendingProductJudgement[] = [];
+  private readonly inFlightJudgements: PendingProductJudgement[] = [];
+  private pendingReflectTransaction: ProductJudgementReflectTransaction | null = null;
   private judgedNodeCount = 0;
   private missedNodeCount = 0;
   private nextAutoIndex = 0;
@@ -172,7 +206,8 @@ export class GarupaProductTimelineManager {
         "Product timeline updates require one initialized non-disposed owner.",
       );
     }
-    if (this.pendingJudgements.length !== 0) {
+    if (this.pendingJudgements.length !== 0 || this.inFlightJudgements.length !== 0 ||
+      this.pendingReflectTransaction !== null) {
       return rejected(
         "simulator.garupa-extension.undrained-product-batch",
         "Every product-only due set must be fully drained through bounded OneFrame batches before the next host update.",
@@ -188,6 +223,11 @@ export class GarupaProductTimelineManager {
         "Product visual and judgement sampling requires finite BPM-clock positions and one exact nonnegative Float32 outer-frame delta.",
       );
     }
+    const before = this.captureMutableState();
+    const rollback = <T>(result: SimulatorResult<T>): SimulatorResult<T> => {
+      this.restoreMutableState(before);
+      return result;
+    };
     const judgedThisFrame: GarupaProductNode[] = [];
     if (this.mode.inputMode === "auto") {
       while (this.nextAutoIndex < this.orderedVisibleNodes.length) {
@@ -198,7 +238,7 @@ export class GarupaProductTimelineManager {
       }
     } else {
       const manual = this.processManualFrame(judgementPosition);
-      if (manual.status !== "ok") return manual;
+      if (manual.status !== "ok") return rollback(manual);
       judgedThisFrame.push(...manual.value);
     }
     const render = this.render?.preflightFrame(
@@ -206,67 +246,186 @@ export class GarupaProductTimelineManager {
       judgedThisFrame,
       deltaTimeSeconds,
     ) ?? ok(null);
-    if (render.status !== "ok") return render;
+    if (render.status !== "ok") return rollback(render);
     if (this.mode.inputMode === "auto") {
       for (const node of judgedThisFrame) {
         const submitted = this.submitAuto(node);
         if (submitted.status !== "ok") {
-          if (render.value !== null) render.value.discard();
-          return submitted;
+          render.value?.discard();
+          return rollback(submitted);
         }
       }
     }
-    if (render.value !== null) {
-      const committed = render.value.commit();
-      if (committed.status !== "ok") return committed;
+    const submission = this.preflightPendingJudgementBatch();
+    if (submission.status !== "ok") {
+      render.value?.discard();
+      return rollback(submission);
     }
-    this.pendingManualFrame = null;
-    const submitted = this.submitPendingJudgementBatch();
-    return submitted.status === "ok" ? ok(undefined) : submitted;
+    const participants: FrameMutationParticipant[] = [];
+    if (submission.value !== null) participants.push(Object.freeze({
+      identity: "product-one-frame",
+      publishOwner: () => submission.value!.publishOwner(),
+      discard: () => submission.value!.discard(),
+    }));
+    if (render.value !== null) participants.push(Object.freeze({
+      identity: "product-render",
+      commitExternal: () => render.value!.commitBackend(),
+      publishOwner: () => render.value!.publishOwner(),
+      discard: () => render.value!.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "product-timeline",
+      publishOwner: () => {
+        this.pendingManualFrame = null;
+        return ok(undefined);
+      },
+      discard: () => {
+        this.restoreMutableState(before);
+        return ok(undefined);
+      },
+    }));
+    const plan = FrameMutationPlan.create(
+      participants,
+      render.value === null ? [] : ["product-render"],
+      ["product-one-frame", "product-render", "product-timeline"]
+        .filter((identity) => participants.some((participant) => participant.identity === identity)),
+    );
+    if (plan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return rollback(plan);
+    }
+    const committed = plan.value.commit();
+    return committed.status === "ok" ? committed : rollback(committed);
   }
 
   submitPendingJudgementBatch(): SimulatorResult<{
     readonly submitted: number;
     readonly remaining: number;
   }> {
+    const planned = this.preflightPendingJudgementBatch();
+    if (planned.status !== "ok") return planned;
+    if (planned.value === null) {
+      return ok(Object.freeze({
+        submitted: 0,
+        remaining: this.pendingJudgements.length,
+      }));
+    }
+    const committed = planned.value.publishOwner();
+    return committed.status === "ok"
+      ? ok(Object.freeze({
+          submitted: planned.value.submitted,
+          remaining: planned.value.remaining,
+        }))
+      : committed;
+  }
+
+  preflightReflectJudgementBatch(
+    batch: OneFrameJudgementBatch,
+  ): SimulatorResult<ProductJudgementReflectTransaction | null> {
+    if (!this.initialized || this.disposed || this.pendingReflectTransaction !== null ||
+      batch === null || !Array.isArray(batch.entries)) {
+      return rejected(
+        "simulator.garupa-extension.invalid-reflect-preflight",
+        "Product reflection requires one initialized owner, one OneFrame batch and no overlapping final-state transaction.",
+      );
+    }
+    const reflected = this.inFlightJudgements.filter((pending) => batch.entries.some((entry) =>
+      entry.noteIndex === pending.request.noteInformation.index &&
+      entry.absolutePosition === pending.node.absolutePosition && entry.phase === "head"));
+    if (reflected.length === 0) return ok(null);
+    if (reflected.length !== this.inFlightJudgements.length || reflected.some((pending) =>
+      batch.entries.filter((entry) => entry.noteIndex === pending.request.noteInformation.index &&
+        entry.absolutePosition === pending.node.absolutePosition && entry.phase === "head").length !== 1)) {
+      return rejected(
+        "simulator.garupa-extension.reflect-source-mismatch",
+        "Every in-flight product judgement must map exactly once into the same immutable OneFrame reflection batch.",
+      );
+    }
+    let state: "pending" | "committed" | "discarded" = "pending";
+    let transaction!: ProductJudgementReflectTransaction;
+    transaction = Object.freeze({
+      publishOwner: (): SimulatorResult<void> => {
+        if (state !== "pending" || this.pendingReflectTransaction !== transaction) {
+          return rejected("simulator.garupa-extension.repeated-reflect-publish", `Product reflection cannot publish from ${state}.`);
+        }
+        for (const entry of reflected) {
+          const index = this.inFlightJudgements.indexOf(entry);
+          if (index < 0) throw new Error("Product reflected source left its in-flight owner");
+          this.inFlightJudgements.splice(index, 1);
+          this.markJudged(entry.node, entry.missed);
+        }
+        state = "committed";
+        this.pendingReflectTransaction = null;
+        return ok(undefined);
+      },
+      discard: (): SimulatorResult<void> => {
+        if (state !== "pending" || this.pendingReflectTransaction !== transaction) {
+          return rejected("simulator.garupa-extension.repeated-reflect-discard", `Product reflection cannot discard from ${state}.`);
+        }
+        state = "discarded";
+        this.pendingReflectTransaction = null;
+        return ok(undefined);
+      },
+    });
+    this.pendingReflectTransaction = transaction;
+    return ok(transaction);
+  }
+
+  private preflightPendingJudgementBatch(): SimulatorResult<ProductJudgementSubmission | null> {
     if (!this.initialized || this.disposed) {
       return rejected(
         "simulator.garupa-extension.batch-outside-lifecycle",
         "Product OneFrame batches require one initialized non-disposed timeline owner.",
       );
     }
-    if (this.pendingJudgements.length === 0) {
-      return ok(Object.freeze({ submitted: 0, remaining: 0 }));
-    }
+    if (this.pendingJudgements.length === 0) return ok(null);
     const capacity = this.oneFrame.availableCapacity();
-    if (capacity === 0) {
-      return ok(Object.freeze({ submitted: 0, remaining: this.pendingJudgements.length }));
-    }
+    if (capacity === 0) return ok(null);
     const count = Math.min(capacity, 5, this.pendingJudgements.length);
-    const entries = this.pendingJudgements.slice(0, count);
+    const entries = Object.freeze(this.pendingJudgements.slice(0, count));
     if (entries.some((entry) => entry.kind !== (this.mode.inputMode === "auto" ? "auto" : "manual"))) {
       return rejected(
         "simulator.garupa-extension.mixed-product-batch",
         "One product session cannot mix Auto and Manual judgement requests in a bounded batch.",
       );
     }
+    let transaction: OneFrameJudgementBatchTransaction;
     if (this.mode.inputMode === "auto") {
-      const requests = entries.map((entry) => (entry as Extract<PendingProductJudgement, { kind: "auto" }>).request);
-      const transaction = this.oneFrame.preflightAutoLiveJudgementBatch(requests);
-      if (transaction.status !== "ok") return transaction;
-      const committed = transaction.value.commit();
-      if (committed.status !== "ok") return committed;
+      const requests = entries.map((entry) =>
+        (entry as Extract<PendingProductJudgement, { kind: "auto" }>).request);
+      const planned = this.oneFrame.preflightAutoLiveJudgementBatch(requests);
+      if (planned.status !== "ok") return planned;
+      transaction = planned.value;
     } else {
       const requests = entries.map((entry) =>
         (entry as Extract<PendingProductJudgement, { kind: "manual" }>).request);
-      const transaction = this.oneFrame.preflightManualJudgementBatch(requests);
-      if (transaction.status !== "ok") return transaction;
-      const committed = transaction.value.commit();
-      if (committed.status !== "ok") return committed;
+      const planned = this.oneFrame.preflightManualJudgementBatch(requests);
+      if (planned.status !== "ok") return planned;
+      transaction = planned.value;
     }
-    for (const entry of entries) this.markJudged(entry.node, entry.missed);
-    this.pendingJudgements.splice(0, count);
-    return ok(Object.freeze({ submitted: count, remaining: this.pendingJudgements.length }));
+    let state: "pending" | "committed" | "discarded" = "pending";
+    return ok(Object.freeze({
+      submitted: count,
+      remaining: this.pendingJudgements.length - count,
+      publishOwner: (): SimulatorResult<void> => {
+        if (state !== "pending") return rejected("simulator.garupa-extension.repeated-batch-publish", `Product batch cannot publish from ${state}.`);
+        const committed = transaction.commit();
+        if (committed.status !== "ok") return committed;
+        const removed = this.pendingJudgements.splice(0, count);
+        if (removed.some((entry, index) => entry !== entries[index])) {
+          throw new Error("Product OneFrame publication lost its staged source order");
+        }
+        this.inFlightJudgements.push(...entries);
+        state = "committed";
+        return ok(undefined);
+      },
+      discard: (): SimulatorResult<void> => {
+        if (state !== "pending") return rejected("simulator.garupa-extension.repeated-batch-discard", `Product batch cannot discard from ${state}.`);
+        const discarded = transaction.discard();
+        if (discarded.status === "ok") state = "discarded";
+        return discarded;
+      },
+    }));
   }
 
   private processManualFrame(
@@ -594,10 +753,54 @@ export class GarupaProductTimelineManager {
   commitDispose(): void {
     this.pendingManualFrame = null;
     this.pendingJudgements.length = 0;
+    this.inFlightJudgements.length = 0;
+    this.pendingReflectTransaction = null;
+    this.judgedSources.clear();
+    this.missedSources.clear();
+    this.queuedSources.clear();
     this.fingers.clear();
     this.chainFinger.clear();
     this.initialized = false;
     this.disposed = true;
+  }
+
+  private captureMutableState(): ProductTimelineMutableSnapshot {
+    return Object.freeze({
+      judgedSources: Object.freeze([...this.judgedSources]),
+      missedSources: Object.freeze([...this.missedSources]),
+      queuedSources: Object.freeze([...this.queuedSources]),
+      fingers: Object.freeze([...this.fingers].map(([fingerId, owner]) => Object.freeze([
+        fingerId,
+        cloneFingerOwner(owner),
+      ] as const))),
+      chainFinger: Object.freeze([...this.chainFinger].map((entry) => Object.freeze([...entry] as const))),
+      nextVisibleIndexByChain: Object.freeze([...this.nextVisibleIndexByChain].map((entry) => Object.freeze([...entry] as const))),
+      pendingManualFrame: this.pendingManualFrame,
+      pendingJudgements: Object.freeze([...this.pendingJudgements]),
+      inFlightJudgements: Object.freeze([...this.inFlightJudgements]),
+      judgedNodeCount: this.judgedNodeCount,
+      missedNodeCount: this.missedNodeCount,
+      nextAutoIndex: this.nextAutoIndex,
+    });
+  }
+
+  private restoreMutableState(snapshot: ProductTimelineMutableSnapshot): void {
+    replaceSet(this.judgedSources, snapshot.judgedSources);
+    replaceSet(this.missedSources, snapshot.missedSources);
+    replaceSet(this.queuedSources, snapshot.queuedSources);
+    this.fingers.clear();
+    for (const [fingerId, owner] of snapshot.fingers) this.fingers.set(fingerId, cloneFingerOwner(owner));
+    this.chainFinger.clear();
+    for (const [identity, fingerId] of snapshot.chainFinger) this.chainFinger.set(identity, fingerId);
+    this.nextVisibleIndexByChain.clear();
+    for (const [identity, index] of snapshot.nextVisibleIndexByChain) this.nextVisibleIndexByChain.set(identity, index);
+    this.pendingManualFrame = snapshot.pendingManualFrame;
+    this.pendingJudgements.splice(0, this.pendingJudgements.length, ...snapshot.pendingJudgements);
+    this.inFlightJudgements.splice(0, this.inFlightJudgements.length, ...snapshot.inFlightJudgements);
+    this.pendingReflectTransaction = null;
+    this.judgedNodeCount = snapshot.judgedNodeCount;
+    this.missedNodeCount = snapshot.missedNodeCount;
+    this.nextAutoIndex = snapshot.nextAutoIndex;
   }
 
   snapshot(): GarupaProductTimelineSnapshot {
@@ -608,10 +811,30 @@ export class GarupaProductTimelineManager {
       missedNodeCount: this.missedNodeCount,
       nextAutoIndex: this.nextAutoIndex,
       activeFingerCount: this.fingers.size,
-      pendingJudgementCount: this.pendingJudgements.length,
+      pendingJudgementCount: this.pendingJudgements.length + this.inFlightJudgements.length,
       render: this.render?.snapshot() ?? null,
     });
   }
+}
+
+function cloneFingerOwner(owner: ProductFingerOwner): ProductFingerOwner {
+  return {
+    fingerId: owner.fingerId,
+    began: Object.freeze({ ...owner.began }),
+    last: Object.freeze({ ...owner.last }),
+    chainIdentity: owner.chainIdentity,
+    pendingGesture: owner.pendingGesture === null
+      ? null
+      : Object.freeze({
+          ...owner.pendingGesture,
+          origin: Object.freeze({ ...owner.pendingGesture.origin }),
+        }),
+  };
+}
+
+function replaceSet<T>(target: Set<T>, values: readonly T[]): void {
+  target.clear();
+  for (const value of values) target.add(value);
 }
 
 function productJudgeNoteType(node: GarupaProductNode): number {

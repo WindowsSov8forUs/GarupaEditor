@@ -20,7 +20,7 @@ import {
 } from "./gameClearParticleOwner";
 
 export class ParticleOuterFrameTransaction {
-  private state: "pending" | "domain-committed" | "committed" | "discarded" = "pending";
+  private state: "pending" | "external-committed" | "domain-committed" | "committed" | "discarded" = "pending";
 
   constructor(
     private readonly coordinator: ParticleFrameCoordinator,
@@ -30,6 +30,40 @@ export class ParticleOuterFrameTransaction {
     private readonly gameClearTransaction: GameClearParticleOwnerTransaction | null,
   ) {}
 
+  /** Commits only the portable executor; every Simulator-owned state remains detached. */
+  commitExternal(): SimulatorResult<void> {
+    if (this.state !== "pending") return transactionRejected("external commit", this.state);
+    const rendered = this.rendererBatch === null
+      ? ok(undefined)
+      : mapParticleResult(this.coordinator.renderer!.commitFrame(this.rendererBatch));
+    if (rendered.status !== "ok") {
+      // Renderer/context failure is an explicit external boundary. The native
+      // simulation and both command owners still roll back to the prior frame.
+      this.coordinator.backend.discardFrame(this.backendBatch);
+      this.ownerTransaction?.discard();
+      this.gameClearTransaction?.discard();
+      this.state = "discarded";
+      return rendered;
+    }
+    this.state = "external-committed";
+    return ok(undefined);
+  }
+
+  /** No-fail publication after the exact detached backend/owner capabilities survived external commit. */
+  publishDomain(): SimulatorResult<void> {
+    if (this.state !== "external-committed") return transactionRejected("domain publish", this.state);
+    const committed = mapParticleResult(this.coordinator.backend.commitFrame(this.backendBatch));
+    if (committed.status !== "ok") return committed;
+    const owner = this.ownerTransaction?.commit() ?? ok(undefined);
+    if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearTransaction?.commit() ?? ok(undefined);
+    if (gameClear.status !== "ok") return gameClear;
+    this.state = "committed";
+    this.coordinator.finishFrame(this.backendBatch.frame);
+    return ok(undefined);
+  }
+
+  /** Legacy source-compatible ordering; production frame plans use commitExternal/publishDomain. */
   commitDomain(): SimulatorResult<void> {
     if (this.state !== "pending") return transactionRejected("domain commit", this.state);
     const committed = mapParticleResult(this.coordinator.backend.commitFrame(this.backendBatch));

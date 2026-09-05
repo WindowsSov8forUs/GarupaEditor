@@ -233,20 +233,23 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         "Web Audio commit requires the exact pending one-use semantic capability.",
       );
     }
-    const committed = this.recording.commit(batch);
-    if (committed.status !== "accepted") return committed;
-    this.pending = null;
     try {
       if (this.physicalOutputState !== "move-time-suppressed") {
         this.applyCommands(pending.commands);
       }
-      return audioAccepted(undefined);
     } catch {
+      // Physical AudioNode effects cannot be rolled back. Semantic commands and
+      // every Simulator owner remain detached when that external boundary fails.
+      this.recording.discard(batch);
+      this.pending = null;
       return this.recording.recordTerminalFault(
         "audio.web.command-commit-threw",
-        "The first synchronous AudioNode or AudioParam exception is terminal; committed semantic commands remain visible.",
+        "The first synchronous AudioNode or AudioParam exception is terminal; physical effects may be partial, but semantic commands and Simulator-owned frame state did not publish.",
       );
     }
+    const committed = this.recording.commit(batch);
+    this.pending = null;
+    return committed;
   }
 
   discard(batch: AudioCommandBatch): AudioOperationResult<void> {

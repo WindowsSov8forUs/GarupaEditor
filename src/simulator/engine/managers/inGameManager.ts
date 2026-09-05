@@ -20,6 +20,7 @@ import { NoteManager } from "./noteManager";
 import type {
   OrdinaryFixedNoteSceneInput,
   RenderCommandProducer,
+  RenderOwnerTransaction,
 } from "../rendering/renderCommandProducer";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
@@ -39,7 +40,13 @@ import type {
   PrimaryJudgementAdjustmentOwner,
   PrimaryJudgementAdjustmentSnapshot,
 } from "./primaryJudgementAdjustmentOwner";
-import type { TapLaneEffectOwner, TapLaneEffectSnapshot } from "./tapLaneEffectOwner";
+import type {
+  TapLaneEffectOwner,
+  TapLaneEffectSnapshot,
+  TapLaneEffectStateTransaction,
+  TapLaneEffectTransaction,
+} from "./tapLaneEffectOwner";
+import { FrameMutationPlan, type FrameMutationParticipant } from "./frameMutationPlan";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: SimulatorIntegrityFailure | null;
@@ -206,7 +213,8 @@ export class InGameManager {
     const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
     if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
     if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
-    this.audioProducer?.beginOuterFrame();
+    const audioFrame = this.audioProducer?.beginOuterFrame() ?? ok(undefined);
+    if (audioFrame.status !== "ok") return this.latchFault(audioFrame);
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
@@ -223,7 +231,7 @@ export class InGameManager {
         this.habahiroChangeAbsolutePos,
       );
       if (laneChange.status !== "ok") return this.latchFault(laneChange);
-      const committed = laneChange.value.commit();
+      const committed = this.commitRenderFrame(laneChange.value, "habahiro-degraded-lane-change");
       if (committed.status !== "ok") return this.latchFault(committed);
       this.degradedHabahiroLaneChanged = true;
     }
@@ -240,7 +248,7 @@ export class InGameManager {
           this.habahiroChangeAbsolutePos,
         );
         if (flash.status !== "ok") return this.latchFault(flash);
-        const committed = flash.value.commit();
+        const committed = this.commitRenderFrame(flash.value, "habahiro-flash-start");
         if (committed.status !== "ok") return this.latchFault(committed);
         this.habahiroLanePhase = "playing-before-change";
         this.habahiroFlashElapsed = Math.fround(0);
@@ -261,7 +269,7 @@ export class InGameManager {
           this.renderScene,
         );
         if (advanced.status !== "ok") return this.latchFault(advanced);
-        const committed = advanced.value.commit();
+        const committed = this.commitRenderFrame(advanced.value, "habahiro-animation-advance");
         if (committed.status !== "ok") return this.latchFault(committed);
         const changed = previousElapsed < this.renderScene.habahiro.changeLaneSeconds.value &&
           nextElapsed >= this.renderScene.habahiro.changeLaneSeconds.value;
@@ -279,7 +287,7 @@ export class InGameManager {
       return this.latchFault(hudAnimation);
     }
     if (hudAnimation?.status === "ok") {
-      const committed = hudAnimation.value.commit();
+      const committed = this.commitRenderFrame(hudAnimation.value, "hud-animation-advance");
       if (committed.status !== "ok") return this.latchFault(committed);
     }
     let particleAdvanced = false;
@@ -326,84 +334,102 @@ export class InGameManager {
           );
           return this.latchFault(audioPlan);
         }
+        const canCombineTapLane = businessPlan?.status === "ok" && this.renderProducer !== null;
+        const tapLaneEffectStatePlan: SimulatorResult<TapLaneEffectStateTransaction | null> | null = canCombineTapLane
+          ? terminalGameOver
+            ? this.tapLaneEffect?.preflightAllOffState() ?? null
+            : this.tapLaneEffect?.preflightJudgementState(batch) ?? null
+          : null;
+        if (tapLaneEffectStatePlan?.status === "integrity-failure") {
+          if (particlePlan?.status === "ok") particlePlan.value.discard();
+          if (audioPlan?.status === "ok") audioPlan.value.discard();
+          if (businessPlan?.status === "ok") this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
+          return this.latchFault(tapLaneEffectStatePlan);
+        }
+        const detachedTapLane = tapLaneEffectStatePlan?.status === "ok"
+          ? tapLaneEffectStatePlan.value
+          : null;
         const renderPlan = businessPlan?.status === "ok"
-          ? this.renderProducer?.preflightHudReflect(businessPlan.value, batchDeltaTimeSeconds) ?? null
+          ? this.renderProducer?.preflightHudReflect(
+              businessPlan.value,
+              batchDeltaTimeSeconds,
+              detachedTapLane?.renderStates ?? Object.freeze([]),
+            ) ?? null
           : null;
         if (renderPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
+          detachedTapLane?.discard();
           this.scoreLifeStateManager!.discardReflect(businessPlan!.value);
           this.oneFrameJudgementController.discardReflectOneFrameData(
             reflectPlan.value,
           );
           return this.latchFault(renderPlan);
         }
-        const reflected =
-          this.oneFrameJudgementController.commitReflectOneFrameData(
-            reflectPlan.value,
-          );
-        if (reflected.status !== "ok") {
-          if (businessPlan?.status === "ok") {
-            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
-          }
+        const productReflect = this.garupaProduct?.preflightReflectJudgementBatch(batch) ?? null;
+        if (productReflect?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
           if (renderPlan?.status === "ok") renderPlan.value.discard();
-          return this.latchFault(reflected);
+          detachedTapLane?.discard();
+          if (businessPlan?.status === "ok") this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
+          return this.latchFault(productReflect);
         }
-        if (businessPlan?.status === "ok") {
-          const businessReflect = this.scoreLifeStateManager!.commitReflect(
-            businessPlan.value,
-          );
-          if (businessReflect.status !== "ok") {
-            if (particlePlan?.status === "ok") particlePlan.value.discard();
-            if (audioPlan?.status === "ok") audioPlan.value.discard();
-            if (renderPlan?.status === "ok") renderPlan.value.discard();
-              return this.latchFault(businessReflect);
-          }
+        const participants: FrameMutationParticipant[] = [];
+        participants.push(Object.freeze({
+          identity: "one-frame",
+          publishOwner: (): SimulatorResult<void> => {
+            const reflected = this.oneFrameJudgementController.commitReflectOneFrameData(reflectPlan.value!);
+            return reflected.status === "ok" ? ok(undefined) : reflected;
+          },
+          discard: () => this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value!),
+        }));
+        if (businessPlan?.status === "ok") participants.push(Object.freeze({
+          identity: "score-life",
+          publishOwner: () => this.scoreLifeStateManager!.commitReflect(businessPlan.value),
+          discard: () => this.scoreLifeStateManager!.discardReflect(businessPlan.value),
+        }));
+        if (productReflect?.status === "ok" && productReflect.value !== null) participants.push(Object.freeze({
+          identity: "product-reflect",
+          publishOwner: () => productReflect.value!.publishOwner(),
+          discard: () => productReflect.value!.discard(),
+        }));
+        if (particlePlan?.status === "ok") participants.push(Object.freeze({
+          identity: "particle",
+          commitExternal: () => particlePlan.value.commitExternal(),
+          publishOwner: () => particlePlan.value.publishDomain(),
+          discard: () => particlePlan.value.discard(),
+        }));
+        if (audioPlan?.status === "ok") participants.push(Object.freeze({
+          identity: "audio",
+          commitExternal: () => audioPlan.value.commitBackend(),
+          publishOwner: () => audioPlan.value.publishOwner(),
+          discard: () => audioPlan.value.discard(),
+        }));
+        if (renderPlan?.status === "ok") participants.push(Object.freeze({
+          identity: "render",
+          commitExternal: () => renderPlan.value.commitBackend(),
+          publishOwner: () => renderPlan.value.publishOwner(),
+          discard: () => renderPlan.value.discard(),
+        }));
+        if (detachedTapLane !== null) participants.push(Object.freeze({
+          identity: "tap-lane",
+          publishOwner: () => detachedTapLane.publishOwner(),
+          discard: () => detachedTapLane.discard(),
+        }));
+        const ownerOrder = participants.map((participant) => participant.identity);
+        const externalOrder = ["audio", "render", "particle"].filter((identity) =>
+          participants.some((participant) => participant.identity === identity));
+        const framePlan = FrameMutationPlan.create(participants, externalOrder, ownerOrder);
+        if (framePlan.status !== "ok") {
+          for (const participant of [...participants].reverse()) participant.discard();
+          return this.latchFault(framePlan);
         }
-        if (particlePlan?.status === "ok") {
-          const committed = particlePlan.value.commitDomain();
-          if (committed.status !== "ok") {
-            if (audioPlan?.status === "ok") audioPlan.value.discard();
-            if (renderPlan?.status === "ok") renderPlan.value.discard();
-              return this.latchFault(committed);
-          }
-        }
-        if (audioPlan?.status === "ok") {
-          const committed = audioPlan.value.commit();
-          if (committed.status !== "ok") {
-            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
-            if (renderPlan?.status === "ok") renderPlan.value.discard();
-              return this.latchFault(committed);
-          }
-        }
-        if (renderPlan?.status === "ok") {
-          const committed = renderPlan.value.commit();
-          if (committed.status !== "ok") {
-            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
-              return this.latchFault(committed);
-          }
-        }
-        const tapLaneEffectPlan = terminalGameOver
-          ? this.tapLaneEffect?.preflightAllOff() ?? null
-          : this.tapLaneEffect?.preflightJudgement(batch) ?? null;
-        if (tapLaneEffectPlan?.status === "integrity-failure") {
-          if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
-          return this.latchFault(tapLaneEffectPlan);
-        }
-        if (tapLaneEffectPlan?.status === "ok" && tapLaneEffectPlan.value !== null) {
-          const committed = tapLaneEffectPlan.value.commit();
-          if (committed.status !== "ok") {
-            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
-            return this.latchFault(committed);
-          }
-        }
-        if (particlePlan?.status === "ok") {
-          const committed = particlePlan.value.commitRender();
-          if (committed.status !== "ok") return this.latchFault(committed);
-          particleAdvanced = true;
-        }
+        const committedFrame = framePlan.value.commit();
+        if (committedFrame.status !== "ok") return this.latchFault(committedFrame);
+        particleAdvanced ||= particlePlan?.status === "ok";
         firstJudgementBatch = false;
         const nextProductBatch = this.garupaProduct?.submitPendingJudgementBatch() ?? ok({
           submitted: 0,
@@ -424,15 +450,48 @@ export class InGameManager {
     if (tapLaneEffectAdvance?.status === "integrity-failure") {
       return this.latchFault(tapLaneEffectAdvance);
     }
+    const particleAdvance = !particleAdvanced
+      ? this.particleCoordinator?.preflightAdvance(deltaTimeSeconds, false) ?? null
+      : null;
+    if (particleAdvance?.status === "integrity-failure") {
+      if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
+        tapLaneEffectAdvance.value.discard();
+      }
+      return this.latchFault(particleAdvance);
+    }
+    const advanceParticipants: FrameMutationParticipant[] = [];
     if (tapLaneEffectAdvance?.status === "ok" && tapLaneEffectAdvance.value !== null) {
-      const committed = tapLaneEffectAdvance.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
+      advanceParticipants.push(Object.freeze({
+        identity: "tap-lane-advance",
+        commitExternal: () => tapLaneEffectAdvance.value!.commitBackend(),
+        publishOwner: () => tapLaneEffectAdvance.value!.publishOwner(),
+        discard: () => tapLaneEffectAdvance.value!.discard(),
+      }));
     }
-    if (!particleAdvanced) {
-      const advanced = this.commitParticleAdvance(deltaTimeSeconds, false);
-      if (advanced.status !== "ok") return this.latchFault(advanced);
+    if (particleAdvance?.status === "ok") advanceParticipants.push(Object.freeze({
+      identity: "particle-advance",
+      commitExternal: () => particleAdvance.value.commitExternal(),
+      publishOwner: () => particleAdvance.value.publishDomain(),
+      discard: () => particleAdvance.value.discard(),
+    }));
+    if (advanceParticipants.length === 0) {
+      return this.audioProducer?.commitOuterFrame() ?? ok(undefined);
     }
-    return ok(undefined);
+    const advancePlan = FrameMutationPlan.create(
+      advanceParticipants,
+      advanceParticipants.map((participant) => participant.identity),
+      advanceParticipants.map((participant) => participant.identity),
+    );
+    if (advancePlan.status !== "ok") {
+      for (const participant of [...advanceParticipants].reverse()) participant.discard();
+      return this.latchFault(advancePlan);
+    }
+    const advanced = advancePlan.value.commit();
+    if (advanced.status !== "ok") return this.latchFault(advanced);
+    const audioFrameCommitted = this.audioProducer?.commitOuterFrame() ?? ok(undefined);
+    return audioFrameCommitted.status === "ok"
+      ? audioFrameCommitted
+      : this.latchFault(audioFrameCommitted);
   }
 
   continueLive(): SimulatorResult<void> {
@@ -461,6 +520,30 @@ export class InGameManager {
     return ok(this.noteManager.getAdjustedMusicPosition());
   }
 
+  preflightTapLaneEffectsAllOff(): SimulatorResult<TapLaneEffectTransaction | null> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized") {
+      return integrityFailure(
+        "render.tap-lane-effect.cleanup-outside-initialized-lifecycle",
+        ["OLS-R05", "OLS-P01"],
+        "Lane-effect all-off preflight belongs to one initialized session owner.",
+      );
+    }
+    return this.tapLaneEffect?.preflightAllOff() ?? ok(null);
+  }
+
+  preflightTapLaneEffectsAllOffState(): SimulatorResult<TapLaneEffectStateTransaction | null> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized") {
+      return integrityFailure(
+        "render.tap-lane-effect.cleanup-outside-initialized-lifecycle",
+        ["OLS-R05", "OLS-P01"],
+        "Lane-effect all-off state preflight belongs to one initialized session owner.",
+      );
+    }
+    return this.tapLaneEffect?.preflightAllOffState() ?? ok(null);
+  }
+
   clearTapLaneEffects(): SimulatorResult<void> {
     if (this.faultValue !== null) return this.faultValue;
     if (this.lifecycleState !== "initialized") {
@@ -479,7 +562,9 @@ export class InGameManager {
     return ok(undefined);
   }
 
-  pause(): SimulatorResult<void> {
+  pause(
+    preparedLaneEffect?: TapLaneEffectTransaction | null,
+  ): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
     }
@@ -499,10 +584,21 @@ export class InGameManager {
       );
     }
     if (this.isPaused()) return ok(undefined);
-    const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
-    if (movie.status !== "ok") return this.latchFault(movie);
-    const laneEffect = this.clearTapLaneEffects();
+    const laneEffect = preparedLaneEffect === undefined
+      ? this.preflightTapLaneEffectsAllOff()
+      : ok(preparedLaneEffect);
     if (laneEffect.status !== "ok") return laneEffect;
+    const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
+    if (movie.status !== "ok") {
+      laneEffect.value?.discard();
+      return this.latchFault(movie);
+    }
+    if (laneEffect.value !== null) {
+      const external = laneEffect.value.commitBackend();
+      if (external.status !== "ok") return this.latchFault(external);
+      const published = laneEffect.value.publishOwner();
+      if (published.status !== "ok") return this.latchFault(published);
+    }
     this.currentGameStateValue = GameState.PauseSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);
@@ -583,6 +679,20 @@ export class InGameManager {
     this.pauseStateValue = PauseState.None;
   }
 
+  private commitRenderFrame(
+    transaction: RenderOwnerTransaction,
+    identity: string,
+  ): SimulatorResult<void> {
+    const participant: FrameMutationParticipant = Object.freeze({
+      identity,
+      commitExternal: () => transaction.commitBackend(),
+      publishOwner: () => transaction.publishOwner(),
+      discard: () => transaction.discard(),
+    });
+    const plan = FrameMutationPlan.create([participant], [identity], [identity]);
+    return plan.status === "ok" ? plan.value.commit() : plan;
+  }
+
   private commitParticleAdvance(
     deltaTimeSeconds: number,
     paused: boolean,
@@ -596,8 +706,8 @@ export class InGameManager {
   private commitParticleTransaction(
     transaction: ParticleOuterFrameTransaction,
   ): SimulatorResult<void> {
-    const domain = transaction.commitDomain();
-    return domain.status === "ok" ? transaction.commitRender() : domain;
+    const external = transaction.commitExternal();
+    return external.status === "ok" ? transaction.publishDomain() : external;
   }
 
   private isPaused(): boolean {
@@ -620,6 +730,7 @@ export class InGameManager {
       ...fault,
       requiredEvidence: [...fault.requiredEvidence],
     };
+    this.audioProducer?.discardOuterFrame();
     this.faultValue = latched;
     this.lifecycleState = "faulted";
     return latched;

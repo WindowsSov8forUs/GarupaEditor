@@ -35,7 +35,7 @@ interface TapStatusSnapshot {
 }
 
 export class AudioOwnerTransaction {
-  private state: "pending" | "committed" | "discarded" = "pending";
+  private state: "pending" | "backend-committed" | "committed" | "discarded" = "pending";
 
   constructor(
     private readonly backend: SimulatorAudioBackend,
@@ -43,21 +43,35 @@ export class AudioOwnerTransaction {
     private readonly onCommit: () => void = () => {},
   ) {}
 
-  commit(): SimulatorResult<void> {
+  commitBackend(): SimulatorResult<void> {
     if (this.state !== "pending") {
       return rejected(
-        "audio.transaction.repeated-commit",
-        `Audio transaction cannot commit from ${this.state}.`,
+        "audio.transaction.repeated-backend-commit",
+        `Audio backend transaction cannot commit from ${this.state}.`,
       );
     }
     const committed = this.batch === null
       ? ok(undefined)
       : mapAudioResult(this.backend.commit(this.batch));
-    if (committed.status === "ok") {
-      this.state = "committed";
-      this.onCommit();
-    }
+    if (committed.status === "ok") this.state = "backend-committed";
     return committed;
+  }
+
+  publishOwner(): SimulatorResult<void> {
+    if (this.state !== "backend-committed") {
+      return rejected(
+        "audio.transaction.invalid-owner-publish",
+        `Audio owner state cannot publish from ${this.state}.`,
+      );
+    }
+    this.state = "committed";
+    this.onCommit();
+    return ok(undefined);
+  }
+
+  commit(): SimulatorResult<void> {
+    const backend = this.commitBackend();
+    return backend.status === "ok" ? this.publishOwner() : backend;
   }
 
   discard(): SimulatorResult<void> {
@@ -87,6 +101,7 @@ export class AudioCommandProducer {
   private naturallyEnded = false;
   private gameOverTriggered = false;
   private completionTriggered = false;
+  private outerFrameTapStatus: TapStatusSnapshot | null = null;
 
   constructor(
     readonly input: SimulatorAudioSessionInput,
@@ -147,12 +162,29 @@ export class AudioCommandProducer {
     return ok(undefined);
   }
 
-  beginOuterFrame(): void {
-    if (this.tapStatus.frameCounter <= 0) return;
-    this.tapStatus = Object.freeze({
+  beginOuterFrame(): SimulatorResult<void> {
+    if (this.outerFrameTapStatus !== null) {
+      return rejected(
+        "audio.frame.overlapping-tap-status",
+        "One audio tap-suppression projection may be detached for each outer frame.",
+      );
+    }
+    this.outerFrameTapStatus = Object.freeze({
       ...this.tapStatus,
-      frameCounter: this.tapStatus.frameCounter - 1,
+      frameCounter: Math.max(0, this.tapStatus.frameCounter - 1),
     });
+    return ok(undefined);
+  }
+
+  commitOuterFrame(): SimulatorResult<void> {
+    if (this.outerFrameTapStatus === null) return ok(undefined);
+    this.tapStatus = this.outerFrameTapStatus;
+    this.outerFrameTapStatus = null;
+    return ok(undefined);
+  }
+
+  discardOuterFrame(): void {
+    this.outerFrameTapStatus = null;
   }
 
   preflightInitialize(): SimulatorResult<AudioOwnerTransaction> {
@@ -339,7 +371,7 @@ export class AudioCommandProducer {
     batch: OneFrameJudgementBatch,
     gameOverAfterReflect = false,
   ): SimulatorResult<AudioOwnerTransaction> {
-    const nextTap = { ...this.tapStatus };
+    const nextTap = { ...(this.outerFrameTapStatus ?? this.tapStatus) };
     const activeHolds = new Set(
       this.backend.snapshot().semantic.holds.map((hold) => hold.ownerKey),
     );
@@ -404,6 +436,7 @@ export class AudioCommandProducer {
       commands,
       () => {
         this.tapStatus = Object.freeze({ ...nextTap });
+        this.outerFrameTapStatus = null;
         if (gameOverAfterReflect) this.gameOverTriggered = true;
       },
     );
