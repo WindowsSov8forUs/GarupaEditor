@@ -3514,13 +3514,14 @@ function applyScoreHud(
   }
   if (visual.text !== null) visual.text.visible = false;
   const nativeProfile = requireScoreNativeProfile(object);
-  const scoreRoot = nativeProfile.scene.objects.find((row) => row.path === nativeProfile.scene.rootPath)!;
   const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
   const backgroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background`);
   const coverProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background_Cover`);
   const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
   const foregroundGraph = nativeProfile.scene.objects.find((row) => row.path === foregroundProfile.path)!;
-  placeAuthoredUiRoot(object, scoreRoot.localPosition[0], scoreRoot.localPosition[1]);
+  // StarUIAnchor Left+Top/ScreenToSafeArea overrides the serialized root TRS.
+  // Keep the authored Base/Progress child graph relative to that runtime anchor.
+  placeSafeTopAnchoredUiRoot(object, "left");
   showScoreBaselineComponents(visual, state.foregroundActive);
 
   const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
@@ -3672,11 +3673,10 @@ function updatePersistentScoreHud(
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): void {
   const nativeProfile = requireScoreNativeProfile(object);
-  const scoreRoot = nativeProfile.scene.objects.find((row) => row.path === nativeProfile.scene.rootPath)!;
   const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
   const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
   const foregroundGraph = nativeProfile.scene.objects.find((row) => row.path === foregroundProfile.path)!;
-  placeAuthoredUiRoot(object, scoreRoot.localPosition[0], scoreRoot.localPosition[1]);
+  placeSafeTopAnchoredUiRoot(object, "left");
   showScoreBaselineComponents(visual, state.foregroundActive);
   const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
   if (scoreFont === undefined || visual.scoreTextSegments === null || totalScoreProfile.font_size === undefined) {

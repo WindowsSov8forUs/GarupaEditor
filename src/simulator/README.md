@@ -48,18 +48,20 @@ Frame mutation uses detached backend capabilities. Potentially failing portable/
 
 ## Current capability boundary
 
+**Rendering re-audit is OPEN.** The Score runtime-anchor regression is corrected, but particle cross-scene sorting and stretched-billboard consumption remain open. Earlier resource/primitive audit passes do not close these production paths. See [`rendering-consumption-contract.md`](./rendering-consumption-contract.md); its dispositions supersede historical aggregate closure statements.
+
 `closed-native-algorithm-equivalent` means that the current 10.1.4 ARM64/serialized state transition, Float32 formula, random ownership, source resource relation and GPU-pre primitive handoff are closed for the named scope. It does **not** claim Unity/GPU driver raster, fixed-device pixels, CRI/USM or physical speaker equivalence.
 
 | Capability | Product status | Claim boundary |
 | --- | --- | --- |
 | Public recipe and autonomous host | `closed-portable` | Public Schema 13, transport Schema 3 and the one source-neutral launcher remain product architecture |
 | Live/Rehearsal × Manual/Auto lifecycle | `closed-native-algorithm-equivalent` | Independent mode axes, startup/gameplay/pause, Life-zero, terminal and Rehearsal MoveTime owner order; physical A/V output remains external |
-| Ordinary command scene and current particles | `closed-native-algorithm-equivalent` | All 27 current resources, 1,375 concrete systems and 152 reachable pairs; native Shape/TRS/random/module/lifecycle and mode 0/1/4 GPU-pre primitives |
+| Ordinary command scene and current particles | `observational-gap` | Source-bound resource/core work is retained; projected stretch direction and ordinary/particle final ordering are not closed |
 | Original Slide particle owner | `closed-native-algorithm-equivalent` | Eight-slot pool, target-button transform, outer `n`, per-ParticleSystem `g`, Stop/Clear/Play and current-node movement are separate owners |
-| Score/ordinary HUD presentation | `closed-product-extension` | Complete 64-object NGUI Score graph, source font metrics, SoftClip and SS/SSS animation are native-equivalent; the active score input remains product CS-V1 |
-| Original Live settings and current Skin switching | `closed-native-algorithm-equivalent` | Frozen settings, source-bound package resolver, all current selected particle/render branches and Retry/MoveTime identity reuse |
+| Score/ordinary HUD presentation | `observational-gap` | Runtime safe-area anchor restored without moving authored child nodes; full final glyph/clip consumption remains under audit; score input remains product CS-V1 |
+| Original Live settings and current Skin switching | `observational-gap` / `closed-static-portable` | Static package selection and identity reuse are retained; selected render/HUD/Skin output gates remain open |
 | HABAHIRO current external path | `closed-native-algorithm-equivalent` | Three leased packages, exact Root_effect Sprite graph/curves, frame-25 resource mutation and frame-60 no-callback lifecycle |
-| Base clear / FC / AP | `closed-native-algorithm-equivalent` | One shared prepared particle world/primitive executor, complete Animator states, 3.233-second callback and 15ms exit handoff |
+| Base clear / FC / AP | `observational-gap` for rendering | Shared particle world and Animator/callback work is retained; the shared geometry/composition gaps also prevent terminal rendering closure |
 | Frame publication | `closed-native-algorithm-equivalent` | OneFrame, score/life, product-reflect, particle, audio semantic state, HUD and tap-lane owners publish only after all detached backend commits succeed |
 | Startup direction/audio | `closed-portable` | Prepared BGM, Live-only Gaya and null SD/voice route; tutorial, CRI/HCA and speaker exact excluded |
 | Gameplay MV | `closed-portable` | Live Manual/Auto portable media, signed delay, darkness, pause/resume and cleanup; standalone MVView/Star3D/CRI excluded |

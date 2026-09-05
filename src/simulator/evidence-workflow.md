@@ -17,13 +17,15 @@
 
 ## 当前 Skin / Particle / HUD / Game-clear 证据
 
+**Production 消费复查仍 OPEN。** 下列证据与历史独立差分不能替代最终集成：Score 曾漏掉 StarUIAnchor 对 prefab 根初始坐标的运行时覆盖；particle 内部排序未进入 ordinary 共同排序域，stretched billboard 也存在投影方向消费差异。当前处分以 [`rendering-consumption-contract.md`](./rendering-consumption-contract.md) 和 `public/capabilities.ts` 为准。这些是算法/集成缺陷，不属于 GPU 排除项；不得要求用户补录作为源码排查前提。
+
 - Skin资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`继续拥有master/包选择。过期Collabo 36的六个`skinapril2019`路径仍不可得且没有`skin_april2019`别名；三项Live2D-only structural stage仍不进入Standard/MV recipe。
-- 当前source-bound粒子证据由已推送批次`dccbfab9`/`d707d922`/`c52355e9`、native core `1ea7e35b1584809ffb695a2033e4e8f38579f443`和renderer/Slide `e43dded8890260806001fbcb5ab519cfb019a379`共同拥有。覆盖27 resources、1,375 concrete systems、1,147 enabled renderers、114 renderer signatures、4 meshes和152 reachable ordinary/directional pairs；Shape 0/4/5/8/10/no-Shape、per-instance random、module/time/capacity、root→parent TRS、Slide `n`/`g`与mode 0/1/4 GPU前图元均以独立差分关闭。
+- 当前source-bound粒子证据由已推送批次`dccbfab9`/`d707d922`/`c52355e9`、native core `1ea7e35b1584809ffb695a2033e4e8f38579f443`和renderer/Slide `e43dded8890260806001fbcb5ab519cfb019a379`共同拥有。覆盖27 resources、1,375 concrete systems、1,147 enabled renderers、114 renderer signatures、4 meshes和152 reachable ordinary/directional pairs；Shape 0/4/5/8/10/no-Shape、per-instance random、module/time/capacity、root→parent TRS、Slide `n`/`g`与mode 0/1/4 GPU前图元曾通过独立差分；后者未覆盖完整 production 消费，当前不能再据此宣布 renderer 闭合。
 - Production semantic catalog以exact logical resource、application revision、official UnityFS/serialized asset digest、component PathID、renderer/material/mesh/texture relation绑定leased bytes。Default和selected进入同一Schema-2 validator；expected PNG digest来自application snapshot receipt而非被测bytes自产。Simulation与Pixi只消费同一个cached immutable prepared token；禁止path/name hash random、literal renderer count、first-non-null material或unknown-current fallback。
 - HAB authority为`4fc0b23c433bd294dbcdda97658b565c059590f6`：`fieldskin/skin00`、`fieldskin/habahiro`与`tapeffect/habahiro`三包，Root_effect 9 objects / 4 Sprite meshes / 0 ParticleSystems，frame25只换四项资源，frame60无game callback。旧0.25秒synthetic white sine不属于original-compatible route。
 - Score/NGUI authority为`dddab345825dbff6d2a5cf65f5fbbcf771b00e07`：64-object/45-widget完整图、source-bound `sgm` metrics、SoftClip GLES3、rank5/6/12与SS/SSS clips。Native ScoreRankData和产品CS-V1输入必须保持不同identity；presentation等价不能升级产品计分。
 - Game-clear authority为`6cddb142806ffdb933cc6a237f69f4dd16e9ca97`：base 40/30、FC 6/5、AP 12/11 systems/enabled renderers、34 assets、完整Animator和3.233秒callback/15ms exit。它在launch前并入同一particle token/world/geometry/Pixi executor；typed outer scale仅为`screenToSafeChildScale / pixelsPerWorldUnit`，不得恢复375常量、birth-origin拆分或Pixi-owned第二套simulation。
-- 以上`closed-native-algorithm-equivalent`只覆盖当前ARM64/serialized/CPU与GPU前hand-off。Browser字体raster、GPU/driver量化、fixed-device framebuffer、CRI/USM和physical speaker继续`OUT_OF_SCOPE`；fixture manifest仍锁定`343c09cc…`，后续证据不为迎合产品测试复制成fixture。
+- 未重新打开的`closed-native-algorithm-equivalent`声明仅限其具名ARM64/serialized/CPU范围；Particle/HUD/Game-clear rendering 不得以历史 GPU前 hand-off 声明绕过当前 OPEN。Browser字体raster、GPU/driver量化、fixed-device framebuffer、CRI/USM和physical speaker继续`OUT_OF_SCOPE`；fixture manifest仍锁定`343c09cc…`，后续证据不为迎合产品测试复制成fixture。
 
 ## 当前启动方向与音频证据
 

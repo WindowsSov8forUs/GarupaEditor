@@ -18,8 +18,10 @@ export function createSimulatorModuleCapabilitySummary(
     chart,
     skin,
     publicAutonomousCore: "closed-portable" as const,
-    ordinaryCommandScene: "closed-native-algorithm-equivalent" as const,
-    ordinaryHud: "closed-product-extension" as const,
+    // Resource/math audits do not close the final scene-consumption boundary.
+    // See rendering-consumption-contract.md (SRC-SCORE-ANCHOR / SRC-PARTICLE-*).
+    ordinaryCommandScene: "observational-gap" as const,
+    ordinaryHud: "observational-gap" as const,
     habahiroCurrentExternalComplete: "closed-native-algorithm-equivalent" as const,
     habahiroOriginalParity: "observational-gap" as const,
     liveRehearsalFourModeMatrix: "closed-native-algorithm-equivalent" as const,
@@ -40,23 +42,17 @@ export function createSimulatorModuleCapabilitySummary(
     dynamicSurfaceResize: "observational-gap" as const,
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
-    originalSkinSettings: "closed-native-algorithm-equivalent" as const,
-    originalLiveSettings: "closed-native-algorithm-equivalent" as const,
+    originalSkinSettings: "closed-static-portable" as const,
+    originalLiveSettings: "observational-gap" as const,
     mainProgramIntegration: "closed-product-integration" as const,
-    selectedRenderingGate: rendering === null
-      ? "observational-gap" as const
-      : "closed-native-algorithm-equivalent" as const,
-    selectedHudGate: rendering === null
-      ? "observational-gap" as const
-      : "closed-product-extension" as const,
+    selectedRenderingGate: "observational-gap" as const,
+    selectedHudGate: "observational-gap" as const,
     selectedBackgroundGate: background === null
       ? "observational-gap" as const
       : "closed-portable" as const,
     selectedChartGate: chart === "garupa-product-extension"
       ? "closed-product-extension" as const
       : "closed-portable" as const,
-    selectedSkinGate: skin === null
-      ? "observational-gap" as const
-      : "closed-native-algorithm-equivalent" as const,
+    selectedSkinGate: "observational-gap" as const,
   });
 }
