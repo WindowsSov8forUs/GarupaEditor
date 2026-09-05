@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `2c14fa7dbe7b78c313d297ca23675dccc7d85b04`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `1c63c3d173a34849396f273a091c403526636a95`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -28,11 +28,17 @@ Still OPEN: complete native min/max camera-uniform consumption (the portable ort
 
 ## SRC-PARTICLE-COMPOSITION — open cross-renderer sorting
 
-Authority: `simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json` and `simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json`. They prohibit one monolithic particle stage before all ordinary renderers. Current renderer layer/order must survive the final handoff; HUD follows the world domain.
+Authority: `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` and `serialized_sort_camera.json`, SORT-C01..C11, with hash-locked ARM64 slices, ELF RELA bindings and current APK object identities. Earlier `simulator-pixi-particle-visual-reconciliation-10-1-4/simulator_pixi_particle_visual_reconciliation.json` and `simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json` identify the monolithic-stage gap but do not define the complete native comparator.
 
-Current defect: particle preflight sorts native primitives internally, but commit puts every mesh into one generation under the low stage. The high stage is empty, while `pixiCombinedScene` and ordinary sibling sorting still treat the mounts as separate fixed-depth siblings. Thus native sorting orders do not participate in ordinary/particle composition. This is a production integration gap, not an excluded GPU/driver difference.
+The nonopaque drawing-settings branch uses criteria `0x17`: packed signed layer-value/order (not numeric layer ID), signed material queue, computed distance and concrete record/state ties. Fudge participates in distance; it is not an independent ascending key before depth. Renderer priority is not enabled by this criteria mask. Final ties are not particle birth order or semantic string IDs.
 
-Still required: a shared, transitive ordering domain covering ordinary renderer layer/order/Z and concrete particle renderer ownership, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
+Native camera construction/reset imports global transparency mode/axis. The current APK has global mode 0, axis +Z and an orthographic GameCamera; absent later caller overrides, `InitializeSortSettings` selects distance metric 1, which uses view-space Z minus fudge. Camera mode 2 also maps to metric 1, not custom-axis metric 2. This establishes the static default chain, not the absence of pipeline overrides.
+
+Ungrouped particle sorting uses renderer bounds center, copied from Renderer+192 through node+128. Bounds publication derives its center from runtime min/max and applies the space-dependent transform. It is not the emitter root or each particle's position. The draw-record constructor also has a table-entry substitution branch that replaces position/key and zeroes fudge. Upstream min/max accumulation and override reachability remain independent gaps.
+
+Current defect: particle preflight sorts primitives internally using layer ID/order/fudge/priority/owner/birth keys that do not implement this native comparator, but commit puts every mesh into one generation under the low stage. The high stage is empty, while `pixiCombinedScene` and ordinary sibling sorting still treat the mounts as separate fixed-depth siblings. Thus native sorting orders do not participate in ordinary/particle composition. This is a production integration gap, not an excluded GPU/driver difference.
+
+Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
 ## Acceptance boundary
 
