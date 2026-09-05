@@ -17,6 +17,7 @@ import type {
   ParticleTransformProfile,
 } from "../backends/particleContracts";
 import { particleAccepted } from "../backends/particleValidation";
+import { HABAHIRO_PARTICLE_RANGE_PREFABS, findHabahiroParticleRangePrefab } from "../engine/particles/particleRangePrefabs";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
@@ -137,7 +138,10 @@ function convertBundle(
     !Array.isArray(raw.materials) || !Array.isArray(raw.textures)) {
     return invalid("simulator.skin.particle-profile-shape", "Selected particle semantics require exact source binding, systems, profiles, modules, renderers, materials and textures.");
   }
-  const roots = key === "ordinary" ? ORDINARY_ROOTS : DIRECTIONAL_ROOTS;
+  const indexedRanges = key === "ordinary" && pack.logicalResource === "ingameskin/tapeffect/habahiro";
+  const roots: readonly string[] = indexedRanges
+    ? HABAHIRO_PARTICLE_RANGE_PREFABS.map((entry) => entry.prefab)
+    : key === "ordinary" ? ORDINARY_ROOTS : DIRECTIONAL_ROOTS;
   const rootSet = new Set<string>();
   const systems: ParticleSystemDefinition[] = [];
   const preparedProfiles: Record<string, ParticleProfileDefinition> = {};
@@ -178,10 +182,15 @@ function convertBundle(
     }
     preparedProfiles[preparedProfileIdentity] = preparedProfile;
     rootSet.add(item.prefab);
+    const rangePrefab = indexedRanges ? findHabahiroParticleRangePrefab(item.prefab) : undefined;
+    if (indexedRanges && rangePrefab === undefined) {
+      return invalid("simulator.skin.particle-system-source-relation", "An indexed HAB component requires its exact source prefab slot.");
+    }
     systems.push(Object.freeze({
       identity: `${key}:${item.path}`,
       sourceOrdinal: ordinal,
-      root: `${key}:${item.prefab}` as ParticleRootId,
+      root: rangePrefab !== undefined ? rangePrefab.root : `${key}:${item.prefab}` as ParticleRootId,
+      ...(rangePrefab === undefined ? {} : { sourceRangeLength: rangePrefab.rangeLength }),
       path: item.path,
       transform: freezeTransform(item.transform),
       parentTransforms: Object.freeze(item.parent_transforms.map(freezeTransform)),
@@ -342,6 +351,7 @@ function convertBundle(
   return accepted(Object.freeze({
     bundle: Object.freeze({
       key,
+      ...(indexedRanges ? { rangePrefabSelection: "habahiro-width-arrays" as const } : {}),
       systems: Object.freeze(systems),
       profiles,
       moduleProfiles: modules,

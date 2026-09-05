@@ -12,6 +12,7 @@ import type {
   ParticleTextureManifest,
   ParticleTextureManifestEntry,
 } from "./particleContracts";
+import { HABAHIRO_PARTICLE_RANGE_PREFABS } from "../engine/particles/particleRangePrefabs";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const FLOAT32_BITS_PATTERN = /^0x[0-9A-F]{8}$/;
@@ -351,6 +352,13 @@ export function validateSelectedSkinParticlePack(
       bundle.materials.length === 0 || bundle.textures.length === 0) {
       return reject("particle.skin-pack.invalid-bundle", "Selected Skin ordinary/directional particle bundles must each be complete and unique.");
     }
+    const indexedRanges = bundle.rangePrefabSelection === "habahiro-width-arrays";
+    const requiresIndexedRanges = bundle.key === "ordinary" && sourceResources.has("ingameskin/tapeffect/habahiro");
+    if (indexedRanges !== requiresIndexedRanges ||
+      bundle.rangePrefabSelection !== undefined && !indexedRanges) {
+      return reject("particle.skin-pack.invalid-bundle", "HAB source receipts require their complete indexed prefab policy; other bundles cannot opt into it.");
+    }
+    const sourcePrefabs = new Set<string>();
     const materialNames = new Set<string>();
     for (const material of bundle.materials) {
       if (!isCurrentMaterialProfile(material) || materialNames.has(material.name)) {
@@ -375,6 +383,18 @@ export function validateSelectedSkinParticlePack(
     }
     for (let sourceOrdinal = 0; sourceOrdinal < bundle.systems.length; sourceOrdinal += 1) {
       const system = bundle.systems[sourceOrdinal]!;
+      if (indexedRanges) {
+        const sourcePrefab = HABAHIRO_PARTICLE_RANGE_PREFABS.find((entry) =>
+          entry.root === system.root && entry.rangeLength === system.sourceRangeLength);
+        if (sourcePrefab === undefined || typeof system.path !== "string" ||
+          !(system.path === sourcePrefab.prefab || system.path.startsWith(`${sourcePrefab.prefab}/`)) ||
+          system.identity !== `${bundle.key}:${system.path}`) {
+          return reject("particle.skin-pack.invalid-system", "Each HAB width slot must retain its exact physical prefab path and component identity.");
+        }
+        sourcePrefabs.add(sourcePrefab.prefab);
+      } else if (system.sourceRangeLength !== undefined) {
+        return reject("particle.skin-pack.invalid-system", "Only the source-bound HAB bundle carries indexed button-prefab slots.");
+      }
       if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
         system.sourceOrdinal !== sourceOrdinal || !isTransform(system.transform) ||
         !Array.isArray(system.parentTransforms) || !system.parentTransforms.every(isTransform) ||
@@ -387,6 +407,10 @@ export function validateSelectedSkinParticlePack(
         !(system.meshProfile === null || typeof system.meshProfile === "string" && owns(bundle.meshProfiles, system.meshProfile))) {
         return reject("particle.skin-pack.invalid-system", "Every selected Skin particle system requires one known root, contiguous source ordinal and source-bound profile/TRS; runtime random state is allocated only for the concrete instance.");
       }
+    }
+    if (indexedRanges && (sourcePrefabs.size !== HABAHIRO_PARTICLE_RANGE_PREFABS.length ||
+      HABAHIRO_PARTICLE_RANGE_PREFABS.some((entry) => !sourcePrefabs.has(entry.prefab)))) {
+      return reject("particle.skin-pack.invalid-bundle", "The prepared HAB bundle must include every exact width-prefab slot before publication.");
     }
     for (const profile of Object.values(bundle.profiles)) {
       if (!isRecord(profile) || !isRecord(profile.system) || !isRecord(profile.modules) ||

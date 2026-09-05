@@ -473,6 +473,8 @@ export interface ParticleSystemDefinition {
   readonly identity: string;
   readonly sourceOrdinal?: number;
   readonly root: ParticleRootId;
+  /** Authored GamePlayButton width slot; null identifies HAB's separate effect_tap scalar. */
+  readonly sourceRangeLength?: number | null;
   readonly path: string;
   readonly transform: ParticleTransformProfile;
   readonly parentTransforms: readonly ParticleTransformProfile[];
@@ -499,6 +501,8 @@ export interface ParticleSystemDefinition {
 
 export interface ParticleBundleProfile {
   readonly key: "ordinary" | "directional" | "game-clear";
+  /** Explicit prepared HAB source policy; absent for single-prefab and terminal bundles. */
+  readonly rangePrefabSelection?: "habahiro-width-arrays";
   readonly systems: readonly ParticleSystemDefinition[];
   readonly profiles: Readonly<Record<string, ParticleProfileDefinition>>;
   readonly moduleProfiles: ParticleModuleProfileMap;

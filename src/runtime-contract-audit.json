@@ -9954,7 +9954,7 @@
     {
       "id": "RCB-0473",
       "file": "src/simulator/assembly/skinParticlePreparation.ts",
-      "line": 448,
+      "line": 458,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",
@@ -10668,7 +10668,7 @@
     {
       "id": "RCB-0507",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 1126,
+      "line": 1150,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -28728,7 +28728,7 @@
     {
       "id": "RCB-1367",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 56,
+      "line": 57,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -28749,7 +28749,7 @@
     {
       "id": "RCB-1368",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 75,
+      "line": 76,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -28770,7 +28770,7 @@
     {
       "id": "RCB-1369",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 380,
+      "line": 381,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (root?.schemaVersion !== 1 || resources === null) throw new Error(\"invalid Skin render semantic catalog\");",
@@ -28791,7 +28791,7 @@
     {
       "id": "RCB-1370",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 384,
+      "line": 385,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (row === null || !Array.isArray(row.textures) || typeof row.role !== \"string\") throw new Error(\"invalid Skin render semantic row\");",
@@ -28812,7 +28812,7 @@
     {
       "id": "RCB-1371",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 390,
+      "line": 391,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof item?.name !== \"string\" || !positive(item.width) || !positive(item.height) || !positive(item.mipCount) || settings === null) throw new Error(\"invalid Skin render semantic texture\");",
@@ -28833,7 +28833,7 @@
     {
       "id": "RCB-1372",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 420,
+      "line": 422,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"invalid source-bound Skin particle semantic catalog\");",
@@ -28854,7 +28854,7 @@
     {
       "id": "RCB-1373",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 434,
+      "line": 436,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound Skin particle semantic row: ${logicalResource}`);",
@@ -28875,7 +28875,7 @@
     {
       "id": "RCB-1374",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 448,
+      "line": 450,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound ParticleSystem row: ${logicalResource}`);",
@@ -28896,7 +28896,7 @@
     {
       "id": "RCB-1375",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 464,
+      "line": 466,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound particle material row: ${logicalResource}`);",
@@ -28917,7 +28917,7 @@
     {
       "id": "RCB-1376",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 473,
+      "line": 475,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound particle texture row: ${logicalResource}`);",
@@ -28938,7 +28938,7 @@
     {
       "id": "RCB-1377",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 490,
+      "line": 492,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"The source-bound particle catalog must derive a non-empty complete renderer/mesh set from its exact system relations.\");",
@@ -28959,7 +28959,7 @@
     {
       "id": "RCB-1378",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 527,
+      "line": 529,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",

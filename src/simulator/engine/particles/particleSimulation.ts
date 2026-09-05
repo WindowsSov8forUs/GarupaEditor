@@ -26,6 +26,7 @@ import type {
   ParticleVelocityModule,
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
+import { selectedParticleRangeLength } from "./particleRangePrefabs";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
   particleSimdRandomValues,
@@ -64,6 +65,14 @@ interface SystemRecord {
   readonly bundle: ParticleBundleProfile;
   readonly definition: ParticleSystemDefinition;
   readonly ordinal: number;
+}
+
+function matchesInstanceRoot(record: SystemRecord, root: ParticleRootId, instance: ParticleInstanceIdentity): boolean {
+  return record.definition.root === root && (
+    record.bundle.rangePrefabSelection !== "habahiro-width-arrays" ||
+    record.definition.sourceRangeLength === null ||
+    record.definition.sourceRangeLength === selectedParticleRangeLength(instance)
+  );
 }
 
 interface InstanceSystemState {
@@ -215,7 +224,7 @@ export class DeterministicParticleSimulation {
     root: ParticleRootId,
   ): void {
     const selected = [...this.definitions.values()]
-      .filter((record) => record.definition.root === root)
+      .filter((record) => matchesInstanceRoot(record, root, instance))
       .sort((left, right) => left.ordinal - right.ordinal)
       .map((record) => record.definition.identity);
     const owner = this.owners.get(ownerKey);
@@ -260,7 +269,7 @@ export class DeterministicParticleSimulation {
     }
     const selected = [...new Set(selectedSystemIds)].map((identity) => {
       const record = this.definitions.get(identity);
-      if (record === undefined || record.definition.root !== root || owner!.systems.has(identity)) {
+      if (record === undefined || !matchesInstanceRoot(record, root, instance) || owner!.systems.has(identity)) {
         throw fault("particle.simulation.invalid-system-activation", "Every incremental activation must name one inactive prepared ParticleSystem under the selected root.");
       }
       return record;
@@ -288,7 +297,7 @@ export class DeterministicParticleSimulation {
       return;
     }
     const records = [...this.definitions.values()]
-      .filter((record) => record.definition.root === root)
+      .filter((record) => matchesInstanceRoot(record, root, instance))
       .sort((left, right) => left.ordinal - right.ordinal);
     for (const record of records) {
       const profile = record.bundle.profiles[record.definition.profile];
