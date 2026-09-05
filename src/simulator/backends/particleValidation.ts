@@ -1,7 +1,9 @@
 import type {
+  ParticleBundleProfile,
   ParticleCommand,
   ParticleFailureCode,
   ParticleFrameRequest,
+  ParticleGameClearFramePlan,
   ParticleInstanceIdentity,
   ParticleOperationResult,
   ParticlePortableProfile,
@@ -32,6 +34,9 @@ export const CURRENT_PARTICLE_ROOTS: readonly ParticleRootId[] = Object.freeze([
   "ordinary:effect_tap_skill_great",
   "ordinary:effect_tap_skill_perfect",
   "ordinary:effect_tap_swipe",
+  "game-clear:base",
+  "game-clear:full-combo",
+  "game-clear:all-perfect",
 ]);
 
 const ROOT_SET: ReadonlySet<string> = new Set(CURRENT_PARTICLE_ROOTS);
@@ -305,7 +310,8 @@ export function validateSelectedSkinParticlePack(
   const textures = pack.textures;
   if (!profile.packIdentity.startsWith("particle-skin-source-bound-v2-") || profile.schemaVersion !== 2 ||
     profile.fidelity !== "current-native-semantic-v2" || profile.networkAllowed !== false ||
-    profile.automaticFallbackAllowed !== false || profile.bundles.length !== 2 ||
+    profile.automaticFallbackAllowed !== false ||
+    (profile.bundles.length !== 2 && profile.bundles.length !== 3) ||
     profile.systemCount !== profile.bundles.reduce((sum, bundle) => sum + bundle.systems.length, 0) ||
     profile.profileCount !== profile.bundles.reduce((sum, bundle) => sum + Object.keys(bundle.profiles).length, 0) ||
     textures.status !== "selected-skin-portable-textures" ||
@@ -330,13 +336,21 @@ export function validateSelectedSkinParticlePack(
   }
   const bundleKeys = new Set<string>();
   for (const bundle of profile.bundles) {
-    if ((bundle.key !== "ordinary" && bundle.key !== "directional") || bundleKeys.has(bundle.key) ||
+    if (bundleKeys.has(bundle.key)) {
+      return reject("particle.skin-pack.duplicate-bundle", "Prepared particle bundle roles must be globally unique.");
+    }
+    bundleKeys.add(bundle.key);
+    if (bundle.key === "game-clear") {
+      const gameClear = validateGameClearBundle(bundle);
+      if (gameClear.status !== "accepted") return gameClear;
+      continue;
+    }
+    if ((bundle.key !== "ordinary" && bundle.key !== "directional") ||
       bundle.systems.length === 0 || Object.keys(bundle.profiles).length === 0 ||
       Object.keys(bundle.rendererProfiles).length === 0 || bundle.meshProfiles === undefined ||
       bundle.materials.length === 0 || bundle.textures.length === 0) {
       return reject("particle.skin-pack.invalid-bundle", "Selected Skin ordinary/directional particle bundles must each be complete and unique.");
     }
-    bundleKeys.add(bundle.key);
     const materialNames = new Set<string>();
     for (const material of bundle.materials) {
       if (!isCurrentMaterialProfile(material) || materialNames.has(material.name)) {
@@ -397,8 +411,104 @@ export function validateSelectedSkinParticlePack(
       }
     }
   }
+  if (!bundleKeys.has("ordinary") || !bundleKeys.has("directional") ||
+    (profile.bundles.length === 3 && (!bundleKeys.has("game-clear") ||
+      !sourceResources.has("prefabs/bms/gameclear"))) ||
+    (profile.bundles.length === 2 && bundleKeys.has("game-clear"))) {
+    return reject(
+      "particle.skin-pack.incomplete-domain-bundles",
+      "Prepared gameplay packs contain ordinary/directional; the final launch token additionally contains Game-clear plus its leased source receipt.",
+    );
+  }
   const relations = validateParticleProfileTextureRelations(profile, textures);
   return relations.status === "accepted" ? particleAccepted(deepFreeze(pack)) : relations;
+}
+
+function validateGameClearBundle(
+  bundle: ParticleBundleProfile,
+): ParticleOperationResult<void> {
+  if (bundle.systems.length === 0 || Object.keys(bundle.profiles).length !== bundle.systems.length ||
+    Object.keys(bundle.rendererProfiles).length !== bundle.systems.length || bundle.meshProfiles === undefined ||
+    Object.keys(bundle.meshProfiles).length !== 0 || bundle.materials.length === 0 || bundle.textures.length === 0) {
+    return reject(
+      "particle.game-clear.invalid-inventory",
+      "Game-clear requires one complete source-bound profile/renderer per system, additive materials and its exact texture subset.",
+    );
+  }
+  const textureNames = new Set(bundle.textures.map((texture) => texture.name));
+  if (textureNames.size !== bundle.textures.length || bundle.textures.some((texture) =>
+    !isNonEmpty(texture.name) || !isPositiveInteger(texture.width) || !isPositiveInteger(texture.height) ||
+    texture.rgbaBytes !== texture.width * texture.height * 4 ||
+    typeof texture.rgbaSha256 !== "string" || !SHA256_PATTERN.test(texture.rgbaSha256) ||
+    texture.filterMode !== 1 || ![0, 1].includes(texture.wrapU) || ![0, 1].includes(texture.wrapV))) {
+    return reject("particle.game-clear.invalid-texture", "Game-clear textures require exact decoded identity and sampling state.");
+  }
+  const materialNames = new Set<string>();
+  for (const material of bundle.materials) {
+    const mainTextureScale = material.mainTextureScale;
+    const mainTextureOffset = material.mainTextureOffset;
+    if (!isNonEmpty(material.name) || materialNames.has(material.name) || material.shader !== "Mobile/Particles/Additive" ||
+      material.texture !== material.name || !textureNames.has(material.name) || material.blend !== "add" ||
+      typeof material.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(material.sourcePathId) ||
+      material.renderQueue !== 3000 || material.sourceBlendFactor !== 5 || material.destinationBlendFactor !== 1 ||
+      material.zWrite !== false || material.cull !== "off" || material.fragment !== "straight-rgba-modulate" ||
+      !isVector2(mainTextureScale) || mainTextureScale?.x !== 1 || mainTextureScale?.y !== 1 ||
+      !isVector2(mainTextureOffset) || mainTextureOffset?.x !== 0 || mainTextureOffset?.y !== 0) {
+      return reject("particle.game-clear.invalid-material", "Game-clear material routes require the source PathID and exact additive pass equation.");
+    }
+    materialNames.add(material.name);
+  }
+  const roots = new Set<string>();
+  const branchOrdinals = new Map<string, number>();
+  for (let ordinal = 0; ordinal < bundle.systems.length; ordinal += 1) {
+    const system = bundle.systems[ordinal]!;
+    const expectedRoot = system.sourceBranch === "base" ? "game-clear:base" :
+      system.sourceBranch === "fullCombo" ? "game-clear:full-combo" :
+      system.sourceBranch === "allPerfect" ? "game-clear:all-perfect" : null;
+    const nextBranchOrdinal = branchOrdinals.get(system.sourceBranch ?? "") ?? 0;
+    if (expectedRoot === null || system.root !== expectedRoot || system.sourceOrdinal !== ordinal ||
+      system.sourceBranchOrdinal !== nextBranchOrdinal || typeof system.activeSerialized !== "boolean" ||
+      !isNonEmpty(system.identity) || !isNonEmpty(system.path) || !owns(bundle.profiles, system.profile) ||
+      !isTransform(system.transform) || !Array.isArray(system.parentTransforms) ||
+      !system.parentTransforms.every(isTransform) || !Array.isArray(system.parentParticleSystemFlags) ||
+      system.parentParticleSystemFlags.length !== system.parentTransforms.length ||
+      !system.parentParticleSystemFlags.every((flag) => typeof flag === "boolean") ||
+      typeof system.gameObjectSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(system.gameObjectSourcePathId) ||
+      typeof system.transformSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(system.transformSourcePathId) ||
+      typeof system.particleSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(system.particleSourcePathId) ||
+      !isPositiveInteger(system.particleSerializedBytes) || typeof system.particleSerializedSha256 !== "string" ||
+      !SHA256_PATTERN.test(system.particleSerializedSha256) ||
+      typeof system.rendererSourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(system.rendererSourcePathId) ||
+      !isPositiveInteger(system.rendererSerializedBytes) || typeof system.rendererSerializedSha256 !== "string" ||
+      !SHA256_PATTERN.test(system.rendererSerializedSha256) || system.meshProfile !== null) {
+      return reject("particle.game-clear.invalid-system", "Every Game-clear system requires exact branch order, component identities, TRS and serialized digests.");
+    }
+    roots.add(system.root);
+    branchOrdinals.set(system.sourceBranch!, nextBranchOrdinal + 1);
+    const definition = bundle.profiles[system.profile]!;
+    const renderer = bundle.rendererProfiles[definition.renderer];
+    if (!isGameClearSystemProfile(definition.system) || !isRecord(definition.modules) || renderer === undefined ||
+      !isCurrentRendererProfile(renderer, materialNames) || renderer.m_RenderMode === 4 ||
+      (renderer.m_Enabled && renderer.m_Materials[0] === null) ||
+      (!renderer.m_Enabled && renderer.m_Materials.some((material) => material !== null))) {
+      return reject("particle.game-clear.invalid-profile-renderer", "Game-clear profile and renderer state must preserve PlayOnAwake, source modules, null slots and mode 0/1 handoff.");
+    }
+    for (const [moduleName, moduleIdentity] of Object.entries(definition.modules)) {
+      const map = bundle.moduleProfiles[moduleName as keyof typeof bundle.moduleProfiles];
+      if (!MODULE_SET.has(moduleName) || !isNonEmpty(moduleIdentity) || !isRecord(map) || !owns(map, moduleIdentity) ||
+        !isCurrentModuleProfile(moduleName, map[moduleIdentity])) {
+        return reject("particle.game-clear.invalid-module", `Game-clear module ${moduleName}:${String(moduleIdentity)} is outside the closed current native domain.`);
+      }
+    }
+  }
+  return roots.size === 3 && roots.has("game-clear:base") && roots.has("game-clear:full-combo") && roots.has("game-clear:all-perfect")
+    ? particleAccepted(undefined)
+    : reject("particle.game-clear.incomplete-roots", "Base, Full Combo and All Perfect roots must coexist in the one prepared world.");
+}
+
+function isGameClearSystemProfile(value: unknown): boolean {
+  return isRecord(value) && value.playOnAwake === true &&
+    isCurrentSystemProfile({ ...value, playOnAwake: false });
 }
 
 export function validateParticleCommandShape(
@@ -444,14 +554,25 @@ export function validateParticleCommandShape(
 export function validateParticleFrameRequest(
   request: ParticleFrameRequest,
 ): ParticleOperationResult<number> {
-  if (!isRecord(request) || !hasExactKeys(request, ["frame", "deltaTimeBits", "paused", "commands"]) ||
-    !Number.isSafeInteger(request.frame) || request.frame < 0 || typeof request.paused !== "boolean" ||
-    !Array.isArray(request.commands)) {
-    return reject("particle.frame.invalid-shape", "A particle frame requires exact frame/delta/pause/command fields.");
+  const exactShape = isRecord(request) && (
+    hasExactKeys(request, ["frame", "deltaTimeBits", "paused", "commands"]) ||
+    hasExactKeys(request, ["frame", "deltaTimeBits", "paused", "commands", "gameClearPlan"])
+  );
+  if (!exactShape || !Number.isSafeInteger(request.frame) || request.frame < 0 ||
+    typeof request.paused !== "boolean" || !Array.isArray(request.commands)) {
+    return reject("particle.frame.invalid-shape", "A particle frame requires exact frame/delta/pause/command fields and an optional explicit Game-clear plan.");
   }
   const delta = particleFloat32FromBits(request.deltaTimeBits);
   if (delta === null || delta < 0) {
     return reject("particle.frame.invalid-delta", "Particle delta must be a finite non-negative binary32 bit pattern.");
+  }
+  const gameClearPlan = request.gameClearPlan ?? null;
+  if (gameClearPlan !== null) {
+    const validatedPlan = validateGameClearFramePlan(gameClearPlan);
+    if (validatedPlan.status !== "accepted") return validatedPlan;
+    if (delta !== 0 || request.paused) {
+      return reject("particle.game-clear.outer-delta", "Game-clear phases own their exact subdivided delta; the enclosing frame delta is zero and cannot be paused.");
+    }
   }
   if (request.paused && request.commands.length !== 0) {
     return reject("particle.frame.paused-command", "The managed pause branch does not issue gameplay particle commands; already-playing native systems continue on the outer particle delta.");
@@ -463,6 +584,81 @@ export function validateParticleFrameRequest(
   return particleAccepted(delta);
 }
 
+export function validateGameClearFramePlan(
+  plan: ParticleGameClearFramePlan,
+): ParticleOperationResult<void> {
+  if (!isRecord(plan) || !hasExactKeys(plan, [
+    "clearStatus", "elapsedBeforeBits", "elapsedAfterBits", "instance", "phases",
+  ]) || ![1, 2, 3].includes(plan.clearStatus) || !isParticleInstanceIdentity(plan.instance) ||
+    plan.instance.kind !== "game-clear" || plan.instance.clearStatus !== plan.clearStatus ||
+    !Array.isArray(plan.phases) || plan.phases.length === 0) {
+    return reject("particle.game-clear.invalid-plan", "A Game-clear frame requires one exact status, typed UI_Root owner and non-empty ordered phase plan.");
+  }
+  const before = particleFloat32FromBits(plan.elapsedBeforeBits);
+  const after = particleFloat32FromBits(plan.elapsedAfterBits);
+  if (before === null || after === null || before < 0 || after < before) {
+    return reject("particle.game-clear.invalid-elapsed", "Game-clear elapsed time is finite, non-negative and monotonic.");
+  }
+  let accumulated = Math.fround(0);
+  let previousSample = before;
+  for (const phase of plan.phases) {
+    if (!isRecord(phase) || !hasExactKeys(phase, [
+      "sampledAtSecondsBits", "deltaTimeBits", "transforms", "deactivate", "activate",
+    ]) || typeof phase.sampledAtSecondsBits !== "string" || typeof phase.deltaTimeBits !== "string" ||
+      !Array.isArray(phase.transforms) || phase.transforms.length === 0 ||
+      !Array.isArray(phase.deactivate) || !Array.isArray(phase.activate)) {
+      return reject("particle.game-clear.invalid-phase", "Every Game-clear phase requires sampled TRS, one exact delta and explicit lifecycle groups.");
+    }
+    const sampledAt = particleFloat32FromBits(phase.sampledAtSecondsBits);
+    const delta = particleFloat32FromBits(phase.deltaTimeBits);
+    if (sampledAt === null || delta === null || sampledAt < previousSample || delta < 0) {
+      return reject("particle.game-clear.invalid-phase-time", "Game-clear phase samples and deltas are finite and monotonic.");
+    }
+    accumulated = Math.fround(accumulated + delta);
+    if (sampledAt !== Math.fround(before + accumulated)) {
+      return reject("particle.game-clear.phase-sample", "Each Game-clear Transform sample is taken at the exact endpoint of its accumulated phase delta.");
+    }
+    previousSample = sampledAt;
+    const transformIds = new Set<string>();
+    for (const update of phase.transforms) {
+      if (!isRecord(update) || !hasExactKeys(update, ["systemId", "transform", "parentTransforms"]) ||
+        !isNonEmpty(update.systemId) || transformIds.has(update.systemId) || !isTransform(update.transform) ||
+        !Array.isArray(update.parentTransforms) || !update.parentTransforms.every(isTransform)) {
+        return reject("particle.game-clear.invalid-transform-update", "Each Game-clear phase publishes one unique complete serialized Transform chain per system.");
+      }
+      transformIds.add(update.systemId);
+    }
+    const deactivated = validateGameClearGroups(phase.deactivate);
+    if (deactivated.status !== "accepted") return deactivated;
+    const activated = validateGameClearGroups(phase.activate);
+    if (activated.status !== "accepted") return activated;
+    const mutationIds = [...phase.deactivate, ...phase.activate].flatMap((group) => group.systemIds);
+    if (new Set(mutationIds).size !== mutationIds.length || mutationIds.some((identity) => !transformIds.has(identity))) {
+      return reject("particle.game-clear.phase-mutation-transform", "Every Game-clear lifecycle mutation is disjoint and consumes the Transform sample from the same phase.");
+    }
+  }
+  return Math.fround(before + accumulated) === after && previousSample === after
+    ? particleAccepted(undefined)
+    : reject("particle.game-clear.phase-sum", "Game-clear phase deltas and final sample must exactly cover the Float32 elapsed interval.");
+}
+
+function validateGameClearGroups(groups: readonly unknown[]): ParticleOperationResult<void> {
+  const owners = new Set<string>();
+  const systems = new Set<string>();
+  for (const value of groups) {
+    if (!isRecord(value) || !hasExactKeys(value, ["ownerKey", "root", "systemIds"]) ||
+      !isNonEmpty(value.ownerKey) || owners.has(value.ownerKey) ||
+      !["game-clear:base", "game-clear:full-combo", "game-clear:all-perfect"].includes(value.root as string) ||
+      !Array.isArray(value.systemIds) || value.systemIds.length === 0 ||
+      value.systemIds.some((identity) => !isNonEmpty(identity) || systems.has(identity))) {
+      return reject("particle.game-clear.invalid-system-group", "Game-clear lifecycle groups require unique owners, native roots and disjoint non-empty system identities.");
+    }
+    owners.add(value.ownerKey);
+    for (const identity of value.systemIds) systems.add(identity);
+  }
+  return particleAccepted(undefined);
+}
+
 export function freezeParticleCommand(command: ParticleCommand): ParticleCommand {
   return "instance" in command
     ? Object.freeze({ ...command, instance: freezeParticleInstance(command.instance) }) as ParticleCommand
@@ -470,7 +666,7 @@ export function freezeParticleCommand(command: ParticleCommand): ParticleCommand
 }
 
 function freezeParticleInstance(instance: ParticleInstanceIdentity): ParticleInstanceIdentity {
-  if (instance.kind === "game-clear" || instance.ownerTransform === undefined) {
+  if (instance.ownerTransform === undefined) {
     return Object.freeze({ ...instance });
   }
   return Object.freeze({
@@ -795,6 +991,14 @@ function parseJson(bytes: Uint8Array, capability: string): ParticleOperationResu
 
 function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceIdentity {
   if (!isRecord(value) || typeof value.kind !== "string") return false;
+  if (value.kind === "game-clear") {
+    return hasExactKeys(value, [
+      "kind", "buttonType", "rangeLength", "clearStatus", "ownerTransform", "particleSystemSetupScaleBits",
+    ]) && value.buttonType === 0 && value.rangeLength === null &&
+      (value.clearStatus === 1 || value.clearStatus === 2 || value.clearStatus === 3) &&
+      isOwnerTransform(value.ownerTransform, "game-clear-ui-root") &&
+      value.particleSystemSetupScaleBits === "0x3F800000";
+  }
   if (value.kind === "game-play-button") {
     return hasExactKeys(value, ["kind", "buttonType", "rangeLength", "ownerTransform", "particleSystemSetupScaleBits"]) &&
       typeof value.buttonType === "number" && Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
@@ -847,6 +1051,7 @@ function isInstanceCompatibleWithRoot(
   instance: ParticleInstanceIdentity,
   root: ParticleRootId,
 ): boolean {
+  if (instance.kind === "game-clear") return root.startsWith("game-clear:");
   if (instance.kind === "note-slide") return root === "ordinary:effect_TapKeep";
   return root.startsWith("directional:")
     ? instance.rangeLength === null

@@ -57,6 +57,14 @@ async function prepareOnce(
   const validated = validateSelectedSkinParticlePack(selected.value);
   if (validated.status !== "accepted") return validated;
   const pack = validated.value;
+  const bundleKeys = new Set(pack.profile.bundles.map((bundle) => bundle.key));
+  if (pack.profile.bundles.length !== 3 || bundleKeys.size !== 3 ||
+    !bundleKeys.has("ordinary") || !bundleKeys.has("directional") || !bundleKeys.has("game-clear")) {
+    return reject(
+      "particle.prepare.game-clear-domain-missing",
+      "Production preparation requires ordinary, directional and Game-clear in one native-semantic profile before either backend is created.",
+    );
+  }
   const source = pack.source;
   if (source === undefined || source.kind !== "application-snapshot" || source.resources.length === 0) {
     return reject("particle.prepare.source-identity-missing", "Prepared particles require one application Snapshot/Lease source identity; a profile self-hash is not an expected digest.");

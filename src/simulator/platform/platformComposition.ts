@@ -442,6 +442,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       particles: {
         sessionId,
         scene: assembly.value.sceneLayout.particleScene,
+        gameClearProfile: assembly.value.gameClearProfile,
       },
       ...(movie === null || mvResource.value === null
         ? {}

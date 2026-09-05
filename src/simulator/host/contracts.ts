@@ -29,6 +29,7 @@ import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
 import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
 import type { GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
+import type { GameClearRuntimeProfile } from "../backends/resources/currentGameClearProfile";
 import type {
   OriginalLiveSettings,
   OriginalLiveSettingsSnapshot,
@@ -47,6 +48,8 @@ export interface SimulatorParticleSessionInput {
   readonly sessionId: string;
   /** Required by production; optional only for legacy source compilation. */
   readonly scene?: ParticlePixiSceneProfile;
+  /** Required by production; optional only for legacy source compilation. */
+  readonly gameClearProfile?: GameClearRuntimeProfile;
 }
 
 export interface SimulatorEngineInput {

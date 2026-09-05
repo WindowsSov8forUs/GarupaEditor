@@ -3,6 +3,7 @@ import type {
   ParticleBundleProfile,
   ParticleInstanceIdentity,
   ParticleOperationResult,
+  ParticleOwnerTransform,
   ParticlePixiSceneProfile,
   ParticlePortableProfile,
   ParticleRenderSample,
@@ -524,12 +525,23 @@ function buildSystemBindings(profile: ParticlePortableProfile): ParticleOperatio
 function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult<ParticlePixiSceneProfile> {
   const ppu = scene === null || typeof scene !== "object" ? null : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
   const legacyScale = scene === null || typeof scene !== "object" ? null : particleFloat32FromBits(scene.gameplayTransformScaleBits);
+  const gameClearAuthoredScale = scene?.gameClearOwner === undefined
+    ? null
+    : particleFloat32FromBits(scene.gameClearOwner.authoredUiScaleBits);
+  const gameClearOwnerScale = scene?.gameClearOwner === undefined
+    ? null
+    : particleFloat32FromBits(scene.gameClearOwner.transform.scale.xBits);
   if (scene === null || typeof scene !== "object" || !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
     !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 || scene.viewportWidth < scene.viewportHeight ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
     ppu !== Math.fround(scene.viewportHeight / 2) || legacyScale === null || legacyScale <= 0 || scene.roundPixels !== false ||
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
     !Array.isArray(scene.buttonOwners) || scene.buttonOwners.length !== 15 || scene.slidePool === undefined ||
+    scene.gameClearOwner === undefined || scene.gameClearOwner.transform.source !== "game-clear-ui-root" ||
+    scene.gameClearOwner.particleSystemSetupScaleBits !== "0x3F800000" ||
+    gameClearAuthoredScale === null || gameClearAuthoredScale <= 0 || gameClearOwnerScale === null ||
+    gameClearOwnerScale !== Math.fround(gameClearAuthoredScale / ppu) ||
+    !finiteOwnerTransform(scene.gameClearOwner.transform) ||
     scene.slidePool.poolSize !== 8 || scene.slidePool.initialCursor !== 0 || scene.slidePool.firstAcquiredSlot !== 1 ||
     positiveBits(scene.slidePool.outerScaleBits) === null || positiveBits(scene.slidePool.particleSystemSetupScaleBits) === null ||
     scene.buttonOwners.some((owner, index) => owner.buttonType !== (index < 7 ? index : index + 1) ||
@@ -545,8 +557,14 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
 }
 
 function isNativeInstance(value: ParticleInstanceIdentity): boolean {
-  if (value === null || typeof value !== "object" || value.kind === "game-clear" || value.ownerTransform === undefined ||
+  if (value === null || typeof value !== "object" || value.ownerTransform === undefined ||
     positiveBits(value.particleSystemSetupScaleBits ?? "") === null || !finiteOwnerTransform(value.ownerTransform)) return false;
+  if (value.kind === "game-clear") {
+    return (value.clearStatus === 1 || value.clearStatus === 2 || value.clearStatus === 3) &&
+      value.buttonType === 0 && value.rangeLength === null &&
+      value.ownerTransform.source === "game-clear-ui-root" &&
+      value.particleSystemSetupScaleBits === "0x3F800000";
+  }
   if (value.kind === "game-play-button") {
     return Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
       (value.rangeLength === null || Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7) &&
@@ -561,7 +579,7 @@ function isNativeInstance(value: ParticleInstanceIdentity): boolean {
     value.rootScaleBits === value.ownerTransform.scale.xBits;
 }
 
-function finiteOwnerTransform(transform: NonNullable<Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"]>): boolean {
+function finiteOwnerTransform(transform: ParticleOwnerTransform): boolean {
   return [transform.position.xBits, transform.position.yBits, transform.position.zBits,
     transform.rotation.xBits, transform.rotation.yBits, transform.rotation.zBits, transform.rotation.wBits,
     transform.scale.xBits, transform.scale.yBits, transform.scale.zBits]

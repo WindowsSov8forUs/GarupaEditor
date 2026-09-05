@@ -4,10 +4,12 @@ import type {
   ParticleCommand,
   ParticleFrameBatch,
   ParticleFrameRequest,
+  ParticleGameClearFramePlan,
   ParticleFrameSnapshot,
   ParticleInstanceIdentity,
   ParticleOperationResult,
   ParticleOwnerSnapshot,
+  ParticleOwnerTransform,
   ParticlePortableProfile,
   ParticleRenderSample,
   ParticleResourcePreflightAdapter,
@@ -38,6 +40,11 @@ interface MutableOwner {
   restartCount: number;
 }
 
+interface GameClearBackendState {
+  readonly clearStatus: 1 | 2 | 3;
+  readonly elapsedBits: string;
+}
+
 interface PendingFrame {
   readonly capability: ParticleFrameBatch;
   readonly request: ParticleFrameRequest;
@@ -45,6 +52,7 @@ interface PendingFrame {
   readonly simulation: DeterministicParticleSimulation;
   readonly samples: readonly ParticleRenderSample[];
   readonly suppressedUntilReplay: boolean;
+  readonly gameClearState: GameClearBackendState | null;
 }
 
 export class DeterministicSimulatorParticleBackend implements SimulatorParticleBackend {
@@ -59,6 +67,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
   private nextSequence = 0;
   private owners = new Map<string, MutableOwner>();
   private suppressedUntilReplay = false;
+  private gameClearState: GameClearBackendState | null = null;
   private readonly frames: ParticleFrameSnapshot[] = [];
   private pendingFrame: PendingFrame | null = null;
   private fault: ParticleBackendFault | null = null;
@@ -145,13 +154,28 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
       if (delta === null) {
         return this.reject("particle.frame.invalid-delta-after-validation", "The validated binary32 delta must remain decodable.");
       }
-      simulation.step(delta, request.paused);
+      let gameClearState = this.gameClearState;
+      if (request.gameClearPlan === null || request.gameClearPlan === undefined) {
+        if (gameClearState !== null && delta !== 0) {
+          throw new ParticleSimulationFault(
+            "particle.game-clear.generic-advance-forbidden",
+            "An active Game-clear world advances only through its Animator-owned subdivided timeline plan.",
+          );
+        }
+        simulation.step(delta, request.paused);
+      } else {
+        gameClearState = validateGameClearContinuity(request.gameClearPlan, request.commands, gameClearState);
+        applyGameClearPlan(request.gameClearPlan, owners, simulation);
+      }
       const samples = simulation.samples();
       const frozenRequest: ParticleFrameRequest = Object.freeze({
         frame: request.frame,
         deltaTimeBits: request.deltaTimeBits,
         paused: request.paused,
         commands: Object.freeze(commands),
+        gameClearPlan: request.gameClearPlan === null || request.gameClearPlan === undefined
+          ? null
+          : freezeGameClearPlan(request.gameClearPlan),
       });
       const capability = Object.freeze({
         sessionId: this.sessionId,
@@ -166,6 +190,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
         simulation,
         samples,
         suppressedUntilReplay: suppressed,
+        gameClearState,
       });
       return particleAccepted(capability);
     } catch (error) {
@@ -198,11 +223,13 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     this.owners = pending.owners;
     this.simulation = pending.simulation;
     this.suppressedUntilReplay = pending.suppressedUntilReplay;
+    this.gameClearState = pending.gameClearState;
     this.frames.push(Object.freeze({
       frame: pending.request.frame,
       deltaTimeBits: pending.request.deltaTimeBits,
       paused: pending.request.paused,
       commands: pending.request.commands,
+      gameClearPlan: pending.request.gameClearPlan ?? null,
       samples: pending.samples,
     }));
     this.nextFrame = pending.request.frame + 1;
@@ -260,6 +287,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     this.resourceCount = 0;
     this.owners.clear();
     this.suppressedUntilReplay = false;
+    this.gameClearState = null;
     this.state = "disposed";
     return particleAccepted(undefined);
   }
@@ -384,11 +412,121 @@ function applyCommand(
   }
 }
 
+function validateGameClearContinuity(
+  plan: ParticleGameClearFramePlan,
+  commands: readonly ParticleCommand[],
+  current: GameClearBackendState | null,
+): GameClearBackendState {
+  if (current === null) {
+    if (plan.elapsedBeforeBits !== "0x00000000" || commands.length !== 1 ||
+      commands[0]?.kind !== "clear-all" || commands[0].reason !== "natural-end") {
+      throw new ParticleSimulationFault(
+        "particle.game-clear.invalid-start-handoff",
+        "The first Game-clear plan is atomically paired with the one natural-end gameplay Clear-all at elapsed zero.",
+      );
+    }
+  } else if (commands.length !== 0 || current.clearStatus !== plan.clearStatus ||
+    current.elapsedBits !== plan.elapsedBeforeBits) {
+    throw new ParticleSimulationFault(
+      "particle.game-clear.non-contiguous-timeline",
+      "Every later Game-clear plan continues the exact committed status/elapsed owner without gameplay commands.",
+    );
+  }
+  return Object.freeze({ clearStatus: plan.clearStatus, elapsedBits: plan.elapsedAfterBits });
+}
+
+function applyGameClearPlan(
+  plan: ParticleGameClearFramePlan,
+  owners: Map<string, MutableOwner>,
+  simulation: DeterministicParticleSimulation,
+): void {
+  for (const phase of plan.phases) {
+    simulation.updateSystemTransforms(phase.transforms);
+    const delta = particleFloat32FromBits(phase.deltaTimeBits);
+    if (delta === null) {
+      throw new ParticleSimulationFault(
+        "particle.game-clear.invalid-phase-delta-after-validation",
+        "A validated Game-clear phase delta must remain decodable.",
+      );
+    }
+    simulation.step(delta, false);
+    for (const group of phase.deactivate) {
+      const owner = owners.get(group.ownerKey);
+      if (owner === undefined || owner.root !== group.root || !sameInstance(owner.instance, plan.instance)) {
+        throw new ParticleSimulationFault(
+          "particle.game-clear.deactivate-owner-mismatch",
+          "Game-clear Animator deactivation requires the exact active branch owner and typed UI_Root instance.",
+        );
+      }
+      simulation.deactivateRootSystems(group.ownerKey, group.systemIds);
+    }
+    for (const group of phase.activate) {
+      const owner = owners.get(group.ownerKey);
+      if (owner === undefined) {
+        owners.set(group.ownerKey, {
+          root: group.root,
+          instance: Object.freeze({ ...plan.instance }),
+          restartCount: 0,
+        });
+      } else if (owner.root !== group.root || !sameInstance(owner.instance, plan.instance)) {
+        throw new ParticleSimulationFault(
+          "particle.game-clear.activate-owner-mismatch",
+          "Game-clear Animator activation cannot switch branch root or outer owner identity.",
+        );
+      }
+      simulation.playRootSystems(group.ownerKey, plan.instance, group.root, group.systemIds);
+    }
+  }
+}
+
+function freezeGameClearPlan(plan: ParticleGameClearFramePlan): ParticleGameClearFramePlan {
+  const transform = (value: ParticleGameClearFramePlan["phases"][number]["transforms"][number]["transform"]) => Object.freeze({
+    m_LocalPosition: Object.freeze({ ...value.m_LocalPosition }),
+    m_LocalRotation: Object.freeze({ ...value.m_LocalRotation }),
+    m_LocalScale: Object.freeze({ ...value.m_LocalScale }),
+  });
+  return Object.freeze({
+    clearStatus: plan.clearStatus,
+    elapsedBeforeBits: plan.elapsedBeforeBits,
+    elapsedAfterBits: plan.elapsedAfterBits,
+    instance: Object.freeze({
+      ...plan.instance,
+      ownerTransform: Object.freeze({
+        ...plan.instance.ownerTransform,
+        position: Object.freeze({ ...plan.instance.ownerTransform.position }),
+        rotation: Object.freeze({ ...plan.instance.ownerTransform.rotation }),
+        scale: Object.freeze({ ...plan.instance.ownerTransform.scale }),
+      }),
+    }),
+    phases: Object.freeze(plan.phases.map((phase) => Object.freeze({
+      sampledAtSecondsBits: phase.sampledAtSecondsBits,
+      deltaTimeBits: phase.deltaTimeBits,
+      transforms: Object.freeze(phase.transforms.map((update) => Object.freeze({
+        systemId: update.systemId,
+        transform: transform(update.transform),
+        parentTransforms: Object.freeze(update.parentTransforms.map(transform)),
+      }))),
+      deactivate: Object.freeze(phase.deactivate.map((group) => Object.freeze({
+        ownerKey: group.ownerKey,
+        root: group.root,
+        systemIds: Object.freeze([...group.systemIds]),
+      }))),
+      activate: Object.freeze(phase.activate.map((group) => Object.freeze({
+        ownerKey: group.ownerKey,
+        root: group.root,
+        systemIds: Object.freeze([...group.systemIds]),
+      }))),
+    }))),
+  });
+}
+
 function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
-  if (left.kind !== right.kind || left.rangeLength !== right.rangeLength || left.buttonType !== right.buttonType) return false;
-  if (left.kind === "game-clear" || right.kind === "game-clear") return left.kind === right.kind;
-  if (left.particleSystemSetupScaleBits !== right.particleSystemSetupScaleBits ||
+  if (left.kind !== right.kind || left.rangeLength !== right.rangeLength || left.buttonType !== right.buttonType ||
+    left.particleSystemSetupScaleBits !== right.particleSystemSetupScaleBits ||
     !sameOwnerTransform(left.ownerTransform, right.ownerTransform)) return false;
+  if (left.kind === "game-clear" || right.kind === "game-clear") {
+    return left.kind === "game-clear" && right.kind === "game-clear" && left.clearStatus === right.clearStatus;
+  }
   return left.kind === "game-play-button" && right.kind === "game-play-button" ||
     left.kind === "note-slide" && right.kind === "note-slide" &&
       left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
@@ -396,8 +534,8 @@ function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIde
 }
 
 function sameOwnerTransform(
-  left: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
-  right: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+  left: ParticleOwnerTransform | undefined,
+  right: ParticleOwnerTransform | undefined,
 ): boolean {
   if (left === undefined || right === undefined) return left === right;
   return left.source === right.source &&
@@ -421,6 +559,7 @@ function freezeFrameSnapshot(frame: ParticleFrameSnapshot): ParticleFrameSnapsho
     deltaTimeBits: frame.deltaTimeBits,
     paused: frame.paused,
     commands: Object.freeze(frame.commands.map(freezeParticleCommand)),
+    gameClearPlan: frame.gameClearPlan ?? null,
     samples: Object.freeze([...frame.samples]),
   });
 }

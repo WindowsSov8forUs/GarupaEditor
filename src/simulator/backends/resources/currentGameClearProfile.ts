@@ -56,6 +56,14 @@ export interface GameClearAdditionalBranch {
   readonly textOutClip: GameClearClipProfile;
 }
 
+import {
+  isParsedGameClearNativeSemanticProfile,
+  parseGameClearNativeSemanticProfile,
+  type GameClearNativeBranch,
+  type GameClearNativeSemanticProfile,
+  type GameClearNativeSystemIdentity,
+} from "./currentGameClearNativeSemanticProfile";
+
 export interface GameClearRuntimeProfile {
   readonly schemaVersion: 2;
   readonly durationSeconds: number;
@@ -65,6 +73,8 @@ export interface GameClearRuntimeProfile {
   readonly base: { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile };
   readonly fullCombo: GameClearAdditionalBranch;
   readonly allPerfect: GameClearAdditionalBranch;
+  /** Required by production; optional only for legacy source compilation. */
+  readonly nativeSemantic?: GameClearNativeSemanticProfile;
 }
 
 export type GameClearAdditionalState = "text-in" | "text-out" | "text-out-terminal";
@@ -76,9 +86,25 @@ export interface GameClearAdditionalAnimationSample {
   readonly values: readonly number[];
 }
 
-export function parseCurrentGameClearProfile(value: unknown): GameClearRuntimeProfile | null {
-  if (!record(value) || value.schemaVersion !== 2 || value.durationSeconds !== 3.233 ||
-      value.exitAfterFinishedSeconds !== 0.015 || !Array.isArray(value.assets) || value.assets.length !== 34 ||
+export function parseCurrentGameClearProfile(
+  value: unknown,
+  nativeSemantic?: GameClearNativeSemanticProfile,
+): GameClearRuntimeProfile | null {
+  if (!record(value)) return null;
+  const embeddedNative = nativeSemantic ?? (
+    value.nativeSemantic === undefined
+      ? undefined
+      : isParsedGameClearNativeSemanticProfile(value.nativeSemantic)
+      ? value.nativeSemantic
+      : parseGameClearNativeSemanticProfile(value.nativeSemantic) ?? undefined
+  );
+  if (value.nativeSemantic !== undefined && embeddedNative === undefined) return null;
+  const clearStatusMapping = asRecord(value.clearStatusMapping);
+  if (value.schemaVersion !== 2 || value.durationSeconds !== 3.233 ||
+      value.exitAfterFinishedSeconds !== 0.015 || clearStatusMapping?.["1"] !== "base clear only" ||
+      clearStatusMapping?.["2"] !== "base + FullCombo_text_in" ||
+      clearStatusMapping?.["3"] !== "base + AllPerfect_text_in" ||
+      !Array.isArray(value.assets) || value.assets.length === 0 ||
       !validAdditionalBranch(value.fullCombo, "FullCombo_text_in", 104, "FullCombo_text_out", 32, 25) ||
       !validAdditionalBranch(value.allPerfect, "AllPerfect_text_in", 129, "AllPerfect_text_out", 44, 36) ||
       !validBranch(value.base, "MusicGameClear", 44, 43, 3)) return null;
@@ -88,6 +114,15 @@ export function parseCurrentGameClearProfile(value: unknown): GameClearRuntimePr
         typeof asset.file !== "string" || !positiveInt(asset.width) || !positiveInt(asset.height)) return null;
     keys.add(asset.logical_key);
   }
+  if (embeddedNative !== undefined && (
+    value.assets.length !== embeddedNative.assets.length ||
+    value.assets.some((asset: any) => {
+      const expected = embeddedNative.assets.find((candidate) => candidate.logical_key === asset.logical_key);
+      return expected === undefined || expected.file !== asset.file ||
+        expected.width !== asset.width || expected.height !== asset.height;
+    }) ||
+    !validNativeParticleGraph(value, embeddedNative)
+  )) return null;
   for (const rawBranch of [value.fullCombo, value.allPerfect]) {
     if (!record(rawBranch) || !record(rawBranch.graph) || !Array.isArray(rawBranch.graph.objects)) return null;
     for (const objectValue of rawBranch.graph.objects) {
@@ -103,7 +138,10 @@ export function parseCurrentGameClearProfile(value: unknown): GameClearRuntimePr
       }
     }
   }
-  return deepFreeze(value as unknown as GameClearRuntimeProfile);
+  return deepFreeze({
+    ...value,
+    ...(embeddedNative === undefined ? {} : { nativeSemantic: embeddedNative }),
+  } as unknown as GameClearRuntimeProfile);
 }
 
 /**
@@ -138,130 +176,170 @@ export function sampleGameClearAdditionalAnimation(
   );
 }
 
-export function buildGameClearParticleProfile(
+/** Builds the one source-bound Game-clear bundle shared by simulation and Pixi primitive execution. */
+export function buildGameClearParticleBundle(
   profile: GameClearRuntimeProfile,
-  clearStatus: 1 | 2 | 3,
-): ParticlePortableProfile {
-  const root: ParticleRootId = clearStatus === 1
-    ? "game-clear:base"
-    : clearStatus === 2 ? "game-clear:full-combo" : "game-clear:all-perfect";
-  const objects = clearStatus === 1
-    ? profile.base.graph.objects
-    : [...profile.base.graph.objects, ...(clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects)];
-  const byPath = new Map(objects.map((object) => [object.path, object]));
-  const additionalObjects = clearStatus === 2 ? profile.fullCombo.graph.objects : profile.allPerfect.graph.objects;
-  const additionalClip = clearStatus === 2 ? profile.fullCombo.clip : profile.allPerfect.clip;
-  const particleOverrides = new Map([
-    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip, 0),
-    ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip, 0)),
-  ]);
+): ParticleBundleProfile {
+  const native = profile.nativeSemantic;
+  if (native === undefined) {
+    throw new Error("Game-clear native semantic authority is required before particle preparation");
+  }
   const systems: ParticleSystemDefinition[] = [];
   const profiles: Record<string, ParticleProfileDefinition> = {};
   const moduleProfiles: Record<string, Record<string, unknown>> = {};
   const rendererProfiles: Record<string, ParticleRendererProfile> = {};
-  const textureNames = new Set<string>();
-  for (const object of objects) {
-    const particle = object.components.find((component) => component.class === "ParticleSystem")?.serializedTree;
-    const rendererComponent = object.components.find((component) => component.class === "ParticleSystemRenderer");
-    const renderer = rendererComponent?.serializedTree;
-    const texture = rendererComponent?.asset ?? null;
-    if (particle === undefined || renderer === undefined) continue;
-    const profileId = `game-clear-profile:${object.path}`;
-    const rendererId = `game-clear-renderer:${object.path}`;
-    const modules: Record<string, string> = {};
-    for (const moduleName of [
-      "InitialModule", "EmissionModule", "ShapeModule", "ColorModule", "SizeModule",
-      "RotationModule", "RotationBySpeedModule", "ClampVelocityModule", "UVModule",
-    ] as const) {
-      const module = particle[moduleName];
-      if (!record(module) || module.enabled !== true) continue;
-      const id = `${profileId}:${moduleName}`;
-      const override = particleOverrides.get(object.path);
-      (moduleProfiles[moduleName] ??= {})[id] = moduleName === "InitialModule" && override?.startRotation !== undefined
-        ? initialModuleWithStartRotation(module, override.startRotation)
-        : module;
-      modules[moduleName] = id;
-    }
-    profiles[profileId] = Object.freeze({
-      system: Object.freeze({
+  let globalOrdinal = 0;
+  for (const branch of ["base", "fullCombo", "allPerfect"] as const) {
+    const source = gameClearBranch(profile, branch);
+    const objects = source.graph.objects;
+    const byPath = new Map(objects.map((object) => [object.path, object]));
+    const overrides = particleChannelOverrides(objects, source.clip, 0);
+    const branchSystems = native.systems
+      .filter((system) => system.branch === branch)
+      .sort((left, right) => left.sourceOrdinal - right.sourceOrdinal);
+    for (const semantic of branchSystems) {
+      const object = byPath.get(semantic.path);
+      const particle = object?.components.find((component) => component.class === "ParticleSystem")?.serializedTree;
+      const rendererComponent = object?.components.find((component) => component.class === "ParticleSystemRenderer");
+      const renderer = rendererComponent?.serializedTree;
+      if (object === undefined || particle === undefined || renderer === undefined ||
+        !sameVector(object.local_position, semantic.localPosition) ||
+        !sameVector(object.local_rotation, semantic.localRotation) ||
+        !sameVector(object.local_scale, semantic.localScale) ||
+        (rendererComponent?.asset ?? null) !== semantic.materialAsset) {
+        throw new Error(`Game-clear serialized/native system relation diverged: ${semantic.path}`);
+      }
+      const profileId = `game-clear-profile:${branch}:${semantic.sourceOrdinal}`;
+      const rendererId = `game-clear-renderer:${branch}:${semantic.sourceOrdinal}`;
+      const modules: Record<string, string> = {};
+      for (const moduleName of semantic.enabledModules) {
+        const module = asRecord(particle[moduleName]);
+        if (module === null || module.enabled !== true) {
+          throw new Error(`Game-clear enabled module relation diverged: ${semantic.path}:${moduleName}`);
+        }
+        const moduleId = `${profileId}:${moduleName}`;
+        const overridden = moduleName === "InitialModule" && overrides.get(object.path)?.startRotation !== undefined
+          ? initialModuleWithStartRotation(module, overrides.get(object.path)!.startRotation!)
+          : module;
+        (moduleProfiles[moduleName] ??= {})[moduleId] = normalizeGameClearModule(moduleName, overridden);
+        modules[moduleName] = moduleId;
+      }
+      const system = Object.freeze({
         lengthInSec: numberValue(particle.lengthInSec),
-        simulationSpeed: 1 as const,
-        stopAction: 0 as const,
+        simulationSpeed: numberValue(particle.simulationSpeed),
+        stopAction: numberValue(particle.stopAction),
         cullingMode: numberValue(particle.cullingMode) as 0 | 1 | 3,
-        ringBufferMode: 0 as const,
-        ringBufferLoopRange: particle.ringBufferLoopRange as ParticleProfileDefinition["system"]["ringBufferLoopRange"],
-        emitterVelocityMode: 0 as const,
-        looping: particleOverrides.get(object.path)?.looping ?? particle.looping === true,
+        ringBufferMode: numberValue(particle.ringBufferMode),
+        ringBufferLoopRange: freezeVector2(particle.ringBufferLoopRange),
+        emitterVelocityMode: numberValue(particle.emitterVelocityMode),
+        looping: overrides.get(object.path)?.looping ?? particle.looping === true,
         prewarm: particle.prewarm === true,
-        playOnAwake: false as const,
-        useUnscaledTime: false as const,
-        autoRandomSeed: true as const,
-        startDelay: particle.startDelay as ParticleProfileDefinition["system"]["startDelay"],
-        moveWithTransform: 0 as const,
+        playOnAwake: particle.playOnAwake === true,
+        useUnscaledTime: particle.useUnscaledTime === true,
+        autoRandomSeed: particle.autoRandomSeed === true,
+        startDelay: particle.startDelay,
+        moveWithTransform: numberValue(particle.moveWithTransform),
         moveWithCustomTransform: null,
-        scalingMode: 1 as const,
-        randomSeed: 0 as const,
-      }),
-      modules: Object.freeze(modules) as ParticleProfileDefinition["modules"],
-      renderer: rendererId,
-    });
-    rendererProfiles[rendererId] = Object.freeze({
-      m_Enabled: renderer.m_Enabled === true,
-      m_Materials: Object.freeze(texture === null ? [] : [{ type: "Material" as const, name: texture }]),
-      m_SortingOrder: numberValue(renderer.m_SortingOrder),
-      m_RenderMode: numberValue(renderer.m_RenderMode) as 0 | 1,
-      m_RenderAlignment: numberValue(renderer.m_RenderAlignment) as 0 | 2,
-      m_MinParticleSize: 0 as const,
-      m_MaxParticleSize: numberValue(renderer.m_MaxParticleSize),
-      m_VelocityScale: numberValue(renderer.m_VelocityScale),
-      m_LengthScale: numberValue(renderer.m_LengthScale),
-      m_NormalDirection: numberValue(renderer.m_NormalDirection),
-      m_SortMode: 0 as const,
-      m_ApplyActiveColorSpace: renderer.m_ApplyActiveColorSpace === true,
-      m_RotateWithStretchDirection: true as const,
-      m_Pivot: renderer.m_Pivot as ParticleRendererProfile["m_Pivot"],
-    });
-    if (texture !== null) textureNames.add(texture);
-    systems.push(Object.freeze({
-      identity: `game-clear:${object.path}`,
-      root,
-      path: object.path,
-      transform: transform(object, particleOverrides.get(object.path)),
-      parentTransforms: Object.freeze(parentTransforms(object.path, byPath, particleOverrides)),
-      profile: profileId,
-      randomStateU32: randomWords(object.path),
-    }));
+        scalingMode: numberValue(particle.scalingMode) as 0 | 1,
+        randomSeed: numberValue(particle.randomSeed),
+      }) as ParticleProfileDefinition["system"];
+      profiles[profileId] = Object.freeze({
+        system,
+        modules: Object.freeze(modules) as ParticleProfileDefinition["modules"],
+        renderer: rendererId,
+      });
+      rendererProfiles[rendererId] = normalizeGameClearRenderer(renderer, semantic);
+      systems.push(Object.freeze({
+        identity: `game-clear:${branch}:${semantic.particleSystemPathId}`,
+        sourceOrdinal: globalOrdinal,
+        root: gameClearRoot(branch),
+        path: semantic.path,
+        transform: transform(object, overrides.get(object.path)),
+        parentTransforms: Object.freeze(parentTransforms(object.path, byPath, overrides)),
+        parentParticleSystemFlags: semantic.parentParticleSystemFlagsRootToImmediate,
+        profile: profileId,
+        meshProfile: null,
+        particleSourcePathId: semantic.particleSystemPathId,
+        particleSerializedBytes: semantic.particleSystemSerializedBytes,
+        particleSerializedSha256: semantic.particleSystemSerializedSha256,
+        rendererSourcePathId: semantic.rendererPathId,
+        rendererSerializedBytes: semantic.rendererSerializedBytes,
+        rendererSerializedSha256: semantic.rendererSerializedSha256,
+        gameObjectSourcePathId: semantic.gameObjectPathId,
+        transformSourcePathId: semantic.transformPathId,
+        sourceBranch: branch,
+        sourceBranchOrdinal: semantic.sourceOrdinal,
+        activeSerialized: semantic.activeSerialized,
+      } as ParticleSystemDefinition));
+      globalOrdinal += 1;
+    }
   }
-  const textures = profile.assets.filter((asset) => textureNames.has(asset.logical_key)).map((asset) => Object.freeze({
-    name: asset.logical_key,
-    width: asset.width,
-    height: asset.height,
-    rgbaBytes: asset.width * asset.height * 4,
-    rgbaSha256: "0".repeat(64),
-    filterMode: 1 as const,
-    wrapU: 1 as const,
-    wrapV: 1 as const,
+  const textureNames = new Set(native.systems.flatMap((system) =>
+    system.materialAsset === null ? [] : [system.materialAsset]));
+  const textures = native.assets
+    .filter((asset) => textureNames.has(asset.logical_key))
+    .map((asset) => Object.freeze({
+      name: asset.logical_key,
+      width: asset.width,
+      height: asset.height,
+      rgbaBytes: asset.width * asset.height * 4,
+      rgbaSha256: asset.rgba_sha256,
+      filterMode: 1 as const,
+      wrapU: asset.texture_settings.wrap_u,
+      wrapV: asset.texture_settings.wrap_v,
+    }));
+  const materialPathIds = new Map(native.systems.flatMap((system) =>
+    system.materialAsset === null || system.materialPathId === null
+      ? []
+      : [[system.materialAsset, system.materialPathId] as const]));
+  const materials = [...textureNames].sort().map((name) => Object.freeze({
+    name,
+    shader: "Mobile/Particles/Additive",
+    texture: name,
+    blend: "add" as const,
+    sourcePathId: materialPathIds.get(name),
+    renderQueue: 3000 as const,
+    sourceBlendFactor: 5 as const,
+    destinationBlendFactor: 1 as const,
+    zWrite: false as const,
+    cull: "off" as const,
+    fragment: "straight-rgba-modulate" as const,
+    mainTextureScale: Object.freeze({ x: 1, y: 1 }),
+    mainTextureOffset: Object.freeze({ x: 0, y: 0 }),
   }));
-  const bundle: ParticleBundleProfile = Object.freeze({
-    key: "game-clear" as const,
+  if (systems.length !== native.systems.length || textures.length !== textureNames.size) {
+    throw new Error("Game-clear native particle inventory is incomplete");
+  }
+  return Object.freeze({
+    key: "game-clear",
     systems: Object.freeze(systems),
     profiles: Object.freeze(profiles),
-    moduleProfiles: Object.freeze(moduleProfiles) as unknown as ParticleModuleProfileMap,
+    moduleProfiles: deepFreeze(moduleProfiles) as ParticleModuleProfileMap,
     rendererProfiles: Object.freeze(rendererProfiles),
-    materials: Object.freeze([...textureNames].map((name) => Object.freeze({
-      name, shader: "Mobile/Particles/Additive" as const, texture: name, blend: "add" as const,
-    }))),
+    meshProfiles: Object.freeze({}),
+    materials: Object.freeze(materials),
     textures: Object.freeze(textures),
   });
+}
+
+/** Legacy call shape retained for source compatibility; production merges this bundle at launch. */
+export function buildGameClearParticleProfile(
+  profile: GameClearRuntimeProfile,
+  clearStatus: 1 | 2 | 3,
+): ParticlePortableProfile {
+  const bundle = buildGameClearParticleBundle(profile);
   return Object.freeze({
-    schemaVersion: 1 as const,
-    sample: Object.freeze({ package: "jp.co.craftegg.band" as const, versionName: "10.1.4" as const, versionCode: 230 as const, abi: "arm64-v8a" as const, unityVersion: "2022.3.62f1" as const }),
-    packIdentity: `game-clear-${clearStatus}-current-portable-v1`,
-    fidelity: "current-static-portable" as const,
-    networkAllowed: false as const,
-    automaticFallbackAllowed: false as const,
-    systemCount: systems.length,
-    profileCount: systems.length,
+    schemaVersion: 2,
+    sample: Object.freeze({
+      package: "jp.co.craftegg.band", versionName: "10.1.4", versionCode: 230,
+      abi: "arm64-v8a", unityVersion: "2022.3.62f1",
+    }),
+    packIdentity: `particle-game-clear-source-bound-v2-${clearStatus}`,
+    fidelity: "current-native-semantic-v2",
+    networkAllowed: false,
+    automaticFallbackAllowed: false,
+    systemCount: bundle.systems.length,
+    profileCount: Object.keys(bundle.profiles).length,
     bundles: Object.freeze([bundle]),
   });
 }
@@ -305,7 +383,7 @@ export function sampleGameClearParticleTransforms(
   return Object.freeze(objects
     .filter((object) => object.components.some((component) => component.class === "ParticleSystem"))
     .map((object) => Object.freeze({
-      systemId: `game-clear:${object.path}`,
+      systemId: gameClearSystemId(profile, object.path),
       transform: transform(object, overrides.get(object.path)),
       parentTransforms: Object.freeze(parentTransforms(object.path, byPath, overrides)),
     }))
@@ -379,7 +457,7 @@ function activeGameClearParticleSystems(
     };
     for (const object of objects) {
       if (object.components.some((component) => component.class === "ParticleSystem") && resolve(object.path)) {
-        active.add(`game-clear:${object.path}`);
+        active.add(gameClearSystemId(profile, object.path));
       }
     }
   }
@@ -530,18 +608,193 @@ function parentTransforms(
     const parent = objects.get(current);
     if (parent !== undefined) output.push(transform(parent, overrides.get(current)));
   }
-  return output;
+  return output.reverse();
 }
-function randomWords(value: string): readonly [number, number, number, number] {
-  const result: number[] = [];
-  for (let lane = 0; lane < 4; lane += 1) {
-    let hash = (2166136261 ^ lane) >>> 0;
-    for (let index = 0; index < value.length; index += 1) hash = Math.imul(hash ^ value.charCodeAt(index), 16777619) >>> 0;
-    result.push(hash || ((0x9E3779B9 ^ lane) >>> 0));
+
+function gameClearBranch(
+  profile: GameClearRuntimeProfile,
+  branch: GameClearNativeBranch,
+): { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile } {
+  return branch === "base" ? profile.base : branch === "fullCombo" ? profile.fullCombo : profile.allPerfect;
+}
+
+export function gameClearRoot(branch: GameClearNativeBranch): ParticleRootId {
+  return branch === "base"
+    ? "game-clear:base"
+    : branch === "fullCombo" ? "game-clear:full-combo" : "game-clear:all-perfect";
+}
+
+export function gameClearSystemId(profile: GameClearRuntimeProfile, path: string): string {
+  const semantic = profile.nativeSemantic?.systems.find((system) => system.path === path);
+  if (semantic === undefined) throw new Error(`Game-clear system has no native semantic identity: ${path}`);
+  return `game-clear:${semantic.branch}:${semantic.particleSystemPathId}`;
+}
+
+function normalizeGameClearModule(
+  moduleName: string,
+  module: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  if (moduleName === "InitialModule") {
+    return deepFreeze({ ...module, gravitySource: module.gravitySource ?? 0 });
   }
-  return Object.freeze(result) as unknown as readonly [number, number, number, number];
+  if (moduleName === "ShapeModule") {
+    return deepFreeze({
+      ...module,
+      m_Mesh: null,
+      m_MeshRenderer: null,
+      m_SkinnedMeshRenderer: null,
+      m_Sprite: null,
+      m_SpriteRenderer: null,
+      m_Texture: null,
+    });
+  }
+  return deepFreeze({ ...module });
 }
-function numberValue(value: unknown): number { if (typeof value !== "number" || !Number.isFinite(value)) throw new Error("invalid game-clear particle number"); return Math.fround(value); }
+
+function normalizeGameClearRenderer(
+  renderer: Readonly<Record<string, unknown>>,
+  semantic: GameClearNativeSystemIdentity,
+): ParticleRendererProfile {
+  const material = semantic.materialAsset === null || semantic.materialPathId === null
+    ? null
+    : Object.freeze({
+        type: "Material" as const,
+        name: semantic.materialAsset,
+        fileId: rendererMaterialFileId(renderer),
+        pathId: semantic.materialPathId,
+      });
+  return deepFreeze({
+    m_Enabled: renderer.m_Enabled === true,
+    m_Materials: Object.freeze([material]),
+    m_CastShadows: numberValue(renderer.m_CastShadows),
+    m_ReceiveShadows: numberValue(renderer.m_ReceiveShadows),
+    m_DynamicOccludee: numberValue(renderer.m_DynamicOccludee),
+    m_StaticShadowCaster: numberValue(renderer.m_StaticShadowCaster),
+    m_MotionVectors: numberValue(renderer.m_MotionVectors),
+    m_LightProbeUsage: numberValue(renderer.m_LightProbeUsage),
+    m_ReflectionProbeUsage: numberValue(renderer.m_ReflectionProbeUsage),
+    m_RayTracingMode: numberValue(renderer.m_RayTracingMode),
+    m_RayTraceProcedural: numberValue(renderer.m_RayTraceProcedural),
+    m_RenderingLayerMask: numberValue(renderer.m_RenderingLayerMask),
+    m_RendererPriority: numberValue(renderer.m_RendererPriority),
+    m_SortingLayerID: numberValue(renderer.m_SortingLayerID),
+    m_SortingLayer: numberValue(renderer.m_SortingLayer),
+    m_SortingOrder: numberValue(renderer.m_SortingOrder),
+    m_SortingFudge: numberValue(renderer.m_SortingFudge),
+    m_RenderMode: numberValue(renderer.m_RenderMode) as 0 | 1,
+    m_RenderAlignment: numberValue(renderer.m_RenderAlignment) as 0,
+    m_SortMode: numberValue(renderer.m_SortMode),
+    m_MeshDistribution: numberValue(renderer.m_MeshDistribution),
+    m_MinParticleSize: numberValue(renderer.m_MinParticleSize),
+    m_MaxParticleSize: numberValue(renderer.m_MaxParticleSize),
+    m_CameraVelocityScale: numberValue(renderer.m_CameraVelocityScale),
+    m_VelocityScale: numberValue(renderer.m_VelocityScale),
+    m_LengthScale: numberValue(renderer.m_LengthScale),
+    m_NormalDirection: numberValue(renderer.m_NormalDirection),
+    m_ShadowBias: numberValue(renderer.m_ShadowBias),
+    m_ApplyActiveColorSpace: renderer.m_ApplyActiveColorSpace === true,
+    m_AllowRoll: renderer.m_AllowRoll === true,
+    m_FreeformStretching: renderer.m_FreeformStretching === true,
+    m_RotateWithStretchDirection: renderer.m_RotateWithStretchDirection === true,
+    m_EnableGPUInstancing: renderer.m_EnableGPUInstancing === true,
+    m_UseCustomVertexStreams: renderer.m_UseCustomVertexStreams === true,
+    m_VertexStreams: freezeNumberArray(renderer.m_VertexStreams),
+    m_UseCustomTrailVertexStreams: renderer.m_UseCustomTrailVertexStreams === true,
+    m_TrailVertexStreams: freezeNumberArray(renderer.m_TrailVertexStreams),
+    m_Pivot: freezeVector3(renderer.m_Pivot),
+    m_Flip: freezeVector3(renderer.m_Flip),
+    m_Mesh: null,
+    m_Mesh1: null,
+    m_Mesh2: null,
+    m_Mesh3: null,
+    m_MeshWeighting: numberValue(renderer.m_MeshWeighting),
+    m_MeshWeighting1: numberValue(renderer.m_MeshWeighting1),
+    m_MeshWeighting2: numberValue(renderer.m_MeshWeighting2),
+    m_MeshWeighting3: numberValue(renderer.m_MeshWeighting3),
+    m_MaskInteraction: numberValue(renderer.m_MaskInteraction),
+    m_StaticBatchRoot: null,
+    m_ProbeAnchor: null,
+    m_LightProbeVolumeOverride: null,
+  } as ParticleRendererProfile);
+}
+
+function rendererMaterialFileId(renderer: Readonly<Record<string, unknown>>): number {
+  const materials = renderer.m_Materials;
+  const first = Array.isArray(materials) ? asRecord(materials[0]) : null;
+  return first === null ? 0 : numberValue(first.m_FileID);
+}
+
+function freezeVector2(value: unknown): Readonly<{ readonly x: number; readonly y: number }> {
+  const row = asRecord(value);
+  if (row === null) throw new Error("Game-clear particle Vector2 is missing");
+  return Object.freeze({ x: numberValue(row.x), y: numberValue(row.y) });
+}
+function freezeVector3(value: unknown): Readonly<{ readonly x: number; readonly y: number; readonly z: number }> {
+  const row = asRecord(value);
+  if (row === null) throw new Error("Game-clear particle Vector3 is missing");
+  return Object.freeze({ x: numberValue(row.x), y: numberValue(row.y), z: numberValue(row.z) });
+}
+function freezeNumberArray(value: unknown): readonly number[] {
+  if (!Array.isArray(value)) throw new Error("Game-clear renderer stream inventory is missing");
+  return Object.freeze(value.map(numberValue));
+}
+function sameVector(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((value, index) => Object.is(Math.fround(value), Math.fround(right[index]!)));
+}
+function numberValue(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new Error("invalid game-clear particle number");
+  return Math.fround(value);
+}
+
+function validNativeParticleGraph(
+  value: Record<string, unknown>,
+  native: GameClearNativeSemanticProfile,
+): boolean {
+  const seen = new Set<string>();
+  for (const branch of ["base", "fullCombo", "allPerfect"] as const) {
+    const source = asRecord(value[branch]);
+    const graph = asRecord(source?.graph);
+    if (graph === null || !Array.isArray(graph.objects)) return false;
+    const objects = graph.objects.filter((entry): entry is GameClearGraphObject => validObject(entry));
+    if (objects.length !== graph.objects.length) return false;
+    const byPath = new Map(objects.map((object) => [object.path, object]));
+    const expected = native.systems.filter((system) => system.branch === branch);
+    const particleObjects = objects.filter((object) =>
+      object.components.some((component) => component.class === "ParticleSystem"));
+    if (particleObjects.length !== expected.length) return false;
+    for (const semantic of expected) {
+      const object = byPath.get(semantic.path);
+      const particle = object?.components.find((component) => component.class === "ParticleSystem")?.serializedTree;
+      const rendererComponent = object?.components.find((component) => component.class === "ParticleSystemRenderer");
+      const renderer = rendererComponent?.serializedTree;
+      if (object === undefined || particle === undefined || renderer === undefined || seen.has(semantic.path) ||
+        !sameVector(object.local_position, semantic.localPosition) ||
+        !sameVector(object.local_rotation, semantic.localRotation) ||
+        !sameVector(object.local_scale, semantic.localScale) ||
+        (rendererComponent?.asset ?? null) !== semantic.materialAsset ||
+        renderer.m_Enabled !== semantic.rendererEnabled ||
+        renderer.m_RenderMode !== semantic.renderMode ||
+        renderer.m_RenderAlignment !== semantic.renderAlignment ||
+        renderer.m_SortingOrder !== semantic.sortingOrder ||
+        parentTransforms(semantic.path, byPath, new Map()).length !==
+          semantic.parentParticleSystemFlagsRootToImmediate.length) return false;
+      const enabled = Object.entries(particle)
+        .filter(([name, module]) => name.endsWith("Module") && asRecord(module)?.enabled === true)
+        .map(([name]) => name)
+        .filter((name) => [
+          "InitialModule", "EmissionModule", "ShapeModule", "ColorModule", "SizeModule",
+          "RotationModule", "RotationBySpeedModule", "ClampVelocityModule", "UVModule",
+        ].includes(name));
+      if (enabled.length !== semantic.enabledModules.length ||
+        semantic.enabledModules.some((name) => !enabled.includes(name))) return false;
+      const shape = asRecord(particle.ShapeModule);
+      const shapeType = shape?.enabled === true ? shape.type : null;
+      if (shapeType !== semantic.shapeType) return false;
+      seen.add(semantic.path);
+    }
+  }
+  return seen.size === native.systems.length;
+}
 
 function validAdditionalBranch(
   value: unknown,
@@ -611,4 +864,5 @@ function validObject(value: unknown): boolean {
 function vector(value: unknown, size: number): boolean { return Array.isArray(value) && value.length === size && value.every((entry) => typeof entry === "number" && Number.isFinite(entry)); }
 function positiveInt(value: unknown): value is number { return typeof value === "number" && Number.isInteger(value) && value > 0; }
 function record(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
+function asRecord(value: unknown): Record<string, any> | null { return record(value) ? value : null; }
 function deepFreeze<T>(value: T): T { if (value && typeof value === "object" && !Object.isFrozen(value)) { Object.freeze(value); for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child); } return value; }

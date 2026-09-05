@@ -14,6 +14,10 @@ import {
   ParticleCommandOwnerTransaction,
   ParticleCommandProducer,
 } from "./particleCommandProducer";
+import {
+  GameClearParticleOwner,
+  GameClearParticleOwnerTransaction,
+} from "./gameClearParticleOwner";
 
 export class ParticleOuterFrameTransaction {
   private state: "pending" | "domain-committed" | "committed" | "discarded" = "pending";
@@ -23,6 +27,7 @@ export class ParticleOuterFrameTransaction {
     private readonly backendBatch: ParticleFrameBatch,
     private readonly rendererBatch: ParticleRendererFrameBatch | null,
     private readonly ownerTransaction: ParticleCommandOwnerTransaction | null,
+    private readonly gameClearTransaction: GameClearParticleOwnerTransaction | null,
   ) {}
 
   commitDomain(): SimulatorResult<void> {
@@ -31,12 +36,19 @@ export class ParticleOuterFrameTransaction {
     if (committed.status !== "ok") {
       if (this.rendererBatch !== null) this.coordinator.renderer!.discardFrame(this.rendererBatch);
       this.ownerTransaction?.discard();
+      this.gameClearTransaction?.discard();
       return committed;
     }
     const owner = this.ownerTransaction?.commit() ?? ok(undefined);
     if (owner.status !== "ok") {
       if (this.rendererBatch !== null) this.coordinator.renderer!.discardFrame(this.rendererBatch);
+      this.gameClearTransaction?.discard();
       return owner;
+    }
+    const gameClear = this.gameClearTransaction?.commit() ?? ok(undefined);
+    if (gameClear.status !== "ok") {
+      if (this.rendererBatch !== null) this.coordinator.renderer!.discardFrame(this.rendererBatch);
+      return gameClear;
     }
     this.state = "domain-committed";
     if (this.rendererBatch === null) {
@@ -82,6 +94,8 @@ export class ParticleOuterFrameTransaction {
     if (backend.status !== "ok") return backend;
     const owner = this.ownerTransaction?.discard() ?? ok(undefined);
     if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearTransaction?.discard() ?? ok(undefined);
+    if (gameClear.status !== "ok") return gameClear;
     this.state = "discarded";
     return ok(undefined);
   }
@@ -95,6 +109,8 @@ export class ParticleFrameCoordinator {
     readonly producer: ParticleCommandProducer,
     readonly backend: SimulatorParticleBackend,
     readonly renderer: SimulatorParticleRendererBackend | null,
+    /** Optional only for legacy source compilation; production always supplies it. */
+    readonly gameClearOwner: GameClearParticleOwner | null = null,
   ) {}
 
   validate(): SimulatorResult<void> {
@@ -119,7 +135,10 @@ export class ParticleFrameCoordinator {
         );
       }
     }
-    return this.producer.validate();
+    const producer = this.producer.validate();
+    return producer.status === "ok" && this.gameClearOwner !== null
+      ? this.gameClearOwner.validateFresh()
+      : producer;
   }
 
   pollFaults(): SimulatorResult<void> {
@@ -177,6 +196,34 @@ export class ParticleFrameCoordinator {
       : owner;
   }
 
+  preflightGameClearStart(
+    clearStatus: 1 | 2 | 3,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    if (this.gameClearOwner === null) {
+      return rejected("particle.game-clear.owner-missing", "Production Game-clear requires its prepared timeline owner.");
+    }
+    const owner = this.producer.preflightTerminal("natural-end");
+    if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearOwner.preflightStart(clearStatus);
+    if (gameClear.status !== "ok") {
+      owner.value.discard();
+      return gameClear;
+    }
+    return this.preflight(0, false, owner.value, gameClear.value);
+  }
+
+  preflightGameClearAdvance(
+    deltaTimeSeconds: number,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    if (this.gameClearOwner === null) {
+      return rejected("particle.game-clear.owner-missing", "Production Game-clear requires its prepared timeline owner.");
+    }
+    const gameClear = this.gameClearOwner.preflightAdvance(deltaTimeSeconds);
+    return gameClear.status === "ok"
+      ? this.preflight(0, false, null, gameClear.value)
+      : gameClear;
+  }
+
   preflightTerminal(
     reason: "game-over" | "natural-end",
   ): SimulatorResult<ParticleOuterFrameTransaction> {
@@ -213,15 +260,18 @@ export class ParticleFrameCoordinator {
     deltaTimeSeconds: number,
     paused: boolean,
     ownerTransaction: ParticleCommandOwnerTransaction | null,
+    gameClearTransaction: GameClearParticleOwnerTransaction | null = null,
   ): SimulatorResult<ParticleOuterFrameTransaction> {
     const faults = this.pollFaults();
     if (faults.status !== "ok") {
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return faults;
     }
     if (typeof deltaTimeSeconds !== "number" ||
       !Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return rejected(
         "particle.frame.invalid-host-delta",
         "Particle outer-frame time is one finite non-negative host delta converted once to binary32.",
@@ -231,6 +281,7 @@ export class ParticleFrameCoordinator {
     const deltaTimeBits = particleFloat32ToBits(rounded);
     if (deltaTimeBits === null) {
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return rejected(
         "particle.frame.invalid-host-delta",
         "Particle outer-frame time is one finite non-negative host delta converted once to binary32.",
@@ -242,15 +293,18 @@ export class ParticleFrameCoordinator {
       deltaTimeBits,
       paused,
       commands,
+      gameClearPlan: gameClearTransaction?.plan ?? null,
     }));
     if (backendBatch.status !== "accepted") {
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return mapParticleResult(backendBatch);
     }
     const preview = this.backend.previewFrame(backendBatch.value);
     if (preview.status !== "accepted") {
       this.backend.discardFrame(backendBatch.value);
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return mapParticleResult(preview);
     }
     const rendererBatch = this.renderer?.preflightFrame(Object.freeze({
@@ -261,6 +315,7 @@ export class ParticleFrameCoordinator {
     if (rendererBatch !== null && rendererBatch.status !== "accepted") {
       this.backend.discardFrame(backendBatch.value);
       ownerTransaction?.discard();
+      gameClearTransaction?.discard();
       return mapParticleResult(rendererBatch);
     }
     return ok(new ParticleOuterFrameTransaction(
@@ -268,6 +323,7 @@ export class ParticleFrameCoordinator {
       backendBatch.value,
       rendererBatch?.value ?? null,
       ownerTransaction,
+      gameClearTransaction,
     ));
   }
 }

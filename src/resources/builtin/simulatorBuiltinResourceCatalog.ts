@@ -63,6 +63,7 @@ import gameClear31Url from "../../assets/game/prefabs/bms/gameclear/FullCombo_un
 import gameClear32Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png?url&no-inline";
 import gameClear33Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png?url&no-inline";
 import gameClearProfileUrl from "../../assets/game/prefabs/bms/gameclear/game-clear-profile.json?url&no-inline";
+import gameClearNativeSemanticProfileUrl from "../../assets/game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json?url&no-inline";
 import manifestJson from "./simulatorBuiltinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -186,6 +187,7 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png", "Tex_parSet_1-E114CC275B2B.png", "image/png", gameClear32Url),
     file("game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png", "Tex_parSet_2-E9CE6B25A9A1.png", "image/png", gameClear33Url),
     file("game/prefabs/bms/gameclear/game-clear-profile.json", "game-clear-profile.json", "application/json", gameClearProfileUrl),
+    file("game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json", "game-clear-native-semantic-profile.json", "application/json", gameClearNativeSemanticProfileUrl),
   ]),
 ]);
 

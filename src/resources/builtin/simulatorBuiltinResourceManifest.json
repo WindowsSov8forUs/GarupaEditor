@@ -444,6 +444,14 @@
       "sourceRelation": "byte-identical"
     },
     {
+      "path": "game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json",
+      "byteLength": 75408,
+      "sha256": "19A32E6652E17BFD637B39C21F9565E0B4431035737D4F100002D9A896482F14",
+      "sourceReverseCommit": "6cddb142806ffdb933cc6a237f69f4dd16e9ca97",
+      "sourcePath": "artifacts/investigations/simulator-game-clear-native-domain-10-1-4/game_clear_native_domain_contract.json",
+      "sourceRelation": "source-derived-projection"
+    },
+    {
       "path": "game/prefabs/bms/gameclear/game-clear-profile.json",
       "byteLength": 2237033,
       "sha256": "558FFBC854ADA8D064D98FDC53C90D2A7DDC1ACF79368F8DB5806222CC5BCDDB",
@@ -528,8 +536,8 @@
   "sourceHead": "343c09cc06ee97f3f2532518eff6192913de2b19",
   "identity": {
     "legacyMetadataTupleSha256": "07a2265ad7c798494a2d3fce405f9ccc7acaf7ae5bbabfd80fdb19a4b0558b82",
-    "currentMetadataTupleSha256": "4ce1e654dbb681df99a275684320ea5d82e21a1e70809f43c803a20419772988",
-    "payloadTupleSha256": "363e04fe04e6e8a0c87279391b17a153e11ed8b947fd4490c8c4a2107e166357",
+    "currentMetadataTupleSha256": "9a029b7e010cbcf018c927a048e24a550a3caf133382b16517d57d17d31577a0",
+    "payloadTupleSha256": "e64b4bce6a57f8abc67426c9b4f128a9a9d08c8d5a990df934141f43d38829fa",
     "metadataProjection": [
       "path",
       "sourceReverseCommit",

@@ -31,6 +31,8 @@ import { rejected, type SimulatorAssemblyResult } from "./result";
 import { prepareLeasedAudioResources } from "./leasedAudioPreparation";
 import { prepareLeasedCommonRenderResources } from "./leasedCommonResourcePreparation";
 import { prepareLeasedDefaultParticleProvider } from "./leasedDefaultParticlePreparation";
+import { prepareGameClearParticleProvider } from "./gameClearParticlePreparation";
+import type { GameClearRuntimeProfile } from "../backends/resources/currentGameClearProfile";
 import type { SimulatorResourceSelection } from "./resourceRequirements";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 import {
@@ -84,6 +86,7 @@ export interface PreparedSimulatorResourceAssembly {
   readonly rendererBackend: SimulatorRendererBackend;
   readonly particleBackend: SimulatorParticleBackend;
   readonly particleRendererBackend: SimulatorParticleRendererBackend;
+  readonly gameClearProfile: GameClearRuntimeProfile;
   readonly sceneLayout: SimulatorSceneLayout;
 }
 
@@ -186,10 +189,24 @@ export async function assembleSimulatorResources(
   if (audio.status === "rejected") return audio;
   const defaultParticles = await prepareLeasedDefaultParticleProvider(lease);
   if (defaultParticles.status === "rejected") return defaultParticles;
-  const particles = prepareSkinParticleProvider(
+  const gameplayParticles = prepareSkinParticleProvider(
     selection.skin.resolved,
     skinPacks.value,
     defaultParticles.value,
+  );
+  if (gameplayParticles.status === "rejected") return gameplayParticles;
+  const gameClearProfile = commonRender.value.profile.gameClearProfile;
+  if (gameClearProfile === undefined || gameClearProfile.nativeSemantic === undefined) {
+    return rejected(
+      "resource-integrity",
+      "simulator.assembly.game-clear-native-profile-missing",
+      "The launch generation requires its source-bound Game-clear graph and native semantic sidecar before particle backend preparation.",
+    );
+  }
+  const particles = await prepareGameClearParticleProvider(
+    gameplayParticles.value,
+    gameClearProfile,
+    lease,
   );
   if (particles.status === "rejected") return particles;
 
@@ -263,6 +280,7 @@ export async function assembleSimulatorResources(
     rendererBackend: targets.rendering.backend,
     particleBackend: targets.particles.backend,
     particleRendererBackend: targets.particles.renderer,
+    gameClearProfile,
     sceneLayout: scene.value,
   }));
 }

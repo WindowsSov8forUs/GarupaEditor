@@ -589,8 +589,13 @@ function createParticleScene(
     slideWidthScale * layout.gameplay.normalizedNoteSize,
   ));
   const slideOuterScaleBits = particleFloat32ToBits(layout.gameplay.noteSettingScale);
+  const gameClearAuthoredUiScaleBits = particleFloat32ToBits(layout.ui.screenToSafeChildScale);
+  const gameClearOwnerScaleBits = particleFloat32ToBits(Math.fround(
+    layout.ui.screenToSafeChildScale / layout.camera.pixelsPerWorldUnit,
+  ));
   if (pixelsPerWorldUnitBits === null || gameplayTransformScaleBits === null ||
-    slideParticleSystemSetupScaleBits === null || slideOuterScaleBits === null) {
+    slideParticleSystemSetupScaleBits === null || slideOuterScaleBits === null ||
+    gameClearAuthoredUiScaleBits === null || gameClearOwnerScaleBits === null) {
     return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
   }
   const resolvedButtonOwners = Object.freeze(buttonOwners.map((owner) => Object.freeze({
@@ -618,6 +623,22 @@ function createParticleScene(
         xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
       }),
       childLocalScale: Object.freeze({ xBits: "0x3F800000", yBits: "0x3F800000", zBits: "0x3F800000" }),
+    }),
+    gameClearOwner: Object.freeze({
+      authoredUiScaleBits: gameClearAuthoredUiScaleBits,
+      transform: Object.freeze({
+        source: "game-clear-ui-root" as const,
+        position: Object.freeze({ xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000" }),
+        rotation: Object.freeze({
+          xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
+        }),
+        scale: Object.freeze({
+          xBits: gameClearOwnerScaleBits,
+          yBits: gameClearOwnerScaleBits,
+          zBits: gameClearOwnerScaleBits,
+        }),
+      }),
+      particleSystemSetupScaleBits: "0x3F800000",
     }),
   }));
 }

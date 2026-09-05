@@ -2,6 +2,7 @@ import commonCatalogJson from "../engine/skin/commonRenderSemanticCatalog.json";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { parseCurrentScoreHudNativeProfile } from "../backends/resources/currentScoreHudNativeProfile";
 import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
+import { parseGameClearNativeSemanticProfile } from "../backends/resources/currentGameClearNativeSemanticProfile";
 import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
 import {
   ImmutableLocalRenderResourceProvider,
@@ -57,22 +58,25 @@ export async function prepareLeasedCommonRenderResources(
     assets.push(profile);
     local.push(Object.freeze({ logicalAssetId: profile.logicalAssetId, bytes: bytes.value }));
   }
-  const [baseProfile, ordinaryVisible, scoreNativeProfile, gameClearProfile, pauseCountdownAnimation] = await Promise.all([
+  const [baseProfile, ordinaryVisible, scoreNativeProfile, gameClearProfile, gameClearSemanticProfile, pauseCountdownAnimation] = await Promise.all([
     readJson(lease, "portable/profiles/ordinary-render", "profile.json"),
     readJson(lease, "portable/profiles/ordinary-visible", "profile.json"),
     readJson(lease, "prefabs/bms/rhythmgamegauge/score", "score-hud-native-profile.json"),
     readJson(lease, "prefabs/bms/gameclear", "game-clear-profile.json"),
+    readJson(lease, "prefabs/bms/gameclear", "game-clear-native-semantic-profile.json"),
     readJson(lease, "prefabs/bms/pause", "countdown-animation-profile.json"),
   ]);
   if (baseProfile.status === "rejected") return baseProfile;
   if (ordinaryVisible.status === "rejected") return ordinaryVisible;
   if (scoreNativeProfile.status === "rejected") return scoreNativeProfile;
   if (gameClearProfile.status === "rejected") return gameClearProfile;
+  if (gameClearSemanticProfile.status === "rejected") return gameClearSemanticProfile;
   if (pauseCountdownAnimation.status === "rejected") return pauseCountdownAnimation;
   const base = record(baseProfile.value);
   const visible = parseCurrentOrdinaryVisibleProfile(ordinaryVisible.value);
   const score = parseCurrentScoreHudNativeProfile(scoreNativeProfile.value);
-  const gameClear = parseCurrentGameClearProfile(gameClearProfile.value);
+  const gameClearSemantic = parseGameClearNativeSemanticProfile(gameClearSemanticProfile.value);
+  const gameClear = gameClearSemantic === null ? null : parseCurrentGameClearProfile(gameClearProfile.value, gameClearSemantic);
   const pauseCountdown = parseCurrentPauseCountdownAnimationProfile(pauseCountdownAnimation.value);
   if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null || gameClear === null || pauseCountdown === null) {
     return invalid("simulator.resources.common-profile-shape");

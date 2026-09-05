@@ -481,6 +481,15 @@ export interface ParticleSystemDefinition {
   readonly profile: string;
   /** Exact renderer/mesh object relation introduced by the current renderer-domain authority. */
   readonly meshProfile?: string | null;
+  /** Game-clear source fields are optional only for legacy gameplay bundles. */
+  readonly particleSourcePathId?: string;
+  readonly particleSerializedBytes?: number;
+  readonly particleSerializedSha256?: string;
+  readonly gameObjectSourcePathId?: string;
+  readonly transformSourcePathId?: string;
+  readonly sourceBranch?: "base" | "fullCombo" | "allPerfect";
+  readonly sourceBranchOrdinal?: number;
+  readonly activeSerialized?: boolean;
   readonly rendererSourcePathId?: string;
   readonly rendererSerializedBytes?: number;
   readonly rendererSerializedSha256?: string;
@@ -597,7 +606,8 @@ export interface ParticlePreparedSourceIdentity {
   readonly kind: "application-snapshot";
   readonly semanticsSource:
     | "current-official-unityfs-profile"
-    | "built-in-default-evidence-profile";
+    | "built-in-default-evidence-profile"
+    | "current-official-unityfs-plus-game-clear-native-profile";
   readonly resources: readonly ParticlePreparedSourceResourceIdentity[];
 }
 
@@ -628,7 +638,8 @@ export interface ParticleOwnerTransform {
   readonly source:
     | "game-play-button"
     | "original-note-slide"
-    | "product-extension-note-slide";
+    | "product-extension-note-slide"
+    | "game-clear-ui-root";
   readonly position: ParticleFloat32Vector3;
   readonly rotation: ParticleFloat32Quaternion;
   readonly scale: ParticleFloat32Vector3;
@@ -639,6 +650,10 @@ export type ParticleInstanceIdentity =
       readonly kind: "game-clear";
       readonly buttonType: 0;
       readonly rangeLength: null;
+      /** Required by production Game-clear plans; optional for legacy source compilation only. */
+      readonly clearStatus?: 1 | 2 | 3;
+      readonly ownerTransform?: ParticleOwnerTransform;
+      readonly particleSystemSetupScaleBits?: string;
     }
   | {
       readonly kind: "game-play-button";
@@ -693,11 +708,52 @@ export type ParticleCommand =
       readonly reason: "movetime";
     };
 
+export interface ParticleGameClearRuntimeInstance {
+  readonly kind: "game-clear";
+  readonly buttonType: 0;
+  readonly rangeLength: null;
+  readonly clearStatus: 1 | 2 | 3;
+  readonly ownerTransform: ParticleOwnerTransform;
+  readonly particleSystemSetupScaleBits: string;
+}
+
+export interface ParticleGameClearTransformUpdate {
+  readonly systemId: string;
+  readonly transform: ParticleTransformProfile;
+  readonly parentTransforms: readonly ParticleTransformProfile[];
+}
+
+export interface ParticleGameClearSystemGroup {
+  readonly ownerKey: string;
+  readonly root: Extract<ParticleRootId,
+    "game-clear:base" | "game-clear:full-combo" | "game-clear:all-perfect">;
+  readonly systemIds: readonly string[];
+}
+
+export interface ParticleGameClearTimelinePhase {
+  readonly sampledAtSecondsBits: string;
+  /** Simulation step after applying this phase's Transform sample and before mutations. */
+  readonly deltaTimeBits: string;
+  readonly transforms: readonly ParticleGameClearTransformUpdate[];
+  readonly deactivate: readonly ParticleGameClearSystemGroup[];
+  readonly activate: readonly ParticleGameClearSystemGroup[];
+}
+
+export interface ParticleGameClearFramePlan {
+  readonly clearStatus: 1 | 2 | 3;
+  readonly elapsedBeforeBits: string;
+  readonly elapsedAfterBits: string;
+  readonly instance: ParticleGameClearRuntimeInstance;
+  readonly phases: readonly ParticleGameClearTimelinePhase[];
+}
+
 export interface ParticleFrameRequest {
   readonly frame: number;
   readonly deltaTimeBits: string;
   readonly paused: boolean;
   readonly commands: readonly ParticleCommand[];
+  /** Null on gameplay frames; present only on the authoritative terminal timeline. */
+  readonly gameClearPlan?: ParticleGameClearFramePlan | null;
 }
 
 export interface ParticleFrameBatch {
@@ -766,6 +822,7 @@ export interface ParticleFrameSnapshot {
   readonly deltaTimeBits: string;
   readonly paused: boolean;
   readonly commands: readonly ParticleCommand[];
+  readonly gameClearPlan?: ParticleGameClearFramePlan | null;
   readonly samples: readonly ParticleRenderSample[];
 }
 
@@ -820,6 +877,12 @@ export interface ParticlePixiButtonOwner {
   readonly particleSystemSetupScaleBits: string;
 }
 
+export interface ParticleGameClearSceneOwner {
+  readonly authoredUiScaleBits: string;
+  readonly transform: ParticleOwnerTransform;
+  readonly particleSystemSetupScaleBits: string;
+}
+
 export interface ParticleSlidePoolSceneProfile {
   readonly poolSize: 8;
   readonly initialCursor: 0;
@@ -847,6 +910,8 @@ export interface ParticlePixiSceneProfile {
   /** Required by production owner resolution; optional only for legacy source compilation. */
   readonly buttonOwners?: readonly ParticlePixiButtonOwner[];
   readonly slidePool?: ParticleSlidePoolSceneProfile;
+  /** Required by production; optional only for legacy fixture source compilation. */
+  readonly gameClearOwner?: ParticleGameClearSceneOwner;
 }
 
 export interface ParticleRendererFrameRequest {

@@ -10,6 +10,7 @@ import type {
   ParticleInstanceIdentity,
   ParticleMinMaxCurve,
   ParticleMinMaxGradient,
+  ParticleOwnerTransform,
   ParticlePortableProfile,
   ParticleProfileDefinition,
   ParticleRandomStateSnapshot,
@@ -1572,18 +1573,20 @@ function cloneSimdState(state: ParticleRandomSimdState): ParticleRandomSimdState
 }
 
 function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
-  if (left.kind !== right.kind || left.buttonType !== right.buttonType || left.rangeLength !== right.rangeLength) return false;
-  if (left.kind === "game-clear" || right.kind === "game-clear") return left.kind === right.kind;
-  if (!sameOwnerTransform(left.ownerTransform, right.ownerTransform) ||
+  if (left.kind !== right.kind || left.buttonType !== right.buttonType || left.rangeLength !== right.rangeLength ||
+    !sameOwnerTransform(left.ownerTransform, right.ownerTransform) ||
     left.particleSystemSetupScaleBits !== right.particleSystemSetupScaleBits) return false;
+  if (left.kind === "game-clear" || right.kind === "game-clear") {
+    return left.kind === "game-clear" && right.kind === "game-clear" && left.clearStatus === right.clearStatus;
+  }
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
   return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
     left.poolSlot === right.poolSlot && left.route === right.route;
 }
 
 function sameOwnerTransform(
-  left: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
-  right: Exclude<ParticleInstanceIdentity, { readonly kind: "game-clear" }>["ownerTransform"],
+  left: ParticleOwnerTransform | undefined,
+  right: ParticleOwnerTransform | undefined,
 ): boolean {
   if (left === undefined || right === undefined) return left === right;
   return left.source === right.source &&
@@ -1597,7 +1600,6 @@ function instanceParticleSystemSetupScale(
   instance: ParticleInstanceIdentity,
   legacyFallback: number,
 ): number {
-  if (instance.kind === "game-clear") return legacyFallback;
   const value = instance.particleSystemSetupScaleBits === undefined
     ? legacyFallback
     : particleFloat32FromBits(instance.particleSystemSetupScaleBits);

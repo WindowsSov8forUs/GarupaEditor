@@ -282,6 +282,11 @@
       "sha256": "217746C38CEE237533FE3453D55D2232C012BBEBE1D9D92135D091E047AAC5A9"
     },
     {
+      "path": "game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json",
+      "byteLength": 75408,
+      "sha256": "19A32E6652E17BFD637B39C21F9565E0B4431035737D4F100002D9A896482F14"
+    },
+    {
       "path": "game/prefabs/bms/gameclear/game-clear-profile.json",
       "byteLength": 2237033,
       "sha256": "558FFBC854ADA8D064D98FDC53C90D2A7DDC1ACF79368F8DB5806222CC5BCDDB"

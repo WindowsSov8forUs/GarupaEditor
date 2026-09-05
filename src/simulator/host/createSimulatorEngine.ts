@@ -64,6 +64,7 @@ import {
   ParticleCommandProducer,
 } from "../engine/particles/particleCommandProducer";
 import { ParticleFrameCoordinator } from "../engine/particles/particleFrameCoordinator";
+import { GameClearParticleOwner } from "../engine/particles/gameClearParticleOwner";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -307,7 +308,7 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Current Full Combo/Game Clear routing is confirmed only for clear status 1, 2 or 3.",
       );
     }
-    const particle = this.particleCoordinator?.preflightTerminal("natural-end") ?? null;
+    const particle = this.particleCoordinator?.preflightGameClearStart(clearStatus) ?? null;
     if (particle?.status === "integrity-failure") return particle;
     const rendering = this.renderProducer?.preflightGameClear(clearStatus) ?? null;
     if (rendering?.status === "integrity-failure") {
@@ -358,13 +359,34 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Game-clear presentation time advances only after natural completion with one finite non-negative host delta.",
       );
     }
+    const particle = this.particleCoordinator?.preflightGameClearAdvance(
+      Math.fround(deltaTimeSeconds),
+    ) ?? null;
+    if (particle?.status === "integrity-failure") return particle;
     const planned = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
-    if (planned === null) return ok(undefined);
-    if (planned.status !== "ok") return planned;
-    const committed = planned.value.commit();
-    return committed.status === "ok"
-      ? committed
-      : this.inGameManager.latchExternalFault(committed);
+    if (planned?.status === "integrity-failure") {
+      if (particle?.status === "ok") particle.value.discard();
+      return planned;
+    }
+    if (particle?.status === "ok") {
+      const domain = particle.value.commitDomain();
+      if (domain.status !== "ok") {
+        if (planned?.status === "ok") planned.value.discard();
+        return this.inGameManager.latchExternalFault(domain);
+      }
+    }
+    if (planned?.status === "ok") {
+      const committed = planned.value.commit();
+      if (committed.status !== "ok") {
+        if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
+        return this.inGameManager.latchExternalFault(committed);
+      }
+    }
+    if (particle?.status === "ok") {
+      const rendered = particle.value.commitRender();
+      if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
+    }
+    return ok(undefined);
   }
 
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
@@ -1053,9 +1075,11 @@ function createParticleCoordinator(
       : ok(null);
   }
   if (input.particles === null || typeof input.particles !== "object" ||
-    Object.keys(input.particles).length !== 2 ||
+    Object.keys(input.particles).length !== 3 ||
     typeof input.particles.sessionId !== "string" || input.particles.sessionId.length === 0 ||
     input.particles.scene === undefined || input.particles.scene === null ||
+    input.particles.scene.gameClearOwner === undefined ||
+    input.particles.gameClearProfile === undefined || input.particles.gameClearProfile.nativeSemantic === undefined ||
     backends.particles === undefined) {
     return integrityFailure(
       "particle.session.invalid-host-binding",
@@ -1074,6 +1098,7 @@ function createParticleCoordinator(
     producer,
     backends.particles,
     backends.particleRendering ?? null,
+    new GameClearParticleOwner(input.particles.gameClearProfile, input.particles.scene),
   );
   const validated = coordinator.validate();
   return validated.status === "ok" ? ok(coordinator) : validated;

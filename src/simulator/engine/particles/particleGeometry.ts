@@ -442,8 +442,8 @@ function requiredCustomData(value: ParticleFloat32Vector4 | null): readonly [num
 }
 
 function requiredOwnerTransform(instance: ParticleInstanceIdentity): ParticleOwnerTransform {
-  if (instance.kind === "game-clear" || instance.ownerTransform === undefined) {
-    throw fault("particle.geometry.owner-transform", "Current gameplay primitive generation requires one explicit typed outer owner transform.");
+  if (instance.ownerTransform === undefined) {
+    throw fault("particle.geometry.owner-transform", "Current particle primitive generation requires one explicit typed outer owner transform, including Game-clear UI_Root.");
   }
   return instance.ownerTransform;
 }
