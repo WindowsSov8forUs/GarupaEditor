@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `6cddb142806ffdb933cc6a237f69f4dd16e9ca97`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `2c14fa7dbe7b78c313d297ca23675dccc7d85b04`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -14,13 +14,17 @@ Score's StarUIAnchor (PathID 1126, target UIWidget 1125) uses Left + Top and Scr
 
 The regression was introduced by treating the serialized Score root as the final runtime transform. Checking only copied fields or initial graph TRS missed this override. The anchor correction does not close remaining UILabel glyph/baseline or full clip-consumption coverage.
 
-## SRC-PARTICLE-STRETCH — projected direction versus speed
+## SRC-PARTICLE-STRETCH — native non-Freeform head/tail correction
 
-Authority: `simulator-particle-renderer-native-domain-10-1-4/particle_renderer_native_domain_contract.json`, `nativePrimitiveContract.mode1` and its vectors; also `simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json` (projected velocity angle and signed height).
+Authority: `simulator-stretched-particle-worker-reaudit-10-1-4/stretched_worker_contract.json`, STR-W01..W11, its six hash-locked ARM64 slices, reciprocal-square-root table and native arithmetic/perimeter extraction. This supersedes the older renderer-domain `nativePrimitiveContract.mode1` centered-quad vectors **and the previous projected-direction explanation in this contract**. The old investigation inspected the dispatcher, not the actual stretched worker.
 
-The long-axis direction is determined in the camera XY plane. Signed length remains `sizeY * lengthScale + length(velocityXYZ) * velocityScale`. Normalizing XYZ and subsequently projecting its XY components incorrectly shortens the axis when velocity has a Z component; pure camera-axis motion can collapse the quad.
+Current non-Freeform rendering anchors the head at particle position, constructs a tail from camera-space velocity, and derives the side from the head/tail cross-product. Inverse speed uses corrected ARM64 FRSQRTE; side normalization uses two FRSQRTS refinements and the native threshold mask. Zero velocity and camera-axis degeneracy do not select a camera-up fallback. UVs follow head+, tail+, tail-, head- with the long axis along U. `RotateWithStretchDirection` does not authorize unconditional particle roll in this branch.
 
-The formula mismatch is identified but not patched in this batch. Native handling of a zero XY projection with nonzero Z speed, and interaction with outer/alignment rotations, require bounded audit. Reusing the zero-total-speed camera-up basis for that distinct branch would introduce an unproved fallback. No particle count, alpha, emission rate, size multiplier, random owner or geometry behavior is changed.
+Production now consumes these head/tail equations, the current stationary camera Z reflection and the renderer scale coefficient; world vertices do not receive emitter rotation twice or an extra subtract/re-add of the head. Side-width limiting occurs before stretch rather than shrinking the final tail bounds. Emission, alpha, particle count, size multipliers and random ownership are unchanged.
+
+Bounded differential scope: 75 native arithmetic rows (six explicit arithmetic inputs plus each of the ordinary renderer-domain's 69 enabled mode-1 parameter profiles) match Float32 output bits. Default-pack mode-1 geometry is also compared with native world-perimeter output projected into the portable viewport. Inputs are explicitly marshalled arithmetic states, not captured gameplay; this does not close owner/simulation/preflight/commit or full renderer consumption.
+
+Still OPEN: complete native min/max camera-uniform consumption (the portable orthographic screen-size conversion is retained), normal stream, full motion worker and final mixed composition. The reciprocal-square-root table executes source instructions in an emulator, not on the fixed device. No whole-renderer or framebuffer acceptance is claimed.
 
 ## SRC-PARTICLE-COMPOSITION — open cross-renderer sorting
 

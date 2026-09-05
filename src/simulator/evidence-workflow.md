@@ -17,7 +17,7 @@
 
 ## 当前 Skin / Particle / HUD / Game-clear 证据
 
-**Production 消费复查仍 OPEN。** 下列证据与历史独立差分不能替代最终集成：Score 曾漏掉 StarUIAnchor 对 prefab 根初始坐标的运行时覆盖；particle 内部排序未进入 ordinary 共同排序域，stretched billboard 也存在投影方向消费差异。当前处分以 [`rendering-consumption-contract.md`](./rendering-consumption-contract.md) 和 `public/capabilities.ts` 为准。这些是算法/集成缺陷，不属于 GPU 排除项；不得要求用户补录作为源码排查前提。
+**Production 消费复查仍 OPEN。** 下列证据与历史独立差分不能替代最终集成：Score 曾漏掉 StarUIAnchor 对 prefab 根初始坐标的运行时覆盖；particle 内部排序未进入 ordinary 共同排序域；后续实际 stretched worker 已推翻旧居中/投影方向解释，当前仅修复有字节依据的非 Freeform head/tail、退化掩码与 UV 消费，完整 camera uniform/normal/motion 仍开放。当前处分以 [`rendering-consumption-contract.md`](./rendering-consumption-contract.md) 和 `public/capabilities.ts` 为准。这些是算法/集成缺陷，不属于 GPU 排除项；不得要求用户补录作为源码排查前提。
 
 - Skin资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`继续拥有master/包选择。过期Collabo 36的六个`skinapril2019`路径仍不可得且没有`skin_april2019`别名；三项Live2D-only structural stage仍不进入Standard/MV recipe。
 - 当前source-bound粒子证据由已推送批次`dccbfab9`/`d707d922`/`c52355e9`、native core `1ea7e35b1584809ffb695a2033e4e8f38579f443`和renderer/Slide `e43dded8890260806001fbcb5ab519cfb019a379`共同拥有。覆盖27 resources、1,375 concrete systems、1,147 enabled renderers、114 renderer signatures、4 meshes和152 reachable ordinary/directional pairs；Shape 0/4/5/8/10/no-Shape、per-instance random、module/time/capacity、root→parent TRS、Slide `n`/`g`与mode 0/1/4 GPU前图元曾通过独立差分；后者未覆盖完整 production 消费，当前不能再据此宣布 renderer 闭合。

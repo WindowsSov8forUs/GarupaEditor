@@ -56,7 +56,7 @@ Frame mutation uses detached backend capabilities. Potentially failing portable/
 | --- | --- | --- |
 | Public recipe and autonomous host | `closed-portable` | Public Schema 13, transport Schema 3 and the one source-neutral launcher remain product architecture |
 | Live/Rehearsal × Manual/Auto lifecycle | `closed-native-algorithm-equivalent` | Independent mode axes, startup/gameplay/pause, Life-zero, terminal and Rehearsal MoveTime owner order; physical A/V output remains external |
-| Ordinary command scene and current particles | `observational-gap` | Source-bound resource/core work is retained; projected stretch direction and ordinary/particle final ordering are not closed |
+| Ordinary command scene and current particles | `observational-gap` | Source-bound resource/core work and bounded non-Freeform stretch correction are retained; complete geometry consumption and ordinary/particle final ordering are not closed |
 | Original Slide particle owner | `closed-native-algorithm-equivalent` | Eight-slot pool, target-button transform, outer `n`, per-ParticleSystem `g`, Stop/Clear/Play and current-node movement are separate owners |
 | Score/ordinary HUD presentation | `observational-gap` | Runtime safe-area anchor restored without moving authored child nodes; full final glyph/clip consumption remains under audit; score input remains product CS-V1 |
 | Original Live settings and current Skin switching | `observational-gap` / `closed-static-portable` | Static package selection and identity reuse are retained; selected render/HUD/Skin output gates remain open |

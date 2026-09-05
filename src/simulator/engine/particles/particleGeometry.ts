@@ -14,6 +14,7 @@ import type {
   ParticleTransformProfile,
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
+import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -178,19 +179,22 @@ function buildPrimitive(
   const size = bitsVector3(sample.size);
   const rotation = bitsVector3(sample.rotation);
   const velocity = transformVector(bitsVector3(sample.velocity), transform);
-  const source = sourceGeometry(binding, size, rotation, velocity);
   const outerScale = bitsVector3(transform.scale);
   const outerRotation = bitsQuaternion(transform.rotation);
-  const offsets = source.vertices.map((vertex) => quaternionRotate([
+  const isStretched = binding.renderer.m_RenderMode === 1;
+  const source = isStretched
+    ? stretchedBillboard(binding, size, velocity, worldCenter, outerScale, scene)
+    : sourceGeometry(binding, size, rotation);
+  const offsets = isStretched ? source.vertices : source.vertices.map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
   ], outerRotation));
-  const worldNormals = source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
+  const worldNormals = isStretched ? source.normals : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const maximumPixels = multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight);
-  const projectedOffsets = offsets.map((offset) => projectVector(offset, scene));
-  const largest = projectedLargestDimension(projectedOffsets);
-  const limitRatio = maximumPixels > 0 && largest > maximumPixels
+  const largest = isStretched ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
+  // Non-Freeform limits the side width before stretch, not the final tail extent.
+  const limitRatio = !isStretched && maximumPixels > 0 && largest > maximumPixels
     ? divide(maximumPixels, largest)
     : Math.fround(1);
   const projectedCenter = projectPoint(worldCenter, scene);
@@ -198,7 +202,9 @@ function buildPrimitive(
   const worldVertices: Vector3[] = [];
   for (let index = 0; index < offsets.length; index += 1) {
     const offset = scaleVector(offsets[index]!, limitRatio);
-    const world = addVector(worldCenter, offset);
+    // The native stretched worker publishes world vertices directly. Turning
+    // its tail into an offset and adding the head again adds Float32 cancellation.
+    const world = isStretched ? offsets[index]! : addVector(worldCenter, offset);
     worldVertices.push(world);
     const projected = projectPoint(world, scene);
     positions[index * 2] = projected[0];
@@ -249,7 +255,6 @@ function sourceGeometry(
   binding: GeometryBinding,
   size: Vector3,
   rotation: Vector3,
-  velocity: Vector3,
 ): {
   readonly vertices: readonly Vector3[];
   readonly uv0: readonly Vector2[];
@@ -282,9 +287,6 @@ function sourceGeometry(
       indices: mesh.screenYReflectionIndices,
     });
   }
-  if (binding.renderer.m_RenderMode === 1) {
-    return stretchedBillboard(binding, size, rotation, velocity);
-  }
   const basis = alignmentBasis(binding);
   const particleRotation = eulerQuaternion(rotation);
   const pivot = binding.renderer.m_Pivot;
@@ -310,40 +312,53 @@ function sourceGeometry(
 function stretchedBillboard(
   binding: GeometryBinding,
   size: Vector3,
-  rotation: Vector3,
   velocity: Vector3,
+  worldCenter: Vector3,
+  outerScale: Vector3,
+  scene: ParticlePixiSceneProfile,
 ): {
   readonly vertices: readonly Vector3[];
   readonly uv0: readonly Vector2[];
   readonly normals: readonly Vector3[];
   readonly indices: readonly number[];
 } {
-  const speed = vectorLength(velocity);
-  let long: Vector3 = speed > ZERO_EPSILON ? scaleVector(velocity, divide(1, speed)) : [0, 1, 0];
-  let wide: Vector3 = normalizeOr([long[1], -long[0], 0], [1, 0, 0]);
-  if (binding.renderer.m_RotateWithStretchDirection) {
-    const cosine = f32(Math.cos(rotation[2]));
-    const sine = f32(Math.sin(rotation[2]));
-    const nextWide = addVector(scaleVector(wide, cosine), scaleVector(long, sine));
-    const nextLong = addVector(scaleVector(long, cosine), scaleVector(wide, -sine));
-    wide = nextWide;
-    long = nextLong;
-  }
-  const width = size[0];
-  const signedLength = add(
-    multiply(size[1], binding.renderer.m_LengthScale),
-    multiply(speed, binding.renderer.m_VelocityScale),
+  // Current non-Freeform worker, not a centered rotated billboard. The native
+  // camera is at (0,0,-15), looking +Z; Unity view space reflects its Z axis.
+  const cameraPosition: Vector3 = [worldCenter[0], worldCenter[1], -add(worldCenter[2], 15)];
+  const maximumSize = Math.max(size[0], size[1], Math.fround(1e-6));
+  // Retain the portable orthographic screen-size conversion here; complete
+  // native camera-uniform consumption remains open (SRC-PARTICLE-STRETCH).
+  const maximumSourceSize = divide(
+    divide(multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight), requiredBits(scene.pixelsPerWorldUnitBits)),
+    Math.max(outerScale[0], Math.fround(0.00001)),
   );
-  const pivot = binding.renderer.m_Pivot;
-  const corners: readonly Vector2[] = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]];
-  const normal = rendererNormal(normalizeOr(cross(long, wide), [0, 0, -1]), binding.renderer.m_NormalDirection);
+  const halfWidth = multiply(size[0], divide(multiply(Math.min(maximumSize, maximumSourceSize), 0.5), maximumSize));
+  const arithmetic = calculateNativeStretchArithmetic({
+    cameraPosition,
+    cameraVelocity: [velocity[0], velocity[1], -velocity[2]],
+    sizeY: size[1],
+    scaledLength: multiply(binding.renderer.m_LengthScale, outerScale[0]),
+    velocityScale: binding.renderer.m_VelocityScale,
+    halfWidth,
+  });
+  const tail: Vector3 = [
+    arithmetic.tail[0],
+    arithmetic.tail[1],
+    subtract(-15, arithmetic.tail[2]),
+  ];
+  const side: Vector3 = [
+    multiply(arithmetic.sideXY[0], outerScale[0]),
+    multiply(arithmetic.sideXY[1], outerScale[1]),
+    0,
+  ];
+  const opposite = scaleVector(side, -1);
+  const normal = rendererNormal([0, 0, -1], binding.renderer.m_NormalDirection);
   return Object.freeze({
-    vertices: Object.freeze(corners.map(([x, y]) => addVector(
-      scaleVector(wide, multiply(subtract(x, pivot.x), width)),
-      scaleVector(long, multiply(subtract(y, pivot.y), signedLength)),
-    ))),
-    uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
-    normals: Object.freeze(corners.map(() => normal)),
+    // Reorder the native perimeter head+,tail+,tail-,head- to our grid indices.
+    // Absolute world vertices: do not rotate by the emitter or re-add the head.
+    vertices: Object.freeze([addVector(worldCenter, side), addVector(tail, side), addVector(worldCenter, opposite), addVector(tail, opposite)]),
+    uv0: Object.freeze([[0, 1], [1, 1], [0, 0], [1, 0]] as const),
+    normals: Object.freeze([normal, normal, normal, normal]),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
 }
@@ -354,14 +369,6 @@ function rendererNormal(base: Vector3, normalDirection: number): Vector3 {
     scaleVector(base, subtract(1, ratio)),
     scaleVector([0, 0, -1], ratio),
   ), [0, 0, -1]);
-}
-
-function cross(left: Vector3, right: Vector3): Vector3 {
-  return [
-    subtract(multiply(left[1], right[2]), multiply(left[2], right[1])),
-    subtract(multiply(left[2], right[0]), multiply(left[0], right[2])),
-    subtract(multiply(left[0], right[1]), multiply(left[1], right[0])),
-  ];
 }
 
 function alignmentBasis(binding: GeometryBinding): readonly [Vector3, Vector3, Vector3] {
