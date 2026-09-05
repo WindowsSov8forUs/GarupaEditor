@@ -136,7 +136,13 @@ const SIBLING_ORDER = Object.freeze([
   "kira_1", "kira_2", "kira_3", "kira_4", "kira_5", "kira_6", "kira_7", "kira_8",
 ]);
 
+// Only this parser's immutable output may bypass the serialized-input checks.
+const parsedProfiles = new WeakSet<CurrentScoreHudNativeProfile>();
+
 export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreHudNativeProfile | null {
+  if (value !== null && typeof value === "object" && parsedProfiles.has(value as CurrentScoreHudNativeProfile)) {
+    return value as CurrentScoreHudNativeProfile;
+  }
   const root = record(value);
   const sample = record(root?.sample);
   const source = record(root?.source);
@@ -210,7 +216,7 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
       typeof metrics[char] === "number" && Number.isFinite(metrics[char]) && metrics[char] > 0);
   })) return null;
 
-  return deepFreeze({
+  const parsed = deepFreeze({
     source: { reverseCommit: source.reverseCommit, contractSha256: source.contractSha256 },
     scene: { rootPath: ROOT, objects: graph, widgets: parsedWidgets },
     label: { component: record(label.component)!, encodedText: record(label.encodedText)!, sfnt: { unitsPerEm: 1024, glyphs, hintedAdvancePixelsByFontSize: hinted } },
@@ -228,6 +234,8 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
     },
     highRank: { siblingOrder: [...SIBLING_ORDER], nodes: nodes as CurrentScoreHighRankNode[], tweenAlpha, clips: clips as CurrentScoreAnimationClip[] },
   }) as unknown as CurrentScoreHudNativeProfile;
+  parsedProfiles.add(parsed);
+  return parsed;
 }
 
 function parseGraphObject(value: unknown): CurrentScoreGraphObject | null {
@@ -320,9 +328,10 @@ function bits4(value: unknown): value is [string, string, string, string] {
   return Array.isArray(value) && value.length === 4 && value.every((item) => typeof item === "string" && /^[0-9A-F]{8}$/.test(item));
 }
 function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+  if (value !== null && typeof value === "object") {
+    // Shallow-frozen rows can still contain mutable arrays from the source JSON.
     for (const child of Object.values(value)) deepFreeze(child);
-    Object.freeze(value);
+    if (!Object.isFrozen(value)) Object.freeze(value);
   }
   return value;
 }
