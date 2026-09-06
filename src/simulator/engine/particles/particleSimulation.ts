@@ -86,12 +86,22 @@ interface InstanceSystemState {
   initialModuleStream: ParticleRandomSimdState;
   shapeModuleStream: ParticleRandomSimdState;
   rateAccumulator: number;
+  burstFraction: number;
   birthCount: number;
 }
 
 interface EmissionBatch {
   readonly at: number;
   readonly count: number;
+  readonly nativeTiming?: ParticleEmissionStep & { readonly delta: number };
+}
+
+interface ParticleEmissionStep {
+  readonly count: number;
+  readonly rateCount: number;
+  readonly inverseRate: number;
+  readonly rateRemainder: number;
+  readonly burstFraction: number;
 }
 
 interface BirthRandomSample {
@@ -205,6 +215,7 @@ export class DeterministicParticleSimulation {
         initialModuleStream: cloneSimdState(state.initialModuleStream),
         shapeModuleStream: cloneSimdState(state.shapeModuleStream),
         rateAccumulator: state.rateAccumulator,
+        burstFraction: state.burstFraction,
         birthCount: state.birthCount,
       }])),
     });
@@ -338,6 +349,7 @@ export class DeterministicParticleSimulation {
       initialModuleStream: particleSimdStateFromSeed(seed),
       shapeModuleStream: particleSimdStateFromSeed(seed),
       rateAccumulator: f32(0),
+      burstFraction: f32(1),
       birthCount: 0,
     });
     return {
@@ -480,7 +492,7 @@ export class DeterministicParticleSimulation {
           // including death removal, before 0x1097DF0/EA0 emission/admission.
           for (const particle of runtime.particles) this.updateParticle(record, particle, effectiveDelta);
           removeExpiredParticles(runtime.particles);
-          const batches = this.events(record.bundle, profile, runtime, before, after, runtime.first);
+          const batches = this.emitStep(record.bundle, profile, runtime, before, after, effectiveDelta);
           for (const batch of batches) {
             this.spawnBatch(owner, record, profile, runtime, batch, after);
           }
@@ -612,6 +624,36 @@ export class DeterministicParticleSimulation {
       })));
   }
 
+  private emitStep(
+    bundle: ParticleBundleProfile,
+    profile: ParticleProfileDefinition,
+    runtime: OwnerSystemRuntime,
+    before: number,
+    after: number,
+    delta: number,
+  ): EmissionBatch[] {
+    const emission = getModule(bundle, profile, "EmissionModule");
+    if (emission === null) return [];
+    const state = this.instanceStates.get(runtime.instanceStateKey);
+    if (state === undefined) {
+      throw fault("particle.simulation.instance-random-state-missing", "Emission requires the concrete ParticleSystem random owner.");
+    }
+    const delay = minMax(profile.system.startDelay, 0, 0);
+    if (after <= delay) return [];
+    const duration = f32(profile.system.lengthInSec);
+    const activeBefore = Math.max(0, subtract(before, delay));
+    const activeAfter = Math.max(0, subtract(after, delay));
+    if (!profile.system.looping && activeAfter >= duration) return [];
+    const phaseBefore = profile.system.looping ? f32(activeBefore % duration) : activeBefore;
+    const phaseAfter = profile.system.looping ? f32(activeAfter % duration) : activeAfter;
+    const activeDelta = before < delay ? subtract(after, delay) : delta;
+    const result = nativeParticleEmissionStep(emission,
+      delta >= duration ? add(phaseBefore, 0.000001) : phaseBefore, phaseAfter, duration, state);
+    return result.count === 0 ? [] : [{ at: before, count: result.count, nativeTiming: { ...result, delta: activeDelta } }];
+  }
+
+  // Prewarm retains its separate scheduling path until the original deferred
+  // and fixed-step Play branches have been closed independently.
   private events(
     bundle: ParticleBundleProfile,
     profile: ParticleProfileDefinition,
@@ -722,7 +764,8 @@ export class DeterministicParticleSimulation {
           profile,
           runtime,
           batch.at,
-          subtract(frameEnd, batch.at),
+          batch.nativeTiming === undefined ? subtract(frameEnd, batch.at)
+            : nativeParticleBirthAge(batch.nativeTiming, batch.nativeTiming.delta, batchIndex),
           batchIndex,
           admitted,
           sample,
@@ -1022,6 +1065,75 @@ function compactParticleBirths(particles: SimulatedParticle[], existingCount: nu
   if (copiedCount === 0) return;
   const copied = particles.splice(particles.length - copiedCount, copiedCount);
   particles.splice(existingCount, 0, ...copied);
+}
+
+function nativeParticleEmissionStep(
+  emission: ParticleEmissionModule,
+  before: number,
+  after: number,
+  duration: number,
+  state: Pick<InstanceSystemState, "emissionStream" | "stream" | "rateAccumulator" | "burstFraction">,
+): ParticleEmissionStep {
+  const drawWord = (): number => {
+    const step = particleXorshift128(state.emissionStream);
+    state.emissionStream = step.state;
+    state.stream = step.state;
+    return step.value;
+  };
+  const rateRandom = particleWordRatio(drawWord());
+  const start = Math.max(f32(before), 0);
+  const end = Math.max(f32(after), 0);
+  let integratedRate = f32(0);
+  if (emission.rateOverTime.scalar > 0) {
+    let segmentEnd = end;
+    if (end < start) {
+      integratedRate = add(multiply(end,
+        Math.max(minMax(emission.rateOverTime, divide(end, duration), rateRandom), 0)), 0);
+      segmentEnd = f32(duration);
+    }
+    integratedRate = add(integratedRate, multiply(subtract(segmentEnd, start),
+      Math.max(minMax(emission.rateOverTime, divide(segmentEnd, duration), rateRandom), 0)));
+  }
+  const bursts = (from: number, to: number, repeat: boolean): number => {
+    let count = 0;
+    for (const burst of emission.m_Bursts) {
+      let matched = burst.time >= from && burst.time < to;
+      if (!matched && repeat && burst.time < from && burst.cycleCount !== 1) {
+        const previousCycle = divide(subtract(from, burst.time), burst.repeatInterval);
+        if (burst.cycleCount === 0 || previousCycle < burst.cycleCount - 1) {
+          matched = Math.trunc(divide(subtract(to, burst.time), burst.repeatInterval)) > Math.trunc(previousCycle);
+        }
+      }
+      if (!matched) continue;
+      if (burst.probability !== 0 &&
+        (burst.probability >= 1 || particleWordRatio(drawWord()) < burst.probability)) {
+        count += currentBurstCount(burst.countCurve, divide(to, duration), drawWord);
+      }
+      const offset = divide(subtract(burst.time, from), subtract(to, from));
+      state.burstFraction = offset >= 0 ? subtract(1, Math.min(offset, 1)) : f32(1);
+    }
+    return count;
+  };
+  const burstCount = end < start
+    ? bursts(0, end, true) + bursts(start, add(duration, 0.0001), false)
+    : bursts(start, end, true);
+  const totalRate = add(integratedRate, state.rateAccumulator);
+  const rateCount = Math.trunc(totalRate);
+  state.rateAccumulator = subtract(totalRate, f32(rateCount));
+  return {
+    count: burstCount + rateCount,
+    rateCount,
+    inverseRate: integratedRate >= f32(0.0001) ? divide(1, integratedRate) : f32(1),
+    rateRemainder: state.rateAccumulator,
+    burstFraction: state.burstFraction,
+  };
+}
+
+function nativeParticleBirthAge(emission: ParticleEmissionStep, delta: number, index: number): number {
+  const fraction = index < emission.rateCount
+    ? multiply(add(emission.rateRemainder, f32(index)), emission.inverseRate)
+    : emission.burstFraction;
+  return subtract(multiply(delta, Math.min(Math.max(fraction, f32(0.000001)), 1)), 0);
 }
 
 function nativeParticleFrameSteps(
