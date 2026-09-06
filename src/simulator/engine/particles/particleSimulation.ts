@@ -54,7 +54,6 @@ const CUBE_LOG_CUBIC = float32FromBits(0x3E470BD9);
 const CUBE_EXP_LINEAR = float32FromBits(0x3F2EA941);
 const CUBE_EXP_QUADRATIC = float32FromBits(0x3EA2AD7F);
 const ONE_THIRD = float32FromBits(0x3EAAAAAB);
-const MIN_LIFETIME = Math.fround(1e-6);
 const SHAPE_DIRECTION_EPSILON_SQUARED = float32FromBits(0x0da24260);
 
 type Vector3 = [number, number, number];
@@ -107,7 +106,9 @@ interface SimulatedParticle {
   readonly emitterOrigin: Vector3;
   readonly particleSystemSetupScale: number;
   age: number;
+  agePercent: number;
   readonly lifetime: number;
+  readonly inverseLifetime: number;
   readonly randomSeed: number;
   position: Vector3;
   velocity: Vector3;
@@ -370,7 +371,7 @@ export class DeterministicParticleSimulation {
     if (finalSegment > 0) {
       for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
     }
-    runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
+    runtime.particles = runtime.particles.filter((particle) => particleIsAlive(particle.agePercent));
   }
 
   updateSystemTransforms(updates: readonly ParticleSystemTransformUpdate[]): void {
@@ -488,7 +489,7 @@ export class DeterministicParticleSimulation {
         }
         // Native admission observes the still-owned outer-update list. Expired
         // rows therefore do not free maxNumParticles until publication.
-        runtime.particles = runtime.particles.filter((particle) => particle.age < particle.lifetime);
+        runtime.particles = runtime.particles.filter((particle) => particleIsAlive(particle.agePercent));
         runtime.elapsed = after;
         runtime.first = false;
         if (!profile.system.looping &&
@@ -515,7 +516,7 @@ export class DeterministicParticleSimulation {
         const material = renderer.m_Materials[0] ?? null;
         const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale);
         for (const particle of runtime.particles) {
-          const normalizedAge = clamp01(divide(particle.age, particle.lifetime));
+          const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
           const sizeModule = getModule(record.bundle, profile, "SizeModule");
           if (sizeModule !== null) {
@@ -751,7 +752,7 @@ export class DeterministicParticleSimulation {
       throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
     }
     const slots = random.slots;
-    const lifetime = Math.max(MIN_LIFETIME, minMax(initial.startLifetime, 0, slots[0]!));
+    const [lifetime, inverseLifetime] = nativeParticleLifetime(minMax(initial.startLifetime, 0, slots[0]!));
     const speed = minMax(initial.startSpeed, 0, slots[1]!);
     const sx = Math.max(0, minMax(initial.startSize, 0, slots[2]!));
     const sy = initial.size3D ? Math.max(0, minMax(initial.startSizeY, 0, slots[3]!)) : sx;
@@ -790,7 +791,9 @@ export class DeterministicParticleSimulation {
       emitterOrigin: emitterOrigin.map(f32) as Vector3,
       particleSystemSetupScale,
       age: f32(0),
+      agePercent: f32(0),
       lifetime,
+      inverseLifetime,
       randomSeed: random.particleSeed,
       position: position.map(f32) as Vector3,
       velocity: velocity.map(f32) as Vector3,
@@ -814,7 +817,7 @@ export class DeterministicParticleSimulation {
     const profile = bundle.profiles[definition.profile]!;
     const initial = getModule(bundle, profile, "InitialModule");
     if (initial === null) throw fault("particle.simulation.missing-initial-module", "Every emitted current particle requires InitialModule.");
-    const normalizedAge = divide(particle.age, particle.lifetime);
+    const normalizedAge = normalizedParticleAge(particle.agePercent);
 
     // 0x109669C phase 1: Initial/gravity owner.
     const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
@@ -929,6 +932,7 @@ export class DeterministicParticleSimulation {
     particle.position = particle.position.map((value, index) =>
       add(value, multiply(effectiveVelocity[index]!, delta))) as Vector3;
     particle.age = add(particle.age, delta);
+    particle.agePercent = advanceParticleAge(particle.agePercent, particle.inverseLifetime, delta);
   }
 }
 
@@ -986,6 +990,36 @@ function curve(value: ParticleAnimationCurve, time: number): number {
     }
   }
   throw fault("particle.simulation.curve-interval", "A current animation curve must resolve one interpolation interval.");
+}
+
+function nativeParticleReciprocalEstimate(value: number): number {
+  const word = uint32Bits(value);
+  const exponent = ((word >>> 23) & 0xFF) - 127;
+  const bucket = 256 + ((word >>> 15) & 0xFF);
+  // BND-C45: original FRECPE outputs for positive normal lifetime values.
+  return f32(Math.round(262144 / (2 * bucket + 1)) * 2 ** (-exponent - 9));
+}
+
+function nativeParticleLifetime(sampled: number): readonly [number, number] {
+  const lifetime = Math.max(f32(sampled), f32(1e-5));
+  const estimate = nativeParticleReciprocalEstimate(lifetime);
+  // FRECPS rounds 2-a*b once; rounding the product separately changes it.
+  const first = multiply(estimate, f32(2 - lifetime * estimate));
+  return [lifetime, multiply(first, f32(2 - lifetime * first))];
+}
+
+function advanceParticleAge(agePercent: number, inverseLifetime: number, delta: number): number {
+  // Current source ringBufferMode=0. Already expired rows retain their age.
+  if (agePercent > 100) return agePercent;
+  return Math.min(add(agePercent, multiply(multiply(delta, 100), inverseLifetime)), f32(100.00000762939453));
+}
+
+function normalizedParticleAge(agePercent: number): number {
+  return multiply(agePercent, f32(0.01));
+}
+
+function particleIsAlive(agePercent: number): boolean {
+  return !(agePercent > 100);
 }
 
 function textureSheetFrame(uv: ParticleUvModule, normalizedAge: number, seed: number): number {
