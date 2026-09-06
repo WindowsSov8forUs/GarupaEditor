@@ -547,11 +547,7 @@ export class DeterministicParticleSimulation {
           const uv = getModule(record.bundle, profile, "UVModule");
           let uvFrame = 0;
           if (uv !== null) {
-            const uvRandom = particleSeedRatio((particle.randomSeed + 0x13740583) >>> 0);
-            const frame = minMax(uv.frameOverTime, normalizedAge, uvRandom);
-            const start = minMax(uv.startFrame, normalizedAge, uvRandom);
-            const tileCount = uv.tilesX * uv.tilesY;
-            uvFrame = modulo(Math.floor((start + frame * uv.cycles) * tileCount), tileCount);
+            uvFrame = textureSheetFrame(uv, normalizedAge, particle.randomSeed);
           }
           const custom = getModule(record.bundle, profile, "CustomDataModule");
           const customData0 = custom === null ? null : customData(custom, 0, normalizedAge, particle.randomSeed);
@@ -990,6 +986,23 @@ function curve(value: ParticleAnimationCurve, time: number): number {
     }
   }
   throw fault("particle.simulation.curve-interval", "A current animation curve must resolve one interpolation interval.");
+}
+
+function textureSheetFrame(uv: ParticleUvModule, normalizedAge: number, seed: number): number {
+  const random = particleSeedRatio((seed + 0x13740583) >>> 0);
+  const frame = minMax(uv.frameOverTime, normalizedAge, random);
+  const start = minMax(uv.startFrame, normalizedAge, random);
+  // The registered source uses cycles=1. Curve phase evaluation remains a
+  // separate native consumer from the post-evaluated frame wrap below.
+  return textureSheetFrameIndex(start, multiply(frame, uv.cycles), uv.tilesX * uv.tilesY);
+}
+
+function textureSheetFrameIndex(start: number, frame: number, tileCount: number): number {
+  // BND-C43: wrap the Float32 sum before scaling to the integer frame cell.
+  const sum = add(start, frame);
+  const whole = Math.floor(sum) || 0;
+  const normalized = subtract(sum, whole);
+  return Math.trunc(multiply(normalized, tileCount)) || 0;
 }
 
 function minMax(value: ParticleMinMaxCurve, time: number, ratio: number): number {
@@ -1714,7 +1727,6 @@ function clamp01(value: number): number { return f32(Math.max(0, Math.min(1, f32
 function lerp(left: number, right: number, time: number): number {
   return add(left, multiply(subtract(right, left), clamp01(time)));
 }
-function modulo(value: number, divisor: number): number { return ((value % divisor) + divisor) % divisor; }
 function compareOrdinal(left: string, right: string): number { return left < right ? -1 : left > right ? 1 : 0; }
 function roundHalfEven(value: number): number {
   const floor = Math.floor(value);
