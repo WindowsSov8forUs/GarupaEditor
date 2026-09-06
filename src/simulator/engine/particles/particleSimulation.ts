@@ -134,6 +134,9 @@ interface OwnerSystemRuntime {
   playing: boolean;
   elapsed: number;
   remainingDelta: number;
+  delayRemaining: number;
+  cycleCount: number;
+  emissionStopped: boolean;
   first: boolean;
   particles: SimulatedParticle[];
 }
@@ -349,7 +352,7 @@ export class DeterministicParticleSimulation {
       initialModuleStream: particleSimdStateFromSeed(seed),
       shapeModuleStream: particleSimdStateFromSeed(seed),
       rateAccumulator: f32(0),
-      burstFraction: f32(1),
+      burstFraction: f32(0),
       birthCount: 0,
     });
     return {
@@ -357,6 +360,9 @@ export class DeterministicParticleSimulation {
       playing: true,
       elapsed: f32(0),
       remainingDelta: f32(0),
+      delayRemaining: profile.system.prewarm ? f32(0) : minMax(profile.system.startDelay, 0, 0),
+      cycleCount: 0,
+      emissionStopped: false,
       first: true,
       particles: [],
     };
@@ -484,23 +490,24 @@ export class DeterministicParticleSimulation {
         if (!runtime.playing) continue;
         const record = this.definitions.get(identity)!;
         const profile = record.bundle.profiles[record.definition.profile]!;
+        const frameElapsed = runtime.elapsed;
         const steps = nativeParticleFrameSteps(delta, profile.system.simulationSpeed, profile.system.lengthInSec, runtime);
         for (const effectiveDelta of steps) {
-          const before = runtime.elapsed;
-          const after = add(before, effectiveDelta);
+          const timing = nativeParticleSystemClock(runtime, effectiveDelta,
+            profile.system.lengthInSec, profile.system.looping, frameElapsed);
+          const before = timing.before;
+          const after = timing.after;
           // 0x1097D34/58/78 update existing rows once with the native step,
           // including death removal, before 0x1097DF0/EA0 emission/admission.
           for (const particle of runtime.particles) this.updateParticle(record, particle, effectiveDelta);
           removeExpiredParticles(runtime.particles);
-          const batches = this.emitStep(record.bundle, profile, runtime, before, after, effectiveDelta);
+          const batches = timing.delta === null ? []
+            : this.emitStep(record.bundle, profile, runtime, before, after, timing.delta);
           for (const batch of batches) {
             this.spawnBatch(owner, record, profile, runtime, batch, after);
           }
-          runtime.elapsed = after;
           runtime.first = false;
-          if (!profile.system.looping &&
-            after >= add(profile.system.startDelay.scalar, profile.system.lengthInSec) &&
-            runtime.particles.length === 0) {
+          if (runtime.emissionStopped && runtime.particles.length === 0) {
             runtime.playing = false;
             break;
           }
@@ -638,18 +645,9 @@ export class DeterministicParticleSimulation {
     if (state === undefined) {
       throw fault("particle.simulation.instance-random-state-missing", "Emission requires the concrete ParticleSystem random owner.");
     }
-    const delay = minMax(profile.system.startDelay, 0, 0);
-    if (after <= delay) return [];
     const duration = f32(profile.system.lengthInSec);
-    const activeBefore = Math.max(0, subtract(before, delay));
-    const activeAfter = Math.max(0, subtract(after, delay));
-    if (!profile.system.looping && activeAfter >= duration) return [];
-    const phaseBefore = profile.system.looping ? f32(activeBefore % duration) : activeBefore;
-    const phaseAfter = profile.system.looping ? f32(activeAfter % duration) : activeAfter;
-    const activeDelta = before < delay ? subtract(after, delay) : delta;
-    const result = nativeParticleEmissionStep(emission,
-      delta >= duration ? add(phaseBefore, 0.000001) : phaseBefore, phaseAfter, duration, state);
-    return result.count === 0 ? [] : [{ at: before, count: result.count, nativeTiming: { ...result, delta: activeDelta } }];
+    const result = nativeParticleEmissionStep(emission, before, after, duration, state);
+    return result.count === 0 ? [] : [{ at: before, count: result.count, nativeTiming: { ...result, delta } }];
   }
 
   // Prewarm retains its separate scheduling path until the original deferred
@@ -1065,6 +1063,39 @@ function compactParticleBirths(particles: SimulatedParticle[], existingCount: nu
   if (copiedCount === 0) return;
   const copied = particles.splice(particles.length - copiedCount, copiedCount);
   particles.splice(existingCount, 0, ...copied);
+}
+
+function nativeParticleSystemClock(
+  runtime: Pick<OwnerSystemRuntime, "elapsed" | "delayRemaining" | "cycleCount" | "emissionStopped">,
+  delta: number,
+  duration: number,
+  looping: boolean,
+  frameElapsed: number,
+): { readonly before: number; readonly after: number; readonly delta: number | null } {
+  let before = Math.min(runtime.elapsed, f32(duration));
+  if (delta >= duration) before = add(before, 0.000001);
+  if (runtime.delayRemaining < delta) {
+    runtime.elapsed = add(runtime.elapsed, subtract(delta, runtime.delayRemaining));
+    if (looping) {
+      while (runtime.elapsed >= duration) {
+        runtime.elapsed = subtract(runtime.elapsed, duration);
+        runtime.cycleCount = (runtime.cycleCount + 1) >>> 0;
+      }
+    } else {
+      runtime.elapsed = Math.min(runtime.elapsed, f32(duration));
+    }
+  }
+  if (!looping && runtime.elapsed >= duration) runtime.emissionStopped = true;
+  const after = runtime.elapsed;
+  if (runtime.emissionStopped) return { before, after, delta: null };
+  let emissionDelta = delta;
+  if (frameElapsed === 0 && runtime.delayRemaining > 0) {
+    const remaining = subtract(runtime.delayRemaining, delta);
+    runtime.delayRemaining = Math.max(remaining, 0);
+    if (remaining > 0) return { before, after, delta: null };
+    emissionDelta = -remaining;
+  }
+  return { before, after, delta: emissionDelta > 0 ? emissionDelta : null };
 }
 
 function nativeParticleEmissionStep(
@@ -1919,6 +1950,9 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
       playing: runtime.playing,
       elapsed: runtime.elapsed,
       remainingDelta: runtime.remainingDelta,
+      delayRemaining: runtime.delayRemaining,
+      cycleCount: runtime.cycleCount,
+      emissionStopped: runtime.emissionStopped,
       first: runtime.first,
       particles: runtime.particles.map((particle) => ({
         ...particle,
