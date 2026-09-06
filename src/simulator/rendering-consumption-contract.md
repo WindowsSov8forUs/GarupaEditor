@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `8ad6d6d9ddfa267a30492e9f14bd5fde6a69c60b`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `fb77a4e5a4a5d8ced848a6a4e70f3ed4e0fa0ad5`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -91,6 +91,12 @@ The differential executes the production width/half-size helper and wrapper and 
 `simulator-particle-bounds-calculation-10-1-4/billboard_view_size_limit.json` freshly binds774 enabled View renderers and their registered Transform chains. Four explicit setup scales, three viewport inputs and five raw-size pairs produce9288 system/setup/viewport references to1605 numeric inputs. Original half-size instructions from simple/complex scalar and simple/complex3D workers agree bit-for-bit. Five full FDE/CIE bodies bind the dispatcher and additional workers. The simple scalar worker is a square-particle diagonal optimization; independent axes, significant pivot or sprite texture-sheet mode select the complex worker.
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
+
+### Complex billboard scalar and 3D rotation bases (BND-C38)
+
+Authority: `simulator-particle-bounds-calculation-10-1-4/billboard_rotation.json`. Significant-pivot billboards now rotate the basis with the original Float32 polynomial and operation order before multiplying their edge coordinates. Scalar and3D branches remain distinct: they use opposite turn factors and cannot be merged when X/Y angles are zero. The production branch wrapper considers Initial rotation3D, Shape alignToDirection and both rotation modules' separateAxes requirements. In the ten C37 source systems, six request3D and four do not; all serialize allowRoll true and exclude sprite mode.
+
+The original worker slices cover190 bases and2280 explicit angle triples. All2280 scalar/3D basis comparisons and22800 actual wrapper calls match Float32 bits. Named getters and eight full FDE/CIE bodies bind source flags and the positive native SoA2003 requirement path. This comparison is conditional on prepared source module state: current runtime37/SoA flags, source rotation curve evaluation and camera-roll correction are not proven by serialized requirements. Complete final vertices/UV/normals, zero-pivot simple or size3D complex branches, outer composition, mesh/stretch rotation, bounds and shared sorting remain OPEN.
 
 ### Significant billboard pivot before rotation (BND-C37)
 

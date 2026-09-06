@@ -17,6 +17,7 @@ import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
+import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation } from "./particleBillboardRotation";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -320,6 +321,9 @@ function sourceGeometry(
       multiply(subtract(vertex[1], pivot.y), size[1]),
       multiply(subtract(vertex[2], pivot.z), size[2]),
     ]);
+  const positionBasis = hasSignificantBillboardPivot(pivot)
+    ? billboardRotationBasis(binding, basis, rotation)
+    : null;
   // The normal stream has its own native consumer; BND-C33 binds positions.
   const normalBasis = alignmentBasis(binding);
   const billboardNormal = rendererNormal(
@@ -327,11 +331,31 @@ function sourceGeometry(
     binding.renderer.m_NormalDirection,
   );
   return Object.freeze({
-    vertices: Object.freeze(coordinates.map((vertex) => applyBasis(quaternionRotate(vertex, particleRotation), basis))),
+    vertices: Object.freeze(coordinates.map((vertex) => positionBasis === null
+      ? applyBasis(quaternionRotate(vertex, particleRotation), basis)
+      : applyBasis(vertex, positionBasis))),
     uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function billboardRotationBasis(
+  binding: GeometryBinding,
+  basis: readonly [Vector3, Vector3, Vector3],
+  rotation: Vector3,
+): readonly [Vector3, Vector3, Vector3] {
+  const keys = binding.bundle.profiles[binding.system.profile]!.modules;
+  const modules = binding.bundle.moduleProfiles;
+  const initial = keys.InitialModule === undefined ? undefined : modules.InitialModule?.[keys.InitialModule];
+  const shape = keys.ShapeModule === undefined ? undefined : modules.ShapeModule?.[keys.ShapeModule];
+  const lifetime = keys.RotationModule === undefined ? undefined : modules.RotationModule?.[keys.RotationModule];
+  const speed = keys.RotationBySpeedModule === undefined ? undefined : modules.RotationBySpeedModule?.[keys.RotationBySpeedModule];
+  const requires3D = initial?.rotation3D === true || shape?.alignToDirection === true ||
+    lifetime?.separateAxes === true || speed?.separateAxes === true;
+  return requires3D
+    ? calculateNative3DBillboardRotation(basis, rotation)
+    : calculateNativeScalarBillboardRotation(basis, rotation[2]);
 }
 
 function hasSignificantBillboardPivot(pivot: ParticleRendererProfile["m_Pivot"]): boolean {
