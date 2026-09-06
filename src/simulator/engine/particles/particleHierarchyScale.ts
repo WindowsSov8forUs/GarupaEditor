@@ -83,6 +83,14 @@ export function calculateNativeParticleLocalBillboardBasis(
   return [applyColumns(diagonal, basis[0]), applyColumns(diagonal, basis[1]), applyColumns(diagonal, basis[2])];
 }
 
+// Reverse BND-C36: current source GameCamera -> 0x107A0DC -> View worker.
+export function calculateNativeParticleViewBillboardBasis(scale: Vector3): Columns {
+  // Preserve the inverse camera's reflected Z column and signed zero lanes.
+  const inverseView: Columns = [[1, -0, -0], [-0, 1, -0], [-0, -0, -1]];
+  const diagonal: Columns = [[scale[0], 0, 0], [0, scale[1], 0], [0, 0, scale[2]]];
+  return [applyColumns(diagonal, inverseView[0]), applyColumns(diagonal, inverseView[1]), applyColumns(diagonal, inverseView[2])];
+}
+
 function scaleSign(value: number): number {
   return value < 0 || Object.is(value, -0) ? -1 : 1;
 }

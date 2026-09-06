@@ -15,7 +15,7 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
-import { calculateNativeParticleLocalBillboardBasis } from "./particleHierarchyScale";
+import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
@@ -306,11 +306,7 @@ function sourceGeometry(
     basis = localBillboardBasis(binding.system, requiredBits(sample.instance.particleSystemSetupScaleBits),
       binding.bundle.profiles[binding.system.profile]!.system.scalingMode);
   } else {
-    const scale = bitsVector3(sample.transformSize!);
-    // C35 corrects the raw-size limit. View's existing scale/rotation order
-    // remains a separate native-matrix consumption gap.
-    size = [multiply(size[0], scale[0]), multiply(size[1], scale[1]), multiply(size[2], scale[2])];
-    basis = alignmentBasis(binding);
+    basis = viewBillboardBasis(sample);
   }
   const particleRotation = eulerQuaternion(rotation);
   const pivot = binding.renderer.m_Pivot;
@@ -333,6 +329,13 @@ function sourceGeometry(
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function viewBillboardBasis(sample: ParticleRenderSample): readonly [Vector3, Vector3, Vector3] {
+  if (sample.transformSize === undefined) {
+    throw fault("particle.geometry.view-billboard-transform", "View billboards require the separate native Transform size scale.");
+  }
+  return calculateNativeParticleViewBillboardBasis(bitsVector3(sample.transformSize));
 }
 
 function billboardHalfSize(
