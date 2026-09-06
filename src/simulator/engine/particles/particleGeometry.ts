@@ -194,9 +194,9 @@ function buildPrimitive(
   ], outerRotation));
   const worldNormals = isStretched ? source.normals : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const maximumPixels = multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight);
-  const hasNativeSizeLimit = isStretched || binding.renderer.m_RenderMode === 0 && binding.renderer.m_RenderAlignment === 2;
+  const hasNativeSizeLimit = isStretched || binding.renderer.m_RenderMode === 0;
   const largest = hasNativeSizeLimit ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
-  // Local billboard limits are already applied to raw size before the basis.
+  // Billboard limits are already applied to raw size before vertex construction.
   const limitRatio = !hasNativeSizeLimit && maximumPixels > 0 && largest > maximumPixels
     ? divide(maximumPixels, largest)
     : Math.fround(1);
@@ -292,17 +292,24 @@ function sourceGeometry(
       indices: mesh.screenYReflectionIndices,
     });
   }
+  if (sample.sizeBeforeTransform === undefined) {
+    throw fault("particle.geometry.billboard-size", "Billboards require current particle size before Transform scaling.");
+  }
+  size = bitsVector3(sample.sizeBeforeTransform);
+  const halfSize = billboardHalfSize(binding, sample, scene);
+  size = [multiply(halfSize[0], 2), multiply(halfSize[1], 2), size[2]];
   let basis: readonly [Vector3, Vector3, Vector3];
   if (binding.renderer.m_RenderAlignment === 2) {
-    if (sample.sizeBeforeTransform === undefined || sample.instance.particleSystemSetupScaleBits === undefined) {
+    if (sample.instance.particleSystemSetupScaleBits === undefined) {
       throw fault("particle.geometry.local-billboard-transform", "Local billboards require current particle size before Transform scaling and their concrete owner setup scale.");
     }
-    size = bitsVector3(sample.sizeBeforeTransform);
-    const halfSize = localBillboardHalfSize(binding, sample, scene);
-    size = [multiply(halfSize[0], 2), multiply(halfSize[1], 2), size[2]];
     basis = localBillboardBasis(binding.system, requiredBits(sample.instance.particleSystemSetupScaleBits),
       binding.bundle.profiles[binding.system.profile]!.system.scalingMode);
   } else {
+    const scale = bitsVector3(sample.transformSize!);
+    // C35 corrects the raw-size limit. View's existing scale/rotation order
+    // remains a separate native-matrix consumption gap.
+    size = [multiply(size[0], scale[0]), multiply(size[1], scale[1]), multiply(size[2], scale[2])];
     basis = alignmentBasis(binding);
   }
   const particleRotation = eulerQuaternion(rotation);
@@ -328,13 +335,13 @@ function sourceGeometry(
   });
 }
 
-function localBillboardHalfSize(
+function billboardHalfSize(
   binding: GeometryBinding,
   sample: ParticleRenderSample,
   scene: ParticlePixiSceneProfile,
 ): readonly [number, number] {
   if (sample.sizeBeforeTransform === undefined || sample.transformSize === undefined) {
-    throw fault("particle.geometry.local-billboard-size-limit", "Local billboard limits require raw particle size and the separate native Transform size scale.");
+    throw fault("particle.geometry.billboard-size-limit", "Billboard limits require raw particle size and the separate native Transform size scale.");
   }
   const size = bitsVector3(sample.sizeBeforeTransform);
   const scale = bitsVector3(sample.transformSize);
