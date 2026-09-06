@@ -806,6 +806,8 @@ export interface ParticleRenderSample {
   readonly size: ParticleFloat32Vector3;
   /** Current particle size before Transform scaling; Local billboard basis owns that scaling. */
   readonly sizeBeforeTransform?: ParticleFloat32Vector3;
+  /** Native runtime348 scale, kept separate from raw size for renderer limits. */
+  readonly transformSize?: ParticleFloat32Vector3;
   readonly rotation: ParticleFloat32Vector3;
   readonly color: ParticleFloat32Color;
   readonly ageBits: string;

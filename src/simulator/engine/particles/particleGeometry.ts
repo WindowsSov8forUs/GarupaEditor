@@ -16,6 +16,7 @@ import type {
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 import { calculateNativeParticleLocalBillboardBasis } from "./particleHierarchyScale";
+import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -185,7 +186,7 @@ function buildPrimitive(
   const isStretched = binding.renderer.m_RenderMode === 1;
   const source = isStretched
     ? stretchedBillboard(binding, size, velocity, worldCenter, outerScale, scene)
-    : sourceGeometry(binding, size, rotation, sample);
+    : sourceGeometry(binding, size, rotation, sample, scene);
   const offsets = isStretched ? source.vertices : source.vertices.map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
     multiply(vertex[1], outerScale[1]),
@@ -193,9 +194,10 @@ function buildPrimitive(
   ], outerRotation));
   const worldNormals = isStretched ? source.normals : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const maximumPixels = multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight);
-  const largest = isStretched ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
-  // Non-Freeform limits the side width before stretch, not the final tail extent.
-  const limitRatio = !isStretched && maximumPixels > 0 && largest > maximumPixels
+  const hasNativeSizeLimit = isStretched || binding.renderer.m_RenderMode === 0 && binding.renderer.m_RenderAlignment === 2;
+  const largest = hasNativeSizeLimit ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
+  // Local billboard limits are already applied to raw size before the basis.
+  const limitRatio = !hasNativeSizeLimit && maximumPixels > 0 && largest > maximumPixels
     ? divide(maximumPixels, largest)
     : Math.fround(1);
   const projectedCenter = projectPoint(worldCenter, scene);
@@ -257,6 +259,7 @@ function sourceGeometry(
   size: Vector3,
   rotation: Vector3,
   sample: ParticleRenderSample,
+  scene: ParticlePixiSceneProfile,
 ): {
   readonly vertices: readonly Vector3[];
   readonly uv0: readonly Vector2[];
@@ -295,6 +298,8 @@ function sourceGeometry(
       throw fault("particle.geometry.local-billboard-transform", "Local billboards require current particle size before Transform scaling and their concrete owner setup scale.");
     }
     size = bitsVector3(sample.sizeBeforeTransform);
+    const halfSize = localBillboardHalfSize(binding, sample, scene);
+    size = [multiply(halfSize[0], 2), multiply(halfSize[1], 2), size[2]];
     basis = localBillboardBasis(binding.system, requiredBits(sample.instance.particleSystemSetupScaleBits),
       binding.bundle.profiles[binding.system.profile]!.system.scalingMode);
   } else {
@@ -321,6 +326,22 @@ function sourceGeometry(
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function localBillboardHalfSize(
+  binding: GeometryBinding,
+  sample: ParticleRenderSample,
+  scene: ParticlePixiSceneProfile,
+): readonly [number, number] {
+  if (sample.sizeBeforeTransform === undefined || sample.transformSize === undefined) {
+    throw fault("particle.geometry.local-billboard-size-limit", "Local billboard limits require raw particle size and the separate native Transform size scale.");
+  }
+  const size = bitsVector3(sample.sizeBeforeTransform);
+  const scale = bitsVector3(sample.transformSize);
+  // Current GameCamera has orthographic size1 and a full normalized viewport.
+  const width = calculateNativeParticleOrthographicWidth(1, divide(scene.viewportWidth, scene.viewportHeight));
+  return calculateNativeParticleOrthographicHalfSize([size[0], size[1]], scale[0],
+    binding.renderer.m_MinParticleSize, binding.renderer.m_MaxParticleSize, width);
 }
 
 function stretchedBillboard(

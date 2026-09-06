@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `f5237d9616f6eb30b787e6bec1a62925b5602997`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `1f4c267d1aed6a9657e50780b9bd1404bf974923`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -74,7 +74,17 @@ Local billboard vertices now use the original parent quaternion composition with
 
 All172 independent native basis inputs and1,004 actual production wrapper references agree bit-for-bit. These references cover251 freshly decoded source systems with four explicit arithmetic setup multipliers1,0.5,1.25,2, not observed Play states. The previous rotation basis with native size scales differs on28 inputs, referenced by19 systems;20 have unequal numeric values and eight differ only in signed zero. The original hierarchy helper189 inputs and scale wrapper1,741 systems at setupScale1 still pass. Raw-size publication and real geometry call sites are checked statically; full samples/quads are not executed by this audit.
 
-Still OPEN: original billboard scalar/3D rotation and pivot/camera min/max consumption, current Transform transfer, normal stream, mesh/stretched consumers, bounds and mixed sorting. This closes the Local billboard basis substitution, not the complete renderer.
+Still OPEN: original billboard scalar/3D rotation and pivot, current Transform transfer, normal stream, mesh/stretched consumers, bounds and mixed sorting. C34 below separately repairs Local billboard orthographic size limits. This closes the Local billboard basis substitution, not the complete renderer.
+
+### Local billboard orthographic size-limit correction (BND-C34)
+
+Authority: `simulator-particle-bounds-calculation-10-1-4/particle_size_limit.json` and its eleven complete FDE/CIE-bound bodies, reused byte-verified worker/handoff and original numeric extraction. Both standard and SRP camera context paths supply visible world width. The current automatic orthographic camera uses `(size + size) * aspect`; using viewport height as the limit dimension is incorrect.
+
+Production publishes native `transformSize` separately from `sizeBeforeTransform`. Local billboard geometry divides min/max fractions by `max(transformSize.x,1e-5)`, multiplies by camera width, preserves native nonfinite/negative sentinel handling, then computes half sizes from `max(rawSizeX,rawSizeY,1e-6)`. This occurs before the existing basis/vertex construction. This branch no longer receives a second projected outer-box limit. Other billboard alignments, stretched and mesh branches remain independently OPEN.
+
+Bounded independent comparison:585 distinct inputs from251 source renderer systems, four explicit setup scales, three explicit viewport inputs and five explicit raw size pairs; six additional arithmetic boundary inputs. All591 native comparisons and15,060 actual production wrapper comparisons match Float32 bits. These are original-instruction expected values with explicit arithmetic inputs, not captured gameplay or product-generated expected. C33 basis comparison remains172/1,004 with zero mismatches.
+
+The differential executes the production width/half-size helper and wrapper and statically binds sample publication and geometry consumption. It does not close full pivot/rotation/quad/normal execution, camera mutation/custom projection, current Transform transfer, complete size-module lifecycle, bounds or mixed sorting. The downstream conversion from half size to the existing quad representation retains its separate open status.
 
 Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json`, `particle_bounds_size_state.json`, `serialized_bounds_source_domain.json`, `particle_bounds_gravity_input.json`, `serialized_bounds_curve_cache.json`, `serialized_bounds_active_motion_inputs.json`, `particle_bounds_space_transform.json`, `serialized_velocity_ranges.json`, `particle_bounds_system_math.json` `serialized_velocity_ranges_system_math.json` `particle_bounds_cache_read_publication.json`, `serialized_constant_motion_ranges.json` `particle_bounds_velocity_copy_flow.json` `serialized_velocity_caller.json` `particle_bounds_size_tuple.json` `particle_bounds_particle_metadata.json` `particle_bounds_size_writers.json` `particle_bounds_size_expansion.json` `serialized_bounds_union_extrema.json` `serialized_bounds_pivot_source.json` `particle_bounds_final_padding.json` `particle_bounds_runtime_scale.json` `particle_bounds_transform_selector.json` `serialized_bounds_hierarchy_scale.json` `serialized_bounds_size_axis_products.json` and `particle_bounds_mesh_cache.json`, BND-C01..C31. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
 

@@ -570,6 +570,7 @@ export class DeterministicParticleSimulation {
             velocity: vectorBits(particle.renderVelocity),
             size: vectorBits(size),
             sizeBeforeTransform,
+            transformSize: vectorBits(transformSize),
             rotation: vectorBits(particle.rotation),
             color: colorBits(color),
             ageBits: bits(particle.age),
