@@ -314,14 +314,15 @@ function sourceGeometry(
   const canonical: readonly Vector3[] = [
     [-0.5, -0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [0.5, 0.5, 0],
   ];
-  const coordinates = hasSignificantBillboardPivot(pivot)
+  const complexBillboard = hasSignificantBillboardPivot(pivot) || hasBillboardSizeAxes(binding);
+  const coordinates = complexBillboard
     ? billboardPivotCoordinates(sample, halfSize, pivot)
     : canonical.map((vertex): Vector3 => [
       multiply(subtract(vertex[0], pivot.x), size[0]),
       multiply(subtract(vertex[1], pivot.y), size[1]),
       multiply(subtract(vertex[2], pivot.z), size[2]),
     ]);
-  const positionBasis = hasSignificantBillboardPivot(pivot)
+  const positionBasis = complexBillboard
     ? billboardRotationBasis(binding, basis, rotation)
     : null;
   // The normal stream has its own native consumer; BND-C33 binds positions.
@@ -338,6 +339,15 @@ function sourceGeometry(
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function hasBillboardSizeAxes(binding: GeometryBinding): boolean {
+  const keys = binding.bundle.profiles[binding.system.profile]!.modules;
+  const modules = binding.bundle.moduleProfiles;
+  const initial = keys.InitialModule === undefined ? undefined : modules.InitialModule?.[keys.InitialModule];
+  const lifetime = keys.SizeModule === undefined ? undefined : modules.SizeModule?.[keys.SizeModule];
+  // The registered source domain has no enabled SizeBySpeedModule.
+  return initial?.size3D === true || lifetime?.separateAxes === true;
 }
 
 function billboardRotationBasis(
