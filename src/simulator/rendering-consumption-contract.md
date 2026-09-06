@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `0c636c42859fbbb49754e8b5d866e16a9a13551f`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `dec552535e47b6a4b0b6592aace56fef310567c8`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -58,11 +58,15 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
-Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json` and `particle_bounds_size_state.json`, BND-C01..C06. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
+Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json`, `particle_bounds_size_state.json`, `serialized_bounds_source_domain.json`, `particle_bounds_gravity_input.json`, `serialized_bounds_curve_cache.json` and `serialized_bounds_active_motion_inputs.json`, BND-C01..C10. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
 
 The original bounds-extrema instructions consume 25 distinct raw HAB curves (9,504 references across eleven MinMaxCurve fields in 432 byte-roundtripped systems). Native Float32 results include maxima `0x3F800001`, `0x3F800002` and `0x3F7FFFFF`; key-value maxima or a clamp to 1 are not equivalent. Disabled modules and inactive curve sides are inventory, not execution claims. The extractor's FPCR=0 is explicit, not a device observation. This bounds helper does not establish the separate live particle module evaluator.
 
 SoA byte +2004 is not Main size3D's serialized byte. Enabled Main and separate-axis size modules request its allocation; the requirement finalizer clears it only when no local requirement remains and runtime +38 is zero. Enabling copies existing array data rather than merely toggling a boolean. EmitOld/EmitParams/SetParticles have conditional +38 writers, and the reset body clears +38 and float bits +436. These are positive source paths, not proof of current Play state, exhaustive aliases or a default-zero runtime size input.
+
+The fresh ordinary/directional source union contains 1,741 systems across 27 resources, retaining historical 1,375 and HAB delta 366 separately. All serialized Lights/Trail flags are disabled and UV mode is 0, independently of UV activity. This narrows source branches, not later mutation reachability or Game-clear. Gravity is not uniformly zero: 144 systems have constant scalar bits `0xBE99999A`. The native 3D interface and named Physics.gravity getter read the same singleton fields; APK PhysicsManager10 supplies source gravity, but current manager state and its complete transfer/initialization remain open.
+
+Native cached and general integrated-curve ranges are separate paths. The HAB compiler audit covers 62 curve/scalar pairs (59 cacheable) and only the 36 source-written cache bytes, without inventing padding. A separate fresh source sweep identifies two constant Force rows, eighteen constant Velocity rows and thirty-two curve-mode Velocity rows. Their active curve inputs contain two noncacheable two-key curves, so key count alone cannot select the fast path. Neither compiler audit executes complete integrated ranges or proves current MinMaxCurve cache flags/live evaluation.
 
 Production bounds and mixed ordering remain unmodified by this evidence-only batch. Remaining inputs include complete SoA identities, current lifecycle/mutation reachability, shape/helper/global and light/UV caches, Float32 padding/publication and concrete mixed-renderer ties. No source inventory or isolated curve arithmetic result closes those integration gaps.
 
