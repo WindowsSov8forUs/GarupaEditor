@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `dec552535e47b6a4b0b6592aace56fef310567c8`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `e7733df5ca1854ebaeca8e1344d94ed96547b78f`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -58,7 +58,7 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
-Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json`, `particle_bounds_size_state.json`, `serialized_bounds_source_domain.json`, `particle_bounds_gravity_input.json`, `serialized_bounds_curve_cache.json` and `serialized_bounds_active_motion_inputs.json`, BND-C01..C10. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
+Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json`, `particle_bounds_size_state.json`, `serialized_bounds_source_domain.json`, `particle_bounds_gravity_input.json`, `serialized_bounds_curve_cache.json`, `serialized_bounds_active_motion_inputs.json` and `particle_bounds_space_transform.json`, BND-C01..C11. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
 
 The original bounds-extrema instructions consume 25 distinct raw HAB curves (9,504 references across eleven MinMaxCurve fields in 432 byte-roundtripped systems). Native Float32 results include maxima `0x3F800001`, `0x3F800002` and `0x3F7FFFFF`; key-value maxima or a clamp to 1 are not equivalent. Disabled modules and inactive curve sides are inventory, not execution claims. The extractor's FPCR=0 is explicit, not a device observation. This bounds helper does not establish the separate live particle module evaluator.
 
@@ -67,6 +67,8 @@ SoA byte +2004 is not Main size3D's serialized byte. Enabled Main and separate-a
 The fresh ordinary/directional source union contains 1,741 systems across 27 resources, retaining historical 1,375 and HAB delta 366 separately. All serialized Lights/Trail flags are disabled and UV mode is 0, independently of UV activity. This narrows source branches, not later mutation reachability or Game-clear. Gravity is not uniformly zero: 144 systems have constant scalar bits `0xBE99999A`. The native 3D interface and named Physics.gravity getter read the same singleton fields; APK PhysicsManager10 supplies source gravity, but current manager state and its complete transfer/initialization remain open.
 
 Native cached and general integrated-curve ranges are separate paths. The HAB compiler audit covers 62 curve/scalar pairs (59 cacheable) and only the 36 source-written cache bytes, without inventing padding. A separate fresh source sweep identifies two constant Force rows, eighteen constant Velocity rows and thirty-two curve-mode Velocity rows. Their active curve inputs contain two noncacheable two-key curves, so key count alone cannot select the fast path. Neither compiler audit executes complete integrated ranges or proves current MinMaxCurve cache flags/live evaluation.
+
+Named space getters bind the bytes tested by the motion bounds helpers. Their nonzero branches copy the supplied matrix, replace translation with a shared vector, and execute an eight-corner Float32 AABB transform rather than a center/extent shortcut. ELF initializer-array metadata and RELA bind original writes of positive-infinity and zero vectors used by these helpers. Positive initialization is not a current matrix/global-state observation or proof of no later writes; this transform was not executed by the extractor.
 
 Production bounds and mixed ordering remain unmodified by this evidence-only batch. Remaining inputs include complete SoA identities, current lifecycle/mutation reachability, shape/helper/global and light/UV caches, Float32 padding/publication and concrete mixed-renderer ties. No source inventory or isolated curve arithmetic result closes those integration gaps.
 
