@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Aligned birth-batch publication order (BND-C48)
+
+Reverse `318c3e7c5ce3dba958450867c2bc4ccb1f3a3c81` was verified, committed and pushed with remote divergence `0 0` before consumption. Its `particle_birth_order.json` SHA256 is `F3662F40861948EB52A2BAE8A694F009F1316B248A3B080B2E0006F910A69909`. Four complete bodies bind birth admission's aligned start and execute the original finalizer, row copier and count publication at360 explicit count pairs across15/50-stream states (720 native paths).
+
+Production captures the existing count before a birth batch and moves the last new rows into the native alignment gap after all batch births. This preserves object identity and the original published order: old[A], new[B,C,D,E,F] becomes[A,D,E,F,B,C]. Baseline210 layouts differed; all360 actual helper calls now agree with720 native paths. The auditor binds the actual append expression and the final helper call after the birth loop. C46's535 death layouts/2140 native paths remain identical. Both noEmit checks and the1438-entry runtime audit pass.
+
+The explicit input contains already-surviving birth rows. Immediate birth deaths, actual capacity admission, emitter grouping, normal/deferred update timing, current optional flags and complete lifecycle/rendering/shared sorting remain OPEN. The numeric finalizer result does not close its whole upstream caller. No product tests, application or visual capture were used.
+
 ### Generic MinMax curve evaluation (BND-C47)
 
 Reverse `4b46e6ab50e13081a1b87260cba273b4bb4b7e47` was verified, committed and pushed with remote divergence `0 0` before consumption. Its `particle_minmax_curves.json` SHA256 is `0254CE913C774D46E1471C2E1B8355EE492AA1FE844E8B2B1E94FA9F455E4A39`. Fresh original full-read/roundtrip covers1741 systems,2987 enabled-module field references and172 distinct mode1/2 parameter records. Fields can be inactive axes despite their module being enabled. Seven complete original bodies execute the cache selector/compiler and general/fast SIMD sampler.

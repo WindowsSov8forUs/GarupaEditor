@@ -708,7 +708,8 @@ export class DeterministicParticleSimulation {
     if (state === undefined) {
       throw fault("particle.simulation.instance-random-state-missing", "Birth admission requires the concrete ParticleSystem random owner.");
     }
-    const admitted = Math.max(0, Math.min(batch.count, initial.maxNumParticles - runtime.particles.length));
+    const existingCount = runtime.particles.length;
+    const admitted = Math.max(0, Math.min(batch.count, initial.maxNumParticles - existingCount));
     const shape = getModule(record.bundle, profile, "ShapeModule");
     for (let groupStart = 0; groupStart < admitted; groupStart += 4) {
       const initialRandom = particleSimdRandomValues(state.initialModuleStream, initialModuleRandomDrawCount(initial));
@@ -732,6 +733,7 @@ export class DeterministicParticleSimulation {
         );
       }
     }
+    compactParticleBirths(runtime.particles, existingCount);
   }
 
   private spawn(
@@ -1015,6 +1017,15 @@ function normalizedParticleAge(agePercent: number): number {
 
 function particleIsAlive(agePercent: number): boolean {
   return !(agePercent > 100);
+}
+
+function compactParticleBirths(particles: SimulatedParticle[], existingCount: number): void {
+  // BND-C48: native births start at the next four-row boundary. The finalizer
+  // fills that alignment gap from the last birth rows before publishing count.
+  const copiedCount = Math.min((4 - existingCount % 4) % 4, particles.length - existingCount);
+  if (copiedCount === 0) return;
+  const copied = particles.splice(particles.length - copiedCount, copiedCount);
+  particles.splice(existingCount, 0, ...copied);
 }
 
 function removeExpiredParticles(particles: SimulatedParticle[]): void {
