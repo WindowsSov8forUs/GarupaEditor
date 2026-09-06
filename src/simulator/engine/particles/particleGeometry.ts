@@ -313,6 +313,13 @@ function sourceGeometry(
   const canonical: readonly Vector3[] = [
     [-0.5, -0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [0.5, 0.5, 0],
   ];
+  const coordinates = hasSignificantBillboardPivot(pivot)
+    ? billboardPivotCoordinates(sample, halfSize, pivot)
+    : canonical.map((vertex): Vector3 => [
+      multiply(subtract(vertex[0], pivot.x), size[0]),
+      multiply(subtract(vertex[1], pivot.y), size[1]),
+      multiply(subtract(vertex[2], pivot.z), size[2]),
+    ]);
   // The normal stream has its own native consumer; BND-C33 binds positions.
   const normalBasis = alignmentBasis(binding);
   const billboardNormal = rendererNormal(
@@ -320,15 +327,43 @@ function sourceGeometry(
     binding.renderer.m_NormalDirection,
   );
   return Object.freeze({
-    vertices: Object.freeze(canonical.map((vertex) => applyBasis(quaternionRotate([
-      multiply(subtract(vertex[0], pivot.x), size[0]),
-      multiply(subtract(vertex[1], pivot.y), size[1]),
-      multiply(subtract(vertex[2], pivot.z), size[2]),
-    ], particleRotation), basis))),
+    vertices: Object.freeze(coordinates.map((vertex) => applyBasis(quaternionRotate(vertex, particleRotation), basis))),
     uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function hasSignificantBillboardPivot(pivot: ParticleRendererProfile["m_Pivot"]): boolean {
+  return add(add(multiply(pivot.x, pivot.x), multiply(pivot.y, pivot.y)), multiply(pivot.z, pivot.z)) > Math.fround(1e-5);
+}
+
+function billboardPivotCoordinates(
+  sample: ParticleRenderSample,
+  halfSize: Vector2,
+  pivot: ParticleRendererProfile["m_Pivot"],
+): readonly Vector3[] {
+  if (sample.sizeBeforeTransform === undefined) {
+    throw fault("particle.geometry.billboard-pivot", "Billboard pivot requires current particle size before Transform scaling and size limits.");
+  }
+  return complexBillboardCoordinates(bitsVector3(sample.sizeBeforeTransform), halfSize, pivot);
+}
+
+function complexBillboardCoordinates(
+  rawSize: Vector3,
+  halfSize: Vector2,
+  pivot: ParticleRendererProfile["m_Pivot"],
+): readonly Vector3[] {
+  // Both original complex workers add the raw-size pivot before rotation.
+  // The Z displacement deliberately uses raw X, not the particle's Z size.
+  const x = multiply(pivot.x, rawSize[0]);
+  const y = multiply(pivot.y, rawSize[1]);
+  const z = multiply(pivot.z, rawSize[0]);
+  const xMinus = subtract(x, halfSize[0]);
+  const xPlus = add(x, halfSize[0]);
+  const yPlus = add(y, halfSize[1]);
+  const yMinus = subtract(y, halfSize[1]);
+  return [[xMinus, yMinus, z], [xPlus, yMinus, z], [xMinus, yPlus, z], [xPlus, yPlus, z]];
 }
 
 function viewBillboardBasis(sample: ParticleRenderSample): readonly [Vector3, Vector3, Vector3] {

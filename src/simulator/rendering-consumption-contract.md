@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `e8d5ac02c7d5912dcc60fe745034486590460263`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `8ad6d6d9ddfa267a30492e9f14bd5fde6a69c60b`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -91,6 +91,12 @@ The differential executes the production width/half-size helper and wrapper and 
 `simulator-particle-bounds-calculation-10-1-4/billboard_view_size_limit.json` freshly binds774 enabled View renderers and their registered Transform chains. Four explicit setup scales, three viewport inputs and five raw-size pairs produce9288 system/setup/viewport references to1605 numeric inputs. Original half-size instructions from simple/complex scalar and simple/complex3D workers agree bit-for-bit. Five full FDE/CIE bodies bind the dispatcher and additional workers. The simple scalar worker is a square-particle diagonal optimization; independent axes, significant pivot or sprite texture-sheet mode select the complex worker.
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
+
+### Significant billboard pivot before rotation (BND-C37)
+
+Authority: `simulator-particle-bounds-calculation-10-1-4/billboard_pivot.json`. The original dispatcher uses the strict Float32 squared-norm threshold1e-5 with ordered `(x*x+y*y)+z*z`. All10 enabled source billboards with nonzero pivot exceed this threshold, and their serialized UV modules exclude sprite mode1. Both original complex workers use positive `(rawX*pivotX,rawY*pivotY,rawX*pivotZ)` offsets, then add/subtract the separately limited half sizes. Production now applies these pre-rotation coordinates through its real raw-size consumer, replacing subtraction of pivot multiplied by the clamped size for this confirmed branch.
+
+The independent audit executes60 native arithmetic inputs, six explicit boundary inputs and200 actual production wrapper calls; Float32 mismatches are zero. Its first attempt stopped on a missing `f32` dependency before comparison; the corrected dependency closure was rerun and pushed. Full scalar/3D rotation and final vertices, the simple branch and current SoA dispatch, sprite offsets, normals, outer composition, mesh/stretch pivots, bounds and shared sorting remain OPEN. This scoped coordinate repair is not complete billboard equivalence.
 
 ### View billboard camera basis and scale placement (BND-C36)
 
