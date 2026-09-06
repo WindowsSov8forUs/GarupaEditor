@@ -371,7 +371,7 @@ export class DeterministicParticleSimulation {
     if (finalSegment > 0) {
       for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
     }
-    runtime.particles = runtime.particles.filter((particle) => particleIsAlive(particle.agePercent));
+    removeExpiredParticles(runtime.particles);
   }
 
   updateSystemTransforms(updates: readonly ParticleSystemTransformUpdate[]): void {
@@ -489,7 +489,7 @@ export class DeterministicParticleSimulation {
         }
         // Native admission observes the still-owned outer-update list. Expired
         // rows therefore do not free maxNumParticles until publication.
-        runtime.particles = runtime.particles.filter((particle) => particleIsAlive(particle.agePercent));
+        removeExpiredParticles(runtime.particles);
         runtime.elapsed = after;
         runtime.first = false;
         if (!profile.system.looping &&
@@ -1020,6 +1020,29 @@ function normalizedParticleAge(agePercent: number): number {
 
 function particleIsAlive(agePercent: number): boolean {
   return !(agePercent > 100);
+}
+
+function removeExpiredParticles(particles: SimulatedParticle[]): void {
+  let first = 0;
+  while (first < particles.length) {
+    // BND-C46: capture a four-row mask before any swap, then remove high to low.
+    let mask = 0;
+    for (let lane = 0; lane < 4 && first + lane < particles.length; lane += 1) {
+      const particle = particles[first + lane]!;
+      if (!particleIsAlive(particle.agePercent)) mask |= 1 << lane;
+    }
+    if (mask === 0) {
+      first += 4;
+      continue;
+    }
+    for (let lane = 3; lane >= 0; lane -= 1) {
+      if ((mask & (1 << lane)) === 0) continue;
+      const index = first + lane;
+      const last = particles.pop()!;
+      if (index < particles.length) particles[index] = last;
+    }
+    // Copied tail rows must be checked again at this same group boundary.
+  }
 }
 
 function textureSheetFrame(uv: ParticleUvModule, normalizedAge: number, seed: number): number {
