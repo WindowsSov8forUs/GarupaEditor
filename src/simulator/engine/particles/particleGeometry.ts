@@ -17,7 +17,7 @@ import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
-import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation } from "./particleBillboardRotation";
+import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices } from "./particleBillboardRotation";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -188,7 +188,7 @@ function buildPrimitive(
   const source = isStretched
     ? stretchedBillboard(binding, size, velocity, worldCenter, outerScale, scene)
     : sourceGeometry(binding, size, rotation, sample, scene);
-  const offsets = isStretched ? source.vertices : source.vertices.map((vertex) => quaternionRotate([
+  const offsets = isStretched ? source.vertices : (source.simpleDiagonals ?? source.vertices).map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
@@ -202,15 +202,14 @@ function buildPrimitive(
     ? divide(maximumPixels, largest)
     : Math.fround(1);
   const projectedCenter = projectPoint(worldCenter, scene);
-  const positions = new Float32Array(offsets.length * 2);
-  const worldVertices: Vector3[] = [];
-  for (let index = 0; index < offsets.length; index += 1) {
-    const offset = scaleVector(offsets[index]!, limitRatio);
+  const worldVertices = source.simpleDiagonals === undefined ? offsets.map((offset) => {
     // The native stretched worker publishes world vertices directly. Turning
     // its tail into an offset and adding the head again adds Float32 cancellation.
-    const world = isStretched ? offsets[index]! : addVector(worldCenter, offset);
-    worldVertices.push(world);
-    const projected = projectPoint(world, scene);
+    return isStretched ? offset : addVector(worldCenter, scaleVector(offset, limitRatio));
+  }) : calculateNativeBillboardVertices(worldCenter, [offsets[0]!, offsets[1]!]);
+  const positions = new Float32Array(worldVertices.length * 2);
+  for (let index = 0; index < worldVertices.length; index += 1) {
+    const projected = projectPoint(worldVertices[index]!, scene);
     positions[index * 2] = projected[0];
     positions[index * 2 + 1] = projected[1];
   }
@@ -263,6 +262,7 @@ function sourceGeometry(
   scene: ParticlePixiSceneProfile,
 ): {
   readonly vertices: readonly Vector3[];
+  readonly simpleDiagonals?: readonly [Vector3, Vector3];
   readonly uv0: readonly Vector2[];
   readonly normals: readonly Vector3[];
   readonly indices: readonly number[];
@@ -296,9 +296,7 @@ function sourceGeometry(
   if (sample.sizeBeforeTransform === undefined) {
     throw fault("particle.geometry.billboard-size", "Billboards require current particle size before Transform scaling.");
   }
-  size = bitsVector3(sample.sizeBeforeTransform);
   const halfSize = billboardHalfSize(binding, sample, scene);
-  size = [multiply(halfSize[0], 2), multiply(halfSize[1], 2), size[2]];
   let basis: readonly [Vector3, Vector3, Vector3];
   if (binding.renderer.m_RenderAlignment === 2) {
     if (sample.instance.particleSystemSetupScaleBits === undefined) {
@@ -317,14 +315,11 @@ function sourceGeometry(
   const complexBillboard = hasSignificantBillboardPivot(pivot) || hasBillboardSizeAxes(binding);
   const coordinates = complexBillboard
     ? billboardPivotCoordinates(sample, halfSize, pivot)
-    : canonical.map((vertex): Vector3 => [
-      multiply(subtract(vertex[0], pivot.x), size[0]),
-      multiply(subtract(vertex[1], pivot.y), size[1]),
-      multiply(subtract(vertex[2], pivot.z), size[2]),
-    ]);
+    : [];
   const positionBasis = complexBillboard
     ? billboardRotationBasis(binding, basis, rotation)
-    : null;
+    : basis;
+  const simpleDiagonals = complexBillboard ? undefined : simpleBillboardDiagonals(binding, basis, rotation, halfSize);
   // The normal stream has its own native consumer; BND-C33 binds positions.
   const normalBasis = alignmentBasis(binding);
   const billboardNormal = rendererNormal(
@@ -332,13 +327,31 @@ function sourceGeometry(
     binding.renderer.m_NormalDirection,
   );
   return Object.freeze({
-    vertices: Object.freeze(coordinates.map((vertex) => positionBasis === null
-      ? applyBasis(quaternionRotate(vertex, particleRotation), basis)
-      : applyBasis(vertex, positionBasis))),
+    vertices: Object.freeze(simpleDiagonals === undefined
+      ? coordinates.map((vertex) => applyBasis(vertex, positionBasis))
+      : calculateNativeBillboardVertices([0, 0, 0], simpleDiagonals)),
+    simpleDiagonals,
     uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
     normals: Object.freeze(canonical.map(() => billboardNormal)),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function simpleBillboardDiagonals(
+  binding: GeometryBinding,
+  basis: readonly [Vector3, Vector3, Vector3],
+  rotation: Vector3,
+  halfSize: Vector2,
+): readonly [Vector3, Vector3] {
+  const keys = binding.bundle.profiles[binding.system.profile]!.modules;
+  const modules = binding.bundle.moduleProfiles;
+  const initial = keys.InitialModule === undefined ? undefined : modules.InitialModule?.[keys.InitialModule];
+  const shape = keys.ShapeModule === undefined ? undefined : modules.ShapeModule?.[keys.ShapeModule];
+  const lifetime = keys.RotationModule === undefined ? undefined : modules.RotationModule?.[keys.RotationModule];
+  const speed = keys.RotationBySpeedModule === undefined ? undefined : modules.RotationBySpeedModule?.[keys.RotationBySpeedModule];
+  const requires3D = initial?.rotation3D === true || shape?.alignToDirection === true ||
+    lifetime?.separateAxes === true || speed?.separateAxes === true;
+  return calculateNativeSimpleBillboardDiagonals(basis, rotation, halfSize, requires3D);
 }
 
 function hasBillboardSizeAxes(binding: GeometryBinding): boolean {
@@ -432,6 +445,7 @@ function stretchedBillboard(
   scene: ParticlePixiSceneProfile,
 ): {
   readonly vertices: readonly Vector3[];
+  readonly simpleDiagonals?: readonly [Vector3, Vector3];
   readonly uv0: readonly Vector2[];
   readonly normals: readonly Vector3[];
   readonly indices: readonly number[];

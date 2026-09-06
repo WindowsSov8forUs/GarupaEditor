@@ -1,6 +1,7 @@
 type Vector3 = readonly [number, number, number];
 type Columns = readonly [Vector3, Vector3, Vector3];
 type MutableVector3 = [number, number, number];
+type Diagonals = readonly [Vector3, Vector3];
 
 // BND-C38: literal Float32 coefficients from the original billboard workers.
 const coefficients = new Float32Array(new Uint32Array([
@@ -66,4 +67,40 @@ export function calculateNative3DBillboardRotation(basis: Columns, rotation: Vec
     z[axis] = add(multiply(a, cxsy), subtract(multiply(c, cxcy), multiply(b, sx)));
   }
   return [x, y, z];
+}
+
+export function calculateNativeSimpleBillboardDiagonals(
+  basis: Columns,
+  rotation: Vector3,
+  halfSize: readonly [number, number],
+  requires3D: boolean,
+): Diagonals {
+  const first: MutableVector3 = [0, 0, 0]; const second: MutableVector3 = [0, 0, 0];
+  if (requires3D) {
+    const rotated = calculateNative3DBillboardRotation(basis, rotation);
+    for (let axis = 0; axis < 3; axis += 1) {
+      const y = add(multiply(rotated[2][axis]!, 0), multiply(halfSize[1], rotated[1][axis]!));
+      const x = multiply(halfSize[0], rotated[0][axis]!);
+      first[axis] = subtract(y, x);
+      second[axis] = add(x, y);
+    }
+  } else {
+    // BND-C40: the scalar worker scales trig values before rotating diagonals.
+    const [cosine, sine] = trigonometry(rotation[2], coefficients[0]!);
+    const s = multiply(sine, halfSize[0]); const c = multiply(cosine, halfSize[1]);
+    const a = subtract(s, c); const b = add(c, s); const d = subtract(c, s);
+    for (let axis = 0; axis < 3; axis += 1) {
+      const zero = multiply(basis[2][axis]!, 0);
+      first[axis] = add(multiply(basis[0][axis]!, a), add(zero, multiply(basis[1][axis]!, b)));
+      second[axis] = add(multiply(basis[0][axis]!, b), add(zero, multiply(basis[1][axis]!, d)));
+    }
+  }
+  return [first, second];
+}
+
+export function calculateNativeBillboardVertices(center: Vector3, diagonals: Diagonals): readonly Vector3[] {
+  const plus = (value: Vector3): Vector3 => [add(center[0], value[0]), add(center[1], value[1]), add(center[2], value[2])];
+  const minus = (value: Vector3): Vector3 => [subtract(center[0], value[0]), subtract(center[1], value[1]), subtract(center[2], value[2])];
+  // Native perimeter order is +d0,+d1,-d0,-d1; this grid follows UV [3,2,0,1].
+  return [minus(diagonals[1]), minus(diagonals[0]), plus(diagonals[0]), plus(diagonals[1])];
 }
