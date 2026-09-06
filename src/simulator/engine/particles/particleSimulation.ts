@@ -961,35 +961,30 @@ function getModule(
   return value;
 }
 
-function curve(value: ParticleAnimationCurve, time: number): number {
+function curve(
+  value: ParticleAnimationCurve,
+  time: number,
+  scalar: number,
+  cached = textureSheetCurveCacheable(value),
+): number {
+  // BND-C47: source unweighted clamp curves; cache scaling precedes evaluation.
   const keys = value.m_Curve;
   if (keys.length === 0) return 0;
   const t = f32(time);
-  if (t <= keys[0]!.time) return f32(keys[0]!.value);
-  if (t >= keys[keys.length - 1]!.time) return f32(keys[keys.length - 1]!.value);
-  for (let index = 0; index < keys.length - 1; index += 1) {
-    const left = keys[index]!;
-    const right = keys[index + 1]!;
-    if (t <= right.time) {
-      if (left.outSlope === "number:+infinity" || left.outSlope === "number:-infinity" ||
-        right.inSlope === "number:+infinity" || right.inSlope === "number:-infinity") {
-        return f32(t === right.time ? right.value : left.value);
-      }
-      const width = subtract(right.time, left.time);
-      const u = divide(subtract(t, left.time), width);
-      const u2 = multiply(u, u);
-      const u3 = multiply(multiply(u, u), u);
-      const h00 = add(subtract(multiply(2, u3), multiply(3, u2)), 1);
-      const h10 = add(subtract(u3, multiply(2, u2)), u);
-      const h01 = add(multiply(-2, u3), multiply(3, u2));
-      const h11 = subtract(u3, u2);
-      return add(
-        add(multiply(h00, left.value), multiply(multiply(h10, width), left.outSlope)),
-        add(multiply(h01, right.value), multiply(multiply(h11, width), right.inSlope)),
-      );
-    }
+  if (keys.length === 1) return multiply(keys[0]!.value, scalar);
+  if (cached) {
+    const second = keys.length > 2 && Math.min(t, f32(0.9999899864196777)) >= keys[1]!.time;
+    const left = keys[second ? 1 : 0]!;
+    const right = keys[second ? 2 : 1]!;
+    const coefficients = textureSheetCurveCoefficients(left, right).map((coefficient) => multiply(coefficient, scalar));
+    return textureSheetCurvePolynomial(coefficients, second ? subtract(t, left.time) : t);
   }
-  throw fault("particle.simulation.curve-interval", "A current animation curve must resolve one interpolation interval.");
+  if (t < keys[0]!.time) return multiply(keys[0]!.value, scalar);
+  if (t >= keys[keys.length - 1]!.time) return multiply(keys[keys.length - 1]!.value, scalar);
+  let index = 0;
+  while (index + 1 < keys.length - 1 && t >= keys[index + 1]!.time) index += 1;
+  const left = keys[index]!;
+  return multiply(textureSheetCurvePolynomial(textureSheetCurveCoefficients(left, keys[index + 1]!), subtract(t, left.time)), scalar);
 }
 
 function nativeParticleReciprocalEstimate(value: number): number {
@@ -1131,12 +1126,12 @@ function textureSheetFrameIndex(start: number, frame: number, tileCount: number)
 function minMax(value: ParticleMinMaxCurve, time: number, ratio: number): number {
   switch (value.minMaxState) {
     case 0: return f32(value.scalar);
-    case 1: return multiply(value.scalar, curve(value.maxCurve, time));
-    case 2: return lerp(
-      multiply(value.minScalar, curve(value.minCurve, time)),
-      multiply(value.scalar, curve(value.maxCurve, time)),
-      ratio,
-    );
+    case 1: return curve(value.maxCurve, time, value.scalar);
+    case 2: {
+      // Both curves use scalar, and either failed cache forces both general paths.
+      const cached = textureSheetCurveCacheable(value.maxCurve) && textureSheetCurveCacheable(value.minCurve);
+      return lerp(curve(value.minCurve, time, value.scalar, cached), curve(value.maxCurve, time, value.scalar, cached), ratio);
+    }
     case 3: return lerp(value.minScalar, value.scalar, ratio);
     default: throw fault("particle.simulation.unsupported-curve-state", "Only current MinMaxCurve states 0..3 are portable.");
   }
