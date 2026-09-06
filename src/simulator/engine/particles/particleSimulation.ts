@@ -823,7 +823,7 @@ export class DeterministicParticleSimulation {
 
     // 0x109669C phase 1: Initial/gravity owner.
     const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
-    particle.velocity[1] = add(particle.velocity[1], multiply(multiply(-9.81, gravity), delta));
+    particle.velocity[1] = add(particle.velocity[1], multiply(multiply(gravity, delta), -9.81));
 
     // 0x109669C phase 2: RotationModule.
     const rotation = getModule(bundle, profile, "RotationModule");

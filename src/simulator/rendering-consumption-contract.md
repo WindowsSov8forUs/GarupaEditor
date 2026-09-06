@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Source gravity Y accumulation (BND-C49)
+
+Reverse `a500ff03741b26e261711bbbd12ef9b8cd91e5f5` was verified, committed and pushed with remote divergence `0 0` before consumption. Its `particle_gravity_step.json` SHA256 is `94A565C5F5D04041DCFBB3D35EBB16CAD52BA82EE17E691C592749E3DE6BEC8E`. Fresh1741-system reads confirm144 constant-0.3 and1597 zero gravity modifiers, all gravitySource0. Seven complete native bodies execute the gravity module and real installed-interface/getter/singleton chain with the C08 source PhysicsManager vector.
+
+Production now multiplies modifier by delta before multiplying physical gravity. The exact Y-velocity assignment agrees for352 inputs/704 native world and explicit identity-inverse-space paths; baseline58 input rows differed. Both noEmit checks and the1438-entry runtime audit pass. Native outputs retain X/Z and transient clearing too, but this production comparison closes only Y accumulation.
+
+Source systems serialize local space; the world branch is an explicit arithmetic probe. Actual owner transforms, sixteen local signed-zero X/Z cases, current manager initialization/mutation, full caller timing/lifecycle and renderer/shared sorting remain OPEN. The installed interface and source manager are explicit entry conditions, not a live observation or fallback. No product tests, application or visual capture were used.
+
 ### Aligned birth-batch publication order (BND-C48)
 
 Reverse `318c3e7c5ce3dba958450867c2bc4ccb1f3a3c81` was verified, committed and pushed with remote divergence `0 0` before consumption. Its `particle_birth_order.json` SHA256 is `F3662F40861948EB52A2BAE8A694F009F1316B248A3B080B2E0006F910A69909`. Four complete bodies bind birth admission's aligned start and execute the original finalizer, row copier and count publication at360 explicit count pairs across15/50-stream states (720 native paths).
