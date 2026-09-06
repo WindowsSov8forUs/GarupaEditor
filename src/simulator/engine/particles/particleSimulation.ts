@@ -27,6 +27,7 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
+import { calculateNativeParticleHierarchyScale, type ParticleHierarchyTransform } from "./particleHierarchyScale";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
   particleSimdRandomValues,
@@ -512,6 +513,7 @@ export class DeterministicParticleSimulation {
         if (renderer === undefined) throw fault("particle.simulation.missing-renderer", "Every current profile renderer must resolve.");
         if (!renderer.m_Enabled) continue;
         const material = renderer.m_Materials[0] ?? null;
+        const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale);
         for (const particle of runtime.particles) {
           const normalizedAge = clamp01(divide(particle.age, particle.lifetime));
           let size: Vector3 = [...particle.baseSize];
@@ -529,11 +531,6 @@ export class DeterministicParticleSimulation {
               size = size.map((value) => multiply(value, scale)) as Vector3;
             }
           }
-          const transformSize = particleSizeScale(
-            record.definition,
-            profile.system.scalingMode,
-            owner.particleSystemSetupScale,
-          );
           size = size.map((value, index) => multiply(value, transformSize[index]!)) as Vector3;
           let colorBytes: ColorBytes = [...particle.baseColor];
           const colorModule = getModule(record.bundle, profile, "ColorModule");
@@ -1434,23 +1431,20 @@ function particleSizeScale(
   scalingMode: 0 | 1,
   gameplayTransformScale: number,
 ): Vector3 {
-  let result: Vector3 = [
-    multiply(definition.transform.m_LocalScale.x, gameplayTransformScale),
-    multiply(definition.transform.m_LocalScale.y, gameplayTransformScale),
-    multiply(definition.transform.m_LocalScale.z, gameplayTransformScale),
-  ];
-  if (scalingMode === 0) {
-    for (let index = definition.parentTransforms.length - 1; index >= 0; index -= 1) {
-      const parent = definition.parentTransforms[index]!;
-      const setupScale = parentSetupScale(definition, index, gameplayTransformScale);
-      result = [
-        multiply(result[0], multiply(parent.m_LocalScale.x, setupScale)),
-        multiply(result[1], multiply(parent.m_LocalScale.y, setupScale)),
-        multiply(result[2], multiply(parent.m_LocalScale.z, setupScale)),
-      ];
-    }
-  }
-  return result;
+  const self = hierarchyTransform(definition.transform, gameplayTransformScale);
+  if (scalingMode === 1) return [...self.scale];
+  const parents = definition.parentTransforms.map((parent, index) =>
+    hierarchyTransform(parent, parentSetupScale(definition, index, gameplayTransformScale)));
+  return [...calculateNativeParticleHierarchyScale(self, parents)];
+}
+
+function hierarchyTransform(transform: ParticleTransformProfile, setupScale: number): ParticleHierarchyTransform {
+  const rotation = transform.m_LocalRotation;
+  const scale = transform.m_LocalScale;
+  return {
+    rotation: [f32(rotation.x), f32(rotation.y), f32(rotation.z), f32(rotation.w)],
+    scale: [multiply(scale.x, setupScale), multiply(scale.y, setupScale), multiply(scale.z, setupScale)],
+  };
 }
 
 function applySystemVector(

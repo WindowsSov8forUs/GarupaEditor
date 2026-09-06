@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `8ba47a1c0f96d116f8806b6a2dc43603a89e9bf9`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `08727014ec460b1cf260280f66a7d79bb1fd5bf1`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -57,6 +57,14 @@ Current defect: particle preflight sorts primitives internally using layer ID/or
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
+
+### Hierarchy scale correction (BND-C29/C32)
+
+`particle_hierarchy_scale_consumption.json` binds the original `0x1089018` helper through runtime348/352/356 to render-record336/340/344 and geometry-input288/292/296. The production `particleSizeScale` now uses that helper's ordered Float32 quaternion composition, parent scale-sign adjustment, rotation/scale column products and final diagonal selection for Hierarchy mode. Local mode still copies the current local scale; existing per-ParticleSystem setup-scale ownership is retained. The scale is calculated once per concrete system/owner sample pass, without caching it across Transform updates.
+
+Independent arithmetic audit uses all189 C29 native source-input outputs, then the actual production scale wrapper on1,741 fresh source systems at explicit setupScale1 (15 Hierarchy,1,726 Local). Both comparisons have zero bit mismatches. The previous production wrapper differs on three `skin02` skill particles: Perfect/Great x/y previously return`0x3F800000` instead of native`0x3F800001`; Good returns`0x3F3427A6` instead of`0x3F3427A7`. Expected values come from original instructions/serialized fields, never the product implementation. The separate Reverse auditor is available at`fab20c6f`; no product tests or visual captures are involved.
+
+This closes the named scale-helper substitution only. The complete alignment2/local-hierarchy renderer branch uses matrix columns and a unit scale vector, so its later reconstruction must not apply hierarchy scale twice. Non-unit setup-scale differential, current native Transform transfer/normalization, full matrix/camera consumption, bounds publication, shared sorting and final rendering remain open. A corrected numeric helper does not close those consumers.
 
 Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json`, `particle_bounds_size_state.json`, `serialized_bounds_source_domain.json`, `particle_bounds_gravity_input.json`, `serialized_bounds_curve_cache.json`, `serialized_bounds_active_motion_inputs.json`, `particle_bounds_space_transform.json`, `serialized_velocity_ranges.json`, `particle_bounds_system_math.json` `serialized_velocity_ranges_system_math.json` `particle_bounds_cache_read_publication.json`, `serialized_constant_motion_ranges.json` `particle_bounds_velocity_copy_flow.json` `serialized_velocity_caller.json` `particle_bounds_size_tuple.json` `particle_bounds_particle_metadata.json` `particle_bounds_size_writers.json` `particle_bounds_size_expansion.json` `serialized_bounds_union_extrema.json` `serialized_bounds_pivot_source.json` `particle_bounds_final_padding.json` `particle_bounds_runtime_scale.json` `particle_bounds_transform_selector.json` `serialized_bounds_hierarchy_scale.json` `serialized_bounds_size_axis_products.json` and `particle_bounds_mesh_cache.json`, BND-C01..C31. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
 
