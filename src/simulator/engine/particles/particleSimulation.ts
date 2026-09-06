@@ -531,6 +531,7 @@ export class DeterministicParticleSimulation {
               size = size.map((value) => multiply(value, scale)) as Vector3;
             }
           }
+          const sizeBeforeTransform = vectorBits(size);
           size = size.map((value, index) => multiply(value, transformSize[index]!)) as Vector3;
           let colorBytes: ColorBytes = [...particle.baseColor];
           const colorModule = getModule(record.bundle, profile, "ColorModule");
@@ -568,6 +569,7 @@ export class DeterministicParticleSimulation {
             position: vectorBits(particle.position),
             velocity: vectorBits(particle.renderVelocity),
             size: vectorBits(size),
+            sizeBeforeTransform,
             rotation: vectorBits(particle.rotation),
             color: colorBits(color),
             ageBits: bits(particle.age),

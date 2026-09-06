@@ -15,6 +15,7 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
+import { calculateNativeParticleLocalBillboardBasis } from "./particleHierarchyScale";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -184,7 +185,7 @@ function buildPrimitive(
   const isStretched = binding.renderer.m_RenderMode === 1;
   const source = isStretched
     ? stretchedBillboard(binding, size, velocity, worldCenter, outerScale, scene)
-    : sourceGeometry(binding, size, rotation);
+    : sourceGeometry(binding, size, rotation, sample);
   const offsets = isStretched ? source.vertices : source.vertices.map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
     multiply(vertex[1], outerScale[1]),
@@ -255,6 +256,7 @@ function sourceGeometry(
   binding: GeometryBinding,
   size: Vector3,
   rotation: Vector3,
+  sample: ParticleRenderSample,
 ): {
   readonly vertices: readonly Vector3[];
   readonly uv0: readonly Vector2[];
@@ -287,14 +289,26 @@ function sourceGeometry(
       indices: mesh.screenYReflectionIndices,
     });
   }
-  const basis = alignmentBasis(binding);
+  let basis: readonly [Vector3, Vector3, Vector3];
+  if (binding.renderer.m_RenderAlignment === 2) {
+    if (sample.sizeBeforeTransform === undefined || sample.instance.particleSystemSetupScaleBits === undefined) {
+      throw fault("particle.geometry.local-billboard-transform", "Local billboards require current particle size before Transform scaling and their concrete owner setup scale.");
+    }
+    size = bitsVector3(sample.sizeBeforeTransform);
+    basis = localBillboardBasis(binding.system, requiredBits(sample.instance.particleSystemSetupScaleBits),
+      binding.bundle.profiles[binding.system.profile]!.system.scalingMode);
+  } else {
+    basis = alignmentBasis(binding);
+  }
   const particleRotation = eulerQuaternion(rotation);
   const pivot = binding.renderer.m_Pivot;
   const canonical: readonly Vector3[] = [
     [-0.5, -0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [0.5, 0.5, 0],
   ];
+  // The normal stream has its own native consumer; BND-C33 binds positions.
+  const normalBasis = alignmentBasis(binding);
   const billboardNormal = rendererNormal(
-    normalizeOr(applyBasis(quaternionRotate([0, 0, -1], particleRotation), basis), [0, 0, -1]),
+    normalizeOr(applyBasis(quaternionRotate([0, 0, -1], particleRotation), normalBasis), [0, 0, -1]),
     binding.renderer.m_NormalDirection,
   );
   return Object.freeze({
@@ -369,6 +383,21 @@ function rendererNormal(base: Vector3, normalDirection: number): Vector3 {
     scaleVector(base, subtract(1, ratio)),
     scaleVector([0, 0, -1], ratio),
   ), [0, 0, -1]);
+}
+
+function localBillboardBasis(
+  system: ParticleSystemDefinition,
+  setupScale: number,
+  scalingMode: 0 | 1,
+): readonly [Vector3, Vector3, Vector3] {
+  const transform = (value: ParticleTransformProfile, scale: number) => ({
+    rotation: transformQuaternion(value),
+    scale: [multiply(value.m_LocalScale.x, scale), multiply(value.m_LocalScale.y, scale),
+      multiply(value.m_LocalScale.z, scale)] as Vector3,
+  });
+  const parents = system.parentTransforms.map((parent, index) => transform(parent,
+    system.parentParticleSystemFlags === undefined || system.parentParticleSystemFlags[index] === true ? setupScale : 1));
+  return calculateNativeParticleLocalBillboardBasis(transform(system.transform, setupScale), parents, scalingMode);
 }
 
 function alignmentBasis(binding: GeometryBinding): readonly [Vector3, Vector3, Vector3] {

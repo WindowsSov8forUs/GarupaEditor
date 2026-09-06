@@ -39,6 +39,50 @@ export function calculateNativeParticleHierarchyScale(
   ];
 }
 
+// Reverse BND-C33: 0x108838C / 0x1088C8C -> 0x107A0DC -> 0x12CEC50.
+// The Local billboard worker scales rows of its selected basis. Its Hierarchy
+// branch selects the full matrix and replaces the separate scale with one.
+export function calculateNativeParticleLocalBillboardBasis(
+  self: ParticleHierarchyTransform,
+  rootToImmediateParents: readonly ParticleHierarchyTransform[],
+  scalingMode: 0 | 1,
+): Columns {
+  let basis: Columns;
+  let scale: Vector3;
+  if (scalingMode === 0) {
+    basis = scaledColumns(self);
+    for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
+      const parent = scaledColumns(rootToImmediateParents[index]!);
+      basis = [applyColumns(parent, basis[0]), applyColumns(parent, basis[1]), applyColumns(parent, basis[2])];
+    }
+    scale = [1, 1, 1];
+  } else {
+    let rotation = self.rotation;
+    for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
+      const parent = rootToImmediateParents[index]!;
+      const sx = scaleSign(parent.scale[0]);
+      const sy = scaleSign(parent.scale[1]);
+      const sz = scaleSign(parent.scale[2]);
+      rotation = multiplyNativeQuaternions(parent.rotation, [
+        rotation[0] * (sy * sz), rotation[1] * (sx * sz), rotation[2] * (sx * sy), rotation[3],
+      ]);
+    }
+    const squaredLength = add(
+      add(mul(rotation[0], rotation[0]), mul(rotation[1], rotation[1])),
+      add(mul(rotation[2], rotation[2]), mul(rotation[3], rotation[3])),
+    );
+    const length = f32(Math.sqrt(squaredLength));
+    // Original threshold 0x0DA24260 and identity literal 0x155A70.
+    const normalized: Quaternion = squaredLength > f32(1e-30)
+      ? [f32(rotation[0] / length), f32(rotation[1] / length), f32(rotation[2] / length), f32(rotation[3] / length)]
+      : [0, 0, 0, 1];
+    basis = rotationColumns(normalized);
+    scale = self.scale;
+  }
+  const diagonal: Columns = [[scale[0], 0, 0], [0, scale[1], 0], [0, 0, scale[2]]];
+  return [applyColumns(diagonal, basis[0]), applyColumns(diagonal, basis[1]), applyColumns(diagonal, basis[2])];
+}
+
 function scaleSign(value: number): number {
   return value < 0 || Object.is(value, -0) ? -1 : 1;
 }
