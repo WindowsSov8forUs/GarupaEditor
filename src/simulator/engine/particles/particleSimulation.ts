@@ -990,11 +990,77 @@ function curve(value: ParticleAnimationCurve, time: number): number {
 
 function textureSheetFrame(uv: ParticleUvModule, normalizedAge: number, seed: number): number {
   const random = particleSeedRatio((seed + 0x13740583) >>> 0);
-  const frame = minMax(uv.frameOverTime, normalizedAge, random);
+  const phase = textureSheetPhase(normalizedAge, uv.cycles);
+  const frame = uv.frameOverTime.minMaxState === 1
+    ? textureSheetCurve(uv.frameOverTime, phase)
+    : minMax(uv.frameOverTime, phase, random);
   const start = minMax(uv.startFrame, normalizedAge, random);
-  // The registered source uses cycles=1. Curve phase evaluation remains a
-  // separate native consumer from the post-evaluated frame wrap below.
-  return textureSheetFrameIndex(start, multiply(frame, uv.cycles), uv.tilesX * uv.tilesY);
+  return textureSheetFrameIndex(start, frame, uv.tilesX * uv.tilesY);
+}
+
+function textureSheetPhase(normalizedAge: number, cycles: number): number {
+  const time = multiply(cycles, Math.max(f32(normalizedAge), 0));
+  return subtract(time, Math.floor(time) || 0);
+}
+
+function textureSheetCurveCacheable(value: ParticleAnimationCurve): boolean {
+  const keys = value.m_Curve;
+  if (keys.length > 3) return false;
+  if (keys.length < 2) return true;
+  const previous = keys[keys.length - 2]!;
+  const last = keys[keys.length - 1]!;
+  if (Math.abs(subtract(previous.value, last.value)) > f32(1e-9) &&
+    (typeof previous.outSlope !== "number" || typeof last.inSlope !== "number")) return false;
+  return keys.every((key) => key.weightedMode === 0) &&
+    Math.abs(keys[0]!.time) <= f32(0.0001) && Math.abs(subtract(last.time, 1)) <= f32(0.0001);
+}
+
+function textureSheetCurveCoefficients(
+  left: ParticleAnimationCurve["m_Curve"][number],
+  right: ParticleAnimationCurve["m_Curve"][number],
+): readonly [number, number, number, number] {
+  if (left.outSlope === "number:+infinity" || right.inSlope === "number:+infinity") {
+    return [0, 0, 0, f32(left.value)];
+  }
+  if (left.outSlope === "number:-infinity" || right.inSlope === "number:-infinity") {
+    return [0, 0, 0, f32(right.value)];
+  }
+  const difference = subtract(right.value, left.value);
+  const width = Math.max(subtract(right.time, left.time), f32(0.0001));
+  const inverse = divide(1, width);
+  const square = multiply(inverse, inverse);
+  const outgoing = multiply(left.outSlope, width);
+  const incoming = multiply(width, right.inSlope);
+  const cubic = subtract(subtract(add(outgoing, incoming), difference), difference);
+  const quadratic = subtract(subtract(subtract(add(difference, add(difference, difference)), outgoing), outgoing), incoming);
+  return [multiply(inverse, multiply(square, cubic)), multiply(square, quadratic), f32(left.outSlope), f32(left.value)];
+}
+
+function textureSheetCurvePolynomial(coefficients: readonly number[], time: number): number {
+  return add(coefficients[3]!, multiply(time,
+    add(coefficients[2]!, multiply(time, add(coefficients[1]!, multiply(time, coefficients[0]!)))),
+  ));
+}
+
+function textureSheetCurve(value: ParticleMinMaxCurve, time: number): number {
+  // BND-C44: the registered UV curves are unweighted and clamp outside their keys.
+  // Fast caches scale coefficients before Horner evaluation; general curves scale after it.
+  const keys = value.maxCurve.m_Curve;
+  if (keys.length === 0) return 0;
+  if (keys.length === 1) return multiply(keys[0]!.value, value.scalar);
+  if (textureSheetCurveCacheable(value.maxCurve)) {
+    const second = keys.length > 2 && Math.min(time, f32(0.9999899864196777)) >= keys[1]!.time;
+    const left = keys[second ? 1 : 0]!;
+    const right = keys[second ? 2 : 1]!;
+    const coefficients = textureSheetCurveCoefficients(left, right).map((coefficient) => multiply(coefficient, value.scalar));
+    return textureSheetCurvePolynomial(coefficients, second ? subtract(time, left.time) : time);
+  }
+  if (time < keys[0]!.time) return multiply(keys[0]!.value, value.scalar);
+  if (time >= keys[keys.length - 1]!.time) return multiply(keys[keys.length - 1]!.value, value.scalar);
+  let index = 0;
+  while (index + 1 < keys.length - 1 && time >= keys[index + 1]!.time) index += 1;
+  const left = keys[index]!;
+  return multiply(textureSheetCurvePolynomial(textureSheetCurveCoefficients(left, keys[index + 1]!), subtract(time, left.time)), value.scalar);
 }
 
 function textureSheetFrameIndex(start: number, frame: number, tileCount: number): number {
