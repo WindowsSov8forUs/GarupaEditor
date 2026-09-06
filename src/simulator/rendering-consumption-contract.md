@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `93c1e9c159b047f05f5668f9beaac2811db1ae66`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `0c636c42859fbbb49754e8b5d866e16a9a13551f`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -55,6 +55,16 @@ Positive runtime invalidation paths are now bound: both SetParticles wrappers re
 Current defect: particle preflight sorts primitives internally using layer ID/order/fudge/priority/owner/birth keys that do not implement this native comparator, but commit puts every mesh into one generation under the low stage. The high stage is empty, while `pixiCombinedScene` and ordinary sibling sorting still treat the mounts as separate fixed-depth siblings. Thus native sorting orders do not participate in ordinary/particle composition. This is a production integration gap, not an excluded GPU/driver difference.
 
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
+
+## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
+
+Authority: `simulator-particle-bounds-calculation-10-1-4/particle_bounds_calculation.json`, `serialized_bounds_curve_extrema.json` and `particle_bounds_size_state.json`, BND-C01..C06. Original icall field loads and serialized Keyframe literals are bound independently of decompiler names. The bounded calculation bodies retain their direct-call dependencies; exporting them does not close every helper or global.
+
+The original bounds-extrema instructions consume 25 distinct raw HAB curves (9,504 references across eleven MinMaxCurve fields in 432 byte-roundtripped systems). Native Float32 results include maxima `0x3F800001`, `0x3F800002` and `0x3F7FFFFF`; key-value maxima or a clamp to 1 are not equivalent. Disabled modules and inactive curve sides are inventory, not execution claims. The extractor's FPCR=0 is explicit, not a device observation. This bounds helper does not establish the separate live particle module evaluator.
+
+SoA byte +2004 is not Main size3D's serialized byte. Enabled Main and separate-axis size modules request its allocation; the requirement finalizer clears it only when no local requirement remains and runtime +38 is zero. Enabling copies existing array data rather than merely toggling a boolean. EmitOld/EmitParams/SetParticles have conditional +38 writers, and the reset body clears +38 and float bits +436. These are positive source paths, not proof of current Play state, exhaustive aliases or a default-zero runtime size input.
+
+Production bounds and mixed ordering remain unmodified by this evidence-only batch. Remaining inputs include complete SoA identities, current lifecycle/mutation reachability, shape/helper/global and light/UV caches, Float32 padding/publication and concrete mixed-renderer ties. No source inventory or isolated curve arithmetic result closes those integration gaps.
 
 ## Acceptance boundary
 
