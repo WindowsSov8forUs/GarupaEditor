@@ -123,6 +123,7 @@ interface OwnerSystemRuntime {
   readonly instanceStateKey: string;
   playing: boolean;
   elapsed: number;
+  remainingDelta: number;
   first: boolean;
   particles: SimulatedParticle[];
 }
@@ -343,6 +344,7 @@ export class DeterministicParticleSimulation {
       instanceStateKey,
       playing: true,
       elapsed: f32(0),
+      remainingDelta: f32(0),
       first: true,
       particles: [],
     };
@@ -470,32 +472,26 @@ export class DeterministicParticleSimulation {
         if (!runtime.playing) continue;
         const record = this.definitions.get(identity)!;
         const profile = record.bundle.profiles[record.definition.profile]!;
-        const effectiveDelta = multiply(delta, profile.system.simulationSpeed);
-        const before = runtime.elapsed;
-        const after = add(before, effectiveDelta);
-        const batches = this.events(record.bundle, profile, runtime, before, after, runtime.first);
-        let cursor = before;
-        for (const batch of batches) {
-          const segment = subtract(batch.at, cursor);
-          if (segment > 0) {
-            for (const particle of runtime.particles) this.updateParticle(record, particle, segment);
+        const steps = nativeParticleFrameSteps(delta, profile.system.simulationSpeed, profile.system.lengthInSec, runtime);
+        for (const effectiveDelta of steps) {
+          const before = runtime.elapsed;
+          const after = add(before, effectiveDelta);
+          // 0x1097D34/58/78 update existing rows once with the native step,
+          // including death removal, before 0x1097DF0/EA0 emission/admission.
+          for (const particle of runtime.particles) this.updateParticle(record, particle, effectiveDelta);
+          removeExpiredParticles(runtime.particles);
+          const batches = this.events(record.bundle, profile, runtime, before, after, runtime.first);
+          for (const batch of batches) {
+            this.spawnBatch(owner, record, profile, runtime, batch, after);
           }
-          this.spawnBatch(owner, record, profile, runtime, batch, batch.at);
-          cursor = batch.at;
-        }
-        const finalSegment = subtract(after, cursor);
-        if (finalSegment > 0) {
-          for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
-        }
-        // Native admission observes the still-owned outer-update list. Expired
-        // rows therefore do not free maxNumParticles until publication.
-        removeExpiredParticles(runtime.particles);
-        runtime.elapsed = after;
-        runtime.first = false;
-        if (!profile.system.looping &&
-          after >= add(profile.system.startDelay.scalar, profile.system.lengthInSec) &&
-          runtime.particles.length === 0) {
-          runtime.playing = false;
+          runtime.elapsed = after;
+          runtime.first = false;
+          if (!profile.system.looping &&
+            after >= add(profile.system.startDelay.scalar, profile.system.lengthInSec) &&
+            runtime.particles.length === 0) {
+            runtime.playing = false;
+            break;
+          }
         }
       }
     }
@@ -1026,6 +1022,36 @@ function compactParticleBirths(particles: SimulatedParticle[], existingCount: nu
   if (copiedCount === 0) return;
   const copied = particles.splice(particles.length - copiedCount, copiedCount);
   particles.splice(existingCount, 0, ...copied);
+}
+
+function nativeParticleFrameSteps(
+  delta: number,
+  speed: number,
+  duration: number,
+  runtime: Pick<OwnerSystemRuntime, "remainingDelta">,
+): number[] {
+  // 0x1089CE4 / 0x108C534 / 0x1097B30, normal-frame flags 0.
+  const effectiveDelta = multiply(delta, Math.max(f32(speed), 0));
+  const maximumStep = f32(0.03); // Source TimeManager.maximumParticleDeltaTime.
+  const baseStep = effectiveDelta > maximumStep
+    ? divide(effectiveDelta, Math.ceil(divide(effectiveDelta, maximumStep)))
+    : effectiveDelta;
+  if (baseStep < f32(0.00001)) return [];
+  runtime.remainingDelta = add(runtime.remainingDelta, effectiveDelta);
+  const steps: number[] = [];
+  let previousStep = baseStep;
+  while (runtime.remainingDelta >= f32(0.000001)) {
+    let step = Math.min(runtime.remainingDelta, baseStep);
+    if (runtime.remainingDelta > 10) {
+      step = previousStep <= 1 ? Math.min(f32(duration), 1) : previousStep;
+    } else if (runtime.remainingDelta > 5) {
+      step = previousStep <= f32(0.2) ? Math.min(f32(duration), f32(0.2)) : previousStep;
+    }
+    steps.push(step);
+    runtime.remainingDelta = subtract(runtime.remainingDelta, step);
+    previousStep = step;
+  }
+  return steps;
 }
 
 function removeExpiredParticles(particles: SimulatedParticle[]): void {
@@ -1780,6 +1806,7 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
       instanceStateKey: runtime.instanceStateKey,
       playing: runtime.playing,
       elapsed: runtime.elapsed,
+      remainingDelta: runtime.remainingDelta,
       first: runtime.first,
       particles: runtime.particles.map((particle) => ({
         ...particle,
