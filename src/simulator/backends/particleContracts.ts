@@ -803,6 +803,8 @@ export interface ParticleRenderSample {
   readonly creationSequence: number;
   readonly position: ParticleFloat32Vector3;
   readonly velocity: ParticleFloat32Vector3;
+  /** The gameplay owner already participates in the native runtime matrix. */
+  readonly nativeOwnerHierarchy?: boolean;
   /** Native gathered local velocity, before the renderer composes camera matrices. */
   readonly simulationVelocity?: ParticleFloat32Vector3;
   /** Columns of the native runtime velocity transform; shared by a system's samples. */

@@ -34,6 +34,7 @@ import {
   calculateNativeParticleHierarchyScale,
   calculateNativeParticleRuntimeTransform,
   calculateNativeParticleWorldPosition,
+  type ParticleHierarchyPositionTransform,
   type ParticleHierarchyTransform,
   type ParticleRuntimeTransform,
 } from "./particleHierarchyScale";
@@ -151,6 +152,7 @@ interface SimulatedParticle {
   readonly emitterOrigin: Vector3;
   readonly particleSystemSetupScale: number;
   readonly resetRootTransform: boolean;
+  readonly ownerParents: readonly ParticleHierarchyPositionTransform[];
   age: number;
   agePercent: number;
   readonly lifetime: number;
@@ -650,12 +652,13 @@ export class DeterministicParticleSimulation {
         if (!renderer.m_Enabled) continue;
         const material = renderer.m_Materials[0] ?? null;
         const resetRootTransform = owner.instance.kind === "game-play-button";
-        const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale, resetRootTransform);
         const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale,
           resetRootTransform && record.definition.parentTransforms.length === 0);
-        const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
-          positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale), resetRootTransform && index === 0));
+        const parentTransforms = [...particleOwnerParents(owner.instance), ...record.definition.parentTransforms.map((parent, index) =>
+          positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale), resetRootTransform && index === 0))];
         const runtimeTransform = calculateNativeParticleRuntimeTransform(emitterTransform, parentTransforms, profile.system.scalingMode);
+        const transformSize: Vector3 = resetRootTransform ? [...runtimeTransform.scalingModeScale]
+          : particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale, resetRootTransform);
         const rendererWorldBounds = currentActualRendererBounds(record, profile, runtime.particles, runtimeTransform);
         const simulationToWorld = Object.freeze([0, 4, 8].map((offset) => vectorBits([
           runtimeTransform.localToWorld[offset]!, runtimeTransform.localToWorld[offset + 1]!,
@@ -713,6 +716,7 @@ export class DeterministicParticleSimulation {
             ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
+            nativeOwnerHierarchy: resetRootTransform,
             velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
             simulationVelocity: vectorBits(particle.renderVelocity),
             simulationToWorld,
@@ -955,10 +959,11 @@ export class DeterministicParticleSimulation {
     const velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
     const particleSystemSetupScale = owner.particleSystemSetupScale;
     const resetRootTransform = owner.instance.kind === "game-play-button";
+    const ownerParents = particleOwnerParents(owner.instance);
     const emitterTransform = positionedHierarchyTransform(record.definition.transform, particleSystemSetupScale,
       resetRootTransform && record.definition.parentTransforms.length === 0);
-    const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
-      positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale), resetRootTransform && index === 0));
+    const parentTransforms = [...ownerParents, ...record.definition.parentTransforms.map((parent, index) =>
+      positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale), resetRootTransform && index === 0))];
     const emitterOrigin = calculateNativeParticleEmitterOrigin(emitterTransform, parentTransforms, profile.system.scalingMode);
     instanceState.birthCount += 1;
     this.creationSequence += 1;
@@ -968,6 +973,7 @@ export class DeterministicParticleSimulation {
       emitterOrigin: emitterOrigin.map(f32) as Vector3,
       particleSystemSetupScale,
       resetRootTransform,
+      ownerParents,
       age: f32(0),
       agePercent: f32(0),
       lifetime,
@@ -1026,7 +1032,7 @@ export class DeterministicParticleSimulation {
         instant[axis] = minMax(value, age, ratio);
       }
       const transform = (value: Vector3): Vector3 => velocity.inWorldSpace
-        ? [...applyNativeParticleWorldModuleVector(particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform), value)] : value;
+        ? [...applyNativeParticleWorldModuleVector(particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform, particle.ownerParents), value)] : value;
       particle.position = addVector(particle.position, transform(displacement));
       particle.moduleVelocity = addVector(transform(instant), particle.moduleVelocity);
       particle.renderVelocity = addVector(particle.velocity, particle.moduleVelocity);
@@ -1046,7 +1052,7 @@ export class DeterministicParticleSimulation {
 
     // 0x109669C phase 1: Initial/gravity owner.
     const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
-    const runtimeTransform = particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform);
+    const runtimeTransform = particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform, particle.ownerParents);
     // 105FBF0 returns zero gravity for scalar0; 10612C4 modes0/1 then
     // skip accumulation entirely, preserving signed-zero base velocities.
     if (initial.gravityModifier.scalar !== 0 || initial.gravityModifier.minMaxState > 1) {
@@ -2200,12 +2206,43 @@ function parentSetupScale(
   return flags === undefined || flags[parentIndex] === true ? gameplayTransformScale : 1;
 }
 
-function particleRuntimeTransform(record: SystemRecord, setupScale: number, resetRootTransform = false): ParticleRuntimeTransform {
+function particleOwnerParents(instance: ParticleInstanceIdentity): readonly ParticleHierarchyPositionTransform[] {
+  if (instance.kind !== "game-play-button") return [];
+  const owner = instance.ownerTransform;
+  if (owner === undefined || owner.source !== "game-play-button") {
+    throw fault("particle.simulation.button-owner-hierarchy", "Button particles require their explicit gameplay owner.");
+  }
+  const read = (value: string): number => {
+    const decoded = particleFloat32FromBits(value);
+    if (decoded === null) throw fault("particle.simulation.button-owner-hierarchy", "Button owner fields must be finite binary32.");
+    return decoded;
+  };
+  const position = [read(owner.position.xBits), read(owner.position.yBits), read(owner.position.zBits)];
+  const rotation = [read(owner.rotation.xBits), read(owner.rotation.yBits), read(owner.rotation.zBits), read(owner.rotation.wBits)];
+  const scale = [read(owner.scale.xBits), read(owner.scale.yBits), read(owner.scale.zBits)];
+  if (position[2] !== 0 || rotation.some((value, index) => value !== (index === 3 ? 1 : 0)) || scale.some((value) => value !== 1)) {
+    throw fault("particle.simulation.button-owner-hierarchy", "Current button owners retain identity rotation, unit scale and world Z zero.");
+  }
+  // BND-C176/C177: GamePlay -> MusicObjects -> Button. Preserve both Z
+  // translations: collapsing +15 and -15 before child evaluation changes F32.
+  return [
+    { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+    { position: [0, 0, -15], rotation: [-0, -0, -0, 1], scale: [1, 1, 1] },
+    { position: [position[0]!, position[1]!, 15], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+  ];
+}
+
+function particleRuntimeTransform(
+  record: SystemRecord,
+  setupScale: number,
+  resetRootTransform = false,
+  ownerParents: readonly ParticleHierarchyPositionTransform[] = [],
+): ParticleRuntimeTransform {
   const { definition } = record;
   return calculateNativeParticleRuntimeTransform(
     positionedHierarchyTransform(definition.transform, setupScale, resetRootTransform && definition.parentTransforms.length === 0),
-    definition.parentTransforms.map((parent, index) =>
-      positionedHierarchyTransform(parent, parentSetupScale(definition, index, setupScale), resetRootTransform && index === 0)),
+    [...ownerParents, ...definition.parentTransforms.map((parent, index) =>
+      positionedHierarchyTransform(parent, parentSetupScale(definition, index, setupScale), resetRootTransform && index === 0))],
     record.bundle.profiles[definition.profile]!.system.scalingMode,
   );
 }

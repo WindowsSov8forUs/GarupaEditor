@@ -180,8 +180,7 @@ function buildPrimitive(
     throw fault("particle.geometry.sample-relation", "Every render sample must retain its source ordinal and exact renderer/material/mesh relation.");
   }
   const transform = requiredOwnerTransform(sample.instance);
-  const localCenter = bitsVector3(sample.position);
-  const worldCenter = transformPoint(localCenter, transform);
+  const worldCenter = particleWorldCenter(sample, transform);
   const size = bitsVector3(sample.size);
   const rotation = bitsVector3(sample.rotation);
   const outerScale = bitsVector3(transform.scale);
@@ -634,6 +633,18 @@ function transformPoint(value: Vector3, transform: ParticleOwnerTransform): Vect
   return addVector(transformVector(value, transform), bitsVector3(transform.position));
 }
 
+function particleWorldCenter(sample: ParticleRenderSample, transform: ParticleOwnerTransform): Vector3 {
+  const position = bitsVector3(sample.position);
+  // BND-C177: the full native matrix has already rounded the owner hierarchy.
+  if (sample.nativeOwnerHierarchy === true) {
+    if (sample.instance.kind !== "game-play-button" || transform.source !== "game-play-button") {
+      throw fault("particle.geometry.owner-hierarchy", "Native owner composition is bound to gameplay button particles.");
+    }
+    return position;
+  }
+  return transformPoint(position, transform);
+}
+
 function transformVector(value: Vector3, transform: ParticleOwnerTransform): Vector3 {
   const scale = bitsVector3(transform.scale);
   return quaternionRotate([
@@ -718,9 +729,9 @@ function nativeRendererBounds(sample: ParticleRenderSample, scene: ParticlePixiS
   if (sample.rendererWorldBounds === undefined) return undefined;
   const owner = requiredOwnerTransform(sample.instance);
   // The source C153 publication is bound to the native runtime Transform.
-  // Additional nonidentity portable owner composition remains a separate gap.
-  if (bitsVector3(owner.position).some((v) => v !== 0) || bitsVector3(owner.scale).some((v) => v !== 1) ||
-    bitsQuaternion(owner.rotation).some((v, i) => v !== (i === 3 ? 1 : 0))) return undefined;
+  // BND-C176/C177 button matrices already include their complete owner chain.
+  if (sample.nativeOwnerHierarchy !== true && (bitsVector3(owner.position).some((v) => v !== 0) || bitsVector3(owner.scale).some((v) => v !== 1) ||
+    bitsQuaternion(owner.rotation).some((v, i) => v !== (i === 3 ? 1 : 0)))) return undefined;
   const center = bitsVector3(sample.rendererWorldBounds.center), extent = bitsVector3(sample.rendererWorldBounds.extents);
   const min: Vector3 = [subtract(center[0], extent[0]), subtract(center[1], extent[1]), subtract(center[2], extent[2])];
   const max: Vector3 = [add(center[0], extent[0]), add(center[1], extent[1]), add(center[2], extent[2])];
