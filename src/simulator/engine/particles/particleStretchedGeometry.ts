@@ -58,6 +58,12 @@ export function calculateNativeStretchArithmetic(input: NativeStretchArithmeticI
 // four independent normals without a final normalization.
 export function calculateNativeStretchNormals(side: Vector3, longitudinal: Vector3, normalDirection: number): readonly Vector3[] {
   const coefficient = f32(Math.cos(f32(f32(f32(normalDirection) * 90) * fromBits(0x3c8efa35))));
+  const perimeter = calculateNativeParticleQuadNormals(side, longitudinal, coefficient);
+  return [perimeter[0]!, perimeter[1]!, perimeter[3]!, perimeter[2]!];
+}
+
+/** Native perimeter order shared by the original quad writer. */
+export function calculateNativeParticleQuadNormals(side: Vector3, longitudinal: Vector3, coefficient: number): readonly Vector3[] {
   const u = normalizeStretchNormalAxis(side, [1, 0, 0]);
   const v = normalizeStretchNormalAxis(longitudinal, [0, 1, 0]);
   const weight = f32(1 - coefficient);
@@ -70,8 +76,7 @@ export function calculateNativeStretchNormals(side: Vector3, longitudinal: Vecto
     const component = f32(value * coefficient);
     return subtract ? f32(core[index]! - component) : f32(component + core[index]!);
   }) as unknown as Vector3;
-  // Native perimeter order is side+, longitudinal+, side-, longitudinal-.
-  return [combine(u, false), combine(v, false), combine(v, true), combine(u, true)];
+  return [combine(u, false), combine(v, false), combine(u, true), combine(v, true)];
 }
 
 function normalizeStretchNormalAxis(value: Vector3, fallback: Vector3): Vector3 {
