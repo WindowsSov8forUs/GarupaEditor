@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Mesh Transform scale composition (BND-C111 / C112)
+
+Reverse `bf503f628aa63bde89e29e5d1a06de033ef0bb32` and adapter correction `2bdd97624aaf712042384caeadf9f3687cbda296` were verified and pushed with remote0 0 before consumption. The mesh path now retains raw particle size separately from Transform scale: each rotation-column component receives its corresponding Transform axis before the column's raw size. Actual complete sourceGeometry matches336 original uniform/nonuniform/reflected scale cases and27888 vertex stores, clearing84 differing cases/17430 coordinate components. Unit112/9296 and endpoint288 remain zero; both noEmit checks and runtime audit1438 pass.
+
+All160 current mesh references match C81 source identities and unit scales under its source-unit-setup boundary. The additional nonunit inputs are explicit algorithm probes, not current setup/owner reachability. The auditor supplies raw-size/scale fields in the actual xBits/yBits/zBits form; its earlier unused array adapter was corrected without changing native expected or baseline differences. Identity Local basis, zero center,3D storage and zero offset/no inversion/no flip bound this result. Current scale/matrix/axis producers, scalar/View dispatch, outer owner/projection/full streams/normals/lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Source mesh pivot and matrix vertex consumption (BND-C109 / C110)
 
 Reverse `959ed94b596b582099efd5800219b152e6fabaee` was verified and pushed with remote0 0 before consumption. Fresh1741 system roundtrips bind160 enabled mode4 systems, four serialized meshes and seven mesh/pivot profiles. Original mesh-cache min/max arithmetic, descriptor copies and Local-worker pivot preparation feed complete12BC4AC; actual12BBA44..12BBB58 writes the expected vertex coordinates. Production now resolves the exact mesh bounds by serialized SHA, applies the original pivot sign/half-width/doubling order, scales quaternion-derived matrix columns before vertex products and adds pivot translation last. No vertex-extents approximation is used.

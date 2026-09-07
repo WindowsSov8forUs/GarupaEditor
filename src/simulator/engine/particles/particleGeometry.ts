@@ -268,17 +268,22 @@ function sourceGeometry(
   readonly indices: readonly number[];
 } {
   if (binding.renderer.m_RenderMode === 4) {
+    if (sample.sizeBeforeTransform === undefined || sample.transformSize === undefined) {
+      throw fault("particle.geometry.mesh-size", "Mesh matrices require raw particle size and its separate Transform scale.");
+    }
     const mesh = binding.mesh!;
     const basis = alignmentBasis(binding);
     const particleRotation = meshRotationQuaternion(binding, rotation);
     const pivot = binding.renderer.m_Pivot;
-    const visibleSize = visibleMeshSize(size, sample);
+    const rawSize = bitsVector3(sample.sizeBeforeTransform);
+    const transformSize = bitsVector3(sample.transformSize);
+    const visibleSize = visibleMeshSize(rawSize, sample);
     const pivotOffset = calculateNativeMeshPivotOffset(mesh.serializedSha256, [pivot.x, pivot.y, pivot.z]);
     if (pivotOffset === undefined) {
       throw fault("particle.geometry.mesh-bounds", "Mesh pivot requires the exact source-bound native mesh bounds.");
     }
     return Object.freeze({
-      vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset)),
+      vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset, transformSize)),
       uv0: mesh.uv0,
       normals: Object.freeze(mesh.normals.map((normal) => {
         const inverseScaled: Vector3 = [
