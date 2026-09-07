@@ -27,7 +27,16 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
-import { calculateNativeParticleEmitterOrigin, calculateNativeParticleHierarchyScale, calculateNativeParticleWorldPosition, type ParticleHierarchyTransform } from "./particleHierarchyScale";
+import {
+  applyNativeParticleMatrixVector,
+  applyNativeParticleWorldModuleVector,
+  calculateNativeParticleEmitterOrigin,
+  calculateNativeParticleHierarchyScale,
+  calculateNativeParticleRuntimeTransform,
+  calculateNativeParticleWorldPosition,
+  type ParticleHierarchyTransform,
+  type ParticleRuntimeTransform,
+} from "./particleHierarchyScale";
 import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
@@ -638,6 +647,9 @@ export class DeterministicParticleSimulation {
         if (!renderer.m_Enabled) continue;
         const material = renderer.m_Materials[0] ?? null;
         const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale);
+        const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale);
+        const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
+          positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale)));
         for (const particle of runtime.particles) {
           const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
@@ -676,6 +688,9 @@ export class DeterministicParticleSimulation {
           const custom = getModule(record.bundle, profile, "CustomDataModule");
           const customData0 = custom === null ? null : customData(custom, 0, normalizedAge, particle.randomSeed);
           const customData1 = custom === null ? null : customData(custom, 1, normalizedAge, particle.randomSeed);
+          // Native local SoA is projected only after integration, using the
+          // current system Transform. The sample position remains world-space.
+          const worldPosition = calculateNativeParticleWorldPosition(emitterTransform, parentTransforms, profile.system.scalingMode, particle.position);
           samples.push(Object.freeze({
             particleId: particle.particleId,
             ownerKey: owner.ownerKey,
@@ -686,8 +701,8 @@ export class DeterministicParticleSimulation {
             ownerGeneration: owner.generation,
             ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
-            position: vectorBits(particle.position),
-            velocity: vectorBits(particle.renderVelocity),
+            position: vectorBits([...worldPosition]),
+            velocity: vectorBits(applySystemVector(particle.renderVelocity, record.definition, owner.particleSystemSetupScale)),
             size: vectorBits(size),
             sizeBeforeTransform,
             transformSize: vectorBits(transformSize),
@@ -921,24 +936,13 @@ export class DeterministicParticleSimulation {
     }
     const shape = getModule(record.bundle, profile, "ShapeModule");
     const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
-    let position: Vector3 = birth.position;
-    let velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
+    const position: Vector3 = birth.position;
+    const velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
     const particleSystemSetupScale = owner.particleSystemSetupScale;
-    const positionedTransform = (transform: ParticleTransformProfile, setupScale: number) => ({
-      ...hierarchyTransform(transform, setupScale),
-      position: [f32(transform.m_LocalPosition.x), f32(transform.m_LocalPosition.y), f32(transform.m_LocalPosition.z)] as Vector3,
-    });
-    const emitterTransform = positionedTransform(record.definition.transform, particleSystemSetupScale);
+    const emitterTransform = positionedHierarchyTransform(record.definition.transform, particleSystemSetupScale);
     const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
-      positionedTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale)));
+      positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale)));
     const emitterOrigin = calculateNativeParticleEmitterOrigin(emitterTransform, parentTransforms, profile.system.scalingMode);
-    position = calculateNativeParticleWorldPosition(emitterTransform, parentTransforms, profile.system.scalingMode, position) as Vector3;
-    velocity = applyTransform(velocity, record.definition.transform, false, particleSystemSetupScale);
-    for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
-      const parent = record.definition.parentTransforms[index]!;
-      const setupScale = parentSetupScale(record.definition, index, particleSystemSetupScale);
-      velocity = applyTransform(velocity, parent, false, setupScale);
-    }
     instanceState.birthCount += 1;
     this.creationSequence += 1;
     const particle: SimulatedParticle = {
@@ -1003,8 +1007,8 @@ export class DeterministicParticleSimulation {
         displacement[axis] = divide(nativeParticleAnalyticIntegral(value, age, ratio), particle.inverseLifetime);
         instant[axis] = minMax(value, age, ratio);
       }
-      const transform = (value: Vector3): Vector3 => velocity.inWorldSpace ? value
-        : applySystemVector(value, record.definition, particle.particleSystemSetupScale);
+      const transform = (value: Vector3): Vector3 => velocity.inWorldSpace
+        ? [...applyNativeParticleWorldModuleVector(particleRuntimeTransform(record, particle.particleSystemSetupScale), value)] : value;
       particle.position = addVector(particle.position, transform(displacement));
       particle.moduleVelocity = addVector(transform(instant), particle.moduleVelocity);
       particle.renderVelocity = addVector(particle.velocity, particle.moduleVelocity);
@@ -1024,7 +1028,16 @@ export class DeterministicParticleSimulation {
 
     // 0x109669C phase 1: Initial/gravity owner.
     const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
-    particle.velocity[1] = add(particle.velocity[1], multiply(multiply(gravity, delta), -9.81));
+    const runtimeTransform = particleRuntimeTransform(record, particle.particleSystemSetupScale);
+    // 105FBF0 returns zero gravity for scalar0; 10612C4 modes0/1 then
+    // skip accumulation entirely, preserving signed-zero base velocities.
+    if (initial.gravityModifier.scalar !== 0 || initial.gravityModifier.minMaxState > 1) {
+      const gravityStep = multiply(gravity, delta);
+      const localGravity = applyNativeParticleMatrixVector(runtimeTransform.worldToLocal, [
+        multiply(gravityStep, 0), multiply(gravityStep, -9.81), multiply(gravityStep, 0),
+      ]);
+      particle.velocity = addVector([...localGravity], particle.velocity);
+    }
 
     // 0x109669C phase 2: RotationModule.
     const angularVelocity: Vector3 = [0, 0, 0];
@@ -1062,16 +1075,16 @@ export class DeterministicParticleSimulation {
         minMax(velocity.orbitalY, normalizedAge, particle.slots[7]!),
         minMax(velocity.orbitalZ, normalizedAge, particle.slots[8]!),
       ];
-      let centerOffset = offset;
-      if (!velocity.inWorldSpace) {
-        moduleVelocity = applySystemVector(moduleVelocity, definition, particle.particleSystemSetupScale);
-        centerOffset = applySystemVector(centerOffset, definition, particle.particleSystemSetupScale);
+      if (velocity.inWorldSpace) {
+        moduleVelocity = [...applyNativeParticleWorldModuleVector(runtimeTransform, moduleVelocity)];
       }
-      const relative = particle.position.map((value, index) =>
-        subtract(value, add(particle.emitterOrigin[index]!, centerOffset[index]!))) as Vector3;
+      // 126D318 passes literal module-space flag0 to 107DAC4 for orbital
+      // motion. Source local simulation keeps it local even when linear
+      // velocity uses inWorldSpace; orbital offsets are local points too.
+      const relative = subtractVector(particle.position, offset);
       speedModifier = minMax(velocity.speedModifier, normalizedAge, particle.slots[4]!);
-      const orbitalStep: Vector3 = angular.map((value) =>
-        multiply(multiply(value, delta), speedModifier)) as Vector3;
+      const scaledDelta = multiply(delta, speedModifier);
+      const orbitalStep = scaleVector(angular, scaledDelta);
       const rotatedRelative = rotateEulerRadians(relative, orbitalStep);
       // 1271598/127278C: divide displacement by speed, then multiply the
       // refined inverse delta. Tiny deltas do not contribute orbital velocity.
@@ -1081,15 +1094,14 @@ export class DeterministicParticleSimulation {
         const first = multiply(estimate, f32(2 - delta * estimate));
         inverseDelta = multiply(first, f32(2 - delta * first));
       }
-      const displacement = subtractVector(rotatedRelative, relative);
-      let orbital = displacement.map((value) => multiply(
+      const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
+      const radial = scaleVector(normalizeOrZero(rotatedRelative), multiply(scaledDelta, radialAmount));
+      const displacement = subtractVector(addVector(rotatedRelative, radial), relative);
+      const orbital = displacement.map((value) => multiply(
         Math.abs(speedModifier) > f32(0.000000001) ? divide(value, speedModifier) : 0,
         inverseDelta,
       )) as Vector3;
-      if (!velocity.inWorldSpace) orbital = applySystemVector(orbital, definition, particle.particleSystemSetupScale);
-      const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
-      const radial = scaleVector(normalizeOrZero(rotatedRelative), radialAmount);
-      moduleVelocity = addVector(moduleVelocity, addVector(orbital, radial));
+      moduleVelocity = addVector(orbital, moduleVelocity);
     }
 
     // 0x109669C phase 4: ordinary 103FB08 accumulates force*delta directly
@@ -1101,7 +1113,7 @@ export class DeterministicParticleSimulation {
         minMax(force.y, normalizedAge, particle.slots[10]!),
         minMax(force.z, normalizedAge, particle.slots[11]!),
       ];
-      if (!force.inWorldSpace) acceleration = applySystemVector(acceleration, definition, particle.particleSystemSetupScale);
+      if (force.inWorldSpace) acceleration = [...applyNativeParticleWorldModuleVector(runtimeTransform, acceleration)];
       particle.velocity = particle.velocity.map((value, index) =>
         add(value, multiply(acceleration[index]!, delta))) as Vector3;
     }
@@ -1110,19 +1122,12 @@ export class DeterministicParticleSimulation {
     let combinedVelocity = addVector(particle.velocity, moduleVelocity);
     const clamp = getModule(bundle, profile, "ClampVelocityModule");
     if (clamp !== null && (clamp.dampen > 0 || clamp.drag.scalar !== 0)) {
-      if (clamp.inWorldSpace || !clamp.separateAxis) {
+      if (!clamp.inWorldSpace || !clamp.separateAxis) {
         combinedVelocity = limitVelocity(combinedVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize);
       } else {
-        const localVelocity = inverseSystemVector(
-          combinedVelocity,
-          definition,
-          particle.particleSystemSetupScale,
-        );
-        combinedVelocity = applySystemVector(
-          limitVelocity(localVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize),
-          definition,
-          particle.particleSystemSetupScale,
-        );
+        const worldVelocity = applyNativeParticleMatrixVector(runtimeTransform.localToWorld, combinedVelocity);
+        combinedVelocity = [...applyNativeParticleMatrixVector(runtimeTransform.worldToLocal,
+          limitVelocity([...worldVelocity], clamp, normalizedAge, particle.slots, delta, particle.baseSize))];
       }
       // 104C0F8 persists the limited base velocity; 108AF6C then recombines
       // the two streams before integration, retaining both F32 roundings.
@@ -2115,39 +2120,21 @@ function parentSetupScale(
   return flags === undefined || flags[parentIndex] === true ? gameplayTransformScale : 1;
 }
 
-function inverseSystemVector(
-  vector: Vector3,
-  definition: ParticleSystemDefinition,
-  gameplayTransformScale: number,
-): Vector3 {
-  let result: Vector3 = [...vector];
-  for (let index = 0; index < definition.parentTransforms.length; index += 1) {
-    result = inverseTransformVector(
-      result,
-      definition.parentTransforms[index]!,
-      parentSetupScale(definition, index, gameplayTransformScale),
-    );
-  }
-  return inverseTransformVector(result, definition.transform, gameplayTransformScale);
+function particleRuntimeTransform(record: SystemRecord, setupScale: number): ParticleRuntimeTransform {
+  const { definition } = record;
+  return calculateNativeParticleRuntimeTransform(
+    positionedHierarchyTransform(definition.transform, setupScale),
+    definition.parentTransforms.map((parent, index) =>
+      positionedHierarchyTransform(parent, parentSetupScale(definition, index, setupScale))),
+    record.bundle.profiles[definition.profile]!.system.scalingMode,
+  );
 }
 
-function inverseTransformVector(
-  vector: Vector3,
-  transform: ParticleTransformProfile,
-  gameplayTransformScale: number,
-): Vector3 {
-  const rotation = transform.m_LocalRotation;
-  const unrotated = quaternionRotate(vector, {
-    x: -rotation.x,
-    y: -rotation.y,
-    z: -rotation.z,
-    w: rotation.w,
-  });
-  return [
-    divide(unrotated[0], multiply(transform.m_LocalScale.x, gameplayTransformScale)),
-    divide(unrotated[1], multiply(transform.m_LocalScale.y, gameplayTransformScale)),
-    divide(unrotated[2], multiply(transform.m_LocalScale.z, gameplayTransformScale)),
-  ];
+function positionedHierarchyTransform(transform: ParticleTransformProfile, setupScale: number) {
+  return {
+    ...hierarchyTransform(transform, setupScale),
+    position: [f32(transform.m_LocalPosition.x), f32(transform.m_LocalPosition.y), f32(transform.m_LocalPosition.z)] as Vector3,
+  };
 }
 
 function particleSizeScale(

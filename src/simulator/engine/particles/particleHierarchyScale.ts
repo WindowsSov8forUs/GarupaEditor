@@ -5,6 +5,13 @@ const f32 = Math.fround;
 type Vector3 = readonly [number, number, number];
 type Quaternion = readonly [number, number, number, number];
 type Columns = readonly [Vector3, Vector3, Vector3];
+export type ParticleMatrix = readonly number[];
+
+export interface ParticleRuntimeTransform {
+  readonly localToWorld: ParticleMatrix;
+  readonly worldToLocal: ParticleMatrix;
+  readonly scalingModeScale: Vector3;
+}
 
 export interface ParticleHierarchyTransform {
   readonly rotation: Quaternion;
@@ -60,6 +67,16 @@ export function calculateNativeParticleWorldPosition(
   scalingMode: 0 | 1,
   localPosition: Vector3,
 ): Vector3 {
+  const transform = calculateNativeParticleRuntimeTransform(self, rootToImmediateParents, scalingMode);
+  return applyNativeParticleMatrixPoint(transform.localToWorld, localPosition);
+}
+
+// Reverse BND-C81/C85: complete runtime68/212/348 preparation for selector0.
+export function calculateNativeParticleRuntimeTransform(
+  self: ParticleHierarchyPositionTransform,
+  rootToImmediateParents: readonly ParticleHierarchyPositionTransform[],
+  scalingMode: 0 | 1,
+): ParticleRuntimeTransform {
   let basis: Columns;
   if (scalingMode === 0) {
     basis = scaledColumns(self);
@@ -81,11 +98,77 @@ export function calculateNativeParticleWorldPosition(
     basis = scaledColumns({ rotation, scale: self.scale });
   }
   const origin = calculateNativeParticleEmitterOrigin(self, rootToImmediateParents, scalingMode);
+  // Mode0 explicitly clears column W; mode1 clears it before EF5C48 scales.
+  const localToWorld: ParticleMatrix = [
+    ...basis[0], scalingMode === 0 ? 0 : mul(0, self.scale[0]),
+    ...basis[1], scalingMode === 0 ? 0 : mul(0, self.scale[1]),
+    ...basis[2], scalingMode === 0 ? 0 : mul(0, self.scale[2]),
+    ...origin, 1,
+  ];
+  return {
+    localToWorld,
+    worldToLocal: inverseNativeParticleMatrix(localToWorld),
+    scalingModeScale: scalingMode === 0
+      ? calculateNativeParticleHierarchyScale(self, rootToImmediateParents) : self.scale,
+  };
+}
+
+export function applyNativeParticleMatrixPoint(matrix: ParticleMatrix, position: Vector3): Vector3 {
   const component = (axis: 0 | 1 | 2) => add(
-    mul(localPosition[0], basis[0][axis]),
-    add(mul(localPosition[1], basis[1][axis]), add(mul(localPosition[2], basis[2][axis]), origin[axis])),
+    mul(position[0], matrix[axis]!),
+    add(mul(position[1], matrix[4 + axis]!), add(mul(position[2], matrix[8 + axis]!), matrix[12 + axis]!)),
   );
   return [component(0), component(1), component(2)];
+}
+
+export function applyNativeParticleMatrixVector(matrix: ParticleMatrix, vector: Vector3): Vector3 {
+  const component = (axis: 0 | 1 | 2) => add(
+    mul(vector[0], matrix[axis]!),
+    add(mul(vector[1], matrix[4 + axis]!), mul(vector[2], matrix[8 + axis]!)),
+  );
+  return [component(0), component(1), component(2)];
+}
+
+// 107D950: a world-space module in local simulation uses inverse columns
+// scaled by runtime348 before those columns multiply the sampled vector.
+export function applyNativeParticleWorldModuleVector(transform: ParticleRuntimeTransform, vector: Vector3): Vector3 {
+  const matrix = transform.worldToLocal;
+  const component = (axis: 0 | 1 | 2) => add(
+    mul(vector[0], mul(matrix[axis]!, transform.scalingModeScale[0])),
+    add(mul(vector[1], mul(matrix[4 + axis]!, transform.scalingModeScale[1])),
+      mul(vector[2], mul(matrix[8 + axis]!, transform.scalingModeScale[2]))),
+  );
+  return [component(0), component(1), component(2)];
+}
+
+function inverseNativeParticleMatrix(matrix: ParticleMatrix): ParticleMatrix {
+  const [a, b, c] = [0, 4, 8].map((offset) => matrix.slice(offset, offset + 3)) as [number[], number[], number[]];
+  // EF6F98: each determinant term rounds both products before subtraction.
+  const x = sub(mul(mul(a[0]!, b[1]!), c[2]!), mul(mul(a[0]!, b[2]!), c[1]!));
+  const y = sub(mul(mul(a[1]!, b[2]!), c[0]!), mul(mul(a[1]!, b[0]!), c[2]!));
+  const z = sub(mul(mul(a[2]!, b[0]!), c[1]!), mul(mul(a[2]!, b[1]!), c[0]!));
+  const determinant = add(z, add(x, y));
+  // The squared Float32 is promoted before comparison with the Float64 literal.
+  if (!(mul(determinant, determinant) >= 1e-25)) return Array<number>(16).fill(0);
+  const inverse = f32(1 / determinant);
+  const cofactors = (left: readonly number[], right: readonly number[], scale: number): Vector3 => [
+    mul(sub(mul(left[1]!, right[2]!), mul(left[2]!, right[1]!)), scale),
+    mul(sub(mul(left[0]!, right[2]!), mul(left[2]!, right[0]!)), -scale),
+    mul(sub(mul(left[0]!, right[1]!), mul(left[1]!, right[0]!)), scale),
+  ];
+  const rows = [cofactors(b, c, inverse), cofactors(a, c, -inverse), cofactors(a, b, inverse)];
+  const zero = mul(0, inverse);
+  const result = [
+    rows[0]![0], rows[1]![0], rows[2]![0], zero,
+    rows[0]![1], rows[1]![1], rows[2]![1], zero,
+    rows[0]![2], rows[1]![2], rows[2]![2], zero,
+  ];
+  for (let axis = 0; axis < 3; axis += 1) result.push(-add(
+    mul(result[8 + axis]!, matrix[14]!),
+    add(mul(result[axis]!, matrix[12]!), mul(result[4 + axis]!, matrix[13]!)),
+  ));
+  result.push(1);
+  return result;
 }
 
 export function calculateNativeParticleHierarchyScale(
