@@ -185,7 +185,7 @@ function buildPrimitive(
   const outerRotation = bitsQuaternion(transform.rotation);
   const isStretched = binding.renderer.m_RenderMode === 1;
   const source = isStretched
-    ? stretchedBillboard(binding, size, sample, transform, worldCenter, outerScale, scene)
+    ? stretchedBillboard(binding, sample, transform, worldCenter, outerScale, scene)
     : sourceGeometry(binding, size, rotation, sample, scene);
   const offsets = isStretched ? source.vertices : (source.simpleDiagonals ?? source.vertices).map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
@@ -437,7 +437,6 @@ function billboardHalfSize(
 
 function stretchedBillboard(
   binding: GeometryBinding,
-  size: Vector3,
   sample: ParticleRenderSample,
   ownerTransform: ParticleOwnerTransform,
   worldCenter: Vector3,
@@ -453,19 +452,17 @@ function stretchedBillboard(
   // Current non-Freeform worker, not a centered rotated billboard. The native
   // camera is at (0,0,-15), looking +Z; Unity view space reflects its Z axis.
   const cameraPosition: Vector3 = [worldCenter[0], worldCenter[1], -add(worldCenter[2], 15)];
-  const maximumSize = Math.max(size[0], size[1], Math.fround(1e-6));
-  // Retain the portable orthographic screen-size conversion here; complete
-  // native camera-uniform consumption remains open (SRC-PARTICLE-STRETCH).
-  const maximumSourceSize = divide(
-    divide(multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight), requiredBits(scene.pixelsPerWorldUnitBits)),
-    Math.max(outerScale[0], Math.fround(0.00001)),
-  );
-  const halfWidth = multiply(size[0], divide(multiply(Math.min(maximumSize, maximumSourceSize), 0.5), maximumSize));
+  // BND-C95: the stretch worker limits raw sizes using the same camera-width
+  // coefficients as billboards. Its side basis applies runtime scale afterward.
+  const halfWidth = billboardHalfSize(binding, sample, scene)[0];
+  const rawSize = bitsVector3(sample.sizeBeforeTransform!);
+  const transformSize = bitsVector3(sample.transformSize!);
+  const sideBasis = viewBillboardBasis(sample);
   const arithmetic = calculateNativeStretchArithmetic({
     cameraPosition,
     cameraVelocity: nativeStretchCameraVelocity(sample, ownerTransform),
-    sizeY: size[1],
-    scaledLength: multiply(binding.renderer.m_LengthScale, outerScale[0]),
+    sizeY: rawSize[1],
+    scaledLength: multiply(multiply(binding.renderer.m_LengthScale, transformSize[0]), outerScale[0]),
     velocityScale: binding.renderer.m_VelocityScale,
     halfWidth,
   });
@@ -474,11 +471,8 @@ function stretchedBillboard(
     arithmetic.tail[1],
     subtract(-15, arithmetic.tail[2]),
   ];
-  const side: Vector3 = [
-    multiply(arithmetic.sideXY[0], outerScale[0]),
-    multiply(arithmetic.sideXY[1], outerScale[1]),
-    0,
-  ];
+  const side = applyBasis([arithmetic.sideXY[0], arithmetic.sideXY[1], 0], sideBasis)
+    .map((value, axis) => multiply(value, outerScale[axis]!)) as unknown as Vector3;
   const opposite = scaleVector(side, -1);
   const normal = rendererNormal([0, 0, -1], binding.renderer.m_NormalDirection);
   return Object.freeze({

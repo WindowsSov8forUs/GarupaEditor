@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `223760858177031b3d9c613ffa23a01d669143e4`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `23827f847249b8336379ac12c23bfb2d7f09df44`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -24,7 +24,7 @@ Production now consumes these head/tail equations, the current stationary camera
 
 Bounded differential scope: 75 native arithmetic rows (six explicit arithmetic inputs plus each of the ordinary renderer-domain's 69 enabled mode-1 parameter profiles) match Float32 output bits. Default-pack mode-1 geometry is also compared with native world-perimeter output projected into the portable viewport. Inputs are explicitly marshalled arithmetic states, not captured gameplay; this does not close owner/simulation/preflight/commit or full renderer consumption.
 
-Still OPEN: complete native min/max camera-uniform consumption (the portable orthographic screen-size conversion is retained), normal stream, full motion worker and final mixed composition. The reciprocal-square-root table executes source instructions in an emulator, not on the fixed device. No whole-renderer or framebuffer acceptance is claimed.
+C95/C96 below closes the source-orthographic raw-size/limit and side-basis scope, replacing the portable screen-height conversion. Current camera-uniform mutation/owner association, normal stream, full motion worker and final mixed composition remain OPEN. The reciprocal-square-root table executes source instructions in an emulator, not on the fixed device. No whole-renderer or framebuffer acceptance is claimed.
 
 ## SRC-HAB-PARTICLE-RANGES — recover authored width prefabs
 
@@ -57,6 +57,14 @@ Current defect: particle preflight sorts primitives internally using layer ID/or
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
+
+### Stretched raw sizes, camera limits and side basis (BND-C95 / C96)
+
+Reverse `6421917cc05c86f882361d10e9cafd2631fa100a` and auditor binding follow-up `23827f847249b8336379ac12c23bfb2d7f09df44` were verified/pushed with remote `0 0` before consumption. `particle_stretch_size_limit.json` SHA256 `9AA778C6EDCCFE185800BA4E8DE098DCB757F1C2C6C0451FC4752DEA1EFDAD23` covers fresh286 enabled mode1 systems,112 runtime scales,3432 source/setup/viewport references and1140 arithmetic configurations. Original camera-width/coefficient preparation and86F0..87A4 determine raw half-width;82CC/8D1C determine `(lengthScale*runtimeScaleX)*rawSizeY`;81B0..83DC and8E28..8E84 produce the actual side basis and world side.
+
+Production now uses the shared native orthographic half-size consumer on raw size, supplies rawY and native-scaled length to stretch arithmetic, and publishes side offsets through the scaled inverse-camera basis, retaining its discarded-Z zero terms. The actual argument-prefix/side-publication partitions have zero differences across1140 inputs and2280 explicit unit-direction side cases, versus1684 earlier differences (453 length-size products,1225 side components and6 unit-scale raw half-width values). C93 camera960 rows remain zero. C34/C35 numeric helpers/wrappers remain zero (585+6/15060 and1605/46440); their stale historical `halfSize*2` text assertions were corrected to the current pivot/simple-diagonal calls without changing expected. Both noEmit checks and runtime audit1438 pass.
+
+This closes source-orthographic size/limit and side-basis arithmetic under the stated explicit setup/raw-size/viewport and identity outer-owner conditions. The audit does not replace normalization or claim a full worker invocation. Actual size/age producers, sprite dimensions, source co-occurrence, camera/Transform/owner mutation, complete camera position/tail/normal/material/geometry, bounds and mixed sorting remain **OPEN**. No tests, application, build or visuals.
 
 ### Non-Freeform camera velocity composition (BND-C93 / C94)
 
