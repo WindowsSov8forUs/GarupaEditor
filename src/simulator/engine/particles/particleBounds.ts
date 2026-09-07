@@ -101,12 +101,18 @@ export function calculateNativeParticleLinearAnalyticBounds(
   const lifetimeMaximum = minMaxRange(lifetime)[1], speedRange = minMaxRange(speed);
   const distance = speedRange.map((value) => mul(value, lifetimeMaximum));
   const lo = [0, 0, Math.min(0, ...distance)], hi = [0, 0, Math.max(0, ...distance)];
+  return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
+}
+
+function finishNativeParticleAnalyticBounds(
+  lo: number[], hi: number[], speedMaximum: number, initialSize3D: boolean, settings: BoundsSettings,
+): ParticleBoundsTuple {
   if (settings.renderMode === 1) {
     // This branch selects Initial.size3D, independently of the SoA storage flag.
     const size = minMaxRange(settings.startSize[initialSize3D ? 1 : 0])[1];
     let length = Math.abs(f32(settings.velocityScale));
-    if (speedRange[1] > f32(0.000001)) length = add(length, div(mul(Math.abs(f32(settings.lengthScale)), size), speedRange[1]));
-    const stretch = mul(speedRange[1], length);
+    if (speedMaximum > f32(0.000001)) length = add(length, div(mul(Math.abs(f32(settings.lengthScale)), size), speedMaximum));
+    const stretch = mul(speedMaximum, length);
     for (let axis = 0; axis < 3; axis++) { lo[axis] = sub(lo[axis]!, stretch); hi[axis] = add(hi[axis]!, stretch); }
   }
   return expandNativeParticleBounds(lo, hi, settings);
