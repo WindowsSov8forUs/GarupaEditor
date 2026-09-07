@@ -14,6 +14,8 @@ Authority: Reverse `ce1b2033d81c49dacb9ff109c220ddcb31220d36`, verified and push
 
 All91 distance bit patterns and180 comparisons per consumer agree, eliminating136 baseline differences;360 primitive distance transfers agree. Affected Slide and game-clear bounds wrappers (438/414 calls) and complete sample/world vertex-normal consumers (1410 View,540 Local and460 game-clear live rows) remain exact. Both noEmit checks and runtime audit1438 pass as compilation/integrity only.
 
+Reverse `4ff1bf855b151e6f7b1853d8c9bf110323e870de` extends the same oracle to the final Pixi admission comparator and its actual rejection condition. `compareSamples` now consumes rendererSortDistanceBits and finite-bit validation requires this field. All three180-comparison sets and180 admission decisions agree. The third comparator previously had68 differences, producing3 false rejections and65 false acceptances; this downstream omission is now repaired.
+
 The comparison corpus fixes layer value0, queue3000 and explicit camera inputs, and excludes equal-key native ties. Source-domain/cache checks do not prove complete current cache or lifecycle occurrence. Frustum/group/override, current camera/material draw-record production, native final ties and ordinary/particle composition remain OPEN. No application, product tests, build or visual acceptance is used.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position

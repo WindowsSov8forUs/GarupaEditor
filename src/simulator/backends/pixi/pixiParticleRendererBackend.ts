@@ -660,13 +660,13 @@ function sampleBitsFinite(sample: ParticleRenderSample): boolean {
     sample.size.xBits, sample.size.yBits, sample.size.zBits,
     sample.rotation.xBits, sample.rotation.yBits, sample.rotation.zBits,
     sample.color.redBits, sample.color.greenBits, sample.color.blueBits, sample.color.alphaBits,
-    sample.ageBits, sample.lifetimeBits,
+    sample.ageBits, sample.lifetimeBits, sample.rendererSortDistanceBits!,
   ].every((bits) => particleFloat32FromBits(bits) !== null);
 }
 
 function compareSamples(left: ParticleRenderSample, right: ParticleRenderSample): number {
   return left.sortingLayerId! - right.sortingLayerId! || left.sortingOrder - right.sortingOrder ||
-    particleFloat32FromBits(left.sortingFudgeBits!)! - particleFloat32FromBits(right.sortingFudgeBits!)! ||
+    particleFloat32FromBits(left.rendererSortDistanceBits!)! - particleFloat32FromBits(right.rendererSortDistanceBits!)! ||
     left.rendererPriority! - right.rendererPriority! ||
     left.ownerSortOrdinal! - right.ownerSortOrdinal! ||
     left.sourceOrdinal! - right.sourceOrdinal! ||
