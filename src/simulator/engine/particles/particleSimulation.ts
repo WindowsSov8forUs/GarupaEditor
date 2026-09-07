@@ -1400,31 +1400,25 @@ function minMax(value: ParticleMinMaxCurve, time: number, ratio: number): number
 }
 
 function gradient(value: ParticleMinMaxGradient["maxGradient"], time: number): Color4 {
-  const t16 = Math.max(0, Math.min(65535, roundHalfEven(clamp01(time) * 65535)));
+  // BND-C58: native retains the fractional Float32 time coordinate.
+  const t16 = multiply(time, 65535);
   const channel = (
     prefix: "c" | "a",
     component: "r" | "g" | "b" | "a",
     count: number,
   ): number => {
+    if (count < 2) return 1;
     const times = Array.from({ length: count }, (_, index) =>
       value[`${prefix}time${index}` as keyof typeof value] as number);
     const values = Array.from({ length: count }, (_, index) =>
       (value[`key${index}` as keyof typeof value] as unknown as { readonly [key: string]: number })[component]!);
-    if (t16 <= times[0]!) return f32(values[0]!);
-    for (let index = 1; index < count; index += 1) {
-      if (t16 <= times[index]!) {
-        if (times[index] === times[index - 1] || (value.m_Mode === 1 && t16 === times[index])) {
-          return f32(values[index]!);
-        }
-        if (value.m_Mode === 1) return f32(values[index - 1]!);
-        return lerp(
-          values[index - 1]!,
-          values[index]!,
-          (t16 - times[index - 1]!) / (times[index]! - times[index - 1]!),
-        );
-      }
-    }
-    return f32(values[values.length - 1]!);
+    const coordinate = Math.min(Math.max(t16, times[0]!), times[count - 1]!);
+    let index = value.m_Mode === 1 ? 0 : 1;
+    while (index < count - 1 && coordinate > times[index]!) index += 1;
+    if (value.m_Mode === 1) return f32(values[index]!);
+    const weight = Math.min(divide(subtract(coordinate, times[index - 1]!),
+      Math.max(subtract(times[index]!, times[index - 1]!), f32(1e-6))), 1);
+    return add(values[index - 1]!, multiply(subtract(values[index]!, values[index - 1]!), weight));
   };
   return [
     channel("c", "r", value.m_NumColorKeys),
@@ -2113,13 +2107,6 @@ function lerp(left: number, right: number, time: number): number {
   return add(left, multiply(subtract(right, left), clamp01(time)));
 }
 function compareOrdinal(left: string, right: string): number { return left < right ? -1 : left > right ? 1 : 0; }
-function roundHalfEven(value: number): number {
-  const floor = Math.floor(value);
-  const fraction = value - floor;
-  if (fraction < 0.5) return floor;
-  if (fraction > 0.5) return floor + 1;
-  return floor % 2 === 0 ? floor : floor + 1;
-}
 function fault(capability: string, boundary: string): ParticleSimulationFault {
   return new ParticleSimulationFault(capability, boundary);
 }
