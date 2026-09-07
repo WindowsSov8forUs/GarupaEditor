@@ -561,3 +561,9 @@ This closes these source-unit Local inputs only. Generic axis rotation is not as
 Reverse `bd57a0b4401dd0aadbe13ead49ea92891a7f0186` independently executes actual complete buildPrimitive against immutable C117 normal stores. Under an explicit identity owner linear transform,748/896 cases and75519 normal components differed after the previously correct inner stage. The outer generic normalization replaced zero normals with fallback-Z and rounded native normalized values again. Mesh normals now retain their native bytes in this owner boundary, followed only by the portable Y sign-bit reflection. All896 cases/74368 final normals agree; C125292 source Local cases remain exact.
 
 Nonidentity owner transforms and their inverse/scale ordering remain OPEN, as do current stream/format admission, View, full lifecycle/bounds/sorting/HUD and aggregate parity. Executed position/UV/color dependencies are not accepted outputs. Both noEmit checks and runtime-contract audit pass as compile/integrity information only; no tests/app/build/visuals.
+
+### BND-C129: source View mesh matrix and geometry
+
+Reverse `d4148ce39a69f5a91aaea48351ce857dc1c4cf1e` was verified, pushed and synchronized before consumption. Fresh14 View renderers retain source allowRoll=true; the original camera inverse-view columns enter the actual View worker, which negates its Z basis and clears roll offset. Complete12BD40C and original vertex/normal stores agree with sourceGeometry for all56 scalar/3D and age-boundary calls:18856 vertices and18856 normals. Corpus SHA `7B270EC1C335708A29B3DFFA37431F802C4AA49797C7F33E4B2E1956AA099588`. No production change was necessary.
+
+Current CPU/GPU instancing selection, stream/format admission, dynamic owner/camera, outer position publication, complete lifecycle/bounds/sorting/HUD and aggregate parity remain OPEN. Explicit unit scale/zero center/no flips and numeric angle/size boundaries are retained.
