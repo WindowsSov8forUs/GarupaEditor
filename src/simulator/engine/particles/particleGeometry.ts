@@ -15,6 +15,7 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
+import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices } from "./particleMeshGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion } from "./particleBillboardRotation";
@@ -272,15 +273,12 @@ function sourceGeometry(
     const particleRotation = meshRotationQuaternion(binding, rotation);
     const pivot = binding.renderer.m_Pivot;
     const visibleSize = visibleMeshSize(size, sample);
+    const pivotOffset = calculateNativeMeshPivotOffset(mesh.serializedSha256, [pivot.x, pivot.y, pivot.z]);
+    if (pivotOffset === undefined) {
+      throw fault("particle.geometry.mesh-bounds", "Mesh pivot requires the exact source-bound native mesh bounds.");
+    }
     return Object.freeze({
-      vertices: Object.freeze(mesh.vertices.map((vertex) => {
-        const scaled: Vector3 = [
-          multiply(subtract(vertex[0], pivot.x), visibleSize[0]),
-          multiply(subtract(vertex[1], pivot.y), visibleSize[1]),
-          multiply(subtract(vertex[2], pivot.z), visibleSize[2]),
-        ];
-        return applyBasis(quaternionRotate(scaled, particleRotation), basis);
-      })),
+      vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset)),
       uv0: mesh.uv0,
       normals: Object.freeze(mesh.normals.map((normal) => {
         const inverseScaled: Vector3 = [

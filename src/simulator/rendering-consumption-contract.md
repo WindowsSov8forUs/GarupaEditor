@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Source mesh pivot and matrix vertex consumption (BND-C109 / C110)
+
+Reverse `959ed94b596b582099efd5800219b152e6fabaee` was verified and pushed with remote0 0 before consumption. Fresh1741 system roundtrips bind160 enabled mode4 systems, four serialized meshes and seven mesh/pivot profiles. Original mesh-cache min/max arithmetic, descriptor copies and Local-worker pivot preparation feed complete12BC4AC; actual12BBA44..12BBB58 writes the expected vertex coordinates. Production now resolves the exact mesh bounds by serialized SHA, applies the original pivot sign/half-width/doubling order, scales quaternion-derived matrix columns before vertex products and adds pivot translation last. No vertex-extents approximation is used.
+
+Actual complete sourceGeometry matches all112 cases/9296 vertices, clearing40 differing cases/5277 coordinate components. Mesh endpoint288 and3D quaternion144 comparisons remain zero; both noEmit checks and runtime audit1438 pass. This scope explicitly uses3D storage, unit scale, identity Local basis, zero center/angle offset, no inversion/flips and the source mesh vertices. Source View meshes are numeric crossproducts, not current Local dispatch proof. Nonunit scale composition, scalar/View workers, actual flags/axis/cache/producer/owner state, outer projection/minmax clamp, normals/material/full writer/lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Mesh endpoint size mask (BND-C107 / C108)
 
 Reverse `9596447554c96595eb0d25d9ed7f38ca634a5924` and adapter correction `3dcc6ed6f79ee939799cac3dd6e9bd3db30820de` were verified and pushed with remote0 0 before consumption. Original complete12BC4AC clears all three size axes at percentage age>=100; the independently constructed normal matrix precedes that mask. Actual mode4 vertex-size initialization now applies that predicate. All288 explicit unit-scale/no-flip cases match native masked-size bits, clearing144 baseline differences (72 at exact100 and72 successor100 nonlive probes). Billboard half-size/pivot7080/240 and mesh3D quaternion144 comparisons remain zero.
