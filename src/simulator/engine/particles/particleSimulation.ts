@@ -147,6 +147,7 @@ interface SimulatedParticle {
   position: Vector3;
   velocity: Vector3;
   renderVelocity: Vector3;
+  moduleVelocity: Vector3;
   readonly baseSize: Vector3;
   readonly baseColor: ColorBytes;
   rotation: Vector3;
@@ -422,13 +423,12 @@ export class DeterministicParticleSimulation {
     }
     const analyticInitial = getModule(record.bundle, profile, "InitialModule");
     if (analyticInitial !== null && analyticInitial.gravityModifier.scalar === 0 &&
-      getModule(record.bundle, profile, "RotationModule") === null &&
-      getModule(record.bundle, profile, "VelocityModule") === null &&
+      nativeParticleAnalyticMotionCacheable(record.bundle, profile) &&
       getModule(record.bundle, profile, "ForceModule") === null) {
       this.reconstructAnalyticPrewarm(owner, record, profile, runtime, analyticInitial);
       return;
     }
-    // The eight source systems with integrated motion modules remain open.
+    // Non-cached integral curves and nonzero gravity/Force remain open.
     const duration = f32(profile.system.lengthInSec);
     const events = this.events(record.bundle, profile, runtime, -duration, 0, true)
       .filter((batch) => batch.at < 0);
@@ -954,6 +954,7 @@ export class DeterministicParticleSimulation {
       position: position.map(f32) as Vector3,
       velocity: velocity.map(f32) as Vector3,
       renderVelocity: velocity.map(f32) as Vector3,
+      moduleVelocity: [0, 0, 0],
       baseSize: [sx, sy, sz],
       baseColor,
       rotation,
@@ -967,8 +968,47 @@ export class DeterministicParticleSimulation {
       particle.renderVelocity = [...particle.velocity];
       particle.age = analytic.ageSeconds;
       particle.agePercent = analytic.agePercent;
+      this.rebuildAnalyticMotion(record, particle, initial);
     } else if (initialAge > 0) this.updateParticle(record, particle, f32(initialAge));
     void owner;
+  }
+
+  private rebuildAnalyticMotion(record: SystemRecord, particle: SimulatedParticle, initial: ParticleInitialModule): void {
+    const profile = record.bundle.profiles[record.definition.profile]!;
+    const age = Math.max(normalizedParticleAge(particle.agePercent), 0);
+    const rotation = getModule(record.bundle, profile, "RotationModule");
+    if (rotation !== null) {
+      // 105614C: integrate before applying direction and refined lifetime.
+      const random = particleSeedRatio((particle.randomSeed + 0x6AED452E) >>> 0);
+      const sign = particleSeedRatio((particle.randomSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
+      const estimate = nativeParticleReciprocalEstimate(particle.inverseLifetime);
+      const first = multiply(estimate, f32(2 - particle.inverseLifetime * estimate));
+      const lifetime = multiply(first, f32(2 - particle.inverseLifetime * first));
+      const curves = [rotation.x, rotation.y, rotation.curve];
+      for (let axis = rotation.separateAxes ? 0 : 2; axis < 3; axis += 1) {
+        const integral = nativeParticleAnalyticIntegral(curves[axis]!, age, random);
+        particle.rotation[axis] = add(particle.rotation[axis]!, multiply(lifetime, multiply(integral, sign)));
+      }
+    }
+    const velocity = getModule(record.bundle, profile, "VelocityModule");
+    if (velocity !== null) {
+      // 126F704: three sequential draws from the particle-seeded local tuple.
+      let random = particleStateFromSeed((particle.randomSeed + 0xE0FBD834) >>> 0);
+      const displacement: Vector3 = [0, 0, 0];
+      const instant: Vector3 = [0, 0, 0];
+      for (const [axis, value] of [velocity.x, velocity.y, velocity.z].entries()) {
+        const step = particleXorshift128(random);
+        random = step.state;
+        const ratio = particleWordRatio(step.value);
+        displacement[axis] = divide(nativeParticleAnalyticIntegral(value, age, ratio), particle.inverseLifetime);
+        instant[axis] = minMax(value, age, ratio);
+      }
+      const transform = (value: Vector3): Vector3 => velocity.inWorldSpace ? value
+        : applySystemVector(value, record.definition, particle.particleSystemSetupScale);
+      particle.position = addVector(particle.position, transform(displacement));
+      particle.moduleVelocity = addVector(transform(instant), particle.moduleVelocity);
+      particle.renderVelocity = addVector(particle.velocity, particle.moduleVelocity);
+    }
   }
 
   private updateParticle(
@@ -1073,6 +1113,7 @@ export class DeterministicParticleSimulation {
       }
     }
     const effectiveVelocity = scaleVector(combinedVelocity, speedModifier);
+    particle.moduleVelocity = moduleVelocity;
     particle.renderVelocity = effectiveVelocity;
 
     // 0x109669C phase 6: RotationBySpeedModule observes clamped velocity.
@@ -1405,6 +1446,35 @@ function nativeParticleIntegralMinMaxEligible(value: ParticleMinMaxCurve): boole
   return value.minMaxState === 0 || value.minMaxState === 3 ||
     (nativeParticleIntegralCurveEligible(value.maxCurve) &&
       (value.minMaxState !== 2 || nativeParticleIntegralCurveEligible(value.minCurve)));
+}
+
+function nativeParticleAnalyticMotionCacheable(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition): boolean {
+  const cached = (value: ParticleMinMaxCurve): boolean => value.minMaxState === 0 || value.minMaxState === 3 ||
+    (textureSheetCurveCacheable(value.maxCurve) && (value.minMaxState !== 2 || textureSheetCurveCacheable(value.minCurve)));
+  const rotation = getModule(bundle, profile, "RotationModule");
+  const velocity = getModule(bundle, profile, "VelocityModule");
+  return (rotation === null || [rotation.curve, ...(rotation.separateAxes ? [rotation.x, rotation.y] : [])].every(cached)) &&
+    (velocity === null || [velocity.x, velocity.y, velocity.z].every(cached));
+}
+
+function nativeParticleAnalyticIntegral(value: ParticleMinMaxCurve, age: number, ratio: number): number {
+  if (value.minMaxState === 0 || value.minMaxState === 3) return multiply(age, minMax(value, age, ratio));
+  const integral = (curve: ParticleAnimationCurve): number => {
+    const keys = curve.m_Curve;
+    const split = keys.length > 2 ? f32(keys[1]!.time) : f32(1);
+    const segment = (second: boolean, time: number): number => {
+      const index = second && keys.length > 2 ? 1 : 0;
+      const coefficients = keys.length < 2 ? [0, 0, 0, f32(keys[0]?.value ?? 0)]
+        : textureSheetCurveCoefficients(keys[index]!, keys[index + 1]!);
+      // EF7FE4 scales cached cubic coefficients by 1/4,1/3,1/2,1.
+      const integrated = coefficients.map((coefficient, axis) =>
+        multiply(multiply(coefficient, value.scalar), [0.25, ONE_THIRD, 0.5, 1][axis]!));
+      return multiply(time, textureSheetCurvePolynomial(integrated, time));
+    };
+    return add(segment(false, Math.min(age, split)), segment(true, Math.max(subtract(age, split), 0)));
+  };
+  const maximum = integral(value.maxCurve);
+  return lerp(value.minMaxState === 2 ? integral(value.minCurve) : maximum, maximum, ratio);
 }
 
 function nativeParticlePrewarmAnalyticEligible(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition): boolean {
@@ -2280,6 +2350,7 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
         position: [...particle.position] as Vector3,
         velocity: [...particle.velocity] as Vector3,
         renderVelocity: [...particle.renderVelocity] as Vector3,
+        moduleVelocity: [...particle.moduleVelocity] as Vector3,
         baseSize: [...particle.baseSize] as Vector3,
         baseColor: [...particle.baseColor] as ColorBytes,
         rotation: [...particle.rotation] as Vector3,
