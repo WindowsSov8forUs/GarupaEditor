@@ -1,57 +1,64 @@
-# Simulator 逆向证据工作流
+# Simulator 原作证据工作流
 
-## 强制来源与目录
+本文件只定义稳定流程。通用约定见[AGENTS.md](../../AGENTS.md)，算法来源与消费边界见[rendering-consumption-contract.md](rendering-consumption-contract.md)，能力声明见[public/capabilities.ts](public/capabilities.ts)。当前任务摘要拥有本轮待办；本文件不再追加历史流水。
 
-- 唯一行为依据：[`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 已验证、已提交且已推送的证据。
-- 逆向获取、反编译、runtime capture、oracle、closure、profile和verifier均在Reverse checkout完成；维护工具如需定位本地checkout，必须由显式参数或`GARUPA_REVERSE_ROOT`注入，不记录宿主安装位置。
-- Reverse未提交工作树、`.claude/`、`runtime/tools/`和未登记临时输出不属于证据。
-- GarupaEditor的`tmp/`只保存本地任务书、验收日志、发布记录和工作笔记；生产代码和提交测试不得读取它。
+## 1. 以具体问题划分阶段
 
-## 提交顺序
+每阶段只写四项：差异或待验证命题、实际生产消费者、必要依赖、关闭条件。
 
-1. 在Reverse取证并生成结果。
-2. 在Reverse运行对应verifier、`git diff --check`和暂存检查。
-3. 在Reverse提交并推送。
-4. 确认所引用的Reverse证据提交已存在于远端。
-5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知原作表现登记为内部evidence notice并绑定显式产品语义，不得以`evidence-required`阻断合法动作，也不得把产品语义写成Reverse事实。
+| 状态 | 含义 | 行动 |
+| --- | --- | --- |
+| 已确认差异 | 独立原作输出与生产消费者不一致 | 优先修复，验证受影响消费链 |
+| 证据缺口 | 原作输入、分支或消费关系未建立 | 仅在阻塞当前问题时深入取证 |
+| 范围内一致 | 指定版本、输入域与消费者的对照通过 | 记录边界，依赖未变时复用结果 |
 
-## 当前 Skin / Particle / HUD / Game-clear 证据
+跨模块的新问题先进入待办，不因发现就全面逆向。每60–90分钟复核阶段是否收敛；持续无有效进展时换切入点或说明依赖。时间估计绑定范围与不确定性，不按提交数、样本数或文件数推算整体完成率。
 
-**Production 消费复查仍 OPEN。** 下列证据与历史独立差分不能替代最终集成：Score 曾漏掉 StarUIAnchor 对 prefab 根初始坐标的运行时覆盖；particle 内部排序未进入 ordinary 共同排序域；后续实际 stretched worker 已推翻旧居中/投影方向解释，当前仅修复有字节依据的非 Freeform head/tail、退化掩码与 UV 消费，完整 camera uniform/normal/motion 仍开放。当前处分以 [`rendering-consumption-contract.md`](./rendering-consumption-contract.md) 和 `public/capabilities.ts` 为准。这些是算法/集成缺陷，不属于 GPU 排除项；不得要求用户补录作为源码排查前提。
+## 2. 证据标准
 
-- Skin资源基线`977f5e7153257e5bb4cabb2904790408f5452aa7`与可达性纠正`4312a8ad5a755b28cb40366f6160771dbf79637e`继续拥有master/包选择。过期Collabo 36的六个`skinapril2019`路径仍不可得且没有`skin_april2019`别名；三项Live2D-only structural stage仍不进入Standard/MV recipe。
-- 当前source-bound粒子证据由已推送批次`dccbfab9`/`d707d922`/`c52355e9`、native core `1ea7e35b1584809ffb695a2033e4e8f38579f443`和renderer/Slide `e43dded8890260806001fbcb5ab519cfb019a379`共同拥有。覆盖27 resources、1,375 concrete systems、1,147 enabled renderers、114 renderer signatures、4 meshes和152 reachable ordinary/directional pairs；Shape 0/4/5/8/10/no-Shape、per-instance random、module/time/capacity、root→parent TRS、Slide `n`/`g`与mode 0/1/4 GPU前图元曾通过独立差分；后者未覆盖完整 production 消费，当前不能再据此宣布 renderer 闭合。
-- Production semantic catalog以exact logical resource、application revision、official UnityFS/serialized asset digest、component PathID、renderer/material/mesh/texture relation绑定leased bytes。Default和selected进入同一Schema-2 validator；expected PNG digest来自application snapshot receipt而非被测bytes自产。Simulation与Pixi只消费同一个cached immutable prepared token；禁止path/name hash random、literal renderer count、first-non-null material或unknown-current fallback。
-- HAB authority为`4fc0b23c433bd294dbcdda97658b565c059590f6`：`fieldskin/skin00`、`fieldskin/habahiro`与`tapeffect/habahiro`三包，Root_effect 9 objects / 4 Sprite meshes / 0 ParticleSystems，frame25只换四项资源，frame60无game callback。旧0.25秒synthetic white sine不属于original-compatible route。
-- Score/NGUI authority为`dddab345825dbff6d2a5cf65f5fbbcf771b00e07`：64-object/45-widget完整图、source-bound `sgm` metrics、SoftClip GLES3、rank5/6/12与SS/SSS clips。Native ScoreRankData和产品CS-V1输入必须保持不同identity；presentation等价不能升级产品计分。
-- Game-clear authority为`6cddb142806ffdb933cc6a237f69f4dd16e9ca97`：base 40/30、FC 6/5、AP 12/11 systems/enabled renderers、34 assets、完整Animator和3.233秒callback/15ms exit。它在launch前并入同一particle token/world/geometry/Pixi executor；typed outer scale仅为`screenToSafeChildScale / pixelsPerWorldUnit`，不得恢复375常量、birth-origin拆分或Pixi-owned第二套simulation。
-- 未重新打开的`closed-native-algorithm-equivalent`声明仅限其具名ARM64/serialized/CPU范围；Particle/HUD/Game-clear rendering 不得以历史 GPU前 hand-off 声明绕过当前 OPEN。Browser字体raster、GPU/driver量化、fixed-device framebuffer、CRI/USM和physical speaker继续`OUT_OF_SCOPE`；fixture manifest仍锁定`343c09cc…`，后续证据不为迎合产品测试复制成fixture。
+- 唯一原作行为依据是[GirlsBandParty-Reverse](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse)已验证、已提交、已推送的证据；本轮锁定10.1.4/230 ARM64。
+- 区分静态指令、序列化事实、数值ABI输入、动态观察和推断。条件数值一致不等于完整生命周期中这些输入实际同时出现。
+- 算法修复不依赖录屏、截图、framebuffer或视觉调参；expected必须独立来自原作，不能由产品生成。
+- 编译和运行合同审计只证明编译/完整性；对象数、digest或历史局部闭合不证明当前完整生产消费一致。
+- 未知语义登记为内部缺口，遵守[运行失败政策](../runtime-contract-policy.md)；不得用默认值、静默降级或无界clamp掩盖，也不得仅因`evidence-required`拒绝合法动作。评分例外见[scoring-contract.md](scoring-contract.md)。
+- 原作、产品、portable、device exact分别声明。当前算法/集成缺陷不得归入GPU排除项；CPU对照不能升级为GPU或物理音频完全一致。
 
-## 当前启动方向与音频证据
+## 3. 最小必要调查与验证
 
-- Reverse提交`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`已push；`startup-direction-runtime-contract-10-1-4/`的SD01–SD16和portable pack约束presentation、视觉owner、状态0→5及输入边界。
-- Reverse提交`d408d758f39873c2c997107903300e58d56c59c6`已push且远端同步；`startup-direction-null-session-assets-10-1-4/`的SDN01–SDN04确认count-zero非null SD集合执行零次LoadCharacter但保留3.0秒intro wait，语音null映射缺SoundResource路径。Public两字段因此固定literal null，禁止五槽placeholder、silent MP3或默认身份。
-- Reverse提交`b17e64e98423bed3718ac2e76a43cde5c451ee1f`已push且远端同步；`startup-audio-callgraph-10-1-4/`从10.1.4/230 ARM64重新遍历ExecStart、虚调用、协程、voice、BGM、Gaya、Retry、MoveTime及cleanup，包含44个方法切片和10条privacy-normalized observation-only R1。
-- 调用图确认Standard Live两种input mode创建`SE_RHYTHM_GAYA` owned loop，Practice两种模式保持null；锁定151,033-byte MP3、完整SHA-256、44.1kHz stereo、310,191 frames、全decoded-buffer loop、1.0/0.5秒fade-in及1.5秒stop-at-zero。BGM先prepared-paused，PlayingNone后resume；voice ended执行release。
-- `reachable_unclassified_count`、`unknown_predicate_count`、`missing_resource_count`和runtime hook failure均为0，committed verifier授权production，故`startupDirectionPortable`恢复`closed-portable`。Garupa fixture sourceHead锁定`b17e64e9`，只复制callgraph JSON与最小Gaya字节；production不读取fixture。
-- 真实WebView2视觉digest与独立Gaya/WebAudio graph digest只证明portable browser子门，不证明speaker onset、CRI/HCA、Android或原Unity framebuffer exact。后续调查仍必须使用已提交当前样本，不得消费Reverse未提交`runtime/tools/`、10.1.3行为或旧总体`closed`字段。
+先搜索具名函数和已有证据，定位第一处分歧；确认字段归属、调用顺序及实际消费输入，再补必要依赖。逆向优先`ida-pro-mcp`单函数反编译，按需展开汇编或引用，不默认导出整片组件。
 
-## 当前谱面 MV Live 证据
+新增工具前优先扩展现有入口；仅确需独立来源/执行边界才另建工具。新证据以源身份、输入键和引用去重，保留原始写入位模式，不反复复制完整资源树或盲目做全域笛卡尔积。扩大覆盖须说明解决哪项缺口；不得为省资源省略必要分支、篡改expected或接受未绑定读取。
 
-- Reverse `f2c0b360`建立83个current ARM64 static slices；最终`38802391fc6169e405c316e9a998f28c283961e3`加入Live Manual/Auto R1、pause/resume/exit/natural、98-model signed-delay inventory、1600×720 layer/bounds observation、original segmented USM技术profile与portable MP4/WebM mapping。
-- `mv_live_closure.json`八项unknown/missing/mapping/hook计数均为0，production只授权Live Manual/Auto的host-supplied portable bytes。Practice/Rehearsal MV、Retry/MoveTime MV、standalone MVView、Star3D和CRI/USM/device exact明确排除。
-- Garupa fixture中的MV条目来源锁定`38802391`；全局sourceHead随SDN修订更新为`d408d758`。只复制runtime contract、command oracle、closure、portable profile、SDN contract和项目自制20-frame MP4/WebM probe；不复制R1、截图、ARM64或61MB original USM。Production不读取fixture。
-- MV WebView2的media/raster digest只证明当前Browser Blob/HTMLVideoElement/Pixi映射，不升级original frame、codec或物理输出。
+| 改动 | 必要验证 |
+| --- | --- |
+| 生成器、源绑定或原始输入 | 对应再生成/字节比对、摘要清单、仓库政策；共享代码影响旧模式时验旧模式 |
+| 差分审计器 | 对同一独立expected验证受影响消费者；未变生成器的原作输出可复用 |
+| 生产算法 | 对应原作差分、受影响消费链、适用TypeScript与运行合同检查 |
+| 文档或状态 | 内容、引用、diff和暂存政策；不重跑编译和无关算法审计 |
 
-## 当前多比例布局证据
+验证摘要绑定原作提交/输入、产品源码及相关依赖、工具版本、计数、结果和未覆盖范围。任一相关依赖变化使对应结果失效；依赖关系不明时保守补验，不据单文件未改推断整条链可复用。复用既有报告，不为此新建验证框架。全库扫描在收尾或相应政策要求时执行，不机械重复每次小改动。
 
-- Reverse `9167dce77d0472a000b509f993b0e66e44e4797f`已push并远端`0 0`；`simulator-multiaspect-layout-runtime-contract-10-1-4/`包含27个current ARM64 slices、current level3与MoveTime/Movie/Auto-caption最小serialized sources、6组参数化ratio/safe-area oracle和committed verifier。
-- 证据关闭任意有效**初始横屏**viewport、base safe-area、StarUI continuous high-aspect、GameCamera、gameplay/particle scale、UIRoot FitWidth、MoveTime circle hit、Auto caption和movie widget。截图derived、fixed-frame authority、unclassified scalar及unknown order计数均为0。
-- 同一证据确认不存在完整任意局中resize原作刷新路由；`production_authorization.dynamic_resize=false`只限制原作等价声明。GarupaEditor对post-initial revision采用独立登记的产品级原子surface重建语义并记录notice；重建失败时释放当前session并稳定返回宿主，不宣称原作连续刷新，也不使用无依据的外层letterbox冒充原作。
-- Garupa只复制contract和closure两项最小JSON fixture，分别记录来源commit、bytes与SHA；production不读取fixture。1600×720截图和全部WebView2 digest只作observation。
+本轮禁止新增、修改或生成产品测试、fixture、snapshot、harness，也不运行应用或视觉验收；限制同样适用于ignored和临时文件。允许Reverse中的原始extractor/exporter/verifier与只消费native/serialized expected的独立审计。改变限制须用户明确授权。
 
-## 测试边界
+## 4. 一个问题完成一次交付
 
-隔离测试需要离线输入时，只从已推送的Reverse提取最小快照到`src/simulator/testing/fixtures/`，并记录来源提交、源相对路径、字节数和SHA-256。`verifyTestingFixtures.mjs`只校验这些快照，不读取Reverse或网络。生产代码不得读取本地工作记录、Reverse或testing fixture。
+1. Reverse完成对应证据与验证，精确暂存、检查、提交、推送并确认引用提交存在且远端同步。
+2. 之后才修改或正式消费到Garupa；canonical dirty checkout不修改。未提交证据、`.claude/`、`runtime/tools/`、ignored `tmp/`及未登记输出不能成为行为依据。
+3. 原子提交按问题意图划分，相关说明与验证归入同一问题；不要为每次工具调用、样本或只读观察单独提交/推送。
+4. 当前要求推送时，每个完整问题批次做一次远端握手；同一提交已验证后不重复查询，发生推送、远端变更或身份不确定时再检查。
+5. 无算法差异就登记限定范围内一致，不为产生代码提交做重构。不顺手更新测试快照、依赖锁文件或无关模块。
 
-Garupa JSON公共schema位于`src/chart/garupa.ts`；本轮字段基线来源为`origin/main@a4ed4bbaa49d3e7db0407a1f2d5500f6d5940114:src/chartCore.ts`。能力边界应直接体现在Public合同、capability类型、失败返回和可执行测试中。发布耗时、逐文件哈希、候选提交及attestation只保留在忽略的`tmp/`，不提交为运行时或测试依赖。
+## 5. 记录、输出与资源
+
+- 稳定规范只放规则；生产合同只登记行为、原作来源、消费位置和验证边界，不复制工具日志。
+- 当前任务摘要是唯一待办状态；验收摘要只记当前验证和交付；证据指针只负责路径与特殊身份。
+- 历史存在原提交或ignored归档。续接只读摘要，遇具体矛盾、失败或来源问题才追溯归档；不在三份文件重复一段进度。
+- 默认一个重型进程，不频繁轮询；轻量独立只读可合并。待验证结束并检查结果后再提交。
+- 工具输出默认约100行/4KB以内。大JSON输出结构、计数、摘要；失败只列首批关键差异，完整报告存文件并按需定位。
+- 进度只汇报新增事实、阻塞和下一步，成功检查一句话概括。收尾给出交付、剩余差异、工作树状态，不重述全部历史。
+
+## 6. 保持既有能力与资源边界
+
+生产不得读取Reverse、`tmp/`或`testing/`。维护工具通过显式参数或`GARUPA_REVERSE_ROOT`定位Reverse，不将宿主绝对路径写入tracked文件。本轮保持唯一入口、Recipe13、transport3及各能力合同。
+
+历史type-5 `+Y`与current native `+Z` oracle身份分别保留。Fixture manifest继续拥有快照身份；未获授权不改写或复制快照。Skin、HUD、Game-clear、音频、MV和布局历史来源通过具名合同及原提交追溯；移除本文件历史流水不撤销证据，也不扩大任何已验收范围。
