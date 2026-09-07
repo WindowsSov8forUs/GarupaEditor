@@ -194,7 +194,13 @@ function buildPrimitive(
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
   ], outerRotation));
-  const worldNormals = isStretched ? source.normals : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
+  // BND-C127: native mesh normals are already normalized, including zero and
+  // signed-zero results. An identity owner must publish those exact bytes.
+  const hasIdentityMeshOwner = binding.renderer.m_RenderMode === 4 &&
+    outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
+    outerRotation[1] === 0 && outerRotation[2] === 0 && outerRotation[3] === 1;
+  const worldNormals = isStretched || hasIdentityMeshOwner ? source.normals
+    : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const maximumPixels = multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight);
   const hasNativeSizeLimit = isStretched || binding.renderer.m_RenderMode === 0;
   const largest = hasNativeSizeLimit ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
