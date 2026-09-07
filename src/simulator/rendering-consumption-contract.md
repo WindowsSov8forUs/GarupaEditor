@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Mesh endpoint size mask (BND-C107 / C108)
+
+Reverse `9596447554c96595eb0d25d9ed7f38ca634a5924` and adapter correction `3dcc6ed6f79ee939799cac3dd6e9bd3db30820de` were verified and pushed with remote0 0 before consumption. Original complete12BC4AC clears all three size axes at percentage age>=100; the independently constructed normal matrix precedes that mask. Actual mode4 vertex-size initialization now applies that predicate. All288 explicit unit-scale/no-flip cases match native masked-size bits, clearing144 baseline differences (72 at exact100 and72 successor100 nonlive probes). Billboard half-size/pivot7080/240 and mesh3D quaternion144 comparisons remain zero.
+
+The audit adapter was corrected to include the actual production bit-pattern declaration and convert native little-endian input bytes to the public0x word form; native expected is unchanged. Both noEmit checks and runtime audit1438 pass. Current source size/age/flags/admission, nonunit scale composition, matrix/pivot/final vertices, owner/camera, bounds/sorting/HUD and aggregate equivalence remain OPEN. No product tests/app/build/visuals.
+
 ### Mesh 3D quaternion arithmetic (BND-C105 / C106)
 
 Reverse `3200ee203cdd7a837253bc22a818b5b2970cf894` was verified and pushed with remote0 0 before consumption. Complete original12BC4AC and the original coefficient initialization prefix provide288 numeric cases;144 use3D rotation storage. The actual mode4 quaternion consumer now uses half-angle Float32 folded polynomials and the original ZXY sign/product order. All144 quaternion outputs match native bits, clearing96 baseline differences. Existing scalar/3D billboard rotation and simple/complex vertex consumers retain zero differences.

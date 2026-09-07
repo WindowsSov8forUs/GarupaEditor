@@ -271,12 +271,13 @@ function sourceGeometry(
     const basis = alignmentBasis(binding);
     const particleRotation = meshRotationQuaternion(binding, rotation);
     const pivot = binding.renderer.m_Pivot;
+    const visibleSize = visibleMeshSize(size, sample);
     return Object.freeze({
       vertices: Object.freeze(mesh.vertices.map((vertex) => {
         const scaled: Vector3 = [
-          multiply(subtract(vertex[0], pivot.x), size[0]),
-          multiply(subtract(vertex[1], pivot.y), size[1]),
-          multiply(subtract(vertex[2], pivot.z), size[2]),
+          multiply(subtract(vertex[0], pivot.x), visibleSize[0]),
+          multiply(subtract(vertex[1], pivot.y), visibleSize[1]),
+          multiply(subtract(vertex[2], pivot.z), visibleSize[2]),
         ];
         return applyBasis(quaternionRotate(scaled, particleRotation), basis);
       })),
@@ -417,6 +418,12 @@ function viewBillboardBasis(sample: ParticleRenderSample): readonly [Vector3, Ve
     throw fault("particle.geometry.view-billboard-transform", "View billboards require the separate native Transform size scale.");
   }
   return calculateNativeParticleViewBillboardBasis(bitsVector3(sample.transformSize));
+}
+
+function visibleMeshSize(size: Vector3, sample: ParticleRenderSample): Vector3 {
+  // BND-C107: the mesh matrix masks all size axes at age>=100. Its normal
+  // matrix is constructed before this mask and does not use the masked size.
+  return requiredBits(sample.agePercentBits!) >= 100 ? [0, 0, 0] : size;
 }
 
 function visibleBillboardHalfSize(halfSize: Vector2, sample: ParticleRenderSample): Vector2 {
