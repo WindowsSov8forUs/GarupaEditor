@@ -87,6 +87,7 @@ export function buildCurrentParticlePrimitives(
   samples: readonly ParticleRenderSample[],
 ): readonly ParticleNativeRenderPrimitive[] {
   const bindings = buildBindings(profile);
+  const systemSamples = new Map(samples.map((sample) => [`${sample.ownerKey}\u0000${sample.systemId}`, sample]));
   const primitives = samples.map((sample) => buildPrimitive(sample, bindings, scene));
   primitives.sort((left, right) => left.sortingLayerId - right.sortingLayerId ||
     left.sortingOrder - right.sortingOrder || left.sortingFudge - right.sortingFudge ||
@@ -100,8 +101,8 @@ export function buildCurrentParticlePrimitives(
     grouped.set(key, rows);
   }
   const visible = new Set<ParticleNativeRenderPrimitive>();
-  for (const rows of grouped.values()) {
-    const bounds = unionBounds(rows.map((row) => row.bounds));
+  for (const [key, rows] of grouped) {
+    const bounds = nativeRendererBounds(systemSamples.get(key)!, scene) ?? unionBounds(rows.map((row) => row.bounds));
     if (intersectsOrthographicViewport(bounds, scene)) {
       for (const row of rows) visible.add(row);
     }
@@ -711,6 +712,20 @@ function unionBounds(values: readonly ParticleNativePrimitiveBounds[]): Particle
     nearZ: Math.min(...values.map((value) => value.nearZ)),
     farZ: Math.max(...values.map((value) => value.farZ)),
   });
+}
+
+function nativeRendererBounds(sample: ParticleRenderSample, scene: ParticlePixiSceneProfile): ParticleNativePrimitiveBounds | undefined {
+  if (sample.rendererWorldBounds === undefined) return undefined;
+  const owner = requiredOwnerTransform(sample.instance);
+  // The source C153 publication is bound to the native runtime Transform.
+  // Additional nonidentity portable owner composition remains a separate gap.
+  if (bitsVector3(owner.position).some((v) => v !== 0) || bitsVector3(owner.scale).some((v) => v !== 1) ||
+    bitsQuaternion(owner.rotation).some((v, i) => v !== (i === 3 ? 1 : 0))) return undefined;
+  const center = bitsVector3(sample.rendererWorldBounds.center), extent = bitsVector3(sample.rendererWorldBounds.extents);
+  const min: Vector3 = [subtract(center[0], extent[0]), subtract(center[1], extent[1]), subtract(center[2], extent[2])];
+  const max: Vector3 = [add(center[0], extent[0]), add(center[1], extent[1]), add(center[2], extent[2])];
+  const lo = projectPoint(min, scene), hi = projectPoint(max, scene);
+  return Object.freeze({ left: lo[0], top: hi[1], right: hi[0], bottom: lo[1], nearZ: min[2], farZ: max[2] });
 }
 
 function intersectsOrthographicViewport(bounds: ParticleNativePrimitiveBounds, scene: ParticlePixiSceneProfile): boolean {

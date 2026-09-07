@@ -38,6 +38,8 @@ import {
   type ParticleRuntimeTransform,
 } from "./particleHierarchyScale";
 import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
+import { calculateNativeParticleActualBounds, calculateNativeParticleWorldBounds } from "./particleBounds";
+import { getNativeParticleMeshBounds } from "./particleMeshGeometry";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
   particleSimdRandomValues,
@@ -651,6 +653,7 @@ export class DeterministicParticleSimulation {
         const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
           positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale)));
         const runtimeTransform = calculateNativeParticleRuntimeTransform(emitterTransform, parentTransforms, profile.system.scalingMode);
+        const rendererWorldBounds = currentActualRendererBounds(record, profile, runtime.particles, runtimeTransform);
         const simulationToWorld = Object.freeze([0, 4, 8].map((offset) => vectorBits([
           runtimeTransform.localToWorld[offset]!, runtimeTransform.localToWorld[offset + 1]!,
           runtimeTransform.localToWorld[offset + 2]!,
@@ -710,6 +713,7 @@ export class DeterministicParticleSimulation {
             velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
             simulationVelocity: vectorBits(particle.renderVelocity),
             simulationToWorld,
+            ...(rendererWorldBounds === undefined ? {} : { rendererWorldBounds }),
             size: vectorBits(size),
             sizeBeforeTransform,
             transformSize: vectorBits(transformSize),
@@ -1533,6 +1537,42 @@ function nativeParticlePrewarmAnalyticEligible(bundle: ParticleBundleProfile, pr
     [velocity.orbitalX, velocity.orbitalY, velocity.orbitalZ, velocity.radial].some((value) => value.scalar !== 0))) return false;
   const force = getModule(bundle, profile, "ForceModule");
   return force === null || (!force.randomizePerFrame && [force.x, force.y, force.z].every(nativeParticleIntegralMinMaxEligible));
+}
+
+function currentActualRendererBounds(
+  record: SystemRecord, profile: ParticleProfileDefinition, particles: readonly SimulatedParticle[],
+  transform: ParticleRuntimeTransform,
+): ParticleRenderSample["rendererWorldBounds"] {
+  // BND-C151: an ineligible source cannot take the analytic branch even if
+  // invalidation34 changes. Eligible and separate game-clear bounds stay open.
+  if (record.bundle.key === "game-clear" || nativeParticlePrewarmAnalyticEligible(record.bundle, profile)) return undefined;
+  const initial = getModule(record.bundle, profile, "InitialModule");
+  if (initial === null) throw fault("particle.bounds.initial-module", "Actual bounds require their source InitialModule size curves.");
+  const renderer = record.bundle.rendererProfiles[profile.renderer]!;
+  const size = getModule(record.bundle, profile, "SizeModule");
+  const mesh = record.definition.meshProfile == null ? undefined : record.bundle.meshProfiles?.[record.definition.meshProfile];
+  const meshBounds = mesh === undefined ? undefined : getNativeParticleMeshBounds(mesh.serializedSha256);
+  if (renderer.m_RenderMode === 4 && meshBounds === undefined) {
+    throw fault("particle.bounds.mesh-cache", "Mesh bounds require the exact source Mesh.localAABB cache.");
+  }
+  const bounds = calculateNativeParticleActualBounds(particles, {
+    renderMode: renderer.m_RenderMode,
+    velocityScale: renderer.m_VelocityScale,
+    lengthScale: renderer.m_LengthScale,
+    pivot: [renderer.m_Pivot.x, renderer.m_Pivot.y, renderer.m_Pivot.z],
+    meshBounds: meshBounds ?? null,
+    size3D: initial.size3D || size?.separateAxes === true,
+    startSize: [initial.startSize, initial.startSizeY, initial.startSizeZ],
+    sizeLifetime: size === null ? null : [size.curve, size.y, size.z],
+    sizeBySpeed: null, // Disabled in the complete registered gameplay source union.
+    runtimeSize: 0, // Fresh reset; this API admits no EmitParams/SetParticles size overrides.
+    simulationSpace: profile.system.moveWithTransform,
+    scale: transform.scalingModeScale,
+    translation: [transform.localToWorld[12]!, transform.localToWorld[13]!, transform.localToWorld[14]!],
+  });
+  const world = calculateNativeParticleWorldBounds(bounds, transform.localToWorld, transform.scalingModeScale,
+    profile.system.moveWithTransform, renderer.m_RenderAlignment);
+  return Object.freeze({ center: vectorBits([world[0], world[1], world[2]]), extents: vectorBits([world[3], world[4], world[5]]) });
 }
 
 function removeExpiredParticles(particles: SimulatedParticle[]): void {

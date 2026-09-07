@@ -15,6 +15,12 @@ const mul = (a: number, b: number): number => f32(f32(a) * f32(b));
 const add = (a: number, b: number): number => f32(f32(a) + f32(b));
 const sub = (a: number, b: number): number => f32(f32(a) - f32(b));
 
+export function getNativeParticleMeshBounds(meshSha256: string): readonly [number, number, number, number, number, number] | undefined {
+  const words = meshBounds[meshSha256];
+  if (words === undefined) return undefined;
+  return [...new Float32Array(new Uint32Array(words).buffer)] as [number, number, number, number, number, number];
+}
+
 export function calculateNativeMeshPivotOffset(meshSha256: string, pivot: Vector3): Vector3 | undefined {
   const words = meshBounds[meshSha256];
   if (words === undefined) return undefined;
