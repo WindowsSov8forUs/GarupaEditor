@@ -527,8 +527,11 @@ function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIde
   if (left.kind === "game-clear" || right.kind === "game-clear") {
     return left.kind === "game-clear" && right.kind === "game-clear" && left.clearStatus === right.clearStatus;
   }
-  return left.kind === "game-play-button" && right.kind === "game-play-button" ||
-    left.kind === "note-slide" && right.kind === "note-slide" &&
+  if (left.kind === "game-play-button" && right.kind === "game-play-button") {
+    return left.particleSystemSetupScaleFactorsBits?.[0] === right.particleSystemSetupScaleFactorsBits?.[0] &&
+      left.particleSystemSetupScaleFactorsBits?.[1] === right.particleSystemSetupScaleFactorsBits?.[1];
+  }
+  return left.kind === "note-slide" && right.kind === "note-slide" &&
       left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
       left.poolSlot === right.poolSlot && left.route === right.route;
 }

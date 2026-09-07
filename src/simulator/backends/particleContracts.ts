@@ -666,6 +666,8 @@ export type ParticleInstanceIdentity =
       /** Required by Schema-2 production; optional only for legacy source compilation. */
       readonly ownerTransform?: ParticleOwnerTransform;
       readonly particleSystemSetupScaleBits?: string;
+      /** Required in production; retain both original localScale write passes. */
+      readonly particleSystemSetupScaleFactorsBits?: readonly [string, string];
     }
   | {
       readonly kind: "note-slide";
@@ -896,6 +898,7 @@ export interface ParticlePixiButtonOwner {
   readonly buttonType: number;
   readonly transform: ParticleOwnerTransform;
   readonly particleSystemSetupScaleBits: string;
+  readonly particleSystemSetupScaleFactorsBits?: readonly [string, string];
 }
 
 export interface ParticleGameClearSceneOwner {

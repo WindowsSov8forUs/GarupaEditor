@@ -1024,11 +1024,13 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
       value.particleSystemSetupScaleBits === "0x3F800000";
   }
   if (value.kind === "game-play-button") {
-    return hasExactKeys(value, ["kind", "buttonType", "rangeLength", "ownerTransform", "particleSystemSetupScaleBits"]) &&
+    return hasExactKeys(value, ["kind", "buttonType", "rangeLength", "ownerTransform", "particleSystemSetupScaleBits", "particleSystemSetupScaleFactorsBits"]) &&
       typeof value.buttonType === "number" && Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
       (value.rangeLength === null || typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) &&
         value.rangeLength >= 1 && value.rangeLength <= 7) &&
-      isOwnerTransform(value.ownerTransform, "game-play-button") && positiveFloat32Bits(value.particleSystemSetupScaleBits);
+      isOwnerTransform(value.ownerTransform, "game-play-button") && positiveFloat32Bits(value.particleSystemSetupScaleBits) &&
+      Array.isArray(value.particleSystemSetupScaleFactorsBits) && value.particleSystemSetupScaleFactorsBits.length === 2 &&
+      value.particleSystemSetupScaleFactorsBits.every(positiveFloat32Bits);
   }
   if (value.kind !== "note-slide" ||
     !hasExactKeys(value, [

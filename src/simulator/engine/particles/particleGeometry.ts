@@ -16,7 +16,7 @@ import type {
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic, calculateNativeStretchNormals, calculateNativeBillboardNormals } from "./particleStretchedGeometry";
 import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices, calculateNativeMeshMatrixColumns } from "./particleMeshGeometry";
-import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
+import { applyNativeParticleSetupScale, type ParticleSetupScale, calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion, calculateNativeMeshScalarQuaternion } from "./particleBillboardRotation";
 import { calculateNativeMeshNormals } from "./particleNormalGeometry";
@@ -303,7 +303,10 @@ function sourceGeometry(
     if (sample.instance.particleSystemSetupScaleBits === undefined) {
       throw fault("particle.geometry.local-billboard-transform", "Local billboards require current particle size before Transform scaling and their concrete owner setup scale.");
     }
-    basis = localBillboardBasis(binding.system, requiredBits(sample.instance.particleSystemSetupScaleBits),
+    const setup: ParticleSetupScale = sample.instance.kind === "game-play-button"
+      ? [requiredBits(sample.instance.particleSystemSetupScaleFactorsBits![0]), requiredBits(sample.instance.particleSystemSetupScaleFactorsBits![1])]
+      : requiredBits(sample.instance.particleSystemSetupScaleBits);
+    basis = localBillboardBasis(binding.system, setup,
       binding.bundle.profiles[binding.system.profile]!.system.scalingMode);
   } else {
     basis = viewBillboardBasis(sample);
@@ -518,13 +521,12 @@ function nativeStretchCameraVelocity(sample: ParticleRenderSample, ownerTransfor
 
 function localBillboardBasis(
   system: ParticleSystemDefinition,
-  setupScale: number,
+  setupScale: ParticleSetupScale,
   scalingMode: 0 | 1,
 ): readonly [Vector3, Vector3, Vector3] {
-  const transform = (value: ParticleTransformProfile, scale: number) => ({
+  const transform = (value: ParticleTransformProfile, scale: ParticleSetupScale) => ({
     rotation: transformQuaternion(value),
-    scale: [multiply(value.m_LocalScale.x, scale), multiply(value.m_LocalScale.y, scale),
-      multiply(value.m_LocalScale.z, scale)] as Vector3,
+    scale: applyNativeParticleSetupScale([value.m_LocalScale.x, value.m_LocalScale.y, value.m_LocalScale.z], scale),
   });
   const parents = system.parentTransforms.map((parent, index) => transform(parent,
     system.parentParticleSystemFlags === undefined || system.parentParticleSystemFlags[index] === true ? setupScale : 1));

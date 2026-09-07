@@ -6,6 +6,20 @@ type Vector3 = readonly [number, number, number];
 type Quaternion = readonly [number, number, number, number];
 type Columns = readonly [Vector3, Vector3, Vector3];
 export type ParticleMatrix = readonly number[];
+export type ParticleSetupScale = number | readonly [number, number];
+
+// BND-C179: 3883074 passes width first, then normalized note size * safe ratio.
+export function calculateNativeParticleSetupFactors(widthRate: number, normalizedNoteSize: number, safeAreaRatio: number): readonly [number, number] {
+  return [f32(widthRate), mul(normalizedNoteSize, safeAreaRatio)];
+}
+
+// Each 3883E60 call reads the scale written by the preceding call.
+export function applyNativeParticleSetupScale(scale: Vector3, setup: ParticleSetupScale): Vector3 {
+  const factors = typeof setup === "number" ? [setup] : setup;
+  let result = scale;
+  for (const factor of factors) result = [mul(result[0], factor), mul(result[1], factor), mul(result[2], factor)];
+  return result;
+}
 
 export interface ParticleRuntimeTransform {
   readonly localToWorld: ParticleMatrix;

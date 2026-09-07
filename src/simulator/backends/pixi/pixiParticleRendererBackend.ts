@@ -598,6 +598,8 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
     positiveBits(scene.slidePool.outerScaleBits) === null || positiveBits(scene.slidePool.particleSystemSetupScaleBits) === null ||
     scene.buttonOwners.some((owner, index) => owner.buttonType !== (index < 7 ? index : index + 1) ||
       owner.transform.source !== "game-play-button" || positiveBits(owner.particleSystemSetupScaleBits) === null ||
+      !Array.isArray(owner.particleSystemSetupScaleFactorsBits) || owner.particleSystemSetupScaleFactorsBits.length !== 2 ||
+      owner.particleSystemSetupScaleFactorsBits.some((value: string) => positiveBits(value) === null) ||
       !finiteOwnerTransform(owner.transform))) {
     return particleRejected(
       "integrity-failure",
@@ -620,7 +622,9 @@ function isNativeInstance(value: ParticleInstanceIdentity): boolean {
   if (value.kind === "game-play-button") {
     return Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
       (value.rangeLength === null || Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7) &&
-      value.ownerTransform.source === "game-play-button";
+      value.ownerTransform.source === "game-play-button" &&
+      Array.isArray(value.particleSystemSetupScaleFactorsBits) && value.particleSystemSetupScaleFactorsBits.length === 2 &&
+      value.particleSystemSetupScaleFactorsBits.every((factor) => positiveBits(factor) !== null);
   }
   return Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
     Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 && Number.isInteger(value.rangeLength) && value.rangeLength >= 1 &&

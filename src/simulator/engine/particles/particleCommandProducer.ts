@@ -805,6 +805,7 @@ function buttonInstance(
     rangeLength,
     ownerTransform: owner.transform,
     particleSystemSetupScaleBits: owner.particleSystemSetupScaleBits,
+    particleSystemSetupScaleFactorsBits: owner.particleSystemSetupScaleFactorsBits!,
   });
 }
 
@@ -909,6 +910,8 @@ function validOwnerScene(scene: ParticlePixiSceneProfile | null): scene is Parti
     const anchor = scene.buttonAnchors.find((candidate) => candidate.buttonType === owner.buttonType);
     if (seen.has(owner.buttonType) || anchor === undefined || owner.transform.source !== "game-play-button" ||
       !validOwnerTransform(owner.transform) || positiveBits(owner.particleSystemSetupScaleBits) === null ||
+      !Array.isArray(owner.particleSystemSetupScaleFactorsBits) || owner.particleSystemSetupScaleFactorsBits.length !== 2 ||
+      owner.particleSystemSetupScaleFactorsBits.some((value: string) => positiveBits(value) === null) ||
       owner.transform.position.xBits !== anchor.position.xBits ||
       owner.transform.position.yBits !== anchor.position.yBits ||
       owner.transform.position.zBits !== anchor.position.zBits ||

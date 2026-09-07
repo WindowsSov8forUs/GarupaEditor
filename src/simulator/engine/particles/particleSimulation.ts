@@ -29,6 +29,8 @@ import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
 import {
   applyNativeParticleMatrixVector,
+  applyNativeParticleSetupScale,
+  type ParticleSetupScale,
   applyNativeParticleWorldModuleVector,
   calculateNativeParticleEmitterOrigin,
   calculateNativeParticleHierarchyScale,
@@ -150,7 +152,7 @@ interface SimulatedParticle {
   readonly particleId: string;
   readonly creationSequence: number;
   readonly emitterOrigin: Vector3;
-  readonly particleSystemSetupScale: number;
+  readonly particleSystemSetupScale: ParticleSetupScale;
   readonly resetRootTransform: boolean;
   readonly ownerParents: readonly ParticleHierarchyPositionTransform[];
   age: number;
@@ -183,7 +185,7 @@ interface OwnerSystemRuntime {
 interface OwnerRuntime {
   readonly ownerKey: string;
   readonly generation: number;
-  readonly particleSystemSetupScale: number;
+  readonly particleSystemSetupScale: ParticleSetupScale;
   instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systems: Map<string, OwnerSystemRuntime>;
@@ -286,7 +288,7 @@ export class DeterministicParticleSimulation {
     const owner = this.owners.get(ownerKey);
     if (owner !== undefined) {
       if (owner.root !== root || !sameParticleInstance(owner.instance, instance) ||
-        owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
+        !sameParticleSetupScale(owner.particleSystemSetupScale, instanceParticleSystemSetupScale(instance, this.gameplayTransformScale))) {
         throw fault("particle.simulation.owner-identity-mismatch", "A live native ParticleSystem instance cannot switch owner/root identity during Stop/Clear/Play restart.");
       }
       // The managed routes execute Stop(withChildren) + Clear(withChildren)
@@ -320,7 +322,7 @@ export class DeterministicParticleSimulation {
       };
       this.owners.set(ownerKey, owner);
     } else if (owner.root !== root || !sameParticleInstance(owner.instance, instance) ||
-      owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
+      !sameParticleSetupScale(owner.particleSystemSetupScale, instanceParticleSystemSetupScale(instance, this.gameplayTransformScale))) {
       throw fault("particle.simulation.owner-identity-mismatch", "Incremental ParticleSystem activation requires the same stable root owner identity.");
     }
     const selected = [...new Set(selectedSystemIds)].map((identity) => {
@@ -575,7 +577,7 @@ export class DeterministicParticleSimulation {
       owner.instance.noteIndex !== instance.noteIndex ||
       owner.instance.absolutePosition !== instance.absolutePosition ||
       owner.instance.poolSlot !== instance.poolSlot || owner.instance.route !== instance.route ||
-      owner.particleSystemSetupScale !== instanceParticleSystemSetupScale(instance, this.gameplayTransformScale)) {
+      !sameParticleSetupScale(owner.particleSystemSetupScale, instanceParticleSystemSetupScale(instance, this.gameplayTransformScale))) {
       throw fault("particle.simulation.missing-slide-owner", "Slide root movement requires the exact active persistent owner.");
     }
     owner.instance = Object.freeze({ ...instance });
@@ -2200,8 +2202,8 @@ function limitVelocity(
 function parentSetupScale(
   definition: ParticleSystemDefinition,
   parentIndex: number,
-  gameplayTransformScale: number,
-): number {
+  gameplayTransformScale: ParticleSetupScale,
+): ParticleSetupScale {
   const flags = definition.parentParticleSystemFlags;
   return flags === undefined || flags[parentIndex] === true ? gameplayTransformScale : 1;
 }
@@ -2234,7 +2236,7 @@ function particleOwnerParents(instance: ParticleInstanceIdentity): readonly Part
 
 function particleRuntimeTransform(
   record: SystemRecord,
-  setupScale: number,
+  setupScale: ParticleSetupScale,
   resetRootTransform = false,
   ownerParents: readonly ParticleHierarchyPositionTransform[] = [],
 ): ParticleRuntimeTransform {
@@ -2247,7 +2249,7 @@ function particleRuntimeTransform(
   );
 }
 
-function positionedHierarchyTransform(transform: ParticleTransformProfile, setupScale: number, resetRootTransform = false) {
+function positionedHierarchyTransform(transform: ParticleTransformProfile, setupScale: ParticleSetupScale, resetRootTransform = false) {
   return {
     ...hierarchyTransform(transform, setupScale, resetRootTransform),
     // GamePlayButton.Setup -> 32BBB4C resets only the instantiated prefab root.
@@ -2259,7 +2261,7 @@ function positionedHierarchyTransform(transform: ParticleTransformProfile, setup
 function particleSizeScale(
   definition: ParticleSystemDefinition,
   scalingMode: 0 | 1,
-  gameplayTransformScale: number,
+  gameplayTransformScale: ParticleSetupScale,
   resetRootTransform = false,
 ): Vector3 {
   const self = hierarchyTransform(definition.transform, gameplayTransformScale, resetRootTransform && definition.parentTransforms.length === 0);
@@ -2269,13 +2271,12 @@ function particleSizeScale(
   return [...calculateNativeParticleHierarchyScale(self, parents)];
 }
 
-function hierarchyTransform(transform: ParticleTransformProfile, setupScale: number, resetRootTransform = false): ParticleHierarchyTransform {
+function hierarchyTransform(transform: ParticleTransformProfile, setupScale: ParticleSetupScale, resetRootTransform = false): ParticleHierarchyTransform {
   const rotation = transform.m_LocalRotation;
   const scale = transform.m_LocalScale;
   return {
     rotation: [f32(rotation.x), f32(rotation.y), f32(rotation.z), f32(rotation.w)],
-    scale: resetRootTransform ? [f32(setupScale), f32(setupScale), f32(setupScale)]
-      : [multiply(scale.x, setupScale), multiply(scale.y, setupScale), multiply(scale.z, setupScale)],
+    scale: applyNativeParticleSetupScale(resetRootTransform ? [1, 1, 1] : [scale.x, scale.y, scale.z], setupScale),
   };
 }
 
@@ -2363,6 +2364,10 @@ function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleIns
   if (left.kind === "game-clear" || right.kind === "game-clear") {
     return left.kind === "game-clear" && right.kind === "game-clear" && left.clearStatus === right.clearStatus;
   }
+  if (left.kind === "game-play-button" && right.kind === "game-play-button") {
+    return left.particleSystemSetupScaleFactorsBits?.[0] === right.particleSystemSetupScaleFactorsBits?.[0] &&
+      left.particleSystemSetupScaleFactorsBits?.[1] === right.particleSystemSetupScaleFactorsBits?.[1];
+  }
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
   return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
     left.poolSlot === right.poolSlot && left.route === right.route;
@@ -2383,7 +2388,18 @@ function sameOwnerTransform(
 function instanceParticleSystemSetupScale(
   instance: ParticleInstanceIdentity,
   legacyFallback: number,
-): number {
+): ParticleSetupScale {
+  if (instance.kind === "game-play-button") {
+    const factors = instance.particleSystemSetupScaleFactorsBits;
+    if (factors === undefined || factors.length !== 2) {
+      throw fault("particle.simulation.invalid-owner-setup-scale", "Button setup requires both original scale factors.");
+    }
+    const first = particleFloat32FromBits(factors[0]), second = particleFloat32FromBits(factors[1]);
+    if (first === null || second === null || first <= 0 || second <= 0) {
+      throw fault("particle.simulation.invalid-owner-setup-scale", "Button setup factors must be positive binary32.");
+    }
+    return [first, second];
+  }
   const value = instance.particleSystemSetupScaleBits === undefined
     ? legacyFallback
     : particleFloat32FromBits(instance.particleSystemSetupScaleBits);
@@ -2391,6 +2407,11 @@ function instanceParticleSystemSetupScale(
     throw fault("particle.simulation.invalid-owner-setup-scale", "Every current gameplay particle owner requires one positive binary32 ParticleSystem setup scale.");
   }
   return value;
+}
+
+function sameParticleSetupScale(left: ParticleSetupScale, right: ParticleSetupScale): boolean {
+  return typeof left === "number" ? left === right
+    : typeof right !== "number" && left[0] === right[0] && left[1] === right[1];
 }
 
 function particleConstructionKey(ownerKey: string, instance: ParticleInstanceIdentity): string {

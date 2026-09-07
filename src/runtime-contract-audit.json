@@ -10647,7 +10647,7 @@
     {
       "id": "RCB-0506",
       "file": "src/simulator/backends/particles/deterministicParticleBackend.ts",
-      "line": 572,
+      "line": 575,
       "marker": "integrity-failure-string",
       "symbol": "transitionRejected",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -10668,7 +10668,7 @@
     {
       "id": "RCB-0507",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 1150,
+      "line": 1152,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -11256,7 +11256,7 @@
     {
       "id": "RCB-0535",
       "file": "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
-      "line": 603,
+      "line": 605,
       "marker": "integrity-failure-string",
       "symbol": "positiveBits",
       "source": "\"integrity-failure\",",
@@ -23856,7 +23856,7 @@
     {
       "id": "RCB-1135",
       "file": "src/simulator/engine/particles/particleCommandProducer.ts",
-      "line": 1194,
+      "line": 1197,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -29883,7 +29883,7 @@
     {
       "id": "RCB-1422",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 287,
+      "line": 288,
       "marker": "integrity-failure-call",
       "symbol": "scaled",
       "source": ": integrityFailure(scaled.capability, scaled.requiredEvidence, scaled.boundary);",
@@ -29904,7 +29904,7 @@
     {
       "id": "RCB-1423",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 345,
+      "line": 346,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(start.capability, start.requiredEvidence, start.boundary);",
@@ -29925,7 +29925,7 @@
     {
       "id": "RCB-1424",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 348,
+      "line": 349,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(goal.capability, goal.requiredEvidence, goal.boundary);",
@@ -29946,7 +29946,7 @@
     {
       "id": "RCB-1425",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 383,
+      "line": 384,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"scene.slide-judge-profile-out-of-range\");",
@@ -29967,7 +29967,7 @@
     {
       "id": "RCB-1426",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 511,
+      "line": 512,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (moved.status !== \"ok\") throw new Error(moved.capability);",
@@ -29988,7 +29988,7 @@
     {
       "id": "RCB-1427",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 519,
+      "line": 520,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"scene.slide-judge-generation-unbounded\");",
@@ -30009,7 +30009,7 @@
     {
       "id": "RCB-1428",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 789,
+      "line": 796,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(created.capability);",
@@ -30030,7 +30030,7 @@
     {
       "id": "RCB-1429",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 810,
+      "line": 817,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",

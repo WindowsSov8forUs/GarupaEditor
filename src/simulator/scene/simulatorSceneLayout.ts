@@ -13,6 +13,7 @@ import {
 } from "./originalSurfaceLayout";
 import type { ParticlePixiSceneProfile } from "../backends/particleContracts";
 import { particleFloat32ToBits } from "../backends/particleValidation";
+import { calculateNativeParticleSetupFactors } from "../engine/particles/particleHierarchyScale";
 import type {
   RenderColor,
   RenderFloat32,
@@ -582,6 +583,10 @@ function createParticleScene(
   }
   const pixelsPerWorldUnitBits = particleFloat32ToBits(layout.camera.pixelsPerWorldUnit);
   const gameplayTransformScaleBits = particleFloat32ToBits(layout.gameplay.particleTransformScale);
+  const setupFactors = calculateNativeParticleSetupFactors(layout.gameplay.screenWidthAdjustRate,
+    layout.gameplay.normalizedNoteSize, layout.starUi.screenToSafeAreaRatio);
+  const firstSetupScaleBits = particleFloat32ToBits(setupFactors[0]);
+  const secondSetupScaleBits = particleFloat32ToBits(setupFactors[1]);
   const slideWidthScale = layout.gameplay.screenWidthAdjustRate < 1
     ? layout.gameplay.screenWidthAdjustRate
     : Math.fround(1);
@@ -594,6 +599,7 @@ function createParticleScene(
     layout.ui.screenToSafeChildScale / layout.camera.pixelsPerWorldUnit,
   ));
   if (pixelsPerWorldUnitBits === null || gameplayTransformScaleBits === null ||
+    firstSetupScaleBits === null || secondSetupScaleBits === null ||
     slideParticleSystemSetupScaleBits === null || slideOuterScaleBits === null ||
     gameClearAuthoredUiScaleBits === null || gameClearOwnerScaleBits === null) {
     return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
@@ -601,6 +607,7 @@ function createParticleScene(
   const resolvedButtonOwners = Object.freeze(buttonOwners.map((owner) => Object.freeze({
     ...owner,
     particleSystemSetupScaleBits: gameplayTransformScaleBits,
+    particleSystemSetupScaleFactorsBits: Object.freeze([firstSetupScaleBits, secondSetupScaleBits] as const),
   })));
   return ok(Object.freeze({
     viewportWidth: layout.surface.viewportWidth,
