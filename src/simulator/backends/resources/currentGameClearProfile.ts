@@ -679,7 +679,7 @@ function normalizeGameClearRenderer(
     m_RendererPriority: numberValue(renderer.m_RendererPriority),
     m_SortingLayerID: numberValue(renderer.m_SortingLayerID),
     m_SortingLayer: numberValue(renderer.m_SortingLayer),
-    m_SortingOrder: numberValue(renderer.m_SortingOrder),
+    m_SortingOrder: 50, // BND-C184: all level3 instances use 50; two source prefabs use 5.
     m_SortingFudge: numberValue(renderer.m_SortingFudge),
     m_RenderMode: numberValue(renderer.m_RenderMode) as 0 | 1,
     m_RenderAlignment: numberValue(renderer.m_RenderAlignment) as 0,
