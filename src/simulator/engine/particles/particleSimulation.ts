@@ -1557,7 +1557,7 @@ function currentActualRendererBounds(
   record: SystemRecord, profile: ParticleProfileDefinition, particles: readonly SimulatedParticle[],
   transform: ParticleRuntimeTransform,
 ): ParticleRenderSample["rendererWorldBounds"] {
-  if (record.bundle.key === "game-clear") return undefined;
+  // BND-C181/C182 include the game-clear source domain in the same native branches.
   const initial = getModule(record.bundle, profile, "InitialModule");
   if (initial === null) throw fault("particle.bounds.initial-module", "Actual bounds require their source InitialModule size curves.");
   const analytic = nativeParticlePrewarmAnalyticEligible(record.bundle, profile);
