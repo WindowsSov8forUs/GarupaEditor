@@ -1548,11 +1548,14 @@ function currentActualRendererBounds(
   if (initial === null) throw fault("particle.bounds.initial-module", "Actual bounds require their source InitialModule size curves.");
   const analytic = nativeParticlePrewarmAnalyticEligible(record.bundle, profile);
   const shape = getModule(record.bundle, profile, "ShapeModule");
-  // BND-C157/C161/C165: source zero-rotation shapes; motion remains a separate gap.
+  const force = getModule(record.bundle, profile, "ForceModule");
+  // BND-C167 adds source constant local force without Shape; other motion remains open.
   if (analytic && ((shape !== null && (![0, 4, 5, 8, 10].includes(shape.type) ||
     [shape.m_Rotation.x, shape.m_Rotation.y, shape.m_Rotation.z].some((value) => value !== 0) ||
     (shape.type === 4 && (shape.angle < 0 || shape.angle >= 45)) || (shape.type === 8 && shape.angle !== 0))) ||
-    getModule(record.bundle, profile, "VelocityModule") !== null || getModule(record.bundle, profile, "ForceModule") !== null ||
+    getModule(record.bundle, profile, "VelocityModule") !== null ||
+    (force !== null && (shape !== null || force.inWorldSpace || force.randomizePerFrame ||
+      [force.x, force.y, force.z].some((curve) => curve.minMaxState !== 0))) ||
     initial.gravityModifier.scalar !== 0)) return undefined;
   const renderer = record.bundle.rendererProfiles[profile.renderer]!;
   const size = getModule(record.bundle, profile, "SizeModule");
@@ -1577,7 +1580,8 @@ function currentActualRendererBounds(
     translation: [transform.localToWorld[12]!, transform.localToWorld[13]!, transform.localToWorld[14]!] as const,
   };
   const bounds = analytic ? shape === null
-    ? calculateNativeParticleLinearAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, settings)
+    ? calculateNativeParticleLinearAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, settings,
+      force === null ? null : [force.x, force.y, force.z])
     // C81 selector0/scalingMode0/1 prepares runtime336 as unit, separately from348.
     : calculateNativeParticleShapeAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, shape, [1, 1, 1], settings)
     : calculateNativeParticleActualBounds(particles, settings);

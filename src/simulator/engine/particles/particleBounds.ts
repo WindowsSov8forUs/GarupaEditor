@@ -94,13 +94,24 @@ function expandNativeParticleBounds(lo: readonly number[], hi: readonly number[]
   return [...lo.map((value) => sub(sub(value, pivot), radius)), ...hi.map((value) => add(add(value, pivot), radius))] as unknown as ParticleBoundsTuple;
 }
 
-/** BND-C157: analytic local bounds with disabled Shape/Velocity/Force and zero gravity. */
+/** BND-C157/C167: analytic local bounds with optional source constant local force. */
 export function calculateNativeParticleLinearAnalyticBounds(
   lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean, settings: BoundsSettings,
+  force: CurveAxes | null = null,
 ): ParticleBoundsTuple {
   const lifetimeMaximum = minMaxRange(lifetime)[1], speedRange = minMaxRange(speed);
   const distance = speedRange.map((value) => mul(value, lifetimeMaximum));
   const lo = [0, 0, Math.min(0, ...distance)], hi = [0, 0, Math.max(0, ...distance)];
+  if (force !== null) {
+    for (let axis = 0; axis < 3; axis++) {
+      const half = mul(force[axis]!.scalar, 0.5);
+      // Original 1044520 multiplies by lifetime twice, rounding after each operation.
+      const lower = mul(mul(Math.min(half, 0), lifetimeMaximum), lifetimeMaximum);
+      const upper = mul(mul(Math.max(half, 0), lifetimeMaximum), lifetimeMaximum);
+      lo[axis] = Math.min(lo[axis]!, add(lo[axis]!, lower));
+      hi[axis] = Math.max(hi[axis]!, add(hi[axis]!, upper));
+    }
+  }
   return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
 }
 
