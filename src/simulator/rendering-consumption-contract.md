@@ -549,3 +549,9 @@ Production bounds and mixed ordering remain unmodified by this evidence-only bat
 The production route is connected: platform composition creates the deterministic particle backend and Pixi particle renderer; simulation samples flow through `buildCurrentParticlePrimitives` into mesh preparation and commit. No bypass to the old simulation has been found. That callgraph fact does not prove appearance or explain all missing particles.
 
 Current ordinary scene/HUD and selected rendering/HUD/Skin gates remain `observational-gap`; Skin settings retains only its static portable resource-selection claim. All-Skin, final mixed composition and terminal particle presentation are not closed by old primitive digests. CS-V1 and Live Auto AP remain product semantics. Application/framebuffer execution is not part of this re-audit; TypeScript and contract checks are compile/integrity information only. No product tests, fixtures or harnesses are added or changed.
+
+### BND-C125: current source Local mesh basis
+
+Reverse `622557beb880e20a6a29ff0ca3fe8fe238f0773b` was verified and pushed before consumption. All146 source Local mesh objects join C109/C81 by resource, semantic identity and byte hashes. Their25 Transform chains, including nonidentity X rotations, feed original12AD7F4..12AD8C0 and complete12BC4AC through actual vertex/normal stores. All292 scalar/3D numeric cases (1168 vertices and1168 normals) match the complete sourceGeometry output; no algorithm modification was necessary. Corpus SHA `ADC87EDBB5610613A38F831F247CE52819FE580F9A99AE2C5B6EF3293A81BE37`.
+
+This closes these source-unit Local inputs only. Generic axis rotation is not asserted equivalent for arbitrary transforms. Current dynamic owner/setup, actual angle/storage/stream admission, View, outer publication, full lifecycle/bounds/sorting/HUD and aggregate parity remain OPEN. No tests/app/build/visuals.
