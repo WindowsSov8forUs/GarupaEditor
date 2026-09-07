@@ -39,6 +39,11 @@ const div = (a: number, b: number): number => f32(a / b);
 const words = new DataView(new ArrayBuffer(4));
 const numberFromBits = (value: number): number => { words.setUint32(0, value, true); return words.getFloat32(0, true); };
 
+/** BND-C173: metric1 for the gameplay camera at (0,0,-15), with reflected view Z. */
+export function calculateNativeParticleRendererSortDistance(center: Vector3, sortingFudge: number): number {
+  return sub(add(-15, add(add(mul(center[0], 0), mul(center[1], 0)), mul(center[2], -1))), sortingFudge);
+}
+
 /** BND-C147/C149: actual-particle branch, including the shared size/pivot tail. */
 export function calculateNativeParticleActualBounds(particles: readonly BoundsParticle[], settings: BoundsSettings): ParticleBoundsTuple {
   if (particles.length === 0) {

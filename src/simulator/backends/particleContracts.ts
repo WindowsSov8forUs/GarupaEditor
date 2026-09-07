@@ -833,6 +833,8 @@ export interface ParticleRenderSample {
   readonly sortingOrder: number;
   readonly sortingLayerId?: number;
   readonly sortingFudgeBits?: string;
+  /** Native camera distance minus sortingFudge, shared by all particles of a renderer. */
+  readonly rendererSortDistanceBits?: string;
   readonly rendererPriority?: number;
   readonly renderMode: 0 | 1 | 4;
   readonly renderAlignment: 0 | 2;

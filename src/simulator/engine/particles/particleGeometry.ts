@@ -47,6 +47,7 @@ export interface ParticleNativeRenderPrimitive {
   readonly sortingLayerId: number;
   readonly sortingOrder: number;
   readonly sortingFudge: number;
+  readonly sortingDistance: number;
   readonly rendererPriority: number;
   readonly renderMode: 0 | 1 | 4;
   readonly renderAlignment: 0 | 2;
@@ -90,7 +91,7 @@ export function buildCurrentParticlePrimitives(
   const systemSamples = new Map(samples.map((sample) => [`${sample.ownerKey}\u0000${sample.systemId}`, sample]));
   const primitives = samples.map((sample) => buildPrimitive(sample, bindings, scene));
   primitives.sort((left, right) => left.sortingLayerId - right.sortingLayerId ||
-    left.sortingOrder - right.sortingOrder || left.sortingFudge - right.sortingFudge ||
+    left.sortingOrder - right.sortingOrder || left.sortingDistance - right.sortingDistance ||
     left.rendererPriority - right.rendererPriority || left.ownerSortOrdinal - right.ownerSortOrdinal ||
     left.sourceOrdinal - right.sourceOrdinal || left.creationSequence - right.creationSequence);
   const grouped = new Map<string, ParticleNativeRenderPrimitive[]>();
@@ -239,6 +240,7 @@ function buildPrimitive(
     sortingLayerId: sample.sortingLayerId!,
     sortingOrder: sample.sortingOrder,
     sortingFudge,
+    sortingDistance: requiredBits(sample.rendererSortDistanceBits!),
     rendererPriority: sample.rendererPriority!,
     renderMode: sample.renderMode,
     renderAlignment: sample.renderAlignment,

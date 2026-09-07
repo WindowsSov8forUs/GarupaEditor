@@ -4,6 +4,18 @@ Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do
 
 Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `23827f847249b8336379ac12c23bfb2d7f09df44`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
+## SORT-01 — renderer distance prefix
+
+Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.
+
+Authority: Reverse `ce1b2033d81c49dacb9ff109c220ddcb31220d36`, verified and pushed before consumption. The unchanged `simulator-particle-bounds-calculation-10-1-4/particle_renderer_sort_distance.json` (SHA256 `6A780A7D929FB45B244B2CFCA7C3282011505089C36703682CD0B2C316915A92`) executes original81B464 metric1 and81A11C on unequal layer/order or distance keys, with the gameplay reflected-Z camera at `(0,0,-15)`.
+
+`DeterministicParticleSimulation.samples` computes the Float32 camera distance minus sortingFudge once per renderer from `currentActualRendererBounds`, publishes its bits, and orders samples by that distance after layer/order. `buildPrimitive` carries the same value into primitive sorting. This replaces lexicographic sortingFudge in both consumers. Original multiplication/addition/subtraction rounding order, including zero products, is preserved. C151's599 source inputs/1741 references, including1280 native-eligible references, never take the former undefined-bounds guard; that obsolete guard is removed without substituting a particle-position center. C109's seven source mesh profiles match four original Mesh cache identities.
+
+All91 distance bit patterns and180 comparisons per consumer agree, eliminating136 baseline differences;360 primitive distance transfers agree. Affected Slide and game-clear bounds wrappers (438/414 calls) and complete sample/world vertex-normal consumers (1410 View,540 Local and460 game-clear live rows) remain exact. Both noEmit checks and runtime audit1438 pass as compilation/integrity only.
+
+The comparison corpus fixes layer value0, queue3000 and explicit camera inputs, and excludes equal-key native ties. Source-domain/cache checks do not prove complete current cache or lifecycle occurrence. Frustum/group/override, current camera/material draw-record production, native final ties and ordinary/particle composition remain OPEN. No application, product tests, build or visual acceptance is used.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.
@@ -52,7 +64,7 @@ A bounded native extraction now executes the original eligibility predicate with
 
 Positive runtime invalidation paths are now bound: both SetParticles wrappers reach a core that writes runtimeData+34 before its count branch; Emit parameter/old and managed-job-handle paths contain conditional writers; the SubEmitters helper writes returned children's flags. Count emission and job scheduling have distinct targets. This is not an exhaustive alias/store inventory or proof that current owners never reach these paths, and does not close actual Play state or bounds.
 
-Current defect: particle preflight sorts primitives internally using layer ID/order/fudge/priority/owner/birth keys that do not implement this native comparator, but commit puts every mesh into one generation under the low stage. The high stage is empty, while `pixiCombinedScene` and ordinary sibling sorting still treat the mounts as separate fixed-depth siblings. Thus native sorting orders do not participate in ordinary/particle composition. This is a production integration gap, not an excluded GPU/driver difference.
+Current defect: particle preflight sorts primitives internally using layer ID/order/native distance/priority/owner/birth keys whose final ties do not implement the complete native comparator, but commit puts every mesh into one generation under the low stage. The high stage is empty, while `pixiCombinedScene` and ordinary sibling sorting still treat the mounts as separate fixed-depth siblings. Thus native sorting orders do not participate in ordinary/particle composition. This is a production integration gap, not an excluded GPU/driver difference.
 
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
