@@ -1548,9 +1548,10 @@ function currentActualRendererBounds(
   if (initial === null) throw fault("particle.bounds.initial-module", "Actual bounds require their source InitialModule size curves.");
   const analytic = nativeParticlePrewarmAnalyticEligible(record.bundle, profile);
   const shape = getModule(record.bundle, profile, "ShapeModule");
-  // BND-C157/C161: the remaining cone and motion branches stay explicit gaps.
-  if (analytic && ((shape !== null && (![0, 5, 10].includes(shape.type) ||
-    [shape.m_Rotation.x, shape.m_Rotation.y, shape.m_Rotation.z].some((value) => value !== 0))) ||
+  // BND-C157/C161/C165: source zero-rotation shapes; motion remains a separate gap.
+  if (analytic && ((shape !== null && (![0, 4, 5, 8, 10].includes(shape.type) ||
+    [shape.m_Rotation.x, shape.m_Rotation.y, shape.m_Rotation.z].some((value) => value !== 0) ||
+    (shape.type === 4 && (shape.angle < 0 || shape.angle >= 45)) || (shape.type === 8 && shape.angle !== 0))) ||
     getModule(record.bundle, profile, "VelocityModule") !== null || getModule(record.bundle, profile, "ForceModule") !== null ||
     initial.gravityModifier.scalar !== 0)) return undefined;
   const renderer = record.bundle.rendererProfiles[profile.renderer]!;

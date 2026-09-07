@@ -118,14 +118,17 @@ function finishNativeParticleAnalyticBounds(
   return expandNativeParticleBounds(lo, hi, settings);
 }
 
-/** BND-C161: source zero-rotation box/sphere/circle Shape, without force/velocity/gravity. */
+/** BND-C161/C165: source zero-rotation Shape, without force/velocity/gravity. */
 export function calculateNativeParticleShapeAnalyticBounds(
   lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean,
   shape: ParticleShapeModule, runtimeShapeScale: Vector3, settings: BoundsSettings,
 ): ParticleBoundsTuple {
   const speedRange = minMaxRange(speed), lifetimeMaximum = minMaxRange(lifetime)[1];
   const distances = speedRange.map((value) => mul(value, lifetimeMaximum));
-  const radius = f32(shape.radius.value);
+  let radius = f32(shape.radius.value);
+  const cone = shape.type === 4 || shape.type === 8;
+  const sine = cone ? nativeBoundsSine(mul(shape.angle, numberFromBits(0x3c8efa35))) : 0;
+  if (shape.type === 8) radius = add(radius, mul(shape.length, sine));
   const half = shape.type === 5 ? [0.5, 0.5, 0.5] : shape.type === 0 ? [radius, radius, radius] : [radius, radius, f32(0.1)];
   const shapeScale: Vector3 = [shape.m_Scale.x, shape.m_Scale.y, shape.m_Scale.z];
   const position: Vector3 = [shape.m_Position.x, shape.m_Position.y, shape.m_Position.z];
@@ -142,11 +145,16 @@ export function calculateNativeParticleShapeAnalyticBounds(
     }
     return [...lo, ...hi];
   };
-  const bounds = transform([...half.map((v) => -v), ...half], shapeScale, position)
+  // The registered cone-volume source has angle zero, so native sincosf stores0/1.
+  const sourceBounds = cone ? [-radius, -radius, -0, radius, radius, shape.type === 8 ? mul(shape.length, 1) : 0]
+    : [...half.map((v) => -v), ...half];
+  const bounds = transform(sourceBounds, shapeScale, position)
     .map((value, axis) => mul(value, runtimeShapeScale[axis % 3]!));
   const randomDirection = shape.randomDirectionAmount > 0;
-  const direction = transform(shape.type === 5 && !randomDirection ? [0, 0, 0, 0, 0, 1] : [-1, -1, -1, 1, 1, 1], [1, 1, 1], [0, 0, 0]);
-  if (randomDirection) { distances[0] = Math.abs(distances[0]!); distances[1] = Math.abs(distances[1]!); }
+  const directionBounds = cone && (!randomDirection || shape.type === 4) ? [-sine, -sine, 0, sine, sine, 1]
+    : shape.type === 5 && !randomDirection ? [0, 0, 0, 0, 0, 1] : [-1, -1, -1, 1, 1, 1];
+  const direction = transform(directionBounds, [1, 1, 1], [0, 0, 0]);
+  if (randomDirection && shape.type !== 4) { distances[0] = Math.abs(distances[0]!); distances[1] = Math.abs(distances[1]!); }
   const lo = bounds.slice(0, 3), hi = bounds.slice(3);
   for (let axis = 0; axis < 3; axis++) {
     lo[axis] = Math.min(lo[axis]!, add(lo[axis]!, mul(distances[1]!, direction[axis]!)));
@@ -156,6 +164,39 @@ export function calculateNativeParticleShapeAnalyticBounds(
     lo[axis] = Math.min(lo[axis]!, left, right); hi[axis] = Math.max(hi[axis]!, left, right);
   }
   return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
+}
+
+function nativeBoundsSine(value: number): number {
+  // C165 libm33C4C..7C, source arguments below pi/4. FMADD rounds once in binary64.
+  if (Math.abs(value) < 0.000244140625) return value;
+  const square = value * value, cube = square * value;
+  const upper = boundsMultiplyAdd64(square, -0.00019517298981385725, 0.008332178146138854);
+  return f32(boundsMultiplyAdd64(square * cube, upper, boundsMultiplyAdd64(cube, -0.16666654943701084, value)));
+}
+
+const boundsDoubleWord = new DataView(new ArrayBuffer(8));
+function boundsMultiplyAdd64(a: number, b: number, c: number): number {
+  // Exact finite significand accumulation, then one round-to-nearest-even.
+  // These source trigonometric operands do not overflow binary64.
+  const decompose = (value: number): readonly [bigint, number] => {
+    boundsDoubleWord.setFloat64(0, value, true);
+    const word = boundsDoubleWord.getBigUint64(0, true), exponent = Number((word >> 52n) & 0x7ffn);
+    let significand = (word & 0xfffffffffffffn) | (exponent === 0 ? 0n : 0x10000000000000n);
+    if ((word >> 63n) !== 0n) significand = -significand;
+    return [significand, exponent === 0 ? -1074 : exponent - 1075];
+  };
+  const [am, ae] = decompose(a), [bm, be] = decompose(b), [cm, ce] = decompose(c);
+  const exponent = Math.min(ae + be, ce);
+  const exact = (am * bm << BigInt(ae + be - exponent)) + (cm << BigInt(ce - exponent));
+  if (exact === 0n) return a * b + c;
+  const sign = exact < 0n ? -1 : 1, magnitude = exact < 0n ? -exact : exact;
+  const shift = Math.max(0, magnitude.toString(2).length - 53, -1074 - exponent);
+  let rounded = magnitude >> BigInt(shift);
+  if (shift > 0) {
+    const remainder = magnitude - (rounded << BigInt(shift)), halfway = 1n << BigInt(shift - 1);
+    if (remainder > halfway || (remainder === halfway && (rounded & 1n) !== 0n)) rounded += 1n;
+  }
+  return sign * Number(rounded) * 2 ** (exponent + shift);
 }
 
 /** BND-C153: ordinary renderer output is center/extents, not corner union. */
