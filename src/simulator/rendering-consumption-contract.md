@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Final stretch positions and default UV stores (BND-C101 / C102)
+
+Authority: Reverse `21c7225a0b678a5f1cf3f2c734f103d0739e82ba`, verified and pushed with remote `0 0` before consumption. `particle_stretch_output.json` SHA256 `5442EACC3E33418EC38F5B9C42E62237A01082BC26B124BDC755400FB5715300` continues the C97 prefix through the actual12C39C4 interleaved writer. The worker quad flag0x80000000 follows original107A0A8 preparation; C97's previous pre-output flags0 did not establish final vertex count. Descriptor stream-mask0, disabled UV/flip, white Color32 and normal coefficient0 are explicit input boundaries.
+
+All240 calls/960 native particle rows produce3840 vertices; every byte in each576-byte block is written natively and0/A5 dead-padding variants agree. Final position bytes equal the earlier native vertices. Actual production update/samples/stretchedBillboard/buildUvs has zero position/default-UV differences for792 admitted rows;168 age>100 probes remain separately recorded. No algorithm change is needed for this scope. This uses neutral material ST and exact default-UV Y reflection; current enabled UV/flip/stream selection, native normal coefficient and color/material producers, owner association, full worker loop/return, bounds/sorting/HUD remain OPEN. Documentation-only registration does not rerun compilation; no tests/app/build/visuals.
+
 ### Ordinary billboard endpoint visibility (BND-C99 / C100)
 
 Authority: Reverse `e2f36019f761a684a7f2b6608215eb6e3cc23c74`, verified and pushed with remote `0 0` before consumption. `billboard_age_visibility.json` SHA256 `388007D245657734688AD316329F988A24EE431DA2A789C04EF241797FC88345` executes continuous original size/limit/mask regions across all four billboard workers. The1770 distinct C34/C35 source inputs give7080 native calls/28320 lane results at percentage ages-0, predecessor100,100 and successor100. All four workers agree; successor100 is an arithmetic probe, not a current admission claim.
