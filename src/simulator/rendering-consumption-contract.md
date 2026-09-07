@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Source stretch texture-sheet output (BND-C103 / C104)
+
+Authority: Reverse `a31252b43c77f6bcc4653e4e580a5e64ab543f80`, verified and pushed with remote `0 0` before consumption. `particle_stretch_uv_output.json` SHA256 `68F0ACFC4DA2281711F39BA4A9BD3DD25D14A2D4B00EEFAA7F3257605357F70F` binds1741 fresh system roundtrips and286 enabled mode1 renderers to five UV configurations: enabled4x4/4x8/1x8 and disabled4x4/1x1. Original preparation, normalized-frame gather, full12C3738 and final12C39C4 execute58 native frame states, including both disabled defaults. All actual286 tile bindings and4517 source/frame buildUvs consumers match the native output; no algorithm edit is needed.
+
+This explicitly crosses one C97 motion/raw-size/camera row with dyadic integer frame inputs and neutral material ST. Current normalized-frame producer/storage, source cooccurrence, noninteger inputs, renderer flip/stream selection, material/custom shader and normal coefficient remain OPEN, together with full lifecycle/bounds/sorting/HUD. Documentation-only registration does not rerun compilation; no tests/app/build/visuals.
+
 ### Final stretch positions and default UV stores (BND-C101 / C102)
 
 Authority: Reverse `21c7225a0b678a5f1cf3f2c734f103d0739e82ba`, verified and pushed with remote `0 0` before consumption. `particle_stretch_output.json` SHA256 `5442EACC3E33418EC38F5B9C42E62237A01082BC26B124BDC755400FB5715300` continues the C97 prefix through the actual12C39C4 interleaved writer. The worker quad flag0x80000000 follows original107A0A8 preparation; C97's previous pre-output flags0 did not establish final vertex count. Descriptor stream-mask0, disabled UV/flip, white Color32 and normal coefficient0 are explicit input boundaries.
