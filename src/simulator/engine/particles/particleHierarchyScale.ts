@@ -11,6 +11,46 @@ export interface ParticleHierarchyTransform {
   readonly scale: Vector3;
 }
 
+export interface ParticleHierarchyPositionTransform extends ParticleHierarchyTransform {
+  readonly position: Vector3;
+}
+
+// Reverse BND-C81: 108834C, descriptor selector0, runtime translation+116.
+export function calculateNativeParticleEmitterOrigin(
+  self: ParticleHierarchyPositionTransform,
+  rootToImmediateParents: readonly ParticleHierarchyPositionTransform[],
+  scalingMode: 0 | 1,
+): Vector3 {
+  let position = self.position;
+  for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
+    const parent = rootToImmediateParents[index]!;
+    let rotated: Vector3;
+    if (scalingMode === 0) {
+      rotated = applyColumns(scaledColumns(parent), position);
+    } else {
+      // 1088AF4..1088B58: retain the delta columns and their subtraction
+      // order; adding identity to a rotation matrix first rounds differently.
+      const [x, y, z, w] = parent.rotation;
+      const x2 = mul(2, x); const nx2 = mul(-2, x);
+      const y2 = mul(2, y); const ny2 = mul(-2, y);
+      const z2 = mul(2, z); const nz2 = mul(-2, z);
+      const delta: Columns = [
+        [sub(mul(y, ny2), mul(z, z2)), sub(mul(x, y2), mul(w, nz2)), sub(mul(w, ny2), mul(x, nz2))],
+        [sub(mul(w, nz2), mul(y, nx2)), sub(mul(z, nz2), mul(x, x2)), sub(mul(y, z2), mul(w, nx2))],
+        [sub(mul(z, x2), mul(w, ny2)), sub(mul(w, nx2), mul(z, ny2)), sub(mul(x, nx2), mul(y, y2))],
+      ];
+      const scaled: Vector3 = [mul(position[0], parent.scale[0]), mul(position[1], parent.scale[1]), mul(position[2], parent.scale[2])];
+      const component = (axis: 0 | 1 | 2) => add(
+        add(scaled[axis], mul(delta[0][axis], scaled[0])),
+        add(mul(delta[1][axis], scaled[1]), mul(delta[2][axis], scaled[2])),
+      );
+      rotated = [component(0), component(1), component(2)];
+    }
+    position = [add(parent.position[0], rotated[0]), add(parent.position[1], rotated[1]), add(parent.position[2], rotated[2])];
+  }
+  return position;
+}
+
 export function calculateNativeParticleHierarchyScale(
   self: ParticleHierarchyTransform,
   rootToImmediateParents: readonly ParticleHierarchyTransform[],

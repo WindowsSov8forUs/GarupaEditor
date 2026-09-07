@@ -27,7 +27,7 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
-import { calculateNativeParticleHierarchyScale, type ParticleHierarchyTransform } from "./particleHierarchyScale";
+import { calculateNativeParticleEmitterOrigin, calculateNativeParticleHierarchyScale, type ParticleHierarchyTransform } from "./particleHierarchyScale";
 import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
@@ -923,14 +923,17 @@ export class DeterministicParticleSimulation {
     const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
     let position: Vector3 = birth.position;
     let velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
-    let emitterOrigin: Vector3 = [0, 0, 0];
     const particleSystemSetupScale = owner.particleSystemSetupScale;
-    emitterOrigin = applyTransform(emitterOrigin, record.definition.transform, true, particleSystemSetupScale);
-    for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {
-      const parent = record.definition.parentTransforms[index]!;
-      const setupScale = parentSetupScale(record.definition, index, particleSystemSetupScale);
-      emitterOrigin = applyTransform(emitterOrigin, parent, true, setupScale);
-    }
+    const positionedTransform = (transform: ParticleTransformProfile, setupScale: number) => ({
+      ...hierarchyTransform(transform, setupScale),
+      position: [f32(transform.m_LocalPosition.x), f32(transform.m_LocalPosition.y), f32(transform.m_LocalPosition.z)] as Vector3,
+    });
+    const emitterOrigin = calculateNativeParticleEmitterOrigin(
+      positionedTransform(record.definition.transform, particleSystemSetupScale),
+      record.definition.parentTransforms.map((parent, index) =>
+        positionedTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale))),
+      profile.system.scalingMode,
+    );
     position = applyTransform(position, record.definition.transform, true, particleSystemSetupScale);
     velocity = applyTransform(velocity, record.definition.transform, false, particleSystemSetupScale);
     for (let index = record.definition.parentTransforms.length - 1; index >= 0; index -= 1) {

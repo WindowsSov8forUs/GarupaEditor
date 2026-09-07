@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Source Transform emitter origin (BND-C81/C82)
+
+Reverse `8b83a2d5966c9d493e37d2e42c526b28de33140b` was verified, pushed and confirmed remote0 0 before consumption. Fresh1,741 systems bind316 distinct serialized Transform chains/scaling modes. Complete108834C with explicit descriptor selector0 produces seven runtime fields;632 native calls verify unused fourth-lane padding invariance. Selector0 is not a direct simulationSpace enum or a current Shape source-object selection assertion.
+
+Actual complete production spawn now copies self translation and follows the original parent-position arithmetic: mode0 uses scaled matrix columns; mode1 preserves quaternion delta-column subtraction and ordered Float32 additions. All316 emitter origins match native localToWorld translation, eliminating24 baseline component differences. Explicit unit setup scale, zero initial age and a registered InitialModule used to reach spawn bound this comparison; unrelated modules are disabled, without claiming source co-occurrence.
+
+Particle position/velocity simulation-space ownership, world-center projection and the remaining six runtime fields, current instantiated/reparented/setup-scale state, selector1/2 and full lifecycle/rendering remain **OPEN**. This repair closes the measured origin calculation only. Prior analytic reconstruction88 calls/164 rows plus104 queues, analytic motion16/74, ordinary Velocity190/760 and Force30/120 retain zero differences. Both noEmit checks and runtime audit1438 pass as compile/integrity information. No product tests/app/build/visuals.
+
 ### Ordinary constant Force ownership (BND-C79/C80)
 
 Authority: Reverse `f53af19c4b36c47182acc1398f366af0fd5877f7`, `particle_force_update.json` SHA256 `92EB8AA3CF471B57BDC707FCFF3DF69C191966B793C152E9D9D6105576A0E33D`, verified and pushed before consumption. Fresh1,741 source roundtrips bindtwo enabled Force systems/one constant(0,5,0) configuration with randomizePerFrame=false. Complete103FB08/107D950 and three consecutive bounded108AF6C integrations produce30 calls/120 particle-frame rows; actual complete production updateParticle already agrees.
