@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available at `72850a862bbf26db30b35d57504fd332dfb83271`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `e001c0c65c39a1fed554efc8d40ddb5bf5b83c02`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Ordinary full spawn and initial speed (BND-C89/C90)
+
+Authority: Reverse `e001c0c65c39a1fed554efc8d40ddb5bf5b83c02`, verified/pushed with remote0 0 before consumption. `simulator-particle-bounds-calculation-10-1-4/particle_birth_speed.json` has SHA256 `017BA852E27057FE71B41DEB196F598752451182B708461B5A3613AF67736A59`.
+
+Complete original1091C7C/103DB48 consumes native C61 stored particle seeds and all559 source Initial speed configurations (422 constant,137 two-constant). Actual complete production spawn, Initial SIMD draws/buildBirthRandomSample and native Shape directions agree for1,122 native calls/4,488 lanes: seed, inverse lifetime, source size/color/rotation fields, local position and speed-scaled direction. No additional algorithm change is required. This extends C61's property-expression gate to the full spawn method at initialAge0.
+
+Each explicit lane starts with empty product SoA, respecting source capacities1..3 without overriding maxNumParticles; this does not establish four simultaneous live admissions. Native box/Initial combinations, identity/unit setup and source phase inputs are an explicit arithmetic domain. Capacity admission, complete108C5B8 birth scheduling, current phase/seed/owner overrides, inherited velocity, optional orientation and later module/render coupling remain OPEN. Source randomizeRotationDirection is0 in all559 configurations; arbitrary overrides are not asserted. No product expected/stubs/tests/app/build/visuals.
+
 ### World velocity publication (BND-C87/C88)
 
 Authority: Reverse `f8752385494de549353ea8dd149ec0da0699987c` and auditor binding follow-up `6c05439b1d93a497bf8565e811638eebae870305`, both verified/pushed before consumption. `simulator-particle-bounds-calculation-10-1-4/particle_world_velocity.json` has SHA256 `F59D1EC08FF59052DB7E41C622E4E6A5F549259020D33C58EF77CC8D15FBB4E2`.
@@ -118,7 +126,7 @@ Reverse `ebc899b339f06e50350f7d295433bdcea7fbce9e` was verified, pushed and conf
 
 Actual complete spawn now constructs the native mode0 scaled hierarchy matrix or mode1 unnormalized composed-quaternion matrix with self scale, then evaluates X+(Y+(Z+translation)). All2,528 birth positions agree bitwise, eliminating2,724 baseline component differences. Emitter origins316, radial Shape4,608 rows/2,016 RNG states, Initial4,488 rows/2,244 states/192 phases and prior analytic reconstruction/motion gates retain zero differences.
 
-This is a zero-initial-age, unit-setup, pre-pivot world-position gate. Production still stores world position and transforms velocity before later integration; native local SoA/module integration and later projection remain **OPEN**, along with current Transform mutation, selector1/2, camera-forward/pivot offsets, other renderers and full lifecycle. No product tests/app/build/visuals.
+This is a zero-initial-age, unit-setup, pre-pivot world-position gate. At this historical gate production stored world position and transformed velocity before integration. BND-C85/C86 subsequently closes source-local integration and later position projection; BND-C87/C88 closes the conditional world-velocity representation. Current Transform mutation, selector1/2, camera-forward/pivot offsets, other renderer consumption and full lifecycle remain **OPEN**. No product tests/app/build/visuals.
 
 ### Source Transform emitter origin (BND-C81/C82)
 
@@ -126,7 +134,7 @@ Reverse `8b83a2d5966c9d493e37d2e42c526b28de33140b` was verified, pushed and conf
 
 Actual complete production spawn now copies self translation and follows the original parent-position arithmetic: mode0 uses scaled matrix columns; mode1 preserves quaternion delta-column subtraction and ordered Float32 additions. All316 emitter origins match native localToWorld translation, eliminating24 baseline component differences. Explicit unit setup scale, zero initial age and a registered InitialModule used to reach spawn bound this comparison; unrelated modules are disabled, without claiming source co-occurrence.
 
-Particle position/velocity simulation-space ownership, world-center projection and the remaining six runtime fields, current instantiated/reparented/setup-scale state, selector1/2 and full lifecycle/rendering remain **OPEN**. This repair closes the measured origin calculation only. Prior analytic reconstruction88 calls/164 rows plus104 queues, analytic motion16/74, ordinary Velocity190/760 and Force30/120 retain zero differences. Both noEmit checks and runtime audit1438 pass as compile/integrity information. No product tests/app/build/visuals.
+Later BND-C83..C88 separately closes the declared source-local matrix/integration/publication domains. Other runtime fields, current instantiated/reparented/setup-scale state, selector1/2 and full lifecycle/rendering remain **OPEN**. This repair closes the measured origin calculation only. Prior analytic reconstruction88 calls/164 rows plus104 queues, analytic motion16/74, ordinary Velocity190/760 and Force30/120 retain zero differences. Both noEmit checks and runtime audit1438 pass as compile/integrity information. No product tests/app/build/visuals.
 
 ### Ordinary constant Force ownership (BND-C79/C80)
 
