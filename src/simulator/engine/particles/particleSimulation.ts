@@ -1500,6 +1500,14 @@ function sampleParticleGradientCache(cache: ParticleGradientCache, time: number)
 
 function lifetimeColorToBytes(value: ParticleMinMaxGradient, time: number, ratio: number): ColorBytes {
   if (value.minMaxState === 1) return sampleParticleGradientCache(nativeParticleGradientCache(value.maxGradient), time);
+  if (value.minMaxState === 3) {
+    // BND-C60: interpolate the two sampled Color32 caches with an integer weight.
+    const minimum = sampleParticleGradientCache(nativeParticleGradientCache(value.minGradient), time);
+    const maximum = sampleParticleGradientCache(nativeParticleGradientCache(value.maxGradient), time);
+    const weight = Math.trunc(multiply(ratio, 255));
+    return minimum.map((left, channel) =>
+      (left + ((128 + weight * (maximum[channel]! - left)) >> 8)) & 255) as ColorBytes;
+  }
   return colorToBytes(minMaxColor(value, time, ratio));
 }
 
