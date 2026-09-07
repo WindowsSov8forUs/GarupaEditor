@@ -62,6 +62,14 @@ export function calculateNativeStretchNormals(side: Vector3, longitudinal: Vecto
   return [perimeter[0]!, perimeter[1]!, perimeter[3]!, perimeter[2]!];
 }
 
+// BND-C137: mode0 scales the source cosine by the native 1/sqrt(2)
+// literal. The writer consumes the first two native perimeter offsets.
+export function calculateNativeBillboardNormals(first: Vector3, second: Vector3, normalDirection: number): readonly Vector3[] {
+  const cosine = f32(Math.cos(f32(f32(f32(normalDirection) * 90) * fromBits(0x3c8efa35))));
+  const perimeter = calculateNativeParticleQuadNormals(first, second, f32(cosine * fromBits(0x3f3504f3)));
+  return [perimeter[3]!, perimeter[2]!, perimeter[0]!, perimeter[1]!];
+}
+
 /** Native perimeter order shared by the original quad writer. */
 export function calculateNativeParticleQuadNormals(side: Vector3, longitudinal: Vector3, coefficient: number): readonly Vector3[] {
   const u = normalizeStretchNormalAxis(side, [1, 0, 0]);

@@ -14,7 +14,7 @@ import type {
   ParticleTransformProfile,
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
-import { calculateNativeStretchArithmetic, calculateNativeStretchNormals } from "./particleStretchedGeometry";
+import { calculateNativeStretchArithmetic, calculateNativeStretchNormals, calculateNativeBillboardNormals } from "./particleStretchedGeometry";
 import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices, calculateNativeMeshMatrixColumns } from "./particleMeshGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
@@ -308,11 +308,7 @@ function sourceGeometry(
   } else {
     basis = viewBillboardBasis(sample);
   }
-  const particleRotation = eulerQuaternion(rotation);
   const pivot = binding.renderer.m_Pivot;
-  const canonical: readonly Vector3[] = [
-    [-0.5, -0.5, 0], [0.5, -0.5, 0], [-0.5, 0.5, 0], [0.5, 0.5, 0],
-  ];
   const complexBillboard = hasSignificantBillboardPivot(pivot) || hasBillboardSizeAxes(binding);
   const coordinates = complexBillboard
     ? billboardPivotCoordinates(sample, halfSize, pivot)
@@ -321,19 +317,18 @@ function sourceGeometry(
     ? billboardRotationBasis(binding, basis, rotation)
     : basis;
   const simpleDiagonals = complexBillboard ? undefined : simpleBillboardDiagonals(binding, basis, rotation, halfSize);
-  // The normal stream has its own native consumer; BND-C33 binds positions.
-  const normalBasis = alignmentBasis(binding);
-  const billboardNormal = rendererNormal(
-    normalizeOr(applyBasis(quaternionRotate([0, 0, -1], particleRotation), normalBasis), [0, 0, -1]),
-    binding.renderer.m_NormalDirection,
-  );
+  const vertices = simpleDiagonals === undefined
+    ? coordinates.map((vertex) => applyBasis(vertex, positionBasis))
+    : calculateNativeBillboardVertices([0, 0, 0], simpleDiagonals);
+  // BND-C137: complex normals include the raw pivot through native offsets.
+  // Simple workers pass their diagonals directly, preserving signed zeros.
+  const normalOffsets = simpleDiagonals ?? [vertices[2]!, vertices[3]!];
+  const normals = calculateNativeBillboardNormals(normalOffsets[0]!, normalOffsets[1]!, binding.renderer.m_NormalDirection);
   return Object.freeze({
-    vertices: Object.freeze(simpleDiagonals === undefined
-      ? coordinates.map((vertex) => applyBasis(vertex, positionBasis))
-      : calculateNativeBillboardVertices([0, 0, 0], simpleDiagonals)),
+    vertices: Object.freeze(vertices),
     simpleDiagonals,
     uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
-    normals: Object.freeze(canonical.map(() => billboardNormal)),
+    normals: Object.freeze(normals),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
 }
@@ -519,14 +514,6 @@ function nativeStretchCameraVelocity(sample: ParticleRenderSample, ownerTransfor
   const columns = sample.simulationToWorld.map((column) => applyBasis(bitsVector3(column), ownerToCamera)) as unknown as readonly [Vector3, Vector3, Vector3];
   const velocity = applyBasis(bitsVector3(sample.simulationVelocity), columns);
   return [subtract(velocity[0], 0), subtract(velocity[1], 0), subtract(velocity[2], 0)];
-}
-
-function rendererNormal(base: Vector3, normalDirection: number): Vector3 {
-  const ratio = Math.max(0, Math.min(1, f32(normalDirection)));
-  return normalizeOr(addVector(
-    scaleVector(base, subtract(1, ratio)),
-    scaleVector([0, 0, -1], ratio),
-  ), [0, 0, -1]);
 }
 
 function localBillboardBasis(
