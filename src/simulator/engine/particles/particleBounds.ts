@@ -1,4 +1,4 @@
-import type { ParticleAnimationCurve, ParticleMinMaxCurve } from "../../backends/particleContracts";
+import type { ParticleAnimationCurve, ParticleMinMaxCurve, ParticleShapeModule } from "../../backends/particleContracts";
 import estimateTable from "./arm64ReciprocalSqrtEstimate.json";
 
 type Vector3 = readonly [number, number, number];
@@ -116,6 +116,46 @@ function finishNativeParticleAnalyticBounds(
     for (let axis = 0; axis < 3; axis++) { lo[axis] = sub(lo[axis]!, stretch); hi[axis] = add(hi[axis]!, stretch); }
   }
   return expandNativeParticleBounds(lo, hi, settings);
+}
+
+/** BND-C161: source zero-rotation box/sphere/circle Shape, without force/velocity/gravity. */
+export function calculateNativeParticleShapeAnalyticBounds(
+  lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean,
+  shape: ParticleShapeModule, runtimeShapeScale: Vector3, settings: BoundsSettings,
+): ParticleBoundsTuple {
+  const speedRange = minMaxRange(speed), lifetimeMaximum = minMaxRange(lifetime)[1];
+  const distances = speedRange.map((value) => mul(value, lifetimeMaximum));
+  const radius = f32(shape.radius.value);
+  const half = shape.type === 5 ? [0.5, 0.5, 0.5] : shape.type === 0 ? [radius, radius, radius] : [radius, radius, f32(0.1)];
+  const shapeScale: Vector3 = [shape.m_Scale.x, shape.m_Scale.y, shape.m_Scale.z];
+  const position: Vector3 = [shape.m_Position.x, shape.m_Position.y, shape.m_Position.z];
+  const transform = (bounds: readonly number[], scale: Vector3, translation: Vector3): number[] => {
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    // 76F720 retains corner order and translation + ((X + Y) + Z).
+    for (const corner of [[0, 1, 2], [3, 1, 2], [3, 4, 2], [0, 4, 2], [0, 1, 5], [3, 1, 5], [3, 4, 5], [0, 4, 5]]) {
+      for (let axis = 0; axis < 3; axis++) {
+        const terms = corner.map((index, column) => mul(mul(axis === column ? 1 : 0, scale[column]!), bounds[index]!));
+        const value = add(translation[axis]!, add(add(terms[0]!, terms[1]!), terms[2]!));
+        if (value < lo[axis]!) lo[axis] = value;
+        if (hi[axis]! < value) hi[axis] = value;
+      }
+    }
+    return [...lo, ...hi];
+  };
+  const bounds = transform([...half.map((v) => -v), ...half], shapeScale, position)
+    .map((value, axis) => mul(value, runtimeShapeScale[axis % 3]!));
+  const randomDirection = shape.randomDirectionAmount > 0;
+  const direction = transform(shape.type === 5 && !randomDirection ? [0, 0, 0, 0, 0, 1] : [-1, -1, -1, 1, 1, 1], [1, 1, 1], [0, 0, 0]);
+  if (randomDirection) { distances[0] = Math.abs(distances[0]!); distances[1] = Math.abs(distances[1]!); }
+  const lo = bounds.slice(0, 3), hi = bounds.slice(3);
+  for (let axis = 0; axis < 3; axis++) {
+    lo[axis] = Math.min(lo[axis]!, add(lo[axis]!, mul(distances[1]!, direction[axis]!)));
+    hi[axis] = Math.max(hi[axis]!, add(hi[axis]!, mul(distances[1]!, direction[axis + 3]!)));
+    // The lower-distance interval is unioned directly, without adding Shape position.
+    const left = mul(direction[axis]!, distances[0]!), right = mul(direction[axis + 3]!, distances[0]!);
+    lo[axis] = Math.min(lo[axis]!, left, right); hi[axis] = Math.max(hi[axis]!, left, right);
+  }
+  return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
 }
 
 /** BND-C153: ordinary renderer output is center/extents, not corner union. */
