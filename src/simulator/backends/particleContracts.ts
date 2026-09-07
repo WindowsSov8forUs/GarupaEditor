@@ -803,6 +803,10 @@ export interface ParticleRenderSample {
   readonly creationSequence: number;
   readonly position: ParticleFloat32Vector3;
   readonly velocity: ParticleFloat32Vector3;
+  /** Native gathered local velocity, before the renderer composes camera matrices. */
+  readonly simulationVelocity?: ParticleFloat32Vector3;
+  /** Columns of the native runtime velocity transform; shared by a system's samples. */
+  readonly simulationToWorld?: readonly [ParticleFloat32Vector3, ParticleFloat32Vector3, ParticleFloat32Vector3];
   readonly size: ParticleFloat32Vector3;
   /** Current particle size before Transform scaling; Local billboard basis owns that scaling. */
   readonly sizeBeforeTransform?: ParticleFloat32Vector3;

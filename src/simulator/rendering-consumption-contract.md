@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `99f3153939c9331b5788fdf377bd831f12b7840a`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `223760858177031b3d9c613ffa23a01d669143e4`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -57,6 +57,14 @@ Current defect: particle preflight sorts primitives internally using layer ID/or
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
+
+### Non-Freeform camera velocity composition (BND-C93 / C94)
+
+Reverse `223760858177031b3d9c613ffa23a01d669143e4` was verified, committed and pushed with clean remote `0 0` before consumption. `particle_stretch_camera_velocity.json` SHA256 `7BB3B89F8BE65E101FB0D60DFA99CE3850EF9F95E946B3C5DF7AE740A4E73998` executes actual12C814C..12C81F8 matrix composition and12C8C00..12C8CE4 non-Freeform velocity projection, fed by full12C7034 native gather, C36 camera and C81 runtime matrices. The stationary camera/identity outer-owner scope covers24 source matrix/Velocity configurations,240 calls and960 lanes.
+
+Production now retains gathered simulation-space velocity and native runtime basis columns in internal render samples. Stretch composes the camera basis with those columns before the Float32X+(Y+Z) sum and stationary-camera subtraction. World velocity remains separately published. The actual update/samples/geometry-helper audit reports zero differences; previously90 cameraZ values were negative zero where native emitted positive zero. This follows the native matrix arithmetic rather than canonicalizing zeros. Size1728, worldVelocity960 and localMotion22752 rows remain zero; both noEmit checks and runtime integrity audit1438 pass.
+
+The arithmetic gate uses the original source-system/camera cross-product and identity outer owner; current owner matrix construction/association for nonidentity owners remains **OPEN**, as do actual source co-occurrence and camera mutations. Full non-Freeform position, size limits, normal/UV/material streams, lifecycle/bounds/sorting and complete rendering remain open. The new optional fields belong to internal ParticleRenderSample; Public13/transport3 are unchanged. No tests, application, build or visuals.
 
 ### Complete lifetime SizeModule output (BND-C91 / C92)
 

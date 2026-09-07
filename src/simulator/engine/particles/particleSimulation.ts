@@ -651,6 +651,10 @@ export class DeterministicParticleSimulation {
         const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
           positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale)));
         const runtimeTransform = calculateNativeParticleRuntimeTransform(emitterTransform, parentTransforms, profile.system.scalingMode);
+        const simulationToWorld = Object.freeze([0, 4, 8].map((offset) => vectorBits([
+          runtimeTransform.localToWorld[offset]!, runtimeTransform.localToWorld[offset + 1]!,
+          runtimeTransform.localToWorld[offset + 2]!,
+        ]))) as NonNullable<ParticleRenderSample["simulationToWorld"]>;
         for (const particle of runtime.particles) {
           const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
@@ -704,6 +708,8 @@ export class DeterministicParticleSimulation {
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
             velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
+            simulationVelocity: vectorBits(particle.renderVelocity),
+            simulationToWorld,
             size: vectorBits(size),
             sizeBeforeTransform,
             transformSize: vectorBits(transformSize),

@@ -181,12 +181,11 @@ function buildPrimitive(
   const worldCenter = transformPoint(localCenter, transform);
   const size = bitsVector3(sample.size);
   const rotation = bitsVector3(sample.rotation);
-  const velocity = transformVector(bitsVector3(sample.velocity), transform);
   const outerScale = bitsVector3(transform.scale);
   const outerRotation = bitsQuaternion(transform.rotation);
   const isStretched = binding.renderer.m_RenderMode === 1;
   const source = isStretched
-    ? stretchedBillboard(binding, size, velocity, worldCenter, outerScale, scene)
+    ? stretchedBillboard(binding, size, sample, transform, worldCenter, outerScale, scene)
     : sourceGeometry(binding, size, rotation, sample, scene);
   const offsets = isStretched ? source.vertices : (source.simpleDiagonals ?? source.vertices).map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
@@ -439,7 +438,8 @@ function billboardHalfSize(
 function stretchedBillboard(
   binding: GeometryBinding,
   size: Vector3,
-  velocity: Vector3,
+  sample: ParticleRenderSample,
+  ownerTransform: ParticleOwnerTransform,
   worldCenter: Vector3,
   outerScale: Vector3,
   scene: ParticlePixiSceneProfile,
@@ -463,7 +463,7 @@ function stretchedBillboard(
   const halfWidth = multiply(size[0], divide(multiply(Math.min(maximumSize, maximumSourceSize), 0.5), maximumSize));
   const arithmetic = calculateNativeStretchArithmetic({
     cameraPosition,
-    cameraVelocity: [velocity[0], velocity[1], -velocity[2]],
+    cameraVelocity: nativeStretchCameraVelocity(sample, ownerTransform),
     sizeY: size[1],
     scaledLength: multiply(binding.renderer.m_LengthScale, outerScale[0]),
     velocityScale: binding.renderer.m_VelocityScale,
@@ -489,6 +489,24 @@ function stretchedBillboard(
     normals: Object.freeze([normal, normal, normal, normal]),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
+}
+
+function nativeStretchCameraVelocity(sample: ParticleRenderSample, ownerTransform: ParticleOwnerTransform): Vector3 {
+  if (sample.simulationVelocity === undefined || sample.simulationToWorld === undefined) {
+    throw fault("particle.geometry.stretch-velocity", "Native stretch requires the gathered simulation velocity and its matrix columns.");
+  }
+  // BND-C93, 12C814C..12C81F8 and 12C8C00..12C8CE4. Compose
+  // camera/local columns first; reflecting an already summed world velocity
+  // loses the original zero terms and their signs. Current camera is stationary.
+  const view: readonly [Vector3, Vector3, Vector3] = [[1, 0, 0], [0, 1, 0], [0, 0, -1]];
+  const ownerToCamera = [
+    applyBasis(transformVector([1, 0, 0], ownerTransform), view),
+    applyBasis(transformVector([0, 1, 0], ownerTransform), view),
+    applyBasis(transformVector([0, 0, 1], ownerTransform), view),
+  ] as const;
+  const columns = sample.simulationToWorld.map((column) => applyBasis(bitsVector3(column), ownerToCamera)) as unknown as readonly [Vector3, Vector3, Vector3];
+  const velocity = applyBasis(bitsVector3(sample.simulationVelocity), columns);
+  return [subtract(velocity[0], 0), subtract(velocity[1], 0), subtract(velocity[2], 0)];
 }
 
 function rendererNormal(base: Vector3, normalDirection: number): Vector3 {
