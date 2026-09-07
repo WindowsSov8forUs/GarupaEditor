@@ -183,7 +183,7 @@ function buildPrimitive(
   const worldCenter = particleWorldCenter(sample, transform);
   const size = bitsVector3(sample.size);
   const rotation = bitsVector3(sample.rotation);
-  const outerScale = bitsVector3(transform.scale);
+  const outerScale: Vector3 = sample.nativeOwnerHierarchy === true ? [1, 1, 1] : bitsVector3(transform.scale);
   const outerRotation = bitsQuaternion(transform.rotation);
   const isStretched = binding.renderer.m_RenderMode === 1;
   const hasIdentityOwner = outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
@@ -510,9 +510,9 @@ function nativeStretchCameraVelocity(sample: ParticleRenderSample, ownerTransfor
   // loses the original zero terms and their signs. Current camera is stationary.
   const view: readonly [Vector3, Vector3, Vector3] = [[1, 0, 0], [0, 1, 0], [0, 0, -1]];
   const ownerToCamera = [
-    applyBasis(transformVector([1, 0, 0], ownerTransform), view),
-    applyBasis(transformVector([0, 1, 0], ownerTransform), view),
-    applyBasis(transformVector([0, 0, 1], ownerTransform), view),
+    applyBasis(sample.nativeOwnerHierarchy === true ? [1, 0, 0] : transformVector([1, 0, 0], ownerTransform), view),
+    applyBasis(sample.nativeOwnerHierarchy === true ? [0, 1, 0] : transformVector([0, 1, 0], ownerTransform), view),
+    applyBasis(sample.nativeOwnerHierarchy === true ? [0, 0, 1] : transformVector([0, 0, 1], ownerTransform), view),
   ] as const;
   const columns = sample.simulationToWorld.map((column) => applyBasis(bitsVector3(column), ownerToCamera)) as unknown as readonly [Vector3, Vector3, Vector3];
   const velocity = applyBasis(bitsVector3(sample.simulationVelocity), columns);
