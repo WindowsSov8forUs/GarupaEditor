@@ -58,6 +58,14 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Complete mesh inverse and source normal output (BND-C117 / C119 / C123 / C124)
+
+Reverse `9fb0aa7cce9c79ea4b4f78b45f626acf6cf9fbd4` was verified and pushed at remote0 0 before consumption. C117 original inverse/normal stores and C119 partition bind the implementation; C123 `particle_mesh_inverse_probes.json` SHA256 `89A052C378D09D5A52B10FB79A5C572AE12F3CF663AE6223DAC059380B0AA1C7` adds316 native source Transform matrices and18 explicit finite nonorthogonal/rank0/rank1/rank2/near-singular/scale probes. No source mesh dispatcher association is inferred from those extra numeric inputs.
+
+Mesh normals now consume the same masked/scaled position-matrix columns as vertices. Native inverse scaling/cofactors, full singular inverse (five Jacobi sweeps, signed sorting and three QR rotations), reciprocal cutoff, transpose and normalization replace separate generic inverse-size/quaternion operations. The complete sourceGeometry normal output matches all896 cases/74368 normals, clearing the remaining838 cases/195206 differing components. Original inverse896/224 singular calls plus334 additional inputs/8 singular calls and normalization74368 remain zero. Scalar vertices448/37184 and3D nonunit336/27888 remain zero; both noEmit checks and runtime audit1438 pass. The old size argument is explicitly unused because precise sample fields now supply all geometry sizes.
+
+This closes those explicit identity-Local/zero-center/offset/no-flip numeric normal stores, including endpoint and degenerate sizes. Current source stream/format admission, nonidentity basis/outer owner/View composition, final portable normal publication, full lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Shared mesh position columns (C120)
 
 The existing native mesh matrix-column calculation is extracted unchanged for reuse by the pending normal inverse implementation. Scalar448/37184 and3D nonunit336/27888 vertices remain byte-identical to original stores; no new algorithm equivalence is claimed. Both noEmit checks and runtime audit1438 pass. Reverse `43aa57b242c693c66ccc72fb2f19c47ee7ca1a9b` registers the inverse partition on immutable C117 expected. Full normal838 differing cases and the aggregate OPEN boundary remain unchanged.

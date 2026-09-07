@@ -15,11 +15,11 @@ import type {
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
-import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices } from "./particleMeshGeometry";
+import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices, calculateNativeMeshMatrixColumns } from "./particleMeshGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion, calculateNativeMeshScalarQuaternion } from "./particleBillboardRotation";
-import { normalizeNativeParticleNormal } from "./particleNormalGeometry";
+import { calculateNativeMeshNormals } from "./particleNormalGeometry";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -257,7 +257,7 @@ function buildPrimitive(
 
 function sourceGeometry(
   binding: GeometryBinding,
-  size: Vector3,
+  _size: Vector3,
   rotation: Vector3,
   sample: ParticleRenderSample,
   scene: ParticlePixiSceneProfile,
@@ -286,14 +286,8 @@ function sourceGeometry(
     return Object.freeze({
       vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset, transformSize)),
       uv0: mesh.uv0,
-      normals: Object.freeze(mesh.normals.map((normal) => {
-        const inverseScaled: Vector3 = [
-          divide(normal[0], Math.abs(size[0]) > ZERO_EPSILON ? size[0] : 1),
-          divide(normal[1], Math.abs(size[1]) > ZERO_EPSILON ? size[1] : 1),
-          divide(normal[2], Math.abs(size[2]) > ZERO_EPSILON ? size[2] : 1),
-        ];
-        return normalizeNativeParticleNormal(applyBasis(quaternionRotate(inverseScaled, particleRotation), basis));
-      })),
+      normals: Object.freeze(calculateNativeMeshNormals(mesh.normals,
+        calculateNativeMeshMatrixColumns(particleRotation, visibleSize, basis, transformSize))),
       indices: mesh.screenYReflectionIndices,
     });
   }
