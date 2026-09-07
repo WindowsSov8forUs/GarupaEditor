@@ -800,3 +800,10 @@ The owner probes are conditional source XY/prefab Z and quaternion/native scale 
 Reverse83b9270c711969320602ea67b8ee54b21059d38a passed original regeneration,1011 manifest hashes, staged policy and exact remote0 0 before consumption. CorpusB0F17DD69BA88B2F8C00BFBC008ADBFB762D6EDCD89E3358AF11C093138892DF binds73 enabled nonmesh ordinary TapKeep systems through fresh full source reads/byte roundtrips.69 source/owner combinations execute414 original108D584/1076970 pairs using complete C195 owner rows0/8/17,count0/4 and source-matching storage. Source eligibility, curve extrema, Shape, Velocity cache and native libm remain continuous.
 
 Actual owner/setup/root/runtime preparation438 calls, complete bounds wrapper438 calls and73 eligibility calls agree. No production bounds correction is needed for this domain.14 disabled renderers and16 Mesh renderers with unbound current mesh cache remain explicitly separate. Current layout/slidingMove/module/lifecycle/SoA/flags/cache invalidation, frustum/group and sorting remain OPEN; C173 retains136 prefix differences. No product tests/app/build/visuals; compilation is not used as equivalence evidence.
+
+
+### BND-C198: complete View billboard output with Slide owners
+
+Reverse137247f4e5535656aa7f0345046094c0f4dc6239 passed original regeneration,1014 manifest hashes, staged policy and exact remote0 0 before consumption. Corpus38862D37009AD653AAE67187C232E5FAB3A05B1259546DA4F662E8E3345D34F5 executes423 complete original View/zero-pivot worker calls on47 source Slide renderer inputs and C195 complete owners. Actual complete samples/buildPrimitive world vertices and normals agree for1410 live rows;282 nonlive rows remain separate. No production arithmetic change is indicated.
+
+18 Local-alignment and8 nonzero-pivot systems remain separate along with C197 disabled/Mesh exclusions. Explicit raw size and rotation probes do not accept actual module/color/UV/material producer occurrence. Native layout/slidingMove/lifecycle/SoA/flags/frustum/group/shared sorting remain OPEN; C173 retains136 comparator-prefix differences. No product tests/app/build/visuals.
