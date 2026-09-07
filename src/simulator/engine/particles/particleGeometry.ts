@@ -18,7 +18,7 @@ import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices } from "./particleMeshGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
-import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion } from "./particleBillboardRotation";
+import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion, calculateNativeMeshScalarQuaternion } from "./particleBillboardRotation";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -670,7 +670,7 @@ function meshRotationQuaternion(binding: GeometryBinding, rotation: Vector3): Qu
   const speed = keys.RotationBySpeedModule === undefined ? undefined : modules.RotationBySpeedModule?.[keys.RotationBySpeedModule];
   const requires3D = initial?.rotation3D === true || shape?.alignToDirection === true ||
     lifetime?.separateAxes === true || speed?.separateAxes === true;
-  return requires3D ? calculateNativeMeshEulerQuaternion(rotation) : eulerQuaternion(rotation);
+  return requires3D ? calculateNativeMeshEulerQuaternion(rotation) : calculateNativeMeshScalarQuaternion(rotation[2]);
 }
 
 function eulerQuaternion(rotation: Vector3): Quaternion {

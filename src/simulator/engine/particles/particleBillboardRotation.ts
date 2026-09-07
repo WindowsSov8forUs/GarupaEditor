@@ -44,6 +44,19 @@ export function calculateNativeMeshEulerQuaternion(rotation: Vector3): readonly 
   return result;
 }
 
+export function calculateNativeMeshScalarQuaternion(angle: number): readonly [number, number, number, number] {
+  // BND-C113: the default Initial axis and its native normalization are exactly +Z.
+  // Keep the original zero-offset quaternion product order, including zero signs.
+  const [w, sine] = trigonometry(multiply(angle, 0.5), coefficients[0]!);
+  const x = multiply(0, sine); const y = multiply(0, sine); const z = multiply(1, sine);
+  return [
+    -subtract(subtract(subtract(multiply(0, y), multiply(0, z)), multiply(1, x)), multiply(0, w)),
+    -subtract(subtract(subtract(multiply(0, z), multiply(0, x)), multiply(1, y)), multiply(0, w)),
+    -subtract(subtract(subtract(multiply(0, x), multiply(1, z)), multiply(0, w)), multiply(0, y)),
+    subtract(subtract(subtract(multiply(1, w), multiply(0, x)), multiply(0, z)), multiply(0, y)),
+  ];
+}
+
 export function calculateNativeScalarBillboardRotation(basis: Columns, angle: number): Columns {
   const [cosine, sine] = trigonometry(angle, coefficients[0]!);
   const x: MutableVector3 = [0, 0, 0]; const y: MutableVector3 = [0, 0, 0]; const z: MutableVector3 = [0, 0, 0];

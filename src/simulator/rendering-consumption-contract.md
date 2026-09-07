@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Default mesh scalar quaternion (BND-C113 / C114)
+
+Reverse `6c51fba63e8cd1046d82dba2118e8aabb823c2c8` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_scalar_axis.json` SHA256 `00C9BF184B73DD40C1942F6873D22332781F9C1369BEE49A5258148A8878E935` binds the original global initializer and RELA-bound Initial reset to default axis+Z, then full105FD50 on1122 source calls/4488 axis rows. Existing birth outputs remain unchanged. The separate axis-storage flag is explicitly enabled; this proves default initialization, not absence of later overrides or current allocation.
+
+The actual mode4 scalar consumer now uses only rotationZ, native half-angle Float32 folded polynomials and original zero-offset quaternion multiplication order. All255 native quaternions match, clearing255 differences including signed zeros and trigonometric rounding. The native normalization result for this default axis is exactly+Z. Existing3D144, unit112/9296 vertices and nonunit336/27888 vertices remain zero; both noEmit checks and runtime audit1438 pass. Current axis/angle/storage producers, nonzero offset, scalar full vertices, View/owner/full streams/normals/lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Mesh Transform scale composition (BND-C111 / C112)
 
 Reverse `bf503f628aa63bde89e29e5d1a06de033ef0bb32` and adapter correction `2bdd97624aaf712042384caeadf9f3687cbda296` were verified and pushed with remote0 0 before consumption. The mesh path now retains raw particle size separately from Transform scale: each rotation-column component receives its corresponding Transform axis before the column's raw size. Actual complete sourceGeometry matches336 original uniform/nonuniform/reflected scale cases and27888 vertex stores, clearing84 differing cases/17430 coordinate components. Unit112/9296 and endpoint288 remain zero; both noEmit checks and runtime audit1438 pass.
