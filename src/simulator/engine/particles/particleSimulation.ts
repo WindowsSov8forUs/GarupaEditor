@@ -650,6 +650,7 @@ export class DeterministicParticleSimulation {
         const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale);
         const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
           positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale)));
+        const runtimeTransform = calculateNativeParticleRuntimeTransform(emitterTransform, parentTransforms, profile.system.scalingMode);
         for (const particle of runtime.particles) {
           const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
@@ -702,7 +703,7 @@ export class DeterministicParticleSimulation {
             ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
-            velocity: vectorBits(applySystemVector(particle.renderVelocity, record.definition, owner.particleSystemSetupScale)),
+            velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
             size: vectorBits(size),
             sizeBeforeTransform,
             transformSize: vectorBits(transformSize),
@@ -2158,23 +2159,6 @@ function hierarchyTransform(transform: ParticleTransformProfile, setupScale: num
   };
 }
 
-function applySystemVector(
-  vector: Vector3,
-  definition: ParticleSystemDefinition,
-  gameplayTransformScale: number,
-): Vector3 {
-  let result = applyTransform(vector, definition.transform, false, gameplayTransformScale);
-  for (let index = definition.parentTransforms.length - 1; index >= 0; index -= 1) {
-    result = applyTransform(
-      result,
-      definition.parentTransforms[index]!,
-      false,
-      parentSetupScale(definition, index, gameplayTransformScale),
-    );
-  }
-  return result;
-}
-
 function rotateEulerRadians(vector: Vector3, rotation: Vector3): Vector3 {
   const [x, y, z] = rotation;
   let result: Vector3 = [...vector];
@@ -2246,46 +2230,6 @@ function currentBurstCount(
   }
   const ratio = value.minMaxState === 2 ? particleWordRatio(drawWord()) : 0;
   return Math.max(0, Math.trunc(minMax(value, time, ratio)));
-}
-
-function applyTransform(
-  vector: Vector3,
-  transform: ParticleTransformProfile,
-  position: boolean,
-  gameplayTransformScale: number,
-): Vector3 {
-  const scale = transform.m_LocalScale;
-  const translation = transform.m_LocalPosition;
-  let value: Vector3 = [
-    multiply(vector[0], multiply(scale.x, gameplayTransformScale)),
-    multiply(vector[1], multiply(scale.y, gameplayTransformScale)),
-    multiply(vector[2], multiply(scale.z, gameplayTransformScale)),
-  ];
-  value = quaternionRotate(value, transform.m_LocalRotation);
-  if (position) {
-    value = [
-      add(value[0], translation.x),
-      add(value[1], translation.y),
-      add(value[2], translation.z),
-    ];
-  }
-  return value;
-}
-
-function quaternionRotate(vector: Vector3, quaternion: ParticleTransformProfile["m_LocalRotation"]): Vector3 {
-  const [x, y, z] = vector.map(f32) as Vector3;
-  const qx = f32(quaternion.x);
-  const qy = f32(quaternion.y);
-  const qz = f32(quaternion.z);
-  const qw = f32(quaternion.w);
-  const tx = multiply(2, subtract(multiply(qy, z), multiply(qz, y)));
-  const ty = multiply(2, subtract(multiply(qz, x), multiply(qx, z)));
-  const tz = multiply(2, subtract(multiply(qx, y), multiply(qy, x)));
-  return [
-    add(x, add(multiply(qw, tx), subtract(multiply(qy, tz), multiply(qz, ty)))),
-    add(y, add(multiply(qw, ty), subtract(multiply(qz, tx), multiply(qx, tz)))),
-    add(z, add(multiply(qw, tz), subtract(multiply(qx, ty), multiply(qy, tx)))),
-  ];
 }
 
 function cloneSimdState(state: ParticleRandomSimdState): ParticleRandomSimdState {
