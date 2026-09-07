@@ -67,6 +67,10 @@ export function calculateNativeParticleActualBounds(particles: readonly BoundsPa
     const length = add(f32(settings.velocityScale), mul(particle.baseSize[0], mul(f32(settings.lengthScale), inverse)));
     include(particle.position.map((value, axis) => sub(value, mul(v[axis]!, length))) as unknown as Vector3);
   }
+  return expandNativeParticleBounds(lo, hi, settings);
+}
+
+function expandNativeParticleBounds(lo: readonly number[], hi: readonly number[], settings: BoundsSettings): ParticleBoundsTuple {
   let coefficients = [1, 1, 1];
   if (settings.renderMode === 4 && settings.meshBounds !== null) {
     coefficients = [0, 1, 2].map((axis) => {
