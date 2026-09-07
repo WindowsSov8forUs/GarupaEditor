@@ -807,7 +807,7 @@ export interface ParticleRenderSample {
   readonly creationSequence: number;
   readonly position: ParticleFloat32Vector3;
   readonly velocity: ParticleFloat32Vector3;
-  /** The button or game-clear owner already participates in the native runtime matrix. */
+  /** The button, Slide or game-clear owner already participates in the native runtime matrix. */
   readonly nativeOwnerHierarchy?: boolean;
   /** Native gathered local velocity, before the renderer composes camera matrices. */
   readonly simulationVelocity?: ParticleFloat32Vector3;

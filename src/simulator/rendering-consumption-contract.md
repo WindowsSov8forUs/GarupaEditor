@@ -782,3 +782,14 @@ Birth and samples now select a distinct slide-play root reset mode. Runtime upda
 Both actual birth/sample selector paths and private matrix preparation now agree on852 matrix calls/29820 fields, eliminating2338 baseline component differences. Prior button316 matrices/11060 values/2528 centers and Game-clear23 matrices/805 values/184 centers remain exact. Both noEmit checks and runtimeaudit1438 pass as compilation/integrity only. Canonical Reverse dirty state, frozen dev refs and user package-lock digest remain unchanged; NUL scan0.
 
 This accepts conditional inner-graph root/scale matrix consumption. Complete current birth/sample/lifecycle/module occurrence, outer NoteSlide/MusicObjects hierarchy and reparent quaternion, final geometry/material, bounds/frustum and C173 sorting136 prefix differences remain OPEN. No product tests/app/build/visuals.
+
+
+### BND-C195/C196: complete Slide owner matrix consumption
+
+Reverse87da1cc9d6770923399b20505fae474237c530a8 and movement-auditor supplement99ef977e0f017a5fc4e59bfeb41a1a8b2bdf4856 were verified/pushed with exact remote0 0 before consumption. C195 corpusA8F70393472C931EB3D31673C5CCEE22EC0F4FD80C8E991AF4092F67CA1BA2EF binds fresh NoteManager1152.noteParentTrans538, GamePlay544 and the identity NoteSlide prefab to complete original108834C matrices and12CEDFC..12CEE68 centers. The source hierarchy is GamePlay -> NoteParentTrans -> NoteSlide; older MusicObjects ancestry speculation is superseded.
+
+Slide owner position and scale now enter native runtime preparation before emitter-origin evaluation. Samples mark this composition so geometry preserves the native center and does not repeat outer scale. Actual moveOwner preflights the new parent chain and refreshes every live particle's saved parent reference; subsequent module matrix preparation uses the current owner. The immutable parent arrays remain shared safely, while birth emitter-origin diagnostics are unchanged.
+
+Actual1278 static matrices/44730 fields/5112 world centers agree, eliminating15480 baseline components. Actual1278 owner replacements/44730 subsequent matrix fields agree, eliminating5134 stale-parent components. Prior button316 matrices/11060 fields/2528 centers and game-clear23 matrices/805 fields/184 centers remain exact. Both noEmit checks and runtimeaudit1438 pass as compilation/integrity only. The user's package-lock digest is unchanged.
+
+The owner probes are conditional source XY/prefab Z and quaternion/native scale inputs. This does not accept native slidingMove trajectory or layout occurrence, clone/reparent quaternion conversion, complete birth/module/lifecycle/SoA execution, final Slide worker offsets/normals, bounds/frustum/group/shared sorting or aggregate parity. C173 retains136 comparator-prefix differences. No product tests/app/build/visuals.

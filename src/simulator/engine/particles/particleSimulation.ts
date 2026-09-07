@@ -157,7 +157,7 @@ interface SimulatedParticle {
   readonly emitterOrigin: Vector3;
   readonly particleSystemSetupScale: ParticleSetupScale;
   readonly resetRootTransform: ParticleRootTransformReset;
-  readonly ownerParents: readonly ParticleHierarchyPositionTransform[];
+  ownerParents: readonly ParticleHierarchyPositionTransform[];
   age: number;
   agePercent: number;
   readonly lifetime: number;
@@ -583,7 +583,11 @@ export class DeterministicParticleSimulation {
       !sameParticleSetupScale(owner.particleSystemSetupScale, instanceParticleSystemSetupScale(instance, this.gameplayTransformScale))) {
       throw fault("particle.simulation.missing-slide-owner", "Slide root movement requires the exact active persistent owner.");
     }
+    const ownerParents = particleOwnerParents(instance);
     owner.instance = Object.freeze({ ...instance });
+    for (const runtime of owner.systems.values()) {
+      for (const particle of runtime.particles) particle.ownerParents = ownerParents;
+    }
   }
 
   stopOwner(ownerKey: string): void {
@@ -721,7 +725,7 @@ export class DeterministicParticleSimulation {
             ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
-            nativeOwnerHierarchy: resetRootTransform === true || owner.instance.kind === "game-clear",
+            nativeOwnerHierarchy: resetRootTransform !== false || owner.instance.kind === "game-clear",
             velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
             simulationVelocity: vectorBits(particle.renderVelocity),
             simulationToWorld,
@@ -2212,6 +2216,26 @@ function parentSetupScale(
 }
 
 function particleOwnerParents(instance: ParticleInstanceIdentity): readonly ParticleHierarchyPositionTransform[] {
+  if (instance.kind === "note-slide") {
+    const owner = instance.ownerTransform;
+    if (owner === undefined || (owner.source !== "original-note-slide" && owner.source !== "product-extension-note-slide") ||
+      [owner.position.zBits, owner.rotation.xBits, owner.rotation.yBits, owner.rotation.zBits].some((value) => value !== "0x00000000") ||
+      owner.rotation.wBits !== "0x3F800000" || owner.scale.yBits !== owner.scale.xBits || owner.scale.zBits !== owner.scale.xBits) {
+      throw fault("particle.simulation.slide-owner-hierarchy", "Slide particles require their NoteSlide owner with identity rotation, uniform scale and world Z zero.");
+    }
+    const x = particleFloat32FromBits(owner.position.xBits), y = particleFloat32FromBits(owner.position.yBits);
+    const scale = particleFloat32FromBits(owner.scale.xBits);
+    if (x === null || y === null || scale === null || scale <= 0) {
+      throw fault("particle.simulation.slide-owner-hierarchy", "NoteSlide owner position and positive scale must be finite binary32.");
+    }
+    // BND-C195: GamePlay -> NoteParentTrans -> NoteSlide. Parent scale belongs
+    // in the runtime matrix, including Local-mode emitter-origin evaluation.
+    return [
+      { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+      { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+      { position: [x, y, 0], rotation: [0, 0, 0, 1], scale: [scale, scale, scale] },
+    ];
+  }
   if (instance.kind === "game-clear") {
     const owner = instance.ownerTransform;
     if (owner === undefined || owner.source !== "game-clear-ui-root" ||
