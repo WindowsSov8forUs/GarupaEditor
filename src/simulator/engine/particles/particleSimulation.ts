@@ -104,6 +104,22 @@ interface EmissionBatch {
   readonly nativeTiming?: ParticleEmissionStep & { readonly delta: number };
 }
 
+interface AnalyticEmissionRecord {
+  readonly phase: number;
+  age: number;
+  readonly rateRemainder: number;
+  readonly rateInterval: number;
+  readonly count: number;
+  readonly rateCount: number;
+}
+
+interface AnalyticBirthState {
+  readonly lifetime: number;
+  readonly inverseLifetime: number;
+  readonly agePercent: number;
+  readonly ageSeconds: number;
+}
+
 interface ParticleEmissionStep {
   readonly count: number;
   readonly rateCount: number;
@@ -404,7 +420,15 @@ export class DeterministicParticleSimulation {
       }
       return;
     }
-    // The distinct analytic/deferred branch remains under native reconstruction.
+    const analyticInitial = getModule(record.bundle, profile, "InitialModule");
+    if (analyticInitial !== null && analyticInitial.gravityModifier.scalar === 0 &&
+      getModule(record.bundle, profile, "RotationModule") === null &&
+      getModule(record.bundle, profile, "VelocityModule") === null &&
+      getModule(record.bundle, profile, "ForceModule") === null) {
+      this.reconstructAnalyticPrewarm(owner, record, profile, runtime, analyticInitial);
+      return;
+    }
+    // The eight source systems with integrated motion modules remain open.
     const duration = f32(profile.system.lengthInSec);
     const events = this.events(record.bundle, profile, runtime, -duration, 0, true)
       .filter((batch) => batch.at < 0);
@@ -422,6 +446,60 @@ export class DeterministicParticleSimulation {
       for (const particle of runtime.particles) this.updateParticle(record, particle, finalSegment);
     }
     removeExpiredParticles(runtime.particles);
+  }
+
+  private reconstructAnalyticPrewarm(
+    owner: OwnerRuntime, record: SystemRecord, profile: ParticleProfileDefinition,
+    runtime: OwnerSystemRuntime, initial: ParticleInitialModule,
+  ): void {
+    const state = this.instanceStates.get(runtime.instanceStateKey);
+    if (state === undefined) throw fault("particle.simulation.instance-random-state-missing", "Analytic birth requires its concrete random owner.");
+    const queue = nativeParticleAnalyticPrewarmQueue(record.bundle, profile, initial, runtime, state);
+    const births: Array<{ phase: number; random: BirthRandomSample; state: AnalyticBirthState }> = [];
+    const emptyShape = particleSimdRandomValues(state.shapeModuleStream, 0);
+    for (const entry of queue) {
+      const phase = divide(entry.phase, profile.system.lengthInSec);
+      let remainingCount = entry.count;
+      let motionIndex = entry.rateRemainder;
+      for (let group = 0; group < entry.count; group += 4) {
+        const lifetimeDraw = particleSimdRandomValues(state.initialModuleStream, 1);
+        state.initialModuleStream = lifetimeDraw.state;
+        const lifetimes = lifetimeDraw.values[0]!.map((ratio) => nativeParticleLifetime(
+          minMax(initial.startLifetime, phase, ratio), f32(0.000001)));
+        const remaining = lifetimes.map(([lifetime], lane) => subtract(subtract(lifetime, entry.age),
+          group + lane < entry.rateCount ? multiply(entry.rateInterval, add(entry.rateRemainder, group + lane)) : 0));
+        // 10616B0 skips the other draws only when all four SIMD lanes are dead.
+        if (remaining.every((value) => value <= 0)) continue;
+        const rest = particleSimdRandomValues(state.initialModuleStream, initialModuleRandomDrawCount(initial) - 1);
+        state.initialModuleStream = rest.state;
+        const draws = { state: rest.state,
+          words: [rest.words[0]!, lifetimeDraw.words[0]!, ...rest.words.slice(1)],
+          values: [rest.values[0]!, lifetimeDraw.values[0]!, ...rest.values.slice(1)] };
+        // The original remaining counter advances only for published groups.
+        const count = Math.min(4, remainingCount);
+        remainingCount -= 4;
+        for (let lane = 0; lane < count; lane += 1) {
+          const [lifetime, inverseLifetime] = lifetimes[lane]!;
+          births.push({ phase, random: buildBirthRandomSample(initial, draws, emptyShape, lane), state: {
+            lifetime, inverseLifetime,
+            agePercent: multiply(clamp01(subtract(1, multiply(remaining[lane]!, inverseLifetime))), 100),
+            ageSeconds: add(entry.age, motionIndex < entry.rateCount ? multiply(motionIndex, entry.rateInterval) : 0),
+          } });
+          motionIndex = add(motionIndex, 1);
+        }
+      }
+    }
+    const shape = getModule(record.bundle, profile, "ShapeModule");
+    for (let group = 0; group < births.length; group += 4) {
+      const shapeDraws = particleSimdRandomValues(state.shapeModuleStream, shapeRandomDrawCount(shape));
+      state.shapeModuleStream = shapeDraws.state;
+      for (let lane = 0; lane < Math.min(4, births.length - group); lane += 1) {
+        const birth = births[group + lane]!;
+        this.spawn(owner, record, profile, runtime, birth.phase, 0, group + lane, births.length,
+          { ...birth.random, shapeValues: shapeDraws.values.map((values) => values[lane]!) }, birth.state);
+      }
+    }
+    runtime.first = false;
   }
 
   updateSystemTransforms(updates: readonly ParticleSystemTransformUpdate[]): void {
@@ -815,6 +893,7 @@ export class DeterministicParticleSimulation {
     batchIndex: number,
     batchCount: number,
     random: BirthRandomSample,
+    analytic?: AnalyticBirthState,
   ): void {
     const initial = getModule(record.bundle, profile, "InitialModule");
     if (initial === null || runtime.particles.length >= initial.maxNumParticles) return;
@@ -823,7 +902,9 @@ export class DeterministicParticleSimulation {
       throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
     }
     const slots = random.slots;
-    const [lifetime, inverseLifetime] = nativeParticleLifetime(minMax(initial.startLifetime, birthPhase, slots[0]!));
+    const [lifetime, inverseLifetime] = analytic === undefined
+      ? nativeParticleLifetime(minMax(initial.startLifetime, birthPhase, slots[0]!))
+      : [analytic.lifetime, analytic.inverseLifetime];
     const speed = minMax(initial.startSpeed, 0, slots[1]!);
     const sx = Math.max(0, minMax(initial.startSize, birthPhase, slots[2]!));
     const sy = initial.size3D ? Math.max(0, minMax(initial.startSizeY, birthPhase, slots[3]!)) : sx;
@@ -834,6 +915,10 @@ export class DeterministicParticleSimulation {
       minMax(initial.startRotationY, birthPhase, slots[7]!),
       minMax(initial.startRotation, birthPhase, slots[8]!),
     ];
+    if (analytic !== undefined) {
+      const sign = particleSeedRatio((random.particleSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
+      for (let axis = 0; axis < 3; axis += 1) rotation[axis] = multiply(rotation[axis]!, sign);
+    }
     const shape = getModule(record.bundle, profile, "ShapeModule");
     const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
     let position: Vector3 = birth.position;
@@ -875,7 +960,14 @@ export class DeterministicParticleSimulation {
       slots,
     };
     runtime.particles.push(particle);
-    if (initialAge > 0) this.updateParticle(record, particle, f32(initialAge));
+    if (analytic !== undefined) {
+      // 10985B4..109860C, source zero gravity: retain the native zero additions.
+      particle.position = addVector(addVector([0, 0, 0], scaleVector(particle.velocity, analytic.ageSeconds)), particle.position);
+      particle.velocity = addVector([0, 0, 0], particle.velocity);
+      particle.renderVelocity = [...particle.velocity];
+      particle.age = analytic.ageSeconds;
+      particle.agePercent = analytic.agePercent;
+    } else if (initialAge > 0) this.updateParticle(record, particle, f32(initialAge));
     void owner;
   }
 
@@ -1066,8 +1158,8 @@ function nativeParticleReciprocalEstimate(value: number): number {
   return f32(Math.round(262144 / (2 * bucket + 1)) * 2 ** (-exponent - 9));
 }
 
-function nativeParticleLifetime(sampled: number): readonly [number, number] {
-  const lifetime = Math.max(f32(sampled), f32(1e-5));
+function nativeParticleLifetime(sampled: number, minimum = f32(1e-5)): readonly [number, number] {
+  const lifetime = Math.max(f32(sampled), minimum);
   const estimate = nativeParticleReciprocalEstimate(lifetime);
   // FRECPS rounds 2-a*b once; rounding the product separately changes it.
   const first = multiply(estimate, f32(2 - lifetime * estimate));
@@ -1206,6 +1298,45 @@ function nativeParticleBirthAge(emission: ParticleEmissionStep, delta: number, i
     ? multiply(add(emission.rateRemainder, f32(index)), emission.inverseRate)
     : emission.burstFraction;
   return subtract(multiply(delta, Math.min(Math.max(fraction, f32(0.000001)), 1)), 0);
+}
+
+function nativeParticleAnalyticPrewarmQueue(
+  bundle: ParticleBundleProfile, profile: ParticleProfileDefinition, initial: ParticleInitialModule,
+  runtime: OwnerSystemRuntime, state: InstanceSystemState,
+): AnalyticEmissionRecord[] {
+  // BND-C55/C67: fixed-step flags3 age queue records before each emission pass.
+  const prepared = nativeParticlePrewarmPreparation(profile.system, initial.startLifetime);
+  runtime.elapsed = prepared.phase;
+  runtime.remainingDelta = add(runtime.remainingDelta, multiply(prepared.delta, Math.max(f32(profile.system.simulationSpeed), 0)));
+  const fixed = f32(0.02);
+  const frameElapsed = runtime.elapsed;
+  const queue: AnalyticEmissionRecord[] = [];
+  const emission = getModule(bundle, profile, "EmissionModule");
+  let previousStep = fixed;
+  let queuedCount = 0;
+  while (runtime.remainingDelta >= previousStep) {
+    let step = Math.min(runtime.remainingDelta, fixed);
+    if (runtime.remainingDelta > 10) step = previousStep <= 1 ? Math.min(f32(profile.system.lengthInSec), 1) : previousStep;
+    else if (runtime.remainingDelta > 5) step = previousStep <= f32(0.2) ? Math.min(f32(profile.system.lengthInSec), f32(0.2)) : previousStep;
+    const timing = nativeParticleSystemClock(runtime, step, profile.system.lengthInSec, true, frameElapsed);
+    for (const entry of queue) entry.age = add(step, entry.age);
+    if (emission !== null && timing.delta !== null && timing.delta > 0) {
+      const result = nativeParticleEmissionStep(emission, timing.before, timing.after, profile.system.lengthInSec, state);
+      const admitted = Math.min(result.count, Math.max(0, initial.maxNumParticles - queuedCount));
+      if (admitted > 0) {
+        const dropped = result.count - admitted;
+        const retainedRate = Math.max(result.rateCount - dropped, 0);
+        const bursts = admitted - retainedRate + (dropped >= result.rateCount ? result.rateCount : 0);
+        const fields = { phase: timing.after, rateRemainder: result.rateRemainder, rateInterval: multiply(result.inverseRate, timing.delta) };
+        if (bursts !== 0) queue.push({ ...fields, age: timing.delta, count: bursts, rateCount: 0 });
+        if (dropped < result.rateCount) queue.push({ ...fields, age: 0, count: retainedRate, rateCount: retainedRate });
+        queuedCount += bursts + retainedRate;
+      }
+    }
+    runtime.remainingDelta = subtract(runtime.remainingDelta, step);
+    previousStep = step;
+  }
+  return queue;
 }
 
 function nativeParticleFrameSteps(
