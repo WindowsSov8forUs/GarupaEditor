@@ -614,3 +614,10 @@ All110640 final Billboard normals agree. The896 complete mesh primitive calls/74
 Reverse `767bd5d768d7a1f4fceb3fee11c81a6c5d79fd23` was verified and pushed before consumption. All four scalar/3D/simple/complex workers execute from entry through the real scalar/3D gather and complete native writer after107A0DC camera/matrix preparation. Explicit mixed rotations, matching raw sizes/storage flags and source motion/matrix/age inputs produce3840 native rows. Corpus SHA `73A9C106E7E6D04DC714E5E43E4917A1707C46BA3BB7F3C351C036EEE2DC102B`.
 
 Actual updateParticle/samples/buildPrimitive through worldVertices/worldNormals agrees on all3168 live rows;672 nonlive rows are retained separately. No new product algorithm change was required. View/allowRoll/zero pivot/direction1/unit outer owner and conditional numeric renderer inputs bound this result. Source cooccurrence/dispatch/streams, Local/nonzero pivot/owner and full lifecycle/bounds/sorting/HUD remain OPEN. No tests/app/build/visuals; prior C142 compile/integrity results apply to unchanged production.
+
+
+### BND-C145/C146: continuous Local/View and source pivot output
+
+Reverse `0558ed9c572bd51ec9aa0b17aa6e02193f0e7783` was verified and pushed before consumption. Original camera/matrix preparation and all four Billboard workers cover22 combinations of View/Local alignment, scalar/3D storage and five source pivot bit triples across24 source Transform configurations. All5280 calls/21120 native rows reproduce. Corpus SHA `DC88EB83A60EC9A6EA9BD158329923CB1668D970BC07FD1092D3CDDBD4387FA1`.
+
+The actual update/samples/buildPrimitive world-output chain agrees on all17424 live rows and69696 vertices/normals;3696 nonlive rows remain separate. No product change was required. Source scalingMode1/simulationSpace0, explicit numeric rotations/raw sizes/ages and unit outer owner bound this result. Local Hierarchy scalingMode0, current source cooccurrence/dispatch/streams, nonidentity owner, lifecycle/bounds/shared sorting/HUD and aggregate parity remain OPEN. No tests/app/build/visuals; prior C142 compile/integrity results apply to unchanged production.
