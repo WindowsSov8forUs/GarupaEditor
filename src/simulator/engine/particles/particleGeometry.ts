@@ -637,10 +637,11 @@ function transformPoint(value: Vector3, transform: ParticleOwnerTransform): Vect
 
 function particleWorldCenter(sample: ParticleRenderSample, transform: ParticleOwnerTransform): Vector3 {
   const position = bitsVector3(sample.position);
-  // BND-C177: the full native matrix has already rounded the owner hierarchy.
+  // BND-C177/C186: the full native matrix has already rounded the owner hierarchy.
   if (sample.nativeOwnerHierarchy === true) {
-    if (sample.instance.kind !== "game-play-button" || transform.source !== "game-play-button") {
-      throw fault("particle.geometry.owner-hierarchy", "Native owner composition is bound to gameplay button particles.");
+    if ((sample.instance.kind !== "game-play-button" || transform.source !== "game-play-button") &&
+      (sample.instance.kind !== "game-clear" || transform.source !== "game-clear-ui-root")) {
+      throw fault("particle.geometry.owner-hierarchy", "Native owner composition requires its matching button or game-clear owner.");
     }
     return position;
   }

@@ -718,7 +718,7 @@ export class DeterministicParticleSimulation {
             ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
-            nativeOwnerHierarchy: resetRootTransform,
+            nativeOwnerHierarchy: resetRootTransform || owner.instance.kind === "game-clear",
             velocity: vectorBits([...applyNativeParticleMatrixVector(runtimeTransform.localToWorld, particle.renderVelocity)]),
             simulationVelocity: vectorBits(particle.renderVelocity),
             simulationToWorld,
@@ -2209,6 +2209,26 @@ function parentSetupScale(
 }
 
 function particleOwnerParents(instance: ParticleInstanceIdentity): readonly ParticleHierarchyPositionTransform[] {
+  if (instance.kind === "game-clear") {
+    const owner = instance.ownerTransform;
+    if (owner === undefined || owner.source !== "game-clear-ui-root" ||
+      [owner.position.xBits, owner.position.yBits, owner.position.zBits,
+        owner.rotation.xBits, owner.rotation.yBits, owner.rotation.zBits].some((value) => value !== "0x00000000") ||
+      owner.rotation.wBits !== "0x3F800000" || owner.scale.yBits !== owner.scale.xBits || owner.scale.zBits !== owner.scale.xBits) {
+      throw fault("particle.simulation.game-clear-owner-hierarchy", "Game-clear requires its centered UI_Root with identity rotation and uniform scale.");
+    }
+    const scale = particleFloat32FromBits(owner.scale.xBits);
+    if (scale === null || scale <= 0) {
+      throw fault("particle.simulation.game-clear-owner-hierarchy", "UI_Root scale must be positive finite binary32.");
+    }
+    // BND-C184/C186: GamePlay -> UI_Root -> Animator precedes each clear branch.
+    // Local scaling mode applies this scale to emitter origins within the matrix.
+    return [
+      { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+      { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [scale, scale, scale] },
+      { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+    ];
+  }
   if (instance.kind !== "game-play-button") return [];
   const owner = instance.ownerTransform;
   if (owner === undefined || owner.source !== "game-play-button") {
