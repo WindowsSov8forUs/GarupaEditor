@@ -201,18 +201,13 @@ function buildPrimitive(
     outerRotation[1] === 0 && outerRotation[2] === 0 && outerRotation[3] === 1;
   const worldNormals = isStretched || hasIdentityMeshOwner ? source.normals
     : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
-  const maximumPixels = multiply(binding.renderer.m_MaxParticleSize, scene.viewportHeight);
-  const hasNativeSizeLimit = isStretched || binding.renderer.m_RenderMode === 0;
-  const largest = hasNativeSizeLimit ? 0 : projectedLargestDimension(offsets.map((offset) => projectVector(offset, scene)));
-  // Billboard limits are already applied to raw size before vertex construction.
-  const limitRatio = !hasNativeSizeLimit && maximumPixels > 0 && largest > maximumPixels
-    ? divide(maximumPixels, largest)
-    : Math.fround(1);
   const projectedCenter = projectPoint(worldCenter, scene);
   const worldVertices = source.simpleDiagonals === undefined ? offsets.map((offset) => {
     // The native stretched worker publishes world vertices directly. Turning
     // its tail into an offset and adding the head again adds Float32 cancellation.
-    return isStretched ? offset : addVector(worldCenter, scaleVector(offset, limitRatio));
+    // BND-C131: mesh workers publish these coordinates without a subsequent
+    // screen-size clamp. Billboard limits already apply before construction.
+    return isStretched ? offset : addVector(worldCenter, offset);
   }) : calculateNativeBillboardVertices(worldCenter, [offsets[0]!, offsets[1]!]);
   const positions = new Float32Array(worldVertices.length * 2);
   for (let index = 0; index < worldVertices.length; index += 1) {
@@ -716,17 +711,6 @@ function projectPoint(value: Vector3, scene: ParticlePixiSceneProfile): Vector2 
     f32(scene.viewportWidth / 2 + multiply(subtract(value[0], centerX), ppu)),
     f32(scene.viewportHeight / 2 - multiply(subtract(value[1], centerY), ppu)),
   ];
-}
-
-function projectVector(value: Vector3, scene: ParticlePixiSceneProfile): Vector2 {
-  const ppu = requiredBits(scene.pixelsPerWorldUnitBits);
-  return [multiply(value[0], ppu), multiply(-value[1], ppu)];
-}
-
-function projectedLargestDimension(values: readonly Vector2[]): number {
-  const xs = values.map((value) => value[0]);
-  const ys = values.map((value) => value[1]);
-  return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
 }
 
 function primitiveBounds(positions: Float32Array, world: readonly Vector3[]): ParticleNativePrimitiveBounds {
