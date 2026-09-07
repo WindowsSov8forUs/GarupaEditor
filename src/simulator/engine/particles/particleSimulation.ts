@@ -1676,16 +1676,18 @@ function sampleShape(
       const theta = arcAngle();
       const [cosine, sine] = nativeSinCos(theta);
       const radiusDraw = next();
-      const radial = multiply(radius, f32(Math.sqrt(add(
+      const radial = f32(Math.sqrt(add(
         multiply(Math.max(inner, 0.001), radiusDraw),
         subtract(1, radiusDraw),
-      ))));
+      )));
+      const radialX = multiply(radial, cosine);
+      const radialY = multiply(radial, sine);
       const angle = multiply(shape.angle, DEG_TO_RAD);
       const [cosAngle, sinAngle] = nativeSinCos(angle);
-      position = [multiply(radial, cosine), multiply(radial, sine), 0];
+      position = [multiply(radius, radialX), multiply(radius, radialY), 0];
       direction = [
-        multiply(sinAngle, cosine),
-        multiply(sinAngle, sine),
+        multiply(sinAngle, radialX),
+        multiply(sinAngle, radialY),
         cosAngle,
       ];
       break;
@@ -1698,19 +1700,21 @@ function sampleShape(
       const theta = arcAngle();
       const [cosine, sine] = nativeSinCos(theta);
       const radiusDraw = next();
-      const radial = multiply(radius, f32(Math.sqrt(add(
+      const radial = f32(Math.sqrt(add(
         multiply(Math.max(inner, 0.001), radiusDraw),
         subtract(1, radiusDraw),
-      ))));
+      )));
+      const radialX = multiply(radial, cosine);
+      const radialY = multiply(radial, sine);
       const angle = multiply(shape.angle, DEG_TO_RAD);
       const [cosAngle, sinAngle] = nativeSinCos(angle);
       direction = [
-        multiply(sinAngle, cosine),
-        multiply(sinAngle, sine),
+        multiply(sinAngle, radialX),
+        multiply(sinAngle, radialY),
         cosAngle,
       ];
       position = addVector(
-        [multiply(radial, cosine), multiply(radial, sine), 0],
+        [multiply(radius, radialX), multiply(radius, radialY), 0],
         scaleVector(normalizeOrFallback(direction), multiply(shape.length, next())),
       );
       break;
@@ -1978,8 +1982,8 @@ function normalizeOrZero(vector: Vector3): Vector3 {
   return scaleVector(vector, divide(1, f32(Math.sqrt(squared))));
 }
 function normalizeOrFallback(vector: Vector3): Vector3 {
-  const normalized = normalizeOrZero(vector);
-  return vectorLengthSquared(normalized) > 0 ? normalized : [0, 0, 1];
+  // BND-C64: source cone-volume directions are nonzero and use two refinements.
+  return nativeShapeDirection(vector);
 }
 function nativeShapeReciprocalSqrtEstimate(value: number): number {
   const word = uint32Bits(value);
