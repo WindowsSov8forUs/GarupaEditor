@@ -4,6 +4,11 @@ import estimateTable from "./arm64ReciprocalSqrtEstimate.json";
 type Vector3 = readonly [number, number, number];
 export type ParticleBoundsTuple = readonly [number, number, number, number, number, number];
 type CurveAxes = readonly [ParticleMinMaxCurve, ParticleMinMaxCurve, ParticleMinMaxCurve];
+interface BoundsVelocity {
+  readonly axes: CurveAxes;
+  readonly inWorldSpace: boolean;
+  readonly worldToLocal: readonly number[];
+}
 interface BoundsParticle {
   readonly position: Vector3;
   readonly velocity: Vector3;
@@ -98,10 +103,12 @@ function expandNativeParticleBounds(lo: readonly number[], hi: readonly number[]
 export function calculateNativeParticleLinearAnalyticBounds(
   lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean, settings: BoundsSettings,
   force: CurveAxes | null = null,
+  velocity: BoundsVelocity | null = null,
 ): ParticleBoundsTuple {
   const lifetimeMaximum = minMaxRange(lifetime)[1], speedRange = minMaxRange(speed);
   const distance = speedRange.map((value) => mul(value, lifetimeMaximum));
   const lo = [0, 0, Math.min(0, ...distance)], hi = [0, 0, Math.max(0, ...distance)];
+  extendNativeParticleVelocityBounds(lo, hi, lifetimeMaximum, velocity);
   if (force !== null) {
     for (let axis = 0; axis < 3; axis++) {
       const half = mul(force[axis]!.scalar, 0.5);
@@ -113,6 +120,30 @@ export function calculateNativeParticleLinearAnalyticBounds(
     }
   }
   return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
+}
+
+/** BND-C169: complete constant-axis interval and zero-translation world conversion. */
+function extendNativeParticleVelocityBounds(lo: number[], hi: number[], lifetime: number, velocity: BoundsVelocity | null): void {
+  if (velocity === null) return;
+  const ranges = velocity.axes.map((curve) => minMaxRange(curve).map((value) => mul(value, lifetime)));
+  let lower = ranges.map((range) => range[0]!), upper = ranges.map((range) => range[1]!);
+  if (velocity.inWorldSpace) {
+    const bounds = [...lower, ...upper], matrix = velocity.worldToLocal;
+    lower = [Infinity, Infinity, Infinity]; upper = [-Infinity, -Infinity, -Infinity];
+    for (const corner of [[0, 1, 2], [3, 1, 2], [3, 4, 2], [0, 4, 2], [0, 1, 5], [3, 1, 5], [3, 4, 5], [0, 4, 5]]) {
+      for (let axis = 0; axis < 3; axis++) {
+        const value = add(0, add(add(mul(matrix[axis]!, bounds[corner[0]!]!),
+          mul(matrix[axis + 4]!, bounds[corner[1]!]!)), mul(matrix[axis + 8]!, bounds[corner[2]!]!)));
+        if (value < lower[axis]!) lower[axis] = value;
+        if (upper[axis]! < value) upper[axis] = value;
+      }
+    }
+  }
+  for (let axis = 0; axis < 3; axis++) {
+    const left = add(lo[axis]!, lower[axis]!), right = add(hi[axis]!, upper[axis]!);
+    if (left < lo[axis]!) lo[axis] = left;
+    if (hi[axis]! < right) hi[axis] = right;
+  }
 }
 
 function finishNativeParticleAnalyticBounds(
@@ -129,10 +160,11 @@ function finishNativeParticleAnalyticBounds(
   return expandNativeParticleBounds(lo, hi, settings);
 }
 
-/** BND-C161/C165: source zero-rotation Shape, without force/velocity/gravity. */
+/** BND-C161/C165/C169: source zero-rotation Shape and optional constant Velocity. */
 export function calculateNativeParticleShapeAnalyticBounds(
   lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean,
   shape: ParticleShapeModule, runtimeShapeScale: Vector3, settings: BoundsSettings,
+  velocity: BoundsVelocity | null = null,
 ): ParticleBoundsTuple {
   const speedRange = minMaxRange(speed), lifetimeMaximum = minMaxRange(lifetime)[1];
   const distances = speedRange.map((value) => mul(value, lifetimeMaximum));
@@ -174,6 +206,7 @@ export function calculateNativeParticleShapeAnalyticBounds(
     const left = mul(direction[axis]!, distances[0]!), right = mul(direction[axis + 3]!, distances[0]!);
     lo[axis] = Math.min(lo[axis]!, left, right); hi[axis] = Math.max(hi[axis]!, left, right);
   }
+  extendNativeParticleVelocityBounds(lo, hi, lifetimeMaximum, velocity);
   return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
 }
 

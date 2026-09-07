@@ -1549,11 +1549,12 @@ function currentActualRendererBounds(
   const analytic = nativeParticlePrewarmAnalyticEligible(record.bundle, profile);
   const shape = getModule(record.bundle, profile, "ShapeModule");
   const force = getModule(record.bundle, profile, "ForceModule");
-  // BND-C167 adds source constant local force without Shape; other motion remains open.
+  const velocity = getModule(record.bundle, profile, "VelocityModule");
+  // BND-C167/C169 admit source constant Force/Velocity; general curve motion remains open.
   if (analytic && ((shape !== null && (![0, 4, 5, 8, 10].includes(shape.type) ||
     [shape.m_Rotation.x, shape.m_Rotation.y, shape.m_Rotation.z].some((value) => value !== 0) ||
     (shape.type === 4 && (shape.angle < 0 || shape.angle >= 45)) || (shape.type === 8 && shape.angle !== 0))) ||
-    getModule(record.bundle, profile, "VelocityModule") !== null ||
+    (velocity !== null && (force !== null || [velocity.x, velocity.y, velocity.z].some((curve) => curve.minMaxState !== 0))) ||
     (force !== null && (shape !== null || force.inWorldSpace || force.randomizePerFrame ||
       [force.x, force.y, force.z].some((curve) => curve.minMaxState !== 0))) ||
     initial.gravityModifier.scalar !== 0)) return undefined;
@@ -1579,11 +1580,16 @@ function currentActualRendererBounds(
     scale: transform.scalingModeScale,
     translation: [transform.localToWorld[12]!, transform.localToWorld[13]!, transform.localToWorld[14]!] as const,
   };
+  const boundsVelocity = velocity === null ? null : {
+    axes: [velocity.x, velocity.y, velocity.z] as const,
+    inWorldSpace: velocity.inWorldSpace,
+    worldToLocal: transform.worldToLocal,
+  };
   const bounds = analytic ? shape === null
     ? calculateNativeParticleLinearAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, settings,
-      force === null ? null : [force.x, force.y, force.z])
+      force === null ? null : [force.x, force.y, force.z], boundsVelocity)
     // C81 selector0/scalingMode0/1 prepares runtime336 as unit, separately from348.
-    : calculateNativeParticleShapeAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, shape, [1, 1, 1], settings)
+    : calculateNativeParticleShapeAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, shape, [1, 1, 1], settings, boundsVelocity)
     : calculateNativeParticleActualBounds(particles, settings);
   const world = calculateNativeParticleWorldBounds(bounds, transform.localToWorld, transform.scalingModeScale,
     profile.system.moveWithTransform, renderer.m_RenderAlignment);
