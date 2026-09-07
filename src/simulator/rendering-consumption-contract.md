@@ -596,3 +596,14 @@ The actual sourceGeometry suffix now passes those same two offsets to the shared
 
 
 C139 compile correction: the initial bcf3307c commit retained unused eulerQuaternion, so both noEmit checks reported TS6133. The initial compile-pass statement above was premature. The follow-up removes that unreferenced legacy function; both noEmit checks and runtime audit1438 now pass. Native expected and the zero-difference normal results are unchanged.
+
+
+### BND-C140: all source stretch normal directions
+
+Reverse `7fd39b9162e77d01c93712a8147b2c391267b1ac` verifies original mode1 field/coefficient/cosf/worker output for all three directions0/0.07/1 present in286 enabled stretch renderers. All720 calls/2880 rows reproduce; actual update/samples/geometry/UV agree on2376 live rows, with504 nonlive rows separate. No further algorithm change was needed. Corpus SHA `241906D758B15FD9A97069F1D6321A0983A8622EAC3E0454E14013BDB11FEC72`; current setters/cooccurrence/streams/owner/fullrenderer remain OPEN.
+
+### BND-C141/C142: final Billboard normal publication
+
+Reverse `7b232ec42544018d51eaf98866f2d1d48b1f06a7` was verified and pushed before consumption. The actual buildPrimitive final normal selection/normalization/buffer-write partition changes25074 of27660 native Billboard inputs, totaling279204 components, under an identity owner. Quad normals are not necessarily unit vectors, so generic re-normalization alters the algorithm. The identity-owner predicate now preserves native quad normals as it already did for mesh normals; portable Y sign-bit reflection remains the final coordinate conversion.
+
+All110640 final Billboard normals agree. The896 complete mesh primitive calls/74368 normal buffers remain exact. These are explicit native-input publication checks; preceding current source/stream association, nonidentity owner/lifecycle/bounds/sorting/HUD and aggregate parity remain OPEN. Both noEmit checks and runtime audit1438 passed before this commit. No tests/app/build/visuals.

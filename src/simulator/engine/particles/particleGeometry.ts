@@ -186,9 +186,9 @@ function buildPrimitive(
   const outerScale = bitsVector3(transform.scale);
   const outerRotation = bitsQuaternion(transform.rotation);
   const isStretched = binding.renderer.m_RenderMode === 1;
-  const hasIdentityMeshOwner = binding.renderer.m_RenderMode === 4 &&
-    outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
+  const hasIdentityOwner = outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
     outerRotation[1] === 0 && outerRotation[2] === 0 && outerRotation[3] === 1;
+  const hasIdentityMeshOwner = binding.renderer.m_RenderMode === 4 && hasIdentityOwner;
   const hasNativeWorldVertices = isStretched || hasIdentityMeshOwner;
   const source = isStretched
     ? stretchedBillboard(binding, sample, transform, worldCenter, outerScale, scene)
@@ -198,9 +198,9 @@ function buildPrimitive(
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
   ], outerRotation));
-  // BND-C127: native mesh normals are already normalized, including zero and
-  // signed-zero results. An identity owner must publish those exact bytes.
-  const worldNormals = isStretched || hasIdentityMeshOwner ? source.normals
+  // BND-C127/C141: preserve native mesh and quad normal stores. Quad normals
+  // need not have unit length; identity owners must not normalize them again.
+  const worldNormals = isStretched || hasIdentityOwner ? source.normals
     : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const projectedCenter = projectPoint(worldCenter, scene);
   const worldVertices = source.simpleDiagonals === undefined ? offsets.map((offset) => {
