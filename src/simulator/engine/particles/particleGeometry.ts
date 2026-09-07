@@ -186,28 +186,29 @@ function buildPrimitive(
   const outerScale = bitsVector3(transform.scale);
   const outerRotation = bitsQuaternion(transform.rotation);
   const isStretched = binding.renderer.m_RenderMode === 1;
+  const hasIdentityMeshOwner = binding.renderer.m_RenderMode === 4 &&
+    outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
+    outerRotation[1] === 0 && outerRotation[2] === 0 && outerRotation[3] === 1;
+  const hasNativeWorldVertices = isStretched || hasIdentityMeshOwner;
   const source = isStretched
     ? stretchedBillboard(binding, sample, transform, worldCenter, outerScale, scene)
-    : sourceGeometry(binding, size, rotation, sample, scene);
-  const offsets = isStretched ? source.vertices : (source.simpleDiagonals ?? source.vertices).map((vertex) => quaternionRotate([
+    : sourceGeometry(binding, size, rotation, sample, scene, hasIdentityMeshOwner ? worldCenter : [0, 0, 0]);
+  const offsets = hasNativeWorldVertices ? source.vertices : (source.simpleDiagonals ?? source.vertices).map((vertex) => quaternionRotate([
     multiply(vertex[0], outerScale[0]),
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
   ], outerRotation));
   // BND-C127: native mesh normals are already normalized, including zero and
   // signed-zero results. An identity owner must publish those exact bytes.
-  const hasIdentityMeshOwner = binding.renderer.m_RenderMode === 4 &&
-    outerScale.every((value) => value === 1) && outerRotation[0] === 0 &&
-    outerRotation[1] === 0 && outerRotation[2] === 0 && outerRotation[3] === 1;
   const worldNormals = isStretched || hasIdentityMeshOwner ? source.normals
     : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const projectedCenter = projectPoint(worldCenter, scene);
   const worldVertices = source.simpleDiagonals === undefined ? offsets.map((offset) => {
     // The native stretched worker publishes world vertices directly. Turning
     // its tail into an offset and adding the head again adds Float32 cancellation.
-    // BND-C131: mesh workers publish these coordinates without a subsequent
-    // screen-size clamp. Billboard limits already apply before construction.
-    return isStretched ? offset : addVector(worldCenter, offset);
+    // BND-C131/C133: mesh center and pivot enter the native matrix before its
+    // vertex stores. Preserve those world points without a later screen clamp.
+    return hasNativeWorldVertices ? offset : addVector(worldCenter, offset);
   }) : calculateNativeBillboardVertices(worldCenter, [offsets[0]!, offsets[1]!]);
   const positions = new Float32Array(worldVertices.length * 2);
   for (let index = 0; index < worldVertices.length; index += 1) {
@@ -262,6 +263,7 @@ function sourceGeometry(
   rotation: Vector3,
   sample: ParticleRenderSample,
   scene: ParticlePixiSceneProfile,
+  meshCenter: Vector3 = [0, 0, 0],
 ): {
   readonly vertices: readonly Vector3[];
   readonly simpleDiagonals?: readonly [Vector3, Vector3];
@@ -285,7 +287,7 @@ function sourceGeometry(
       throw fault("particle.geometry.mesh-bounds", "Mesh pivot requires the exact source-bound native mesh bounds.");
     }
     return Object.freeze({
-      vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset, transformSize)),
+      vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset, transformSize, meshCenter)),
       uv0: mesh.uv0,
       normals: Object.freeze(calculateNativeMeshNormals(mesh.normals,
         calculateNativeMeshMatrixColumns(particleRotation, visibleSize, basis, transformSize))),

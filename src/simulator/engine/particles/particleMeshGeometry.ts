@@ -61,10 +61,12 @@ export function calculateNativeMeshMatrixColumns(
 
 export function calculateNativeMeshVertices(
   vertices: readonly Vector3[], rotation: Quaternion, size: Vector3, basis: Columns, pivot: Vector3, transformScale: Vector3,
+  center: Vector3 = [0, 0, 0],
 ): readonly Vector3[] {
   const columns = calculateNativeMeshMatrixColumns(rotation, size, basis, transformScale);
   const offset = apply(columns, pivot);
-  const translation: Vector3 = [add(0, offset[0]), add(0, offset[1]), add(0, offset[2])];
+  // BND-C133: original matrix translation is center + pivot, before vertices.
+  const translation: Vector3 = [add(center[0], offset[0]), add(center[1], offset[1]), add(center[2], offset[2])];
   return vertices.map((vertex) => {
     const transformed = apply(columns, vertex);
     return [add(translation[0], transformed[0]), add(translation[1], transformed[1]), add(translation[2], transformed[2])];
