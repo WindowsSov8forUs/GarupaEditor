@@ -59,6 +59,13 @@ const SHAPE_DIRECTION_EPSILON_SQUARED = float32FromBits(0x0da24260);
 type Vector3 = [number, number, number];
 type Color4 = [number, number, number, number];
 type ColorBytes = [number, number, number, number];
+interface ParticleGradientCache {
+  readonly mode: 0 | 1;
+  readonly times: readonly number[];
+  readonly colors: readonly ColorBytes[];
+  readonly inverses: readonly number[];
+}
+const particleGradientCaches = new WeakMap<ParticleMinMaxGradient["maxGradient"], ParticleGradientCache>();
 type ParticleSimdDraws = ReturnType<typeof particleSimdRandomValues>;
 
 interface SystemRecord {
@@ -574,11 +581,11 @@ export class DeterministicParticleSimulation {
           let colorBytes: ColorBytes = [...particle.baseColor];
           const colorModule = getModule(record.bundle, profile, "ColorModule");
           if (colorModule !== null) {
-            const sampled = colorToBytes(minMaxColor(
+            const sampled = lifetimeColorToBytes(
               colorModule.gradient,
               normalizedAge,
               particleSeedRatio((particle.randomSeed + 0x591BC05C) >>> 0),
-            ));
+            );
             colorBytes = colorBytes.map((value, index) => multiplyColorByte(value, sampled[index]!)) as ColorBytes;
           }
           const color = colorBytes.map((value) => divide(value, 255)) as Color4;
@@ -1447,6 +1454,53 @@ function minMaxColor(value: ParticleMinMaxGradient, time: number, ratio: number)
 function colorToBytes(color: Color4): ColorBytes {
   // BND-C57: native FMUL/FADD round separately before FCVTZS truncates.
   return color.map((value) => Math.trunc(add(multiply(clamp01(value), 255), 0.5))) as ColorBytes;
+}
+
+function nativeParticleGradientCache(value: ParticleMinMaxGradient["maxGradient"]): ParticleGradientCache {
+  const existing = particleGradientCaches.get(value);
+  if (existing !== undefined) return existing;
+  // BND-C59: color times multiply a rounded reciprocal; alpha times divide.
+  const unit = float32FromBits(0x37800080);
+  const times = [
+    ...Array.from({ length: value.m_NumColorKeys }, (_, index) =>
+      multiply(value[`ctime${index}` as keyof typeof value] as number, unit)),
+    ...Array.from({ length: value.m_NumAlphaKeys }, (_, index) =>
+      divide(value[`atime${index}` as keyof typeof value] as number, 65535)),
+  ].filter((time, index, all) => all.indexOf(time) === index)
+    .map((time) => value.m_Mode === 1 ? subtract(time, unit) : time)
+    .sort((left, right) => left - right);
+  if (times.length < 16) times.push(1);
+  else times[times.length - 1] = 1;
+  const colors = times.map((time) => colorToBytes(gradient(value, time)));
+  const inverses = times.map((time, index) => {
+    if (index === 0) return 0;
+    const width = Math.max(subtract(time, times[index - 1]!), f32(1e-6));
+    const estimate = nativeParticleReciprocalEstimate(width);
+    const first = multiply(estimate, f32(2 - width * estimate));
+    return multiply(first, f32(2 - width * first));
+  });
+  const cache = { mode: value.m_Mode, times, colors, inverses };
+  particleGradientCaches.set(value, cache);
+  return cache;
+}
+
+function sampleParticleGradientCache(cache: ParticleGradientCache, time: number): ColorBytes {
+  const coordinate = f32(time);
+  const { times, colors, inverses } = cache;
+  if (coordinate > times[times.length - 1]!) return [255, 255, 255, 255];
+  let index = cache.mode === 1 ? 0 : 1;
+  while (index < times.length - 1 && coordinate >= times[index]!) index += 1;
+  if (index >= times.length) return [255, 255, 255, 255];
+  if (cache.mode === 1) return [...colors[index]!];
+  // Native clamps the time difference before multiplying the cached reciprocal.
+  const weight = Math.trunc(multiply(multiply(clamp01(subtract(coordinate, times[index - 1]!)), inverses[index]!), 255));
+  return colors[index - 1]!.map((left, channel) =>
+    (left + ((128 + weight * (colors[index]![channel]! - left)) >> 8)) & 255) as ColorBytes;
+}
+
+function lifetimeColorToBytes(value: ParticleMinMaxGradient, time: number, ratio: number): ColorBytes {
+  if (value.minMaxState === 1) return sampleParticleGradientCache(nativeParticleGradientCache(value.maxGradient), time);
+  return colorToBytes(minMaxColor(value, time, ratio));
 }
 
 function multiplyColorByte(left: number, right: number): number {

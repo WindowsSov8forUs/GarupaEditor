@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Native ColorModule gradient cache (BND-C59)
+
+Reverse `58ca32be4f60a5e0ffb035192b030298e3e8a368` and domain clarification `fd3b1949` were verified/pushed with remote `0 0`. `particle_gradient_cache.json` SHA256 `2DFE2DD2CB10733D010BC3B75A01F6111F8551A31F9C24448A3FACA84498D2D9` executes original EFB8D8 preparation and EFBDF4/EFBF60 byte sampling for202 source ColorModule gradient sides. All active cache time/color/reciprocal fields are native outputs. Three exact SIMD tail load sites allow only proved dead lanes; all live reads and writes remain guarded.
+
+Production mode1 ColorModule now consumes generated cache times, sampled/quantized colors and native reciprocal refinements, preserving cached byte interpolation and fixed interval boundaries.202 actual cache tuples,5683 legal-age samples and5683 mode1 wrapper calls match original outputs; baseline2397 legal-age samples differed. C57/C58 remain zero; both noEmit checks and runtime integrity audit1438 pass as compile/integrity information.
+
+The native corpus also retains709 inputs outside live normalized age0..1. Those are explicitly excluded from the scalar product gate: above1, native output can depend on other SIMD lanes, which the current scalar sampler does not represent. They remain **OPEN**, with no expected rows removed or synthesized. Cache colorspace/source-to-current ownership, mode3 cache mixing, full ColorModule RNG/age/base multiplication, analytic prewarm, complete modules/renderer/bounds/shared sorting/HUD also remain **OPEN**. No product tests, app, build or visuals.
+
 ### Native gradient time, key selection and interpolation (BND-C58)
 
 Reverse `653a6d050f68fb90b0962f7cedbe163a2945a313` was verified and pushed with clean remote `0 0` before consumption. `particle_gradients.json` SHA256 `4036EADCC27B081DD97FB09E64973D87D37113EEE5E8DBDF19DC923CCB035D5A` covers1741 fresh complete source roundtrips,1469 used gradient-side references and250 distinct gradients (206 blend/44 fixed). Complete original EE9E64/EEA108 evaluates7820 mixed SIMD lane inputs at finite times, source key neighbors and interval midpoints.
