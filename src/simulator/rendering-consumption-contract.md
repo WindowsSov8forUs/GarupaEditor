@@ -58,6 +58,14 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Continuous stretch vertices and lifetime endpoint (BND-C97 / C98)
+
+Authority: Reverse `adb22c874aa871f9c03aabc9ea25de4356c4b794`, verified and pushed with remote `0 0` before consumption. `particle_stretch_prefix.json` SHA256 `851554A2D8265CB295775156A6288A19464168D715BBA52B796A5D1CA8E98203` executes original107A0DC and continuous12C7C4C..12C8ECC, including actual gather and vertex arithmetic. The24 source matrix/Velocity configurations give240 four-row cases, repeated with0/A5 dead padding; both runs agree. Of960 native rows,792 age<=100 rows enter the current vertex comparison;168 age>100 probes remain separately recorded outside current vertex admission.
+
+At exact percentage age100 the native half-width mask clears to positive zero although strict age>100 removal has not occurred. Production now publishes the precise native percentage-age bits and applies that mask in the stretched worker. Actual complete update/samples/stretchedBillboard comparison falls from384 vertex-component differences to zero; all prior differences were at age100. Size-limit1140/2280, lifetime-size1728 and local-motion22752 comparisons remain zero; age-state97/768/16597 plus3701 samples/birth-state calls remain zero. Both noEmit checks and runtime audit1438 pass.
+
+This closes the explicit stationary-camera, identity-outer-owner, raw-size[1,2,1], zero-pivot renderer cross-product through pre-UV vertices only. It does not prove current renderer/configuration cooccurrence, arbitrary owner/camera mutation, final output streams or full lifecycle. Ordinary billboard endpoint masking, all remaining current-state/renderer/bounds/sorting/HUD gaps and aggregate equivalence remain OPEN.
+
 ### Stretched raw sizes, camera limits and side basis (BND-C95 / C96)
 
 Reverse `6421917cc05c86f882361d10e9cafd2631fa100a` and auditor binding follow-up `23827f847249b8336379ac12c23bfb2d7f09df44` were verified/pushed with remote `0 0` before consumption. `particle_stretch_size_limit.json` SHA256 `9AA778C6EDCCFE185800BA4E8DE098DCB757F1C2C6C0451FC4752DEA1EFDAD23` covers fresh286 enabled mode1 systems,112 runtime scales,3432 source/setup/viewport references and1140 arithmetic configurations. Original camera-width/coefficient preparation and86F0..87A4 determine raw half-width;82CC/8D1C determine `(lengthScale*runtimeScaleX)*rawSizeY`;81B0..83DC and8E28..8E84 produce the actual side basis and world side.

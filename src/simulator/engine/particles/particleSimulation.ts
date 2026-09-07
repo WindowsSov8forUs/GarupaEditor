@@ -715,6 +715,7 @@ export class DeterministicParticleSimulation {
             transformSize: vectorBits(transformSize),
             rotation: vectorBits(particle.rotation),
             color: colorBits(color),
+            agePercentBits: bits(particle.agePercent),
             ageBits: bits(particle.age),
             lifetimeBits: bits(particle.lifetime),
             uvFrame,

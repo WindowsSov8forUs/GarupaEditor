@@ -814,6 +814,8 @@ export interface ParticleRenderSample {
   readonly transformSize?: ParticleFloat32Vector3;
   readonly rotation: ParticleFloat32Vector3;
   readonly color: ParticleFloat32Color;
+  /** Native percentage age; renderer visibility cannot be reconstructed from seconds. */
+  readonly agePercentBits?: string;
   readonly ageBits: string;
   readonly lifetimeBits: string;
   readonly uvFrame: number;

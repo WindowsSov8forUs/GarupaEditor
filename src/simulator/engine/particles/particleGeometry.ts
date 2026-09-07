@@ -454,7 +454,10 @@ function stretchedBillboard(
   const cameraPosition: Vector3 = [worldCenter[0], worldCenter[1], -add(worldCenter[2], 15)];
   // BND-C95: the stretch worker limits raw sizes using the same camera-width
   // coefficients as billboards. Its side basis applies runtime scale afterward.
-  const halfWidth = billboardHalfSize(binding, sample, scene)[0];
+  const halfSize = billboardHalfSize(binding, sample, scene);
+  // 12C8794/9C clears all half-width bits at age100, while the removal
+  // predicate remains age>100. Keep this separate from diagnostic seconds.
+  const halfWidth = requiredBits(sample.agePercentBits!) < 100 ? halfSize[0] : 0;
   const rawSize = bitsVector3(sample.sizeBeforeTransform!);
   const transformSize = bitsVector3(sample.transformSize!);
   const sideBasis = viewBillboardBasis(sample);
