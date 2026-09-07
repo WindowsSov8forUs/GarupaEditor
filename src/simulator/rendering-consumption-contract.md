@@ -2,7 +2,7 @@
 
 Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
-Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `e001c0c65c39a1fed554efc8d40ddb5bf5b83c02`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
+Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `99f3153939c9331b5788fdf377bd831f12b7840a`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
@@ -57,6 +57,14 @@ Current defect: particle preflight sorts primitives internally using layer ID/or
 Still required: a shared, transitive ordering domain covering concrete ordinary and particle renderer records, their layer value/order, material queue, source-bound sorting position and native ties, without arbitrary high/low thresholds. Detached preflight, failure cleanup and generation publication must remain intact. A mixed-domain comparator cannot invent equivalence between ordinary `sourceZ` and particle sorting fudge, nor assume that root containers describe every child renderer's order.
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
+
+### Complete lifetime SizeModule output (BND-C91 / C92)
+
+Reverse `99f3153939c9331b5788fdf377bd831f12b7840a` was verified, committed and pushed with clean remote `0 0` before consumption. `particle_size_update.json` SHA256 `C584E42F6615A316E613D3496B64EF251BA9678E7DAE6B43717BF258CF05608C` binds full original105B848, original cache compiler and scalar evaluators to fresh1741 source roundtrips:903 enabled systems,108 configurations (94 uniform/14 separateAxes),432 native calls and1728 lanes. Native writes base672/704/736 multiplied by nonnegative lifetime factors into separate output768/800/832.
+
+The independent auditor invokes the actual complete `samples()` and its curve/random/age/Float32 dependencies. All1728 rows match native `sizeBeforeTransform` output at executable8b1940d895d11ea18c15def89fa108f314723b6a; no production algorithm change was needed. Explicit1D storage checks only native writtenX, while3D checks all axes. Both use bound percentage-age vectors, four seeds, signed-zero/positive base-size lanes and identity/unit setup.
+
+This closes the source-parameter lifetime-size arithmetic scope. Current allocation flags and actual age/base/seed producers, SizeBySpeed/Noise coupling, Transform scaling and complete lifecycle/rendering remain **OPEN**. No tests, application, build or visuals; documentation-only registration does not rerun compilation.
 
 ### Hierarchy scale correction (BND-C29/C32)
 
