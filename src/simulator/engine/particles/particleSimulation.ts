@@ -776,6 +776,8 @@ export class DeterministicParticleSimulation {
     const existingCount = runtime.particles.length;
     const admitted = Math.max(0, Math.min(batch.count, initial.maxNumParticles - existingCount));
     const shape = getModule(record.bundle, profile, "ShapeModule");
+    const birthPhase = batch.nativeTiming === undefined ? 0
+      : nativeParticleBirthPhase(frameEnd, profile.system.lengthInSec);
     for (let groupStart = 0; groupStart < admitted; groupStart += 4) {
       const initialRandom = particleSimdRandomValues(state.initialModuleStream, initialModuleRandomDrawCount(initial));
       state.initialModuleStream = initialRandom.state;
@@ -790,7 +792,7 @@ export class DeterministicParticleSimulation {
           record,
           profile,
           runtime,
-          batch.at,
+          birthPhase,
           batch.nativeTiming === undefined ? subtract(frameEnd, batch.at)
             : nativeParticleBirthAge(batch.nativeTiming, batch.nativeTiming.delta, batchIndex),
           batchIndex,
@@ -807,7 +809,7 @@ export class DeterministicParticleSimulation {
     record: SystemRecord,
     profile: ParticleProfileDefinition,
     runtime: OwnerSystemRuntime,
-    _eventTime: number,
+    birthPhase: number,
     initialAge: number,
     batchIndex: number,
     batchCount: number,
@@ -820,16 +822,16 @@ export class DeterministicParticleSimulation {
       throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
     }
     const slots = random.slots;
-    const [lifetime, inverseLifetime] = nativeParticleLifetime(minMax(initial.startLifetime, 0, slots[0]!));
+    const [lifetime, inverseLifetime] = nativeParticleLifetime(minMax(initial.startLifetime, birthPhase, slots[0]!));
     const speed = minMax(initial.startSpeed, 0, slots[1]!);
-    const sx = Math.max(0, minMax(initial.startSize, 0, slots[2]!));
-    const sy = initial.size3D ? Math.max(0, minMax(initial.startSizeY, 0, slots[3]!)) : sx;
-    const sz = initial.size3D ? Math.max(0, minMax(initial.startSizeZ, 0, slots[4]!)) : sx;
-    const baseColor = colorToBytes(minMaxColor(initial.startColor, 0, slots[5]!));
+    const sx = Math.max(0, minMax(initial.startSize, birthPhase, slots[2]!));
+    const sy = initial.size3D ? Math.max(0, minMax(initial.startSizeY, birthPhase, slots[3]!)) : sx;
+    const sz = initial.size3D ? Math.max(0, minMax(initial.startSizeZ, birthPhase, slots[4]!)) : sx;
+    const baseColor = colorToBytes(minMaxColor(initial.startColor, birthPhase, slots[5]!));
     const rotation: Vector3 = [
-      minMax(initial.startRotationX, 0, slots[6]!),
-      minMax(initial.startRotationY, 0, slots[7]!),
-      minMax(initial.startRotation, 0, slots[8]!),
+      minMax(initial.startRotationX, birthPhase, slots[6]!),
+      minMax(initial.startRotationY, birthPhase, slots[7]!),
+      minMax(initial.startRotation, birthPhase, slots[8]!),
     ];
     const shape = getModule(record.bundle, profile, "ShapeModule");
     const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
@@ -1069,6 +1071,15 @@ function nativeParticleLifetime(sampled: number): readonly [number, number] {
   // FRECPS rounds 2-a*b once; rounding the product separately changes it.
   const first = multiply(estimate, f32(2 - lifetime * estimate));
   return [lifetime, multiply(first, f32(2 - lifetime * first))];
+}
+
+function nativeParticleBirthPhase(after: number, duration: number): number {
+  // BND-C61: normal InitialModule receives the step-end phase; source durations
+  // are positive normal Float32 values. Analytic reconstruction is separate.
+  const length = f32(duration);
+  const estimate = nativeParticleReciprocalEstimate(length);
+  const first = multiply(estimate, f32(2 - length * estimate));
+  return multiply(multiply(first, f32(2 - length * first)), after);
 }
 
 function advanceParticleAge(agePercent: number, inverseLifetime: number, delta: number): number {
