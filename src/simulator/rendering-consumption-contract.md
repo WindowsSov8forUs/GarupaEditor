@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Mesh normal normalization (BND-C117 / C118)
+
+Reverse `e936055267960572d14c3fbad5b6786211786fb7` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_normals.json` SHA256 `3ACCA140FE7880A0260F38169D5E8F2D342F9C975708949B95DC46145AEB0966` executes896 full mesh matrices, native inverse preparation including224 singular10EFB00 calls, and74368 actual Float32 normal stores. Interleaved position/normal/tangent branch and Float32 inputs are explicit; current stream/format association remains OPEN.
+
+The actual mode4 normalization consumer now uses native paired Float32 sums, ARM64 reciprocal-square-root estimates and two FRSQRTS refinements, clearing below-threshold vectors to zero. On native pre-normalization vectors,74368 calls match exactly, clearing49710 differences. This does not close the preceding matrix inverse: the full normal audit still has838 differing cases/195206 components (previously876/197932). Scalar vertices448/37184 and3D nonunit336/27888 remain zero; both noEmit checks and runtime audit1438 pass. Current matrix/axis/storage/View/owner/full streams/lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Scalar mesh vertex consumption (BND-C115 / C116)
 
 Reverse `ade2821641cd0f3c067fbaf1fabdb28434c40398` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_scalar_vertices.json` SHA256 `D82706371A1C062134200AB74F350208DA35DB4498F7E2EE02AE748326585A4A` continues the full scalar matrix helper through actual Float32 vertex stores. It crosses exact source meshes/pivots with unit, uniform, nonuniform and reflected scales, zero size, two boundary ages and default+Z axis under explicit scalar storage/identity Local basis/zero center/offset/no flip inputs.

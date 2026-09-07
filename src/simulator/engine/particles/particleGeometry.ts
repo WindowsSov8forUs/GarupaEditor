@@ -19,6 +19,7 @@ import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices } from "./p
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion, calculateNativeMeshScalarQuaternion } from "./particleBillboardRotation";
+import { normalizeNativeParticleNormal } from "./particleNormalGeometry";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -291,7 +292,7 @@ function sourceGeometry(
           divide(normal[1], Math.abs(size[1]) > ZERO_EPSILON ? size[1] : 1),
           divide(normal[2], Math.abs(size[2]) > ZERO_EPSILON ? size[2] : 1),
         ];
-        return normalizeOr(applyBasis(quaternionRotate(inverseScaled, particleRotation), basis), [0, 0, -1]);
+        return normalizeNativeParticleNormal(applyBasis(quaternionRotate(inverseScaled, particleRotation), basis));
       })),
       indices: mesh.screenYReflectionIndices,
     });
