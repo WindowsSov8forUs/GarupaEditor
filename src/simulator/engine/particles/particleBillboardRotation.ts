@@ -29,6 +29,21 @@ function trigonometry(angle: number, inverseTwoPi: number): readonly [number, nu
   return [foldedPolynomial(turns), foldedPolynomial(add(turns, -0.25))];
 }
 
+export function calculateNativeMeshEulerQuaternion(rotation: Vector3): readonly [number, number, number, number] {
+  // BND-C105: the mesh helper combines half-angle polynomials in ZXY order.
+  const [cx, sx] = trigonometry(multiply(rotation[0], 0.5), coefficients[0]!);
+  const [cy, sy] = trigonometry(multiply(rotation[1], 0.5), coefficients[0]!);
+  const [cz, sz] = trigonometry(multiply(rotation[2], 0.5), coefficients[0]!);
+  const products = [multiply(cz, sx), multiply(sx, sz), multiply(cx, sz), multiply(cx, cz)];
+  const firstSigns = [1, -1, 1, 1]; const secondSigns = [1, 1, -1, 1];
+  const result: [number, number, number, number] = [0, 0, 0, 0];
+  for (let axis = 0; axis < 4; axis += 1) {
+    result[axis] = add(multiply(firstSigns[axis]!, multiply(products[axis]!, cy)),
+      multiply(multiply(secondSigns[axis]!, sy), products[(axis + 2) % 4]!));
+  }
+  return result;
+}
+
 export function calculateNativeScalarBillboardRotation(basis: Columns, angle: number): Columns {
   const [cosine, sine] = trigonometry(angle, coefficients[0]!);
   const x: MutableVector3 = [0, 0, 0]; const y: MutableVector3 = [0, 0, 0]; const z: MutableVector3 = [0, 0, 0];

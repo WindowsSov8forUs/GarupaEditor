@@ -17,7 +17,7 @@ import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
-import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices } from "./particleBillboardRotation";
+import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion } from "./particleBillboardRotation";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
 const ZERO_EPSILON = Math.fround(1e-10);
@@ -269,7 +269,7 @@ function sourceGeometry(
   if (binding.renderer.m_RenderMode === 4) {
     const mesh = binding.mesh!;
     const basis = alignmentBasis(binding);
-    const particleRotation = eulerQuaternion(rotation);
+    const particleRotation = meshRotationQuaternion(binding, rotation);
     const pivot = binding.renderer.m_Pivot;
     return Object.freeze({
       vertices: Object.freeze(mesh.vertices.map((vertex) => {
@@ -649,6 +649,18 @@ function transformQuaternion(transform: ParticleTransformProfile): Quaternion {
     f32(transform.m_LocalRotation.x), f32(transform.m_LocalRotation.y),
     f32(transform.m_LocalRotation.z), f32(transform.m_LocalRotation.w),
   ];
+}
+
+function meshRotationQuaternion(binding: GeometryBinding, rotation: Vector3): Quaternion {
+  const keys = binding.bundle.profiles[binding.system.profile]!.modules;
+  const modules = binding.bundle.moduleProfiles;
+  const initial = keys.InitialModule === undefined ? undefined : modules.InitialModule?.[keys.InitialModule];
+  const shape = keys.ShapeModule === undefined ? undefined : modules.ShapeModule?.[keys.ShapeModule];
+  const lifetime = keys.RotationModule === undefined ? undefined : modules.RotationModule?.[keys.RotationModule];
+  const speed = keys.RotationBySpeedModule === undefined ? undefined : modules.RotationBySpeedModule?.[keys.RotationBySpeedModule];
+  const requires3D = initial?.rotation3D === true || shape?.alignToDirection === true ||
+    lifetime?.separateAxes === true || speed?.separateAxes === true;
+  return requires3D ? calculateNativeMeshEulerQuaternion(rotation) : eulerQuaternion(rotation);
 }
 
 function eulerQuaternion(rotation: Vector3): Quaternion {

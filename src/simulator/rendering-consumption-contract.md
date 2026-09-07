@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Mesh 3D quaternion arithmetic (BND-C105 / C106)
+
+Reverse `3200ee203cdd7a837253bc22a818b5b2970cf894` was verified and pushed with remote0 0 before consumption. Complete original12BC4AC and the original coefficient initialization prefix provide288 numeric cases;144 use3D rotation storage. The actual mode4 quaternion consumer now uses half-angle Float32 folded polynomials and the original ZXY sign/product order. All144 quaternion outputs match native bits, clearing96 baseline differences. Existing scalar/3D billboard rotation and simple/complex vertex consumers retain zero differences.
+
+This closes only the3D quaternion partition with explicit zero angle offset and no inversion. Module requirements select the production3D path; current native allocation flags and source axis/angle producers remain OPEN. Scalar mesh rotation, matrix conversion/scaling, pivot and age masking, owner/camera association, final mesh streams, bounds/sorting/HUD and aggregate equivalence remain OPEN. Both noEmit checks and runtime audit1438 pass as compile/integrity information; no tests/app/build/visuals.
+
 ### Source stretch texture-sheet output (BND-C103 / C104)
 
 Authority: Reverse `a31252b43c77f6bcc4653e4e580a5e64ab543f80`, verified and pushed with remote `0 0` before consumption. `particle_stretch_uv_output.json` SHA256 `68F0ACFC4DA2281711F39BA4A9BD3DD25D14A2D4B00EEFAA7F3257605357F70F` binds1741 fresh system roundtrips and286 enabled mode1 renderers to five UV configurations: enabled4x4/4x8/1x8 and disabled4x4/1x1. Original preparation, normalized-frame gather, full12C3738 and final12C39C4 execute58 native frame states, including both disabled defaults. All actual286 tile bindings and4517 source/frame buildUvs consumers match the native output; no algorithm edit is needed.
