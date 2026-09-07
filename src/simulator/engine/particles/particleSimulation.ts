@@ -1072,10 +1072,19 @@ export class DeterministicParticleSimulation {
       const orbitalStep: Vector3 = angular.map((value) =>
         multiply(multiply(value, delta), speedModifier)) as Vector3;
       const rotatedRelative = rotateEulerRadians(relative, orbitalStep);
-      const orbitalDuration = multiply(delta, speedModifier);
-      let orbital: Vector3 = Math.abs(orbitalDuration) > 0
-        ? scaleVector(subtractVector(rotatedRelative, relative), divide(1, orbitalDuration))
-        : [0, 0, 0];
+      // 1271598/127278C: divide displacement by speed, then multiply the
+      // refined inverse delta. Tiny deltas do not contribute orbital velocity.
+      let inverseDelta = f32(0);
+      if (delta > f32(0.000001)) {
+        const estimate = nativeParticleReciprocalEstimate(delta);
+        const first = multiply(estimate, f32(2 - delta * estimate));
+        inverseDelta = multiply(first, f32(2 - delta * first));
+      }
+      const displacement = subtractVector(rotatedRelative, relative);
+      let orbital = displacement.map((value) => multiply(
+        Math.abs(speedModifier) > f32(0.000000001) ? divide(value, speedModifier) : 0,
+        inverseDelta,
+      )) as Vector3;
       if (!velocity.inWorldSpace) orbital = applySystemVector(orbital, definition, particle.particleSystemSetupScale);
       const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
       const radial = scaleVector(normalizeOrZero(rotatedRelative), radialAmount);

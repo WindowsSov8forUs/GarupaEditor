@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Ordinary velocity and orbital delta correction (BND-C73/C74)
+
+Authority: Reverse `1fc165c9c157b67c9836ea463e270ecaea2ede32`, `particle_velocity_update.json` SHA256 `F43D01794046CF5A552D9488E8A0B765E5C38F883EDD7AEE439CE73DCB6EF87C`, verified and pushed before consumption. Fresh1,741 source roundtrips identify50 enabled Velocity systems/19 configurations. Complete original126D318 and its native callees feed the original108AF6C position-integration region. Explicit identity owner/unit scale, four seed/base-velocity/position rows, two age vectors and five deltas produce190 calls/760 rows.
+
+Production now applies the original strict delta>1e-6 gate, twice-refined reciprocal estimate, and displacement/speed followed by inverse-delta multiplication. The source orbital system accounts for54 baseline module-velocity/position differences; complete actual updateParticle now matches all760 native rows. C71 rotation408 calls/1632 rows, C69 analytic motion16 cases/74 rows, C67 common88 cases/164 rows/104 queues and C54 prewarm59 selections/59 preparations/7 wrappers/104 steps remain zero. Both noEmit checks and runtime audit1438 pass.
+
+This closes the declared source ordinary Velocity inputs, including speed1/2 and the single Z-orbital source. Mixed orbital axes/radial/current overrides, allocation/current owner/SoA producers, Force/Clamp/RotationBySpeed coupling, render-velocity publication and full lifecycle/rendering remain **OPEN**. No product tests/app/build/visuals.
+
 ### Ordinary rotation direction correction (BND-C71/C72)
 
 Verified/pushed Reverse17d17c804a3618fd0ef2409e46a70bf521c5f6cb retains original1055940 and the actual-rate108AF6C rotation integration region. particle_rotation_update.json SHA2569714085C6AAF0C1177EB60E32A4510EE476AC46441BBA435638F03119B61F076 freshly roundtrips1741 systems and binds360 enabled Rotation systems/34 module configurations. Cached and noncached two-curve paths execute original curve samplers/compilers.
