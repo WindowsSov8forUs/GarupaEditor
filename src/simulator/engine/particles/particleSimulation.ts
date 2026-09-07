@@ -1092,9 +1092,8 @@ export class DeterministicParticleSimulation {
       moduleVelocity = addVector(moduleVelocity, addVector(orbital, radial));
     }
 
-    // 0x109669C phase 4: ForceModule. Current active Force curves are
-    // constants, so accumulating force*delta in base velocity is equivalent
-    // to the native age-integrated transient velocity owner.
+    // 0x109669C phase 4: ordinary 103FB08 accumulates force*delta directly
+    // into base velocity. Analytic Force reconstruction is a separate path.
     const force = getModule(bundle, profile, "ForceModule");
     if (force !== null) {
       let acceleration: Vector3 = [

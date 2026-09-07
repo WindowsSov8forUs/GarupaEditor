@@ -92,6 +92,12 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Ordinary constant Force ownership (BND-C79/C80)
+
+Authority: Reverse `f53af19c4b36c47182acc1398f366af0fd5877f7`, `particle_force_update.json` SHA256 `92EB8AA3CF471B57BDC707FCFF3DF69C191966B793C152E9D9D6105576A0E33D`, verified and pushed before consumption. Fresh1,741 source roundtrips bindtwo enabled Force systems/one constant(0,5,0) configuration with randomizePerFrame=false. Complete103FB08/107D950 and three consecutive bounded108AF6C integrations produce30 calls/120 particle-frame rows; actual complete production updateParticle already agrees.
+
+Ordinary Force directly adds force*delta to base velocity96/128/160 and leaves extra velocity192/224/256 intact. The former production comment describing an age-integrated transient owner was incorrect and is replaced; executable behavior is unchanged. Identity basis/unit scale and explicit seed/age/base-velocity/position inputs bound this gate. Current owner/Transform/scale/override producers, nonconstant/randomizePerFrame/analytic Force and full lifecycle/rendering remain **OPEN**. No product tests/app/build/visuals.
+
 ### Shared rotation-rate integration (BND-C77/C78)
 
 Authority: Reverse `4749e63d9c2e78999186031613c7c5a105c1317d`, `particle_rotation_speed.json` SHA256 `1A26B39BA2D20ACB60D8610E259F6BAE5614A6C5B5D6AA3A52A4A3143CC74258`, verified and pushed before consumption. Fresh1,741 source roundtrips bind18 enabled RotationBySpeed systems/3 configurations, all mode0/3, with RotationModule disabled. The12 source calls/48 rows already agree. Separately labeled probes enable each system's serialized Rotation fields or select direction0.5/1;60 calls/240 rows expose90 baseline differences, including six at source direction0 with Rotation enabled.
