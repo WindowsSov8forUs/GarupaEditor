@@ -14,7 +14,7 @@ import type {
   ParticleTransformProfile,
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
-import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
+import { calculateNativeStretchArithmetic, calculateNativeStretchNormals } from "./particleStretchedGeometry";
 import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices, calculateNativeMeshMatrixColumns } from "./particleMeshGeometry";
 import { calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
@@ -491,13 +491,14 @@ function stretchedBillboard(
   const side = applyBasis([arithmetic.sideXY[0], arithmetic.sideXY[1], 0], sideBasis)
     .map((value, axis) => multiply(value, outerScale[axis]!)) as unknown as Vector3;
   const opposite = scaleVector(side, -1);
-  const normal = rendererNormal([0, 0, -1], binding.renderer.m_NormalDirection);
+  const longitudinal: Vector3 = [subtract(tail[0], worldCenter[0]), subtract(tail[1], worldCenter[1]), subtract(tail[2], worldCenter[2])];
+  const normals = calculateNativeStretchNormals(side, longitudinal, binding.renderer.m_NormalDirection);
   return Object.freeze({
     // Reorder the native perimeter head+,tail+,tail-,head- to our grid indices.
     // Absolute world vertices: do not rotate by the emitter or re-add the head.
     vertices: Object.freeze([addVector(worldCenter, side), addVector(tail, side), addVector(worldCenter, opposite), addVector(tail, opposite)]),
     uv0: Object.freeze([[0, 1], [1, 1], [0, 0], [1, 0]] as const),
-    normals: Object.freeze([normal, normal, normal, normal]),
+    normals: Object.freeze(normals),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
 }

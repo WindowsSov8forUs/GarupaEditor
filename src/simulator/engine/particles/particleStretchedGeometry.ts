@@ -54,6 +54,35 @@ export function calculateNativeStretchArithmetic(input: NativeStretchArithmeticI
   };
 }
 
+// BND-C135: 107A518..568 prepares the coefficient; 12C39C4 writes
+// four independent normals without a final normalization.
+export function calculateNativeStretchNormals(side: Vector3, longitudinal: Vector3, normalDirection: number): readonly Vector3[] {
+  const coefficient = f32(Math.cos(f32(f32(f32(normalDirection) * 90) * fromBits(0x3c8efa35))));
+  const u = normalizeStretchNormalAxis(side, [1, 0, 0]);
+  const v = normalizeStretchNormalAxis(longitudinal, [0, 1, 0]);
+  const weight = f32(1 - coefficient);
+  const core: Vector3 = [
+    f32(weight * f32(f32(u[1] * v[2]) - f32(u[2] * v[1]))),
+    f32(weight * f32(f32(u[2] * v[0]) - f32(u[0] * v[2]))),
+    f32(weight * f32(f32(u[0] * v[1]) - f32(u[1] * v[0]))),
+  ];
+  const combine = (axis: Vector3, subtract: boolean): Vector3 => axis.map((value, index) => {
+    const component = f32(value * coefficient);
+    return subtract ? f32(core[index]! - component) : f32(component + core[index]!);
+  }) as unknown as Vector3;
+  // Native perimeter order is side+, longitudinal+, side-, longitudinal-.
+  return [combine(u, false), combine(v, false), combine(v, true), combine(u, true)];
+}
+
+function normalizeStretchNormalAxis(value: Vector3, fallback: Vector3): Vector3 {
+  const squared = f32(f32(value[0] * value[0]) + f32(f32(value[1] * value[1]) + f32(value[2] * value[2])));
+  if (!(squared > MIN_SQUARED_LENGTH)) return fallback;
+  let inverse = reciprocalSqrtEstimate(squared);
+  inverse = f32(inverse * f32((3 - f32(squared * inverse) * inverse) / 2));
+  inverse = f32(inverse * f32((3 - f32(squared * inverse) * inverse) / 2));
+  return [f32(value[0] * inverse), f32(value[1] * inverse), f32(value[2] * inverse)];
+}
+
 function reciprocalSqrtEstimate(value: number): number {
   words.setFloat32(0, value, true);
   const bits = words.getUint32(0, true);
