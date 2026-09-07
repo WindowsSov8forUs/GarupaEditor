@@ -58,6 +58,10 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Shared mesh position columns (C120)
+
+The existing native mesh matrix-column calculation is extracted unchanged for reuse by the pending normal inverse implementation. Scalar448/37184 and3D nonunit336/27888 vertices remain byte-identical to original stores; no new algorithm equivalence is claimed. Both noEmit checks and runtime audit1438 pass. Reverse `43aa57b242c693c66ccc72fb2f19c47ee7ca1a9b` registers the inverse partition on immutable C117 expected. Full normal838 differing cases and the aggregate OPEN boundary remain unchanged.
+
 ### Mesh normal normalization (BND-C117 / C118)
 
 Reverse `e936055267960572d14c3fbad5b6786211786fb7` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_normals.json` SHA256 `3ACCA140FE7880A0260F38169D5E8F2D342F9C975708949B95DC46145AEB0966` executes896 full mesh matrices, native inverse preparation including224 singular10EFB00 calls, and74368 actual Float32 normal stores. Interleaved position/normal/tangent branch and Float32 inputs are explicit; current stream/format association remains OPEN.

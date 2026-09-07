@@ -50,13 +50,19 @@ function scale(column: Vector3, value: number, transformScale: Vector3): Vector3
     mul(mul(column[1], transformScale[1]), value), mul(mul(column[2], transformScale[2]), value)];
 }
 
+export function calculateNativeMeshMatrixColumns(
+  rotation: Quaternion, size: Vector3, basis: Columns, transformScale: Vector3,
+): Columns {
+  const rotated = rotationColumns(rotation);
+  // BND-C111: Transform axes scale the matrix rows before each particle axis.
+  return [apply(basis, scale(rotated[0], size[0], transformScale)),
+    apply(basis, scale(rotated[1], size[1], transformScale)), apply(basis, scale(rotated[2], size[2], transformScale))];
+}
+
 export function calculateNativeMeshVertices(
   vertices: readonly Vector3[], rotation: Quaternion, size: Vector3, basis: Columns, pivot: Vector3, transformScale: Vector3,
 ): readonly Vector3[] {
-  const rotated = rotationColumns(rotation);
-  // BND-C111: Transform axes scale the matrix rows before each particle axis.
-  const columns: Columns = [apply(basis, scale(rotated[0], size[0], transformScale)),
-    apply(basis, scale(rotated[1], size[1], transformScale)), apply(basis, scale(rotated[2], size[2], transformScale))];
+  const columns = calculateNativeMeshMatrixColumns(rotation, size, basis, transformScale);
   const offset = apply(columns, pivot);
   const translation: Vector3 = [add(0, offset[0]), add(0, offset[1]), add(0, offset[2])];
   return vertices.map((vertex) => {
