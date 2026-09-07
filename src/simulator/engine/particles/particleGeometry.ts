@@ -659,21 +659,6 @@ function meshRotationQuaternion(binding: GeometryBinding, rotation: Vector3): Qu
   return requires3D ? calculateNativeMeshEulerQuaternion(rotation) : calculateNativeMeshScalarQuaternion(rotation[2]);
 }
 
-function eulerQuaternion(rotation: Vector3): Quaternion {
-  const hx = multiply(rotation[0], 0.5);
-  const hy = multiply(rotation[1], 0.5);
-  const hz = multiply(rotation[2], 0.5);
-  const sx = f32(Math.sin(hx)); const cx = f32(Math.cos(hx));
-  const sy = f32(Math.sin(hy)); const cy = f32(Math.cos(hy));
-  const sz = f32(Math.sin(hz)); const cz = f32(Math.cos(hz));
-  return [
-    add(multiply(multiply(sx, cy), cz), multiply(multiply(cx, sy), sz)),
-    subtract(multiply(multiply(cx, sy), cz), multiply(multiply(sx, cy), sz)),
-    add(multiply(multiply(cx, cy), sz), multiply(multiply(sx, sy), cz)),
-    subtract(multiply(multiply(cx, cy), cz), multiply(multiply(sx, sy), sz)),
-  ];
-}
-
 function quaternionRotate(vector: Vector3, quaternion: Quaternion): Vector3 {
   const [x, y, z] = vector.map(f32) as [number, number, number];
   const [qx, qy, qz, qw] = quaternion.map(f32) as [number, number, number, number];
