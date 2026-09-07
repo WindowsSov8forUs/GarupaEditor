@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Ordinary rotation direction correction (BND-C71/C72)
+
+Verified/pushed Reverse17d17c804a3618fd0ef2409e46a70bf521c5f6cb retains original1055940 and the actual-rate108AF6C rotation integration region. particle_rotation_update.json SHA2569714085C6AAF0C1177EB60E32A4510EE476AC46441BBA435638F03119B61F076 freshly roundtrips1741 systems and binds360 enabled Rotation systems/34 module configurations. Cached and noncached two-curve paths execute original curve samplers/compilers.
+
+Production now applies the native particleSeed+FF2BB1A4 direction comparison before multiplying angular velocity by delta. Actual complete updateParticle agrees with408 original calls/1632 rows. Source direction0 contributes136 calls/544 rows with zero baseline differences. Separately labeled direction0.5/1 arithmetic probes contribute272 calls/1088 rows;736 baseline differences are corrected. These probes do not assert current source overrides. Both noEmit checks and runtime audit1438 pass; C69/C70 analytic-motion16 cases74 rows, common88 cases164 rows/104 queues and seven normal prewarm wrappers remain zero.
+
+Explicit source curves, four seeds/initial angles, age/delta vectors and angular-velocity/3D storage bound this gate. Complete current flag/seed/module producers, ordinary Initial/Velocity/Force/Clamp/RotationBySpeed coupling, whole update/death scheduling and full lifecycle/rendering remain **OPEN**. No product tests/app/build/visuals.
+
 ### Analytic prewarm motion integration (BND-C69/C70)
 
 Verified/pushed Reverse132da4a06e7fb238855b4af1ec55667c9dc893c5 and auditor1e9b5e79 bind original analytic Rotation105614C and Velocity126EE40/126F704 after the common queue reconstruction. particle_analytic_motion.json SHA2566DB753FD15D0990F91D937D03F673D5082340A5380D2E7DD9EFDA2BA6A496D0E retains32 calls/148 rows across eight source systems, two seeds and two inactive SIMD seed paddings. Original C47 curve compiler supplies cached coefficients; live outputs do not depend on those padding values.

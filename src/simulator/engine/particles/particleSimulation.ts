@@ -1030,11 +1030,15 @@ export class DeterministicParticleSimulation {
     const rotation = getModule(bundle, profile, "RotationModule");
     if (rotation !== null) {
       const rotationRandom = particleSeedRatio((particle.randomSeed + 0x6AED452E) >>> 0);
+      // 1055940 signs angular velocity before 108AF6C multiplies it by delta.
+      const rotationDirection = particleSeedRatio((particle.randomSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
+      const rotationStep = (value: ParticleMinMaxCurve): number =>
+        multiply(multiply(minMax(value, normalizedAge, rotationRandom), rotationDirection), delta);
       if (rotation.separateAxes) {
-        particle.rotation[0] = add(particle.rotation[0], multiply(minMax(rotation.x, normalizedAge, rotationRandom), delta));
-        particle.rotation[1] = add(particle.rotation[1], multiply(minMax(rotation.y, normalizedAge, rotationRandom), delta));
+        particle.rotation[0] = add(particle.rotation[0], rotationStep(rotation.x));
+        particle.rotation[1] = add(particle.rotation[1], rotationStep(rotation.y));
       }
-      particle.rotation[2] = add(particle.rotation[2], multiply(minMax(rotation.curve, normalizedAge, rotationRandom), delta));
+      particle.rotation[2] = add(particle.rotation[2], rotationStep(rotation.curve));
     }
 
     // 0x109669C phase 3: VelocityModule.
