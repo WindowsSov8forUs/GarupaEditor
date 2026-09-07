@@ -1550,11 +1550,16 @@ function currentActualRendererBounds(
   const shape = getModule(record.bundle, profile, "ShapeModule");
   const force = getModule(record.bundle, profile, "ForceModule");
   const velocity = getModule(record.bundle, profile, "VelocityModule");
-  // BND-C167/C169 admit source constant Force/Velocity; general curve motion remains open.
+  // BND-C167/C169/C171 admit source Force and finite unweighted two-key Velocity curves.
   if (analytic && ((shape !== null && (![0, 4, 5, 8, 10].includes(shape.type) ||
     [shape.m_Rotation.x, shape.m_Rotation.y, shape.m_Rotation.z].some((value) => value !== 0) ||
     (shape.type === 4 && (shape.angle < 0 || shape.angle >= 45)) || (shape.type === 8 && shape.angle !== 0))) ||
-    (velocity !== null && (force !== null || [velocity.x, velocity.y, velocity.z].some((curve) => curve.minMaxState !== 0))) ||
+    (velocity !== null && (force !== null || [velocity.x, velocity.y, velocity.z].some((curve) => {
+      if (curve.minMaxState === 0) return false;
+      const keys = curve.maxCurve.m_Curve;
+      return curve.minMaxState !== 1 || keys.length !== 2 || keys[0]!.time !== 0 || keys[1]!.time <= 0 || keys[1]!.time > 1 ||
+        keys.some((key) => key.weightedMode !== 0 || typeof key.inSlope !== "number" || typeof key.outSlope !== "number");
+    }))) ||
     (force !== null && (shape !== null || force.inWorldSpace || force.randomizePerFrame ||
       [force.x, force.y, force.z].some((curve) => curve.minMaxState !== 0))) ||
     initial.gravityModifier.scalar !== 0)) return undefined;

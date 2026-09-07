@@ -125,7 +125,7 @@ export function calculateNativeParticleLinearAnalyticBounds(
 /** BND-C169: complete constant-axis interval and zero-translation world conversion. */
 function extendNativeParticleVelocityBounds(lo: number[], hi: number[], lifetime: number, velocity: BoundsVelocity | null): void {
   if (velocity === null) return;
-  const ranges = velocity.axes.map((curve) => minMaxRange(curve).map((value) => mul(value, lifetime)));
+  const ranges = velocity.axes.map((curve) => nativeBoundsVelocityRange(curve).map((value) => mul(value, lifetime)));
   let lower = ranges.map((range) => range[0]!), upper = ranges.map((range) => range[1]!);
   if (velocity.inWorldSpace) {
     const bounds = [...lower, ...upper], matrix = velocity.worldToLocal;
@@ -144,6 +144,70 @@ function extendNativeParticleVelocityBounds(lo: number[], hi: number[], lifetime
     if (left < lo[axis]!) lo[axis] = left;
     if (hi[axis]! < right) hi[axis] = right;
   }
+}
+
+/** C171: source mode1 two-key cached/general integrated ranges. */
+function nativeBoundsVelocityRange(value: ParticleMinMaxCurve): readonly [number, number] {
+  if (value.minMaxState === 0) return minMaxRange(value);
+  const [left, right] = value.maxCurve.m_Curve;
+  const width = Math.max(sub(right!.time, left!.time), f32(0.0001));
+  const inverse = div(1, width), square = mul(inverse, inverse), difference = sub(right!.value, left!.value);
+  const outgoing = mul(left!.outSlope as number, width), incoming = mul(width, right!.inSlope as number);
+  const coefficients = [
+    mul(inverse, mul(square, sub(sub(add(outgoing, incoming), difference), difference))),
+    mul(square, sub(sub(sub(add(difference, add(difference, difference)), outgoing), outgoing), incoming)),
+    f32(left!.outSlope as number), f32(left!.value),
+  ].map((coefficient) => mul(coefficient, value.scalar));
+  const integrate = (raw: readonly number[]): number[] => raw.map((coefficient, axis) => mul(coefficient, [0.25, f32(1 / 3), 0.5, 1][axis]!));
+  const first = integrate(coefficients);
+  const cached = Math.abs(sub(right!.time, 1)) <= f32(0.0001);
+  const second = cached ? first : integrate([0, 0, 0, mul(right!.value, value.scalar)]);
+  const split = cached ? 1 : f32(right!.time), end = cached ? 1 : numberFromBits(0x3f8147ae);
+  const polynomial = (c: readonly number[], t: number): number => mul(t, add(c[3]!, mul(t, add(c[2]!, mul(t, add(c[1]!, mul(t, c[0]!)))))));
+  const prefix = polynomial(first, split);
+  const evaluate = (time: number): number => cached
+    ? add(polynomial(first, Math.min(time, split)), polynomial(second, Math.max(sub(time, split), 0)))
+    : time <= split ? polynomial(first, time) : add(prefix, polynomial(second, sub(time, split)));
+  let lo = 0, hi = 0;
+  const include = (time: number): void => { const v = evaluate(time); lo = Math.min(lo, v); hi = Math.max(hi, v); };
+  for (let segment = 0; segment < 2; segment++) {
+    const c = segment === 0 ? first : second, start = segment === 0 ? 0 : split, stop = segment === 0 ? split : end;
+    const roots = nativeBoundsIntegralRoots(mul(c[0]!, 4), mul(c[1]!, 3), mul(c[2]!, 2), c[3]!);
+    for (const root of roots) { const time = add(root, start); if (time >= start && time < stop) include(time); }
+    include(stop);
+  }
+  return [lo, hi];
+}
+
+/** C171 original EF8374: binary64 cubic reduction, then binary32 deflation. */
+function nativeBoundsIntegralRoots(a: number, b: number, c: number, d: number): number[] {
+  const quadratic = (aa: number, bb: number, cc: number): number[] => {
+    if (Math.abs(aa) < f32(0.00001)) return Math.abs(bb) > f32(0.00001) ? [div(-cc, bb)] : [];
+    const discriminant = add(mul(bb, bb), mul(mul(aa, -4), cc));
+    if (discriminant < 0) return [];
+    const root = f32(Math.sqrt(discriminant)), factor = div(0.5, aa);
+    return [mul(factor, sub(root, bb)), mul(factor, sub(-root, bb))];
+  };
+  if (Math.abs(a) < f32(0.0001)) return quadratic(f32(b), f32(c), f32(d));
+  const third = 1 / 3, shift = (b / a) * third, normalized = c / a;
+  const p = normalized * third - shift * shift;
+  const q = (d / a) * 0.5 + (shift * (shift * shift) - (shift * normalized) * 0.5);
+  const cube = p * (p * p), discriminant = cube + q * q;
+  let root: number;
+  if (discriminant <= 0) {
+    const magnitude = Math.sqrt(-cube), angle = Math.acos(-q / magnitude), power = Math.pow(magnitude, third);
+    const scale = power - p / power;
+    const r0 = scale * Math.cos(angle * third) - shift;
+    const r1 = scale * Math.cos((angle + f32(2 * Math.PI)) * third) - shift;
+    const r2 = scale * Math.cos((angle + f32(4 * Math.PI)) * third) - shift;
+    root = Math.max(r0, r1, r2);
+  } else {
+    const x = Math.sqrt(discriminant) - q;
+    const power = x <= 0 ? -Math.pow(-x, third) : Math.pow(x, third);
+    root = power + (-shift - p / power);
+  }
+  root = f32(root);
+  return [root, ...quadratic(f32(a), f32(root * a + b), f32((root * b + c) + (root * a) * root))];
 }
 
 function finishNativeParticleAnalyticBounds(
