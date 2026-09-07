@@ -793,3 +793,10 @@ Slide owner position and scale now enter native runtime preparation before emitt
 Actual1278 static matrices/44730 fields/5112 world centers agree, eliminating15480 baseline components. Actual1278 owner replacements/44730 subsequent matrix fields agree, eliminating5134 stale-parent components. Prior button316 matrices/11060 fields/2528 centers and game-clear23 matrices/805 fields/184 centers remain exact. Both noEmit checks and runtimeaudit1438 pass as compilation/integrity only. The user's package-lock digest is unchanged.
 
 The owner probes are conditional source XY/prefab Z and quaternion/native scale inputs. This does not accept native slidingMove trajectory or layout occurrence, clone/reparent quaternion conversion, complete birth/module/lifecycle/SoA execution, final Slide worker offsets/normals, bounds/frustum/group/shared sorting or aggregate parity. C173 retains136 comparator-prefix differences. No product tests/app/build/visuals.
+
+
+### BND-C197: Slide bounds under complete native owner matrices
+
+Reverse83b9270c711969320602ea67b8ee54b21059d38a passed original regeneration,1011 manifest hashes, staged policy and exact remote0 0 before consumption. CorpusB0F17DD69BA88B2F8C00BFBC008ADBFB762D6EDCD89E3358AF11C093138892DF binds73 enabled nonmesh ordinary TapKeep systems through fresh full source reads/byte roundtrips.69 source/owner combinations execute414 original108D584/1076970 pairs using complete C195 owner rows0/8/17,count0/4 and source-matching storage. Source eligibility, curve extrema, Shape, Velocity cache and native libm remain continuous.
+
+Actual owner/setup/root/runtime preparation438 calls, complete bounds wrapper438 calls and73 eligibility calls agree. No production bounds correction is needed for this domain.14 disabled renderers and16 Mesh renderers with unbound current mesh cache remain explicitly separate. Current layout/slidingMove/module/lifecycle/SoA/flags/cache invalidation, frustum/group and sorting remain OPEN; C173 retains136 prefix differences. No product tests/app/build/visuals; compilation is not used as equivalence evidence.
