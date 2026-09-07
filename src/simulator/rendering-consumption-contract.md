@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Shape direction normalization correction (BND-C62)
+
+Reverse `f3b240379ee9011d927e7d7ae5ef1236bc1728b6` was verified/pushed clean with remote `0 0` before consumption. `particle_shape_normalization.json` SHA256 `BF2A0C4E9B3F4BAF87E64E020F9EF6637DFA9BEF81A11AA802C2D467309FB185` executes original1241914..124199C for3148 explicit finite vectors, including magnitude/sign/zero/threshold boundaries.512 original FRSQRTE bins match the existing production table. Full helper and12357F0 caller bodies retain the subsequent spherical and post-transform normalization context.
+
+Production Shape initial, spherical and final direction normalization now use the original estimate and two FRSQRTS refinements with separately rounded FMUL operations. The independent auditor executes all three actual consumer helper bindings:9444 results and512 table entries agree, versus3219 baseline comparisons (1073 vectors across three consumers). The cone-volume intermediate helper and unrelated velocity radial normalization retain their separate status.
+
+This is a bounded numeric gate. Current source vectors, direction/position random generation, matrix construction, spherical/random blending, complete Shape/SoA/rotation publication and analytic lifecycle/rendering/bounds/shared sorting/HUD remain **OPEN**. No product tests, app, build or visual capture.
+
 ### Normal InitialModule end-phase correction (BND-C61)
 
 Reverse `926086004cecfbfcf207a6d5c605538a35df467b` was verified/pushed clean with remote `0 0` before consumption. `particle_initial_birth.json` SHA256 `D73601535DE36BB860D910DEC1400E88EACF0EF9412309680DEFC2A2BD09384E` binds1741 fresh system roundtrips/559 Initial configurations and executes1122 complete105FD50 calls. Original normal seed/lifetime/size/rotation/color ordering is checked independently from analytic C56. The caller chain1090584 ->108C5B8 ->105FD50 supplies the end-of-step normalized system phase. Its FRECPE/two-FRECPS arithmetic executes192 inputs across all12 positive source durations.

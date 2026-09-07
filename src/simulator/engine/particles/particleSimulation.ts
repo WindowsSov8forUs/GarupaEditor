@@ -28,6 +28,7 @@ import type {
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
 import { calculateNativeParticleHierarchyScale, type ParticleHierarchyTransform } from "./particleHierarchyScale";
+import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
   particleSimdRandomValues,
@@ -1726,7 +1727,7 @@ function sampleShape(
     default:
       throw fault("particle.simulation.unsupported-shape", "Current native semantic profiles admit only Shape types 0, 4, 5, 8 and 10.");
   }
-  direction = normalizeOrFallback(direction);
+  direction = nativeShapeDirection(direction);
   if (shape.randomDirectionAmount > 0) {
     const randomTheta = multiply(TWO_PI, next());
     const randomZ = subtract(multiply(2, next()), 1);
@@ -1741,7 +1742,7 @@ function sampleShape(
       lerp(value, randomDirection[index]!, shape.randomDirectionAmount)) as Vector3;
   }
   if (shape.sphericalDirectionAmount > 0) {
-    const radialDirection = normalizeOrFallback(position);
+    const radialDirection = nativeShapeDirection(position);
     direction = direction.map((value, index) =>
       lerp(value, radialDirection[index]!, shape.sphericalDirectionAmount)) as Vector3;
   }
@@ -1775,7 +1776,7 @@ function sampleShape(
     multiply(direction[1], shape.m_Scale.y),
     multiply(direction[2], shape.m_Scale.z),
   ], shape.m_Rotation);
-  return Object.freeze({ position, direction: normalizeOrFallback(direction) });
+  return Object.freeze({ position, direction: nativeShapeDirection(direction) });
 }
 
 function customData(
@@ -1979,6 +1980,22 @@ function normalizeOrZero(vector: Vector3): Vector3 {
 function normalizeOrFallback(vector: Vector3): Vector3 {
   const normalized = normalizeOrZero(vector);
   return vectorLengthSquared(normalized) > 0 ? normalized : [0, 0, 1];
+}
+function nativeShapeReciprocalSqrtEstimate(value: number): number {
+  const word = uint32Bits(value);
+  const exponent = ((word >>> 23) & 0xFF) - 127;
+  const halfExponent = Math.floor(exponent / 2);
+  const index = (exponent - halfExponent * 2) * 256 + ((word & 0x7FFFFF) >>> 15);
+  return float32FromBits(particleReciprocalSqrtEstimates.estimateBits[index]! - halfExponent * 0x800000);
+}
+function nativeShapeDirection(vector: Vector3): Vector3 {
+  const squared = vectorLengthSquared(vector);
+  if (!(squared > SHAPE_DIRECTION_EPSILON_SQUARED)) return [0, 0, 1];
+  let inverse = nativeShapeReciprocalSqrtEstimate(squared);
+  // BND-C62: FRSQRTS rounds (3-a*b)/2 once, after the separate FMUL.
+  inverse = multiply(inverse, f32((3 - multiply(squared, inverse) * inverse) / 2));
+  inverse = multiply(inverse, f32((3 - multiply(squared, inverse) * inverse) / 2));
+  return scaleVector(vector, inverse);
 }
 function currentBurstCount(
   value: ParticleMinMaxCurve,
