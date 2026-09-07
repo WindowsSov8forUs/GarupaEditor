@@ -150,6 +150,7 @@ interface SimulatedParticle {
   readonly creationSequence: number;
   readonly emitterOrigin: Vector3;
   readonly particleSystemSetupScale: number;
+  readonly resetRootTransform: boolean;
   age: number;
   agePercent: number;
   readonly lifetime: number;
@@ -648,10 +649,12 @@ export class DeterministicParticleSimulation {
         if (renderer === undefined) throw fault("particle.simulation.missing-renderer", "Every current profile renderer must resolve.");
         if (!renderer.m_Enabled) continue;
         const material = renderer.m_Materials[0] ?? null;
-        const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale);
-        const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale);
+        const resetRootTransform = owner.instance.kind === "game-play-button";
+        const transformSize = particleSizeScale(record.definition, profile.system.scalingMode, owner.particleSystemSetupScale, resetRootTransform);
+        const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale,
+          resetRootTransform && record.definition.parentTransforms.length === 0);
         const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
-          positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale)));
+          positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, owner.particleSystemSetupScale), resetRootTransform && index === 0));
         const runtimeTransform = calculateNativeParticleRuntimeTransform(emitterTransform, parentTransforms, profile.system.scalingMode);
         const rendererWorldBounds = currentActualRendererBounds(record, profile, runtime.particles, runtimeTransform);
         const simulationToWorld = Object.freeze([0, 4, 8].map((offset) => vectorBits([
@@ -951,9 +954,11 @@ export class DeterministicParticleSimulation {
     const position: Vector3 = birth.position;
     const velocity = birth.direction.map((value) => multiply(value, speed)) as Vector3;
     const particleSystemSetupScale = owner.particleSystemSetupScale;
-    const emitterTransform = positionedHierarchyTransform(record.definition.transform, particleSystemSetupScale);
+    const resetRootTransform = owner.instance.kind === "game-play-button";
+    const emitterTransform = positionedHierarchyTransform(record.definition.transform, particleSystemSetupScale,
+      resetRootTransform && record.definition.parentTransforms.length === 0);
     const parentTransforms = record.definition.parentTransforms.map((parent, index) =>
-      positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale)));
+      positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale), resetRootTransform && index === 0));
     const emitterOrigin = calculateNativeParticleEmitterOrigin(emitterTransform, parentTransforms, profile.system.scalingMode);
     instanceState.birthCount += 1;
     this.creationSequence += 1;
@@ -962,6 +967,7 @@ export class DeterministicParticleSimulation {
       creationSequence: this.creationSequence,
       emitterOrigin: emitterOrigin.map(f32) as Vector3,
       particleSystemSetupScale,
+      resetRootTransform,
       age: f32(0),
       agePercent: f32(0),
       lifetime,
@@ -1020,7 +1026,7 @@ export class DeterministicParticleSimulation {
         instant[axis] = minMax(value, age, ratio);
       }
       const transform = (value: Vector3): Vector3 => velocity.inWorldSpace
-        ? [...applyNativeParticleWorldModuleVector(particleRuntimeTransform(record, particle.particleSystemSetupScale), value)] : value;
+        ? [...applyNativeParticleWorldModuleVector(particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform), value)] : value;
       particle.position = addVector(particle.position, transform(displacement));
       particle.moduleVelocity = addVector(transform(instant), particle.moduleVelocity);
       particle.renderVelocity = addVector(particle.velocity, particle.moduleVelocity);
@@ -1040,7 +1046,7 @@ export class DeterministicParticleSimulation {
 
     // 0x109669C phase 1: Initial/gravity owner.
     const gravity = minMax(initial.gravityModifier, normalizedAge, particle.slots[9]!);
-    const runtimeTransform = particleRuntimeTransform(record, particle.particleSystemSetupScale);
+    const runtimeTransform = particleRuntimeTransform(record, particle.particleSystemSetupScale, particle.resetRootTransform);
     // 105FBF0 returns zero gravity for scalar0; 10612C4 modes0/1 then
     // skip accumulation entirely, preserving signed-zero base velocities.
     if (initial.gravityModifier.scalar !== 0 || initial.gravityModifier.minMaxState > 1) {
@@ -2194,20 +2200,22 @@ function parentSetupScale(
   return flags === undefined || flags[parentIndex] === true ? gameplayTransformScale : 1;
 }
 
-function particleRuntimeTransform(record: SystemRecord, setupScale: number): ParticleRuntimeTransform {
+function particleRuntimeTransform(record: SystemRecord, setupScale: number, resetRootTransform = false): ParticleRuntimeTransform {
   const { definition } = record;
   return calculateNativeParticleRuntimeTransform(
-    positionedHierarchyTransform(definition.transform, setupScale),
+    positionedHierarchyTransform(definition.transform, setupScale, resetRootTransform && definition.parentTransforms.length === 0),
     definition.parentTransforms.map((parent, index) =>
-      positionedHierarchyTransform(parent, parentSetupScale(definition, index, setupScale))),
+      positionedHierarchyTransform(parent, parentSetupScale(definition, index, setupScale), resetRootTransform && index === 0)),
     record.bundle.profiles[definition.profile]!.system.scalingMode,
   );
 }
 
-function positionedHierarchyTransform(transform: ParticleTransformProfile, setupScale: number) {
+function positionedHierarchyTransform(transform: ParticleTransformProfile, setupScale: number, resetRootTransform = false) {
   return {
-    ...hierarchyTransform(transform, setupScale),
-    position: [f32(transform.m_LocalPosition.x), f32(transform.m_LocalPosition.y), f32(transform.m_LocalPosition.z)] as Vector3,
+    ...hierarchyTransform(transform, setupScale, resetRootTransform),
+    // GamePlayButton.Setup -> 32BBB4C resets only the instantiated prefab root.
+    position: (resetRootTransform ? [0, 0, 0]
+      : [f32(transform.m_LocalPosition.x), f32(transform.m_LocalPosition.y), f32(transform.m_LocalPosition.z)]) as Vector3,
   };
 }
 
@@ -2215,20 +2223,22 @@ function particleSizeScale(
   definition: ParticleSystemDefinition,
   scalingMode: 0 | 1,
   gameplayTransformScale: number,
+  resetRootTransform = false,
 ): Vector3 {
-  const self = hierarchyTransform(definition.transform, gameplayTransformScale);
+  const self = hierarchyTransform(definition.transform, gameplayTransformScale, resetRootTransform && definition.parentTransforms.length === 0);
   if (scalingMode === 1) return [...self.scale];
   const parents = definition.parentTransforms.map((parent, index) =>
-    hierarchyTransform(parent, parentSetupScale(definition, index, gameplayTransformScale)));
+    hierarchyTransform(parent, parentSetupScale(definition, index, gameplayTransformScale), resetRootTransform && index === 0));
   return [...calculateNativeParticleHierarchyScale(self, parents)];
 }
 
-function hierarchyTransform(transform: ParticleTransformProfile, setupScale: number): ParticleHierarchyTransform {
+function hierarchyTransform(transform: ParticleTransformProfile, setupScale: number, resetRootTransform = false): ParticleHierarchyTransform {
   const rotation = transform.m_LocalRotation;
   const scale = transform.m_LocalScale;
   return {
     rotation: [f32(rotation.x), f32(rotation.y), f32(rotation.z), f32(rotation.w)],
-    scale: [multiply(scale.x, setupScale), multiply(scale.y, setupScale), multiply(scale.z, setupScale)],
+    scale: resetRootTransform ? [f32(setupScale), f32(setupScale), f32(setupScale)]
+      : [multiply(scale.x, setupScale), multiply(scale.y, setupScale), multiply(scale.z, setupScale)],
   };
 }
 
