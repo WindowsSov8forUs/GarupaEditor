@@ -374,7 +374,29 @@ export class DeterministicParticleSimulation {
     profile: ParticleProfileDefinition,
     runtime: OwnerSystemRuntime,
   ): void {
-    if (!profile.system.prewarm) return;
+    if (!profile.system.prewarm || !profile.system.looping) return;
+    if (!nativeParticlePrewarmAnalyticEligible(record.bundle, profile)) {
+      const initial = getModule(record.bundle, profile, "InitialModule");
+      if (initial === null) return;
+      const prepared = nativeParticlePrewarmPreparation(profile.system, initial.startLifetime);
+      runtime.elapsed = prepared.phase;
+      const frameElapsed = runtime.elapsed;
+      // Play's normal prewarm uses the explicit-delta batch job (flags 8).
+      const steps = nativeParticleFrameSteps(prepared.delta, profile.system.simulationSpeed,
+        profile.system.lengthInSec, runtime);
+      for (const effectiveDelta of steps) {
+        const timing = nativeParticleSystemClock(runtime, effectiveDelta,
+          profile.system.lengthInSec, profile.system.looping, frameElapsed);
+        for (const particle of runtime.particles) this.updateParticle(record, particle, effectiveDelta);
+        removeExpiredParticles(runtime.particles);
+        const batches = timing.delta === null ? []
+          : this.emitStep(record.bundle, profile, runtime, timing.before, timing.after, timing.delta);
+        for (const batch of batches) this.spawnBatch(owner, record, profile, runtime, batch, timing.after);
+        runtime.first = false;
+      }
+      return;
+    }
+    // The distinct analytic/deferred branch remains under native reconstruction.
     const duration = f32(profile.system.lengthInSec);
     const events = this.events(record.bundle, profile, runtime, -duration, 0, true)
       .filter((batch) => batch.at < 0);
@@ -1195,6 +1217,66 @@ function nativeParticleFrameSteps(
     previousStep = step;
   }
   return steps;
+}
+
+function nativeParticlePrewarmPreparation(
+  system: ParticleProfileDefinition["system"],
+  lifetime: ParticleMinMaxCurve,
+): { delta: number; phase: number } {
+  // 0x108EC04, Play time 0; all current source lifetimes use mode 0 or 3.
+  let maximumLifetime = lifetime.minMaxState === 3
+    ? Math.max(f32(lifetime.minScalar), f32(lifetime.scalar)) : Math.max(f32(lifetime.scalar), 0);
+  const duration = f32(system.lengthInSec);
+  if (maximumLifetime === Infinity) maximumLifetime = duration;
+  maximumLifetime = Math.max(maximumLifetime, 0); // No enabled source subemitters.
+  let start = subtract(0, maximumLifetime);
+  if (start < 0) start = add(start, multiply(duration, f32(Math.ceil(divide(-start, duration)))));
+  return {
+    delta: divide(maximumLifetime, Math.max(f32(system.simulationSpeed), f32(0.001))),
+    phase: f32(start % duration),
+  };
+}
+
+function nativeParticleIntegralCurveEligible(value: ParticleAnimationCurve): boolean {
+  // 0xEF8B6C counts the cache segments after adding missing domain endpoints.
+  const keys = value.m_Curve;
+  if (keys.length === 0) return true;
+  let segments = keys.length;
+  if (keys[0]!.time === 0) segments -= 1;
+  else if (value.m_PreInfinity < 2) return false;
+  if (keys[keys.length - 1]!.time !== 1) {
+    if (value.m_PostInfinity < 2) return false;
+    segments += 1;
+  }
+  return segments < 9;
+}
+
+function nativeParticleIntegralMinMaxEligible(value: ParticleMinMaxCurve): boolean {
+  return value.minMaxState === 0 || value.minMaxState === 3 ||
+    (nativeParticleIntegralCurveEligible(value.maxCurve) &&
+      (value.minMaxState !== 2 || nativeParticleIntegralCurveEligible(value.minCurve)));
+}
+
+function nativeParticlePrewarmAnalyticEligible(bundle: ParticleBundleProfile, profile: ParticleProfileDefinition): boolean {
+  // 0x108E6CC over the current source module domain. ExternalForces, Collision,
+  // Noise, Trigger, SubEmitters and Trails are disabled in all source prewarms.
+  if (profile.system.moveWithTransform !== 0 || profile.system.stopAction !== 0 ||
+    getModule(bundle, profile, "ClampVelocityModule") !== null ||
+    getModule(bundle, profile, "RotationBySpeedModule") !== null) return false;
+  const emission = getModule(bundle, profile, "EmissionModule");
+  if (emission !== null && emission.rateOverDistance.scalar !== 0) return false;
+  const initial = getModule(bundle, profile, "InitialModule");
+  if (initial !== null && (initial.gravityModifier.minMaxState !== 0 || initial.startLifetime.scalar === Infinity)) return false;
+  const shape = getModule(bundle, profile, "ShapeModule");
+  if (shape !== null && (shape.type === 4 || shape.type === 8 || shape.type === 10) && shape.arc.mode !== 0) return false;
+  const rotation = getModule(bundle, profile, "RotationModule");
+  if (rotation !== null && (!nativeParticleIntegralMinMaxEligible(rotation.curve) ||
+    (rotation.separateAxes && (!nativeParticleIntegralMinMaxEligible(rotation.x) || !nativeParticleIntegralMinMaxEligible(rotation.y))))) return false;
+  const velocity = getModule(bundle, profile, "VelocityModule");
+  if (velocity !== null && (![velocity.x, velocity.y, velocity.z].every(nativeParticleIntegralMinMaxEligible) ||
+    [velocity.orbitalX, velocity.orbitalY, velocity.orbitalZ, velocity.radial].some((value) => value.scalar !== 0))) return false;
+  const force = getModule(bundle, profile, "ForceModule");
+  return force === null || (!force.randomizePerFrame && [force.x, force.y, force.z].every(nativeParticleIntegralMinMaxEligible));
 }
 
 function removeExpiredParticles(particles: SimulatedParticle[]): void {
