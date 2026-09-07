@@ -807,3 +807,10 @@ Actual owner/setup/root/runtime preparation438 calls, complete bounds wrapper438
 Reverse137247f4e5535656aa7f0345046094c0f4dc6239 passed original regeneration,1014 manifest hashes, staged policy and exact remote0 0 before consumption. Corpus38862D37009AD653AAE67187C232E5FAB3A05B1259546DA4F662E8E3345D34F5 executes423 complete original View/zero-pivot worker calls on47 source Slide renderer inputs and C195 complete owners. Actual complete samples/buildPrimitive world vertices and normals agree for1410 live rows;282 nonlive rows remain separate. No production arithmetic change is indicated.
 
 18 Local-alignment and8 nonzero-pivot systems remain separate along with C197 disabled/Mesh exclusions. Explicit raw size and rotation probes do not accept actual module/color/UV/material producer occurrence. Native layout/slidingMove/lifecycle/SoA/flags/frustum/group/shared sorting remain OPEN; C173 retains136 comparator-prefix differences. No product tests/app/build/visuals.
+
+
+### BND-C199: Local billboard evidence closeout
+
+Reverse `a248d8bd7de5702243f6c1c96360d60ccc0fa63b` passed Local regeneration, unchanged C198 View regeneration,1015 manifest hashes, staged policy and exact remote0 0 before consumption. Corpus `E4129D46A132805CC83DD5054E090C7280F26860AE82D2BF153809674DAEB675` covers18 source Local/zero-pivot renderers and162 complete original worker calls. Actual complete samples/buildPrimitive world vertices and normals agree on540 live rows;108 nonlive rows remain separate. Prior47 View renderers/1410 live rows remain exact. No production algorithm change is required.
+
+This closes the current candidate only: source alignment/quaternion/flag inputs are explicit ABI adapters, not complete dispatcher or source producer occurrence.8 nonzero-pivot systems,16 Mesh systems with unbound current cache, C173136 sorting-prefix differences, current lifecycle/module/SoA/flags/layout/frustum/shared sorting remain OPEN. Heavy investigation pauses at this boundary for workflow consolidation. No product tests/app/build/visuals or unrelated compilation reruns.
