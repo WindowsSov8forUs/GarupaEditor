@@ -2390,7 +2390,9 @@ function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleIns
   }
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
   return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
-    left.poolSlot === right.poolSlot && left.route === right.route;
+    left.poolSlot === right.poolSlot && left.route === right.route &&
+    left.particleSystemSetupScaleFactorsBits?.[0] === right.particleSystemSetupScaleFactorsBits?.[0] &&
+    left.particleSystemSetupScaleFactorsBits?.[1] === right.particleSystemSetupScaleFactorsBits?.[1];
 }
 
 function sameOwnerTransform(
@@ -2409,14 +2411,14 @@ function instanceParticleSystemSetupScale(
   instance: ParticleInstanceIdentity,
   legacyFallback: number,
 ): ParticleSetupScale {
-  if (instance.kind === "game-play-button") {
+  if (instance.kind === "game-play-button" || instance.kind === "note-slide") {
     const factors = instance.particleSystemSetupScaleFactorsBits;
     if (factors === undefined || factors.length !== 2) {
-      throw fault("particle.simulation.invalid-owner-setup-scale", "Button setup requires both original scale factors.");
+      throw fault("particle.simulation.invalid-owner-setup-scale", "Gameplay setup requires both original scale factors.");
     }
     const first = particleFloat32FromBits(factors[0]), second = particleFloat32FromBits(factors[1]);
     if (first === null || second === null || first <= 0 || second <= 0) {
-      throw fault("particle.simulation.invalid-owner-setup-scale", "Button setup factors must be positive binary32.");
+      throw fault("particle.simulation.invalid-owner-setup-scale", "Gameplay setup factors must be positive binary32.");
     }
     return [first, second];
   }

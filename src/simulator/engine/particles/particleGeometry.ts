@@ -303,7 +303,7 @@ function sourceGeometry(
     if (sample.instance.particleSystemSetupScaleBits === undefined) {
       throw fault("particle.geometry.local-billboard-transform", "Local billboards require current particle size before Transform scaling and their concrete owner setup scale.");
     }
-    const setup: ParticleSetupScale = sample.instance.kind === "game-play-button"
+    const setup: ParticleSetupScale = sample.instance.kind === "game-play-button" || sample.instance.kind === "note-slide"
       ? [requiredBits(sample.instance.particleSystemSetupScaleFactorsBits![0]), requiredBits(sample.instance.particleSystemSetupScaleFactorsBits![1])]
       : requiredBits(sample.instance.particleSystemSetupScaleBits);
     basis = localBillboardBasis(binding.system, setup,

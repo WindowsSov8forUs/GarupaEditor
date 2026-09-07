@@ -678,6 +678,8 @@ export type ParticleInstanceIdentity =
       /** Required by Schema-2 production; optional only for legacy source compilation. */
       readonly ownerTransform?: ParticleOwnerTransform;
       readonly particleSystemSetupScaleBits?: string;
+      /** Required in production; preserve width and note-size writes separately. */
+      readonly particleSystemSetupScaleFactorsBits?: readonly [string, string];
       readonly poolSlot?: number;
       readonly route?: "original" | "product-extension";
       /** Deprecated compile-only fields; production command validation rejects nullable transform ownership. */
@@ -913,6 +915,7 @@ export interface ParticleSlidePoolSceneProfile {
   readonly firstAcquiredSlot: 1;
   readonly outerScaleBits: string;
   readonly particleSystemSetupScaleBits: string;
+  readonly particleSystemSetupScaleFactorsBits?: readonly [string, string];
   readonly childLocalPosition: ParticleFloat32Vector3;
   readonly childLocalRotation: ParticleFloat32Quaternion;
   readonly childLocalScale: ParticleFloat32Vector3;

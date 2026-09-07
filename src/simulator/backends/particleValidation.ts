@@ -1035,7 +1035,7 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
   if (value.kind !== "note-slide" ||
     !hasExactKeys(value, [
       "kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength", "ownerTransform",
-      "particleSystemSetupScaleBits", "poolSlot", "route", "rootPositionXBits", "rootPositionYBits", "rootScaleBits",
+      "particleSystemSetupScaleBits", "particleSystemSetupScaleFactorsBits", "poolSlot", "route", "rootPositionXBits", "rootPositionYBits", "rootScaleBits",
     ]) ||
     typeof value.noteIndex !== "number" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
     typeof value.absolutePosition !== "number" || !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
@@ -1044,6 +1044,8 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
     typeof value.poolSlot !== "number" || !Number.isInteger(value.poolSlot) || value.poolSlot < 0 || value.poolSlot >= 8 ||
     (value.route !== "original" && value.route !== "product-extension") ||
     !positiveFloat32Bits(value.particleSystemSetupScaleBits) ||
+    !Array.isArray(value.particleSystemSetupScaleFactorsBits) || value.particleSystemSetupScaleFactorsBits.length !== 2 ||
+    !value.particleSystemSetupScaleFactorsBits.every(positiveFloat32Bits) ||
     !isOwnerTransform(value.ownerTransform, value.route === "original" ? "original-note-slide" : "product-extension-note-slide") ||
     typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
     typeof value.rootScaleBits !== "string") return false;

@@ -10647,7 +10647,7 @@
     {
       "id": "RCB-0506",
       "file": "src/simulator/backends/particles/deterministicParticleBackend.ts",
-      "line": 575,
+      "line": 577,
       "marker": "integrity-failure-string",
       "symbol": "transitionRejected",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -10668,7 +10668,7 @@
     {
       "id": "RCB-0507",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 1152,
+      "line": 1154,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -11256,7 +11256,7 @@
     {
       "id": "RCB-0535",
       "file": "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
-      "line": 605,
+      "line": 607,
       "marker": "integrity-failure-string",
       "symbol": "positiveBits",
       "source": "\"integrity-failure\",",
@@ -23856,7 +23856,7 @@
     {
       "id": "RCB-1135",
       "file": "src/simulator/engine/particles/particleCommandProducer.ts",
-      "line": 1197,
+      "line": 1200,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -30009,7 +30009,7 @@
     {
       "id": "RCB-1428",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 796,
+      "line": 801,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(created.capability);",
@@ -30030,7 +30030,7 @@
     {
       "id": "RCB-1429",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 817,
+      "line": 822,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",

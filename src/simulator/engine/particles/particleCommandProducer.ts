@@ -826,6 +826,7 @@ function slideInstance(
     rangeLength,
     ownerTransform: transform,
     particleSystemSetupScaleBits: scene.slidePool!.particleSystemSetupScaleBits,
+    particleSystemSetupScaleFactorsBits: scene.slidePool!.particleSystemSetupScaleFactorsBits!,
     poolSlot,
     route,
     rootPositionXBits: transform.position.xBits,
@@ -903,6 +904,8 @@ function validOwnerScene(scene: ParticlePixiSceneProfile | null): scene is Parti
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 || scene.slidePool === undefined ||
     scene.slidePool.poolSize !== 8 || scene.slidePool.initialCursor !== 0 || scene.slidePool.firstAcquiredSlot !== 1 ||
     positiveBits(scene.slidePool.outerScaleBits) === null || positiveBits(scene.slidePool.particleSystemSetupScaleBits) === null ||
+    !Array.isArray(scene.slidePool.particleSystemSetupScaleFactorsBits) || scene.slidePool.particleSystemSetupScaleFactorsBits.length !== 2 ||
+    scene.slidePool.particleSystemSetupScaleFactorsBits.some((value: string) => positiveBits(value) === null) ||
     !zeroVector(scene.slidePool.childLocalPosition) || !identityQuaternion(scene.slidePool.childLocalRotation) ||
     !oneVector(scene.slidePool.childLocalScale)) return false;
   const seen = new Set<number>();
