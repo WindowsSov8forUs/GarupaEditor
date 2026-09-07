@@ -1109,8 +1109,8 @@ export class DeterministicParticleSimulation {
     // 0x109669C phase 5: ClampVelocityModule.
     let combinedVelocity = addVector(particle.velocity, moduleVelocity);
     const clamp = getModule(bundle, profile, "ClampVelocityModule");
-    if (clamp !== null) {
-      if (clamp.inWorldSpace) {
+    if (clamp !== null && (clamp.dampen > 0 || clamp.drag.scalar !== 0)) {
+      if (clamp.inWorldSpace || !clamp.separateAxis) {
         combinedVelocity = limitVelocity(combinedVelocity, clamp, normalizedAge, particle.slots, delta, particle.baseSize);
       } else {
         const localVelocity = inverseSystemVector(
@@ -1124,6 +1124,10 @@ export class DeterministicParticleSimulation {
           particle.particleSystemSetupScale,
         );
       }
+      // 104C0F8 persists the limited base velocity; 108AF6C then recombines
+      // the two streams before integration, retaining both F32 roundings.
+      particle.velocity = subtractVector(combinedVelocity, moduleVelocity);
+      combinedVelocity = addVector(particle.velocity, moduleVelocity);
     }
     const effectiveVelocity = scaleVector(combinedVelocity, speedModifier);
     particle.moduleVelocity = moduleVelocity;
@@ -2079,12 +2083,15 @@ function limitVelocity(
       if (Math.abs(value) <= limit) return value;
       return lerp(value, Math.sign(value) * limit, dampen);
     }) as Vector3;
-  } else {
+  } else if (module.dampen > 0) {
     const speed = vectorLength(result);
-    const limit = Math.max(0, minMax(module.magnitude, time, slots[10]!));
-    if (speed > limit && speed > 0) {
-      result = scaleVector(result, divide(lerp(speed, limit, dampen), speed));
-    }
+    const limit = minMax(module.magnitude, time, slots[10]!);
+    const magnitude = speed > limit ? lerp(speed, limit, dampen) : speed;
+    // 104C2B0..104C354 normalizes even below the limit, using the same
+    // twice-refined estimate as Shape but a zero-vector threshold result.
+    const direction: Vector3 = vectorLengthSquared(result) > SHAPE_DIRECTION_EPSILON_SQUARED
+      ? nativeShapeDirection(result) : [0, 0, 0];
+    result = scaleVector(direction, multiply(magnitude, speed > 0 ? 1 : 0));
   }
   let drag = Math.max(0, minMax(module.drag, time, slots[11]!));
   if (module.multiplyDragByParticleSize) drag = multiply(drag, Math.max(size[0], size[1], size[2]));
