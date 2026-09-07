@@ -38,7 +38,7 @@ import {
   type ParticleRuntimeTransform,
 } from "./particleHierarchyScale";
 import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
-import { calculateNativeParticleActualBounds, calculateNativeParticleWorldBounds } from "./particleBounds";
+import { calculateNativeParticleActualBounds, calculateNativeParticleLinearAnalyticBounds, calculateNativeParticleWorldBounds } from "./particleBounds";
 import { getNativeParticleMeshBounds } from "./particleMeshGeometry";
 import {
   PARTICLE_AUTO_SEED_INITIAL_STATE,
@@ -1543,11 +1543,15 @@ function currentActualRendererBounds(
   record: SystemRecord, profile: ParticleProfileDefinition, particles: readonly SimulatedParticle[],
   transform: ParticleRuntimeTransform,
 ): ParticleRenderSample["rendererWorldBounds"] {
-  // BND-C151: an ineligible source cannot take the analytic branch even if
-  // invalidation34 changes. Eligible and separate game-clear bounds stay open.
-  if (record.bundle.key === "game-clear" || nativeParticlePrewarmAnalyticEligible(record.bundle, profile)) return undefined;
+  if (record.bundle.key === "game-clear") return undefined;
   const initial = getModule(record.bundle, profile, "InitialModule");
   if (initial === null) throw fault("particle.bounds.initial-module", "Actual bounds require their source InitialModule size curves.");
+  const analytic = nativeParticlePrewarmAnalyticEligible(record.bundle, profile);
+  // BND-C157 covers the source linear branch. Enabled Shape/motion still needs
+  // its own original bounds calculation, even when the predicate is eligible.
+  if (analytic && (getModule(record.bundle, profile, "ShapeModule") !== null ||
+    getModule(record.bundle, profile, "VelocityModule") !== null || getModule(record.bundle, profile, "ForceModule") !== null ||
+    initial.gravityModifier.scalar !== 0)) return undefined;
   const renderer = record.bundle.rendererProfiles[profile.renderer]!;
   const size = getModule(record.bundle, profile, "SizeModule");
   const mesh = record.definition.meshProfile == null ? undefined : record.bundle.meshProfiles?.[record.definition.meshProfile];
@@ -1555,21 +1559,23 @@ function currentActualRendererBounds(
   if (renderer.m_RenderMode === 4 && meshBounds === undefined) {
     throw fault("particle.bounds.mesh-cache", "Mesh bounds require the exact source Mesh.localAABB cache.");
   }
-  const bounds = calculateNativeParticleActualBounds(particles, {
+  const settings = {
     renderMode: renderer.m_RenderMode,
     velocityScale: renderer.m_VelocityScale,
     lengthScale: renderer.m_LengthScale,
-    pivot: [renderer.m_Pivot.x, renderer.m_Pivot.y, renderer.m_Pivot.z],
+    pivot: [renderer.m_Pivot.x, renderer.m_Pivot.y, renderer.m_Pivot.z] as const,
     meshBounds: meshBounds ?? null,
     size3D: initial.size3D || size?.separateAxes === true,
-    startSize: [initial.startSize, initial.startSizeY, initial.startSizeZ],
-    sizeLifetime: size === null ? null : [size.curve, size.y, size.z],
+    startSize: [initial.startSize, initial.startSizeY, initial.startSizeZ] as const,
+    sizeLifetime: size === null ? null : [size.curve, size.y, size.z] as const,
     sizeBySpeed: null, // Disabled in the complete registered gameplay source union.
     runtimeSize: 0, // Fresh reset; this API admits no EmitParams/SetParticles size overrides.
     simulationSpace: profile.system.moveWithTransform,
     scale: transform.scalingModeScale,
-    translation: [transform.localToWorld[12]!, transform.localToWorld[13]!, transform.localToWorld[14]!],
-  });
+    translation: [transform.localToWorld[12]!, transform.localToWorld[13]!, transform.localToWorld[14]!] as const,
+  };
+  const bounds = analytic ? calculateNativeParticleLinearAnalyticBounds(initial.startLifetime, initial.startSpeed, initial.size3D, settings)
+    : calculateNativeParticleActualBounds(particles, settings);
   const world = calculateNativeParticleWorldBounds(bounds, transform.localToWorld, transform.scalingModeScale,
     profile.system.moveWithTransform, renderer.m_RenderAlignment);
   return Object.freeze({ center: vectorBits([world[0], world[1], world[2]]), extents: vectorBits([world[3], world[4], world[5]]) });

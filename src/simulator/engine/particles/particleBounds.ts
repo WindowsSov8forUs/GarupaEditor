@@ -94,6 +94,24 @@ function expandNativeParticleBounds(lo: readonly number[], hi: readonly number[]
   return [...lo.map((value) => sub(sub(value, pivot), radius)), ...hi.map((value) => add(add(value, pivot), radius))] as unknown as ParticleBoundsTuple;
 }
 
+/** BND-C157: analytic local bounds with disabled Shape/Velocity/Force and zero gravity. */
+export function calculateNativeParticleLinearAnalyticBounds(
+  lifetime: ParticleMinMaxCurve, speed: ParticleMinMaxCurve, initialSize3D: boolean, settings: BoundsSettings,
+): ParticleBoundsTuple {
+  const lifetimeMaximum = minMaxRange(lifetime)[1], speedRange = minMaxRange(speed);
+  const distance = speedRange.map((value) => mul(value, lifetimeMaximum));
+  const lo = [0, 0, Math.min(0, ...distance)], hi = [0, 0, Math.max(0, ...distance)];
+  if (settings.renderMode === 1) {
+    // This branch selects Initial.size3D, independently of the SoA storage flag.
+    const size = minMaxRange(settings.startSize[initialSize3D ? 1 : 0])[1];
+    let length = Math.abs(f32(settings.velocityScale));
+    if (speedRange[1] > f32(0.000001)) length = add(length, div(mul(Math.abs(f32(settings.lengthScale)), size), speedRange[1]));
+    const stretch = mul(speedRange[1], length);
+    for (let axis = 0; axis < 3; axis++) { lo[axis] = sub(lo[axis]!, stretch); hi[axis] = add(hi[axis]!, stretch); }
+  }
+  return expandNativeParticleBounds(lo, hi, settings);
+}
+
 /** BND-C153: ordinary renderer output is center/extents, not corner union. */
 export function calculateNativeParticleWorldBounds(
   bounds: ParticleBoundsTuple, matrix: readonly number[], scale: Vector3, space: number, alignment: number,
