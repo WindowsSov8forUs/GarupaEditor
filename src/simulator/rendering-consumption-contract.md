@@ -92,6 +92,12 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Sphere volume distribution correction (BND-C66)
+
+Verified/pushed Reverse78f3d43cd47b7bfc75f6af4467de4dac1c7717b7 binds16 source sphere systems/two configurations. particle_shape_sphere.json SHA256709715767B9118843DDCB3BFD314B32760F3F7B16301EB268B36B001D2006F31 retains full12357F0/1238F74/1241914 and original registered-libm log2f/exp2f/divzerof execution. Source radiusThickness1 reaches +0 -> -infinity -> +0; this explicit ELF library binding does not assert current-process GOT identity.
+
+Production cube-root approximation now adds the exponent and linear term before the separately rounded higher-order term, matching12393DC..1239408. All28 full native calls/128 live position-direction rows/56 random-state comparisons agree;8 baseline position differences are eliminated both before postprocessing and after actual identity-owner consumption. This completes the named source Shape types0/4/5/8/10 numeric gates under their recorded entry conditions, not arbitrary/current owner/scale/SoA, optional orientation, analytic/full lifecycle/rendering/bounds/sorting/HUD. Those remain **OPEN**. No tests/app/build/visuals.
+
 ### Shape local matrix correction (BND-C65)
 
 The committed C64 full native corpus and original12357F0/1241914 bodies at Reverse29341bf3 also bind local Shape rotation. Production now constructs the original ZXY quaternion from half angles, scales its separately rounded matrix columns and consumes position as X+(Y+(Z+translation)). Direct sequential Euler rotation produced70 final position/direction differences for the source circle x-rotation35.709999084472656 degrees.

@@ -1557,12 +1557,10 @@ function nativeCubeRoot(value: number): number {
   const mantissa = add(float32FromBits((sourceBits & 0x807FFFFF) | 0x3F800000), -1);
   const square = multiply(mantissa, mantissa);
   const exponent = f32((sourceBits >>> 23) - 127);
+  // BND-C66, 12393DC..1239408: exponent and linear term are rounded first.
   const log2Approximation = add(
-    exponent,
-    add(
-      multiply(mantissa, CUBE_LOG_LINEAR),
-      multiply(square, add(multiply(mantissa, CUBE_LOG_CUBIC), CUBE_LOG_QUADRATIC)),
-    ),
+    add(exponent, multiply(mantissa, CUBE_LOG_LINEAR)),
+    multiply(square, add(multiply(mantissa, CUBE_LOG_CUBIC), CUBE_LOG_QUADRATIC)),
   );
   const divided = Math.max(-127, multiply(log2Approximation, ONE_THIRD));
   const truncated = Math.trunc(divided);
