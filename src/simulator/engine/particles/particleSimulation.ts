@@ -1765,22 +1765,52 @@ function sampleShape(
   if (cursor !== values.length) {
     throw fault("particle.simulation.shape-random-schedule", "Shape branch must consume every random value assigned by its current native schedule.");
   }
-  position = rotateEulerDegrees([
-    multiply(position[0], shape.m_Scale.x),
-    multiply(position[1], shape.m_Scale.y),
-    multiply(position[2], shape.m_Scale.z),
-  ], shape.m_Rotation);
-  position = [
-    add(position[0], shape.m_Position.x),
-    add(position[1], shape.m_Position.y),
-    add(position[2], shape.m_Position.z),
-  ];
-  direction = rotateEulerDegrees([
-    multiply(direction[0], shape.m_Scale.x),
-    multiply(direction[1], shape.m_Scale.y),
-    multiply(direction[2], shape.m_Scale.z),
-  ], shape.m_Rotation);
+  const matrix = nativeShapeMatrix(shape);
+  position = nativeShapeMatrixVector(matrix, position, true);
+  direction = nativeShapeMatrixVector(matrix, direction, false);
   return Object.freeze({ position, direction: nativeShapeDirection(direction) });
+}
+
+function nativeShapeMatrix(shape: ParticleShapeModule): readonly [Vector3, Vector3, Vector3, Vector3] {
+  // BND-C65: 12357F0 constructs a ZXY quaternion from half angles, then
+  // multiplies the separately rounded matrix columns by Shape scale.
+  const [cx, sx] = nativeSinCos(multiply(multiply(shape.m_Rotation.x, DEG_TO_RAD), 0.5));
+  const [cy, sy] = nativeSinCos(multiply(multiply(shape.m_Rotation.y, DEG_TO_RAD), 0.5));
+  const [cz, sz] = nativeSinCos(multiply(multiply(shape.m_Rotation.z, DEG_TO_RAD), 0.5));
+  const products = [multiply(cz, sx), multiply(sx, sz), multiply(cx, sz), multiply(cx, cz)];
+  const firstSigns = [1, -1, 1, 1];
+  const secondSigns = [1, 1, -1, 1];
+  const q = products.map((value, index) => add(
+    multiply(firstSigns[index]!, multiply(value, cy)),
+    multiply(multiply(secondSigns[index]!, sy), products[(index + 2) % 4]!),
+  ));
+  const reversed = [q[1]!, q[0]!, q[3]!, q[2]!];
+  const halfSwap = [q[2]!, q[3]!, q[0]!, q[1]!];
+  const reversedHalf = [q[3]!, q[2]!, q[1]!, q[0]!];
+  const column = (left: readonly number[], leftSigns: readonly number[], leftValue: number,
+    right: readonly number[], rightSigns: readonly number[], rightValue: number,
+    axis: number, scale: number): Vector3 => [0, 1, 2].map((index) => multiply(add(add(
+      multiply(left[index]!, multiply(leftSigns[index]!, leftValue)),
+      multiply(right[index]!, multiply(rightSigns[index]!, rightValue)),
+    ), index === axis ? 1 : 0), scale)) as Vector3;
+  return [
+    column(reversed, [-2, 2, -2], q[1]!, halfSwap, [-2, 2, 2], q[2]!, 0, shape.m_Scale.x),
+    column(reversedHalf, [-2, -2, 2], q[2]!, reversed, [2, -2, 2], q[0]!, 1, shape.m_Scale.y),
+    column(halfSwap, [2, -2, -2], q[0]!, reversedHalf, [2, 2, -2], q[1]!, 2, shape.m_Scale.z),
+    [f32(shape.m_Position.x), f32(shape.m_Position.y), f32(shape.m_Position.z)],
+  ];
+}
+
+function nativeShapeMatrixVector(
+  matrix: readonly [Vector3, Vector3, Vector3, Vector3], vector: Vector3, position: boolean,
+): Vector3 {
+  // 1241914: position translation joins the Z term before Y and X.
+  return [0, 1, 2].map((index) => {
+    const z = multiply(matrix[2][index]!, vector[2]);
+    return add(multiply(matrix[0][index]!, vector[0]), add(
+      multiply(matrix[1][index]!, vector[1]), position ? add(z, matrix[3][index]!) : z,
+    ));
+  }) as Vector3;
 }
 
 function customData(
@@ -1933,14 +1963,6 @@ function applySystemVector(
   return result;
 }
 
-function rotateEulerDegrees(vector: Vector3, rotation: ParticleVector3Like): Vector3 {
-  return rotateEulerRadians(vector, [
-    multiply(rotation.x, DEG_TO_RAD),
-    multiply(rotation.y, DEG_TO_RAD),
-    multiply(rotation.z, DEG_TO_RAD),
-  ]);
-}
-
 function rotateEulerRadians(vector: Vector3, rotation: Vector3): Vector3 {
   const [x, y, z] = rotation;
   let result: Vector3 = [...vector];
@@ -1958,8 +1980,6 @@ function rotateEulerRadians(vector: Vector3, rotation: Vector3): Vector3 {
   }
   return result;
 }
-
-type ParticleVector3Like = { readonly x: number; readonly y: number; readonly z: number };
 
 function addVector(left: Vector3, right: Vector3): Vector3 {
   return left.map((value, index) => add(value, right[index]!)) as Vector3;
