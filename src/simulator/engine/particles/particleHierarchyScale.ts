@@ -51,6 +51,43 @@ export function calculateNativeParticleEmitterOrigin(
   return position;
 }
 
+// Reverse BND-C83: runtime68 -> worker128 -> 12CEDFC..12CEE68.
+// This is the pre-pivot world point, with the original matrix preparation and
+// X + (Y + (Z + translation)) grouping. Mode1 does not normalize its quaternion.
+export function calculateNativeParticleWorldPosition(
+  self: ParticleHierarchyPositionTransform,
+  rootToImmediateParents: readonly ParticleHierarchyPositionTransform[],
+  scalingMode: 0 | 1,
+  localPosition: Vector3,
+): Vector3 {
+  let basis: Columns;
+  if (scalingMode === 0) {
+    basis = scaledColumns(self);
+    for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
+      const parent = scaledColumns(rootToImmediateParents[index]!);
+      basis = [applyColumns(parent, basis[0]), applyColumns(parent, basis[1]), applyColumns(parent, basis[2])];
+    }
+  } else {
+    let rotation = self.rotation;
+    for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
+      const parent = rootToImmediateParents[index]!;
+      const sx = scaleSign(parent.scale[0]);
+      const sy = scaleSign(parent.scale[1]);
+      const sz = scaleSign(parent.scale[2]);
+      rotation = multiplyNativeQuaternions(parent.rotation, [
+        rotation[0] * (sy * sz), rotation[1] * (sx * sz), rotation[2] * (sx * sy), rotation[3],
+      ]);
+    }
+    basis = scaledColumns({ rotation, scale: self.scale });
+  }
+  const origin = calculateNativeParticleEmitterOrigin(self, rootToImmediateParents, scalingMode);
+  const component = (axis: 0 | 1 | 2) => add(
+    mul(localPosition[0], basis[0][axis]),
+    add(mul(localPosition[1], basis[1][axis]), add(mul(localPosition[2], basis[2][axis]), origin[axis])),
+  );
+  return [component(0), component(1), component(2)];
+}
+
 export function calculateNativeParticleHierarchyScale(
   self: ParticleHierarchyTransform,
   rootToImmediateParents: readonly ParticleHierarchyTransform[],

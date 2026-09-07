@@ -92,6 +92,14 @@ The differential executes the production width/half-size helper and wrapper and 
 
 View geometry now consumes `sizeBeforeTransform` through the shared original width/half-size function before vertex construction. All mode0 billboards bypass the second projected-box clamp. The independent source auditor executes the actual production half-size wrapper with native expected and statically binds the View call:1605 native inputs and46,440 wrapper comparisons have zero bit mismatches. This closes View's raw-size limit substitution; C36 separately corrects its camera basis and scale placement. Full scalar/3D rotation, raw-size pivot displacement, sprite dimensions, normals, current Transform/camera state, complete quads, bounds and mixed sorting remain OPEN. No visual capture, app execution or product-generated expected is used.
 
+### Birth-position matrix projection (BND-C83/C84)
+
+Reverse `ebc899b339f06e50350f7d295433bdcea7fbce9e` was verified, pushed and confirmed remote0 0 before consumption. Original12CEDFC..12CEE68 now consumes C81 native matrices and C63 native box points. Two existing seeds on source box configuration13 supply eight XYZ points, explicitly crossed with316 source chains; this does not assert source co-occurrence. Full caller/gather bodies bind runtime68 -> worker128 and position SoA0/32/64; their execution and current producers remain separate.
+
+Actual complete spawn now constructs the native mode0 scaled hierarchy matrix or mode1 unnormalized composed-quaternion matrix with self scale, then evaluates X+(Y+(Z+translation)). All2,528 birth positions agree bitwise, eliminating2,724 baseline component differences. Emitter origins316, radial Shape4,608 rows/2,016 RNG states, Initial4,488 rows/2,244 states/192 phases and prior analytic reconstruction/motion gates retain zero differences.
+
+This is a zero-initial-age, unit-setup, pre-pivot world-position gate. Production still stores world position and transforms velocity before later integration; native local SoA/module integration and later projection remain **OPEN**, along with current Transform mutation, selector1/2, camera-forward/pivot offsets, other renderers and full lifecycle. No product tests/app/build/visuals.
+
 ### Source Transform emitter origin (BND-C81/C82)
 
 Reverse `8b83a2d5966c9d493e37d2e42c526b28de33140b` was verified, pushed and confirmed remote0 0 before consumption. Fresh1,741 systems bind316 distinct serialized Transform chains/scaling modes. Complete108834C with explicit descriptor selector0 produces seven runtime fields;632 native calls verify unused fourth-lane padding invariance. Selector0 is not a direct simulationSpace enum or a current Shape source-object selection assertion.
