@@ -58,6 +58,12 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Scalar mesh vertex consumption (BND-C115 / C116)
+
+Reverse `ade2821641cd0f3c067fbaf1fabdb28434c40398` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_scalar_vertices.json` SHA256 `D82706371A1C062134200AB74F350208DA35DB4498F7E2EE02AE748326585A4A` continues the full scalar matrix helper through actual Float32 vertex stores. It crosses exact source meshes/pivots with unit, uniform, nonuniform and reflected scales, zero size, two boundary ages and default+Z axis under explicit scalar storage/identity Local basis/zero center/offset/no flip inputs.
+
+Actual complete sourceGeometry matches all448 cases/37184 vertices. No algorithm change is required in this scope; C114 compilation remains the applicable unchanged-code check. Source X/Y numeric angles are ignored by the original scalar branch. Current axis overrides/storage/angle cooccurrence, View/outer owner/projection, normal/full stream publication/lifecycle/bounds/sorting/HUD and aggregate equivalence remain OPEN. No tests/app/build/visuals.
+
 ### Default mesh scalar quaternion (BND-C113 / C114)
 
 Reverse `6c51fba63e8cd1046d82dba2118e8aabb823c2c8` was verified and pushed at remote0 0 before consumption. Corpus `particle_mesh_scalar_axis.json` SHA256 `00C9BF184B73DD40C1942F6873D22332781F9C1369BEE49A5258148A8878E935` binds the original global initializer and RELA-bound Initial reset to default axis+Z, then full105FD50 on1122 source calls/4488 axis rows. Existing birth outputs remain unchanged. The separate axis-storage flag is explicitly enabled; this proves default initialization, not absence of later overrides or current allocation.
