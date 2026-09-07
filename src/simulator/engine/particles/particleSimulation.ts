@@ -1027,18 +1027,19 @@ export class DeterministicParticleSimulation {
     particle.velocity[1] = add(particle.velocity[1], multiply(multiply(gravity, delta), -9.81));
 
     // 0x109669C phase 2: RotationModule.
+    const angularVelocity: Vector3 = [0, 0, 0];
     const rotation = getModule(bundle, profile, "RotationModule");
     if (rotation !== null) {
       const rotationRandom = particleSeedRatio((particle.randomSeed + 0x6AED452E) >>> 0);
       // 1055940 signs angular velocity before 108AF6C multiplies it by delta.
       const rotationDirection = particleSeedRatio((particle.randomSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
-      const rotationStep = (value: ParticleMinMaxCurve): number =>
-        multiply(multiply(minMax(value, normalizedAge, rotationRandom), rotationDirection), delta);
+      const rotationRate = (value: ParticleMinMaxCurve): number =>
+        multiply(minMax(value, normalizedAge, rotationRandom), rotationDirection);
       if (rotation.separateAxes) {
-        particle.rotation[0] = add(particle.rotation[0], rotationStep(rotation.x));
-        particle.rotation[1] = add(particle.rotation[1], rotationStep(rotation.y));
+        angularVelocity[0] = add(angularVelocity[0], rotationRate(rotation.x));
+        angularVelocity[1] = add(angularVelocity[1], rotationRate(rotation.y));
       }
-      particle.rotation[2] = add(particle.rotation[2], rotationStep(rotation.curve));
+      angularVelocity[2] = add(angularVelocity[2], rotationRate(rotation.curve));
     }
 
     // 0x109669C phase 3: VelocityModule.
@@ -1142,14 +1143,20 @@ export class DeterministicParticleSimulation {
       const normalizedSpeed = upper !== lower
         ? clamp01(divide(subtract(speed, lower), subtract(upper, lower)))
         : 0;
-      particle.rotation[2] = add(particle.rotation[2], multiply(minMax(
-        bySpeed.curve,
-        normalizedSpeed,
-        particleSeedRatio((particle.randomSeed + 0xDEC4AEA1) >>> 0),
-      ), delta));
+      const random = particleSeedRatio((particle.randomSeed + 0xDEC4AEA1) >>> 0);
+      const direction = particleSeedRatio((particle.randomSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
+      const curves = [bySpeed.x, bySpeed.y, bySpeed.curve];
+      for (let axis = bySpeed.separateAxes ? 0 : 2; axis < 3; axis += 1) {
+        angularVelocity[axis] = add(angularVelocity[axis]!, multiply(minMax(curves[axis]!, normalizedSpeed, random), direction));
+      }
     }
 
     // 0x108AF6C integration follows the complete module pipeline.
+    if (rotation !== null || bySpeed !== null) {
+      for (let axis = rotation?.separateAxes || bySpeed?.separateAxes ? 0 : 2; axis < 3; axis += 1) {
+        particle.rotation[axis] = add(particle.rotation[axis]!, multiply(angularVelocity[axis]!, delta));
+      }
+    }
     particle.position = particle.position.map((value, index) =>
       add(value, multiply(effectiveVelocity[index]!, delta))) as Vector3;
     particle.age = add(particle.age, delta);
