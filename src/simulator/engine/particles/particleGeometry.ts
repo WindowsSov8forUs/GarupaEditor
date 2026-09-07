@@ -295,7 +295,7 @@ function sourceGeometry(
   if (sample.sizeBeforeTransform === undefined) {
     throw fault("particle.geometry.billboard-size", "Billboards require current particle size before Transform scaling.");
   }
-  const halfSize = billboardHalfSize(binding, sample, scene);
+  const halfSize = visibleBillboardHalfSize(billboardHalfSize(binding, sample, scene), sample);
   let basis: readonly [Vector3, Vector3, Vector3];
   if (binding.renderer.m_RenderAlignment === 2) {
     if (sample.instance.particleSystemSetupScaleBits === undefined) {
@@ -417,6 +417,12 @@ function viewBillboardBasis(sample: ParticleRenderSample): readonly [Vector3, Ve
     throw fault("particle.geometry.view-billboard-transform", "View billboards require the separate native Transform size scale.");
   }
   return calculateNativeParticleViewBillboardBasis(bitsVector3(sample.transformSize));
+}
+
+function visibleBillboardHalfSize(halfSize: Vector2, sample: ParticleRenderSample): Vector2 {
+  // All four native workers mask limited half sizes with 100>percentageAge.
+  // Raw size remains available to the complex worker's pivot displacement.
+  return requiredBits(sample.agePercentBits!) < 100 ? halfSize : [0, 0];
 }
 
 function billboardHalfSize(

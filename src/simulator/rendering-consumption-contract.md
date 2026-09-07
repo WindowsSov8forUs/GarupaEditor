@@ -58,13 +58,19 @@ Still required: a shared, transitive ordering domain covering concrete ordinary 
 
 ## SRC-PARTICLE-BOUNDS — source inputs bound, production calculation still open
 
+### Ordinary billboard endpoint visibility (BND-C99 / C100)
+
+Authority: Reverse `e2f36019f761a684a7f2b6608215eb6e3cc23c74`, verified and pushed with remote `0 0` before consumption. `billboard_age_visibility.json` SHA256 `388007D245657734688AD316329F988A24EE431DA2A789C04EF241797FC88345` executes continuous original size/limit/mask regions across all four billboard workers. The1770 distinct C34/C35 source inputs give7080 native calls/28320 lane results at percentage ages-0, predecessor100,100 and successor100. All four workers agree; successor100 is an arithmetic probe, not a current admission claim.
+
+Production now masks both limited half sizes to positive zero when native percentage age is not below100, retaining raw size for complex pivot displacement. Actual sourceGeometry prefix7080 calls and separate mask/pivot240 calls have zero differences, down from2922 differing result rows. C34 Local585+6/15060 and C35 View1605/46440 retain zero; pivot60+6/200 and continuous stretched792 admitted vertices also retain zero. Both noEmit checks and runtime audit1438 pass. Current SoA/renderer dispatch and cooccurrence, full normal/UV/material/output, owner/camera state, bounds/sorting/HUD and aggregate equivalence remain OPEN.
+
 ### Continuous stretch vertices and lifetime endpoint (BND-C97 / C98)
 
 Authority: Reverse `adb22c874aa871f9c03aabc9ea25de4356c4b794`, verified and pushed with remote `0 0` before consumption. `particle_stretch_prefix.json` SHA256 `851554A2D8265CB295775156A6288A19464168D715BBA52B796A5D1CA8E98203` executes original107A0DC and continuous12C7C4C..12C8ECC, including actual gather and vertex arithmetic. The24 source matrix/Velocity configurations give240 four-row cases, repeated with0/A5 dead padding; both runs agree. Of960 native rows,792 age<=100 rows enter the current vertex comparison;168 age>100 probes remain separately recorded outside current vertex admission.
 
 At exact percentage age100 the native half-width mask clears to positive zero although strict age>100 removal has not occurred. Production now publishes the precise native percentage-age bits and applies that mask in the stretched worker. Actual complete update/samples/stretchedBillboard comparison falls from384 vertex-component differences to zero; all prior differences were at age100. Size-limit1140/2280, lifetime-size1728 and local-motion22752 comparisons remain zero; age-state97/768/16597 plus3701 samples/birth-state calls remain zero. Both noEmit checks and runtime audit1438 pass.
 
-This closes the explicit stationary-camera, identity-outer-owner, raw-size[1,2,1], zero-pivot renderer cross-product through pre-UV vertices only. It does not prove current renderer/configuration cooccurrence, arbitrary owner/camera mutation, final output streams or full lifecycle. Ordinary billboard endpoint masking, all remaining current-state/renderer/bounds/sorting/HUD gaps and aggregate equivalence remain OPEN.
+This closes the explicit stationary-camera, identity-outer-owner, raw-size[1,2,1], zero-pivot renderer cross-product through pre-UV vertices only. It does not prove current renderer/configuration cooccurrence, arbitrary owner/camera mutation, final output streams or full lifecycle. C99/C100 separately closes ordinary billboard endpoint masking in its stated domain; remaining current-state/renderer/bounds/sorting/HUD gaps and aggregate equivalence remain OPEN.
 
 ### Stretched raw sizes, camera limits and side basis (BND-C95 / C96)
 
