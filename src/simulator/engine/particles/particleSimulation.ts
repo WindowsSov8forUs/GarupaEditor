@@ -1451,7 +1451,8 @@ function minMaxColor(value: ParticleMinMaxGradient, time: number, ratio: number)
 }
 
 function colorToBytes(color: Color4): ColorBytes {
-  return color.map((value) => Math.max(0, Math.min(255, roundHalfEven(f32(value) * 255)))) as ColorBytes;
+  // BND-C57: native FMUL/FADD round separately before FCVTZS truncates.
+  return color.map((value) => Math.trunc(add(multiply(clamp01(value), 255), 0.5))) as ColorBytes;
 }
 
 function multiplyColorByte(left: number, right: number): number {
