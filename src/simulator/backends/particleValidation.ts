@@ -396,7 +396,8 @@ export function validateSelectedSkinParticlePack(
         return reject("particle.skin-pack.invalid-system", "Only the source-bound HAB bundle carries indexed button-prefab slots.");
       }
       if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
-        system.sourceOrdinal !== sourceOrdinal || !isTransform(system.transform) ||
+        system.sourceOrdinal !== sourceOrdinal || !Number.isSafeInteger(system.nativePlayOrdinal) ||
+        system.nativePlayOrdinal! < 0 || !isTransform(system.transform) ||
         !Array.isArray(system.parentTransforms) || !system.parentTransforms.every(isTransform) ||
         !Array.isArray(system.parentParticleSystemFlags) ||
         system.parentParticleSystemFlags.length !== system.parentTransforms.length ||

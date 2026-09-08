@@ -10,6 +10,7 @@ import {
   validateSelectedSkinParticlePack,
 } from "../backends/particleValidation";
 import { sha256UpperHex } from "../backends/resources/sha256";
+import { getNativeParticlePlayOrdinal } from "../backends/resources/currentParticlePlayOrder";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { OriginalResourcePackageView } from "../resources/originalResourcePackageView";
 import { rejected, type SimulatorAssemblyResult } from "./result";
@@ -114,6 +115,12 @@ export async function prepareLeasedDefaultParticleProvider(
 }
 
 function upgradeDefaultBundle(bundle: Record<string, any>): Readonly<Record<string, unknown>> {
+  if (bundle.key !== "ordinary" && bundle.key !== "directional") {
+    throw new Error(`Unknown exact default particle bundle: ${String(bundle.key)}`);
+  }
+  const logicalResource = bundle.key === "ordinary"
+    ? "ingameskin/tapeffect/skin00"
+    : "ingameskin/tapeffect/directionalflickskin00normal";
   const particlePaths = new Set(bundle.systems
     .filter(record)
     .map((system: Record<string, unknown>) => system.path)
@@ -127,7 +134,12 @@ function upgradeDefaultBundle(bundle: Record<string, any>): Readonly<Record<stri
       const segments = path.split("/");
       const parentParticleSystemFlags = segments.slice(0, -1).map((_segment, index) =>
         particlePaths.has(segments.slice(0, index + 1).join("/")));
-      return Object.freeze({ ...source, sourceOrdinal, parentParticleSystemFlags: Object.freeze(parentParticleSystemFlags) });
+      return Object.freeze({
+        ...source,
+        sourceOrdinal,
+        nativePlayOrdinal: getNativeParticlePlayOrdinal(logicalResource, path),
+        parentParticleSystemFlags: Object.freeze(parentParticleSystemFlags),
+      });
     })),
   });
 }

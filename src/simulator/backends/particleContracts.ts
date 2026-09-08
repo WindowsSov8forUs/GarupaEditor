@@ -472,6 +472,8 @@ export interface ParticleTextureProfile {
 export interface ParticleSystemDefinition {
   readonly identity: string;
   readonly sourceOrdinal?: number;
+  /** Original Play(withChildren) preorder within one gameplay prefab. */
+  readonly nativePlayOrdinal?: number;
   readonly root: ParticleRootId;
   /** Authored GamePlayButton width slot; null identifies HAB's separate effect_tap scalar. */
   readonly sourceRangeLength?: number | null;
