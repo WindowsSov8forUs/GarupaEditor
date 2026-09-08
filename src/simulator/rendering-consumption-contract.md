@@ -28,6 +28,12 @@ Native NoteBase.Move Z scale0 is transported separately from XY scale, including
 
 This is a bounded integration repair. Same-type ordering still retains the existing sequence after the verified keys; it is not native material/resource/node equivalence. Multiple-directional line ordering publication, full runtime group/bounds/camera overrides, full quaternion input reachability and complete scene/HUD composition remain OPEN. The layer's application phase position is not a native sort key. Static mask/transaction review does not claim dynamic device validation.
 
+## SORT-07 — multiple-directional back-line publication
+
+Authority: pushed Reverse `8066fb8a69b92b487b6c0ec27788fdab8ac6b4b1`, SORT-C40. The current APK ordinary inventory now includes both native LineRenderers (53 renderers total; the previous51 records remain unchanged). Multiple-directional back-line source order0 and world-coordinate mode are distinct from sync-line AwakeEnd order69. The twelve existing mapped back-line method bodies,632 instructions, were verified against the locked binary; their known class route does not write either setting.
+
+`preflightOrdinaryMultipleDirectionalLine` publishes an identity transform and explicit source order0 before world-space geometry, preserving the pool creation sequence. This supplies the existing common-layer registration prerequisite instead of leaving the line in its previous scene stratum. Four actual left/right activation/update paths and backend transfers now agree, removing four missing-publication discrepancies. Retained ordinary and shared-sort audits, both noEmit checks and runtime audit1442 pass. Endpoint generation, width/color/material state, external mutations and native same-type ties remain separate consumers.
+
 ## SORT-02 — ordinary root sorting-order producer
 
 Authority: Reverse `36ea69f8a1f526d511b945db9e7a4ee5df08483f`, verified and pushed before consumption. SORT-C32 in `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` (SHA256 `2C9994909A511F4C45E0FD71E15F8F969C1F3A69799CC43182CE16502AC04737`) binds the current NoteBase root SpriteRenderer field+0x58 to original literal70 and the separate directional Flick icon field+0x48 to71, with checked LDR/MOVZ/BL operands and the Renderer sorting-order setter wrapper.

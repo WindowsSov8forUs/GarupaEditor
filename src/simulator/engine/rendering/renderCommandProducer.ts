@@ -2113,8 +2113,26 @@ export class RenderCommandProducer {
     }
     const geometry = buildOrdinaryMultipleDirectionalLine(ownerState);
     if (geometry.status !== "ok") return geometry;
+    const zero = float32State(0);
+    const one = float32State(1);
     const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [];
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      // SORT-C40: endpoints are world coordinates; the source line keeps order 0.
+      position: { x: zero, y: zero, z: zero },
+      scale: { x: one, y: one, z: one },
+      rotationDegrees: zero,
+      color: { red: one, green: one, blue: one, alpha: one },
+      ordering: {
+        domainLayer: 3,
+        sourceDepthOrSortingOrder: 0,
+        sourceZ: zero,
+        creationSequence: this.creationSequenceByObjectId.get(renderObjectId)!,
+      },
+      maskObjectId: null,
+    }];
     if (activate) {
       commands.push({
         ...base(commands.length),
