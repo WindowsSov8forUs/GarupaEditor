@@ -432,7 +432,9 @@ Reverse `1f8c6ecccd28ea4504c9b21ae0572a654bc07dd2` was verified, pushed and conf
 
 `currentLinearColor` uses the complete native256-entry byte mapping, then publishes Float32(byte/255). Original SIMD approximation and Color32 repacking replace the former continuous gamma formula; alpha and disabled conversions remain unchanged. The actual sample producer supplies packed bytes divided by255; C53 below carries these values through Mesh modulation to shader vertex attributes. All512 actual consumer calls match original output bits, removing256 differing converted colors.
 
-The native audit explicitly disables lifetime/speed/UV modules. Current enabled module combinations, runtime color-space overrides and final GPU/material integration remain OPEN; C53 separately covers source Mesh color modulation. This closes the packed conversion domain, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
+RENDER-C54, Reverse `7e8151a452d9633722294f8550fcf31833b6f686`, separately executes complete1096BB4 with the real lifecycle ColorModule and conversion callees. `particle_render_color_chain.json` (SHA256 `535C5EB0A7B69F2158E7937F023B79656BB0C92AE0F48D83D48A9739B782151E`) roundtrips all1741 source systems: ColorBySpeed is always disabled;11 systems combine lifecycle color and Linear conversion, using four gradient configurations. All34 reused native groups/136 actual composed production results agree, and C60 retains5960 matching results. No further production change is needed for this composition.
+
+C52 isolates conversion with lifetime/speed/UV modules disabled; C54 adds lifecycle color with explicit age/seed/base-color/cache-guard inputs and disables UV writing. Current live input/global/cache producers, runtime color-space overrides and final GPU/material integration remain OPEN; C53 separately covers source Mesh color modulation. These are color-domain results, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
 
 ### Mesh vertex Color32 modulation (RENDER-C53)
 
