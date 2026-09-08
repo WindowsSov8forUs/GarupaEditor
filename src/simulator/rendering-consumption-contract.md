@@ -1070,6 +1070,20 @@ read; the additional reader fix was verified offline, without repeating capture.
 This repairs evidence tooling only. Native glyph metrics and current UILabel-to-
 Font instance association remain open; no production metrics are changed.
 
+HUD-C220 from verified/pushed Reverse `a14d9f6b8a81a1c9d4bf8397ac28c5bf96f06bc1`
+adds the successful bounded Font observation and complete CharacterInfo replay.
+`font_cache_runtime.json` SHA256
+`6F2F4012E903E8BE343137675A0B79EC1065BF8FDA25D6360AE59B0E6D9F3153`
+retains356 cache records and33 digit variants from one observed sgm Font.
+`font_cache_character_info.json` SHA256
+`E530FF72D0301586EC8888C6659D592F9D9A9A3639BD8DFDEB4AB07BB50DF16F`
+executes complete GetCharacterInfo plus10 original callees against captured data.
+All33 results agree with cache fields; the actual production profile parser and
+layout calculator agree on31 supported-size records, including eight28px digits
+with advance21. No production arithmetic correction is needed in that domain.
+Digits3 and9 at28px are absent, not synthesized. The current UILabel-to-Font
+association, missing glyphs, glyph placement and complete HUD remain open.
+
 ### Current score-label glyph spacing and Android shrinking
 
 Verified/pushed Reverse `900c6d7d979f534ba2bc19c846609aea907f2d70` includes the UILabel1271 correction first published in `7bb802512c7607a3740e3a9f6bb7ab9b09036043`. Original spacingX is1. UpdateNGUIText publishes it; NGUIText.Update scales it; glyph advances retain spacing across gray/pink color boundaries. CalculatePrintedSize subtracts final spacing and takes ceil, while WrapText includes final spacing in its fit comparison.
