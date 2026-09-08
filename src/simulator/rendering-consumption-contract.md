@@ -36,6 +36,12 @@ Authority: Reverse `a356dcd0be704879ac19dd04be007cdafe3854dc`, verified and push
 
 Ordinary Long/Slide belt activation and the extended Slide belt now publish60 instead of0. The independent ordinary audit executes all three actual transform publications and backend field transfers; the three differences are removed while the seven root and three simultaneous-line cases remain exact. Motion updates retain this order and update mesh geometry. Native bounds/distance/material/ties and common scene composition remain OPEN.
 
+## SORT-05 — independent note icon ordering
+
+Authority: Reverse `4d6343232241ade4e8546b97a2e633f88724111e`, verified and pushed before consumption. SORT-C35 in `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` (SHA256 `FA486A8764E36F66CBEFD4823F2CAF33E1BBCBC1C5E2F1C317E69C8E3B4AEAEC`) checks the root-to-icon getter/setter copy and directional front/add/after writers. C30 `serialized_sort_ordinary.json` (SHA256 `D7A670A2D79FA81B0D147A6BA24E0A3791B05E32F2D6B6C621BDECE5D81AC94A`) retains both Long/Slide TouchingFlash renderers at71.
+
+Ordinary Flick icons receive70; directional Flick and long-flash icons receive71. The three HAB transform sites now preserve that distinction through activation, adjustment and motion instead of publishing72. Ordinary front/after/slide-child animation starts publish their independent child ordering before binding and playback. Eighteen role/site probes execute actual publication helpers and backend transfers with zero differences, replacing nine wrong HAB orders and nine missing ordinary publications. Seven root, three line and three belt cases remain exact. These explicit role adapters do not assert every role occurs at every callsite; world geometry, native distance/ties and independent common-layer rendering remain OPEN.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.

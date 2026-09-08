@@ -1690,7 +1690,8 @@ export class RenderCommandProducer {
         this.creationSequenceByObjectId,
       );
       if (ownerValidation.status !== "ok") return ownerValidation;
-      appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation);
+      appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation,
+        scene.noteDomainLayer, this.creationSequenceByObjectId.get(ordinaryFrontAnimation.ownerObjectId)!);
     }
     const habahiroIcon = completeHabahiro
       ? resolveHabahiroIconBinding(information, this.resources)
@@ -1711,7 +1712,7 @@ export class RenderCommandProducer {
         rotationDegrees: zero.value, color: scene.noteTint,
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
-          sourceDepthOrSortingOrder: 72,
+          sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(habahiroIcon.animationRole),
           sourceZ: start.z,
           creationSequence: iconCreationSequence,
         }),
@@ -1748,7 +1749,7 @@ export class RenderCommandProducer {
         rotationDegrees: zero.value, color: scene.noteTint,
         ordering: Object.freeze({
           ...ordering,
-          sourceDepthOrSortingOrder: 72,
+          sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(habahiroIcon.animationRole),
           creationSequence: this.creationSequenceByObjectId.get(
             habahiroIconRenderObjectId(poolObjectId),
           )!,
@@ -1878,7 +1879,8 @@ export class RenderCommandProducer {
           this.creationSequenceByObjectId,
         );
         if (ownerValidation.status !== "ok") return ownerValidation;
-        appendOrdinaryAnimationStart(commands, base, afterAnimation);
+        appendOrdinaryAnimationStart(commands, base, afterAnimation,
+          scene.noteDomainLayer, this.creationSequenceByObjectId.get(afterAnimation.ownerObjectId)!);
       }
     }
     if (r7Slide) {
@@ -1982,7 +1984,8 @@ export class RenderCommandProducer {
               this.creationSequenceByObjectId,
             );
             if (ownerValidation.status !== "ok") return ownerValidation;
-            appendOrdinaryAnimationStart(commands, base, childAnimation);
+            appendOrdinaryAnimationStart(commands, base, childAnimation,
+              scene.noteDomainLayer, this.creationSequenceByObjectId.get(childAnimation.ownerObjectId)!);
           }
         }
         const segmentWidthRate = completeHabahiro
@@ -2521,7 +2524,9 @@ export class RenderCommandProducer {
         rotationDegrees: rotation.value, color: visualState.color,
         ordering: Object.freeze({
           ...visualState.ordering,
-          sourceDepthOrSortingOrder: 72,
+          sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(
+            this.noteAnimationElapsedSeconds.get(iconObjectId)!.role,
+          ),
           creationSequence: iconCreationSequence,
         }),
         maskObjectId: null,
@@ -2918,11 +2923,40 @@ function appendHiddenChild(
   commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
 }
 
+function noteVisualAnimationSortingOrder(role: NoteVisualAnimationRole): number {
+  // SORT-C35/C30: ordinary Flick inherits root 70; directional icons and TouchingFlash use 71.
+  switch (role) {
+    case "note-flick": return 70;
+    case "note-directional-flick":
+    case "note-long-flash": return 71;
+  }
+}
+
 function appendOrdinaryAnimationStart(
   commands: RenderCommand[],
   base: RenderCommandBaseFactory,
   binding: OrdinaryAnimationBinding,
+  domainLayer: number,
+  creationSequence: number,
 ): void {
+  const zero = float32State(0);
+  const one = float32State(1);
+  commands.push({
+    ...base(commands.length),
+    kind: "set-transform",
+    renderObjectId: binding.ownerObjectId,
+    position: { x: zero, y: zero, z: zero },
+    scale: { x: one, y: one },
+    rotationDegrees: zero,
+    color: { red: one, green: one, blue: one, alpha: one },
+    ordering: {
+      domainLayer,
+      sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(binding.animationRole),
+      sourceZ: zero,
+      creationSequence,
+    },
+    maskObjectId: null,
+  });
   commands.push({
     ...base(commands.length),
     kind: "bind-resource",
