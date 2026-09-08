@@ -17,6 +17,12 @@ import {
   type SimulatorResult,
 } from "../../engine/evidence";
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
+import { calculateNativeParticleRendererSortDistance } from "../../engine/particles/particleBounds";
+import {
+  calculateGameplayWorldZ,
+  PIXI_GAMEPLAY_RENDER_ORDER_LABEL,
+  type PixiGameplayRenderOrder,
+} from "./pixiGameplayRenderOrder";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
 import {
@@ -88,6 +94,7 @@ import type {
   RenderColor,
   RenderOrthographicProjectionProfile,
   RenderObjectRole,
+  RenderVector3,
   RenderResourceAssetProfile,
   RenderResourcePreflightAdapter,
   RenderScoreHudState,
@@ -208,6 +215,9 @@ interface PixiObjectRecord {
   readonly animationElapsedByRole: Map<EvidenceAnimationRole, number>;
   animationElapsedSeconds: number | null;
   lastTransform: SetTransformCommand | null;
+  animatedLocalZ: number | null;
+  geometryCenterZ: number | null;
+  geometryUsesWorldCoordinates: boolean;
 }
 
 interface PixiShadowObject {
@@ -241,6 +251,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   constructor(
     private readonly decoder: PixiTextureDecoder,
     private readonly objectFactory: PixiSceneObjectFactory = defaultObjectFactory,
+    private readonly gameplayRenderOrder?: PixiGameplayRenderOrder,
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
@@ -1143,6 +1154,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       release(`font:${logicalAssetId}`, () => font.dispose());
     }
     this.decodedFonts.clear();
+    release("gameplay-render-order", () => this.gameplayRenderOrder?.dispose());
     this.controlOverlayRoot = null;
     this.profile = null;
     const failure = cleanupFailures.length === 0
@@ -1492,6 +1504,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           animationElapsedByRole: new Map(),
           animationElapsedSeconds: null,
           lastTransform: null,
+          animatedLocalZ: null,
+          geometryCenterZ: null,
+          geometryUsesWorldCoordinates: false,
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
         return;
@@ -1557,12 +1572,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           applySpatialSpriteTransform(object, object.lastTransform, this.profile!);
           if (object.role === "tap-lane-effect") this.ensureTapLaneEffectOutsideMask(object);
         }
+        this.attachGameplayDraw(object);
         return;
       }
       case "set-transform": {
         const object = this.objects.get(command.renderObjectId)!;
         const node = object.node;
         object.lastTransform = command;
+        object.animatedLocalZ = null;
         if (spatialSpriteRole(object.role)) {
           applySpatialSpriteTransform(object, command, this.profile!);
         } else {
@@ -1594,6 +1611,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ]);
         node.zIndex = orderingZIndex(object.ordering);
         this.sortSiblings(node.parent as Container);
+        this.attachGameplayDraw(object);
         return;
       }
       case "set-mask": {
@@ -1630,6 +1648,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.node.addChild(mesh);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
+        object.geometryCenterZ = geometryCenterZ(command.vertices);
+        object.geometryUsesWorldCoordinates = command.coordinateSpace === "authored-ui";
+        this.attachGameplayDraw(object);
         return;
       }
       case "set-line": {
@@ -1639,6 +1660,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         applyGeometryMaterial(mesh, object, this.profile!);
         object.node.addChild(mesh);
         object.geometryContent = mesh;
+        object.geometryCenterZ = geometryCenterZ([command.start, command.end]);
+        object.geometryUsesWorldCoordinates = true;
+        this.attachGameplayDraw(object);
         return;
       }
       case "play-animation": {
@@ -1649,6 +1673,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.animationElapsedByRole.set(role, 0);
         object.animationElapsedSeconds = 0;
         applyEvidenceAnimation(object, role, 0);
+        this.attachGameplayDraw(object);
         return;
       }
       case "sample-animation": {
@@ -1657,6 +1682,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.animationElapsedByRole.set(role, command.elapsedSeconds.value);
         object.animationElapsedSeconds = command.elapsedSeconds.value;
         applyEvidenceAnimation(object, role, command.elapsedSeconds.value, true);
+        this.attachGameplayDraw(object);
         return;
       }
       case "stop-animation": {
@@ -1693,6 +1719,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           node === spriteChild(parent) ||
           node.label === "GarupaSimulatorParticles" ||
           node.label === "GarupaSimulatorParticlesHigh" ||
+          node.label === PIXI_GAMEPLAY_RENDER_ORDER_LABEL ||
           node.label.startsWith("tap-lane-effect-sprite-mask:");
         if ((leftRecord === undefined && !externalLayer(left)) ||
           (rightRecord === undefined && !externalLayer(right))) {
@@ -1702,6 +1729,42 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
     });
+  }
+
+  private attachGameplayDraw(object: PixiObjectRecord): void {
+    const order = this.gameplayRenderOrder;
+    const rendererType = gameplayRendererType(object.role);
+    if (order === undefined || rendererType === null || object.lastTransform === null ||
+      object.spriteBindingKey === null && object.geometryContent === null) return;
+    // Note roots own separately ordered icon nodes. Attaching both parent and
+    // child containers to the same RenderLayer would collect the child twice.
+    // Current Note transforms are unmasked; their Sprite leaves retain the
+    // logical transform/tint/visibility chain. Masked field/belt owners stay whole.
+    const drawOwner = noteSpatialRole(object.role) ? object.spriteContent : object.node;
+    if (drawOwner === null) return;
+    order.attach(drawOwner, () => ({
+      sortingOrder: object.ordering[1],
+      distance: calculateNativeParticleRendererSortDistance([0, 0, this.gameplayWorldZ(object)], 0),
+      rendererType,
+      sameTypeSequence: object.ordering[3],
+    }));
+  }
+
+  private gameplayWorldZ(object: PixiObjectRecord): number {
+    const centerZ = object.geometryCenterZ ?? 0;
+    if (object.geometryUsesWorldCoordinates) return centerZ;
+    const chain: { positionZ: number; scaleZ: number | undefined }[] = [];
+    let current: PixiObjectRecord | undefined = object;
+    while (current !== undefined) {
+      const transform = current.lastTransform;
+      if (transform === null) throw new Error("A gameplay draw owner requires its parent transform before publication.");
+      chain.push({ positionZ: current.animatedLocalZ ?? transform.position.z.value, scaleZ: transform.scale.z?.value });
+      if (current.parentObjectId === null) break;
+      const parent = this.objects.get(current.parentObjectId);
+      if (parent === undefined) throw new Error("A gameplay draw owner lost its registered parent.");
+      current = parent;
+    }
+    return calculateGameplayWorldZ(centerZ, chain);
   }
 
   private destroyUnownedReservations(
@@ -1735,6 +1798,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   private resetSceneAfterTerminalMutation(pending?: PendingPixiBatch): readonly string[] {
     const cleanupFailures: string[] = [];
+    try {
+      this.gameplayRenderOrder?.dispose();
+    } catch {
+      cleanupFailures.push("gameplay-render-order");
+    }
     const pendingValues = pending === undefined
       ? [...this.pending.values()]
       : [pending, ...[...this.pending.values()].filter((value) => value !== pending)];
@@ -4222,6 +4290,7 @@ function applyOrdinaryNoteAnimation(
     sprite.tint = rgbTint(values[0]!, values[1]!, values[2]!);
     sprite.alpha = values[3]!;
   } else {
+    object.animatedLocalZ = values[2]!;
     object.node.position.set(
       Math.fround(values[0]! * object.spritePixelsPerUnit),
       Math.fround(-values[1]! * object.spritePixelsPerUnit),
@@ -4353,6 +4422,25 @@ function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
 function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
   if (!isEvidenceAnimationRole(role)) throw new Error("unsupported animation role");
   return role;
+}
+
+function geometryCenterZ(vertices: readonly RenderVector3[]): number {
+  if (vertices.length === 0) return 0;
+  let minimum = vertices[0]!.z.value;
+  let maximum = minimum;
+  for (let index = 1; index < vertices.length; index += 1) {
+    minimum = Math.min(minimum, vertices[index]!.z.value);
+    maximum = Math.max(maximum, vertices[index]!.z.value);
+  }
+  return Math.fround(Math.fround(minimum + maximum) * 0.5);
+}
+
+function gameplayRendererType(role: RenderObjectRole): 1 | 3 | 6 | null {
+  if (noteSpatialRole(role) || role === "judge-line" || role === "tap-lane-effect" ||
+    role === "habahiro-flash" || role === "habahiro-flash-mesh") return 3;
+  if (role === "note-mesh") return 1;
+  if (role === "sync-line" || role === "multiple-directional-line") return 6;
+  return null;
 }
 
 function noteSpatialRole(role: RenderObjectRole): boolean {
@@ -4775,6 +4863,7 @@ function copyPixiCommand(command: RenderCommand): RenderCommand {
       scale: Object.freeze({
         x: Object.freeze({ ...command.scale.x }),
         y: Object.freeze({ ...command.scale.y }),
+        ...(command.scale.z === undefined ? {} : { z: Object.freeze({ ...command.scale.z }) }),
       }),
       rotationDegrees: Object.freeze({ ...command.rotationDegrees }),
       color: Object.freeze({

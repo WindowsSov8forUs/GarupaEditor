@@ -3,6 +3,7 @@ import { PIXI_MV_LIVE_STAGE_LABEL } from "./pixiMvLiveBackend";
 import { integrityFailure, ok, type SimulatorResult } from "../../engine/evidence";
 import type { PixiStartupDirectionScene } from "./pixiStartupDirectionScene";
 import type { StartupDirectionSceneState } from "../../scene/startupDirectionScene";
+import type { PixiGameplayRenderOrder } from "./pixiGameplayRenderOrder";
 
 export const PIXI_COMBINED_SCENE_LABEL = "GarupaSimulatorCombinedScene";
 export const PIXI_PARTICLE_STAGE_LABEL = "GarupaSimulatorParticles";
@@ -36,6 +37,7 @@ export function createPixiCombinedScene(
   startupScene?: PixiStartupDirectionScene,
   mvStage?: Container,
   particleHighStage?: Container,
+  gameplayRenderOrder?: PixiGameplayRenderOrder,
 ): SimulatorResult<PixiCombinedScene> {
   if (
     !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
@@ -68,6 +70,7 @@ export function createPixiCombinedScene(
   try {
     if (mvStage !== undefined) root.addChild(mvStage);
     if (startupScene !== undefined) root.addChild(startupScene.backgroundRoot);
+    gameplayRenderOrder?.mount(ordinaryStage);
     particleStage.zIndex = 2_000_000;
     ordinaryStage.addChild(particleStage);
     if (particleHighStage !== undefined) {
@@ -78,6 +81,7 @@ export function createPixiCombinedScene(
     root.addChild(ordinaryStage);
     if (startupScene !== undefined) root.addChild(startupScene.foregroundRoot);
   } catch {
+    gameplayRenderOrder?.layer.removeFromParent();
     mvStage?.removeFromParent();
     startupScene?.backgroundRoot.removeFromParent();
     particleStage.removeFromParent();

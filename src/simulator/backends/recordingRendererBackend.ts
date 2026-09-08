@@ -355,6 +355,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         if (
           !validateVector3(command.position) ||
           !validateVector2(command.scale) ||
+          (command.scale.z !== undefined && !validateRenderFloat32(command.scale.z)) ||
           !validateRenderFloat32(command.rotationDegrees) ||
           !validateColor(command.color) ||
           !validateOrdering(command.ordering) ||
@@ -575,7 +576,9 @@ function freezeCommand(command: RenderCommand): RenderCommand {
       return Object.freeze({
         ...command,
         position: freezeRenderVector3(command.position),
-        scale: freezeRenderVector2(command.scale),
+        scale: command.scale.z === undefined
+          ? freezeRenderVector2(command.scale)
+          : freezeRenderVector3({ ...command.scale, z: command.scale.z }),
         rotationDegrees: Object.freeze({ ...command.rotationDegrees }),
         color: freezeRenderColor(command.color),
         ordering: Object.freeze({

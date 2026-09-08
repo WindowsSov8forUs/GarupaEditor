@@ -413,7 +413,8 @@ export type RenderCommand =
   | (RenderObjectCommandBase & {
       readonly kind: "set-transform";
       readonly position: RenderVector3;
-      readonly scale: RenderVector2;
+      /** Native note parents retain Z scale for child world-depth composition. */
+      readonly scale: RenderVector2 & { readonly z?: RenderFloat32 };
       readonly rotationDegrees: RenderFloat32;
       readonly color: RenderColor;
       readonly ordering: RenderOrderingKey;

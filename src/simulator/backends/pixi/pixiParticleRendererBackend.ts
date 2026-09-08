@@ -1,4 +1,5 @@
 import { Container, Texture } from "pixi.js";
+import type { PixiGameplayRenderOrder } from "./pixiGameplayRenderOrder";
 import type {
   ParticleBundleProfile,
   ParticleInstanceIdentity,
@@ -82,7 +83,10 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private lastSampleCount = 0;
   private fault: ParticleRendererBackendSnapshot["fault"] = null;
 
-  constructor(private readonly decoder: ParticlePixiTextureDecoder) {}
+  constructor(
+    private readonly decoder: ParticlePixiTextureDecoder,
+    private readonly gameplayRenderOrder?: PixiGameplayRenderOrder,
+  ) {}
 
   async prepare(
     sessionId: string,
@@ -281,12 +285,26 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       return this.latchFault("particle.pixi.invalid-batch-capability", "Pixi accepts only its exact one-use detached primitive capability.");
     }
     try {
-      // The complete candidate is detached and hidden. The only allocating
-      // scene operation runs while the previous generation is still visible.
+      // The candidate stays hidden until both its logical parent and shared
+      // draw-order registrations succeed; the previous generation stays live.
       this.stage.addChild(pending.generation);
+      for (let index = 0; index < pending.meshes.length; index += 1) {
+        const primitive = pending.primitives[index]!;
+        this.gameplayRenderOrder?.attach(pending.meshes[index]!, () => ({
+          sortingOrder: primitive.sortingOrder,
+          distance: primitive.sortingDistance,
+          rendererType: 7,
+          sameTypeSequence: index,
+        }));
+      }
     } catch {
       this.pending = null;
-      const cleanupFailures = destroyGeneration(pending.generation, pending.meshes, "candidate");
+      const cleanupFailures: string[] = [];
+      for (let index = 0; index < pending.meshes.length; index += 1) {
+        try { this.gameplayRenderOrder?.detach(pending.meshes[index]!); }
+        catch { cleanupFailures.push(`candidate-order:${index}`); }
+      }
+      cleanupFailures.push(...destroyGeneration(pending.generation, pending.meshes, "candidate"));
       return this.latchFaultPreservingLive(
         "particle.pixi.generation-attach-threw",
         cleanupFailures.length === 0

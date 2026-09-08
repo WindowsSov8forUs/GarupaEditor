@@ -1664,7 +1664,7 @@ export class RenderCommandProducer {
       kind: "set-transform",
       renderObjectId,
       position: start,
-      scale: Object.freeze({ x: one.value, y: one.value }),
+      scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
       rotationDegrees: zero.value,
       color: scene.noteTint,
       ordering,
@@ -1709,7 +1709,7 @@ export class RenderCommandProducer {
       commands.push({
         ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
         position: noteVisualAnimationLocalPosition(habahiroIcon.animationRole),
-        scale: Object.freeze({ x: one.value, y: one.value }),
+        scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
         rotationDegrees: zero.value,
         color: { red: one.value, green: one.value, blue: one.value, alpha: one.value },
         ordering: Object.freeze({
@@ -1737,7 +1737,7 @@ export class RenderCommandProducer {
         kind: "set-transform",
         renderObjectId,
         position: motion.position,
-        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
+        scale: motion.localScale,
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering,
@@ -1797,7 +1797,7 @@ export class RenderCommandProducer {
         kind: "set-transform",
         renderObjectId: afterObjectId,
         position: longChildState.renderedTransform.position,
-        scale: Object.freeze({ x: one.value, y: one.value }),
+        scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering: Object.freeze({
@@ -1813,7 +1813,7 @@ export class RenderCommandProducer {
         kind: "set-transform",
         renderObjectId: meshObjectId,
         position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
-        scale: Object.freeze({ x: one.value, y: one.value }),
+        scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering: Object.freeze({
@@ -1929,7 +1929,7 @@ export class RenderCommandProducer {
           kind: "set-transform",
           renderObjectId: childObjectId,
           position: childTransform.position,
-          scale: Object.freeze({ x: childTransform.localScale.x, y: childTransform.localScale.y }),
+          scale: childTransform.localScale,
           rotationDegrees: zero.value,
           color: scene.noteTint,
           ordering: Object.freeze({
@@ -2000,7 +2000,7 @@ export class RenderCommandProducer {
           kind: "set-transform",
           renderObjectId: meshObjectId,
           position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
-          scale: Object.freeze({ x: one.value, y: one.value }),
+          scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
           rotationDegrees: zero.value,
           color: scene.noteTint,
           ordering: Object.freeze({
@@ -2174,7 +2174,7 @@ export class RenderCommandProducer {
       kind: "set-transform",
       renderObjectId,
       position: { x: zero, y: zero, z: zero },
-      scale: { x: one, y: one },
+      scale: { x: one, y: one, z: one },
       rotationDegrees: zero,
       color: { red: one, green: one, blue: one, alpha: one },
       ordering: {
@@ -2276,6 +2276,7 @@ export class RenderCommandProducer {
       scale: Object.freeze({
         x: next.value.renderedTransform.localScale.x,
         y: next.value.renderedTransform.localScale.y,
+        z: next.value.renderedTransform.localScale.z,
       }),
       rotationDegrees: zero.value,
       color: scene.noteTint,
@@ -2392,6 +2393,7 @@ export class RenderCommandProducer {
           scale: Object.freeze({
             x: state.lifecycle.renderedTransform.localScale.x,
             y: state.lifecycle.renderedTransform.localScale.y,
+            z: state.lifecycle.renderedTransform.localScale.z,
           }),
           rotationDegrees: zero.value,
           color: scene.noteTint,
@@ -2494,6 +2496,7 @@ export class RenderCommandProducer {
       scale: Object.freeze({
         x: motion.value.localScale.x,
         y: motion.value.localScale.y,
+        z: motion.value.localScale.z,
       }),
       rotationDegrees: rotation.value,
       color: visualState.color,
@@ -2925,7 +2928,7 @@ function appendOrdinaryAnimationStart(
     kind: "set-transform",
     renderObjectId: binding.ownerObjectId,
     position: noteVisualAnimationLocalPosition(binding.animationRole),
-    scale: { x: one, y: one },
+    scale: { x: one, y: one, z: one },
     rotationDegrees: zero,
     color: { red: one, green: one, blue: one, alpha: one },
     ordering: {

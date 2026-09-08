@@ -15,6 +15,7 @@ import {
   type PixiCombinedScene,
 } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
+import { PixiGameplayRenderOrder } from "../backends/pixi/pixiGameplayRenderOrder";
 import { PixiMvLiveBackend } from "../backends/pixi/pixiMvLiveBackend";
 import {
   PixiRendererBackend,
@@ -285,11 +286,13 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         releasePendingMovie(),
       );
     }
-    const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
+    const gameplayRenderOrder = new PixiGameplayRenderOrder();
+    const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder(), undefined, gameplayRenderOrder);
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, reconstructionCandidate);
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
+      gameplayRenderOrder,
     );
     const assembly = await assembleSimulatorResources(
       bgm.value,
@@ -492,6 +495,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       startupScene.value,
       movie?.stage,
       particleRenderer.highSortingStage,
+      gameplayRenderOrder,
     );
     if (combinedScene.status !== "ok") {
       const cleanups = [
