@@ -42,6 +42,12 @@ Authority: Reverse `4d6343232241ade4e8546b97a2e633f88724111e`, verified and push
 
 Ordinary Flick icons receive70; directional Flick and long-flash icons receive71. The three HAB transform sites now preserve that distinction through activation, adjustment and motion instead of publishing72. Ordinary front/after/slide-child animation starts publish their independent child ordering before binding and playback. Eighteen role/site probes execute actual publication helpers and backend transfers with zero differences, replacing nine wrong HAB orders and nine missing ordinary publications. Seven root, three line and three belt cases remain exact. These explicit role adapters do not assert every role occurs at every callsite; world geometry, native distance/ties and independent common-layer rendering remain OPEN.
 
+## ICON-PARENT — preserve native child transforms
+
+Authority: Reverse `a46fb9be6aa16df2560a4f0e1028156c1aa84110`, verified and pushed before consumption, extends the ordinary audit over the unchanged C30 serialized source cited above. For seven front/add families, each icon/TouchingFlash Transform points directly to its note prefab root. Initial Flick local position is `(0, Float32(0.7), 0)`; TouchingFlash is `(0, 0, -1)`; both use unit scale.
+
+HAB icons now belong to their note root, so local animation offsets retain parent position, scale and visibility. Initial transforms use the source local pose, also for ordinary animation children. The two repeated HAB world-transform publications are removed: adjustment and motion flow through the parent instead of overwriting the child's animation pose. The parent identity and twelve initial-pose checks remove13 baseline discrepancies. Seven root, three line, three belt and twelve retained icon-order publications/transfers remain exact. This supersedes SORT-05's three independent HAB transform sites; full world matrices, animation interpolation and common native renderer ordering remain independently OPEN.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.

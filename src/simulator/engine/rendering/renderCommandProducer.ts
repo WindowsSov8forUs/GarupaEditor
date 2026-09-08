@@ -1136,7 +1136,7 @@ export class RenderCommandProducer {
         created.push(iconObjectId);
         commands.push({
           ...base(commands.length), kind: "create-object", renderObjectId: iconObjectId,
-          poolFamily: `${pool.family}-habahiro-icon`, role: "note-icon", parentObjectId: null,
+          poolFamily: `${pool.family}-habahiro-icon`, role: "note-icon", parentObjectId: renderObjectId,
         });
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
       }
@@ -1708,12 +1708,14 @@ export class RenderCommandProducer {
       }
       commands.push({
         ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
-        position: start, scale: Object.freeze({ x: one.value, y: one.value }),
-        rotationDegrees: zero.value, color: scene.noteTint,
+        position: noteVisualAnimationLocalPosition(habahiroIcon.animationRole),
+        scale: Object.freeze({ x: one.value, y: one.value }),
+        rotationDegrees: zero.value,
+        color: { red: one.value, green: one.value, blue: one.value, alpha: one.value },
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
           sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(habahiroIcon.animationRole),
-          sourceZ: start.z,
+          sourceZ: noteVisualAnimationLocalPosition(habahiroIcon.animationRole).z,
           creationSequence: iconCreationSequence,
         }),
         maskObjectId: null,
@@ -1739,21 +1741,6 @@ export class RenderCommandProducer {
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering,
-        maskObjectId: null,
-      });
-      if (habahiroIcon !== null) commands.push({
-        ...base(commands.length), kind: "set-transform",
-        renderObjectId: habahiroIconRenderObjectId(poolObjectId),
-        position: motion.position,
-        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
-        rotationDegrees: zero.value, color: scene.noteTint,
-        ordering: Object.freeze({
-          ...ordering,
-          sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(habahiroIcon.animationRole),
-          creationSequence: this.creationSequenceByObjectId.get(
-            habahiroIconRenderObjectId(poolObjectId),
-          )!,
-        }),
         maskObjectId: null,
       });
     }
@@ -2515,23 +2502,6 @@ export class RenderCommandProducer {
     }];
     const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
     const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
-    const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
-    if (iconCreationSequence !== undefined && this.noteAnimationElapsedSeconds.has(iconObjectId)) {
-      commands.push({
-        ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
-        position: motion.value.position,
-        scale: Object.freeze({ x: motion.value.localScale.x, y: motion.value.localScale.y }),
-        rotationDegrees: rotation.value, color: visualState.color,
-        ordering: Object.freeze({
-          ...visualState.ordering,
-          sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(
-            this.noteAnimationElapsedSeconds.get(iconObjectId)!.role,
-          ),
-          creationSequence: iconCreationSequence,
-        }),
-        maskObjectId: null,
-      });
-    }
     for (const animatedObjectId of [
       ordinaryNoteIconRenderObjectId(renderObjectId),
       ordinaryLongFlashRenderObjectId(renderObjectId),
@@ -2932,6 +2902,15 @@ function noteVisualAnimationSortingOrder(role: NoteVisualAnimationRole): number 
   }
 }
 
+function noteVisualAnimationLocalPosition(role: NoteVisualAnimationRole): RenderVector3 {
+  // C30: icon and TouchingFlash are direct note children; the animation samples local offsets.
+  return {
+    x: float32State(0),
+    y: float32State(role === "note-long-flash" ? 0 : 0.699999988079071),
+    z: float32State(role === "note-long-flash" ? -1 : 0),
+  };
+}
+
 function appendOrdinaryAnimationStart(
   commands: RenderCommand[],
   base: RenderCommandBaseFactory,
@@ -2945,14 +2924,14 @@ function appendOrdinaryAnimationStart(
     ...base(commands.length),
     kind: "set-transform",
     renderObjectId: binding.ownerObjectId,
-    position: { x: zero, y: zero, z: zero },
+    position: noteVisualAnimationLocalPosition(binding.animationRole),
     scale: { x: one, y: one },
     rotationDegrees: zero,
     color: { red: one, green: one, blue: one, alpha: one },
     ordering: {
       domainLayer,
       sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(binding.animationRole),
-      sourceZ: zero,
+      sourceZ: noteVisualAnimationLocalPosition(binding.animationRole).z,
       creationSequence,
     },
     maskObjectId: null,
