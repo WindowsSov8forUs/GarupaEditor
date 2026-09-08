@@ -1035,6 +1035,18 @@ capacity preparation from particle publication without claiming allocator-call
 equivalence. No production algorithm change is needed for this handoff; current
 manager/Transform state and paused/nonempty restarts remain open.
 
+LIFECYCLE-C217 from verified/pushed Reverse `bd18a8313ff7fe2c63aa3cba43e4c65bd9f9c185`
+binds the managed invalidation callers to original metadata/module tables.
+`particle_managed_invalidation_callers.json` SHA256
+`377FBD3C38DCF8206111BFBC5C2E5A7AE9A16C90BF883306616C9E4BCC98A25B`
+retains20 complete methods and six direct branch candidates. The two external
+SetParticles callers belong to Coffee.UIExtensions; none of the808 serialized
+MonoBehaviour headers across27 particle resources, level3 and two Game-clear
+prefabs references Coffee/UI-particle classes. One null script reference is
+retained. This narrows source-attached direct invalidation callbacks and requires
+no production change; runtime-created components, indirect/reflection calls and
+complete native writer coverage remain separate.
+
 ### Current score-label glyph spacing and Android shrinking
 
 Verified/pushed Reverse `900c6d7d979f534ba2bc19c846609aea907f2d70` includes the UILabel1271 correction first published in `7bb802512c7607a3740e3a9f6bb7ab9b09036043`. Original spacingX is1. UpdateNGUIText publishes it; NGUIText.Update scales it; glyph advances retain spacing across gray/pink color boundaries. CalculatePrintedSize subtracts final spacing and takes ceil, while WrapText includes final spacing in its fit comparison.
