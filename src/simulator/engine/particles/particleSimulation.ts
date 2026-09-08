@@ -911,8 +911,9 @@ export class DeterministicParticleSimulation {
       state.initialModuleStream = initialRandom.state;
       const shapeRandom = particleSimdRandomValues(state.shapeModuleStream, shapeRandomDrawCount(shape));
       state.shapeModuleStream = shapeRandom.state;
-      const groupCount = Math.min(4, admitted - groupStart);
-      for (let lane = 0; lane < groupCount; lane += 1) {
+      // 1090584/108C5B8 publish and initialize complete SIMD groups. Padding
+      // participates in the newborn death scan before the admitted prefix.
+      for (let lane = 0; lane < 4; lane += 1) {
         const sample = buildBirthRandomSample(initial, initialRandom, shapeRandom, lane);
         const batchIndex = groupStart + lane;
         this.spawn(
@@ -926,9 +927,12 @@ export class DeterministicParticleSimulation {
           batchIndex,
           admitted,
           sample,
+          undefined,
+          true,
         );
       }
     }
+    removeExpiredNewbornParticles(runtime.particles, existingCount, admitted);
     compactParticleBirths(runtime.particles, existingCount);
   }
 
@@ -943,9 +947,10 @@ export class DeterministicParticleSimulation {
     batchCount: number,
     random: BirthRandomSample,
     analytic?: AnalyticBirthState,
+    paddedBirth = false,
   ): void {
     const initial = getModule(record.bundle, profile, "InitialModule");
-    if (initial === null || runtime.particles.length >= initial.maxNumParticles) return;
+    if (initial === null || (!paddedBirth && runtime.particles.length >= initial.maxNumParticles)) return;
     const instanceState = this.instanceStates.get(runtime.instanceStateKey);
     if (instanceState === undefined) {
       throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
@@ -1295,6 +1300,23 @@ function normalizedParticleAge(agePercent: number): number {
 
 function particleIsAlive(agePercent: number): boolean {
   return !(agePercent > 100);
+}
+
+function removeExpiredNewbornParticles(particles: SimulatedParticle[], existingCount: number, admitted: number): void {
+  // BND-C205: 108CCE0 scans ascending newborn rows, including SIMD padding.
+  // Each removal swaps the physical tail and rechecks this index. The native
+  // admitted counter saturates at zero; only that surviving prefix publishes.
+  let index = existingCount;
+  while (index < particles.length) {
+    if (particles[index]!.agePercent <= 100) {
+      index += 1;
+      continue;
+    }
+    const last = particles.pop()!;
+    if (index < particles.length) particles[index] = last;
+    if (admitted > 0) admitted -= 1;
+  }
+  particles.length = existingCount + admitted;
 }
 
 function compactParticleBirths(particles: SimulatedParticle[], existingCount: number): void {
