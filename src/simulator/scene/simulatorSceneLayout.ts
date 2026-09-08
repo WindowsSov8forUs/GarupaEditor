@@ -203,7 +203,8 @@ function createSceneValues(
       ),
     );
     goalPositions.push(vector3(goalX, targetCenterY, NOTE_WORLD_Z));
-    noteStartPositions.push(vector3(startX, startY, NOTE_WORLD_Z));
+    // SORT-C43: initLauncher publishes Z=0; activation adds the per-note depth.
+    noteStartPositions.push(vector3(startX, startY, 0));
   }
   return ok(Object.freeze({
     surfaceLayout: layout,
@@ -250,7 +251,7 @@ function createGarupaProductScene(
       : scene.noteStartPositions[originalLane]!.x.value;
     const startY = scene.noteStartPositions[3]!.y.value;
     const goalY = scene.targetCenterY.value;
-    if (curve === 0 && originalLane !== null) return ok(scene.noteStartPositions[originalLane]!);
+    if (curve === 0 && originalLane !== null) return ok(vector3(startX, startY, NOTE_WORLD_Z));
     if (curve === 1 && originalLane !== null) return ok(scene.goalPositions[originalLane]!);
     const projectedX = Math.fround(startX + Math.fround(curve * Math.fround(goalX - startX)));
     const projectedY = Math.fround(startY + Math.fround(curve * Math.fround(goalY - startY)));

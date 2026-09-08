@@ -18,6 +18,12 @@ Reverse `4ff1bf855b151e6f7b1853d8c9bf110323e870de` extends the same oracle to th
 
 The comparison corpus fixes layer value0, queue3000 and explicit camera inputs, and excludes equal-key native ties. Source-domain/cache checks do not prove complete current cache or lifecycle occurrence. Frustum/group/override, current camera/material draw-record production, native final ties and ordinary/particle composition remain OPEN. No application, product tests, build or visual acceptance is used.
 
+## SORT-08 — per-note start depth
+
+Reverse `b74fa56878cf18ba5fae188d21f462747919945b`, SORT-C43 `note_start_depth.json`, restores the Z component of `NoteBase.getStartPos` omitted from the earlier geometry profile. Launcher start positions have source Z zero. Activation adds the original signed `absolutePos` and `buttonType` terms using the native Float32 conversion/multiplication/addition order; a fixed `-13.5` is not the note depth algorithm. Ordinary roots and Slide child sources consume their own information. Long after objects retain the head information's depth while scheduling movement with the separate end time.
+
+The production arithmetic agrees bit-for-bit with248 original ARM64 instruction-window cases. Root/Slide bindings, Long inheritance and launcher zero publication are statically checked. World/local Transform setter rounding and full material/resource/node ties remain separate open consumers; this repair does not claim final Live renderer depth or whole-simulator equivalence.
+
 ## SORT-06 — common gameplay draw order and parent depth
 
 Authority: pushed Reverse `0e6e31f1f6d78ce33891f707a188885f0cdba2f7` (C204 native Sprite world bounds/distance), `559c6f08846c4d09b30d6ff5f95a9bb4ec0f6c14` (C39 native renderer types/defaults and C203 cross-type branches), and `cf2c7db5713ed04bb63b7a4c89a51cc9ffc4f9a3` (independent actual-consumer audit). C204 `ordinary_sprite_world_bounds.json` SHA256 is `8CC4BFBA2579674362BD2F0C0B899E189C9CE5C0C2AE5F14CA7DF02BFF4819F5`. C173 camera-distance expected is unchanged.

@@ -46,6 +46,7 @@ import {
   advanceOrdinaryNoteMotion,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
+  calculateOrdinaryNoteStartDepth,
   getHabahiroMeshWidthRate,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
@@ -1621,7 +1622,7 @@ export class RenderCommandProducer {
         "Ordinary activation requires its committed engine-authored pool root identity.",
       );
     }
-    const start = scene.noteStartPositions[lane.value]!;
+    const start = noteStartPosition(scene.noteStartPositions[lane.value]!, information);
     const goal = scene.goalPositions[lane.value]!;
     const zero = createRenderFloat32(Math.fround(0));
     const one = createRenderFloat32(Math.fround(1));
@@ -1887,7 +1888,7 @@ export class RenderCommandProducer {
           ? resolveHabahiroMotionLaneIndex(source)
           : resolveOrdinaryMotionLaneIndex(source, true);
         if (childLane.status !== "ok") return childLane;
-        const childStart = scene.noteStartPositions[childLane.value]!;
+        const childStart = noteStartPosition(scene.noteStartPositions[childLane.value]!, source);
         const childGoal = scene.goalPositions[childLane.value]!;
         const childButtonCount = source.buttonTypesArray.length ||
           source.buttonTypes.length || 1;
@@ -3391,6 +3392,13 @@ function renderColor(value: readonly [number, number, number, number]): RenderCo
     green: float32State(Math.fround(value[1])),
     blue: float32State(Math.fround(value[2])),
     alpha: float32State(Math.fround(value[3])),
+  });
+}
+
+function noteStartPosition(start: RenderVector3, information: NoteInformation): RenderVector3 {
+  return Object.freeze({
+    ...start,
+    z: float32State(calculateOrdinaryNoteStartDepth(start.z.value, information.absolutePos, information.buttonType)),
   });
 }
 

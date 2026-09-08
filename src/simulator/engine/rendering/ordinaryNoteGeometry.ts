@@ -141,6 +141,20 @@ export function getHabahiroMeshWidthRate(
   return createRenderFloat32(value);
 }
 
+/** SORT-C43: NoteBase.getStartPos preserves each ARM64 SCVTF/FMUL/FADD write. */
+export function calculateOrdinaryNoteStartDepth(
+  baseZ: number,
+  absolutePos: number,
+  buttonType: number,
+): number {
+  const coefficient = Math.fround(0.00005);
+  const positionOffset = Math.fround(Math.fround(absolutePos) * coefficient);
+  const laneOffset = Math.fround(
+    Math.fround(Math.fround(buttonType) * coefficient) * Math.fround(0.1),
+  );
+  return Math.fround(baseZ + Math.fround(Math.fround(-14 + positionOffset) + laneOffset));
+}
+
 export function getOrdinaryNoteArrivalSeconds(
   specificSpeed: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
