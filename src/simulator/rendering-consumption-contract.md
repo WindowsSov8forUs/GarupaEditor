@@ -1047,6 +1047,18 @@ retained. This narrows source-attached direct invalidation callbacks and require
 no production change; runtime-created components, indirect/reflection calls and
 complete native writer coverage remain separate.
 
+HUD-C218 from verified/pushed Reverse `96ab774d3b9ab43a9c56a2eb7df72ccf026be1cf`
+corrects the Font runtime reader source binding. `font_cache_native_sources.json`
+SHA256 `6812E8C80456DCBBF7BD5CD73EA22742D486C9FE680A5669EE6BE5F388E0F9B0`
+retains22 complete functions: registration copies the template into descriptor
+17F3F30, and TimeManager indexes the inline manager array without a second root
+dereference. Two original accessor executions verify64-bit pointer preservation.
+The bounded collector retains resident digit variants without assuming28px keys.
+Its one corrected-descriptor attempt stopped at TimeManager before any glyph
+read; the additional reader fix was verified offline, without repeating capture.
+This repairs evidence tooling only. Native glyph metrics and current UILabel-to-
+Font instance association remain open; no production metrics are changed.
+
 ### Current score-label glyph spacing and Android shrinking
 
 Verified/pushed Reverse `900c6d7d979f534ba2bc19c846609aea907f2d70` includes the UILabel1271 correction first published in `7bb802512c7607a3740e3a9f6bb7ab9b09036043`. Original spacingX is1. UpdateNGUIText publishes it; NGUIText.Update scales it; glyph advances retain spacing across gray/pink color boundaries. CalculatePrintedSize subtracts final spacing and takes ceil, while WrapText includes final spacing in its fit comparison.
