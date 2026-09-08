@@ -1830,7 +1830,7 @@ export class RenderCommandProducer {
         color: scene.noteTint,
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
-          sourceDepthOrSortingOrder: 0,
+          sourceDepthOrSortingOrder: 60,
           sourceZ: meshZ.value,
           creationSequence: meshCreationSequence,
         }),
@@ -2015,7 +2015,7 @@ export class RenderCommandProducer {
           color: scene.noteTint,
           ordering: Object.freeze({
             domainLayer: scene.noteDomainLayer,
-            sourceDepthOrSortingOrder: 0,
+            sourceDepthOrSortingOrder: 60,
             sourceZ: meshZ.value,
             creationSequence: meshCreationSequence,
           }),

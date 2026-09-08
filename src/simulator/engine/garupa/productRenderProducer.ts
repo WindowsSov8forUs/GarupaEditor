@@ -462,7 +462,7 @@ export class GarupaProductRenderProducer {
             scale: vector2(1, 1),
             rotationDegrees: f32(0),
             color: white(),
-            ordering: ordering(3, 0, objectId, 0.9900000095367432),
+            ordering: ordering(3, 60, objectId, 0.9900000095367432),
             maskObjectId: null,
           }));
           const mesh = slideMesh(

@@ -30,6 +30,12 @@ Authority: Reverse `0a0e3615ec07eca58bfb9609e318c98954438059`, verified and push
 
 The ordinary fixed-pool line now publishes its identity transform and order69 before its world-space geometry, on activation and updates. The extended product line changes order0 to69. The existing gameplay grouping remains3; it is not the original sorting-layer value. Independent actual command/ordering-helper and backend-transfer checks remove all three baseline discrepancies and preserve all seven root cases. Line geometry, native bounds/distance/ties and shared ordinary/particle rendering remain separately OPEN.
 
+## SORT-04 — runtime note belt sorting-order producer
+
+Authority: Reverse `a356dcd0be704879ac19dd04be007cdafe3854dc`, verified and pushed before consumption. SORT-C34 in `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` (SHA256 `A904F7A62CE937C05D0BB6B19061E1E237104BEEC6D14D31E0CDB431BB098FCF`) checks the original NoteMesh/NoteMeshAdvanced MeshRenderer field+0x48 and literal60 setter calls, including the X21 field-address alias in NoteMesh. Serialized PreviewNoteMesh order0 is a different renderer.
+
+Ordinary Long/Slide belt activation and the extended Slide belt now publish60 instead of0. The independent ordinary audit executes all three actual transform publications and backend field transfers; the three differences are removed while the seven root and three simultaneous-line cases remain exact. Motion updates retain this order and update mesh geometry. Native bounds/distance/material/ties and common scene composition remain OPEN.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.
