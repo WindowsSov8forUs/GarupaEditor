@@ -1021,6 +1021,20 @@ seed/module initializer for those source inputs; full Play allocation, prewarm,
 Transform work, actual scene-global history and overall parity remain open.
 
 
+BND-C216 from verified/pushed Reverse `b3cfc7b66e73bd937dc3ae7b7b7756ecc8b001eb`
+adds the fresh Play reset/start-delay handoff. `particle_play_handoff.json` SHA256
+`8C854F8CB7D4571AADBC441B00E829B4617419CDBFE6FAC7945270D2EF7AC40B` reuses
+registered source inputs and assigned seeds:149 native inputs cover3242 selected
+calls. All1741 startDelay curves are constant. Actual createSystemRuntime elapsed
+and delayRemaining match the original instructions, retaining the C214 seed
+checks. The59 prewarm source systems loop; original Play skips delay evaluation
+when prewarm is set and additionally gates prewarm on an empty particle store
+and the caller flag. This gate has native source evidence; the audit does not
+execute the complete product prewarm. Seven full function exports distinguish
+capacity preparation from particle publication without claiming allocator-call
+equivalence. No production algorithm change is needed for this handoff; current
+manager/Transform state and paused/nonempty restarts remain open.
+
 ### Current score-label glyph spacing and Android shrinking
 
 Verified/pushed Reverse `900c6d7d979f534ba2bc19c846609aea907f2d70` includes the UILabel1271 correction first published in `7bb802512c7607a3740e3a9f6bb7ab9b09036043`. Original spacingX is1. UpdateNGUIText publishes it; NGUIText.Update scales it; glyph advances retain spacing across gray/pink color boundaries. CalculatePrintedSize subtracts final spacing and takes ceil, while WrapText includes final spacing in its fit comparison.
