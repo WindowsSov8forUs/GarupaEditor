@@ -58,6 +58,7 @@ export interface ParticleNativeRenderPrimitive {
   readonly sourceBlendFactor: 1 | 5;
   readonly destinationBlendFactor: 1 | 10;
   readonly linearColor: readonly [number, number, number, number];
+  readonly vertexColors: Float32Array;
   readonly positions: Float32Array;
   readonly uvs: Float32Array;
   readonly normals: Float32Array;
@@ -225,6 +226,7 @@ function buildPrimitive(
     normals[index * 3 + 2] = worldNormals[index]![2];
   }
   const color = currentLinearColor(sample, binding.renderer.m_ApplyActiveColorSpace);
+  const vertexColors = currentVertexColors(binding.mesh, color, source.vertices.length);
   const sortingFudge = requiredBits(sample.sortingFudgeBits!);
   const bounds = primitiveBounds(positions, worldVertices);
   if (!Number.isFinite(projectedCenter[0]) || !Number.isFinite(projectedCenter[1])) {
@@ -251,6 +253,7 @@ function buildPrimitive(
     sourceBlendFactor: binding.material.sourceBlendFactor!,
     destinationBlendFactor: binding.material.destinationBlendFactor!,
     linearColor: color,
+    vertexColors,
     positions,
     uvs,
     normals,
@@ -577,6 +580,24 @@ function buildUvs(
     const transformedNativeV = add(add(multiply(tileNativeV, materialScale.y), materialOffset.y), custom[0]);
     output[index * 2] = transformedU;
     output[index * 2 + 1] = subtract(1, transformedNativeV);
+  }
+  return output;
+}
+
+function currentVertexColors(
+  mesh: ParticleMeshProfile | null,
+  color: readonly [number, number, number, number],
+  vertexCount: number,
+): Float32Array {
+  const output = new Float32Array(vertexCount * 4);
+  const particleBytes = color.map((channel) => Math.round(channel * 255));
+  for (let vertex = 0; vertex < vertexCount; vertex += 1) {
+    const meshColor = mesh === null || mesh.colorBytes === null ? null : mesh.colorBytes[vertex]!;
+    for (let channel = 0; channel < 4; channel += 1) {
+      // Original mesh writers multiply packed bytes after render color conversion.
+      output[vertex * 4 + channel] = meshColor === null ? color[channel]!
+        : divide(((meshColor[channel]! + 1) * particleBytes[channel]!) >>> 8, 255);
+    }
   }
   return output;
 }

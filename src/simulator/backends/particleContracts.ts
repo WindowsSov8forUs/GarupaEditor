@@ -431,6 +431,7 @@ export interface ParticleMeshProfile {
   readonly vertices: readonly (readonly [number, number, number])[];
   readonly uv0: readonly (readonly [number, number])[];
   readonly normals: readonly (readonly [number, number, number])[];
+  readonly colorBytes: readonly (readonly [number, number, number, number])[] | null;
   readonly indices: readonly number[];
   readonly screenYReflectionIndices: readonly number[];
   readonly subMeshes: readonly ParticleMeshSubMeshProfile[];

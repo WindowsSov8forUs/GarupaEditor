@@ -767,9 +767,13 @@ function isCurrentMeshProfile(value: unknown): boolean {
   const vertices = value.vertices;
   const uv0 = value.uv0;
   const normals = value.normals;
+  const colors = value.colorBytes;
   const indices = value.indices;
   const reflected = value.screenYReflectionIndices;
   const subMeshes = value.subMeshes;
+  if (!(colors === null || Array.isArray(colors) && colors.length === vertices.length &&
+    colors.every((color) => Array.isArray(color) && color.length === 4 &&
+      color.every((channel) => Number.isInteger(channel) && channel >= 0 && channel <= 255)))) return false;
   if (vertices.length < 4 || uv0.length !== vertices.length || normals.length !== vertices.length ||
     indices.length < 3 || indices.length % 3 !== 0 || reflected.length !== indices.length || subMeshes.length !== 1 ||
     !vertices.every(isFloat32Vector3Array) || !normals.every(isFloat32Vector3Array) || !uv0.every(isFloat32Vector2Array) ||

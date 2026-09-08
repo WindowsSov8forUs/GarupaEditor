@@ -430,9 +430,17 @@ Explicit identity basis/zero translation, source3D storage flags/default overrid
 
 Reverse `1f8c6ecccd28ea4504c9b21ae0572a654bc07dd2` was verified, pushed and confirmed remotely before production consumption. `simulator-particle-bounds-calculation-10-1-4/particle_render_color_space.json` (SHA256 `8EC211FDE6C1933B0D3CA49101785DE1E328D175A7AC5FF5B99CA33508B164BB`) executes complete original1096BB4 on both conversion states and every byte value in each RGBA channel. Original10806E4 binds Renderer+521;1079908 gates worker328 bit26 by that flag and active Linear color space, and107A33C consumes it. APK PlayerSettings serializes Linear(1); six true renderer profiles have87 references, including14 enabled skin_witch mesh renderers.
 
-`currentLinearColor` now uses the complete native256-entry byte mapping, then publishes Float32(byte/255). Original SIMD approximation and Color32 repacking replace the former continuous gamma formula; alpha and disabled conversions remain unchanged. The actual sample producer supplies packed bytes divided by255, and the primitive forwards the result to the particle shader uniform. All512 actual consumer calls now match original output bits, removing256 differing converted colors.
+`currentLinearColor` uses the complete native256-entry byte mapping, then publishes Float32(byte/255). Original SIMD approximation and Color32 repacking replace the former continuous gamma formula; alpha and disabled conversions remain unchanged. The actual sample producer supplies packed bytes divided by255; C53 below carries these values through Mesh modulation to shader vertex attributes. All512 actual consumer calls match original output bits, removing256 differing converted colors.
 
-The native audit explicitly disables lifetime/speed/UV modules. Current enabled module combinations, runtime color-space overrides, mesh vertex-color multiplication and final GPU/material integration remain OPEN; this closes the packed conversion domain, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
+The native audit explicitly disables lifetime/speed/UV modules. Current enabled module combinations, runtime color-space overrides and final GPU/material integration remain OPEN; C53 separately covers source Mesh color modulation. This closes the packed conversion domain, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
+
+### Mesh vertex Color32 modulation (RENDER-C53)
+
+Reverse `0544835452c477fe4f31f13bd4f07964a85d24ed` was verified and pushed before consumption. `simulator-particle-bounds-calculation-10-1-4/particle_mesh_colors.json` (SHA256 `9F507C7BD7C7E3BD365C0E0F913D327BE046354ACE30704EB80E3324766A805F`) roundtrips all four source meshes. screwTowerLow/screwTower contain82/35 Color32 values with white RGB and nonuniform alpha; crossCylinder and Quad have no color channel. The semantic catalog now retains these fields, and validation requires exact byte arrays or explicit null.
+
+Eight normal/inverse-normal writer blocks in12B6BB0/12B1150 agree on24576 native executions covering12 source colors and all particle alpha bytes. `currentVertexColors` applies floor((MeshByte+1)*ParticleByte/256) after C52 conversion. The primitive and Pixi geometry carry these values to a float32x4 attribute; the shader interpolates vertex colors before texture multiplication. Mesh destruction releases its owned color/position/UV/index buffers.
+
+All1024 actual consumer calls and145664 vertex comparisons agree, removing four missing resource fields and4845 baseline vertex differences. C52 remains512/512 exact. Original numeric register/stack inputs establish the color writer arithmetic; complete worker/cache dispatch, enabled module combinations and final GPU/material integration remain OPEN. No product tests, fixtures, app or visual capture were added.
 
 ### Complete source ColorModule consumption (BND-C60)
 

@@ -20,6 +20,8 @@ Each logical resource retains its application revision relation, official UnityF
 
 Names are diagnostics, not join keys. A system/profile/material/mesh/texture relation may be resolved only by its source-bound identity. Malformed or unknown current rows reject the whole selected pack; no row is skipped and no name/default/nearest fallback exists.
 
+Mesh colors are completed by Reverse `0544835452c477fe4f31f13bd4f07964a85d24ed`, `simulator-particle-bounds-calculation-10-1-4/particle_mesh_colors.json`, SHA-256 `9F507C7BD7C7E3BD365C0E0F913D327BE046354ACE30704EB80E3324766A805F`. The catalog's four meshes retain all previous geometry/source identities and explicitly publish Color32 arrays or null for an absent channel. screwTowerLow and screwTower carry82 and35 source colors, including alpha gradients. The engine applies original packed integer modulation after particle color conversion and supplies a per-vertex shader attribute. This source delta does not establish current stream/cache dispatch or GPU equivalence.
+
 ## Lease and prepared token
 
 Application Snapshot/Lease owns the independent expected revision, file byte length and SHA-256. `OriginalResourcePackageView` rehashes each read against that receipt. The semantic sidecar must match the exact package revision/digest set; a hash calculated from the bytes under test is not an expected identity.
