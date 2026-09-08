@@ -24,6 +24,16 @@ Reverse `b74fa56878cf18ba5fae188d21f462747919945b`, SORT-C43 `note_start_depth.j
 
 The production arithmetic agrees bit-for-bit with248 original ARM64 instruction-window cases. Root/Slide bindings, Long inheritance and launcher zero publication are statically checked. World/local Transform setter rounding and full material/resource/node ties remain separate open consumers; this repair does not claim final Live renderer depth or whole-simulator equivalence.
 
+
+## SORT-09 — parent-space position writes
+
+Reverse `b591dec690ad1141b1130ef0d365225f6e527872`, SORT-C44 `note_parent_position.json`, binds InGameIPhoneXAdjuster.Awake and the canonical NoteParentTrans538. High-aspect devices assign `ScreenToSafeAreaRatio * (1 + clamp01(HighAspectRatio) * 0x3D8F5C30)` with the original Float32 writes; other devices retain serialized unit scale. Scene layout supplies this explicit scale to note motion.
+
+Root and Slide activation perform the original world-to-local-to-world position conversion. Ordinary Move, synthetic activation adjustment, Long/Slide children and manager state retain the resulting world Z after each write. Sorting records receive the updated world depth. Unity's FRECPE plus two FRECPS steps are preserved; local note scale still uses the requested Y before the Transform conversion. Native expected covers25 layout cases,1536 round trips,1536 Move calls,1536 Long child calls and672 activation-adjustment calls. Root/Slide initial binding and manager/command propagation are source checked.
+
+This closes position-write rounding for the canonical zero-translation, identity-rotation ancestors and positive uniform layout scales. Final renderer world scale, changed hierarchy/animation inputs, complete resource keys and full simulator equivalence remain open. Existing tests received only explicitly authorized parent-scale inputs; no new fixtures, snapshots or visual acceptance were introduced.
+
+
 ## SORT-06 — common gameplay draw order and parent depth
 
 Authority: pushed Reverse `0e6e31f1f6d78ce33891f707a188885f0cdba2f7` (C204 native Sprite world bounds/distance), `559c6f08846c4d09b30d6ff5f95a9bb4ec0f6c14` (C39 native renderer types/defaults and C203 cross-type branches), and `cf2c7db5713ed04bb63b7a4c89a51cc9ffc4f9a3` (independent actual-consumer audit). C204 `ordinary_sprite_world_bounds.json` SHA256 is `8CC4BFBA2579674362BD2F0C0B899E189C9CE5C0C2AE5F14CA7DF02BFF4819F5`. C173 camera-distance expected is unchanged.

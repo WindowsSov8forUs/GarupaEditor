@@ -52,6 +52,7 @@ export interface OriginalGameplayLayout {
   readonly screenWidthAdjustRate: number;
   readonly normalizedNoteSize: number;
   readonly noteSettingScale: number;
+  readonly noteParentScale: number;
   readonly particleTransformScale: number;
   readonly targetCenterY: number;
   readonly launcherY: number;
@@ -196,6 +197,7 @@ export function createOriginalSurfaceLayout(
       screenWidthAdjustRate: widthRate,
       normalizedNoteSize,
       noteSettingScale,
+      noteParentScale: calculateOrdinaryNoteParentScale(isHigh, screenToSafeAreaRatio, highAspectRatio),
       particleTransformScale: mul(noteSettingScale, screenToSafeAreaRatio),
       targetCenterY,
       launcherY,
@@ -239,6 +241,19 @@ export function createOriginalSurfaceLayout(
       height: movieHeight,
     }),
   }));
+}
+
+/** SORT-C44: InGameIPhoneXAdjuster.Awake overwrites the canonical note parent scale. */
+export function calculateOrdinaryNoteParentScale(
+  isHighAspectRatioDevice: boolean,
+  screenToSafeAreaRatio: number,
+  highAspectRatio: number,
+): number {
+  if (!isHighAspectRatioDevice) return 1;
+  const amount = Math.min(1, Math.max(0, highAspectRatio));
+  return Math.fround(screenToSafeAreaRatio * Math.fround(
+    1 + Math.fround(amount * Math.fround(0.0700000524520874)),
+  ));
 }
 
 export function originalWorldToBottomLeftScreen(

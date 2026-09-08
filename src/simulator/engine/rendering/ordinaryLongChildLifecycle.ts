@@ -14,6 +14,7 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  roundtripOrdinaryNoteWorldCoordinate,
   buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   type OrdinaryBaseNoteMeshGeometry,
@@ -68,6 +69,14 @@ export function createOrdinaryLongNormalChildState(
   const one = createRenderFloat32(Math.fround(1));
   if (zero.status !== "ok") return zero;
   if (one.status !== "ok") return one;
+  const startX = createRenderFloat32(roundtripOrdinaryNoteWorldCoordinate(
+    motionState.noteStartPosition.x.value, motionState.noteParentScale.value,
+  ));
+  const startY = createRenderFloat32(roundtripOrdinaryNoteWorldCoordinate(
+    motionState.noteStartPosition.y.value, motionState.noteParentScale.value,
+  ));
+  if (startX.status !== "ok") return startX;
+  if (startY.status !== "ok") return startY;
   return ok(Object.freeze({
     phase: "wait" as const,
     afterAbsolutePosition,
@@ -81,8 +90,8 @@ export function createOrdinaryLongNormalChildState(
     renderedTransform: Object.freeze({
       progressRate: zero.value,
       position: Object.freeze({
-        x: motionState.noteStartPosition.x,
-        y: motionState.noteStartPosition.y,
+        x: startX.value,
+        y: startY.value,
         z: motionState.currentPositionZ,
       }),
       localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
@@ -129,6 +138,7 @@ export function advanceOrdinaryLongNormalChild(
         ...state.motionState,
         progressRate: adjustment.value.progressRate,
         realMoveSecond: adjustment.value.realMoveSecond,
+        currentPositionZ: renderedTransform.position.z,
       }),
       renderedTransform,
     }));
@@ -147,6 +157,7 @@ export function advanceOrdinaryLongNormalChild(
       ...state.motionState,
       deltaTime: input.deltaTime,
       progressRate: motion.value.progressRate,
+      currentPositionZ: motion.value.position.z,
     }),
     renderedTransform: motion.value,
   }));

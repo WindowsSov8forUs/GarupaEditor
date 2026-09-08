@@ -1037,6 +1037,7 @@ export class NoteManager {
         ...current.motionState,
         deltaTime: deltaTime.value,
         progressRate: prepared.value.motion.progressRate,
+        currentPositionZ: prepared.value.motion.position.z,
       }),
       renderedTransform: prepared.value.motion,
     }));

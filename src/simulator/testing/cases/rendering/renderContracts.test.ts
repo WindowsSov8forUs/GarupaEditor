@@ -366,12 +366,13 @@ function vector3(x: number, y: number, z: number) {
 const ORDINARY_NOTE_SCENE = Object.freeze({
   specificSpeed: f32(11),
   noteSettingScale: f32(1),
+  noteParentScale: f32(1), // Explicit canonical unit-parent input for this isolated case.
   launcherY: f32(5.420000076293945),
   targetCenterY: f32(-3.450000047683716),
   highAspectRatio: f32(1),
   noteStartPositions: Object.freeze(Array.from(
     { length: 7 },
-    (_, lane) => vector3(Math.fround((lane - 3) * 0.11), 4.976500511169434, -13.5),
+    (_, lane) => vector3(Math.fround((lane - 3) * 0.11), 4.976500511169434, 0),
   )),
   goalPositions: Object.freeze(Array.from(
     { length: 7 },
@@ -790,7 +791,7 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
   equal(renderer.snapshot().nextSequence, 10, "Long pool setup creates every parent before its hidden animation child");
   requireOk(engine.step(0), "Long activation frame");
   const activation = renderer.commandSnapshot();
-  equal(activation.length, 22, "Long activation atomically starts its independent flash owner with tail/mesh setup");
+  equal(activation.length, 23, "Long activation atomically starts its independent flash owner with tail and mesh world-transform setup");
   const longFlashId = "render:long:0:root:ordinary-long-flash";
   equal(activation.some((command) => command.kind === "bind-resource" &&
     command.renderObjectId === longFlashId && command.exactKey === "note_long_flash_0"), true,
@@ -805,7 +806,7 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
       command.kind === "activate-object" && command.renderObjectId === "render:long:0:after"
     );
   }
-  assert(afterActivationIndex > 22, "Long after becomes visible at LauncherMusicPos tail equality");
+  assert(afterActivationIndex >= activation.length, "Long after becomes visible at LauncherMusicPos tail equality");
   const moved = renderer.commandSnapshot();
   equal(moved[afterActivationIndex - 1]?.kind, "set-transform", "after equality writes transform before visibility");
   equal(moved[afterActivationIndex + 1]?.kind, "set-mesh", "mesh refresh follows after visibility transition");
@@ -873,12 +874,13 @@ async function testOrdinarySyncLineLifecycle(): Promise<void> {
 
   requireOk(engine.step(0), "activate simultaneous ordinary Notes");
   const activated = renderer.commandSnapshot();
-  equal(activated.length, 252, "two roots and one sync line activate after the optional HUD-free setup");
-  equal(activated[250]?.kind, "set-line", "line geometry follows both Note activations");
-  equal(activated[251]?.kind, "activate-object", "line visibility follows initial geometry");
-  if (activated[250]?.kind !== "set-line") throw new Error("missing initial sync geometry");
-  equal(activated[250].renderObjectId, "render:sync-line:0", "first inactive pool slot acquired");
-  equal(activated[250].width.bits, f32(0.2800000011920929).bits, "current width factor uses initial scale one");
+  equal(activated.length, 253, "two roots and the world-transform/geometry/visibility line commands activate");
+  equal(activated[250]?.kind, "set-transform", "The line publishes its world transform before its world-space endpoints");
+  equal(activated[251]?.kind, "set-line", "line geometry follows both Note activations");
+  equal(activated[252]?.kind, "activate-object", "line visibility follows initial geometry");
+  if (activated[251]?.kind !== "set-line") throw new Error("missing initial sync geometry");
+  equal(activated[251].renderObjectId, "render:sync-line:0", "first inactive pool slot acquired");
+  equal(activated[251].width.bits, f32(0.2800000011920929).bits, "current width factor uses initial scale one");
 
   requireOk(engine.step(1 / 60), "advance simultaneous ordinary Notes");
   const moved = renderer.commandSnapshot();
@@ -952,7 +954,7 @@ async function testHostReadyGate(): Promise<void> {
   equal(produced[4]?.kind, "bind-resource", "setupNoteType binds after visibility");
   if (produced[2]?.kind === "set-transform") {
     equal(produced[2].ordering.sourceDepthOrSortingOrder, 70, "current Note root sorting order");
-    equal(produced[2].position.z.bits, f32(-13.5).bits, "initial transform preserves typed scene Z");
+    equal(produced[2].position.z.bits, "C15FEC57", "SORT-C43 native depth: launcher Z0, absolutePos96, buttonType0");
   }
   if (produced[4]?.kind === "bind-resource") {
     equal(produced[4].exactKey, "note_normal_0", "owner-authored exact Sprite key");

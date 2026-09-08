@@ -135,6 +135,7 @@ export function createSimulatorSceneLayout(
   const ordinaryNoteScene: OrdinaryFixedNoteSceneInput = Object.freeze({
     specificSpeed: values.value.specificSpeed,
     noteSettingScale: values.value.noteSettingScale,
+    noteParentScale: values.value.noteParentScale,
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,
@@ -177,6 +178,7 @@ interface SceneValues {
   readonly surfaceLayout: OriginalSurfaceLayout;
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
+  readonly noteParentScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -210,6 +212,7 @@ function createSceneValues(
     surfaceLayout: layout,
     specificSpeed: f32(config.specificSpeed),
     noteSettingScale: f32(layout.gameplay.noteSettingScale),
+    noteParentScale: f32(layout.gameplay.noteParentScale),
     launcherY: f32(launcherY),
     targetCenterY: f32(targetCenterY),
     highAspectRatio: f32(layout.starUi.highAspectRatio),
@@ -541,6 +544,7 @@ function motionState(
     noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
     currentPositionZ: start.z,
     noteSettingScale: scene.noteSettingScale,
+    noteParentScale: scene.noteParentScale,
     launcherY: scene.launcherY,
     targetCenterY: scene.targetCenterY,
     highAspectRatio: scene.highAspectRatio,

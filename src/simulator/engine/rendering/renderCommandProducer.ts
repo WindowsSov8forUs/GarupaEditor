@@ -44,6 +44,7 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  roundtripOrdinaryNoteWorldCoordinate,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
   calculateOrdinaryNoteStartDepth,
@@ -162,6 +163,7 @@ export interface OriginalSkinFieldSceneInput {
 export interface OrdinaryFixedNoteSceneInput {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
+  readonly noteParentScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -1623,6 +1625,11 @@ export class RenderCommandProducer {
       );
     }
     const start = noteStartPosition(scene.noteStartPositions[lane.value]!, information);
+    const placedStart = Object.freeze({
+      x: float32State(roundtripOrdinaryNoteWorldCoordinate(start.x.value, scene.noteParentScale.value)),
+      y: float32State(roundtripOrdinaryNoteWorldCoordinate(start.y.value, scene.noteParentScale.value)),
+      z: float32State(roundtripOrdinaryNoteWorldCoordinate(start.z.value, scene.noteParentScale.value)),
+    });
     const goal = scene.goalPositions[lane.value]!;
     const zero = createRenderFloat32(Math.fround(0));
     const one = createRenderFloat32(Math.fround(1));
@@ -1635,7 +1642,8 @@ export class RenderCommandProducer {
       realMoveSecond: zero.value,
       goalPosition: Object.freeze({ x: goal.x, y: goal.y }),
       noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
-      currentPositionZ: start.z,
+      currentPositionZ: placedStart.z,
+      noteParentScale: scene.noteParentScale,
       noteSettingScale: scene.noteSettingScale,
       launcherY: scene.launcherY,
       targetCenterY: scene.targetCenterY,
@@ -1656,7 +1664,7 @@ export class RenderCommandProducer {
       domainLayer: scene.noteDomainLayer,
       // SORT-C32: NoteBase assigns 70 to its root; 71 belongs to the separate directional icon.
       sourceDepthOrSortingOrder: 70,
-      sourceZ: start.z,
+      sourceZ: placedStart.z,
       creationSequence,
     });
     const base = this.commandBase(substep);
@@ -1664,7 +1672,7 @@ export class RenderCommandProducer {
       ...base(0),
       kind: "set-transform",
       renderObjectId,
-      position: start,
+      position: placedStart,
       scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
       rotationDegrees: zero.value,
       color: scene.noteTint,
@@ -1741,7 +1749,7 @@ export class RenderCommandProducer {
         scale: motion.localScale,
         rotationDegrees: zero.value,
         color: scene.noteTint,
-        ordering,
+        ordering: Object.freeze({ ...ordering, sourceZ: motion.position.z }),
         maskObjectId: null,
       });
     }
@@ -1749,7 +1757,7 @@ export class RenderCommandProducer {
       adjustment.value.motions.length - 1
     ] ?? Object.freeze({
       progressRate: zero.value,
-      position: start,
+      position: placedStart,
       localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
     });
     let longChildState: OrdinaryLongNormalChildState | null = null;
@@ -1804,7 +1812,7 @@ export class RenderCommandProducer {
         ordering: Object.freeze({
           domainLayer: scene.noteDomainLayer,
           sourceDepthOrSortingOrder: 70,
-          sourceZ: start.z,
+          sourceZ: placedStart.z,
           creationSequence: afterCreationSequence,
         }),
         maskObjectId: null,
@@ -1899,7 +1907,7 @@ export class RenderCommandProducer {
           realMoveSecond: zero.value,
           goalPosition: Object.freeze({ x: childGoal.x, y: childGoal.y }),
           noteStartPosition: Object.freeze({ x: childStart.x, y: childStart.y }),
-          currentPositionZ: childStart.z,
+          currentPositionZ: float32State(roundtripOrdinaryNoteWorldCoordinate(childStart.z.value, scene.noteParentScale.value)),
           buttonCount: childButtonCount,
           virtualLaneControllerPresent: source.virtualLaneDirection !== 0,
         });
@@ -2081,6 +2089,7 @@ export class RenderCommandProducer {
         ...motionState,
         progressRate: adjustment.value.progressRate,
         realMoveSecond: adjustment.value.realMoveSecond,
+        currentPositionZ: renderedTransform.position.z,
       }),
       renderedTransform,
       longChildState,
@@ -2519,7 +2528,7 @@ export class RenderCommandProducer {
       }),
       rotationDegrees: rotation.value,
       color: visualState.color,
-      ordering: visualState.ordering,
+      ordering: Object.freeze({ ...visualState.ordering, sourceZ: motion.value.position.z }),
       maskObjectId: null,
     }];
     const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
@@ -2852,6 +2861,8 @@ export function validateOrdinaryFixedNoteSceneInput(
   ];
   if (
     !validateRenderFloat32(scene.specificSpeed) ||
+    !validateRenderFloat32(scene.noteParentScale) ||
+    scene.noteParentScale.value <= 0 ||
     !validateRenderFloat32(scene.noteSettingScale) ||
     scene.noteSettingScale.value < 0 ||
     !validateRenderFloat32(scene.launcherY) ||

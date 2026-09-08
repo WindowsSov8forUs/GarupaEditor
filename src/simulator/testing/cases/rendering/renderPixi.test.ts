@@ -1485,11 +1485,12 @@ function ordinaryScene() {
   return Object.freeze({
     specificSpeed: f32(11),
     noteSettingScale: f32(1),
+    noteParentScale: f32(1), // Explicit canonical unit-parent input for this isolated case.
     launcherY: f32(5.420000076293945),
     targetCenterY: f32(-3.450000047683716),
     highAspectRatio: f32(1),
     noteStartPositions: Object.freeze(Array.from({ length: 7 }, (_, lane) =>
-      v3(Math.fround((lane - 3) * 0.11), 4.976500511169434, -13.5))),
+      v3(Math.fround((lane - 3) * 0.11), 4.976500511169434, 0))),
     goalPositions: Object.freeze(Array.from({ length: 7 }, (_, lane) =>
       v3(Math.fround((lane - 3) * 2.2), -3.450000047683716, -13.5))),
     tapLaneEffectPositions: Object.freeze([

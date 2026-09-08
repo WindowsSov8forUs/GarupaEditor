@@ -98,6 +98,7 @@ export interface OrdinaryNoteMotionState {
   readonly goalPosition: RenderVector2;
   readonly noteStartPosition: RenderVector2;
   readonly currentPositionZ: RenderFloat32;
+  readonly noteParentScale: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
@@ -155,6 +156,21 @@ export function calculateOrdinaryNoteStartDepth(
   return Math.fround(baseZ + Math.fround(Math.fround(-14 + positionOffset) + laneOffset));
 }
 
+/** SORT-C44: canonical note ancestors have zero translation and identity rotation. */
+export function roundtripOrdinaryNoteWorldCoordinate(value: number, parentScale: number): number {
+  if (Math.abs(parentScale) < Math.fround(1e-9)) return 0;
+  const view = new DataView(new ArrayBuffer(4));
+  view.setFloat32(0, parentScale);
+  const word = view.getUint32(0);
+  const exponent = ((word >>> 23) & 255) - 127;
+  const bucket = 256 + ((word >>> 15) & 255);
+  let reciprocal = Math.fround(Math.round(262144 / (2 * bucket + 1)) * 2 ** (-exponent - 9));
+  // FRECPS rounds the fused subtraction, not a separately rounded product.
+  reciprocal = Math.fround(reciprocal * Math.fround(2 - parentScale * reciprocal));
+  reciprocal = Math.fround(reciprocal * Math.fround(2 - parentScale * reciprocal));
+  return Math.fround(Math.fround(value * reciprocal) * parentScale) + 0;
+}
+
 export function getOrdinaryNoteArrivalSeconds(
   specificSpeed: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
@@ -194,6 +210,8 @@ export function advanceOrdinaryNoteMotion(
     !validateVector2(state.goalPosition) ||
     !validateVector2(state.noteStartPosition) ||
     !validateRenderFloat32(state.currentPositionZ) ||
+    !validateRenderFloat32(state.noteParentScale) ||
+    state.noteParentScale.value <= 0 ||
     !validateRenderFloat32(state.noteSettingScale) ||
     state.noteSettingScale.value < 0 ||
     !validateRenderFloat32(state.launcherY) ||
@@ -234,7 +252,11 @@ export function advanceOrdinaryNoteMotion(
       Math.fround(state.noteStartPosition.y.value - state.goalPosition.y.value) * curve,
     )),
   );
-  const position = vector3(x, y, state.currentPositionZ.value);
+  const position = vector3(
+    roundtripOrdinaryNoteWorldCoordinate(x, state.noteParentScale.value),
+    roundtripOrdinaryNoteWorldCoordinate(y, state.noteParentScale.value),
+    roundtripOrdinaryNoteWorldCoordinate(state.currentPositionZ.value, state.noteParentScale.value),
+  );
   if (position.status !== "ok") return position;
   const scale = calculateOrdinaryNoteScaleAtY(state, y);
   if (scale.status !== "ok") return scale;
@@ -303,6 +325,7 @@ export function advanceOrdinaryNoteActivationAdjustment(
   }
   let progress = state.progressRate;
   let realMoveSecond = state.realMoveSecond;
+  let currentPositionZ = state.currentPositionZ;
   const motions: OrdinaryNoteMotionResult[] = [];
   while (targetProgress > progress.value) {
     const nextRealMoveSecond = createRenderFloat32(Math.fround(
@@ -311,6 +334,7 @@ export function advanceOrdinaryNoteActivationAdjustment(
     if (nextRealMoveSecond.status !== "ok") return nextRealMoveSecond;
     const motion = advanceOrdinaryNoteMotion({
       ...state,
+      currentPositionZ: currentPositionZ,
       progressRate: progress,
       deltaTime: step.value,
       realMoveSecond: nextRealMoveSecond.value,
@@ -324,6 +348,7 @@ export function advanceOrdinaryNoteActivationAdjustment(
     }
     motions.push(motion.value);
     progress = motion.value.progressRate;
+    currentPositionZ = motion.value.position.z;
     realMoveSecond = nextRealMoveSecond.value;
   }
   return ok(Object.freeze({
