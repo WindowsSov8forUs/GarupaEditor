@@ -1009,6 +1009,17 @@ This closes initial descendant activity at ordinary Play. External hierarchy mut
 
 BND-C214 from verified/pushed Reverse `7799e8e90076d4797d84b1af0a25190f36e9bcfa` connects original108F26C own initialization to six complete module initializers and original833EA0. Actual selection and createSystemRuntime agree on assigned seed, manager state, emission scalar state and Initial/Shape SIMD states for3242 calls across279 source prefabs and two explicit global input states. The1741 original system inputs deduplicate to15 source configurations and60 native numeric records. No production arithmetic change is needed. Prewarm is neither called nor stubbed by this gate; full Play, sub-emitter tail, actual scene-global history and overall parity remain separate. Both source regeneration and source/consumer comparison pass; unchanged production compilation results from C213 are reused.
 
+BND-C215 from verified/pushed Reverse `00e8e649a65bf28fa20e19be10626ad21bbefd11`
+extends this to complete108F26C, including the original sub-emitter collection and
+free(null) callees. `particle_play_seed_complete.json` SHA256
+`D8A047FBFC266C166FC9664AC8B553B796842B06AD135CB17A00C27D9FD4AB24` binds all1741
+serialized SubModule records: each is disabled with one null-emitter slot. Native
+collection initializes no child state; all60 original output records remain equal
+to C214, referenced by digest. Actual selection/createSystemRuntime still agrees
+on3242 calls. No production algorithm change is needed. This closes the complete
+seed/module initializer for those source inputs; full Play allocation, prewarm,
+Transform work, actual scene-global history and overall parity remain open.
+
 
 ### Current score-label glyph spacing and Android shrinking
 
