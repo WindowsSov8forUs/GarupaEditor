@@ -426,6 +426,14 @@ Production ordinary and normal-prewarm births now pass that end phase to Initial
 
 Explicit identity basis/zero translation, source3D storage flags/default overrides and initialized modulation guard/vector remain entry conditions. Positions/directions/additional arrays, current owner/global/override/SoA producers, capacity/timing integration, analytic prewarm reconstruction, Shape/other motion modules and rendering/bounds/shared sorting/HUD remain **OPEN**. No product tests, app, build or visual capture.
 
+### Packed render color conversion (RENDER-C52)
+
+Reverse `1f8c6ecccd28ea4504c9b21ae0572a654bc07dd2` was verified, pushed and confirmed remotely before production consumption. `simulator-particle-bounds-calculation-10-1-4/particle_render_color_space.json` (SHA256 `8EC211FDE6C1933B0D3CA49101785DE1E328D175A7AC5FF5B99CA33508B164BB`) executes complete original1096BB4 on both conversion states and every byte value in each RGBA channel. Original10806E4 binds Renderer+521;1079908 gates worker328 bit26 by that flag and active Linear color space, and107A33C consumes it. APK PlayerSettings serializes Linear(1); six true renderer profiles have87 references, including14 enabled skin_witch mesh renderers.
+
+`currentLinearColor` now uses the complete native256-entry byte mapping, then publishes Float32(byte/255). Original SIMD approximation and Color32 repacking replace the former continuous gamma formula; alpha and disabled conversions remain unchanged. The actual sample producer supplies packed bytes divided by255, and the primitive forwards the result to the particle shader uniform. All512 actual consumer calls now match original output bits, removing256 differing converted colors.
+
+The native audit explicitly disables lifetime/speed/UV modules. Current enabled module combinations, runtime color-space overrides, mesh vertex-color multiplication and final GPU/material integration remain OPEN; this closes the packed conversion domain, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
+
 ### Complete source ColorModule consumption (BND-C60)
 
 Reverse `ec8f0786f4954e66dec5a50b4bc3a35d93aa49a2` was verified/pushed with clean remote `0 0` before consumption. `particle_color_module.json` SHA256 `BB715E6C1C48B1FD21FBC2A24EFD1A0D330B88D9E9EED83D21D19804A43A84DF` executes full103BD34, real cache construction,103C188, random hashing, age normalization and base Color32 multiplication. Fresh1741 system roundtrips bind1239 enabled ColorModules:1126 mode1/113 mode3,184 complete configurations.1490 original module calls cover four explicit live rows, percentage ages0..100, four seed words and two base-color layouts. Named original getters and1096BB4 bind the payload and caller.

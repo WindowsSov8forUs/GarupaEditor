@@ -597,10 +597,30 @@ function currentLinearColor(
   ] as const);
 }
 
+// RENDER-C52: original1096BB4 converts and repacks Color32 before publication.
+// The current sample producer supplies exact Float32(byte / 255); this finite
+// map preserves the original SIMD approximation and byte quantization.
+const NATIVE_LINEAR_COLOR_BYTES = Object.freeze([
+  0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
+  4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
+  8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 12, 12, 12, 13,
+  13, 14, 14, 14, 15, 15, 16, 16, 17, 17, 17, 18, 18, 19, 19, 20,
+  21, 21, 22, 22, 23, 23, 24, 24, 25, 26, 26, 27, 27, 28, 29, 29,
+  30, 30, 31, 32, 32, 33, 34, 34, 35, 36, 37, 37, 38, 39, 40, 40,
+  41, 42, 43, 44, 45, 45, 46, 47, 48, 49, 50, 51, 52, 53, 53, 54,
+  55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+  71, 72, 73, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 86, 88, 89,
+  90, 91, 93, 94, 95, 97, 98, 99, 101, 102, 103, 105, 106, 107, 109, 110,
+  111, 113, 114, 116, 117, 118, 120, 121, 123, 124, 125, 127, 128, 130, 131, 133,
+  134, 136, 137, 139, 141, 142, 144, 145, 147, 149, 150, 152, 154, 156, 157, 159,
+  161, 163, 164, 166, 168, 170, 171, 173, 175, 177, 179, 181, 183, 184, 186, 188,
+  190, 192, 194, 196, 198, 200, 202, 204, 206, 208, 210, 212, 214, 216, 218, 220,
+  222, 224, 227, 229, 231, 233, 235, 237, 239, 242, 244, 246, 248, 250, 253, 255,
+]);
+
 function gammaToLinear(value: number): number {
-  return f32(value <= Math.fround(0.04045)
-    ? divide(value, Math.fround(12.92))
-    : Math.pow(divide(add(value, Math.fround(0.055)), Math.fround(1.055)), Math.fround(2.4)));
+  return divide(NATIVE_LINEAR_COLOR_BYTES[Math.round(value * 255)]!, 255);
 }
 
 function requiredCustomData(value: ParticleFloat32Vector4 | null): readonly [number, number, number, number] {
