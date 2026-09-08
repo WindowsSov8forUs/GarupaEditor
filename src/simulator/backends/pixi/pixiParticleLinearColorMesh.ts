@@ -1,4 +1,5 @@
 import {
+  ColorMask,
   GlProgram,
   Matrix,
   Mesh,
@@ -35,7 +36,7 @@ uniform float uPremultiplyOutput;
 void main(void) {
   vec4 value = texture(uTexture, vTextureCoord) * vParticleColor;
   if (uPremultiplyOutput > 0.5) {
-    value.rgb *= value.a;
+    value *= vParticleColor.a;
   }
   finalColor = value;
 }`;
@@ -64,7 +65,7 @@ export function createPixiParticleNativePrimitiveMesh(
   texture: Texture,
   primitive: ParticleNativeRenderPrimitive,
 ): PixiParticleLinearColorMesh {
-  const premultiplyOutput = primitive.fragment === "premultiply-rgb-after-rgba-modulate";
+  const premultiplyOutput = primitive.fragment === "rgba-modulate-times-particle-alpha";
   const mesh = createMesh(
     texture,
     primitive.particleId,
@@ -89,6 +90,7 @@ export function createPixiParticleNativePrimitiveMesh(
     destroyPixiParticleLinearColorMesh(mesh);
     throw new Error("Unsupported current particle blend tuple");
   }
+  mesh.addEffect(new ColorMask({ mask: primitive.colorWriteMask }));
   return mesh;
 }
 

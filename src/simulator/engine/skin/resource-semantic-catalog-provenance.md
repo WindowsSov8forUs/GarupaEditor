@@ -4,6 +4,17 @@
 
 ## Source-bound identity
 
+Material color consumption is completed in the bounded RENDER-C56 domain by Reverse
+`c670d103b44276ffbcf5e5aeaf4cf2af68325c04`. The source
+`particle_material_pass_states.json` SHA-256 is
+`7E19052CD3C1014B3D3F5E0238E5BE53F924165C8D0747340AF632C30A16D168`.
+All 102 catalog materials now retain the original `colorWriteMask`; seven Legacy
+Premultiply materials use `rgba-modulate-times-particle-alpha`, matching the original
+whole-RGBA second multiplication by particle alpha. Source shader references and
+strict JSON/serialized roundtrips are retained in Reverse. Cull/front-face and
+runtime global keyword selection remain open; the historical cull field is not proof
+of equivalence.
+
 The particle catalog is Schema 2. The historical selected-domain inventory covers the following source relations; it is **not** a current state/GPU-pre or final-rendering closure. `../../rendering-consumption-contract.md` takes precedence over the earlier `closed-native-algorithm-equivalent` declaration:
 
 - 27 logical particle resources;

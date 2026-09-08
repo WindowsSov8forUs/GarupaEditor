@@ -451,9 +451,10 @@ export interface ParticleMaterialProfile {
   readonly destinationBlendFactor?: 1 | 10;
   readonly zWrite?: false;
   readonly cull?: "off";
+  readonly colorWriteMask?: 14 | 15;
   readonly fragment?:
     | "straight-rgba-modulate"
-    | "premultiply-rgb-after-rgba-modulate"
+    | "rgba-modulate-times-particle-alpha"
     | "straight-rgba-modulate-custom0-yx-uv-offset";
   readonly mainTextureScale?: ParticleVector2;
   readonly mainTextureOffset?: ParticleVector2;

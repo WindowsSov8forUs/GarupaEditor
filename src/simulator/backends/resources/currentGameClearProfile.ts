@@ -304,6 +304,7 @@ export function buildGameClearParticleBundle(
     destinationBlendFactor: 1 as const,
     zWrite: false as const,
     cull: "off" as const,
+    colorWriteMask: 15 as const,
     fragment: "straight-rgba-modulate" as const,
     mainTextureScale: Object.freeze({ x: 1, y: 1 }),
     mainTextureOffset: Object.freeze({ x: 0, y: 0 }),

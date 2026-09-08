@@ -477,6 +477,7 @@ function validateGameClearBundle(
       typeof material.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(material.sourcePathId) ||
       material.renderQueue !== 3000 || material.sourceBlendFactor !== 5 || material.destinationBlendFactor !== 1 ||
       material.zWrite !== false || material.cull !== "off" || material.fragment !== "straight-rgba-modulate" ||
+      material.colorWriteMask !== 15 ||
       !isVector2(mainTextureScale) || mainTextureScale?.x !== 1 || mainTextureScale?.y !== 1 ||
       !isVector2(mainTextureOffset) || mainTextureOffset?.x !== 0 || mainTextureOffset?.y !== 0) {
       return reject("particle.game-clear.invalid-material", "Game-clear material routes require the source PathID and exact additive pass equation.");
@@ -738,14 +739,15 @@ function isCurrentMaterialProfile(value: unknown): boolean {
     !isPositiveInteger(value.serializedBytes) || typeof value.serializedSha256 !== "string" ||
     !SHA256_PATTERN.test(value.serializedSha256) || value.renderQueue !== 3000 || value.zWrite !== false ||
     value.cull !== "off" || (value.sourceBlendFactor !== 1 && value.sourceBlendFactor !== 5) ||
+    (value.colorWriteMask !== 14 && value.colorWriteMask !== 15) ||
     (value.destinationBlendFactor !== 1 && value.destinationBlendFactor !== 10) ||
     !isVector2(value.mainTextureScale) || !isVector2(value.mainTextureOffset) ||
     (value.blend !== "add" && value.blend !== "normal") ||
     value.blend !== (value.destinationBlendFactor === 1 ? "add" : "normal") ||
-    !["straight-rgba-modulate", "premultiply-rgb-after-rgba-modulate", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(value.fragment as string)) {
+    !["straight-rgba-modulate", "rgba-modulate-times-particle-alpha", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(value.fragment as string)) {
     return false;
   }
-  if (value.fragment === "premultiply-rgb-after-rgba-modulate") {
+  if (value.fragment === "rgba-modulate-times-particle-alpha") {
     return value.sourceBlendFactor === 1 && value.destinationBlendFactor === 10 &&
       value.shader === "Legacy Shaders/Particles/Alpha Blended Premultiply";
   }

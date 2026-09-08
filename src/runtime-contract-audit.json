@@ -9975,7 +9975,7 @@
     {
       "id": "RCB-0474",
       "file": "src/simulator/assembly/skinParticlePreparation.ts",
-      "line": 461,
+      "line": 463,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",
@@ -10689,7 +10689,7 @@
     {
       "id": "RCB-0508",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 1160,
+      "line": 1162,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -11130,7 +11130,7 @@
     {
       "id": "RCB-0529",
       "file": "src/simulator/backends/pixi/pixiParticleLinearColorMesh.ts",
-      "line": 47,
+      "line": 48,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Particle Linear shader program is available only in the production Browser renderer.\");",
@@ -11151,7 +11151,7 @@
     {
       "id": "RCB-0530",
       "file": "src/simulator/backends/pixi/pixiParticleLinearColorMesh.ts",
-      "line": 90,
+      "line": 91,
       "marker": "throw-error",
       "symbol": "destroyPixiParticleLinearColorMesh",
       "source": "throw new Error(\"Unsupported current particle blend tuple\");",
@@ -11172,7 +11172,7 @@
     {
       "id": "RCB-0531",
       "file": "src/simulator/backends/pixi/pixiParticleLinearColorMesh.ts",
-      "line": 145,
+      "line": 147,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Particle native mesh requires exact finite primitive, source texture and unit color fields.\");",
@@ -13587,7 +13587,7 @@
     {
       "id": "RCB-0646",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 312,
+      "line": 313,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Game-clear native particle inventory is incomplete\");",
@@ -13608,7 +13608,7 @@
     {
       "id": "RCB-0647",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 372,
+      "line": 373,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Game-clear particle Transform sampling requires one finite monotonic scene phase\");",
@@ -13629,7 +13629,7 @@
     {
       "id": "RCB-0648",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 490,
+      "line": 491,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Game-clear clip channel/value coverage mismatch: ${channels.length}/${values.length}/${clip.curve_count}`);",
@@ -13650,7 +13650,7 @@
     {
       "id": "RCB-0649",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 575,
+      "line": 576,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!record(startRotation)) throw new Error(\"game-clear animated startRotation owner is missing\");",
@@ -13671,7 +13671,7 @@
     {
       "id": "RCB-0650",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 605,
+      "line": 606,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (current === undefined) throw new Error(`Missing Game-clear hierarchy owner: ${path}`);",
@@ -13692,7 +13692,7 @@
     {
       "id": "RCB-0651",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 644,
+      "line": 645,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (semantic === undefined) throw new Error(`Game-clear system has no native semantic identity: ${path}`);",
@@ -13713,7 +13713,7 @@
     {
       "id": "RCB-0652",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 744,
+      "line": 745,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (row === null) throw new Error(\"Game-clear particle Vector2 is missing\");",
@@ -13734,7 +13734,7 @@
     {
       "id": "RCB-0653",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 749,
+      "line": 750,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (row === null) throw new Error(\"Game-clear particle Vector3 is missing\");",
@@ -13755,7 +13755,7 @@
     {
       "id": "RCB-0654",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 753,
+      "line": 754,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!Array.isArray(value)) throw new Error(\"Game-clear renderer stream inventory is missing\");",
@@ -13776,7 +13776,7 @@
     {
       "id": "RCB-0655",
       "file": "src/simulator/backends/resources/currentGameClearProfile.ts",
-      "line": 760,
+      "line": 761,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof value !== \"number\" || !Number.isFinite(value)) throw new Error(\"invalid game-clear particle number\");",
@@ -28896,7 +28896,7 @@
     {
       "id": "RCB-1375",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 58,
+      "line": 59,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -28917,7 +28917,7 @@
     {
       "id": "RCB-1376",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 77,
+      "line": 78,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(opened.failure.code === \"resource-platform-unavailable\" ? \"platform-unavailable\" : \"resource-integrity\", opened.failure.capability, opened.failure.boundary);",
@@ -28938,7 +28938,7 @@
     {
       "id": "RCB-1377",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 382,
+      "line": 383,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (root?.schemaVersion !== 1 || resources === null) throw new Error(\"invalid Skin render semantic catalog\");",
@@ -28959,7 +28959,7 @@
     {
       "id": "RCB-1378",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 386,
+      "line": 387,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (row === null || !Array.isArray(row.textures) || typeof row.role !== \"string\") throw new Error(\"invalid Skin render semantic row\");",
@@ -28980,7 +28980,7 @@
     {
       "id": "RCB-1379",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 392,
+      "line": 393,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (typeof item?.name !== \"string\" || !positive(item.width) || !positive(item.height) || !positive(item.mipCount) || settings === null) throw new Error(\"invalid Skin render semantic texture\");",
@@ -29001,7 +29001,7 @@
     {
       "id": "RCB-1380",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 424,
+      "line": 426,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"invalid source-bound Skin particle semantic catalog\");",
@@ -29022,7 +29022,7 @@
     {
       "id": "RCB-1381",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 438,
+      "line": 440,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound Skin particle semantic row: ${logicalResource}`);",
@@ -29043,7 +29043,7 @@
     {
       "id": "RCB-1382",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 452,
+      "line": 454,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound ParticleSystem row: ${logicalResource}`);",
@@ -29064,7 +29064,7 @@
     {
       "id": "RCB-1383",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 468,
+      "line": 471,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound particle material row: ${logicalResource}`);",
@@ -29085,7 +29085,7 @@
     {
       "id": "RCB-1384",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 477,
+      "line": 480,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`invalid source-bound particle texture row: ${logicalResource}`);",
@@ -29106,7 +29106,7 @@
     {
       "id": "RCB-1385",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 494,
+      "line": 497,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"The source-bound particle catalog must derive a non-empty complete renderer/mesh set from its exact system relations.\");",
@@ -29127,7 +29127,7 @@
     {
       "id": "RCB-1386",
       "file": "src/simulator/resources/sourcePackageDecoder.ts",
-      "line": 531,
+      "line": 534,
       "marker": "rejected-call",
       "symbol": "invalid",
       "source": "return rejected(\"resource-integrity\", capability, boundary);",

@@ -252,7 +252,8 @@ function convertBundle(
       (semantics.sourceBlendFactor !== 1 && semantics.sourceBlendFactor !== 5) ||
       (semantics.destinationBlendFactor !== 1 && semantics.destinationBlendFactor !== 10) ||
       semantics.zWrite !== false || semantics.cull !== "off" ||
-      !["straight-rgba-modulate", "premultiply-rgb-after-rgba-modulate", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(semantics.fragment) ||
+      (semantics.colorWriteMask !== 14 && semantics.colorWriteMask !== 15) ||
+      !["straight-rgba-modulate", "rgba-modulate-times-particle-alpha", "straight-rgba-modulate-custom0-yx-uv-offset"].includes(semantics.fragment) ||
       !vector2(semantics.mainTextureScale) || !vector2(semantics.mainTextureOffset)) {
       return invalid("simulator.skin.particle-material-source-relation", `Selected particle material row ${index} is incomplete or has an unresolved current shader/pass.`);
     }
@@ -269,6 +270,7 @@ function convertBundle(
       destinationBlendFactor: semantics.destinationBlendFactor,
       zWrite: false as const,
       cull: "off" as const,
+      colorWriteMask: semantics.colorWriteMask,
       fragment: semantics.fragment,
       mainTextureScale: Object.freeze({ ...semantics.mainTextureScale }),
       mainTextureOffset: Object.freeze({ ...semantics.mainTextureOffset }),

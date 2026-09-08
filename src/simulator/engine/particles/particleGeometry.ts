@@ -56,6 +56,7 @@ export interface ParticleNativeRenderPrimitive {
   readonly shader: ParticleMaterialProfile["shader"];
   readonly fragment: NonNullable<ParticleMaterialProfile["fragment"]>;
   readonly sourceBlendFactor: 1 | 5;
+  readonly colorWriteMask: 14 | 15;
   readonly destinationBlendFactor: 1 | 10;
   readonly linearColor: readonly [number, number, number, number];
   readonly vertexColors: Float32Array;
@@ -132,6 +133,7 @@ function buildBindings(profile: ParticlePortableProfile): ReadonlyMap<string, Ge
         : textures.get(material.texture);
       if (material === undefined || texture === undefined ||
         material.renderQueue !== 3000 ||
+        (material.colorWriteMask !== 14 && material.colorWriteMask !== 15) ||
         (material.sourceBlendFactor !== 1 && material.sourceBlendFactor !== 5) ||
         (material.destinationBlendFactor !== 1 && material.destinationBlendFactor !== 10) ||
         material.fragment === undefined || material.mainTextureScale === undefined || material.mainTextureOffset === undefined ||
@@ -251,6 +253,7 @@ function buildPrimitive(
     shader: binding.material.shader,
     fragment: binding.material.fragment!,
     sourceBlendFactor: binding.material.sourceBlendFactor!,
+    colorWriteMask: binding.material.colorWriteMask!,
     destinationBlendFactor: binding.material.destinationBlendFactor!,
     linearColor: color,
     vertexColors,

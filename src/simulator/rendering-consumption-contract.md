@@ -436,6 +436,32 @@ RENDER-C54, Reverse `7e8151a452d9633722294f8550fcf31833b6f686`, separately execu
 
 C52 isolates conversion with lifetime/speed/UV modules disabled; C54 adds lifecycle color with explicit age/seed/base-color/cache-guard inputs and disables UV writing. Current live input/global/cache producers, runtime color-space overrides and final GPU/material integration remain OPEN; C53 separately covers source Mesh color modulation. These are color-domain results, not complete particle rendering. No product tests, fixtures, application or visual acceptance were added.
 
+### Material fragment color and write mask (RENDER-C56)
+
+Reverse `c670d103b44276ffbcf5e5aeaf4cf2af68325c04` was verified and pushed before
+consumption. `particle_material_pass_states.json` (SHA256
+`7E19052CD3C1014B3D3F5E0238E5BE53F924165C8D0747340AF632C30A16D168`) binds 102
+materials to six exact Shader objects and 21 explicitly referenced GLES programs.
+For serialized local keyword variants, seven Legacy Premultiply materials output
+`(texture * particleColor) * particleColor.a` for all RGBA. The previous RGB-only
+multiplication by combined alpha added texture alpha incorrectly and omitted the
+second particle alpha in source alpha. The shader now follows the original formula;
+blend One/OneMinusSrcAlpha remains unchanged.
+
+The source masks are14 for13 Standard Unlit and7 Legacy materials, and15 for the
+remaining82. The source catalog, preparation, validated primitive and Pixi ColorMask
+effect carry these exact masks. The existing additive Game-clear material route
+explicitly supplies its builtin shader's mask15. Pixi's effect pushes/pops the mask
+around the mesh draw, preserving the enclosing mask rather than leaking state to
+later objects.
+
+The independent Reverse audit follows symbolic operations from original and actual
+production fragment source: all102 color expressions and masks agree, with the
+preparation/primitive/effect handoff present. This removes7 expression differences
+and102 missing catalog fields. It does not run a GPU or establish precision,
+interpolation, active global keywords or culling/front-face equivalence. These remain
+separate open domains; no product tests, fixtures or visual acceptance were added.
+
 ### Mesh vertex Color32 modulation (RENDER-C53)
 
 Reverse `0544835452c477fe4f31f13bd4f07964a85d24ed` was verified and pushed before consumption. `simulator-particle-bounds-calculation-10-1-4/particle_mesh_colors.json` (SHA256 `9F507C7BD7C7E3BD365C0E0F913D327BE046354ACE30704EB80E3324766A805F`) roundtrips all four source meshes. screwTowerLow/screwTower contain82/35 Color32 values with white RGB and nonuniform alpha; crossCylinder and Quad have no color channel. The semantic catalog now retains these fields, and validation requires exact byte arrays or explicit null.
