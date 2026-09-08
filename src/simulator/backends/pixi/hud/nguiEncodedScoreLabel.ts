@@ -1,6 +1,9 @@
 import { Text } from "pixi.js";
 import { linearTintFromSrgbColor } from "./nguiMaterialPipeline";
 
+// UILabel 1271 serialized spacingX; Reverse 7bb802512c7607a3740e3a9f6bb7ab9b09036043.
+const SCORE_LABEL_SPACING_X = 1;
+
 export interface NguiEncodedScoreLabelLayout {
   readonly displayed: string;
   readonly leading: string;
@@ -12,7 +15,7 @@ export interface NguiEncodedScoreLabelLayout {
   readonly glyphAdvances: readonly number[];
 }
 
-/** Current UILabel 1271: encoding is parsed first and exact source-bound CharacterInfo advances own layout. */
+/** Current UILabel 1271: color boundaries preserve the continuous glyph-spacing run. */
 export function layoutNguiEncodedScoreLabel(
   segments: readonly Text[],
   encodedText: string | number,
@@ -58,16 +61,18 @@ export function calculateNguiEncodedScoreLabelLayout(
   let fontSize = requestedFontSize;
   while (fontSize > 0 && runWidth(parsed.displayed, fontSize, metricsByFontSize) > maximumWidth) fontSize -= 1;
   if (fontSize <= 0) throw new Error("Score UILabel source metrics cannot fit the encoded digit run.");
-  const leadingWidth = runWidth(parsed.leading, fontSize, metricsByFontSize);
+  const leadingWidth = parsed.leading.length === 0 ? 0
+    : Math.fround(runWidth(parsed.leading, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X);
   const significantWidth = runWidth(parsed.significant, fontSize, metricsByFontSize);
-  const totalWidth = Math.fround(leadingWidth + significantWidth);
+  const totalWidth = Math.ceil(runWidth(parsed.displayed, fontSize, metricsByFontSize));
   return Object.freeze({
     ...parsed,
     fontSize,
     totalWidth,
     leadingWidth,
     significantWidth,
-    glyphAdvances: Object.freeze([...parsed.displayed].map((char) => metric(char, fontSize, metricsByFontSize))),
+    glyphAdvances: Object.freeze([...parsed.displayed].map((char) =>
+      Math.fround(metric(char, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X))),
   });
 }
 
@@ -87,8 +92,11 @@ function runWidth(
   metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
 ): number {
   let width = Math.fround(0);
-  for (const char of value) width = Math.fround(width + metric(char, fontSize, metricsByFontSize));
-  return width;
+  for (const char of value) {
+    const advance = Math.fround(metric(char, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X);
+    width = Math.fround(width + advance);
+  }
+  return value.length === 0 ? 0 : Math.fround(width - SCORE_LABEL_SPACING_X);
 }
 
 function metric(
