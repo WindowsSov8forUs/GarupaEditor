@@ -1047,6 +1047,17 @@ retained. This narrows source-attached direct invalidation callbacks and require
 no production change; runtime-created components, indirect/reflection calls and
 complete native writer coverage remain separate.
 
+RENDER-C219 from verified/pushed Reverse `2eaf1374294f5f4aafb6c15347b5b66bcb5b6a0f`
+binds particle hierarchy and projection winding. `particle_winding_sources.json`
+SHA256 `BAD90921595C460F7BC017D796027618535611AB5002BB8F058C170EAE134E27`
+retains17 complete functions and564 original numeric calls. Local scale sign bits,
+including signed zero, XOR into bit2; ancestor accumulation preserves this parity.
+The particle Transform callback writes Renderer+244, node publication copies it
+to node+180, and a per-node draw consumer forwards bit2 through device slot448.
+Projection inversion toggles both its Y row and the flag supplied to Vulkan.
+These source relationships constrain a future culling fix; current camera/global
+inversion, actual draw invocation and final production culling remain open.
+
 HUD-C218 from verified/pushed Reverse `96ab774d3b9ab43a9c56a2eb7df72ccf026be1cf`
 corrects the Font runtime reader source binding. `font_cache_native_sources.json`
 SHA256 `6812E8C80456DCBBF7BD5CD73EA22742D486C9FE680A5669EE6BE5F388E0F9B0`
