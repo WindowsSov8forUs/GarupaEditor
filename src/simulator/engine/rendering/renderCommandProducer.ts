@@ -2176,9 +2176,27 @@ export class RenderCommandProducer {
     }
     const geometry = buildOrdinarySyncLine(ownerState);
     if (geometry.status !== "ok") return geometry;
+    const zero = float32State(0);
+    const one = float32State(1);
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [{
       ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      position: { x: zero, y: zero, z: zero },
+      scale: { x: one, y: one },
+      rotationDegrees: zero,
+      color: { red: one, green: one, blue: one, alpha: one },
+      ordering: {
+        domainLayer: 3,
+        // SORT-C33: NoteSyncLine.AwakeEnd assigns its LineRenderer order 69.
+        sourceDepthOrSortingOrder: 69,
+        sourceZ: zero,
+        creationSequence: this.creationSequenceByObjectId.get(renderObjectId)!,
+      },
+      maskObjectId: null,
+    }, {
+      ...base(1),
       kind: "set-line",
       renderObjectId,
       start: geometry.value.start,
@@ -2188,7 +2206,7 @@ export class RenderCommandProducer {
     }];
     if (activate) {
       commands.push({
-        ...base(1),
+        ...base(2),
         kind: "activate-object",
         renderObjectId,
       });

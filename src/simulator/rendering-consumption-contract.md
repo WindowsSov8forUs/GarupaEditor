@@ -24,6 +24,12 @@ Authority: Reverse `36ea69f8a1f526d511b945db9e7a4ee5df08483f`, verified and push
 
 `RenderCommandProducer.preflightOrdinaryNoteActivation` now assigns70 to the root for directional fronts as well. The previous branch assigned71 to DirectionalFlick and MultipleDirectionalFlick roots. The independent `audit_particle_renderer_sort_distance.py --ordinary` executes the actual ordering initializer, first root transform publication and Pixi field transfer against the original root assignment on seven named front types. The two baseline root-field differences are removed; this does not close icon producers, full activation callbacks, world bounds/native ties or shared ordinary/particle composition.
 
+## SORT-03 — simultaneous-line sorting-order producer
+
+Authority: Reverse `0a0e3615ec07eca58bfb9609e318c98954438059`, verified and pushed before consumption. SORT-C33 in `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` (SHA256 `7003FD5CE4CE5AF62259EB87751E1FBA8409DE5221BD8CA8C3982EBEC8631304`) binds NoteSyncLine.AwakeEnd's LineRenderer field+0x20 to original literal69 and the sorting-order setter tail-call.
+
+The ordinary fixed-pool line now publishes its identity transform and order69 before its world-space geometry, on activation and updates. The extended product line changes order0 to69. The existing gameplay grouping remains3; it is not the original sorting-layer value. Independent actual command/ordering-helper and backend-transfer checks remove all three baseline discrepancies and preserve all seven root cases. Line geometry, native bounds/distance/ties and shared ordinary/particle rendering remain separately OPEN.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.

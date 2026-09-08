@@ -178,7 +178,7 @@ export class GarupaProductRenderProducer {
           scale: vector2(1, 1),
           rotationDegrees: f32(0),
           color: white(),
-          ordering: ordering(3, 0, objectId),
+          ordering: ordering(3, 69, objectId),
           maskObjectId: null,
         }));
         commands.push(command(commands.length, productSyncLine(
