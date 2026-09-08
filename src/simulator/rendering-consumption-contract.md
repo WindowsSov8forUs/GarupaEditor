@@ -34,6 +34,16 @@ Root and Slide activation perform the original world-to-local-to-world position 
 This closes position-write rounding for the canonical zero-translation, identity-rotation ancestors and positive uniform layout scales. Final renderer world scale, changed hierarchy/animation inputs, complete resource keys and full simulator equivalence remain open. Existing tests received only explicitly authorized parent-scale inputs; no new fixtures, snapshots or visual acceptance were introduced.
 
 
+
+## SORT-10 — note world scale and sync margins
+
+Reverse `44f66cc07bb1ccff37d2bb9634847fbff9da7801`, SORT-C45 `note_world_scale.json`, executes the original complete hierarchy matrix path and independent `Transform.lossyScale` getter8C8984. For the canonical zero-translation, identity-rotation parents, both yield the Float32 product of local note scale and the C44 parent scale, including the moving note's zero Z scale.
+
+Seven root/Long-after/Slide-child activation and frame publications now fold the parent scale into their world transforms. Motion state retains local scale for mesh consumers. NoteManager supplies independently derived world X scale to both sync-line edge-margin targets while preserving their local X scale for the line-width calculation. Forty-eight original matrix/getter cases produce288 matching axis comparisons; publication sites and local/world separation are source checked. The C44 position-write audit remains exact.
+
+This closes canonical note scale publication and sync margin ownership. Arbitrary hierarchy/animation changes, complete material/resource/node keys and overall equivalence remain open. No new product tests, fixtures, snapshots or visual tuning.
+
+
 ## SORT-06 — common gameplay draw order and parent depth
 
 Authority: pushed Reverse `0e6e31f1f6d78ce33891f707a188885f0cdba2f7` (C204 native Sprite world bounds/distance), `559c6f08846c4d09b30d6ff5f95a9bb4ec0f6c14` (C39 native renderer types/defaults and C203 cross-type branches), and `cf2c7db5713ed04bb63b7a4c89a51cc9ffc4f9a3` (independent actual-consumer audit). C204 `ordinary_sprite_world_bounds.json` SHA256 is `8CC4BFBA2579674362BD2F0C0B899E189C9CE5C0C2AE5F14CA7DF02BFF4819F5`. C173 camera-distance expected is unchanged.

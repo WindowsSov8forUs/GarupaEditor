@@ -52,10 +52,11 @@ import type {
 } from "../rendering/renderCommandProducer";
 import type { OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import type { OrdinarySlideChildState } from "../rendering/ordinarySlideChildLifecycle";
-import type {
-  OrdinaryNoteMotionResult,
-  OrdinaryNoteMotionState,
-  OrdinarySyncLineOwnerState,
+import {
+  calculateOrdinaryNoteWorldScaleAxis,
+  type OrdinaryNoteMotionResult,
+  type OrdinaryNoteMotionState,
+  type OrdinarySyncLineOwnerState,
 } from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 
@@ -1205,16 +1206,24 @@ export class NoteManager {
         "Every active simultaneous line requires two committed ordinary transforms and their bound NoteInformation owners.",
       );
     }
+    const lossyScaleA = createRenderFloat32(calculateOrdinaryNoteWorldScaleAxis(
+      targetA.renderedTransform.localScale.x.value, targetA.motionState.noteParentScale.value,
+    ));
+    const lossyScaleB = createRenderFloat32(calculateOrdinaryNoteWorldScaleAxis(
+      targetB.renderedTransform.localScale.x.value, targetB.motionState.noteParentScale.value,
+    ));
+    if (lossyScaleA.status !== "ok") return lossyScaleA;
+    if (lossyScaleB.status !== "ok") return lossyScaleB;
     return ok(Object.freeze({
       targetA: Object.freeze({
         position: targetA.renderedTransform.position,
-        lossyScaleX: targetA.renderedTransform.localScale.x,
+        lossyScaleX: lossyScaleA.value,
         localScaleX: targetA.renderedTransform.localScale.x,
         gameNoteType: informationA.gameNoteType,
       }),
       targetB: Object.freeze({
         position: targetB.renderedTransform.position,
-        lossyScaleX: targetB.renderedTransform.localScale.x,
+        lossyScaleX: lossyScaleB.value,
         localScaleX: targetB.renderedTransform.localScale.x,
         gameNoteType: informationB.gameNoteType,
       }),

@@ -171,6 +171,11 @@ export function roundtripOrdinaryNoteWorldCoordinate(value: number, parentScale:
   return Math.fround(Math.fround(value * reciprocal) * parentScale) + 0;
 }
 
+/** SORT-C45: full native matrices and lossyScale agree for the canonical note ancestors. */
+export function calculateOrdinaryNoteWorldScaleAxis(localScale: number, parentScale: number): number {
+  return Math.fround(localScale * parentScale) + 0;
+}
+
 export function getOrdinaryNoteArrivalSeconds(
   specificSpeed: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {

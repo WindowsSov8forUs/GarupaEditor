@@ -48,6 +48,7 @@ import {
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
   calculateOrdinaryNoteStartDepth,
+  calculateOrdinaryNoteWorldScaleAxis,
   getHabahiroMeshWidthRate,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
@@ -1673,7 +1674,7 @@ export class RenderCommandProducer {
       kind: "set-transform",
       renderObjectId,
       position: placedStart,
-      scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
+      scale: noteWorldScale(Object.freeze({ x: one.value, y: one.value, z: one.value }), scene.noteParentScale),
       rotationDegrees: zero.value,
       color: scene.noteTint,
       ordering,
@@ -1746,7 +1747,7 @@ export class RenderCommandProducer {
         kind: "set-transform",
         renderObjectId,
         position: motion.position,
-        scale: motion.localScale,
+        scale: noteWorldScale(motion.localScale, scene.noteParentScale),
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering: Object.freeze({ ...ordering, sourceZ: motion.position.z }),
@@ -1806,7 +1807,7 @@ export class RenderCommandProducer {
         kind: "set-transform",
         renderObjectId: afterObjectId,
         position: longChildState.renderedTransform.position,
-        scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
+        scale: noteWorldScale(Object.freeze({ x: one.value, y: one.value, z: one.value }), scene.noteParentScale),
         rotationDegrees: zero.value,
         color: scene.noteTint,
         ordering: Object.freeze({
@@ -1938,7 +1939,7 @@ export class RenderCommandProducer {
           kind: "set-transform",
           renderObjectId: childObjectId,
           position: childTransform.position,
-          scale: childTransform.localScale,
+          scale: noteWorldScale(childTransform.localScale, scene.noteParentScale),
           rotationDegrees: zero.value,
           color: scene.noteTint,
           ordering: Object.freeze({
@@ -2301,11 +2302,7 @@ export class RenderCommandProducer {
       kind: "set-transform",
       renderObjectId: afterObjectId,
       position: next.value.renderedTransform.position,
-      scale: Object.freeze({
-        x: next.value.renderedTransform.localScale.x,
-        y: next.value.renderedTransform.localScale.y,
-        z: next.value.renderedTransform.localScale.z,
-      }),
+      scale: noteWorldScale(next.value.renderedTransform.localScale, next.value.motionState.noteParentScale),
       rotationDegrees: zero.value,
       color: scene.noteTint,
       ordering: Object.freeze({
@@ -2418,11 +2415,7 @@ export class RenderCommandProducer {
           kind: "set-transform",
           renderObjectId: childObjectId,
           position: state.lifecycle.renderedTransform.position,
-          scale: Object.freeze({
-            x: state.lifecycle.renderedTransform.localScale.x,
-            y: state.lifecycle.renderedTransform.localScale.y,
-            z: state.lifecycle.renderedTransform.localScale.z,
-          }),
+          scale: noteWorldScale(state.lifecycle.renderedTransform.localScale, state.lifecycle.motionState.noteParentScale),
           rotationDegrees: zero.value,
           color: scene.noteTint,
           ordering: Object.freeze({
@@ -2521,11 +2514,7 @@ export class RenderCommandProducer {
       kind: "set-transform",
       renderObjectId,
       position: motion.value.position,
-      scale: Object.freeze({
-        x: motion.value.localScale.x,
-        y: motion.value.localScale.y,
-        z: motion.value.localScale.z,
-      }),
+      scale: noteWorldScale(motion.value.localScale, motionState.noteParentScale),
       rotationDegrees: rotation.value,
       color: visualState.color,
       ordering: Object.freeze({ ...visualState.ordering, sourceZ: motion.value.position.z }),
@@ -3410,6 +3399,14 @@ function noteStartPosition(start: RenderVector3, information: NoteInformation): 
   return Object.freeze({
     ...start,
     z: float32State(calculateOrdinaryNoteStartDepth(start.z.value, information.absolutePos, information.buttonType)),
+  });
+}
+
+function noteWorldScale(scale: RenderVector3, parentScale: RenderFloat32): RenderVector3 {
+  return Object.freeze({
+    x: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.x.value, parentScale.value)),
+    y: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.y.value, parentScale.value)),
+    z: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.z.value, parentScale.value)),
   });
 }
 
