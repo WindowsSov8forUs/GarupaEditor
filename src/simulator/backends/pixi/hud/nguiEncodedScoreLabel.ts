@@ -9,6 +9,7 @@ export interface NguiEncodedScoreLabelLayout {
   readonly leading: string;
   readonly significant: string;
   readonly fontSize: number;
+  readonly fontScale: number;
   readonly totalWidth: number;
   readonly leadingWidth: number;
   readonly significantWidth: number;
@@ -33,7 +34,7 @@ export function layoutNguiEncodedScoreLabel(
   const calculated = calculateNguiEncodedScoreLabelLayout(
     encodedText, maximumWidth, requestedFontSize, metricsByFontSize,
   );
-  const { leading, displayed, fontSize, totalWidth, glyphAdvances } = calculated;
+  const { leading, displayed, fontSize, fontScale, totalWidth, glyphAdvances } = calculated;
   if (segments.length < displayed.length) throw new Error("Score UILabel persistent glyph pool is too small.");
   let cursor = Math.fround(rightX - totalWidth);
   for (let index = 0; index < segments.length; index += 1) {
@@ -44,6 +45,7 @@ export function layoutNguiEncodedScoreLabel(
       continue;
     }
     configureSegment(glyph, char, index < leading.length ? 0xbebebe : 0xff3b72, fontSize, fontFamily, depth);
+    glyph.scale.set(fontScale);
     glyph.position.set(cursor, centerY);
     glyph.visible = true;
     cursor = Math.fround(cursor + glyphAdvances[index]!);
@@ -58,21 +60,31 @@ export function calculateNguiEncodedScoreLabelLayout(
   metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
 ): NguiEncodedScoreLabelLayout {
   const parsed = parseEncodedScoreText(encodedText);
-  let fontSize = requestedFontSize;
-  while (fontSize > 0 && runWidth(parsed.displayed, fontSize, metricsByFontSize) > maximumWidth) fontSize -= 1;
-  if (fontSize <= 0) throw new Error("Score UILabel source metrics cannot fit the encoded digit run.");
-  const leadingWidth = parsed.leading.length === 0 ? 0
-    : Math.fround(runWidth(parsed.leading, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X);
-  const significantWidth = runWidth(parsed.significant, fontSize, metricsByFontSize);
-  const totalWidth = Math.ceil(runWidth(parsed.displayed, fontSize, metricsByFontSize));
+  const fontSize = requestedFontSize;
+  let candidate = requestedFontSize;
+  let fontScale = Math.fround(1);
+  // Android OnDesktop is non-crisp: retain the requested glyph and scale it.
+  // WrapText includes trailing spacing in its fit test; failed candidates step by two.
+  // Reverse 900c6d7d979f534ba2bc19c846609aea907f2d70.
+  while (candidate > 0) {
+    fontScale = Math.fround(candidate / requestedFontSize);
+    if (runAdvance(parsed.displayed, fontSize, fontScale, metricsByFontSize) <= maximumWidth) break;
+    candidate -= 2;
+  }
+  if (candidate <= 0) throw new Error("Score UILabel source metrics cannot fit the encoded digit run.");
+  const spacing = Math.fround(SCORE_LABEL_SPACING_X * fontScale);
+  const leadingWidth = runAdvance(parsed.leading, fontSize, fontScale, metricsByFontSize);
+  const significantWidth = Math.fround(runAdvance(parsed.significant, fontSize, fontScale, metricsByFontSize) - spacing);
+  const totalWidth = Math.ceil(Math.fround(runAdvance(parsed.displayed, fontSize, fontScale, metricsByFontSize) - spacing));
   return Object.freeze({
     ...parsed,
     fontSize,
+    fontScale,
     totalWidth,
     leadingWidth,
     significantWidth,
     glyphAdvances: Object.freeze([...parsed.displayed].map((char) =>
-      Math.fround(metric(char, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X))),
+      glyphAdvance(char, fontSize, fontScale, metricsByFontSize))),
   });
 }
 
@@ -86,17 +98,29 @@ export function parseEncodedScoreText(encodedText: string): {
   return Object.freeze({ leading: match[1]!, significant: match[2]!, displayed: `${match[1]}${match[2]}` });
 }
 
-function runWidth(
+function runAdvance(
   value: string,
   fontSize: number,
+  fontScale: number,
   metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
 ): number {
   let width = Math.fround(0);
   for (const char of value) {
-    const advance = Math.fround(metric(char, fontSize, metricsByFontSize) + SCORE_LABEL_SPACING_X);
+    const advance = glyphAdvance(char, fontSize, fontScale, metricsByFontSize);
     width = Math.fround(width + advance);
   }
-  return value.length === 0 ? 0 : Math.fround(width - SCORE_LABEL_SPACING_X);
+  return width;
+}
+
+function glyphAdvance(
+  char: string,
+  fontSize: number,
+  fontScale: number,
+  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
+): number {
+  const advance = Math.fround(metric(char, fontSize, metricsByFontSize) * fontScale);
+  const spacing = Math.fround(SCORE_LABEL_SPACING_X * fontScale);
+  return Math.fround(advance + spacing);
 }
 
 function metric(

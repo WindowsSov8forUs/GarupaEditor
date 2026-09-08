@@ -10731,7 +10731,7 @@
     {
       "id": "RCB-0510",
       "file": "src/simulator/backends/pixi/hud/nguiEncodedScoreLabel.ts",
-      "line": 31,
+      "line": 32,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Score UILabel source-bound encoded text/CharacterInfo metrics are missing.\");",
@@ -10752,7 +10752,7 @@
     {
       "id": "RCB-0511",
       "file": "src/simulator/backends/pixi/hud/nguiEncodedScoreLabel.ts",
-      "line": 37,
+      "line": 38,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (segments.length < displayed.length) throw new Error(\"Score UILabel persistent glyph pool is too small.\");",
@@ -10773,10 +10773,10 @@
     {
       "id": "RCB-0512",
       "file": "src/simulator/backends/pixi/hud/nguiEncodedScoreLabel.ts",
-      "line": 63,
+      "line": 74,
       "marker": "throw-error",
       "symbol": "if",
-      "source": "if (fontSize <= 0) throw new Error(\"Score UILabel source metrics cannot fit the encoded digit run.\");",
+      "source": "if (candidate <= 0) throw new Error(\"Score UILabel source metrics cannot fit the encoded digit run.\");",
       "productSemanticsId": null,
       "trigger": "internal invariant or backend exception that cannot return a typed partial result",
       "userReachability": "caught internal exception boundary",
@@ -10794,7 +10794,7 @@
     {
       "id": "RCB-0513",
       "file": "src/simulator/backends/pixi/hud/nguiEncodedScoreLabel.ts",
-      "line": 85,
+      "line": 97,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (match === null) throw new Error(\"Score UILabel requires the exact two-run encoded score string.\");",
@@ -10815,7 +10815,7 @@
     {
       "id": "RCB-0514",
       "file": "src/simulator/backends/pixi/hud/nguiEncodedScoreLabel.ts",
-      "line": 109,
+      "line": 133,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Score UILabel has no source-bound CharacterInfo advance for ${char}@${fontSize}.`);",
