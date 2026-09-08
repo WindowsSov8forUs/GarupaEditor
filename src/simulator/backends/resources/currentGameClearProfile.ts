@@ -270,6 +270,7 @@ export function buildGameClearParticleBundle(
         sourceBranch: branch,
         sourceBranchOrdinal: semantic.sourceOrdinal,
         activeSerialized: semantic.activeSerialized,
+        activeInHierarchySerialized: initialGameClearHierarchyActive(object.path, byPath),
       } as ParticleSystemDefinition));
       globalOrdinal += 1;
     }
@@ -596,6 +597,20 @@ function transform(
     m_LocalScale: Object.freeze({ x: value.local_scale[0], y: value.local_scale[1], z: value.local_scale[2] }),
   });
 }
+function initialGameClearHierarchyActive(
+  path: string,
+  byPath: ReadonlyMap<string, GameClearGraphObject>,
+): boolean {
+  let current = byPath.get(path);
+  if (current === undefined) throw new Error(`Missing Game-clear hierarchy owner: ${path}`);
+  while (current !== undefined) {
+    if (!current.active) return false;
+    const parentEnd = current.path.lastIndexOf("/");
+    current = parentEnd < 0 ? undefined : byPath.get(current.path.slice(0, parentEnd));
+  }
+  return true;
+}
+
 function parentTransforms(
   path: string,
   objects: ReadonlyMap<string, GameClearGraphObject>,

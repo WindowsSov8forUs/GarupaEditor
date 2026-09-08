@@ -492,6 +492,7 @@ function validateGameClearBundle(
     const nextBranchOrdinal = branchOrdinals.get(system.sourceBranch ?? "") ?? 0;
     if (expectedRoot === null || system.root !== expectedRoot || system.sourceOrdinal !== ordinal ||
       system.sourceBranchOrdinal !== nextBranchOrdinal || typeof system.activeSerialized !== "boolean" ||
+      typeof system.activeInHierarchySerialized !== "boolean" ||
       !isNonEmpty(system.identity) || !isNonEmpty(system.path) || !owns(bundle.profiles, system.profile) ||
       !isTransform(system.transform) || !Array.isArray(system.parentTransforms) ||
       !system.parentTransforms.every(isTransform) || !Array.isArray(system.parentParticleSystemFlags) ||

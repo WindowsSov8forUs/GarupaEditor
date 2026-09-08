@@ -365,7 +365,8 @@ export class DeterministicParticleSimulation {
       if (profile === undefined) throw fault("particle.simulation.missing-profile", "Every constructed system profile must resolve.");
       // Native activation enters Play only for playOnAwake systems. An idle
       // component does not consume an auto seed merely because it was created.
-      if (profile.system.playOnAwake && profile.system.autoRandomSeed) {
+      if (profile.system.playOnAwake && profile.system.autoRandomSeed &&
+        record.definition.activeInHierarchySerialized === true) {
         const constructionSeed = particleXorshift128(this.autoSeedState);
         this.autoSeedState = constructionSeed.state;
       }

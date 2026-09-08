@@ -936,3 +936,11 @@ Reverse `06d1bf5ab2090460eb827cd2f13d576e84b1ce1b` was verified and pushed befor
 Production ensureConstructedOwner now consumes a construction auto seed only for playOnAwake systems. The120 source systems all disable this flag. Actual complete prefab groups and individual systems, each followed by reuse, expose137 baseline differences in274 calls; all are now zero. Explicit later Play still initializes its own seed. Full normal birth160 calls/1024 padded rows/732 published rows remains exact. Both noEmit checks and runtime audit1442 pass.
 
 This closes the false-awake extra draw, not true-awake eligibility, exact scene construction/activation order or process-global history before Live. Full lifecycle, shared sorting and aggregate algorithm equivalence remain OPEN. No product tests, app or visual capture.
+
+### BND-C211: initial inactive hierarchies do not draw construction seeds
+
+Reverse `acf9c8ea7a578e098a45ece45bc4cd410f3374b3` was verified and pushed before consumption. The registered GameObject.activeInHierarchy getter executes the original recursive74C684; ParticleSystem activation1089308 exits before module or Play calls when it returns false. All58 Game-clear source chains are evaluated with their original self/ancestor active bits. Base40, FC6 and one AP system are initially inactive; the other11 AP chains do not establish outer activity or actual prefab creation time.
+
+Game-clear preparation now publishes activeInHierarchySerialized from its complete branch graph, separately from each object's own activeSerialized. Validation requires the new field. Construction seed consumption also requires this hierarchy condition. The independent actual producer/consumer comparison clears58 missing input fields and47 unsupported draws;58 hierarchy comparisons and94 construction/reuse calls match. C210's274 calls remain exact. Both noEmit checks, runtime audit1443 and the existing nonvisual render.game-clear case pass.
+
+The original active branch's Play eligibility, outer activity, AP creation/activation timing and global draw order remain OPEN. No new or modified product tests, app launch or visual capture.

@@ -492,6 +492,8 @@ export interface ParticleSystemDefinition {
   readonly sourceBranch?: "base" | "fullCombo" | "allPerfect";
   readonly sourceBranchOrdinal?: number;
   readonly activeSerialized?: boolean;
+  /** Initial self/ancestor active bits within the source prefab graph. */
+  readonly activeInHierarchySerialized?: boolean;
   readonly rendererSourcePathId?: string;
   readonly rendererSerializedBytes?: number;
   readonly rendererSerializedSha256?: string;
