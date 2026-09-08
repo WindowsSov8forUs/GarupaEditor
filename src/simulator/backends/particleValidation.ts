@@ -397,7 +397,7 @@ export function validateSelectedSkinParticlePack(
       }
       if (!ROOT_SET.has(system.root) || !owns(bundle.profiles, system.profile) ||
         system.sourceOrdinal !== sourceOrdinal || !Number.isSafeInteger(system.nativePlayOrdinal) ||
-        system.nativePlayOrdinal! < 0 || !isTransform(system.transform) ||
+        system.nativePlayOrdinal! < 0 || typeof system.nativePlayActive !== "boolean" || !isTransform(system.transform) ||
         !Array.isArray(system.parentTransforms) || !system.parentTransforms.every(isTransform) ||
         !Array.isArray(system.parentParticleSystemFlags) ||
         system.parentParticleSystemFlags.length !== system.parentTransforms.length ||

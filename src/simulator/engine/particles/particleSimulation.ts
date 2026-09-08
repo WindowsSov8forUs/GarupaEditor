@@ -234,8 +234,9 @@ export class DeterministicParticleSimulation {
           throw fault("particle.simulation.duplicate-system", "System semantic identities must be globally unique.");
         }
         if (profile.schemaVersion === 2 && (definition.sourceOrdinal !== bundleOrdinal ||
-          bundle.key !== "game-clear" && (!Number.isSafeInteger(definition.nativePlayOrdinal) || definition.nativePlayOrdinal! < 0))) {
-          throw fault("particle.simulation.source-ordinal-drift", "Native-semantic Schema 2 requires contiguous component order and a source-bound gameplay Play traversal ordinal.");
+          bundle.key !== "game-clear" && (!Number.isSafeInteger(definition.nativePlayOrdinal) || definition.nativePlayOrdinal! < 0 ||
+            typeof definition.nativePlayActive !== "boolean"))) {
+          throw fault("particle.simulation.source-ordinal-drift", "Native-semantic Schema 2 requires contiguous component order and source-bound gameplay Play traversal and hierarchy activity.");
         }
         this.definitions.set(definition.identity, { bundle, definition, ordinal });
         ordinal += 1;
@@ -335,7 +336,9 @@ export class DeterministicParticleSimulation {
         throw fault("particle.simulation.invalid-system-activation", "Every incremental activation must name one inactive prepared ParticleSystem under the selected root.");
       }
       return record;
-    }).sort((left, right) => instance.kind === "game-clear" || this.profile.schemaVersion === 1
+    }).filter((record) => instance.kind === "game-clear" || this.profile.schemaVersion === 1 ||
+      record.definition.nativePlayActive === true)
+      .sort((left, right) => instance.kind === "game-clear" || this.profile.schemaVersion === 1
       ? left.ordinal - right.ordinal
       : left.definition.nativePlayOrdinal! - right.definition.nativePlayOrdinal!);
     for (const record of selected) {

@@ -17,7 +17,7 @@ import type {
   ParticleTransformProfile,
 } from "../backends/particleContracts";
 import { particleAccepted } from "../backends/particleValidation";
-import { getNativeParticlePlayOrdinal } from "../backends/resources/currentParticlePlayOrder";
+import { getNativeParticlePlayOrdinal, getNativeParticlePlayActive } from "../backends/resources/currentParticlePlayOrder";
 import { HABAHIRO_PARTICLE_RANGE_PREFABS, findHabahiroParticleRangePrefab } from "../engine/particles/particleRangePrefabs";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
@@ -191,6 +191,7 @@ function convertBundle(
       identity: `${key}:${item.path}`,
       sourceOrdinal: ordinal,
       nativePlayOrdinal: getNativeParticlePlayOrdinal(pack.logicalResource, item.path),
+      nativePlayActive: getNativeParticlePlayActive(pack.logicalResource, item.path),
       root: rangePrefab !== undefined ? rangePrefab.root : `${key}:${item.prefab}` as ParticleRootId,
       ...(rangePrefab === undefined ? {} : { sourceRangeLength: rangePrefab.rangeLength }),
       path: item.path,

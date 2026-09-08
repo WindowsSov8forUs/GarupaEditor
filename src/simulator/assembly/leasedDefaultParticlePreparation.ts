@@ -10,7 +10,7 @@ import {
   validateSelectedSkinParticlePack,
 } from "../backends/particleValidation";
 import { sha256UpperHex } from "../backends/resources/sha256";
-import { getNativeParticlePlayOrdinal } from "../backends/resources/currentParticlePlayOrder";
+import { getNativeParticlePlayOrdinal, getNativeParticlePlayActive } from "../backends/resources/currentParticlePlayOrder";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { OriginalResourcePackageView } from "../resources/originalResourcePackageView";
 import { rejected, type SimulatorAssemblyResult } from "./result";
@@ -138,6 +138,7 @@ function upgradeDefaultBundle(bundle: Record<string, any>): Readonly<Record<stri
         ...source,
         sourceOrdinal,
         nativePlayOrdinal: getNativeParticlePlayOrdinal(logicalResource, path),
+        nativePlayActive: getNativeParticlePlayActive(logicalResource, path),
         parentParticleSystemFlags: Object.freeze(parentParticleSystemFlags),
       });
     })),

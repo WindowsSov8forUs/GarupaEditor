@@ -474,6 +474,8 @@ export interface ParticleSystemDefinition {
   readonly sourceOrdinal?: number;
   /** Original Play(withChildren) preorder within one gameplay prefab. */
   readonly nativePlayOrdinal?: number;
+  /** Initial descendant hierarchy activity with the gameplay prefab root active. */
+  readonly nativePlayActive?: boolean;
   readonly root: ParticleRootId;
   /** Authored GamePlayButton width slot; null identifies HAB's separate effect_tap scalar. */
   readonly sourceRangeLength?: number | null;
