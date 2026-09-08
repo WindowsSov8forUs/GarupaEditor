@@ -18,6 +18,12 @@ Reverse `4ff1bf855b151e6f7b1853d8c9bf110323e870de` extends the same oracle to th
 
 The comparison corpus fixes layer value0, queue3000 and explicit camera inputs, and excludes equal-key native ties. Source-domain/cache checks do not prove complete current cache or lifecycle occurrence. Frustum/group/override, current camera/material draw-record production, native final ties and ordinary/particle composition remain OPEN. No application, product tests, build or visual acceptance is used.
 
+## SORT-02 — ordinary root sorting-order producer
+
+Authority: Reverse `36ea69f8a1f526d511b945db9e7a4ee5df08483f`, verified and pushed before consumption. SORT-C32 in `simulator-renderer-sort-consumption-10-1-4/renderer_sort_consumption_contract.json` (SHA256 `2C9994909A511F4C45E0FD71E15F8F969C1F3A69799CC43182CE16502AC04737`) binds the current NoteBase root SpriteRenderer field+0x58 to original literal70 and the separate directional Flick icon field+0x48 to71, with checked LDR/MOVZ/BL operands and the Renderer sorting-order setter wrapper.
+
+`RenderCommandProducer.preflightOrdinaryNoteActivation` now assigns70 to the root for directional fronts as well. The previous branch assigned71 to DirectionalFlick and MultipleDirectionalFlick roots. The independent `audit_particle_renderer_sort_distance.py --ordinary` executes the actual ordering initializer, first root transform publication and Pixi field transfer against the original root assignment on seven named front types. The two baseline root-field differences are removed; this does not close icon producers, full activation callbacks, world bounds/native ties or shared ordinary/particle composition.
+
 ## SRC-SCORE-ANCHOR — runtime anchor, not prefab initial position
 
 Authority: `simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json`, `hud_owner_contract.score.anchor`, and `simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json` with its ARM64 applySafeArea/SetAnchor/SetAnchorTransform slices.

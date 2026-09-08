@@ -1653,11 +1653,8 @@ export class RenderCommandProducer {
     if (adjustment.status !== "ok") return adjustment;
     const ordering: RenderOrderingKey = Object.freeze({
       domainLayer: scene.noteDomainLayer,
-      sourceDepthOrSortingOrder:
-        information.fireNoteType === FrontNoteType.DirectionalFlick ||
-          information.fireNoteType === FrontNoteType.MultipleDirectionalFlick
-          ? 71
-          : 70,
+      // SORT-C32: NoteBase assigns 70 to its root; 71 belongs to the separate directional icon.
+      sourceDepthOrSortingOrder: 70,
       sourceZ: start.z,
       creationSequence,
     });
