@@ -72,6 +72,14 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
   private pendingFrame: PendingFrame | null = null;
   private fault: ParticleBackendFault | null = null;
 
+  // Standalone diagnostic users may retain replay history; production explicitly disables it.
+  constructor(private readonly recordFrames = true) {}
+
+  status(): Pick<ParticleBackendSnapshot, "state" | "sessionId" | "nextFrame" | "nextSequence" | "fault"> {
+    return { state: this.state, sessionId: this.sessionId, nextFrame: this.nextFrame,
+      nextSequence: this.nextSequence, fault: this.fault === null ? null : { ...this.fault } };
+  }
+
   async prepare(
     sessionId: string,
     scene: ParticleSimulationSceneProfile,
@@ -224,7 +232,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     this.simulation = pending.simulation;
     this.suppressedUntilReplay = pending.suppressedUntilReplay;
     this.gameClearState = pending.gameClearState;
-    this.frames.push(Object.freeze({
+    if (this.recordFrames) this.frames.push(Object.freeze({
       frame: pending.request.frame,
       deltaTimeBits: pending.request.deltaTimeBits,
       paused: pending.request.paused,
@@ -286,6 +294,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     this.sessionId = null;
     this.resourceCount = 0;
     this.owners.clear();
+    this.frames.length = 0;
     this.suppressedUntilReplay = false;
     this.gameClearState = null;
     this.state = "disposed";

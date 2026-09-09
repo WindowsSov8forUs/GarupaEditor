@@ -4,6 +4,19 @@ Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do
 
 Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `23827f847249b8336379ac12c23bfb2d7f09df44`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
+## Current application-layer implementation boundary
+
+The Simulator does not use implementation code to erase platform differences. This boundary supersedes historical instruction-exact and Unity-internal consumption requirements below; those reports remain records of their original source revisions, not acceptance gates for the current implementation.
+
+- Particle normals, their singular inverse/Jacobi/QR solver and normal-only validation are removed: the active Pixi particle shaders have no normal input.
+- Host sine/cosine, cube root, reciprocal and square root replace ARM estimates, refinement tables, copied trigonometric polynomials and software fused-multiply-add. Standard sRGB transfer replaces the source SIMD color lookup. Particle transforms retain authored spatial semantics without simulating world/local setter round trips or signed-zero instruction sequences.
+- Particle storage contains admitted particles only and preserves surviving insertion order; SIMD padding and physical swap-tail/compaction behavior are not application contracts. Authored gradient/curve keys are evaluated directly instead of reproducing Unity internal caches. Seeded random streams, lifetime rules and application emission/update ordering remain explicit.
+- Unity-only shadow/probe/ray-tracing/instancing states and investigation commit/hash gates are not runtime prerequisites. Resource byte identity, topology, material inputs and application ownership checks remain.
+- Score text uses host font measurements and a width fit, without original CharacterInfo tables, Android crispness branches or clip-center rounding corrections. The authored spacing, colors and alignment remain. Historical C49/C50/C220 numeric layout conclusions do not apply to this host text path.
+- Production disables diagnostic particle frame retention and polls compact backend status. Recording/offline backends and explicit diagnostic snapshots remain useful verification interfaces.
+
+Historical normal output, storage-row, internal-cache, world/local round-trip and instruction-exact numeric comparisons are retired for these consumers. Rendering remains OPEN at the application-semantic level; compilation and contract checks do not establish original-client or device equivalence. No original binary/runtime or visual capture is required to remove unused implementation.
+
 ## SORT-01 — renderer distance prefix
 
 Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.

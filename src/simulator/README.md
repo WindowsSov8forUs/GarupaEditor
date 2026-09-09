@@ -48,7 +48,7 @@ Frame mutation uses detached backend capabilities. Potentially failing portable/
 
 ## Current capability boundary
 
-Algorithm alignment targets the calculations, state transitions and production output semantics of supported Simulator features. It does not require reproducing Unity internals in Tauri/Pixi. Implementation differences, confirmed semantic defects and necessary evidence gaps must be classified separately under [the algorithm alignment workflow](./evidence-workflow.md). Existing capability labels below are evidence claims, not an instruction to investigate every Unity subsystem; this scope clarification does not upgrade any label.
+Algorithm alignment targets the calculations, state transitions and production output semantics of supported Simulator features. Simulator implementation must not erase platform differences by emulating Unity internals, ARM instructions or device raster behavior. Host math and rendering are used; necessary coordinate/unit and resource-format conversions remain platform interfaces. Implementation differences, confirmed semantic defects and necessary evidence gaps must be classified separately under [the algorithm alignment workflow](./evidence-workflow.md). Existing capability labels below are evidence claims, not an instruction to investigate every Unity subsystem; this scope clarification does not upgrade any label.
 
 **Rendering re-audit is OPEN.** The Score runtime-anchor regression is corrected, but particle cross-scene sorting and stretched-billboard consumption remain open. Earlier resource/primitive audit passes do not close these production paths. See [`rendering-consumption-contract.md`](./rendering-consumption-contract.md); its dispositions supersede historical aggregate closure statements.
 

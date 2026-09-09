@@ -390,18 +390,13 @@ export interface ParticleRendererProfile {
   readonly m_MaxParticleSize: number;
   readonly m_VelocityScale: number;
   readonly m_LengthScale: number;
-  readonly m_NormalDirection: number;
   readonly m_SortMode: number;
   readonly m_ApplyActiveColorSpace: boolean;
   readonly m_RotateWithStretchDirection: boolean;
   readonly m_Pivot: ParticleVector3;
-  readonly m_ShadowBias?: number;
   readonly m_Flip?: ParticleVector3;
-  readonly m_EnableGPUInstancing?: boolean;
   readonly m_UseCustomVertexStreams?: boolean;
   readonly m_VertexStreams?: readonly number[];
-  readonly m_UseCustomTrailVertexStreams?: boolean;
-  readonly m_TrailVertexStreams?: readonly number[];
   readonly m_Mesh?: ParticleRendererObjectReference | null;
   readonly m_Mesh1?: ParticleRendererObjectReference | null;
   readonly m_Mesh2?: ParticleRendererObjectReference | null;
@@ -430,7 +425,6 @@ export interface ParticleMeshProfile {
   readonly serializedSha256: string;
   readonly vertices: readonly (readonly [number, number, number])[];
   readonly uv0: readonly (readonly [number, number])[];
-  readonly normals: readonly (readonly [number, number, number])[];
   readonly colorBytes: readonly (readonly [number, number, number, number])[] | null;
   readonly indices: readonly number[];
   readonly screenYReflectionIndices: readonly number[];
@@ -1003,6 +997,7 @@ export interface SimulatorParticleBackend {
   commitFrame(batch: ParticleFrameBatch): ParticleOperationResult<void>;
   discardFrame(batch: ParticleFrameBatch): ParticleOperationResult<void>;
   recordTerminalFault(capability: string, boundary: string): ParticleOperationResult<never>;
+  status(): Pick<ParticleBackendSnapshot, "state" | "sessionId" | "nextFrame" | "nextSequence" | "fault">;
   snapshot(): ParticleBackendSnapshot;
   dispose(): ParticleOperationResult<void>;
 }

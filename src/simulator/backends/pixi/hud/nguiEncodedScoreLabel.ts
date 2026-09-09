@@ -26,17 +26,24 @@ export function layoutNguiEncodedScoreLabel(
   requestedFontSize: number,
   fontFamily: string,
   depth: number,
-  metricsByFontSize?: Readonly<Record<string, Readonly<Record<string, number>>>>,
 ): NguiEncodedScoreLabelLayout {
-  if (metricsByFontSize === undefined || typeof encodedText !== "string") {
-    throw new Error("Score UILabel source-bound encoded text/CharacterInfo metrics are missing.");
+  if (typeof encodedText !== "string") throw new Error("Score label requires encoded text.");
+  const parsed = parseEncodedScoreText(encodedText);
+  if (segments.length < parsed.displayed.length) throw new Error("Score glyph pool is too small.");
+  const advances: Record<string, number> = {};
+  for (let index = 0; index < parsed.displayed.length; index += 1) {
+    const glyph = segments[index]!;
+    const char = parsed.displayed[index]!;
+    configureSegment(glyph, char, index < parsed.leading.length ? 0xbebebe : 0xff3b72,
+      requestedFontSize, fontFamily, depth);
+    glyph.scale.set(1);
+    advances[char] = glyph.width;
   }
   const calculated = calculateNguiEncodedScoreLabelLayout(
-    encodedText, maximumWidth, requestedFontSize, metricsByFontSize,
+    encodedText, maximumWidth, requestedFontSize, advances,
   );
-  const { leading, displayed, fontSize, fontScale, totalWidth, glyphAdvances } = calculated;
-  if (segments.length < displayed.length) throw new Error("Score UILabel persistent glyph pool is too small.");
-  let cursor = Math.fround(rightX - totalWidth);
+  const { displayed, fontScale, totalWidth, glyphAdvances } = calculated;
+  let cursor = rightX - totalWidth;
   for (let index = 0; index < segments.length; index += 1) {
     const glyph = segments[index]!;
     const char = displayed[index];
@@ -44,48 +51,37 @@ export function layoutNguiEncodedScoreLabel(
       glyph.visible = false;
       continue;
     }
-    configureSegment(glyph, char, index < leading.length ? 0xbebebe : 0xff3b72, fontSize, fontFamily, depth);
     glyph.scale.set(fontScale);
     glyph.position.set(cursor, centerY);
     glyph.visible = true;
-    cursor = Math.fround(cursor + glyphAdvances[index]!);
+    cursor += glyphAdvances[index]!;
   }
   return calculated;
 }
 
+/** Fit the measured host glyph run; no original font-cache or platform crispness policy. */
 export function calculateNguiEncodedScoreLabelLayout(
   encodedText: string,
   maximumWidth: number,
-  requestedFontSize: number,
-  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
+  fontSize: number,
+  measuredAdvances: Readonly<Record<string, number>>,
 ): NguiEncodedScoreLabelLayout {
   const parsed = parseEncodedScoreText(encodedText);
-  const fontSize = requestedFontSize;
-  let candidate = requestedFontSize;
-  let fontScale = Math.fround(1);
-  // Android OnDesktop is non-crisp: retain the requested glyph and scale it.
-  // WrapText includes trailing spacing in its fit test; failed candidates step by two.
-  // Reverse 900c6d7d979f534ba2bc19c846609aea907f2d70.
-  while (candidate > 0) {
-    fontScale = Math.fround(candidate / requestedFontSize);
-    if (runAdvance(parsed.displayed, fontSize, fontScale, metricsByFontSize) <= maximumWidth) break;
-    candidate -= 2;
-  }
-  if (candidate <= 0) throw new Error("Score UILabel source metrics cannot fit the encoded digit run.");
-  const spacing = Math.fround(SCORE_LABEL_SPACING_X * fontScale);
-  const leadingWidth = runAdvance(parsed.leading, fontSize, fontScale, metricsByFontSize);
-  const significantWidth = Math.fround(runAdvance(parsed.significant, fontSize, fontScale, metricsByFontSize) - spacing);
-  const totalWidth = Math.ceil(Math.fround(runAdvance(parsed.displayed, fontSize, fontScale, metricsByFontSize) - spacing));
-  return Object.freeze({
-    ...parsed,
-    fontSize,
-    fontScale,
-    totalWidth,
-    leadingWidth,
-    significantWidth,
-    glyphAdvances: Object.freeze([...parsed.displayed].map((char) =>
-      glyphAdvance(char, fontSize, fontScale, metricsByFontSize))),
+  const advances = [...parsed.displayed].map((char) => {
+    const value = measuredAdvances[char];
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      throw new Error(`Score label has no measured font advance for ${char}.`);
+    }
+    return value + SCORE_LABEL_SPACING_X;
   });
+  const unscaledWidth = advances.reduce((sum, value) => sum + value, 0) - SCORE_LABEL_SPACING_X;
+  if (!(maximumWidth > 0) || !Number.isFinite(maximumWidth)) throw new Error("Score label requires positive finite width.");
+  const fontScale = Math.min(1, maximumWidth / unscaledWidth);
+  const glyphAdvances = advances.map((value) => value * fontScale);
+  const totalWidth = unscaledWidth * fontScale;
+  const leadingWidth = glyphAdvances.slice(0, parsed.leading.length).reduce((sum, value) => sum + value, 0);
+  return Object.freeze({ ...parsed, fontSize, fontScale, totalWidth, leadingWidth,
+    significantWidth: totalWidth - leadingWidth, glyphAdvances: Object.freeze(glyphAdvances) });
 }
 
 export function parseEncodedScoreText(encodedText: string): {
@@ -96,43 +92,6 @@ export function parseEncodedScoreText(encodedText: string): {
   const match = /^\[BEBEBE\](0*)\[-\]\[FF3B72\]([0-9]+)\[-\]$/.exec(encodedText);
   if (match === null) throw new Error("Score UILabel requires the exact two-run encoded score string.");
   return Object.freeze({ leading: match[1]!, significant: match[2]!, displayed: `${match[1]}${match[2]}` });
-}
-
-function runAdvance(
-  value: string,
-  fontSize: number,
-  fontScale: number,
-  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
-): number {
-  let width = Math.fround(0);
-  for (const char of value) {
-    const advance = glyphAdvance(char, fontSize, fontScale, metricsByFontSize);
-    width = Math.fround(width + advance);
-  }
-  return width;
-}
-
-function glyphAdvance(
-  char: string,
-  fontSize: number,
-  fontScale: number,
-  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
-): number {
-  const advance = Math.fround(metric(char, fontSize, metricsByFontSize) * fontScale);
-  const spacing = Math.fround(SCORE_LABEL_SPACING_X * fontScale);
-  return Math.fround(advance + spacing);
-}
-
-function metric(
-  char: string,
-  fontSize: number,
-  metricsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>,
-): number {
-  const value = metricsByFontSize[String(fontSize)]?.[char];
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
-    throw new Error(`Score UILabel has no source-bound CharacterInfo advance for ${char}@${fontSize}.`);
-  }
-  return Math.fround(value);
 }
 
 function configureSegment(

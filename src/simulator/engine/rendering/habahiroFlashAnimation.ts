@@ -63,10 +63,6 @@ export interface HabahiroFieldAssetProfile {
 }
 
 export interface HabahiroSemanticProfile {
-  readonly source: {
-    readonly reverseCommit: "4fc0b23c433bd294dbcdda97658b565c059590f6";
-    readonly contractSha256: "846497FACCB35BE125AF7177D97BEEFB2C1562BFF6FCCDB3F59039C3C25C85C0";
-  };
   readonly flash: {
     readonly logicalResource: "ingameskin/tapeffect/habahiro";
     readonly officialUnityFs: Readonly<{ readonly bytes: number; readonly sha256: string }>;
@@ -142,15 +138,12 @@ function sampleCurve(keys: readonly HabahiroCurveKey[], time: number): number {
 
 function parseProfile(value: unknown): HabahiroSemanticProfile {
   const root = record(value);
-  const source = record(root?.source);
   const resources = record(root?.resources);
   const flash = record(resources?.flash);
   const before = record(resources?.fieldBefore);
   const after = record(resources?.fieldAfter);
   const animation = record(flash?.animation);
   if (root?.schemaVersion !== 1 || root.status !== "current-source-bound-habahiro-flash-and-field-swap" ||
-    source?.reverseCommit !== "4fc0b23c433bd294dbcdda97658b565c059590f6" ||
-    source.contractSha256 !== "846497FACCB35BE125AF7177D97BEEFB2C1562BFF6FCCDB3F59039C3C25C85C0" ||
     flash?.logicalResource !== "ingameskin/tapeffect/habahiro" || flash.rootObjectCount !== 9 ||
     flash.particleSystemCount !== 0 || !sourceIdentity(flash.officialUnityFs) || !Array.isArray(flash.sprites) ||
     animation === null || animation.legacy !== true || animation.sampleRate !== 60 || animation.wrapMode !== 0 ||
@@ -185,10 +178,6 @@ function parseProfile(value: unknown): HabahiroSemanticProfile {
   const fieldBefore = parseField(before, "ingameskin/fieldskin/skin00");
   const fieldAfter = parseField(after, "ingameskin/fieldskin/habahiro");
   return deepFreeze({
-    source: {
-      reverseCommit: source.reverseCommit,
-      contractSha256: source.contractSha256,
-    },
     flash: {
       logicalResource: flash.logicalResource,
       officialUnityFs: copySourceIdentity(flash.officialUnityFs),

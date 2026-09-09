@@ -1,5 +1,4 @@
 import type { ParticleAnimationCurve, ParticleMinMaxCurve, ParticleShapeModule } from "../../backends/particleContracts";
-import estimateTable from "./arm64ReciprocalSqrtEstimate.json";
 
 type Vector3 = readonly [number, number, number];
 export type ParticleBoundsTuple = readonly [number, number, number, number, number, number];
@@ -65,15 +64,7 @@ export function calculateNativeParticleActualBounds(particles: readonly BoundsPa
     // Bounds reads base + module velocity without the renderer's speed modifier.
     const v = particle.velocity.map((value, axis) => add(value, particle.moduleVelocity[axis]!));
     const squared = add(mul(v[0]!, v[0]!), add(mul(v[1]!, v[1]!), mul(v[2]!, v[2]!)));
-    let inverse = 0;
-    if (squared > numberFromBits(0x0da24260)) {
-      words.setFloat32(0, squared, true);
-      const value = words.getUint32(0, true), exponent = ((value >>> 23) & 255) - 127;
-      const half = Math.floor(exponent / 2), parity = exponent - half * 2;
-      inverse = numberFromBits(estimateTable.estimateBits[parity * 256 + ((value & 0x7fffff) >>> 15)]! - half * 0x800000);
-      inverse = mul(inverse, f32((3 - mul(inverse, squared) * inverse) / 2));
-      inverse = mul(inverse, f32((3 - mul(inverse, squared) * inverse) / 2));
-    }
+    const inverse = squared > numberFromBits(0x0da24260) ? f32(1 / Math.sqrt(squared)) : 0;
     const length = add(f32(settings.velocityScale), mul(particle.baseSize[0], mul(f32(settings.lengthScale), inverse)));
     include(particle.position.map((value, axis) => sub(value, mul(v[axis]!, length))) as unknown as Vector3);
   }
@@ -279,38 +270,7 @@ export function calculateNativeParticleShapeAnalyticBounds(
   return finishNativeParticleAnalyticBounds(lo, hi, speedRange[1], initialSize3D, settings);
 }
 
-function nativeBoundsSine(value: number): number {
-  // C165 libm33C4C..7C, source arguments below pi/4. FMADD rounds once in binary64.
-  if (Math.abs(value) < 0.000244140625) return value;
-  const square = value * value, cube = square * value;
-  const upper = boundsMultiplyAdd64(square, -0.00019517298981385725, 0.008332178146138854);
-  return f32(boundsMultiplyAdd64(square * cube, upper, boundsMultiplyAdd64(cube, -0.16666654943701084, value)));
-}
-
-const boundsDoubleWord = new DataView(new ArrayBuffer(8));
-function boundsMultiplyAdd64(a: number, b: number, c: number): number {
-  // Exact finite significand accumulation, then one round-to-nearest-even.
-  // These source trigonometric operands do not overflow binary64.
-  const decompose = (value: number): readonly [bigint, number] => {
-    boundsDoubleWord.setFloat64(0, value, true);
-    const word = boundsDoubleWord.getBigUint64(0, true), exponent = Number((word >> 52n) & 0x7ffn);
-    let significand = (word & 0xfffffffffffffn) | (exponent === 0 ? 0n : 0x10000000000000n);
-    if ((word >> 63n) !== 0n) significand = -significand;
-    return [significand, exponent === 0 ? -1074 : exponent - 1075];
-  };
-  const [am, ae] = decompose(a), [bm, be] = decompose(b), [cm, ce] = decompose(c);
-  const exponent = Math.min(ae + be, ce);
-  const exact = (am * bm << BigInt(ae + be - exponent)) + (cm << BigInt(ce - exponent));
-  if (exact === 0n) return a * b + c;
-  const sign = exact < 0n ? -1 : 1, magnitude = exact < 0n ? -exact : exact;
-  const shift = Math.max(0, magnitude.toString(2).length - 53, -1074 - exponent);
-  let rounded = magnitude >> BigInt(shift);
-  if (shift > 0) {
-    const remainder = magnitude - (rounded << BigInt(shift)), halfway = 1n << BigInt(shift - 1);
-    if (remainder > halfway || (remainder === halfway && (rounded & 1n) !== 0n)) rounded += 1n;
-  }
-  return sign * Number(rounded) * 2 ** (exponent + shift);
-}
+function nativeBoundsSine(value: number): number { return f32(Math.sin(value)); }
 
 /** BND-C153: ordinary renderer output is center/extents, not corner union. */
 export function calculateNativeParticleWorldBounds(

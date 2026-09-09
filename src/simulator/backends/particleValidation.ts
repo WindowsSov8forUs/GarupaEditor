@@ -764,11 +764,10 @@ function isCurrentMeshProfile(value: unknown): boolean {
     typeof value.sourcePathId !== "string" || !/^int64:-?[0-9]+$/.test(value.sourcePathId) || !isNonEmpty(value.name) ||
     !isPositiveInteger(value.serializedBytes) || typeof value.serializedSha256 !== "string" ||
     !SHA256_PATTERN.test(value.serializedSha256) || !Array.isArray(value.vertices) ||
-    !Array.isArray(value.uv0) || !Array.isArray(value.normals) || !Array.isArray(value.indices) ||
+    !Array.isArray(value.uv0) || !Array.isArray(value.indices) ||
     !Array.isArray(value.screenYReflectionIndices) || !Array.isArray(value.subMeshes)) return false;
   const vertices = value.vertices;
   const uv0 = value.uv0;
-  const normals = value.normals;
   const colors = value.colorBytes;
   const indices = value.indices;
   const reflected = value.screenYReflectionIndices;
@@ -776,9 +775,9 @@ function isCurrentMeshProfile(value: unknown): boolean {
   if (!(colors === null || Array.isArray(colors) && colors.length === vertices.length &&
     colors.every((color) => Array.isArray(color) && color.length === 4 &&
       color.every((channel) => Number.isInteger(channel) && channel >= 0 && channel <= 255)))) return false;
-  if (vertices.length < 4 || uv0.length !== vertices.length || normals.length !== vertices.length ||
+  if (vertices.length < 4 || uv0.length !== vertices.length ||
     indices.length < 3 || indices.length % 3 !== 0 || reflected.length !== indices.length || subMeshes.length !== 1 ||
-    !vertices.every(isFloat32Vector3Array) || !normals.every(isFloat32Vector3Array) || !uv0.every(isFloat32Vector2Array) ||
+    !vertices.every(isFloat32Vector3Array) || !uv0.every(isFloat32Vector2Array) ||
     !indices.every((index) => Number.isSafeInteger(index) && index >= 0 && index < vertices.length) ||
     !reflected.every((index) => Number.isSafeInteger(index) && index >= 0 && index < vertices.length)) return false;
   for (let index = 0; index < indices.length; index += 3) {
@@ -793,19 +792,13 @@ function isCurrentMeshProfile(value: unknown): boolean {
 
 function isCurrentRendererProfile(value: unknown, materialNames: ReadonlySet<string>): boolean {
   if (!isRecord(value) || typeof value.m_Enabled !== "boolean" || !Array.isArray(value.m_Materials) ||
-    !Array.isArray(value.m_VertexStreams) || !Array.isArray(value.m_TrailVertexStreams)) return false;
+    !Array.isArray(value.m_VertexStreams)) return false;
   const materials = value.m_Materials;
   const vertexStreams = value.m_VertexStreams;
-  const trailStreams = value.m_TrailVertexStreams;
   if ((materials.length !== 1 && materials.length !== 2) ||
     !materials.every((material) => material === null ||
       (isRecord(material) && material.type === "Material" && isNonEmpty(material.name) && materialNames.has(material.name) &&
         Number.isSafeInteger(material.fileId) && typeof material.pathId === "string" && /^int64:-?[0-9]+$/.test(material.pathId))) ||
-    value.m_CastShadows !== 0 && value.m_CastShadows !== 1 ||
-    value.m_ReceiveShadows !== 0 && value.m_ReceiveShadows !== 1 || value.m_DynamicOccludee !== 1 ||
-    value.m_StaticShadowCaster !== 0 || value.m_MotionVectors !== 1 ||
-    value.m_LightProbeUsage !== 0 && value.m_LightProbeUsage !== 1 || value.m_ReflectionProbeUsage !== 0 ||
-    value.m_RayTracingMode !== 0 || value.m_RayTraceProcedural !== 0 || value.m_RenderingLayerMask !== 1 ||
     value.m_RendererPriority !== 0 || value.m_SortingLayerID !== 0 || value.m_SortingLayer !== 0 ||
     (value.m_RenderMode !== 0 && value.m_RenderMode !== 1 && value.m_RenderMode !== 4) ||
     (value.m_RenderAlignment !== 0 && value.m_RenderAlignment !== 2) || value.m_SortMode !== 0 || value.m_MeshDistribution !== 0 ||
@@ -813,17 +806,14 @@ function isCurrentRendererProfile(value: unknown, materialNames: ReadonlySet<str
     (value.m_SortingFudge !== 0 && value.m_SortingFudge !== -10) ||
     !isFloat32(value.m_MinParticleSize) || value.m_MinParticleSize !== 0 ||
     !isFloat32(value.m_MaxParticleSize) || value.m_MaxParticleSize <= 0 || !isFloat32(value.m_CameraVelocityScale) ||
-    !isFloat32(value.m_VelocityScale) || !isFloat32(value.m_LengthScale) || !isFloat32(value.m_NormalDirection) ||
-    value.m_ShadowBias !== 0 || typeof value.m_ApplyActiveColorSpace !== "boolean" || value.m_AllowRoll !== true ||
+    !isFloat32(value.m_VelocityScale) || !isFloat32(value.m_LengthScale) ||
+    typeof value.m_ApplyActiveColorSpace !== "boolean" || value.m_AllowRoll !== true ||
     value.m_FreeformStretching !== false || value.m_RotateWithStretchDirection !== true ||
-    typeof value.m_EnableGPUInstancing !== "boolean" || typeof value.m_UseCustomVertexStreams !== "boolean" ||
-    typeof value.m_UseCustomTrailVertexStreams !== "boolean" || value.m_UseCustomTrailVertexStreams !== false ||
+    typeof value.m_UseCustomVertexStreams !== "boolean" ||
     ![[0, 1, 3, 4], [0, 1, 3, 4, 5], [0, 1, 3, 4, 34]]
       .some((expected) => expected.length === vertexStreams.length && expected.every((item, index) => item === vertexStreams[index])) ||
     value.m_UseCustomVertexStreams !== vertexStreams.includes(34) ||
-    trailStreams.length !== 4 || !trailStreams.every((item, index) => item === [0, 1, 3, 4][index]) ||
     !isZeroVector3(value.m_Flip) || !isVector3(value.m_Pivot) || value.m_MaskInteraction !== 0 ||
-    value.m_StaticBatchRoot !== null || value.m_ProbeAnchor !== null || value.m_LightProbeVolumeOverride !== null ||
     !["m_Mesh", "m_Mesh1", "m_Mesh2", "m_Mesh3"].every((key) => isRendererObjectReferenceOrNull(value[key])) ||
     value.m_Mesh1 !== null || value.m_Mesh2 !== null || value.m_Mesh3 !== null ||
     ![value.m_MeshWeighting, value.m_MeshWeighting1, value.m_MeshWeighting2, value.m_MeshWeighting3]

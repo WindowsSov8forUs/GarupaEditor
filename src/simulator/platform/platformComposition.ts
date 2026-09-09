@@ -289,7 +289,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const gameplayRenderOrder = new PixiGameplayRenderOrder();
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder(), undefined, gameplayRenderOrder);
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, reconstructionCandidate);
-    const particles = new DeterministicSimulatorParticleBackend();
+    const particles = new DeterministicSimulatorParticleBackend(false);
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
       gameplayRenderOrder,

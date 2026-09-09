@@ -197,6 +197,11 @@ export class RecordingSimulatorParticleBackend implements SimulatorParticleBacke
     return this.latchFault(capability, boundary);
   }
 
+  status(): Pick<ParticleBackendSnapshot, "state" | "sessionId" | "nextFrame" | "nextSequence" | "fault"> {
+    return { state: this.state, sessionId: this.sessionId, nextFrame: this.nextFrame,
+      nextSequence: this.nextSequence, fault: this.fault === null ? null : { ...this.fault } };
+  }
+
   snapshot(): ParticleBackendSnapshot {
     const activeOwners: ParticleOwnerSnapshot[] = [...this.owners]
       .sort(([left], [right]) => left.localeCompare(right))

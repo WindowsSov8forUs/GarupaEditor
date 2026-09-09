@@ -156,21 +156,6 @@ export function calculateOrdinaryNoteStartDepth(
   return Math.fround(baseZ + Math.fround(Math.fround(-14 + positionOffset) + laneOffset));
 }
 
-/** SORT-C44: canonical note ancestors have zero translation and identity rotation. */
-export function roundtripOrdinaryNoteWorldCoordinate(value: number, parentScale: number): number {
-  if (Math.abs(parentScale) < Math.fround(1e-9)) return 0;
-  const view = new DataView(new ArrayBuffer(4));
-  view.setFloat32(0, parentScale);
-  const word = view.getUint32(0);
-  const exponent = ((word >>> 23) & 255) - 127;
-  const bucket = 256 + ((word >>> 15) & 255);
-  let reciprocal = Math.fround(Math.round(262144 / (2 * bucket + 1)) * 2 ** (-exponent - 9));
-  // FRECPS rounds the fused subtraction, not a separately rounded product.
-  reciprocal = Math.fround(reciprocal * Math.fround(2 - parentScale * reciprocal));
-  reciprocal = Math.fround(reciprocal * Math.fround(2 - parentScale * reciprocal));
-  return Math.fround(Math.fround(value * reciprocal) * parentScale) + 0;
-}
-
 /** SORT-C45: full native matrices and lossyScale agree for the canonical note ancestors. */
 export function calculateOrdinaryNoteWorldScaleAxis(localScale: number, parentScale: number): number {
   return Math.fround(localScale * parentScale) + 0;
@@ -258,9 +243,9 @@ export function advanceOrdinaryNoteMotion(
     )),
   );
   const position = vector3(
-    roundtripOrdinaryNoteWorldCoordinate(x, state.noteParentScale.value),
-    roundtripOrdinaryNoteWorldCoordinate(y, state.noteParentScale.value),
-    roundtripOrdinaryNoteWorldCoordinate(state.currentPositionZ.value, state.noteParentScale.value),
+    x,
+    y,
+    state.currentPositionZ.value,
   );
   if (position.status !== "ok") return position;
   const scale = calculateOrdinaryNoteScaleAtY(state, y);

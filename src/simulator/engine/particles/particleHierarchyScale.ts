@@ -1,6 +1,5 @@
-// Reverse BND-C29/C32, libunity 10.1.4/230 ARM64 0x1089018..0x10892EF.
-// Preserve its Float32 grouping, sign-bit adjustment and diagonal selection.
-// This is not a componentwise scale product or a generic lossyScale operation.
+// Authored hierarchy rotation, scale and reflection semantics.
+// Host arithmetic is used without reproducing platform instruction sequences.
 const f32 = Math.fround;
 type Vector3 = readonly [number, number, number];
 type Quaternion = readonly [number, number, number, number];
@@ -36,37 +35,15 @@ export interface ParticleHierarchyPositionTransform extends ParticleHierarchyTra
   readonly position: Vector3;
 }
 
-// Reverse BND-C81: 108834C, descriptor selector0, runtime translation+116.
+/** Compose the emitter position through its authored parent transforms. */
 export function calculateNativeParticleEmitterOrigin(
   self: ParticleHierarchyPositionTransform,
   rootToImmediateParents: readonly ParticleHierarchyPositionTransform[],
-  scalingMode: 0 | 1,
 ): Vector3 {
   let position = self.position;
   for (let index = rootToImmediateParents.length - 1; index >= 0; index -= 1) {
     const parent = rootToImmediateParents[index]!;
-    let rotated: Vector3;
-    if (scalingMode === 0) {
-      rotated = applyColumns(scaledColumns(parent), position);
-    } else {
-      // 1088AF4..1088B58: retain the delta columns and their subtraction
-      // order; adding identity to a rotation matrix first rounds differently.
-      const [x, y, z, w] = parent.rotation;
-      const x2 = mul(2, x); const nx2 = mul(-2, x);
-      const y2 = mul(2, y); const ny2 = mul(-2, y);
-      const z2 = mul(2, z); const nz2 = mul(-2, z);
-      const delta: Columns = [
-        [sub(mul(y, ny2), mul(z, z2)), sub(mul(x, y2), mul(w, nz2)), sub(mul(w, ny2), mul(x, nz2))],
-        [sub(mul(w, nz2), mul(y, nx2)), sub(mul(z, nz2), mul(x, x2)), sub(mul(y, z2), mul(w, nx2))],
-        [sub(mul(z, x2), mul(w, ny2)), sub(mul(w, nx2), mul(z, ny2)), sub(mul(x, nx2), mul(y, y2))],
-      ];
-      const scaled: Vector3 = [mul(position[0], parent.scale[0]), mul(position[1], parent.scale[1]), mul(position[2], parent.scale[2])];
-      const component = (axis: 0 | 1 | 2) => add(
-        add(scaled[axis], mul(delta[0][axis], scaled[0])),
-        add(mul(delta[1][axis], scaled[1]), mul(delta[2][axis], scaled[2])),
-      );
-      rotated = [component(0), component(1), component(2)];
-    }
+    const rotated = applyColumns(scaledColumns(parent), position);
     position = [add(parent.position[0], rotated[0]), add(parent.position[1], rotated[1]), add(parent.position[2], rotated[2])];
   }
   return position;
@@ -111,12 +88,12 @@ export function calculateNativeParticleRuntimeTransform(
     }
     basis = scaledColumns({ rotation, scale: self.scale });
   }
-  const origin = calculateNativeParticleEmitterOrigin(self, rootToImmediateParents, scalingMode);
-  // Mode0 explicitly clears column W; mode1 clears it before EF5C48 scales.
+  const origin = calculateNativeParticleEmitterOrigin(self, rootToImmediateParents);
+  // Affine transforms have zero in the three basis W components.
   const localToWorld: ParticleMatrix = [
-    ...basis[0], scalingMode === 0 ? 0 : mul(0, self.scale[0]),
-    ...basis[1], scalingMode === 0 ? 0 : mul(0, self.scale[1]),
-    ...basis[2], scalingMode === 0 ? 0 : mul(0, self.scale[2]),
+    ...basis[0], 0,
+    ...basis[1], 0,
+    ...basis[2], 0,
     ...origin, 1,
   ];
   return {
@@ -259,25 +236,21 @@ export function calculateNativeParticleLocalBillboardBasis(
 
 // Reverse BND-C36: current source GameCamera -> 0x107A0DC -> View worker.
 export function calculateNativeParticleViewBillboardBasis(scale: Vector3): Columns {
-  // Preserve the inverse camera's reflected Z column and signed zero lanes.
-  const inverseView: Columns = [[1, -0, -0], [-0, 1, -0], [-0, -0, -1]];
-  const diagonal: Columns = [[scale[0], 0, 0], [0, scale[1], 0], [0, 0, scale[2]]];
-  return [applyColumns(diagonal, inverseView[0]), applyColumns(diagonal, inverseView[1]), applyColumns(diagonal, inverseView[2])];
+  return [[scale[0], 0, 0], [0, scale[1], 0], [0, 0, -scale[2]]];
 }
 
 function scaleSign(value: number): number {
-  return value < 0 || Object.is(value, -0) ? -1 : 1;
+  return value < 0 ? -1 : 1;
 }
 
 function multiplyNativeQuaternions(parent: Quaternion, child: Quaternion): Quaternion {
   const [a, b, c, d] = parent;
   const [x, y, z, w] = child;
-  // Native SIMD subtraction/sign-flip order, including its w-term ordering.
   return [
-    -sub(sub(sub(mul(c, y), mul(b, z)), mul(d, x)), mul(a, w)),
-    -sub(sub(sub(mul(a, z), mul(c, x)), mul(d, y)), mul(b, w)),
-    -sub(sub(sub(mul(b, x), mul(d, z)), mul(c, w)), mul(a, y)),
-    sub(sub(sub(mul(d, w), mul(a, x)), mul(c, z)), mul(b, y)),
+    f32(d * x + a * w + b * z - c * y),
+    f32(d * y - a * z + b * w + c * x),
+    f32(d * z + a * y - b * x + c * w),
+    f32(d * w - a * x - b * y - c * z),
   ];
 }
 

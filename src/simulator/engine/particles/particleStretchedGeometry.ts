@@ -1,12 +1,6 @@
-import estimateTable from "./arm64ReciprocalSqrtEstimate.json";
-
-// Reverse simulator-stretched-particle-worker-reaudit-10-1-4, STR-W03..W07.
-// The table executes the source FRSQRTE opcode; it is not a device capture.
-const estimates = Object.freeze(estimateTable.estimateBits);
-const words = new DataView(new ArrayBuffer(4));
 const f32 = Math.fround;
-const MIN_SQUARED_LENGTH = fromBits(0x0da24260);
-const ESTIMATE_CORRECTION = fromBits(0x3f804020);
+const MIN_SQUARED_LENGTH = 1e-30;
+
 type Vector3 = readonly [number, number, number];
 
 export interface NativeStretchArithmeticInput {
@@ -29,7 +23,7 @@ export function calculateNativeStretchArithmetic(input: NativeStretchArithmeticI
   const v = input.cameraVelocity;
   const speedSquared = f32(f32(v[0] * v[0]) + f32(f32(v[1] * v[1]) + f32(v[2] * v[2])));
   const inverseSpeed = speedSquared > MIN_SQUARED_LENGTH
-    ? f32(reciprocalSqrtEstimate(speedSquared) * ESTIMATE_CORRECTION)
+    ? f32(1 / Math.sqrt(speedSquared))
     : 0;
   const stretch = f32(input.velocityScale + f32(f32(input.scaledLength * input.sizeY) * inverseSpeed));
   const tail: Vector3 = [
@@ -43,70 +37,9 @@ export function calculateNativeStretchArithmetic(input: NativeStretchArithmeticI
   if (sideSquared <= MIN_SQUARED_LENGTH) {
     return { tail, sideXY: [0, 0] };
   }
-  let inverseSide = reciprocalSqrtEstimate(sideSquared);
-  // FRSQRTS computes (3 - a*b)/2 before its Float32 rounding. Do not
-  // substitute Math.sqrt or add another intermediate product rounding.
-  inverseSide = f32(inverseSide * f32((3 - f32(sideSquared * inverseSide) * inverseSide) / 2));
-  inverseSide = f32(inverseSide * f32((3 - f32(sideSquared * inverseSide) * inverseSide) / 2));
+  const inverseSide = f32(1 / Math.sqrt(sideSquared));
   return {
     tail,
     sideXY: [f32(input.halfWidth * f32(x * inverseSide)), f32(input.halfWidth * f32(y * inverseSide))],
   };
-}
-
-// BND-C135: 107A518..568 prepares the coefficient; 12C39C4 writes
-// four independent normals without a final normalization.
-export function calculateNativeStretchNormals(side: Vector3, longitudinal: Vector3, normalDirection: number): readonly Vector3[] {
-  const coefficient = f32(Math.cos(f32(f32(f32(normalDirection) * 90) * fromBits(0x3c8efa35))));
-  const perimeter = calculateNativeParticleQuadNormals(side, longitudinal, coefficient);
-  return [perimeter[0]!, perimeter[1]!, perimeter[3]!, perimeter[2]!];
-}
-
-// BND-C137: mode0 scales the source cosine by the native 1/sqrt(2)
-// literal. The writer consumes the first two native perimeter offsets.
-export function calculateNativeBillboardNormals(first: Vector3, second: Vector3, normalDirection: number): readonly Vector3[] {
-  const cosine = f32(Math.cos(f32(f32(f32(normalDirection) * 90) * fromBits(0x3c8efa35))));
-  const perimeter = calculateNativeParticleQuadNormals(first, second, f32(cosine * fromBits(0x3f3504f3)));
-  return [perimeter[3]!, perimeter[2]!, perimeter[0]!, perimeter[1]!];
-}
-
-/** Native perimeter order shared by the original quad writer. */
-export function calculateNativeParticleQuadNormals(side: Vector3, longitudinal: Vector3, coefficient: number): readonly Vector3[] {
-  const u = normalizeStretchNormalAxis(side, [1, 0, 0]);
-  const v = normalizeStretchNormalAxis(longitudinal, [0, 1, 0]);
-  const weight = f32(1 - coefficient);
-  const core: Vector3 = [
-    f32(weight * f32(f32(u[1] * v[2]) - f32(u[2] * v[1]))),
-    f32(weight * f32(f32(u[2] * v[0]) - f32(u[0] * v[2]))),
-    f32(weight * f32(f32(u[0] * v[1]) - f32(u[1] * v[0]))),
-  ];
-  const combine = (axis: Vector3, subtract: boolean): Vector3 => axis.map((value, index) => {
-    const component = f32(value * coefficient);
-    return subtract ? f32(core[index]! - component) : f32(component + core[index]!);
-  }) as unknown as Vector3;
-  return [combine(u, false), combine(v, false), combine(u, true), combine(v, true)];
-}
-
-function normalizeStretchNormalAxis(value: Vector3, fallback: Vector3): Vector3 {
-  const squared = f32(f32(value[0] * value[0]) + f32(f32(value[1] * value[1]) + f32(value[2] * value[2])));
-  if (!(squared > MIN_SQUARED_LENGTH)) return fallback;
-  let inverse = reciprocalSqrtEstimate(squared);
-  inverse = f32(inverse * f32((3 - f32(squared * inverse) * inverse) / 2));
-  inverse = f32(inverse * f32((3 - f32(squared * inverse) * inverse) / 2));
-  return [f32(value[0] * inverse), f32(value[1] * inverse), f32(value[2] * inverse)];
-}
-
-function reciprocalSqrtEstimate(value: number): number {
-  words.setFloat32(0, value, true);
-  const bits = words.getUint32(0, true);
-  const exponent = ((bits >>> 23) & 255) - 127;
-  const halfExponent = Math.floor(exponent / 2);
-  const parity = exponent - halfExponent * 2;
-  const bin = parity * 256 + ((bits & 0x7fffff) >>> 15);
-  return fromBits(estimates[bin]! - halfExponent * 0x800000);
-}
-
-function fromBits(bits: number): number {
-  words.setUint32(0, bits, true);
-  return words.getFloat32(0, true);
 }

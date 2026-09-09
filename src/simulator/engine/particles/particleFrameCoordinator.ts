@@ -151,7 +151,7 @@ export class ParticleFrameCoordinator {
     if (typeof this.sessionId !== "string" || this.sessionId.length === 0) {
       return rejected("particle.session.invalid-id", "Particle sessions require one non-empty host identity.");
     }
-    const backend = this.backend.snapshot();
+    const backend = this.backend.status();
     if (backend.state !== "ready" || backend.sessionId !== this.sessionId || backend.fault !== null ||
       backend.nextFrame !== null || backend.nextSequence !== 0) {
       return rejected(
@@ -176,7 +176,7 @@ export class ParticleFrameCoordinator {
   }
 
   pollFaults(): SimulatorResult<void> {
-    const backend = this.backend.snapshot();
+    const backend = this.backend.status();
     if (backend.fault !== null) {
       return integrityFailure(
         `particle.${backend.fault.code}.${backend.fault.capability}`,

@@ -14,15 +14,13 @@ import type {
   ParticleTransformProfile,
 } from "../../backends/particleContracts";
 import { particleFloat32FromBits } from "../../backends/particleValidation";
-import { calculateNativeStretchArithmetic, calculateNativeStretchNormals, calculateNativeBillboardNormals } from "./particleStretchedGeometry";
-import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices, calculateNativeMeshMatrixColumns } from "./particleMeshGeometry";
+import { calculateNativeStretchArithmetic } from "./particleStretchedGeometry";
+import { calculateNativeMeshPivotOffset, calculateNativeMeshVertices } from "./particleMeshGeometry";
 import { applyNativeParticleSetupScale, type ParticleSetupScale, calculateNativeParticleLocalBillboardBasis, calculateNativeParticleViewBillboardBasis } from "./particleHierarchyScale";
 import { calculateNativeParticleOrthographicHalfSize, calculateNativeParticleOrthographicWidth } from "./particleSizeLimit";
 import { calculateNativeScalarBillboardRotation, calculateNative3DBillboardRotation, calculateNativeSimpleBillboardDiagonals, calculateNativeBillboardVertices, calculateNativeMeshEulerQuaternion, calculateNativeMeshScalarQuaternion } from "./particleBillboardRotation";
-import { calculateNativeMeshNormals } from "./particleNormalGeometry";
 
 const SCREEN_REFLECTED_QUAD_INDICES = Object.freeze([0, 1, 3, 3, 2, 0]);
-const ZERO_EPSILON = Math.fround(1e-10);
 
 type Vector2 = readonly [number, number];
 type Vector3 = readonly [number, number, number];
@@ -62,7 +60,6 @@ export interface ParticleNativeRenderPrimitive {
   readonly vertexColors: Float32Array;
   readonly positions: Float32Array;
   readonly uvs: Float32Array;
-  readonly normals: Float32Array;
   readonly indices: Uint32Array;
   readonly bounds: ParticleNativePrimitiveBounds;
 }
@@ -202,10 +199,6 @@ function buildPrimitive(
     multiply(vertex[1], outerScale[1]),
     multiply(vertex[2], outerScale[2]),
   ], outerRotation));
-  // BND-C127/C141: preserve native mesh and quad normal stores. Quad normals
-  // need not have unit length; identity owners must not normalize them again.
-  const worldNormals = isStretched || hasIdentityOwner ? source.normals
-    : source.normals.map((normal) => normalizeOr(quaternionRotate(normal, outerRotation), [0, 0, -1]));
   const projectedCenter = projectPoint(worldCenter, scene);
   const worldVertices = source.simpleDiagonals === undefined ? offsets.map((offset) => {
     // The native stretched worker publishes world vertices directly. Turning
@@ -221,12 +214,7 @@ function buildPrimitive(
     positions[index * 2 + 1] = projected[1];
   }
   const uvs = buildUvs(source.uv0, sample, binding);
-  const normals = new Float32Array(worldNormals.length * 3);
-  for (let index = 0; index < worldNormals.length; index += 1) {
-    normals[index * 3] = worldNormals[index]![0];
-    normals[index * 3 + 1] = -worldNormals[index]![1];
-    normals[index * 3 + 2] = worldNormals[index]![2];
-  }
+
   const color = currentLinearColor(sample, binding.renderer.m_ApplyActiveColorSpace);
   const vertexColors = currentVertexColors(binding.mesh, color, source.vertices.length);
   const sortingFudge = requiredBits(sample.sortingFudgeBits!);
@@ -259,7 +247,6 @@ function buildPrimitive(
     vertexColors,
     positions,
     uvs,
-    normals,
     indices: new Uint32Array(source.indices),
     bounds,
   });
@@ -276,7 +263,6 @@ function sourceGeometry(
   readonly vertices: readonly Vector3[];
   readonly simpleDiagonals?: readonly [Vector3, Vector3];
   readonly uv0: readonly Vector2[];
-  readonly normals: readonly Vector3[];
   readonly indices: readonly number[];
 } {
   if (binding.renderer.m_RenderMode === 4) {
@@ -297,8 +283,6 @@ function sourceGeometry(
     return Object.freeze({
       vertices: Object.freeze(calculateNativeMeshVertices(mesh.vertices, particleRotation, visibleSize, basis, pivotOffset, transformSize, meshCenter)),
       uv0: mesh.uv0,
-      normals: Object.freeze(calculateNativeMeshNormals(mesh.normals,
-        calculateNativeMeshMatrixColumns(particleRotation, visibleSize, basis, transformSize))),
       indices: mesh.screenYReflectionIndices,
     });
   }
@@ -331,15 +315,10 @@ function sourceGeometry(
   const vertices = simpleDiagonals === undefined
     ? coordinates.map((vertex) => applyBasis(vertex, positionBasis))
     : calculateNativeBillboardVertices([0, 0, 0], simpleDiagonals);
-  // BND-C137: complex normals include the raw pivot through native offsets.
-  // Simple workers pass their diagonals directly, preserving signed zeros.
-  const normalOffsets = simpleDiagonals ?? [vertices[2]!, vertices[3]!];
-  const normals = calculateNativeBillboardNormals(normalOffsets[0]!, normalOffsets[1]!, binding.renderer.m_NormalDirection);
   return Object.freeze({
     vertices: Object.freeze(vertices),
     simpleDiagonals,
     uv0: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]] as const),
-    normals: Object.freeze(normals),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
 }
@@ -466,7 +445,6 @@ function stretchedBillboard(
   readonly vertices: readonly Vector3[];
   readonly simpleDiagonals?: readonly [Vector3, Vector3];
   readonly uv0: readonly Vector2[];
-  readonly normals: readonly Vector3[];
   readonly indices: readonly number[];
 } {
   // Current non-Freeform worker, not a centered rotated billboard. The native
@@ -497,14 +475,11 @@ function stretchedBillboard(
   const side = applyBasis([arithmetic.sideXY[0], arithmetic.sideXY[1], 0], sideBasis)
     .map((value, axis) => multiply(value, outerScale[axis]!)) as unknown as Vector3;
   const opposite = scaleVector(side, -1);
-  const longitudinal: Vector3 = [subtract(tail[0], worldCenter[0]), subtract(tail[1], worldCenter[1]), subtract(tail[2], worldCenter[2])];
-  const normals = calculateNativeStretchNormals(side, longitudinal, binding.renderer.m_NormalDirection);
   return Object.freeze({
     // Reorder the native perimeter head+,tail+,tail-,head- to our grid indices.
     // Absolute world vertices: do not rotate by the emitter or re-add the head.
     vertices: Object.freeze([addVector(worldCenter, side), addVector(tail, side), addVector(worldCenter, opposite), addVector(tail, opposite)]),
     uv0: Object.freeze([[0, 1], [1, 1], [0, 0], [1, 0]] as const),
-    normals: Object.freeze(normals),
     indices: SCREEN_REFLECTED_QUAD_INDICES,
   });
 }
@@ -621,30 +596,8 @@ function currentLinearColor(
   ] as const);
 }
 
-// RENDER-C52: original1096BB4 converts and repacks Color32 before publication.
-// The current sample producer supplies exact Float32(byte / 255); this finite
-// map preserves the original SIMD approximation and byte quantization.
-const NATIVE_LINEAR_COLOR_BYTES = Object.freeze([
-  0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4,
-  4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
-  8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 12, 12, 12, 13,
-  13, 14, 14, 14, 15, 15, 16, 16, 17, 17, 17, 18, 18, 19, 19, 20,
-  21, 21, 22, 22, 23, 23, 24, 24, 25, 26, 26, 27, 27, 28, 29, 29,
-  30, 30, 31, 32, 32, 33, 34, 34, 35, 36, 37, 37, 38, 39, 40, 40,
-  41, 42, 43, 44, 45, 45, 46, 47, 48, 49, 50, 51, 52, 53, 53, 54,
-  55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
-  71, 72, 73, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 86, 88, 89,
-  90, 91, 93, 94, 95, 97, 98, 99, 101, 102, 103, 105, 106, 107, 109, 110,
-  111, 113, 114, 116, 117, 118, 120, 121, 123, 124, 125, 127, 128, 130, 131, 133,
-  134, 136, 137, 139, 141, 142, 144, 145, 147, 149, 150, 152, 154, 156, 157, 159,
-  161, 163, 164, 166, 168, 170, 171, 173, 175, 177, 179, 181, 183, 184, 186, 188,
-  190, 192, 194, 196, 198, 200, 202, 204, 206, 208, 210, 212, 214, 216, 218, 220,
-  222, 224, 227, 229, 231, 233, 235, 237, 239, 242, 244, 246, 248, 250, 253, 255,
-]);
-
 function gammaToLinear(value: number): number {
-  return divide(NATIVE_LINEAR_COLOR_BYTES[Math.round(value * 255)]!, 255);
+  return f32(value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4));
 }
 
 function requiredCustomData(value: ParticleFloat32Vector4 | null): readonly [number, number, number, number] {
@@ -801,13 +754,6 @@ function addVector(left: Vector3, right: Vector3): Vector3 {
 }
 function scaleVector(value: Vector3, scalar: number): Vector3 {
   return [multiply(value[0], scalar), multiply(value[1], scalar), multiply(value[2], scalar)];
-}
-function vectorLength(value: Vector3): number {
-  return f32(Math.sqrt(add(add(multiply(value[0], value[0]), multiply(value[1], value[1])), multiply(value[2], value[2]))));
-}
-function normalizeOr(value: Vector3, fallback: Vector3): Vector3 {
-  const length = vectorLength(value);
-  return length > ZERO_EPSILON ? scaleVector(value, divide(1, length)) : fallback;
 }
 function f32(value: number): number { return Math.fround(value); }
 function add(left: number, right: number): number { return f32(f32(left) + f32(right)); }

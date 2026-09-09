@@ -41,11 +41,6 @@ interface ParticleSemanticResource {
 }
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
-const CURRENT_PARTICLE_SOURCE_COMMIT = "c670d103b44276ffbcf5e5aeaf4cf2af68325c04";
-const CURRENT_PARTICLE_MATERIAL_PASS_SHA256 = "7E19052CD3C1014B3D3F5E0238E5BE53F924165C8D0747340AF632C30A16D168";
-const CURRENT_PARTICLE_MESH_COLORS_SHA256 = "9F507C7BD7C7E3BD365C0E0F913D327BE046354ACE30704EB80E3324766A805F";
-const CURRENT_HABAHIRO_RANGE_CONTRACT_SHA256 = "40A6822708A9B400297D9A5AE7F8816CF4E57847F67F3DA31274CC492E041F4D";
-const CURRENT_PARTICLE_RENDERER_CONTRACT_SHA256 = "7F1F19B26F6E8271D1A800645BFD7E1ECD0D5CAF322631E79474E63B3A47B307";
 
 const renderCatalog = parseRenderCatalog(renderCatalogJson);
 const particleCatalog = parseParticleCatalog(particleCatalogJson);
@@ -406,7 +401,6 @@ function parseParticleCatalog(value: unknown): {
   readonly meshProfiles: Readonly<Record<string, unknown>>;
 } {
   const root = record(reviveNonFinite(value));
-  const source = record(root?.source);
   const resources = record(root?.resources);
   const profiles = record(root?.profiles);
   const modules = record(root?.moduleProfiles);
@@ -414,14 +408,6 @@ function parseParticleCatalog(value: unknown): {
   const meshes = record(root?.meshProfiles);
   if (root?.schemaVersion !== 2 ||
     root.status !== "current-source-bound-particle-renderer-semantics-provider-raster-separate" ||
-    source?.reverseCommit !== CURRENT_PARTICLE_SOURCE_COMMIT ||
-    source.rendererDomainContractSha256 !== CURRENT_PARTICLE_RENDERER_CONTRACT_SHA256 ||
-    source.meshColorContractSha256 !== CURRENT_PARTICLE_MESH_COLORS_SHA256 ||
-    source.materialPassContractSha256 !== CURRENT_PARTICLE_MATERIAL_PASS_SHA256 ||
-    source.habahiroRangeContractSha256 !== CURRENT_HABAHIRO_RANGE_CONTRACT_SHA256 ||
-    typeof source.resourceProfileSha256 !== "string" || !SHA256_PATTERN.test(source.resourceProfileSha256) ||
-    typeof source.currentDomainContractSha256 !== "string" || !SHA256_PATTERN.test(source.currentDomainContractSha256) ||
-    typeof source.boundary !== "string" || source.boundary.length === 0 ||
     resources === null || profiles === null || modules === null || renderers === null || meshes === null) {
     throw new Error("invalid source-bound Skin particle semantic catalog");
   }

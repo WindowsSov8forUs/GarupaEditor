@@ -44,7 +44,6 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
-  roundtripOrdinaryNoteWorldCoordinate,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
   calculateOrdinaryNoteStartDepth,
@@ -1627,9 +1626,9 @@ export class RenderCommandProducer {
     }
     const start = noteStartPosition(scene.noteStartPositions[lane.value]!, information);
     const placedStart = Object.freeze({
-      x: float32State(roundtripOrdinaryNoteWorldCoordinate(start.x.value, scene.noteParentScale.value)),
-      y: float32State(roundtripOrdinaryNoteWorldCoordinate(start.y.value, scene.noteParentScale.value)),
-      z: float32State(roundtripOrdinaryNoteWorldCoordinate(start.z.value, scene.noteParentScale.value)),
+      x: float32State(start.x.value),
+      y: float32State(start.y.value),
+      z: float32State(start.z.value),
     });
     const goal = scene.goalPositions[lane.value]!;
     const zero = createRenderFloat32(Math.fround(0));
@@ -1908,7 +1907,7 @@ export class RenderCommandProducer {
           realMoveSecond: zero.value,
           goalPosition: Object.freeze({ x: childGoal.x, y: childGoal.y }),
           noteStartPosition: Object.freeze({ x: childStart.x, y: childStart.y }),
-          currentPositionZ: float32State(roundtripOrdinaryNoteWorldCoordinate(childStart.z.value, scene.noteParentScale.value)),
+          currentPositionZ: float32State(childStart.z.value),
           buttonCount: childButtonCount,
           virtualLaneControllerPresent: source.virtualLaneDirection !== 0,
         });

@@ -1,3 +1,5 @@
+import { CURRENT_SCORE_HUD_SCENE_PROFILE } from "../../engine/rendering/currentScoreHudSemanticProfile";
+
 export type CurrentScoreHighRankClipName = "ScoreGaugeSS" | "ScoreGaugeSSS";
 
 export interface CurrentScoreGraphObject {
@@ -82,23 +84,10 @@ export interface CurrentScoreHighRankNode {
 }
 
 export interface CurrentScoreHudNativeProfile {
-  readonly source: {
-    readonly reverseCommit: "dddab345825dbff6d2a5cf65f5fbbcf771b00e07";
-    readonly contractSha256: "E022B3D4A010D8968BF7661A8000C9822D7BDE6C9A32A668A3F14F44CF7130F4";
-  };
   readonly scene: {
     readonly rootPath: "GamePlay/UI_Root/Display/Score";
     readonly objects: readonly CurrentScoreGraphObject[];
     readonly widgets: readonly CurrentScoreWidget[];
-  };
-  readonly label: {
-    readonly component: Readonly<Record<string, unknown>>;
-    readonly encodedText: Readonly<Record<string, unknown>>;
-    readonly sfnt: {
-      readonly unitsPerEm: 1024;
-      readonly glyphs: Readonly<Record<string, { readonly glyphId: number; readonly advanceUnits: number }>>;
-      readonly hintedAdvancePixelsByFontSize: Readonly<Record<string, Readonly<Record<string, number>>>>;
-    };
   };
   readonly panel: {
     readonly targetLeftX: 38;
@@ -106,7 +95,6 @@ export interface CurrentScoreHudNativeProfile {
     readonly bottomY: -25.5;
     readonly topY: 13.5;
     readonly minimumWidth: 2;
-    readonly clipRangeCenterF32Correction: readonly [number, number];
     readonly softness: readonly [20, 3];
   };
   readonly highRank: {
@@ -145,10 +133,7 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
   }
   const root = record(value);
   const sample = record(root?.sample);
-  const source = record(root?.source);
   const scene = record(root?.scene);
-  const label = record(root?.label);
-  const sfnt = record(label?.sfnt);
   const highRank = record(root?.highRank);
   const panel = record(root?.panel);
   const panelSerialized = record(panel?.serialized);
@@ -160,12 +145,9 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
   if (root?.schemaVersion !== 1 || root.status !== "current-score-ngui-native-production-profile" ||
     sample?.package !== "jp.co.craftegg.band" || sample.versionName !== "10.1.4" ||
     sample.versionCode !== 230 || sample.abi !== "arm64-v8a" ||
-    source?.reverseCommit !== "dddab345825dbff6d2a5cf65f5fbbcf771b00e07" ||
-    source.contractBytes !== 320367 ||
-    source.contractSha256 !== "E022B3D4A010D8968BF7661A8000C9822D7BDE6C9A32A668A3F14F44CF7130F4" ||
-    scene?.rootPath !== ROOT || scene.gameObjectCount !== 64 || scene.widgetCount !== 45 ||
+    scene?.rootPath !== ROOT ||
     !Array.isArray(scene.objects) || !Array.isArray(scene.widgets) ||
-    label === null || sfnt?.unitsPerEm !== 1024 || highRank === null || panel === null ||
+    highRank === null || panel === null ||
     anchorWidget === null || !Array.isArray(anchorWidget.local_position) || anchorWidget.local_position[0] !== 38 ||
     panelClip === null || !Array.isArray(panelClip.value) || panelClip.value.length !== 4 ||
     panelSoftness === null || !Array.isArray(panelSoftness.value) || panelSoftness.value[0] !== 20 || panelSoftness.value[1] !== 3 ||
@@ -176,7 +158,7 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
   if (objects.some((row) => row === null)) return null;
   const graph = objects as CurrentScoreGraphObject[];
   const pathSet = new Set(graph.map((row) => row.path));
-  if (graph.length !== 64 || pathSet.size !== 64 || !pathSet.has(ROOT) || graph.some((row) =>
+  if (pathSet.size !== graph.length || !pathSet.has(ROOT) || graph.some((row) =>
     row.path !== ROOT && (row.parentPath === null || !pathSet.has(row.parentPath)))) return null;
   const siblingKeys = graph.map((row) => `${row.parentPath}\0${row.siblingIndex}`);
   if (new Set(siblingKeys).size !== siblingKeys.length) return null;
@@ -184,7 +166,7 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
   const widgets = scene.widgets.map(parseWidget);
   if (widgets.some((row) => row === null)) return null;
   const parsedWidgets = widgets as CurrentScoreWidget[];
-  if (parsedWidgets.length !== 45 || new Set(parsedWidgets.map((row) => row.path)).size !== 45 ||
+  if (new Set(parsedWidgets.map((row) => row.path)).size !== 45 ||
     parsedWidgets.some((row) => !pathSet.has(row.path))) return null;
 
   const nodes = highRank.nodes.map(parseHighRankNode);
@@ -205,33 +187,9 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
   });
   if (tweenAlpha.some((row) => row === null) || tweenAlpha.length !== 3) return null;
 
-  const glyphs = record(sfnt.glyphs);
-  const hinted = record(sfnt.hintedAdvancePixelsByFontSize);
-  if (glyphs === null || hinted === null || ![..."0123456789ABCS+"].every((char) => {
-    const glyph = record(glyphs[char]);
-    return glyph !== null && Number.isSafeInteger(glyph.glyphId) && Number.isSafeInteger(glyph.advanceUnits) && glyph.advanceUnits > 0;
-  }) || !Array.from({ length: 28 }, (_, index) => String(index + 1)).every((size) => {
-    const metrics = record(hinted[size]);
-    return metrics !== null && [..."0123456789ABCS+"].every((char) =>
-      typeof metrics[char] === "number" && Number.isFinite(metrics[char]) && metrics[char] > 0);
-  })) return null;
-
   const parsed = deepFreeze({
-    source: { reverseCommit: source.reverseCommit, contractSha256: source.contractSha256 },
     scene: { rootPath: ROOT, objects: graph, widgets: parsedWidgets },
-    label: { component: record(label.component)!, encodedText: record(label.encodedText)!, sfnt: { unitsPerEm: 1024, glyphs, hintedAdvancePixelsByFontSize: hinted } },
-    panel: {
-      targetLeftX: 38,
-      leftAbsolute: 4,
-      bottomY: -25.5,
-      topY: 13.5,
-      minimumWidth: 2,
-      clipRangeCenterF32Correction: Object.freeze([
-        Math.fround(0.0000152587890625),
-        Math.fround(0.000011444091796875),
-      ]),
-      softness: Object.freeze([20, 3]),
-    },
+    panel: CURRENT_SCORE_HUD_SCENE_PROFILE.gauge.highRankPanel,
     highRank: { siblingOrder: [...SIBLING_ORDER], nodes: nodes as CurrentScoreHighRankNode[], tweenAlpha, clips: clips as CurrentScoreAnimationClip[] },
   }) as unknown as CurrentScoreHudNativeProfile;
   parsedProfiles.add(parsed);

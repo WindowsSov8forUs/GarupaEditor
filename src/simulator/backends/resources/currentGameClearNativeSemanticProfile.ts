@@ -47,12 +47,6 @@ export interface GameClearNativeAssetIdentity {
 }
 
 export interface GameClearNativeSemanticProfile {
-  readonly source: Readonly<{
-    readonly reverseCommit: "6cddb142806ffdb933cc6a237f69f4dd16e9ca97";
-    readonly contractBytes: 653562;
-    readonly contractSha256: "B5670A20E449671B77C3FD595AC8B27B225A9F0EDD1FEA98238BEDF0B3556D56";
-    readonly runtimeGraphProfileSha256: "558FFBC854ADA8D064D98FDC53C90D2A7DDC1ACF79368F8DB5806222CC5BCDDB";
-  }>;
   readonly systems: readonly GameClearNativeSystemIdentity[];
   readonly assets: readonly GameClearNativeAssetIdentity[];
   readonly nativeParticleHandoff: Readonly<{
@@ -100,7 +94,6 @@ export function parseGameClearNativeSemanticProfile(
 ): GameClearNativeSemanticProfile | null {
   const root = record(value);
   const sample = record(root?.sample);
-  const source = record(root?.source);
   const inventory = record(root?.inventory);
   const counts = record(inventory?.counts);
   const handoff = record(root?.nativeParticleHandoff);
@@ -114,10 +107,6 @@ export function parseGameClearNativeSemanticProfile(
     sample.versionCode !== 230 ||
     sample.abi !== "arm64-v8a" ||
     sample.unityVersion !== "2022.3.62f1" ||
-    source?.reverseCommit !== "6cddb142806ffdb933cc6a237f69f4dd16e9ca97" ||
-    source.contractBytes !== 653562 ||
-    source.contractSha256 !== "B5670A20E449671B77C3FD595AC8B27B225A9F0EDD1FEA98238BEDF0B3556D56" ||
-    source.runtimeGraphProfileSha256 !== "558FFBC854ADA8D064D98FDC53C90D2A7DDC1ACF79368F8DB5806222CC5BCDDB" ||
     counts === null ||
     !sameArray(inventory?.shapeTypes, [null, 5, 10]) ||
     !sameArray(inventory?.renderModes, [0, 1]) ||
@@ -168,12 +157,6 @@ export function parseGameClearNativeSemanticProfile(
     system.materialAsset !== null && !assetKeys.has(system.materialAsset))) return null;
 
   const parsed = deepFreeze({
-    source: {
-      reverseCommit: source.reverseCommit,
-      contractBytes: source.contractBytes,
-      contractSha256: source.contractSha256,
-      runtimeGraphProfileSha256: source.runtimeGraphProfileSha256,
-    },
     systems,
     assets,
     nativeParticleHandoff: {

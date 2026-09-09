@@ -14,7 +14,6 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
-  roundtripOrdinaryNoteWorldCoordinate,
   buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   type OrdinaryBaseNoteMeshGeometry,
@@ -69,12 +68,8 @@ export function createOrdinaryLongNormalChildState(
   const one = createRenderFloat32(Math.fround(1));
   if (zero.status !== "ok") return zero;
   if (one.status !== "ok") return one;
-  const startX = createRenderFloat32(roundtripOrdinaryNoteWorldCoordinate(
-    motionState.noteStartPosition.x.value, motionState.noteParentScale.value,
-  ));
-  const startY = createRenderFloat32(roundtripOrdinaryNoteWorldCoordinate(
-    motionState.noteStartPosition.y.value, motionState.noteParentScale.value,
-  ));
+  const startX = createRenderFloat32(motionState.noteStartPosition.x.value);
+  const startY = createRenderFloat32(motionState.noteStartPosition.y.value);
   if (startX.status !== "ok") return startX;
   if (startY.status !== "ok") return startY;
   return ok(Object.freeze({

@@ -3610,7 +3610,6 @@ function applyScoreHud(
     totalScoreProfile.font_size,
     scoreFont.family,
     totalScoreProfile.depth,
-    nativeProfile.label.sfnt.hintedAdvancePixelsByFontSize,
   );
 
   const progress = scoreGameObject(visual, `${nativeProfile.scene.rootPath}/Progress`);
@@ -3764,7 +3763,6 @@ function updatePersistentScoreHud(
     totalScoreProfile.font_size,
     scoreFont.family,
     totalScoreProfile.depth,
-    nativeProfile.label.sfnt.hintedAdvancePixelsByFontSize,
   );
 
   const progress = visual.scoreGaugeSprites[0]!;
@@ -3823,11 +3821,11 @@ function updateScorePanelClip(
   const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
   const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
   const panelCenter = Math.fround(
-    Math.fround(Math.fround(authoredLeft + panelRight) / 2) + panel.clipRangeCenterF32Correction[0],
+    Math.fround(Math.fround(authoredLeft + panelRight) / 2),
   );
   const panelHeight = Math.fround(panel.topY - panel.bottomY);
   const panelCenterY = Math.fround(
-    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2) - panel.clipRangeCenterF32Correction[1],
+    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2),
   );
   const panelLeft = Math.fround(panelCenter - Math.fround(panelWidth / 2));
   const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));

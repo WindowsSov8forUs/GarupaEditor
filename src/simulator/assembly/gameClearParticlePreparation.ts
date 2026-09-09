@@ -115,7 +115,7 @@ export async function prepareGameClearParticleProvider(
     logicalTextureCount: mergedEntries.length,
     uniquePngCount: pngBytes.size,
     entries: mergedEntries,
-    productionBoundary: `${basePack.textures.productionBoundary} Game-clear encoded PNG identities and serialized component relations are independently pinned by Reverse commit ${profile.nativeSemantic.source.reverseCommit}.`,
+    productionBoundary: `${basePack.textures.productionBoundary} Game-clear encoded PNG identities and serialized component relations are validated during resource preparation.`,
   });
   const pack: ParticlePreparedResourcePack = Object.freeze({
     profile: mergedProfile,

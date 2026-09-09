@@ -40,7 +40,6 @@ import {
   type ParticleHierarchyTransform,
   type ParticleRuntimeTransform,
 } from "./particleHierarchyScale";
-import particleReciprocalSqrtEstimates from "./arm64ReciprocalSqrtEstimate.json";
 import { calculateNativeParticleActualBounds, calculateNativeParticleLinearAnalyticBounds, calculateNativeParticleShapeAnalyticBounds, calculateNativeParticleWorldBounds, calculateNativeParticleRendererSortDistance } from "./particleBounds";
 import { getNativeParticleMeshBounds } from "./particleMeshGeometry";
 import {
@@ -57,30 +56,11 @@ import {
 
 const TWO_PI = float32FromBits(0x40C90FDB);
 const DEG_TO_RAD = float32FromBits(0x3C8EFA35);
-const INVERSE_TWO_PI = float32FromBits(0x3E22F983);
-const TRIG_POLY_1 = float32FromBits(0x42255DDC);
-const TRIG_POLY_2 = float32FromBits(0x42A33422);
-const TRIG_POLY_3 = float32FromBits(0x42992322);
-const TRIG_POLY_4 = float32FromBits(0x421EA0CD);
-const TRIG_POLY_TWO_PI = float32FromBits(0x40C90FDA);
-const CUBE_LOG_LINEAR = float32FromBits(0x3FB80D57);
-const CUBE_LOG_QUADRATIC = float32FromBits(0xBF21DDA4);
-const CUBE_LOG_CUBIC = float32FromBits(0x3E470BD9);
-const CUBE_EXP_LINEAR = float32FromBits(0x3F2EA941);
-const CUBE_EXP_QUADRATIC = float32FromBits(0x3EA2AD7F);
-const ONE_THIRD = float32FromBits(0x3EAAAAAB);
 const SHAPE_DIRECTION_EPSILON_SQUARED = float32FromBits(0x0da24260);
 
 type Vector3 = [number, number, number];
 type Color4 = [number, number, number, number];
 type ColorBytes = [number, number, number, number];
-interface ParticleGradientCache {
-  readonly mode: 0 | 1;
-  readonly times: readonly number[];
-  readonly colors: readonly ColorBytes[];
-  readonly inverses: readonly number[];
-}
-const particleGradientCaches = new WeakMap<ParticleMinMaxGradient["maxGradient"], ParticleGradientCache>();
 type ParticleSimdDraws = ReturnType<typeof particleSimdRandomValues>;
 
 interface SystemRecord {
@@ -920,9 +900,8 @@ export class DeterministicParticleSimulation {
       state.initialModuleStream = initialRandom.state;
       const shapeRandom = particleSimdRandomValues(state.shapeModuleStream, shapeRandomDrawCount(shape));
       state.shapeModuleStream = shapeRandom.state;
-      // 1090584/108C5B8 publish and initialize complete SIMD groups. Padding
-      // participates in the newborn death scan before the admitted prefix.
-      for (let lane = 0; lane < 4; lane += 1) {
+      // Retain the seeded random schedule without materializing padding particles.
+      for (let lane = 0; lane < Math.min(4, admitted - groupStart); lane += 1) {
         const sample = buildBirthRandomSample(initial, initialRandom, shapeRandom, lane);
         const batchIndex = groupStart + lane;
         this.spawn(
@@ -936,13 +915,10 @@ export class DeterministicParticleSimulation {
           batchIndex,
           admitted,
           sample,
-          undefined,
-          true,
         );
       }
     }
-    removeExpiredNewbornParticles(runtime.particles, existingCount, admitted);
-    compactParticleBirths(runtime.particles, existingCount);
+    removeExpiredParticles(runtime.particles);
   }
 
   private spawn(
@@ -956,10 +932,9 @@ export class DeterministicParticleSimulation {
     batchCount: number,
     random: BirthRandomSample,
     analytic?: AnalyticBirthState,
-    paddedBirth = false,
   ): void {
     const initial = getModule(record.bundle, profile, "InitialModule");
-    if (initial === null || (!paddedBirth && runtime.particles.length >= initial.maxNumParticles)) return;
+    if (initial === null || runtime.particles.length >= initial.maxNumParticles) return;
     const instanceState = this.instanceStates.get(runtime.instanceStateKey);
     if (instanceState === undefined) {
       throw fault("particle.simulation.instance-random-state-missing", "Every concrete ParticleSystem instance must retain its own initialized native random state.");
@@ -993,7 +968,7 @@ export class DeterministicParticleSimulation {
       record.definition.parentTransforms.length === 0 && resetRootTransform);
     const parentTransforms = [...ownerParents, ...record.definition.parentTransforms.map((parent, index) =>
       positionedHierarchyTransform(parent, parentSetupScale(record.definition, index, particleSystemSetupScale), index === 0 && resetRootTransform))];
-    const emitterOrigin = calculateNativeParticleEmitterOrigin(emitterTransform, parentTransforms, profile.system.scalingMode);
+    const emitterOrigin = calculateNativeParticleEmitterOrigin(emitterTransform, parentTransforms);
     instanceState.birthCount += 1;
     this.creationSequence += 1;
     const particle: SimulatedParticle = {
@@ -1038,9 +1013,7 @@ export class DeterministicParticleSimulation {
       // 105614C: integrate before applying direction and refined lifetime.
       const random = particleSeedRatio((particle.randomSeed + 0x6AED452E) >>> 0);
       const sign = particleSeedRatio((particle.randomSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
-      const estimate = nativeParticleReciprocalEstimate(particle.inverseLifetime);
-      const first = multiply(estimate, f32(2 - particle.inverseLifetime * estimate));
-      const lifetime = multiply(first, f32(2 - particle.inverseLifetime * first));
+      const lifetime = divide(1, particle.inverseLifetime);
       const curves = [rotation.x, rotation.y, rotation.curve];
       for (let axis = rotation.separateAxes ? 0 : 2; axis < 3; axis += 1) {
         const integral = nativeParticleAnalyticIntegral(curves[axis]!, age, random);
@@ -1143,9 +1116,7 @@ export class DeterministicParticleSimulation {
       // refined inverse delta. Tiny deltas do not contribute orbital velocity.
       let inverseDelta = f32(0);
       if (delta > f32(0.000001)) {
-        const estimate = nativeParticleReciprocalEstimate(delta);
-        const first = multiply(estimate, f32(2 - delta * estimate));
-        inverseDelta = multiply(first, f32(2 - delta * first));
+        inverseDelta = divide(1, delta);
       }
       const radialAmount = minMax(velocity.radial, normalizedAge, particle.slots[5]!);
       const radial = scaleVector(normalizeOrZero(rotatedRelative), multiply(scaledDelta, radialAmount));
@@ -1250,20 +1221,12 @@ function curve(
   value: ParticleAnimationCurve,
   time: number,
   scalar: number,
-  cached = textureSheetCurveCacheable(value),
 ): number {
-  // BND-C47: source unweighted clamp curves; cache scaling precedes evaluation.
+  // Evaluate authored Hermite segments directly, including constant endpoint behavior.
   const keys = value.m_Curve;
   if (keys.length === 0) return 0;
   const t = f32(time);
   if (keys.length === 1) return multiply(keys[0]!.value, scalar);
-  if (cached) {
-    const second = keys.length > 2 && Math.min(t, f32(0.9999899864196777)) >= keys[1]!.time;
-    const left = keys[second ? 1 : 0]!;
-    const right = keys[second ? 2 : 1]!;
-    const coefficients = textureSheetCurveCoefficients(left, right).map((coefficient) => multiply(coefficient, scalar));
-    return textureSheetCurvePolynomial(coefficients, second ? subtract(t, left.time) : t);
-  }
   if (t < keys[0]!.time) return multiply(keys[0]!.value, scalar);
   if (t >= keys[keys.length - 1]!.time) return multiply(keys[keys.length - 1]!.value, scalar);
   let index = 0;
@@ -1272,29 +1235,13 @@ function curve(
   return multiply(textureSheetCurvePolynomial(textureSheetCurveCoefficients(left, keys[index + 1]!), subtract(t, left.time)), scalar);
 }
 
-function nativeParticleReciprocalEstimate(value: number): number {
-  const word = uint32Bits(value);
-  const exponent = ((word >>> 23) & 0xFF) - 127;
-  const bucket = 256 + ((word >>> 15) & 0xFF);
-  // BND-C45: original FRECPE outputs for positive normal lifetime values.
-  return f32(Math.round(262144 / (2 * bucket + 1)) * 2 ** (-exponent - 9));
-}
-
 function nativeParticleLifetime(sampled: number, minimum = f32(1e-5)): readonly [number, number] {
   const lifetime = Math.max(f32(sampled), minimum);
-  const estimate = nativeParticleReciprocalEstimate(lifetime);
-  // FRECPS rounds 2-a*b once; rounding the product separately changes it.
-  const first = multiply(estimate, f32(2 - lifetime * estimate));
-  return [lifetime, multiply(first, f32(2 - lifetime * first))];
+  return [lifetime, divide(1, lifetime)];
 }
 
 function nativeParticleBirthPhase(after: number, duration: number): number {
-  // BND-C61: normal InitialModule receives the step-end phase; source durations
-  // are positive normal Float32 values. Analytic reconstruction is separate.
-  const length = f32(duration);
-  const estimate = nativeParticleReciprocalEstimate(length);
-  const first = multiply(estimate, f32(2 - length * estimate));
-  return multiply(multiply(first, f32(2 - length * first)), after);
+  return divide(after, duration);
 }
 
 function advanceParticleAge(agePercent: number, inverseLifetime: number, delta: number): number {
@@ -1309,32 +1256,6 @@ function normalizedParticleAge(agePercent: number): number {
 
 function particleIsAlive(agePercent: number): boolean {
   return !(agePercent > 100);
-}
-
-function removeExpiredNewbornParticles(particles: SimulatedParticle[], existingCount: number, admitted: number): void {
-  // BND-C205: 108CCE0 scans ascending newborn rows, including SIMD padding.
-  // Each removal swaps the physical tail and rechecks this index. The native
-  // admitted counter saturates at zero; only that surviving prefix publishes.
-  let index = existingCount;
-  while (index < particles.length) {
-    if (particles[index]!.agePercent <= 100) {
-      index += 1;
-      continue;
-    }
-    const last = particles.pop()!;
-    if (index < particles.length) particles[index] = last;
-    if (admitted > 0) admitted -= 1;
-  }
-  particles.length = existingCount + admitted;
-}
-
-function compactParticleBirths(particles: SimulatedParticle[], existingCount: number): void {
-  // BND-C48: native births start at the next four-row boundary. The finalizer
-  // fills that alignment gap from the last birth rows before publishing count.
-  const copiedCount = Math.min((4 - existingCount % 4) % 4, particles.length - existingCount);
-  if (copiedCount === 0) return;
-  const copied = particles.splice(particles.length - copiedCount, copiedCount);
-  particles.splice(existingCount, 0, ...copied);
 }
 
 function nativeParticleSystemClock(
@@ -1566,7 +1487,7 @@ function nativeParticleAnalyticIntegral(value: ParticleMinMaxCurve, age: number,
         : textureSheetCurveCoefficients(keys[index]!, keys[index + 1]!);
       // EF7FE4 scales cached cubic coefficients by 1/4,1/3,1/2,1.
       const integrated = coefficients.map((coefficient, axis) =>
-        multiply(multiply(coefficient, value.scalar), [0.25, ONE_THIRD, 0.5, 1][axis]!));
+        multiply(multiply(coefficient, value.scalar), [0.25, f32(1 / 3), 0.5, 1][axis]!));
       return multiply(time, textureSheetCurvePolynomial(integrated, time));
     };
     return add(segment(false, Math.min(age, split)), segment(true, Math.max(subtract(age, split), 0)));
@@ -1649,26 +1570,11 @@ function currentActualRendererBounds(
 }
 
 function removeExpiredParticles(particles: SimulatedParticle[]): void {
-  let first = 0;
-  while (first < particles.length) {
-    // BND-C46: capture a four-row mask before any swap, then remove high to low.
-    let mask = 0;
-    for (let lane = 0; lane < 4 && first + lane < particles.length; lane += 1) {
-      const particle = particles[first + lane]!;
-      if (!particleIsAlive(particle.agePercent)) mask |= 1 << lane;
-    }
-    if (mask === 0) {
-      first += 4;
-      continue;
-    }
-    for (let lane = 3; lane >= 0; lane -= 1) {
-      if ((mask & (1 << lane)) === 0) continue;
-      const index = first + lane;
-      const last = particles.pop()!;
-      if (index < particles.length) particles[index] = last;
-    }
-    // Copied tail rows must be checked again at this same group boundary.
+  let live = 0;
+  for (const particle of particles) {
+    if (particleIsAlive(particle.agePercent)) particles[live++] = particle;
   }
+  particles.length = live;
 }
 
 function textureSheetFrame(uv: ParticleUvModule, normalizedAge: number, seed: number): number {
@@ -1726,24 +1632,7 @@ function textureSheetCurvePolynomial(coefficients: readonly number[], time: numb
 }
 
 function textureSheetCurve(value: ParticleMinMaxCurve, time: number): number {
-  // BND-C44: the registered UV curves are unweighted and clamp outside their keys.
-  // Fast caches scale coefficients before Horner evaluation; general curves scale after it.
-  const keys = value.maxCurve.m_Curve;
-  if (keys.length === 0) return 0;
-  if (keys.length === 1) return multiply(keys[0]!.value, value.scalar);
-  if (textureSheetCurveCacheable(value.maxCurve)) {
-    const second = keys.length > 2 && Math.min(time, f32(0.9999899864196777)) >= keys[1]!.time;
-    const left = keys[second ? 1 : 0]!;
-    const right = keys[second ? 2 : 1]!;
-    const coefficients = textureSheetCurveCoefficients(left, right).map((coefficient) => multiply(coefficient, value.scalar));
-    return textureSheetCurvePolynomial(coefficients, second ? subtract(time, left.time) : time);
-  }
-  if (time < keys[0]!.time) return multiply(keys[0]!.value, value.scalar);
-  if (time >= keys[keys.length - 1]!.time) return multiply(keys[keys.length - 1]!.value, value.scalar);
-  let index = 0;
-  while (index + 1 < keys.length - 1 && time >= keys[index + 1]!.time) index += 1;
-  const left = keys[index]!;
-  return multiply(textureSheetCurvePolynomial(textureSheetCurveCoefficients(left, keys[index + 1]!), subtract(time, left.time)), value.scalar);
+  return curve(value.maxCurve, time, value.scalar);
 }
 
 function textureSheetFrameIndex(start: number, frame: number, tileCount: number): number {
@@ -1759,9 +1648,7 @@ function minMax(value: ParticleMinMaxCurve, time: number, ratio: number): number
     case 0: return f32(value.scalar);
     case 1: return curve(value.maxCurve, time, value.scalar);
     case 2: {
-      // Both curves use scalar, and either failed cache forces both general paths.
-      const cached = textureSheetCurveCacheable(value.maxCurve) && textureSheetCurveCacheable(value.minCurve);
-      return lerp(curve(value.minCurve, time, value.scalar, cached), curve(value.maxCurve, time, value.scalar, cached), ratio);
+      return lerp(curve(value.minCurve, time, value.scalar), curve(value.maxCurve, time, value.scalar), ratio);
     }
     case 3: return lerp(value.minScalar, value.scalar, ratio);
     default: throw fault("particle.simulation.unsupported-curve-state", "Only current MinMaxCurve states 0..3 are portable.");
@@ -1818,58 +1705,7 @@ function colorToBytes(color: Color4): ColorBytes {
   return color.map((value) => Math.trunc(add(multiply(clamp01(value), 255), 0.5))) as ColorBytes;
 }
 
-function nativeParticleGradientCache(value: ParticleMinMaxGradient["maxGradient"]): ParticleGradientCache {
-  const existing = particleGradientCaches.get(value);
-  if (existing !== undefined) return existing;
-  // BND-C59: color times multiply a rounded reciprocal; alpha times divide.
-  const unit = float32FromBits(0x37800080);
-  const times = [
-    ...Array.from({ length: value.m_NumColorKeys }, (_, index) =>
-      multiply(value[`ctime${index}` as keyof typeof value] as number, unit)),
-    ...Array.from({ length: value.m_NumAlphaKeys }, (_, index) =>
-      divide(value[`atime${index}` as keyof typeof value] as number, 65535)),
-  ].filter((time, index, all) => all.indexOf(time) === index)
-    .map((time) => value.m_Mode === 1 ? subtract(time, unit) : time)
-    .sort((left, right) => left - right);
-  if (times.length < 16) times.push(1);
-  else times[times.length - 1] = 1;
-  const colors = times.map((time) => colorToBytes(gradient(value, time)));
-  const inverses = times.map((time, index) => {
-    if (index === 0) return 0;
-    const width = Math.max(subtract(time, times[index - 1]!), f32(1e-6));
-    const estimate = nativeParticleReciprocalEstimate(width);
-    const first = multiply(estimate, f32(2 - width * estimate));
-    return multiply(first, f32(2 - width * first));
-  });
-  const cache = { mode: value.m_Mode, times, colors, inverses };
-  particleGradientCaches.set(value, cache);
-  return cache;
-}
-
-function sampleParticleGradientCache(cache: ParticleGradientCache, time: number): ColorBytes {
-  const coordinate = f32(time);
-  const { times, colors, inverses } = cache;
-  if (coordinate > times[times.length - 1]!) return [255, 255, 255, 255];
-  let index = cache.mode === 1 ? 0 : 1;
-  while (index < times.length - 1 && coordinate >= times[index]!) index += 1;
-  if (index >= times.length) return [255, 255, 255, 255];
-  if (cache.mode === 1) return [...colors[index]!];
-  // Native clamps the time difference before multiplying the cached reciprocal.
-  const weight = Math.trunc(multiply(multiply(clamp01(subtract(coordinate, times[index - 1]!)), inverses[index]!), 255));
-  return colors[index - 1]!.map((left, channel) =>
-    (left + ((128 + weight * (colors[index]![channel]! - left)) >> 8)) & 255) as ColorBytes;
-}
-
 function lifetimeColorToBytes(value: ParticleMinMaxGradient, time: number, ratio: number): ColorBytes {
-  if (value.minMaxState === 1) return sampleParticleGradientCache(nativeParticleGradientCache(value.maxGradient), time);
-  if (value.minMaxState === 3) {
-    // BND-C60: interpolate the two sampled Color32 caches with an integer weight.
-    const minimum = sampleParticleGradientCache(nativeParticleGradientCache(value.minGradient), time);
-    const maximum = sampleParticleGradientCache(nativeParticleGradientCache(value.maxGradient), time);
-    const weight = Math.trunc(multiply(ratio, 255));
-    return minimum.map((left, channel) =>
-      (left + ((128 + weight * (maximum[channel]! - left)) >> 8)) & 255) as ColorBytes;
-  }
   return colorToBytes(minMaxColor(value, time, ratio));
 }
 
@@ -1878,50 +1714,11 @@ function multiplyColorByte(left: number, right: number): number {
   return (product + (product >>> 8)) >>> 8;
 }
 
-function nativeSinCos(radians: number): readonly [number, number] {
-  const turns = multiply(radians, INVERSE_TWO_PI);
-  const evaluate = (phase: number): number => {
-    const sign = uint32Bits(phase) & 0x80000000;
-    const magic = float32FromBits(sign | 0x4B000000);
-    const nearestInteger = subtract(add(phase, magic), magic);
-    const quarterWave = subtract(0.25, Math.abs(subtract(phase, nearestInteger)));
-    const square = multiply(quarterWave, quarterWave);
-    const fourth = multiply(square, square);
-    const eighth = multiply(fourth, fourth);
-    return multiply(quarterWave, add(
-      multiply(eighth, TRIG_POLY_4),
-      add(
-        subtract(TRIG_POLY_TWO_PI, multiply(square, TRIG_POLY_1)),
-        multiply(fourth, subtract(TRIG_POLY_2, multiply(square, TRIG_POLY_3))),
-      ),
-    ));
-  };
-  return Object.freeze([
-    evaluate(turns),
-    evaluate(add(turns, -0.25)),
-  ] as const);
+function particleSinCos(radians: number): readonly [number, number] {
+  return [f32(Math.cos(radians)), f32(Math.sin(radians))];
 }
 
-function nativeCubeRoot(value: number): number {
-  const sourceBits = uint32Bits(value);
-  const mantissa = add(float32FromBits((sourceBits & 0x807FFFFF) | 0x3F800000), -1);
-  const square = multiply(mantissa, mantissa);
-  const exponent = f32((sourceBits >>> 23) - 127);
-  // BND-C66, 12393DC..1239408: exponent and linear term are rounded first.
-  const log2Approximation = add(
-    add(exponent, multiply(mantissa, CUBE_LOG_LINEAR)),
-    multiply(square, add(multiply(mantissa, CUBE_LOG_CUBIC), CUBE_LOG_QUADRATIC)),
-  );
-  const divided = Math.max(-127, multiply(log2Approximation, ONE_THIRD));
-  const truncated = Math.trunc(divided);
-  const integral = truncated - (truncated > divided ? 1 : 0);
-  const fraction = subtract(divided, integral);
-  const exponential = add(
-    multiply(multiply(fraction, fraction), CUBE_EXP_QUADRATIC),
-    add(multiply(fraction, CUBE_EXP_LINEAR), 1),
-  );
-  return multiply(exponential, float32FromBits((0x3F800000 + (integral << 23)) >>> 0));
-}
+function particleCubeRoot(value: number): number { return f32(Math.cbrt(value)); }
 
 function initialModuleRandomDrawCount(initial: ParticleInitialModule): number {
   // 0x105FD50: particle seed, lifetime, size[X,(Y,Z)], rotation[Z,(X,Y)], color.
@@ -2010,19 +1807,19 @@ function sampleShape(
   switch (shape.type) {
     case 0: {
       const theta = multiply(TWO_PI, next());
-      const [cosine, sine] = nativeSinCos(theta);
+      const [cosine, sine] = particleSinCos(theta);
       const z = subtract(multiply(2, next()), 1);
       const radial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(z, z)))));
       direction = [multiply(radial, cosine), multiply(radial, sine), z];
       const innerCubed = multiply(multiply(inner, inner), inner);
       const radiusDraw = next();
-      const radiusRatio = nativeCubeRoot(add(multiply(innerCubed, radiusDraw), subtract(1, radiusDraw)));
+      const radiusRatio = particleCubeRoot(add(multiply(innerCubed, radiusDraw), subtract(1, radiusDraw)));
       position = scaleVector(direction, multiply(radius, radiusRatio));
       break;
     }
     case 4: {
       const theta = arcAngle();
-      const [cosine, sine] = nativeSinCos(theta);
+      const [cosine, sine] = particleSinCos(theta);
       const radiusDraw = next();
       const radial = f32(Math.sqrt(add(
         multiply(Math.max(inner, 0.001), radiusDraw),
@@ -2031,7 +1828,7 @@ function sampleShape(
       const radialX = multiply(radial, cosine);
       const radialY = multiply(radial, sine);
       const angle = multiply(shape.angle, DEG_TO_RAD);
-      const [cosAngle, sinAngle] = nativeSinCos(angle);
+      const [cosAngle, sinAngle] = particleSinCos(angle);
       position = [multiply(radius, radialX), multiply(radius, radialY), 0];
       direction = [
         multiply(sinAngle, radialX),
@@ -2046,7 +1843,7 @@ function sampleShape(
       break;
     case 8: {
       const theta = arcAngle();
-      const [cosine, sine] = nativeSinCos(theta);
+      const [cosine, sine] = particleSinCos(theta);
       const radiusDraw = next();
       const radial = f32(Math.sqrt(add(
         multiply(Math.max(inner, 0.001), radiusDraw),
@@ -2055,7 +1852,7 @@ function sampleShape(
       const radialX = multiply(radial, cosine);
       const radialY = multiply(radial, sine);
       const angle = multiply(shape.angle, DEG_TO_RAD);
-      const [cosAngle, sinAngle] = nativeSinCos(angle);
+      const [cosAngle, sinAngle] = particleSinCos(angle);
       direction = [
         multiply(sinAngle, radialX),
         multiply(sinAngle, radialY),
@@ -2069,7 +1866,7 @@ function sampleShape(
     }
     case 10: {
       const theta = arcAngle();
-      const [cosine, sine] = nativeSinCos(theta);
+      const [cosine, sine] = particleSinCos(theta);
       const innerSquared = multiply(inner, inner);
       const radial = multiply(radius, f32(Math.sqrt(add(innerSquared, multiply(subtract(1, innerSquared), next())))));
       position = [multiply(radial, cosine), multiply(radial, sine), 0];
@@ -2084,7 +1881,7 @@ function sampleShape(
     const randomTheta = multiply(TWO_PI, next());
     const randomZ = subtract(multiply(2, next()), 1);
     const randomRadial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(randomZ, randomZ)))));
-    const [randomCosine, randomSine] = nativeSinCos(randomTheta);
+    const [randomCosine, randomSine] = particleSinCos(randomTheta);
     const randomDirection: Vector3 = [
       multiply(randomRadial, randomCosine),
       multiply(randomRadial, randomSine),
@@ -2102,7 +1899,7 @@ function sampleShape(
     const randomTheta = multiply(TWO_PI, next());
     const randomZ = subtract(multiply(2, next()), 1);
     const randomRadial = f32(Math.sqrt(Math.max(0, subtract(1, multiply(randomZ, randomZ)))));
-    const [randomCosine, randomSine] = nativeSinCos(randomTheta);
+    const [randomCosine, randomSine] = particleSinCos(randomTheta);
     const randomPosition: Vector3 = [
       multiply(randomRadial, randomCosine),
       multiply(randomRadial, randomSine),
@@ -2122,9 +1919,9 @@ function sampleShape(
 function nativeShapeMatrix(shape: ParticleShapeModule): readonly [Vector3, Vector3, Vector3, Vector3] {
   // BND-C65: 12357F0 constructs a ZXY quaternion from half angles, then
   // multiplies the separately rounded matrix columns by Shape scale.
-  const [cx, sx] = nativeSinCos(multiply(multiply(shape.m_Rotation.x, DEG_TO_RAD), 0.5));
-  const [cy, sy] = nativeSinCos(multiply(multiply(shape.m_Rotation.y, DEG_TO_RAD), 0.5));
-  const [cz, sz] = nativeSinCos(multiply(multiply(shape.m_Rotation.z, DEG_TO_RAD), 0.5));
+  const [cx, sx] = particleSinCos(multiply(multiply(shape.m_Rotation.x, DEG_TO_RAD), 0.5));
+  const [cy, sy] = particleSinCos(multiply(multiply(shape.m_Rotation.y, DEG_TO_RAD), 0.5));
+  const [cz, sz] = particleSinCos(multiply(multiply(shape.m_Rotation.z, DEG_TO_RAD), 0.5));
   const products = [multiply(cz, sx), multiply(sx, sz), multiply(cx, sz), multiply(cx, cz)];
   const firstSigns = [1, -1, 1, 1];
   const secondSigns = [1, 1, -1, 1];
@@ -2358,15 +2155,15 @@ function rotateEulerRadians(vector: Vector3, rotation: Vector3): Vector3 {
   const [x, y, z] = rotation;
   let result: Vector3 = [...vector];
   if (x !== 0) {
-    const [cosine, sine] = nativeSinCos(x);
+    const [cosine, sine] = particleSinCos(x);
     result = [result[0], subtract(multiply(result[1], cosine), multiply(result[2], sine)), add(multiply(result[1], sine), multiply(result[2], cosine))];
   }
   if (y !== 0) {
-    const [cosine, sine] = nativeSinCos(y);
+    const [cosine, sine] = particleSinCos(y);
     result = [add(multiply(result[0], cosine), multiply(result[2], sine)), result[1], subtract(multiply(result[2], cosine), multiply(result[0], sine))];
   }
   if (z !== 0) {
-    const [cosine, sine] = nativeSinCos(z);
+    const [cosine, sine] = particleSinCos(z);
     result = [subtract(multiply(result[0], cosine), multiply(result[1], sine)), add(multiply(result[0], sine), multiply(result[1], cosine)), result[2]];
   }
   return result;
@@ -2396,21 +2193,10 @@ function normalizeOrFallback(vector: Vector3): Vector3 {
   // BND-C64: source cone-volume directions are nonzero and use two refinements.
   return nativeShapeDirection(vector);
 }
-function nativeShapeReciprocalSqrtEstimate(value: number): number {
-  const word = uint32Bits(value);
-  const exponent = ((word >>> 23) & 0xFF) - 127;
-  const halfExponent = Math.floor(exponent / 2);
-  const index = (exponent - halfExponent * 2) * 256 + ((word & 0x7FFFFF) >>> 15);
-  return float32FromBits(particleReciprocalSqrtEstimates.estimateBits[index]! - halfExponent * 0x800000);
-}
+
 function nativeShapeDirection(vector: Vector3): Vector3 {
   const squared = vectorLengthSquared(vector);
-  if (!(squared > SHAPE_DIRECTION_EPSILON_SQUARED)) return [0, 0, 1];
-  let inverse = nativeShapeReciprocalSqrtEstimate(squared);
-  // BND-C62: FRSQRTS rounds (3-a*b)/2 once, after the separate FMUL.
-  inverse = multiply(inverse, f32((3 - multiply(squared, inverse) * inverse) / 2));
-  inverse = multiply(inverse, f32((3 - multiply(squared, inverse) * inverse) / 2));
-  return scaleVector(vector, inverse);
+  return squared > SHAPE_DIRECTION_EPSILON_SQUARED ? scaleVector(vector, divide(1, Math.sqrt(squared))) : [0, 0, 1];
 }
 function currentBurstCount(
   value: ParticleMinMaxCurve,
@@ -2565,12 +2351,6 @@ function colorBits(value: Color4) {
     blueBits: bits(value[2]),
     alphaBits: bits(value[3]),
   });
-}
-
-function uint32Bits(value: number): number {
-  const view = new DataView(new ArrayBuffer(4));
-  view.setFloat32(0, f32(value), true);
-  return view.getUint32(0, true);
 }
 
 function float32FromBits(value: number): number {
