@@ -1149,7 +1149,8 @@ export class RenderCommandProducer {
         renderObjectId,
       });
       if (!this.isAnyHabahiro()) {
-        if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "multiple-directional-flick") {
+        if (pool.family === "flick" || pool.family === "directional-flick" ||
+          pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
           appendHiddenChild(
             commands,
             created,

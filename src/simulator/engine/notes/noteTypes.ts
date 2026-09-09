@@ -2401,10 +2401,10 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
 }
 
 export class NoteMultipleDirectionalVisual extends NoteFrontBase {
-  private presentationLifecycleEnabled = false;
+  private resolvePresentationState: (() => NoteState) | null = null;
 
-  registerPresentationLifecycle(enabled: boolean): void {
-    this.presentationLifecycleEnabled = enabled;
+  registerPresentationLifecycle(resolveState: () => NoteState): void {
+    this.resolvePresentationState = resolveState;
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -2433,22 +2433,24 @@ export class NoteMultipleDirectionalVisual extends NoteFrontBase {
   }
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    // R7 closes the presentation owner only for the explicitly connected renderer.
-    if (!this.presentationLifecycleEnabled) return integrityFailure(
-      "auto-live.multiple-directional-visual-presentation",
-      ["R10", "R13", "R16.D01", "R16.D03"],
-      "AddLong/AddSlide Multiple Directional presentation requires its explicit R7 renderer owner.",
+    return this.updatePresentationState();
+  }
+
+  protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return ok(undefined);
+  }
+
+  protected override stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return ok(undefined);
+  }
+
+  updatePresentationState(): SimulatorResult<void> {
+    if (this.resolvePresentationState === null) return integrityFailure(
+      "note.multiple-directional-visual-owner-unregistered",
+      ["R16.D01", "R16.D03"],
+      "SetupNotes must register the connected tail lifecycle for AddLong/AddSlide visuals.",
     );
-    const noteInformation = this.noteInformation;
-    const runtime = this.autoLiveRuntime;
-    if (noteInformation === null || runtime.status !== "ok") return integrityFailure(
-      "auto-live.multiple-directional-visual-presentation",
-      ["R10", "R13", "R16.D01", "R16.D03", "RPR-R7-009"],
-      "The connected Multiple Directional visual requires its activated chart time owner; R7 closes only the registered production presentation path.",
-    );
-    return runtime.value.getAdjustedMusicPosition() >= noteInformation.absolutePos
-      ? this.changeState(NoteState.Deactive)
-      : ok(undefined);
+    return this.changeState(this.resolvePresentationState());
   }
 }
 
@@ -2776,13 +2778,23 @@ function validateRootFamilyShape(
       valid = noteInformation.afterNoteType === AfterNoteType.None;
       break;
     case FrontNoteType.LongMultipleDirectionalFlickAdd:
-      valid = noteInformation.gameNoteType === GameNoteType.LongAddDirectionFlick &&
-        noteInformation.afterNoteType === AfterNoteType.None;
+      valid = (noteInformation.gameNoteType === GameNoteType.LongAddDirectionFlick &&
+        noteInformation.afterNoteType === AfterNoteType.None) ||
+        (noteInformation.gameNoteType === GameNoteType.LongDirectionalFlickLeftAdd &&
+          noteInformation.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft) ||
+        (noteInformation.gameNoteType === GameNoteType.LongDirectionalFlickRightAdd &&
+          noteInformation.afterNoteType === AfterNoteType.MultipleDirectionalFlickRight);
       break;
     case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
     case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
-      valid = noteInformation.gameNoteType === GameNoteType.SlideAddDirectionalFlick &&
-        noteInformation.afterNoteType === AfterNoteType.None;
+      valid = (noteInformation.gameNoteType === GameNoteType.SlideAddDirectionalFlick &&
+        noteInformation.afterNoteType === AfterNoteType.None) ||
+        (noteInformation.gameNoteType === (noteInformation.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd
+          ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideBDirectionalFlickLeftAdd) &&
+          noteInformation.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft) ||
+        (noteInformation.gameNoteType === (noteInformation.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd
+          ? GameNoteType.SlideADirectionalFlickRightAdd : GameNoteType.SlideBDirectionalFlickRightAdd) &&
+          noteInformation.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight);
       break;
     default:
       return integrityFailure(

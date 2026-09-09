@@ -147,6 +147,11 @@ interface ActiveMultipleDirectionalLine {
   readonly materialDirection: "left" | "right";
 }
 
+interface DirectionalVisualTailOwner {
+  readonly note: NoteBase;
+  readonly information: NoteInformation;
+}
+
 export class NoteManager {
   private readonly activeNotesValue: NoteBase[] = [];
   private readonly activeBpmChangesValue: NoteBpmChange[] = [];
@@ -192,6 +197,10 @@ export class NoteManager {
   private syncConnectionSequence = 0;
   private readonly activeMultipleDirectionalLines: Array<ActiveMultipleDirectionalLine | null> =
     Array.from({ length: MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH }, () => null);
+  private readonly directionalVisualTailOwners = new Map<NoteMultipleDirectionalVisual, {
+    readonly left: DirectionalVisualTailOwner | null;
+    readonly right: DirectionalVisualTailOwner | null;
+  }>();
   private readonly ordinaryLongRenderStates = new Map<
     NoteBase,
     OrdinaryLongNormalChildState
@@ -403,6 +412,9 @@ export class NoteManager {
             this.removeActiveNote(inactiveNote);
             this.releaseOrdinarySyncLinesForNote(inactiveNote);
             this.releaseMultipleDirectionalLinesForNote(inactiveNote);
+            if (inactiveNote instanceof NoteMultipleDirectionalVisual) {
+              this.directionalVisualTailOwners.delete(inactiveNote);
+            }
             this.ordinaryLongRenderStates.delete(inactiveNote);
             this.ordinarySlideRenderStates.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
@@ -474,9 +486,7 @@ export class NoteManager {
             this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
         }
         if (note instanceof NoteMultipleDirectionalVisual) {
-          note.registerPresentationLifecycle(
-            this.renderProducer?.isCompleteHabahiro() === true,
-          );
+          note.registerPresentationLifecycle(() => this.directionalVisualState(note));
         }
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
@@ -617,6 +627,11 @@ export class NoteManager {
       const slideChildUpdate = this.updateOrdinarySlideChildren(substepDelta);
       if (slideChildUpdate.status !== "ok") {
         return slideChildUpdate;
+      }
+
+      for (const visual of this.directionalVisualTailOwners.keys()) {
+        const updated = visual.updatePresentationState();
+        if (updated.status !== "ok") return updated;
       }
 
       const syncLineUpdate = this.updateOrdinarySyncLines();
@@ -850,6 +865,7 @@ export class NoteManager {
     this.syncConnectionSequence = 0;
     this.suppressedOrdinarySyncLinePairCountValue = 0;
     this.activeMultipleDirectionalLines.fill(null);
+    this.directionalVisualTailOwners.clear();
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
     this.bpmPoolCursorValue = 0;
@@ -980,6 +996,7 @@ export class NoteManager {
     deltaTimeSeconds: number,
     placement: "perspective" | "target-button" | "preserve" | null = null,
     useGoalDepth = false,
+    controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"],
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return integrityFailure(
@@ -998,10 +1015,18 @@ export class NoteManager {
     }
     const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
     if (deltaTime.status !== "ok") return deltaTime;
-    const realMoveSecond = placement === null
+    const realMoveSecond = controlledRealMoveSecond !== undefined ? ok(controlledRealMoveSecond) : placement === null
       ? createRenderFloat32(Math.fround(current.motionState.realMoveSecond.value + deltaTime.value.value))
       : ok(current.motionState.realMoveSecond);
     if (realMoveSecond.status !== "ok") return realMoveSecond;
+    if (note instanceof NoteMultipleDirectionalVisual && controlledRealMoveSecond === undefined && placement === null) {
+      // ExecuteUpdate advances the clock; the connected tail owns Add.Move.
+      this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...current,
+        motionState: Object.freeze({ ...current.motionState, deltaTime: deltaTime.value,
+          realMoveSecond: realMoveSecond.value }),
+      }));
+      return ok(undefined);
+    }
     const prepared = this.renderProducer.preflightOrdinaryNoteSceneMotion(
       note.poolObjectId,
       Object.freeze({
@@ -1031,6 +1056,43 @@ export class NoteManager {
       }),
       renderedTransform: prepared.value.motion,
     }));
+    return ok(undefined);
+  }
+
+  private advanceDirectionalVisualsForTail(
+    tail: NoteBase,
+    deltaTimeSeconds: number,
+    realMoveSecond: OrdinaryNoteMotionState["realMoveSecond"],
+  ): SimulatorResult<void> {
+    const afterType = tail.noteInformation?.afterNoteType;
+    if (this.directionalVisualTailOwners.size === 0 ||
+      (afterType !== AfterNoteType.MultipleDirectionalFlickLeft &&
+        afterType !== AfterNoteType.MultipleDirectionalFlickRight &&
+        afterType !== AfterNoteType.SlideMultipleDirectionalFlickLeft &&
+        afterType !== AfterNoteType.SlideMultipleDirectionalFlickRight)) return ok(undefined);
+    const adjacentVisuals = (note: NoteBase, after: boolean): NoteMultipleDirectionalVisual[] =>
+      this.activeMultipleDirectionalLines.flatMap((line) => {
+        if (line === null) return [];
+        const other = line.targetA === note && line.afterA === after && !line.afterB ? line.targetB
+          : line.targetB === note && line.afterB === after && !line.afterA ? line.targetA : null;
+        return other instanceof NoteMultipleDirectionalVisual ? [other] : [];
+      }).sort((a, b) => b.noteInformation!.buttonType - a.noteInformation!.buttonType);
+    for (const visual of adjacentVisuals(tail, true)) {
+      const moved = this.advanceOrdinaryRenderMotion(visual, deltaTimeSeconds, null, false, realMoveSecond);
+      if (moved.status !== "ok") return moved;
+      // Add.Move forwards plain NoteBase.Move only to immediate Add neighbors.
+      // Their existing clocks are retained; there is no recursive group motion.
+      for (const neighbor of adjacentVisuals(visual, false)) {
+        const current = this.ordinaryRenderMotionStates.get(neighbor);
+        if (current === undefined) return integrityFailure(
+          "render.note.directional-neighbor-motion-unavailable", ["R16.D01", "R16.D03"],
+          "A connected Add visual requires its activated motion state.",
+        );
+        const advanced = this.advanceOrdinaryRenderMotion(neighbor, deltaTimeSeconds, null, false,
+          current.motionState.realMoveSecond);
+        if (advanced.status !== "ok") return advanced;
+      }
+    }
     return ok(undefined);
   }
 
@@ -1080,6 +1142,11 @@ export class NoteManager {
       const committed = prepared.value.transaction.commit();
       if (committed.status !== "ok") return committed;
       this.ordinaryLongRenderStates.set(note, prepared.value.childState);
+      if (childState.phase === "move") {
+        const moved = this.advanceDirectionalVisualsForTail(note, deltaTimeSeconds,
+          prepared.value.childState.motionState.realMoveSecond);
+        if (moved.status !== "ok") return moved;
+      }
     }
     return ok(undefined);
   }
@@ -1157,6 +1224,13 @@ export class NoteManager {
       if (committed.status !== "ok") return committed;
       this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
       this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...front, renderedTransform: prepared.value.frontTransform }));
+      const previousTail = childStates[childStates.length - 1];
+      const currentTail = prepared.value.childStates[prepared.value.childStates.length - 1];
+      if (advanceMotion && previousTail?.lifecycle.phase === "move" && currentTail !== undefined) {
+        const moved = this.advanceDirectionalVisualsForTail(note, deltaTimeSeconds,
+          currentTail.lifecycle.motionState.realMoveSecond);
+        if (moved.status !== "ok") return moved;
+      }
       if (note instanceof NoteSlide) note.commitRenderHides();
     }
     return ok(undefined);
@@ -1553,19 +1627,38 @@ export class NoteManager {
       }
       previous = current;
     }
+    for (const visual of activatedNotes) {
+      if (!(visual instanceof NoteMultipleDirectionalVisual)) continue;
+      const button = visual.noteInformation!.buttonType;
+      const tails = this.directionalSyncEndpoints(visual, false)
+        .filter((endpoint) => endpoint.after)
+        .map((endpoint) => ({ note: endpoint.note, information: endpoint.note.noteInformation! }))
+        .sort((a, b) => directionalEndpointButton(a.information) - directionalEndpointButton(b.information));
+      this.directionalVisualTailOwners.set(visual, {
+        left: tails.filter((owner) => directionalEndpointButton(owner.information) < button).slice(-1)[0] ?? null,
+        right: tails.find((owner) => directionalEndpointButton(owner.information) > button) ?? null,
+      });
+    }
     return ok(undefined);
   }
 
-  private directionalSyncExtremes(note: NoteBase, after: boolean): {
-    readonly left: { readonly note: NoteBase; readonly after: boolean };
-    readonly right: { readonly note: NoteBase; readonly after: boolean };
-  } {
+  private directionalVisualState(visual: NoteMultipleDirectionalVisual): NoteState {
+    const owners = this.directionalVisualTailOwners.get(visual);
+    // NotesCheck gives the left tail precedence, including its Deactive state.
+    const owner = owners?.left ?? owners?.right;
+    if (owner === undefined || owner === null || owner.note.state === NoteState.Deactive ||
+      owner.note.noteInformation !== owner.information) return NoteState.Deactive;
+    const phase = this.syncTailState(owner.note)?.phase;
+    return phase === "wait" ? NoteState.Wait : phase === "stop" ? NoteState.Stop : NoteState.Move;
+  }
+
+  private directionalSyncEndpoints(note: NoteBase, after: boolean): Array<{ note: NoteBase; after: boolean }> {
     const start = { note, after };
     const fire = note.noteInformation!.fireNoteType;
     // Front MultipleDirectionalFlick inherits the base GetFarLeft/Right self result.
     if (!after && fire !== FrontNoteType.LongMultipleDirectionalFlickAdd &&
       fire !== FrontNoteType.SlideAMultipleDirectionalFlickAdd &&
-      fire !== FrontNoteType.SlideBMultipleDirectionalFlickAdd) return { left: start, right: start };
+      fire !== FrontNoteType.SlideBMultipleDirectionalFlickAdd) return [start];
     const endpoints = [start];
     for (let i = 0; i < endpoints.length; i += 1) {
       const endpoint = endpoints[i]!;
@@ -1580,6 +1673,15 @@ export class NoteManager {
         if (!endpoints.some((item) => item.note === other.note && item.after === other.after)) endpoints.push(other);
       }
     }
+    return endpoints;
+  }
+
+  private directionalSyncExtremes(note: NoteBase, after: boolean): {
+    readonly left: { readonly note: NoteBase; readonly after: boolean };
+    readonly right: { readonly note: NoteBase; readonly after: boolean };
+  } {
+    const start = { note, after };
+    const endpoints = this.directionalSyncEndpoints(note, after);
     const button = (endpoint: typeof start) => endpoint.after
       ? directionalEndpointButton(endpoint.note.noteInformation!) : endpoint.note.noteInformation!.buttonType;
     let left = start, right = start;
