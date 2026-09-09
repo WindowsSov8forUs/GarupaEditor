@@ -1385,7 +1385,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           ) {
             return reject(
               "render.pixi.line-outside-r2-r4-profile",
-              "Pixi accepts only positive-width non-degenerate ordinary R2 sync or R4 MultipleDirectional line segments.",
+              "Pixi accepts only positive-width ordinary R2 sync or R4 MultipleDirectional line segments.",
             );
           }
           break;
@@ -4541,11 +4541,7 @@ function projectWorldPoint(
 function isEvidenceLine(command: SetLineCommand): boolean {
   return (command.materialRole === "sync-line" ||
     command.materialRole === "multiple-directional-line") &&
-    command.width.value > 0 &&
-    Math.hypot(
-      command.end.x.value - command.start.x.value,
-      command.end.y.value - command.start.y.value,
-    ) > 0;
+    command.width.value > 0;
 }
 
 function createEvidenceLine(
@@ -4559,8 +4555,9 @@ function createEvidenceLine(
   const dy = endY - startY;
   const length = Math.hypot(dx, dy);
   const halfWidth = command.width.value * projection.pixelsPerWorldUnit / 2;
-  const nx = -dy / length * halfWidth;
-  const ny = dx / length * halfWidth;
+  // Coincident endpoints retain a zero-area quad until the line separates again.
+  const nx = length === 0 ? 0 : -dy / length * halfWidth;
+  const ny = length === 0 ? 0 : dx / length * halfWidth;
   const geometry = new MeshGeometry({
     positions: new Float32Array([
       startX + nx, startY + ny,

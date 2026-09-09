@@ -439,17 +439,6 @@ export function buildOrdinaryMultipleDirectionalLine(
       "MultipleDirectional back-line geometry requires two committed root positions and one positive owner-local Float32 scale.",
     );
   }
-  if (
-    Math.hypot(
-      state.targetB.position.x.value - state.targetA.position.x.value,
-      state.targetB.position.y.value - state.targetA.position.y.value,
-    ) === 0
-  ) {
-    return reject(
-      "render.geometry.degenerate-multiple-directional-line",
-      "The observed MultipleDirectional back line requires distinct root positions.",
-    );
-  }
   const targetAFirst = state.targetA.position.x.value <= state.targetB.position.x.value;
   const width = createRenderFloat32(Math.fround(
     state.targetA.localScale.x.value * Math.fround(0.75),
@@ -509,16 +498,10 @@ export function buildOrdinarySyncLine(
     state.targetA.localScaleX.value * SYNC_LINE_WIDTH_FACTOR,
   ));
   if (width.status !== "ok") return width;
-  if (
-    width.value.value <= 0 ||
-    Math.hypot(
-      end.value.x.value - start.value.x.value,
-      end.value.y.value - start.value.y.value,
-    ) === 0
-  ) {
+  if (width.value.value <= 0) {
     return reject(
       "render.geometry.degenerate-sync-line",
-      "The current portable quad requires a positive width and distinct projected XY endpoints.",
+      "The current portable quad requires a positive width.",
     );
   }
   return ok(Object.freeze({
