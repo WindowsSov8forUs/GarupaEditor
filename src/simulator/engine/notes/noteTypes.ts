@@ -505,13 +505,6 @@ export class NoteLong extends NoteFrontBase {
         }),
       }));
     }
-    if (input.deltaTimeSeconds === null) {
-      return integrityFailure(
-        "manual.long-owner-delta-unavailable",
-        ["D10", "D14", "D15", "MJ14", "MJ26"],
-        "Long movement grace requires the host-owned outer-frame Float32 delta.",
-      );
-    }
     const nextOrigin = judgement.value.result === NoteResultType.None
       ? input.currentPosition
       : origin;
@@ -524,7 +517,7 @@ export class NoteLong extends NoteFrontBase {
     }
     const nextAfterMoveTime = inside.value
       ? Math.fround(8)
-      : Math.fround(this.manualAfterMoveTimeValue - input.deltaTimeSeconds);
+      : Math.fround(this.manualAfterMoveTimeValue - runtime.value.getExecuteFrame());
     let movementSucceeded = false;
     if (after.afterNoteType === AfterNoteType.Flick) {
       const rate = getManualScreenDistanceRate(runtime.value.geometry, {
@@ -1231,13 +1224,6 @@ export class NoteSlide extends NoteFrontBase {
         false,
       );
     }
-    if (input.deltaTimeSeconds === null) {
-      return integrityFailure(
-        "manual.slide-owner-delta-unavailable",
-        ["D10", "D14", "D15", "MJ21", "MJ26"],
-        "Slide terminal movement grace requires the host-owned outer-frame delta.",
-      );
-    }
     const judgement = runtime.value.judgeSlide(current.source, adjusted);
     if (judgement.status !== "ok") {
       return judgement;
@@ -1253,7 +1239,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const nextGrace = inside.value
       ? Math.fround(8)
-      : Math.fround(this.manualAfterMoveTimeValue - input.deltaTimeSeconds);
+      : Math.fround(this.manualAfterMoveTimeValue - runtime.value.getExecuteFrame());
     const origin = judgement.value.result === NoteResultType.None || !judgement.value.hasReachedPerfectLine
       ? input.currentPosition
       : this.manualTouchOriginValue;

@@ -6,6 +6,8 @@ Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM6
 
 ## Current application-layer implementation boundary
 
+Long/Slide terminal leave grace resets to 8 inside its target and subtracts the music controller's stored ExecuteFrame outside. Input runs before NoteManager updates that value; an input delta in seconds is not the grace decrement. Existing Reverse `manual-input-runtime-contract-10-1-4/arm64/030eb210__NoteLong__ExecTouchMoved.arm64.tsv` and `0321c664__NoteSlide__ExecTouchMoved.arm64.tsv` (1,482 instructions reverified against the locked ELF) supply this rule. Thirty native subtraction cases and 24 actual production continuation comparisons cover zero/fractional/full frame decrements, exhausted grace and inside resets. The runtime reads the existing clock directly; it adds no platform emulation.
+
 The Simulator does not use implementation code to erase platform differences. This boundary supersedes historical instruction-exact and Unity-internal consumption requirements below; those reports remain records of their original source revisions, not acceptance gates for the current implementation.
 
 - Particle normals, their singular inverse/Jacobi/QR solver and normal-only validation are removed: the active Pixi particle shaders have no normal input.

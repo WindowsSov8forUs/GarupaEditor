@@ -446,6 +446,7 @@ export class NoteManager {
           submitJudgement: this.submitAutoLiveJudgement,
         });
         note.registerManualRuntime({
+          getExecuteFrame: () => this.musicScoreController.executeFrame,
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,

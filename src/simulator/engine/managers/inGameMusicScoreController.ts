@@ -128,6 +128,10 @@ export class InGameMusicScoreController {
     return ok(undefined);
   }
 
+  get executeFrame(): number {
+    return this.executeFrameValue;
+  }
+
   setExecuteFrame(executeFrame: number): void {
     this.executeFrameValue = Math.fround(executeFrame);
   }

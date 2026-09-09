@@ -39,6 +39,7 @@ export interface NoteStateSnapshot {
 }
 
 export interface ManualNoteRuntime {
+  readonly getExecuteFrame: () => number;
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly getJudgementAdjustValueB: () => number;
