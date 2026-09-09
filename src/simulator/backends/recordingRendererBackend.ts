@@ -10,6 +10,7 @@ import {
   freezeTypedHudState,
   validateTypedRenderHudCommand,
   validateTypedRenderResourceBinding,
+  spriteObjectRole,
 } from "./renderingCommandValidation";
 import type {
   RenderBackendFault,
@@ -332,6 +333,16 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       case "hide-object":
       case "deactivate-object":
         return this.requireObject(objects, command.renderObjectId);
+      case "clear-sprite": {
+        const existing = this.requireObject(objects, command.renderObjectId);
+        if (existing.status !== "ok") return existing;
+        const object = objects.get(command.renderObjectId)!;
+        if (!spriteObjectRole(object.role)) return this.latchFault(
+          "render.command.clear-non-sprite", "Only sprite contents can be cleared.",
+        );
+        objects.set(command.renderObjectId, Object.freeze({ ...object, spriteExactKey: null }));
+        return ok(undefined);
+      }
       case "bind-resource": {
         const object = this.requireObject(objects, command.renderObjectId);
         if (object.status !== "ok") return object;

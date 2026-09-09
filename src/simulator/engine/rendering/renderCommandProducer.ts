@@ -1731,14 +1731,8 @@ export class RenderCommandProducer {
       ...base(1),
       kind: "activate-object",
       renderObjectId,
-    }, {
-      ...base(2),
-      kind: "bind-resource",
-      renderObjectId,
-      binding: "sprite",
-      logicalAssetId: binding.value.logicalAssetId,
-      exactKey: binding.value.exactKey,
     }];
+    appendNoteSpriteBinding(commands, base, renderObjectId, binding.value);
     const ordinaryFrontAnimation = habahiro
       ? null
       : resolveNoteAnimationBinding(information, renderObjectId, this.resources);
@@ -1908,14 +1902,7 @@ export class RenderCommandProducer {
         ? resolveHabahiroAfterSpriteBinding(information, this.resources)
         : resolveAfterSpriteBinding(information, this.resources);
       if (afterBinding.status !== "ok") return afterBinding;
-      commands.push({
-        ...base(commands.length),
-        kind: "bind-resource",
-        renderObjectId: afterObjectId,
-        binding: "sprite",
-        logicalAssetId: afterBinding.value.logicalAssetId,
-        exactKey: afterBinding.value.exactKey,
-      });
+      appendNoteSpriteBinding(commands, base, afterObjectId, afterBinding.value);
       const afterAnimation = resolveAfterAnimationBinding(
         information,
         afterObjectId,
@@ -2017,14 +2004,7 @@ export class RenderCommandProducer {
                 this.resources,
               );
           if (childBinding.status !== "ok") return childBinding;
-          commands.push({
-            ...base(commands.length),
-            kind: "bind-resource",
-            renderObjectId: childObjectId,
-            binding: "sprite",
-            logicalAssetId: childBinding.value.logicalAssetId,
-            exactKey: childBinding.value.exactKey,
-          });
+          appendNoteSpriteBinding(commands, base, childObjectId, childBinding.value);
           const childAnimation = resolveNoteAnimationBinding(
             source, childObjectId, this.resources, false, completeHabahiro,
           );
@@ -3045,6 +3025,20 @@ type OrdinaryAnimationBinding = Readonly<{
   animationRole: NoteVisualAnimationRole;
 }>;
 
+function appendNoteSpriteBinding(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  binding: NoteSpriteBinding | null,
+): void {
+  commands.push(binding === null
+    ? { ...base(commands.length), kind: "clear-sprite", renderObjectId }
+    : {
+        ...base(commands.length), kind: "bind-resource", renderObjectId,
+        binding: "sprite", logicalAssetId: binding.logicalAssetId, exactKey: binding.exactKey,
+      });
+}
+
 function appendHiddenChild(
   commands: RenderCommand[],
   created: string[],
@@ -3290,9 +3284,21 @@ function resolveHabahiroFrontSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
   noteColor: boolean,
-): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+): SimulatorResult<NoteSpriteBinding | null> {
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
+  if (
+    information.fireNoteType === FrontNoteType.DirectionalFlick ||
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
+  ) {
+    const left = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType)
+      : afterTypeIsLeft(information.afterNoteType);
+    return ok(resolveHabahiroDirectionalBodyBinding(laneSuffix.value, left, resources));
+  }
   const atlases = resolveHabahiroAtlasLogicalIds(resources);
   if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
     return ok(Object.freeze({ logicalAssetId: atlases.skill, exactKey: `note_skill_${laneSuffix.value}` }));
@@ -3302,14 +3308,7 @@ function resolveHabahiroFrontSpriteBinding(
       ? ok(Object.freeze({ logicalAssetId: atlases.normal16, exactKey: `note_normal_16_${laneSuffix.value}` }))
       : ok(Object.freeze({ logicalAssetId: atlases.normal, exactKey: `note_normal_${laneSuffix.value}` }));
   }
-  if (
-    information.fireNoteType === FrontNoteType.Flick ||
-    information.fireNoteType === FrontNoteType.DirectionalFlick ||
-    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
-    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
-    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
-    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
-  ) {
+  if (information.fireNoteType === FrontNoteType.Flick) {
     return ok(Object.freeze({ logicalAssetId: atlases.flick, exactKey: `note_flick_${laneSuffix.value}` }));
   }
   return ok(Object.freeze({ logicalAssetId: atlases.long, exactKey: `note_long_${laneSuffix.value}` }));
@@ -3363,12 +3362,16 @@ function resolveHabahiroIconBinding(
 function resolveHabahiroAfterSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
-): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+): SimulatorResult<NoteSpriteBinding | null> {
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
+  if (afterTypeIsDirectional(information.afterNoteType)) {
+    return ok(resolveHabahiroDirectionalBodyBinding(
+      laneSuffix.value, afterTypeIsLeft(information.afterNoteType), resources,
+    ));
+  }
   const flick = information.afterNoteType === AfterNoteType.Flick ||
-    information.afterNoteType === AfterNoteType.SlideFlickEnd ||
-    afterTypeIsDirectional(information.afterNoteType);
+    information.afterNoteType === AfterNoteType.SlideFlickEnd;
   return ok(Object.freeze({
     logicalAssetId: flick
       ? resolveHabahiroAtlasLogicalIds(resources).flick
@@ -3381,7 +3384,7 @@ function resolveHabahiroSlideChildBinding(
   information: NoteInformation,
   terminal: boolean,
   resources: RenderEngineResourceBindings,
-): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+): SimulatorResult<NoteSpriteBinding | null> {
   const atlases = resolveHabahiroAtlasLogicalIds(resources);
   const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
   if (!terminal) {
@@ -3392,15 +3395,38 @@ function resolveHabahiroSlideChildBinding(
   }
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
+  if (gameTypeIsDirectional(information.gameNoteType)) {
+    return ok(resolveHabahiroDirectionalBodyBinding(
+      laneSuffix.value, gameTypeIsLeft(information.gameNoteType), resources,
+    ));
+  }
   const flick = information.gameNoteType === GameNoteType.Flick ||
     information.gameNoteType === GameNoteType.LongEndFlick ||
     information.gameNoteType === GameNoteType.SlideEndFlickA ||
-    information.gameNoteType === GameNoteType.SlideEndFlickB ||
-    gameTypeIsDirectional(information.gameNoteType);
+    information.gameNoteType === GameNoteType.SlideEndFlickB;
   return ok(Object.freeze({
     logicalAssetId: flick ? atlases.flick : atlases.long,
     exactKey: `${flick ? "note_flick" : "note_long"}_${laneSuffix.value}`,
   }));
+}
+
+interface NoteSpriteBinding {
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+}
+
+function resolveHabahiroDirectionalBodyBinding(
+  laneSuffix: string,
+  left: boolean,
+  resources: RenderEngineResourceBindings,
+): NoteSpriteBinding | null {
+  // The current directional atlases contain single-lane bodies only. Native
+  // sprite lookup returns null for a range key; the independent icon remains.
+  if (laneSuffix.includes("_")) return null;
+  return {
+    logicalAssetId: resources.directionalAtlasLogicalAssetId,
+    exactKey: `note_flick_${left ? "l" : "r"}_${laneSuffix}`,
+  };
 }
 
 function resolveHabahiroAtlasLogicalIds(

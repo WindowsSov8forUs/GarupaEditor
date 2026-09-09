@@ -85,6 +85,7 @@ import {
   animationRoleMatchesObject,
   validateTypedRenderHudCommand,
   validateTypedRenderResourceBinding,
+  spriteObjectRole,
 } from "../renderingCommandValidation";
 import type {
   RenderBackendSnapshot,
@@ -1227,6 +1228,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     switch (command.kind) {
       case "create-object":
       case "acquire-object":
+      case "clear-sprite":
       case "activate-object":
       case "hide-object":
       case "deactivate-object":
@@ -1313,6 +1315,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }
           shadow.delete(command.renderObjectId);
           break;
+        case "clear-sprite": {
+          const object = shadow.get(command.renderObjectId)!;
+          if (!spriteObjectRole(object.role)) return reject(
+            "render.pixi.clear-non-sprite", "Only sprite contents can be cleared.",
+          );
+          shadow.set(command.renderObjectId, { ...object, spriteBindingKey: null });
+          break;
+        }
         case "bind-resource": {
           const role = shadow.get(command.renderObjectId)!.role;
           if (!validateTypedRenderResourceBinding(command, role, this.profile!)) {
@@ -1336,9 +1346,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "deactivate-object":
           break;
         case "hide-object":
-          if (command.contentsOnly && shadow.get(command.renderObjectId)!.spriteBindingKey === null) {
-            return reject("render.pixi.sprite-hide-without-binding",
-              "Hiding sprite contents requires a bound sprite and preserves its child objects.");
+          if (command.contentsOnly && !spriteObjectRole(shadow.get(command.renderObjectId)!.role)) {
+            return reject("render.pixi.hide-non-sprite",
+              "Hiding sprite contents requires a sprite owner and preserves its child objects.");
           }
           break;
         case "set-transform":
@@ -1544,6 +1554,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.node.destroy({ children: true } as DestroyOptions);
         this.objectIdsByNode.delete(object.node);
         this.objects.delete(command.renderObjectId);
+        return;
+      }
+      case "clear-sprite": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
+        object.spriteBindingKey = null;
+        object.spritePixelsPerUnit = null;
+        object.spriteContent!.texture = Texture.EMPTY;
+        object.spriteContent!.visible = false;
+        if (object.lastTransform !== null && noteSpatialRole(object.role)) {
+          applyNoteSpatialTransform(object, object.lastTransform, this.profile!);
+        }
+        this.attachGameplayDraw(object);
         return;
       }
       case "bind-resource": {

@@ -403,7 +403,7 @@ export type RenderCommand =
       readonly parentObjectId: string | null;
     })
   | (RenderObjectCommandBase & {
-      readonly kind: "activate-object" | "deactivate-object" | "release-object";
+      readonly kind: "activate-object" | "deactivate-object" | "release-object" | "clear-sprite";
     })
   | (RenderObjectCommandBase & {
       readonly kind: "hide-object";
