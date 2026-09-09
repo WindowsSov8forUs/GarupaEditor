@@ -187,7 +187,7 @@ export function getManualNoteResult(
       "The recovered Float32 1/60 conversion must remain finite before rounding.",
     );
   }
-  const roundedFrame = roundAwayFromZero(frameDistance);
+  const roundedFrame = roundToNearestEven(frameDistance);
   let result: NoteResultTypeValue;
   if (roundedFrame < sweetFrame + 3) {
     result = NoteResultType.Perfect;
@@ -241,10 +241,12 @@ export function judgeManualNote(
   }));
 }
 
-function roundAwayFromZero(value: number): number {
-  return value < 0
-    ? -Math.floor(-value + 0.5)
-    : Math.floor(value + 0.5);
+function roundToNearestEven(value: number): number {
+  const lower = Math.floor(value);
+  const fraction = value - lower;
+  return fraction < 0.5 || (fraction === 0.5 && lower % 2 === 0)
+    ? lower
+    : lower + 1;
 }
 
 function isExactFiniteFloat32(value: number): boolean {

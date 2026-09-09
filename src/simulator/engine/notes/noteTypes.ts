@@ -452,7 +452,7 @@ export class NoteLong extends NoteFrontBase {
         : runtime;
     }
     const judgement = judgeManualNote(
-      0,
+      1,
       Math.fround(after.absolutePosition),
       runtime.value.getAdjustedMusicPosition(),
       runtime.value.getCurrentBpm(),
