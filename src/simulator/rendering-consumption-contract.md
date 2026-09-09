@@ -17,6 +17,10 @@ The Simulator does not use implementation code to erase platform differences. Th
 
 Historical normal output, storage-row, internal-cache, world/local round-trip and instruction-exact numeric comparisons are retired for these consumers. Rendering remains OPEN at the application-semantic level; compilation and contract checks do not establish original-client or device equivalence. No original binary/runtime or visual capture is required to remove unused implementation.
 
+### Current material consumption and culling relevance
+
+Reverse `550ebb355acc9830228c221118a4e7632494cbec` binds the 102 material color/mask operations and the original renderer enable states to the current production consumers. The 13 Standard Unlit materials with Cull Back have 73 renderer references; all 73 are disabled in both the original serialized domain and the product catalog. `samples` and `buildBindings` exclude them. Enabled references use Cull Off, so no winding or front-face emulation is required for their output. Material color expressions, color masks, their production handoff and enabled-reference culling have zero differences. Runtime enable/keyword overrides and device raster equivalence are not claimed; material configuration alone must not reopen the retired winding investigation.
+
 ## SORT-01 — renderer distance prefix
 
 Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.
