@@ -1,4 +1,4 @@
-import { integrityFailure, ok, productSemantic, type SimulatorResult } from "../engine/evidence";
+import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSurfaceRect {
   readonly x: number;
@@ -51,34 +51,6 @@ export function copyAndValidateInitialSimulatorSurface(
     }),
     origin: "bottom-left" as const,
   }));
-}
-
-export function validateUnchangedSimulatorSurface(
-  initial: SimulatorSurfaceState,
-  current: SimulatorSurfaceState,
-): SimulatorResult<void> {
-  const checked = copyAndValidateInitialSimulatorSurface(current);
-  if (checked.status !== "ok") return checked;
-  const value = checked.value;
-  if (
-    value.revision !== initial.revision ||
-    value.viewportWidth !== initial.viewportWidth ||
-    value.viewportHeight !== initial.viewportHeight ||
-    value.origin !== initial.origin ||
-    !Object.is(value.safeArea.x, initial.safeArea.x) ||
-    !Object.is(value.safeArea.y, initial.safeArea.y) ||
-    !Object.is(value.safeArea.width, initial.safeArea.width) ||
-    !Object.is(value.safeArea.height, initial.safeArea.height)
-  ) {
-    return productSemantic(
-      undefined,
-      "surface.product.revision-change-detected",
-      ["ML-R05"],
-      "Reverse does not provide an original arbitrary mid-session refresh route; the runtime must atomically rebuild the product surface before consuming the next input frame.",
-      "GE-PS-SURFACE-ATOMIC-REBUILD",
-    );
-  }
-  return ok(undefined);
 }
 
 function finiteNumber(value: unknown): value is number {

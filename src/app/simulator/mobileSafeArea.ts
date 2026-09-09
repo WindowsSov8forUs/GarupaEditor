@@ -1,7 +1,7 @@
 import type { SimulatorSurfaceState } from "../../simulator/platform/surfaceContracts";
 
 export function measureCssSafeArea(
-  canvas: HTMLCanvasElement,
+  canvas: HTMLElement,
   viewportWidth: number,
   viewportHeight: number,
 ): SimulatorSurfaceState["safeArea"] {
@@ -26,6 +26,49 @@ export function measureCssSafeArea(
   const bottom = pixels(style.paddingBottom);
   probe.remove();
   return calculateMobileSafeArea({ left, right, top, bottom }, rect.width, rect.height, viewportWidth, viewportHeight);
+}
+
+/** Fit one unchanged logical scene and its safe area into the current CSS host. */
+export function fitSimulatorCanvas(
+  surface: SimulatorSurfaceState,
+  cssWidth: number,
+  cssHeight: number,
+  safe: SimulatorSurfaceState["safeArea"],
+): SimulatorSurfaceState["safeArea"] {
+  const source = surface.safeArea;
+  const width = surface.viewportWidth, height = surface.viewportHeight;
+  if (![width, height, cssWidth, cssHeight, source.width, source.height, safe.width, safe.height]
+    .every((value) => Number.isFinite(value) && value > 0) ||
+    ![source.x, source.y, safe.x, safe.y].every((value) => Number.isFinite(value) && value >= 0) ||
+    Math.fround(source.x + source.width) > Math.fround(width) ||
+    Math.fround(source.y + source.height) > Math.fround(height) ||
+    Math.fround(safe.x + safe.width) > Math.fround(cssWidth) ||
+    Math.fround(safe.y + safe.height) > Math.fround(cssHeight)) {
+    throw new Error("Canvas fitting requires positive viewports with contained safe areas.");
+  }
+  // Each pair of placement bounds must overlap: keep both the whole canvas
+  // inside the host and the logical safe area inside the current safe area.
+  const scale = Math.min(
+    cssWidth / width, cssHeight / height,
+    safe.width / source.width, safe.height / source.height,
+    (safe.x + safe.width) / (source.x + source.width),
+    (cssWidth - safe.x) / (width - source.x),
+    (safe.y + safe.height) / (source.y + source.height),
+    (cssHeight - safe.y) / (height - source.y),
+  );
+  const place = (extent: number, targetExtent: number, sourceStart: number, sourceSize: number,
+    targetStart: number, targetSize: number): number => {
+    const lower = Math.max(0, targetStart - sourceStart * scale);
+    const upper = Math.min(targetExtent - extent * scale, targetStart + targetSize - (sourceStart + sourceSize) * scale);
+    const centered = targetStart + (targetSize - sourceSize * scale) / 2 - sourceStart * scale;
+    return Math.max(lower, Math.min(upper, centered));
+  };
+  return Object.freeze({
+    x: place(width, cssWidth, source.x, source.width, safe.x, safe.width),
+    y: place(height, cssHeight, source.y, source.height, safe.y, safe.height),
+    width: width * scale,
+    height: height * scale,
+  });
 }
 
 export function calculateMobileSafeArea(

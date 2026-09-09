@@ -2,7 +2,7 @@
 
 ## Runtime policy classification
 
-Reverse evidence owns original-layout claims. Missing original resize evidence is an internal notice, not a production terminal condition; GarupaEditor must use a separately registered atomic product surface-rebuild semantic without claiming original equivalence. The production runtime now contains no `evidence-required` resize failure path; evidence status remains internal capability metadata under [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+Reverse evidence owns original-layout claims. During a session, the browser host fits the existing canvas to the available CSS area while preserving the initial logical viewport, safe area and engine state. This product display adaptation does not reproduce Unity resize internals; evidence status remains internal capability metadata under [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
 
 ## Authority and status
 
@@ -10,8 +10,8 @@ Reverse evidence owns original-layout claims. Missing original resize evidence i
 - Investigation: `artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/`.
 - Locked sample: `jp.co.craftegg.band` 10.1.4 / 230 / `arm64-v8a`.
 - Initial landscape surface: `closed-portable`.
-- Mid-session original parity: `observational-gap`; product runtime: `GE-PS-SURFACE-ATOMIC-REBUILD`.
-- Portrait, Unity GPU/framebuffer exact, physical-device raster and Stage 9 remain outside this contract.
+- Mid-session original parity: `observational-gap`; product runtime: `GE-PS-SURFACE-CANVAS-FIT`.
+- Initial portrait layout, Unity GPU/framebuffer exact, physical-device raster and Stage 9 remain outside this contract. A later portrait CSS host fits the already initialized landscape canvas.
 
 The old 1600×720 delivery frame is now only one regression sample. It is not a logical-canvas constant or a source of production coordinates.
 
@@ -144,7 +144,11 @@ Reverse proves no complete original arbitrary-resize refresh route:
 3. `RefreshSafeArea` reinitializes ScreenToSafeArea/SafeAreaToScreen/FullScreenTexture, but not `StarUIVerticalFitScreen`.
 4. `ButtonManager.execMultiResolution` and particle setup run at gameplay startup and have no arbitrary resize caller.
 
-Therefore Reverse authorizes only the initial revision as an original-parity claim. GarupaEditor separately registers `GE-PS-SURFACE-ATOMIC-REBUILD`: before the next input frame, it constructs a fresh deferred-mount generation against the newly observed valid landscape surface, replays the current timeline with physical audio suppressed, disposes the previous mount, publishes current BGM/visual state, then atomically updates surface/control ownership. A failed candidate is not published; the session releases and returns to the editor without an evidence error page. This product behavior does not claim original resize equivalence and never letterboxes to a fixed 1600×720 frame.
+Therefore Reverse authorizes only the initial revision as an original-parity claim. `GE-PS-SURFACE-CANVAS-FIT` replaces the former rebuild/replay policy: the browser retains that initial backing store and logical surface for the session, including Retry and MoveTime. Resize, orientation and safe-area events change only the canvas CSS placement and uniform display scale. Both the whole canvas and its logical safe area must fit the corresponding host regions; differing aspect ratios leave unused space. The canvas dimensions come from the actual initial surface, never a fixed 1600×720 constant. Pointer events use the displayed canvas rectangle to map back to the unchanged logical viewport.
+
+No resize creates an engine, restarts media, advances a simulation clock or replays terminal particles. Minimized zero-size hosts hide the canvas until usable dimensions return. The obsolete surface-rebuild purpose and replay route are removed; Live no longer retains per-frame or input-resolution history for resizing. Rehearsal retains its existing explicit MoveTime replay data. A platform that changes the logical surface during a session violates the host contract; ordinary physical resizing through the browser adapter does not change it.
+
+Validation uses actual fitting/adapter methods for ten aspect/safe-area/input mappings and four resize/minimize cycles, plus Live/Rehearsal replay-owner checks and TypeScript compilation. This verifies the coordinate mapping and unchanged state ownership without an application run or device-raster claim.
 
 ## Provenance gate
 

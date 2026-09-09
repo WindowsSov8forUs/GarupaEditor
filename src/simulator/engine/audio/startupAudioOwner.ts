@@ -4,7 +4,7 @@ import type {
   AudioCommandProducer,
   AudioOwnerTransaction,
 } from "./audioCommandProducer";
-export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstruction" | "surface-rebuild";
+export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstruction";
 
 export type StartupAudioOwnerPhase =
   | "created"
@@ -84,7 +84,7 @@ export class StartupAudioOwner {
     private readonly liveStartVoiceCue: string | null,
     mvLive = false,
   ) {
-    const reconstruction = purpose === "move-time-reconstruction" || purpose === "surface-rebuild";
+    const reconstruction = purpose === "move-time-reconstruction";
     this.gayaRequired = !reconstruction && mode.sessionMode === "live" && !mvLive;
     this.liveVoiceRequired = !reconstruction && mode.sessionMode === "live" && liveStartVoiceCue !== null;
   }
@@ -96,7 +96,7 @@ export class StartupAudioOwner {
         `Startup audio initialization is available only from created, not ${this.phaseValue}.`,
       );
     }
-    const reconstruction = this.purpose === "move-time-reconstruction" || this.purpose === "surface-rebuild";
+    const reconstruction = this.purpose === "move-time-reconstruction";
     const planned = reconstruction
       ? this.producer.preflightMoveTimeReconstructionBgm()
       : this.producer.preflightStartupOpening(

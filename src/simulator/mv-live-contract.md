@@ -139,4 +139,4 @@ standaloneMvView: "excluded";
 star3DLiveView: "excluded";
 ```
 
-`closed-portable`只声明上述browser语义、serialized movie-widget多比例映射、当前WebView2 actual Pixi raster和owner lifecycle，不升级original codec/device exact。任何post-initial有效landscape surface revision按adaptive合同执行`GE-PS-SURFACE-ATOMIC-REBUILD`；候选无法原子发布时稳定返回编辑器。
+`closed-portable`只声明上述browser语义、serialized movie-widget多比例映射及owner lifecycle，不升级original codec/device exact。播放期间物理窗口变化按[adaptive合同](adaptive-layout-contract.md#surface-revision-disposition)拟合现有画布，保持MV/BGM与结算状态，不重建或重新播放媒体。

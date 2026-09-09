@@ -101,8 +101,6 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       );
     }
     if (initial.status === "rejected") return initial;
-    let activeSurface = initial.value.surface;
-    let pendingSurfaceBuild: SimulatorRecipeEngineBuild | null = null;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
       requireVisualPublication: true,
@@ -116,18 +114,15 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
           fresh.value.originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity &&
           fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity &&
           fresh.value.skinFidelity === initial.value.skinFidelity;
-        const surfaceMatches = purpose === "surface-rebuild"
-          ? !sameSurface(fresh.value.surface, activeSurface)
-          : sameSurface(fresh.value.surface, activeSurface);
+        const surfaceMatches = sameSurface(fresh.value.surface, initial.value.surface);
         if (identityMatches && surfaceMatches) {
-          if (purpose === "surface-rebuild") pendingSurfaceBuild = fresh.value;
           return ok(fresh.value.engine);
         }
         const disposed = fresh.value.engine.dispose();
         return integrityFailure(
           "simulator.recipe.fresh-composition-mismatch",
           [],
-          "A fresh generation must retain chart/settings/Skin identity; Retry and MoveTime retain the active surface while surface-rebuild must bind the newly observed landscape surface." +
+          "A fresh Retry or MoveTime generation must retain chart/settings/Skin identity and the session logical surface." +
             (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}.`),
         );
       },
@@ -147,12 +142,6 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       initial.value.surface,
       initial.value.controlLayout,
       initial.value.readSurface ?? (() => accepted(initial.value.surface)),
-      () => {
-        const value = pendingSurfaceBuild;
-        pendingSurfaceBuild = null;
-        if (value !== null) activeSurface = value.surface;
-        return value;
-      },
     ));
   }
 }
@@ -170,10 +159,9 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly backgroundFidelity: SimulatorBackgroundFidelity,
     private readonly chartFidelity: SimulatorChartFidelity,
     private readonly skinFidelity: SimulatorSkinFidelity,
-    private surface: SimulatorSurfaceState,
-    private controlLayout: OriginalSurfaceLayout,
+    private readonly surface: SimulatorSurfaceState,
+    private readonly controlLayout: OriginalSurfaceLayout,
     private readonly readSurface: () => SimulatorAssemblyResult<SimulatorSurfaceState>,
-    private readonly consumeSurfaceBuild: () => SimulatorRecipeEngineBuild | null,
   ) {}
 
   async synchronizeSurface() {
@@ -190,24 +178,14 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (sameSurface(observed.value, this.surface)) {
       return Object.freeze({ status: "ready" as const });
     }
-    const rebuilt = await this.engine.rebuildSurface();
-    if (rebuilt.status !== "ok") {
-      return Object.freeze({ status: "closed" as const, report: this.finish("user-closed", null) });
-    }
-    const build = this.consumeSurfaceBuild();
-    if (build === null || !sameSurface(build.surface, observed.value)) {
-      return Object.freeze({
-        status: "rejected" as const,
-        failure: moduleFailure(
-          "integrity-failure",
-          "simulator.recipe.surface-rebuild-publication-mismatch",
-          "A successful atomic surface replay must publish the exact observed surface and matching control layout before the next input frame.",
-        ),
-      });
-    }
-    this.surface = build.surface;
-    this.controlLayout = build.controlLayout;
-    return Object.freeze({ status: "ready" as const });
+    return Object.freeze({
+      status: "rejected" as const,
+      failure: moduleFailure(
+        "integrity-failure",
+        "simulator.recipe.logical-surface-changed",
+        "A host must preserve the session logical surface while fitting its display canvas; physical resizing cannot replace gameplay state.",
+      ),
+    });
   }
 
   step(

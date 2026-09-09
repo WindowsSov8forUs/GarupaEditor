@@ -203,7 +203,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     );
     if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
     const moveTimeCandidate = purpose === "move-time-reconstruction";
-    const reconstructionCandidate = moveTimeCandidate || purpose === "surface-rebuild";
     const mvPackage = recipe.request.presentation.mv;
     if (mvPackage !== null &&
       (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
@@ -288,7 +287,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     const gameplayRenderOrder = new PixiGameplayRenderOrder();
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder(), undefined, gameplayRenderOrder);
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, reconstructionCandidate);
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
     const particles = new DeterministicSimulatorParticleBackend(false);
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),

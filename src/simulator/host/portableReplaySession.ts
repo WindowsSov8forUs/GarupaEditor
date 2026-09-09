@@ -12,7 +12,6 @@ import {
 import {
   integrityFailure,
   ok,
-  productSemantic,
   type SimulatorIntegrityFailure,
   type SimulatorResult,
 } from "../engine/evidence";
@@ -66,7 +65,6 @@ export interface SimulatorWholeEngineReplayFactory {
 
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
-  rebuildSurface(): Promise<SimulatorResult<void>>;
   retrySession(): Promise<SimulatorResult<void>>;
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
@@ -180,14 +178,16 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (!before.value.managers.playable) {
       return this.active.step(deltaTimeSeconds, inputFrame);
     }
-    const prepared = this.prepareLiveInputFrame(inputFrame);
+    const prepared = this.controlMode.sessionMode === "rehearsal"
+      ? this.prepareLiveInputFrame(inputFrame)
+      : ok({ engineFrame: inputFrame ?? null, replayFrame: null });
     if (prepared.status !== "ok") return prepared;
     const stepped = this.active.step(deltaTimeSeconds, prepared.value.engineFrame ?? undefined);
     if (stepped.status !== "ok") return stepped;
     if (!before.value.managers.paused) {
       this.timelineSecondsValue = Math.fround(this.timelineSecondsValue + deltaTimeSeconds);
     }
-    this.events.push(Object.freeze({
+    if (this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
       kind: "step",
       deltaTimeSeconds,
       inputFrame: prepared.value.replayFrame,
@@ -203,6 +203,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (copied.status !== "ok") return copied;
     const resolved = this.active.resolveManualInputButton(copied.value);
     if (resolved.status !== "ok") return resolved;
+    if (this.controlMode.sessionMode !== "rehearsal") return resolved;
     let resolutionId: number | null = null;
     if (resolved.value !== null) {
       resolutionId = this.nextResolutionId++;
@@ -229,7 +230,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   }
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     const result = this.active.completeLiveAudio(clearStatus);
-    if (result.status === "ok") this.events.push(Object.freeze({
+    if (result.status === "ok" && this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
       kind: "complete-live",
       clearStatus,
       timelineSecondsAfter: this.timelineSecondsValue,
@@ -387,54 +388,6 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     }));
   }
 
-  async rebuildSurface(): Promise<SimulatorResult<void>> {
-    const available = this.available<void>();
-    if (available !== null) return available;
-    this.state = "replaying";
-    const freshResult = await this.createFreshCandidate("surface-rebuild");
-    if (freshResult.status !== "ok") {
-      this.state = "ready";
-      return freshResult;
-    }
-    const fresh = freshResult.value;
-    const replayResolutions = new Map<number, ManualInputButtonResolution>();
-    for (const event of this.events) {
-      const replayed = this.replayEvent(fresh, event, replayResolutions);
-      if (replayed.status !== "ok") return this.rejectCandidate(fresh, replayed);
-    }
-    if (this.moveTimeCountValue > 0) {
-      const revised = commitMoveTimeTimelineRevision(
-        fresh,
-        this.timelineRevisionValue,
-        this.moveTimeCountValue,
-      );
-      if (revised.status !== "ok") return this.rejectCandidate(fresh, revised);
-    }
-    const previous = this.active;
-    const disposed = previous.dispose();
-    if (disposed.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(disposed);
-    }
-    const published = publishMoveTimeAudio(fresh, this.timelineSecondsValue);
-    if (published.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(published);
-    }
-    this.active = fresh;
-    this.currentResolutions = replayResolutions;
-    for (const [id, resolution] of replayResolutions) this.resolutionIds.set(resolution, id);
-    this.generation += 1;
-    this.state = "ready";
-    return productSemantic(
-      undefined,
-      "surface.product.atomic-rebuild",
-      ["ML-R05"],
-      "The original mid-session resize route is unobserved; GarupaEditor atomically replays the current generation onto the new landscape surface without claiming original continuity.",
-      "GE-PS-SURFACE-ATOMIC-REBUILD",
-    );
-  }
-
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState> {
     const available = this.available<SimulatorTimelineControlState>();
     if (available !== null) return available;
@@ -569,7 +522,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const available = this.available<void>();
     if (available !== null) return available;
     const result = operation();
-    if (result.status === "ok") this.events.push(Object.freeze({
+    if (result.status === "ok" && this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
       kind,
       timelineSecondsAfter: this.timelineSecondsValue,
     }));

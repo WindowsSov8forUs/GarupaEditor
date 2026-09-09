@@ -19,7 +19,7 @@ import {
   type SimulatorGraphicsSurface,
 } from "../../simulator/platform/platformComposition";
 import type { SimulatorSurfaceState } from "../../simulator/platform/surfaceContracts";
-import { measureCssSafeArea } from "./mobileSafeArea";
+import { fitSimulatorCanvas, measureCssSafeArea } from "./mobileSafeArea";
 import type {
   SimulatorFrameScheduler,
   SimulatorFrameSubscription,
@@ -66,11 +66,7 @@ export async function createBrowserSimulatorPlatform(input: {
 }
 
 class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
-  private revision = 0;
-  private lastWidth: number;
-  private lastHeight: number;
-  private lastClientWidth: number;
-  private lastClientHeight: number;
+  private readonly surface: SimulatorSurfaceState;
   private mountOwner: Container | null = null;
   private linearOutputOwner: PixiLinearOutputOwner | null = null;
   private readonly resizeObserver: ResizeObserver | null;
@@ -81,16 +77,20 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     private readonly host: HTMLElement,
     private readonly safeAreaPolicy: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"],
   ) {
-    this.lastWidth = canvas.width;
-    this.lastHeight = canvas.height;
-    this.lastClientWidth = host.clientWidth;
-    this.lastClientHeight = host.clientHeight;
+    const width = canvas.width, height = canvas.height;
+    const safeArea = safeAreaPolicy === "full-surface"
+      ? { x: 0, y: 0, width, height }
+      : safeAreaPolicy === "css-safe-area" ? measureCssSafeArea(canvas, width, height) : safeAreaPolicy;
+    this.surface = Object.freeze({ revision: 0, viewportWidth: width, viewportHeight: height,
+      safeArea: Object.freeze({ ...safeArea }), origin: "bottom-left" as const });
     this.resizeObserver = typeof ResizeObserver === "function"
-      ? new ResizeObserver(() => this.synchronizeSurfaceMetrics())
+      ? new ResizeObserver(this.onSurfaceEnvironmentChange)
       : null;
     this.resizeObserver?.observe(host);
+    window.addEventListener("resize", this.onSurfaceEnvironmentChange);
     window.addEventListener("orientationchange", this.onSurfaceEnvironmentChange);
     window.visualViewport?.addEventListener("resize", this.onSurfaceEnvironmentChange);
+    this.fitCanvas();
   }
 
   static async create(
@@ -99,7 +99,8 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   ): Promise<BrowserPixiGraphicsSurface> {
     const app = new Application();
     await app.init({
-      resizeTo: host,
+      width: host.clientWidth,
+      height: host.clientHeight,
       resolution: window.devicePixelRatio,
       autoDensity: true,
       antialias: true,
@@ -119,27 +120,14 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
+    canvas.style.position = "relative";
     canvas.style.touchAction = "none";
     host.replaceChildren(canvas);
     return new BrowserPixiGraphicsSurface(app, canvas, host, safeArea);
   }
 
   readSurfaceState(): SimulatorSurfaceState {
-    this.synchronizeSurfaceMetrics();
-    const width = this.canvas.width;
-    const height = this.canvas.height;
-    const safeArea = this.safeAreaPolicy === "full-surface"
-      ? Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(width), height: Math.fround(height) })
-      : this.safeAreaPolicy === "css-safe-area"
-        ? measureCssSafeArea(this.canvas, width, height)
-        : this.safeAreaPolicy;
-    return Object.freeze({
-      revision: this.revision,
-      viewportWidth: width,
-      viewportHeight: height,
-      safeArea,
-      origin: "bottom-left" as const,
-    });
+    return this.surface;
   }
 
   mount(_sessionId: string, sceneRoot: Container): SimulatorAssemblyResult<SimulatorGraphicsMount> {
@@ -168,38 +156,33 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   }
 
   private readonly onSurfaceEnvironmentChange = () => {
-    this.revision += 1;
-    this.synchronizeStageScale();
+    this.fitCanvas();
   };
-  private synchronizeSurfaceMetrics(): void {
-    const width = this.canvas.width;
-    const height = this.canvas.height;
-    const clientWidth = this.host.clientWidth;
-    const clientHeight = this.host.clientHeight;
-    if (
-      width !== this.lastWidth || height !== this.lastHeight ||
-      clientWidth !== this.lastClientWidth || clientHeight !== this.lastClientHeight
-    ) {
-      this.lastWidth = width;
-      this.lastHeight = height;
-      this.lastClientWidth = clientWidth;
-      this.lastClientHeight = clientHeight;
-      this.revision += 1;
+  private fitCanvas(): void {
+    const width = this.host.clientWidth, height = this.host.clientHeight;
+    if (width <= 0 || height <= 0) {
+      this.canvas.style.visibility = "hidden";
+      return;
     }
-    this.linearOutputOwner?.update(this.canvas.width, this.canvas.height);
-    this.synchronizeStageScale();
+    const source = this.surface;
+    const safe = this.safeAreaPolicy === "css-safe-area"
+      ? measureCssSafeArea(this.host, width, height)
+      : this.safeAreaPolicy === "full-surface" ? { x: 0, y: 0, width, height }
+        : { x: source.safeArea.x * width / source.viewportWidth,
+            y: source.safeArea.y * height / source.viewportHeight,
+            width: source.safeArea.width * width / source.viewportWidth,
+            height: source.safeArea.height * height / source.viewportHeight };
+    const fitted = fitSimulatorCanvas(source, width, height, safe);
+    this.canvas.style.visibility = "visible";
+    this.canvas.style.width = `${fitted.width}px`;
+    this.canvas.style.height = `${fitted.height}px`;
+    this.canvas.style.left = `${fitted.x}px`;
+    this.canvas.style.top = `${height - fitted.y - fitted.height}px`;
   }
-  private synchronizeStageScale(): void {
-    const backingToPixiX = this.app.screen.width / this.canvas.width;
-    const backingToPixiY = this.app.screen.height / this.canvas.height;
-    if (Number.isFinite(backingToPixiX) && Number.isFinite(backingToPixiY) &&
-      backingToPixiX > 0 && backingToPixiY > 0) {
-      this.app.stage.scale.set(backingToPixiX, backingToPixiY);
-    }
-  }
-  render(): void { this.synchronizeSurfaceMetrics(); this.app.render(); }
+  render(): void { this.app.render(); }
   dispose(): void {
     this.resizeObserver?.disconnect();
+    window.removeEventListener("resize", this.onSurfaceEnvironmentChange);
     window.removeEventListener("orientationchange", this.onSurfaceEnvironmentChange);
     window.visualViewport?.removeEventListener("resize", this.onSurfaceEnvironmentChange);
     this.mountOwner = null;
