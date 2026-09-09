@@ -1071,11 +1071,16 @@ export class NoteManager {
     }
     const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
     if (deltaTime.status !== "ok") return deltaTime;
+    const realMoveSecond = placement === null
+      ? createRenderFloat32(Math.fround(current.motionState.realMoveSecond.value + deltaTime.value.value))
+      : ok(current.motionState.realMoveSecond);
+    if (realMoveSecond.status !== "ok") return realMoveSecond;
     const prepared = this.renderProducer.preflightOrdinaryNoteSceneMotion(
       note.poolObjectId,
       Object.freeze({
         ...current.motionState,
         deltaTime: deltaTime.value,
+        realMoveSecond: realMoveSecond.value,
         ...(useGoalDepth ? {
           currentPositionZ: this.ordinaryNoteScene.goalPositions[note.noteInformation!.buttonType]!.z,
         } : {}),
@@ -1093,6 +1098,7 @@ export class NoteManager {
       motionState: Object.freeze({
         ...current.motionState,
         deltaTime: deltaTime.value,
+        realMoveSecond: realMoveSecond.value,
         progressRate: prepared.value.motion.progressRate,
         currentPositionZ: prepared.value.motion.position.z,
       }),

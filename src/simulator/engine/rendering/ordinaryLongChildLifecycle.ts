@@ -138,9 +138,12 @@ export function advanceOrdinaryLongNormalChild(
       renderedTransform,
     }));
   }
+  const realMoveSecond = createRenderFloat32(Math.fround(state.motionState.realMoveSecond.value + input.deltaTime.value));
+  if (realMoveSecond.status !== "ok") return realMoveSecond;
   const motion = advanceOrdinaryNoteMotion(Object.freeze({
     ...state.motionState,
     deltaTime: input.deltaTime,
+    realMoveSecond: realMoveSecond.value,
   }));
   if (motion.status !== "ok") return motion;
   return ok(Object.freeze({
@@ -151,6 +154,7 @@ export function advanceOrdinaryLongNormalChild(
     motionState: Object.freeze({
       ...state.motionState,
       deltaTime: input.deltaTime,
+      realMoveSecond: realMoveSecond.value,
       progressRate: motion.value.progressRate,
       currentPositionZ: motion.value.position.z,
     }),
