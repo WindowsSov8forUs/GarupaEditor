@@ -275,61 +275,8 @@ export class InGameManager {
       if (committed.status !== "ok") return this.latchFault(committed);
       this.degradedHabahiroLaneChanged = true;
     }
-    if (
-      this.renderProducer?.isCompleteHabahiro() === true &&
-      this.renderScene?.habahiro !== undefined &&
-      this.habahiroChangeAbsolutePos >= 0
-    ) {
-      if (
-        this.habahiroLanePhase === "idle" &&
-        this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
-      ) {
-        const flash = this.renderProducer.preflightHabahiroFlashStart(
-          this.habahiroChangeAbsolutePos,
-        );
-        if (flash.status !== "ok") return this.latchFault(flash);
-        const committed = this.commitRenderFrame(flash.value, "habahiro-flash-start");
-        if (committed.status !== "ok") return this.latchFault(committed);
-        this.habahiroLanePhase = "playing-before-change";
-        this.habahiroFlashElapsed = Math.fround(0);
-      } else if (this.habahiroLanePhase === "playing-before-change" ||
-        this.habahiroLanePhase === "playing-after-change") {
-        const previousElapsed = this.habahiroFlashElapsed;
-        const nextElapsed = Math.fround(Math.min(
-          this.renderScene.habahiro.animationCompleteSeconds.value,
-          Math.fround(previousElapsed + deltaTimeSeconds),
-        ));
-        const previous = createRenderFloat32(previousElapsed);
-        const next = createRenderFloat32(nextElapsed);
-        if (previous.status !== "ok") return this.latchFault(previous);
-        if (next.status !== "ok") return this.latchFault(next);
-        const advanced = this.renderProducer.preflightHabahiroAnimationAdvance(
-          previous.value,
-          next.value,
-          this.renderScene,
-        );
-        if (advanced.status !== "ok") return this.latchFault(advanced);
-        const committed = this.commitRenderFrame(advanced.value, "habahiro-animation-advance");
-        if (committed.status !== "ok") return this.latchFault(committed);
-        const changed = previousElapsed < this.renderScene.habahiro.changeLaneSeconds.value &&
-          nextElapsed >= this.renderScene.habahiro.changeLaneSeconds.value;
-        if (changed) this.noteManager.commitHabahiroLaneChangeGeometry();
-        this.habahiroFlashElapsed = nextElapsed;
-        this.habahiroLanePhase = nextElapsed >= this.renderScene.habahiro.animationCompleteSeconds.value
-          ? "complete"
-          : changed || this.habahiroLanePhase === "playing-after-change"
-            ? "playing-after-change"
-            : "playing-before-change";
-      }
-    }
-    const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
-    if (hudAnimation?.status === "integrity-failure") {
-      return this.latchFault(hudAnimation);
-    }
-    if (hudAnimation?.status === "ok") {
-      const committed = this.commitRenderFrame(hudAnimation.value, "hud-animation-advance");
-      if (committed.status !== "ok") return this.latchFault(committed);
-    }
+    const presentation = this.advanceScenePresentation(deltaTimeSeconds, true);
+    if (presentation.status !== "ok") return presentation;
     let particleAdvanced = false;
     let firstJudgementBatch = true;
     while (this.oneFrameJudgementController.existsOneFrameData()) {
@@ -726,11 +673,75 @@ export class InGameManager {
     return plan.status === "ok" ? plan.value.commit() : plan;
   }
 
+  private advanceScenePresentation(
+    deltaTimeSeconds: number,
+    allowHabahiroStart: boolean,
+  ): SimulatorResult<void> {
+    if (
+      this.renderProducer?.isCompleteHabahiro() === true &&
+      this.renderScene?.habahiro !== undefined &&
+      this.habahiroChangeAbsolutePos >= 0
+    ) {
+      if (
+        allowHabahiroStart && this.habahiroLanePhase === "idle" &&
+        this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
+      ) {
+        const flash = this.renderProducer.preflightHabahiroFlashStart(
+          this.habahiroChangeAbsolutePos,
+        );
+        if (flash.status !== "ok") return this.latchFault(flash);
+        const committed = this.commitRenderFrame(flash.value, "habahiro-flash-start");
+        if (committed.status !== "ok") return this.latchFault(committed);
+        this.habahiroLanePhase = "playing-before-change";
+        this.habahiroFlashElapsed = Math.fround(0);
+      } else if (this.habahiroLanePhase === "playing-before-change" ||
+        this.habahiroLanePhase === "playing-after-change") {
+        const previousElapsed = this.habahiroFlashElapsed;
+        const nextElapsed = Math.fround(Math.min(
+          this.renderScene.habahiro.animationCompleteSeconds.value,
+          Math.fround(previousElapsed + deltaTimeSeconds),
+        ));
+        const previous = createRenderFloat32(previousElapsed);
+        const next = createRenderFloat32(nextElapsed);
+        if (previous.status !== "ok") return this.latchFault(previous);
+        if (next.status !== "ok") return this.latchFault(next);
+        const advanced = this.renderProducer.preflightHabahiroAnimationAdvance(
+          previous.value,
+          next.value,
+          this.renderScene,
+        );
+        if (advanced.status !== "ok") return this.latchFault(advanced);
+        const committed = this.commitRenderFrame(advanced.value, "habahiro-animation-advance");
+        if (committed.status !== "ok") return this.latchFault(committed);
+        const changed = previousElapsed < this.renderScene.habahiro.changeLaneSeconds.value &&
+          nextElapsed >= this.renderScene.habahiro.changeLaneSeconds.value;
+        if (changed) this.noteManager.commitHabahiroLaneChangeGeometry();
+        this.habahiroFlashElapsed = nextElapsed;
+        this.habahiroLanePhase = nextElapsed >= this.renderScene.habahiro.animationCompleteSeconds.value
+          ? "complete"
+          : changed || this.habahiroLanePhase === "playing-after-change"
+            ? "playing-after-change"
+            : "playing-before-change";
+      }
+    }
+    const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
+    if (hudAnimation?.status === "integrity-failure") {
+      return this.latchFault(hudAnimation);
+    }
+    if (hudAnimation?.status === "ok") {
+      const committed = this.commitRenderFrame(hudAnimation.value, "hud-animation-advance");
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
+    return ok(undefined);
+  }
+
   private advancePausedPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
     const animated = this.noteManager.advanceNoteAnimations(deltaTimeSeconds);
-    return animated.status === "ok"
+    if (animated.status !== "ok") return this.latchFault(animated);
+    const presentation = this.advanceScenePresentation(deltaTimeSeconds, false);
+    return presentation.status === "ok"
       ? this.commitParticleAdvance(deltaTimeSeconds, true)
-      : this.latchFault(animated);
+      : presentation;
   }
 
   private commitParticleAdvance(

@@ -16995,28 +16995,7 @@
     {
       "id": "RCB-0809",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 326,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "if (hudAnimation?.status === \"integrity-failure\") {",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-0810",
-      "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 343,
+      "line": 290,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (businessPlan?.status === \"integrity-failure\") {",
@@ -17035,9 +17014,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0811",
+      "id": "RCB-0810",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 353,
+      "line": 300,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particlePlan?.status === \"integrity-failure\") {",
@@ -17056,9 +17035,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0812",
+      "id": "RCB-0811",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 361,
+      "line": 308,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioPlan?.status === \"integrity-failure\") {",
@@ -17077,9 +17056,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0813",
+      "id": "RCB-0812",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 375,
+      "line": 322,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectStatePlan?.status === \"integrity-failure\") {",
@@ -17098,9 +17077,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0814",
+      "id": "RCB-0813",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 393,
+      "line": 340,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderPlan?.status === \"integrity-failure\") {",
@@ -17119,9 +17098,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0815",
+      "id": "RCB-0814",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 404,
+      "line": 351,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (productReflect?.status === \"integrity-failure\") {",
@@ -17140,9 +17119,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0816",
+      "id": "RCB-0815",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 474,
+      "line": 421,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return this.latchFault(integrityFailure(",
@@ -17161,9 +17140,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0817",
+      "id": "RCB-0816",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 483,
+      "line": 430,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectAdvance?.status === \"integrity-failure\") {",
@@ -17182,9 +17161,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0818",
+      "id": "RCB-0817",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 489,
+      "line": 436,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particleAdvance?.status === \"integrity-failure\") {",
@@ -17203,9 +17182,30 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-0818",
+      "file": "src/simulator/engine/managers/inGameManager.ts",
+      "line": 480,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-0819",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 533,
+      "line": 494,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17226,7 +17226,7 @@
     {
       "id": "RCB-0820",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 547,
+      "line": 506,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17247,7 +17247,7 @@
     {
       "id": "RCB-0821",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 559,
+      "line": 518,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17268,7 +17268,7 @@
     {
       "id": "RCB-0822",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 571,
+      "line": 530,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17289,28 +17289,7 @@
     {
       "id": "RCB-0823",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 583,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-0824",
-      "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 590,
+      "line": 537,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (laneEffect?.status === \"integrity-failure\") return this.latchFault(laneEffect);",
@@ -17329,9 +17308,30 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-0824",
+      "file": "src/simulator/engine/managers/inGameManager.ts",
+      "line": 552,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-0825",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 605,
+      "line": 560,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17352,7 +17352,7 @@
     {
       "id": "RCB-0826",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 613,
+      "line": 592,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17373,7 +17373,7 @@
     {
       "id": "RCB-0827",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 645,
+      "line": 600,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17394,10 +17394,10 @@
     {
       "id": "RCB-0828",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 653,
-      "marker": "integrity-failure-call",
+      "line": 632,
+      "marker": "integrity-failure-string",
       "symbol": "if",
-      "source": "return integrityFailure(",
+      "source": "if (tapLaneEffectDispose?.status === \"integrity-failure\") return tapLaneEffectDispose;",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
       "userReachability": "typed action-or-session integrity boundary",
@@ -17415,10 +17415,10 @@
     {
       "id": "RCB-0829",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 685,
+      "line": 728,
       "marker": "integrity-failure-string",
       "symbol": "if",
-      "source": "if (tapLaneEffectDispose?.status === \"integrity-failure\") return tapLaneEffectDispose;",
+      "source": "if (hudAnimation?.status === \"integrity-failure\") {",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
       "userReachability": "typed action-or-session integrity boundary",
