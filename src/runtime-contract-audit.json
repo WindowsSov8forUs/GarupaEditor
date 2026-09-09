@@ -24975,7 +24975,7 @@
     {
       "id": "RCB-1189",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 687,
+      "line": 691,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -24996,7 +24996,7 @@
     {
       "id": "RCB-1190",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 721,
+      "line": 725,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25017,7 +25017,7 @@
     {
       "id": "RCB-1191",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 877,
+      "line": 886,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25038,7 +25038,7 @@
     {
       "id": "RCB-1192",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 975,
+      "line": 984,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25059,7 +25059,7 @@
     {
       "id": "RCB-1193",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1032,
+      "line": 1041,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25080,7 +25080,7 @@
     {
       "id": "RCB-1194",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1045,
+      "line": 1054,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25101,7 +25101,7 @@
     {
       "id": "RCB-1195",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1071,
+      "line": 1080,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25122,7 +25122,7 @@
     {
       "id": "RCB-1196",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1333,
+      "line": 1342,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25143,7 +25143,7 @@
     {
       "id": "RCB-1197",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1350,
+      "line": 1359,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25164,7 +25164,7 @@
     {
       "id": "RCB-1198",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1374,
+      "line": 1383,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25185,7 +25185,7 @@
     {
       "id": "RCB-1199",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1398,
+      "line": 1407,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25206,7 +25206,7 @@
     {
       "id": "RCB-1200",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1432,
+      "line": 1441,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"HABAHIRO ChangeLane lost a pre-created field binding owner.\");",
@@ -25227,7 +25227,7 @@
     {
       "id": "RCB-1201",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1452,
+      "line": 1461,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25248,7 +25248,7 @@
     {
       "id": "RCB-1202",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1489,
+      "line": 1498,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25269,7 +25269,7 @@
     {
       "id": "RCB-1203",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1536,
+      "line": 1545,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25290,7 +25290,7 @@
     {
       "id": "RCB-1204",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1546,
+      "line": 1555,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25311,7 +25311,7 @@
     {
       "id": "RCB-1205",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1571,
+      "line": 1580,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25332,7 +25332,7 @@
     {
       "id": "RCB-1206",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1585,
+      "line": 1594,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25353,7 +25353,7 @@
     {
       "id": "RCB-1207",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1602,
+      "line": 1611,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25374,7 +25374,7 @@
     {
       "id": "RCB-1208",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1693,
+      "line": 1702,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25395,7 +25395,7 @@
     {
       "id": "RCB-1209",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1752,
+      "line": 1761,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25416,7 +25416,7 @@
     {
       "id": "RCB-1210",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1870,
+      "line": 1879,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25437,7 +25437,7 @@
     {
       "id": "RCB-1211",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 1910,
+      "line": 1919,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25458,7 +25458,7 @@
     {
       "id": "RCB-1212",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2091,
+      "line": 2100,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25479,7 +25479,7 @@
     {
       "id": "RCB-1213",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2099,
+      "line": 2108,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25500,7 +25500,7 @@
     {
       "id": "RCB-1214",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2162,
+      "line": 2171,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25521,7 +25521,7 @@
     {
       "id": "RCB-1215",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2170,
+      "line": 2179,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25542,7 +25542,7 @@
     {
       "id": "RCB-1216",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2228,
+      "line": 2237,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25563,7 +25563,7 @@
     {
       "id": "RCB-1217",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2241,
+      "line": 2250,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25584,7 +25584,7 @@
     {
       "id": "RCB-1218",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2273,
+      "line": 2282,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25605,7 +25605,7 @@
     {
       "id": "RCB-1219",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2346,
+      "line": 2355,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25626,7 +25626,7 @@
     {
       "id": "RCB-1220",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2356,
+      "line": 2365,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25647,7 +25647,7 @@
     {
       "id": "RCB-1221",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2386,
+      "line": 2395,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25668,7 +25668,7 @@
     {
       "id": "RCB-1222",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2454,
+      "line": 2463,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25689,7 +25689,7 @@
     {
       "id": "RCB-1223",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2480,
+      "line": 2489,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25710,7 +25710,7 @@
     {
       "id": "RCB-1224",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2561,
+      "line": 2570,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25731,7 +25731,7 @@
     {
       "id": "RCB-1225",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2600,
+      "line": 2609,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25752,7 +25752,7 @@
     {
       "id": "RCB-1226",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2619,
+      "line": 2628,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25773,7 +25773,7 @@
     {
       "id": "RCB-1227",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2690,
+      "line": 2699,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25794,7 +25794,7 @@
     {
       "id": "RCB-1228",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2702,
+      "line": 2711,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25815,7 +25815,7 @@
     {
       "id": "RCB-1229",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2738,
+      "line": 2747,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25836,7 +25836,7 @@
     {
       "id": "RCB-1230",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2854,
+      "line": 2863,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25857,7 +25857,7 @@
     {
       "id": "RCB-1231",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 2969,
+      "line": 2978,
       "marker": "integrity-failure-call",
       "symbol": "validateOrdinaryAnimationOwner",
       "source": ": integrityFailure(",
@@ -25878,7 +25878,7 @@
     {
       "id": "RCB-1232",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3060,
+      "line": 3069,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25899,7 +25899,7 @@
     {
       "id": "RCB-1233",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3072,
+      "line": 3081,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -25920,7 +25920,7 @@
     {
       "id": "RCB-1234",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3101,
+      "line": 3110,
       "marker": "integrity-failure-call",
       "symbol": "switch",
       "source": "return integrityFailure(",
@@ -25941,7 +25941,7 @@
     {
       "id": "RCB-1235",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3245,
+      "line": 3254,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"complete HABAHIRO atlas bindings were not preflighted\");",
@@ -25962,7 +25962,7 @@
     {
       "id": "RCB-1236",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3256,
+      "line": 3265,
       "marker": "integrity-failure-call",
       "symbol": "lane",
       "source": ": integrityFailure(",
@@ -25983,7 +25983,7 @@
     {
       "id": "RCB-1237",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3293,
+      "line": 3302,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26004,7 +26004,7 @@
     {
       "id": "RCB-1238",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3300,
+      "line": 3309,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26025,7 +26025,7 @@
     {
       "id": "RCB-1239",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3329,
+      "line": 3338,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (rendererPathId === undefined) throw new Error(\"Unknown HABAHIRO Root_effect SpriteRenderer identity.\");",
@@ -26046,7 +26046,7 @@
     {
       "id": "RCB-1240",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3342,
+      "line": 3351,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (creationSequence <= 0) throw new Error(\"Unknown HABAHIRO Root_effect Sprite identity.\");",
@@ -26067,7 +26067,7 @@
     {
       "id": "RCB-1241",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3395,
+      "line": 3404,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (result.status !== \"ok\") throw new Error(\"internal HUD Float32 invariant failed\");",
@@ -26088,7 +26088,7 @@
     {
       "id": "RCB-1242",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3403,
+      "line": 3412,
       "marker": "integrity-failure-call",
       "symbol": "transactionRejected",
       "source": "return integrityFailure(",
@@ -26109,7 +26109,7 @@
     {
       "id": "RCB-1243",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3436,
+      "line": 3445,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26130,7 +26130,7 @@
     {
       "id": "RCB-1244",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3445,
+      "line": 3454,
       "marker": "integrity-failure-call",
       "symbol": "lane",
       "source": ": integrityFailure(",
@@ -26151,7 +26151,7 @@
     {
       "id": "RCB-1245",
       "file": "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "line": 3471,
+      "line": 3480,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",

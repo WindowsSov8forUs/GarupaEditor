@@ -303,7 +303,7 @@ export class RenderCommandProducer {
   private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
   private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
   private readonly addScoreAnimations = new Map<string, AddScoreAnimationState>();
-  private resultElapsedSeconds: number | null = null;
+  private resultAnimation: Readonly<{ elapsedSeconds: number; visibilityElapsedSeconds: number }> | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
   private scoreGaugeHighRankClip: "ScoreGaugeSS" | "ScoreGaugeSSS" | null = null;
   private gameClearElapsedSeconds: number | null = null;
@@ -652,7 +652,11 @@ export class RenderCommandProducer {
         this.lastCombo = plan.record.currentCombo;
         this.lastAllPerfect = displayedAllPerfect;
       }
-      this.resultElapsedSeconds = 0;
+      this.resultAnimation = Object.freeze({
+        elapsedSeconds: 0,
+        // CE.Result.Show starts its visibility coroutine immediately.
+        visibilityElapsedSeconds: Math.fround(deltaTimeSeconds),
+      });
       if (plan.scoreGauge.highRankEffect !== "none" &&
         plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) {
         this.scoreGaugeSsElapsedSeconds = 0;
@@ -728,7 +732,7 @@ export class RenderCommandProducer {
       (this.hudAnimationElapsedSeconds.size === 0 &&
         this.lifeAnimationElapsedSeconds.size === 0 &&
         this.addScoreAnimations.size === 0 &&
-        this.resultElapsedSeconds === null &&
+        this.resultAnimation === null &&
         this.scoreGaugeSsElapsedSeconds === null &&
         this.gameClearElapsedSeconds === null) ||
       deltaTimeSeconds === 0
@@ -738,7 +742,7 @@ export class RenderCommandProducer {
     const next = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
     const nextLife = new Map<"life-warning" | "life-game-over", number>();
     const nextAddScore = new Map<string, AddScoreAnimationState>();
-    let nextResultElapsed = this.resultElapsedSeconds;
+    let nextResultAnimation = this.resultAnimation;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
     let nextGameClearElapsed = this.gameClearElapsedSeconds;
     const base = this.commandBase(this.substep);
@@ -809,17 +813,22 @@ export class RenderCommandProducer {
         animationRole: "game-clear", elapsedSeconds: sample.value,
       });
     }
-    if (this.resultElapsedSeconds !== null) {
-      nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
-      if (nextResultElapsed >= 1) {
+    if (this.resultAnimation !== null) {
+      // MoveNext compares the time from the previous resume before accumulating
+      // the next delta. Animator sampling has a separate zero-based play clock.
+      if (this.resultAnimation.visibilityElapsedSeconds >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.result,
           animationRole: "result", restart: false,
         });
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
-        nextResultElapsed = null;
+        nextResultAnimation = null;
       } else {
-        const sample = createRenderFloat32(nextResultElapsed);
+        nextResultAnimation = Object.freeze({
+          elapsedSeconds: Math.fround(this.resultAnimation.elapsedSeconds + deltaTimeSeconds),
+          visibilityElapsedSeconds: Math.fround(this.resultAnimation.visibilityElapsedSeconds + deltaTimeSeconds),
+        });
+        const sample = createRenderFloat32(nextResultAnimation.elapsedSeconds);
         if (sample.status !== "ok") return sample;
         commands.push({
           ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.result,
@@ -840,7 +849,7 @@ export class RenderCommandProducer {
       for (const [renderObjectId, animation] of nextAddScore) {
         this.addScoreAnimations.set(renderObjectId, animation);
       }
-      this.resultElapsedSeconds = nextResultElapsed;
+      this.resultAnimation = nextResultAnimation;
       this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
       this.gameClearElapsedSeconds = nextGameClearElapsed;
     });
@@ -2673,7 +2682,7 @@ export class RenderCommandProducer {
       this.lifeAnimationElapsedSeconds.clear();
       this.addScoreAnimations.clear();
       this.noteAnimationElapsedSeconds.clear();
-      this.resultElapsedSeconds = null;
+      this.resultAnimation = null;
       this.scoreGaugeSsElapsedSeconds = null;
       this.scoreGaugeHighRankClip = null;
     });
