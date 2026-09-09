@@ -1176,6 +1176,14 @@ export class NoteManager {
           rootWaiting: note.state === NoteState.Wait || note.state === NoteState.Stop,
           judgementAdjustValueB: this.judgementAdjustValueB,
           virtualPerfectLine: virtualLine.value,
+          rootSource: note.noteInformation!,
+          rootMotionState: front.motionState,
+          currentBpm: this.musicScoreController.currentBpm,
+          virtualLaneDeltaX: Math.fround(Math.fround(
+            this.ordinaryNoteScene.goalPositions[1]!.x.value - this.ordinaryNoteScene.goalPositions[0]!.x.value,
+          ) / 100),
+          stoppedChildWaited: note instanceof NoteSlide
+            ? note.afterNotes.map((after) => after.stopAdjustmentWaited) : [],
         },
         note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );
@@ -1183,6 +1191,7 @@ export class NoteManager {
       const committed = prepared.value.transaction.commit();
       if (committed.status !== "ok") return committed;
       this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
+      this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...front, renderedTransform: prepared.value.frontTransform }));
       if (note instanceof NoteSlide) note.commitRenderHides();
     }
     return ok(undefined);

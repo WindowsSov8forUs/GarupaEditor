@@ -197,6 +197,7 @@ export interface PreparedOrdinaryLongChildFrame {
 }
 
 export interface PreparedOrdinarySlideChildFrame {
+  readonly frontTransform: OrdinaryNoteMotionResult;
   readonly childStates: readonly OrdinarySlideChildState[];
   readonly transaction: RenderOwnerTransaction;
 }
@@ -2443,6 +2444,19 @@ export class RenderCommandProducer {
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
+    if (stopControl.rootWaiting) {
+      const renderObjectId = rootRenderObjectId(poolObjectId);
+      const moved = advanced.value.frontTransform;
+      commands.push({
+        ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: moved.position,
+        scale: noteWorldScale(moved.localScale, stopControl.rootMotionState.noteParentScale),
+        rotationDegrees: zero.value, color: scene.noteTint,
+        ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 70,
+          sourceZ: moved.position.z, creationSequence: this.creationSequenceByObjectId.get(renderObjectId)! },
+        maskObjectId: null,
+      });
+    }
     for (const index of hideRequests?.keys() ?? []) {
       const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
       for (const renderObjectId of [objectId, ordinaryNoteIconRenderObjectId(objectId)]) {
@@ -2456,6 +2470,13 @@ export class RenderCommandProducer {
       const segment = advanced.value.segments[index]!;
       const childObjectId = slideChildRenderObjectId(poolObjectId, state.sourceIndex);
       const meshObjectId = slideMeshRenderObjectId(poolObjectId, segment.sourceIndex);
+      if (!state.visible && childStates[index]!.visible && !hideRequests?.has(index)) {
+        for (const renderObjectId of [childObjectId, ordinaryNoteIconRenderObjectId(childObjectId)]) {
+          if (this.creationSequenceByObjectId.has(renderObjectId)) commands.push({
+            ...base(commands.length), kind: "hide-object", renderObjectId,
+          });
+        }
+      }
       if (!state.meshVisible && childStates[index]!.meshVisible) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
       }
@@ -2515,7 +2536,7 @@ export class RenderCommandProducer {
       );
     });
     return transaction.status === "ok"
-      ? ok(Object.freeze({ childStates: nextChildStates, transaction: transaction.value }))
+      ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates, transaction: transaction.value }))
       : transaction;
   }
 

@@ -1640,11 +1640,12 @@ export class NoteSlide extends NoteFrontBase {
     }
     const runtime = this.autoLiveRuntime;
     if (runtime.status !== "ok") return runtime;
-    if (!runtime.value.shouldForcePerfect() && this.manualHeadJudgedValue) {
+    if (this.manualHeadJudgedValue) {
       for (const after of this.afterNotesValue) {
         if (this.state === NoteState.Deactive) break;
-        if (after.judged || after.source.isInvisible) continue;
-        const timeout = this.executeManualSlideAfterTimeout(after);
+        after.stopAdjustmentWaited = false;
+        const timeout = this.executeManualSlideAfterTimeout(after,
+          !runtime.value.shouldForcePerfect() && !after.source.isInvisible);
         if (timeout.status !== "ok") return timeout;
       }
       if (this.state === NoteState.Deactive) return ok(undefined);
@@ -1667,7 +1668,7 @@ export class NoteSlide extends NoteFrontBase {
     return ok(undefined);
   }
 
-  private executeManualSlideAfterTimeout(current: SlideAfterRuntime): SimulatorResult<void> {
+  private executeManualSlideAfterTimeout(current: SlideAfterRuntime, canJudge: boolean): SimulatorResult<void> {
     const runtime = this.manualRuntime;
     if (runtime.status !== "ok") {
       return runtime;
@@ -1688,8 +1689,10 @@ export class NoteSlide extends NoteFrontBase {
     const adjustment = runtime.value.getJudgementAdjustValueB();
     if (nextVisible !== undefined && adjustment < 0 && current.stopAdjustmentCounter < 6 - adjustment) {
       current.stopAdjustmentCounter += 1;
+      current.stopAdjustmentWaited = true;
       return ok(undefined);
     }
+    if (current.judged || !canJudge) return ok(undefined);
     if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
       current.timeoutFrameCounter = Math.fround(current.timeoutFrameCounter + runtime.value.getExecuteFrame());
       if (current.timeoutFrameCounter < 7) return ok(undefined);
@@ -2588,6 +2591,7 @@ export class LongAfterRuntime {
 export class SlideAfterRuntime {
   private judgedValue = false;
   stopAdjustmentCounter = 0;
+  stopAdjustmentWaited = false;
   timeoutFrameCounter = 0;
 
   constructor(
@@ -2616,6 +2620,7 @@ export class SlideAfterRuntime {
   resetForParentDeactivation(): void {
     this.judgedValue = false;
     this.stopAdjustmentCounter = 0;
+    this.stopAdjustmentWaited = false;
     this.timeoutFrameCounter = 0;
   }
 }
