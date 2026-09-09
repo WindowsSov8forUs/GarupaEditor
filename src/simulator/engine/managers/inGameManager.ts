@@ -187,6 +187,10 @@ export class InGameManager {
     return updated.status === "ok" ? updated : this.latchFault(updated);
   }
 
+  publishGameClearState(finished: boolean): void {
+    this.currentGameStateValue = finished ? GameState.GameClearAnimEnd : GameState.GameClearAnimStart;
+  }
+
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
@@ -768,6 +772,8 @@ export class InGameManager {
           })
         : null,
       playable: (this.startupDirection?.snapshot().playable ?? true) &&
+        this.currentGameStateValue !== GameState.GameClearAnimStart &&
+        this.currentGameStateValue !== GameState.GameClearAnimEnd &&
         this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
     };
   }

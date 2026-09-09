@@ -31,6 +31,7 @@ import {
   validateDirectorDeltaTime,
 } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
+import { GameState } from "../engine/data/inGameState";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { PrimaryJudgementAdjustmentOwner } from "../engine/managers/primaryJudgementAdjustmentOwner";
 import { TapLaneEffectOwner } from "../engine/managers/tapLaneEffectOwner";
@@ -148,6 +149,10 @@ class SimulatorEngineHost implements SimulatorEngine {
     const deltaValidation = validateDirectorDeltaTime(deltaTimeSeconds);
     if (deltaValidation.status !== "ok") {
       return deltaValidation;
+    }
+    if (this.naturalCompletionTimeline !== null) {
+      const advanced = this.advanceNaturalCompletionPresentation(deltaTimeSeconds);
+      return advanced.status === "ok" ? ok(undefined) : advanced;
     }
     const beforeUpdate = this.inGameManager.snapshot();
     if (!beforeUpdate.playable) {
@@ -320,11 +325,12 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
-    if (this.inGameManager.state !== "initialized" || this.audioProducer === null) {
+    if (this.inGameManager.state !== "initialized" || this.audioProducer === null ||
+      this.inGameManager.snapshot().currentGameState !== GameState.PlayingSound) {
       return integrityFailure(
         "audio.complete.without-active-session",
         [],
-        "Game Clear audio requires an initialized explicitly configured audio session.",
+        "Game Clear begins from PlayingSound in an initialized explicitly configured audio session.",
       );
     }
     if (clearStatus !== 1 && clearStatus !== 2 && clearStatus !== 3) {
@@ -386,6 +392,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       publishOwner: () => {
         this.naturalCompletionClearStatus = clearStatus;
         this.naturalCompletionTimeline = startGameClearTimeline(initialDeltaTimeSeconds);
+        this.inGameManager.publishGameClearState(false);
         return ok(undefined);
       },
       discard: () => ok(undefined),
@@ -441,7 +448,11 @@ class SimulatorEngineHost implements SimulatorEngine {
     }));
     participants.push(Object.freeze({
       identity: "completion-clock",
-      publishOwner: () => { this.naturalCompletionTimeline = nextTimeline; return ok(undefined); },
+      publishOwner: () => {
+        this.naturalCompletionTimeline = nextTimeline;
+        if (isGameClearAnimationFinished(nextTimeline)) this.inGameManager.publishGameClearState(true);
+        return ok(undefined);
+      },
       discard: () => ok(undefined),
     }));
     const framePlan = FrameMutationPlan.create(
