@@ -55,7 +55,6 @@ export interface InputManagerSnapshot {
   readonly pendingFrame: boolean;
   readonly consumedFrameCount: number;
   readonly lastFrame: ManualInputFrameSnapshot | null;
-  readonly trace: readonly ManualInputFrameSnapshot[];
   readonly resolutionOwner: ReturnType<ManualInputResolutionOwner["snapshot"]>;
 }
 
@@ -65,7 +64,6 @@ export class InputManager {
   private dispatcherValue: ManualInputDispatcher | null = null;
   private consumedFrameCountValue = 0;
   private lastFrameValue: ManualInputFrameSnapshot | null = null;
-  private readonly traceValue: ManualInputFrameSnapshot[] = [];
 
   constructor(private readonly mode: SimulatorModeIdentity) {}
 
@@ -221,7 +219,6 @@ export class InputManager {
     });
     this.consumedFrameCountValue += 1;
     this.lastFrameValue = snapshot;
-    this.traceValue.push(snapshot);
     return ok(undefined);
   }
 
@@ -239,9 +236,6 @@ export class InputManager {
       pendingFrame: this.pendingFrameValue !== null,
       consumedFrameCount: this.consumedFrameCountValue,
       lastFrame: copyFrameSnapshot(this.lastFrameValue),
-      trace: Object.freeze(
-        this.traceValue.map((frame) => copyFrameSnapshot(frame) as ManualInputFrameSnapshot),
-      ),
       resolutionOwner: this.resolutionOwner.snapshot(),
     });
   }

@@ -18276,7 +18276,7 @@
     {
       "id": "RCB-0870",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 81,
+      "line": 79,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18297,7 +18297,7 @@
     {
       "id": "RCB-0871",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 98,
+      "line": 96,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18318,7 +18318,7 @@
     {
       "id": "RCB-0872",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 113,
+      "line": 111,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18339,7 +18339,7 @@
     {
       "id": "RCB-0873",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 124,
+      "line": 122,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18360,7 +18360,7 @@
     {
       "id": "RCB-0874",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 131,
+      "line": 129,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18381,7 +18381,7 @@
     {
       "id": "RCB-0875",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 140,
+      "line": 138,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18402,7 +18402,7 @@
     {
       "id": "RCB-0876",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 153,
+      "line": 151,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18423,7 +18423,7 @@
     {
       "id": "RCB-0877",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 165,
+      "line": 163,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18444,7 +18444,7 @@
     {
       "id": "RCB-0878",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 195,
+      "line": 193,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18465,7 +18465,7 @@
     {
       "id": "RCB-0879",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 203,
+      "line": 201,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18486,7 +18486,7 @@
     {
       "id": "RCB-0880",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 319,
+      "line": 313,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"GamePlayInputDispatcher could not register its note cleanup owner\");",
@@ -18507,7 +18507,7 @@
     {
       "id": "RCB-0881",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 335,
+      "line": 329,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18528,7 +18528,7 @@
     {
       "id": "RCB-0882",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 343,
+      "line": 337,
       "marker": "integrity-failure-call",
       "symbol": "button",
       "source": "? integrityFailure(",
@@ -18549,7 +18549,7 @@
     {
       "id": "RCB-0883",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 378,
+      "line": 372,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18570,7 +18570,7 @@
     {
       "id": "RCB-0884",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 442,
+      "line": 436,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18591,7 +18591,7 @@
     {
       "id": "RCB-0885",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 506,
+      "line": 500,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18612,7 +18612,7 @@
     {
       "id": "RCB-0886",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 615,
+      "line": 609,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual note commit lost its preflight transaction\");",
@@ -18633,7 +18633,7 @@
     {
       "id": "RCB-0887",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 655,
+      "line": 649,
       "marker": "integrity-failure-call",
       "symbol": "execTouchBegan",
       "source": "return integrityFailure(",
