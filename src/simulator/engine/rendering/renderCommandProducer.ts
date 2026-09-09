@@ -1211,7 +1211,7 @@ export class RenderCommandProducer {
           kind: "hide-object",
           renderObjectId: afterObjectId,
         });
-        if (!this.isAnyHabahiro()) appendHiddenChild(
+        appendHiddenChild(
           commands,
           created,
           base,
@@ -1253,18 +1253,15 @@ export class RenderCommandProducer {
             parentObjectId: null,
           });
           commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
-          if (!this.isAnyHabahiro()) {
-            appendHiddenChild(
-              commands,
-              created,
-              base,
-              ordinaryNoteIconRenderObjectId(childObjectId),
-              `${pool.family}-child-icon`,
-              "note-icon",
-              childObjectId,
-            );
-
-          }
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryNoteIconRenderObjectId(childObjectId),
+            `${pool.family}-child-icon`,
+            "note-icon",
+            childObjectId,
+          );
           commands.push({
             ...base(commands.length),
             kind: "create-object",
@@ -1744,7 +1741,7 @@ export class RenderCommandProducer {
     }];
     const ordinaryFrontAnimation = habahiro
       ? null
-      : resolveOrdinaryAnimationBinding(information, renderObjectId, this.resources);
+      : resolveNoteAnimationBinding(information, renderObjectId, this.resources);
     if (ordinaryFrontAnimation !== null) {
       const ownerValidation = validateOrdinaryAnimationOwner(
         ordinaryFrontAnimation,
@@ -1919,13 +1916,12 @@ export class RenderCommandProducer {
         logicalAssetId: afterBinding.value.logicalAssetId,
         exactKey: afterBinding.value.exactKey,
       });
-      const afterAnimation = completeHabahiro
-        ? null
-        : resolveOrdinaryAfterAnimationBinding(
-            information,
-            afterObjectId,
-            this.resources,
-          );
+      const afterAnimation = resolveAfterAnimationBinding(
+        information,
+        afterObjectId,
+        this.resources,
+        completeHabahiro,
+      );
       if (afterAnimation !== null) {
         const ownerValidation = validateOrdinaryAnimationOwner(
           afterAnimation,
@@ -2029,9 +2025,9 @@ export class RenderCommandProducer {
             logicalAssetId: childBinding.value.logicalAssetId,
             exactKey: childBinding.value.exactKey,
           });
-          const childAnimation = completeHabahiro
-            ? null
-            : resolveOrdinaryAnimationBinding(source, childObjectId, this.resources, false);
+          const childAnimation = resolveNoteAnimationBinding(
+            source, childObjectId, this.resources, false, completeHabahiro,
+          );
           if (childAnimation !== null) {
             const ownerValidation = validateOrdinaryAnimationOwner(
               childAnimation,
@@ -2115,13 +2111,12 @@ export class RenderCommandProducer {
       );
 
       if (longTail) {
-        const afterAnimation = completeHabahiro
-          ? null
-          : resolveOrdinaryAfterAnimationBinding(
-              information,
-              longAfterRenderObjectId(poolObjectId),
-              this.resources,
-            );
+        const afterAnimation = resolveAfterAnimationBinding(
+          information,
+          longAfterRenderObjectId(poolObjectId),
+          this.resources,
+          completeHabahiro,
+        );
         if (afterAnimation !== null) this.noteAnimationElapsedSeconds.set(
           afterAnimation.ownerObjectId,
           Object.freeze({ role: afterAnimation.animationRole, elapsed: 0 }),
@@ -2129,13 +2124,14 @@ export class RenderCommandProducer {
       }
       for (let index = 0; index < information.slideNoteList.length; index += 1) {
         const source = information.slideNoteList[index]!;
-        const animation = source.isInvisible || completeHabahiro
+        const animation = source.isInvisible
           ? null
-          : resolveOrdinaryAnimationBinding(
+          : resolveNoteAnimationBinding(
               source,
               slideChildRenderObjectId(poolObjectId, index),
               this.resources,
               false,
+              completeHabahiro,
             );
         if (animation !== null) this.noteAnimationElapsedSeconds.set(
           animation.ownerObjectId,
@@ -3328,33 +3324,24 @@ function resolveHabahiroIconBinding(
   readonly animationRole: NoteVisualAnimationRole;
 } | null {
   const atlases = resolveHabahiroAtlasLogicalIds(resources);
-  const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
-  if (information.fireNoteType === FrontNoteType.Flick) {
-    const topWidth = Math.min(buttonCount, 3);
-    return Object.freeze({
-      logicalAssetId: atlases.flick,
-      exactKey: topWidth === 1 ? "note_flick_top" : `note_flick_top_${topWidth}`,
-      animationRole: "note-flick",
-    });
-  }
-  if (
-    information.fireNoteType === FrontNoteType.DirectionalFlick ||
-    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
-    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
-    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
-    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
-  ) {
+  const role = information.fireNoteType === FrontNoteType.Flick
+    ? "note-flick"
+    : information.fireNoteType === FrontNoteType.DirectionalFlick ||
+        information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+        information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+        information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+        information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
+    ? "note-directional-flick"
+    : null;
+  if (role !== null) {
     const direction = gameTypeIsDirectional(information.gameNoteType)
-      ? gameTypeIsLeft(information.gameNoteType) ? "l" : "r"
+      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
       : afterTypeIsDirectional(information.afterNoteType)
-      ? afterTypeIsLeft(information.afterNoteType) ? "l" : "r"
-      : null;
-    const lane = resolveLaneIndex(information.buttonType, true);
-    if (direction === null || !Number.isInteger(lane) || lane < 0 || lane > 6) return null;
+      ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+      : "up";
     return Object.freeze({
-      logicalAssetId: atlases.flick,
-      exactKey: `note_flick_${direction}_${lane}`,
-      animationRole: "note-directional-flick",
+      ...resolveFlickIconSpriteBinding(information, resources, direction, true),
+      animationRole: role,
     });
   }
   if (
@@ -3705,15 +3692,15 @@ function resolveSlideChildSpriteBinding(
   }));
 }
 
-function resolveOrdinaryAnimationBinding(
+function resolveNoteAnimationBinding(
   information: NoteInformation,
   parentObjectId: string,
   resources: RenderEngineResourceBindings,
   allowLongFlash = true,
+  habahiro = false,
 ): OrdinaryAnimationBinding | null {
   const role = resolveNoteAnimationRole(information);
   if (role !== null) {
-    const directional = role === "note-directional-flick";
     const direction = gameTypeIsDirectional(information.gameNoteType)
       ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
       : afterTypeIsDirectional(information.afterNoteType)
@@ -3721,12 +3708,7 @@ function resolveOrdinaryAnimationBinding(
       : "up";
     return Object.freeze({
       ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
-      logicalAssetId: directional
-        ? resources.directionalAtlasLogicalAssetId
-        : resources.noteAtlasLogicalAssetId,
-      exactKey: direction === "up"
-        ? "note_flick_top"
-        : direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
+      ...resolveFlickIconSpriteBinding(information, resources, direction, habahiro),
       animationRole: role,
     });
   }
@@ -3750,10 +3732,11 @@ function resolveOrdinaryAnimationBinding(
   });
 }
 
-function resolveOrdinaryAfterAnimationBinding(
+function resolveAfterAnimationBinding(
   information: NoteInformation,
   parentObjectId: string,
   resources: RenderEngineResourceBindings,
+  habahiro = false,
 ): OrdinaryAnimationBinding | null {
   const role = resolveAfterAnimationRole(information.afterNoteType);
   if (role === null) return null;
@@ -3762,14 +3745,30 @@ function resolveOrdinaryAfterAnimationBinding(
     : "up";
   return Object.freeze({
     ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
-    logicalAssetId: role === "note-directional-flick"
-      ? resources.directionalAtlasLogicalAssetId
-      : resources.noteAtlasLogicalAssetId,
-    exactKey: direction === "up"
-      ? "note_flick_top"
-      : direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
+    ...resolveFlickIconSpriteBinding(information, resources, direction, habahiro),
     animationRole: role,
   });
+}
+
+function resolveFlickIconSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  direction: "up" | "left" | "right",
+  habahiro: boolean,
+): { readonly logicalAssetId: string; readonly exactKey: string } {
+  if (direction !== "up") return {
+    logicalAssetId: resources.directionalAtlasLogicalAssetId,
+    exactKey: direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
+  };
+  const width = habahiro
+    ? Math.min(information.buttonTypesArray.length || information.buttonTypes.length || 1, 3)
+    : 1;
+  return {
+    logicalAssetId: habahiro
+      ? resolveHabahiroAtlasLogicalIds(resources).flick
+      : resources.noteAtlasLogicalAssetId,
+    exactKey: width === 1 ? "note_flick_top" : `note_flick_top_${width}`,
+  };
 }
 
 function resolveAfterAnimationRole(

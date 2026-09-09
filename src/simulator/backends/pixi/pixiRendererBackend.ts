@@ -4248,9 +4248,9 @@ function applyOrdinaryNoteAnimation(
       ? "note-flick-up"
       : null
     : role === "note-directional-flick"
-    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left || /^note_flick_l_[0-6]$/.test(exactKey)
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left
       ? "note-flick-left"
-      : exactKey === profile.noteAnimations.directionalSpriteKeys.right || /^note_flick_r_[0-6]$/.test(exactKey)
+      : exactKey === profile.noteAnimations.directionalSpriteKeys.right
       ? "note-flick-right"
       : null
     : exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix)
