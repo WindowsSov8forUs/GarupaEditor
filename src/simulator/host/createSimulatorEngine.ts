@@ -414,6 +414,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       );
     }
     const delta = Math.fround(deltaTimeSeconds);
+    const movie = this.inGameManager.advanceMovie(delta);
+    if (movie.status !== "ok") return movie;
     const nextTimeline = advanceGameClearTimeline(this.naturalCompletionTimeline, delta);
     const particle = this.particleCoordinator?.preflightGameClearAdvance(
       delta, nextTimeline.baseStartedAtSeconds,

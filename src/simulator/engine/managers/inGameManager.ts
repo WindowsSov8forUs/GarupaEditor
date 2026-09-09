@@ -181,6 +181,12 @@ export class InGameManager {
     return ok(undefined);
   }
 
+  /** The post-start MV coroutine also runs while Game-clear waits for finish. */
+  advanceMovie(deltaTimeSeconds: number): SimulatorResult<void> {
+    const updated = this.startupDirection?.stepPlayableMovie(deltaTimeSeconds) ?? ok(undefined);
+    return updated.status === "ok" ? updated : this.latchFault(updated);
+  }
+
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
@@ -208,8 +214,8 @@ export class InGameManager {
     if (this.currentGameStateValue === GameState.PauseSound) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
-    const movieUpdate = this.startupDirection?.stepPlayableMovie(deltaTimeSeconds) ?? ok(undefined);
-    if (movieUpdate.status !== "ok") return this.latchFault(movieUpdate);
+    const movieUpdate = this.advanceMovie(deltaTimeSeconds);
+    if (movieUpdate.status !== "ok") return movieUpdate;
     const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
     if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
     if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
