@@ -447,9 +447,9 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.background, "standard-current-portable");
   assert.equal(stepped.report.capabilities.skin, "default-current");
   assert.equal(stepped.report.capabilities.originalSkinSettings, "closed-static-portable");
-  assert.equal(stepped.report.capabilities.originalLiveSettings, "closed-evidence-equivalent");
-  assert.equal(stepped.report.capabilities.selectedSkinGate, "closed-static-portable");
-  assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
+  assert.equal(stepped.report.capabilities.originalLiveSettings, "observational-gap");
+  assert.equal(stepped.report.capabilities.selectedSkinGate, "observational-gap");
+  assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-native-algorithm-equivalent");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
   assert.equal(stepped.report.capabilities.mvLivePortable, "closed-portable");
   assert.equal(stepped.report.capabilities.standaloneMvView, "excluded");
@@ -653,11 +653,11 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     chart: "standard-original-compatible",
     skin: null,
     publicAutonomousCore: "closed-portable",
-    ordinaryCommandScene: "closed-evidence-equivalent",
-    ordinaryHud: "closed-evidence-equivalent",
-    habahiroCurrentExternalComplete: "closed-portable",
+    ordinaryCommandScene: "observational-gap",
+    ordinaryHud: "observational-gap",
+    habahiroCurrentExternalComplete: "closed-native-algorithm-equivalent",
     habahiroOriginalParity: "observational-gap",
-    liveRehearsalFourModeMatrix: "closed-portable",
+    liveRehearsalFourModeMatrix: "closed-native-algorithm-equivalent",
     startupDirectionPortable: "closed-portable",
     mvLivePortable: "closed-portable",
     standaloneMvView: "excluded",
@@ -676,7 +676,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     originalSkinSettings: "closed-static-portable",
-    originalLiveSettings: "closed-evidence-equivalent",
+    originalLiveSettings: "observational-gap",
     mainProgramIntegration: "closed-product-integration",
     selectedRenderingGate: "observational-gap",
     selectedHudGate: "observational-gap",

@@ -311,7 +311,7 @@ async function main(): Promise<void> {
   });
   assert.equal(thrown.status, "audio-backend-fault");
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");
-  assert.equal(throwing.snapshot().commands[throwing.snapshot().commands.length - 1]?.kind, "bgm.load");
+  assert.equal(throwing.snapshot().commands[throwing.snapshot().commands.length - 1]?.kind, "session.open");
   const later = throwing.recordTerminalFault("replacement", "replacement");
   assert.equal(later.status, "audio-backend-fault");
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");

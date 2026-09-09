@@ -1,5 +1,6 @@
 import { DEFAULT_ORIGINAL_LIVE_SETTINGS } from "../../support/session/originalLiveSettingsProfile";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "../../support/session/modeFixtures";
+import { createSimulatorSceneLayout } from "../../../scene/simulatorSceneLayout";
 declare function require(name: string): any;
 declare const process: any;
 
@@ -285,7 +286,7 @@ function oracleFailureName(status: string): string {
 }
 
 function producerExpected(input: any): unknown {
-  const producer = new ParticleCommandProducer(chart);
+  const producer = new ParticleCommandProducer(chart, false, null, particleScene());
   if (input.route === "tap-keep-start") {
     const transaction = requireOk(producer.preflightButtonTapKeepStart(0, input.rangeLength), "TapKeep start");
     return projectCommands(transaction.commands);
@@ -712,7 +713,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
   const renderer = new TraceParticleRenderer("coordinator");
   const coordinator = new ParticleFrameCoordinator(
     "coordinator",
-    new ParticleCommandProducer(chart),
+    new ParticleCommandProducer(chart, false, null, particleScene()),
     backend,
     renderer,
   );
@@ -1001,36 +1002,14 @@ function buttonInstance(_root: string, rangeLength: number | null, buttonType = 
 }
 
 function particleScene(): ParticlePixiSceneProfile {
-  const widthRate = Math.fround(Math.fround(1600 / 720) / Math.fround(9.578571319580078));
-  const buttonY = Math.fround(Math.fround(-3.450000047683716) * widthRate);
-  const screenRatioX = Math.fround(1600 / 1334);
-  const verticalFit = Math.fround(720 / Math.fround(screenRatioX * 750));
-  const gameplayTransformScale = Math.fround(widthRate * Math.fround(Math.fround(0.9) * verticalFit));
-  return Object.freeze({
-    viewportWidth: 1600,
-    viewportHeight: 720,
-    worldCenterXBits: "0x00000000",
-    worldCenterYBits: "0x00000000",
-    pixelsPerWorldUnitBits: "0x43B40000",
-    gameplayTransformScaleBits: particleFloat32ToBits(gameplayTransformScale)!,
-    roundPixels: false,
-    buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => buttonType)
-      .filter((buttonType) => buttonType !== 7)
-      .map((buttonType) => {
-        const lane = buttonType <= 6 ? buttonType : buttonType === 15 ? 6 : buttonType - 8;
-        const x = Math.fround(
-          Math.fround(Math.fround(lane - 3) * Math.fround(2.200000047683716)) * widthRate,
-        );
-        return Object.freeze({
-          buttonType,
-          position: Object.freeze({
-            xBits: particleFloat32ToBits(x)!,
-            yBits: particleFloat32ToBits(buttonY)!,
-            zBits: particleFloat32ToBits(Math.fround(0))!,
-          }),
-        });
-      })),
-  });
+  return requireOk(createSimulatorSceneLayout(
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720,
+      safeArea: { x: 0, y: 0, width: 1600, height: 720 }, origin: "bottom-left" },
+    { specificSpeed: 11, noteSize: 100, judgementAdjustValueB: 0,
+      habahiroMeshWidthSetting: 1, syncLineEdgeMargin: 0 },
+    "ordinary",
+    { noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" },
+  ), "particle scene input").particleScene;
 }
 
 async function readyRecording(sessionId: string): Promise<RecordingSimulatorParticleBackend> {

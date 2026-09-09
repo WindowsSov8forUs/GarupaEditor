@@ -155,6 +155,7 @@ assert.deepEqual(auto.getNaturalCompletionPresentation(), {
 
 const gauge = requireOk(SinglePlayScoreGauge.create(Object.freeze({
   profileIdentity: "garupa-editor-normalized-10m-v1",
+  source: Object.freeze({ kind: "product-cs-v1" as const, rulesetId: "garupa-editor-normalized-10m-v1" as const, scoringUnitCount: 3 }),
   scoreC: 375_000,
   scoreB: 2_250_000,
   scoreA: 4_500_000,
