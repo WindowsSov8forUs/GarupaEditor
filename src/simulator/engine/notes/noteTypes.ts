@@ -923,7 +923,13 @@ export class NoteLong extends NoteFrontBase {
   }
 }
 
+export interface SlideNodeHideRequest {
+  readonly forceKillMesh: boolean;
+  readonly afterUpdate: boolean;
+}
+
 export class NoteSlide extends NoteFrontBase {
+  private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
   private currentAfterIndexValue = 0;
   private manualHeadJudgedValue = false;
@@ -946,6 +952,36 @@ export class NoteSlide extends NoteFrontBase {
 
   get afterNotes(): readonly SlideAfterRuntime[] {
     return this.afterNotesValue;
+  }
+
+  get pendingRenderHides(): ReadonlyMap<number, SlideNodeHideRequest> {
+    return this.pendingSpriteHides;
+  }
+
+  commitRenderHides(): void {
+    this.pendingSpriteHides.clear();
+  }
+
+  private hideSlideNode(index: number, forceKillMesh: boolean, afterUpdate = false): void {
+    const previous = this.pendingSpriteHides.get(index);
+    this.pendingSpriteHides.set(index, Object.freeze({
+      forceKillMesh: forceKillMesh || previous?.forceKillMesh === true,
+      afterUpdate: afterUpdate || previous?.afterUpdate === true,
+    }));
+  }
+
+  private hideBeforeSlideNode(index: number, forceKillMesh: boolean, afterUpdate = false): void {
+    for (let previous = index - 1; previous >= -1; previous -= 1) {
+      this.hideSlideNode(previous, forceKillMesh, afterUpdate);
+      if (previous === -1 || !this.afterNotesValue[previous]!.source.isInvisible) break;
+    }
+  }
+
+  refreshAfterMoveTime(): void {
+    if (!this.manualHeadJudgedValue) return;
+    this.hideSlideNode(-1, true);
+    this.hideBeforeSlideNode(this.currentAfterIndexValue, true);
+    this.skipManualInvisibleAfterNodes();
   }
 
   get currentAfterIndex(): number {
@@ -1295,6 +1331,7 @@ export class NoteSlide extends NoteFrontBase {
     input: ManualNoteTouchInput,
     plan: ManualNoteContinuationPlan,
   ): void {
+    if (plan.judgementPlan !== null) this.hideBeforeSlideNode(this.currentAfterIndexValue, false);
     this.commitManualSlideNode(input, plan);
   }
 
@@ -1352,6 +1389,9 @@ export class NoteSlide extends NoteFrontBase {
     input: ManualNoteTouchInput,
     plan: ManualNoteContinuationPlan,
   ): void {
+    const data = plan.familyData as { readonly currentIndex: number };
+    this.hideBeforeSlideNode(data.currentIndex, true);
+    this.hideSlideNode(data.currentIndex, true);
     this.commitManualSlideNode(input, plan);
     this.skipManualInvisibleAfterNodes();
     this.setFingerId(-1);
@@ -1543,6 +1583,7 @@ export class NoteSlide extends NoteFrontBase {
       return submitted;
     }
     this.manualHeadJudgedValue = true;
+    this.hideSlideNode(-1, true);
     this.skipManualInvisibleAfterNodes();
     return this.currentAfterIndexValue >= this.afterNotesValue.length
       ? this.changeState(NoteState.Deactive)
@@ -1593,6 +1634,7 @@ export class NoteSlide extends NoteFrontBase {
     if (marked.status !== "ok") {
       return marked;
     }
+    this.hideBeforeSlideNode(selected.sourceIndex, false);
     this.autoLiveTraceValue.push({
       kind: "slide-stop-perfect",
       afterIndex: selected.sourceIndex,
@@ -1668,6 +1710,7 @@ export class NoteSlide extends NoteFrontBase {
     if (marked.status !== "ok") {
       return marked;
     }
+    this.hideSlideNode(this.currentAfterIndexValue, true);
     this.currentAfterIndexValue += 1;
     this.skipManualInvisibleAfterNodes();
     return current.isTerminal || this.currentAfterIndexValue >= this.afterNotesValue.length
@@ -1692,6 +1735,7 @@ export class NoteSlide extends NoteFrontBase {
       if (marked.status !== "ok") {
         throw new Error("Slide invisible current changed during parent-owned timeout cleanup");
       }
+      this.hideSlideNode(this.currentAfterIndexValue, true);
       this.currentAfterIndexValue += 1;
     }
   }
@@ -1773,6 +1817,7 @@ export class NoteSlide extends NoteFrontBase {
     if (marked.status !== "ok") {
       return marked;
     }
+    this.hideBeforeSlideNode(this.currentAfterIndexValue, false, true);
     this.autoLiveTraceValue.push({
       kind: current.isTerminal
         ? "slide-tail-perfect"
@@ -1787,6 +1832,7 @@ export class NoteSlide extends NoteFrontBase {
 
   protected override onResetForDispose(): void {
     this.afterNotesValue = [];
+    this.pendingSpriteHides.clear();
     this.currentAfterIndexValue = 0;
     this.manualHeadJudgedValue = false;
     this.slideAfterMultipleGroupValue = null;
@@ -1818,6 +1864,7 @@ export class NoteSlide extends NoteFrontBase {
       after.resetForParentDeactivation();
     }
     this.afterNotesValue = [];
+    this.pendingSpriteHides.clear();
     this.currentAfterIndexValue = 0;
     this.manualHeadJudgedValue = false;
     this.slideAfterMultipleGroupValue = null;

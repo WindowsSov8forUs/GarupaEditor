@@ -28,6 +28,7 @@ export interface OrdinarySlideChildState {
   readonly sourceIndex: number;
   readonly buttonCount: number;
   readonly visible: boolean;
+  readonly meshVisible: boolean;
   readonly lifecycle: OrdinaryLongNormalChildState;
 }
 
@@ -71,6 +72,7 @@ export function createOrdinarySlideChildState(
       sourceIndex,
       buttonCount,
       visible,
+      meshVisible: true,
       lifecycle: lifecycle.value,
     }))
     : lifecycle;

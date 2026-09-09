@@ -1,3 +1,4 @@
+import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import type {
   RenderColor,
   RenderCommand,
@@ -2389,6 +2390,7 @@ export class RenderCommandProducer {
     frontButtonCount: number,
     input: OrdinaryLongNormalChildFrameInput,
     scene: OrdinaryFixedNoteSceneInput,
+    hideRequests?: ReadonlyMap<number, SlideNodeHideRequest>,
   ): SimulatorResult<PreparedOrdinarySlideChildFrame> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2423,16 +2425,36 @@ export class RenderCommandProducer {
         : undefined,
     );
     if (advanced.status !== "ok") return advanced;
+    const nextChildStates = advanced.value.childStates.map((state, index) => {
+      const request = hideRequests?.get(index - 1);
+      const sampled = request?.afterUpdate ? state : childStates[index]!;
+      const killMesh = request !== undefined && (request.forceKillMesh ||
+        sampled.lifecycle.renderedTransform.position.y.value <= sampled.lifecycle.motionState.targetCenterY.value);
+      return hideRequests?.has(index) || killMesh
+        ? Object.freeze({ ...state, visible: state.visible && !hideRequests?.has(index), meshVisible: state.meshVisible && !killMesh })
+        : state;
+    });
     const zero = createRenderFloat32(Math.fround(0));
     if (zero.status !== "ok") return zero;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
+    for (const index of hideRequests?.keys() ?? []) {
+      const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
+      for (const renderObjectId of [objectId, ordinaryNoteIconRenderObjectId(objectId)]) {
+        if (this.creationSequenceByObjectId.has(renderObjectId)) {
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+        }
+      }
+    }
     for (let index = 0; index < advanced.value.childStates.length; index += 1) {
-      const state = advanced.value.childStates[index]!;
+      const state = nextChildStates[index]!;
       const segment = advanced.value.segments[index]!;
       const childObjectId = slideChildRenderObjectId(poolObjectId, state.sourceIndex);
       const meshObjectId = slideMeshRenderObjectId(poolObjectId, segment.sourceIndex);
+      if (!state.meshVisible && childStates[index]!.meshVisible) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+      }
       const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
       if (childCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
         return integrityFailure(
@@ -2489,7 +2511,7 @@ export class RenderCommandProducer {
       );
     });
     return transaction.status === "ok"
-      ? ok(Object.freeze({ childStates: advanced.value.childStates, transaction: transaction.value }))
+      ? ok(Object.freeze({ childStates: nextChildStates, transaction: transaction.value }))
       : transaction;
   }
 

@@ -543,7 +543,9 @@ class SimulatorEngineHost implements SimulatorEngine {
       return plan;
     }
     const committed = plan.value.commit();
-    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+    if (committed.status !== "ok") return this.inGameManager.latchExternalFault(committed);
+    const refreshed = this.inGameManager.noteManager.refreshAfterMoveTime();
+    return refreshed.status === "ok" ? refreshed : this.inGameManager.latchExternalFault(refreshed);
   }
 
   enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {

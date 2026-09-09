@@ -1096,6 +1096,13 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  refreshAfterMoveTime(): SimulatorResult<void> {
+    for (const note of this.activeNotesValue) {
+      if (note instanceof NoteSlide) note.refreshAfterMoveTime();
+    }
+    return this.updateOrdinarySlideChildren(Math.fround(0));
+  }
+
   private updateOrdinarySlideChildren(
     deltaTimeSeconds: number,
   ): SimulatorResult<void> {
@@ -1138,11 +1145,13 @@ export class NoteManager {
           musicPosition: musicPosition.value,
         }),
         this.ordinaryNoteScene,
+        note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.transaction.commit();
       if (committed.status !== "ok") return committed;
       this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
+      if (note instanceof NoteSlide) note.commitRenderHides();
     }
     return ok(undefined);
   }
