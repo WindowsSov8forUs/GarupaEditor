@@ -511,17 +511,20 @@ function generateSlideJudgePositions(scene: SceneValues): readonly number[] {
   let realMove = f32(0);
   const delta = f32(SLIDE_FRAME_SECONDS);
   const goalY = scene.goalPositions[3]!.y.value;
-  for (let frame = 0; frame < 512; frame += 1) {
+  for (;;) {
     const moved = advanceOrdinaryNoteMotion(motionState(scene, 3, progress, delta, realMove));
     if (moved.status !== "ok") throw new Error(moved.capability);
     const y = moved.value.position.y.value;
     positions.push(y);
     if (y <= Math.fround(goalY - SLIDE_TERMINAL_Y_DISTANCE)) break;
+    if (positions.length > 1 && moved.value.progressRate.value <= progress.value) {
+      throw new Error("scene.slide-judge-motion-not-advancing");
+    }
     progress = moved.value.progressRate;
     realMove = f32(Math.fround(realMove.value + SLIDE_FRAME_SECONDS));
   }
-  if (positions.length < 17 || positions.length >= 512) {
-    throw new Error("scene.slide-judge-generation-unbounded");
+  if (positions.length < 17) {
+    throw new Error("scene.slide-judge-profile-too-short");
   }
   return Object.freeze([...positions].reverse());
 }

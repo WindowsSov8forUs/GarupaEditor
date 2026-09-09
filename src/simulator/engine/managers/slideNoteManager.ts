@@ -101,7 +101,6 @@ export class SlideNoteManager {
     if (
       !Array.isArray(positions) ||
       positions.length < 2 ||
-      positions.length > 64 ||
       !isExactFiniteFloat32(judgeGeometry.value.virtualPerfectLine)
     ) {
       return invalidJudgeGeometry("Slide judge geometry requires a bounded position list and virtual line.");

@@ -5,7 +5,7 @@
   "status": "classified",
   "classificationRule": "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault before final acceptance.",
   "summary": {
-    "productionEntryCount": 1448,
+    "productionEntryCount": 1449,
     "pendingClassificationCount": 0,
     "markerCounts": {
       "evidence-required-call": 0,
@@ -18,7 +18,7 @@
       "exact-prototype": 0,
       "exact-key-order": 0,
       "rejected-call": 244,
-      "throw-error": 508,
+      "throw-error": 509,
       "rust-error-return": 82,
       "rust-result-error": 30
     }
@@ -20040,7 +20040,7 @@
     {
       "id": "RCB-0954",
       "file": "src/simulator/engine/managers/slideNoteManager.ts",
-      "line": 163,
+      "line": 162,
       "marker": "integrity-failure-call",
       "symbol": "invalidJudgeGeometry",
       "source": "return integrityFailure(",
@@ -30183,10 +30183,10 @@
     {
       "id": "RCB-1437",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 524,
+      "line": 521,
       "marker": "throw-error",
       "symbol": "if",
-      "source": "throw new Error(\"scene.slide-judge-generation-unbounded\");",
+      "source": "throw new Error(\"scene.slide-judge-motion-not-advancing\");",
       "productSemanticsId": null,
       "trigger": "internal invariant or backend exception that cannot return a typed partial result",
       "userReachability": "caught internal exception boundary",
@@ -30204,7 +30204,28 @@
     {
       "id": "RCB-1438",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 806,
+      "line": 527,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"scene.slide-judge-profile-too-short\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-1439",
+      "file": "src/simulator/scene/simulatorSceneLayout.ts",
+      "line": 809,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(created.capability);",
@@ -30223,9 +30244,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1439",
+      "id": "RCB-1440",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 827,
+      "line": 830,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",
@@ -30244,7 +30265,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1440",
+      "id": "RCB-1441",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 139,
       "marker": "throw-error",
@@ -30265,7 +30286,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1441",
+      "id": "RCB-1442",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 146,
       "marker": "throw-error",
@@ -30286,7 +30307,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1442",
+      "id": "RCB-1443",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 299,
       "marker": "throw-error",
@@ -30307,7 +30328,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1443",
+      "id": "RCB-1444",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 320,
       "marker": "throw-error",
@@ -30328,7 +30349,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1444",
+      "id": "RCB-1445",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 364,
       "marker": "throw-error",
@@ -30349,7 +30370,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1445",
+      "id": "RCB-1446",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 370,
       "marker": "throw-error",
@@ -30370,7 +30391,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1446",
+      "id": "RCB-1447",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 379,
       "marker": "throw-error",
@@ -30391,7 +30412,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1447",
+      "id": "RCB-1448",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 388,
       "marker": "throw-error",
@@ -30412,7 +30433,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1448",
+      "id": "RCB-1449",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 394,
       "marker": "throw-error",
