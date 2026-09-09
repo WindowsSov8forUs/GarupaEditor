@@ -237,7 +237,7 @@ export class InGameManager {
       return ok(undefined);
     }
     if (this.currentGameStateValue === GameState.PauseNone) {
-      return this.commitParticleAdvance(deltaTimeSeconds, true);
+      return this.advancePausedPresentation(deltaTimeSeconds);
     }
     if (this.currentGameStateValue !== GameState.PauseSound) {
       const movieUpdate = this.advanceMovie(deltaTimeSeconds);
@@ -251,7 +251,7 @@ export class InGameManager {
       return inputResult;
     }
     if (this.currentGameStateValue === GameState.PauseSound) {
-      return this.commitParticleAdvance(deltaTimeSeconds, true);
+      return this.advancePausedPresentation(deltaTimeSeconds);
     }
     const audioFrame = this.audioProducer?.beginOuterFrame() ?? ok(undefined);
     if (audioFrame.status !== "ok") return this.latchFault(audioFrame);
@@ -724,6 +724,13 @@ export class InGameManager {
     });
     const plan = FrameMutationPlan.create([participant], [identity], [identity]);
     return plan.status === "ok" ? plan.value.commit() : plan;
+  }
+
+  private advancePausedPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+    const animated = this.noteManager.advanceNoteAnimations(deltaTimeSeconds);
+    return animated.status === "ok"
+      ? this.commitParticleAdvance(deltaTimeSeconds, true)
+      : this.latchFault(animated);
   }
 
   private commitParticleAdvance(

@@ -650,8 +650,12 @@ export class NoteManager {
       }
     }
 
+    return this.advanceNoteAnimations(frameDelta);
+  }
+
+  advanceNoteAnimations(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.renderProducer !== null) {
-      const animation = this.renderProducer.preflightNoteAnimationFrame(frameDelta,
+      const animation = this.renderProducer.preflightNoteAnimationFrame(Math.fround(deltaTimeSeconds),
         this.activeNotesValue.flatMap((note) => note instanceof NoteLong || note instanceof NoteSlide
           ? [{ poolObjectId: note.poolObjectId, revision: note.flashAnimationRevision }]
           : []));
@@ -1165,7 +1169,8 @@ export class NoteManager {
     for (const note of this.activeNotesValue) {
       if (note instanceof NoteSlide) note.refreshAfterMoveTime();
     }
-    return this.updateOrdinarySlideChildren(Math.fround(0), false);
+    const updated = this.updateOrdinarySlideChildren(Math.fround(0), false);
+    return updated.status === "ok" ? this.advanceNoteAnimations(0) : updated;
   }
 
   private updateOrdinarySlideChildren(
