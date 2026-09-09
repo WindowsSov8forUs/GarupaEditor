@@ -1152,6 +1152,8 @@ export class NoteManager {
           "Every active R4 Slide chain requires its last committed front transform.",
         );
       }
+      const virtualLine = this.slideNoteManager.getVirtualPerfectLine(note.noteInformation!);
+      if (virtualLine.status !== "ok") return virtualLine;
       const prepared = this.renderProducer.preflightOrdinarySlideChildFrame(
         note.poolObjectId,
         childStates,
@@ -1163,6 +1165,11 @@ export class NoteManager {
           musicPosition: musicPosition.value,
         }),
         this.ordinaryNoteScene,
+        {
+          rootWaiting: note.state === NoteState.Wait || note.state === NoteState.Stop,
+          judgementAdjustValueB: this.judgementAdjustValueB,
+          virtualPerfectLine: virtualLine.value,
+        },
         note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );
       if (prepared.status !== "ok") return prepared;

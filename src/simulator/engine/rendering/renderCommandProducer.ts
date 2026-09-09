@@ -69,6 +69,7 @@ import {
   advanceOrdinarySlideChildren,
   createOrdinarySlideChildState,
   type OrdinarySlideChildState,
+  type OrdinarySlideStopControl,
 } from "./ordinarySlideChildLifecycle";
 
 export interface HabahiroFieldResourceBindings {
@@ -2391,6 +2392,7 @@ export class RenderCommandProducer {
     frontButtonCount: number,
     input: OrdinaryLongNormalChildFrameInput,
     scene: OrdinaryFixedNoteSceneInput,
+    stopControl: OrdinarySlideStopControl,
     hideRequests?: ReadonlyMap<number, SlideNodeHideRequest>,
   ): SimulatorResult<PreparedOrdinarySlideChildFrame> {
     const validation = this.validate();
@@ -2421,6 +2423,7 @@ export class RenderCommandProducer {
       input,
       scene.screenToSafeAreaRatio,
       scene.longMeshColor,
+      stopControl,
       this.isCompleteHabahiro()
         ? scene.habahiro!.meshWidthSetting
         : undefined,

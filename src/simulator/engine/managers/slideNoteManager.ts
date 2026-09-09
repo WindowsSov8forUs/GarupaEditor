@@ -69,6 +69,12 @@ export class SlideNoteManager {
     return ok(firstDistance <= secondDistance ? "first" : "second");
   }
 
+  getVirtualPerfectLine(source: NoteInformation): SimulatorResult<number> {
+    const result = this.geometry?.getSlideJudgeGeometry?.(source);
+    if (result === undefined) return invalidJudgeGeometry("Slide stop requires its bound virtual perfect line.");
+    return result.status === "ok" ? ok(result.value.virtualPerfectLine) : result;
+  }
+
   judge(
     source: NoteInformation,
     adjustedMusicPosition: number,
