@@ -1051,14 +1051,14 @@ export class NoteSlide extends NoteFrontBase {
   override preflightManualTouchBegan(
     input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteBeganPlan> {
-    const source = this.noteInformation;
+    const source = this.manualCandidateSource;
     const runtime = this.manualRuntime;
-    if (source === null || runtime.status !== "ok" || this.manualHeadJudgedValue) {
+    if (source === null || runtime.status !== "ok") {
       return runtime.status === "ok"
         ? integrityFailure(
             "manual.slide-head-owner-unavailable",
             ["D10", "D12", "MJ18", "MJ20"],
-            "Slide Began requires its unconsumed parent-owned head.",
+            "Slide Began requires its current unconsumed source.",
           )
         : runtime;
     }
@@ -1077,6 +1077,19 @@ export class NoteSlide extends NoteFrontBase {
         judgementPlan: null,
         familyData: judgement.value,
       }));
+    }
+    if (this.manualHeadJudgedValue) {
+      const current = this.afterNotesValue[this.currentAfterIndexValue]!;
+      // A flick tail binds on Began and judges on movement/release.
+      const continuation = current.isTerminal && current.source.gameNoteType >= 8
+        ? ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)))
+        : this.reserveManualSlideNode(
+            input, current, 8, judgement.value.result, judgement.value.timing,
+            false, input.currentPosition, Math.fround(0),
+          );
+      return continuation.status === "ok"
+        ? ok(Object.freeze({ outcome: "bind", ...continuation.value }))
+        : continuation;
     }
     const reserved = input.judgementTransaction.preflight({
       noteInformation: source,
@@ -1099,6 +1112,10 @@ export class NoteSlide extends NoteFrontBase {
     input: ManualNoteTouchInput,
     plan: ManualNoteBeganPlan,
   ): void {
+    if (this.manualHeadJudgedValue) {
+      this.commitManualSlideNode(input, plan);
+      return;
+    }
     if (plan.judgementPlan === null) {
       throw new Error("Slide head commit lost its type8 reservation");
     }
@@ -1284,7 +1301,8 @@ export class NoteSlide extends NoteFrontBase {
   override preflightManualTouchEnded(
     input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
-    const current = this.afterNotesValue[this.currentAfterIndexValue];
+    const current = this.afterNotesValue.find((after, index) =>
+      index >= this.currentAfterIndexValue && !after.source.isInvisible && !after.judged);
     const root = this.noteInformation;
     const runtime = this.manualRuntime;
     if (current === undefined || root === null || runtime.status !== "ok") {
@@ -1322,8 +1340,11 @@ export class NoteSlide extends NoteFrontBase {
       !current.isTerminal || judgement.value.result === NoteResultType.None
         ? NoteResultType.Miss
         : judgement.value.result,
-      judgement.value.timing,
+      !current.isTerminal || judgement.value.result === NoteResultType.None
+        ? JudgeTiming.None : judgement.value.timing,
       false,
+      null,
+      Math.fround(0),
     );
   }
 
@@ -1331,7 +1352,9 @@ export class NoteSlide extends NoteFrontBase {
     input: ManualNoteTouchInput,
     plan: ManualNoteContinuationPlan,
   ): void {
-    this.commitManualSlideNode(input, plan, true);
+    this.commitManualSlideNode(input, plan);
+    this.skipManualInvisibleAfterNodes();
+    this.setFingerId(-1);
   }
 
   private noManualSlideJudgementPlan(
@@ -1371,7 +1394,7 @@ export class NoteSlide extends NoteFrontBase {
       ? ok(Object.freeze({
           judgementPlan: reserved.value,
           familyData: Object.freeze({
-            currentIndex: this.currentAfterIndexValue,
+            currentIndex: this.afterNotesValue.indexOf(current),
             markMultipleUsed,
             nextOrigin,
             nextGrace,
@@ -1383,7 +1406,6 @@ export class NoteSlide extends NoteFrontBase {
   private commitManualSlideNode(
     input: ManualNoteTouchInput,
     plan: ManualNoteContinuationPlan,
-    release = false,
   ): void {
     const data = plan.familyData as {
       readonly currentIndex: number;
@@ -1396,7 +1418,9 @@ export class NoteSlide extends NoteFrontBase {
     if (plan.judgementPlan === null) {
       return;
     }
-    if (data.currentIndex !== this.currentAfterIndexValue) {
+    if (data.currentIndex < this.currentAfterIndexValue ||
+      this.afterNotesValue.slice(this.currentAfterIndexValue, data.currentIndex)
+        .some((after) => !after.source.isInvisible)) {
       throw new Error("Slide current cursor changed after preflight");
     }
     if (data.markMultipleUsed) {
@@ -1406,13 +1430,17 @@ export class NoteSlide extends NoteFrontBase {
       }
     }
     input.judgementTransaction.commit(plan.judgementPlan);
+    while (this.currentAfterIndexValue < data.currentIndex) {
+      this.afterNotesValue[this.currentAfterIndexValue]!.markJudged();
+      this.currentAfterIndexValue += 1;
+    }
     const current = this.afterNotesValue[this.currentAfterIndexValue];
     const marked = current?.markJudged();
     if (marked?.status !== "ok") {
       throw new Error("Slide current node changed after preflight");
     }
     this.currentAfterIndexValue += 1;
-    if (release || current?.isTerminal) {
+    if (current?.isTerminal) {
       const changed = this.changeState(NoteState.Deactive);
       if (changed.status !== "ok") {
         throw new Error("Slide completion could not deactivate parent");
