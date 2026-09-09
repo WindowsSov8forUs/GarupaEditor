@@ -2215,7 +2215,7 @@ export class RenderCommandProducer {
   preflightOrdinarySyncLine(
     poolIndex: number,
     ownerState: OrdinarySyncLineOwnerState,
-    activate: boolean,
+    visible: boolean,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2233,6 +2233,13 @@ export class RenderCommandProducer {
         ["RPR-D06", "RPR-D13", "PR16", "PR39"],
         "Simultaneous-line updates require a committed fixed-pool identity.",
       );
+    }
+    if (!visible) {
+      return this.preflight([{
+        ...this.commandBase(this.substep)(0),
+        kind: "deactivate-object",
+        renderObjectId,
+      }]);
     }
     const geometry = buildOrdinarySyncLine(ownerState);
     if (geometry.status !== "ok") return geometry;
@@ -2264,13 +2271,11 @@ export class RenderCommandProducer {
       width: geometry.value.width,
       materialRole: "sync-line",
     }];
-    if (activate) {
-      commands.push({
-        ...base(2),
-        kind: "activate-object",
-        renderObjectId,
-      });
-    }
+    commands.push({
+      ...base(2),
+      kind: "activate-object",
+      renderObjectId,
+    });
     return this.preflight(commands);
   }
 

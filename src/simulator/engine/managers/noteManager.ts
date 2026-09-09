@@ -1247,8 +1247,9 @@ export class NoteManager {
       return ok(undefined);
     }
     for (let index = 1; index < activatedNotes.length; index += 1) {
-      const targetA = activatedNotes[index - 1];
-      const targetB = activatedNotes[index];
+      // SetupSyncLine is invoked on the newly activated note; its scale owns the width.
+      const targetA = activatedNotes[index];
+      const targetB = activatedNotes[index - 1];
       if (targetA === undefined || targetB === undefined) continue;
       const informationA = targetA.noteInformation;
       const informationB = targetB.noteInformation;
@@ -1260,9 +1261,13 @@ export class NoteManager {
         );
       }
       if (
-        informationA.fireNoteType !== FrontNoteType.Normal ||
-        informationB.fireNoteType !== FrontNoteType.Normal ||
-        informationA.buttonTypesArray[0] === informationB.buttonTypesArray[0]
+        isSameDirectionalGroup(informationB, informationA) ||
+        (informationA.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
+          informationB.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
+          informationA.gameNoteType === informationB.gameNoteType &&
+          Math.abs(informationA.buttonType - informationB.buttonType) === 1) ||
+        this.activeOrdinarySyncLines.some((line) =>
+          line !== null && (line.targetA === targetB || line.targetB === targetB))
       ) {
         continue;
       }
@@ -1303,7 +1308,7 @@ export class NoteManager {
       const prepared = this.renderProducer.preflightOrdinarySyncLine(
         line.poolIndex,
         ownerState.value,
-        false,
+        line.targetA.state === NoteState.Move && line.targetB.state === NoteState.Move,
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.commit();
