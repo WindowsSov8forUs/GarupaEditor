@@ -19,6 +19,7 @@ const fixture = JSON.parse(readFileSync(join(
 const scoreOracle = fixture.score_boundaries;
 const thresholds = Object.freeze({
   profileIdentity: "reverse:music-786-special",
+  source: Object.freeze({ kind: "native-score-rank-data" as const, musicId: 786, difficulty: "special" }),
   scoreC: scoreOracle.thresholds.c,
   scoreB: scoreOracle.thresholds.b,
   scoreA: scoreOracle.thresholds.a,

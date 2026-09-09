@@ -50,7 +50,10 @@ assert.deepEqual(ordinary.garupaProductScene.fieldLines.map((line) => line.lane)
 for (let lane = 0; lane < 7; lane += 1) {
   assert.deepEqual(
     requireOk(ordinary.garupaProductScene.projectLaneAtCurve(lane, 0)),
-    ordinary.ordinaryNoteScene.noteStartPositions[lane],
+    {
+      ...ordinary.ordinaryNoteScene.noteStartPositions[lane],
+      z: ordinary.ordinaryNoteScene.goalPositions[lane]!.z,
+    },
   );
   assert.deepEqual(
     requireOk(ordinary.garupaProductScene.projectLaneAtCurve(lane, 1)),
@@ -114,10 +117,30 @@ for (const arbitraryLane of [-100.5, -1, 0.5, 7, 100.25]) {
 assert.deepEqual(ordinary.garupaProductScene.fieldLines.map((line) => line.lane), [0, 1, 2, 3, 4, 5, 6]);
 assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(Number.NaN, 1).status, "integrity-failure");
 
-const habahiro = requireOk(createSimulatorSceneLayout(surface, config, "habahiro", resources));
-assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldBefore.length, 2);
-assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldAfter.length, 2);
-assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldMasks.length, 1);
+const habahiro = requireOk(createSimulatorSceneLayout(surface, config, "habahiro", {
+  ...resources,
+  habahiroPackage: {
+    flashLogicalAssetIds: {
+      bg_line_rhythm_flash: "habahiro:bg_line_rhythm_flash",
+      bg_line_rhythm_flash2: "habahiro:bg_line_rhythm_flash2",
+      game_play_line_flash: "habahiro:game_play_line_flash",
+      game_play_line_flash2: "habahiro:game_play_line_flash2",
+    },
+    fieldBefore: {
+      backgroundLineLogicalAssetId: "skin00:bg_line_rhythm",
+      judgeLineLogicalAssetId: "skin00:game_play_line",
+      judgeSkillLineLogicalAssetId: "skin00:game_play_line_skill_adjust_effect",
+    },
+    fieldAfter: {
+      backgroundLineLogicalAssetId: "habahiro:bg_line_rhythm",
+      judgeLineLogicalAssetId: "habahiro:game_play_line",
+      judgeSkillLineLogicalAssetId: "habahiro:game_play_line_skill_adjust_effect",
+    },
+  },
+}));
+assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldBefore.length, 4);
+assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldAfter.length, 4);
+assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldMasks.length, 0);
 assert.equal(requireOk(habahiro.manualInputGeometry.resolveButton(centerScreen)), 3);
 habahiro.manualInputGeometry.setHabahiroLaneChanged?.();
 assert.equal(requireOk(habahiro.manualInputGeometry.resolveButton(centerScreen)), 11);

@@ -594,12 +594,22 @@ function testProductManualChainOwner(): void {
   assert.equal(oneFrame.initialize().status, "ok");
   assert.equal(manager.initialize().status, "ok");
 
+  const reflectProductBatch = () => {
+    requireOk(manager.submitPendingJudgementBatch());
+    const plan = requireOk(oneFrame.preflightReflectOneFrameData());
+    if (plan === null) return null;
+    const productReflect = requireOk(manager.preflightReflectJudgementBatch(plan.batch));
+    const reflected = requireOk(oneFrame.commitReflectOneFrameData(plan));
+    if (productReflect !== null) requireOk(productReflect.publishOwner());
+    return reflected;
+  };
+
   requireOk(music.advance(Math.fround(0.5)));
   const head = product.visibleNodes.find((node) => node.type === "Single" && node.chainIdentity !== null)!;
   const headPoint = productScreenPoint(scene.garupaProductScene, head);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Began, position: headPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  let batch = requireOk(oneFrame.reflectOneFrameData())!;
+  let batch = reflectProductBatch()!;
   assert.equal(batch.entries[0]!.adjustedResult, 4);
   assert.equal(batch.entries[0]!.noteType, 0);
   assert.equal(manager.snapshot().activeFingerCount, 1);
@@ -609,10 +619,10 @@ function testProductManualChainOwner(): void {
   const flickPoint = productScreenPoint(scene.garupaProductScene, flick);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: flickPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
+  assert.equal(reflectProductBatch(), null);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: flickPoint.x + 20, y: flickPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  batch = reflectProductBatch()!;
   assert.equal(batch.entries[0]!.noteType, 3);
 
   requireOk(music.advance(Math.fround(0.5)));
@@ -620,16 +630,16 @@ function testProductManualChainOwner(): void {
   const directionalPoint = productScreenPoint(scene.garupaProductScene, directional);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: directionalPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
+  assert.equal(reflectProductBatch(), null);
   requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: directionalPoint.x - 10, y: directionalPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  batch = reflectProductBatch()!;
   assert.equal(batch.entries[0]!.noteType, 9);
   assert.equal(manager.snapshot().activeFingerCount, 0);
 
   requireOk(music.advance(Math.fround(0.7)));
   requireOk(manager.update(Math.fround(1 / 60)));
-  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  batch = reflectProductBatch()!;
   assert.equal(batch.entries[0]!.adjustedResult, 0);
   assert.equal(manager.snapshot().judgedNodeCount, 3);
   assert.equal(manager.snapshot().missedNodeCount, 1);
