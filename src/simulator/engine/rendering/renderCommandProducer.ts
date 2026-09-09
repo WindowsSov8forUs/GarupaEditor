@@ -2005,7 +2005,6 @@ export class RenderCommandProducer {
                 this.resources,
               );
           if (childBinding.status !== "ok") return childBinding;
-          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
           commands.push({
             ...base(commands.length),
             kind: "bind-resource",
@@ -2495,6 +2494,9 @@ export class RenderCommandProducer {
         );
       }
       if (state.visible) {
+        if (childStates[index]!.lifecycle.phase === "wait" && state.lifecycle.phase !== "wait") {
+          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
+        }
         commands.push({
           ...base(commands.length),
           kind: "set-transform",
