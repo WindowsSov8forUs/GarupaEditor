@@ -146,11 +146,11 @@ export function getSecondsWithDistance(
   distance: number,
   bpm: number,
 ): SimulatorResult<number> {
-  if (!isExactFiniteFloat32(distance) || distance < 0 || !isExactFiniteFloat32(bpm) || bpm <= 0) {
+  if (!isExactFiniteFloat32(distance) || !isExactFiniteFloat32(bpm) || bpm <= 0) {
     return integrityFailure(
       "manual.judgement.invalid-distance-or-bpm",
       ["D05", "MJ02"],
-      "GetSecWithDistance requires non-negative finite Float32 distance and positive finite Float32 BPM.",
+      "GetSecWithDistance requires finite signed Float32 distance and positive finite Float32 BPM.",
     );
   }
   const secondsPerBar = Math.fround(SECONDS_PER_MINUTE_TIMES_FOUR / bpm);

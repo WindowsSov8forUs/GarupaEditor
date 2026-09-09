@@ -1552,10 +1552,9 @@ export class NoteSlide extends NoteFrontBase {
         !after.judged &&
         !after.source.isInvisible,
     );
-    const midpointOver = nextVisible !== undefined &&
-      Math.fround(nextVisible.source.absolutePos - adjusted) > Math.fround(0) &&
-      Math.fround(adjusted - information.absolutePos) >
-        Math.fround(nextVisible.source.absolutePos - adjusted);
+    const remaining = Math.fround((nextVisible?.source.absolutePos ?? 0) - adjusted);
+    const midpointOver = remaining <= 0 ||
+      Math.fround(adjusted - information.absolutePos) > remaining;
     if (!frontOver.value && !midpointOver) {
       return ok(undefined);
     }
@@ -1589,7 +1588,7 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     if (!runtime.value.shouldForcePerfect()) {
-      return this.executeManualSlideCurrentTimeout();
+      return ok(undefined);
     }
     const selected = this.afterNotesValue.find(
       (after) => !after.source.isInvisible && !after.judged,
@@ -1639,6 +1638,17 @@ export class NoteSlide extends NoteFrontBase {
         });
       }
     }
+    const runtime = this.autoLiveRuntime;
+    if (runtime.status !== "ok") return runtime;
+    if (!runtime.value.shouldForcePerfect() && this.manualHeadJudgedValue) {
+      for (const after of this.afterNotesValue) {
+        if (this.state === NoteState.Deactive) break;
+        if (after.judged || after.source.isInvisible) continue;
+        const timeout = this.executeManualSlideAfterTimeout(after);
+        if (timeout.status !== "ok") return timeout;
+      }
+      if (this.state === NoteState.Deactive) return ok(undefined);
+    }
     return this.forcePerfectPendingAfter();
   }
 
@@ -1657,7 +1667,7 @@ export class NoteSlide extends NoteFrontBase {
     return ok(undefined);
   }
 
-  private executeManualSlideCurrentTimeout(): SimulatorResult<void> {
+  private executeManualSlideAfterTimeout(current: SlideAfterRuntime): SimulatorResult<void> {
     const runtime = this.manualRuntime;
     if (runtime.status !== "ok") {
       return runtime;
@@ -1670,18 +1680,31 @@ export class NoteSlide extends NoteFrontBase {
         "Slide current timeout requires a finite adjusted position.",
       );
     }
-    this.skipManualInvisibleAfterNodes(adjusted);
-    const current = this.afterNotesValue[this.currentAfterIndexValue];
-    if (current === undefined) {
-      return this.changeState(NoteState.Deactive);
+    const phase = runtime.value.getSlideChildPhase(current.sourceIndex);
+    if (phase.status !== "ok") return phase;
+    if (phase.value !== "stop") return ok(undefined);
+    const nextVisible = this.afterNotesValue.find((after) =>
+      after.sourceIndex > current.sourceIndex && !after.source.isInvisible);
+    const adjustment = runtime.value.getJudgementAdjustValueB();
+    if (nextVisible !== undefined && adjustment < 0 && current.stopAdjustmentCounter < 6 - adjustment) {
+      current.stopAdjustmentCounter += 1;
+      return ok(undefined);
     }
-    const over = isManualTimeoutOver(
-      current.source.absolutePos,
-      adjusted,
-      runtime.value.getCurrentBpm(),
-    );
-    if (over.status !== "ok" || !over.value) {
-      return over.status === "ok" ? ok(undefined) : over;
+    if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
+      current.timeoutFrameCounter = Math.fround(current.timeoutFrameCounter + runtime.value.getExecuteFrame());
+      if (current.timeoutFrameCounter < 7) return ok(undefined);
+    } else {
+      const over = isManualTimeoutOver(current.source.absolutePos, adjusted, runtime.value.getCurrentBpm());
+      if (over.status !== "ok") return over;
+      let successorOver = !current.isTerminal && nextVisible === undefined;
+      if (nextVisible !== undefined) {
+        const nextPhase = runtime.value.getSlideChildPhase(nextVisible.sourceIndex);
+        if (nextPhase.status !== "ok") return nextPhase;
+        const remaining = Math.fround(nextVisible.source.absolutePos - adjusted);
+        successorOver = nextPhase.value === "stop" ||
+          (remaining > 0 && Math.fround(adjusted - current.source.absolutePos) > remaining);
+      }
+      if (!over.value && !successorOver) return ok(undefined);
     }
     const submitted = runtime.value.submitJudgement({
       noteInformation: current.source,
@@ -1698,8 +1721,9 @@ export class NoteSlide extends NoteFrontBase {
     if (marked.status !== "ok") {
       return marked;
     }
-    this.hideSlideNode(this.currentAfterIndexValue, true);
-    this.currentAfterIndexValue += 1;
+    this.hideSlideNode(-1, true);
+    this.hideSlideNode(current.sourceIndex, true);
+    this.currentAfterIndexValue = current.sourceIndex + 1;
     this.skipManualInvisibleAfterNodes();
     return current.isTerminal || this.currentAfterIndexValue >= this.afterNotesValue.length
       ? this.changeState(NoteState.Deactive)
@@ -2563,6 +2587,8 @@ export class LongAfterRuntime {
 
 export class SlideAfterRuntime {
   private judgedValue = false;
+  stopAdjustmentCounter = 0;
+  timeoutFrameCounter = 0;
 
   constructor(
     readonly source: NoteInformation,
@@ -2589,6 +2615,8 @@ export class SlideAfterRuntime {
 
   resetForParentDeactivation(): void {
     this.judgedValue = false;
+    this.stopAdjustmentCounter = 0;
+    this.timeoutFrameCounter = 0;
   }
 }
 

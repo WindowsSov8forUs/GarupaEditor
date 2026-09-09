@@ -447,6 +447,13 @@ export class NoteManager {
         });
         note.registerManualRuntime({
           getExecuteFrame: () => this.musicScoreController.executeFrame,
+          getSlideChildPhase: (index) => {
+            const phase = this.ordinarySlideRenderStates.get(note)?.[index]?.lifecycle.phase;
+            return phase === undefined
+              ? integrityFailure("manual.slide-child-phase-unavailable", ["D11", "MJ23"],
+                  "Slide timeout requires the committed child motion phase.")
+              : ok(phase);
+          },
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,

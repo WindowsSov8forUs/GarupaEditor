@@ -40,6 +40,7 @@ export interface NoteStateSnapshot {
 
 export interface ManualNoteRuntime {
   readonly getExecuteFrame: () => number;
+  readonly getSlideChildPhase: (index: number) => SimulatorResult<"wait" | "move" | "stop">;
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly getJudgementAdjustValueB: () => number;
