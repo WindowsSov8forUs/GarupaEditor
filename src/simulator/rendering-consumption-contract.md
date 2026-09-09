@@ -29,6 +29,14 @@ The transactional render owner now carries the phase, phase time, accumulated X 
 
 Source-branch review and direct execution at zero, 0.1, 0.2 and exact Float32 0.14-second deltas agree on phase resets, increments, raw alpha and completion. At 0.1-second cadence the active resumes produce X offsets 8,16,17,18,19,20 before completion, rather than selecting later phases from global elapsed time. TypeScript compilation verifies the command handoff. This closes the AddScore phase rule; it is not a device cadence or raster equivalence claim.
 
+## HUD-CLOCKS — independent animation and visibility clocks
+
+The source-bound `simulator-score-ngui-native-domain-10-1-4/score_ngui_native_domain_contract.json` gives the high-rank clip a 3-second loop, BigStar alpha tweens 0.8-second legs and Flash a 1-second leg. The producer no longer wraps their shared elapsed input at 3 seconds; each consumer uses its own period. Direct production sampling at 0/3/6 seconds gives BigStar alpha 0.4/0.475/0.55 and Flash 0/0.3/0, preserving the independent cycles instead of resetting all alpha at each clip loop.
+
+`resource-pixi-rendering-runtime-contract-10-1-4/arm64/032ac710__CE_Result_showCoroutine_d__31__MoveNext.arm64.tsv` compares the previous visibility time with 1 second before adding delta. `CE.Result.Show` starts that coroutine immediately, while GameJudge starts at animation time zero. The producer now carries both clocks transactionally and hides on the source comparison. Actual producer-method execution with initial delta 0.1 followed by 0.95/0.01, and initial delta 0.9 followed by 0.2/0.01, preserves the first sampled frame and hides on the next resume. Compilation and command classification pass; no product tests or fixtures were added.
+
+The older Combo one-second-hide interpretation is superseded by `simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4`: current ComboNumber.Show starts Animator, not the dormant show coroutine. Combo remains visible after its scale animation and is unchanged. BND-C184/C185's 58 scene-bound Game-clear ParticleSystemRenderers all have layer 0/order 50; current HUD order 100 is above their shared draw layer. This ordering boundary needs no new engine emulation and does not assert native allocation-dependent ties.
+
 ## SORT-01 — renderer distance prefix
 
 Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.
