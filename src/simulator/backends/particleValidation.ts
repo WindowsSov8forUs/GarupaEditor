@@ -626,7 +626,6 @@ export function validateGameClearFramePlan(
   if (before === null || after === null || before < 0 || after < before) {
     return reject("particle.game-clear.invalid-elapsed", "Game-clear elapsed time is finite, non-negative and monotonic.");
   }
-  let accumulated = Math.fround(0);
   let previousSample = before;
   for (const phase of plan.phases) {
     if (!isRecord(phase) || !hasExactKeys(phase, [
@@ -638,12 +637,11 @@ export function validateGameClearFramePlan(
     }
     const sampledAt = particleFloat32FromBits(phase.sampledAtSecondsBits);
     const delta = particleFloat32FromBits(phase.deltaTimeBits);
-    if (sampledAt === null || delta === null || sampledAt < previousSample || delta < 0) {
+    if (sampledAt === null || delta === null || sampledAt < previousSample || sampledAt > after || delta < 0) {
       return reject("particle.game-clear.invalid-phase-time", "Game-clear phase samples and deltas are finite and monotonic.");
     }
-    accumulated = Math.fround(accumulated + delta);
-    if (sampledAt !== Math.fround(before + accumulated)) {
-      return reject("particle.game-clear.phase-sample", "Each Game-clear Transform sample is taken at the exact endpoint of its accumulated phase delta.");
+    if (delta !== Math.fround(sampledAt - previousSample)) {
+      return reject("particle.game-clear.phase-sample", "Each Game-clear phase delta covers its adjacent published sample endpoints.");
     }
     previousSample = sampledAt;
     const transformIds = new Set<string>();
@@ -664,9 +662,9 @@ export function validateGameClearFramePlan(
       return reject("particle.game-clear.phase-mutation-transform", "Every Game-clear lifecycle mutation is disjoint and consumes the Transform sample from the same phase.");
     }
   }
-  return Math.fround(before + accumulated) === after && previousSample === after
+  return previousSample === after
     ? particleAccepted(undefined)
-    : reject("particle.game-clear.phase-sum", "Game-clear phase deltas and final sample must exactly cover the Float32 elapsed interval.");
+    : reject("particle.game-clear.phase-sum", "Game-clear phases must end at the published elapsed endpoint.");
 }
 
 function validateGameClearGroups(groups: readonly unknown[]): ParticleOperationResult<void> {

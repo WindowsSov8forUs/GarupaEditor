@@ -37,6 +37,14 @@ The source-bound `simulator-score-ngui-native-domain-10-1-4/score_ngui_native_do
 
 The older Combo one-second-hide interpretation is superseded by `simulator-hud-particle-pause-terminal-strict-reaudit-10-1-4`: current ComboNumber.Show starts Animator, not the dormant show coroutine. Combo remains visible after its scale animation and is unchanged. BND-C184/C185's 58 scene-bound Game-clear ParticleSystemRenderers all have layer 0/order 50; current HUD order 100 is above their shared draw layer. This ordering boundary needs no new engine emulation and does not assert native allocation-dependent ties.
 
+## Game-clear application timing correction
+
+Reverse `2c7bc211294ea24f09da342bc51dce34a38f9cec`, `simulator-game-clear-native-domain-10-1-4/game_clear_timing_correction.json`, supersedes all fixed 3.233-second/15-ms interpretations below. Those values describe one runtime observation. Original `GameObjectUtility.WaitForSeconds` compares the previous elapsed time with `f32(0.2)` before adding the current delta; the base Animator then starts at zero. The original AnimationClip emits `ClearAnimationFinished` at its own time 3. FC/AP starts immediately on a separate timeline. Completion waits for full-combo character voice and background completion before exit; current supported sessions have no character voice, and MV completion is checked after the clear animation, not before starting it.
+
+The engine owns this timeline transactionally. Base particles retain serialized inactive state during the wait and consume their own shifted activation keys; FC/AP keys retain their original times. Game-clear phase validation checks adjacent endpoints rather than requiring reassociated Float32 sums to be identical. The assembly releases host resources on the scheduler turn after the completed presentation is published, without a device-derived timer. Observed duration fields in historical resource metadata no longer gate parsing or drive production.
+
+Validation: original binary ranges and serialized event checked before Reverse delivery; 272 activation-key comparisons across clear statuses 1/2/3 and two delayed starts; direct execution of actual profile parsers, particle owner, frame validator and discard/commit paths including zero-time start, large jumps and elapsed time beyond the old deadline; direct Standard/MV completion ordering checks. TypeScript and the runtime contract check pass. No product test files, fixtures, app runs or visual evidence were added. This closes the named timing/exit defects, not the overall renderer parity declaration.
+
 ## SORT-01 — renderer distance prefix
 
 Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.

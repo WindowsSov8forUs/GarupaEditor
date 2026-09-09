@@ -100,7 +100,7 @@ export interface SimulatorEngine {
   resume(): SimulatorResult<void>;
   continueLive(): SimulatorResult<void>;
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
-  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void>;
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean>;
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;
   getAdjustedMusicPosition(): SimulatorResult<number>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;

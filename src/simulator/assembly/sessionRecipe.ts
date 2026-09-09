@@ -161,8 +161,8 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private state: "running" | "closed" = "running";
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
   private closeReport: SimulatorModuleCloseReport | null = null;
-  private naturalCompletionPresentationRemainingSeconds: number | null = null;
-  private naturalCompletionExitDelayRemainingSeconds: number | null = null;
+  private naturalCompletionPresentationActive = false;
+  private naturalCompletionReadyToClose = false;
 
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
@@ -222,36 +222,15 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       return Object.freeze({ status: "rejected" as const, failure: surface.failure });
     }
     if (this.engine.getNaturalCompletionClearStatus() !== null) {
-      if (this.naturalCompletionPresentationRemainingSeconds === null) {
-        this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
-        return Object.freeze({ status: "running" as const });
+      this.naturalCompletionPresentationActive = true;
+      if (this.naturalCompletionReadyToClose) {
+        return Object.freeze({ status: "closed" as const, report: this.finish("completed", null) });
       }
-      if (this.naturalCompletionExitDelayRemainingSeconds !== null) {
-        this.naturalCompletionExitDelayRemainingSeconds = Math.fround(
-          this.naturalCompletionExitDelayRemainingSeconds - Math.fround(deltaTimeSeconds),
-        );
-        if (this.naturalCompletionExitDelayRemainingSeconds <= 0) {
-          const report = this.finish("completed", null);
-          return Object.freeze({ status: "closed" as const, report });
-        }
-        return Object.freeze({ status: "running" as const });
-      }
-      const presentationDelta = Math.fround(Math.min(
-        Math.fround(deltaTimeSeconds),
-        this.naturalCompletionPresentationRemainingSeconds,
-      ));
-      const advanced = this.engine.advanceNaturalCompletionPresentation(presentationDelta);
+      const advanced = this.engine.advanceNaturalCompletionPresentation(deltaTimeSeconds);
       if (advanced.status !== "ok") return rejectedStep(advanced);
-      this.naturalCompletionPresentationRemainingSeconds = Math.fround(
-        this.naturalCompletionPresentationRemainingSeconds - presentationDelta,
-      );
-      if (this.naturalCompletionPresentationRemainingSeconds <= 0) {
-        // Reverse R1: ClearAnimationFinished publishes the final frame, then
-        // InGameManager.onExit follows 15 ms later. Never dispose in the same
-        // scheduler turn that committed the terminal presentation endpoint.
-        this.naturalCompletionPresentationRemainingSeconds = Math.fround(0);
-        this.naturalCompletionExitDelayRemainingSeconds = Math.fround(0.015);
-      }
+      // Publish the terminal presentation before releasing host resources on
+      // the next scheduler turn; no device-observed millisecond timer.
+      this.naturalCompletionReadyToClose = advanced.value;
       return Object.freeze({ status: "running" as const });
     }
     const stepped = this.engine.step(
@@ -260,7 +239,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     );
     if (stepped.status !== "ok") return rejectedStep(stepped);
     if (this.engine.getNaturalCompletionClearStatus() !== null) {
-      this.naturalCompletionPresentationRemainingSeconds = Math.fround(3.233);
+      this.naturalCompletionPresentationActive = true;
       return Object.freeze({ status: "running" as const });
     }
     const snapshot = this.engine.snapshot();
@@ -320,7 +299,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (surface.status === "rejected") return surface;
     const state = this.engine.getTimelineControlState();
     if (state.status !== "ok") return fromEngineFailure(state);
-    return accepted(this.naturalCompletionPresentationRemainingSeconds === null
+    return accepted(!this.naturalCompletionPresentationActive
       ? Object.freeze({ ...state.value, terminalPresentationActive: false })
       : Object.freeze({ ...state.value, playable: false, terminalPresentationActive: true }));
   }

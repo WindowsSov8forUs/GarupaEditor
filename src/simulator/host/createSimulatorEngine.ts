@@ -76,8 +76,16 @@ import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingG
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
 import { GarupaProductTimelineManager } from "../engine/garupa/productTimelineManager";
 
+import {
+  advanceGameClearTimeline,
+  isGameClearAnimationFinished,
+  startGameClearTimeline,
+  type GameClearTimeline,
+} from "../engine/hud/gameClearTimeline";
+
 class SimulatorEngineHost implements SimulatorEngine {
   private naturalCompletionClearStatus: 1 | 2 | 3 | null = null;
+  private naturalCompletionTimeline: GameClearTimeline | null = null;
 
   constructor(
     private readonly inGameDirector: InGameDirector,
@@ -167,7 +175,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const updated = this.inGameDirector.update(deltaTimeSeconds);
     if (updated.status !== "ok") return updated;
-    return this.pollNaturalCompletion();
+    return this.pollNaturalCompletion(deltaTimeSeconds);
   }
 
   resolveManualInputButton(
@@ -308,7 +316,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       : audioFault;
   }
 
-  completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
+  completeLiveAudio(clearStatus: 1 | 2 | 3, initialDeltaTimeSeconds = 0): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
@@ -377,6 +385,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       identity: "completion-owner",
       publishOwner: () => {
         this.naturalCompletionClearStatus = clearStatus;
+        this.naturalCompletionTimeline = startGameClearTimeline(initialDeltaTimeSeconds);
         return ok(undefined);
       },
       discard: () => ok(undefined),
@@ -394,9 +403,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
-  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
-    if (this.naturalCompletionClearStatus === null || !Number.isFinite(deltaTimeSeconds) ||
+    if (this.naturalCompletionTimeline === null || !Number.isFinite(deltaTimeSeconds) ||
       deltaTimeSeconds < 0) {
       return integrityFailure(
         "render.game-clear.invalid-presentation-advance",
@@ -404,11 +413,13 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Game-clear presentation time advances only after natural completion with one finite non-negative host delta.",
       );
     }
+    const delta = Math.fround(deltaTimeSeconds);
+    const nextTimeline = advanceGameClearTimeline(this.naturalCompletionTimeline, delta);
     const particle = this.particleCoordinator?.preflightGameClearAdvance(
-      Math.fround(deltaTimeSeconds),
+      delta, nextTimeline.baseStartedAtSeconds,
     ) ?? null;
     if (particle?.status === "integrity-failure") return particle;
-    const planned = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
+    const planned = this.renderProducer?.preflightHudAnimationAdvance(delta) ?? null;
     if (planned?.status === "integrity-failure") {
       if (particle?.status === "ok") particle.value.discard();
       return planned;
@@ -426,18 +437,31 @@ class SimulatorEngineHost implements SimulatorEngine {
       publishOwner: () => planned.value.publishOwner(),
       discard: () => planned.value.discard(),
     }));
-    if (participants.length === 0) return ok(undefined);
+    participants.push(Object.freeze({
+      identity: "completion-clock",
+      publishOwner: () => { this.naturalCompletionTimeline = nextTimeline; return ok(undefined); },
+      discard: () => ok(undefined),
+    }));
     const framePlan = FrameMutationPlan.create(
       participants,
       ["render", "particle"].filter((identity) => participants.some((participant) => participant.identity === identity)),
-      ["particle", "render"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+      ["particle", "render", "completion-clock"].filter((identity) => participants.some((participant) => participant.identity === identity)),
     );
     if (framePlan.status !== "ok") {
       for (const participant of [...participants].reverse()) participant.discard();
       return framePlan;
     }
     const committed = framePlan.value.commit();
-    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+    return committed.status === "ok" ? this.completionReadyToExit() : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private completionReadyToExit(): SimulatorResult<boolean> {
+    if (this.naturalCompletionTimeline === null || !isGameClearAnimationFinished(this.naturalCompletionTimeline)) return ok(false);
+    // Supported sessions have no full-combo character voice. MV completes after
+    // the clear animation; a Standard background has no remaining work.
+    if (this.backends.movie === undefined) return ok(true);
+    const movie = mapMovieResult(this.backends.movie.observe());
+    return movie.status === "ok" ? ok(movie.value.ended) : this.inGameManager.latchExternalFault(movie);
   }
 
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
@@ -624,17 +648,12 @@ class SimulatorEngineHost implements SimulatorEngine {
       : this.inGameManager.latchExternalFault(committed);
   }
 
-  private pollNaturalCompletion(): SimulatorResult<void> {
+  private pollNaturalCompletion(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.audioProducer === null || this.naturalCompletionClearStatus !== null) {
       return ok(undefined);
     }
     const ended = this.audioProducer.pollBgmNaturalEnd();
     if (ended.status !== "ok" || !ended.value) return ended.status === "ok" ? ok(undefined) : ended;
-    if (this.backends.movie !== undefined) {
-      const movie = mapMovieResult(this.backends.movie.observe());
-      if (movie.status !== "ok") return this.inGameManager.latchExternalFault(movie);
-      if (!movie.value.ended) return ok(undefined);
-    }
     const scoreLife = this.inGameManager.scoreLifeStateManager;
     if (scoreLife === null) {
       return integrityFailure(
@@ -644,7 +663,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       );
     }
     const presentation = scoreLife.getNaturalCompletionPresentation();
-    return this.completeLiveAudio(presentation.clearStatus);
+    return this.completeLiveAudio(presentation.clearStatus, deltaTimeSeconds);
   }
 
   private pollMovieFault(): SimulatorResult<void> {

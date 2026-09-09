@@ -248,11 +248,12 @@ export class ParticleFrameCoordinator {
 
   preflightGameClearAdvance(
     deltaTimeSeconds: number,
+    baseStartedAtSeconds: number | null,
   ): SimulatorResult<ParticleOuterFrameTransaction> {
     if (this.gameClearOwner === null) {
       return rejected("particle.game-clear.owner-missing", "Production Game-clear requires its prepared timeline owner.");
     }
-    const gameClear = this.gameClearOwner.preflightAdvance(deltaTimeSeconds);
+    const gameClear = this.gameClearOwner.preflightAdvance(deltaTimeSeconds, baseStartedAtSeconds);
     return gameClear.status === "ok"
       ? this.preflight(0, false, null, gameClear.value)
       : gameClear;

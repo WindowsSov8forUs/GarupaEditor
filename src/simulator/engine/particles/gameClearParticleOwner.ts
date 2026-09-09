@@ -31,6 +31,7 @@ type GameClearRoot = typeof ROOT_ORDER[number];
 interface MutableGameClearParticleState {
   readonly status: 1 | 2 | 3;
   readonly elapsedSeconds: number;
+  readonly baseStartedAtSeconds: number | null;
   readonly activeByRoot: ReadonlyMap<GameClearRoot, ReadonlySet<string>>;
 }
 
@@ -107,7 +108,7 @@ export class GameClearParticleOwner {
       return integrityFailure("particle.game-clear.invalid-status", [], "Game-clear status is exactly base, Full Combo or All Perfect.");
     }
     const activeByRoot = emptyActiveRoots();
-    const initialMutations = buildGameClearParticleLifecycleSchedule(this.profile, clearStatus)
+    const initialMutations = buildGameClearParticleLifecycleSchedule(this.profile, clearStatus, null)
       .filter((mutation) => mutation.atSeconds === 0 && mutation.active);
     for (const mutation of initialMutations) {
       const root = this.rootForSystem(mutation.systemId, clearStatus);
@@ -117,7 +118,7 @@ export class GameClearParticleOwner {
     const phase: ParticleGameClearTimelinePhase = Object.freeze({
       sampledAtSecondsBits: ZERO_BITS,
       deltaTimeBits: ZERO_BITS,
-      transforms: this.transforms(clearStatus, 0),
+      transforms: this.transforms(clearStatus, 0, null),
       deactivate: Object.freeze([]),
       activate: groupsFrom(activeByRoot),
     });
@@ -131,12 +132,13 @@ export class GameClearParticleOwner {
     const projected: MutableGameClearParticleState = Object.freeze({
       status: clearStatus,
       elapsedSeconds: Math.fround(0),
+      baseStartedAtSeconds: null,
       activeByRoot: freezeActiveRoots(activeByRoot),
     });
     return this.stage(plan, projected);
   }
 
-  preflightAdvance(deltaTimeSeconds: number): SimulatorResult<GameClearParticleOwnerTransaction> {
+  preflightAdvance(deltaTimeSeconds: number, baseStartedAtSeconds: number | null): SimulatorResult<GameClearParticleOwnerTransaction> {
     if (this.pending !== null || this.committed === null) {
       return integrityFailure(
         "particle.game-clear.advance-without-owner",
@@ -154,16 +156,21 @@ export class GameClearParticleOwner {
     }
     const before = this.committed.elapsedSeconds;
     const after = Math.fround(before + deltaTimeSeconds);
-    if (after < before || after > Math.fround(this.profile.durationSeconds)) {
+    if (!Number.isFinite(after) || after < before ||
+      (baseStartedAtSeconds !== null && (!Number.isFinite(baseStartedAtSeconds) || baseStartedAtSeconds < 0 || baseStartedAtSeconds > after)) ||
+      (this.committed.baseStartedAtSeconds !== null && this.committed.baseStartedAtSeconds !== baseStartedAtSeconds)) {
       return integrityFailure(
         "particle.game-clear.elapsed-out-of-range",
         [],
-        "Game-clear native presentation advances monotonically through the exact 3.233-second callback endpoint.",
+        "Game-clear presentation advances monotonically and starts its base Animator once after the application wait.",
       );
     }
     const activeByRoot = cloneActiveRoots(this.committed.activeByRoot);
-    const schedule = buildGameClearParticleLifecycleSchedule(this.profile, this.committed.status);
-    const due = schedule.filter((mutation) => mutation.atSeconds > before && mutation.atSeconds <= after);
+    const schedule = buildGameClearParticleLifecycleSchedule(this.profile, this.committed.status, baseStartedAtSeconds);
+    const startingBase = this.committed.baseStartedAtSeconds === null && baseStartedAtSeconds !== null;
+    const due = schedule.filter((mutation) =>
+      (mutation.atSeconds > before || (startingBase && mutation.atSeconds === baseStartedAtSeconds &&
+        mutation.systemId.startsWith("game-clear:base:"))) && mutation.atSeconds <= after);
     const phases: ParticleGameClearTimelinePhase[] = [];
     let cursor = before;
     for (let index = 0; index < due.length;) {
@@ -190,7 +197,7 @@ export class GameClearParticleOwner {
       phases.push(Object.freeze({
         sampledAtSecondsBits: requiredBits(at),
         deltaTimeBits: requiredBits(Math.fround(at - cursor)),
-        transforms: this.transforms(this.committed.status, at),
+        transforms: this.transforms(this.committed.status, at, baseStartedAtSeconds),
         deactivate: groupsFrom(deactivate),
         activate: groupsFrom(activate),
       }));
@@ -200,7 +207,7 @@ export class GameClearParticleOwner {
       phases.push(Object.freeze({
         sampledAtSecondsBits: requiredBits(after),
         deltaTimeBits: requiredBits(Math.fround(after - cursor)),
-        transforms: this.transforms(this.committed.status, after),
+        transforms: this.transforms(this.committed.status, after, baseStartedAtSeconds),
         deactivate: Object.freeze([]),
         activate: Object.freeze([]),
       }));
@@ -215,6 +222,7 @@ export class GameClearParticleOwner {
     const projected: MutableGameClearParticleState = Object.freeze({
       status: this.committed.status,
       elapsedSeconds: after,
+      baseStartedAtSeconds,
       activeByRoot: freezeActiveRoots(activeByRoot),
     });
     return this.stage(plan, projected);
@@ -230,8 +238,8 @@ export class GameClearParticleOwner {
     });
   }
 
-  private transforms(clearStatus: 1 | 2 | 3, elapsed: number): readonly ParticleGameClearTransformUpdate[] {
-    return Object.freeze(sampleGameClearParticleTransforms(this.profile, clearStatus, elapsed).map((sample) => Object.freeze({
+  private transforms(clearStatus: 1 | 2 | 3, elapsed: number, baseStartedAtSeconds: number | null): readonly ParticleGameClearTransformUpdate[] {
+    return Object.freeze(sampleGameClearParticleTransforms(this.profile, clearStatus, elapsed, baseStartedAtSeconds).map((sample) => Object.freeze({
       systemId: sample.systemId,
       transform: sample.transform,
       parentTransforms: sample.parentTransforms,

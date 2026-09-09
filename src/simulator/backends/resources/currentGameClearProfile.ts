@@ -66,8 +66,6 @@ import {
 
 export interface GameClearRuntimeProfile {
   readonly schemaVersion: 2;
-  readonly durationSeconds: number;
-  readonly exitAfterFinishedSeconds: number;
   readonly clearStatusMapping: Readonly<Record<"1" | "2" | "3", string>>;
   readonly assets: readonly { readonly logical_key: string; readonly file: string; readonly width: number; readonly height: number }[];
   readonly base: { readonly graph: { readonly objects: readonly GameClearGraphObject[] }; readonly clip: GameClearClipProfile };
@@ -100,8 +98,7 @@ export function parseCurrentGameClearProfile(
   );
   if (value.nativeSemantic !== undefined && embeddedNative === undefined) return null;
   const clearStatusMapping = asRecord(value.clearStatusMapping);
-  if (value.schemaVersion !== 2 || value.durationSeconds !== 3.233 ||
-      value.exitAfterFinishedSeconds !== 0.015 || clearStatusMapping?.["1"] !== "base clear only" ||
+  if (value.schemaVersion !== 2 || clearStatusMapping?.["1"] !== "base clear only" ||
       clearStatusMapping?.["2"] !== "base + FullCombo_text_in" ||
       clearStatusMapping?.["3"] !== "base + AllPerfect_text_in" ||
       !Array.isArray(value.assets) || value.assets.length === 0 ||
@@ -368,6 +365,7 @@ export function sampleGameClearParticleTransforms(
   profile: GameClearRuntimeProfile,
   clearStatus: 1 | 2 | 3,
   elapsedSeconds: number,
+  baseStartedAtSeconds: number | null,
 ): readonly GameClearParticleTransformSample[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
     throw new Error("Game-clear particle Transform sampling requires one finite monotonic scene phase");
@@ -377,8 +375,9 @@ export function sampleGameClearParticleTransforms(
   const objects = clearStatus === 1
     ? profile.base.graph.objects
     : [...profile.base.graph.objects, ...additionalObjects];
+  const basePhase = gameClearBaseClipPhase(profile.base.clip, elapsedSeconds, baseStartedAtSeconds);
   const overrides = new Map([
-    ...particleChannelOverrides(profile.base.graph.objects, profile.base.clip, elapsedSeconds),
+    ...(basePhase === null ? [] : particleChannelOverrides(profile.base.graph.objects, profile.base.clip, basePhase)),
     ...(clearStatus === 1 ? [] : particleChannelOverrides(additionalObjects, additionalClip, elapsedSeconds)),
   ]);
   const byPath = new Map(objects.map((object) => [object.path, object]));
@@ -395,25 +394,30 @@ export function sampleGameClearParticleTransforms(
 export function buildGameClearParticleLifecycleSchedule(
   profile: GameClearRuntimeProfile,
   clearStatus: 1 | 2 | 3,
+  baseStartedAtSeconds: number | null,
 ): readonly GameClearParticleLifecycleMutation[] {
-  const additional = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
-  const phaseSet = new Set<number>([
-    0,
-    ...profile.base.clip.streamed_frames.map((frame) => frame.time),
-    ...(clearStatus === 1 ? [] : additional.clip.streamed_frames.map((frame) => frame.time)),
-  ]);
-  const phases = [...phaseSet].sort((left, right) => left - right);
-  let before = new Set<string>();
+  const branches = [profile.base, ...(clearStatus === 1 ? [] : [clearStatus === 2 ? profile.fullCombo : profile.allPerfect])];
   const mutations: GameClearParticleLifecycleMutation[] = [];
-  for (const phase of phases) {
-    const active = activeGameClearParticleSystems(profile, clearStatus, phase);
-    for (const systemId of [...before].filter((identity) => !active.has(identity)).sort()) {
-      mutations.push(Object.freeze({ systemId, atSeconds: Math.fround(phase), active: false }));
+  for (const branch of branches) {
+    const isBase = branch === profile.base;
+    let before = isBase ? activeGameClearBranchSystems(profile, branch, null) : new Set<string>();
+    for (const systemId of before) mutations.push(Object.freeze({ systemId, atSeconds: 0, active: true }));
+    if (isBase && baseStartedAtSeconds === null) continue;
+    const offset = isBase ? baseStartedAtSeconds! : 0;
+    const phases = [...new Set([0, ...branch.clip.streamed_frames.map((frame) => frame.time)])].sort((a, b) => a - b);
+    for (const phase of phases) {
+      // Evaluate each controller's own keys before mapping to the shared clock.
+      // Another controller's key must not trigger a rounded local-time change.
+      const active = activeGameClearBranchSystems(profile, branch, phase);
+      const atSeconds = Math.fround(offset + phase);
+      for (const systemId of before) {
+        if (!active.has(systemId)) mutations.push(Object.freeze({ systemId, atSeconds, active: false }));
+      }
+      for (const systemId of active) {
+        if (!before.has(systemId)) mutations.push(Object.freeze({ systemId, atSeconds, active: true }));
+      }
+      before = active;
     }
-    for (const systemId of [...active].filter((identity) => !before.has(identity)).sort()) {
-      mutations.push(Object.freeze({ systemId, atSeconds: Math.fround(phase), active: true }));
-    }
-    before = active;
   }
   return Object.freeze(mutations.sort((left, right) => left.atSeconds - right.atSeconds ||
     Number(left.active) - Number(right.active) || left.systemId.localeCompare(right.systemId)));
@@ -424,46 +428,56 @@ export function buildGameClearParticleActivationSchedule(
   clearStatus: 1 | 2 | 3,
 ): readonly GameClearParticleActivation[] {
   const first = new Map<string, number>();
-  for (const mutation of buildGameClearParticleLifecycleSchedule(profile, clearStatus)) {
+  for (const mutation of buildGameClearParticleLifecycleSchedule(profile, clearStatus, 0)) {
     if (mutation.active && !first.has(mutation.systemId)) first.set(mutation.systemId, mutation.atSeconds);
   }
   return Object.freeze([...first].map(([systemId, activateAtSeconds]) => Object.freeze({ systemId, activateAtSeconds }))
     .sort((left, right) => left.activateAtSeconds - right.activateAtSeconds || left.systemId.localeCompare(right.systemId)));
 }
 
-function activeGameClearParticleSystems(
+function activeGameClearBranchSystems(
   profile: GameClearRuntimeProfile,
-  clearStatus: 1 | 2 | 3,
-  phase: number,
+  branch: GameClearRuntimeProfile["base"],
+  phase: number | null,
 ): Set<string> {
-  const branches = [profile.base, ...(clearStatus === 1 ? [] : [clearStatus === 2 ? profile.fullCombo : profile.allPerfect])];
   const active = new Set<string>();
-  for (const branch of branches) {
-    const objects = branch.graph.objects;
-    const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
-    const own = new Map(objects.map((object) => [object.path, object.active]));
-    const channels = branch.clip.bindings.flatMap((binding) => binding.channels);
-    for (let index = 0; index < channels.length; index += 1) {
-      const channel = channels[index]!;
-      if (!channel.endsWith(".m_IsActive.value")) continue;
-      const relative = channel.slice(0, -".m_IsActive.value".length);
-      const path = relative.length === 0 ? root : `${root}/${relative}`;
-      own.set(path, clipValue(branch.clip, index, Math.min(phase, branch.clip.stop_time - 1 / 6000)) >= 0.5);
-    }
-    const effective = new Map<string, boolean>();
-    const resolve = (path: string): boolean => {
-      const cached = effective.get(path); if (cached !== undefined) return cached;
-      const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : null;
-      const value = (own.get(path) ?? true) && (parentPath === null || !own.has(parentPath) || resolve(parentPath));
-      effective.set(path, value); return value;
-    };
-    for (const object of objects) {
-      if (object.components.some((component) => component.class === "ParticleSystem") && resolve(object.path)) {
-        active.add(gameClearSystemId(profile, object.path));
-      }
+  const objects = branch.graph.objects;
+  const root = [...objects].sort((left, right) => left.path.split("/").length - right.path.split("/").length)[0]!.path;
+  const own = new Map(objects.map((object) => [object.path, object.active]));
+  const channels = phase === null ? [] : branch.clip.bindings.flatMap((binding) => binding.channels);
+  for (let index = 0; index < channels.length; index += 1) {
+    const channel = channels[index]!;
+    if (!channel.endsWith(".m_IsActive.value")) continue;
+    const relative = channel.slice(0, -".m_IsActive.value".length);
+    const path = relative.length === 0 ? root : `${root}/${relative}`;
+    own.set(path, clipValue(branch.clip, index, Math.min(phase!, branch.clip.stop_time)) >= 0.5);
+  }
+  const effective = new Map<string, boolean>();
+  const resolve = (path: string): boolean => {
+    const cached = effective.get(path); if (cached !== undefined) return cached;
+    const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : null;
+    const value = (own.get(path) ?? true) && (parentPath === null || !own.has(parentPath) || resolve(parentPath));
+    effective.set(path, value); return value;
+  };
+  for (const object of objects) {
+    if (object.components.some((component) => component.class === "ParticleSystem") && resolve(object.path)) {
+      active.add(gameClearSystemId(profile, object.path));
     }
   }
   return active;
+}
+
+function gameClearBaseClipPhase(
+  clip: GameClearClipProfile,
+  elapsedSeconds: number,
+  startedAtSeconds: number | null,
+): number | null {
+  if (startedAtSeconds === null || elapsedSeconds < startedAtSeconds) return null;
+  // A scheduled event consumes its authored key directly. Reconstructing that
+  // key by subtracting Float32 timestamps can select the preceding key instead.
+  const event = clip.streamed_frames.find((frame) =>
+    Math.fround(startedAtSeconds + frame.time) === elapsedSeconds);
+  return event?.time ?? Math.fround(elapsedSeconds - startedAtSeconds);
 }
 
 function canonicalClipPhase(phase: number, sampleRate: number): number {

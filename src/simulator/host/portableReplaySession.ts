@@ -236,7 +236,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     }));
     return result;
   }
-  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean> {
     return this.active.advanceNaturalCompletionPresentation(deltaTimeSeconds);
   }
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {

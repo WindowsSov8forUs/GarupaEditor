@@ -804,7 +804,7 @@ export class RenderCommandProducer {
     if (this.gameClearElapsedSeconds !== null) {
       // Focused 10.1.4 controller evidence: the backend consumes the complete
       // text-in -> text-out -> alpha-zero terminal state sequence. This clock
-      // remains independent from the base 3.233-second callback and 15ms exit.
+      // remains independent from the delayed base Animator and its completion event.
       nextGameClearElapsed = Math.fround(this.gameClearElapsedSeconds + deltaTimeSeconds);
       const sample = createRenderFloat32(nextGameClearElapsed);
       if (sample.status !== "ok") return sample;

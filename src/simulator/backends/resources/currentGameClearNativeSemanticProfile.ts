@@ -71,8 +71,6 @@ export interface GameClearNativeSemanticProfile {
     ];
   }>;
   readonly terminal: Readonly<{
-    readonly baseDurationSeconds: 3.233;
-    readonly exitAfterCallbackSeconds: 0.015;
     readonly additionalFinalFrameHoldUntilBaseCallback: true;
     readonly naturalAutoStatus1: "ORIGINAL";
     readonly productAutoStatus3: "PRODUCT_ONLY";
@@ -177,8 +175,6 @@ export function parseGameClearNativeSemanticProfile(
       forbidden: projection!.forbidden,
     },
     terminal: {
-      baseDurationSeconds: terminal!.baseDurationSeconds,
-      exitAfterCallbackSeconds: terminal!.exitAfterCallbackSeconds,
       additionalFinalFrameHoldUntilBaseCallback: terminal!.additionalFinalFrameHoldUntilBaseCallback,
       naturalAutoStatus1: terminal!.naturalAutoStatus1,
       productAutoStatus3: terminal!.productAutoStatus3,
@@ -266,9 +262,7 @@ function validProjection(value: Record<string, any> | null): boolean {
 }
 
 function validTerminal(value: Record<string, any> | null): boolean {
-  return value?.baseDurationSeconds === 3.233 &&
-    value.exitAfterCallbackSeconds === 0.015 &&
-    value.additionalFinalFrameHoldUntilBaseCallback === true &&
+  return value?.additionalFinalFrameHoldUntilBaseCallback === true &&
     value.naturalAutoStatus1 === "ORIGINAL" && value.productAutoStatus3 === "PRODUCT_ONLY" &&
     value.manualFcApReachability === "original status 2/3; natural device framebuffer not required for CPU/primitive closure";
 }
