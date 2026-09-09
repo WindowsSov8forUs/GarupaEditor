@@ -257,6 +257,19 @@ export function advanceOrdinaryNoteMotion(
   }));
 }
 
+export function repositionOrdinaryNoteToJudgeLine(
+  state: OrdinaryNoteMotionState,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  const position = vector3(state.goalPosition.x.value, state.goalPosition.y.value, state.currentPositionZ.value);
+  if (position.status !== "ok") return position;
+  const scale = calculateOrdinaryNoteScaleAtY(state, state.goalPosition.y.value);
+  return scale.status === "ok" ? ok(Object.freeze({
+    progressRate: state.progressRate,
+    position: position.value,
+    localScale: scale.value,
+  })) : scale;
+}
+
 export function advanceOrdinaryNoteActivationAdjustment(
   state: OrdinaryNoteMotionState,
   launcherMusicPosition: RenderFloat32,

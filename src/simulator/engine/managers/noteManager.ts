@@ -623,6 +623,12 @@ export class NoteManager {
         if (updateResult.status !== "ok") {
           return updateResult;
         }
+        if (this.renderProducer !== null && stateBefore === NoteState.Move && note.state === NoteState.Stop &&
+          (note instanceof NoteLong || note instanceof NoteSlide) &&
+          (this.inGameCalculatedData.isAutoPlay || this.isMoveTime())) {
+          const repositioned = this.advanceOrdinaryRenderMotion(note, Math.fround(0), true);
+          if (repositioned.status !== "ok") return repositioned;
+        }
         if (note.state !== NoteState.Deactive) {
           afterUpdateNotes.push(note);
         }
@@ -1005,6 +1011,7 @@ export class NoteManager {
   private advanceOrdinaryRenderMotion(
     note: NoteBase,
     deltaTimeSeconds: number,
+    repositionToGoal = false,
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return integrityFailure(
@@ -1030,6 +1037,7 @@ export class NoteManager {
         deltaTime: deltaTime.value,
       }),
       this.ordinaryNoteScene,
+      repositionToGoal,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
