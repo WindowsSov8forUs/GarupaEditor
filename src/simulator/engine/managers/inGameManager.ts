@@ -353,7 +353,8 @@ export class InGameManager {
         const renderPlan = businessPlan?.status === "ok"
           ? this.renderProducer?.preflightHudReflect(
               businessPlan.value,
-              batchDeltaTimeSeconds,
+              // Each newly started AddScore coroutine reads the same outer Time.deltaTime.
+              deltaTimeSeconds,
               detachedTapLane?.renderStates ?? Object.freeze([]),
             ) ?? null
           : null;

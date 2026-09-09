@@ -106,7 +106,8 @@ export function validateTypedRenderHudCommand(
     }
     case "add-score": {
       const state = command.state;
-      return objectRole === "hud-add-score" && exactKeys(state, ["depth", "poolIndex", "value"]) &&
+      return objectRole === "hud-add-score" && exactKeys(state, ["alpha", "depth", "localXOffset", "poolIndex", "value"]) &&
+        Number.isFinite(state.alpha) && Number.isFinite(state.localXOffset) &&
         isUInt32(state.value) && state.value > 0 &&
         Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
         Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8;
@@ -159,7 +160,6 @@ export function animationRoleMatchesObject(
   return (role === "note-flick" || role === "note-directional-flick") ? objectRole === "note-icon" :
     role === "note-long-flash" ? objectRole === "note-intermediate" :
     (role === "combo" || role === "all-perfect") ? objectRole === "hud-combo" :
-    role === "add-score" ? objectRole === "hud-add-score" :
     role === "result" ? objectRole === "hud-result" :
     (role === "life-warning" || role === "life-game-over") ? objectRole === "hud-life" :
     role === "score-gauge-ss" ? objectRole === "hud-score" :
@@ -192,7 +192,7 @@ function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
     "color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife", "primaryFill", "secondaryFill",
     "singleGameOver", "warning",
   ];
-  if ("poolIndex" in state) return ["depth", "poolIndex", "value"];
+  if ("poolIndex" in state) return ["alpha", "depth", "localXOffset", "poolIndex", "value"];
   if ("clearStatus" in state) return ["clearStatus"];
   if ("phase" in state) return ["phase", "progress"];
   return "laneChangePhase" in state

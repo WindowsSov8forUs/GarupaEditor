@@ -175,7 +175,6 @@ interface PixiHudVisual {
 type EvidenceAnimationRole =
   | "combo"
   | "all-perfect"
-  | "add-score"
   | "result"
   | "life-warning"
   | "life-game-over"
@@ -1681,7 +1680,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const role = requireEvidenceAnimationRole(command.animationRole);
         object.animationElapsedByRole.set(role, command.elapsedSeconds.value);
         object.animationElapsedSeconds = command.elapsedSeconds.value;
-        applyEvidenceAnimation(object, role, command.elapsedSeconds.value, true);
+        applyEvidenceAnimation(object, role, command.elapsedSeconds.value);
         this.attachGameplayDraw(object);
         return;
       }
@@ -3149,7 +3148,7 @@ function updatePersistentComboHud(
 function applyAddScoreHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
-  state: { readonly value: number; readonly depth: number },
+  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localXOffset: number },
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
 ): void {
@@ -3168,7 +3167,7 @@ function applyAddScoreHud(
 function updatePersistentAddScoreHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
-  state: { readonly value: number; readonly depth: number },
+  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localXOffset: number },
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
 ): void {
@@ -3178,11 +3177,11 @@ function updatePersistentAddScoreHud(
   const uiScale = authoredUiScale(object);
   object.node.position.set(
     Math.fround(object.node.position.x +
-      (current.numberBaseAuthoredPosition[0] + current.initialLocalX) * uiScale),
+      (current.numberBaseAuthoredPosition[0] + current.initialLocalX + state.localXOffset) * uiScale),
     Math.fround(object.node.position.y - current.numberBaseAuthoredPosition[1] * uiScale),
   );
   object.node.scale.set(Math.fround(uiScale * current.numberScale));
-  object.node.alpha = profile.addScore.start.alpha;
+  object.node.alpha = state.alpha;
   const keys = [
     ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`),
     profile.addScore.digits.plus,
@@ -4068,32 +4067,10 @@ function setHudText(
   text.anchor.set(0.5);
 }
 
-function sampleAddScoreCoroutine(
-  phases: readonly { readonly alphaFrom: number; readonly alphaTo: number; readonly localXPerOuterUpdate: number }[],
-  phaseSeconds: number,
-  elapsedSeconds: number,
-): Readonly<{ alpha: number; localXPerOuterUpdate: number }> {
-  if (phases.length !== 3 || !Number.isFinite(phaseSeconds) || phaseSeconds <= 0 ||
-    !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
-    throw new Error("AddScore coroutine requires three source phases, one positive duration and finite non-negative time.");
-  }
-  const total = Math.fround(phaseSeconds * phases.length);
-  const elapsed = Math.fround(Math.min(elapsedSeconds, total));
-  const phaseIndex = Math.min(Math.floor(elapsed / phaseSeconds), phases.length - 1);
-  const phase = phases[phaseIndex]!;
-  const localElapsed = Math.fround(elapsed - Math.fround(phaseIndex * phaseSeconds));
-  const progress = Math.fround(Math.min(localElapsed / phaseSeconds, 1));
-  return Object.freeze({
-    alpha: Math.fround(phase.alphaFrom + Math.fround(Math.fround(phase.alphaTo - phase.alphaFrom) * progress)),
-    localXPerOuterUpdate: phase.localXPerOuterUpdate,
-  });
-}
-
 function applyEvidenceAnimation(
   object: PixiObjectRecord,
   role: EvidenceAnimationRole,
   elapsedSeconds: number,
-  committedOuterAdvance = false,
 ): void {
   if (role === "combo") {
     const profile = requireOrdinaryVisibleProfile(object);
@@ -4161,17 +4138,6 @@ function applyEvidenceAnimation(
     }
     return;
   }
-  if (role === "add-score") {
-    const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-    const sample = sampleAddScoreCoroutine(current.animationPhases, current.phaseSeconds, elapsedSeconds);
-    if (committedOuterAdvance) {
-      object.node.position.x = Math.fround(
-        object.node.position.x + Math.fround(sample.localXPerOuterUpdate * authoredUiScale(object)),
-      );
-    }
-    object.node.alpha = sample.alpha;
-    return;
-  }
   if (role === "result") {
     const visual = object.hudVisual;
     if (visual?.kind !== "result") throw new Error("GameJudge requires the persistent Result/other child graph.");
@@ -4230,10 +4196,6 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
   }
   if (role === "game-clear") {
     if (object.hudVisual !== null) object.hudVisual.content.visible = false;
-    return;
-  }
-  if (role === "add-score") {
-    object.node.alpha = 1;
     return;
   }
   if (role === "life-warning") {
@@ -4411,7 +4373,7 @@ function boundSpriteExactKey(bindingKey: string | null): string | null {
 }
 
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
-  return role === "combo" || role === "all-perfect" || role === "add-score" ||
+  return role === "combo" || role === "all-perfect" ||
     role === "result" || role === "life-warning" || role === "life-game-over" ||
     role === "score-gauge-ss" || role === "game-clear" || role === "note-flick" ||
     role === "note-directional-flick" || role === "note-long-flash";

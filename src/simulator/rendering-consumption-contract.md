@@ -21,6 +21,14 @@ Historical normal output, storage-row, internal-cache, world/local round-trip an
 
 Reverse `550ebb355acc9830228c221118a4e7632494cbec` binds the 102 material color/mask operations and the original renderer enable states to the current production consumers. The 13 Standard Unlit materials with Cull Back have 73 renderer references; all 73 are disabled in both the original serialized domain and the product catalog. `samples` and `buildBindings` exclude them. Enabled references use Cull Off, so no winding or front-face emulation is required for their output. Material color expressions, color masks, their production handoff and enabled-reference culling have zero differences. Runtime enable/keyword overrides and device raster equivalence are not claimed; material configuration alone must not reopen the retired winding investigation.
 
+## HUD-ADDSCORE — per-update phase transitions
+
+The existing pushed `resource-pixi-rendering-runtime-contract-10-1-4/arm64/0387a260__AddScoreObject_playCoroutine_d__11__MoveNext.arm64.tsv` is the source for the three 0.14-second phases. At each resume, the previous phase time is compared with its duration before adding the current delta; crossing a phase resets its clock, without carrying overshoot. The final phase completes on the following resume. The first resume also runs immediately on Play, including a zero-delta start. Reverse `552433d0dea66a0aa67c28f335e3430a9db323c6` separately establishes local X increments +8/+1/+1, superseding the older Y interpretation.
+
+The transactional render owner now carries the phase, phase time, accumulated X offset and raw alpha. Pixi consumes the committed position/alpha instead of selecting a phase from total elapsed time or ending at a fixed 0.42-second deadline. Every new Play in an outer frame receives that frame's delta; only advancing existing animations is once per outer update. Pool/depth cycling, pause and discard semantics remain unchanged.
+
+Source-branch review and direct execution at zero, 0.1, 0.2 and exact Float32 0.14-second deltas agree on phase resets, increments, raw alpha and completion. At 0.1-second cadence the active resumes produce X offsets 8,16,17,18,19,20 before completion, rather than selecting later phases from global elapsed time. TypeScript compilation verifies the command handoff. This closes the AddScore phase rule; it is not a device cadence or raster equivalence claim.
+
 ## SORT-01 — renderer distance prefix
 
 Current status (2026-09-08): the C173 comparator-prefix differences are repaired. This supersedes the historical 136-difference statements below; the complete renderer contract remains OPEN.

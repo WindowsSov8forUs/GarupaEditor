@@ -29,6 +29,7 @@ import type { NoteFamily } from "../data/noteData";
 import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import { advanceAddScoreAnimation, type AddScoreAnimationState } from "../hud/addScoreHudOwner";
 import { InGameHudController } from "../hud/inGameHudController";
 import { HUD_PREFAB_OBJECT_IDS } from "../hud/hudContracts";
 import { resolveDisplayedAllPerfect } from "../hud/comboHudOwner";
@@ -301,7 +302,7 @@ export class RenderCommandProducer {
   private readonly creationSequenceByObjectId = new Map<string, number>();
   private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
   private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
-  private readonly addScoreElapsedSeconds = new Map<string, number>();
+  private readonly addScoreAnimations = new Map<string, AddScoreAnimationState>();
   private resultElapsedSeconds: number | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
   private scoreGaugeHighRankClip: "ScoreGaugeSS" | "ScoreGaugeSSS" | null = null;
@@ -426,6 +427,8 @@ export class RenderCommandProducer {
         ...base(commands.length), kind: "set-hud", renderObjectId,
         hudRole: "add-score", state: Object.freeze({
           value: 1,
+          alpha: 0,
+          localXOffset: 0,
           poolIndex: poolIndex as 0 | 1 | 2 | 3,
           depth: 0 as const,
         }),
@@ -493,25 +496,17 @@ export class RenderCommandProducer {
     const totalAddScore = plan.reflect.totalScore;
     const addScoreOwnerState = this.hud.addScore.snapshot();
     const addScoreObjectId = HUD_OBJECTS.addScore[addScoreOwnerState.poolIndex]!;
-    const initialAddScoreElapsed = Math.fround(deltaTimeSeconds);
-    if (totalAddScore !== 0) {
+    const initialAddScoreAnimation = totalAddScore === 0 ? null : advanceAddScoreAnimation({
+      phase: 0,
+      phaseElapsedSeconds: 0,
+      hud: this.hud.addScore.createState(totalAddScore),
+    }, deltaTimeSeconds)!;
+    if (initialAddScoreAnimation !== null) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
-        hudRole: "add-score", state: this.hud.addScore.createState(totalAddScore),
+        hudRole: "add-score", state: initialAddScoreAnimation.hud,
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
-      commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: addScoreObjectId,
-        animationRole: "add-score", restart: true,
-      });
-      if (!plan.record.singleGameOver) {
-        const sample = createRenderFloat32(initialAddScoreElapsed);
-        if (sample.status !== "ok") return sample;
-        commands.push({
-          ...base(commands.length), kind: "sample-animation", renderObjectId: addScoreObjectId,
-          animationRole: "add-score", elapsedSeconds: sample.value,
-        });
-      }
     }
     const displayedAllPerfect = this.hud.combo.displayedAllPerfect(plan.record.allPerfect);
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
@@ -625,10 +620,6 @@ export class RenderCommandProducer {
       animationRole: "life-game-over", restart: false,
     });
     if (plan.record.singleGameOver) {
-      if (totalAddScore !== 0) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: addScoreObjectId,
-        animationRole: "add-score", restart: false,
-      });
       for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, ...HUD_OBJECTS.addScore]) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       }
@@ -640,7 +631,7 @@ export class RenderCommandProducer {
     return this.preflight(commands, () => {
       if (totalAddScore !== 0) {
         if (!plan.record.singleGameOver) {
-          this.addScoreElapsedSeconds.set(addScoreObjectId, initialAddScoreElapsed);
+          this.addScoreAnimations.set(addScoreObjectId, initialAddScoreAnimation!);
         }
         this.hud.addScore.commit();
       }
@@ -681,7 +672,7 @@ export class RenderCommandProducer {
       this.lastSingleGameOver = nextLifeState.singleGameOver;
       if (plan.record.singleGameOver) {
         this.hudAnimationElapsedSeconds.clear();
-        this.addScoreElapsedSeconds.clear();
+        this.addScoreAnimations.clear();
       }
     });
   }
@@ -736,7 +727,7 @@ export class RenderCommandProducer {
     if (
       (this.hudAnimationElapsedSeconds.size === 0 &&
         this.lifeAnimationElapsedSeconds.size === 0 &&
-        this.addScoreElapsedSeconds.size === 0 &&
+        this.addScoreAnimations.size === 0 &&
         this.resultElapsedSeconds === null &&
         this.scoreGaugeSsElapsedSeconds === null &&
         this.gameClearElapsedSeconds === null) ||
@@ -746,7 +737,7 @@ export class RenderCommandProducer {
     }
     const next = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
     const nextLife = new Map<"life-warning" | "life-game-over", number>();
-    const nextAddScore = new Map<string, number>();
+    const nextAddScore = new Map<string, AddScoreAnimationState>();
     let nextResultElapsed = this.resultElapsedSeconds;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
     let nextGameClearElapsed = this.gameClearElapsedSeconds;
@@ -783,22 +774,16 @@ export class RenderCommandProducer {
       });
       nextLife.set(role, nextElapsed);
     }
-    for (const [renderObjectId, elapsed] of this.addScoreElapsedSeconds) {
-      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
-      if (nextElapsed >= Math.fround(0.42000000178813934)) {
-        commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId,
-          animationRole: "add-score", restart: false,
-        });
+    for (const [renderObjectId, animation] of this.addScoreAnimations) {
+      const advanced = advanceAddScoreAnimation(animation, deltaTimeSeconds);
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId,
+        hudRole: "add-score", state: advanced?.hud ?? Object.freeze({ ...animation.hud, alpha: 0 }),
+      });
+      if (advanced === null) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       } else {
-        const sample = createRenderFloat32(nextElapsed);
-        if (sample.status !== "ok") return sample;
-        commands.push({
-          ...base(commands.length), kind: "sample-animation", renderObjectId,
-          animationRole: "add-score", elapsedSeconds: sample.value,
-        });
-        nextAddScore.set(renderObjectId, nextElapsed);
+        nextAddScore.set(renderObjectId, advanced);
       }
     }
     if (this.scoreGaugeSsElapsedSeconds !== null) {
@@ -855,9 +840,9 @@ export class RenderCommandProducer {
       for (const [role, elapsed] of nextLife) {
         this.lifeAnimationElapsedSeconds.set(role, elapsed);
       }
-      this.addScoreElapsedSeconds.clear();
-      for (const [renderObjectId, elapsed] of nextAddScore) {
-        this.addScoreElapsedSeconds.set(renderObjectId, elapsed);
+      this.addScoreAnimations.clear();
+      for (const [renderObjectId, animation] of nextAddScore) {
+        this.addScoreAnimations.set(renderObjectId, animation);
       }
       this.resultElapsedSeconds = nextResultElapsed;
       this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
@@ -2690,7 +2675,7 @@ export class RenderCommandProducer {
       this.fieldObjectIds.clear();
       this.hudAnimationElapsedSeconds.clear();
       this.lifeAnimationElapsedSeconds.clear();
-      this.addScoreElapsedSeconds.clear();
+      this.addScoreAnimations.clear();
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;
       this.scoreGaugeSsElapsedSeconds = null;
