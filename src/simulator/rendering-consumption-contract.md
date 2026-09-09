@@ -1,6 +1,6 @@
 # Rendering consumption re-audit
 
-Status: **OPEN**. Earlier isolated resource, scene-graph and primitive audits do not close the production renderer. This contract takes precedence over historical aggregate completion statements. Public capability gaps are informational, not reasons to reject otherwise valid launches.
+Status: application-scope review is defined below. Historical device, engine-internal and aggregate renderer claims remain unpromoted. Public capability gaps are informational, not reasons to reject otherwise valid launches.
 
 Original authority is the verified, committed and pushed Reverse 10.1.4/230 ARM64 evidence available through `23827f847249b8336379ac12c23bfb2d7f09df44`. Paths below are relative to its `artifacts/investigations/` directory; production never reads that checkout.
 
@@ -15,7 +15,24 @@ The Simulator does not use implementation code to erase platform differences. Th
 - Score text uses host font measurements and a width fit, without original CharacterInfo tables, Android crispness branches or clip-center rounding corrections. The authored spacing, colors and alignment remain. Historical C49/C50/C220 numeric layout conclusions do not apply to this host text path.
 - Production disables diagnostic particle frame retention and polls compact backend status. Recording/offline backends and explicit diagnostic snapshots remain useful verification interfaces.
 
-Historical normal output, storage-row, internal-cache, world/local round-trip and instruction-exact numeric comparisons are retired for these consumers. Rendering remains OPEN at the application-semantic level; compilation and contract checks do not establish original-client or device equivalence. No original binary/runtime or visual capture is required to remove unused implementation.
+Historical normal output, storage-row, internal-cache, world/local round-trip and instruction-exact numeric comparisons are retired for these consumers. Compilation and contract checks do not establish original-client or device equivalence. No original binary/runtime or visual capture is required to remove unused implementation.
+
+### Current application-scope dispositions
+
+The acceptance domain is the supported ordinary single-song Live/Rehearsal × Manual/Auto routes, registered default/Skin resources and original-compatible chart behavior. Host math, font measurement, graphics and audio remain the interfaces specified by evidence-workflow.md. Garupa chart/CS-V1/Auto-AP extensions retain their own contracts. The following closes the named source-rule and consumption questions, not arbitrary Unity execution or all product-host defects.
+
+| Consumer | Source and current disposition |
+| --- | --- |
+| Chart, clock, input and note state/geometry | Existing input/timing/scoring, four-mode and note-world-scale results remain applicable to unchanged rules; original-compatible routing is separate from Garupa continuous lanes/SV/extended Slide. See live-rehearsal-contract.md and garupa-extension-contract.md. |
+| Record, HUD reflection and end selection | CS-V1 numeric score is explicitly product-only. Original Combo/Life/OneFrame rules remain source-bound. The frame-end branch now selects clear before Life-zero Game Over, after reflection; GameState 8/11/12 publication is explicit. See live-rehearsal-contract.md and the timing correction below. |
+| Particle birth/update/death and random ownership | Reuse current clock, emission, frame-step, gradient, motion, Play/seed and 59-source prewarm results. Simulation/random source hashes are unchanged by end-branch repair. The four lifetime-rounding boundary probes and analytic floating residuals remain platform differences, not bitwise PASS. Nonempty native Play and forced padded-emission probes are not reachable through the supported fresh Stop/Clear/Play inputs. |
+| Particle geometry, bounds and projection | C147–C202 bind current actual/analytic bounds and button/Slide/Game-clear transforms. Current samples always supplies rendererWorldBounds; all three owner kinds publish nativeOwnerHierarchy. Thus current production does not use the legacy primitive-union fallback. The positive-PPU orthographic projection maps world min/max to viewport bounds with Y reflection; its six interval comparisons implement the current camera volume. Host matrix/trigonometric arithmetic replaces the retired instruction-level proofs. |
+| Shared draw order, material and clip consumption | SORT-01–10 and the current shared-order results cover application keys and ordinary/particle registration. Pixi consumes primitive order/distance in the common layer; Game-clear order 50 remains below HUD order 100. Current 102-material handoff is closed below; all 73 Cull Back references are disabled. Native allocation-dependent ties, unused normal streams and GPU submission are excluded. |
+| HUD, settings and media | Authored HUD graph, anchors, clip uniforms, colors, spacing and settings/Skin selection retain source bindings. Host-measured glyph widths are fitted to the source layout. AddScore, result visibility and high-rank clocks are corrected below. Existing startup/pause/MV results are reused; delayed MV continues during clear, then actual background completion gates exit. |
+
+Within these named application rules and current source-resource inputs, the identified original-algorithm differences are resolved and the listed former renderer questions have source-level dispositions. This uses existing independent source outputs plus current consumer review and focused execution of changed methods; it is not a new full-suite or device run. Historical OPEN paragraphs below describe their original investigation scope and must not recreate excluded engine work.
+
+The separate `GE-PS-SURFACE-ATOMIC-REBUILD` product-host path still lacks terminal presentation advances in its replay journal. Resize during clear can therefore lose terminal state. This is an unresolved host-continuity defect, not evidence that original particle/HUD algorithms differ; dynamic resize has never carried an original-parity claim. No complete-project or all-host-features acceptance is made here.
 
 ### Current material consumption and culling relevance
 
