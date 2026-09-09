@@ -259,12 +259,18 @@ export function advanceOrdinaryNoteVerticalMotion(
   return ok({ progressRate: progress.value, curve, y });
 }
 
+export type OrdinaryNoteGoalScale = "perspective" | "target-button" | RenderVector3;
+
 export function repositionOrdinaryNoteToJudgeLine(
   state: OrdinaryNoteMotionState,
+  goalScale: OrdinaryNoteGoalScale = "perspective",
 ): SimulatorResult<OrdinaryNoteMotionResult> {
   const position = vector3(state.goalPosition.x.value, state.goalPosition.y.value, state.currentPositionZ.value);
   if (position.status !== "ok") return position;
-  const scale = calculateOrdinaryNoteScaleAtY(state, state.goalPosition.y.value);
+  // The scene's thirteen gameplay target transforms have unit local scale.
+  const scale = typeof goalScale === "object" ? ok(goalScale) : goalScale === "target-button"
+    ? vector3(state.noteSettingScale.value, state.noteSettingScale.value, state.noteSettingScale.value)
+    : calculateOrdinaryNoteScaleAtY(state, state.goalPosition.y.value);
   return scale.status === "ok" ? ok(Object.freeze({
     progressRate: state.progressRate,
     position: position.value,

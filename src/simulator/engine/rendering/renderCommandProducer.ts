@@ -47,6 +47,7 @@ import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   repositionOrdinaryNoteToJudgeLine,
+  type OrdinaryNoteGoalScale,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
   calculateOrdinaryNoteStartDepth,
@@ -2544,7 +2545,7 @@ export class RenderCommandProducer {
     poolObjectId: string,
     motionState: OrdinaryNoteMotionState,
     scene: OrdinaryFixedNoteSceneInput,
-    repositionToGoal = false,
+    goalScale: OrdinaryNoteGoalScale | null = null,
   ): SimulatorResult<PreparedOrdinaryNoteMotion> {
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
@@ -2566,14 +2567,14 @@ export class RenderCommandProducer {
         creationSequence,
       }),
       maskObjectId: null,
-    }, repositionToGoal);
+    }, goalScale);
   }
 
   preflightOrdinaryNoteMotion(
     poolObjectId: string,
     motionState: OrdinaryNoteMotionState,
     visualState: OrdinaryNoteTransformVisualState,
-    repositionToGoal = false,
+    goalScale: OrdinaryNoteGoalScale | null = null,
   ): SimulatorResult<PreparedOrdinaryNoteMotion> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2584,8 +2585,8 @@ export class RenderCommandProducer {
         "Ordinary Note Move requires one pool identity and the confirmed unmasked root Sprite path.",
       );
     }
-    const motion = repositionToGoal
-      ? repositionOrdinaryNoteToJudgeLine(motionState)
+    const motion = goalScale !== null
+      ? repositionOrdinaryNoteToJudgeLine(motionState, goalScale)
       : advanceOrdinaryNoteMotion(motionState);
     if (motion.status !== "ok") return motion;
     const rotation = createRenderFloat32(Math.fround(0));

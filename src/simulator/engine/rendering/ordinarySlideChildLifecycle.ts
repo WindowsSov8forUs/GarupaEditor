@@ -124,7 +124,7 @@ export function advanceOrdinarySlideChildren(
     if (first.lifecycle.phase === "stop") {
       const target = first.lifecycle.motionState.goalPosition;
       const x = slideGoalX(sources[0]!, target.x.value, stopControl.virtualLaneDeltaX);
-      const moved = withSlidePosition(frontTransform, x, target.y.value);
+      const moved = withSlidePosition(frontTransform, x, target.y.value, stopControl.rootMotionState.noteSettingScale);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
     } else {
@@ -165,7 +165,7 @@ export function advanceOrdinarySlideChildren(
         const x = createRenderFloat32(slideGoalX(sources[index]!, goal.x.value, stopControl.virtualLaneDeltaX));
         if (x.status !== "ok") return x;
         const snapped = repositionOrdinaryNoteToJudgeLine({ ...lifecycle.motionState,
-          goalPosition: { x: x.value, y: goal.y } });
+          goalPosition: { x: x.value, y: goal.y } }, "target-button");
         if (snapped.status !== "ok") return snapped;
         lifecycle = Object.freeze({ ...lifecycle, renderedTransform: snapped.value });
       }
@@ -186,7 +186,7 @@ export function advanceOrdinarySlideChildren(
         }
         if (visibleAfter.lifecycle.phase === "stop") {
           const goal = visibleAfter.lifecycle.motionState.goalPosition;
-          const moved = withSlidePosition(lifecycle.renderedTransform, goal.x.value, goal.y.value);
+          const moved = withSlidePosition(lifecycle.renderedTransform, goal.x.value, goal.y.value, lifecycle.motionState.noteSettingScale);
           if (moved.status !== "ok") return moved;
           lifecycle = Object.freeze({ ...lifecycle, renderedTransform: moved.value });
           if (!stopControl.stoppedChildWaited[index]) visible = false;
@@ -256,12 +256,17 @@ function slideGoalX(source: NoteInformation, base: number, delta: number, apply 
   return Math.fround(source.virtualLaneDirection === 1 ? base - offset : base + offset);
 }
 
-function withSlidePosition(transform: OrdinaryNoteMotionResult, x: number, y: number): SimulatorResult<OrdinaryNoteMotionResult> {
+function withSlidePosition(
+  transform: OrdinaryNoteMotionResult, x: number, y: number, targetScale?: RenderFloat32,
+): SimulatorResult<OrdinaryNoteMotionResult> {
   const nextX = createRenderFloat32(Math.fround(x));
   const nextY = createRenderFloat32(Math.fround(y));
   if (nextX.status !== "ok") return nextX;
   if (nextY.status !== "ok") return nextY;
-  return ok(Object.freeze({ ...transform, position: Object.freeze({ x: nextX.value, y: nextY.value, z: transform.position.z }) }));
+  return ok(Object.freeze({ ...transform,
+    position: Object.freeze({ x: nextX.value, y: nextY.value, z: transform.position.z }),
+    ...(targetScale === undefined ? {} : { localScale: Object.freeze({ x: targetScale, y: targetScale, z: targetScale }) }),
+  }));
 }
 
 function moveSlideEndpoint(

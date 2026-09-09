@@ -472,7 +472,7 @@ export class NoteManager {
             if (current.motionState.progressRate.value <= 1 || current.renderedTransform.position.y.value > line.value) {
               return ok(false);
             }
-            const snapped = this.advanceOrdinaryRenderMotion(note, 0, true);
+            const snapped = this.advanceOrdinaryRenderMotion(note, 0, "target-button");
             return snapped.status === "ok" ? ok(true) : snapped;
           },
           judgeSlide: (source) => {
@@ -642,7 +642,7 @@ export class NoteManager {
         }
         const noteIndex = note.noteInformation?.index ?? -1;
         if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
-          const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), true, true);
+          const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve", true);
           if (placed.status !== "ok") return placed;
           note.commitBeganPlacement();
         }
@@ -664,7 +664,7 @@ export class NoteManager {
         if (this.renderProducer !== null && stateBefore === NoteState.Move && note.state === NoteState.Stop &&
           (note instanceof NoteLong || note instanceof NoteSlide) &&
           (this.inGameCalculatedData.isAutoPlay || this.isMoveTime())) {
-          const repositioned = this.advanceOrdinaryRenderMotion(note, Math.fround(0), true);
+          const repositioned = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "perspective");
           if (repositioned.status !== "ok") return repositioned;
         }
         if (note.state !== NoteState.Deactive) {
@@ -1051,7 +1051,7 @@ export class NoteManager {
   private advanceOrdinaryRenderMotion(
     note: NoteBase,
     deltaTimeSeconds: number,
-    repositionToGoal = false,
+    placement: "perspective" | "target-button" | "preserve" | null = null,
     useGoalDepth = false,
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
@@ -1081,14 +1081,14 @@ export class NoteManager {
         } : {}),
       }),
       this.ordinaryNoteScene,
-      repositionToGoal,
+      placement === "preserve" ? current.renderedTransform.localScale : placement,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
     if (committed.status !== "ok") return committed;
     this.ordinaryRenderMotionStates.set(note, Object.freeze({
       ...(note instanceof NoteSlide ? {
-        slideJudgeY: repositionToGoal ? current.slideJudgeY! : prepared.value.motion.position.y.value,
+        slideJudgeY: placement !== null ? current.slideJudgeY! : prepared.value.motion.position.y.value,
       } : {}),
       motionState: Object.freeze({
         ...current.motionState,
