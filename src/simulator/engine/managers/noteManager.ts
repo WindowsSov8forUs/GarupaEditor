@@ -79,41 +79,6 @@ export type NotePoolObjectFactory = (
   poolObjectId: string,
 ) => NoteBase;
 
-export type NoteManagerTraceEntry =
-  | {
-      readonly kind: "frame";
-      readonly deltaTimeSeconds: number;
-      readonly executeFrame: number;
-      readonly substepCount: number;
-      readonly outerFrameIndex: number;
-    }
-  | {
-      readonly kind: "music-advance";
-      readonly substepIndex: number;
-      readonly deltaTimeSeconds: number;
-      readonly executeFrame: number;
-    }
-  | {
-      readonly kind: "bpm-update" | "bpm-activate" | "note-after-update" | "note-activate";
-      readonly substepIndex: number;
-      readonly noteIndex: number;
-      readonly poolObjectId: string;
-    }
-  | {
-      readonly kind: "note-update";
-      readonly substepIndex: number;
-      readonly noteIndex: number;
-      readonly poolObjectId: string;
-      readonly adjustedPosition: number | null;
-      readonly stateBefore: NoteState;
-      readonly stateAfter: NoteState;
-    }
-  | {
-      readonly kind: "group-activate";
-      readonly substepIndex: number;
-      readonly batchIndex: number;
-    };
-
 export interface NotePoolSnapshot {
   readonly family: NoteFamily;
   readonly cursor: number;
@@ -129,7 +94,6 @@ export interface NoteManagerSnapshot {
   readonly bpmPool: readonly ReturnType<NoteBpmChange["snapshot"]>[];
   readonly pools: readonly NotePoolSnapshot[];
   readonly slideNoteManagerInitialized: boolean;
-  readonly schedulerTrace: readonly NoteManagerTraceEntry[];
   readonly bpmChangeCount: number;
   readonly performanceLevelCounters: readonly number[];
   readonly activeOrdinarySyncLineCount: number;
@@ -186,8 +150,6 @@ export class NoteManager {
     (_, index) => new NoteBpmChange(index),
   );
   private readonly notePoolsValue = new Map<NoteFamily, NotePool>();
-  private readonly schedulerTraceValue: NoteManagerTraceEntry[] = [];
-  private readonly observedAdjustedPositions = new WeakMap<NoteBase, number>();
   private readonly performanceLevelCountersValue: PerformanceLevelCounters = [
     0, 0, 0, 0,
   ];
@@ -442,11 +404,7 @@ export class NoteManager {
         note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
         note.registerAutoLiveRuntime({
           shouldForcePerfect: () => this.inGameCalculatedData.isAutoPlay || this.isMoveTime(),
-          getAdjustedMusicPosition: () => {
-            const adjustedPosition = this.getAdjustedMusicPosition();
-            this.observedAdjustedPositions.set(note, adjustedPosition);
-            return adjustedPosition;
-          },
+          getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           submitJudgement: this.submitAutoLiveJudgement,
         });
         note.registerManualRuntime({
@@ -591,13 +549,6 @@ export class NoteManager {
     this.clock.setExecuteFrame(substepExecuteFrame);
     const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
     if (renderFrame?.status === "integrity-failure") return renderFrame;
-    this.schedulerTraceValue.push({
-      kind: "frame",
-      deltaTimeSeconds: frameDelta,
-      executeFrame,
-      substepCount,
-      outerFrameIndex: this.outerFrameIndexValue,
-    });
     this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
@@ -607,12 +558,6 @@ export class NoteManager {
       if (advanceResult.status !== "ok") {
         return advanceResult;
       }
-      this.schedulerTraceValue.push({
-        kind: "music-advance",
-        substepIndex,
-        deltaTimeSeconds: substepDelta,
-        executeFrame: substepExecuteFrame,
-      });
 
       let bpmIndex = 0;
       while (bpmIndex < this.activeBpmChangesValue.length) {
@@ -620,23 +565,14 @@ export class NoteManager {
         if (bpmChange === undefined) {
           break;
         }
-        const noteIndex = bpmChange.snapshot().noteIndex ?? -1;
         const updateResult = bpmChange.execUpdate(this.musicScoreController);
         if (updateResult.status !== "ok") {
           return updateResult;
         }
-        this.schedulerTraceValue.push({
-          kind: "bpm-update",
-          substepIndex,
-          noteIndex,
-          poolObjectId: `bpm:${bpmChange.poolIndex}`,
-        });
         if (this.activeBpmChangesValue[bpmIndex] === bpmChange) {
           bpmIndex += 1;
         }
       }
-
-      const afterUpdateNotes: NoteBase[] = [];
       let activeIndex = this.activeNotesValue.length - 1;
       while (activeIndex >= 0) {
         const note = this.activeNotesValue[activeIndex];
@@ -647,24 +583,13 @@ export class NoteManager {
             "No recovered Update caller removes a different lower-index active Note in this stage.",
           );
         }
-        const noteIndex = note.noteInformation?.index ?? -1;
         if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
           const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve", true);
           if (placed.status !== "ok") return placed;
           note.commitBeganPlacement();
         }
         const stateBefore = note.state;
-        this.observedAdjustedPositions.delete(note);
         const updateResult = note.executeUpdate(substepDelta);
-        this.schedulerTraceValue.push({
-          kind: "note-update",
-          substepIndex,
-          noteIndex,
-          poolObjectId: note.poolObjectId,
-          adjustedPosition: this.observedAdjustedPositions.get(note) ?? null,
-          stateBefore,
-          stateAfter: note.state,
-        });
         if (updateResult.status !== "ok") {
           return updateResult;
         }
@@ -673,9 +598,6 @@ export class NoteManager {
           (this.inGameCalculatedData.isAutoPlay || this.isMoveTime())) {
           const repositioned = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "perspective");
           if (repositioned.status !== "ok") return repositioned;
-        }
-        if (note.state !== NoteState.Deactive) {
-          afterUpdateNotes.push(note);
         }
         activeIndex -= 1;
       }
@@ -696,19 +618,6 @@ export class NoteManager {
       const multipleDirectionalLineUpdate = this.updateMultipleDirectionalLines();
       if (multipleDirectionalLineUpdate.status !== "ok") {
         return multipleDirectionalLineUpdate;
-      }
-
-      for (const note of afterUpdateNotes) {
-        this.schedulerTraceValue.push({
-          kind: "note-after-update",
-          substepIndex,
-          noteIndex: note.noteInformation?.index ?? -1,
-          poolObjectId: note.poolObjectId,
-        });
-        const afterUpdateResult = note.executeAfterUpdate(substepDelta);
-        if (afterUpdateResult.status !== "ok") {
-          return afterUpdateResult;
-        }
       }
 
       const activationResult = this.activateCurrentBatch(substepIndex);
@@ -891,7 +800,6 @@ export class NoteManager {
         objects: pool.objects.map((note) => note.snapshot()),
       })),
       slideNoteManagerInitialized: this.slideNoteManager.isInitialized,
-      schedulerTrace: [...this.schedulerTraceValue],
       bpmChangeCount: this.bpmChangeCount,
       performanceLevelCounters: [...this.performanceLevelCountersValue],
       activeOrdinarySyncLineCount: this.activeOrdinarySyncLines.filter((line) => line !== null).length,
@@ -1533,12 +1441,6 @@ export class NoteManager {
         (completed) => this.removeActiveBpmChange(completed),
       );
       this.activeBpmChangesValue.push(bpmObject.value);
-      this.schedulerTraceValue.push({
-        kind: "bpm-activate",
-        substepIndex,
-        noteIndex: bpmCommand.index,
-        poolObjectId: `bpm:${bpmObject.value.poolIndex}`,
-      });
     }
 
     const activatedRenderedNotes: NoteBase[] = [];
@@ -1612,12 +1514,6 @@ export class NoteManager {
       if (slideChildStates !== null) {
         this.ordinarySlideRenderStates.set(noteResult.value.note, slideChildStates);
       }
-      this.schedulerTraceValue.push({
-        kind: "note-activate",
-        substepIndex,
-        noteIndex: noteInformation.index,
-        poolObjectId: noteResult.value.note.poolObjectId,
-      });
     }
 
     const syncLineActivation = this.connectOrdinarySyncLines(activatedRenderedNotes);
@@ -1627,12 +1523,6 @@ export class NoteManager {
     if (multipleDirectionalLineActivation.status !== "ok") {
       return multipleDirectionalLineActivation;
     }
-
-    this.schedulerTraceValue.push({
-      kind: "group-activate",
-      substepIndex,
-      batchIndex: this.nextBatchIndexValue,
-    });
     this.nextBatchIndexValue += 1;
     return ok(undefined);
   }

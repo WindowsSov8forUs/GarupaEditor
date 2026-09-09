@@ -37,11 +37,6 @@ export class NoteFrontBase extends NoteBase {}
 
 export class NoteAfterBase extends NoteBase {}
 
-export interface FlickForcePerfectTraceEntry {
-  readonly kind: "flick-begin" | "flick-synthetic-move";
-  readonly syntheticX?: number;
-}
-
 export abstract class NoteSingleBase extends NoteFrontBase {
   private missSecondCounterValue = Math.fround(0);
 
@@ -266,7 +261,6 @@ export class NoteLong extends NoteFrontBase {
   private manualTouchOriginValue: ManualInputPosition | null = null;
   private manualMoveSucceededValue = false;
   private manualAfterMoveTimeValue = Math.fround(0);
-  private readonly autoLiveTraceValue: LongAutoLiveTraceEntry[] = [];
 
   registerLongAfterMultipleGroupResolver(
     resolver: (
@@ -278,10 +272,6 @@ export class NoteLong extends NoteFrontBase {
 
   get afterNote(): LongAfterRuntime | null {
     return this.afterNoteValue;
-  }
-
-  get autoLiveTrace(): readonly LongAutoLiveTraceEntry[] {
-    return this.autoLiveTraceValue.map((entry) => ({ ...entry }));
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -320,7 +310,6 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
-    this.autoLiveTraceValue.length = 0;
     return ok(undefined);
   }
 
@@ -710,7 +699,6 @@ export class NoteLong extends NoteFrontBase {
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
-      this.autoLiveTraceValue.push({ kind: "long-head-perfect" });
       return this.changeState(NoteState.Stop);
     }
     return submitted;
@@ -836,7 +824,6 @@ export class NoteLong extends NoteFrontBase {
         "Long OnUpdate requires its parent-owned linked after runtime.",
       );
     }
-    this.autoLiveTraceValue.push({ kind: "long-after-update" });
     if (!runtime.value.shouldForcePerfect() || after.judged) {
       return ok(undefined);
     }
@@ -859,7 +846,6 @@ export class NoteLong extends NoteFrontBase {
         `Long root ${noteInformation.index} retained an unconfirmed terminal type.`,
       );
     }
-    this.autoLiveTraceValue.push({ kind: "long-linked-after-finish" });
     const submitted = runtime.value.submitJudgement({
       noteInformation,
       phase: "tail",
@@ -874,23 +860,12 @@ export class NoteLong extends NoteFrontBase {
     if (marked.status !== "ok") {
       return marked;
     }
-    this.autoLiveTraceValue.push({ kind: "long-tail-perfect" });
     return this.changeState(NoteState.Deactive);
-  }
-
-  override executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.state === NoteState.Deactive) {
-      return ok(undefined);
-    }
-    this.autoLiveTraceValue.push({ kind: "long-base-after-update" });
-    this.autoLiveTraceValue.push({ kind: "long-linked-after-update" });
-    return ok(undefined);
   }
 
   override snapshot() {
     return {
       ...super.snapshot(),
-      autoLiveTrace: this.autoLiveTrace,
       linkedAfter: this.afterNoteValue === null
         ? null
         : {
@@ -916,7 +891,6 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
-    this.autoLiveTraceValue.length = 0;
   }
 }
 
@@ -938,7 +912,6 @@ export class NoteSlide extends NoteFrontBase {
   private manualTouchOriginValue: ManualInputPosition | null = null;
   private manualAfterMoveTimeValue = Math.fround(0);
   private terminalJudgeNoteTypeValue: 5 | 6 | 7 | 8 | null = null;
-  private readonly autoLiveTraceValue: SlideAutoLiveTraceEntry[] = [];
 
   registerSlideAfterMultipleGroupResolver(
     resolver: (
@@ -992,10 +965,6 @@ export class NoteSlide extends NoteFrontBase {
 
   get currentAfterIndex(): number {
     return this.currentAfterIndexValue;
-  }
-
-  get autoLiveTrace(): readonly SlideAutoLiveTraceEntry[] {
-    return this.autoLiveTraceValue.map((entry) => ({ ...entry }));
   }
 
   get manualCandidateSource(): NoteInformation | null {
@@ -1086,7 +1055,6 @@ export class NoteSlide extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = terminalJudgeNoteType.value;
-    this.autoLiveTraceValue.length = 0;
     return ok(undefined);
   }
 
@@ -1516,7 +1484,6 @@ export class NoteSlide extends NoteFrontBase {
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
-      this.autoLiveTraceValue.push({ kind: "slide-head-perfect" });
       this.manualHeadJudgedValue = true;
       return this.changeState(NoteState.Stop);
     }
@@ -1626,22 +1593,10 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(selected.sourceIndex, false);
-    this.autoLiveTraceValue.push({
-      kind: "slide-stop-perfect",
-      afterIndex: selected.sourceIndex,
-    });
     return selected.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
   }
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    for (const after of this.afterNotesValue) {
-      if (!after.judged) {
-        this.autoLiveTraceValue.push({
-          kind: "slide-after-update",
-          afterIndex: after.sourceIndex,
-        });
-      }
-    }
     const runtime = this.autoLiveRuntime;
     if (runtime.status !== "ok") return runtime;
     if (this.manualHeadJudgedValue) {
@@ -1655,21 +1610,6 @@ export class NoteSlide extends NoteFrontBase {
       if (this.state === NoteState.Deactive) return ok(undefined);
     }
     return this.forcePerfectPendingAfter();
-  }
-
-  override executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.state === NoteState.Deactive) {
-      return ok(undefined);
-    }
-    this.autoLiveTraceValue.push({ kind: "slide-base-after-update" });
-    const current = this.afterNotesValue[this.currentAfterIndexValue];
-    if (current !== undefined) {
-      this.autoLiveTraceValue.push({
-        kind: "slide-current-after-update",
-        afterIndex: current.sourceIndex,
-      });
-    }
-    return ok(undefined);
   }
 
   private executeManualSlideAfterTimeout(current: SlideAfterRuntime, canJudge: boolean): SimulatorResult<void> {
@@ -1800,10 +1740,6 @@ export class NoteSlide extends NoteFrontBase {
       if (marked.status !== "ok") {
         return marked;
       }
-      this.autoLiveTraceValue.push({
-        kind: "slide-invisible-support-skip",
-        afterIndex: current.sourceIndex,
-      });
       this.currentAfterIndexValue += 1;
       return ok(undefined);
     }
@@ -1837,12 +1773,6 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(this.currentAfterIndexValue, false, true);
-    this.autoLiveTraceValue.push({
-      kind: current.isTerminal
-        ? "slide-tail-perfect"
-        : "slide-intermediate-perfect",
-      afterIndex: current.sourceIndex,
-    });
     this.currentAfterIndexValue += 1;
     return current.isTerminal
       ? this.changeState(NoteState.Deactive)
@@ -1859,7 +1789,6 @@ export class NoteSlide extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = null;
-    this.autoLiveTraceValue.length = 0;
   }
 
   override snapshot() {
@@ -1896,13 +1825,8 @@ export class NoteSlide extends NoteFrontBase {
 }
 
 export abstract class NoteFlickBase extends NoteSingleBase {
-  protected readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
   private frameCounterValue = Math.fround(0);
   private cachedJudgementValue: ManualNoteJudgement | null = null;
-
-  get flickTrace(): readonly FlickForcePerfectTraceEntry[] {
-    return this.flickTraceValue.map((entry) => ({ ...entry }));
-  }
 
   protected abstract get forcePerfectSyntheticX(): SimulatorResult<number>;
   protected abstract get forcePerfectJudgeNoteType(): number;
@@ -1984,11 +1908,6 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     if (synthetic.status !== "ok") {
       return synthetic;
     }
-    this.flickTraceValue.push({ kind: "flick-begin" });
-    this.flickTraceValue.push({
-      kind: "flick-synthetic-move",
-      syntheticX: synthetic.value,
-    });
     const autoRuntime = this.autoLiveRuntime;
     if (autoRuntime.status !== "ok") {
       return autoRuntime;
@@ -2072,7 +1991,6 @@ export abstract class NoteFlickBase extends NoteSingleBase {
   }
 
   protected override onResetForDispose(): void {
-    this.flickTraceValue.length = 0;
     this.frameCounterValue = Math.fround(0);
     this.cachedJudgementValue = null;
   }
@@ -2208,7 +2126,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     information: NoteInformation,
   ) => SimulatorResult<MultipleDirectionalRuntimeGroup>) | null = null;
   private groupValue: MultipleDirectionalRuntimeGroup | null = null;
-  private readonly multipleTraceValue: MultipleDirectionalAutoLiveTraceEntry[] = [];
 
   registerMultipleDirectionalGroupResolver(
     resolver: (
@@ -2216,10 +2133,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     ) => SimulatorResult<MultipleDirectionalRuntimeGroup>,
   ): void {
     this.groupResolverValue = resolver;
-  }
-
-  get multipleTrace(): readonly MultipleDirectionalAutoLiveTraceEntry[] {
-    return this.multipleTraceValue.map((entry) => ({ ...entry }));
   }
 
   protected override acceptsFrontNoteType(frontNoteType: number): boolean {
@@ -2357,8 +2270,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       throw new Error("Multiple Directional group use changed after preflight");
     }
     this.commitSuccessfulManualMove(input, plan);
-    this.multipleTraceValue.push({ kind: "multiple-head-manual", groupCount: group.count });
-    this.multipleTraceValue.push({ kind: "multiple-side-notes-used", groupCount: group.count });
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -2394,14 +2305,12 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return activated;
     }
     this.groupValue = group.value;
-    this.multipleTraceValue.length = 0;
     return ok(undefined);
   }
 
   protected override moveState(deltaTimeSeconds: number): SimulatorResult<void> {
     const group = this.groupValue;
     if (group?.isUsed) {
-      this.multipleTraceValue.push({ kind: "multiple-side-used-deactivate", groupCount: group.count });
       return this.changeState(NoteState.Deactive);
     }
     return super.moveState(deltaTimeSeconds);
@@ -2419,15 +2328,12 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       );
     }
     if (group.isUsed) {
-      this.multipleTraceValue.push({ kind: "multiple-side-used-deactivate", groupCount: group.count });
       return this.changeState(NoteState.Deactive);
     }
     const synthetic = this.forcePerfectSyntheticX;
     if (synthetic.status !== "ok") {
       return synthetic;
     }
-    this.flickTraceValue.push({ kind: "flick-begin" });
-    this.flickTraceValue.push({ kind: "flick-synthetic-move", syntheticX: synthetic.value });
     if (runtime.value.shouldForcePerfect()) {
       const submitted = runtime.value.submitJudgement({
         noteInformation,
@@ -2469,8 +2375,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       transaction.commit(reserved.value);
       transaction.finish();
     }
-    this.multipleTraceValue.push({ kind: "multiple-head-perfect", groupCount: group.count });
-    this.multipleTraceValue.push({ kind: "multiple-side-notes-used", groupCount: group.count });
     return this.changeState(NoteState.Deactive);
   }
 
@@ -2479,7 +2383,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       ...super.snapshot(),
       multipleDirectionalGroupCount: this.groupValue?.count ?? null,
       multipleDirectionalGroupUsed: this.groupValue?.isUsed ?? null,
-      multipleDirectionalTrace: this.multipleTrace,
     };
   }
 
@@ -2494,7 +2397,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   protected override onResetForDispose(): void {
     super.onResetForDispose();
     this.groupValue = null;
-    this.multipleTraceValue.length = 0;
   }
 }
 
@@ -2630,42 +2532,6 @@ export class SlideAfterRuntime {
     this.timeoutFrameCounter = 0;
   }
 }
-
-export type LongAutoLiveTraceEntry = {
-  readonly kind:
-    | "long-head-perfect"
-    | "long-after-update"
-    | "long-linked-after-finish"
-    | "long-tail-perfect"
-    | "long-base-after-update"
-    | "long-linked-after-update";
-};
-
-export type SlideAutoLiveTraceEntry =
-  | {
-      readonly kind:
-        | "slide-head-perfect"
-        | "slide-base-after-update";
-    }
-  | {
-      readonly kind:
-        | "slide-after-update"
-        | "slide-current-after-update"
-        | "slide-invisible-support-skip"
-        | "slide-intermediate-perfect"
-        | "slide-tail-perfect"
-        | "slide-stop-perfect";
-      readonly afterIndex: number;
-    };
-
-export type MultipleDirectionalAutoLiveTraceEntry = {
-  readonly kind:
-    | "multiple-head-perfect"
-    | "multiple-head-manual"
-    | "multiple-side-notes-used"
-    | "multiple-side-used-deactivate";
-  readonly groupCount: number;
-};
 
 export function validateAutoLiveActivationGraph(
   noteInformation: NoteInformation,

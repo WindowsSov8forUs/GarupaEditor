@@ -26,13 +26,6 @@ export interface MusicScoreControllerSnapshot {
   readonly musicPosition: number;
   readonly launcherMusicPosition: number;
   readonly musicPositionCallbackCount: number;
-  readonly tempoQueryTrace: readonly TempoQueryTraceEntry[];
-}
-
-export interface TempoQueryTraceEntry {
-  readonly queryIndex: number;
-  readonly position: number;
-  readonly bpm: number;
 }
 
 export class InGameMusicScoreController {
@@ -48,7 +41,6 @@ export class InGameMusicScoreController {
   private launcherMusicBarProgressValue = 0;
   private launcherMusicBeatProgressValue: number;
   private musicPositionCallbackCountValue = 0;
-  private readonly tempoQueryTraceValue: TempoQueryTraceEntry[] = [];
   private readonly tempoCommands: readonly NoteInformation[];
 
   constructor(chart: ChartConstructionResult) {
@@ -190,16 +182,15 @@ export class InGameMusicScoreController {
   }
 
   getAdjustedMusicPosition(offsetFrames: number): number {
-    return this.calculateAdjustedMusicPosition(offsetFrames, true);
+    return this.calculateAdjustedMusicPosition(offsetFrames);
   }
 
   peekAdjustedMusicPosition(offsetFrames: number): number {
-    return this.calculateAdjustedMusicPosition(offsetFrames, false);
+    return this.calculateAdjustedMusicPosition(offsetFrames);
   }
 
   private calculateAdjustedMusicPosition(
     offsetFrames: number,
-    recordTempoQueries: boolean,
   ): number {
     if (offsetFrames === 0) {
       return this.musicPosition;
@@ -213,20 +204,13 @@ export class InGameMusicScoreController {
         cursor = advancePosition(
           cursor.bar,
           cursor.beatProgress,
-          this.bpmAtPosition(absolutePosition(cursor), recordTempoQueries),
+          this.bpmAtPosition(absolutePosition(cursor)),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
     } else {
       const committedBpm = this.currentBpmValue;
       for (let index = 0; index < -offsetFrames; index += 1) {
-        if (recordTempoQueries) {
-          this.tempoQueryTraceValue.push({
-            queryIndex: this.tempoQueryTraceValue.length,
-            position: absolutePosition(cursor),
-            bpm: committedBpm,
-          });
-        }
         cursor = rewindPosition(
           cursor.bar,
           cursor.beatProgress,
@@ -247,7 +231,7 @@ export class InGameMusicScoreController {
   }
 
   getBpmAtNotePosition(position: number): number {
-    return this.bpmAtPosition(position, false);
+    return this.bpmAtPosition(position);
   }
 
   get currentBar(): number {
@@ -288,11 +272,10 @@ export class InGameMusicScoreController {
       musicPosition: this.musicPosition,
       launcherMusicPosition: this.launcherMusicPosition,
       musicPositionCallbackCount: this.musicPositionCallbackCountValue,
-      tempoQueryTrace: this.tempoQueryTraceValue.map((entry) => ({ ...entry })),
     };
   }
 
-  private bpmAtPosition(position: number, recordQuery = true): number {
+  private bpmAtPosition(position: number): number {
     let bpm = this.basicBpmValue;
     let latestPosition = 0;
     for (const command of this.tempoCommands) {
@@ -304,13 +287,6 @@ export class InGameMusicScoreController {
         latestPosition = command.absolutePos;
         bpm = Math.fround(command.bpm);
       }
-    }
-    if (recordQuery) {
-      this.tempoQueryTraceValue.push({
-        queryIndex: this.tempoQueryTraceValue.length,
-        position,
-        bpm,
-      });
     }
     return bpm;
   }

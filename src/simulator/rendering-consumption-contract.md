@@ -16,6 +16,7 @@ The Simulator does not use implementation code to erase platform differences. Th
 - Unity-only shadow/probe/ray-tracing/instancing states and investigation commit/hash gates are not runtime prerequisites. Resource byte identity, topology, material inputs and application ownership checks remain.
 - Score text uses host font measurements and a width fit, without original CharacterInfo tables, Android crispness branches or clip-center rounding corrections. The authored spacing, colors and alignment remain. Historical C49/C50/C220 numeric layout conclusions do not apply to this host text path.
 - Production disables diagnostic particle frame retention and polls compact backend status. Recording/offline backends and explicit diagnostic snapshots remain useful verification interfaces.
+- Unconsumed scheduler, BPM-query and note-family trace arrays are removed, together with their snapshot copies and the trace-only after-update loop. Current note/clock state and gameplay updates remain. Both TypeScript checks, the runtime contract audit and affected native/serialized motion, judgement, BPM and visibility consumer audits pass after this removal; old trace-based diagnostics no longer describe the snapshot interface.
 
 Historical normal output, storage-row, internal-cache, world/local round-trip and instruction-exact numeric comparisons are retired for these consumers. Compilation and contract checks do not establish original-client or device equivalence. No original binary/runtime or visual capture is required to remove unused implementation.
 

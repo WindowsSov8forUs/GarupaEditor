@@ -236,10 +236,6 @@ export class NoteBase {
     return this.onUpdate(deltaTimeSeconds);
   }
 
-  executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return ok(undefined);
-  }
-
   preflightManualTouchBegan(
     _input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteBeganPlan> {
