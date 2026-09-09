@@ -575,9 +575,6 @@ export class GamePlayButton {
         deltaTimeSeconds,
       ));
     }
-    if (touch.phase === ManualTouchPhase.Stationary) {
-      return ok(noNotePlan("moved", touch, deltaTimeSeconds));
-    }
     const phase = touch.phase === ManualTouchPhase.Ended ? "ended" : "moved";
     const input = manualNoteInput(
       touch,

@@ -18612,7 +18612,7 @@
     {
       "id": "RCB-0886",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 617,
+      "line": 614,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual note commit lost its preflight transaction\");",
@@ -18633,7 +18633,7 @@
     {
       "id": "RCB-0887",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 657,
+      "line": 654,
       "marker": "integrity-failure-call",
       "symbol": "execTouchBegan",
       "source": "return integrityFailure(",
