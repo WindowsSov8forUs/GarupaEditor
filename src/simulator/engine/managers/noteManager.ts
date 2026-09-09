@@ -1125,11 +1125,12 @@ export class NoteManager {
     for (const note of this.activeNotesValue) {
       if (note instanceof NoteSlide) note.refreshAfterMoveTime();
     }
-    return this.updateOrdinarySlideChildren(Math.fround(0));
+    return this.updateOrdinarySlideChildren(Math.fround(0), false);
   }
 
   private updateOrdinarySlideChildren(
     deltaTimeSeconds: number,
+    advanceMotion = true,
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return this.ordinarySlideRenderStates.size === 0
@@ -1173,6 +1174,7 @@ export class NoteManager {
         }),
         this.ordinaryNoteScene,
         {
+          advanceMotion,
           rootWaiting: note.state === NoteState.Wait || note.state === NoteState.Stop,
           judgementAdjustValueB: this.judgementAdjustValueB,
           virtualPerfectLine: virtualLine.value,

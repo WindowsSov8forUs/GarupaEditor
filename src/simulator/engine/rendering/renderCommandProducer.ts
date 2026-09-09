@@ -2444,7 +2444,7 @@ export class RenderCommandProducer {
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
-    if (stopControl.rootWaiting) {
+    if (stopControl.advanceMotion && stopControl.rootWaiting) {
       const renderObjectId = rootRenderObjectId(poolObjectId);
       const moved = advanced.value.frontTransform;
       commands.push({

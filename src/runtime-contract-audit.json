@@ -19074,7 +19074,7 @@
     {
       "id": "RCB-0908",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1137,
+      "line": 1138,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -19095,7 +19095,7 @@
     {
       "id": "RCB-0909",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1156,
+      "line": 1157,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19116,7 +19116,7 @@
     {
       "id": "RCB-0910",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1238,
+      "line": 1240,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19137,7 +19137,7 @@
     {
       "id": "RCB-0911",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1254,
+      "line": 1256,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19158,7 +19158,7 @@
     {
       "id": "RCB-0912",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1302,
+      "line": 1304,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19179,7 +19179,7 @@
     {
       "id": "RCB-0913",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1321,
+      "line": 1323,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19200,7 +19200,7 @@
     {
       "id": "RCB-0914",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1370,
+      "line": 1372,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19221,7 +19221,7 @@
     {
       "id": "RCB-0915",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1406,
+      "line": 1408,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19242,7 +19242,7 @@
     {
       "id": "RCB-0916",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1513,
+      "line": 1515,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19263,7 +19263,7 @@
     {
       "id": "RCB-0917",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1600,
+      "line": 1602,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19284,7 +19284,7 @@
     {
       "id": "RCB-0918",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1617,
+      "line": 1619,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19305,7 +19305,7 @@
     {
       "id": "RCB-0919",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1637,
+      "line": 1639,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19326,7 +19326,7 @@
     {
       "id": "RCB-0920",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1720,
+      "line": 1722,
       "marker": "integrity-failure-call",
       "symbol": "switch",
       "source": "return integrityFailure(",
@@ -19347,7 +19347,7 @@
     {
       "id": "RCB-0921",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1738,
+      "line": 1740,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19368,7 +19368,7 @@
     {
       "id": "RCB-0922",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1761,
+      "line": 1763,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19389,7 +19389,7 @@
     {
       "id": "RCB-0923",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1767,
+      "line": 1769,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19410,7 +19410,7 @@
     {
       "id": "RCB-0924",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1831,
+      "line": 1833,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19431,7 +19431,7 @@
     {
       "id": "RCB-0925",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1845,
+      "line": 1847,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "resolveButton: () => integrityFailure(",
@@ -19452,7 +19452,7 @@
     {
       "id": "RCB-0926",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1850,
+      "line": 1852,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "screenToWorld: () => integrityFailure(",
@@ -19473,7 +19473,7 @@
     {
       "id": "RCB-0927",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1855,
+      "line": 1857,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "getDistanceNormalization: () => integrityFailure(",
@@ -19494,7 +19494,7 @@
     {
       "id": "RCB-0928",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1860,
+      "line": 1862,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "isInsideTargetButtons: () => integrityFailure(",
@@ -19515,7 +19515,7 @@
     {
       "id": "RCB-0929",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1869,
+      "line": 1871,
       "marker": "integrity-failure-call",
       "symbol": "createUnavailableManualJudgementTransaction",
       "source": "preflight: () => integrityFailure(",
@@ -19536,7 +19536,7 @@
     {
       "id": "RCB-0930",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1875,
+      "line": 1877,
       "marker": "throw-error",
       "symbol": "createUnavailableManualJudgementTransaction",
       "source": "throw new Error(\"Unavailable manual judgement transaction cannot commit\");",
@@ -19557,7 +19557,7 @@
     {
       "id": "RCB-0931",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1958,
+      "line": 1960,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19578,7 +19578,7 @@
     {
       "id": "RCB-0932",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1974,
+      "line": 1976,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional manual finger owner changed after preflight\");",
@@ -19599,7 +19599,7 @@
     {
       "id": "RCB-0933",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1988,
+      "line": 1990,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -24849,7 +24849,7 @@
     {
       "id": "RCB-1183",
       "file": "src/simulator/engine/rendering/ordinarySlideChildLifecycle.ts",
-      "line": 272,
+      "line": 274,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(capability, [",

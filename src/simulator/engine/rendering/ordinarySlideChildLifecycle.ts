@@ -48,6 +48,7 @@ export interface OrdinarySlideFrameResult {
 }
 
 export interface OrdinarySlideStopControl {
+  readonly advanceMotion: boolean;
   readonly rootWaiting: boolean;
   readonly judgementAdjustValueB: number;
   readonly virtualPerfectLine: number;
@@ -116,7 +117,7 @@ export function advanceOrdinarySlideChildren(
   let frontTransform = front;
   const sources = stopControl.rootSource.slideNoteList;
   const first = childStates[0]!;
-  if (stopControl.rootWaiting) {
+  if (stopControl.advanceMotion && stopControl.rootWaiting) {
     if (first.lifecycle.phase === "stop") {
       const target = first.lifecycle.motionState.goalPosition;
       const x = slideGoalX(sources[0]!, target.x.value, stopControl.virtualLaneDeltaX);
@@ -132,13 +133,14 @@ export function advanceOrdinarySlideChildren(
     }
   }
   for (const [index, state] of childStates.entries()) {
-    const advanced = advanceOrdinaryLongNormalChild(state.lifecycle, input);
+    const advanced = stopControl.advanceMotion
+      ? advanceOrdinaryLongNormalChild(state.lifecycle, input) : ok(state.lifecycle);
     if (advanced.status !== "ok") return advanced;
     let lifecycle = advanced.value;
     let meshVisible = state.meshVisible;
     let visible = state.visible;
     let segmentStartIndex = state.segmentStartIndex;
-    if (state.lifecycle.phase === "move") {
+    if (stopControl.advanceMotion && state.lifecycle.phase === "move") {
       const hasAfter = index + 1 < childStates.length;
       const realLine = stopControl.rootWaiting && hasAfter;
       const stopLine = realLine
@@ -161,7 +163,7 @@ export function advanceOrdinarySlideChildren(
         lifecycle = Object.freeze({ ...lifecycle, renderedTransform: snapped.value });
       }
     }
-    if (state.lifecycle.phase === "stop") {
+    if (stopControl.advanceMotion && state.lifecycle.phase === "stop") {
       const visibleAfter = childStates.find((candidate) => candidate.sourceIndex > index &&
         !sources[candidate.sourceIndex]!.isInvisible);
       if (visibleAfter !== undefined) {
