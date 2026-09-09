@@ -2316,7 +2316,8 @@ export class RenderCommandProducer {
     const zero = createRenderFloat32(Math.fround(0));
     if (widthRate.status !== "ok") return widthRate;
     if (zero.status !== "ok") return zero;
-    const mesh = buildOrdinaryLongNormalMesh({
+    const meshVisible = next.value.renderedTransform.position.y.value > childState.motionState.goalPosition.y.value;
+    const mesh = meshVisible ? buildOrdinaryLongNormalMesh({
       front: frontTransform,
       after: next.value.renderedTransform,
       frontButtonCount: childState.motionState.buttonCount,
@@ -2325,7 +2326,7 @@ export class RenderCommandProducer {
       widthRate: widthRate.value,
       color: scene.longMeshColor,
       advanced: childState.motionState.virtualLaneControllerPresent,
-    });
+    }) : ok(null);
     if (mesh.status !== "ok") return mesh;
     const afterObjectId = longAfterRenderObjectId(poolObjectId);
     const meshObjectId = longMeshRenderObjectId(poolObjectId);
@@ -2369,16 +2370,20 @@ export class RenderCommandProducer {
         animationRole: animation.role, elapsedSeconds: sample.value,
       });
     }
-    commands.push({
-      ...base(commands.length),
-      kind: "set-mesh",
-      renderObjectId: meshObjectId,
-      vertices: mesh.value.vertices,
-      indices: mesh.value.indices,
-      uv: mesh.value.uv,
-      colors: mesh.value.colors,
-      materialRole: "long-note",
-    });
+    if (mesh.value !== null) {
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mesh",
+        renderObjectId: meshObjectId,
+        vertices: mesh.value.vertices,
+        indices: mesh.value.indices,
+        uv: mesh.value.uv,
+        colors: mesh.value.colors,
+        materialRole: "long-note",
+      });
+    } else if (childState.renderedTransform.position.y.value > childState.motionState.goalPosition.y.value) {
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+    }
     const transaction = this.preflight(commands, () => {
       if (animation !== undefined && nextAnimationElapsed !== null) {
         this.noteAnimationElapsedSeconds.set(animatedAfterObjectId, Object.freeze({
