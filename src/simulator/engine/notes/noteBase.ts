@@ -42,6 +42,7 @@ export interface ManualNoteRuntime {
   readonly getExecuteFrame: () => number;
   readonly getSlideChildPhase: (index: number) => SimulatorResult<"wait" | "move" | "stop">;
   readonly stopSlideHeadAtJudgeLine: () => SimulatorResult<boolean>;
+  readonly hasCrossedMotionLine: () => SimulatorResult<boolean>;
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly getJudgementAdjustValueB: () => number;

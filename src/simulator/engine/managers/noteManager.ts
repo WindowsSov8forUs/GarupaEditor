@@ -461,6 +461,13 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,
+          hasCrossedMotionLine: () => {
+            const progress = this.ordinaryRenderMotionStates.get(note)?.motionState.progressRate.value;
+            return progress === undefined
+              ? integrityFailure("manual.note-motion-progress-unavailable", ["D11", "MJ23"],
+                  "Long Move requires its committed motion progress.")
+              : ok(progress > 1);
+          },
           stopSlideHeadAtJudgeLine: () => {
             const current = this.ordinaryRenderMotionStates.get(note);
             if (current === undefined || note.noteInformation === null) {
@@ -1124,12 +1131,12 @@ export class NoteManager {
     const launcherMusicPosition = createRenderFloat32(Math.fround(
       this.musicScoreController.launcherMusicPosition,
     ));
-    const musicPosition = createRenderFloat32(Math.fround(
-      this.musicScoreController.musicPosition,
+    const adjustedMusicPosition = createRenderFloat32(Math.fround(
+      this.getAdjustedMusicPosition(),
     ));
     if (deltaTime.status !== "ok") return deltaTime;
     if (launcherMusicPosition.status !== "ok") return launcherMusicPosition;
-    if (musicPosition.status !== "ok") return musicPosition;
+    if (adjustedMusicPosition.status !== "ok") return adjustedMusicPosition;
     for (const [note, childState] of this.ordinaryLongRenderStates) {
       const front = this.ordinaryRenderMotionStates.get(note);
       if (front === undefined) {
@@ -1146,7 +1153,7 @@ export class NoteManager {
         Object.freeze({
           deltaTime: deltaTime.value,
           launcherMusicPosition: launcherMusicPosition.value,
-          musicPosition: musicPosition.value,
+          adjustedMusicPosition: adjustedMusicPosition.value,
         }),
         this.ordinaryNoteScene,
       );
@@ -1182,12 +1189,12 @@ export class NoteManager {
     const launcherMusicPosition = createRenderFloat32(Math.fround(
       this.musicScoreController.launcherMusicPosition,
     ));
-    const musicPosition = createRenderFloat32(Math.fround(
-      this.musicScoreController.musicPosition,
+    const adjustedMusicPosition = createRenderFloat32(Math.fround(
+      this.getAdjustedMusicPosition(),
     ));
     if (deltaTime.status !== "ok") return deltaTime;
     if (launcherMusicPosition.status !== "ok") return launcherMusicPosition;
-    if (musicPosition.status !== "ok") return musicPosition;
+    if (adjustedMusicPosition.status !== "ok") return adjustedMusicPosition;
     for (const [note, childStates] of this.ordinarySlideRenderStates) {
       const front = this.ordinaryRenderMotionStates.get(note);
       if (front === undefined) {
@@ -1207,7 +1214,7 @@ export class NoteManager {
         Object.freeze({
           deltaTime: deltaTime.value,
           launcherMusicPosition: launcherMusicPosition.value,
-          musicPosition: musicPosition.value,
+          adjustedMusicPosition: adjustedMusicPosition.value,
         }),
         this.ordinaryNoteScene,
         {

@@ -34,7 +34,7 @@ export interface OrdinaryLongNormalChildState {
 export interface OrdinaryLongNormalChildFrameInput {
   readonly deltaTime: RenderFloat32;
   readonly launcherMusicPosition: RenderFloat32;
-  readonly musicPosition: RenderFloat32;
+  readonly adjustedMusicPosition: RenderFloat32;
 }
 
 export interface OrdinaryLongNormalMeshInput {
@@ -102,11 +102,11 @@ export function advanceOrdinaryLongNormalChild(
     !validateRenderFloat32(input.deltaTime) ||
     input.deltaTime.value < 0 ||
     !validateRenderFloat32(input.launcherMusicPosition) ||
-    !validateRenderFloat32(input.musicPosition)
+    !validateRenderFloat32(input.adjustedMusicPosition)
   ) {
     return reject(
       "render.long-child.invalid-frame-input",
-      "Long after Update requires finite Float32 delta, LauncherMusicPos and MusicPos inputs.",
+      "Long after Update requires finite Float32 delta, LauncherMusicPos and adjusted music-position inputs.",
     );
   }
   if (state.phase === "stop") return ok(state);
@@ -148,7 +148,7 @@ export function advanceOrdinaryLongNormalChild(
   if (motion.status !== "ok") return motion;
   return ok(Object.freeze({
     ...state,
-    phase: input.musicPosition.value - state.afterAbsolutePosition >= 0
+    phase: input.adjustedMusicPosition.value - state.afterAbsolutePosition >= 0
       ? "stop" as const
       : "move" as const,
     motionState: Object.freeze({

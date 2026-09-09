@@ -680,6 +680,13 @@ export class NoteLong extends NoteFrontBase {
           )
         : runtime;
     }
+    if (!runtime.value.shouldForcePerfect()) {
+      const manual = this.manualRuntime;
+      if (manual.status !== "ok") return manual;
+      const crossed = manual.value.hasCrossedMotionLine();
+      if (crossed.status !== "ok") return crossed;
+      return crossed.value ? this.changeState(NoteState.Wait) : ok(undefined);
+    }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
       return integrityFailure(
@@ -692,9 +699,6 @@ export class NoteLong extends NoteFrontBase {
       return ok(undefined);
     }
     const stateChange = this.changeState(NoteState.Wait);
-    if (!runtime.value.shouldForcePerfect()) {
-      return stateChange;
-    }
     if (stateChange.status !== "ok") {
       return stateChange;
     }
