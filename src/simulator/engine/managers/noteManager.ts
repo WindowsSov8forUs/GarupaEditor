@@ -46,6 +46,7 @@ import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type {
+  DirectionalNotePresentationPlan,
   OrdinaryFixedNoteSceneInput,
   RenderCommandProducer,
   RenderOwnerTransaction,
@@ -1586,6 +1587,58 @@ export class NoteManager {
     const committed = prepared.value.commit();
     if (committed.status !== "ok") return committed;
     this.activeMultipleDirectionalLines[poolIndex] = line;
+    return this.updateDirectionalConnectionPresentation(line);
+  }
+
+  private updateDirectionalConnectionPresentation(line: ActiveMultipleDirectionalLine): SimulatorResult<void> {
+    const a = this.syncEndpointTransform(line.targetA, line.afterA)!;
+    const b = this.syncEndpointTransform(line.targetB, line.afterB)!;
+    const button = (note: NoteBase, after: boolean) => after
+      ? directionalEndpointButton(note.noteInformation!) : note.noteInformation!.buttonType;
+    const toRight = button(line.targetA, line.afterA) > button(line.targetB, line.afterB);
+    // B connects to A first; reciprocal setup restores B. Keep the source's
+    // application depth offset, without reproducing instruction rounding.
+    const z = createRenderFloat32(Math.fround(b.renderedTransform.position.z.value +
+      (toRight === (line.materialDirection === "left") ? 0.00001 : -0.00001)));
+    if (z.status !== "ok") return z;
+    const motion = Object.freeze({ ...a.renderedTransform, position: Object.freeze({
+      x: b.renderedTransform.position.x, y: b.renderedTransform.position.y, z: z.value,
+    }) });
+    const plan = (note: NoteBase, after: boolean, transform: DirectionalNotePresentationPlan["transform"]):
+      DirectionalNotePresentationPlan => {
+      const children = this.ordinarySlideRenderStates.get(note);
+      const ownButton = button(note, after);
+      const hasDirectionalNeighbor = this.activeMultipleDirectionalLines.some((edge) => {
+        if (edge === null) return false;
+        const other = edge.targetA === note && edge.afterA === after ? { note: edge.targetB, after: edge.afterB }
+          : edge.targetB === note && edge.afterB === after ? { note: edge.targetA, after: edge.afterA } : null;
+        // Add's icon selector uses its Add neighbor, not its separate tail link.
+        if (other === null || (!after && note instanceof NoteMultipleDirectionalVisual && other.after)) return false;
+        const difference = button(other.note, other.after) - ownButton;
+        return line.materialDirection === "left" ? difference < 0 : difference > 0;
+      });
+      return { poolObjectId: note.poolObjectId, childIndex: !after ? null
+        : children === undefined ? -1 : children.length - 1,
+        iconVisible: !hasDirectionalNeighbor, transform };
+    };
+    const prepared = this.renderProducer!.preflightDirectionalConnectionPresentation([
+      plan(line.targetA, line.afterA, { motion, parentScale: a.motionState.noteParentScale }),
+      plan(line.targetB, line.afterB, null),
+    ], this.ordinaryNoteScene!);
+    if (prepared.status !== "ok") return prepared;
+    const committed = prepared.value.commit();
+    if (committed.status !== "ok") return committed;
+    const updated = Object.freeze({ ...a,
+      motionState: Object.freeze({ ...a.motionState, currentPositionZ: z.value }), renderedTransform: motion,
+    });
+    if (!line.afterA) this.ordinaryRenderMotionStates.set(line.targetA, updated);
+    else if (this.ordinaryLongRenderStates.has(line.targetA)) {
+      this.ordinaryLongRenderStates.set(line.targetA, { ...this.ordinaryLongRenderStates.get(line.targetA)!, ...updated });
+    } else {
+      const children = this.ordinarySlideRenderStates.get(line.targetA)!;
+      this.ordinarySlideRenderStates.set(line.targetA, children.map((child, index) => index + 1 === children.length
+        ? Object.freeze({ ...child, lifecycle: Object.freeze({ ...child.lifecycle, ...updated }) }) : child));
+    }
     return ok(undefined);
   }
 

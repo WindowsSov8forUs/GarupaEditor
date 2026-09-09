@@ -139,6 +139,17 @@ export interface RenderPoolIdentityPlan {
   readonly slideChildCount?: number;
 }
 
+export interface DirectionalNotePresentationPlan {
+  readonly poolObjectId: string;
+  /** null is the front, -1 the Long tail, otherwise the Slide child index. */
+  readonly childIndex: number | null;
+  readonly iconVisible: boolean;
+  readonly transform: {
+    readonly motion: OrdinaryNoteMotionResult;
+    readonly parentScale: RenderFloat32;
+  } | null;
+}
+
 export interface OrdinaryNoteTransformVisualState {
   readonly color: RenderColor;
   readonly ordering: RenderOrderingKey;
@@ -2363,7 +2374,11 @@ export class RenderCommandProducer {
       maskObjectId: null,
     }];
     if (childState.phase === "wait" && next.value.phase === "move") {
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: afterObjectId });
+      for (const renderObjectId of [afterObjectId, ordinaryNoteIconRenderObjectId(afterObjectId)]) {
+        if (this.creationSequenceByObjectId.has(renderObjectId)) {
+          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+        }
+      }
     }
     const animatedAfterObjectId = ordinaryNoteIconRenderObjectId(afterObjectId);
     const animation = this.noteAnimationElapsedSeconds.get(animatedAfterObjectId);
@@ -2507,7 +2522,11 @@ export class RenderCommandProducer {
       }
       if (state.visible) {
         if (childStates[index]!.lifecycle.phase === "wait" && state.lifecycle.phase !== "wait") {
-          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
+          for (const renderObjectId of [childObjectId, ordinaryNoteIconRenderObjectId(childObjectId)]) {
+            if (this.creationSequenceByObjectId.has(renderObjectId)) {
+              commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+            }
+          }
         }
         commands.push({
           ...base(commands.length),
@@ -2558,6 +2577,42 @@ export class RenderCommandProducer {
     return transaction.status === "ok"
       ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates, transaction: transaction.value }))
       : transaction;
+  }
+
+  preflightDirectionalConnectionPresentation(
+    plans: readonly DirectionalNotePresentationPlan[],
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const plan of plans) {
+      const renderObjectId = plan.childIndex === null ? rootRenderObjectId(plan.poolObjectId)
+        : plan.childIndex === -1 ? longAfterRenderObjectId(plan.poolObjectId)
+        : slideChildRenderObjectId(plan.poolObjectId, plan.childIndex);
+      const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+      if (creationSequence === undefined) return integrityFailure(
+        "render.note.directional-presentation-owner-missing", ["RPR-D13", "PR09", "PR17"],
+        "A directional connection requires both activated note render owners.",
+      );
+      if (plan.transform !== null) {
+        const { motion, parentScale } = plan.transform;
+        commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+          position: motion.position, scale: noteWorldScale(motion.localScale, parentScale),
+          rotationDegrees: zeroFloat(), color: scene.noteTint,
+          ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 70,
+            sourceZ: motion.position.z, creationSequence }, maskObjectId: null,
+        });
+      }
+      const iconObjectId = this.isCompleteHabahiro() && plan.childIndex === null
+        ? habahiroIconRenderObjectId(plan.poolObjectId) : ordinaryNoteIconRenderObjectId(renderObjectId);
+      if (this.creationSequenceByObjectId.has(iconObjectId)) commands.push({
+        ...base(commands.length), kind: plan.iconVisible ? "activate-object" : "hide-object",
+        renderObjectId: iconObjectId,
+      });
+    }
+    return this.preflight(commands);
   }
 
   preflightOrdinaryNoteSceneMotion(
