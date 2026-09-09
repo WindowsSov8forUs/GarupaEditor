@@ -195,6 +195,29 @@ export class InGameManager {
     this.currentGameStateValue = GameState.GameOverMotionFirstStart;
   }
 
+  get isMoveTime(): boolean {
+    return this.currentGameStateValue === GameState.MoveTime;
+  }
+
+  execMoveTimeStep(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.lifecycleState !== "initialized" ||
+      this.currentGameStateValue !== GameState.PlayingSound ||
+      this.noteManager.inGameCalculatedData.mode.sessionMode !== "rehearsal") {
+      return integrityFailure(
+        "timeline.movetime.invalid-step-state",
+        ["LR-C03"],
+        "MoveTime advances only an initialized Rehearsal PlayingSound reconstruction.",
+      );
+    }
+    this.currentGameStateValue = GameState.MoveTime;
+    try {
+      // InputManager excludes state 14; note owners select forcePerfect.
+      return this.execUpdate(deltaTimeSeconds);
+    } finally {
+      this.currentGameStateValue = GameState.PlayingSound;
+    }
+  }
+
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;

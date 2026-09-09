@@ -26,7 +26,7 @@ export interface MultipleDirectionalRuntimeGroup {
 }
 
 export interface NoteAutoLiveRuntime {
-  readonly isAutoPlay: () => boolean;
+  readonly shouldForcePerfect: () => boolean;
   readonly getAdjustedMusicPosition: () => number;
   readonly submitJudgement: (
     request: AutoLiveJudgementRequest,

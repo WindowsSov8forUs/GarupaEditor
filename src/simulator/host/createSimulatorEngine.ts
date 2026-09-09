@@ -188,6 +188,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     return this.transitionGameEndState(deltaTimeSeconds);
   }
 
+  stepForMoveTime(deltaTimeSeconds: number): SimulatorResult<void> {
+    const validation = validateDirectorDeltaTime(deltaTimeSeconds);
+    if (validation.status !== "ok") return validation;
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    return this.inGameManager.execMoveTimeStep(deltaTimeSeconds);
+  }
+
   resolveManualInputButton(
     position: ManualInputPosition,
   ): SimulatorResult<ManualInputButtonResolution | null> {
@@ -907,6 +916,17 @@ export function enterMoveTimeForWholeEngineReplay(
       );
 }
 
+export function stepForMoveTime(
+  engine: SimulatorEngine,
+  deltaTimeSeconds: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null ? host.stepForMoveTime(deltaTimeSeconds) : integrityFailure(
+    "timeline.movetime.foreign-step-owner", [],
+    "MoveTime steps require an engine created by the simulator host.",
+  );
+}
+
 function resolveMoveTimeHost(engine: SimulatorEngine): SimulatorEngineHost | null {
   if (engine instanceof SimulatorEngineHost) return engine;
   return registeredMoveTimeWrappers.get(engine)?.host ?? null;
@@ -1109,6 +1129,7 @@ export function createSimulatorEngine(
       productRender,
       productScene ?? null,
       originalLiveSettings.core.judgementAdjustValueB,
+      () => inGameManager.isMoveTime,
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -1132,6 +1153,7 @@ export function createSimulatorEngine(
     backends.manualInputGeometry,
     renderProducer,
     input.rendering?.ordinaryNoteScene ?? null,
+    () => inGameManager.isMoveTime,
   );
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(
@@ -1168,7 +1190,7 @@ export function createSimulatorEngine(
         movieBackgroundResult.value,
         primaryJudgementAdjustment,
       );
-  const inGameManager = new InGameManager(
+  const inGameManager: InGameManager = new InGameManager(
     musicScoreController,
     noteManager,
     oneFrameJudgementController,

@@ -125,10 +125,15 @@ export class GarupaProductTimelineManager {
     private readonly render: GarupaProductRenderProducer | null,
     private readonly scene: GarupaProductSceneLayout | null = null,
     private readonly judgementAdjustValueB = 0,
+    private readonly isMoveTime: () => boolean = () => false,
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
     for (const chain of chart.slideChains) this.nextVisibleIndexByChain.set(chain.identity, 0);
+  }
+
+  private get shouldForcePerfect(): boolean {
+    return this.mode.inputMode === "auto" || this.isMoveTime();
   }
 
   initialize(): SimulatorResult<void> {
@@ -229,12 +234,15 @@ export class GarupaProductTimelineManager {
       return result;
     };
     const judgedThisFrame: GarupaProductNode[] = [];
-    if (this.mode.inputMode === "auto") {
+    if (this.shouldForcePerfect) {
       while (this.nextAutoIndex < this.orderedVisibleNodes.length) {
         const node = this.orderedVisibleNodes[this.nextAutoIndex]!;
         if (judgementPosition < node.absolutePosition) break;
-        judgedThisFrame.push(node);
         this.nextAutoIndex += 1;
+        const source = node.scoringSource!;
+        if (this.judgedSources.has(source) || this.missedSources.has(source)) continue;
+        judgedThisFrame.push(node);
+        this.advanceChain(node);
       }
     } else {
       const manual = this.processManualFrame(judgementPosition);
@@ -247,7 +255,7 @@ export class GarupaProductTimelineManager {
       deltaTimeSeconds,
     ) ?? ok(null);
     if (render.status !== "ok") return rollback(render);
-    if (this.mode.inputMode === "auto") {
+    if (this.shouldForcePerfect) {
       for (const node of judgedThisFrame) {
         const submitted = this.submitAuto(node);
         if (submitted.status !== "ok") {
@@ -383,14 +391,14 @@ export class GarupaProductTimelineManager {
     if (capacity === 0) return ok(null);
     const count = Math.min(capacity, 5, this.pendingJudgements.length);
     const entries = Object.freeze(this.pendingJudgements.slice(0, count));
-    if (entries.some((entry) => entry.kind !== (this.mode.inputMode === "auto" ? "auto" : "manual"))) {
+    if (entries.some((entry) => entry.kind !== (this.shouldForcePerfect ? "auto" : "manual"))) {
       return rejected(
         "simulator.garupa-extension.mixed-product-batch",
         "One product session cannot mix Auto and Manual judgement requests in a bounded batch.",
       );
     }
     let transaction: OneFrameJudgementBatchTransaction;
-    if (this.mode.inputMode === "auto") {
+    if (this.shouldForcePerfect) {
       const requests = entries.map((entry) =>
         (entry as Extract<PendingProductJudgement, { kind: "auto" }>).request);
       const planned = this.oneFrame.preflightAutoLiveJudgementBatch(requests);

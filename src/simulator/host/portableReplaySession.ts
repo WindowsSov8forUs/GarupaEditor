@@ -26,6 +26,7 @@ import {
   publishFreshEngineVisual,
   publishMoveTimeAudio,
   setMoveTimeVisualState,
+  stepForMoveTime,
 } from "./createSimulatorEngine";
 
 export type SimulatorMoveTimeDirection = "return-five" | "advance-five";
@@ -92,6 +93,11 @@ type ReplayEvent =
   | { readonly kind: "resume"; readonly timelineSecondsAfter: number }
   | { readonly kind: "continue-live"; readonly timelineSecondsAfter: number }
   | {
+      readonly kind: "move-time-step";
+      readonly deltaTimeSeconds: number;
+      readonly timelineSecondsAfter: number;
+    }
+  | {
       readonly kind: "move-time-resume";
       readonly timelineRevision: number;
       readonly moveTimeCount: number;
@@ -114,7 +120,6 @@ interface ReplayInputFrame { readonly touches: readonly ReplayInputTouch[]; }
 const MOVE_TIME_SECONDS = 5;
 const RETURN_REPLAY_LIMIT_SECONDS = 16;
 const MOVE_TIME_MAX_DELTA_SECONDS = Math.fround(0.01666666753590107);
-const EMPTY_MANUAL_FRAME: ManualInputFrame = Object.freeze({ touches: Object.freeze([]) });
 
 export function createPortableReplaySimulatorEngine(
   initialEngine: SimulatorEngine,
@@ -345,9 +350,6 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       replaySeconds = event.timelineSecondsAfter;
     }
 
-    const freshModeSnapshot = fresh.snapshot();
-    if (freshModeSnapshot.status !== "ok") return this.rejectCandidate(fresh, freshModeSnapshot);
-    const isAutoPlay = freshModeSnapshot.value.managers.noteManager.calculatedData.isAutoPlay;
     const generated: ReplayEvent[] = [];
     while (replaySeconds < targetSeconds) {
       const delta = Math.fround(Math.min(targetSeconds - replaySeconds, MOVE_TIME_MAX_DELTA_SECONDS));
@@ -357,13 +359,12 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
           "MoveTime reconstruction requires positive Float32 progress and never jumps or clamps the clock.",
         ));
       }
-      const stepped = fresh.step(delta, isAutoPlay ? undefined : EMPTY_MANUAL_FRAME);
+      const stepped = stepForMoveTime(fresh, delta);
       if (stepped.status !== "ok") return this.rejectCandidate(fresh, stepped);
       replaySeconds = Math.fround(replaySeconds + delta);
       generated.push(Object.freeze({
-        kind: "step",
+        kind: "move-time-step",
         deltaTimeSeconds: delta,
-        inputFrame: isAutoPlay ? null : Object.freeze({ touches: Object.freeze([]) }),
         timelineSecondsAfter: replaySeconds,
       }));
       if (fresh.getNaturalCompletionClearStatus() !== null && replaySeconds < targetSeconds) {
@@ -625,6 +626,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       case "resume": return engine.resume();
       case "continue-live": return engine.continueLive();
       case "move-time-resume": return commitMoveTimeTimelineRevision(engine, event.timelineRevision, event.moveTimeCount);
+      case "move-time-step": return stepForMoveTime(engine, event.deltaTimeSeconds);
       case "complete-live": return engine.completeLiveAudio(event.clearStatus);
     }
   }

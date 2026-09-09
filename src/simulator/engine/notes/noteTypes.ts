@@ -82,7 +82,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     const adjustedPosition = autoRuntime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjustedPosition)) {
       return integrityFailure(
-        autoRuntime.value.isAutoPlay()
+        autoRuntime.value.shouldForcePerfect()
           ? "auto-live.non-finite-adjusted-position"
           : "manual.single-non-finite-adjusted-position",
         ["R02", "R04", "D05", "MJ02"],
@@ -93,7 +93,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
       this.missSecondCounterValue = Math.fround(0);
       return ok(undefined);
     }
-    if (autoRuntime.value.isAutoPlay()) {
+    if (autoRuntime.value.shouldForcePerfect()) {
       return this.forcePerfect();
     }
     this.missSecondCounterValue = Math.fround(
@@ -699,7 +699,7 @@ export class NoteLong extends NoteFrontBase {
       return ok(undefined);
     }
     const stateChange = this.changeState(NoteState.Wait);
-    if (!runtime.value.isAutoPlay()) {
+    if (!runtime.value.shouldForcePerfect()) {
       return stateChange;
     }
     if (stateChange.status !== "ok") {
@@ -714,6 +714,7 @@ export class NoteLong extends NoteFrontBase {
     });
     if (submitted.status === "ok") {
       this.autoLiveTraceValue.push({ kind: "long-head-perfect" });
+      return this.changeState(NoteState.Stop);
     }
     return submitted;
   }
@@ -730,7 +731,7 @@ export class NoteLong extends NoteFrontBase {
           )
         : autoRuntime;
     }
-    if (autoRuntime.value.isAutoPlay()) {
+    if (autoRuntime.value.shouldForcePerfect()) {
       return ok(undefined);
     }
     const runtime = this.manualRuntime;
@@ -783,7 +784,7 @@ export class NoteLong extends NoteFrontBase {
           )
         : autoRuntime;
     }
-    if (autoRuntime.value.isAutoPlay()) {
+    if (autoRuntime.value.shouldForcePerfect()) {
       return ok(undefined);
     }
     const runtime = this.manualRuntime;
@@ -839,7 +840,7 @@ export class NoteLong extends NoteFrontBase {
       );
     }
     this.autoLiveTraceValue.push({ kind: "long-after-update" });
-    if (!runtime.value.isAutoPlay() || after.judged) {
+    if (!runtime.value.shouldForcePerfect() || after.judged) {
       return ok(undefined);
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
@@ -1440,7 +1441,7 @@ export class NoteSlide extends NoteFrontBase {
     if (adjusted < noteInformation.absolutePos) {
       return ok(undefined);
     }
-    if (!runtime.value.isAutoPlay()) {
+    if (!runtime.value.shouldForcePerfect()) {
       return this.changeState(NoteState.Wait);
     }
     const changed = this.changeState(NoteState.Wait);
@@ -1456,6 +1457,8 @@ export class NoteSlide extends NoteFrontBase {
     });
     if (submitted.status === "ok") {
       this.autoLiveTraceValue.push({ kind: "slide-head-perfect" });
+      this.manualHeadJudgedValue = true;
+      return this.changeState(NoteState.Stop);
     }
     return submitted;
   }
@@ -1472,7 +1475,7 @@ export class NoteSlide extends NoteFrontBase {
           )
         : autoRuntime;
     }
-    if (autoRuntime.value.isAutoPlay()) {
+    if (autoRuntime.value.shouldForcePerfect()) {
       return ok(undefined);
     }
     const runtime = this.manualRuntime;
@@ -1528,7 +1531,7 @@ export class NoteSlide extends NoteFrontBase {
         "Slide StopState requires the activated parent-owned after graph.",
       );
     }
-    if (!runtime.value.isAutoPlay()) {
+    if (!runtime.value.shouldForcePerfect()) {
       return this.executeManualSlideCurrentTimeout();
     }
     const selected = this.afterNotesValue.find(
@@ -1550,8 +1553,8 @@ export class NoteSlide extends NoteFrontBase {
     }
     const submitted = runtime.value.submitJudgement({
       noteInformation: selected.source,
-      phase: "intermediate",
-      noteType: 8,
+      phase: selected.isTerminal ? "tail" : "intermediate",
+      noteType: selected.isTerminal ? selected.terminalJudgeNoteType! : 8,
       absolutePosition: selected.source.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     });
@@ -1566,7 +1569,7 @@ export class NoteSlide extends NoteFrontBase {
       kind: "slide-stop-perfect",
       afterIndex: selected.sourceIndex,
     });
-    return ok(undefined);
+    return selected.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
   }
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -1675,7 +1678,7 @@ export class NoteSlide extends NoteFrontBase {
         "Slide pending-node Force Perfect requires the parent-owned runtime graph.",
       );
     }
-    if (!runtime.value.isAutoPlay()) {
+    if (!runtime.value.shouldForcePerfect()) {
       return ok(undefined);
     }
     const current = this.afterNotesValue[this.currentAfterIndexValue];
@@ -1892,7 +1895,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     if (autoRuntime.status !== "ok") {
       return autoRuntime;
     }
-    if (autoRuntime.value.isAutoPlay()) {
+    if (autoRuntime.value.shouldForcePerfect()) {
       return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
     }
     const information = this.noteInformation;
@@ -2327,7 +2330,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     }
     this.flickTraceValue.push({ kind: "flick-begin" });
     this.flickTraceValue.push({ kind: "flick-synthetic-move", syntheticX: synthetic.value });
-    if (runtime.value.isAutoPlay()) {
+    if (runtime.value.shouldForcePerfect()) {
       const submitted = runtime.value.submitJudgement({
         noteInformation,
         phase: "head",

@@ -248,6 +248,7 @@ export class NoteManager {
       unavailableManualInputGeometry,
     private readonly renderProducer: RenderCommandProducer | null = null,
     private readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput | null = null,
+    private readonly isMoveTime: () => boolean = () => false,
   ) {}
 
   validateSetup(): SimulatorResult<void> {
@@ -436,7 +437,7 @@ export class NoteManager {
         });
         note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
         note.registerAutoLiveRuntime({
-          isAutoPlay: () => this.inGameCalculatedData.isAutoPlay,
+          shouldForcePerfect: () => this.inGameCalculatedData.isAutoPlay || this.isMoveTime(),
           getAdjustedMusicPosition: () => {
             const adjustedPosition = this.getAdjustedMusicPosition();
             this.observedAdjustedPositions.set(note, adjustedPosition);

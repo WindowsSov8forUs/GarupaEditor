@@ -74,6 +74,8 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 
 定位恢复前按原作清零当前Combo、清除singleGameOver、恢复Life=1000及默认1000/2000边界；启用的AP提示重新开始，历史判定计数不清零。HUD清除旧判定、连击和AddScore，重置Life动画；Record与HUD在同一事务中发布。练习重建历史保留这些恢复边界，连续定位不会丢失先前的重置。CS-V1仍按目标恢复分数与已消费计分单元。
 
+定位新生成的推进帧使用GameState 14：输入不分发，音符按`IsAutoPlay || GameState == MoveTime`选择强制Perfect，且不触发普通播放的自然结束迁移。会话Manual/Auto身份不改变。历史中的定位推进帧保留此语义，不能重放成空输入Manual帧；已发生的手动判定不重算。Garupa扩展沿用相同定位政策，跳过已消费节点并推进连接链游标。Long/Slide头部强制判定后进入Stop，Slide终端仍使用终端判定类型。原作依据为已交付`manual-input-runtime-contract-10-1-4/arm64`的Single/Long/Slide分支、Began和尾部处理；22个相关导出1,817条指令与锁定ELF字节一致，Single分支8组原指令执行结果与实际MoveState选择一致。此项验证不代表全功能算法闭合。
+
 依据：LR-E03–LR-E20、LR-R03–LR-R05、LR-C03；Reverse `baea2e8843245efbbd91611c0118bcf69314efa2` 的 `live-rehearsal-runtime-contract-10-1-4/move_time_boundary_correction.json` 及 `e7b3d8ac42e661bddc087d878b6f60f1b3a5d19e` 的 `move_time_resume_life.json`。后两项已核对9个原作指令窗口576字节；实际Record对照4组原作执行输出、20个恢复字段一致，分数/计数/历史最大值保留。HUD消费与事务路径源级核对、两级TypeScript及运行合同检查通过；未新增测试文件或运行应用。
 
 ## 帧级多域发布
