@@ -449,8 +449,8 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,
-          judgeSlide: (source, adjustedMusicPosition) =>
-            this.slideNoteManager.judge(source, adjustedMusicPosition),
+          judgeSlide: (source, adjustedMusicPosition, clampAtPerfectLine) =>
+            this.slideNoteManager.judge(source, adjustedMusicPosition, clampAtPerfectLine),
           geometry: this.manualInputGeometry,
           beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
@@ -608,6 +608,11 @@ export class NoteManager {
           );
         }
         const noteIndex = note.noteInformation?.index ?? -1;
+        if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
+          const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), true, true);
+          if (placed.status !== "ok") return placed;
+          note.commitBeganPlacement();
+        }
         const stateBefore = note.state;
         this.observedAdjustedPositions.delete(note);
         const updateResult = note.executeUpdate(substepDelta);
@@ -1012,6 +1017,7 @@ export class NoteManager {
     note: NoteBase,
     deltaTimeSeconds: number,
     repositionToGoal = false,
+    useGoalDepth = false,
   ): SimulatorResult<void> {
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return integrityFailure(
@@ -1035,6 +1041,9 @@ export class NoteManager {
       Object.freeze({
         ...current.motionState,
         deltaTime: deltaTime.value,
+        ...(useGoalDepth ? {
+          currentPositionZ: this.ordinaryNoteScene.goalPositions[note.noteInformation!.buttonType]!.z,
+        } : {}),
       }),
       this.ordinaryNoteScene,
       repositionToGoal,

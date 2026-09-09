@@ -930,6 +930,7 @@ export interface SlideNodeHideRequest {
 
 export class NoteSlide extends NoteFrontBase {
   private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
+  private beganPlacementPending = false;
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
   private currentAfterIndexValue = 0;
   private manualHeadJudgedValue = false;
@@ -956,6 +957,14 @@ export class NoteSlide extends NoteFrontBase {
 
   get pendingRenderHides(): ReadonlyMap<number, SlideNodeHideRequest> {
     return this.pendingSpriteHides;
+  }
+
+  get pendingBeganPlacement(): boolean {
+    return this.beganPlacementPending;
+  }
+
+  commitBeganPlacement(): void {
+    this.beganPlacementPending = false;
   }
 
   commitRenderHides(): void {
@@ -1098,11 +1107,10 @@ export class NoteSlide extends NoteFrontBase {
           )
         : runtime;
     }
-    const judgement = judgeManualNote(
-      0,
-      Math.fround(source.absolutePos),
+    const judgement = runtime.value.judgeSlide(
+      source,
       runtime.value.getAdjustedMusicPosition(),
-      runtime.value.getCurrentBpm(),
+      !this.manualHeadJudgedValue,
     );
     if (judgement.status !== "ok") {
       return judgement;
@@ -1114,13 +1122,15 @@ export class NoteSlide extends NoteFrontBase {
         familyData: judgement.value,
       }));
     }
+    const timing = judgement.value.result === NoteResultType.Perfect || judgement.value.correction <= 0
+      ? JudgeTiming.None : JudgeTiming.Fast;
     if (this.manualHeadJudgedValue) {
       const current = this.afterNotesValue[this.currentAfterIndexValue]!;
       // A flick tail binds on Began and judges on movement/release.
       const continuation = current.isTerminal && current.terminalJudgeNoteType !== 8
         ? ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)))
         : this.reserveManualSlideNode(
-            input, current, 8, judgement.value.result, judgement.value.timing,
+            input, current, 8, judgement.value.result, timing,
             false, input.currentPosition, Math.fround(0),
           );
       return continuation.status === "ok"
@@ -1132,7 +1142,7 @@ export class NoteSlide extends NoteFrontBase {
       phase: "head",
       noteType: 8,
       rawResult: judgement.value.result,
-      rawTiming: judgement.value.timing,
+      rawTiming: timing,
       absolutePosition: source.absolutePos,
     });
     return reserved.status === "ok"
@@ -1149,6 +1159,7 @@ export class NoteSlide extends NoteFrontBase {
     plan: ManualNoteBeganPlan,
   ): void {
     if (this.manualHeadJudgedValue) {
+      if (plan.judgementPlan === null) this.hideSlideNode(this.currentAfterIndexValue, false);
       this.commitManualSlideNode(input, plan);
       return;
     }
@@ -1156,6 +1167,7 @@ export class NoteSlide extends NoteFrontBase {
       throw new Error("Slide head commit lost its type8 reservation");
     }
     input.judgementTransaction.commit(plan.judgementPlan);
+    this.beganPlacementPending = true;
     this.manualHeadJudgedValue = true;
     this.manualTouchOriginValue = input.currentPosition;
     this.manualAfterMoveTimeValue = Math.fround(0);
@@ -1822,6 +1834,7 @@ export class NoteSlide extends NoteFrontBase {
 
   protected override onResetForDispose(): void {
     this.afterNotesValue = [];
+    this.beganPlacementPending = false;
     this.pendingSpriteHides.clear();
     this.currentAfterIndexValue = 0;
     this.manualHeadJudgedValue = false;
@@ -1854,6 +1867,7 @@ export class NoteSlide extends NoteFrontBase {
       after.resetForParentDeactivation();
     }
     this.afterNotesValue = [];
+    this.beganPlacementPending = false;
     this.pendingSpriteHides.clear();
     this.currentAfterIndexValue = 0;
     this.manualHeadJudgedValue = false;

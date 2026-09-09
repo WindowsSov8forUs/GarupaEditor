@@ -45,6 +45,7 @@ export interface ManualNoteRuntime {
   readonly judgeSlide: (
     source: NoteInformation,
     adjustedMusicPosition: number,
+    clampAtPerfectLine?: boolean,
   ) => SimulatorResult<import("../managers/slideNoteManager").SlideJudgeDecision>;
   readonly geometry: SimulatorManualInputGeometryBackend;
   readonly beginJudgementTransaction: () => ManualJudgementTransaction;

@@ -72,6 +72,7 @@ export class SlideNoteManager {
   judge(
     source: NoteInformation,
     adjustedMusicPosition: number,
+    clampAtPerfectLine = false,
   ): SimulatorResult<SlideJudgeDecision> {
     const geometry = this.geometry;
     if (
@@ -129,17 +130,27 @@ export class SlideNoteManager {
       if (leftIndex >= 0) results[leftIndex] = result;
       if (rightIndex < results.length) results[rightIndex] = result;
     }
-    const selectedIndex = copiedPositions.findIndex((value) => projected.value <= value);
-    const hasReachedPerfectLine = projected.value <= judgeGeometry.value.virtualPerfectLine;
-    if (selectedIndex < 0) {
-      return ok(Object.freeze({ result: -1, correction: 0, hasReachedPerfectLine }));
+    const position = clampAtPerfectLine
+      ? Math.max(projected.value, judgeGeometry.value.virtualPerfectLine)
+      : projected.value;
+    const hasReachedPerfectLine = position <= judgeGeometry.value.virtualPerfectLine;
+    const intervals = copiedPositions.flatMap((value, index) => results[index] === -1
+      ? [] : [{ position: value, result: results[index] as 1 | 2 | 3 | 4 }]).reverse();
+    for (let upper = 0; upper < intervals.length / 2; upper += 1) {
+      const lower = intervals.length - 1 - upper;
+      const selected = intervals[upper]!.position >= position && intervals[upper + 1]!.position < position
+        ? upper
+        : intervals[lower]!.position <= position && intervals[lower - 1]!.position > position
+          ? lower : null;
+      if (selected === null) continue;
+      const distance = Math.floor(intervals.length / 2) - selected;
+      return ok(Object.freeze({
+        result: intervals[selected]!.result,
+        correction: distance <= 0 ? distance - 1 : distance,
+        hasReachedPerfectLine,
+      }));
     }
-    const result = results[selectedIndex] as -1 | 1 | 2 | 3 | 4;
-    if (result === -1) {
-      return ok(Object.freeze({ result, correction: 0, hasReachedPerfectLine }));
-    }
-    const correction = overedIndex - selectedIndex - (selectedIndex >= overedIndex ? 1 : 0);
-    return ok(Object.freeze({ result, correction, hasReachedPerfectLine }));
+    return ok(Object.freeze({ result: -1, correction: 0, hasReachedPerfectLine }));
   }
 
   dispose(): void {
