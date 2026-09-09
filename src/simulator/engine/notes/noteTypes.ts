@@ -1964,8 +1964,10 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     _plan: ManualNoteContinuationPlan,
   ): void {}
 
-  protected override waitState(deltaTimeSeconds: number): SimulatorResult<void> {
-    const executeFrame = Math.fround(Math.fround(deltaTimeSeconds) * Math.fround(60));
+  protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") return runtime;
+    const executeFrame = runtime.value.getExecuteFrame();
     const nextFrameCounter = Math.fround(this.frameCounterValue + executeFrame);
     this.frameCounterValue = nextFrameCounter;
     return nextFrameCounter < Math.fround(7)
