@@ -225,6 +225,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (audioFault.status !== "ok") return audioFault;
     const movieFault = this.pollMovieFault();
     if (movieFault.status !== "ok") return movieFault;
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.pause();
+    }
     const manager = this.inGameManager.snapshot();
     if (manager.startupDirection?.playable === false) {
       return integrityFailure(
