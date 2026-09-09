@@ -2144,7 +2144,7 @@ export class RenderCommandProducer {
     poolIndex: number,
     ownerState: OrdinaryMultipleDirectionalLineOwnerState,
     materialDirection: "left" | "right",
-    activate: boolean,
+    phase: "initialize" | "show" | "hide",
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2162,6 +2162,21 @@ export class RenderCommandProducer {
         ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
         "MultipleDirectional back-line updates require a committed fixed-pool identity.",
       );
+    }
+    if (phase !== "show") {
+      const base = this.commandBase(this.substep);
+      const commands: RenderCommand[] = [];
+      if (phase === "initialize") {
+        commands.push({
+          ...base(0), kind: "bind-resource", renderObjectId, binding: "material",
+          logicalAssetId: materialDirection === "left"
+            ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+            : this.resources.multipleDirectionalLineRightLogicalAssetId!,
+          exactKey: null,
+        });
+      }
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      return this.preflight(commands);
     }
     const geometry = buildOrdinaryMultipleDirectionalLine(ownerState);
     if (geometry.status !== "ok") return geometry;
@@ -2185,18 +2200,6 @@ export class RenderCommandProducer {
       },
       maskObjectId: null,
     }];
-    if (activate) {
-      commands.push({
-        ...base(commands.length),
-        kind: "bind-resource",
-        renderObjectId,
-        binding: "material",
-        logicalAssetId: materialDirection === "left"
-          ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
-          : this.resources.multipleDirectionalLineRightLogicalAssetId!,
-        exactKey: null,
-      });
-    }
     commands.push({
       ...base(commands.length),
       kind: "set-line",
@@ -2206,9 +2209,7 @@ export class RenderCommandProducer {
       width: geometry.value.width,
       materialRole: "multiple-directional-line",
     });
-    if (activate) {
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
-    }
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
     return this.preflight(commands);
   }
 

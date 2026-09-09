@@ -142,6 +142,8 @@ interface ActiveMultipleDirectionalLine {
   readonly poolIndex: number;
   readonly targetA: NoteBase;
   readonly targetB: NoteBase;
+  readonly afterA: boolean;
+  readonly afterB: boolean;
   readonly materialDirection: "left" | "right";
 }
 
@@ -186,6 +188,7 @@ export class NoteManager {
     Array.from({ length: SYNC_LINE_POOL_LENGTH }, () => null);
   private suppressedOrdinarySyncLinePairCountValue = 0;
   private readonly pendingSyncTailNotes: NoteBase[] = [];
+  private readonly pendingDirectionalSyncTailNotes: NoteBase[] = [];
   private syncConnectionSequence = 0;
   private readonly activeMultipleDirectionalLines: Array<ActiveMultipleDirectionalLine | null> =
     Array.from({ length: MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH }, () => null);
@@ -843,6 +846,7 @@ export class NoteManager {
     this.activeBpmChangesValue.length = 0;
     this.activeOrdinarySyncLines.fill(null);
     this.pendingSyncTailNotes.length = 0;
+    this.pendingDirectionalSyncTailNotes.length = 0;
     this.syncConnectionSequence = 0;
     this.suppressedOrdinarySyncLinePairCountValue = 0;
     this.activeMultipleDirectionalLines.fill(null);
@@ -1167,8 +1171,10 @@ export class NoteManager {
   }
 
   private releaseOrdinarySyncLinesForNote(note: NoteBase): void {
-    const candidateIndex = this.pendingSyncTailNotes.indexOf(note);
-    if (candidateIndex >= 0) this.pendingSyncTailNotes.splice(candidateIndex, 1);
+    for (const candidates of [this.pendingSyncTailNotes, this.pendingDirectionalSyncTailNotes]) {
+      const candidateIndex = candidates.indexOf(note);
+      if (candidateIndex >= 0) candidates.splice(candidateIndex, 1);
+    }
     for (let index = 0; index < this.activeOrdinarySyncLines.length; index += 1) {
       const line = this.activeOrdinarySyncLines[index];
       if (line !== null && (line.targetA === note || line.targetB === note)) {
@@ -1307,7 +1313,7 @@ export class NoteManager {
     return ok(undefined);
   }
 
-  private isSameFrontTailDirectionalGroup(tail: NoteBase, front: NoteBase): boolean {
+  private isSameFrontTailDirectionalGroup(tail: NoteBase, front: NoteBase, maxRange = 2): boolean {
     const source = tail.noteInformation!;
     const target = front.noteInformation!;
     const after = source.afterNoteType;
@@ -1326,7 +1332,7 @@ export class NoteManager {
     const difference = directionalEndpointButton(source) - target.buttonType;
     const left = after === AfterNoteType.MultipleDirectionalFlickLeft ||
       after === AfterNoteType.SlideMultipleDirectionalFlickLeft;
-    return matches && (left ? difference > 0 && difference <= 2 : difference < 0 && difference >= -2);
+    return matches && (left ? difference > 0 && difference <= maxRange : difference < 0 && difference >= -maxRange);
   }
 
   private reconnectSyncTail(tail: NoteBase, front: NoteBase): SimulatorResult<void> {
@@ -1356,8 +1362,10 @@ export class NoteManager {
       if (connected.status !== "ok") return connected;
       this.pendingSyncTailNotes.splice(candidateIndex, 1);
     }
-    if ((this.ordinaryLongRenderStates.has(front) || this.ordinarySlideRenderStates.has(front)) &&
-      !this.pendingSyncTailNotes.includes(front)) this.pendingSyncTailNotes.push(front);
+    if (this.ordinaryLongRenderStates.has(front) || this.ordinarySlideRenderStates.has(front)) {
+      if (!this.pendingSyncTailNotes.includes(front)) this.pendingSyncTailNotes.push(front);
+      if (!this.pendingDirectionalSyncTailNotes.includes(front)) this.pendingDirectionalSyncTailNotes.push(front);
+    }
     return ok(candidate);
   }
 
@@ -1389,7 +1397,7 @@ export class NoteManager {
   }
 
   private connectOrdinarySyncLines(activatedNotes: readonly NoteBase[]): SimulatorResult<void> {
-    if (activatedNotes.length === 0 || this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) {
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) {
       return ok(undefined);
     }
     let previous: NoteBase | null = null;
@@ -1461,8 +1469,8 @@ export class NoteManager {
     readonly targetA: OrdinaryNoteMotionResult;
     readonly targetB: OrdinaryNoteMotionResult;
   }> {
-    const targetA = this.ordinaryRenderMotionStates.get(line.targetA);
-    const targetB = this.ordinaryRenderMotionStates.get(line.targetB);
+    const targetA = this.syncEndpointTransform(line.targetA, line.afterA);
+    const targetB = this.syncEndpointTransform(line.targetB, line.afterB);
     if (targetA === undefined || targetB === undefined) {
       return integrityFailure(
         "render.note.multiple-directional-line-target-state-unavailable",
@@ -1476,57 +1484,130 @@ export class NoteManager {
     }));
   }
 
-  private connectMultipleDirectionalLines(
-    activatedNotes: readonly NoteBase[],
+  private connectDirectionalEndpoints(
+    targetA: NoteBase, afterA: boolean, targetB: NoteBase, afterB: boolean,
   ): SimulatorResult<void> {
+    const poolIndex = this.activeMultipleDirectionalLines.findIndex((line) => line === null);
+    if (poolIndex < 0) {
+      return integrityFailure("render.note.multiple-directional-line-pool-exhausted",
+        ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+        "The recovered 60-slot MultipleDirectional back-line pool has no inactive object.");
+    }
+    const information = targetA.noteInformation!;
+    const gameType = afterA
+      ? information.slideNoteList[information.slideNoteList.length - 1]?.gameNoteType
+      : information.gameNoteType;
+    const left = gameType === undefined
+      ? information.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft ||
+        information.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft
+      : [10, 14, 16, 18, 20, 22].includes(gameType);
+    const line: ActiveMultipleDirectionalLine = Object.freeze({
+      poolIndex, targetA, targetB, afterA, afterB, materialDirection: left ? "left" : "right",
+    });
+    const ownerState = this.multipleDirectionalLineOwnerState(line);
+    if (ownerState.status !== "ok") return ownerState;
+    const prepared = this.renderProducer!.preflightOrdinaryMultipleDirectionalLine(
+      poolIndex, ownerState.value, line.materialDirection, "initialize");
+    if (prepared.status !== "ok") return prepared;
+    const committed = prepared.value.commit();
+    if (committed.status !== "ok") return committed;
+    this.activeMultipleDirectionalLines[poolIndex] = line;
+    return ok(undefined);
+  }
+
+  private connectMultipleDirectionalLines(activatedNotes: readonly NoteBase[]): SimulatorResult<void> {
     if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
-    let targetA: NoteBase | null = null;
-    for (const targetB of activatedNotes) {
-      const informationB = targetB.noteInformation;
-      if (informationB?.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
-        targetA = null;
-        continue;
+    let previous: NoteBase | null = null;
+    for (const current of activatedNotes) {
+      const information = current.noteInformation!;
+      if (information.isInvisible) continue;
+      if (information.gameNoteType >= GameNoteType.LongDirectionalFlickLeftAdd &&
+        information.gameNoteType <= GameNoteType.SlideBDirectionalFlickRightAdd) {
+        const candidateIndex = this.pendingDirectionalSyncTailNotes.findIndex((tail) =>
+          tail.noteInformation !== null &&
+          directionalEndpointPosition(tail.noteInformation) === information.absolutePos &&
+          this.isSameFrontTailDirectionalGroup(tail, current, 1));
+        const tail = this.pendingDirectionalSyncTailNotes[candidateIndex];
+        if (tail !== undefined) {
+          const connected = this.connectDirectionalEndpoints(tail, true, current, false);
+          if (connected.status !== "ok") return connected;
+          this.pendingDirectionalSyncTailNotes.splice(candidateIndex, 1);
+        }
       }
-      const informationA = targetA?.noteInformation;
-      if (
-        targetA === null ||
-        informationA === null ||
-        informationA === undefined ||
-        informationA.gameNoteType !== informationB.gameNoteType ||
-        Math.abs(informationA.buttonType - informationB.buttonType) !== 1
-      ) {
-        targetA = targetB;
-        continue;
+      if (previous !== null) {
+        const before = previous.noteInformation!;
+        const frontGroup = before.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
+          information.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
+          before.gameNoteType === information.gameNoteType &&
+          Math.abs(before.buttonType - information.buttonType) === 1;
+        const addLong = before.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
+          information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd;
+        const addSlide = (before.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+          before.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd) &&
+          (information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+            information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd);
+        if (frontGroup || ((addLong || addSlide) && isSameDirectionalGroup(before, information))) {
+          const connected = this.connectDirectionalEndpoints(current, false, previous, false);
+          if (connected.status !== "ok") return connected;
+        }
       }
-      const poolIndex = this.activeMultipleDirectionalLines.findIndex((line) => line === null);
-      if (poolIndex < 0) {
-        return integrityFailure(
-          "render.note.multiple-directional-line-pool-exhausted",
-          ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
-          "The recovered 60-slot MultipleDirectional back-line pool has no inactive object.",
-        );
+      previous = current;
+    }
+    return ok(undefined);
+  }
+
+  private directionalSyncExtremes(note: NoteBase, after: boolean): {
+    readonly left: { readonly note: NoteBase; readonly after: boolean };
+    readonly right: { readonly note: NoteBase; readonly after: boolean };
+  } {
+    const start = { note, after };
+    const fire = note.noteInformation!.fireNoteType;
+    // Front MultipleDirectionalFlick inherits the base GetFarLeft/Right self result.
+    if (!after && fire !== FrontNoteType.LongMultipleDirectionalFlickAdd &&
+      fire !== FrontNoteType.SlideAMultipleDirectionalFlickAdd &&
+      fire !== FrontNoteType.SlideBMultipleDirectionalFlickAdd) return { left: start, right: start };
+    const endpoints = [start];
+    for (let i = 0; i < endpoints.length; i += 1) {
+      const endpoint = endpoints[i]!;
+      for (const line of this.activeMultipleDirectionalLines) {
+        if (line === null) continue;
+        let other: { note: NoteBase; after: boolean };
+        if (line.targetA === endpoint.note && line.afterA === endpoint.after) {
+          other = { note: line.targetB, after: line.afterB };
+        } else if (line.targetB === endpoint.note && line.afterB === endpoint.after) {
+          other = { note: line.targetA, after: line.afterA };
+        } else continue;
+        if (!endpoints.some((item) => item.note === other.note && item.after === other.after)) endpoints.push(other);
       }
-      const line = Object.freeze({
-        poolIndex,
-        targetA,
-        targetB,
-        materialDirection: informationA.gameNoteType === GameNoteType.DirectionalFlickLeft
-          ? "left" as const
-          : "right" as const,
-      });
-      const ownerState = this.multipleDirectionalLineOwnerState(line);
-      if (ownerState.status !== "ok") return ownerState;
-      const prepared = this.renderProducer.preflightOrdinaryMultipleDirectionalLine(
-        poolIndex,
-        ownerState.value,
-        line.materialDirection,
-        true,
-      );
-      if (prepared.status !== "ok") return prepared;
-      const committed = prepared.value.commit();
-      if (committed.status !== "ok") return committed;
-      this.activeMultipleDirectionalLines[poolIndex] = line;
-      targetA = targetB;
+    }
+    const button = (endpoint: typeof start) => endpoint.after
+      ? directionalEndpointButton(endpoint.note.noteInformation!) : endpoint.note.noteInformation!.buttonType;
+    let left = start, right = start;
+    for (const endpoint of endpoints) {
+      if (button(endpoint) < button(left)) left = endpoint;
+      if (button(endpoint) > button(right)) right = endpoint;
+    }
+    return { left, right };
+  }
+
+  private reconnectDirectionalSyncLines(batchPosition: number): SimulatorResult<void> {
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
+    for (const line of this.activeOrdinarySyncLines) {
+      if (line === null) continue;
+      const informationA = line.targetA.noteInformation!;
+      const informationB = line.targetB.noteInformation!;
+      const position = line.afterA ? directionalEndpointPosition(informationA) : informationA.absolutePos;
+      if (position !== batchPosition) continue;
+      const a = this.directionalSyncExtremes(line.targetA, line.afterA);
+      const b = this.directionalSyncExtremes(line.targetB, line.afterB);
+      const buttonA = line.afterA ? directionalEndpointButton(informationA) : informationA.buttonType;
+      const buttonB = line.afterB ? directionalEndpointButton(informationB) : informationB.buttonType;
+      const selectedA = buttonA > buttonB ? a.left : a.right;
+      const selectedB = buttonA > buttonB ? b.right : b.left;
+      const owner = b.right.after ? selectedB : selectedA;
+      const other = b.right.after ? selectedA : selectedB;
+      const connected = this.connectSyncEndpoints(owner.note, owner.after, other.note, other.after, line);
+      if (connected.status !== "ok") return connected;
     }
     return ok(undefined);
   }
@@ -1541,7 +1622,7 @@ export class NoteManager {
         line.poolIndex,
         ownerState.value,
         line.materialDirection,
-        false,
+        this.syncEndpointMoving(line.targetA, line.afterA) && this.syncEndpointMoving(line.targetB, line.afterB) ? "show" : "hide",
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.commit();
@@ -1665,6 +1746,11 @@ export class NoteManager {
       this.connectMultipleDirectionalLines(activatedRenderedNotes);
     if (multipleDirectionalLineActivation.status !== "ok") {
       return multipleDirectionalLineActivation;
+    }
+    const firstInformation = batch.informationList[0];
+    if (firstInformation !== undefined) {
+      const reconnected = this.reconnectDirectionalSyncLines(firstInformation.absolutePos);
+      if (reconnected.status !== "ok") return reconnected;
     }
     this.nextBatchIndexValue += 1;
     return ok(undefined);
