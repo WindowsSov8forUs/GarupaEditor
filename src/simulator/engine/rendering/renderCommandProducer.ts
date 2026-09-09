@@ -1584,6 +1584,7 @@ export class RenderCommandProducer {
     scene: OrdinaryFixedNoteSceneInput,
     noteColor: boolean,
     substep: number,
+    bpmAtNotePosition: (position: number) => SimulatorResult<RenderFloat32>,
   ): SimulatorResult<PreparedOrdinaryNoteActivation> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -1812,10 +1813,12 @@ export class RenderCommandProducer {
           "Long activation requires committed after and mesh pool identities.",
         );
       }
+      const afterBpm = bpmAtNotePosition(information.afterNoteAbsolutePos);
+      if (afterBpm.status !== "ok") return afterBpm;
       const createdChild = createOrdinaryLongNormalChildState(
         motionState,
         information.afterNoteAbsolutePos,
-        noteBpm,
+        afterBpm.value,
       );
       if (createdChild.status !== "ok") return createdChild;
       longChildState = createdChild.value;
@@ -1949,13 +1952,15 @@ export class RenderCommandProducer {
           buttonCount: childButtonCount,
           virtualLaneControllerPresent: source.virtualLaneDirection !== 0,
         });
+        const childBpm = bpmAtNotePosition(source.absolutePos);
+        if (childBpm.status !== "ok") return childBpm;
         const created = createOrdinarySlideChildState(
           index,
           childButtonCount,
           !source.isInvisible,
           childMotionState,
           source.absolutePos,
-          noteBpm,
+          childBpm.value,
         );
         if (created.status !== "ok") return created;
         states.push(created.value);

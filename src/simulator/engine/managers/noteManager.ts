@@ -1563,7 +1563,7 @@ export class NoteManager {
           );
         }
         const noteBpm = createRenderFloat32(Math.fround(
-          this.musicScoreController.currentBpm,
+          this.musicScoreController.nextBpm,
         ));
         if (noteBpm.status !== "ok") return noteBpm;
         const launcherMusicPosition = createRenderFloat32(Math.fround(
@@ -1578,6 +1578,9 @@ export class NoteManager {
           this.ordinaryNoteScene,
           this.inGameCalculatedData.noteColor,
           substepIndex,
+          (position) => createRenderFloat32(
+            this.musicScoreController.getBpmAtNotePosition(position),
+          ),
         );
         if (prepared.status !== "ok") return prepared;
         renderActivation = prepared.value.transaction;

@@ -242,6 +242,14 @@ export class InGameMusicScoreController {
     return this.currentBpmValue;
   }
 
+  get nextBpm(): number {
+    return this.nextBpmValue;
+  }
+
+  getBpmAtNotePosition(position: number): number {
+    return this.bpmAtPosition(position, false);
+  }
+
   get currentBar(): number {
     return this.musicBarProgressValue;
   }
@@ -286,11 +294,16 @@ export class InGameMusicScoreController {
 
   private bpmAtPosition(position: number, recordQuery = true): number {
     let bpm = this.basicBpmValue;
+    let latestPosition = 0;
     for (const command of this.tempoCommands) {
-      if (command.absolutePos > position) {
+      if (command.absolutePos === position) {
+        bpm = Math.fround(command.bpm);
         break;
       }
-      bpm = Math.fround(command.bpm);
+      if (command.absolutePos < position && command.absolutePos > latestPosition) {
+        latestPosition = command.absolutePos;
+        bpm = Math.fround(command.bpm);
+      }
     }
     if (recordQuery) {
       this.tempoQueryTraceValue.push({
