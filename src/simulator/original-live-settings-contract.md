@@ -51,6 +51,7 @@ Primary A is an audio/gameplay phase owner, not a chart offset:
 - `A = 0`: music starts without an intentional phase delay;
 - `A < 0`: music starts first, then `slowCounter` blocks gameplay time, input, Note, judgement, Score/Life and gameplay particles for exactly `abs(A)` outer updates;
 - Pause freezes the counters; Retry creates a fresh owner; MoveTime reconstruction explicitly bypasses the startup adjustment with zero counters;
+- The negative-A gate also precedes input preparation/consumption and the host Rehearsal clock/history. Frozen updates consume neither gameplay time nor replay events, and MoveTime controls remain inactive until the gate finishes. This follows `InGameManager.updatePlayState` at `0x32F8DAC..0x32F8DE0`, whose slow-counter return precedes `updateInGameSec` and `InputManager.ExecInput`; it prevents the wrapper from replaying startup-only delay as gameplay after a seek.
 - MV signed-delay routing and the Primary owner share the same startup edge. Negative MV delay continues from PlayingSound independently while negative A may still block gameplay.
 
 Secondary B remains the independent `-5..5` axis used by the existing music-position, manual geometry, Auto and Slide consumers. Neither axis rewrites authored positions, BPM/SV, visibility windows or judgement constants.

@@ -216,6 +216,13 @@ export class InGameManager {
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
+    if (this.currentGameStateValue !== GameState.PauseSound) {
+      const movieUpdate = this.advanceMovie(deltaTimeSeconds);
+      if (movieUpdate.status !== "ok") return movieUpdate;
+      const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
+      if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
+      if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
+    }
     const inputResult = this.inputManager.execInput(this.currentGameStateValue);
     if (inputResult.status !== "ok") {
       return inputResult;
@@ -223,11 +230,6 @@ export class InGameManager {
     if (this.currentGameStateValue === GameState.PauseSound) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
-    const movieUpdate = this.advanceMovie(deltaTimeSeconds);
-    if (movieUpdate.status !== "ok") return movieUpdate;
-    const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
-    if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
-    if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
     const audioFrame = this.audioProducer?.beginOuterFrame() ?? ok(undefined);
     if (audioFrame.status !== "ok") return this.latchFault(audioFrame);
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);

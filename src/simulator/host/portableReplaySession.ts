@@ -188,7 +188,8 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (available !== null) return available;
     const before = this.active.snapshot();
     if (before.status !== "ok") return before;
-    if (!before.value.managers.playable) {
+    if (!before.value.managers.playable ||
+      before.value.managers.primaryJudgementAdjustment?.gameplayBlocked === true) {
       return this.active.step(deltaTimeSeconds, inputFrame);
     }
     const prepared = this.controlMode.sessionMode === "rehearsal"
@@ -290,7 +291,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         "MoveTime is unavailable in Live regardless of Manual or Auto input identity.",
       );
     }
-    if (!currentSnapshot.value.managers.playable || currentSnapshot.value.managers.paused || this.active.getNaturalCompletionClearStatus() !== null) {
+    if (!currentSnapshot.value.managers.playable || currentSnapshot.value.managers.paused ||
+      currentSnapshot.value.managers.primaryJudgementAdjustment?.gameplayBlocked === true ||
+      this.active.getNaturalCompletionClearStatus() !== null) {
       return rejected(
         "timeline.movetime.outside-playing-state",
         "MoveTime accepts a touch-began intent only in an active playable Rehearsal PlayingSound state.",
@@ -416,7 +419,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return ok(Object.freeze({
       mode: this.controlMode,
       timelineSeconds: this.timelineSecondsValue,
-      playable: snapshot.value.managers.playable && this.active.getNaturalCompletionClearStatus() === null,
+      playable: snapshot.value.managers.playable &&
+        snapshot.value.managers.primaryJudgementAdjustment?.gameplayBlocked !== true &&
+        this.active.getNaturalCompletionClearStatus() === null,
       hudAlpha: snapshot.value.managers.startupDirection?.scene.hudAlpha ??
         (snapshot.value.managers.playable ? Math.fround(1) : Math.fround(0)),
       paused: snapshot.value.managers.paused,

@@ -166,6 +166,10 @@ class SimulatorEngineHost implements SimulatorEngine {
       }
       return this.inGameDirector.update(deltaTimeSeconds);
     }
+    if (beforeUpdate.primaryJudgementAdjustment?.gameplayBlocked === true) {
+      // Original slow-counter branch returns before time/input/Note updates.
+      return this.inGameDirector.update(deltaTimeSeconds);
+    }
     const productInput = this.productTimeline?.prepareManualFrame(
       inputFrame,
       deltaTimeSeconds,
