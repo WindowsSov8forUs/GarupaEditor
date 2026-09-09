@@ -22,8 +22,6 @@ jobs:
         with:
           fetch-depth: 1
           lfs: true
-      - name: Test host-path classifier
-        run: python scripts/verify_host_path_policy.py --self-test
       - name: Scan current Git tree
         run: python scripts/verify_host_path_policy.py --tree --report "$RUNNER_TEMP/host-path-tree.json"
 

@@ -2,7 +2,7 @@
 
 `src/simulator` is an autonomous, source-neutral rhythm-game module. Original behavior claims are limited to verified, committed and pushed Reverse evidence for `jp.co.craftegg.band` 10.1.4 (version code 230, ARM64). GarupaEditor extensions are identified by stable product semantics and are never presented as original-game facts.
 
-The current test-fixture baseline remains `343c09cc06ee97f3f2532518eff6192913de2b19`; later native-equivalence evidence is consumed through source-bound production profiles rather than copied into fixtures. Production code never reads Reverse, `tmp/` or `testing/fixtures`.
+Native-equivalence evidence is consumed through source-bound production profiles. Production code never reads Reverse or `tmp/`.
 
 ## Public boundary
 
@@ -36,8 +36,7 @@ src/simulator/
 ├─ host/        # engine host and whole-engine replay
 ├─ engine/      # chart, state, judgement, notes and command producers
 ├─ backends/    # Recording, Pixi, WebAudio, movie and particle adapters
-├─ resources/   # source-blind leased package views and decoders
-└─ testing/     # capability suites, independent expected values and fixtures
+└─ resources/   # source-blind leased package views and decoders
 ```
 
 `engine/` does not depend on React, Pixi, Tauri, DOM, editor chart types or window protocols. Simulator production does not import the application resource manager. The app adapter creates one immutable Snapshot/Lease and exposes only the neutral capability in `platform/resourceContracts.ts`.
@@ -76,28 +75,18 @@ Original natural Auto clear status is `1`. GarupaEditor Live Auto AP presentatio
 
 Particle semantics are source-bound to application snapshot revisions and independent receipt digests. A single immutable prepared token contains ordinary, directional and Game-clear bundles; simulation and Pixi share it. Runtime state is per concrete `(owner generation, ParticleSystem component)`, parent transforms are stored root→immediate and consumed self→immediate→root, and current no-Shape/type-5 direction is `+Z [0,0,1]`.
 
-The historical particle fixture with local `+Y` remains `historical-superseded`; it is not deleted or rewritten. GPU/driver raster and actual framebuffer remain independent gates and cannot be inferred from command count, object count or a stable digest.
+Historical particle evidence with local `+Y` remains `historical-superseded` in Reverse. GPU/driver raster and actual framebuffer remain independent gates and cannot be inferred from command count, object count or a stable digest.
 
 The B.B.K single-width regression is product semantics `simulator.bbkk-single-width-ordinary-particle-visible-regression-v1`. It requires complete Pixi particle publication, bilateral fine and large visible features, and additive composition that never decreases opaque-backdrop RGB. It does not transfer component thresholds, random tuples or single-root attribution from a different original capture.
 
 ## Evidence and authority
 
 - Reverse is the only authority for original fields, thresholds, order, component graphs and state transitions.
-- Only verified, committed, pushed evidence is consumed. Fixture provenance is recorded in `testing/fixtures/manifest.json`.
-- Independent expected code under `testing/expected/independent` cannot import production implementation.
-- Product-derived snapshots live under `testing/product-samples` and explicitly declare `derivedWithProductionCode: true` and `originalBehaviorAuthority: false`.
+- Only verified, committed, pushed Reverse evidence is consumed. Product-derived output is not an original-behavior authority.
 - Evidence gaps are internal notices. Reachable product behavior requires an explicit `productSemanticsId`; gaps are not launch failures or user-facing terminal states.
 
 See [`evidence-workflow.md`](./evidence-workflow.md), [`../runtime-contract-policy.md`](../runtime-contract-policy.md), [`original-live-settings-contract.md`](./original-live-settings-contract.md), [`skin-settings-contract.md`](./skin-settings-contract.md), [`mv-live-contract.md`](./mv-live-contract.md) and [`garupa-extension-contract.md`](./garupa-extension-contract.md).
 
-## Stable verification commands
+## Verification
 
-```powershell
-npm.cmd run simulator:test             # development profile
-npm.cmd run simulator:test:portable    # complete portable profile
-npm.cmd run simulator:test:browser     # serial WebView2 profile
-npm.cmd run simulator:test:release     # portable + browser release profile
-npm.cmd run simulator:test:release:clean
-```
-
-The suite manifest is the single owner of every case/check. Each profile compiles the Simulator and TypeScript test tree once. WebView2 cases run serially, and the runner terminates only the exact process tree it spawned. Development success does not replace portable, browser, build, desktop or real-window release gates. See [`testing/README.md`](./testing/README.md).
+Project test suites, fixtures and runners have been removed. Algorithm changes use the source comparisons and minimal independent evidence checks defined in [the workflow](./evidence-workflow.md). TypeScript compilation checks integration; it does not establish algorithm equivalence.

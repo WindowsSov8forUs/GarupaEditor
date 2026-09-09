@@ -33,21 +33,15 @@ const files = tracked
   .sort((left, right) => normalized(left).localeCompare(normalized(right)));
 
 const productionEntries = [];
-const testMarkerCounts = Object.fromEntries(MARKERS.map(([kind]) => [kind, 0]));
 for (const file of files) {
   const rel = normalized(file);
   if (rel === "src/runtime-contract-audit.json") continue;
   const text = await readFile(file, "utf8");
   const lines = text.split(/\r?\n/);
-  const testOnly = /(?:^|\/)testing(?:\/|$)|\.test\.[^.]+$|(?:^|\/)tests?(?:\/|$)/.test(rel);
   for (let index = 0; index < lines.length; index += 1) {
     const source = lines[index];
     for (const [marker, token] of MARKERS) {
       if (!source.includes(token)) continue;
-      if (testOnly) {
-        testMarkerCounts[marker] += 1;
-        continue;
-      }
       productionEntries.push({
         file: rel,
         line: index + 1,
@@ -91,16 +85,15 @@ const markerCounts = Object.fromEntries(MARKERS.map(([kind]) => [kind, entries.f
 const audit = {
   schemaVersion: 1,
   policy: "src/runtime-contract-policy.md",
-  scope: "production TypeScript/JavaScript, Rust and Android host sources; tests summarized separately",
+  scope: "production TypeScript/JavaScript, Rust and Android host sources",
   status: entries.some((entry) => entry.disposition === "pending-classification")
     ? "inventory-pending-classification"
     : "classified",
-  classificationRule: "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault, or test-only-assertion before final acceptance.",
+  classificationRule: "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault before final acceptance.",
   summary: {
     productionEntryCount: entries.length,
     pendingClassificationCount: entries.filter((entry) => entry.disposition === "pending-classification").length,
     markerCounts,
-    testMarkerCounts,
   },
   entries,
 };
@@ -160,7 +153,7 @@ function classify(entry) {
       userReachability: unavailable ? "native action-level boundary" : "native integrity boundary",
       disposition: unavailable ? "action-unavailable" : "integrity-failure",
       productSemanticsId: null,
-      regression: "Cargo check plus native resource/path transaction test",
+      regression: "Cargo check and source review of native resource/path transactions",
     };
   }
   if (entry.marker === "terminal-close") return {
@@ -168,7 +161,7 @@ function classify(entry) {
     userReachability: "session-internal terminal boundary",
     disposition: "terminal-fault",
     productSemanticsId: null,
-    regression: "autonomousModule.test.ts cleanup and single-close assertions",
+    regression: "Source review of autonomous cleanup and single-close ownership",
   };
   if (entry.marker === "throw-error") return entry.file.startsWith("src/simulator/")
     ? {
@@ -176,7 +169,7 @@ function classify(entry) {
         userReachability: "caught internal exception boundary",
         disposition: "terminal-fault",
         productSemanticsId: null,
-        regression: "module targeted exception/atomic-cleanup test",
+        regression: "Source review of exception handling and atomic cleanup",
       }
     : {
         trigger: "invalid user file/action or recoverable application dependency failure",
@@ -194,7 +187,7 @@ function classify(entry) {
       userReachability: unavailable ? "action-level boundary" : "typed internal boundary",
       disposition: unavailable ? "action-unavailable" : "integrity-failure",
       productSemanticsId: null,
-      regression: unavailable ? "action remains on stable host test" : "module integrity/atomicity test",
+      regression: unavailable ? "Source review of stable host state on action failure" : "Source review of module integrity and atomicity",
     };
   }
   if (entry.marker === "integrity-failure-call" || entry.marker === "integrity-failure-string") return {
@@ -209,28 +202,28 @@ function classify(entry) {
     userReachability: "runtime-product-path",
     disposition: "continue-product",
     productSemanticsId: entry.productSemanticsId,
-    regression: "behavior-level product semantic test required",
+    regression: "Source comparison of registered product semantics",
   };
   if (entry.marker === "observational-gap-string") return {
     trigger: "capability summary construction",
     userReachability: "internal-observation-only",
     disposition: "continue-product",
     productSemanticsId: "GE-PS-CAPABILITY-OBSERVATION",
-    regression: "runtimeContractPolicy.test.ts",
+    regression: "Source review against runtime-contract-policy.md",
   };
   if (entry.marker === "evidence-required-string" && entry.file.includes("currentOrdinaryVisibleProfile")) return {
     trigger: "tracked internal HAB missing-animation disposition",
     userReachability: "internal-profile-description",
     disposition: "continue-product",
     productSemanticsId: "GE-PS-HAB-MISSING-ANIMATION-OMIT",
-    regression: "renderContracts.test.ts",
+    regression: "Source comparison of rendering contracts",
   };
   if (entry.marker === "evidence-required-string" && /audio(?:Contracts|Validation)|leasedAudioPreparation/.test(entry.file)) return {
     trigger: "fixed audio pool exhaustion descriptor",
     userReachability: "internal-profile-description",
     disposition: "integrity-failure",
     productSemanticsId: null,
-    regression: "audioContracts.test.ts",
+    regression: "Source comparison of audio contracts",
   };
   return {
     trigger: "pending call-site review",

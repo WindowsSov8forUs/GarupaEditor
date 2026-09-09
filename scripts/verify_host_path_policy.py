@@ -801,51 +801,6 @@ def scan_entries(
     }
 
 
-def self_test() -> None:
-    separator = chr(92)
-    drive_path = chr(88) + ":" + separator + "profile" + separator + "tool"
-    unc_path = separator * 2 + "server" + separator + "share" + separator + "item"
-    posix_path = "/" + "home" + "/" + "account" + "/tool"
-    mac_path = "/" + "Users" + "/" + "account" + "/tool"
-    wsl_path = "/" + "mnt" + "/" + "x" + "/tool"
-    file_uri = "file:" + "/" * 3 + chr(88) + ":/tool"
-    positives = [drive_path, unc_path, posix_path, mac_path, wsl_path, file_uri]
-    negatives = [
-        "https://example.invalid/schema.json",
-        "asset://portable/item",
-        "method-fixture://owner/method",
-        "/usr/bin/env",
-        "/data/local/tmp/agent",
-        "relative/path/to/tool",
-        "GBP_FRIDA_PYTHON",
-    ]
-    for value in positives:
-        if not scan_scalar_bytes(value.encode("utf-8"), "self-test"):
-            raise AssertionError("positive path classifier case was missed")
-    for value in negatives:
-        if scan_scalar_bytes(value.encode("utf-8"), "self-test"):
-            raise AssertionError("negative path classifier case was rejected")
-    if not all(is_local_path(value) for value in (".local", ".local/item", "./.local/item", "/.local/item")):
-        raise AssertionError("tracked .local classifier case was missed")
-    if any(is_local_path(value) for value in ("local/item", "nested/.local/item")):
-        raise AssertionError("non-root .local classifier case was rejected")
-    utf16 = drive_path.encode("utf-16le")
-    if not any(row["encoding"].startswith("utf-16") for row in scan_scalar_bytes(utf16, "self-test")):
-        raise AssertionError("UTF-16 path classifier case was missed")
-    binary_drive = b"\x00\xffprefix:" + (chr(88) + ":" + separator + "Users" + separator + "account" + separator + "tool").encode("ascii") + b"\x00suffix"
-    binary_rows = scan_scalar_bytes(binary_drive, "self-test-binary")
-    if not any(row["encoding"] == "raw-ascii" and row["category"] == "windows-drive" for row in binary_rows):
-        raise AssertionError("raw-ASCII binary path classifier case was missed")
-    binary_posix = b"\x00\xffprefix:" + ("/" + "Users" + "/" + "user" + "/cache/tool").encode("ascii") + b"\x00suffix"
-    if not any(row["encoding"] == "raw-ascii" and row["category"] == "posix-home" for row in scan_scalar_bytes(binary_posix, "self-test-binary")):
-        raise AssertionError("raw-ASCII binary POSIX path classifier case was missed")
-    compressed = gzip.compress(drive_path.encode("utf-8"), mtime=0)
-    rows, errors = scan_payload(compressed, source="self-test")
-    if errors or not any("!gzip" in str(row["source"]) for row in rows):
-        raise AssertionError("gzip expansion classifier case was missed")
-    print("host_path_policy_self_test=passed")
-
-
 def write_report(report: dict[str, object], path: Path | None) -> None:
     if path is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -869,7 +824,6 @@ def parse_args() -> argparse.Namespace:
     mode.add_argument("--tree", action="store_true", help="scan every path and blob in the current index")
     mode.add_argument("--staged", action="store_true", help="scan staged additions/modifications and any tracked .local path")
     mode.add_argument("--history", action="store_true", help="scan objects reachable from an explicit frozen ref ledger")
-    mode.add_argument("--self-test", action="store_true", help="run synthetic classifier and container tests")
     parser.add_argument("--refs-file", type=Path)
     parser.add_argument("--report", type=Path)
     return parser.parse_args()
@@ -877,10 +831,6 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if args.self_test:
-        self_test()
-        return 0
-    self_test()
     if args.history:
         if args.refs_file is None:
             raise SystemExit("--history requires --refs-file")

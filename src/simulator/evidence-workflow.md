@@ -72,7 +72,7 @@
 
 复用已有工具与报告。验证记录绑定原作提交/输入、产品源码及相关依赖、工具版本、结果和边界；相关依赖变化才重验对应部分，依赖不明时做针对性核查，不默认重跑全部。不开新框架，不反复复制完整资源树，不为覆盖计数制造新样本。
 
-本轮禁止新增、修改或生成产品测试、fixture、snapshot、harness，含ignored和临时文件；不运行应用或视觉验收。允许Reverse原始提取器、字节验证器及只消费native/serialized expected的独立审计，但同样受最小必要范围限制。改变限制须用户明确授权；已授予的具体例外按其范围执行。
+项目测试代码、专用fixture、snapshot、harness及运行入口已按用户要求删除；未经新的明确授权，不新增或恢复这些内容，含ignored和临时文件；不运行应用或视觉验收。允许Reverse原始提取器、字节验证器及只消费native/serialized expected的独立审计，但同样受最小必要范围限制。改变限制须用户明确授权；已授予的具体例外按其范围执行。
 
 未知语义按[运行失败政策](../runtime-contract-policy.md)处理，不用默认值、静默降级或无界clamp掩盖，也不因研究未完成或 `evidence-required` 拒绝合法动作。评分例外见[scoring-contract.md](scoring-contract.md)。
 
@@ -84,4 +84,4 @@
 4. 默认一个重型进程，无用户或适用规范要求不启动子代理。输出默认约100行/4KB以内；大文件只读所需字段，完整报告存文件。及时释放本任务不再使用的重型进程，不干预其他进程。
 5. 更新只报告新增事实、阻塞和下一步；交付报告说明实际修复、验证范围和剩余问题，不将工具维护计作算法修复。
 
-生产不读取Reverse、`tmp/`、`testing/`或未登记证据。维护工具使用显式参数或 `GARUPA_REVERSE_ROOT`，宿主绝对路径不写入tracked文件。保留唯一入口、Recipe13、transport3、资源所有权与既有能力合同。历史type-5 `+Y`和current native `+Z`的来源身份分别保留；Fixture manifest继续拥有快照身份，未获授权不改写快照、锁文件或无关模块。
+生产不读取Reverse、`tmp/`、`testing/`或未登记证据。维护工具使用显式参数或 `GARUPA_REVERSE_ROOT`，宿主绝对路径不写入tracked文件。保留唯一入口、Recipe13、transport3、资源所有权与既有能力合同。历史type-5 `+Y`和current native `+Z`的来源身份在Reverse分别保留；删除项目测试不改写原作证据、锁文件或无关模块。

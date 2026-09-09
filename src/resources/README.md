@@ -25,13 +25,8 @@ The full behavior contract is [`resource-management-contract.md`](./resource-man
 ```powershell
 npm.cmd run resources:builtin-manifest          # regenerate after an intentional src/assets change
 node scripts/build-builtin-resource-catalog.mjs --check
-npm.cmd run resources:test
-npm.cmd run chart:test
 npm.cmd run build
 cargo check --manifest-path src-tauri/Cargo.toml
-cargo test --manifest-path src-tauri/Cargo.toml resource_manager --lib --no-run
 ```
-
-`resources:test` runs the manifest `--check` gate, exact catalog/manifest set comparisons, dependency boundaries and TypeScript resource lifecycle tests. No application-only, Simulator or union count is hard-coded; the current values are derived from the owned sets.
 
 `npm run build` is complete only after `resources:verify-production-assets` hashes `dist/assets` and finds every source-manifest payload unchanged. A runtime integrity mismatch remains scoped to the affected action and never authorizes regeneration from transformed output.

@@ -7,8 +7,6 @@
     "dev": "vite",
     "build": "tsc && vite build && npm run resources:verify-production-assets",
     "preview": "vite preview",
-    "chart:test": "node src/chart/testing/runTests.mjs",
-    "resources:test": "node src/resources/testing/runTests.mjs",
     "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
     "resources:verify-production-assets": "node scripts/verify-builtin-production-assets.mjs",
     "repository:hygiene:check": "python scripts/verify_host_path_policy.py --tree",
@@ -23,15 +21,7 @@
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
     "ios:build": "tauri ios build",
-    "sprites:map": "node ./scripts/build-sprite-source-map.mjs",
-    "app:test": "node src/app/testing/run.mjs",
-    "test": "node scripts/run-project-tests.mjs --profile development",
-    "test:release": "node scripts/run-project-tests.mjs --profile release",
-    "simulator:test": "node src/simulator/testing/suite/run.mjs --profile development",
-    "simulator:test:portable": "node src/simulator/testing/suite/run.mjs --profile portable",
-    "simulator:test:browser": "node src/simulator/testing/suite/run.mjs --profile browser",
-    "simulator:test:release": "node src/simulator/testing/suite/run.mjs --profile release",
-    "simulator:test:release:clean": "node src/simulator/testing/suite/run.mjs --profile release --clean-browser-build"
+    "sprites:map": "node ./scripts/build-sprite-source-map.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",
