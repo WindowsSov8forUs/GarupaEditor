@@ -253,6 +253,8 @@ export class NoteNormal extends NoteSingleBase {
 }
 
 export class NoteLong extends NoteFrontBase {
+  flashAnimationRevision: number | null = null;
+  private flashRestartSequence = 0;
   private afterNoteValue: LongAfterRuntime | null = null;
   private longAfterMultipleGroupResolverValue: ((
     information: NoteInformation,
@@ -306,6 +308,8 @@ export class NoteLong extends NoteFrontBase {
       return activated;
     }
     this.afterNoteValue = nextAfterNote;
+    this.flashAnimationRevision = null;
+    this.flashRestartSequence = 0;
     this.longAfterMultipleGroupValue = multipleGroup.value;
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
@@ -392,6 +396,7 @@ export class NoteLong extends NoteFrontBase {
     if (changed.status !== "ok") {
       throw new Error("Long Began commit could not enter Stop state");
     }
+    this.flashAnimationRevision = ++this.flashRestartSequence;
   }
 
   override preflightManualTouchMoved(
@@ -699,6 +704,7 @@ export class NoteLong extends NoteFrontBase {
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
+      this.flashAnimationRevision = ++this.flashRestartSequence;
       return this.changeState(NoteState.Stop);
     }
     return submitted;
@@ -877,6 +883,7 @@ export class NoteLong extends NoteFrontBase {
   }
 
   protected override onDeactivated(): void {
+    this.flashAnimationRevision = null;
     this.afterNoteValue?.resetForParentDeactivation();
     this.afterNoteValue = null;
     this.longAfterMultipleGroupValue = null;
@@ -886,6 +893,7 @@ export class NoteLong extends NoteFrontBase {
   }
 
   protected override onResetForDispose(): void {
+    this.flashAnimationRevision = null;
     this.afterNoteValue = null;
     this.longAfterMultipleGroupValue = null;
     this.manualTouchOriginValue = null;
@@ -900,6 +908,8 @@ export interface SlideNodeHideRequest {
 }
 
 export class NoteSlide extends NoteFrontBase {
+  flashAnimationRevision: number | null = null;
+  private flashRestartSequence = 0;
   private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
   private beganPlacementPending = false;
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
@@ -958,6 +968,7 @@ export class NoteSlide extends NoteFrontBase {
 
   refreshAfterMoveTime(): void {
     if (!this.manualHeadJudgedValue) return;
+    this.flashAnimationRevision = null;
     this.hideSlideNode(-1, true);
     this.hideBeforeSlideNode(this.currentAfterIndexValue, true);
     this.skipManualInvisibleAfterNodes();
@@ -1048,6 +1059,8 @@ export class NoteSlide extends NoteFrontBase {
     if (activated.status !== "ok") {
       return activated;
     }
+    this.flashAnimationRevision = null;
+    this.flashRestartSequence = 0;
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
     this.manualHeadJudgedValue = false;
@@ -1124,6 +1137,7 @@ export class NoteSlide extends NoteFrontBase {
     if (this.manualHeadJudgedValue) {
       if (plan.judgementPlan === null) this.hideSlideNode(this.currentAfterIndexValue, false);
       this.commitManualSlideNode(input, plan);
+      if (this.state !== NoteState.Deactive) this.flashAnimationRevision = ++this.flashRestartSequence;
       return;
     }
     if (plan.judgementPlan === null) {
@@ -1138,6 +1152,7 @@ export class NoteSlide extends NoteFrontBase {
     if (changed.status !== "ok") {
       throw new Error("Slide head commit could not enter Stop state");
     }
+    this.flashAnimationRevision = ++this.flashRestartSequence;
   }
 
   override preflightManualTouchMoved(
@@ -1390,6 +1405,7 @@ export class NoteSlide extends NoteFrontBase {
       ? ok(Object.freeze({
           judgementPlan: reserved.value,
           familyData: Object.freeze({
+            stopFlash: rawResult === NoteResultType.Miss && !current.source.isInvisible,
             currentIndex: this.afterNotesValue.indexOf(current),
             markMultipleUsed,
             nextOrigin,
@@ -1404,6 +1420,7 @@ export class NoteSlide extends NoteFrontBase {
     plan: ManualNoteContinuationPlan,
   ): void {
     const data = plan.familyData as {
+      readonly stopFlash: boolean;
       readonly currentIndex: number;
       readonly markMultipleUsed: boolean;
       readonly nextOrigin: ManualInputPosition | null;
@@ -1426,6 +1443,7 @@ export class NoteSlide extends NoteFrontBase {
       }
     }
     input.judgementTransaction.commit(plan.judgementPlan);
+    if (data.stopFlash) this.flashAnimationRevision = null;
     while (this.currentAfterIndexValue < data.currentIndex) {
       this.afterNotesValue[this.currentAfterIndexValue]!.markJudged();
       this.currentAfterIndexValue += 1;
@@ -1485,6 +1503,7 @@ export class NoteSlide extends NoteFrontBase {
     });
     if (submitted.status === "ok") {
       this.manualHeadJudgedValue = true;
+      this.flashAnimationRevision = ++this.flashRestartSequence;
       return this.changeState(NoteState.Stop);
     }
     return submitted;
@@ -1670,6 +1689,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.hideSlideNode(-1, true);
     this.hideSlideNode(current.sourceIndex, true);
+    if (!current.source.isInvisible) this.flashAnimationRevision = null;
     this.currentAfterIndexValue = current.sourceIndex + 1;
     this.skipManualInvisibleAfterNodes();
     return current.isTerminal || this.currentAfterIndexValue >= this.afterNotesValue.length
@@ -1780,6 +1800,7 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   protected override onResetForDispose(): void {
+    this.flashAnimationRevision = null;
     this.afterNotesValue = [];
     this.beganPlacementPending = false;
     this.pendingSpriteHides.clear();
@@ -1809,6 +1830,7 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   protected override onDeactivated(): void {
+    this.flashAnimationRevision = null;
     for (const after of this.afterNotesValue) {
       after.resetForParentDeactivation();
     }

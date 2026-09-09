@@ -331,6 +331,7 @@ export class RenderCommandProducer {
   private readonly noteAnimationElapsedSeconds = new Map<string, {
     readonly role: NoteVisualAnimationRole;
     readonly elapsed: number;
+    readonly playbackRevision?: number | null;
   }>();
 
   constructor(
@@ -1785,9 +1786,12 @@ export class RenderCommandProducer {
         binding: "sprite", logicalAssetId: habahiroIcon.logicalAssetId,
         exactKey: habahiroIcon.exactKey,
       });
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: iconObjectId });
-      commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: iconObjectId,
+      commands.push({ ...base(commands.length),
+        kind: habahiroIcon.animationRole === "note-long-flash" ? "hide-object" : "activate-object",
+        renderObjectId: iconObjectId });
+      if (habahiroIcon.animationRole !== "note-long-flash") commands.push({
+        ...base(commands.length), kind: "play-animation",
+        renderObjectId: iconObjectId,
         animationRole: habahiroIcon.animationRole, restart: true,
       });
     }
@@ -2101,11 +2105,13 @@ export class RenderCommandProducer {
         this.noteAnimationElapsedSeconds.set(ordinaryFrontAnimation.ownerObjectId, Object.freeze({
           role: ordinaryFrontAnimation.animationRole,
           elapsed: 0,
+          playbackRevision: ordinaryFrontAnimation.animationRole === "note-long-flash" ? null : undefined,
         }));
       }
       if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
         habahiroIconRenderObjectId(poolObjectId),
-        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0 }),
+        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0,
+          playbackRevision: habahiroIcon.animationRole === "note-long-flash" ? null : undefined }),
       );
 
       if (longTail) {
@@ -2129,7 +2135,7 @@ export class RenderCommandProducer {
               source,
               slideChildRenderObjectId(poolObjectId, index),
               this.resources,
-              true,
+              false,
             );
         if (animation !== null) this.noteAnimationElapsedSeconds.set(
           animation.ownerObjectId,
@@ -2380,18 +2386,6 @@ export class RenderCommandProducer {
         }
       }
     }
-    const animatedAfterObjectId = ordinaryNoteIconRenderObjectId(afterObjectId);
-    const animation = this.noteAnimationElapsedSeconds.get(animatedAfterObjectId);
-    let nextAnimationElapsed: number | null = null;
-    if (animation !== undefined) {
-      nextAnimationElapsed = Math.fround(animation.elapsed + input.deltaTime.value);
-      const sample = createRenderFloat32(nextAnimationElapsed);
-      if (sample.status !== "ok") return sample;
-      commands.push({
-        ...base(commands.length), kind: "sample-animation", renderObjectId: animatedAfterObjectId,
-        animationRole: animation.role, elapsedSeconds: sample.value,
-      });
-    }
     if (mesh.value !== null) {
       commands.push({
         ...base(commands.length),
@@ -2406,13 +2400,7 @@ export class RenderCommandProducer {
     } else if (childState.renderedTransform.position.y.value > childState.motionState.goalPosition.y.value) {
       commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
     }
-    const transaction = this.preflight(commands, () => {
-      if (animation !== undefined && nextAnimationElapsed !== null) {
-        this.noteAnimationElapsedSeconds.set(animatedAfterObjectId, Object.freeze({
-          role: animation.role, elapsed: nextAnimationElapsed,
-        }));
-      }
-    });
+    const transaction = this.preflight(commands);
     return transaction.status === "ok"
       ? ok(Object.freeze({ childState: next.value, transaction: transaction.value }))
       : transaction;
@@ -2475,7 +2463,6 @@ export class RenderCommandProducer {
     if (zero.status !== "ok") return zero;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
-    const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
     if (stopControl.advanceMotion && stopControl.rootWaiting) {
       const renderObjectId = rootRenderObjectId(poolObjectId);
       const moved = advanced.value.frontTransform;
@@ -2493,7 +2480,8 @@ export class RenderCommandProducer {
       const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
       for (const renderObjectId of [objectId, ordinaryNoteIconRenderObjectId(objectId)]) {
         if (this.creationSequenceByObjectId.has(renderObjectId)) {
-          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId,
+            contentsOnly: renderObjectId === objectId ? true : undefined });
         }
       }
     }
@@ -2544,18 +2532,7 @@ export class RenderCommandProducer {
           }),
           maskObjectId: null,
         });
-        for (const animatedObjectId of [ordinaryNoteIconRenderObjectId(childObjectId)]) {
-          const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
-          if (animation === undefined) continue;
-          const elapsed = Math.fround(animation.elapsed + input.deltaTime.value);
-          const sample = createRenderFloat32(elapsed);
-          if (sample.status !== "ok") return sample;
-          commands.push({
-            ...base(commands.length), kind: "sample-animation", renderObjectId: animatedObjectId,
-            animationRole: animation.role, elapsedSeconds: sample.value,
-          });
-          animationUpdates.push(Object.freeze({ renderObjectId: animatedObjectId, role: animation.role, elapsed }));
-        }
+
       }
       commands.push({
         ...base(commands.length),
@@ -2568,12 +2545,7 @@ export class RenderCommandProducer {
         materialRole: "curve-note",
       });
     }
-    const transaction = this.preflight(commands, () => {
-      for (const update of animationUpdates) this.noteAnimationElapsedSeconds.set(
-        update.renderObjectId,
-        Object.freeze({ role: update.role, elapsed: update.elapsed }),
-      );
-    });
+    const transaction = this.preflight(commands);
     return transaction.status === "ok"
       ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates, transaction: transaction.value }))
       : transaction;
@@ -2678,33 +2650,58 @@ export class RenderCommandProducer {
       ordering: Object.freeze({ ...visualState.ordering, sourceZ: motion.value.position.z }),
       maskObjectId: null,
     }];
-    const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
-    const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
-    for (const animatedObjectId of [
-      ordinaryNoteIconRenderObjectId(renderObjectId),
-      ordinaryLongFlashRenderObjectId(renderObjectId),
-      iconObjectId,
-    ]) {
-      const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
-      if (animation === undefined) continue;
-      const elapsed = Math.fround(animation.elapsed + motionState.deltaTime.value);
-      const sample = createRenderFloat32(elapsed);
-      if (sample.status !== "ok") return sample;
-      commands.push({
-        ...base(commands.length), kind: "sample-animation", renderObjectId: animatedObjectId,
-        animationRole: animation.role, elapsedSeconds: sample.value,
-      });
-      animationUpdates.push(Object.freeze({ renderObjectId: animatedObjectId, role: animation.role, elapsed }));
-    }
-    const transaction = this.preflight(commands, () => {
-      for (const update of animationUpdates) this.noteAnimationElapsedSeconds.set(
-        update.renderObjectId,
-        Object.freeze({ role: update.role, elapsed: update.elapsed }),
-      );
-    });
+    const transaction = this.preflight(commands);
     return transaction.status === "ok"
       ? ok(Object.freeze({ motion: motion.value, transaction: transaction.value }))
       : transaction;
+  }
+
+  preflightNoteAnimationFrame(
+    deltaTimeSeconds: number,
+    flashes: readonly { readonly poolObjectId: string; readonly revision: number | null }[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const delta = createRenderFloat32(deltaTimeSeconds);
+    if (delta.status !== "ok") return delta;
+    if (deltaTimeSeconds < 0) return integrityFailure(
+      "render.note.negative-animation-delta", ["PR08", "PR09", "PR11"],
+      "Note animation advances once per outer frame with a non-negative elapsed time.",
+    );
+    const revisions = new Map<string, number | null>();
+    for (const flash of flashes) {
+      revisions.set(ordinaryLongFlashRenderObjectId(rootRenderObjectId(flash.poolObjectId)), flash.revision);
+      revisions.set(habahiroIconRenderObjectId(flash.poolObjectId), flash.revision);
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    const updates = new Map<string, { role: NoteVisualAnimationRole; elapsed: number; playbackRevision?: number | null }>();
+    for (const [renderObjectId, animation] of this.noteAnimationElapsedSeconds) {
+      const playbackRevision = animation.role === "note-long-flash"
+        ? revisions.get(renderObjectId) ?? null : undefined;
+      const restarted = playbackRevision !== animation.playbackRevision;
+      if (restarted) {
+        if (playbackRevision !== null) commands.push({ ...base(commands.length),
+          kind: "activate-object", renderObjectId });
+        commands.push({ ...base(commands.length),
+          kind: playbackRevision === null ? "stop-animation" : "play-animation",
+          renderObjectId, animationRole: animation.role, restart: playbackRevision !== null });
+        if (playbackRevision === null) commands.push({ ...base(commands.length),
+          kind: "hide-object", renderObjectId });
+      }
+      const elapsed = playbackRevision === null ? 0
+        : Math.fround((restarted ? 0 : animation.elapsed) + delta.value.value);
+      if (playbackRevision !== null) {
+        const sample = createRenderFloat32(elapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({ ...base(commands.length), kind: "sample-animation",
+          renderObjectId, animationRole: animation.role, elapsedSeconds: sample.value });
+      }
+      updates.set(renderObjectId, { role: animation.role, elapsed, playbackRevision });
+    }
+    return this.preflight(commands, () => {
+      for (const [renderObjectId, animation] of updates) this.noteAnimationElapsedSeconds.set(renderObjectId, animation);
+    });
   }
 
   preflightNoteDeactivation(
@@ -3126,10 +3123,10 @@ function appendOrdinaryAnimationStart(
   });
   commands.push({
     ...base(commands.length),
-    kind: "activate-object",
+    kind: binding.animationRole === "note-long-flash" ? "hide-object" : "activate-object",
     renderObjectId: binding.ownerObjectId,
   });
-  commands.push({
+  if (binding.animationRole !== "note-long-flash") commands.push({
     ...base(commands.length),
     kind: "play-animation",
     renderObjectId: binding.ownerObjectId,
@@ -3156,11 +3153,15 @@ function appendAnimationChildTeardown(
   base: RenderCommandBaseFactory,
   renderObjectId: string,
   creationSequenceByObjectId: ReadonlyMap<string, number>,
-  animations: ReadonlyMap<string, { readonly role: NoteVisualAnimationRole; readonly elapsed: number }>,
+  animations: ReadonlyMap<string, {
+    readonly role: NoteVisualAnimationRole;
+    readonly elapsed: number;
+    readonly playbackRevision?: number | null;
+  }>,
 ): void {
   if (!creationSequenceByObjectId.has(renderObjectId)) return;
   const animation = animations.get(renderObjectId);
-  if (animation !== undefined) commands.push({
+  if (animation !== undefined && animation.playbackRevision !== null) commands.push({
     ...base(commands.length),
     kind: "stop-animation",
     renderObjectId,

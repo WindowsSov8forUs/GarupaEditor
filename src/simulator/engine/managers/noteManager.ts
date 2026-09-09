@@ -650,6 +650,15 @@ export class NoteManager {
       }
     }
 
+    if (this.renderProducer !== null) {
+      const animation = this.renderProducer.preflightNoteAnimationFrame(frameDelta,
+        this.activeNotesValue.flatMap((note) => note instanceof NoteLong || note instanceof NoteSlide
+          ? [{ poolObjectId: note.poolObjectId, revision: note.flashAnimationRevision }]
+          : []));
+      if (animation.status !== "ok") return animation;
+      const committed = animation.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
     return ok(undefined);
   }
 

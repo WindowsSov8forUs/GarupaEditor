@@ -403,7 +403,12 @@ export type RenderCommand =
       readonly parentObjectId: string | null;
     })
   | (RenderObjectCommandBase & {
-      readonly kind: "activate-object" | "hide-object" | "deactivate-object" | "release-object";
+      readonly kind: "activate-object" | "deactivate-object" | "release-object";
+    })
+  | (RenderObjectCommandBase & {
+      readonly kind: "hide-object";
+      /** Hide the bound sprite while retaining independently visible children. */
+      readonly contentsOnly?: true;
     })
   | (RenderObjectCommandBase & {
       readonly kind: "bind-resource";

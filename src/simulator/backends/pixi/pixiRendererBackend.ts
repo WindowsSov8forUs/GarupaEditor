@@ -1333,8 +1333,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         }
         case "activate-object":
-        case "hide-object":
         case "deactivate-object":
+          break;
+        case "hide-object":
+          if (command.contentsOnly && shadow.get(command.renderObjectId)!.spriteBindingKey === null) {
+            return reject("render.pixi.sprite-hide-without-binding",
+              "Hiding sprite contents requires a bound sprite and preserves its child objects.");
+          }
           break;
         case "set-transform":
           if (
@@ -1512,8 +1517,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "activate-object":
         this.objects.get(command.renderObjectId)!.node.visible = true;
+        if (this.objects.get(command.renderObjectId)!.spriteContent !== null) {
+          this.objects.get(command.renderObjectId)!.spriteContent!.visible = true;
+        }
         return;
       case "hide-object":
+        if (command.contentsOnly) {
+          this.objects.get(command.renderObjectId)!.spriteContent!.visible = false;
+          return;
+        }
+        this.objects.get(command.renderObjectId)!.node.visible = false;
+        return;
       case "deactivate-object":
         this.objects.get(command.renderObjectId)!.node.visible = false;
         return;
