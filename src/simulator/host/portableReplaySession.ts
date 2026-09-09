@@ -92,6 +92,12 @@ type ReplayEvent =
   | { readonly kind: "resume"; readonly timelineSecondsAfter: number }
   | { readonly kind: "continue-live"; readonly timelineSecondsAfter: number }
   | {
+      readonly kind: "move-time-resume";
+      readonly timelineRevision: number;
+      readonly moveTimeCount: number;
+      readonly timelineSecondsAfter: number;
+    }
+  | {
       readonly kind: "complete-live";
       readonly clearStatus: 1 | 2 | 3;
       readonly timelineSecondsAfter: number;
@@ -381,7 +387,12 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.active = fresh;
     this.currentResolutions = replayResolutions;
     for (const [id, resolution] of replayResolutions) this.resolutionIds.set(resolution, id);
-    this.events = [...retained, ...generated];
+    this.events = [...retained, ...generated, Object.freeze({
+      kind: "move-time-resume" as const,
+      timelineRevision: nextRevision,
+      moveTimeCount: nextMoveCount,
+      timelineSecondsAfter: replaySeconds,
+    })];
     this.timelineSecondsValue = replaySeconds;
     this.timelineRevisionValue = nextRevision;
     this.moveTimeCountValue = nextMoveCount;
@@ -608,6 +619,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       case "pause": return engine.pause();
       case "resume": return engine.resume();
       case "continue-live": return engine.continueLive();
+      case "move-time-resume": return commitMoveTimeTimelineRevision(engine, event.timelineRevision, event.moveTimeCount);
       case "complete-live": return engine.completeLiveAudio(event.clearStatus);
     }
   }

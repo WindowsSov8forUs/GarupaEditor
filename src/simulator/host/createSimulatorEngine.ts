@@ -501,13 +501,36 @@ class SimulatorEngineHost implements SimulatorEngine {
     moveTimeCount: number,
   ): SimulatorResult<void> {
     const manager = this.inGameManager.scoreLifeStateManager;
-    return manager === null
-      ? integrityFailure(
-          "score-life.move-time-without-record-owner",
-          ["LR-R03", "LR-C04"],
-          "Rehearsal MoveTime publication requires the Score/Life/Record owner.",
-        )
-      : manager.commitMoveTimeTimelineRevision(timelineRevision, moveTimeCount);
+    if (manager === null) return integrityFailure(
+      "score-life.move-time-without-record-owner",
+      ["LR-R03", "LR-C04"],
+      "Rehearsal MoveTime publication requires the Score/Life/Record owner.",
+    );
+    const record = manager.preflightMoveTimeTimelineRevision(timelineRevision, moveTimeCount);
+    if (record.status !== "ok") return record;
+    const render = this.renderProducer?.preflightMoveTimeResume(record.value.record) ?? null;
+    if (render?.status === "integrity-failure") {
+      record.value.discard();
+      return render;
+    }
+    const participants: FrameMutationParticipant[] = [record.value];
+    if (render?.status === "ok") participants.push({
+      identity: "move-time-hud",
+      commitExternal: () => render.value.commitBackend(),
+      publishOwner: () => render.value.publishOwner(),
+      discard: () => render.value.discard(),
+    });
+    const plan = FrameMutationPlan.create(
+      participants,
+      render === null ? [] : ["move-time-hud"],
+      participants.map((entry) => entry.identity),
+    );
+    if (plan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return plan;
+    }
+    const committed = plan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
   enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {

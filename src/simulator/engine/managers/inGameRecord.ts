@@ -91,11 +91,16 @@ export class InGameRecord {
     if (timing === 2) this.slowCountValue = addInt32(this.slowCountValue, 1);
   }
 
-  commitMoveTimeCount(value: number): void {
+  resetAfterMoveTime(value: number, initialLife: number): void {
     if (!Number.isSafeInteger(value) || value < this.moveTimeCountValue) {
       throw new Error("InGameRecord MoveTime count must be monotonic safe integer");
     }
     this.moveTimeCountValue = value;
+    this.currentComboValue = 0;
+    this.singleGameOverValue = false;
+    this.currentLifeValue = initialLife;
+    // AP presentation restarts for the resumed segment; result totals remain.
+    this.allPerfectValue = true;
   }
 
   updateOneNoteMax(score: number): void {

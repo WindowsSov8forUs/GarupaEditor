@@ -681,6 +681,49 @@ export class RenderCommandProducer {
     });
   }
 
+  preflightMoveTimeResume(record: InGameRecordSnapshot): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const [renderObjectId, animationRole] of [
+      [HUD_OBJECTS.combo, "combo"],
+      [HUD_OBJECTS.comboAllPerfect, "combo"],
+      [HUD_OBJECTS.comboAllPerfect, "all-perfect"],
+      [HUD_OBJECTS.result, "result"],
+      [HUD_OBJECTS.life, "life-warning"],
+      [HUD_OBJECTS.life, "life-game-over"],
+    ] as const) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId, animationRole, restart: false,
+    });
+    for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result, ...HUD_OBJECTS.addScore]) {
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
+      hudRole: "combo", state: this.hud.combo.normalState(0),
+    });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+      hudRole: "combo", state: this.hud.combo.allPerfectState(0),
+    });
+    const life = this.hud.life.createState(record);
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: life,
+    });
+    return this.preflight(commands, () => {
+      this.hudAnimationElapsedSeconds.clear();
+      this.lifeAnimationElapsedSeconds.clear();
+      this.addScoreAnimations.clear();
+      this.resultAnimation = null;
+      this.lastCombo = 0;
+      this.lastAllPerfect = this.hud.combo.displayedAllPerfect(record.allPerfect);
+      this.lastLifeWarning = life.warning;
+      this.lastSingleGameOver = false;
+    });
+  }
+
   preflightGameClear(
     clearStatus: 1 | 2 | 3,
     tapLaneEffectStates: readonly TapLaneEffectRenderState[] = Object.freeze([]),

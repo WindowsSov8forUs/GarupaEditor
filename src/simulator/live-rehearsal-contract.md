@@ -68,11 +68,13 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 - 原作按钮固定-5/+5秒，touch-began触发，moved/ended为空。
 - 自动整数秒snapshot，不接收调用方checkpoint或任意目标。
 - 后退目标从不晚于目标且最多提前16秒的snapshot重建；LR-R03/LR-R05观察到`returnTime(5) -> advanceTime(16,true)`。
-- 前进观察为`advanceTime(5,false)`。
+- 前进观察为`advanceTime(5,false)`；目标为当前整数秒加5并限制在BGM时长的整数秒上限。若当前时钟已超过该整数边界，保留当前小数时刻，不倒退。
 - 重建复用Float32 ordinary pipeline、禁止外部输入，经过GameState 14/15/16，Stop Music后以`trunc(InGameSec*1000)`Load Music并恢复。
 - Note、Command、Record、chart-owned Skill appearance、render、particle和audio必须作为一个事务恢复；不允许clock-only seek。
 
-依据：LR-E03–LR-E20、LR-R03–LR-R05、LR-C03。
+定位恢复前按原作清零当前Combo、清除singleGameOver、恢复Life=1000及默认1000/2000边界；启用的AP提示重新开始，历史判定计数不清零。HUD清除旧判定、连击和AddScore，重置Life动画；Record与HUD在同一事务中发布。练习重建历史保留这些恢复边界，连续定位不会丢失先前的重置。CS-V1仍按目标恢复分数与已消费计分单元。
+
+依据：LR-E03–LR-E20、LR-R03–LR-R05、LR-C03；Reverse `baea2e8843245efbbd91611c0118bcf69314efa2` 的 `live-rehearsal-runtime-contract-10-1-4/move_time_boundary_correction.json` 及 `e7b3d8ac42e661bddc087d878b6f60f1b3a5d19e` 的 `move_time_resume_life.json`。后两项已核对9个原作指令窗口576字节；实际Record对照4组原作执行输出、20个恢复字段一致，分数/计数/历史最大值保留。HUD消费与事务路径源级核对、两级TypeScript及运行合同检查通过；未新增测试文件或运行应用。
 
 ## 帧级多域发布
 

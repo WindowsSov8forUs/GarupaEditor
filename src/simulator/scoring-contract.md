@@ -48,7 +48,7 @@ The constructed-chart adapter owns unit identity, phase, ordinal, quota, and `N`
 
 ## Rehearsal timeline revisions
 
-Normal play and Rehearsal forward MoveTime preserve the current timeline revision. Rehearsal backward MoveTime atomically commits a new revision restored at the target timeline: Score, Combo, Life, result counts, HUD and consumed scoring-unit identities all return together. Discarded-future units may then be consumed again only in the new revision. Score remains monotonic and units remain exactly-once within each revision.
+Normal play and Rehearsal forward MoveTime preserve the current timeline revision. Rehearsal backward MoveTime atomically commits a new revision with Score, result counts and consumed scoring-unit identities restored at the target. Both directions then apply the original resume resets for Combo, Life and AP presentation together with the HUD, as specified in [live-rehearsal-contract.md](live-rehearsal-contract.md#movetime). Discarded-future units may be consumed again only in the new revision. Score remains monotonic and units remain exactly-once within each revision; this product rule does not preserve pre-resume Combo or Life against the original reset.
 
 This is a narrow product reconciliation with original MoveTime record restoration (LR-R03/LR-C04). It does not claim original score-formula parity. The original Game Over score-decrease formula remains excluded; CS-V1 numeric Score never applies it.
 

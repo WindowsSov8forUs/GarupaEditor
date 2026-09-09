@@ -30,6 +30,7 @@ import {
 } from "../scoring/normalizedScoreRule";
 import { InGameRecord, type InGameRecordSnapshot } from "./inGameRecord";
 import { SinglePlayScoreGauge } from "./singlePlayScoreGauge";
+import type { FrameMutationParticipant } from "./frameMutationPlan";
 
 export interface ScoreLifeReflectEntry {
   readonly slot: number;
@@ -291,11 +292,11 @@ export class ScoreLifeStateManager {
     return ok(undefined);
   }
 
-  commitMoveTimeTimelineRevision(
+  preflightMoveTimeTimelineRevision(
     timelineRevision: number,
     moveTimeCount: number,
-  ): SimulatorResult<void> {
-    if (this.pendingReflect !== null || !Number.isSafeInteger(timelineRevision) ||
+  ): SimulatorResult<FrameMutationParticipant & { readonly record: InGameRecordSnapshot }> {
+    if (this.mode.sessionMode !== "rehearsal" || this.pendingReflect !== null || !Number.isSafeInteger(timelineRevision) ||
       timelineRevision < 0 || !Number.isSafeInteger(moveTimeCount) || moveTimeCount <= 0) {
       return integrityFailure(
         "score-life.invalid-move-time-revision",
@@ -303,8 +304,9 @@ export class ScoreLifeStateManager {
         "A reconstructed Rehearsal timeline commits one non-negative revision and positive MoveTime count only after all Score/Life replay owners are settled.",
       );
     }
+    const record = this.record.cloneForPreflight();
     try {
-      this.record.commitMoveTimeCount(moveTimeCount);
+      record.resetAfterMoveTime(moveTimeCount, this.profile.life.initialLife);
     } catch {
       return integrityFailure(
         "score-life.invalid-move-time-count",
@@ -312,9 +314,17 @@ export class ScoreLifeStateManager {
         "MoveTime count is monotonic across reconstructed timeline publications.",
       );
     }
-    this.timelineRevisionValue = timelineRevision;
-    this.traceValue.push(`move-time-revision:${timelineRevision}:${moveTimeCount}`);
-    return ok(undefined);
+    return ok(Object.freeze({
+      identity: "move-time-record",
+      record: record.snapshot(),
+      publishOwner: () => {
+        this.record.commitFromPreflight(record);
+        this.timelineRevisionValue = timelineRevision;
+        this.traceValue.push(`move-time-revision:${timelineRevision}:${moveTimeCount}`);
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    }));
   }
 
   continueLive(): SimulatorResult<void> {
