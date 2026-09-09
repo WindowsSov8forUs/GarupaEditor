@@ -5,6 +5,7 @@ import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 export interface SlideJudgeDecision {
   readonly result: -1 | 1 | 2 | 3 | 4;
   readonly correction: number;
+  readonly hasReachedPerfectLine: boolean;
 }
 
 export class SlideNoteManager {
@@ -129,15 +130,16 @@ export class SlideNoteManager {
       if (rightIndex < results.length) results[rightIndex] = result;
     }
     const selectedIndex = copiedPositions.findIndex((value) => projected.value <= value);
+    const hasReachedPerfectLine = projected.value <= judgeGeometry.value.virtualPerfectLine;
     if (selectedIndex < 0) {
-      return ok(Object.freeze({ result: -1, correction: 0 }));
+      return ok(Object.freeze({ result: -1, correction: 0, hasReachedPerfectLine }));
     }
     const result = results[selectedIndex] as -1 | 1 | 2 | 3 | 4;
     if (result === -1) {
-      return ok(Object.freeze({ result, correction: 0 }));
+      return ok(Object.freeze({ result, correction: 0, hasReachedPerfectLine }));
     }
     const correction = overedIndex - selectedIndex - (selectedIndex >= overedIndex ? 1 : 0);
-    return ok(Object.freeze({ result, correction }));
+    return ok(Object.freeze({ result, correction, hasReachedPerfectLine }));
   }
 
   dispose(): void {

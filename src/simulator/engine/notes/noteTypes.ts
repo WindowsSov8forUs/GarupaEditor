@@ -1117,7 +1117,7 @@ export class NoteSlide extends NoteFrontBase {
     if (this.manualHeadJudgedValue) {
       const current = this.afterNotesValue[this.currentAfterIndexValue]!;
       // A flick tail binds on Began and judges on movement/release.
-      const continuation = current.isTerminal && current.source.gameNoteType >= 8
+      const continuation = current.isTerminal && current.terminalJudgeNoteType !== 8
         ? ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)))
         : this.reserveManualSlideNode(
             input, current, 8, judgement.value.result, judgement.value.timing,
@@ -1185,7 +1185,7 @@ export class NoteSlide extends NoteFrontBase {
         : runtime;
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
-    if (!current.isTerminal || current.source.gameNoteType <= 7) {
+    if (!current.isTerminal || current.terminalJudgeNoteType === 8) {
       if (!current.source.isInvisible) {
         const inside = runtime.value.geometry.isInsideTargetButtons(
           input.currentPosition,
@@ -1226,12 +1226,7 @@ export class NoteSlide extends NoteFrontBase {
         "Slide terminal movement grace requires the host-owned outer-frame delta.",
       );
     }
-    const judgement = judgeManualNote(
-      0,
-      Math.fround(current.source.absolutePos),
-      adjusted,
-      runtime.value.getCurrentBpm(),
-    );
+    const judgement = runtime.value.judgeSlide(current.source, adjusted);
     if (judgement.status !== "ok") {
       return judgement;
     }
@@ -1247,7 +1242,7 @@ export class NoteSlide extends NoteFrontBase {
     const nextGrace = inside.value
       ? Math.fround(8)
       : Math.fround(this.manualAfterMoveTimeValue - input.deltaTimeSeconds);
-    const origin = judgement.value.result === NoteResultType.None
+    const origin = judgement.value.result === NoteResultType.None || !judgement.value.hasReachedPerfectLine
       ? input.currentPosition
       : this.manualTouchOriginValue;
     if (origin === null) {
@@ -1258,8 +1253,8 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     let movementSucceeded = false;
-    const gameNoteType = current.source.gameNoteType;
-    if (gameNoteType === 8) {
+    const afterNoteType = this.noteInformation!.afterNoteType;
+    if (afterNoteType === 8) {
       const rate = getManualScreenDistanceRate(runtime.value.geometry, {
         beganPosition: origin,
         currentPosition: input.currentPosition,
@@ -1270,7 +1265,7 @@ export class NoteSlide extends NoteFrontBase {
       }
       movementSucceeded = rate.value > float32FromBits(0x3d23d70a);
     } else {
-      const correctDirection = gameNoteType === 9 || gameNoteType === 11
+      const correctDirection = afterNoteType === 9 || afterNoteType === 11
         ? origin.x > input.currentPosition.x
         : origin.x < input.currentPosition.x;
       if (correctDirection) {
@@ -1283,7 +1278,7 @@ export class NoteSlide extends NoteFrontBase {
           return horizontalRate;
         }
         movementSucceeded = horizontalRate.value > float32FromBits(0x3c23d70a);
-        if (movementSucceeded && (gameNoteType === 11 || gameNoteType === 12)) {
+        if (movementSucceeded && (afterNoteType === 11 || afterNoteType === 12)) {
           if (group === null || group.isUsed) {
             return integrityFailure(
               "manual.slide-multiple-terminal-group-unavailable",
@@ -1310,17 +1305,18 @@ export class NoteSlide extends NoteFrontBase {
     if (
       !movementSucceeded ||
       judgement.value.result === NoteResultType.None ||
+      !judgement.value.hasReachedPerfectLine ||
       nextGrace <= Math.fround(0)
     ) {
       return ok(this.noManualSlideJudgementPlan(origin, nextGrace));
     }
-    const noteType = gameNoteType === 8 ? 8 : gameNoteType <= 10 ? 9 : 10;
+    const noteType = current.terminalJudgeNoteType!;
     return this.reserveManualSlideNode(
       input,
       current,
       noteType,
-      judgement.value.result as Exclude<typeof judgement.value.result, -1>,
-      judgement.value.timing,
+      runtime.value.getJudgementAdjustValueB() >= 1 ? NoteResultType.Perfect : judgement.value.result,
+      JudgeTiming.None,
       group !== null,
       origin,
       nextGrace,
@@ -1351,37 +1347,31 @@ export class NoteSlide extends NoteFrontBase {
           )
         : runtime;
     }
-    const judgement = judgeManualNote(
-      0,
-      Math.fround(current.source.absolutePos),
-      runtime.value.getAdjustedMusicPosition(),
-      runtime.value.getCurrentBpm(),
-    );
-    if (judgement.status !== "ok") {
-      return judgement;
-    }
-    const noteType = current.isTerminal
-      ? manualSlideFinalJudgeNoteType(root.afterNoteType)
-      : 8;
-    if (noteType === null) {
-      return integrityFailure(
-        "manual.slide-final-type-unrepresented",
-        ["D12", "MJ22"],
-        `Slide after type ${root.afterNoteType} has no confirmed final note type.`,
+    const noteType = current.isTerminal ? current.terminalJudgeNoteType! : 8;
+    let result: Exclude<NoteResultTypeValue, -1> = NoteResultType.Miss;
+    let timing: JudgeTimingValue = JudgeTiming.None;
+    if (current.isTerminal && noteType === 8) {
+      const inside = runtime.value.geometry.isInsideTargetButtons(
+        input.currentPosition,
+        current.source.buttonTypesArray,
       );
+      if (inside.status !== "ok") return inside;
+      if (inside.value) {
+        const decision = runtime.value.judgeSlide(
+          current.source,
+          runtime.value.getAdjustedMusicPosition(),
+        );
+        if (decision.status !== "ok") return decision;
+        result = decision.value.result === NoteResultType.None ? NoteResultType.Miss : decision.value.result;
+        timing = decision.value.result === NoteResultType.Perfect || decision.value.correction <= 0
+          ? JudgeTiming.None : JudgeTiming.Fast;
+      }
     }
+    // Flick movement already commits/deactivates a successful owner. An active
+    // flick tail on real Ended has isFlicked=false. Its incoming timing is None:
+    // the original bound Slide root clamps virtual Y to VirtualPerfectLine.
     return this.reserveManualSlideNode(
-      input,
-      current,
-      noteType,
-      !current.isTerminal || judgement.value.result === NoteResultType.None
-        ? NoteResultType.Miss
-        : judgement.value.result,
-      !current.isTerminal || judgement.value.result === NoteResultType.None
-        ? JudgeTiming.None : judgement.value.timing,
-      false,
-      null,
-      Math.fround(0),
+      input, current, noteType, result, timing, false, null, Math.fround(0),
     );
   }
 
@@ -2969,26 +2959,6 @@ function isManualTimeoutOver(
   return seconds.status === "ok"
     ? ok(seconds.value > float32FromBits(0x3e5dddde))
     : seconds;
-}
-
-function manualSlideFinalJudgeNoteType(
-  afterNoteType: AfterNoteTypeValue,
-): 5 | 6 | 7 | 8 | null {
-  switch (afterNoteType) {
-    case AfterNoteType.SlideAfter:
-    case AfterNoteType.SlideEnd:
-      return 5;
-    case AfterNoteType.SlideFlickEnd:
-      return 6;
-    case AfterNoteType.SlideDirectionalFlickEndLeft:
-    case AfterNoteType.SlideDirectionalFlickEndRight:
-      return 7;
-    case AfterNoteType.SlideMultipleDirectionalFlickLeft:
-    case AfterNoteType.SlideMultipleDirectionalFlickRight:
-      return 8;
-    default:
-      return null;
-  }
 }
 
 function manualLongAfterJudgeNoteType(

@@ -338,7 +338,7 @@ export class NoteManager {
             this.autoLiveJudgementSources.add(source);
             const terminal = slideIndex === noteInformation.slideNoteList.length - 1;
             const allowedNoteTypes = terminal
-              ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType, source.gameNoteType)
+              ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType)
               : [8];
             this.manualSlideSources.set(source, Object.freeze({
               phase: terminal ? "tail" : "intermediate",
@@ -1868,29 +1868,14 @@ function createDefaultPoolObject(
   }
 }
 
-function manualSlideTerminalNoteTypes(
-  afterNoteType: number,
-  gameNoteType: number,
-): readonly number[] {
-  const movementType = gameNoteType >= 4 && gameNoteType <= 8
-    ? 8
-    : gameNoteType === 9 || gameNoteType === 10
-    ? 9
-    : gameNoteType === 11 || gameNoteType === 12
-    ? 10
-    : 8;
-  const finalType = afterNoteType === AfterNoteType.SlideFlickEnd
-    ? 6
+function manualSlideTerminalNoteTypes(afterNoteType: number): readonly number[] {
+  const finalType = afterNoteType === AfterNoteType.SlideFlickEnd ? 5
     : afterNoteType === AfterNoteType.SlideDirectionalFlickEndLeft ||
-      afterNoteType === AfterNoteType.SlideDirectionalFlickEndRight
-    ? 7
+      afterNoteType === AfterNoteType.SlideDirectionalFlickEndRight ? 6
     : afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
-      afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight
-    ? 8
-    : 5;
-  return movementType === finalType
-    ? [movementType]
-    : [movementType, finalType];
+      afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight ? 7 : 8;
+  // Timeout/onMiss uses 8 independently of the successful terminal family.
+  return finalType === 8 ? [8] : [8, finalType];
 }
 
 function manualLongAfterNoteType(afterNoteType: number): 2 | 5 | 6 | 7 | null {
