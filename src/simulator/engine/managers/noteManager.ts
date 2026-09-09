@@ -796,6 +796,7 @@ export class NoteManager {
 
   selectManualCandidateBeforeJudgement(
     buttonType: ButtonTypeValue,
+    projectedFingerOwners?: ReadonlyMap<NoteBase, number>,
   ): SimulatorResult<NoteBase | null> {
     let ordinaryCandidate: NoteBase | null = null;
     let ordinaryDistance = Number.POSITIVE_INFINITY;
@@ -812,7 +813,7 @@ export class NoteManager {
           continue;
         }
         if (slideCandidate === null) {
-          slideCandidate = note;
+          if ((projectedFingerOwners?.get(note) ?? note.fingerId) < 0) slideCandidate = note;
         } else {
           const selected = this.selectNearestRenderedCandidate(slideCandidate, note);
           if (selected.status !== "ok") return selected;

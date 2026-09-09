@@ -511,6 +511,7 @@ export class GamePlayButton {
     }
     const selected = this.noteManager.selectManualCandidateBeforeJudgement(
       this.buttonType,
+      projectedFingerOwners,
     );
     if (selected.status !== "ok") {
       return selected;
