@@ -146,6 +146,7 @@ interface NotePool {
 }
 
 interface ManualSlideSourceOwnership {
+  readonly sourceIndex: number;
   readonly phase: "head" | "intermediate" | "tail";
   readonly allowedNoteTypes: readonly number[];
   readonly absolutePosition: number;
@@ -161,6 +162,7 @@ interface NotePoolAcquisition {
 interface OrdinaryRenderedNoteState {
   readonly motionState: OrdinaryNoteMotionState;
   readonly renderedTransform: OrdinaryNoteMotionResult;
+  readonly slideJudgeY?: number;
 }
 
 interface ActiveOrdinarySyncLine {
@@ -325,6 +327,7 @@ export class NoteManager {
         ) {
           const slideAfterGroup = this.slideAfterMultipleGroups.get(noteInformation);
           this.manualSlideSources.set(noteInformation, Object.freeze({
+            sourceIndex: -1,
             phase: "head",
             allowedNoteTypes: Object.freeze([8]),
             absolutePosition: noteInformation.absolutePos,
@@ -341,6 +344,7 @@ export class NoteManager {
               ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType)
               : [8];
             this.manualSlideSources.set(source, Object.freeze({
+              sourceIndex: slideIndex,
               phase: terminal ? "tail" : "intermediate",
               allowedNoteTypes: Object.freeze(allowedNoteTypes),
               absolutePosition: source.absolutePos,
@@ -457,8 +461,29 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,
-          judgeSlide: (source, adjustedMusicPosition, clampAtPerfectLine) =>
-            this.slideNoteManager.judge(source, adjustedMusicPosition, clampAtPerfectLine),
+          stopSlideHeadAtJudgeLine: () => {
+            const current = this.ordinaryRenderMotionStates.get(note);
+            if (current === undefined || note.noteInformation === null) {
+              return integrityFailure("manual.slide-head-motion-unavailable", ["D10", "MJ23"],
+                "Slide Move requires its committed head motion.");
+            }
+            const line = this.slideNoteManager.getVirtualPerfectLine(note.noteInformation);
+            if (line.status !== "ok") return line;
+            if (current.motionState.progressRate.value <= 1 || current.renderedTransform.position.y.value > line.value) {
+              return ok(false);
+            }
+            const snapped = this.advanceOrdinaryRenderMotion(note, 0, true);
+            return snapped.status === "ok" ? ok(true) : snapped;
+          },
+          judgeSlide: (source) => {
+            const index = this.manualSlideSources.get(source)?.sourceIndex;
+            const y = index === -1 ? this.ordinaryRenderMotionStates.get(note)?.slideJudgeY
+              : index === undefined ? undefined : this.ordinarySlideRenderStates.get(note)?.[index]?.judgeY;
+            return y === undefined
+              ? integrityFailure("manual.slide-judge-motion-unavailable", ["D10", "MJ20"],
+                  "Slide judgement requires the committed motion of its chart-owned node.")
+              : this.slideNoteManager.judge(source, y);
+          },
           geometry: this.manualInputGeometry,
           beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
@@ -775,7 +800,6 @@ export class NoteManager {
     let ordinaryCandidate: NoteBase | null = null;
     let ordinaryDistance = Number.POSITIVE_INFINITY;
     let slideCandidate: NoteSlide | null = null;
-    let slideDistance = Number.POSITIVE_INFINITY;
     const musicPosition = Math.fround(this.musicScoreController.musicPosition);
 
     for (const note of this.activeNotesValue) {
@@ -787,12 +811,12 @@ export class NoteManager {
         if (source === null) {
           continue;
         }
-        const distance = Math.fround(Math.abs(
-          Math.fround(source.absolutePos) - musicPosition,
-        ));
-        if (distance < slideDistance) {
+        if (slideCandidate === null) {
           slideCandidate = note;
-          slideDistance = distance;
+        } else {
+          const selected = this.selectNearestRenderedCandidate(slideCandidate, note);
+          if (selected.status !== "ok") return selected;
+          if (selected.value === "second") slideCandidate = note;
         }
         continue;
       }
@@ -818,24 +842,27 @@ export class NoteManager {
     if (slideCandidate === null) {
       return ok(ordinaryCandidate);
     }
-    const ordinarySource = ordinaryCandidate.noteInformation;
-    const slideSource = slideCandidate.manualCandidateSource;
-    if (ordinarySource === null || slideSource === null) {
-      return integrityFailure(
-        "manual.candidate-button-owner-unavailable",
-        ["D04", "D10", "MJ04"],
-        "Near-line arbitration requires both candidates' owner-derived current buttons.",
-      );
-    }
-    const near = this.slideNoteManager.selectNearJudgeLineSource(
-      ordinarySource,
-      slideSource,
-      this.getAdjustedMusicPosition(),
-    );
+    const near = this.selectNearestRenderedCandidate(ordinaryCandidate, slideCandidate);
     if (near.status !== "ok") {
       return near;
     }
     return ok(near.value === "first" ? ordinaryCandidate : slideCandidate);
+  }
+
+  private selectNearestRenderedCandidate(first: NoteBase, second: NoteBase): SimulatorResult<"first" | "second"> {
+    const localY = (note: NoteBase): number | undefined => {
+      const source = note instanceof NoteSlide ? note.manualCandidateSource : note.noteInformation;
+      const index = source === null ? undefined : this.manualSlideSources.get(source)?.sourceIndex;
+      return index !== undefined && index >= 0
+        ? this.ordinarySlideRenderStates.get(note)?.[index]?.lifecycle.renderedTransform.position.y.value
+        : this.ordinaryRenderMotionStates.get(note)?.renderedTransform.position.y.value;
+    };
+    const firstY = localY(first);
+    const secondY = localY(second);
+    return firstY === undefined || secondY === undefined
+      ? integrityFailure("manual.candidate-button-owner-unavailable", ["D04", "D10", "MJ04"],
+          "Near-line arbitration requires both candidates' committed local positions.")
+      : this.slideNoteManager.selectNearJudgeLineSource(firstY, secondY);
   }
 
   snapshot(): NoteManagerSnapshot {
@@ -1060,6 +1087,9 @@ export class NoteManager {
     const committed = prepared.value.transaction.commit();
     if (committed.status !== "ok") return committed;
     this.ordinaryRenderMotionStates.set(note, Object.freeze({
+      ...(note instanceof NoteSlide ? {
+        slideJudgeY: repositionToGoal ? current.slideJudgeY! : prepared.value.motion.position.y.value,
+      } : {}),
       motionState: Object.freeze({
         ...current.motionState,
         deltaTime: deltaTime.value,
@@ -1540,6 +1570,7 @@ export class NoteManager {
         renderedState = Object.freeze({
           motionState: prepared.value.motionState,
           renderedTransform: prepared.value.renderedTransform,
+          ...(noteResult.value.note instanceof NoteSlide ? { slideJudgeY: prepared.value.renderedTransform.position.y.value } : {}),
         });
         longChildState = prepared.value.longChildState;
         slideChildStates = prepared.value.slideChildStates;

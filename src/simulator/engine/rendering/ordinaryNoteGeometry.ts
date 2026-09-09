@@ -192,13 +192,6 @@ export function advanceOrdinaryNoteMotion(
   state: OrdinaryNoteMotionState,
 ): SimulatorResult<OrdinaryNoteMotionResult> {
   if (
-    !validateRenderFloat32(state.progressRate) ||
-    !validateRenderFloat32(state.deltaTime) ||
-    state.deltaTime.value < 0 ||
-    !validateRenderFloat32(state.realMoveSecond) ||
-    state.realMoveSecond.value < 0 ||
-    !validateVector2(state.goalPosition) ||
-    !validateVector2(state.noteStartPosition) ||
     !validateRenderFloat32(state.currentPositionZ) ||
     !validateRenderFloat32(state.noteParentScale) ||
     state.noteParentScale.value <= 0 ||
@@ -217,30 +210,15 @@ export function advanceOrdinaryNoteMotion(
       "Note Move requires complete current Float32 timing, scene positions, scale inputs and a 1..7 button count.",
     );
   }
-  const arrival = getOrdinaryNoteArrivalSeconds(state.specificSpeed);
-  if (arrival.status !== "ok") return arrival;
-  const progressValue = state.progressRate.value === 0
-    ? Math.fround(state.realMoveSecond.value / arrival.value.value)
-    : Math.fround(
-      state.progressRate.value + Math.fround(state.deltaTime.value / arrival.value.value),
-    );
-  const progress = createRenderFloat32(progressValue);
-  if (progress.status !== "ok") return progress;
-  const exponent = Math.fround(
-    Math.fround(progress.value.value - Math.fround(1)) * NOTE_POSITION_EXPONENT_SCALE,
-  );
-  const curve = Math.fround(Math.pow(NOTE_POSITION_BASE, exponent));
+  const vertical = advanceOrdinaryNoteVerticalMotion(state);
+  if (vertical.status !== "ok") return vertical;
+  const { curve, y, progressRate } = vertical.value;
   const x = Math.fround(
     state.noteStartPosition.x.value + Math.fround(
       curve * Math.fround(
         state.goalPosition.x.value - state.noteStartPosition.x.value,
       ),
     ),
-  );
-  const y = Math.fround(
-    state.noteStartPosition.y.value - Math.abs(Math.fround(
-      Math.fround(state.noteStartPosition.y.value - state.goalPosition.y.value) * curve,
-    )),
   );
   const position = vector3(
     x,
@@ -251,10 +229,34 @@ export function advanceOrdinaryNoteMotion(
   const scale = calculateOrdinaryNoteScaleAtY(state, y);
   if (scale.status !== "ok") return scale;
   return ok(Object.freeze({
-    progressRate: progress.value,
+    progressRate,
     position: position.value,
     localScale: scale.value,
   }));
+}
+
+export function advanceOrdinaryNoteVerticalMotion(
+  state: Pick<OrdinaryNoteMotionState, "specificSpeed" | "progressRate" | "deltaTime" |
+    "realMoveSecond" | "goalPosition" | "noteStartPosition">,
+): SimulatorResult<{ readonly progressRate: RenderFloat32; readonly curve: number; readonly y: number }> {
+  if (!validateRenderFloat32(state.progressRate) || !validateRenderFloat32(state.deltaTime) ||
+    state.deltaTime.value < 0 || !validateRenderFloat32(state.realMoveSecond) || state.realMoveSecond.value < 0 ||
+    !validateVector2(state.goalPosition) || !validateVector2(state.noteStartPosition)) {
+    return reject("render.geometry.invalid-note-vertical-motion",
+      "Note vertical motion requires finite timing, start and goal positions.");
+  }
+  const arrival = getOrdinaryNoteArrivalSeconds(state.specificSpeed);
+  if (arrival.status !== "ok") return arrival;
+  const progress = createRenderFloat32(state.progressRate.value === 0
+    ? Math.fround(state.realMoveSecond.value / arrival.value.value)
+    : Math.fround(state.progressRate.value + Math.fround(state.deltaTime.value / arrival.value.value)));
+  if (progress.status !== "ok") return progress;
+  const exponent = Math.fround(Math.fround(progress.value.value - 1) * NOTE_POSITION_EXPONENT_SCALE);
+  const curve = Math.fround(Math.pow(NOTE_POSITION_BASE, exponent));
+  const y = Math.fround(state.noteStartPosition.y.value - Math.abs(Math.fround(
+    Math.fround(state.noteStartPosition.y.value - state.goalPosition.y.value) * curve,
+  )));
+  return ok({ progressRate: progress.value, curve, y });
 }
 
 export function repositionOrdinaryNoteToJudgeLine(

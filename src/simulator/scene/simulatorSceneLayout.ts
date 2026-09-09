@@ -21,7 +21,7 @@ import type {
   RenderVector3,
 } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
-import { ButtonType, type ButtonTypeValue, type NoteInformation } from "../engine/chart/types";
+import { ButtonType, type ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
@@ -464,34 +464,6 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
     return lane === null
       ? reject("scene.unsupported-button-local-position", "The current scene does not invent a position for unsupported Button_07_BMS_1P_07.")
       : ok(this.scene.goalPositions[lane]!.y.value);
-  }
-
-  getSlideCurrentLocalY(
-    source: NoteInformation,
-    adjustedMusicPosition: number,
-  ): SimulatorResult<number> {
-    if (!Number.isFinite(adjustedMusicPosition) || !exactPositiveFloat32(source.bpm)) {
-      return reject("scene.invalid-slide-motion-query", "Slide geometry requires finite music position and positive source BPM.");
-    }
-    const lane = laneIndex(source.buttonType);
-    if (lane === null) return reject("scene.unsupported-slide-button", "Slide motion requires one supported current lane.");
-    const arrival = getOrdinaryNoteArrivalSeconds(this.scene.specificSpeed);
-    if (arrival.status !== "ok") return arrival;
-    const activationPosition = Math.fround(
-      Math.fround(source.absolutePos) - Math.fround(source.bpm * arrival.value.value),
-    );
-    const elapsed = Math.fround(Math.max(0, Math.fround(
-      Math.fround(adjustedMusicPosition - activationPosition) / source.bpm,
-    )));
-    const state = motionState(
-      this.scene,
-      lane,
-      f32(0),
-      f32(0),
-      f32(elapsed),
-    );
-    const moved = advanceOrdinaryNoteMotion(state);
-    return moved.status === "ok" ? ok(moved.value.position.y.value) : moved;
   }
 
   getSlideJudgeGeometry(): SimulatorResult<{

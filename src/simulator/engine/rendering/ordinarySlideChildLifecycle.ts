@@ -20,6 +20,7 @@ import {
   type OrdinaryLongNormalChildState,
 } from "./ordinaryLongChildLifecycle";
 import {
+  advanceOrdinaryNoteVerticalMotion,
   getHabahiroMeshWidthRate,
   repositionOrdinaryNoteToJudgeLine,
   type OrdinaryBaseNoteMeshGeometry,
@@ -33,6 +34,7 @@ export interface OrdinarySlideChildState {
   readonly buttonCount: number;
   readonly visible: boolean;
   readonly meshVisible: boolean;
+  readonly judgeY: number;
   readonly lifecycle: OrdinaryLongNormalChildState;
 }
 
@@ -91,6 +93,7 @@ export function createOrdinarySlideChildState(
       buttonCount,
       visible,
       meshVisible: true,
+      judgeY: lifecycle.value.renderedTransform.position.y.value,
       lifecycle: lifecycle.value,
     }))
     : lifecycle;
@@ -140,6 +143,10 @@ export function advanceOrdinarySlideChildren(
     let meshVisible = state.meshVisible;
     let visible = state.visible;
     let segmentStartIndex = state.segmentStartIndex;
+    let judgeY = state.judgeY;
+    if (stopControl.advanceMotion && state.lifecycle.phase !== "stop") {
+      judgeY = Math.max(lifecycle.renderedTransform.position.y.value, stopControl.virtualPerfectLine);
+    }
     if (stopControl.advanceMotion && state.lifecycle.phase === "move") {
       const hasAfter = index + 1 < childStates.length;
       const realLine = stopControl.rootWaiting && hasAfter;
@@ -167,6 +174,16 @@ export function advanceOrdinarySlideChildren(
       const visibleAfter = childStates.find((candidate) => candidate.sourceIndex > index &&
         !sources[candidate.sourceIndex]!.isInvisible);
       if (visibleAfter !== undefined) {
+        // Stop keeps the endpoint on the field while its judgement motion
+        // continues to the virtual line. No later consumer needs progress past it.
+        if (judgeY > stopControl.virtualPerfectLine) {
+          const virtual = advanceOrdinaryNoteVerticalMotion({ ...lifecycle.motionState, deltaTime: input.deltaTime });
+          if (virtual.status !== "ok") return virtual;
+          judgeY = Math.max(virtual.value.y, stopControl.virtualPerfectLine);
+          lifecycle = Object.freeze({ ...lifecycle, motionState: Object.freeze({
+            ...lifecycle.motionState, progressRate: virtual.value.progressRate,
+          }) });
+        }
         if (visibleAfter.lifecycle.phase === "stop") {
           const goal = visibleAfter.lifecycle.motionState.goalPosition;
           const moved = withSlidePosition(lifecycle.renderedTransform, goal.x.value, goal.y.value);
@@ -198,7 +215,7 @@ export function advanceOrdinarySlideChildren(
         }
       }
     }
-    const next = Object.freeze({ ...state, lifecycle, meshVisible, visible, segmentStartIndex });
+    const next = Object.freeze({ ...state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY });
     nextStates.push(next);
   }
   let previousTransform = frontTransform;

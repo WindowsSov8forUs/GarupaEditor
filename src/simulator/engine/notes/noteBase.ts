@@ -41,13 +41,12 @@ export interface NoteStateSnapshot {
 export interface ManualNoteRuntime {
   readonly getExecuteFrame: () => number;
   readonly getSlideChildPhase: (index: number) => SimulatorResult<"wait" | "move" | "stop">;
+  readonly stopSlideHeadAtJudgeLine: () => SimulatorResult<boolean>;
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly getJudgementAdjustValueB: () => number;
   readonly judgeSlide: (
     source: NoteInformation,
-    adjustedMusicPosition: number,
-    clampAtPerfectLine?: boolean,
   ) => SimulatorResult<import("../managers/slideNoteManager").SlideJudgeDecision>;
   readonly geometry: SimulatorManualInputGeometryBackend;
   readonly beginJudgementTransaction: () => ManualJudgementTransaction;

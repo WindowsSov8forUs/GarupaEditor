@@ -1102,8 +1102,6 @@ export class NoteSlide extends NoteFrontBase {
     }
     const judgement = runtime.value.judgeSlide(
       source,
-      runtime.value.getAdjustedMusicPosition(),
-      !this.manualHeadJudgedValue,
     );
     if (judgement.status !== "ok") {
       return judgement;
@@ -1189,7 +1187,6 @@ export class NoteSlide extends NoteFrontBase {
           )
         : runtime;
     }
-    const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!current.isTerminal || current.terminalJudgeNoteType === 8) {
       if (!current.source.isInvisible) {
         const inside = runtime.value.geometry.isInsideTargetButtons(
@@ -1203,7 +1200,7 @@ export class NoteSlide extends NoteFrontBase {
           return ok(this.noManualSlideJudgementPlan());
         }
       }
-      const slideDecision = runtime.value.judgeSlide(current.source, adjusted);
+      const slideDecision = runtime.value.judgeSlide(current.source);
       if (slideDecision.status !== "ok") {
         return slideDecision;
       }
@@ -1224,7 +1221,7 @@ export class NoteSlide extends NoteFrontBase {
         false,
       );
     }
-    const judgement = runtime.value.judgeSlide(current.source, adjusted);
+    const judgement = runtime.value.judgeSlide(current.source);
     if (judgement.status !== "ok") {
       return judgement;
     }
@@ -1357,7 +1354,6 @@ export class NoteSlide extends NoteFrontBase {
       if (inside.value) {
         const decision = runtime.value.judgeSlide(
           current.source,
-          runtime.value.getAdjustedMusicPosition(),
         );
         if (decision.status !== "ok") return decision;
         result = decision.value.result === NoteResultType.None ? NoteResultType.Miss : decision.value.result;
@@ -1486,6 +1482,13 @@ export class NoteSlide extends NoteFrontBase {
         "Slide MoveState requires an activated root and Auto Live runtime.",
       );
     }
+    if (!runtime.value.shouldForcePerfect()) {
+      const manual = this.manualRuntime;
+      if (manual.status !== "ok") return manual;
+      const stopped = manual.value.stopSlideHeadAtJudgeLine();
+      if (stopped.status !== "ok") return stopped;
+      return stopped.value ? this.changeState(NoteState.Wait) : ok(undefined);
+    }
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
       return integrityFailure(
@@ -1496,9 +1499,6 @@ export class NoteSlide extends NoteFrontBase {
     }
     if (adjusted < noteInformation.absolutePos) {
       return ok(undefined);
-    }
-    if (!runtime.value.shouldForcePerfect()) {
-      return this.changeState(NoteState.Wait);
     }
     const changed = this.changeState(NoteState.Wait);
     if (changed.status !== "ok") {

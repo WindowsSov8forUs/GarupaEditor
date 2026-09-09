@@ -25,15 +25,13 @@ export class SlideNoteManager {
   }
 
   selectNearJudgeLineSource(
-    firstSource: NoteInformation,
-    secondSource: NoteInformation,
-    adjustedMusicPosition: number,
+    firstY: number,
+    secondY: number,
   ): SimulatorResult<"first" | "second"> {
     const geometry = this.geometry;
     if (
       !this.initialized ||
-      geometry?.getGameplayButtonLocalY === undefined ||
-      geometry.getSlideCurrentLocalY === undefined
+      geometry?.getGameplayButtonLocalY === undefined
     ) {
       return integrityFailure(
         "manual.slide-near-line-geometry-unavailable",
@@ -45,18 +43,10 @@ export class SlideNoteManager {
     if (center.status !== "ok") {
       return center;
     }
-    const first = geometry.getSlideCurrentLocalY(firstSource, adjustedMusicPosition);
-    if (first.status !== "ok") {
-      return first;
-    }
-    const second = geometry.getSlideCurrentLocalY(secondSource, adjustedMusicPosition);
-    if (second.status !== "ok") {
-      return second;
-    }
     if (
       !isExactFiniteFloat32(center.value) ||
-      !isExactFiniteFloat32(first.value) ||
-      !isExactFiniteFloat32(second.value)
+      !isExactFiniteFloat32(firstY) ||
+      !isExactFiniteFloat32(secondY)
     ) {
       return integrityFailure(
         "manual.slide-invalid-near-line-geometry",
@@ -64,8 +54,8 @@ export class SlideNoteManager {
         "Slide near-line button positions must be exact finite Float32 owner values.",
       );
     }
-    const firstDistance = Math.fround(Math.abs(Math.fround(first.value - center.value)));
-    const secondDistance = Math.fround(Math.abs(Math.fround(second.value - center.value)));
+    const firstDistance = Math.fround(Math.abs(Math.fround(firstY - center.value)));
+    const secondDistance = Math.fround(Math.abs(Math.fround(secondY - center.value)));
     return ok(firstDistance <= secondDistance ? "first" : "second");
   }
 
@@ -77,14 +67,12 @@ export class SlideNoteManager {
 
   judge(
     source: NoteInformation,
-    adjustedMusicPosition: number,
-    clampAtPerfectLine = false,
+    motionY: number,
   ): SimulatorResult<SlideJudgeDecision> {
     const geometry = this.geometry;
     if (
       !this.initialized ||
-      geometry?.getSlideCurrentLocalY === undefined ||
-      geometry.getSlideJudgeGeometry === undefined
+      geometry?.getSlideJudgeGeometry === undefined
     ) {
       return integrityFailure(
         "manual.slide-judge-geometry-unavailable",
@@ -92,16 +80,12 @@ export class SlideNoteManager {
         "Slide judgement requires the host-owned gameplay-local touch projection and frozen judge positions.",
       );
     }
-    const projected = geometry.getSlideCurrentLocalY(source, adjustedMusicPosition);
-    if (projected.status !== "ok") {
-      return projected;
-    }
     const judgeGeometry = geometry.getSlideJudgeGeometry(source);
     if (judgeGeometry.status !== "ok") {
       return judgeGeometry;
     }
-    if (!isExactFiniteFloat32(projected.value)) {
-      return invalidJudgeGeometry("Projected Slide input must be exact finite Float32.");
+    if (!isExactFiniteFloat32(motionY)) {
+      return invalidJudgeGeometry("Committed Slide motion Y must be exact finite Float32.");
     }
     const positions = judgeGeometry.value.positions;
     if (
@@ -135,9 +119,7 @@ export class SlideNoteManager {
       if (leftIndex >= 0) results[leftIndex] = result;
       if (rightIndex < results.length) results[rightIndex] = result;
     }
-    const position = clampAtPerfectLine
-      ? Math.max(projected.value, judgeGeometry.value.virtualPerfectLine)
-      : projected.value;
+    const position = Math.max(motionY, judgeGeometry.value.virtualPerfectLine);
     const hasReachedPerfectLine = position <= judgeGeometry.value.virtualPerfectLine;
     const intervals = copiedPositions.flatMap((value, index) => results[index] === -1
       ? [] : [{ position: value, result: results[index] as 1 | 2 | 3 | 4 }]).reverse();
