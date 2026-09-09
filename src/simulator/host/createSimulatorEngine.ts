@@ -155,6 +155,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       return advanced.status === "ok" ? ok(undefined) : advanced;
     }
     const beforeUpdate = this.inGameManager.snapshot();
+    if (beforeUpdate.currentGameState === GameState.GameOverMotionFirstStart) return ok(undefined);
     if (!beforeUpdate.playable) {
       if (inputFrame !== undefined && inputFrame.touches.length > 0) {
         return integrityFailure(
@@ -180,7 +181,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const updated = this.inGameDirector.update(deltaTimeSeconds);
     if (updated.status !== "ok") return updated;
-    return this.pollNaturalCompletion(deltaTimeSeconds);
+    return this.transitionGameEndState(deltaTimeSeconds);
   }
 
   resolveManualInputButton(
@@ -661,12 +662,21 @@ class SimulatorEngineHost implements SimulatorEngine {
       : this.inGameManager.latchExternalFault(committed);
   }
 
-  private pollNaturalCompletion(deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.audioProducer === null || this.naturalCompletionClearStatus !== null) {
+  private transitionGameEndState(deltaTimeSeconds: number): SimulatorResult<void> {
+    const manager = this.inGameManager.snapshot();
+    if (manager.currentGameState !== GameState.PlayingSound || this.naturalCompletionClearStatus !== null) {
       return ok(undefined);
     }
-    const ended = this.audioProducer.pollBgmNaturalEnd();
-    if (ended.status !== "ok" || !ended.value) return ended.status === "ok" ? ok(undefined) : ended;
+    const ended = this.audioProducer?.pollBgmNaturalEnd() ?? ok(false);
+    if (ended.status !== "ok") return ended;
+    // Original transitionGameEndState chooses clear before Life-zero, after
+    // all judgement/Record/HUD reflection for the current gameplay update.
+    if (!ended.value) {
+      return manager.scoreLifeState?.record.singleGameOver === true &&
+        manager.noteManager.calculatedData.sessionMode === "live"
+        ? this.commitGameOver()
+        : ok(undefined);
+    }
     const scoreLife = this.inGameManager.scoreLifeStateManager;
     if (scoreLife === null) {
       return integrityFailure(
@@ -677,6 +687,60 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const presentation = scoreLife.getNaturalCompletionPresentation();
     return this.completeLiveAudio(presentation.clearStatus, deltaTimeSeconds);
+  }
+
+  private commitGameOver(): SimulatorResult<void> {
+    const particle = this.particleCoordinator?.preflightTerminal("game-over") ?? null;
+    if (particle?.status === "integrity-failure") return particle;
+    const audio = this.audioProducer?.preflightGameOver() ?? null;
+    if (audio?.status === "integrity-failure") {
+      if (particle?.status === "ok") particle.value.discard();
+      return audio;
+    }
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      if (audio?.status === "ok") audio.value.discard();
+      return tapLane;
+    }
+    const participants: FrameMutationParticipant[] = [];
+    if (audio?.status === "ok") participants.push({
+      identity: "audio",
+      commitExternal: () => audio.value.commitBackend(),
+      publishOwner: () => audio.value.publishOwner(),
+      discard: () => audio.value.discard(),
+    });
+    if (tapLane.value !== null) participants.push({
+      identity: "tap-lane",
+      commitExternal: () => tapLane.value!.commitBackend(),
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    });
+    if (particle?.status === "ok") participants.push({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    });
+    participants.push({
+      identity: "game-over",
+      publishOwner: () => {
+        this.inGameManager.publishGameOverState();
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    });
+    const plan = FrameMutationPlan.create(
+      participants,
+      participants.filter((entry) => entry.commitExternal !== undefined).map((entry) => entry.identity),
+      participants.map((entry) => entry.identity),
+    );
+    if (plan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return plan;
+    }
+    const committed = plan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
   private pollMovieFault(): SimulatorResult<void> {

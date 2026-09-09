@@ -369,7 +369,6 @@ export class AudioCommandProducer {
 
   preflightJudgement(
     batch: OneFrameJudgementBatch,
-    gameOverAfterReflect = false,
   ): SimulatorResult<AudioOwnerTransaction> {
     const nextTap = { ...(this.outerFrameTapStatus ?? this.tapStatus) };
     const activeHolds = new Set(
@@ -412,32 +411,11 @@ export class AudioCommandProducer {
       }
       updateTapStatus(nextTap, entry);
     }
-    if (gameOverAfterReflect) {
-      if (this.gameOverTriggered) {
-        return rejected(
-          "audio.game-over.duplicate",
-          "The life-zero Game Over audio coroutine starts once.",
-        );
-      }
-      commands.push(
-        {
-          kind: "audio.pause-all",
-          paused: true,
-          delay_seconds_bits: "0x3D4CCCCD",
-        },
-        {
-          kind: "audio.pause-all",
-          paused: true,
-          delay_seconds_bits: "0x3DCCCCCD",
-        },
-      );
-    }
     return this.preflightCommands(
       commands,
       () => {
         this.tapStatus = Object.freeze({ ...nextTap });
         this.outerFrameTapStatus = null;
-        if (gameOverAfterReflect) this.gameOverTriggered = true;
       },
     );
   }

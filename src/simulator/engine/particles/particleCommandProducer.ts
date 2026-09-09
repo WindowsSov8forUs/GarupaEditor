@@ -171,7 +171,6 @@ export class ParticleCommandProducer {
 
   preflightJudgement(
     batch: OneFrameJudgementBatch,
-    terminalAfter: "game-over" | null = null,
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
@@ -305,12 +304,6 @@ export class ParticleCommandProducer {
           ));
         }
       }
-    }
-    if (terminalAfter !== null) {
-      commands.push(Object.freeze({ kind: "clear-all", reason: terminalAfter }));
-      projected.buttonTapKeep.clear();
-      projected.slideTapKeep.clear();
-      projected.terminal = true;
     }
     return this.stage(commands, projected);
   }

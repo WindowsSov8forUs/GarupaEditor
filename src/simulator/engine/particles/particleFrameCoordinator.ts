@@ -219,12 +219,8 @@ export class ParticleFrameCoordinator {
   preflightJudgement(
     deltaTimeSeconds: number,
     batch: OneFrameJudgementBatch,
-    gameOverAfterReflect: boolean,
   ): SimulatorResult<ParticleOuterFrameTransaction> {
-    const owner = this.producer.preflightJudgement(
-      batch,
-      gameOverAfterReflect ? "game-over" : null,
-    );
+    const owner = this.producer.preflightJudgement(batch);
     return owner.status === "ok"
       ? this.preflight(deltaTimeSeconds, false, owner.value)
       : owner;

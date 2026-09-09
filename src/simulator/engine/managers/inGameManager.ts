@@ -191,6 +191,10 @@ export class InGameManager {
     this.currentGameStateValue = finished ? GameState.GameClearAnimEnd : GameState.GameClearAnimStart;
   }
 
+  publishGameOverState(): void {
+    this.currentGameStateValue = GameState.GameOverMotionFirstStart;
+  }
+
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
@@ -202,6 +206,7 @@ export class InGameManager {
         "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
       );
     }
+    if (this.currentGameStateValue === GameState.GameOverMotionFirstStart) return ok(undefined);
     if (this.startupDirection !== null && !this.startupDirection.snapshot().playable) {
       const startup = this.startupDirection.step(deltaTimeSeconds);
       if (startup.status !== "ok") return this.latchFault(startup);
@@ -309,7 +314,6 @@ export class InGameManager {
       if (reflectPlan.value !== null) {
         const batch = reflectPlan.value.batch;
         const batchDeltaTimeSeconds = firstJudgementBatch ? deltaTimeSeconds : Math.fround(0);
-        const lifeBefore = this.scoreLifeStateManager?.record.currentLife ?? null;
         const businessPlan = this.scoreLifeStateManager?.preflightReflect(batch) ?? null;
         if (businessPlan?.status === "integrity-failure") {
           this.oneFrameJudgementController.discardReflectOneFrameData(
@@ -317,14 +321,9 @@ export class InGameManager {
           );
           return this.latchFault(businessPlan);
         }
-        const gameOver = businessPlan?.status === "ok" && lifeBefore !== null &&
-          lifeBefore > 0 && businessPlan.value.record.currentLife <= 0;
-        const terminalGameOver = gameOver &&
-          this.noteManager.snapshot().calculatedData.sessionMode === "live";
         const particlePlan = this.particleCoordinator?.preflightJudgement(
           batchDeltaTimeSeconds,
           batch,
-          terminalGameOver,
         ) ?? null;
         if (particlePlan?.status === "integrity-failure") {
           if (businessPlan?.status === "ok") {
@@ -333,7 +332,7 @@ export class InGameManager {
           this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
           return this.latchFault(particlePlan);
         }
-        const audioPlan = this.audioProducer?.preflightJudgement(batch, terminalGameOver) ?? null;
+        const audioPlan = this.audioProducer?.preflightJudgement(batch) ?? null;
         if (audioPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (businessPlan?.status === "ok") {
@@ -346,9 +345,7 @@ export class InGameManager {
         }
         const canCombineTapLane = businessPlan?.status === "ok" && this.renderProducer !== null;
         const tapLaneEffectStatePlan: SimulatorResult<TapLaneEffectStateTransaction | null> | null = canCombineTapLane
-          ? terminalGameOver
-            ? this.tapLaneEffect?.preflightAllOffState() ?? null
-            : this.tapLaneEffect?.preflightJudgementState(batch) ?? null
+          ? this.tapLaneEffect?.preflightJudgementState(batch) ?? null
           : null;
         if (tapLaneEffectStatePlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
@@ -772,6 +769,7 @@ export class InGameManager {
           })
         : null,
       playable: (this.startupDirection?.snapshot().playable ?? true) &&
+        this.currentGameStateValue !== GameState.GameOverMotionFirstStart &&
         this.currentGameStateValue !== GameState.GameClearAnimStart &&
         this.currentGameStateValue !== GameState.GameClearAnimEnd &&
         this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
