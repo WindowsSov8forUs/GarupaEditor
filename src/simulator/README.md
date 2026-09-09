@@ -48,6 +48,8 @@ Frame mutation uses detached backend capabilities. Potentially failing portable/
 
 ## Current capability boundary
 
+Algorithm alignment targets the calculations, state transitions and production output semantics of supported Simulator features. It does not require reproducing Unity internals in Tauri/Pixi. Implementation differences, confirmed semantic defects and necessary evidence gaps must be classified separately under [the algorithm alignment workflow](./evidence-workflow.md). Existing capability labels below are evidence claims, not an instruction to investigate every Unity subsystem; this scope clarification does not upgrade any label.
+
 **Rendering re-audit is OPEN.** The Score runtime-anchor regression is corrected, but particle cross-scene sorting and stretched-billboard consumption remain open. Earlier resource/primitive audit passes do not close these production paths. See [`rendering-consumption-contract.md`](./rendering-consumption-contract.md); its dispositions supersede historical aggregate closure statements.
 
 `closed-native-algorithm-equivalent` means that the current 10.1.4 ARM64/serialized state transition, Float32 formula, random ownership, source resource relation and GPU-pre primitive handoff are closed for the named scope. It does **not** claim Unity/GPU driver raster, fixed-device pixels, CRI/USM or physical speaker equivalence.
