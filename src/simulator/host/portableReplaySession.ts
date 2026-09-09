@@ -59,6 +59,7 @@ export interface SimulatorMoveTimeReceipt {
 
 export interface SimulatorWholeEngineReplayFactory {
   readonly mode: SimulatorModeIdentity;
+  readonly bgmDurationSeconds: number;
   readonly requireVisualPublication?: boolean;
   createFreshEngine(purpose: Exclude<SimulatorEngineBuildPurpose, "initial">): Promise<SimulatorResult<SimulatorEngine>>;
 }
@@ -123,6 +124,12 @@ export function createPortableReplaySimulatorEngine(
   }
   const mode = validateSimulatorModeIdentity(factory.mode);
   if (mode.status !== "ok") return mode;
+  if (!Number.isFinite(factory.bgmDurationSeconds) || factory.bgmDurationSeconds <= 0) {
+    return rejected(
+      "timeline.replay.invalid-bgm-duration",
+      "Timeline controls require the prepared session BGM duration for the original whole-second seek boundary.",
+    );
+  }
   const before = initialEngine.snapshot();
   if (before.status !== "ok") return before;
   if (!isPristine(before.value)) {
@@ -288,7 +295,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const wholeSecond = Math.floor(fromSeconds);
     const targetSeconds = direction === "return-five"
       ? Math.max(wholeSecond - MOVE_TIME_SECONDS, 0)
-      : wholeSecond + MOVE_TIME_SECONDS;
+      // Original advanceTime bounds by trunc(BGM milliseconds / 1000).
+      // onAdvanceTime never reverses an already later fractional clock.
+      : Math.max(fromSeconds, Math.min(wholeSecond + MOVE_TIME_SECONDS, Math.floor(this.factory.bgmDurationSeconds)));
     if (direction === "return-five" && wholeSecond === 0) {
       return rejected(
         "timeline.movetime.return-at-origin",

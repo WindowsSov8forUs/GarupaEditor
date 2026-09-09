@@ -49,6 +49,7 @@ export interface SimulatorSessionRecipe {
 
 export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
+  readonly bgmDurationSeconds: number;
   readonly mode: SimulatorModeIdentity;
   readonly chartFidelity: SimulatorChartFidelity;
   readonly originalLiveSettingsIdentity: string;
@@ -103,6 +104,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
+      bgmDurationSeconds: initial.value.bgmDurationSeconds,
       requireVisualPublication: true,
       createFreshEngine: async (purpose) => {
         const fresh = await this.builder.createFreshEngine(recipe.value, purpose);
@@ -110,6 +112,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
           return integrityFailure(fresh.failure.capability, [], fresh.failure.boundary);
         }
         const identityMatches =
+          fresh.value.bgmDurationSeconds === initial.value.bgmDurationSeconds &&
           fresh.value.chartFidelity === initial.value.chartFidelity &&
           fresh.value.originalLiveSettingsIdentity === initial.value.originalLiveSettingsIdentity &&
           fresh.value.skinRecipeIdentity === initial.value.skinRecipeIdentity &&

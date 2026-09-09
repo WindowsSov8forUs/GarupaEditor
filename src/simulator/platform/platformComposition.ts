@@ -542,6 +542,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     return accepted(Object.freeze({
       engine: mountedEngine,
+      bgmDurationSeconds: bgm.value.profile.durationSeconds,
       mode: score.value.mode,
       chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
         ? "garupa-product-extension" as const
