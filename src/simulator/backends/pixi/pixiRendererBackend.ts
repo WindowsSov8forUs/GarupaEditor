@@ -1604,7 +1604,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         node.tint = rgbTint(command.color.red.value, command.color.green.value, command.color.blue.value);
         if (command.spriteFlipX !== undefined) {
           if (object.spriteContent === null) throw new Error("Sprite flip requires a bound Sprite owner.");
-          object.spriteContent.scale.x = command.spriteFlipX ? -1 : 1;
+          object.spriteContent.scale.x = (command.spriteFlipX ? -1 : 1) *
+            Math.abs(object.spriteContent.scale.x);
         }
         if (object.role === "tap-lane-effect") {
           if (command.maskObjectId !== null) {
@@ -4266,8 +4267,8 @@ function applyOrdinaryNoteAnimation(
   } else {
     object.animatedLocalZ = values[2]!;
     object.node.position.set(
-      Math.fround(values[0]! * object.spritePixelsPerUnit),
-      Math.fround(-values[1]! * object.spritePixelsPerUnit),
+      Math.fround(values[0]!),
+      Math.fround(-values[1]!),
     );
     object.node.rotation = Math.fround(-values[5]! * Math.PI / 180);
   }
@@ -4493,44 +4494,30 @@ function applyNoteSpatialTransform(
 ): void {
   const row = boundAtlasRow(profile, object.spriteBindingKey);
   const node = object.node;
+  // Note containers use world units; atlas pixel conversion belongs to the
+  // sprite contents, so a parent's atlas never rescales its child icons.
   if (object.parentObjectId === null) {
     const projected = projectWorldPoint(
       command.position.x.value,
       command.position.y.value,
       profile.scene.projection,
     );
-    const textureScale = row === null
-      ? 1
-      : profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit;
     node.position.set(projected[0], projected[1]);
     node.scale.set(
-      Math.fround(command.scale.x.value * textureScale),
-      Math.fround(command.scale.y.value * textureScale),
-    );
-  } else if (object.parentObjectId.startsWith("render:garupa:slide-owner:")) {
-    // NoteSlide owns Flash as a stable child. The owner is projected once at
-    // the current after-node; child coordinates stay in scene world units and
-    // the atlas pixels-per-unit conversion belongs to the Flash sprite itself.
-    // This preserves the former world size without applying current-node scale
-    // to both parent and child.
-    const textureScale = row === null
-      ? 1
-      : profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit;
-    node.position.set(
-      Math.fround(command.position.x.value * profile.scene.projection.pixelsPerWorldUnit),
-      Math.fround(-command.position.y.value * profile.scene.projection.pixelsPerWorldUnit),
-    );
-    node.scale.set(
-      Math.fround(command.scale.x.value * textureScale),
-      Math.fround(command.scale.y.value * textureScale),
+      Math.fround(command.scale.x.value * profile.scene.projection.pixelsPerWorldUnit),
+      Math.fround(command.scale.y.value * profile.scene.projection.pixelsPerWorldUnit),
     );
   } else {
-    const localPixelsPerUnit = row?.pixelsPerUnit ?? 1;
-    node.position.set(
-      Math.fround(command.position.x.value * localPixelsPerUnit),
-      Math.fround(-command.position.y.value * localPixelsPerUnit),
-    );
+    node.position.set(command.position.x.value, -command.position.y.value);
     node.scale.set(command.scale.x.value, command.scale.y.value);
+  }
+  if (object.spriteContent !== null) {
+    const pixelScale = row === null ? 1 : 1 / row.pixelsPerUnit;
+    const flipped = command.spriteFlipX ?? (object.spriteContent.scale.x < 0);
+    object.spriteContent.scale.set(
+      flipped ? -pixelScale : pixelScale,
+      pixelScale,
+    );
   }
   node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
 }
