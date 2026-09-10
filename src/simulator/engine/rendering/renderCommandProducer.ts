@@ -1,4 +1,4 @@
-import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, advanceNoteAnimationClock } from "./noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import type {
   RenderColor,
@@ -315,7 +315,8 @@ export type NotePresentation = {
   | { readonly kind: "sync-line"; readonly state: OrdinarySyncLineOwnerState | null }
   | { readonly kind: "multiple-directional-line"; readonly state: OrdinaryMultipleDirectionalLineOwnerState | null;
       readonly direction: "left" | "right" }
-  | { readonly kind: "curve-note"; readonly geometry: OrdinaryBaseNoteMeshGeometry | null }
+  | { readonly kind: "curve-note"; readonly geometry: OrdinaryBaseNoteMeshGeometry | null;
+      readonly materialRole: "long-note" | "curve-note" }
 );
 
 type PresentedObject = { readonly plan: NotePresentation; readonly visible: boolean;
@@ -1294,11 +1295,6 @@ export class RenderCommandProducer {
             parentObjectId: null,
           });
           commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
-          if (this.resources.curveNoteMaterialLogicalAssetId !== undefined) commands.push({
-            ...base(commands.length), kind: "bind-resource", renderObjectId: meshObjectId,
-            binding: "material", logicalAssetId: this.resources.curveNoteMaterialLogicalAssetId,
-            exactKey: null,
-          });
         }
       }
     }
@@ -2045,7 +2041,11 @@ export class RenderCommandProducer {
           advanced: information.virtualLaneDirection !== 0 || source.virtualLaneDirection !== 0,
         });
         if (mesh.status !== "ok") return mesh;
-        appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true);
+        const materialRole = slideLineMaterialRole(information.slideNoteList.some(child => child.isInvisible));
+        commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId: meshObjectId,
+          binding: "material", logicalAssetId: materialRole === "curve-note"
+            ? this.resources.curveNoteMaterialLogicalAssetId! : this.resources.longNoteMaterialLogicalAssetId!, exactKey: null });
+        appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true, materialRole);
         commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
         previousTransform = childTransform;
         previousButtonCount = childButtonCount;
@@ -2417,7 +2417,8 @@ export class RenderCommandProducer {
 
       }
       appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
-        this.creationSequenceByObjectId.get(meshObjectId)!, false);
+        this.creationSequenceByObjectId.get(meshObjectId)!, false,
+        slideLineMaterialRole(stopControl.rootSource.slideNoteList.some(child => child.isInvisible)));
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
@@ -2719,7 +2720,8 @@ export class RenderCommandProducer {
           }
         } else {
           const material = plan.kind === "sync-line" ? this.resources.syncLineLogicalAssetId!
-            : plan.kind === "curve-note" ? this.resources.curveNoteMaterialLogicalAssetId!
+            : plan.kind === "curve-note" ? plan.materialRole === "curve-note"
+              ? this.resources.curveNoteMaterialLogicalAssetId! : this.resources.longNoteMaterialLogicalAssetId!
             : plan.direction === "left" ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
             : this.resources.multipleDirectionalLineRightLogicalAssetId!;
           commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId: plan.id,
@@ -2746,7 +2748,7 @@ export class RenderCommandProducer {
         }
       } else if (plan.kind === "curve-note") {
         if (plan.visible && plan.geometry !== null) {
-          appendCurveMesh(commands, base, plan.id, plan.geometry, scene, sequence(plan.id), previous === undefined);
+          appendCurveMesh(commands, base, plan.id, plan.geometry, scene, sequence(plan.id), previous === undefined, plan.materialRole);
           if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
         } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
       } else if (plan.visible || previous?.visible) {
@@ -3008,6 +3010,7 @@ function appendNoteTransform(
 function appendCurveMesh(
   commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
   geometry: OrdinaryBaseNoteMeshGeometry, scene: OrdinaryFixedNoteSceneInput, creationSequence: number, initialize: boolean,
+  materialRole: "long-note" | "curve-note",
 ): void {
   if (initialize) {
     const zero = float32State(0), one = float32State(1), z = float32State(0.9900000095367432);
@@ -3015,7 +3018,7 @@ function appendCurveMesh(
       position: { x: zero, y: zero, z }, scale: { x: one, y: one, z: one }, rotationDegrees: zero, color: scene.noteTint,
       ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
   }
-  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole: "curve-note" });
+  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
   if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: CURRENT_SUDDEN_THRESHOLD });
 }
 

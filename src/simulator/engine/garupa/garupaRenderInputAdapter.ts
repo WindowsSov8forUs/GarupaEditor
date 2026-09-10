@@ -2,7 +2,7 @@ import { GameNoteType } from "../chart/types";
 import { buildGarupaSyncInputs, advanceGarupaSyncInputs, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
 import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { slideAxisInterval } from "./slideAxisMesh";
-import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding } from "../rendering/noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
 import type {
   RenderAnimationRole,
   RenderFloat32,
@@ -310,6 +310,8 @@ export class GarupaRenderInputAdapter {
     }
 
     for (const chain of this.chart.slideChains) {
+      const materialRole = slideLineMaterialRole(chain.connectionIdentities.slice(1)
+        .some(id => !this.chart.nodeByIdentity.get(id)!.visible));
       for (let index = 1; index < chain.connectionIdentities.length; index += 1) {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;
         const to = samples.get(chain.connectionIdentities[index]!)!;
@@ -318,6 +320,7 @@ export class GarupaRenderInputAdapter {
         const lineVisible = !slideState.finished && slideState.children[index - 1]!.meshVisible &&
           slideAxisInterval(from.curve, to.curve) !== null;
         plans.push({ id: objectId, lifetime: chain.identity, kind: "curve-note", visible: lineVisible,
+          materialRole,
           geometry: lineVisible ? slideSegments.get(chain.identity)![index - 1]!.geometry : null });
       }
     }

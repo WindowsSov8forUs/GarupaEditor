@@ -2,6 +2,10 @@ import type { RenderEngineResourceBindings } from "./renderCommandProducer";
 
 export type NoteBodyFamily = "note_normal" | "note_normal_16" | "note_skill" | "note_long" | "note_flick" | "note_slide_among";
 
+export function slideLineMaterialRole(containsHiddenChild: boolean): "long-note" | "curve-note" {
+  return containsHiddenChild ? "curve-note" : "long-note";
+}
+
 /** Common skin lookup after the chart adapter has supplied its semantic inputs. */
 export function noteBodyBinding(resources: RenderEngineResourceBindings, family: NoteBodyFamily,
   laneSuffix: string, width: number, habahiro: boolean, direction: "l" | "r" | null = null) {
