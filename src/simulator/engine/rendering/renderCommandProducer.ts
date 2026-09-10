@@ -1,3 +1,4 @@
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import type {
   RenderColor,
@@ -68,6 +69,7 @@ import {
 } from "./habahiroFlashAnimation";
 import {
   advanceOrdinarySlideChildren,
+  applySlideRenderHides,
   createOrdinarySlideChildState,
   type OrdinarySlideChildState,
   type OrdinarySlideStopControl,
@@ -2426,15 +2428,7 @@ export class RenderCommandProducer {
         : undefined,
     );
     if (advanced.status !== "ok") return advanced;
-    const nextChildStates = advanced.value.childStates.map((state, index) => {
-      const request = hideRequests?.get(index - 1);
-      const sampled = request?.afterUpdate ? state : childStates[index]!;
-      const killMesh = request !== undefined && (request.forceKillMesh ||
-        sampled.lifecycle.renderedTransform.position.y.value <= sampled.lifecycle.motionState.targetCenterY.value);
-      return hideRequests?.has(index) || killMesh
-        ? Object.freeze({ ...state, visible: state.visible && !hideRequests?.has(index), meshVisible: state.meshVisible && !killMesh })
-        : state;
-    });
+    const nextChildStates = applySlideRenderHides(childStates, advanced.value.childStates, hideRequests);
     const zero = createRenderFloat32(Math.fround(0));
     if (zero.status !== "ok") return zero;
     const base = this.commandBase(this.substep);
@@ -2665,8 +2659,7 @@ export class RenderCommandProducer {
         if (playbackRevision === null) commands.push({ ...base(commands.length),
           kind: "hide-object", renderObjectId });
       }
-      const elapsed = playbackRevision === null ? 0
-        : Math.fround((restarted ? 0 : animation.elapsed) + delta.value.value);
+      const elapsed = advanceNoteAnimationClock(animation.elapsed, delta.value.value, restarted, playbackRevision !== null);
       if (playbackRevision !== null) {
         const sample = createRenderFloat32(elapsed);
         if (sample.status !== "ok") return sample;
@@ -3082,7 +3075,7 @@ function noteVisualAnimationLocalPosition(role: NoteVisualAnimationRole): Render
   };
 }
 
-function appendOrdinaryAnimationStart(
+export function appendOrdinaryAnimationStart(
   commands: RenderCommand[],
   base: RenderCommandBaseFactory,
   binding: OrdinaryAnimationBinding,
@@ -3278,10 +3271,7 @@ export function resolveFrontSpriteBinding(
         );
     }
   }
-  return ok(Object.freeze({
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${family}_${laneSuffix.value}`,
-  }));
+  return ok(noteBodyBinding(resources, family, laneSuffix.value, 1, false)!);
 }
 
 function resolveHabahiroFrontSpriteBinding(
@@ -3303,19 +3293,12 @@ function resolveHabahiroFrontSpriteBinding(
       : afterTypeIsLeft(information.afterNoteType);
     return ok(resolveHabahiroDirectionalBodyBinding(laneSuffix.value, left, resources));
   }
-  const atlases = resolveHabahiroAtlasLogicalIds(resources);
-  if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
-    return ok(Object.freeze({ logicalAssetId: atlases.skill, exactKey: `note_skill_${laneSuffix.value}` }));
-  }
-  if (information.fireNoteType === FrontNoteType.Normal) {
-    return noteColor && information.shortRhythmUnder8beat
-      ? ok(Object.freeze({ logicalAssetId: atlases.normal16, exactKey: `note_normal_16_${laneSuffix.value}` }))
-      : ok(Object.freeze({ logicalAssetId: atlases.normal, exactKey: `note_normal_${laneSuffix.value}` }));
-  }
-  if (information.fireNoteType === FrontNoteType.Flick) {
-    return ok(Object.freeze({ logicalAssetId: atlases.flick, exactKey: `note_flick_${laneSuffix.value}` }));
-  }
-  return ok(Object.freeze({ logicalAssetId: atlases.long, exactKey: `note_long_${laneSuffix.value}` }));
+  const family = information.gameNoteAdditionalType === GameNoteAdditionalType.Skill ? "note_skill"
+    : information.fireNoteType === FrontNoteType.Normal
+      ? noteColor && information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal"
+    : information.fireNoteType === FrontNoteType.Flick ? "note_flick" : "note_long";
+  return ok(noteBodyBinding(resources, family, laneSuffix.value,
+    information.buttonTypesArray.length || information.buttonTypes.length || 1, true));
 }
 
 function resolveHabahiroIconBinding(
@@ -3326,7 +3309,6 @@ function resolveHabahiroIconBinding(
   readonly exactKey: string;
   readonly animationRole: NoteVisualAnimationRole;
 } | null {
-  const atlases = resolveHabahiroAtlasLogicalIds(resources);
   const role = information.fireNoteType === FrontNoteType.Flick
     ? "note-flick"
     : information.fireNoteType === FrontNoteType.DirectionalFlick ||
@@ -3355,8 +3337,7 @@ function resolveHabahiroIconBinding(
     const suffix = resolveLaneSuffix(information, true);
     if (suffix.status !== "ok") return null;
     return Object.freeze({
-      logicalAssetId: atlases.longFlash,
-      exactKey: `note_long_flash_${suffix.value}`,
+      ...noteLongFlashBinding(resources, suffix.value, true),
       animationRole: "note-long-flash",
     });
   }
@@ -3389,13 +3370,9 @@ function resolveHabahiroSlideChildBinding(
   terminal: boolean,
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<NoteSpriteBinding | null> {
-  const atlases = resolveHabahiroAtlasLogicalIds(resources);
   const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
   if (!terminal) {
-    return ok(Object.freeze({
-      logicalAssetId: atlases.slideAmong,
-      exactKey: buttonCount === 1 ? "note_slide_among" : `note_slide_among_${buttonCount}`,
-    }));
+    return ok(noteBodyBinding(resources, "note_slide_among", "", buttonCount, true));
   }
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
@@ -3408,10 +3385,7 @@ function resolveHabahiroSlideChildBinding(
     information.gameNoteType === GameNoteType.LongEndFlick ||
     information.gameNoteType === GameNoteType.SlideEndFlickA ||
     information.gameNoteType === GameNoteType.SlideEndFlickB;
-  return ok(Object.freeze({
-    logicalAssetId: flick ? atlases.flick : atlases.long,
-    exactKey: `${flick ? "note_flick" : "note_long"}_${laneSuffix.value}`,
-  }));
+  return ok(noteBodyBinding(resources, flick ? "note_flick" : "note_long", laneSuffix.value, buttonCount, true));
 }
 
 interface NoteSpriteBinding {
@@ -3424,13 +3398,7 @@ function resolveHabahiroDirectionalBodyBinding(
   left: boolean,
   resources: RenderEngineResourceBindings,
 ): NoteSpriteBinding | null {
-  // The current directional atlases contain single-lane bodies only. Native
-  // sprite lookup returns null for a range key; the independent icon remains.
-  if (laneSuffix.includes("_")) return null;
-  return {
-    logicalAssetId: resources.directionalAtlasLogicalAssetId,
-    exactKey: `note_flick_${left ? "l" : "r"}_${laneSuffix}`,
-  };
+  return noteBodyBinding(resources, "note_flick", laneSuffix, 1, true, left ? "l" : "r");
 }
 
 function resolveHabahiroAtlasLogicalIds(
@@ -3699,27 +3667,19 @@ function resolveSlideChildSpriteBinding(
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   if (!terminal) {
-    return ok(Object.freeze({
-      logicalAssetId: resources.noteAtlasLogicalAssetId,
-      exactKey: "note_slide_among",
-    }));
+    return ok(noteBodyBinding(resources, "note_slide_among", "", 1, false)!);
   }
   const lane = resolveOrdinarySlideCenterLane(information);
   if (lane.status !== "ok") return lane;
   if (gameTypeIsDirectional(information.gameNoteType)) {
-    return ok(Object.freeze({
-      logicalAssetId: resources.directionalAtlasLogicalAssetId,
-      exactKey: `note_flick_${gameTypeIsLeft(information.gameNoteType) ? "l" : "r"}_${lane.value}`,
-    }));
+    return ok(noteBodyBinding(resources, "note_flick", String(lane.value), 1, false,
+      gameTypeIsLeft(information.gameNoteType) ? "l" : "r")!);
   }
   const flick = information.gameNoteType === GameNoteType.Flick ||
     information.gameNoteType === GameNoteType.LongEndFlick ||
     information.gameNoteType === GameNoteType.SlideEndFlickA ||
     information.gameNoteType === GameNoteType.SlideEndFlickB;
-  return ok(Object.freeze({
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${flick ? "note_flick" : "note_long"}_${lane.value}`,
-  }));
+  return ok(noteBodyBinding(resources, flick ? "note_flick" : "note_long", String(lane.value), 1, false)!);
 }
 
 function resolveNoteAnimationBinding(
@@ -3756,8 +3716,7 @@ function resolveNoteAnimationBinding(
   if (lane.status !== "ok") return null;
   return Object.freeze({
     ownerObjectId: ordinaryLongFlashRenderObjectId(parentObjectId),
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `note_long_flash_${lane.value}`,
+    ...noteLongFlashBinding(resources, String(lane.value), false),
     animationRole: "note-long-flash",
   });
 }
@@ -3786,19 +3745,8 @@ function resolveFlickIconSpriteBinding(
   direction: "up" | "left" | "right",
   habahiro: boolean,
 ): { readonly logicalAssetId: string; readonly exactKey: string } {
-  if (direction !== "up") return {
-    logicalAssetId: resources.directionalAtlasLogicalAssetId,
-    exactKey: direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
-  };
-  const width = habahiro
-    ? Math.min(information.buttonTypesArray.length || information.buttonTypes.length || 1, 3)
-    : 1;
-  return {
-    logicalAssetId: habahiro
-      ? resolveHabahiroAtlasLogicalIds(resources).flick
-      : resources.noteAtlasLogicalAssetId,
-    exactKey: width === 1 ? "note_flick_top" : `note_flick_top_${width}`,
-  };
+  return noteFlickIconBinding(resources, direction,
+    information.buttonTypesArray.length || information.buttonTypes.length || 1, habahiro);
 }
 
 function resolveAfterAnimationRole(

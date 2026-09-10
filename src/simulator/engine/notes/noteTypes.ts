@@ -32,6 +32,7 @@ import {
 } from "../data/manualJudgement";
 import type { ManualInputPosition } from "../data/manualInput";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
+import { advanceSlideStopWait, queueSlideRenderHideBefore } from "../rendering/ordinarySlideChildLifecycle";
 
 export class NoteFrontBase extends NoteBase {}
 
@@ -960,10 +961,8 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   private hideBeforeSlideNode(index: number, forceKillMesh: boolean, afterUpdate = false): void {
-    for (let previous = index - 1; previous >= -1; previous -= 1) {
-      this.hideSlideNode(previous, forceKillMesh, afterUpdate);
-      if (previous === -1 || !this.afterNotesValue[previous]!.source.isInvisible) break;
-    }
+    queueSlideRenderHideBefore(this.pendingSpriteHides, index,
+      this.afterNotesValue.map((after) => after.source), forceKillMesh, afterUpdate);
   }
 
   refreshAfterMoveTime(): void {
@@ -1650,8 +1649,9 @@ export class NoteSlide extends NoteFrontBase {
     const nextVisible = this.afterNotesValue.find((after) =>
       after.sourceIndex > current.sourceIndex && !after.source.isInvisible);
     const adjustment = runtime.value.getJudgementAdjustValueB();
-    if (nextVisible !== undefined && adjustment < 0 && current.stopAdjustmentCounter < 6 - adjustment) {
-      current.stopAdjustmentCounter += 1;
+    const stopWait = advanceSlideStopWait(current.stopAdjustmentCounter, nextVisible !== undefined, adjustment);
+    if (stopWait.waited) {
+      current.stopAdjustmentCounter = stopWait.counter;
       current.stopAdjustmentWaited = true;
       return ok(undefined);
     }

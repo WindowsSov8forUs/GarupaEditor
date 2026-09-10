@@ -54,11 +54,62 @@ export interface OrdinarySlideStopControl {
   readonly rootWaiting: boolean;
   readonly judgementAdjustValueB: number;
   readonly virtualPerfectLine: number;
-  readonly rootSource: NoteInformation;
+  readonly rootSource: SlideGeometrySource & { readonly slideNoteList: readonly SlideGeometrySource[] };
   readonly rootMotionState: OrdinaryNoteMotionState;
   readonly currentBpm: number;
   readonly virtualLaneDeltaX: number;
   readonly stoppedChildWaited: readonly boolean[];
+}
+
+export type SlideGeometrySource = Pick<NoteInformation,
+  "absolutePos" | "isInvisible" | "virtualLaneDirection" | "virtualLaneDistance">;
+
+/** Extensions supply motion inputs, not a second Slide lifecycle. */
+export interface SlideMotionExtension {
+  advanceChild(state: OrdinaryLongNormalChildState, index: number): SimulatorResult<OrdinaryLongNormalChildState>;
+  buildMesh?: typeof buildOrdinaryLongNormalMesh;
+  isAfterHitTime?: (index: number) => boolean;
+}
+
+export interface SlideRenderHideRequest {
+  readonly forceKillMesh: boolean;
+  readonly afterUpdate: boolean;
+}
+
+export function queueSlideRenderHideBefore(
+  requests: Map<number, SlideRenderHideRequest>,
+  index: number,
+  sources: readonly { readonly isInvisible: boolean }[],
+  forceKillMesh: boolean,
+  afterUpdate: boolean,
+): void {
+  for (let previous = index - 1; previous >= -1; previous -= 1) {
+    const old = requests.get(previous);
+    requests.set(previous, { forceKillMesh: forceKillMesh || old?.forceKillMesh === true,
+      afterUpdate: afterUpdate || old?.afterUpdate === true });
+    if (previous === -1 || !sources[previous]!.isInvisible) break;
+  }
+}
+
+export function advanceSlideStopWait(counter: number, hasNextVisible: boolean, adjustment: number) {
+  const waited = hasNextVisible && adjustment < 0 && counter < 6 - adjustment;
+  return { counter: counter + (waited ? 1 : 0), waited };
+}
+
+export function applySlideRenderHides(
+  previous: readonly OrdinarySlideChildState[],
+  next: readonly OrdinarySlideChildState[],
+  requests: ReadonlyMap<number, SlideRenderHideRequest> | undefined,
+): readonly OrdinarySlideChildState[] {
+  return next.map((state, index) => {
+    const request = requests?.get(index - 1);
+    const sampled = request?.afterUpdate ? state : previous[index]!;
+    const killMesh = request !== undefined && (request.forceKillMesh ||
+      sampled.lifecycle.renderedTransform.position.y.value <= sampled.lifecycle.motionState.targetCenterY.value);
+    return requests?.has(index) || killMesh
+      ? Object.freeze({ ...state, visible: state.visible && !requests?.has(index), meshVisible: state.meshVisible && !killMesh })
+      : state;
+  });
 }
 
 export function createOrdinarySlideChildState(
@@ -108,6 +159,7 @@ export function advanceOrdinarySlideChildren(
   color: RenderColor,
   stopControl: OrdinarySlideStopControl,
   habahiroMeshWidthSetting?: RenderFloat32,
+  extension?: SlideMotionExtension,
 ): SimulatorResult<OrdinarySlideFrameResult> {
   if (childStates.length === 0) {
     return reject(
@@ -137,7 +189,8 @@ export function advanceOrdinarySlideChildren(
   }
   for (const [index, state] of childStates.entries()) {
     const advanced = stopControl.advanceMotion
-      ? advanceOrdinaryLongNormalChild(state.lifecycle, input) : ok(state.lifecycle);
+      ? extension?.advanceChild(state.lifecycle, index) ?? advanceOrdinaryLongNormalChild(state.lifecycle, input)
+      : ok(state.lifecycle);
     if (advanced.status !== "ok") return advanced;
     let lifecycle = advanced.value;
     let meshVisible = state.meshVisible;
@@ -153,7 +206,7 @@ export function advanceOrdinarySlideChildren(
       const stopLine = realLine
         ? lifecycle.motionState.goalPosition.y.value
         : stopControl.virtualPerfectLine;
-      const crossed = lifecycle.renderedTransform.progressRate.value > 1 &&
+      const crossed = (extension?.isAfterHitTime?.(index) ?? lifecycle.renderedTransform.progressRate.value > 1) &&
         lifecycle.renderedTransform.position.y.value <= stopLine;
       if (crossed && lifecycle.renderedTransform.position.y.value < lifecycle.motionState.goalPosition.y.value) {
         meshVisible = false;
@@ -228,7 +281,7 @@ export function advanceOrdinarySlideChildren(
           habahiroMeshWidthSetting,
         );
     if (widthRate.status !== "ok") return widthRate;
-    const mesh = buildOrdinaryLongNormalMesh({
+    const mesh = (extension?.buildMesh ?? buildOrdinaryLongNormalMesh)({
       front: previousTransform,
       after: state.lifecycle.renderedTransform,
       frontButtonCount: previousButtonCount,
@@ -250,7 +303,7 @@ export function advanceOrdinarySlideChildren(
   }));
 }
 
-function slideGoalX(source: NoteInformation, base: number, delta: number, apply = source.isInvisible): number {
+function slideGoalX(source: SlideGeometrySource, base: number, delta: number, apply = source.isInvisible): number {
   if (!apply || source.virtualLaneDirection === 0) return base;
   const offset = Math.fround(source.virtualLaneDistance * delta);
   return Math.fround(source.virtualLaneDirection === 1 ? base - offset : base + offset);
@@ -272,9 +325,9 @@ function withSlidePosition(
 function moveSlideEndpoint(
   current: OrdinaryNoteMotionResult,
   origin: OrdinaryNoteMotionState,
-  source: NoteInformation,
+  source: SlideGeometrySource,
   target: OrdinaryNoteMotionState,
-  targetSource: NoteInformation,
+  targetSource: SlideGeometrySource,
   deltaTime: number,
   bpm: number,
   laneDelta: number,
