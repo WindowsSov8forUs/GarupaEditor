@@ -544,7 +544,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       engine: mountedEngine,
       bgmDurationSeconds: bgm.value.profile.durationSeconds,
       mode: score.value.mode,
-      chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
+      chartFidelity: getGarupaProductChartProfile(chart.value)?.hasExtensions
         ? "garupa-product-extension" as const
         : "standard-original-compatible" as const,
       originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings.value),

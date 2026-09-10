@@ -251,12 +251,21 @@ export function advanceOrdinaryNoteVerticalMotion(
     ? Math.fround(state.realMoveSecond.value / arrival.value.value)
     : Math.fround(state.progressRate.value + Math.fround(state.deltaTime.value / arrival.value.value)));
   if (progress.status !== "ok") return progress;
-  const exponent = Math.fround(Math.fround(progress.value.value - 1) * NOTE_POSITION_EXPONENT_SCALE);
-  const curve = Math.fround(Math.pow(NOTE_POSITION_BASE, exponent));
+  const curve = calculateNoteMotionCurve(progress.value.value);
   const y = Math.fround(state.noteStartPosition.y.value - Math.abs(Math.fround(
     Math.fround(state.noteStartPosition.y.value - state.goalPosition.y.value) * curve,
   )));
   return ok({ progressRate: progress.value, curve, y });
+}
+
+/** Original projection, also used after an extension transforms the time axis. */
+export function calculateNoteMotionCurve(progress: number, preserveClippingRange = false): number {
+  const exponent = Math.fround(Math.fround(progress - 1) * NOTE_POSITION_EXPONENT_SCALE);
+  const value = Math.pow(NOTE_POSITION_BASE, exponent);
+  const packed = Math.fround(value);
+  // Extended SV can place an endpoint outside Float32 world coordinates while
+  // its segment still intersects the field. Keep that value only for clipping.
+  return preserveClippingRange && !Number.isFinite(packed) ? value : packed;
 }
 
 export type OrdinaryNoteGoalScale = "perspective" | "target-button" | RenderVector3;
@@ -400,21 +409,45 @@ function buildOrdinaryNoteMeshStrip(
     state.widthRate.value,
   );
   if (after.status !== "ok") return after;
+  return buildNoteMeshStrip(sectionCount, (rate) => {
+    const point = (side: 0 | 1) => vector2(
+      interpolate(front.value[side].x.value, after.value[side].x.value, rate),
+      interpolate(front.value[side].y.value, after.value[side].y.value, rate),
+    );
+    const left = point(0);
+    if (left.status !== "ok") return left;
+    const right = point(1);
+    return right.status === "ok" ? ok([left.value, right.value] as const) : right;
+  }, state.color, indices);
+}
+
+/** Extensions may supply clipped boundaries; topology, UV and colour stay original. */
+export function buildNoteMeshStrip(
+  sectionCount: number,
+  boundaryAt: (rate: number) => SimulatorResult<readonly [RenderVector2, RenderVector2]>,
+  color: RenderColor,
+  indices: readonly number[] = sectionCount === BASE_SECTION_COUNT ? BASE_INDICES : ADVANCED_INDICES,
+): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
+  if ((sectionCount !== BASE_SECTION_COUNT && sectionCount !== ADVANCED_SECTION_COUNT) || !validateColor(color)) {
+    return reject("render.geometry.invalid-base-mesh-owner-state", "Note strips retain original section counts and finite colour.");
+  }
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
   for (let section = 0; section <= sectionCount; section += 1) {
     const rate = Math.fround(section / sectionCount);
+    const boundary = boundaryAt(rate);
+    if (boundary.status !== "ok") return boundary;
     for (const side of [0, 1] as const) {
-      const x = interpolate(front.value[side].x.value, after.value[side].x.value, rate);
-      const y = interpolate(front.value[side].y.value, after.value[side].y.value, rate);
+      const x = boundary.value[side].x.value;
+      const y = boundary.value[side].y.value;
       const vertex = vector3(x, y, Math.fround(0));
       if (vertex.status !== "ok") return vertex;
       vertices.push(vertex.value);
       const coordinate = vector2(Math.fround(side), rate);
       if (coordinate.status !== "ok") return coordinate;
       uv.push(coordinate.value);
-      colors.push(copyColor(state.color));
+      colors.push(copyColor(color));
     }
   }
   return ok(Object.freeze({
@@ -575,9 +608,7 @@ function projectBoundary(
   safeAreaRatio: number,
   widthRate: number,
 ): SimulatorResult<readonly [RenderVector2, RenderVector2]> {
-  const halfWidth = Math.fround(Math.fround(Math.fround(
-    endpoint.localScaleX.value * endpoint.buttonCount,
-  ) * safeAreaRatio) * widthRate);
+  const halfWidth = calculateNoteMeshHalfWidth(endpoint.localScaleX.value, endpoint.buttonCount, safeAreaRatio, widthRate);
   const left = vector2(
     Math.fround(endpoint.position.x.value - halfWidth),
     endpoint.position.y.value,
@@ -590,6 +621,10 @@ function projectBoundary(
   return right.status === "ok"
     ? ok(Object.freeze([left.value, right.value]))
     : right;
+}
+
+export function calculateNoteMeshHalfWidth(scale: number, width: number, safeAreaRatio: number, widthRate = 1): number {
+  return Math.fround(Math.fround(Math.fround(scale * width) * safeAreaRatio) * widthRate);
 }
 
 function syncMargin(

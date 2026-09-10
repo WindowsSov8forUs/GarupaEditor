@@ -2,7 +2,7 @@
 
 ## Runtime policy classification
 
-Every behavior in this document is an explicit product semantic unless a paragraph cites Reverse for an original-compatible fact. Evidence gaps emit internal notices and do not reject otherwise valid product actions; integrity-invalid charts and non-finite state still reject the current action. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
+Extensions add semantics to the original chart; they are not a second chart type or an alternative implementation of original behaviour. Original calculations, state changes and output semantics remain authoritative for shared behaviour. Only the additional SV, continuous-coordinate and graph semantics are product-defined. Integrity-invalid charts and non-finite state still reject the current action. See [`../runtime-contract-policy.md`](../runtime-contract-policy.md).
 
 This document owns GarupaEditor-specific behavior layered above the reconstructed
 10.1.4 simulator. It does **not** describe original-game parity. The product
@@ -19,9 +19,23 @@ Reverse remains the only authority for original behavior.
 - Product data is copied, deeply frozen and bound to a constructed chart through
   simulator-owned metadata. It is not encoded as an invented original
   `ButtonType`, CC value, fixture identity or evidence identity.
-- A chart uses the original-compatible route only when every authored item can be
-  represented without dropping SV/group/lane/connection semantics. An extended
-  Slide uses one product chain owner for the whole chain.
+- Use the original path whenever it can preserve the authored behaviour. Extend
+  that path where an axis, coordinate or Slide topology requires additional
+  semantics; never select another algorithm for the entire chart. Neutral SV
+  and unchanged named-group axes leave original notes on their original path.
+  A connected Slide retains one owner so its finger and segment state cannot be
+  split between implementations.
+- The construction result always contains the original-compatible notes. Its
+  extension metadata owns only the notes/chains needing additional semantics.
+  They share the original music clock, input dispatch, OneFrame reflection and
+  scoring namespace. Original touch acceptance takes priority; extensions cannot
+  judge the same accepted touch again. Scoring and audio/particle ownership include
+  both sets without replacing or duplicating original sources.
+- Extension rendering reuses the original motion curve, scale projection, strip
+  topology/UV/colour, width calculation and SyncLine geometry. SV transforms the
+  curve input; clipping extends its representable range. Mixed SyncLines read
+  committed original transforms rather than reconstructing original note motion.
+  Flick distance uses the original screen-to-world and distance normalization.
 
 ## Original Skin reuse
 
@@ -65,7 +79,7 @@ Reverse remains the only authority for original behavior.
   those lines or outside the viewport; there is no lane domain.
 - A rhythm front is centered at `lane + (width - 1) / 2`. Directional incoming
   anchor is `lane`; outgoing anchor is the span edge.
-- `simulator.product-compatible-node-visual-routing-v2` preserves each locally compatible node's selected Normal/Skill/Flick/Long/Directional family, integer source-center lane key and original child ownership even when one SV or continuous node makes the whole chart use the product timeline. A Slide root uses Long and owns the chain's only LongFlash; each visible non-terminal child uses `note_slide_among` with no flash; the ordinary terminal uses Long and terminal Flick/Directional nodes retain their corresponding animated icon children. Hidden nodes create mesh continuity but no front owner. Integer center lanes consume their exact `0..6` key. Fractional/outside centers use the fixed selected-family center glyph as an explicitly product-owned marker, never a nearest/default/first lookup or original-equivalence claim.
+- `simulator.product-compatible-node-visual-routing-v2` preserves each locally compatible node's selected Normal/Skill/Flick/Long/Directional family, integer source-center lane key and original child ownership when that node's own axis or topology requires extension handling. A Slide root uses Long and owns the chain's only LongFlash; each visible non-terminal child uses `note_slide_among` with no flash; the ordinary terminal uses Long and terminal Flick/Directional nodes retain their corresponding animated icon children. Hidden nodes create mesh continuity but no front owner. Integer center lanes consume their exact `0..6` key. Fractional/outside centers use the fixed selected-family center glyph as an explicitly product-owned marker, never a nearest/default/first lookup or original-equivalence claim.
 - `GE-PS-PRODUCT-VISUAL-LIFECYCLE` reuses the ordinary Note scale formula, including its uniform front transform: width is carried by authored span/Slide mesh and never by X-only deformation of the front Sprite. Product fronts use source sorting order 70, directional icons 71, curve Mesh precedes fronts and HUD remains at 100; chart authored order is never a renderer sorting order. Product Slide mesh keeps the ordinary base-mesh white RGBA `(1,1,1,0.8)`, 22 vertices/60 indices and selected curve material; Sync and Mesh publish explicit stable ordering. Hidden connections affect front ownership, not an invented whole-chain dim tint. `simulator.garupa-slide-note-visible-domain-v1` shows an unjudged front only for its own TimingGroup-projected curve `[0.002,1]` and publishes exactly the portion of every adjacent Slide segment intersecting that same domain. It expressly forbids the former screenshot-derived bottom-left threshold mask, because that made a connection begin closer to the judgment line than its endpoint notes. A negative/zero-SV segment whose raw endpoint projection overflows but whose curve interval crosses `[0.002,1]` is reprojected section-by-section from finite clipped curves; it is not silently dropped or clamped as an endpoint. Width above seven uses the one-head vertical aspect branch and authored horizontal span; it is not numerically clamped. Frame rejection discards the complete product transaction. This is reported as product-extension fidelity, not original resource parity.
 
 ## TimingGroup and SV
@@ -124,8 +138,8 @@ Reverse remains the only authority for original behavior.
 
 ## Manual product owner
 
-Manual behavior is a product contract; it is not taken from old main, which was
-Auto-only.
+The following rules define additional graph/coordinate behaviour. They do not
+exempt ordinary judgement or gesture rules from the original implementation.
 
 - A chain owns one finger continuity state. Hidden nodes are geometry anchors.
   Every visible node is judged by its own type.
@@ -169,10 +183,11 @@ Auto-only.
 Closed fields use `closed-product-extension`, separate from `closed-portable`:
 `garupaSvTimingGroup`, `garupaContinuousLaneOutside`,
 `garupaExtendedSlideGraph` and `garupaExtendedManualInput`. Receipts distinguish
-`standard-original-compatible` from `garupa-product-extension` chart fidelity;
+`standard-original-compatible` from `garupa-product-extension` capability receipts;
+these labels describe whether additional semantics are used, never whole-chart execution routes.
 Retry and MoveTime reject any fresh-generation fidelity mismatch.
 
-Portable product raster acceptance uses production Browser decoding and actual
+Historical product raster acceptance (before the shared-path change; not current acceptance) used production Browser decoding and actual
 Pixi/WebGL in three fresh WebView2 processes. The initial/negative-SV/zero-SV/
 restored-positive stable digest is
 `80b944d36aa34bd343b9acc36d3045012706e996ebcd4d1b671a413173cfcd89`.

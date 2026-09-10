@@ -211,6 +211,33 @@ export class NoteManager {
     readonly OrdinarySlideChildState[]
   >();
 
+  private extensionSyncConnection: (first: NoteInformation, second: NoteInformation) => boolean = () => true;
+
+  setExtensionSyncConnection(filter: (first: NoteInformation, second: NoteInformation) => boolean): void {
+    this.extensionSyncConnection = filter;
+  }
+
+  getCommittedNotePresentation(source: NoteInformation) {
+    for (const note of this.activeNotesValue) {
+      const root = note.noteInformation;
+      if (root === null) continue;
+      const index = root.slideNoteList.indexOf(source);
+      if (root !== source && index < 0) continue;
+      const child = index < 0 ? undefined : this.ordinarySlideRenderStates.get(note)?.[index];
+      const state = child?.lifecycle ?? this.ordinaryRenderMotionStates.get(note);
+      if (state === undefined) return null;
+      return {
+        position: state.renderedTransform.position,
+        localScaleX: state.renderedTransform.localScale.x,
+        lossyScaleX: createRenderFloat32(calculateOrdinaryNoteWorldScaleAxis(
+          state.renderedTransform.localScale.x.value, state.motionState.noteParentScale.value,
+        )),
+        visible: child === undefined ? this.syncEndpointMoving(note, false) : child.visible && child.lifecycle.phase === "move",
+      };
+    }
+    return null;
+  }
+
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
     readonly slideNoteManager: SlideNoteManager,
@@ -1377,6 +1404,11 @@ export class NoteManager {
     targetA: NoteBase, afterA: boolean, targetB: NoteBase, afterB: boolean,
     existing: ActiveOrdinarySyncLine | null = null,
   ): SimulatorResult<void> {
+    const childrenA = targetA.noteInformation?.slideNoteList;
+    const childrenB = targetB.noteInformation?.slideNoteList;
+    const first = afterA ? childrenA?.[childrenA.length - 1] : targetA.noteInformation;
+    const second = afterB ? childrenB?.[childrenB.length - 1] : targetB.noteInformation;
+    if (first && second && !this.extensionSyncConnection(first, second)) return ok(undefined);
     if (!this.inGameCalculatedData.isSyncLineEnabled) {
       this.suppressedOrdinarySyncLinePairCountValue += 1;
       return ok(undefined);

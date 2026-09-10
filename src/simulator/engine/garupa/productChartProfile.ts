@@ -1,7 +1,6 @@
 import type { GarupaChartJsonDirection, GarupaChartJsonSlideConnection } from "../../../chart";
 import type { ChartConstructionResult, NoteInformation } from "../chart/types";
 
-export type GarupaProductChartRoute = "original-compatible" | "product-extension";
 export type GarupaProductTimingGroupId = "#Global" | `#${string}`;
 
 export interface GarupaProductSvEvent {
@@ -54,7 +53,10 @@ export interface GarupaProductSlideChain {
 }
 
 export interface GarupaProductChartProfile {
-  readonly route: GarupaProductChartRoute;
+  readonly originalItemIndices: ReadonlySet<number>;
+  readonly hasExtensions: boolean;
+  readonly originalSources: ReadonlyMap<string, NoteInformation>;
+  readonly authoredNodes: readonly GarupaProductNode[];
   readonly svEvents: readonly GarupaProductSvEvent[];
   readonly nodes: readonly GarupaProductNode[];
   readonly visibleNodes: readonly GarupaProductNode[];
@@ -80,22 +82,26 @@ export function getGarupaProductChartProfile(
 }
 
 export function freezeGarupaProductChartProfile(input: {
-  readonly route: GarupaProductChartRoute;
+  readonly originalItemIndices: ReadonlySet<number>;
   readonly svEvents: GarupaProductSvEvent[];
   readonly nodes: GarupaProductNode[];
   readonly slideChains: GarupaProductSlideChain[];
 }): GarupaProductChartProfile {
-  const nodes = Object.freeze(input.nodes.map((node) => {
+  const authoredNodes = Object.freeze(input.nodes.map((node) => {
     if (node.scoringSource !== null) freezeProductScoringSource(node.scoringSource);
     return Object.freeze(node);
   }));
+  const nodes = Object.freeze(authoredNodes.filter((node) => !input.originalItemIndices.has(node.chartItemIndex)));
   const visibleNodes = Object.freeze(nodes.filter((node) => node.visible));
-  const syncPairs = freezeProductSyncPairs(nodes);
-  const nodeByIdentity = new Map<string, GarupaProductNode>();
+  const nodeByIdentity = new Map(authoredNodes.map((node) => [node.identity, node]));
+  const syncPairs = Object.freeze(freezeProductSyncPairs(authoredNodes).filter((pair) => {
+    const first = nodeByIdentity.get(pair.firstNodeIdentity)!;
+    const second = nodeByIdentity.get(pair.secondNodeIdentity)!;
+    return !input.originalItemIndices.has(first.chartItemIndex) || !input.originalItemIndices.has(second.chartItemIndex);
+  }));
   const scoringNodeBySource = new WeakMap<NoteInformation, GarupaProductNode>();
-  for (const node of nodes) {
-    nodeByIdentity.set(node.identity, node);
-    if (node.scoringSource !== null) scoringNodeBySource.set(node.scoringSource, node);
+  for (const node of authoredNodes) {
+    if (!input.originalItemIndices.has(node.chartItemIndex) && node.scoringSource !== null) scoringNodeBySource.set(node.scoringSource, node);
   }
   const slideChains = Object.freeze(input.slideChains.map((chain) => Object.freeze({
     ...chain,
@@ -103,7 +109,10 @@ export function freezeGarupaProductChartProfile(input: {
     visibleConnectionIdentities: Object.freeze([...chain.visibleConnectionIdentities]),
   })));
   return Object.freeze({
-    route: input.route,
+    originalItemIndices: input.originalItemIndices,
+    originalSources: new Map(),
+    authoredNodes,
+    hasExtensions: nodes.length > 0,
     svEvents: Object.freeze(input.svEvents.map((event) => Object.freeze(event))),
     nodes,
     visibleNodes,

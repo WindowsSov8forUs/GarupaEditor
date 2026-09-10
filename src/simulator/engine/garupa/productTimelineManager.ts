@@ -2,6 +2,7 @@ import type {
   AutoLiveJudgementOwnership,
   AutoLiveJudgementRequest,
 } from "../data/autoLiveJudgement";
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import {
   ManualTouchPhase,
@@ -14,6 +15,7 @@ import {
   JudgeTiming,
   NoteResultType,
   judgeManualNote,
+  getManualScreenDistanceRate,
   type JudgeTimingValue,
   type ManualJudgementOwnership,
   type ManualJudgementRequest,
@@ -89,7 +91,7 @@ interface ProductFingerOwner {
 }
 
 export interface GarupaProductTimelineSnapshot {
-  readonly route: "product-extension";
+  readonly kind: "note-extensions";
   readonly visibleNodeCount: number;
   readonly judgedNodeCount: number;
   readonly missedNodeCount: number;
@@ -126,6 +128,8 @@ export class GarupaProductTimelineManager {
     private readonly scene: GarupaProductSceneLayout | null = null,
     private readonly judgementAdjustValueB = 0,
     private readonly isMoveTime: () => boolean = () => false,
+    private readonly originalHandledTouch: (fingerId: number) => boolean = () => false,
+    private readonly manualGeometry: SimulatorManualInputGeometryBackend | null = null,
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
@@ -139,13 +143,13 @@ export class GarupaProductTimelineManager {
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("simulator.garupa-extension.initialize-after-dispose", "A disposed product timeline is terminal.");
     if (this.initialized) return ok(undefined);
-    if (this.chart.route !== "product-extension") {
+    if (!this.chart.hasExtensions) {
       return rejected(
         "simulator.garupa-extension.invalid-timeline-route",
-        "Only a product-extension profile may create the sibling product timeline owner.",
+        "Note extension handling requires at least one note that cannot use the unextended original behaviour.",
       );
     }
-    if (this.mode.inputMode === "manual" && this.scene === null) {
+    if (this.mode.inputMode === "manual" && (this.scene === null || this.manualGeometry === null)) {
       return rejected(
         "simulator.garupa-extension.manual-scene-required",
         "Product Manual requires the schema-6 continuous input scene; it cannot fall back to original buttons.",
@@ -191,17 +195,6 @@ export class GarupaProductTimelineManager {
     }
     this.pendingManualFrame = Object.freeze({ touches: Object.freeze(touches) });
     return ok(undefined);
-  }
-
-  resolveContinuousInput(position: ManualInputPosition): SimulatorResult<null> {
-    if (!this.initialized || this.disposed || this.mode.inputMode !== "manual" || this.scene === null) {
-      return rejected(
-        "simulator.garupa-extension.resolve-outside-manual",
-        "Continuous input resolution exists only in an initialized product Manual session.",
-      );
-    }
-    const lane = this.scene.screenToContinuousLane(position);
-    return lane.status === "ok" ? ok(null) : lane;
   }
 
   update(deltaTimeSeconds: number): SimulatorResult<void> {
@@ -467,6 +460,7 @@ export class GarupaProductTimelineManager {
     judgementPosition: number,
     judged: GarupaProductNode[],
   ): SimulatorResult<void> {
+    if (this.originalHandledTouch(touch.fingerId) && !this.fingers.has(touch.fingerId)) return ok(undefined);
     if (touch.phase === ManualTouchPhase.Began) {
       if (this.fingers.has(touch.fingerId)) {
         return rejected("simulator.garupa-extension.duplicate-finger-began", "One product finger cannot Begin twice before Ended.");
@@ -498,7 +492,9 @@ export class GarupaProductTimelineManager {
       return ok(undefined);
     }
     if (owner.pendingGesture !== null) {
-      if (gestureSucceeded(owner.pendingGesture, touch.position)) {
+      const gesture = gestureSucceeded(this.manualGeometry!, owner.pendingGesture, touch.position);
+      if (gesture.status !== "ok") return gesture;
+      if (gesture.value) {
         const pending = owner.pendingGesture;
         const submitted = this.submitManual(pending.node, pending.result, pending.timing);
         if (submitted.status !== "ok") return submitted;
@@ -813,7 +809,7 @@ export class GarupaProductTimelineManager {
 
   snapshot(): GarupaProductTimelineSnapshot {
     return Object.freeze({
-      route: "product-extension" as const,
+      kind: "note-extensions" as const,
       visibleNodeCount: this.orderedVisibleNodes.length,
       judgedNodeCount: this.judgedNodeCount,
       missedNodeCount: this.missedNodeCount,
@@ -851,14 +847,19 @@ function productJudgeNoteType(node: GarupaProductNode): number {
   return 0;
 }
 
-function gestureSucceeded(pending: PendingGesture, current: ManualInputPosition): boolean {
-  const dx = Math.fround(current.x - pending.origin.x);
-  const dy = Math.fround(current.y - pending.origin.y);
-  if (pending.node.type === "Flick") {
-    return Math.fround(Math.hypot(dx, dy) / 360) > Math.fround(0.04);
+function gestureSucceeded(
+  geometry: SimulatorManualInputGeometryBackend,
+  pending: PendingGesture,
+  current: ManualInputPosition,
+): SimulatorResult<boolean> {
+  const directional = pending.node.type === "Directional";
+  if (directional && !(pending.node.direction === "Left" ? current.x < pending.origin.x : current.x > pending.origin.x)) {
+    return ok(false);
   }
-  const correct = pending.node.direction === "Left" ? dx < 0 : dx > 0;
-  return correct && Math.fround(Math.abs(dx) / 360) > Math.fround(0.01);
+  const rate = getManualScreenDistanceRate(geometry, {
+    beganPosition: pending.origin, currentPosition: current, horizontalOnly: directional,
+  });
+  return rate.status === "ok" ? ok(rate.value > Math.fround(directional ? 0.01 : 0.04)) : rate;
 }
 
 function rejected<T>(capability: string, boundary: string): SimulatorResult<T> {

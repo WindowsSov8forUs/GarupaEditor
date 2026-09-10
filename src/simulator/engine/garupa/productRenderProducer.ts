@@ -10,7 +10,7 @@ import type {
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { getOrdinaryNoteArrivalSeconds } from "../rendering/ordinaryNoteGeometry";
+import { buildNoteMeshStrip, buildOrdinarySyncLine, calculateNoteMeshHalfWidth, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
 import { RenderOwnerTransaction, type RenderEngineResourceBindings } from "../rendering/renderCommandProducer";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
@@ -26,6 +26,7 @@ interface ProductNodeSample {
   readonly position: RenderVector3 | null;
   readonly uniformScale: RenderFloat32 | null;
   readonly visible: boolean;
+  readonly syncTarget?: OrdinarySyncLineTargetState;
 }
 
 export interface GarupaProductRenderSnapshot {
@@ -55,12 +56,16 @@ export class GarupaProductRenderProducer {
     private readonly specificSpeed: RenderFloat32,
     private readonly noteColor: boolean,
     private readonly syncLine: boolean,
+    private readonly syncLineEdgeMargin: RenderFloat32,
+    private readonly originalPresentation: (identity: string) => SimulatorResult<{
+      readonly target: OrdinarySyncLineTargetState; readonly visible: boolean;
+    } | null>,
   ) {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
   }
 
   validate(): SimulatorResult<void> {
-    if (this.chart.route !== "product-extension") return ok(undefined);
+    if (!this.chart.hasExtensions) return ok(undefined);
     if (typeof this.sessionId !== "string" || this.sessionId.length === 0 ||
       this.renderer.snapshot().sessionId !== this.sessionId ||
       this.renderer.snapshot().state !== "ready" ||
@@ -97,7 +102,7 @@ export class GarupaProductRenderProducer {
         "Product frame projection requires finite current position, one owner-produced judgement list and an exact nonnegative Float32 outer-frame delta.",
       );
     }
-    if (this.chart.route !== "product-extension") return ok(null);
+    if (!this.chart.hasExtensions) return ok(null);
     const arrival = getOrdinaryNoteArrivalSeconds(this.specificSpeed);
     if (arrival.status !== "ok") return arrival;
     const arrivalMilliseconds = arrival.value.value * 1000;
@@ -112,7 +117,7 @@ export class GarupaProductRenderProducer {
       );
       if (displacement.status !== "ok") return displacement;
       const progress = 1 - displacement.value / arrivalMilliseconds;
-      const curve = Math.pow(1.1, 50 * (progress - 1));
+      const curve = calculateNoteMotionCurve(progress, true);
       let position: RenderVector3 | null = null;
       let uniformScale: RenderFloat32 | null = null;
       if (Number.isFinite(curve)) {
@@ -150,6 +155,21 @@ export class GarupaProductRenderProducer {
 
     if (this.syncLine) {
       for (const pair of this.chart.syncPairs) {
+        for (const identity of [pair.firstNodeIdentity, pair.secondNodeIdentity]) {
+          if (samples.has(identity)) continue;
+          const actual = this.originalPresentation(identity);
+          if (actual.status !== "ok") return actual;
+          const node = this.chart.nodeByIdentity.get(identity)!;
+          samples.set(identity, {
+            node, curve: 0,
+            position: actual.value?.target.position ?? null,
+            uniformScale: actual.value?.target.localScaleX ?? null,
+            visible: actual.value?.visible ?? false,
+            syncTarget: actual.value?.target,
+          });
+        }
+      }
+      for (const pair of this.chart.syncPairs) {
         const first = samples.get(pair.firstNodeIdentity)!;
         const second = samples.get(pair.secondNodeIdentity)!;
         const objectId = syncPairObjectId(pair.identity);
@@ -181,12 +201,12 @@ export class GarupaProductRenderProducer {
           ordering: ordering(3, 69, objectId),
           maskObjectId: null,
         }));
-        commands.push(command(commands.length, productSyncLine(
-          objectId,
-          requireProjectedPosition(first),
-          requireProjectedPosition(second),
-          requireUniformScale(first),
-        )));
+        const line = buildOrdinarySyncLine({
+          targetA: syncTarget(first), targetB: syncTarget(second), edgeMargin: this.syncLineEdgeMargin,
+        });
+        if (line.status !== "ok") return line;
+        commands.push(command(commands.length, { kind: "set-line", renderObjectId: objectId,
+          ...line.value, materialRole: "sync-line" }));
         if (!plannedVisible.has(objectId)) {
           commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
           plannedVisible.add(objectId);
@@ -683,10 +703,6 @@ function slideMesh(
   to: ProductNodeSample,
   scene: GarupaProductSceneLayout,
 ): SimulatorResult<Omit<Extract<RenderCommand, { kind: "set-mesh" }>,  "sessionId" | "sequence" | "frame" | "substep">> {
-  const vertices: RenderVector3[] = [];
-  const uv: RenderVector2[] = [];
-  const colors: RenderColor[] = [];
-  const indices: number[] = [];
   const interval = visibleSegmentInterval(from.curve, to.curve);
   if (interval === null) return rejected(
     "render.garupa-product.invisible-slide-mesh",
@@ -714,8 +730,7 @@ function slideMesh(
         scene.screenToSafeAreaRatio.value,
       )
     : null;
-  for (let section = 0; section <= 10; section += 1) {
-    const sectionRatio = Math.fround(section / 10);
+  const mesh = buildNoteMeshStrip(10, (sectionRatio) => {
     const ratio = Math.fround(
       Math.fround(interval[0]) + Math.fround(
         Math.fround(Math.fround(interval[1]) - Math.fround(interval[0])) * sectionRatio,
@@ -765,29 +780,13 @@ function slideMesh(
       );
       halfWidth = interpolateSlideBoundary(fromBoundary, toBoundary, stableRatio);
     }
-    vertices.push(
-      vector3(Math.fround(x - halfWidth), y, 0),
-      vector3(Math.fround(x + halfWidth), y, 0),
-    );
-    uv.push(vector2(0, sectionRatio), vector2(1, sectionRatio));
-    colors.push(
-      color(1, 1, 1, 0.8),
-      color(1, 1, 1, 0.8),
-    );
-    if (section < 10) {
-      const left = section * 2;
-      indices.push(left, left + 2, left + 1, left + 1, left + 2, left + 3);
-    }
-  }
-  return ok({
-    kind: "set-mesh",
-    renderObjectId,
-    vertices: Object.freeze(vertices),
-    indices: Object.freeze(indices),
-    uv: Object.freeze(uv),
-    colors: Object.freeze(colors),
-    materialRole: "curve-note",
-  });
+    return ok(Object.freeze([
+      vector2(Math.fround(x - halfWidth), y),
+      vector2(Math.fround(x + halfWidth), y),
+    ] as const));
+  }, color(1, 1, 1, 0.8));
+  if (mesh.status !== "ok") return mesh;
+  return ok({ kind: "set-mesh", renderObjectId, ...mesh.value, materialRole: "curve-note" });
 }
 
 function interpolateSlideBoundary(first: number, second: number, ratio: number): number {
@@ -814,25 +813,15 @@ export function calculateGarupaProductSlideHalfWidth(
     uniformScale < 0 || authoredWidth <= 0 || screenToSafeAreaRatio <= 0) {
     throw new Error("Garupa product Slide width requires finite non-negative scale and positive authored width/layout rates.");
   }
-  return Math.fround(
-    Math.fround(Math.fround(uniformScale) * Math.fround(authoredWidth)) *
-      Math.fround(screenToSafeAreaRatio),
-  );
+  return calculateNoteMeshHalfWidth(Math.fround(uniformScale), Math.fround(authoredWidth), Math.fround(screenToSafeAreaRatio));
 }
 
-function productSyncLine(
-  renderObjectId: string,
-  start: RenderVector3,
-  end: RenderVector3,
-  uniformScale: RenderFloat32,
-): Omit<Extract<RenderCommand, { kind: "set-line" }>, "sessionId" | "sequence" | "frame" | "substep"> {
-  return {
-    kind: "set-line",
-    renderObjectId,
-    start,
-    end,
-    width: f32(Math.fround(uniformScale.value * Math.fround(0.2800000011920929))),
-    materialRole: "sync-line",
+function syncTarget(sample: ProductNodeSample): OrdinarySyncLineTargetState {
+  return sample.syncTarget ?? {
+    position: requireProjectedPosition(sample),
+    localScaleX: requireUniformScale(sample),
+    lossyScaleX: requireUniformScale(sample),
+    gameNoteType: sample.node.scoringSource!.gameNoteType,
   };
 }
 

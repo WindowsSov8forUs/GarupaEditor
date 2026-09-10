@@ -33,7 +33,7 @@ export function createConstructedChartScoringPlan(
   const productProfile = getGarupaProductChartProfile(chart);
   const multipleDirectionalIdentities = createMultipleDirectionalIdentityMap(chart);
   const multipleDirectionalGroups = new Map<string, Candidate>();
-  if (productProfile?.route === "product-extension") {
+  if (productProfile?.hasExtensions) {
     for (const node of productProfile.visibleNodes) {
       const source = node.scoringSource;
       if (source === null) continue;
@@ -45,7 +45,8 @@ export function createConstructedChartScoringPlan(
         groupIdentity: null,
       });
     }
-  } else for (const batch of chart.noteBatches) {
+  }
+  for (const batch of chart.noteBatches) {
     for (const source of batch.informationList) {
       if (!isScoringRoot(source)) continue;
       const groupIdentity = multipleDirectionalIdentities.get(source) ?? null;

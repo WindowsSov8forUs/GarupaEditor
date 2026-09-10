@@ -132,7 +132,7 @@ export class ParticleCommandProducer {
       for (const note of batch.informationList) this.registerNote(note, null);
     }
     const product = getGarupaProductChartProfile(chart);
-    if (product?.route === "product-extension") {
+    if (product?.hasExtensions) {
       for (const chain of product.slideChains) {
         const nodes = chain.visibleConnectionIdentities.map((identity) => product.nodeByIdentity.get(identity)!);
         for (const node of nodes) this.productSlideNodesByIdentity.set(node.identity, Object.freeze(nodes));

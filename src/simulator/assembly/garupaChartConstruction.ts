@@ -80,21 +80,21 @@ export function constructChartFromGarupaChartJson(
 ): SimulatorResult<ChartConstructionResult> {
   const profile = buildGarupaProductChartProfile(chart);
   if (profile.status !== "ok") return profile;
-  const constructed = profile.value.route === "original-compatible"
-    ? constructOriginalCompatibleGarupaChart(chart)
-    : constructOriginalCompatibleGarupaChart(
-        chart.filter((item) => item.type === "BPM"),
-      );
+  const originalSources = new Map<string, NoteInformation>();
+  const extensions = Object.freeze({ ...profile.value, originalSources });
+  const constructed = constructOriginalCompatibleGarupaChart(chart, extensions, originalSources);
   if (constructed.status !== "ok") return constructed;
   const axis = createGarupaProductTimingGroupAxisProfile(constructed.value, profile.value);
   if (axis.status !== "ok") return axis;
-  registerGarupaProductChartProfile(constructed.value, profile.value);
+  registerGarupaProductChartProfile(constructed.value, extensions);
   registerGarupaProductTimingGroupAxisProfile(constructed.value, axis.value);
   return constructed;
 }
 
 function constructOriginalCompatibleGarupaChart(
   chart: GarupaChartJson,
+  extensions: GarupaProductChartProfile,
+  originalSources: Map<string, NoteInformation>,
 ): SimulatorResult<ChartConstructionResult> {
   const bpmItems: Array<{ readonly sourceOrder: number; readonly absolutePos: number; readonly value: number; readonly text: string }> = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
@@ -123,13 +123,19 @@ function constructOriginalCompatibleGarupaChart(
     }
   }
 
-  let nextIndex = 0;
+  // Extension sources and original sources share the same scoring namespace.
+  let nextIndex = extensions.nodes.reduce((next, node) =>
+    Math.max(next, (node.scoringSource?.index ?? -1) + 1), 0);
   let slideOrdinal = 0;
   let isMultiRangeNotes = false;
   const records: PositionedRecord[] = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder];
     if (item === undefined || item.type === "SV" || item.type === "BPM") continue;
+    if (!extensions.originalItemIndices.has(sourceOrder)) {
+      if (item.type === "Slide") slideOrdinal += 1;
+      continue;
+    }
     if (item.type === "Slide") {
       const slide = createSlide(item, sourceOrder, slideOrdinal, nextIndex);
       if (slide.status !== "ok") return slide;
@@ -212,6 +218,14 @@ function constructOriginalCompatibleGarupaChart(
     left.sourceOrder - right.sourceOrder ||
     left.localOrder - right.localOrder);
   const noteBatches = createBatches(records);
+  const roots = new Map(records.filter((record) => record.localOrder === 0).map((record) => [record.sourceOrder, record.note]));
+  for (const node of extensions.authoredNodes) {
+    const root = roots.get(node.chartItemIndex);
+    if (root === undefined) continue;
+    const source = node.connectionIndex === null || node.connectionIndex === 0
+      ? root : root.slideNoteList[node.connectionIndex - 1];
+    if (source !== undefined) originalSources.set(node.identity, source);
+  }
   const changeItems = bpmItems.filter((item) => item.absolutePos > 0);
   const result = freezeChartConstructionResult({
     noteBatches,
@@ -232,7 +246,6 @@ function buildGarupaProductChartProfile(
   const svEvents: GarupaProductSvEvent[] = [];
   const nodes: GarupaProductNode[] = [];
   const slideChains: GarupaProductSlideChain[] = [];
-  let route: GarupaProductChartProfile["route"] = "original-compatible";
   let authoredOrder = 0;
   let scoringIndex = 0;
 
@@ -242,7 +255,6 @@ function buildGarupaProductChartProfile(
     if (item.type === "SV") {
       const position = garupaBeatToAbsolutePosition(item.beat);
       if (position.status !== "ok") return position;
-      route = "product-extension";
       svEvents.push({
         sourceOrder,
         absolutePosition: position.value,
@@ -257,8 +269,6 @@ function buildGarupaProductChartProfile(
       const connectionIdentities: string[] = [];
       const visibleConnectionIdentities: string[] = [];
       let containsHidden = false;
-      if (!isOriginalCompatibleSlide(item)) route = "product-extension";
-      if (ownerGroup !== "#Global") route = "product-extension";
       for (let connectionIndex = 0; connectionIndex < item.connections.length; connectionIndex += 1) {
         const connection = item.connections[connectionIndex]!;
         const built = buildProductNode(
@@ -279,9 +289,6 @@ function buildGarupaProductChartProfile(
         if (built.value.visible) {
           visibleConnectionIdentities.push(built.value.identity);
           scoringIndex += 1;
-        }
-        if (!isOriginalCompatibleLane(connection) || built.value.timingGroup !== "#Global") {
-          route = "product-extension";
         }
       }
       slideChains.push({
@@ -306,16 +313,28 @@ function buildGarupaProductChartProfile(
     );
     if (built.status !== "ok") return built;
     nodes.push(built.value);
-    if (!isOriginalCompatibleLane(item) || built.value.timingGroup !== "#Global") {
-      route = "product-extension";
-    }
   }
 
+  // A group name or a neutral SV does not change note behaviour. Only notes
+  // whose own geometry, topology or effective axis needs an extension use it.
+  const needsAxisExtension = (group: GarupaProductTimingGroupId): boolean =>
+    svEvents.some((event) => (event.timingGroup === "#Global" || event.timingGroup === group) && event.value !== 1);
+  const originalItemIndices = new Set<number>();
+  for (const [index, item] of chart.entries()) {
+    if (item.type === "BPM" || item.type === "SV") continue;
+    const group = productTimingGroup(item.timingGroup);
+    const compatible = item.type === "Slide"
+      ? isOriginalCompatibleSlide(item) && item.connections.every((node) =>
+          isOriginalCompatibleLane(node) && !needsAxisExtension(
+            node.timingGroup === undefined ? group : productTimingGroup(node.timingGroup)))
+      : isOriginalCompatibleLane(item) && !needsAxisExtension(group);
+    if (compatible) originalItemIndices.add(index);
+  }
   return ok(freezeGarupaProductChartProfile({
-    route,
+    originalItemIndices,
     svEvents,
     nodes,
-    slideChains,
+    slideChains: slideChains.filter((chain) => !originalItemIndices.has(chain.chartItemIndex)),
   }));
 }
 

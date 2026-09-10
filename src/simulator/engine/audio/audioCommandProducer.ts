@@ -112,7 +112,7 @@ export class AudioCommandProducer {
       for (const note of batch.informationList) this.registerNote(note);
     }
     const product = getGarupaProductChartProfile(chart);
-    if (product?.route === "product-extension") {
+    if (product?.hasExtensions) {
       for (const node of product.visibleNodes) {
         if (node.scoringSource !== null) this.registerNote(node.scoringSource);
       }

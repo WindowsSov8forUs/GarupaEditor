@@ -175,11 +175,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       deltaTimeSeconds,
     ) ?? ok(undefined);
     if (productInput.status !== "ok") return productInput;
-    const originalInputFrame = this.productTimeline === null
-      ? inputFrame
-      : Object.freeze({ touches: Object.freeze([]) });
     const inputValidation =
-      this.inGameManager.inputManager.prepareOuterFrame(originalInputFrame, deltaTimeSeconds);
+      this.inGameManager.inputManager.prepareOuterFrame(inputFrame, deltaTimeSeconds);
     if (inputValidation.status !== "ok") {
       return inputValidation;
     }
@@ -223,9 +220,6 @@ class SimulatorEngineHost implements SimulatorEngine {
     const copied = copyManualInputPosition(position);
     if (copied.status !== "ok") {
       return copied;
-    }
-    if (this.productTimeline !== null) {
-      return this.productTimeline.resolveContinuousInput(copied.value);
     }
     const resolved = this.backends.manualInputGeometry.resolveButton(copied.value);
     if (resolved.status !== "ok") {
@@ -1037,7 +1031,7 @@ export function createSimulatorEngine(
   );
   const productProfile = getGarupaProductChartProfile(input.chart);
   const productLaneEffectButtons = new Map<number, readonly number[]>();
-  if (productProfile?.route === "product-extension") {
+  if (productProfile?.hasExtensions) {
     for (const node of productProfile.visibleNodes) {
       const noteIndex = node.scoringSource?.index;
       if (noteIndex === undefined || !Number.isInteger(node.spanStart) ||
@@ -1090,7 +1084,7 @@ export function createSimulatorEngine(
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   let productTimeline: GarupaProductTimelineManager | null = null;
-  if (productProfile?.route === "product-extension") {
+  if (productProfile?.hasExtensions) {
     const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);
     if (productAxis === undefined) {
       return integrityFailure(
@@ -1122,6 +1116,18 @@ export function createSimulatorEngine(
           input.rendering.ordinaryNoteScene.specificSpeed,
           originalLiveSettings.noteColor,
           originalLiveSettings.syncLine,
+          input.rendering.ordinaryNoteScene.syncLineEdgeMargin!,
+          (identity) => {
+            const source = productProfile.originalSources.get(identity);
+            if (source === undefined) return ok(null);
+            const presentation = noteManager.getCommittedNotePresentation(source);
+            if (presentation === null) return ok(null);
+            if (presentation.lossyScaleX.status !== "ok") return presentation.lossyScaleX;
+            return ok({ visible: presentation.visible, target: {
+              position: presentation.position, localScaleX: presentation.localScaleX,
+              lossyScaleX: presentation.lossyScaleX.value, gameNoteType: source.gameNoteType,
+            } });
+          },
         );
     productTimeline = new GarupaProductTimelineManager(
       productProfile,
@@ -1132,6 +1138,8 @@ export function createSimulatorEngine(
       productScene ?? null,
       originalLiveSettings.core.judgementAdjustValueB,
       () => inGameManager.isMoveTime,
+      (fingerId) => inputDispatcher.handledTouch(fingerId),
+      backends.manualInputGeometry,
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -1176,6 +1184,22 @@ export function createSimulatorEngine(
     return manualJudgementOwner;
   }
   const inputManager = new InputManager(inGameCalculatedData.mode);
+  if (productProfile?.hasExtensions) {
+    const originalNodes = new Map([...productProfile.originalSources].map(([identity, source]) =>
+      [source, productProfile.nodeByIdentity.get(identity)!] as const));
+    const extensionPositions = new Map<number, number[]>();
+    for (const node of productProfile.visibleNodes) {
+      const positions = extensionPositions.get(node.absolutePosition) ?? [];
+      positions.push(node.authoredOrder);
+      extensionPositions.set(node.absolutePosition, positions);
+    }
+    noteManager.setExtensionSyncConnection((first, second) => {
+      const a = originalNodes.get(first), b = originalNodes.get(second);
+      if (a === undefined || b === undefined || a.absolutePosition !== b.absolutePosition) return true;
+      return !(extensionPositions.get(a.absolutePosition) ?? []).some((order) =>
+        order > Math.min(a.authoredOrder, b.authoredOrder) && order < Math.max(a.authoredOrder, b.authoredOrder));
+    });
+  }
   const inputDispatcher = new GamePlayInputDispatcher(noteManager, tapLaneEffectOwner);
   const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
   if (inputDispatcherRegistration.status !== "ok") {

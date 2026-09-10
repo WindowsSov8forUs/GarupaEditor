@@ -287,6 +287,11 @@ export interface GamePlayInputDispatcherSnapshot {
 }
 
 export class GamePlayInputDispatcher implements ManualInputDispatcher {
+  private readonly handledTouches = new Set<number>();
+
+  handledTouch(fingerId: number): boolean {
+    return this.handledTouches.has(fingerId);
+  }
   private readonly buttonsValue: readonly GamePlayButton[];
   private readonly ownedButtons = new WeakSet<GamePlayButton>();
   private readonly ownedPlans = new WeakSet<GamePlayInputPlan>();
@@ -442,7 +447,10 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     this.ownedPlans.delete(ownedPlan);
     const laneEffectExternal = ownedPlan.tapLaneEffectTransaction?.commitBackend() ?? ok(undefined);
     if (laneEffectExternal.status !== "ok") return laneEffectExternal;
+    this.handledTouches.clear();
     for (const operation of ownedPlan.operations) {
+      if (operation.buttonPlan?.note !== null && operation.buttonPlan?.note !== undefined &&
+          operation.buttonPlan.phase !== "none") this.handledTouches.add(operation.fingerId);
       if (operation.inputButton !== null) {
         this.buttonWithFingerId[operation.fingerId] = operation.inputButton;
       }
