@@ -261,6 +261,13 @@ export class InGameManager {
     }
     const productUpdate = this.garupaProduct?.update(deltaTimeSeconds) ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
+    const holdSounds = [...this.noteManager.takeHoldSounds(), ...this.garupaProduct?.takeHoldSounds() ?? []];
+    if (holdSounds.length > 0 && this.audioProducer !== null) {
+      const soundPlan = this.audioProducer.preflightHoldSounds(holdSounds);
+      if (soundPlan.status !== "ok") return this.latchFault(soundPlan);
+      const committed = soundPlan.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
     if (
       !this.degradedHabahiroLaneChanged &&
       this.renderProducer?.isDegradedHabahiro() === true &&

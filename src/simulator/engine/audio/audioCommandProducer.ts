@@ -26,6 +26,11 @@ export interface SimulatorAudioSessionInput {
   readonly seGainBits: string;
 }
 
+export interface HoldSoundEvent {
+  readonly ownerKey: string;
+  readonly action: "start" | "fade";
+}
+
 interface TapStatusSnapshot {
   readonly beforeJudgeNoteType: number;
   readonly beforeMultipleDirectionalFlickNoteCount: number;
@@ -367,6 +372,23 @@ export class AudioCommandProducer {
     return this.preflightCommands(commands);
   }
 
+  preflightHoldSounds(events: readonly HoldSoundEvent[]): SimulatorResult<AudioOwnerTransaction> {
+    const active = new Set(this.backend.snapshot().semantic.holds.map(hold => hold.ownerKey));
+    const commands: AudioCommand[] = [];
+    for (const event of events) {
+      if (active.has(event.ownerKey)) {
+        commands.push(fadeHold(event.ownerKey));
+        active.delete(event.ownerKey);
+      }
+      if (event.action === "start") {
+        commands.push({ kind: "hold.start-loop", cue: "SE_RHYTHM_TAP_LONG", owner_key: event.ownerKey,
+          volume_bits: "0x3F800000", fade_in_bits: "0x00000000" });
+        active.add(event.ownerKey);
+      }
+    }
+    return this.preflightCommands(commands);
+  }
+
   preflightJudgement(
     batch: OneFrameJudgementBatch,
   ): SimulatorResult<AudioOwnerTransaction> {
@@ -387,22 +409,6 @@ export class AudioCommandProducer {
       if (holdOwner !== null && entry.phase !== "head" && activeHolds.has(holdOwner)) {
         commands.push(fadeHold(holdOwner));
         activeHolds.delete(holdOwner);
-      }
-      if (holdOwner !== null && entry.phase === "head" && entry.adjustedResult > 0) {
-        if (activeHolds.has(holdOwner)) {
-          return rejected(
-            "audio.hold.duplicate-owner",
-            "A Long/Slide note cannot acquire a second loop for its stable owner.",
-          );
-        }
-        commands.push({
-          kind: "hold.start-loop",
-          cue: "SE_RHYTHM_TAP_LONG",
-          owner_key: holdOwner,
-          volume_bits: "0x3F800000",
-          fade_in_bits: "0x00000000",
-        });
-        activeHolds.add(holdOwner);
       }
       if (!shouldSilent(nextTap, entry)) {
         const cue = judgementCue(entry, note);
@@ -601,7 +607,6 @@ function updateTapStatus(status: {
 
 function holdOwnerKey(note: NoteInformation): string | null {
   if (note.fireNoteType === 1) return `long:${note.index}`;
-  if (note.fireNoteType === 3 || note.fireNoteType === 4) return `slide:${note.index}`;
   return null;
 }
 

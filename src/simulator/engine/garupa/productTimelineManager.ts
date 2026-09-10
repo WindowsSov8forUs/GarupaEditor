@@ -2,6 +2,7 @@ import type {
   AutoLiveJudgementOwnership,
   AutoLiveJudgementRequest,
 } from "../data/autoLiveJudgement";
+import type { HoldSoundEvent } from "../audio/audioCommandProducer";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import {
@@ -68,6 +69,7 @@ interface ProductJudgementSubmission {
 }
 
 interface ProductTimelineMutableSnapshot {
+  readonly holdSounds: readonly HoldSoundEvent[];
   readonly judgedSources: readonly NoteInformation[];
   readonly missedSources: readonly NoteInformation[];
   readonly queuedSources: readonly NoteInformation[];
@@ -108,6 +110,9 @@ export class GarupaProductTimelineManager {
   private readonly queuedSources = new Set<NoteInformation>();
   private readonly fingers = new Map<number, ProductFingerOwner>();
   private readonly chainFinger = new Map<string, number>();
+  private readonly pendingHoldSounds: HoldSoundEvent[] = [];
+
+  takeHoldSounds(): readonly HoldSoundEvent[] { return this.pendingHoldSounds.splice(0); }
   private readonly nextVisibleIndexByChain = new Map<string, number>();
   private pendingManualFrame: ManualInputFrame | null = null;
   private readonly pendingJudgements: PendingProductJudgement[] = [];
@@ -455,6 +460,9 @@ export class GarupaProductTimelineManager {
       if (timing.value.result !== NoteResultType.None) continue;
       const missed = this.submitManual(node, NoteResultType.Miss, JudgeTiming.None);
       if (missed.status !== "ok") return missed;
+      if (node.chainIdentity !== null) {
+        this.pendingHoldSounds.push({ ownerKey: `slide:${node.chainIdentity}`, action: "fade" });
+      }
       this.advanceChain(node);
       this.clearPendingGesture(node);
     }
@@ -487,7 +495,12 @@ export class GarupaProductTimelineManager {
         this.chainFinger.set(owner.chainIdentity, touch.fingerId);
       }
       this.fingers.set(touch.fingerId, owner);
-      return this.consumeCandidate(owner, candidate.value, touch.position, judgementPosition, judged);
+      const consumed = this.consumeCandidate(owner, candidate.value, touch.position, judgementPosition, judged);
+      if (consumed.status === "ok" && owner.chainIdentity !== null &&
+          this.chainFinger.get(owner.chainIdentity) === owner.fingerId) {
+        this.pendingHoldSounds.push({ ownerKey: `slide:${owner.chainIdentity}`, action: "start" });
+      }
+      return consumed;
     }
 
     const owner = this.fingers.get(touch.fingerId);
@@ -725,6 +738,7 @@ export class GarupaProductTimelineManager {
   private releaseFinger(owner: ProductFingerOwner): void {
     this.fingers.delete(owner.fingerId);
     if (owner.chainIdentity !== null && this.chainFinger.get(owner.chainIdentity) === owner.fingerId) {
+      this.pendingHoldSounds.push({ ownerKey: `slide:${owner.chainIdentity}`, action: "fade" });
       this.chainFinger.delete(owner.chainIdentity);
     }
   }
@@ -760,6 +774,7 @@ export class GarupaProductTimelineManager {
     this.render?.releaseInputs();
     this.pendingManualFrame = null;
     this.pendingJudgements.length = 0;
+    this.pendingHoldSounds.length = 0;
     this.inFlightJudgements.length = 0;
     this.pendingReflectTransaction = null;
     this.judgedSources.clear();
@@ -773,6 +788,7 @@ export class GarupaProductTimelineManager {
 
   private captureMutableState(): ProductTimelineMutableSnapshot {
     return Object.freeze({
+      holdSounds: [...this.pendingHoldSounds],
       judgedSources: Object.freeze([...this.judgedSources]),
       missedSources: Object.freeze([...this.missedSources]),
       queuedSources: Object.freeze([...this.queuedSources]),
@@ -792,6 +808,7 @@ export class GarupaProductTimelineManager {
   }
 
   private restoreMutableState(snapshot: ProductTimelineMutableSnapshot): void {
+    this.pendingHoldSounds.splice(0, this.pendingHoldSounds.length, ...snapshot.holdSounds);
     replaceSet(this.judgedSources, snapshot.judgedSources);
     replaceSet(this.missedSources, snapshot.missedSources);
     replaceSet(this.queuedSources, snapshot.queuedSources);

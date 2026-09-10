@@ -1,4 +1,5 @@
 import { SyncLineConnectionRules, selectDirectionalSyncEndpoints } from "../rendering/syncLineConnectionRules";
+import type { HoldSoundEvent } from "../audio/audioCommandProducer";
 import {
   AfterNoteType,
   ButtonType,
@@ -162,6 +163,9 @@ export class NoteManager {
     (_, index) => new NoteBpmChange(index),
   );
   private readonly notePoolsValue = new Map<NoteFamily, NotePool>();
+  private readonly pendingHoldSounds: HoldSoundEvent[] = [];
+
+  takeHoldSounds(): readonly HoldSoundEvent[] { return this.pendingHoldSounds.splice(0); }
   private readonly performanceLevelCountersValue: PerformanceLevelCounters = [
     0, 0, 0, 0,
   ];
@@ -444,6 +448,10 @@ export class NoteManager {
     for (const [family, notes] of familyNotes) {
       const objects = notes.map((_, index) => {
         const note = this.createPoolObject(family, `${family}:${index}`);
+        if (note instanceof NoteSlide || note instanceof NoteLong) note.onTouchKeepSound = (index, action) => {
+          if (action === "start" && this.isMoveTime()) return;
+          this.pendingHoldSounds.push({ ownerKey: `${note instanceof NoteSlide ? "slide" : "long"}:${index}`, action });
+        };
         note.setLifecycleCallbacks({
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
           onDeactivate: (inactiveNote) => {
@@ -905,6 +913,7 @@ export class NoteManager {
   }
 
   private clearRuntimeForDispose(): void {
+    this.pendingHoldSounds.length = 0;
     for (const bpm of this.bpmPoolValue) {
       bpm.resetForDispose();
     }

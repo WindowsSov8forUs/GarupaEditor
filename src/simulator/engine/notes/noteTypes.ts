@@ -254,6 +254,7 @@ export class NoteNormal extends NoteSingleBase {
 }
 
 export class NoteLong extends NoteFrontBase {
+  onTouchKeepSound: ((noteIndex: number, action: "start" | "fade") => void) | null = null;
   flashAnimationRevision: number | null = null;
   private flashRestartSequence = 0;
   private afterNoteValue: LongAfterRuntime | null = null;
@@ -398,6 +399,7 @@ export class NoteLong extends NoteFrontBase {
       throw new Error("Long Began commit could not enter Stop state");
     }
     this.flashAnimationRevision = ++this.flashRestartSequence;
+    this.onTouchKeepSound?.(this.noteInformation!.index, "start");
   }
 
   override preflightManualTouchMoved(
@@ -423,6 +425,7 @@ export class NoteLong extends NoteFrontBase {
     input: ManualNoteTouchInput,
     plan: ManualNoteContinuationPlan,
   ): void {
+    this.onTouchKeepSound?.(this.noteInformation!.index, "fade");
     this.commitManualLongAfter(input, plan);
   }
 
@@ -909,6 +912,15 @@ export interface SlideNodeHideRequest {
 }
 
 export class NoteSlide extends NoteFrontBase {
+  onTouchKeepSound: ((noteIndex: number, action: "start" | "fade") => void) | null = null;
+  private touchKeepSoundActive = false;
+
+  private updateTouchKeepSound(action: "start" | "fade"): void {
+    const active = action === "start";
+    if (active === this.touchKeepSoundActive) return;
+    this.touchKeepSoundActive = active;
+    if (this.noteInformation !== null) this.onTouchKeepSound?.(this.noteInformation.index, action);
+  }
   flashAnimationRevision: number | null = null;
   private flashRestartSequence = 0;
   private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
@@ -967,6 +979,7 @@ export class NoteSlide extends NoteFrontBase {
 
   refreshAfterMoveTime(): void {
     if (!this.manualHeadJudgedValue) return;
+    this.updateTouchKeepSound("fade");
     this.flashAnimationRevision = null;
     this.hideSlideNode(-1, true);
     this.hideBeforeSlideNode(this.currentAfterIndexValue, true);
@@ -1136,7 +1149,10 @@ export class NoteSlide extends NoteFrontBase {
     if (this.manualHeadJudgedValue) {
       if (plan.judgementPlan === null) this.hideSlideNode(this.currentAfterIndexValue, false);
       this.commitManualSlideNode(input, plan);
-      if (this.state !== NoteState.Deactive) this.flashAnimationRevision = ++this.flashRestartSequence;
+      if (this.state !== NoteState.Deactive) {
+        this.flashAnimationRevision = ++this.flashRestartSequence;
+        this.updateTouchKeepSound("start");
+      }
       return;
     }
     if (plan.judgementPlan === null) {
@@ -1152,6 +1168,7 @@ export class NoteSlide extends NoteFrontBase {
       throw new Error("Slide head commit could not enter Stop state");
     }
     this.flashAnimationRevision = ++this.flashRestartSequence;
+    this.updateTouchKeepSound("start");
   }
 
   override preflightManualTouchMoved(
@@ -1360,6 +1377,7 @@ export class NoteSlide extends NoteFrontBase {
     plan: ManualNoteContinuationPlan,
   ): void {
     const data = plan.familyData as { readonly currentIndex: number };
+    this.updateTouchKeepSound("fade");
     this.hideBeforeSlideNode(data.currentIndex, true);
     this.hideSlideNode(data.currentIndex, true);
     this.commitManualSlideNode(input, plan);
@@ -1689,7 +1707,10 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.hideSlideNode(-1, true);
     this.hideSlideNode(current.sourceIndex, true);
-    if (!current.source.isInvisible) this.flashAnimationRevision = null;
+    if (!current.source.isInvisible) {
+      this.flashAnimationRevision = null;
+      this.updateTouchKeepSound("fade");
+    }
     this.currentAfterIndexValue = current.sourceIndex + 1;
     this.skipManualInvisibleAfterNodes();
     return current.isTerminal || this.currentAfterIndexValue >= this.afterNotesValue.length
@@ -1831,6 +1852,8 @@ export class NoteSlide extends NoteFrontBase {
 
   protected override onDeactivated(): void {
     this.flashAnimationRevision = null;
+    // Sound belongs to the Slide root, not the child being consumed.
+    this.updateTouchKeepSound("fade");
     for (const after of this.afterNotesValue) {
       after.resetForParentDeactivation();
     }

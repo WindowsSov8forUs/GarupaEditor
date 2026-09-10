@@ -25,7 +25,7 @@ interface WebAudioVoiceFade {
 }
 
 interface WebAudioVoice {
-  readonly voiceKey: string;
+  voiceKey: string;
   readonly cue: string;
   readonly category: "bgm" | "se";
   readonly gain: GainNode;
@@ -45,6 +45,7 @@ interface PendingWebAudioBatch {
 
 export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   readonly id = "web-audio";
+  private fadingHoldSequence = 0;
 
   private recording = new RecordingSimulatorAudioBackend();
   private readonly decodedByCue = new Map<string, AudioBuffer>();
@@ -479,6 +480,13 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             audioFloat32FromBits(command.duration_bits)!,
             command.stop_at_zero,
           );
+          // The logical owner is free immediately; the old source keeps its 0.3 s fade.
+          // A new touch may start another loop before that fade completes.
+          if (command.stop_at_zero && this.voices.get(voice.voiceKey) === voice) {
+            this.voices.delete(voice.voiceKey);
+            voice.voiceKey = `fading-hold:${++this.fadingHoldSequence}`;
+            this.voices.set(voice.voiceKey, voice);
+          }
           break;
         }
         case "hold.pause":
