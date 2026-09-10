@@ -32,17 +32,24 @@ uniform sampler2D uTexture;
 uniform vec2 uClipArgs0;
 void main(void) {
   vec4 sampleColor = texture(uTexture, vTextureCoord);
+  // Pixi filter inputs are premultiplied; the source shader evaluates straight color.
+  if (sampleColor.a <= 0.0) {
+    finalColor = vec4(0.0);
+    return;
+  }
+  vec3 straightColor = sampleColor.rgb / sampleColor.a;
   float alphaPolynomial = sampleColor.a * 0.305299997 + 0.682200015;
   alphaPolynomial = sampleColor.a * alphaPolynomial + 0.0125000002;
   alphaPolynomial = sampleColor.a * alphaPolynomial - sampleColor.a;
   alphaPolynomial = alphaPolynomial * 0.349999994 + sampleColor.a;
   float gammaAlpha = clamp(exp2(log2(abs(sampleColor.a)) * 0.416700006) * 1.05499995 - 0.0549999997, 0.0, 1.0);
   float mixedAlpha = (gammaAlpha - sampleColor.a) * 0.649999976 + sampleColor.a;
-  float luminance = dot(sampleColor.rgb, vec3(0.212599993, 0.715200007, 0.0722000003));
+  float luminance = dot(straightColor, vec3(0.212599993, 0.715200007, 0.0722000003));
   float currentAlpha = luminance * (alphaPolynomial - mixedAlpha) + mixedAlpha;
   vec2 edge = (vec2(1.0) - abs(vClipCoordinate)) * uClipArgs0;
   float clipAlpha = clamp(min(edge.y, edge.x), 0.0, 1.0);
-  finalColor = vec4(sampleColor.rgb, currentAlpha * clipAlpha);
+  float finalAlpha = currentAlpha * clipAlpha;
+  finalColor = vec4(straightColor * finalAlpha, finalAlpha);
 }`;
 
 type SoftClipUniforms = {

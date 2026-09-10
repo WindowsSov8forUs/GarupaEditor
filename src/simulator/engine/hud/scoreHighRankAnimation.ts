@@ -30,6 +30,84 @@ export interface ScoreHighRankTweenInput {
   readonly durationSeconds: number;
   readonly fromAlpha: number;
   readonly toAlpha: number;
+  readonly curve: { readonly keys: readonly ScoreHighRankTweenKey[] };
+}
+
+export interface ScoreHighRankTweenKey {
+  readonly time: number;
+  readonly value: number;
+  readonly inSlope: number;
+  readonly outSlope: number;
+}
+
+export interface ScoreHighRankPlayback {
+  readonly clipName: ScoreHighRankAnimationClipInput["name"];
+  readonly elapsedSeconds: number;
+  readonly tweens: readonly {
+    readonly node: string;
+    readonly factor: number;
+    readonly direction: 1 | -1;
+    readonly active: boolean;
+  }[];
+}
+
+export function startScoreHighRankPlayback(
+  clip: ScoreHighRankAnimationClipInput,
+  tweens: readonly ScoreHighRankTweenInput[],
+  previous: ScoreHighRankPlayback | null,
+): ScoreHighRankPlayback {
+  const values = sampleStreamedClip(clip, 0);
+  return Object.freeze({
+    clipName: clip.name,
+    elapsedSeconds: 0,
+    tweens: Object.freeze(tweens.map((tween) => {
+      const before = previous?.tweens.find((state) => state.node === tween.node);
+      const active = scalarBinding(clip, values, tween.node, "active");
+      return Object.freeze({
+        node: tween.node,
+        factor: before?.factor ?? 0,
+        direction: before?.direction ?? 1,
+        active: active === null || active >= 0.5,
+      });
+    })),
+  });
+}
+
+export function advanceScoreHighRankPlayback(
+  playback: ScoreHighRankPlayback,
+  clip: ScoreHighRankAnimationClipInput,
+  tweens: readonly ScoreHighRankTweenInput[],
+  elapsedSeconds: number,
+): ScoreHighRankPlayback {
+  if (clip.name !== playback.clipName || !Number.isFinite(elapsedSeconds) || elapsedSeconds < playback.elapsedSeconds) {
+    throw new Error("High-rank sampling requires a started clip and a non-decreasing engine clock.");
+  }
+  if (elapsedSeconds === playback.elapsedSeconds) return playback;
+  const delta = elapsedSeconds - playback.elapsedSeconds;
+  const values = sampleStreamedClip(clip, elapsedSeconds);
+  return Object.freeze({
+    clipName: clip.name,
+    elapsedSeconds,
+    tweens: Object.freeze(playback.tweens.map((before) => {
+      const tween = tweens.find((input) => input.node === before.node)!;
+      const enabled = scalarBinding(clip, values, before.node, "active");
+      const active = enabled === null || enabled >= 0.5;
+      let { factor, direction } = before;
+      // An enabled TweenAlpha owns its phase independently of Animator.Play.
+      // Its first update after activation samples the retained factor with zero delta.
+      if (active && before.active) {
+        factor += delta / tween.durationSeconds * direction;
+        if (factor > 1) {
+          factor = 1 + Math.floor(factor) - factor;
+          direction = direction === 1 ? -1 : 1;
+        } else if (factor < 0) {
+          factor = -factor - Math.floor(-factor);
+          direction = direction === 1 ? -1 : 1;
+        }
+      }
+      return Object.freeze({ node: before.node, factor, direction, active });
+    })),
+  });
 }
 
 export interface ScoreHighRankNodeSample {
@@ -46,6 +124,7 @@ export function sampleScoreHighRankPresentation(
   nodes: readonly ScoreHighRankNodeInput[],
   tweens: readonly ScoreHighRankTweenInput[],
   elapsedSeconds: number,
+  playback: ScoreHighRankPlayback,
 ): readonly ScoreHighRankNodeSample[] {
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
     throw new Error("Score high-rank animation requires finite non-negative engine time.");
@@ -70,7 +149,7 @@ export function sampleScoreHighRankPresentation(
       active: active === null || active >= 0.5,
       tweenAlpha: tween === undefined || tweenTo === undefined
         ? null
-        : sampleLinearPingPong(tween.fromAlpha, tweenTo, tween.durationSeconds, elapsedSeconds),
+        : sampleScoreHighRankTween(tween, playback.tweens.find((state) => state.node === node.name)!.factor, tweenTo),
     });
   }));
 }
@@ -130,11 +209,20 @@ function scalarBinding(
   return binding?.streamedStartIndex === null || binding === undefined ? null : values[binding.streamedStartIndex]!;
 }
 
-function sampleLinearPingPong(from: number, to: number, duration: number, elapsedSeconds: number): number {
-  const period = Math.fround(duration * 2);
-  const phase = Math.fround(elapsedSeconds % period);
-  const factor = phase <= duration
-    ? Math.fround(phase / duration)
-    : Math.fround((period - phase) / duration);
-  return Math.fround(from + Math.fround(Math.fround(to - from) * factor));
+export function sampleScoreHighRankTween(tween: ScoreHighRankTweenInput, factor: number, toAlpha = tween.toAlpha): number {
+  const phase = Math.min(1, Math.max(0, factor));
+  const keys = tween.curve.keys;
+  let value = keys[keys.length - 1]!.value;
+  for (let index = 1; index < keys.length; index += 1) {
+    const right = keys[index]!;
+    if (phase > right.time) continue;
+    const left = keys[index - 1]!;
+    const span = right.time - left.time;
+    const t = (phase - left.time) / span;
+    const t2 = t * t, t3 = t2 * t;
+    value = (2 * t3 - 3 * t2 + 1) * left.value + (t3 - 2 * t2 + t) * span * left.outSlope +
+      (-2 * t3 + 3 * t2) * right.value + (t3 - t2) * span * right.inSlope;
+    break;
+  }
+  return tween.fromAlpha + (toAlpha - tween.fromAlpha) * Math.min(1, Math.max(0, value));
 }

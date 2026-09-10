@@ -343,8 +343,8 @@
     },
     {
       "path": "game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json",
-      "byteLength": 139347,
-      "sha256": "2E78E5C26FCA61848018D63A9E7E5EEC0E5BE5B3A5D355994937E5E0285B7DE1"
+      "byteLength": 140924,
+      "sha256": "C487F13EF46209ACF101A15A92C057679F9AB1D06986CBFCC60D2FA1A1E029F8"
     },
     {
       "path": "icons/apply-action.svg",

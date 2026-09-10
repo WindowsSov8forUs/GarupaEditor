@@ -525,9 +525,9 @@
     },
     {
       "path": "game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json",
-      "byteLength": 139347,
-      "sha256": "2E78E5C26FCA61848018D63A9E7E5EEC0E5BE5B3A5D355994937E5E0285B7DE1",
-      "sourceReverseCommit": "dddab345825dbff6d2a5cf65f5fbbcf771b00e07",
+      "byteLength": 140924,
+      "sha256": "C487F13EF46209ACF101A15A92C057679F9AB1D06986CBFCC60D2FA1A1E029F8",
+      "sourceReverseCommit": "b8565a070366612e8fb616b1c3e95051cd8defd1",
       "sourcePath": "artifacts/investigations/simulator-score-ngui-native-domain-10-1-4/score_ngui_native_domain_contract.json",
       "sourceRelation": "source-derived-projection"
     }

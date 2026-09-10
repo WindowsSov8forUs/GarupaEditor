@@ -35,7 +35,12 @@ import {
 import {
   CURRENT_HABAHIRO_SEMANTIC_PROFILE,
 } from "../../engine/rendering/habahiroFlashAnimation";
-import { sampleScoreHighRankPresentation } from "../../engine/hud/scoreHighRankAnimation";
+import {
+  advanceScoreHighRankPlayback,
+  sampleScoreHighRankPresentation,
+  startScoreHighRankPlayback,
+  type ScoreHighRankPlayback,
+} from "../../engine/hud/scoreHighRankAnimation";
 import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
 import {
   createRehearsalControlSceneLayout,
@@ -195,6 +200,7 @@ interface PixiObjectRecord {
   spritePixelsPerUnit: number | null;
   hudBindingKeys: string[];
   scoreHighRankBindingKeys: string[];
+  scoreHighRankPlayback: ScoreHighRankPlayback | null;
   spriteContent: Sprite | null;
   materialTexture: Texture | null;
   materialLogicalAssetId: string | null;
@@ -1498,6 +1504,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           spritePixelsPerUnit: null,
           hudBindingKeys: [],
           scoreHighRankBindingKeys: [],
+          scoreHighRankPlayback: null,
           spriteContent: spriteChild(node),
           materialTexture: null,
           materialLogicalAssetId: null,
@@ -1705,6 +1712,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "play-animation": {
         const object = this.objects.get(command.renderObjectId)!;
         const role = requireEvidenceAnimationRole(command.animationRole);
+        if (role === "score-gauge-ss") {
+          const highRank = requireScoreNativeProfile(object).highRank;
+          const name = (object.hudState as RenderScoreHudState).highRankEffectClip;
+          const clip = highRank.clips.find((candidate) => candidate.name === name);
+          if (clip === undefined) throw new Error("Score high-rank play requires its current HUD clip.");
+          object.scoreHighRankPlayback = startScoreHighRankPlayback(clip, highRank.tweenAlpha, object.scoreHighRankPlayback);
+        }
         object.activeAnimationRoles.add(role);
         object.activeAnimationRole = role;
         object.animationElapsedByRole.set(role, 0);
@@ -4137,16 +4151,22 @@ function applyEvidenceAnimation(
   if (role === "score-gauge-ss") {
     const visual = object.hudVisual;
     const profile = requireScoreNativeProfile(object);
-    const clipName = (object.hudState as RenderScoreHudState | null)?.highRankEffectClip;
+    // A HUD update can select the next clip before its Play command arrives.
+    const clipName = object.scoreHighRankPlayback?.clipName;
     const clip = profile.highRank.clips.find((candidate) => candidate.name === clipName);
     if (visual === null || clip === undefined || visual.scoreHighRankSprites.length !== profile.highRank.nodes.length) {
       throw new Error("Score high-rank source-backed visual/clip is missing");
     }
+    if (object.scoreHighRankPlayback === null) throw new Error("Score high-rank animation has not started.");
+    object.scoreHighRankPlayback = advanceScoreHighRankPlayback(
+      object.scoreHighRankPlayback, clip, profile.highRank.tweenAlpha, elapsedSeconds,
+    );
     const samples = sampleScoreHighRankPresentation(
       clip,
       profile.highRank.nodes,
       profile.highRank.tweenAlpha,
       elapsedSeconds,
+      object.scoreHighRankPlayback,
     );
     for (let index = 0; index < samples.length; index += 1) {
       const sample = samples[index]!;

@@ -1,5 +1,7 @@
 import { CURRENT_SCORE_HUD_SCENE_PROFILE } from "../../engine/rendering/currentScoreHudSemanticProfile";
 
+import type { ScoreHighRankTweenKey } from "../../engine/hud/scoreHighRankAnimation";
+
 export type CurrentScoreHighRankClipName = "ScoreGaugeSS" | "ScoreGaugeSSS";
 
 export interface CurrentScoreGraphObject {
@@ -107,6 +109,7 @@ export interface CurrentScoreHudNativeProfile {
       readonly toAlpha: number;
       readonly method: 0;
       readonly style: 2;
+      readonly curve: { readonly keys: readonly ScoreHighRankTweenKey[] };
     }[];
     readonly clips: readonly CurrentScoreAnimationClip[];
   };
@@ -183,7 +186,18 @@ export function parseCurrentScoreHudNativeProfile(value: unknown): CurrentScoreH
     if (row === null || !["BigStar_1", "BigStar_2", "Flash"].includes(row.node as string) ||
       row.method !== 0 || row.style !== 2 || !f32(row.durationSeconds) || row.durationSeconds <= 0 ||
       !f32(row.fromAlpha) || !f32(row.toAlpha)) return null;
-    return Object.freeze({ node: row.node, durationSeconds: row.durationSeconds, fromAlpha: row.fromAlpha, toAlpha: row.toAlpha, method: 0, style: 2 });
+    const curve = record(row.curve);
+    if (curve === null || !Array.isArray(curve.keys) || curve.keys.length < 2) return null;
+    const keys: ScoreHighRankTweenKey[] = [];
+    for (const value of curve.keys) {
+      const key = record(value);
+      if (key === null || !f32(key.time) || !f32(key.value) || !f32(key.inSlope) || !f32(key.outSlope) ||
+        key.weightedMode !== 0 || key.time < 0 || key.time > 1 ||
+        (keys.length > 0 && key.time <= keys[keys.length - 1]!.time)) return null;
+      keys.push({ time: key.time, value: key.value, inSlope: key.inSlope, outSlope: key.outSlope });
+    }
+    if (keys[0]!.time !== 0 || keys[keys.length - 1]!.time !== 1) return null;
+    return Object.freeze({ node: row.node, durationSeconds: row.durationSeconds, fromAlpha: row.fromAlpha, toAlpha: row.toAlpha, method: 0, style: 2, curve: { keys } });
   });
   if (tweenAlpha.some((row) => row === null) || tweenAlpha.length !== 3) return null;
 
