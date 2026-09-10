@@ -3882,21 +3882,20 @@ function updateScorePanelClip(
   const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
   visual.scoreHighRankPanelMask.clear().rect(panelLeft, panelTop, panelWidth, panelHeight).fill(0xffffff);
   visual.scoreHighRankPanelMaskBounds = Object.freeze([panelLeft, panelTop, panelWidth, panelHeight] as const);
-  const uiScale = authoredUiScale(object);
-  const globalCenterX = Math.fround(object.node.position.x + Math.fround((progress.position.x + panelCenter) * uiScale));
-  const globalCenterY = Math.fround(object.node.position.y + Math.fround((progress.position.y + panelCenterY) * uiScale));
   updateScoreSoftClipFilter(
     visual,
-    globalCenterX,
-    globalCenterY,
-    Math.fround(panelWidth * uiScale),
-    Math.fround(panelHeight * uiScale),
-    Object.freeze([Math.fround(panel.softness[0] * uiScale), Math.fround(panel.softness[1] * uiScale)]),
+    progress,
+    panelCenter,
+    panelCenterY,
+    panelWidth,
+    panelHeight,
+    panel.softness,
   );
 }
 
 function updateScoreSoftClipFilter(
   visual: PixiHudVisual,
+  panelSpace: Container,
   centerX: number,
   centerY: number,
   panelWidth: number,
@@ -3906,7 +3905,7 @@ function updateScoreSoftClipFilter(
   if (typeof document === "undefined") return;
   if (visual.scoreHighRankSoftClipFilter === null) {
     visual.scoreHighRankSoftClipFilter = createNguiSoftClipFilter(
-      centerX, centerY, panelWidth, panelHeight, softness[0], softness[1],
+      panelSpace, centerX, centerY, panelWidth, panelHeight, softness[0], softness[1],
     );
     for (const sprite of visual.scoreHighRankSprites) sprite.filters = [visual.scoreHighRankSoftClipFilter];
   } else {

@@ -1,4 +1,4 @@
-import { Filter, GlProgram, UniformGroup } from "pixi.js";
+import { Container, Filter, GlProgram, Matrix, UniformGroup } from "pixi.js";
 
 const VERTEX = `
 in vec2 aPosition;
@@ -7,6 +7,9 @@ out vec2 vClipCoordinate;
 uniform vec4 uInputSize;
 uniform vec4 uOutputFrame;
 uniform vec4 uOutputTexture;
+uniform vec4 uGlobalFrame;
+uniform mat3 uGlobalToPanel;
+uniform float uOutputResolution;
 uniform vec4 uClipRange0;
 vec4 filterVertexPosition(void) {
   vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
@@ -18,7 +21,9 @@ vec2 filterTextureCoord(void) {
   return aPosition * (uOutputFrame.zw * uInputSize.zw);
 }
 void main(void) {
-  vec2 panelPosition = aPosition * uOutputFrame.zw + uOutputFrame.xy;
+  vec2 globalPosition = aPosition * uOutputFrame.zw + uOutputFrame.xy
+    + uGlobalFrame.xy / uOutputResolution;
+  vec2 panelPosition = (uGlobalToPanel * vec3(globalPosition, 1.0)).xy;
   gl_Position = filterVertexPosition();
   vTextureCoord = filterTextureCoord();
   vClipCoordinate = panelPosition * uClipRange0.zw + uClipRange0.xy;
@@ -53,18 +58,41 @@ void main(void) {
 }`;
 
 type SoftClipUniforms = {
-  [key: string]: { value: Float32Array; type: "vec4<f32>" | "vec2<f32>" };
+  [key: string]: { value: Float32Array | number; type: "vec4<f32>" | "vec2<f32>" | "mat3x3<f32>" | "f32" };
   uClipRange0: { value: Float32Array; type: "vec4<f32>" };
   uClipArgs0: { value: Float32Array; type: "vec2<f32>" };
+  uGlobalToPanel: { value: Float32Array; type: "mat3x3<f32>" };
+  uOutputResolution: { value: number; type: "f32" };
 };
 
-export interface NguiSoftClipFilter extends Filter {
-  readonly resources: Filter["resources"] & {
+export class NguiSoftClipFilter extends Filter {
+  declare readonly resources: Filter["resources"] & {
     readonly softClipUniforms: UniformGroup<SoftClipUniforms>;
   };
+  private readonly globalToPanel = new Matrix();
+
+  constructor(private readonly panelSpace: Container, uniforms: SoftClipUniforms) {
+    super({
+      glProgram: GlProgram.from({ vertex: VERTEX, fragment: FRAGMENT, name: "ngui-current-gles3-soft-clip" }),
+      resources: { softClipUniforms: new UniformGroup(uniforms) },
+      padding: 0,
+      antialias: "inherit",
+    });
+  }
+
+  override apply(...args: Parameters<Filter["apply"]>): void {
+    // The browser stage converts backing pixels to Pixi logical coordinates.
+    // Resolve the complete transform at draw time, after mounting and resizing.
+    this.panelSpace.getGlobalTransform(this.globalToPanel).invert();
+    this.resources.softClipUniforms.uniforms.uGlobalToPanel = this.globalToPanel.toArray(true);
+    // The containing linear-output filter inherits the renderer resolution.
+    this.resources.softClipUniforms.uniforms.uOutputResolution = args[0].renderer.resolution;
+    super.apply(...args);
+  }
 }
 
 export function createNguiSoftClipFilter(
+  panelSpace: Container,
   centerX: number,
   centerY: number,
   clipWidth: number,
@@ -74,12 +102,7 @@ export function createNguiSoftClipFilter(
 ): NguiSoftClipFilter {
   validate(centerX, centerY, clipWidth, clipHeight, softnessX, softnessY);
   const uniforms = calculateNguiSoftClipUniforms(centerX, centerY, clipWidth, clipHeight, softnessX, softnessY);
-  return new Filter({
-    glProgram: GlProgram.from({ vertex: VERTEX, fragment: FRAGMENT, name: "ngui-current-gles3-soft-clip" }),
-    resources: { softClipUniforms: new UniformGroup(uniforms) },
-    padding: 0,
-    antialias: "inherit",
-  }) as NguiSoftClipFilter;
+  return new NguiSoftClipFilter(panelSpace, uniforms);
 }
 
 export function updateNguiSoftClipFilter(
@@ -106,6 +129,8 @@ export function calculateNguiSoftClipUniforms(
   softnessY: number,
 ): SoftClipUniforms {
   return {
+    uGlobalToPanel: { value: new Matrix().toArray(true), type: "mat3x3<f32>" },
+    uOutputResolution: { value: 1, type: "f32" },
     uClipRange0: {
       value: new Float32Array([
         Math.fround(-2 * centerX / clipWidth),

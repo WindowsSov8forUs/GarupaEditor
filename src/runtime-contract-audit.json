@@ -10884,7 +10884,7 @@
     {
       "id": "RCB-0518",
       "file": "src/simulator/backends/pixi/hud/nguiPanelClip.ts",
-      "line": 130,
+      "line": 155,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"NGUI SoftClip requires finite center and positive clip/softness dimensions.\");",
@@ -12627,7 +12627,7 @@
     {
       "id": "RCB-0601",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3992,
+      "line": 3991,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!componentOwners.has(name)) throw new Error(`Score high-rank sibling is missing: ${name}`);",
@@ -12648,7 +12648,7 @@
     {
       "id": "RCB-0602",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4052,
+      "line": 4051,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (texture === undefined) throw new Error(`missing Score HUD texture ${logicalAssetId}:${exactKey}`);",
@@ -12669,7 +12669,7 @@
     {
       "id": "RCB-0603",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4073,
+      "line": 4072,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Result HUD requires exactly one selected Judge texture for ${exactKey}; found ${matches.length}.`);",
@@ -12690,7 +12690,7 @@
     {
       "id": "RCB-0604",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4130,
+      "line": 4129,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clip === undefined) throw new Error(\"Combo scale clip is missing\");",
@@ -12711,7 +12711,7 @@
     {
       "id": "RCB-0605",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4143,
+      "line": 4142,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"All Perfect Sprite clip/owner is missing\");",
@@ -12732,7 +12732,7 @@
     {
       "id": "RCB-0606",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4158,
+      "line": 4157,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Score high-rank source-backed visual/clip is missing\");",
@@ -12753,7 +12753,7 @@
     {
       "id": "RCB-0607",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4160,
+      "line": 4159,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.scoreHighRankPlayback === null) throw new Error(\"Score high-rank animation has not started.\");",
@@ -12774,7 +12774,7 @@
     {
       "id": "RCB-0608",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4189,
+      "line": 4188,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Game-clear animation owner/profile/state is missing\");",
@@ -12795,7 +12795,7 @@
     {
       "id": "RCB-0609",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4202,
+      "line": 4201,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual?.kind !== \"result\") throw new Error(\"GameJudge requires the persistent Result/other child graph.\");",
@@ -12816,7 +12816,7 @@
     {
       "id": "RCB-0610",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4214,
+      "line": 4213,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual?.kind !== \"life\") throw new Error(\"Life warning animation owner is missing\");",
@@ -12837,7 +12837,7 @@
     {
       "id": "RCB-0611",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4225,
+      "line": 4224,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (text === null || text === undefined) throw new Error(\"Life GameOver label animation owner is missing\");",
@@ -12858,7 +12858,7 @@
     {
       "id": "RCB-0612",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4233,
+      "line": 4232,
       "marker": "throw-error",
       "symbol": "applyOrdinaryNoteAnimation",
       "source": "throw new Error(\"unsupported HUD animation role\");",
@@ -12879,7 +12879,7 @@
     {
       "id": "RCB-0613",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4243,
+      "line": 4242,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.hudVisual?.kind !== \"result\") throw new Error(\"GameJudge stop requires the persistent other child.\");",
@@ -12900,7 +12900,7 @@
     {
       "id": "RCB-0614",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4287,
+      "line": 4286,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"ordinary Note animation owner/profile/resource binding is missing\");",
@@ -12921,7 +12921,7 @@
     {
       "id": "RCB-0615",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4304,
+      "line": 4303,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clipId === null) throw new Error(\"ordinary Note animation resource key does not select a current clip\");",
@@ -12942,7 +12942,7 @@
     {
       "id": "RCB-0616",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4306,
+      "line": 4305,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clip === undefined) throw new Error(\"ordinary Note animation clip is missing\");",
@@ -12963,7 +12963,7 @@
     {
       "id": "RCB-0617",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4374,
+      "line": 4373,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (asset === undefined) throw new Error(\"UISpriteNumber atlas profile is missing\");",
@@ -12984,7 +12984,7 @@
     {
       "id": "RCB-0618",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4380,
+      "line": 4379,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"UISpriteNumber exact Sprite row/border is missing\");",
@@ -13005,7 +13005,7 @@
     {
       "id": "RCB-0619",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4403,
+      "line": 4402,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (key === undefined) throw new Error(\"HUD streamed clip curve has no current key\");",
@@ -13026,7 +13026,7 @@
     {
       "id": "RCB-0620",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4442,
+      "line": 4441,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceAnimationRole(role)) throw new Error(\"unsupported animation role\");",
@@ -13047,7 +13047,7 @@
     {
       "id": "RCB-0621",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4499,
+      "line": 4498,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"spatial Sprite transform requires one bound atlas row\");",
@@ -13068,7 +13068,7 @@
     {
       "id": "RCB-0622",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4596,
+      "line": 4595,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceLine(command)) throw new Error(\"line outside R2 profile\");",
@@ -13089,7 +13089,7 @@
     {
       "id": "RCB-0623",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4654,
+      "line": 4653,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceMesh(command)) throw new Error(\"mesh outside current source-bound profile\");",
@@ -13110,7 +13110,7 @@
     {
       "id": "RCB-0624",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4686,
+      "line": 4685,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (color === undefined) throw new Error(\"validated mesh lost its uniform color\");",
@@ -13131,7 +13131,7 @@
     {
       "id": "RCB-0625",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4716,
+      "line": 4715,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (texture === null) throw new Error(\"geometry material texture is missing after validated preflight\");",
@@ -13152,7 +13152,7 @@
     {
       "id": "RCB-0626",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4721,
+      "line": 4720,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"geometry material profile is missing after validated preflight\");",
@@ -13173,7 +13173,7 @@
     {
       "id": "RCB-0627",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4887,
+      "line": 4886,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",
