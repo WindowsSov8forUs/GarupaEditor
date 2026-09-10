@@ -1031,7 +1031,7 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
   if (value.kind !== "note-slide" ||
     !hasExactKeys(value, [
       "kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength", "ownerTransform",
-      "particleSystemSetupScaleBits", "particleSystemSetupScaleFactorsBits", "poolSlot", "route", "rootPositionXBits", "rootPositionYBits", "rootScaleBits",
+      "particleSystemSetupScaleBits", "particleSystemSetupScaleFactorsBits", "poolSlot", "rootPositionXBits", "rootPositionYBits", "rootScaleBits",
     ]) ||
     typeof value.noteIndex !== "number" || !Number.isSafeInteger(value.noteIndex) || value.noteIndex < 0 ||
     typeof value.absolutePosition !== "number" || !Number.isSafeInteger(value.absolutePosition) || value.absolutePosition < 0 ||
