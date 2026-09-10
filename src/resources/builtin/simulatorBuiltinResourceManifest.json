@@ -141,8 +141,8 @@
     },
     {
       "path": "game/portable/profiles/default-particle/profile.json",
-      "byteLength": 694547,
-      "sha256": "4F1A57C5933454D86B1326377C03118903EBC748269850EDB0B20C3439C50F74",
+      "byteLength": 694706,
+      "sha256": "76BF01D064D4D4C3D11192FFA07311669595C16164C8CD5D9C764C1042711185",
       "sourceReverseCommit": "e43dded8890260806001fbcb5ab519cfb019a379",
       "sourcePath": "artifacts/investigations/simulator-particle-renderer-native-domain-10-1-4/particle_renderer_native_domain_contract.json",
       "sourceRelation": "derived-source-bound-native-renderer-profile"

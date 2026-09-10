@@ -5907,7 +5907,7 @@
     {
       "id": "RCB-0281",
       "file": "src/resources/builtin/simulatorBuiltinResourceCatalog.ts",
-      "line": 216,
+      "line": 214,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (manifest === undefined) throw new Error(`Simulator builtin manifest is missing ${definedFile.assetPath}`);",
@@ -5928,7 +5928,7 @@
     {
       "id": "RCB-0282",
       "file": "src/resources/builtin/simulatorBuiltinResourceCatalog.ts",
-      "line": 270,
+      "line": 268,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!response.ok) throw new Error(`Simulator builtin fetch failed: ${response.status}`);",
@@ -5949,7 +5949,7 @@
     {
       "id": "RCB-0283",
       "file": "src/resources/builtin/simulatorBuiltinResourceCatalog.ts",
-      "line": 272,
+      "line": 270,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (bytes.byteLength === 0) throw new Error(\"Simulator builtin fetch returned empty bytes\");",

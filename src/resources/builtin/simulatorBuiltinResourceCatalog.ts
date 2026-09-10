@@ -64,7 +64,7 @@ import gameClear32Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_1
 import gameClear33Url from "../../assets/game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png?url&no-inline";
 import gameClearProfileUrl from "../../assets/game/prefabs/bms/gameclear/game-clear-profile.json?url&no-inline";
 import gameClearNativeSemanticProfileUrl from "../../assets/game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json?url&no-inline";
-import manifestJson from "./simulatorBuiltinResourceManifest.json";
+import manifestJson from "./builtinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
   createResourceRef,
@@ -78,8 +78,6 @@ interface SimulatorBuiltinManifestEntry {
   readonly path: string;
   readonly byteLength: number;
   readonly sha256: string;
-  readonly sourceReverseCommit: string;
-  readonly sourcePath: string;
 }
 
 interface SimulatorBuiltinFileDefinition {

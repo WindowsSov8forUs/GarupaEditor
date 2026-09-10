@@ -4,7 +4,7 @@
 
 ## Source classes
 
-- **Builtin**: source-controlled application and Simulator assets. `builtinResourceManifest.json` is generated from the complete `src/assets` inventory. `builtinResourceCatalog.ts` owns the application-only set; `simulatorBuiltinResourceCatalog.ts` owns the Simulator set described by `simulatorBuiltinResourceManifest.json`. The sets must be disjoint and their union must equal the generated source manifest.
+- **Builtin**: source-controlled application and Simulator assets. `builtinResourceManifest.json` is generated from the complete `src/assets` inventory and supplies runtime byte length/SHA-256 for both catalogs. `builtinResourceCatalog.ts` owns the application-only set; `simulatorBuiltinResourceCatalog.ts` owns the Simulator set. `simulatorBuiltinResourceManifest.json` records development provenance and does not supply runtime integrity values. The sets must be disjoint and their union must equal the generated source manifest.
 - **Network**: reusable packages discovered from the live Bestdori catalog or the last complete offline catalog. A digest observes downloaded bytes; it is not a compiled eligibility allowlist. Note Skin primary and sample packages remain distinct records and are joined only by explicit Snapshot slots.
 - **Workspace**: BGM, cover, MV and stage-backdrop media for the current recoverable chart session. These bytes do not become a permanent global media library. Legacy `user/media/*` is migration input only.
 
