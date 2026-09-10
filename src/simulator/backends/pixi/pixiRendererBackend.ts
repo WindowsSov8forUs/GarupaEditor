@@ -4157,6 +4157,7 @@ function applyEvidenceAnimation(
       owner.scale.set(sample.scale[0], sample.scale[1]);
       owner.rotation = sample.rotationRadiansScreen;
       owner.visible = sample.active;
+      sprite.visible = sample.active;
       if (sample.tweenAlpha !== null) sprite.alpha = sample.tweenAlpha;
     }
     return;
