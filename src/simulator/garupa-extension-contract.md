@@ -162,6 +162,8 @@ Reverse remains the only authority for original behavior.
 
 ## Manual product owner
 
+Deferred product input retains the adjusted music position and BPM captured when the host receives the frame, before `NoteManager.ExecUpdate` advances the shared clock. Candidate selection, node judgement and equal-position continuation consume that same snapshot; post-update expiry still uses the updated clock. This preserves the original input-before-Note-update order across extended coordinates/SV and BPM changes, rather than delaying extended input by one frame. The unchanged native judgement function was checked at the two sweetFrame=0 boundaries in Reverse `manual-input-runtime-contract-10-1-4/judgement_window_correction.json` through the deferred input clock consumer; no new product tests or fixtures were added.
+
 The following rules define additional graph/coordinate behaviour. They do not
 exempt ordinary judgement or gesture rules from the original implementation.
 
