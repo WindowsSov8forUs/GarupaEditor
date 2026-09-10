@@ -2,7 +2,7 @@ import { GameNoteType } from "../chart/types";
 import { buildGarupaSyncInputs, advanceGarupaSyncInputs, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
 import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { slideAxisInterval } from "./slideAxisMesh";
-import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding } from "../rendering/noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding } from "../rendering/noteVisualBinding";
 import type {
   RenderAnimationRole,
   RenderFloat32,
@@ -281,8 +281,6 @@ export class GarupaRenderInputAdapter {
     }
     // Flash is a child of the actual Slide root, including an invisible authored head.
     for (const chain of this.chart.slideChains) {
-      const headIdentity = chain.visibleConnectionIdentities[0];
-      if (headIdentity === undefined) continue;
       const state = plannedSlides.get(chain.identity)!;
       if (state.finished) retired.add(chain.identity);
       const rootNode = this.chart.nodeByIdentity.get(chain.connectionIdentities[0]!)!;
@@ -296,7 +294,7 @@ export class GarupaRenderInputAdapter {
         position: state.root.renderedTransform.position, localScale: state.root.renderedTransform.localScale,
         binding: existing?.binding ?? null,
         animations: [...existing?.animations ?? [], { ownerObjectId: slideFlashObjectId(chain.identity),
-          ...resolveProductSlideFlashBinding(samples.get(headIdentity)!.node, this.resources), animationRole: "note-long-flash",
+          ...resolveProductSlideFlashBinding(rootNode, this.resources), animationRole: "note-long-flash",
           lifetime: chain.identity, revision: state.flashActive ? 1 : null }] };
       if (index < 0) plans.push(plan); else plans[index] = plan;
     }
@@ -446,7 +444,7 @@ export function resolveProductSlideFlashBinding(
   resources: RenderEngineResourceBindings,
 ): Readonly<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && front.width <= 7;
-  return noteLongFlashBinding(resources, resourceSuffix(front, habahiro), habahiro);
+  return noteSlideFlashBinding(resources, front.width, front.spanStart + (front.width - 1) / 2, habahiro);
 }
 
 function syncTarget(sample: ProductNodeSample, parentScale: RenderFloat32): OrdinarySyncLineTargetState {

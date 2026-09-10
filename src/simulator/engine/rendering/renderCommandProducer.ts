@@ -1,4 +1,4 @@
-import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, advanceNoteAnimationClock } from "./noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import type {
   RenderColor,
@@ -3352,7 +3352,10 @@ function resolveHabahiroIconBinding(
     const suffix = resolveLaneSuffix(information, true);
     if (suffix.status !== "ok") return null;
     return Object.freeze({
-      ...noteLongFlashBinding(resources, suffix.value, true),
+      ...(information.fireNoteType === FrontNoteType.Long
+        ? noteLongFlashBinding(resources, suffix.value, true)
+        : noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1,
+          resolveLaneIndex(information.buttonType, false), true)),
       animationRole: "note-long-flash",
     });
   }
@@ -3734,7 +3737,9 @@ function resolveNoteAnimationBinding(
   if (lane.status !== "ok") return null;
   return Object.freeze({
     ownerObjectId: ordinaryLongFlashRenderObjectId(parentObjectId),
-    ...noteLongFlashBinding(resources, String(lane.value), false),
+    ...(information.fireNoteType === FrontNoteType.SlideA || information.fireNoteType === FrontNoteType.SlideB
+      ? noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1, lane.value, false)
+      : noteLongFlashBinding(resources, String(lane.value), false)),
     animationRole: "note-long-flash",
   });
 }

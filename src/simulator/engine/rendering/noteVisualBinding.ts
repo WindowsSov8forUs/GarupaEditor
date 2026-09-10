@@ -32,6 +32,15 @@ export function noteLongFlashBinding(resources: RenderEngineResourceBindings, su
     exactKey: `note_long_flash_${suffix}` };
 }
 
+/** NoteSlide.Activate uses its centered laneSize table once, from the authored head. */
+export function noteSlideFlashBinding(resources: RenderEngineResourceBindings, width: number, center: number, habahiro: boolean) {
+  // Outside the original atlas domain, retain the original single-lane flash.
+  const size = habahiro && Number.isInteger(width) && width >= 1 && width <= 7 ? width : 1;
+  const start = Math.floor((7 - size) / 2) + (size % 2 === 0 && center > 3 ? 1 : 0);
+  const suffix = Array.from({ length: size }, (_, index) => start + index).join("_");
+  return noteLongFlashBinding(resources, suffix, habahiro);
+}
+
 export function advanceNoteAnimationClock(elapsed: number, delta: number, restarted = false, playing = true): number {
   return playing ? Math.fround((restarted ? 0 : elapsed) + delta) : 0;
 }
