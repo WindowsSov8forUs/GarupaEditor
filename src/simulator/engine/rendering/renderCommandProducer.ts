@@ -2675,9 +2675,13 @@ export class RenderCommandProducer {
       }
       updates.set(renderObjectId, { role: animation.role, elapsed, playbackRevision });
     }
-    return this.preflight(commands, () => {
+    const publishAnimations = () => {
       for (const [renderObjectId, animation] of updates) this.noteAnimationElapsedSeconds.set(renderObjectId, animation);
-    });
+    };
+    // An idle frame or stopped flashes may update owner state without drawing.
+    return commands.length === 0
+      ? ok(new RenderOwnerTransaction(this.renderer, null, publishAnimations))
+      : this.preflight(commands, publishAnimations);
   }
 
   preflightNoteDeactivation(
