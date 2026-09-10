@@ -496,7 +496,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
 
   private hasAnimationRole(role: RenderAnimationRole): boolean {
     if (this.profile!.assets.some((asset) => asset.animationRole === role)) return true;
-    if (role === "score-gauge-ss") return this.profile!.scoreGaugeSsAnimation !== undefined;
+    if (role === "score-gauge-ss") return this.profile!.scoreHudNativeProfile !== undefined;
     if (role === "game-clear") return this.profile!.gameClearProfile !== undefined;
     const visible = this.profile!.ordinaryVisibleProfile;
     if (visible !== undefined) {
