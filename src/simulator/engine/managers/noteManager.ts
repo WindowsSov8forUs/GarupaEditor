@@ -1,3 +1,4 @@
+import { SyncLineConnectionRules, selectDirectionalSyncEndpoints } from "../rendering/syncLineConnectionRules";
 import {
   AfterNoteType,
   ButtonType,
@@ -211,6 +212,14 @@ export class NoteManager {
     readonly OrdinarySlideChildState[]
   >();
 
+  private readonly syncRules = new SyncLineConnectionRules<NoteBase, ActiveOrdinarySyncLine>({
+    pendingTails: this.pendingSyncTailNotes,
+    pendingDirectionalTails: this.pendingDirectionalSyncTailNotes,
+    position: () => this.musicScoreController.musicPosition,
+    hasTail: note => this.ordinaryLongRenderStates.has(note) || this.ordinarySlideRenderStates.has(note),
+    lineFor: (note, after) => this.syncLineForEndpoint(note, after),
+    connect: (a, afterA, b, afterB, existing) => this.connectSyncEndpoints(a, afterA, b, afterB, existing),
+  });
   private extensionSyncConnection: (first: NoteInformation, second: NoteInformation) => boolean = () => true;
 
   setExtensionSyncConnection(filter: (first: NoteInformation, second: NoteInformation) => boolean): void {
@@ -1436,135 +1445,12 @@ export class NoteManager {
   }
 
   private isSameFrontTailDirectionalGroup(tail: NoteBase, front: NoteBase, maxRange = 2): boolean {
-    const source = tail.noteInformation!;
-    const target = front.noteInformation!;
-    const after = source.afterNoteType;
-    let matches = false;
-    if (source.fireNoteType === FrontNoteType.Long) {
-      matches = (after === AfterNoteType.MultipleDirectionalFlickLeft &&
-        target.gameNoteType === GameNoteType.LongDirectionalFlickLeftAdd) ||
-        (after === AfterNoteType.MultipleDirectionalFlickRight &&
-          target.gameNoteType === GameNoteType.LongDirectionalFlickRightAdd);
-    } else if (source.fireNoteType === FrontNoteType.SlideA || source.fireNoteType === FrontNoteType.SlideB) {
-      const left = source.fireNoteType === FrontNoteType.SlideA
-        ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideBDirectionalFlickLeftAdd;
-      matches = (after === AfterNoteType.SlideMultipleDirectionalFlickLeft && target.gameNoteType === left) ||
-        (after === AfterNoteType.SlideMultipleDirectionalFlickRight && target.gameNoteType === left + 1);
-    }
-    const difference = directionalEndpointButton(source) - target.buttonType;
-    const left = after === AfterNoteType.MultipleDirectionalFlickLeft ||
-      after === AfterNoteType.SlideMultipleDirectionalFlickLeft;
-    return matches && (left ? difference > 0 && difference <= maxRange : difference < 0 && difference >= -maxRange);
-  }
-
-  private reconnectSyncTail(tail: NoteBase, front: NoteBase): SimulatorResult<void> {
-    const line = this.syncLineForEndpoint(tail, true);
-    if (line === null) return ok(undefined);
-    const otherIsA = line.targetB === tail && line.afterB;
-    const other = otherIsA ? line.targetA : line.targetB;
-    const otherAfter = otherIsA ? line.afterA : line.afterB;
-    const oldButton = otherAfter ? directionalEndpointButton(other.noteInformation!) : other.noteInformation!.buttonType;
-    const tailButton = directionalEndpointButton(tail.noteInformation!);
-    const newButton = front.noteInformation!.buttonType;
-    return (tailButton < oldButton ? newButton < oldButton : newButton > oldButton)
-      ? this.connectSyncEndpoints(tail, true, front, false, line)
-      : ok(undefined);
-  }
-
-  private setupSyncTailForFront(front: NoteBase): SimulatorResult<NoteBase | null> {
-    const information = front.noteInformation!;
-    const candidateIndex = this.pendingSyncTailNotes.findIndex((tail) =>
-      tail.noteInformation !== null &&
-      directionalEndpointPosition(tail.noteInformation) === information.absolutePos &&
-      !this.isSameFrontTailDirectionalGroup(tail, front));
-    const candidate = this.pendingSyncTailNotes[candidateIndex] ?? null;
-    if (candidate !== null) {
-      const connected = this.connectSyncEndpoints(candidate, true, front, false,
-        this.syncLineForEndpoint(candidate, true) ?? this.syncLineForEndpoint(front, false));
-      if (connected.status !== "ok") return connected;
-      this.pendingSyncTailNotes.splice(candidateIndex, 1);
-    }
-    if (this.ordinaryLongRenderStates.has(front) || this.ordinarySlideRenderStates.has(front)) {
-      if (!this.pendingSyncTailNotes.includes(front)) this.pendingSyncTailNotes.push(front);
-      if (!this.pendingDirectionalSyncTailNotes.includes(front)) this.pendingDirectionalSyncTailNotes.push(front);
-    }
-    return ok(candidate);
-  }
-
-  private connectPendingSyncTails(): SimulatorResult<void> {
-    for (let i = this.pendingSyncTailNotes.length - 1; i >= 0; i -= 1) {
-      const information = this.pendingSyncTailNotes[i]!.noteInformation;
-      if (information === null || this.musicScoreController.musicPosition > directionalEndpointPosition(information)) {
-        this.pendingSyncTailNotes.splice(i, 1);
-      }
-    }
-    for (let i = 0; i < this.pendingSyncTailNotes.length - 1; i += 1) {
-      const first = this.pendingSyncTailNotes[i]!;
-      for (let j = 1; j < this.pendingSyncTailNotes.length; j += 1) {
-        const second = this.pendingSyncTailNotes[j]!;
-        if (first === second || directionalEndpointPosition(first.noteInformation!) !==
-          directionalEndpointPosition(second.noteInformation!)) continue;
-        const connected = this.connectSyncEndpoints(second, true, first, true);
-        if (connected.status !== "ok") return connected;
-        const multiple = [AfterNoteType.MultipleDirectionalFlickLeft, AfterNoteType.MultipleDirectionalFlickRight,
-          AfterNoteType.SlideMultipleDirectionalFlickLeft, AfterNoteType.SlideMultipleDirectionalFlickRight] as readonly number[];
-        if (!multiple.includes(first.noteInformation!.afterNoteType) && !multiple.includes(second.noteInformation!.afterNoteType)) {
-          this.pendingSyncTailNotes.splice(this.pendingSyncTailNotes.indexOf(first), 1);
-          this.pendingSyncTailNotes.splice(this.pendingSyncTailNotes.indexOf(second), 1);
-        }
-        return ok(undefined);
-      }
-    }
-    return ok(undefined);
+    return this.syncRules.isSameFrontTailDirectionalGroup(tail, front, maxRange);
   }
 
   private connectOrdinarySyncLines(activatedNotes: readonly NoteBase[]): SimulatorResult<void> {
-    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) {
-      return ok(undefined);
-    }
-    let previous: NoteBase | null = null;
-    let matchedTail: NoteBase | null = null;
-    for (const current of activatedNotes) {
-      const information = current.noteInformation;
-      if (information === null) {
-        return integrityFailure("render.note.sync-line-target-information-unavailable",
-          ["RPR-D06", "RPR-D13", "PR16", "PR39"], "Sync-line connection requires committed NoteInformation.");
-      }
-      if (information.isInvisible) continue;
-      if (previous !== null) {
-        const previousInformation = previous.noteInformation!;
-        const sameMultiple = information.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
-          previousInformation.fireNoteType === FrontNoteType.MultipleDirectionalFlick &&
-          information.gameNoteType === previousInformation.gameNoteType &&
-          Math.abs(information.buttonType - previousInformation.buttonType) === 1;
-        if (!sameMultiple && !isSameDirectionalGroup(previousInformation, information)) {
-          const line = this.syncLineForEndpoint(previous, false);
-          if (line === null) {
-            const connected = this.connectSyncEndpoints(current, false, previous, false);
-            if (connected.status !== "ok") return connected;
-          } else {
-            const otherIsA = line.targetB === previous && !line.afterB;
-            const other = otherIsA ? line.targetA : line.targetB;
-            if ((otherIsA ? line.afterA : line.afterB) && !isSameDirectionalGroup(other.noteInformation!, information)) {
-              const connected = this.reconnectSyncTail(other, current);
-              if (connected.status !== "ok") return connected;
-            }
-          }
-        }
-      }
-      previous = current;
-      if (matchedTail !== null && this.syncLineForEndpoint(matchedTail, true) !== null) {
-        if (!this.isSameFrontTailDirectionalGroup(matchedTail, current)) {
-          const connected = this.reconnectSyncTail(matchedTail, current);
-          if (connected.status !== "ok") return connected;
-        }
-      } else {
-        const connected = this.setupSyncTailForFront(current);
-        if (connected.status !== "ok") return connected;
-        matchedTail = connected.value;
-      }
-    }
-    return this.connectPendingSyncTails();
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
+    return this.syncRules.connectOrdinarySyncLines(activatedNotes);
   }
 
   private updateOrdinarySyncLines(): SimulatorResult<void> {
@@ -1804,10 +1690,7 @@ export class NoteManager {
       const b = this.directionalSyncExtremes(line.targetB, line.afterB);
       const buttonA = line.afterA ? directionalEndpointButton(informationA) : informationA.buttonType;
       const buttonB = line.afterB ? directionalEndpointButton(informationB) : informationB.buttonType;
-      const selectedA = buttonA > buttonB ? a.left : a.right;
-      const selectedB = buttonA > buttonB ? b.right : b.left;
-      const owner = b.right.after ? selectedB : selectedA;
-      const other = b.right.after ? selectedA : selectedB;
+      const [owner, other] = selectDirectionalSyncEndpoints(a, b, buttonA, buttonB);
       const connected = this.connectSyncEndpoints(owner.note, owner.after, other.note, other.after, line);
       if (connected.status !== "ok") return connected;
     }

@@ -289,12 +289,23 @@ function isDirectionalFlick(note: NoteInformation): boolean {
   );
 }
 
-export function directionalEndpointPosition(note: NoteInformation): number {
+export interface DirectionalGraphSource<B extends number = number> {
+  readonly absolutePos: number;
+  readonly afterNoteAbsolutePos: number;
+  readonly buttonType: B;
+  readonly fireNoteType: number;
+  readonly gameNoteType: number;
+  readonly afterNoteType: number;
+  readonly isInvisible: boolean;
+  readonly slideNoteList: readonly { readonly absolutePos: number; readonly buttonType: B }[];
+}
+
+export function directionalEndpointPosition(note: DirectionalGraphSource): number {
   const terminal = note.slideNoteList[note.slideNoteList.length - 1];
   return terminal?.absolutePos ?? note.afterNoteAbsolutePos;
 }
 
-export function directionalEndpointButton(note: NoteInformation): ButtonTypeValue {
+export function directionalEndpointButton<B extends number>(note: DirectionalGraphSource<B>): B {
   if (
     (note.fireNoteType === FrontNoteType.SlideA || note.fireNoteType === FrontNoteType.SlideB)
     && note.slideNoteList.length > 0
@@ -311,7 +322,7 @@ interface DirectionalKind {
   readonly familyFireNoteType: FrontNoteTypeValue;
 }
 
-function directionalGroupKind(note: NoteInformation): DirectionalKind | null {
+function directionalGroupKind(note: DirectionalGraphSource): DirectionalKind | null {
   const gameNoteType: number = note.gameNoteType;
   if (
     gameNoteType === GameNoteType.LongDirectionalFlickLeftAdd
@@ -357,7 +368,7 @@ function directionalGroupKind(note: NoteInformation): DirectionalKind | null {
 }
 
 function matchesDirectionalKind(
-  note: NoteInformation,
+  note: DirectionalGraphSource,
   kind: DirectionalKind,
 ): boolean {
   const gameNoteType: number = note.gameNoteType;
@@ -389,8 +400,8 @@ function matchesDirectionalKind(
 }
 
 export function isSameDirectionalGroup(
-  source: NoteInformation,
-  target: NoteInformation,
+  source: DirectionalGraphSource,
+  target: DirectionalGraphSource,
 ): boolean {
   const kind = directionalGroupKind(source);
   if (kind === null || !matchesDirectionalKind(target, kind)) {

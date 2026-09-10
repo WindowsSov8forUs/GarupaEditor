@@ -54,6 +54,7 @@ import {
   calculateOrdinaryNoteStartDepth,
   calculateOrdinaryNoteWorldScaleAxis,
   getHabahiroMeshWidthRate,
+  type OrdinaryBaseNoteMeshGeometry,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
@@ -302,6 +303,25 @@ type NoteVisualAnimationRole =
   | "note-directional-flick"
   | "note-long-flash";
 
+/** Projected input for the ordinary presentation owner. No chart-format routing. */
+export type NotePresentation = {
+  readonly id: string;
+  readonly lifetime: string;
+  readonly visible: boolean;
+} & (
+  | { readonly kind: "body"; readonly position: RenderVector3 | null; readonly localScale: RenderVector3 | null;
+      readonly binding: NoteSpriteBinding | null; readonly contentVisible?: boolean;
+      readonly animations: readonly (OrdinaryAnimationBinding & { readonly lifetime: string; readonly revision?: number | null })[] }
+  | { readonly kind: "sync-line"; readonly state: OrdinarySyncLineOwnerState | null }
+  | { readonly kind: "multiple-directional-line"; readonly state: OrdinaryMultipleDirectionalLineOwnerState | null;
+      readonly direction: "left" | "right" }
+  | { readonly kind: "curve-note"; readonly geometry: OrdinaryBaseNoteMeshGeometry | null }
+);
+
+type PresentedObject = { readonly plan: NotePresentation; readonly visible: boolean;
+  readonly animations: ReadonlyMap<string, { readonly role: NoteVisualAnimationRole; readonly elapsed: number;
+    readonly playbackRevision?: number | null }> };
+
 export interface RenderHudSessionMode {
   readonly isAutoPlay: boolean;
   readonly allPerfectStatusPresentationEnabled: boolean;
@@ -330,6 +350,7 @@ export class RenderCommandProducer {
   private lastAllPerfect = false;
   private lastLifeWarning = false;
   private lastSingleGameOver = false;
+  private readonly presentedObjects = new Map<string, PresentedObject>();
   private readonly noteAnimationElapsedSeconds = new Map<string, {
     readonly role: NoteVisualAnimationRole;
     readonly elapsed: number;
@@ -1977,22 +1998,8 @@ export class RenderCommandProducer {
           );
         }
         const childTransform = created.value.lifecycle.renderedTransform;
-        commands.push({
-          ...base(commands.length),
-          kind: "set-transform",
-          renderObjectId: childObjectId,
-          position: childTransform.position,
-          scale: noteWorldScale(childTransform.localScale, scene.noteParentScale),
-          rotationDegrees: zero.value,
-          color: scene.noteTint,
-          ordering: Object.freeze({
-            domainLayer: scene.noteDomainLayer,
-            sourceDepthOrSortingOrder: 70,
-            sourceZ: childTransform.position.z,
-            creationSequence: childCreationSequence,
-          }),
-          maskObjectId: null,
-        });
+        appendNoteTransform(commands, base, childObjectId, childTransform.position,
+          childTransform.localScale, scene.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence);
         if (created.value.visible) {
           const childBinding = completeHabahiro
             ? resolveHabahiroSlideChildBinding(
@@ -2038,34 +2045,7 @@ export class RenderCommandProducer {
           advanced: information.virtualLaneDirection !== 0 || source.virtualLaneDirection !== 0,
         });
         if (mesh.status !== "ok") return mesh;
-        const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
-        if (meshZ.status !== "ok") return meshZ;
-        commands.push({
-          ...base(commands.length),
-          kind: "set-transform",
-          renderObjectId: meshObjectId,
-          position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
-          scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
-          rotationDegrees: zero.value,
-          color: scene.noteTint,
-          ordering: Object.freeze({
-            domainLayer: scene.noteDomainLayer,
-            sourceDepthOrSortingOrder: 60,
-            sourceZ: meshZ.value,
-            creationSequence: meshCreationSequence,
-          }),
-          maskObjectId: null,
-        });
-        commands.push({
-          ...base(commands.length),
-          kind: "set-mesh",
-          renderObjectId: meshObjectId,
-          vertices: mesh.value.vertices,
-          indices: mesh.value.indices,
-          uv: mesh.value.uv,
-          colors: mesh.value.colors,
-          materialRole: "curve-note",
-        });
+        appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true);
         commands.push({
           ...base(commands.length),
           kind: "set-threshold",
@@ -2174,39 +2154,11 @@ export class RenderCommandProducer {
       commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
       return this.preflight(commands);
     }
-    const geometry = buildOrdinaryMultipleDirectionalLine(ownerState);
-    if (geometry.status !== "ok") return geometry;
-    const zero = float32State(0);
-    const one = float32State(1);
-    const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [{
-      ...base(0),
-      kind: "set-transform",
-      renderObjectId,
-      // SORT-C40: endpoints are world coordinates; the source line keeps order 0.
-      position: { x: zero, y: zero, z: zero },
-      scale: { x: one, y: one, z: one },
-      rotationDegrees: zero,
-      color: { red: one, green: one, blue: one, alpha: one },
-      ordering: {
-        domainLayer: 3,
-        sourceDepthOrSortingOrder: 0,
-        sourceZ: zero,
-        creationSequence: this.creationSequenceByObjectId.get(renderObjectId)!,
-      },
-      maskObjectId: null,
-    }];
-    commands.push({
-      ...base(commands.length),
-      kind: "set-line",
-      renderObjectId,
-      start: geometry.value.start,
-      end: geometry.value.end,
-      width: geometry.value.width,
-      materialRole: "multiple-directional-line",
-    });
-    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
-    return this.preflight(commands);
+    const commands: RenderCommand[] = [];
+    const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
+      { kind: "multiple-directional-line", state: ownerState }, true,
+      this.creationSequenceByObjectId.get(renderObjectId)!);
+    return appended.status === "ok" ? this.preflight(commands) : appended;
   }
 
   preflightOrdinarySyncLine(
@@ -2231,49 +2183,35 @@ export class RenderCommandProducer {
         "Simultaneous-line updates require a committed fixed-pool identity.",
       );
     }
-    if (!visible) {
-      return this.preflight([{
-        ...this.commandBase(this.substep)(0),
-        kind: "deactivate-object",
-        renderObjectId,
-      }]);
+    const commands: RenderCommand[] = [];
+    const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
+      { kind: "sync-line", state: ownerState }, visible,
+      this.creationSequenceByObjectId.get(renderObjectId)!);
+    return appended.status === "ok" ? this.preflight(commands) : appended;
+  }
+
+  private appendNoteLine(
+    commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+    line: { kind: "sync-line"; state: OrdinarySyncLineOwnerState | null } |
+      { kind: "multiple-directional-line"; state: OrdinaryMultipleDirectionalLineOwnerState | null },
+    visible: boolean, creationSequence: number,
+  ): SimulatorResult<void> {
+    if (!visible || line.state === null) {
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      return ok(undefined);
     }
-    const geometry = buildOrdinarySyncLine(ownerState);
+    const geometry = line.kind === "sync-line" ? buildOrdinarySyncLine(line.state) : buildOrdinaryMultipleDirectionalLine(line.state);
     if (geometry.status !== "ok") return geometry;
-    const zero = float32State(0);
-    const one = float32State(1);
-    const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [{
-      ...base(0),
-      kind: "set-transform",
-      renderObjectId,
-      position: { x: zero, y: zero, z: zero },
-      scale: { x: one, y: one, z: one },
-      rotationDegrees: zero,
-      color: { red: one, green: one, blue: one, alpha: one },
-      ordering: {
-        domainLayer: 3,
-        // SORT-C33: NoteSyncLine.AwakeEnd assigns its LineRenderer order 69.
-        sourceDepthOrSortingOrder: 69,
-        sourceZ: zero,
-        creationSequence: this.creationSequenceByObjectId.get(renderObjectId)!,
-      },
-      maskObjectId: null,
-    }, {
-      ...base(1),
-      kind: "set-line",
-      renderObjectId,
-      start: geometry.value.start,
-      end: geometry.value.end,
-      width: geometry.value.width,
-      materialRole: "sync-line",
-    }];
-    commands.push({
-      ...base(2),
-      kind: "activate-object",
-      renderObjectId,
-    });
-    return this.preflight(commands);
+    const zero = float32State(0), one = float32State(1);
+    commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+      position: { x: zero, y: zero, z: zero }, scale: { x: one, y: one, z: one },
+      rotationDegrees: zero, color: { red: one, green: one, blue: one, alpha: one },
+      ordering: { domainLayer: 3, sourceDepthOrSortingOrder: line.kind === "sync-line" ? 69 : 0,
+        sourceZ: zero, creationSequence }, maskObjectId: null });
+    commands.push({ ...base(commands.length), kind: "set-line", renderObjectId,
+      ...geometry.value, materialRole: line.kind });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    return ok(undefined);
   }
 
   preflightOrdinaryLongChildFrame(
@@ -2436,15 +2374,9 @@ export class RenderCommandProducer {
     if (stopControl.advanceMotion && stopControl.rootWaiting) {
       const renderObjectId = rootRenderObjectId(poolObjectId);
       const moved = advanced.value.frontTransform;
-      commands.push({
-        ...base(commands.length), kind: "set-transform", renderObjectId,
-        position: moved.position,
-        scale: noteWorldScale(moved.localScale, stopControl.rootMotionState.noteParentScale),
-        rotationDegrees: zero.value, color: scene.noteTint,
-        ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 70,
-          sourceZ: moved.position.z, creationSequence: this.creationSequenceByObjectId.get(renderObjectId)! },
-        maskObjectId: null,
-      });
+      appendNoteTransform(commands, base, renderObjectId, moved.position, moved.localScale,
+        stopControl.rootMotionState.noteParentScale, scene.noteTint, scene.noteDomainLayer,
+        this.creationSequenceByObjectId.get(renderObjectId)!);
     }
     for (const index of hideRequests?.keys() ?? []) {
       const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
@@ -2486,34 +2418,12 @@ export class RenderCommandProducer {
             }
           }
         }
-        commands.push({
-          ...base(commands.length),
-          kind: "set-transform",
-          renderObjectId: childObjectId,
-          position: state.lifecycle.renderedTransform.position,
-          scale: noteWorldScale(state.lifecycle.renderedTransform.localScale, state.lifecycle.motionState.noteParentScale),
-          rotationDegrees: zero.value,
-          color: scene.noteTint,
-          ordering: Object.freeze({
-            domainLayer: scene.noteDomainLayer,
-            sourceDepthOrSortingOrder: 70,
-            sourceZ: state.lifecycle.renderedTransform.position.z,
-            creationSequence: childCreationSequence,
-          }),
-          maskObjectId: null,
-        });
+        appendNoteTransform(commands, base, childObjectId, state.lifecycle.renderedTransform.position,
+          state.lifecycle.renderedTransform.localScale, state.lifecycle.motionState.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence);
 
       }
-      commands.push({
-        ...base(commands.length),
-        kind: "set-mesh",
-        renderObjectId: meshObjectId,
-        vertices: segment.geometry.vertices,
-        indices: segment.geometry.indices,
-        uv: segment.geometry.uv,
-        colors: segment.geometry.colors,
-        materialRole: "curve-note",
-      });
+      appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
+        this.creationSequenceByObjectId.get(meshObjectId)!, false);
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
@@ -2649,24 +2559,8 @@ export class RenderCommandProducer {
     for (const [renderObjectId, animation] of this.noteAnimationElapsedSeconds) {
       const playbackRevision = animation.role === "note-long-flash"
         ? revisions.get(renderObjectId) ?? null : undefined;
-      const restarted = playbackRevision !== animation.playbackRevision;
-      if (restarted) {
-        if (playbackRevision !== null) commands.push({ ...base(commands.length),
-          kind: "activate-object", renderObjectId });
-        commands.push({ ...base(commands.length),
-          kind: playbackRevision === null ? "stop-animation" : "play-animation",
-          renderObjectId, animationRole: animation.role, restart: playbackRevision !== null });
-        if (playbackRevision === null) commands.push({ ...base(commands.length),
-          kind: "hide-object", renderObjectId });
-      }
-      const elapsed = advanceNoteAnimationClock(animation.elapsed, delta.value.value, restarted, playbackRevision !== null);
-      if (playbackRevision !== null) {
-        const sample = createRenderFloat32(elapsed);
-        if (sample.status !== "ok") return sample;
-        commands.push({ ...base(commands.length), kind: "sample-animation",
-          renderObjectId, animationRole: animation.role, elapsedSeconds: sample.value });
-      }
-      updates.set(renderObjectId, { role: animation.role, elapsed, playbackRevision });
+      updates.set(renderObjectId, appendNoteAnimationFrame(commands, base, renderObjectId,
+        animation, playbackRevision, delta.value.value));
     }
     const publishAnimations = () => {
       for (const [renderObjectId, animation] of updates) this.noteAnimationElapsedSeconds.set(renderObjectId, animation);
@@ -2799,6 +2693,86 @@ export class RenderCommandProducer {
     });
   }
 
+  preflightNotePresentation(
+    plans: readonly NotePresentation[], retiredLifetimes: ReadonlySet<string>,
+    scene: OrdinaryFixedNoteSceneInput, deltaTimeSeconds: number, onCommit: () => void,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const commands: RenderCommand[] = [], created: string[] = [];
+    const base = this.commandBase(this.substep);
+    const next = new Map(this.presentedObjects);
+    const current = new Map(plans.map(plan => [plan.id, plan]));
+    const sequence = (id: string) => this.creationSequenceByObjectId.get(id) ??
+      this.creationSequenceByObjectId.size + created.indexOf(id);
+    const create = (id: string, role: "note-root" | "note-icon" | "note-intermediate" | "note-mesh" | "sync-line" | "multiple-directional-line", parent: string | null) => {
+      created.push(id);
+      commands.push({ ...base(commands.length), kind: "create-object", renderObjectId: id,
+        poolFamily: role, role, parentObjectId: parent });
+    };
+    // Omitted viewport parts retain their animation clock until their note retires.
+    for (const [id, previous] of next) if (!current.has(id)) current.set(id, { ...previous.plan, visible: false });
+    for (const plan of current.values()) {
+      const previous = next.get(plan.id);
+      if (previous === undefined && !plan.visible) continue;
+      if (previous === undefined) {
+        create(plan.id, plan.kind === "body" ? "note-root" : plan.kind === "curve-note" ? "note-mesh" : plan.kind, null);
+        if (plan.kind === "body") {
+          appendNoteSpriteBinding(commands, base, plan.id, plan.binding);
+          for (const animation of plan.animations) {
+            create(animation.ownerObjectId, animation.animationRole === "note-long-flash" ? "note-intermediate" : "note-icon", plan.id);
+            appendOrdinaryAnimationStart(commands, base, animation, scene.noteDomainLayer, sequence(animation.ownerObjectId));
+          }
+        } else {
+          const material = plan.kind === "sync-line" ? this.resources.syncLineLogicalAssetId!
+            : plan.kind === "curve-note" ? this.resources.curveNoteMaterialLogicalAssetId!
+            : plan.direction === "left" ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+            : this.resources.multipleDirectionalLineRightLogicalAssetId!;
+          commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId: plan.id,
+            binding: "material", logicalAssetId: material, exactKey: null });
+        }
+      }
+      const animations = new Map(previous?.animations);
+      if (plan.kind === "body") {
+        if (plan.visible && plan.position !== null && plan.localScale !== null) {
+          appendNoteTransform(commands, base, plan.id, plan.position, plan.localScale, scene.noteParentScale,
+            scene.noteTint, scene.noteDomainLayer, sequence(plan.id));
+          if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
+          if (plan.contentVisible === false) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id, contentsOnly: true });
+        } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
+        for (const binding of plan.animations) {
+          const revision = retiredLifetimes.has(binding.lifetime) ? null
+            : binding.animationRole === "note-long-flash" ? binding.revision ?? null : undefined;
+          animations.set(binding.ownerObjectId, appendNoteAnimationFrame(commands, base, binding.ownerObjectId,
+            animations.get(binding.ownerObjectId) ?? { role: binding.animationRole, elapsed: 0 }, revision, deltaTimeSeconds));
+        }
+      } else if (plan.kind === "curve-note") {
+        if (plan.visible && plan.geometry !== null) {
+          appendCurveMesh(commands, base, plan.id, plan.geometry, scene, sequence(plan.id), previous === undefined);
+          if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
+        } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
+      } else if (plan.visible || previous?.visible) {
+        const line = this.appendNoteLine(commands, base, plan.id, plan, plan.visible, sequence(plan.id));
+        if (line.status !== "ok") return line;
+      }
+      next.set(plan.id, { plan, visible: plan.visible, animations });
+    }
+    const publish = () => {
+      this.recordCreatedObjects(created);
+      this.presentedObjects.clear();
+      for (const [id, value] of next) this.presentedObjects.set(id, value);
+      onCommit();
+    };
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null, publish)) : this.preflight(commands, publish);
+  }
+
+  notePresentationSnapshot() {
+    return { frame: this.frame, createdObjectCount: [...this.presentedObjects.values()].reduce((count, state) =>
+      count + 1 + (state.plan.kind === "body" ? state.plan.animations.length : 0), 0),
+      visibleObjectCount: [...this.presentedObjects.values()].filter(state => state.visible).length,
+      activeEffectCount: [...this.presentedObjects.values()].reduce((count, state) => count + [...state.animations.values()].filter(animation => animation.playbackRevision !== null).length, 0) };
+  }
+
   preflightSessionRelease(): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2814,6 +2788,7 @@ export class RenderCommandProducer {
         renderObjectId,
       }));
     return this.preflight(commands, () => {
+      this.presentedObjects.clear();
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
       this.fieldObjectIds.clear();
@@ -3021,6 +2996,47 @@ type OrdinaryAnimationBinding = Readonly<{
   exactKey: string;
   animationRole: NoteVisualAnimationRole;
 }>;
+
+function appendNoteTransform(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  position: RenderVector3, localScale: RenderVector3, parentScale: RenderFloat32,
+  color: RenderColor, domainLayer: number, creationSequence: number,
+): void {
+  commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+    position, scale: noteWorldScale(localScale, parentScale), rotationDegrees: float32State(0), color,
+    ordering: { domainLayer, sourceDepthOrSortingOrder: 70, sourceZ: position.z, creationSequence }, maskObjectId: null });
+}
+
+function appendCurveMesh(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  geometry: OrdinaryBaseNoteMeshGeometry, scene: OrdinaryFixedNoteSceneInput, creationSequence: number, initialize: boolean,
+): void {
+  if (initialize) {
+    const zero = float32State(0), one = float32State(1), z = float32State(0.9900000095367432);
+    commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+      position: { x: zero, y: zero, z }, scale: { x: one, y: one, z: one }, rotationDegrees: zero, color: scene.noteTint,
+      ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
+  }
+  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole: "curve-note" });
+}
+
+function appendNoteAnimationFrame(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  animation: { readonly role: NoteVisualAnimationRole; readonly elapsed: number; readonly playbackRevision?: number | null },
+  playbackRevision: number | null | undefined, delta: number,
+) {
+  const restarted = playbackRevision !== animation.playbackRevision;
+  if (restarted) {
+    if (playbackRevision !== null) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    commands.push({ ...base(commands.length), kind: playbackRevision === null ? "stop-animation" : "play-animation",
+      renderObjectId, animationRole: animation.role, restart: playbackRevision !== null });
+    if (playbackRevision === null) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+  }
+  const elapsed = advanceNoteAnimationClock(animation.elapsed, delta, restarted, playbackRevision !== null);
+  if (playbackRevision !== null) commands.push({ ...base(commands.length), kind: "sample-animation", renderObjectId,
+    animationRole: animation.role, elapsedSeconds: float32State(elapsed) });
+  return { role: animation.role, elapsed, playbackRevision };
+}
 
 function appendNoteSpriteBinding(
   commands: RenderCommand[],
