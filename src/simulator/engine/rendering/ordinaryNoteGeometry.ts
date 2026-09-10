@@ -124,12 +124,12 @@ export function getHabahiroMeshWidthRate(
   explicitSetting: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
   if (
-    !Number.isInteger(noteLength) || noteLength < 1 || noteLength > 7 ||
+    !Number.isInteger(noteLength) || noteLength < 1 ||
     !validateRenderFloat32(explicitSetting)
   ) {
     return reject(
       "render.geometry.invalid-habahiro-mesh-width-input",
-      "The current static HABAHIRO width formula requires a 1..7 note length and explicit Float32 host setting.",
+      "The current static HABAHIRO width formula requires a positive integer note length and explicit Float32 host setting.",
     );
   }
   let value = noteLength === 1 ? Math.fround(1) : HABAHIRO_MESH_WIDTH_BASE;
@@ -599,8 +599,7 @@ function validateEndpoint(value: OrdinaryNoteMeshEndpoint): boolean {
     validateRenderFloat32(value.localScaleX) &&
     value.localScaleX.value > 0 &&
     Number.isInteger(value.buttonCount) &&
-    value.buttonCount >= 1 &&
-    value.buttonCount <= 7;
+    value.buttonCount >= 1;
 }
 
 function projectBoundary(

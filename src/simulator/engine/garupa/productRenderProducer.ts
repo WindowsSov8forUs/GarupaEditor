@@ -1,3 +1,6 @@
+import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+import { slideAxisInterval } from "./slideAxisMesh";
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, advanceNoteAnimationClock } from "../rendering/noteVisualBinding";
 import type { SimulatorRendererBackend } from "../../backends/renderingContracts";
 import type {
   RenderAnimationRole,
@@ -10,8 +13,10 @@ import type {
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { buildNoteMeshStrip, buildOrdinarySyncLine, calculateNoteMeshHalfWidth, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
-import { RenderOwnerTransaction, type RenderEngineResourceBindings } from "../rendering/renderCommandProducer";
+import { buildOrdinarySyncLine, buildOrdinaryMultipleDirectionalLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
+import { appendOrdinaryAnimationStart, RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
+import { advanceExtensionSlide, advanceExtensionMotion, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
+import type { OrdinarySlideFrameResult } from "../rendering/ordinarySlideChildLifecycle";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type {
   GarupaProductChartProfile,
@@ -40,11 +45,14 @@ export interface GarupaProductRenderSnapshot {
 
 export class GarupaProductRenderProducer {
   private frame = 0;
-  private readonly created = new Set<string>();
+  private readonly created = new Map<string, number>();
   private readonly visible = new Set<string>();
   private readonly judgedNodeIdentities = new Set<string>();
   private readonly animationElapsedSeconds = new Map<string, number>();
   private readonly chainByIdentity: ReadonlyMap<string, GarupaProductSlideChain>;
+  private readonly slideStates = new Map<string, ExtensionSlideState>();
+  private readonly singleStates = new Map<string, OrdinaryLongNormalChildState>();
+  private readonly axisGroups: ReadonlySet<string>;
 
   constructor(
     private readonly sessionId: string,
@@ -57,11 +65,13 @@ export class GarupaProductRenderProducer {
     private readonly noteColor: boolean,
     private readonly syncLine: boolean,
     private readonly syncLineEdgeMargin: RenderFloat32,
+    private readonly ordinaryScene: OrdinaryFixedNoteSceneInput,
     private readonly originalPresentation: (identity: string) => SimulatorResult<{
       readonly target: OrdinarySyncLineTargetState; readonly visible: boolean;
     } | null>,
   ) {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
+    this.axisGroups = new Set(axis.groups.filter(group => group.changes.some(change => change.speed !== 1)).map(group => group.id));
   }
 
   validate(): SimulatorResult<void> {
@@ -91,6 +101,7 @@ export class GarupaProductRenderProducer {
     currentAbsolutePosition: number,
     judgedNodes: readonly GarupaProductNode[],
     deltaTimeSeconds: number,
+    frameInput: Omit<ExtensionRenderFrame, "absolutePosition" | "deltaTimeSeconds" | "judged">,
   ): SimulatorResult<RenderOwnerTransaction | null> {
     const valid = this.validate();
     if (valid.status !== "ok") return valid;
@@ -108,8 +119,10 @@ export class GarupaProductRenderProducer {
     const arrivalMilliseconds = arrival.value.value * 1000;
     const plannedJudged = new Set(this.judgedNodeIdentities);
     for (const node of judgedNodes) plannedJudged.add(node.identity);
+    for (const id of frameInput.missed) plannedJudged.add(id);
     const samples = new Map<string, ProductNodeSample>();
-    for (const node of this.chart.nodes) {
+    for (const authored of this.chart.nodes) {
+      const node = noteRenderInput(authored);
       const displacement = this.axis.displacementAtPosition(
         node.timingGroup,
         node.absolutePosition,
@@ -147,11 +160,67 @@ export class GarupaProductRenderProducer {
       }));
     }
 
-    const plannedCreated = new Set(this.created);
+    const frame: ExtensionRenderFrame = { ...frameInput, absolutePosition: currentAbsolutePosition,
+      deltaTimeSeconds, judged: new Set(judgedNodes.map(node => node.identity)) };
+    const motionInput = { deltaTime: f32(deltaTimeSeconds), launcherMusicPosition: f32(frame.launcherMusicPosition),
+      adjustedMusicPosition: f32(frame.adjustedMusicPosition) };
+    const plannedSingles = new Map(this.singleStates);
+    for (const authored of this.chart.nodes) {
+      const node = noteRenderInput(authored);
+      if (node.chainIdentity !== null || plannedJudged.has(node.identity)) continue;
+      let state = plannedSingles.get(node.identity);
+      if (state === undefined) {
+        const motion = this.scene.motionStateAtLane(node.spanStart + (node.width - 1) / 2, node.width, node.absolutePosition);
+        if (motion.status !== "ok") return motion;
+        const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, f32(bpmAtNode(this.axis, node.absolutePosition)));
+        if (created.status !== "ok") return created;
+        state = created.value;
+      }
+      const advanced = advanceExtensionMotion(state, node, frame, motionInput, this.scene, this.axis, this.axisGroups.has(node.timingGroup));
+      if (advanced.status !== "ok") return advanced;
+      // Single notes keep moving until the judgement/timeout consumer retires them.
+      state = advanced.value.phase === "stop" ? { ...advanced.value, phase: "move" } : advanced.value;
+      plannedSingles.set(node.identity, state);
+      const previous = samples.get(node.identity)!;
+      samples.set(node.identity, { ...previous, position: state.renderedTransform.position,
+        uniformScale: state.renderedTransform.localScale.x,
+        visible: state.phase !== "wait" && (!this.axisGroups.has(node.timingGroup) || previous.visible) });
+    }
+    const plannedSlides = new Map(this.slideStates);
+    const slideSegments = new Map<string, OrdinarySlideFrameResult["segments"]>();
+    for (const chain of this.chart.slideChains) {
+      const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+      const advanced = advanceExtensionSlide(nodes, this.slideStates.get(chain.identity), frame, this.scene, this.ordinaryScene, this.axis,
+      this.axisGroups.has(chain.timingGroup));
+      if (advanced.status !== "ok") return advanced;
+      const state = advanced.value.state;
+      plannedSlides.set(chain.identity, state);
+      slideSegments.set(chain.identity, advanced.value.segments);
+      for (const [index, node] of nodes.entries()) {
+        const previous = samples.get(node.identity)!;
+        const lifecycle = index === 0 ? state.root : state.children[index - 1]!.lifecycle;
+        const transform = lifecycle.renderedTransform;
+        const visible = index === 0 ? state.rootVisible : state.children[index - 1]!.visible;
+        const stopped = lifecycle.phase === "stop";
+        samples.set(node.identity, { ...previous, position: transform.position,
+          uniformScale: transform.localScale.x,
+          curve: stopped ? 1 : previous.curve,
+          visible: !state.finished && visible && lifecycle.phase !== "wait" &&
+            (stopped || !this.axisGroups.has(chain.timingGroup) || previous.curve >= 0.002 && previous.curve <= 1) });
+      }
+    }
+
+    const plannedCreated = new Map(this.created);
     const plannedVisible = new Set(this.visible);
     const plannedAnimationElapsed = new Map(this.animationElapsedSeconds);
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
+    const base = (offset: number) => ({ sessionId: this.sessionId,
+      sequence: this.renderer.snapshot().nextSequence + offset, frame: this.frame, substep: 0 });
+    const ordering = (domain: number, source: number, identity: string, sourceZ = 0): RenderOrderingKey => ({
+      domainLayer: domain, sourceDepthOrSortingOrder: source, sourceZ: f32(sourceZ),
+      creationSequence: plannedCreated.get(identity)!,
+    });
 
     if (this.syncLine) {
       for (const pair of this.chart.syncPairs) {
@@ -189,7 +258,7 @@ export class GarupaProductRenderProducer {
             kind: "bind-resource", renderObjectId: objectId, binding: "material",
             logicalAssetId: this.resources.syncLineLogicalAssetId!, exactKey: null,
           }));
-          plannedCreated.add(objectId);
+          plannedCreated.set(objectId, this.renderer.snapshot().nextSequence + commands.length);
         }
         commands.push(command(commands.length, {
           kind: "set-transform",
@@ -202,7 +271,7 @@ export class GarupaProductRenderProducer {
           maskObjectId: null,
         }));
         const line = buildOrdinarySyncLine({
-          targetA: syncTarget(first), targetB: syncTarget(second), edgeMargin: this.syncLineEdgeMargin,
+          targetA: syncTarget(first, this.ordinaryScene.noteParentScale), targetB: syncTarget(second, this.ordinaryScene.noteParentScale), edgeMargin: this.syncLineEdgeMargin,
         });
         if (line.status !== "ok") return line;
         commands.push(command(commands.length, { kind: "set-line", renderObjectId: objectId,
@@ -214,28 +283,16 @@ export class GarupaProductRenderProducer {
       }
     }
 
-    // SVF-R02/SVF-R03: NoteSlide.Activate binds one laneSize1..7 flash from
-    // the root/front span before disabling it. changeCurrentNote then moves the
-    // same NoteSlide root (and its stable Flash/TapKeep children) to each current
-    // after-node without rebinding or recreating either child.
+    // Stable Flash ownership follows the same committed Slide root as its body.
     for (const chain of this.chart.slideChains) {
       const headIdentity = chain.visibleConnectionIdentities[0];
       const terminalIdentity = chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1];
       if (headIdentity === undefined || terminalIdentity === undefined) continue;
       const slideRootObjectId = slideOwnerObjectId(chain.identity);
       const flashObjectId = slideFlashObjectId(chain.identity);
-      const active = plannedJudged.has(headIdentity) && !plannedJudged.has(terminalIdentity);
-      const currentIdentity = active
-        ? chain.visibleConnectionIdentities.find((identity) => !plannedJudged.has(identity))
-        : undefined;
-      if (active && currentIdentity === undefined) {
-        return rejected(
-          "render.garupa-product.slide-current-node-missing",
-          "An active product Slide must retain the first unjudged visible after-node selected by changeCurrentNote.",
-        );
-      }
+      const slideState = plannedSlides.get(chain.identity)!;
+      const active = slideState.flashActive;
       if (active) {
-        const current = samples.get(currentIdentity!)!;
         if (!plannedCreated.has(slideRootObjectId)) {
           commands.push(command(commands.length, {
             kind: "create-object",
@@ -244,7 +301,7 @@ export class GarupaProductRenderProducer {
             role: "note-root",
             parentObjectId: null,
           }));
-          plannedCreated.add(slideRootObjectId);
+          plannedCreated.set(slideRootObjectId, this.renderer.snapshot().nextSequence + commands.length);
         }
         if (!plannedCreated.has(flashObjectId)) {
           const front = samples.get(headIdentity)!;
@@ -256,40 +313,24 @@ export class GarupaProductRenderProducer {
             parentObjectId: slideRootObjectId,
           }));
           const flashBinding = resolveProductSlideFlashBinding(front.node, this.resources);
-          commands.push(command(commands.length, {
-            kind: "bind-resource",
-            renderObjectId: flashObjectId,
-            binding: "sprite",
-            logicalAssetId: flashBinding.logicalAssetId,
-            exactKey: flashBinding.exactKey,
-          }));
-          plannedCreated.add(flashObjectId);
+          plannedCreated.set(flashObjectId, this.renderer.snapshot().nextSequence + commands.length);
+          appendOrdinaryAnimationStart(commands, base, { ...flashBinding,
+            ownerObjectId: flashObjectId, animationRole: "note-long-flash" },
+            this.ordinaryScene.noteDomainLayer, plannedCreated.get(flashObjectId)!);
         }
-        const target = this.scene.projectLaneAtCurve(
-          current.node.spanStart + (current.node.width - 1) / 2,
-          1,
-        );
-        const targetScale = this.scene.projectNoteScaleAtCurve(1, current.node.width);
-        if (target.status !== "ok") return target;
-        if (targetScale.status !== "ok") return targetScale;
+        const target = slideState.root.renderedTransform.position;
+        const targetScale = slideState.root.renderedTransform.localScale;
+        const parentScale = this.ordinaryScene.noteParentScale.value;
         commands.push(command(commands.length, {
           kind: "set-transform",
           renderObjectId: slideRootObjectId,
-          position: target.value,
-          scale: vector3(1, 1, 1),
+          position: target,
+          scale: vector3(calculateOrdinaryNoteWorldScaleAxis(targetScale.x.value, parentScale),
+            calculateOrdinaryNoteWorldScaleAxis(targetScale.y.value, parentScale),
+            calculateOrdinaryNoteWorldScaleAxis(targetScale.z.value, parentScale)),
           rotationDegrees: f32(0),
           color: white(),
-          ordering: ordering(3, 70, slideRootObjectId, target.value.z.value),
-          maskObjectId: null,
-        }));
-        commands.push(command(commands.length, {
-          kind: "set-transform",
-          renderObjectId: flashObjectId,
-          position: vector3(0, 0, 0),
-          scale: vector2(targetScale.value.value, targetScale.value.value),
-          rotationDegrees: f32(0),
-          color: white(),
-          ordering: ordering(3, 71, flashObjectId, target.value.z.value),
+          ordering: ordering(3, 70, slideRootObjectId, target.z.value),
           maskObjectId: null,
         }));
         if (!plannedVisible.has(slideRootObjectId)) {
@@ -322,18 +363,51 @@ export class GarupaProductRenderProducer {
         plannedVisible.delete(flashObjectId);
         plannedVisible.delete(slideRootObjectId);
       } else if (plannedAnimationElapsed.has(flashObjectId)) {
-        const elapsed = plannedAnimationElapsed.get(flashObjectId)!;
+        const elapsed = advanceNoteAnimationClock(plannedAnimationElapsed.get(flashObjectId)!, deltaTimeSeconds);
         commands.push(command(commands.length, {
           kind: "sample-animation",
           renderObjectId: flashObjectId,
           animationRole: "note-long-flash",
           elapsedSeconds: f32(elapsed),
         }));
-        plannedAnimationElapsed.set(flashObjectId, Math.fround(elapsed + deltaTimeSeconds));
+        plannedAnimationElapsed.set(flashObjectId, elapsed);
       }
     }
 
-    for (const node of this.chart.visibleNodes) {
+    const visualNodes: GarupaProductNode[] = [];
+    const visualOwners = new Map<string, GarupaProductNode>();
+    const directionalEdges: Array<readonly [GarupaProductNode, GarupaProductNode, "Left" | "Right"]> = [];
+    const iconOwners = new Set<string>();
+    for (const authored of this.chart.visibleNodes) {
+      const node = noteRenderInput(authored);
+      visualNodes.push(node);
+      visualOwners.set(node.identity, authored);
+      if (node.type !== "Directional" || authored.width === 1) { iconOwners.add(node.identity); continue; }
+      const baseSample = samples.get(node.identity)!;
+      const parts: GarupaProductNode[] = [];
+      const bounds = this.scene.visibleLaneRangeAtCurve(baseSample.curve);
+      const first = Math.max(0, Math.floor(bounds[0] - authored.spanStart) - 1);
+      const last = Math.min(authored.width - 1, Math.ceil(bounds[1] - authored.spanStart) + 1);
+      for (let index = first; index <= last; index = index + 1 > index ? index + 1 : Infinity) {
+        const lane = authored.spanStart + index;
+        const part = lane === authored.lane ? node : { ...node, identity: `${node.identity}:side:${index}`,
+          lane, spanStart: lane, spanEnd: lane, chainIdentity: null, connectionIndex: null };
+        parts.push(part);
+        if (lane === (authored.direction === "Left" ? authored.spanStart : authored.spanEnd)) iconOwners.add(part.identity);
+        if (part === node) continue;
+        const position = this.scene.projectLaneAtCurve(lane, baseSample.curve);
+        const anchor = this.scene.projectLaneAtCurve(authored.lane, baseSample.curve);
+        if (position.status !== "ok" && baseSample.visible) return position;
+        samples.set(part.identity, { ...baseSample, node: part,
+          position: position.status === "ok" && anchor.status === "ok" && baseSample.position !== null
+            ? vector3(baseSample.position.x.value + position.value.x.value - anchor.value.x.value,
+                baseSample.position.y.value, baseSample.position.z.value) : null });
+        visualNodes.push(part); visualOwners.set(part.identity, authored);
+      }
+      for (let index = 1; index < parts.length; index += 1)
+        directionalEdges.push([parts[index - 1]!, parts[index]!, authored.direction!]);
+    }
+    for (const node of visualNodes) {
       const sample = samples.get(node.identity)!;
       const objectId = nodeObjectId(node);
       const front = frontBinding(
@@ -342,11 +416,7 @@ export class GarupaProductRenderProducer {
         this.noteColor,
         this.chainByIdentity,
       );
-      const animation = productAnimationBinding(
-        node,
-        objectId,
-        this.resources,
-      );
+      const animation = iconOwners.has(node.identity) ? productAnimationBinding(node, objectId, this.resources) : null;
       if (sample.visible) {
         if (!plannedCreated.has(objectId)) {
           commands.push(command(commands.length, {
@@ -356,14 +426,14 @@ export class GarupaProductRenderProducer {
             role: "note-root",
             parentObjectId: null,
           }));
-          commands.push(command(commands.length, {
+          if (front !== null) commands.push(command(commands.length, {
             kind: "bind-resource",
             renderObjectId: objectId,
             binding: "sprite",
             logicalAssetId: front.logicalAssetId,
             exactKey: front.exactKey,
           }));
-          plannedCreated.add(objectId);
+          plannedCreated.set(objectId, this.renderer.snapshot().nextSequence + commands.length);
           if (animation !== null) {
             commands.push(command(commands.length, {
               kind: "create-object",
@@ -374,24 +444,9 @@ export class GarupaProductRenderProducer {
                 : "note-icon",
               parentObjectId: objectId,
             }));
-            commands.push(command(commands.length, {
-              kind: "bind-resource",
-              renderObjectId: animation.ownerObjectId,
-              binding: "sprite",
-              logicalAssetId: animation.logicalAssetId,
-              exactKey: animation.exactKey,
-            }));
-            commands.push(command(commands.length, {
-              kind: "activate-object",
-              renderObjectId: animation.ownerObjectId,
-            }));
-            commands.push(command(commands.length, {
-              kind: "play-animation",
-              renderObjectId: animation.ownerObjectId,
-              animationRole: animation.animationRole,
-              restart: true,
-            }));
-            plannedCreated.add(animation.ownerObjectId);
+            plannedCreated.set(animation.ownerObjectId, this.renderer.snapshot().nextSequence + commands.length);
+            appendOrdinaryAnimationStart(commands, base, animation, this.ordinaryScene.noteDomainLayer,
+              plannedCreated.get(animation.ownerObjectId)!);
             plannedAnimationElapsed.set(animation.ownerObjectId, 0);
           }
         }
@@ -415,35 +470,67 @@ export class GarupaProductRenderProducer {
         commands.push(command(commands.length, nodeTransform(
           sample,
           objectId,
+          this.ordinaryScene.noteParentScale,
+          ordering,
         )));
-        if (animation !== null) {
-          const elapsed = plannedAnimationElapsed.get(animation.ownerObjectId) ?? 0;
-          commands.push(command(commands.length, {
-            kind: "sample-animation",
-            renderObjectId: animation.ownerObjectId,
-            animationRole: animation.animationRole,
-            elapsedSeconds: f32(elapsed),
-          }));
-          plannedAnimationElapsed.set(
-            animation.ownerObjectId,
-            Math.fround(elapsed + deltaTimeSeconds),
-          );
-        }
       } else if (plannedVisible.delete(objectId)) {
         commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
-        if (animation !== null && plannedAnimationElapsed.delete(animation.ownerObjectId)) {
-          commands.push(command(commands.length, {
-            kind: "stop-animation",
-            renderObjectId: animation.ownerObjectId,
-            animationRole: animation.animationRole,
-            restart: false,
-          }));
-          commands.push(command(commands.length, {
-            kind: "hide-object",
-            renderObjectId: animation.ownerObjectId,
-          }));
+      }
+      const owner = visualOwners.get(node.identity)!;
+      const chain = owner.chainIdentity === null ? undefined : plannedSlides.get(owner.chainIdentity);
+      const retired = chain === undefined ? plannedJudged.has(owner.identity)
+        : chain.finished || (owner.connectionIndex === 0 ? !chain.rootVisible : !chain.children[owner.connectionIndex! - 1]!.visible);
+      if (animation !== null && plannedAnimationElapsed.has(animation.ownerObjectId)) {
+        if (retired) {
+          plannedAnimationElapsed.delete(animation.ownerObjectId);
+          commands.push(command(commands.length, { kind: "stop-animation", renderObjectId: animation.ownerObjectId,
+            animationRole: animation.animationRole, restart: false }));
+          commands.push(command(commands.length, { kind: "hide-object", renderObjectId: animation.ownerObjectId }));
+        } else {
+          const elapsed = advanceNoteAnimationClock(plannedAnimationElapsed.get(animation.ownerObjectId)!, deltaTimeSeconds);
+          commands.push(command(commands.length, { kind: "sample-animation", renderObjectId: animation.ownerObjectId,
+            animationRole: animation.animationRole, elapsedSeconds: f32(elapsed) }));
+          plannedAnimationElapsed.set(animation.ownerObjectId, elapsed);
         }
       }
+    }
+
+    const currentSideNodes = new Set(visualNodes.map(node => nodeObjectId(node)));
+    for (const objectId of [...plannedVisible]) if (objectId.includes(":side:") && !currentSideNodes.has(objectId)) {
+      commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId })); plannedVisible.delete(objectId);
+    }
+    for (const [objectId, elapsed] of plannedAnimationElapsed) if (objectId.includes(":side:") &&
+      !currentSideNodes.has(objectId.slice(0, -":icon".length)))
+      plannedAnimationElapsed.set(objectId, advanceNoteAnimationClock(elapsed, deltaTimeSeconds));
+
+    const activeDirectionalLines = new Set<string>();
+    for (const [first, second, direction] of directionalEdges) {
+      const a = samples.get(first.identity)!, b = samples.get(second.identity)!;
+      const objectId = `render:garupa:directional-line:${first.identity}:${second.identity}`;
+      if (!a.visible || !b.visible) continue;
+      activeDirectionalLines.add(objectId);
+      if (!plannedCreated.has(objectId)) {
+        commands.push(command(commands.length, { kind: "create-object", renderObjectId: objectId,
+          poolFamily: "multiple-directional-line", role: "multiple-directional-line", parentObjectId: null }));
+        plannedCreated.set(objectId, this.renderer.snapshot().nextSequence + commands.length);
+        commands.push(command(commands.length, { kind: "bind-resource", renderObjectId: objectId, binding: "material",
+          logicalAssetId: direction === "Left" ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+            : this.resources.multipleDirectionalLineRightLogicalAssetId!, exactKey: null }));
+      }
+      const target = (sample: ProductNodeSample) => ({ position: requireProjectedPosition(sample),
+        localScale: vector3(requireUniformScale(sample).value, requireUniformScale(sample).value, 0), progressRate: f32(0) });
+      const geometry = buildOrdinaryMultipleDirectionalLine({ targetA: target(a), targetB: target(b) });
+      if (geometry.status !== "ok") return geometry;
+      commands.push(command(commands.length, { kind: "set-transform", renderObjectId: objectId,
+        position: vector3(0, 0, 0), scale: vector3(1, 1, 1), rotationDegrees: f32(0), color: white(),
+        ordering: ordering(3, 0, objectId), maskObjectId: null }));
+      commands.push(command(commands.length, { kind: "set-line", renderObjectId: objectId,
+        ...geometry.value, materialRole: "multiple-directional-line" }));
+      if (!plannedVisible.has(objectId)) commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
+      plannedVisible.add(objectId);
+    }
+    for (const objectId of [...plannedVisible]) if (objectId.startsWith("render:garupa:directional-line:") && !activeDirectionalLines.has(objectId)) {
+      commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId })); plannedVisible.delete(objectId);
     }
 
     for (const chain of this.chart.slideChains) {
@@ -451,7 +538,9 @@ export class GarupaProductRenderProducer {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;
         const to = samples.get(chain.connectionIdentities[index]!)!;
         const objectId = lineObjectId(chain.identity, index - 1);
-        const lineVisible = segmentVisible(from.curve, to.curve);
+        const slideState = plannedSlides.get(chain.identity)!;
+        const lineVisible = !slideState.finished && slideState.children[index - 1]!.meshVisible &&
+          slideAxisInterval(from.curve, to.curve) !== null;
         if (lineVisible) {
           if (!plannedCreated.has(objectId)) {
             commands.push(command(commands.length, {
@@ -469,7 +558,7 @@ export class GarupaProductRenderProducer {
               exactKey: null,
             }));
             commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
-            plannedCreated.add(objectId);
+            plannedCreated.set(objectId, this.renderer.snapshot().nextSequence + commands.length);
             plannedVisible.add(objectId);
           } else if (!plannedVisible.has(objectId)) {
             commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
@@ -485,34 +574,29 @@ export class GarupaProductRenderProducer {
             ordering: ordering(3, 60, objectId, 0.9900000095367432),
             maskObjectId: null,
           }));
-          const mesh = slideMesh(
-            objectId,
-            from,
-            to,
-            this.scene,
-          );
-          if (mesh.status !== "ok") return mesh;
-          commands.push(command(commands.length, mesh.value));
+          const mesh = slideSegments.get(chain.identity)![index - 1]!.geometry;
+          commands.push(command(commands.length, { kind: "set-mesh", renderObjectId: objectId,
+            ...mesh, materialRole: "curve-note" }));
         } else if (plannedVisible.delete(objectId)) {
           commands.push(command(commands.length, { kind: "hide-object", renderObjectId: objectId }));
         }
       }
     }
 
-    if (commands.length === 0) {
-      this.frame += 1;
-      return ok(null);
-    }
-    const batch = this.renderer.preflight(commands);
+    const batch = commands.length === 0 ? ok(null) : this.renderer.preflight(commands);
     if (batch.status !== "ok") return batch;
     return ok(new RenderOwnerTransaction(this.renderer, batch.value, () => {
       this.created.clear();
       this.visible.clear();
-      for (const id of plannedCreated) this.created.add(id);
+      for (const [id, sequence] of plannedCreated) this.created.set(id, sequence);
       for (const id of plannedVisible) this.visible.add(id);
       this.judgedNodeIdentities.clear();
       for (const id of plannedJudged) this.judgedNodeIdentities.add(id);
       this.animationElapsedSeconds.clear();
+      this.singleStates.clear();
+      for (const [id, state] of plannedSingles) this.singleStates.set(id, state);
+      this.slideStates.clear();
+      for (const [id, state] of plannedSlides) this.slideStates.set(id, state);
       for (const [id, elapsed] of plannedAnimationElapsed) {
         this.animationElapsedSeconds.set(id, elapsed);
       }
@@ -524,7 +608,7 @@ export class GarupaProductRenderProducer {
     if (this.created.size === 0) return ok(null);
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
-    for (const objectId of [...this.created].reverse()) {
+    for (const objectId of [...this.created.keys()].reverse()) {
       commands.push(command(commands.length, { kind: "release-object", renderObjectId: objectId }));
     }
     const batch = this.renderer.preflight(commands);
@@ -534,6 +618,8 @@ export class GarupaProductRenderProducer {
           this.visible.clear();
           this.judgedNodeIdentities.clear();
           this.animationElapsedSeconds.clear();
+          this.slideStates.clear();
+          this.singleStates.clear();
         }))
       : batch;
   }
@@ -547,6 +633,11 @@ export class GarupaProductRenderProducer {
       activeTapLaneEffectCount: 0,
       syncPairCount: this.chart.syncPairs.length,
     });
+  }
+
+  getSlidePresentation(identity: string) {
+    const state = this.slideStates.get(identity);
+    return state === undefined ? null : { transform: state.root.renderedTransform, active: state.flashActive };
   }
 }
 
@@ -580,38 +671,18 @@ function frontBinding(
   noteColor: boolean,
   chains: ReadonlyMap<string, GarupaProductSlideChain>,
 ) {
-  const lane = productResourceLane(node);
-  if (node.type === "Directional") {
-    return Object.freeze({
-      logicalAssetId: resources.directionalAtlasLogicalAssetId,
-      exactKey: `note_flick_${node.direction === "Left" ? "l" : "r"}_${lane}`,
-    });
-  }
   const chain = node.chainIdentity === null ? undefined : chains.get(node.chainIdentity);
   const chainHead = chain !== undefined && node.connectionIndex === 0;
-  const chainTerminal = chain !== undefined &&
-    node.connectionIndex === chain.connectionIdentities.length - 1;
-  if (chain !== undefined && !chainHead && !chainTerminal) {
-    return Object.freeze({
-      logicalAssetId: resources.noteAtlasLogicalAssetId,
-      exactKey: "note_slide_among",
-    });
-  }
-  const family = node.type === "Flick"
-    ? "note_flick"
-    : chain !== undefined
-      ? chainHead && node.type === "Skill"
-        ? "note_skill"
-        : "note_long"
-      : node.type === "Skill"
-        ? "note_skill"
-        : noteColor && node.shortRhythmUnder8beat
-          ? "note_normal_16"
-          : "note_normal";
-  return Object.freeze({
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${family}_${lane}`,
-  });
+  const intermediate = chain !== undefined && !chainHead &&
+    node.connectionIndex !== chain.connectionIdentities.length - 1;
+  const family = intermediate && node.type !== "Directional" ? "note_slide_among"
+    : node.type === "Flick" || node.type === "Directional" ? "note_flick"
+    : chain !== undefined ? chainHead && node.type === "Skill" ? "note_skill" : "note_long"
+    : node.type === "Skill" ? "note_skill"
+    : noteColor && node.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
+  const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && node.width <= 7;
+  return noteBodyBinding(resources, family, resourceSuffix(node, habahiro), node.width, habahiro,
+    node.type === "Directional" ? node.direction === "Left" ? "l" : "r" : null);
 }
 
 function productAnimationBinding(
@@ -619,23 +690,11 @@ function productAnimationBinding(
   parentObjectId: string,
   resources: RenderEngineResourceBindings,
 ): ProductAnimationBinding | null {
-  if (node.type === "Directional") {
-    return Object.freeze({
-      ownerObjectId: `${parentObjectId}:icon`,
-      logicalAssetId: resources.directionalAtlasLogicalAssetId,
-      exactKey: node.direction === "Left" ? "note_flick_top_l" : "note_flick_top_r",
-      animationRole: "note-directional-flick",
-    });
-  }
-  if (node.type === "Flick") {
-    return Object.freeze({
-      ownerObjectId: `${parentObjectId}:icon`,
-      logicalAssetId: resources.noteAtlasLogicalAssetId,
-      exactKey: "note_flick_top",
-      animationRole: "note-flick",
-    });
-  }
-  return null;
+  if (node.type !== "Directional" && node.type !== "Flick") return null;
+  return { ownerObjectId: `${parentObjectId}:icon`,
+    ...noteFlickIconBinding(resources, node.type === "Flick" ? "up" : node.direction === "Left" ? "left" : "right",
+      node.width, resources.habahiroAtlasLogicalAssetIds !== undefined && node.width <= 7),
+    animationRole: node.type === "Flick" ? "note-flick" : "note-directional-flick" };
 }
 
 function productResourceLane(node: GarupaProductNode): number {
@@ -647,7 +706,10 @@ function productResourceLane(node: GarupaProductNode): number {
   return 3;
 }
 
-export function originalSlideFlashExactKey(front: GarupaProductNode): string {
+function resourceSuffix(front: GarupaProductNode, habahiro: boolean): string {
+  if (!habahiro) return String(productResourceLane(front));
+  if (Number.isInteger(front.spanStart) && front.spanStart >= 0 && front.spanEnd <= 6)
+    return Array.from({ length: front.width }, (_, index) => front.spanStart + index).join("_");
   const center = front.spanStart + (front.width - 1) / 2;
   const suffix = front.width === 1 ? "3"
     : front.width === 2 ? center <= 3 ? "2_3" : "3_4"
@@ -657,34 +719,24 @@ export function originalSlideFlashExactKey(front: GarupaProductNode): string {
     : front.width === 6 ? center <= 3 ? "0_1_2_3_4_5" : "1_2_3_4_5_6"
     : front.width === 7 ? "0_1_2_3_4_5_6"
     : "3";
-  return `note_long_flash_${suffix}`;
+  return suffix;
 }
 
 export function resolveProductSlideFlashBinding(
   front: GarupaProductNode,
   resources: RenderEngineResourceBindings,
 ): Readonly<{ readonly logicalAssetId: string; readonly exactKey: string }> {
-  if (resources.habahiroAtlasLogicalAssetIds !== undefined && front.width <= 7) {
-    return Object.freeze({
-      logicalAssetId: resources.habahiroAtlasLogicalAssetIds.longFlash,
-      exactKey: originalSlideFlashExactKey(front),
-    });
-  }
-  // simulator.product-compatible-node-visual-routing-v1: current skin00 owns
-  // only seven single-lane Flash rows. Standard Garupa/ExGarupa therefore binds
-  // the fixed root/front glyph selected by productResourceLane; it never asks
-  // for a missing multi-lane skin00 row or silently substitutes after rejection.
-  return Object.freeze({
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `note_long_flash_${productResourceLane(front)}`,
-  });
+  const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && front.width <= 7;
+  return noteLongFlashBinding(resources, resourceSuffix(front, habahiro), habahiro);
 }
 
 function nodeTransform(
   sample: ProductNodeSample,
   renderObjectId: string,
+  parentScale: RenderFloat32,
+  ordering: (domain: number, source: number, identity: string, sourceZ: number) => RenderOrderingKey,
 ): Omit<Extract<RenderCommand, { kind: "set-transform" }>, "sessionId" | "sequence" | "frame" | "substep"> {
-  const scale = requireUniformScale(sample).value;
+  const scale = calculateOrdinaryNoteWorldScaleAxis(requireUniformScale(sample).value, parentScale.value);
   return {
     kind: "set-transform",
     renderObjectId,
@@ -697,130 +749,11 @@ function nodeTransform(
   };
 }
 
-function slideMesh(
-  renderObjectId: string,
-  from: ProductNodeSample,
-  to: ProductNodeSample,
-  scene: GarupaProductSceneLayout,
-): SimulatorResult<Omit<Extract<RenderCommand, { kind: "set-mesh" }>,  "sessionId" | "sequence" | "frame" | "substep">> {
-  const interval = visibleSegmentInterval(from.curve, to.curve);
-  if (interval === null) return rejected(
-    "render.garupa-product.invisible-slide-mesh",
-    `Invisible product segment reached mesh publication: ${renderObjectId}`,
-  );
-  const rawProjectionAvailable = from.position !== null && to.position !== null &&
-    from.uniformScale !== null && to.uniformScale !== null;
-  const visibleCurveStart = from.curve <= to.curve
-    ? Math.max(0.002, from.curve)
-    : Math.min(1, from.curve);
-  const visibleCurveEnd = from.curve <= to.curve
-    ? Math.min(1, to.curve)
-    : Math.max(0.002, to.curve);
-  const rawFromHalfWidth = rawProjectionAvailable
-    ? calculateGarupaProductSlideHalfWidth(
-        from.uniformScale!.value,
-        from.node.width,
-        scene.screenToSafeAreaRatio.value,
-      )
-    : null;
-  const rawToHalfWidth = rawProjectionAvailable
-    ? calculateGarupaProductSlideHalfWidth(
-        to.uniformScale!.value,
-        to.node.width,
-        scene.screenToSafeAreaRatio.value,
-      )
-    : null;
-  const mesh = buildNoteMeshStrip(10, (sectionRatio) => {
-    const ratio = Math.fround(
-      Math.fround(interval[0]) + Math.fround(
-        Math.fround(Math.fround(interval[1]) - Math.fround(interval[0])) * sectionRatio,
-      ),
-    );
-    let x: number;
-    let y: number;
-    let halfWidth: number;
-    if (rawProjectionAvailable) {
-      x = Math.fround(from.position!.x.value + Math.fround(
-        Math.fround(to.position!.x.value - from.position!.x.value) * ratio,
-      ));
-      y = Math.fround(from.position!.y.value + Math.fround(
-        Math.fround(to.position!.y.value - from.position!.y.value) * ratio,
-      ));
-      halfWidth = interpolateSlideBoundary(rawFromHalfWidth!, rawToHalfWidth!, ratio);
-    } else {
-      // A negative/zero SV can put one endpoint far beyond Float32 world range while
-      // the segment still crosses the complete visible 0.002..1 curve. Re-project
-      // each clipped section from its finite curve instead of dropping the mesh.
-      const targetCurve = Math.fround(visibleCurveStart + Math.fround(
-        Math.fround(visibleCurveEnd - visibleCurveStart) * sectionRatio,
-      ));
-      const stableRatio = stableSegmentRatio(from.curve, to.curve, targetCurve);
-      const lane = Math.fround(
-        (from.node.spanStart + (from.node.width - 1) / 2) +
-          ((to.node.spanStart + (to.node.width - 1) / 2) -
-            (from.node.spanStart + (from.node.width - 1) / 2)) * stableRatio,
-      );
-      const projected = scene.projectLaneAtCurve(lane, targetCurve);
-      const fromScale = scene.projectNoteScaleAtCurve(targetCurve, from.node.width);
-      const toScale = scene.projectNoteScaleAtCurve(targetCurve, to.node.width);
-      if (projected.status !== "ok") return projected;
-      if (fromScale.status !== "ok") return fromScale;
-      if (toScale.status !== "ok") return toScale;
-      x = projected.value.x.value;
-      y = projected.value.y.value;
-      const fromBoundary = calculateGarupaProductSlideHalfWidth(
-        fromScale.value.value,
-        from.node.width,
-        scene.screenToSafeAreaRatio.value,
-      );
-      const toBoundary = calculateGarupaProductSlideHalfWidth(
-        toScale.value.value,
-        to.node.width,
-        scene.screenToSafeAreaRatio.value,
-      );
-      halfWidth = interpolateSlideBoundary(fromBoundary, toBoundary, stableRatio);
-    }
-    return ok(Object.freeze([
-      vector2(Math.fround(x - halfWidth), y),
-      vector2(Math.fround(x + halfWidth), y),
-    ] as const));
-  }, color(1, 1, 1, 0.8));
-  if (mesh.status !== "ok") return mesh;
-  return ok({ kind: "set-mesh", renderObjectId, ...mesh.value, materialRole: "curve-note" });
-}
-
-function interpolateSlideBoundary(first: number, second: number, ratio: number): number {
-  return Math.fround(
-    Math.fround(first * Math.fround(1 - ratio)) + Math.fround(second * ratio),
-  );
-}
-
-function stableSegmentRatio(first: number, second: number, target: number): number {
-  const maximum = Math.max(Math.abs(first), Math.abs(second), Math.abs(target), 1);
-  const normalizedFirst = first / maximum;
-  const normalizedSecond = second / maximum;
-  const denominator = normalizedSecond - normalizedFirst;
-  if (denominator === 0) return 0;
-  return Math.max(0, Math.min(1, (target / maximum - normalizedFirst) / denominator));
-}
-
-export function calculateGarupaProductSlideHalfWidth(
-  uniformScale: number,
-  authoredWidth: number,
-  screenToSafeAreaRatio: number,
-): number {
-  if (![uniformScale, authoredWidth, screenToSafeAreaRatio].every(Number.isFinite) ||
-    uniformScale < 0 || authoredWidth <= 0 || screenToSafeAreaRatio <= 0) {
-    throw new Error("Garupa product Slide width requires finite non-negative scale and positive authored width/layout rates.");
-  }
-  return calculateNoteMeshHalfWidth(Math.fround(uniformScale), Math.fround(authoredWidth), Math.fround(screenToSafeAreaRatio));
-}
-
-function syncTarget(sample: ProductNodeSample): OrdinarySyncLineTargetState {
+function syncTarget(sample: ProductNodeSample, parentScale: RenderFloat32): OrdinarySyncLineTargetState {
   return sample.syncTarget ?? {
     position: requireProjectedPosition(sample),
     localScaleX: requireUniformScale(sample),
-    lossyScaleX: requireUniformScale(sample),
+    lossyScaleX: f32(calculateOrdinaryNoteWorldScaleAxis(requireUniformScale(sample).value, parentScale.value)),
     gameNoteType: sample.node.scoringSource!.gameNoteType,
   };
 }
@@ -839,27 +772,6 @@ function requireUniformScale(sample: ProductNodeSample): RenderFloat32 {
   return sample.uniformScale;
 }
 
-function visibleSegmentInterval(first: number, second: number): readonly [number, number] | null {
-  if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
-  const minimum = Math.min(first, second);
-  const maximum = Math.max(first, second);
-  if (maximum < 0.002 || minimum > 1) return null;
-  if (first === second) return first >= 0.002 && first <= 1
-    ? Object.freeze([0, 1] as const)
-    : null;
-  const lower = (0.002 - first) / (second - first);
-  const upper = (1 - first) / (second - first);
-  const from = Math.max(0, Math.min(lower, upper));
-  const to = Math.min(1, Math.max(lower, upper));
-  return to >= from
-    ? Object.freeze([Math.min(1, from), Math.max(0, to)] as const)
-    : null;
-}
-
-function segmentVisible(first: number, second: number): boolean {
-  return visibleSegmentInterval(first, second) !== null;
-}
-
 function nodeObjectId(node: GarupaProductNode): string {
   return `render:garupa:node:${node.identity}`;
 }
@@ -874,21 +786,6 @@ function slideFlashObjectId(chainIdentity: string): string {
 }
 function syncPairObjectId(identity: string): string {
   return `render:garupa:sync:${identity}`;
-}
-function ordering(
-  domain: number,
-  source: number,
-  identity: string,
-  sourceZ = 0,
-): RenderOrderingKey {
-  let hash = 0;
-  for (let index = 0; index < identity.length; index += 1) hash = (Math.imul(hash, 31) + identity.charCodeAt(index)) | 0;
-  return Object.freeze({
-    domainLayer: domain,
-    sourceDepthOrSortingOrder: source,
-    sourceZ: f32(sourceZ),
-    creationSequence: hash >>> 0,
-  });
 }
 function f32(value: number): RenderFloat32 {
   const created = createRenderFloat32(Math.fround(value));

@@ -140,6 +140,8 @@ export class GarupaProductTimelineManager {
     return this.mode.inputMode === "auto" || this.isMoveTime();
   }
 
+  getSlidePresentation(identity: string) { return this.render?.getSlidePresentation(identity) ?? null; }
+
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("simulator.garupa-extension.initialize-after-dispose", "A disposed product timeline is terminal.");
     if (this.initialized) return ok(undefined);
@@ -246,6 +248,10 @@ export class GarupaProductTimelineManager {
       visualPosition,
       judgedThisFrame,
       deltaTimeSeconds,
+      { currentBpm: this.music.currentBpm, launcherMusicPosition: this.music.launcherMusicPosition,
+        adjustedMusicPosition: judgementPosition, adjustment: this.judgementAdjustValueB,
+        forcePerfect: this.shouldForcePerfect, heldChains: new Set(this.chainFinger.keys()),
+        missed: new Set(this.pendingJudgements.filter(entry => entry.missed).map(entry => entry.node.identity)) },
     ) ?? ok(null);
     if (render.status !== "ok") return rollback(render);
     if (this.shouldForcePerfect) {
@@ -856,6 +862,7 @@ function gestureSucceeded(
   if (directional && !(pending.node.direction === "Left" ? current.x < pending.origin.x : current.x > pending.origin.x)) {
     return ok(false);
   }
+
   const rate = getManualScreenDistanceRate(geometry, {
     beganPosition: pending.origin, currentPosition: current, horizontalOnly: directional,
   });

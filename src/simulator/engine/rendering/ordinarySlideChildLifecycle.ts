@@ -123,13 +123,12 @@ export function createOrdinarySlideChildState(
   if (
     !Number.isSafeInteger(sourceIndex) ||
     sourceIndex < 0 ||
-    !Number.isInteger(buttonCount) ||
     buttonCount < 1 ||
-    buttonCount > 7
+    !Number.isInteger(buttonCount)
   ) {
     return reject(
       "render.slide.invalid-child-owner-state",
-      "The R4 Slide child requires a non-negative source index and one 1..7-button endpoint owner.",
+      "The R4 Slide child requires a non-negative source index and one positive integer-width endpoint owner.",
     );
   }
   const lifecycle = createOrdinaryLongNormalChildState(
@@ -333,6 +332,10 @@ function moveSlideEndpoint(
   laneDelta: number,
   originalSource = source,
 ): SimulatorResult<OrdinaryNoteMotionResult> {
+  // Equal-position connections extend the original transition to zero duration.
+  if (targetSource.absolutePos === source.absolutePos) {
+    return withSlidePosition(current, slideGoalX(targetSource, target.goalPosition.x.value, laneDelta), origin.goalPosition.y.value);
+  }
   const seconds = getSecondsWithDistance(Math.fround(targetSource.absolutePos - source.absolutePos), bpm);
   if (seconds.status !== "ok") return seconds;
   const originX = source.isInvisible

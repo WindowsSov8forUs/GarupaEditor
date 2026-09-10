@@ -229,6 +229,7 @@ export class NoteManager {
       return {
         position: state.renderedTransform.position,
         localScaleX: state.renderedTransform.localScale.x,
+        slideEffectActive: note instanceof NoteSlide && note.flashAnimationRevision !== null,
         lossyScaleX: createRenderFloat32(calculateOrdinaryNoteWorldScaleAxis(
           state.renderedTransform.localScale.x.value, state.motionState.noteParentScale.value,
         )),
@@ -391,13 +392,10 @@ export class NoteManager {
         "A chart with ordinary Long or R4 Slide notes requires explicit safe-area ratio and base-mesh color before pool creation.",
       );
     }
-    const requiresSyncLinePool = this.renderProducer !== null &&
-      !degradedHabahiro && this.batches.some((batch) =>
-      batch.informationList.filter((information) =>
-        !isNonPlayableCommand(information) &&
-        information.fireNoteType === FrontNoteType.Normal
-      ).length > 1
-    );
+    const requiresSyncLinePool = this.renderProducer !== null && !degradedHabahiro &&
+      this.inGameCalculatedData.isSyncLineEnabled &&
+      this.batches.reduce((count, batch) => count + batch.informationList.filter(information =>
+        !isNonPlayableCommand(information)).length, 0) > 1;
     if (
       requiresSyncLinePool &&
       (this.ordinaryNoteScene === null ||
@@ -412,8 +410,11 @@ export class NoteManager {
     const requiresMultipleDirectionalLinePool = this.renderProducer !== null &&
       !degradedHabahiro &&
       this.batches.some((batch) =>
-        groupMultipleDirectionalInformationList(batch.informationList)
-          .some((group) => group.length > 1)
+        batch.informationList.some(information =>
+          information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+          information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+          information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd) ||
+        groupMultipleDirectionalInformationList(batch.informationList).some(group => group.length > 1)
       );
     const renderSetup = this.renderProducer?.preflightPoolSetup(
       [...familyNotes].flatMap(([family, notes]) =>

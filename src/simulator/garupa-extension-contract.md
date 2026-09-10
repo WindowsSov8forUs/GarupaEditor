@@ -31,11 +31,12 @@ Reverse remains the only authority for original behavior.
   scoring namespace. Original touch acceptance takes priority; extensions cannot
   judge the same accepted touch again. Scoring and audio/particle ownership include
   both sets without replacing or duplicating original sources.
-- Extension rendering reuses the original motion curve, scale projection, strip
-  topology/UV/colour, width calculation and SyncLine geometry. SV transforms the
-  curve input; clipping extends its representable range. Mixed SyncLines read
-  committed original transforms rather than reconstructing original note motion.
-  Flick distance uses the original screen-to-world and distance normalization.
+- Extension rendering supplies additional time, coordinate and graph inputs to
+  the original motion, Slide child lifecycle, hide-before, Stop wait, mesh,
+  sprite-binding, animation and line functions. TimingGroup cannot select an
+  independent Slide follow/visibility/flash lifecycle. Mixed SyncLines and Slide
+  particles consume committed owner transforms. Flick distance retains the
+  original screen-to-world and distance normalization.
 
 ## Original Skin reuse
 
@@ -80,7 +81,27 @@ Reverse remains the only authority for original behavior.
 - A rhythm front is centered at `lane + (width - 1) / 2`. Directional incoming
   anchor is `lane`; outgoing anchor is the span edge.
 - `simulator.product-compatible-node-visual-routing-v2` preserves each locally compatible node's selected Normal/Skill/Flick/Long/Directional family, integer source-center lane key and original child ownership when that node's own axis or topology requires extension handling. A Slide root uses Long and owns the chain's only LongFlash; each visible non-terminal child uses `note_slide_among` with no flash; the ordinary terminal uses Long and terminal Flick/Directional nodes retain their corresponding animated icon children. Hidden nodes create mesh continuity but no front owner. Integer center lanes consume their exact `0..6` key. Fractional/outside centers use the fixed selected-family center glyph as an explicitly product-owned marker, never a nearest/default/first lookup or original-equivalence claim.
-- `GE-PS-PRODUCT-VISUAL-LIFECYCLE` reuses the ordinary Note scale formula, including its uniform front transform: width is carried by authored span/Slide mesh and never by X-only deformation of the front Sprite. Product fronts use source sorting order 70, directional icons 71, curve Mesh precedes fronts and HUD remains at 100; chart authored order is never a renderer sorting order. Product Slide mesh keeps the ordinary base-mesh white RGBA `(1,1,1,0.8)`, 22 vertices/60 indices and selected curve material; Sync and Mesh publish explicit stable ordering. Hidden connections affect front ownership, not an invented whole-chain dim tint. `simulator.garupa-slide-note-visible-domain-v1` shows an unjudged front only for its own TimingGroup-projected curve `[0.002,1]` and publishes exactly the portion of every adjacent Slide segment intersecting that same domain. It expressly forbids the former screenshot-derived bottom-left threshold mask, because that made a connection begin closer to the judgment line than its endpoint notes. A negative/zero-SV segment whose raw endpoint projection overflows but whose curve interval crosses `[0.002,1]` is reprojected section-by-section from finite clipped curves; it is not silently dropped or clamped as an endpoint. Width above seven uses the one-head vertical aspect branch and authored horizontal span; it is not numerically clamped. Frame rejection discards the complete product transaction. This is reported as product-extension fidelity, not original resource parity.
+- `GE-PS-PRODUCT-VISUAL-LIFECYCLE` retains original local scale, parent scale,
+  start depth, creation order, animation child transforms and animation sampling.
+  Shared Slide lifecycle output owns the moving root, child visibility and mesh
+  retirement; judging a child hides its predecessor according to the original
+  rule rather than immediately hiding that child. Flash and TapKeep read the
+  same moving root; neither projects the next node as a replacement root.
+- Signed SV adds visibility sampling in curve `[0.002,1]` before retirement.
+  `slideAxisMesh` clips only that extended domain, retaining the source strip
+  topology, colour and width rules. An endpoint outside numeric world-coordinate
+  range remains a clipping input; finite sections are projected without dropping
+  the crossing segment. Original-compatible motion uses the ordinary mesh
+  builder directly. No screenshot-derived mask or second tint is permitted.
+- Directional spans reuse one-lane bodies and the shared MultipleDirectional
+  line builder. The incoming lane anchors a Slide endpoint; side nodes carry
+  the span and the outward icon. Continuous spans extend that graph at authored
+  unit intervals, culling only nodes beyond the actual viewport. Hidden geometry
+  does not introduce a separate material or opacity.
+- Width above seven uses the source one-head vertical aspect branch and authored
+  horizontal span. This does not clamp the authored width. Frame rejection
+  discards the complete owner transaction.
+
 
 ## TimingGroup and SV
 
@@ -105,11 +126,12 @@ Reverse remains the only authority for original behavior.
 
   The new speed applies at the event boundary. Negative values reverse, zero
   stops, and positive values are not clamped.
-- Note displacement is `axis(noteHitMs) - axis(nowMs)`. Visibility is sampled
-  statelessly before judgement, so reverse/stop segments can leave and re-enter
-  the viewport; once the one gameplay judgement commits, that identity remains hidden. Pausing freezes now;
-  Retry creates a fresh profile; MoveTime samples the target time without
-  publishing candidate output and commits the complete frame atomically.
+- Note displacement is `axis(noteHitMs) - axis(nowMs)`. Reverse/stop segments
+  may leave and re-enter the viewport while alive. Retirement is persistent:
+  Single notes follow their judgement/timeout owner; Slide nodes and meshes
+  follow the shared predecessor-hide and Stop lifecycle. SV never rewinds those
+  states or changes BPM hit time. Pausing freezes motion and animation; Retry
+  creates fresh owners; MoveTime publishes the complete frame atomically.
 
 ## ExGarupa Slide graph
 
@@ -122,8 +144,10 @@ Reverse remains the only authority for original behavior.
   and creates one CS-V1 scoring unit. Skill remains chart-owned appearance/SE;
   character/card/deck effects remain excluded.
 - Hidden head/tail are supported. An all-Hidden chain is visual-only and has zero
-  scoring units. Chains containing Hidden use the product special line binding;
-  all-Hidden line opacity is 0.5.
+  scoring units. A Hidden tail keeps the geometry lifetime until its authored
+  endpoint while the final playable node stops the flash. All chains use the
+  original curve material and colour; Hidden does not select another line or
+  reduce its opacity.
 - Same-position segments remain graph edges. Their zero visual height is not
   turned into fake duration; visible node bodies and authored order still exist.
 
@@ -196,3 +220,20 @@ This is a product portable claim, not Unity framebuffer or fixed-device parity.
 This contract does not open character skills, Fever, multiplayer, HABAHIRO
 original parity, standalone MVView, Star3D, CRI/USM, fixed-device exactness,
 physical speaker onset or Stage 9 application integration.
+
+## 保留的扩展渲染链路
+
+以下是相对原作谱面新增语义的完整入口清单。共有规则不得在这些入口中重写；新增入口必须说明现有路径无法承接的具体输入。
+
+| 保留项 | 必要输入与边界 | 共用原作消费者 |
+| --- | --- | --- |
+| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideRenderExtension](engine/garupa/slideRenderExtension.ts) 只替换运动输入与时间到达条件；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 处理反向、停止和超出坐标范围的可见区间 | `advanceOrdinaryLongNormalChild`、`advanceOrdinarySlideChildren`、原作曲线与网格条带 |
+| 连续/域外轨道与宽度 | [simulatorSceneLayout](scene/simulatorSceneLayout.ts) 将连续坐标送入原作场景；超过七格仅补足原作没有的宽度输入 | 原作投影基准、`calculateOrdinaryNoteScaleAtY`、`calculateOrdinaryNoteStartDepth`、父级缩放和网格宽度 |
+| 扩展 Slide 图结构 | 单节点、同拍边、隐藏首尾、全隐藏链及内部 Flick/Directional；必要的图结束状态位于 [slideRenderExtension](engine/garupa/slideRenderExtension.ts) | 原作根节点跟随、Wait/Move/Stop、`queueSlideRenderHideBefore`、`applySlideRenderHides`、`advanceSlideStopWait` |
+| 连续多格 Directional 图 | [productRenderProducer](engine/garupa/productRenderProducer.ts) 将跨度展开为原作单格主体与邻接边；仅对实际视口外的附加主体做剔除 | `noteBodyBinding`、`appendOrdinaryAnimationStart`、`buildOrdinaryMultipleDirectionalLine` 和原作方向材质 |
+| 原作没有对应项的字形映射 | 小数轨道/域外中心使用所选族的固定中心字形；超过原作资源宽度使用明确的单头字形。原作域内的精确键优先，禁止最近轨道和首张图回退 | [noteVisualBinding](engine/rendering/noteVisualBinding.ts) 中共用的主体、Flick 图标和 LongFlash 绑定；共用动画时钟 |
+| 混合节点 SyncLine | [productRenderProducer](engine/garupa/productRenderProducer.ts) 补充包含扩展端点的谱面邻接关系；原作端点读取已提交状态 | `buildOrdinarySyncLine`；不重算原作端点运动，不重复原作端点间的连接 |
+| 连续 Slide 粒子根变换 | [particleCommandProducer](engine/particles/particleCommandProducer.ts) 将同一 Slide 根位置提供给 TapKeep，并共用逐帧移动/停止；保留原有无离散按钮对应项时不伪造单点判定粒子的限制 | 原作粒子根、设置缩放、生命周期、模拟与 Pixi 粒子后端 |
+| CS-V1 加分显示容量 | [pixiRendererBackend](backends/pixi/pixiRendererBackend.ts) 仅在数位超出原作预置数量时增加数字 Sprite | 原作数字 atlas、`spriteNumberPositions`、间距、缩放、透明度和层级 |
+
+场景/场地、普通 HUD、MV、所选 Skin 材质、动画解码、Pixi 命令执行和粒子模拟均不按扩展谱面另开算法。HABAHIRO 是原作自己的分支；必要的宿主坐标与资源格式转换属于接口适配。上述保留项不等于逐像素验收，也不将原有粒子输出限制表述为原作等价。

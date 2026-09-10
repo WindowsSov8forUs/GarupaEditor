@@ -27,6 +27,7 @@ import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteMotion,
   calculateOrdinaryNoteScaleAtY,
+  calculateOrdinaryNoteStartDepth,
   getOrdinaryNoteArrivalSeconds,
   type OrdinaryNoteMotionState,
 } from "../engine/rendering/ordinaryNoteGeometry";
@@ -71,6 +72,9 @@ export interface GarupaProductFieldLine {
 }
 
 export interface GarupaProductSceneLayout {
+  readonly virtualPerfectLine: number;
+  readonly visibleLaneRangeAtCurve: (curve: number) => readonly [number, number];
+  readonly motionStateAtLane: (lane: number, width: number, absolutePosition: number) => SimulatorResult<OrdinaryNoteMotionState>;
   readonly laneSpacingWorld: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
@@ -163,7 +167,9 @@ export function createSimulatorSceneLayout(
   );
   const particleScene = createParticleScene(values.value.goalPositions, originalLayout.value);
   if (particleScene.status !== "ok") return particleScene;
-  const productScene = createGarupaProductScene(values.value);
+  const slideJudge = geometry.getSlideJudgeGeometry();
+  if (slideJudge.status !== "ok") return slideJudge;
+  const productScene = createGarupaProductScene(values.value, slideJudge.value.virtualPerfectLine);
   if (productScene.status !== "ok") return productScene;
   return ok(Object.freeze({
     surfaceLayout: originalLayout.value,
@@ -223,6 +229,7 @@ function createSceneValues(
 
 function createGarupaProductScene(
   scene: SceneValues,
+  virtualPerfectLine: number,
 ): SimulatorResult<GarupaProductSceneLayout> {
   const laneSpacing = Math.fround(
     scene.goalPositions[4]!.x.value - scene.goalPositions[3]!.x.value,
@@ -355,6 +362,24 @@ function createGarupaProductScene(
     fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
   }
   return ok(Object.freeze({
+    virtualPerfectLine,
+    visibleLaneRangeAtCurve: (curve: number): readonly [number, number] => {
+      const visibleCurve = Math.max(.002, Math.min(1, curve));
+      const left = originalBottomLeftScreenToWorld(scene.surfaceLayout, 0, 0);
+      const right = originalBottomLeftScreenToWorld(scene.surfaceLayout, scene.surfaceLayout.surface.viewportWidth, 0);
+      if (left.status !== "ok" || right.status !== "ok") throw new Error("scene.directional-viewport-unavailable");
+      return [3 + left.value[0] / (laneSpacing * visibleCurve), 3 + right.value[0] / (laneSpacing * visibleCurve)];
+    },
+    motionStateAtLane: (lane: number, width: number, absolutePosition: number): SimulatorResult<OrdinaryNoteMotionState> => {
+      const start = projectLaneAtCurve(lane, 0);
+      const goal = projectLaneAtCurve(lane, 1);
+      if (start.status !== "ok") return start;
+      if (goal.status !== "ok") return goal;
+      return ok({ ...motionState(scene, 3, f32(0), f32(0), f32(0)),
+        noteStartPosition: start.value, goalPosition: goal.value,
+        currentPositionZ: f32(calculateOrdinaryNoteStartDepth(scene.noteStartPositions[3]!.z.value, absolutePosition, lane)),
+        buttonCount: width <= 7 ? width : 1 });
+    },
     laneSpacingWorld: f32(laneSpacing),
     noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,

@@ -3431,8 +3431,11 @@ function resolveFrontLaneSuffix(
   if (
     !habahiro &&
     (information.fireNoteType === FrontNoteType.SlideA ||
-      information.fireNoteType === FrontNoteType.SlideB)
+      information.fireNoteType === FrontNoteType.SlideB ||
+      information.buttonTypesArray.length > 1 || information.buttonTypes.length > 1)
   ) {
+    // The ordinary atlas has single-lane keys. Authored wide inputs reuse the
+    // same explicit representative-glyph rule as Slide; geometry retains width.
     const lane = resolveOrdinarySlideCenterLane(information);
     return lane.status === "ok" ? ok(String(lane.value)) : lane;
   }

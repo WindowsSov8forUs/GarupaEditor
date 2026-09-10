@@ -1117,6 +1117,7 @@ export function createSimulatorEngine(
           originalLiveSettings.noteColor,
           originalLiveSettings.syncLine,
           input.rendering.ordinaryNoteScene.syncLineEdgeMargin!,
+          input.rendering.ordinaryNoteScene,
           (identity) => {
             const source = productProfile.originalSources.get(identity);
             if (source === undefined) return ok(null);
@@ -1201,6 +1202,17 @@ export function createSimulatorEngine(
     });
   }
   const inputDispatcher = new GamePlayInputDispatcher(noteManager, tapLaneEffectOwner);
+  particleCoordinator?.producer.setSlidePresentationReader((source) => {
+    const extension = productProfile?.scoringNodeBySource.get(source);
+    if (extension?.chainIdentity != null) {
+      const actual = productTimeline?.getSlidePresentation(extension.chainIdentity);
+      return actual == null ? null : { x: actual.transform.position.x.value,
+        y: actual.transform.position.y.value, active: actual.active };
+    }
+    const actual = noteManager.getCommittedNotePresentation(source);
+    return actual === null ? null : { x: actual.position.x.value, y: actual.position.y.value,
+      active: actual.slideEffectActive };
+  });
   const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
   if (inputDispatcherRegistration.status !== "ok") {
     return inputDispatcherRegistration;

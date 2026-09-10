@@ -117,6 +117,39 @@ export class ParticleCommandProducer {
   private chartIdentityValid = true;
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
+  private slidePresentation: ((source: NoteInformation) => { x: number; y: number; active: boolean } | null) | null = null;
+
+  setSlidePresentationReader(reader: NonNullable<ParticleCommandProducer["slidePresentation"]>): void {
+    this.slidePresentation = reader;
+  }
+
+  preflightSlidePresentation(): SimulatorResult<ParticleCommandOwnerTransaction> {
+    const available = this.validateAvailable();
+    if (available.status !== "ok") return available;
+    const projected = cloneState(this.state);
+    const commands: ParticleCommand[] = [];
+    const synchronized = this.synchronizeSlidePresentations(projected, commands);
+    return synchronized.status === "ok" ? this.stage(commands, projected) : synchronized;
+  }
+
+  private synchronizeSlidePresentations(projected: MutableParticleOwnerState, commands: ParticleCommand[]): SimulatorResult<void> {
+    for (const owner of [...projected.slideTapKeep.values()]) {
+      if (owner.instance.kind !== "note-slide") continue;
+      const identity = { noteIndex: owner.instance.noteIndex, absolutePosition: owner.instance.absolutePosition };
+      const productNode = this.productScoringNodes.get(productScoringKey(identity.noteIndex, identity.absolutePosition));
+      const source = productNode?.scoringSource ?? this.notesByIndex.get(identity.noteIndex);
+      const presentation = source === undefined ? null : this.slidePresentation?.(source);
+      if (presentation === undefined || presentation === null) continue;
+      if (!presentation.active) { stopSlideTapKeep(identity, projected, commands); continue; }
+      const route = productNode === undefined ? "original" : "product-extension";
+      const transform = slideTransform(presentation.x, presentation.y,
+        productNode === undefined ? "original-note-slide" : "product-extension-note-slide", this.particleScene!);
+      if (transform === null) return rejected("particle.producer.invalid-slide-presentation", "Slide particles require the committed finite root position.");
+      moveSlideTapKeep(identity, owner.instance.buttonType, owner.rangeLength, transform, route,
+        this.particleScene!, projected, commands);
+    }
+    return ok(undefined);
+  }
 
   constructor(
     chart: ChartConstructionResult,
@@ -305,7 +338,8 @@ export class ParticleCommandProducer {
         }
       }
     }
-    return this.stage(commands, projected);
+    const synchronized = this.synchronizeSlidePresentations(projected, commands);
+    return synchronized.status === "ok" ? this.stage(commands, projected) : synchronized;
   }
 
   preflightButtonTapKeepStart(
@@ -517,7 +551,10 @@ export class ParticleCommandProducer {
       stopSlideTapKeep(identity, projected, commands);
       return ok(undefined);
     }
-    if (entry.adjustedResult <= 0) return ok(undefined);
+    if (entry.adjustedResult <= 0) {
+      stopSlideTapKeep(identity, projected, commands);
+      return ok(undefined);
+    }
     const target = nodes[nodeIndex + 1]!;
     if (this.productScene === null) {
       return rejected(
@@ -525,16 +562,17 @@ export class ParticleCommandProducer {
         "Product Slide tap-keep movement requires the same continuous scene projection used by its visible root.",
       );
     }
+    const actual = this.slidePresentation?.(head.scoringSource);
     const position = this.productScene.projectLaneAtCurve(
-      target.spanStart + (target.width - 1) / 2,
+      node.spanStart + (node.width - 1) / 2,
       1,
     );
     if (position.status !== "ok") return position;
     // Product continuous X remains a product adapter, while the current
     // NoteSlide pool setup scale and outer NoteSetting scale stay original-owned.
     const transform = slideTransform(
-      position.value.x.value,
-      position.value.y.value,
+      actual?.x ?? position.value.x.value,
+      actual?.y ?? position.value.y.value,
       "product-extension-note-slide",
       this.particleScene!,
     );

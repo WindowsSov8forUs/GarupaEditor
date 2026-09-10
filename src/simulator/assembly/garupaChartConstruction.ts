@@ -410,7 +410,8 @@ function isOriginalCompatibleLane(connection: GarupaChartJsonSlideConnection): b
   const start = connection.type === "Directional" && connection.direction === "Left"
     ? connection.lane - connection.width + 1
     : connection.lane;
-  return Number.isInteger(connection.lane) && connection.width <= 7 &&
+  const center = connection.type === "Directional" ? connection.lane : start + (connection.width - 1) / 2;
+  return Number.isInteger(connection.lane) && Number.isInteger(center) && connection.width <= 7 &&
     start >= 0 && start + connection.width <= LANE_COUNT;
 }
 
@@ -549,9 +550,12 @@ function createSlide(
         position: positions[positions.length - 1]!,
         span: singleButtonSpan(button),
         kinds: Object.freeze({
-          game: GameNoteType.SlideAddDirectionalFlick,
+          game: familyA
+            ? tail.direction === "Left" ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideADirectionalFlickRightAdd
+            : tail.direction === "Left" ? GameNoteType.SlideBDirectionalFlickLeftAdd : GameNoteType.SlideBDirectionalFlickRightAdd,
           front: helperFront,
-          after: AfterNoteType.None,
+          after: tail.direction === "Left"
+            ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight,
         }),
         additional: GameNoteAdditionalType.None,
         afterNoteAbsolutePos: terminal.absolutePos,

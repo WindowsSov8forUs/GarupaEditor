@@ -213,7 +213,9 @@ export class ParticleFrameCoordinator {
         "No additional particle outer frame may follow terminal cleanup before a fresh retry/reset session.",
       );
     }
-    return this.preflight(deltaTimeSeconds, paused, null);
+    if (paused) return this.preflight(deltaTimeSeconds, true, null);
+    const owner = this.producer.preflightSlidePresentation();
+    return owner.status === "ok" ? this.preflight(deltaTimeSeconds, false, owner.value) : owner;
   }
 
   preflightJudgement(
