@@ -640,7 +640,7 @@ function particleWorldCenter(sample: ParticleRenderSample, transform: ParticleOw
   if (sample.nativeOwnerHierarchy === true) {
     if ((sample.instance.kind !== "game-play-button" || transform.source !== "game-play-button") &&
       (sample.instance.kind !== "game-clear" || transform.source !== "game-clear-ui-root") &&
-      (sample.instance.kind !== "note-slide" || (transform.source !== "original-note-slide" && transform.source !== "product-extension-note-slide"))) {
+      (sample.instance.kind !== "note-slide" || transform.source !== "note-slide")) {
       throw fault("particle.geometry.owner-hierarchy", "Native owner composition requires its matching button, Slide or game-clear owner.");
     }
     return position;

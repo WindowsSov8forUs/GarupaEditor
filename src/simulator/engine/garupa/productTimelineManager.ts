@@ -32,7 +32,7 @@ import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout"
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/frameMutationPlan";
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
-import type { GarupaProductRenderProducer } from "./productRenderProducer";
+import type { GarupaRenderInputAdapter } from "./garupaRenderInputAdapter";
 
 interface PendingGesture {
   readonly node: GarupaProductNode;
@@ -98,7 +98,7 @@ export interface GarupaProductTimelineSnapshot {
   readonly nextAutoIndex: number;
   readonly activeFingerCount: number;
   readonly pendingJudgementCount: number;
-  readonly render: ReturnType<GarupaProductRenderProducer["snapshot"]> | null;
+  readonly render: ReturnType<GarupaRenderInputAdapter["snapshot"]> | null;
 }
 
 export class GarupaProductTimelineManager {
@@ -124,7 +124,7 @@ export class GarupaProductTimelineManager {
     private readonly mode: SimulatorModeIdentity,
     private readonly music: InGameMusicScoreController,
     private readonly oneFrame: InGameOneFrameJudgementController,
-    private readonly render: GarupaProductRenderProducer | null,
+    private readonly render: GarupaRenderInputAdapter | null,
     private readonly scene: GarupaProductSceneLayout | null = null,
     private readonly judgementAdjustValueB = 0,
     private readonly isMoveTime: () => boolean = () => false,
@@ -756,11 +756,8 @@ export class GarupaProductTimelineManager {
     return this.chart.scoringNodeBySource.has(source);
   }
 
-  preflightDispose() {
-    return this.render?.preflightDispose() ?? ok(null);
-  }
-
   commitDispose(): void {
+    this.render?.releaseInputs();
     this.pendingManualFrame = null;
     this.pendingJudgements.length = 0;
     this.inFlightJudgements.length = 0;

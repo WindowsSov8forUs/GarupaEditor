@@ -568,7 +568,7 @@ export class DeterministicParticleSimulation {
     if (owner === undefined || owner.instance.kind !== "note-slide" ||
       owner.instance.noteIndex !== instance.noteIndex ||
       owner.instance.absolutePosition !== instance.absolutePosition ||
-      owner.instance.poolSlot !== instance.poolSlot || owner.instance.route !== instance.route ||
+      owner.instance.poolSlot !== instance.poolSlot ||
       !sameParticleSetupScale(owner.particleSystemSetupScale, instanceParticleSystemSetupScale(instance, this.gameplayTransformScale))) {
       throw fault("particle.simulation.missing-slide-owner", "Slide root movement requires the exact active persistent owner.");
     }
@@ -2041,7 +2041,7 @@ function parentSetupScale(
 function particleOwnerParents(instance: ParticleInstanceIdentity): readonly ParticleHierarchyPositionTransform[] {
   if (instance.kind === "note-slide") {
     const owner = instance.ownerTransform;
-    if (owner === undefined || (owner.source !== "original-note-slide" && owner.source !== "product-extension-note-slide") ||
+    if (owner === undefined || owner.source !== "note-slide" ||
       [owner.position.zBits, owner.rotation.xBits, owner.rotation.yBits, owner.rotation.zBits].some((value) => value !== "0x00000000") ||
       owner.rotation.wBits !== "0x3F800000" || owner.scale.yBits !== owner.scale.xBits || owner.scale.zBits !== owner.scale.xBits) {
       throw fault("particle.simulation.slide-owner-hierarchy", "Slide particles require their NoteSlide owner with identity rotation, uniform scale and world Z zero.");
@@ -2230,7 +2230,7 @@ function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleIns
   }
   if (left.kind !== "note-slide" || right.kind !== "note-slide") return true;
   return left.noteIndex === right.noteIndex && left.absolutePosition === right.absolutePosition &&
-    left.poolSlot === right.poolSlot && left.route === right.route &&
+    left.poolSlot === right.poolSlot &&
     left.particleSystemSetupScaleFactorsBits?.[0] === right.particleSystemSetupScaleFactorsBits?.[0] &&
     left.particleSystemSetupScaleFactorsBits?.[1] === right.particleSystemSetupScaleFactorsBits?.[1];
 }

@@ -1038,19 +1038,17 @@ function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceId
     typeof value.buttonType !== "number" || !Number.isFinite(value.buttonType) ||
     typeof value.rangeLength !== "number" || !Number.isInteger(value.rangeLength) || value.rangeLength < 1 ||
     typeof value.poolSlot !== "number" || !Number.isInteger(value.poolSlot) || value.poolSlot < 0 || value.poolSlot >= 8 ||
-    (value.route !== "original" && value.route !== "product-extension") ||
     !positiveFloat32Bits(value.particleSystemSetupScaleBits) ||
     !Array.isArray(value.particleSystemSetupScaleFactorsBits) || value.particleSystemSetupScaleFactorsBits.length !== 2 ||
     !value.particleSystemSetupScaleFactorsBits.every(positiveFloat32Bits) ||
-    !isOwnerTransform(value.ownerTransform, value.route === "original" ? "original-note-slide" : "product-extension-note-slide") ||
+    !isOwnerTransform(value.ownerTransform, "note-slide") ||
     typeof value.rootPositionXBits !== "string" || typeof value.rootPositionYBits !== "string" ||
     typeof value.rootScaleBits !== "string") return false;
   const owner = value.ownerTransform as Record<string, unknown>;
   const position = owner.position as Record<string, unknown>;
   const scale = owner.scale as Record<string, unknown>;
   return value.rootPositionXBits === position.xBits && value.rootPositionYBits === position.yBits &&
-    value.rootScaleBits === scale.xBits && positiveFloat32Bits(value.rootScaleBits) &&
-    (value.route === "product-extension" || Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15);
+    value.rootScaleBits === scale.xBits && positiveFloat32Bits(value.rootScaleBits);
 }
 
 function isOwnerTransform(value: unknown, source: string): boolean {

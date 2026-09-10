@@ -651,8 +651,7 @@ function isNativeInstance(value: ParticleInstanceIdentity): boolean {
     value.particleSystemSetupScaleFactorsBits.every((factor) => positiveBits(factor) !== null) &&
     Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 && Number.isInteger(value.rangeLength) && value.rangeLength >= 1 &&
     Number.isInteger(value.poolSlot) && value.poolSlot! >= 0 && value.poolSlot! < 8 &&
-    (value.route === "original" || value.route === "product-extension") &&
-    value.ownerTransform.source === (value.route === "original" ? "original-note-slide" : "product-extension-note-slide") &&
+    value.ownerTransform.source === "note-slide" &&
     value.rootPositionXBits === value.ownerTransform.position.xBits && value.rootPositionYBits === value.ownerTransform.position.yBits &&
     value.rootScaleBits === value.ownerTransform.scale.xBits;
 }

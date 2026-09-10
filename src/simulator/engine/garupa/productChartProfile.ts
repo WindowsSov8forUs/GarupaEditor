@@ -34,14 +34,6 @@ export interface GarupaProductNode {
   readonly scoringSource: NoteInformation | null;
 }
 
-export interface GarupaProductSyncPair {
-  readonly identity: string;
-  readonly absolutePosition: number;
-  readonly firstNodeIdentity: string;
-  readonly secondNodeIdentity: string;
-  readonly authoredOrder: number;
-}
-
 export interface GarupaProductSlideChain {
   readonly identity: string;
   readonly chartItemIndex: number;
@@ -60,7 +52,6 @@ export interface GarupaProductChartProfile {
   readonly svEvents: readonly GarupaProductSvEvent[];
   readonly nodes: readonly GarupaProductNode[];
   readonly visibleNodes: readonly GarupaProductNode[];
-  readonly syncPairs: readonly GarupaProductSyncPair[];
   readonly slideChains: readonly GarupaProductSlideChain[];
   readonly nodeByIdentity: ReadonlyMap<string, GarupaProductNode>;
   readonly scoringNodeBySource: WeakMap<NoteInformation, GarupaProductNode>;
@@ -94,11 +85,6 @@ export function freezeGarupaProductChartProfile(input: {
   const nodes = Object.freeze(authoredNodes.filter((node) => !input.originalItemIndices.has(node.chartItemIndex)));
   const visibleNodes = Object.freeze(nodes.filter((node) => node.visible));
   const nodeByIdentity = new Map(authoredNodes.map((node) => [node.identity, node]));
-  const syncPairs = Object.freeze(freezeProductSyncPairs(authoredNodes).filter((pair) => {
-    const first = nodeByIdentity.get(pair.firstNodeIdentity)!;
-    const second = nodeByIdentity.get(pair.secondNodeIdentity)!;
-    return !input.originalItemIndices.has(first.chartItemIndex) || !input.originalItemIndices.has(second.chartItemIndex);
-  }));
   const scoringNodeBySource = new WeakMap<NoteInformation, GarupaProductNode>();
   for (const node of authoredNodes) {
     if (!input.originalItemIndices.has(node.chartItemIndex) && node.scoringSource !== null) scoringNodeBySource.set(node.scoringSource, node);
@@ -116,40 +102,10 @@ export function freezeGarupaProductChartProfile(input: {
     svEvents: Object.freeze(input.svEvents.map((event) => Object.freeze(event))),
     nodes,
     visibleNodes,
-    syncPairs,
     slideChains,
     nodeByIdentity,
     scoringNodeBySource,
   });
-}
-
-function freezeProductSyncPairs(
-  nodes: readonly GarupaProductNode[],
-): readonly GarupaProductSyncPair[] {
-  const byPosition = new Map<number, GarupaProductNode[]>();
-  for (const node of nodes) {
-    if (!node.visible) continue;
-    const rows = byPosition.get(node.absolutePosition) ?? [];
-    rows.push(node);
-    byPosition.set(node.absolutePosition, rows);
-  }
-  const pairs: GarupaProductSyncPair[] = [];
-  for (const [absolutePosition, rows] of [...byPosition.entries()].sort((a, b) => a[0] - b[0])) {
-    rows.sort((left, right) => left.authoredOrder - right.authoredOrder);
-    for (let index = 1; index < rows.length; index += 1) {
-      const first = rows[index - 1]!;
-      const second = rows[index]!;
-      if (first.spanStart + (first.width - 1) / 2 === second.spanStart + (second.width - 1) / 2) continue;
-      pairs.push(Object.freeze({
-        identity: `garupa-sync:${absolutePosition}:${first.identity}:${second.identity}`,
-        absolutePosition,
-        firstNodeIdentity: first.identity,
-        secondNodeIdentity: second.identity,
-        authoredOrder: second.authoredOrder,
-      }));
-    }
-  }
-  return Object.freeze(pairs);
 }
 
 function freezeProductScoringSource(source: NoteInformation): void {

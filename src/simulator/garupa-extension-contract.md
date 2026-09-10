@@ -52,7 +52,7 @@ Reverse remains the only authority for original behavior.
 
 - Primary/Secondary judgement adjustment and MvDarkness use the same global original owners; product charts do not create alternate clocks or movie-opacity controls.
 - Product nodes freeze `shortRhythmUnder8beat`; NoteColor uses the original normal/normal16 predicate and selected atlas.
-- Same-position visible nodes freeze deterministic authored-order SyncLine sidecar pairs. Each endpoint uses its own continuous projection and recovered ordinary uniform Note scale every frame; line width is `uniformScale*0.28`, not a constant world width. No lane is rounded, clamped or selected as nearest.
+- SyncLine endpoints enter the shared `SyncLineConnectionRules`, using the original activation interval, connection ownership, pending-tail decisions and directional endpoint selection. There is no authored-order adjacent-pair sidecar. The ordinary command producer owns all line objects, material binding, visibility and geometry. Coordinate adapters supply committed endpoint transforms; they do not round or substitute lanes.
 - VisibleTapLaneEffect remains owned by the common 13-slot GamePlayButton owner. Compatible integer width-one product nodes reuse its exact slot/texture mapping; the product renderer creates no duplicate fixed-`NoteLaneEffect_4` sidecar. Fractional/outside/wide nodes do not use nearest-slot substitution. Turning it Off does not disable selected particles, Judge, SE, Combo, Score or Life.
 - Product Slide strips use the selected curve texture with the original base-mesh white RGB and `0.8` alpha. Hidden connections preserve geometry continuity but do not add an invented chain-wide tint or alpha reduction. The texture is not recolored with a second saturated-green multiplier.
 - These continuous/outside projections are `closed-product-extension`. They are not evidence that the original discrete GamePlayButton/NoteSyncLine owners accept fractional or outside lanes.
@@ -221,19 +221,19 @@ This contract does not open character skills, Fever, multiplayer, HABAHIRO
 original parity, standalone MVView, Star3D, CRI/USM, fixed-device exactness,
 physical speaker onset or Stage 9 application integration.
 
-## 保留的扩展渲染链路
+## 保留的新增输入适配
 
-以下是相对原作谱面新增语义的完整入口清单。共有规则不得在这些入口中重写；新增入口必须说明现有路径无法承接的具体输入。
+多格 Directional、不同音符间的 SyncLine、Slide 连续跟随与持续粒子均为原作已有功能，不作为扩展渲染链路保留。
 
-| 保留项 | 必要输入与边界 | 共用原作消费者 |
+旧 `GarupaProductRenderProducer` 已删除。[Garupa 输入适配器](engine/garupa/garupaRenderInputAdapter.ts) 仅提交时间轴、坐标和图结构产生的呈现输入；[RenderCommandProducer](engine/rendering/renderCommandProducer.ts) 统一拥有资源绑定、对象、绘制命令、动画计时与会话释放。原作池路径及适配输入共用完整连接线命令、Slide 网格提交、变换和动画推进。Slide 闪光属于实际根节点，不再建立影子根节点。粒子统一使用 `note-slide` 所有者，不以原作/扩展标签分流。
+
+| 保留输入 | 原作输入域外的必要适配 | 进入的共用路径 |
 | --- | --- | --- |
-| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideRenderExtension](engine/garupa/slideRenderExtension.ts) 只替换运动输入与时间到达条件；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 处理反向、停止和超出坐标范围的可见区间 | `advanceOrdinaryLongNormalChild`、`advanceOrdinarySlideChildren`、原作曲线与网格条带 |
-| 连续/域外轨道与宽度 | [simulatorSceneLayout](scene/simulatorSceneLayout.ts) 将连续坐标送入原作场景；超过七格仅补足原作没有的宽度输入 | 原作投影基准、`calculateOrdinaryNoteScaleAtY`、`calculateOrdinaryNoteStartDepth`、父级缩放和网格宽度 |
-| 扩展 Slide 图结构 | 单节点、同拍边、隐藏首尾、全隐藏链及内部 Flick/Directional；必要的图结束状态位于 [slideRenderExtension](engine/garupa/slideRenderExtension.ts) | 原作根节点跟随、Wait/Move/Stop、`queueSlideRenderHideBefore`、`applySlideRenderHides`、`advanceSlideStopWait` |
-| 连续多格 Directional 图 | [productRenderProducer](engine/garupa/productRenderProducer.ts) 将跨度展开为原作单格主体与邻接边；仅对实际视口外的附加主体做剔除 | `noteBodyBinding`、`appendOrdinaryAnimationStart`、`buildOrdinaryMultipleDirectionalLine` 和原作方向材质 |
-| 原作没有对应项的字形映射 | 小数轨道/域外中心使用所选族的固定中心字形；超过原作资源宽度使用明确的单头字形。原作域内的精确键优先，禁止最近轨道和首张图回退 | [noteVisualBinding](engine/rendering/noteVisualBinding.ts) 中共用的主体、Flick 图标和 LongFlash 绑定；共用动画时钟 |
-| 混合节点 SyncLine | [productRenderProducer](engine/garupa/productRenderProducer.ts) 补充包含扩展端点的谱面邻接关系；原作端点读取已提交状态 | `buildOrdinarySyncLine`；不重算原作端点运动，不重复原作端点间的连接 |
-| 连续 Slide 粒子根变换 | [particleCommandProducer](engine/particles/particleCommandProducer.ts) 将同一 Slide 根位置提供给 TapKeep，并共用逐帧移动/停止；保留原有无离散按钮对应项时不伪造单点判定粒子的限制 | 原作粒子根、设置缩放、生命周期、模拟与 Pixi 粒子后端 |
-| CS-V1 加分显示容量 | [pixiRendererBackend](backends/pixi/pixiRendererBackend.ts) 仅在数位超出原作预置数量时增加数字 Sprite | 原作数字 atlas、`spriteNumberPositions`、间距、缩放、透明度和层级 |
+| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 裁剪反向、停止及坐标溢出区间 | 原作运动、Slide 状态机、曲线和网格条带；组名本身不切换规则 |
+| 连续/域外坐标及超出原作域的宽度 | [simulatorSceneLayout](scene/simulatorSceneLayout.ts) 投影新增坐标；Directional 跨度提供单格主体及端点输入；缺少原作精确资源键时采用明确字形映射 | 原作主体、方向图标、连接线、缩放、深度、动画和粒子；多格本身不是扩展 |
+| 原作不支持的 Slide 图结构 | [slideRenderExtension](engine/garupa/slideRenderExtension.ts) 将单节点、同拍、隐藏首尾及内部新增类型转换为状态输入 | 原作根跟随、Wait/Move/Stop、隐藏、网格和闪光；[garupaSyncInputs](engine/garupa/garupaSyncInputs.ts) 只组织端点，连接决策由 [SyncLineConnectionRules](engine/rendering/syncLineConnectionRules.ts) 同时供原作 NoteManager 与适配输入使用 |
+| CS-V1 超出预置数位的加分数值 | 超出原作数字对象容量时增加数字 Sprite | 原作数字 atlas、布局、间距、缩放、透明度和层级 |
 
-场景/场地、普通 HUD、MV、所选 Skin 材质、动画解码、Pixi 命令执行和粒子模拟均不按扩展谱面另开算法。HABAHIRO 是原作自己的分支；必要的宿主坐标与资源格式转换属于接口适配。上述保留项不等于逐像素验收，也不将原有粒子输出限制表述为原作等价。
+场景/场地、普通 HUD、MV、Skin 材质、动画解码、Pixi 执行和粒子模拟不因扩展输入另开算法。HABAHIRO 属于原作分支；宿主坐标与资源格式转换属于接口适配。无离散按钮对应时仍保留既有单点判定粒子省略限制，不能将其表述为原作输出等价。
+
+这份清单描述实现归属和保留输入，不代表视觉或整体算法等价验收。

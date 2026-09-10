@@ -617,17 +617,8 @@ export class InGameManager {
     }
     const movieStop = this.startupDirection?.stopMovie() ?? ok(undefined);
     if (movieStop.status !== "ok") return movieStop;
-    const productDispose = this.garupaProduct?.preflightDispose() ?? ok(null);
-    if (productDispose.status !== "ok") return productDispose;
     const noteDispose = this.noteManager.dispose();
-    if (noteDispose.status !== "ok") {
-      if (productDispose.value !== null) productDispose.value.discard();
-      return noteDispose;
-    }
-    if (productDispose.value !== null) {
-      const committed = productDispose.value.commit();
-      if (committed.status !== "ok") return committed;
-    }
+    if (noteDispose.status !== "ok") return noteDispose;
     const tapLaneEffectDispose = this.tapLaneEffect?.preflightAllOff() ?? null;
     if (tapLaneEffectDispose?.status === "integrity-failure") return tapLaneEffectDispose;
     if (tapLaneEffectDispose?.status === "ok" && tapLaneEffectDispose.value !== null) {

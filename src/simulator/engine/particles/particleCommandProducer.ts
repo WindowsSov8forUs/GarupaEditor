@@ -141,11 +141,10 @@ export class ParticleCommandProducer {
       const presentation = source === undefined ? null : this.slidePresentation?.(source);
       if (presentation === undefined || presentation === null) continue;
       if (!presentation.active) { stopSlideTapKeep(identity, projected, commands); continue; }
-      const route = productNode === undefined ? "original" : "product-extension";
       const transform = slideTransform(presentation.x, presentation.y,
-        productNode === undefined ? "original-note-slide" : "product-extension-note-slide", this.particleScene!);
+        this.particleScene!);
       if (transform === null) return rejected("particle.producer.invalid-slide-presentation", "Slide particles require the committed finite root position.");
-      moveSlideTapKeep(identity, owner.instance.buttonType, owner.rangeLength, transform, route,
+      moveSlideTapKeep(identity, owner.instance.buttonType, owner.rangeLength, transform,
         this.particleScene!, projected, commands);
     }
     return ok(undefined);
@@ -288,12 +287,12 @@ export class ParticleCommandProducer {
             if (entry.phase === "head") {
               playSlideTapKeep(
                 identity, targetButton, targetRange, transform,
-                "original", this.particleScene!, projected, commands,
+                this.particleScene!, projected, commands,
               );
             } else {
               moveSlideTapKeep(
                 identity, targetButton, targetRange, transform,
-                "original", this.particleScene!, projected, commands,
+                this.particleScene!, projected, commands,
               );
             }
           }
@@ -400,7 +399,7 @@ export class ParticleCommandProducer {
     playSlideTapKeep(
       slideIdentity(note), buttonType, rangeLength,
       originalSlideTransform(buttonType, this.particleScene!),
-      "original", this.particleScene!, projected, commands,
+      this.particleScene!, projected, commands,
     );
     return this.stage(commands, projected);
   }
@@ -573,7 +572,6 @@ export class ParticleCommandProducer {
     const transform = slideTransform(
       actual?.x ?? position.value.x.value,
       actual?.y ?? position.value.y.value,
-      "product-extension-note-slide",
       this.particleScene!,
     );
     if (transform === null) {
@@ -585,12 +583,12 @@ export class ParticleCommandProducer {
     if (nodeIndex === 0) {
       playSlideTapKeep(
         identity, target.spanStart, target.width, transform,
-        "product-extension", this.particleScene!, projected, commands,
+        this.particleScene!, projected, commands,
       );
     } else {
       moveSlideTapKeep(
         identity, target.spanStart, target.width, transform,
-        "product-extension", this.particleScene!, projected, commands,
+        this.particleScene!, projected, commands,
       );
     }
     return ok(undefined);
@@ -710,7 +708,6 @@ function playSlideTapKeep(
   buttonType: number,
   rangeLength: number,
   transform: ParticleOwnerTransform,
-  route: "original" | "product-extension",
   scene: ParticlePixiSceneProfile,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
@@ -720,7 +717,7 @@ function playSlideTapKeep(
   const poolSlot = state.slidePoolCursor;
   const semanticKey = slideSemanticKey(identity);
   const ownerKey = slideTapKeepOwnerKey(identity, poolSlot);
-  const instance = slideInstance(identity, buttonType, rangeLength, transform, route, poolSlot, scene);
+  const instance = slideInstance(identity, buttonType, rangeLength, transform, poolSlot, scene);
   const before = state.slideTapKeep.get(semanticKey);
   if (before !== undefined) {
     commands.push(stopRoot(before.ownerKey, before.instance, "ordinary:effect_TapKeep"));
@@ -734,7 +731,6 @@ function moveSlideTapKeep(
   buttonType: number,
   rangeLength: number,
   transform: ParticleOwnerTransform,
-  route: "original" | "product-extension",
   scene: ParticlePixiSceneProfile,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
@@ -743,7 +739,7 @@ function moveSlideTapKeep(
   const active = state.slideTapKeep.get(semanticKey);
   if (active === undefined || active.instance.kind !== "note-slide" || active.instance.poolSlot === undefined) return;
   const instance = slideInstance(
-    identity, buttonType, rangeLength, transform, route, active.instance.poolSlot, scene,
+    identity, buttonType, rangeLength, transform, active.instance.poolSlot, scene,
   );
   commands.push(Object.freeze({
     kind: "move-note-slide-root",
@@ -845,7 +841,6 @@ function slideInstance(
   buttonType: number,
   rangeLength: number,
   transform: ParticleOwnerTransform,
-  route: "original" | "product-extension",
   poolSlot: number,
   scene: ParticlePixiSceneProfile,
 ): Extract<ParticleInstanceIdentity, { readonly kind: "note-slide" }> {
@@ -859,7 +854,6 @@ function slideInstance(
     particleSystemSetupScaleBits: scene.slidePool!.particleSystemSetupScaleBits,
     particleSystemSetupScaleFactorsBits: scene.slidePool!.particleSystemSetupScaleFactorsBits!,
     poolSlot,
-    route,
     rootPositionXBits: transform.position.xBits,
     rootPositionYBits: transform.position.yBits,
     rootScaleBits: transform.scale.xBits,
@@ -897,7 +891,7 @@ function originalSlideTransform(
 ): ParticleOwnerTransform {
   const owner = scene.buttonOwners!.find((candidate) => candidate.buttonType === buttonType)!;
   return Object.freeze({
-    source: "original-note-slide" as const,
+    source: "note-slide" as const,
     position: owner.transform.position,
     rotation: Object.freeze({
       xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",
@@ -913,7 +907,6 @@ function originalSlideTransform(
 function slideTransform(
   x: number,
   y: number,
-  source: "original-note-slide" | "product-extension-note-slide",
   scene: ParticlePixiSceneProfile,
 ): ParticleOwnerTransform | null {
   const xBits = particleFloat32ToBits(x);
@@ -921,7 +914,7 @@ function slideTransform(
   const scaleBits = scene.slidePool?.outerScaleBits ?? null;
   if (xBits === null || yBits === null || scaleBits === null || particleFloat32FromBits(scaleBits) === null) return null;
   return Object.freeze({
-    source,
+    source: "note-slide",
     position: Object.freeze({ xBits, yBits, zBits: "0x00000000" }),
     rotation: Object.freeze({
       xBits: "0x00000000", yBits: "0x00000000", zBits: "0x00000000", wBits: "0x3F800000",

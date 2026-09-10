@@ -2046,12 +2046,6 @@ export class RenderCommandProducer {
         });
         if (mesh.status !== "ok") return mesh;
         appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true);
-        commands.push({
-          ...base(commands.length),
-          kind: "set-threshold",
-          renderObjectId: meshObjectId,
-          threshold: CURRENT_SUDDEN_THRESHOLD,
-        });
         commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
         previousTransform = childTransform;
         previousButtonCount = childButtonCount;
@@ -3018,6 +3012,7 @@ function appendCurveMesh(
       ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
   }
   commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole: "curve-note" });
+  if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: CURRENT_SUDDEN_THRESHOLD });
 }
 
 function appendNoteAnimationFrame(

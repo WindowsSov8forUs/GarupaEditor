@@ -74,7 +74,7 @@ import type {
 } from "./contracts";
 import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
 import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
-import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
+import { GarupaRenderInputAdapter } from "../engine/garupa/garupaRenderInputAdapter";
 import { GarupaProductTimelineManager } from "../engine/garupa/productTimelineManager";
 
 import {
@@ -1106,9 +1106,8 @@ export function createSimulatorEngine(
     }
     const productRender = input.rendering === undefined || backends.rendering === undefined
       ? null
-      : new GarupaProductRenderProducer(
-          input.rendering.sessionId,
-          backends.rendering,
+      : new GarupaRenderInputAdapter(
+          renderProducer!,
           input.rendering.resources,
           productProfile,
           productAxis,
@@ -1188,17 +1187,11 @@ export function createSimulatorEngine(
   if (productProfile?.hasExtensions) {
     const originalNodes = new Map([...productProfile.originalSources].map(([identity, source]) =>
       [source, productProfile.nodeByIdentity.get(identity)!] as const));
-    const extensionPositions = new Map<number, number[]>();
-    for (const node of productProfile.visibleNodes) {
-      const positions = extensionPositions.get(node.absolutePosition) ?? [];
-      positions.push(node.authoredOrder);
-      extensionPositions.set(node.absolutePosition, positions);
-    }
+    const extensionPositions = new Set(productProfile.visibleNodes.map(node => node.absolutePosition));
     noteManager.setExtensionSyncConnection((first, second) => {
       const a = originalNodes.get(first), b = originalNodes.get(second);
-      if (a === undefined || b === undefined || a.absolutePosition !== b.absolutePosition) return true;
-      return !(extensionPositions.get(a.absolutePosition) ?? []).some((order) =>
-        order > Math.min(a.authoredOrder, b.authoredOrder) && order < Math.max(a.authoredOrder, b.authoredOrder));
+      return a === undefined || b === undefined || a.absolutePosition !== b.absolutePosition ||
+        !extensionPositions.has(a.absolutePosition);
     });
   }
   const inputDispatcher = new GamePlayInputDispatcher(noteManager, tapLaneEffectOwner);

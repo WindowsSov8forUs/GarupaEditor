@@ -643,8 +643,7 @@ export interface ParticleResourcePreflightAdapter {
 export interface ParticleOwnerTransform {
   readonly source:
     | "game-play-button"
-    | "original-note-slide"
-    | "product-extension-note-slide"
+    | "note-slide"
     | "game-clear-ui-root";
   readonly position: ParticleFloat32Vector3;
   readonly rotation: ParticleFloat32Quaternion;
@@ -683,7 +682,6 @@ export type ParticleInstanceIdentity =
       /** Required in production; preserve width and note-size writes separately. */
       readonly particleSystemSetupScaleFactorsBits?: readonly [string, string];
       readonly poolSlot?: number;
-      readonly route?: "original" | "product-extension";
       /** Deprecated compile-only fields; production command validation rejects nullable transform ownership. */
       readonly rootPositionXBits: string | null;
       readonly rootPositionYBits: string | null;
