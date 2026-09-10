@@ -2738,7 +2738,11 @@ export class RenderCommandProducer {
           const revision = retiredLifetimes.has(binding.lifetime) ? null
             : binding.animationRole === "note-long-flash" ? binding.revision ?? null : undefined;
           animations.set(binding.ownerObjectId, appendNoteAnimationFrame(commands, base, binding.ownerObjectId,
-            animations.get(binding.ownerObjectId) ?? { role: binding.animationRole, elapsed: 0 }, revision, deltaTimeSeconds));
+            animations.get(binding.ownerObjectId) ?? {
+              role: binding.animationRole, elapsed: 0,
+              // appendOrdinaryAnimationStart leaves LongFlash hidden and unplayed.
+              playbackRevision: binding.animationRole === "note-long-flash" ? null : undefined,
+            }, revision, deltaTimeSeconds));
         }
       } else if (plan.kind === "curve-note") {
         if (plan.visible && plan.geometry !== null) {
