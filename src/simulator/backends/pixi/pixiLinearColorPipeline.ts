@@ -62,7 +62,11 @@ export function installPixiLinearOutput(
       name: "garupa-linear-to-srgb-output",
     }),
     resolution: "inherit",
-    antialias: "inherit",
+    // Nested per-widget filters finish the containing render pass. An MSAA
+    // target would therefore resolve this full-scene buffer for every widget.
+    // Keep offscreen composition single-sampled; retain renderer resolution,
+    // texture filtering and the original per-widget color/blend operations.
+    antialias: "off",
     clipToViewport: true,
   });
   const update = (nextWidth: number, nextHeight: number): void => {

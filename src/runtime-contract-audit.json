@@ -11157,7 +11157,7 @@
     {
       "id": "RCB-0531",
       "file": "src/simulator/backends/pixi/pixiLinearColorPipeline.ts",
-      "line": 71,
+      "line": 75,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Linear output filter requires one positive finite viewport.\");",
