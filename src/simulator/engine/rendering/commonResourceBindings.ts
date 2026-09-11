@@ -40,6 +40,7 @@ export const COMMON_PAUSE_CONTROL_BINDINGS = Object.freeze({
 });
 
 export const COMMON_STARTUP_DIRECTION_BINDINGS = Object.freeze({
+  titleBaseLogicalAssetId: "startup/information/title-base",
   lineStarLogicalAssetId: "startup/information/line-star",
   uiCommonLogicalAssetId: "hud/score/ui-common-atlas",
   rhythmGameUiLogicalAssetId: "hud/score/rhythm-game-ui-atlas",

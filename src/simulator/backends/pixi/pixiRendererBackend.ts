@@ -292,12 +292,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   getStartupDirectionCommonResources(): SimulatorResult<{
+    readonly titleBase: Texture;
+    readonly difficultyBackground: Texture;
     readonly lineStar: Texture;
     readonly jacketFrame: Texture;
     readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>;
     readonly fullLiveLabel: Texture;
     readonly fontFamily: string;
   }> {
+    const titleBase = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.titleBaseLogicalAssetId);
+    const difficultyBackground = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "label_square_white"));
     const lineStar = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.lineStarLogicalAssetId);
     const jacketFrame = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_base_jacket_frame"));
     const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
@@ -309,7 +313,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       EXPERT: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_expert")),
       SPECIAL: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_special")),
     });
-    if (lineStar === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
+    if (titleBase === undefined || difficultyBackground === undefined || lineStar === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
       Object.values(difficultyFrames).some((texture) => texture === undefined)) {
       return integrityFailure(
         "render.startup-direction.common-resources-unavailable",
@@ -318,6 +322,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     return ok(Object.freeze({
+      titleBase,
+      difficultyBackground,
       lineStar,
       jacketFrame,
       difficultyFrames: difficultyFrames as Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>,

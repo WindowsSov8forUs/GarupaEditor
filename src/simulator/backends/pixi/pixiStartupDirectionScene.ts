@@ -19,6 +19,8 @@ export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
 
 export interface PixiStartupDirectionCommonResources {
+  readonly titleBase: Texture;
+  readonly difficultyBackground: Texture;
   readonly lineStar: Texture;
   readonly jacketFrame: Texture;
   readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>;
@@ -152,33 +154,42 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.information.position.set(viewportWidth / 2, viewportHeight / 2);
     this.information.scale.set(surfaceLayout.ui.screenToSafeChildScale);
 
+    const titleBase = informationSprite(common.titleBase, "StartupTitleBase", 0, -159, 1334, 88);
     const lineStar = informationSprite(common.lineStar, "StartupLineStar", 0, -170, 1346, 196);
-    this.information.addChild(lineStar);
+    this.information.addChild(titleBase, lineStar);
 
+    const difficulty = STARTUP_DIFFICULTY_STYLE[presentation.difficulty.type];
+    const jacketBase = informationSprite(common.difficultyFrames[presentation.difficulty.type],
+      "StartupJacketDifficultyBase", 6, 144, 374, 374);
     const frame = informationSprite(common.jacketFrame, "StartupJacketFrame", 0, 138, 374, 374);
     const jacket = informationSprite(jacketTexture, "StartupJacket", 0, 138, 360, 360);
-    this.information.addChild(frame, jacket);
+    this.information.addChild(jacketBase, frame, jacket);
 
-    const difficultyFrame = informationSprite(
-      common.difficultyFrames[presentation.difficulty.type],
-      "StartupDifficultyFrame",
+    const difficultyBackground = informationSprite(
+      common.difficultyBackground,
+      "StartupDifficultyBackground",
       7,
       -77,
-      102,
-      34,
+      97,
+      27,
     );
-    this.information.addChild(difficultyFrame);
-    this.information.addChild(text(presentation.difficulty.type, common.fontFamily, 7, -77, 20, "StartupDifficulty"));
-    this.information.addChild(text(String(presentation.difficulty.level), common.fontFamily, 70, -77, 20, "StartupDifficultyLevel"));
-    this.information.addChild(text(presentation.song.title, common.fontFamily, 0, -162, 32, "StartupSongTitle"));
-    this.information.addChild(text(presentation.song.bandName, common.fontFamily, 0, -236, 24, "StartupBandName"));
-    for (const [role, value, authoredY] of [
-      ["Lyricist", presentation.song.lyricist, -283],
-      ["Composer", presentation.song.composer, -313],
-      ["Arranger", presentation.song.arranger, -343],
+    difficultyBackground.tint = difficulty.background;
+    this.information.addChild(difficultyBackground);
+    const difficultyLabel = text(presentation.difficulty.type, common.fontFamily,
+      7 + difficulty.offsetX, -79, 20, "StartupDifficulty");
+    difficultyLabel.style.stroke = { color: difficulty.outline, width: 2 };
+    difficultyLabel.style.letterSpacing = difficulty.spacing;
+    fitText(difficultyLabel, 94);
+    this.information.addChild(difficultyLabel);
+    this.information.addChild(text(presentation.song.title, common.fontFamily, 0, -162, 38, "StartupSongTitle", 1110, 0x505050));
+    this.information.addChild(text(presentation.song.bandName, common.fontFamily, 0, -236, 28, "StartupBandName", 932));
+    for (const [role, prefix, value, authoredY] of [
+      ["Lyricist", "作詞：", presentation.song.lyricist, -283],
+      ["Composer", "作曲：", presentation.song.composer, -313],
+      ["Arranger", "編曲：", presentation.song.arranger, -343],
     ] as const) {
-      if (value !== null) {
-        this.information.addChild(text(value, common.fontFamily, 0, authoredY, 18, `Startup${role}`));
+      if (value !== null && value.length > 0) {
+        this.information.addChild(text(prefix + value, common.fontFamily, 0, authoredY, 22, `Startup${role}`, 925));
       }
     }
     if (isFullLength) {
@@ -273,13 +284,28 @@ function informationSprite(
   return sprite;
 }
 
-function text(value: string, fontFamily: string, x: number, y: number, fontSize: number, label: string): Text {
+// DifficultyUtility colors and DifficultyLabelObject.Setup offsets/spacing.
+const STARTUP_DIFFICULTY_STYLE = {
+  EASY: { background: 0x3366ff, outline: 0x0033ff, offsetX: 1, spacing: 1 },
+  NORMAL: { background: 0x66ff33, outline: 0x00cc33, offsetX: -1, spacing: 1 },
+  HARD: { background: 0xffcc33, outline: 0xff9933, offsetX: 1, spacing: 1 },
+  EXPERT: { background: 0xff3333, outline: 0xcc0000, offsetX: 1, spacing: 0 },
+  SPECIAL: { background: 0xee2299, outline: 0xbb0066, offsetX: 0, spacing: 0 },
+} as const;
+
+function text(value: string, fontFamily: string, x: number, y: number, fontSize: number,
+  label: string, maxWidth?: number, fill = 0xffffff): Text {
   const result = new Text({
     text: value,
     label,
-    style: { fill: 0xffffff, fontFamily, fontSize, align: "center" },
+    style: { fill, fontFamily, fontSize, align: "center" },
   });
   result.anchor.set(0.5);
   result.position.set(x, -y);
+  if (maxWidth !== undefined) fitText(result, maxWidth);
   return result;
+}
+
+function fitText(label: Text, width: number): void {
+  if (label.width > width) label.scale.set(width / label.width);
 }

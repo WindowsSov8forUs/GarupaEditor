@@ -1388,6 +1388,27 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "startup-title-base.png",
+        "profile": {
+          "logicalAssetId": "startup/information/title-base",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 85,
+          "height": 85,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [
