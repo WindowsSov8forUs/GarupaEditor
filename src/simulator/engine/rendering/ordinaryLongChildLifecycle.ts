@@ -40,6 +40,7 @@ export interface OrdinaryLongNormalChildFrameInput {
 export interface OrdinaryLongNormalMeshInput {
   readonly front: OrdinaryNoteMotionResult;
   readonly after: OrdinaryNoteMotionResult;
+  readonly afterScaleX: RenderFloat32;
   readonly frontButtonCount: number;
   readonly afterButtonCount: number;
   readonly screenToSafeAreaRatio: RenderFloat32;
@@ -173,7 +174,7 @@ export function buildOrdinaryLongNormalMesh(
     }),
     after: Object.freeze({
       position: Object.freeze({ x: input.after.position.x, y: input.after.position.y }),
-      localScaleX: input.after.localScale.x,
+      localScaleX: input.afterScaleX,
       buttonCount: input.afterButtonCount,
     }),
     screenToSafeAreaRatio: input.screenToSafeAreaRatio,
@@ -183,6 +184,27 @@ export function buildOrdinaryLongNormalMesh(
   return input.advanced === true
     ? buildOrdinaryAdvancedNoteMesh(state)
     : buildOrdinaryBaseNoteMesh(state);
+}
+
+/** NoteMesh.getAfterNoteScale: a waiting endpoint has a mesh-only virtual
+ * width. Its hidden sprite keeps its own transform and scale. */
+export function getOrdinaryNoteMeshAfterScale(
+  after: OrdinaryLongNormalChildState,
+  frontTargetY: RenderFloat32,
+  screenToSafeAreaRatio: RenderFloat32,
+): SimulatorResult<RenderFloat32> {
+  if (after.phase !== "wait") return ok(after.renderedTransform.localScale.x);
+  const state = after.motionState;
+  const inverseSafeRatio = Math.fround(1 / screenToSafeAreaRatio.value);
+  const launcherY = Math.fround(state.launcherY.value * inverseSafeRatio);
+  const targetY = Math.fround(frontTargetY.value * inverseSafeRatio);
+  const afterLocalY = Math.fround(after.renderedTransform.position.y.value / state.noteParentScale.value);
+  const distance = Math.abs(Math.fround(launcherY - targetY));
+  if (distance === 0) return reject("render.mesh.degenerate-virtual-scale-range",
+    "A waiting mesh endpoint requires distinct launcher and front target coordinates.");
+  return createRenderFloat32(Math.fround(Math.fround(
+    Math.abs(Math.fround(launcherY - afterLocalY)) * state.noteSettingScale.value,
+  ) / distance));
 }
 
 function reject(capability: string, detail: string): SimulatorResult<never> {

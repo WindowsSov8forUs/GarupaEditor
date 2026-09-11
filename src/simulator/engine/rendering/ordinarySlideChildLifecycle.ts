@@ -16,6 +16,7 @@ import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
   createOrdinaryLongNormalChildState,
+  getOrdinaryNoteMeshAfterScale,
   type OrdinaryLongNormalChildFrameInput,
   type OrdinaryLongNormalChildState,
 } from "./ordinaryLongChildLifecycle";
@@ -271,6 +272,7 @@ export function advanceOrdinarySlideChildren(
     nextStates.push(next);
   }
   let previousTransform = frontTransform;
+  let previousMotionState = stopControl.rootMotionState;
   let previousButtonCount = frontButtonCount;
   for (const state of nextStates) {
     const widthRate = habahiroMeshWidthSetting === undefined
@@ -280,9 +282,12 @@ export function advanceOrdinarySlideChildren(
           habahiroMeshWidthSetting,
         );
     if (widthRate.status !== "ok") return widthRate;
+    const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);
+    if (afterScale.status !== "ok") return afterScale;
     const mesh = (extension?.buildMesh ?? buildOrdinaryLongNormalMesh)({
       front: previousTransform,
       after: state.lifecycle.renderedTransform,
+      afterScaleX: afterScale.value,
       frontButtonCount: previousButtonCount,
       afterButtonCount: state.buttonCount,
       screenToSafeAreaRatio,
@@ -293,6 +298,7 @@ export function advanceOrdinarySlideChildren(
     if (mesh.status !== "ok") return mesh;
     segments.push(Object.freeze({ sourceIndex: state.sourceIndex, geometry: mesh.value }));
     previousTransform = state.lifecycle.renderedTransform;
+    previousMotionState = state.lifecycle.motionState;
     previousButtonCount = state.buttonCount;
   }
   return ok(Object.freeze({

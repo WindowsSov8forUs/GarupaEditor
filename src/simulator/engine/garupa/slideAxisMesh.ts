@@ -15,11 +15,11 @@ export function buildSlideAxisMesh(input: OrdinaryLongNormalMeshInput,
     return buildOrdinaryLongNormalMesh(input);
   const width = (scale: number, count: number) => calculateNoteMeshHalfWidth(scale, count,
     input.screenToSafeAreaRatio.value, input.widthRate.value);
-  const endpoint = (node: GarupaProductNode, curve: number, transform: typeof input.front) => {
+  const endpoint = (node: GarupaProductNode, curve: number, transform: typeof input.front, meshScale: number) => {
     const point = scene.projectLaneAtCurve(center(node), curve);
     const scale = scene.projectNoteScaleAtCurve(curve, node.width);
     if (point.status === "ok" && scale.status === "ok") return ok({
-      base: [transform.position.x.value, transform.position.y.value, width(transform.localScale.x.value, node.width)],
+      base: [transform.position.x.value, transform.position.y.value, width(meshScale, node.width)],
       slope: [0, 0, 0],
     });
     const start = scene.projectLaneAtCurve(center(node), 0);
@@ -38,7 +38,8 @@ export function buildSlideAxisMesh(input: OrdinaryLongNormalMeshInput,
       slope: [goal.value.x.value - start.value.x.value, goal.value.y.value - start.value.y.value,
         widthSlope] });
   };
-  const a = endpoint(from, first, input.front), b = endpoint(to, second, input.after);
+  const a = endpoint(from, first, input.front, input.front.localScale.x.value),
+    b = endpoint(to, second, input.after, input.afterScaleX.value);
   if (a.status !== "ok") return a;
   if (b.status !== "ok") return b;
   const [minimum, maximum] = scene.visibleCurveRange;

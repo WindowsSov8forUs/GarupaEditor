@@ -41,6 +41,7 @@ import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
   createOrdinaryLongNormalChildState,
+  getOrdinaryNoteMeshAfterScale,
   type OrdinaryLongNormalChildFrameInput,
   type OrdinaryLongNormalChildState,
 } from "./ordinaryLongChildLifecycle";
@@ -1854,9 +1855,12 @@ export class RenderCommandProducer {
       const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
       if (widthRate.status !== "ok") return widthRate;
       if (meshZ.status !== "ok") return meshZ;
+      const afterScale = getOrdinaryNoteMeshAfterScale(longChildState, motionState.goalPosition.y, scene.screenToSafeAreaRatio!);
+      if (afterScale.status !== "ok") return afterScale;
       const mesh = buildOrdinaryLongNormalMesh({
         front: renderedTransform,
         after: longChildState.renderedTransform,
+        afterScaleX: afterScale.value,
         frontButtonCount: motionState.buttonCount,
         afterButtonCount: motionState.buttonCount,
         screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
@@ -1938,6 +1942,7 @@ export class RenderCommandProducer {
     if (r7Slide) {
       const states: OrdinarySlideChildState[] = [];
       let previousTransform = renderedTransform;
+      let previousMotionState = motionState;
       let previousButtonCount = motionState.buttonCount;
       for (let index = 0; index < information.slideNoteList.length; index += 1) {
         const source = information.slideNoteList[index];
@@ -2027,9 +2032,12 @@ export class RenderCommandProducer {
             )
           : createRenderFloat32(Math.fround(1));
         if (segmentWidthRate.status !== "ok") return segmentWidthRate;
+        const afterScale = getOrdinaryNoteMeshAfterScale(created.value.lifecycle, previousMotionState.goalPosition.y, scene.screenToSafeAreaRatio!);
+        if (afterScale.status !== "ok") return afterScale;
         const mesh = buildOrdinaryLongNormalMesh({
           front: previousTransform,
           after: childTransform,
+          afterScaleX: afterScale.value,
           frontButtonCount: previousButtonCount,
           afterButtonCount: childButtonCount,
           screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
@@ -2045,6 +2053,7 @@ export class RenderCommandProducer {
         appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true, materialRole);
         commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
         previousTransform = childTransform;
+        previousMotionState = childMotionState;
         previousButtonCount = childButtonCount;
       }
       slideChildStates = Object.freeze(states);
@@ -2252,9 +2261,12 @@ export class RenderCommandProducer {
     if (widthRate.status !== "ok") return widthRate;
     if (zero.status !== "ok") return zero;
     const meshVisible = next.value.renderedTransform.position.y.value > childState.motionState.goalPosition.y.value;
+    const afterScale = getOrdinaryNoteMeshAfterScale(next.value, childState.motionState.goalPosition.y, scene.screenToSafeAreaRatio);
+    if (afterScale.status !== "ok") return afterScale;
     const mesh = meshVisible ? buildOrdinaryLongNormalMesh({
       front: frontTransform,
       after: next.value.renderedTransform,
+      afterScaleX: afterScale.value,
       frontButtonCount: childState.motionState.buttonCount,
       afterButtonCount: childState.motionState.buttonCount,
       screenToSafeAreaRatio: scene.screenToSafeAreaRatio,
