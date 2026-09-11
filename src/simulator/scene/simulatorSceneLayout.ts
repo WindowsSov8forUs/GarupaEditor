@@ -74,6 +74,7 @@ export interface GarupaProductFieldLine {
 
 export interface GarupaProductSceneLayout {
   readonly virtualPerfectLine: number;
+  readonly visibleCurveRange: readonly [number, number];
   readonly visibleLaneRangeAtCurve: (curve: number) => readonly [number, number];
   readonly motionStateAtLane: (lane: number, width: number, absolutePosition: number) => SimulatorResult<OrdinaryNoteMotionState>;
   readonly laneSpacingWorld: RenderFloat32;
@@ -363,14 +364,20 @@ function createGarupaProductScene(
     }
     fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
   }
+  const startY = scene.noteStartPositions[3]!.y.value;
+  const travelY = scene.targetCenterY.value - startY;
+  const topCurve = (scene.surfaceLayout.camera.halfHeightWorld - startY) / travelY;
+  const bottomCurve = (-scene.surfaceLayout.camera.halfHeightWorld - startY) / travelY;
   return ok(Object.freeze({
     virtualPerfectLine,
+    visibleCurveRange: [Math.min(topCurve, bottomCurve), Math.max(topCurve, bottomCurve)] as const,
     visibleLaneRangeAtCurve: (curve: number): readonly [number, number] => {
-      const visibleCurve = Math.max(.002, Math.min(1, curve));
+      if (!Number.isFinite(curve)) return [1, 0];
+      const spacing = laneSpacing * (LAUNCH_DISTANCE_RATE + (1 - LAUNCH_DISTANCE_RATE) * curve);
       const left = originalBottomLeftScreenToWorld(scene.surfaceLayout, 0, 0);
       const right = originalBottomLeftScreenToWorld(scene.surfaceLayout, scene.surfaceLayout.surface.viewportWidth, 0);
       if (left.status !== "ok" || right.status !== "ok") throw new Error("scene.directional-viewport-unavailable");
-      return [3 + left.value[0] / (laneSpacing * visibleCurve), 3 + right.value[0] / (laneSpacing * visibleCurve)];
+      return [3 + left.value[0] / spacing, 3 + right.value[0] / spacing];
     },
     motionStateAtLane: (lane: number, width: number, absolutePosition: number): SimulatorResult<OrdinaryNoteMotionState> => {
       const start = projectLaneAtCurve(lane, 0);

@@ -427,6 +427,7 @@ export function buildNoteMeshStrip(
   boundaryAt: (rate: number) => SimulatorResult<readonly [RenderVector2, RenderVector2]>,
   color: RenderColor,
   indices: readonly number[] = sectionCount === BASE_SECTION_COUNT ? BASE_INDICES : ADVANCED_INDICES,
+  uvRateAt?: (rate: number) => number,
 ): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
   if ((sectionCount !== BASE_SECTION_COUNT && sectionCount !== ADVANCED_SECTION_COUNT) || !validateColor(color)) {
     return reject("render.geometry.invalid-base-mesh-owner-state", "Note strips retain original section counts and finite colour.");
@@ -444,7 +445,7 @@ export function buildNoteMeshStrip(
       const vertex = vector3(x, y, Math.fround(0));
       if (vertex.status !== "ok") return vertex;
       vertices.push(vertex.value);
-      const coordinate = vector2(Math.fround(side), rate);
+      const coordinate = vector2(Math.fround(side), uvRateAt === undefined ? rate : Math.fround(uvRateAt(rate)));
       if (coordinate.status !== "ok") return coordinate;
       uv.push(coordinate.value);
       colors.push(copyColor(color));

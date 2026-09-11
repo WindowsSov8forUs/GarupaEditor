@@ -16050,7 +16050,7 @@
     {
       "id": "RCB-0764",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 361,
+      "line": 362,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (projected.status !== \"ok\" || origin.status !== \"ok\") throw new Error(\"SyncLine endpoint projection is not finite.\");",
@@ -16071,7 +16071,7 @@
     {
       "id": "RCB-0765",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 493,
+      "line": 494,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Non-finite product curve ${String(sample.curve)} for ${sample.node.identity} cannot publish render geometry.`);",
@@ -16092,7 +16092,7 @@
     {
       "id": "RCB-0766",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 500,
+      "line": 501,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Product Note scale is unavailable for ${sample.node.identity}.`);",
@@ -16113,7 +16113,7 @@
     {
       "id": "RCB-0767",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 519,
+      "line": 520,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(`${created.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);",
@@ -16134,7 +16134,7 @@
     {
       "id": "RCB-0768",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 526,
+      "line": 527,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -16680,7 +16680,7 @@
     {
       "id": "RCB-0794",
       "file": "src/simulator/engine/garupa/slideRenderExtension.ts",
-      "line": 186,
+      "line": 191,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (result.status !== \"ok\") throw new Error(result.capability);",
@@ -25017,7 +25017,7 @@
     {
       "id": "RCB-1191",
       "file": "src/simulator/engine/rendering/ordinaryNoteGeometry.ts",
-      "line": 688,
+      "line": 689,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",
@@ -30540,7 +30540,7 @@
     {
       "id": "RCB-1454",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 301,
+      "line": 302,
       "marker": "integrity-failure-call",
       "symbol": "scaled",
       "source": ": integrityFailure(scaled.capability, scaled.requiredEvidence, scaled.boundary);",
@@ -30561,7 +30561,7 @@
     {
       "id": "RCB-1455",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 359,
+      "line": 360,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(start.capability, start.requiredEvidence, start.boundary);",
@@ -30582,7 +30582,7 @@
     {
       "id": "RCB-1456",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 362,
+      "line": 363,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(goal.capability, goal.requiredEvidence, goal.boundary);",
@@ -30603,7 +30603,7 @@
     {
       "id": "RCB-1457",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 372,
+      "line": 379,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (left.status !== \"ok\" || right.status !== \"ok\") throw new Error(\"scene.directional-viewport-unavailable\");",
@@ -30624,7 +30624,7 @@
     {
       "id": "RCB-1458",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 415,
+      "line": 422,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"scene.slide-judge-profile-out-of-range\");",
@@ -30645,7 +30645,7 @@
     {
       "id": "RCB-1459",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 515,
+      "line": 522,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (moved.status !== \"ok\") throw new Error(moved.capability);",
@@ -30666,7 +30666,7 @@
     {
       "id": "RCB-1460",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 520,
+      "line": 527,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"scene.slide-judge-motion-not-advancing\");",
@@ -30687,7 +30687,7 @@
     {
       "id": "RCB-1461",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 526,
+      "line": 533,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"scene.slide-judge-profile-too-short\");",
@@ -30708,7 +30708,7 @@
     {
       "id": "RCB-1462",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 808,
+      "line": 815,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(created.capability);",
@@ -30729,7 +30729,7 @@
     {
       "id": "RCB-1463",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
-      "line": 829,
+      "line": 836,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",

@@ -1,5 +1,5 @@
 import { GameNoteType } from "../chart/types";
-import { buildGarupaSyncInputs, advanceGarupaSyncInputs, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
+import { buildGarupaSyncInputs, buildGarupaSyncConnections, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
 import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { slideAxisInterval } from "./slideAxisMesh";
 import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
@@ -115,6 +115,7 @@ export class GarupaRenderInputAdapter {
     const arrival = getOrdinaryNoteArrivalSeconds(this.specificSpeed);
     if (arrival.status !== "ok") return arrival;
     const arrivalMilliseconds = arrival.value.value * 1000;
+    const entryCurve = calculateNoteMotionCurve(0, true);
     const plannedJudged = new Set(this.judgedNodeIdentities);
     for (const node of judgedNodes) plannedJudged.add(node.identity);
     for (const id of frameInput.missed) plannedJudged.add(id);
@@ -138,11 +139,11 @@ export class GarupaRenderInputAdapter {
         );
         const scale = this.scene.projectNoteScaleAtCurve(curve, node.width);
         if (projected.status !== "ok") {
-          if (curve >= 0.002 && curve <= 1) return projected;
+          if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return projected;
         } else {
           position = projected.value;
           if (scale.status !== "ok") {
-            if (curve >= 0.002 && curve <= 1) return scale;
+            if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return scale;
           } else {
             uniformScale = scale.value;
           }
@@ -155,7 +156,7 @@ export class GarupaRenderInputAdapter {
         uniformScale,
         moving: false,
         visible: position !== null && uniformScale !== null &&
-          curve >= 0.002 && curve <= 1 && !plannedJudged.has(node.identity),
+          curve >= entryCurve && !plannedJudged.has(node.identity),
       }));
     }
 
@@ -203,9 +204,9 @@ export class GarupaRenderInputAdapter {
         const stopped = lifecycle.phase === "stop";
         samples.set(node.identity, { ...previous, position: transform.position,
           uniformScale: transform.localScale.x,
-          curve: stopped ? 1 : previous.curve, moving: lifecycle.phase === "move",
+          curve: stopped ? 1 : lifecycle.phase === "wait" ? 0 : previous.curve, moving: lifecycle.phase === "move",
           visible: !state.finished && visible && lifecycle.phase !== "wait" &&
-            (stopped || !this.axisGroups.has(chain.timingGroup) || previous.curve >= 0.002 && previous.curve <= 1) });
+            (stopped || !this.axisGroups.has(chain.timingGroup) || previous.position !== null && previous.uniformScale !== null && previous.curve >= entryCurve) });
       }
     }
 
@@ -216,7 +217,7 @@ export class GarupaRenderInputAdapter {
       if (state === undefined ? plannedJudged.has(node.identity) : state.finished ||
         (node.connectionIndex === 0 ? !state.rootVisible : !state.children[node.connectionIndex! - 1]!.visible)) retired.add(node.identity);
     }
-    const sync = advanceGarupaSyncInputs(this.syncInputs, this.syncState, currentAbsolutePosition, frame.launcherMusicPosition);
+    const sync = this.syncState === undefined ? buildGarupaSyncConnections(this.syncInputs) : ok(this.syncState);
     if (sync.status !== "ok") return sync;
     if (this.syncLine) {
       for (const pair of garupaSyncPairs(sync.value)) {
@@ -319,7 +320,7 @@ export class GarupaRenderInputAdapter {
         const objectId = lineObjectId(chain.identity, index - 1);
         const slideState = plannedSlides.get(chain.identity)!;
         const lineVisible = !slideState.finished && slideState.children[index - 1]!.meshVisible &&
-          slideAxisInterval(from.curve, to.curve) !== null;
+          (!this.axisGroups.has(chain.timingGroup) || slideAxisInterval(from.curve, to.curve, this.scene.visibleCurveRange) !== null);
         plans.push({ id: objectId, lifetime: chain.identity, kind: "curve-note", visible: lineVisible,
           materialRole,
           geometry: lineVisible ? slideSegments.get(chain.identity)![index - 1]!.geometry : null });

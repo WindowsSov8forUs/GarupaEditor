@@ -43,17 +43,15 @@ export function buildGarupaSyncInputs(chart: GarupaProductChartProfile): readonl
 }
 
 export interface GarupaSyncState {
-  readonly activated: ReadonlySet<SyncInput>;
-  readonly pendingTails: readonly SyncInput[];
-  readonly pendingDirectionalTails: readonly SyncInput[];
   readonly lines: readonly SyncConnection<SyncInput>[];
 }
-export function advanceGarupaSyncInputs(inputs: readonly SyncInput[], previous: GarupaSyncState | undefined,
-  position: number, launcherPosition: number): SimulatorResult<GarupaSyncState> {
-  const activated = new Set(previous?.activated);
-  const pendingTails = [...previous?.pendingTails ?? []];
-  const pendingDirectionalTails = [...previous?.pendingDirectionalTails ?? []];
-  const lines = [...previous?.lines ?? []];
+/** SV may reveal future batches out of music order. Resolve their chart-owned
+ * connections in source order; endpoint Move states alone control rendering. */
+export function buildGarupaSyncConnections(inputs: readonly SyncInput[]): SimulatorResult<GarupaSyncState> {
+  const pendingTails: SyncInput[] = [];
+  const pendingDirectionalTails: SyncInput[] = [];
+  const lines: SyncConnection<SyncInput>[] = [];
+  let position = 0;
   const rules = new SyncLineConnectionRules<SyncInput, SyncConnection<SyncInput>>({
     pendingTails, pendingDirectionalTails, position: () => position,
     hasTail: note => note.tail !== null && note.tail.visible,
@@ -72,19 +70,16 @@ export function advanceGarupaSyncInputs(inputs: readonly SyncInput[], previous: 
   const byPosition = new Map<number, SyncInput[]>();
   for (const note of inputs) {
     const at = note.noteInformation.absolutePos;
-    if (activated.has(note) || at > launcherPosition) continue;
-    activated.add(note);
-    // Same activation interval as InGameMusicScoreController.canActivateBatch.
-    if (at <= position) continue;
     const notes = byPosition.get(at) ?? [];
     notes.push(note);
     byPosition.set(at, notes);
   }
-  for (const [, notes] of [...byPosition].sort((a, b) => a[0] - b[0])) {
+  for (const [at, notes] of [...byPosition].sort((a, b) => a[0] - b[0])) {
+    position = at;
     const connected = rules.connectOrdinarySyncLines(notes.sort((a, b) => a.front.authoredOrder - b.front.authoredOrder));
     if (connected.status !== "ok") return connected;
   }
-  return ok({ activated, pendingTails, pendingDirectionalTails, lines });
+  return ok({ lines });
 }
 export function garupaSyncPairs(state: GarupaSyncState): readonly GarupaSyncInputPair[] {
   return state.lines.map((line, index) => {

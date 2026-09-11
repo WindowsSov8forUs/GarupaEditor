@@ -100,7 +100,9 @@ export function advanceExtensionSlide(
         const stopped = index === 0 ? root.phase === "stop" : children[index - 1]!.lifecycle.phase === "stop";
         const displacement = axis.displacementAtPosition(node.timingGroup, node.absolutePosition, frame.absolutePosition);
         if (displacement.status !== "ok") return displacement;
-        curves.push(stopped ? 1 : calculateNoteMotionCurve(1 - displacement.value / (arrival.value.value * 1000), true));
+        const progress = 1 - displacement.value / (arrival.value.value * 1000);
+        const waiting = index === 0 ? root.phase === "wait" : children[index - 1]!.lifecycle.phase === "wait";
+        curves.push(stopped ? 1 : waiting && progress < 0 ? 0 : calculateNoteMotionCurve(progress, true));
       }
     }
     let meshIndex = 0;
@@ -153,20 +155,23 @@ export function advanceExtensionMotion(
   const displacement = axis.displacementAtPosition(node.timingGroup, node.absolutePosition, frame.absolutePosition);
   if (displacement.status !== "ok") return displacement;
   const progress = 1 - displacement.value / (arrival.value.value * 1000);
+  const due = frame.adjustedMusicPosition >= node.absolutePosition;
+  const entered = progress >= 0 || due || state.phase !== "wait";
+  // An unlaunched endpoint stays at the original launcher transform. Its strip
+  // can remain visible even though the endpoint sprite has not entered yet.
+  if (!entered) return ok(state);
   const rawCurve = calculateNoteMotionCurve(progress, true);
   // Clip only coordinates outside the drawable field. A stopped/judged endpoint
   // is subsequently governed by the shared Slide lifecycle, never by SV again.
   let position = scene.projectLaneAtCurve(center(node), rawCurve);
   let scale = scene.projectNoteScaleAtCurve(rawCurve, node.width);
   if (position.status !== "ok" || scale.status !== "ok") {
-    const clippedCurve = rawCurve < 0.002 ? 0.002 : 1;
+    const clippedCurve = rawCurve < scene.visibleCurveRange[0] ? scene.visibleCurveRange[0] : scene.visibleCurveRange[1];
     position = scene.projectLaneAtCurve(center(node), clippedCurve);
     scale = scene.projectNoteScaleAtCurve(clippedCurve, node.width);
   }
   if (position.status !== "ok") return position;
   if (scale.status !== "ok") return scale;
-  const due = frame.adjustedMusicPosition >= node.absolutePosition;
-  const entered = rawCurve >= 0.002 || due || state.phase !== "wait";
   const semanticProgress = 1 + (frame.absolutePosition - node.absolutePosition) * 60 / (48 * frame.currentBpm * arrival.value.value);
   const transform: OrdinaryNoteMotionResult = { progressRate: f32(semanticProgress), position: { ...position.value, z: state.motionState.currentPositionZ },
     localScale: { x: scale.value, y: scale.value, z: f32(0) } };
