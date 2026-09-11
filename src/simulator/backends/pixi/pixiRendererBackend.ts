@@ -1955,11 +1955,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     let mask = this.tapLaneEffectOutsideMask;
     if (mask === null) {
       const projection = object.resourceProfile.scene.projection;
-      const [leftWorld, bottomWorld, rightWorld, topWorld] = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK.worldBounds;
-      const left = Math.fround(projection.viewportWidth / 2 + leftWorld * projection.pixelsPerWorldUnit);
-      const top = Math.fround(projection.viewportHeight / 2 - topWorld * projection.pixelsPerWorldUnit);
-      const width = Math.fround((rightWorld - leftWorld) * projection.pixelsPerWorldUnit);
-      const height = Math.fround((topWorld - bottomWorld) * projection.pixelsPerWorldUnit);
+      const geometry = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK;
+      // This scene branch has no ScreenToSafeArea owner. It follows UIRoot
+      // FitWidth directly, not the serialized root scale or the note-size setting.
+      const scale = object.surfaceLayout.ui.pixelsPerAuthoredUnit;
+      const width = Math.fround(geometry.authoredWidth * scale);
+      const height = Math.fround(geometry.authoredHeight * scale);
+      const left = Math.fround((projection.viewportWidth - width) / 2);
+      const top = Math.fround(projection.viewportHeight / 2 -
+        (geometry.authoredCenterY + geometry.authoredHeight / 2) * scale);
       mask = new Graphics({ label: "tap-lane-effect-sprite-mask:MaskImage" })
         .rect(left, top, width, height)
         .fill(0xffffff);
