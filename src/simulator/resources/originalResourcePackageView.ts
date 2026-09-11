@@ -7,7 +7,7 @@ import {
   simulatorResourceAccepted,
   simulatorResourceRejected,
 } from "../platform/resourceContracts";
-import { sha256UpperHex } from "../backends/resources/sha256";
+import { sha256UpperHexAsync } from "../backends/resources/sha256";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const REVISION_PATTERN = /^[A-Za-z0-9._:/-]{1,512}$/;
@@ -54,7 +54,7 @@ export class OriginalResourcePackageView {
         );
       }
       if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0 || bytes.byteLength !== file.byteLength ||
-        sha256UpperHex(bytes) !== file.sha256) {
+        await sha256UpperHexAsync(bytes) !== file.sha256) {
         return reject("invalid-file-bytes", `Logical resource ${logicalResource}/${file.logicalPath} did not preserve its application-snapshot byte length and SHA-256.`);
       }
       bytesByPath.set(file.logicalPath, Uint8Array.from(bytes));

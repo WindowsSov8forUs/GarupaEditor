@@ -9,7 +9,7 @@ import type {
   RenderResourcePreflightAdapter,
   SimulatorResourceProvider,
 } from "../renderingContracts";
-import { sha256UpperHex } from "./sha256";
+import { sha256UpperHexAsync } from "./sha256";
 
 export interface LocalRenderResource {
   readonly logicalAssetId: string;
@@ -72,7 +72,7 @@ export class PortableRenderResourcePreflightAdapter implements RenderResourcePre
         "SHA-256 accepts only non-empty local bytes.",
       );
     }
-    return ok(sha256UpperHex(bytes));
+    return ok(await sha256UpperHexAsync(bytes));
   }
 
   async inspect(

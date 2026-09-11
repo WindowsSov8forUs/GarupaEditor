@@ -97,3 +97,9 @@ function add32(...values: readonly number[]): number {
   for (const value of values) result = (result + value) >>> 0;
   return result;
 }
+
+/** Startup hashing uses the host crypto worker instead of blocking the render thread. */
+export async function sha256UpperHexAsync(source: Uint8Array): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", Uint8Array.from(source));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+}

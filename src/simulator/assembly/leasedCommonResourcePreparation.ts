@@ -8,7 +8,6 @@ import {
   ImmutableLocalRenderResourceProvider,
   type LocalRenderResource,
 } from "../backends/resources/localResourceProvider";
-import { sha256UpperHex } from "../backends/resources/sha256";
 import type {
   RenderResourceAssetProfile,
   RenderResourceProfile,
@@ -33,12 +32,24 @@ export interface PreparedLeasedCommonRenderResources {
 export async function prepareLeasedCommonRenderResources(
   lease: SimulatorResourceLease,
 ): Promise<SimulatorAssemblyResult<PreparedLeasedCommonRenderResources>> {
+  // This immutable lease is consumed once per preparation. Several semantic
+  // files share a package; verify/read that package once, including concurrent
+  // profile reads, and release the local views when preparation finishes.
+  const packages = new Map<string, ReturnType<typeof OriginalResourcePackageView.open>>();
+  const openPackage = (logicalResource: string) => {
+    let pending = packages.get(logicalResource);
+    if (pending === undefined) {
+      pending = OriginalResourcePackageView.open(lease, logicalResource);
+      packages.set(logicalResource, pending);
+    }
+    return pending;
+  };
   const assets: RenderResourceAssetProfile[] = [];
   const local: LocalRenderResource[] = [];
   for (const entry of semanticGroups) {
     const logicalResource = commonLogicalResource(entry.file);
     if (logicalResource === null) return invalid("simulator.resources.common-semantic-file-unmapped");
-    const view = await OriginalResourcePackageView.open(lease, logicalResource);
+    const view = await openPackage(logicalResource);
     if (view.status === "rejected") return rejected("resource-unavailable", view.failure.capability, view.failure.boundary);
     const bytes = view.value.requireBytes(entry.file);
     if (bytes.status === "rejected") return rejected("resource-unavailable", bytes.failure.capability, bytes.failure.boundary);
@@ -49,22 +60,24 @@ export async function prepareLeasedCommonRenderResources(
         return invalid("simulator.resources.common-png-dimensions");
       }
     }
+    const file = view.value.requireFile(entry.file);
+    if (file.status === "rejected") return rejected("resource-unavailable", file.failure.capability, file.failure.boundary);
     const profile: RenderResourceAssetProfile = Object.freeze({
       ...entry.profile,
       byteLength: bytes.value.byteLength,
-      sha256: sha256UpperHex(bytes.value),
+      sha256: file.value.sha256!,
       provenance: "current-official-portable" as const,
     });
     assets.push(profile);
     local.push(Object.freeze({ logicalAssetId: profile.logicalAssetId, bytes: bytes.value }));
   }
   const [baseProfile, ordinaryVisible, scoreNativeProfile, gameClearProfile, gameClearSemanticProfile, pauseCountdownAnimation] = await Promise.all([
-    readJson(lease, "portable/profiles/ordinary-render", "profile.json"),
-    readJson(lease, "portable/profiles/ordinary-visible", "profile.json"),
-    readJson(lease, "prefabs/bms/rhythmgamegauge/score", "score-hud-native-profile.json"),
-    readJson(lease, "prefabs/bms/gameclear", "game-clear-profile.json"),
-    readJson(lease, "prefabs/bms/gameclear", "game-clear-native-semantic-profile.json"),
-    readJson(lease, "prefabs/bms/pause", "countdown-animation-profile.json"),
+    readJson(openPackage, "portable/profiles/ordinary-render", "profile.json"),
+    readJson(openPackage, "portable/profiles/ordinary-visible", "profile.json"),
+    readJson(openPackage, "prefabs/bms/rhythmgamegauge/score", "score-hud-native-profile.json"),
+    readJson(openPackage, "prefabs/bms/gameclear", "game-clear-profile.json"),
+    readJson(openPackage, "prefabs/bms/gameclear", "game-clear-native-semantic-profile.json"),
+    readJson(openPackage, "prefabs/bms/pause", "countdown-animation-profile.json"),
   ]);
   if (baseProfile.status === "rejected") return baseProfile;
   if (ordinaryVisible.status === "rejected") return ordinaryVisible;
@@ -101,11 +114,11 @@ export async function prepareLeasedCommonRenderResources(
 }
 
 async function readJson(
-  lease: SimulatorResourceLease,
+  openPackage: (logicalResource: string) => ReturnType<typeof OriginalResourcePackageView.open>,
   logicalResource: string,
   file: string,
 ): Promise<SimulatorAssemblyResult<unknown>> {
-  const view = await OriginalResourcePackageView.open(lease, logicalResource);
+  const view = await openPackage(logicalResource);
   if (view.status === "rejected") return rejected("resource-unavailable", view.failure.capability, view.failure.boundary);
   const parsed = view.value.requireJson(file);
   return parsed.status === "rejected"
