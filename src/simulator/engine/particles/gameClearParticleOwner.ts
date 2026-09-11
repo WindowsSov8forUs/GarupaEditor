@@ -68,6 +68,20 @@ export class GameClearParticleOwnerTransaction {
 
 /** Owns the Animator-driven ParticleSystem timeline, not a second simulation. */
 export class GameClearParticleOwner {
+  private cachedSchedule: {
+    readonly status: 1 | 2 | 3;
+    readonly baseStartedAtSeconds: number | null;
+    readonly mutations: ReturnType<typeof buildGameClearParticleLifecycleSchedule>;
+  } | null = null;
+
+  private lifecycleSchedule(status: 1 | 2 | 3, baseStartedAtSeconds: number | null) {
+    if (this.cachedSchedule?.status !== status || this.cachedSchedule.baseStartedAtSeconds !== baseStartedAtSeconds) {
+      this.cachedSchedule = { status, baseStartedAtSeconds,
+        mutations: buildGameClearParticleLifecycleSchedule(this.profile, status, baseStartedAtSeconds) };
+    }
+    return this.cachedSchedule.mutations;
+  }
+
   private committed: MutableGameClearParticleState | null = null;
   private pending: GameClearParticleOwnerTransaction | null = null;
 
@@ -108,7 +122,7 @@ export class GameClearParticleOwner {
       return integrityFailure("particle.game-clear.invalid-status", [], "Game-clear status is exactly base, Full Combo or All Perfect.");
     }
     const activeByRoot = emptyActiveRoots();
-    const initialMutations = buildGameClearParticleLifecycleSchedule(this.profile, clearStatus, null)
+    const initialMutations = this.lifecycleSchedule(clearStatus, null)
       .filter((mutation) => mutation.atSeconds === 0 && mutation.active);
     for (const mutation of initialMutations) {
       const root = this.rootForSystem(mutation.systemId, clearStatus);
@@ -166,7 +180,7 @@ export class GameClearParticleOwner {
       );
     }
     const activeByRoot = cloneActiveRoots(this.committed.activeByRoot);
-    const schedule = buildGameClearParticleLifecycleSchedule(this.profile, this.committed.status, baseStartedAtSeconds);
+    const schedule = this.lifecycleSchedule(this.committed.status, baseStartedAtSeconds);
     const startingBase = this.committed.baseStartedAtSeconds === null && baseStartedAtSeconds !== null;
     const due = schedule.filter((mutation) =>
       (mutation.atSeconds > before || (startingBase && mutation.atSeconds === baseStartedAtSeconds &&

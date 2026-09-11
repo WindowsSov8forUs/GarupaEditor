@@ -513,6 +513,24 @@ function sampleGameClearClip(
   });
 }
 
+type TimedClipKey = Readonly<{ time: number; key: GameClearClipKey }>;
+const clipFrameIndexes = new WeakMap<readonly GameClearClipFrame[], ReadonlyMap<number, readonly TimedClipKey[]>>();
+
+function indexedClipFrames(frames: readonly GameClearClipFrame[]): ReadonlyMap<number, readonly TimedClipKey[]> {
+  const existing = clipFrameIndexes.get(frames);
+  if (existing !== undefined) return existing;
+  const index = new Map<number, TimedClipKey[]>();
+  for (const frame of frames) {
+    for (const key of frame.keys) {
+      let keys = index.get(key.index);
+      if (keys === undefined) { keys = []; index.set(key.index, keys); }
+      keys.push({ time: frame.time, key });
+    }
+  }
+  clipFrameIndexes.set(frames, index);
+  return index;
+}
+
 function clipValue(
   clip: GameClearClipProfile,
   index: number,
@@ -520,14 +538,17 @@ function clipValue(
   frames: readonly GameClearClipFrame[] = clip.streamed_frames,
 ): number {
   if (index >= clip.streamed_curve_count) return clip.constants[index - clip.streamed_curve_count] ?? 0;
-  let latest: GameClearClipKey | null = null;
-  let time = 0;
-  for (const frame of frames) {
-    if (frame.time > phase) break;
-    const key = frame.keys.find((candidate) => candidate.index === index);
-    if (key !== undefined) { latest = key; time = frame.time; }
+  const keys = indexedClipFrames(frames).get(index);
+  if (keys === undefined) return 0;
+  let lower = 0;
+  let upper = keys.length;
+  while (lower < upper) {
+    const middle = (lower + upper) >>> 1;
+    if (keys[middle]!.time <= phase) lower = middle + 1;
+    else upper = middle;
   }
-  if (latest === null) return 0;
+  if (lower === 0) return 0;
+  const { time, key: latest } = keys[lower - 1]!;
   const delta = Math.fround(phase - time);
   let value = Math.fround(Math.fround(latest.coefficients[0] * delta) + latest.coefficients[1]);
   value = Math.fround(Math.fround(value * delta) + latest.coefficients[2]);
