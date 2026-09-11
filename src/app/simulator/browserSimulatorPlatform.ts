@@ -292,16 +292,21 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
       hardwareBack = false;
     }
     const commands: SimulatorRuntimeCommand[] = [];
+    let pausedAfterCommands = controlState.paused;
     for (const command of this.commands.splice(0)) {
+      if ((command.kind === "platform-pause" || command.kind === "platform-resume") &&
+        !controlState.playable) {
+        this.lifecyclePauseApplied = false;
+        continue;
+      }
       if (command.kind === "platform-pause") {
-        if (controlState.paused) {
-          this.lifecyclePauseApplied = false;
-          continue;
-        }
+        if (pausedAfterCommands) continue;
         this.lifecyclePauseApplied = true;
+        pausedAfterCommands = true;
       } else if (command.kind === "platform-resume") {
         if (!this.lifecyclePauseApplied) continue;
         this.lifecyclePauseApplied = false;
+        pausedAfterCommands = false;
       }
       commands.push(command);
     }

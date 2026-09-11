@@ -179,7 +179,14 @@ export class AutonomousSimulatorModule {
       if (input.value.commands.length > 0) {
         manualFrame = null;
         for (const command of input.value.commands) {
-          const applied = await this.applyCommand(command, controlState.value, surface.value);
+          // A queued lifecycle pair can pause and resume within one host frame.
+          // Each command observes the state committed by its predecessor.
+          const commandState = this.session!.getControlState();
+          if (commandState.status === "rejected") {
+            this.closeTerminal(commandState.failure);
+            return;
+          }
+          const applied = await this.applyCommand(command, commandState.value, surface.value);
           if (applied.status === "rejected") {
             this.closeTerminal(applied.failure);
             return;
@@ -283,10 +290,10 @@ export class AutonomousSimulatorModule {
       return accepted(undefined);
     }
     if (command.kind === "platform-pause") {
-      return controlState.paused ? accepted(undefined) : this.session!.pause();
+      return !controlState.playable || controlState.paused ? accepted(undefined) : this.session!.pause();
     }
     if (command.kind === "platform-resume") {
-      return controlState.paused ? this.session!.resume() : accepted(undefined);
+      return controlState.playable && controlState.paused ? this.session!.resume() : accepted(undefined);
     }
     if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort") {
       const consumed = consumePauseControlCommand(command, controlState, surface);
