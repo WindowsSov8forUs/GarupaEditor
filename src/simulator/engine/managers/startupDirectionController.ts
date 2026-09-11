@@ -61,6 +61,7 @@ export class StartupDirectionController {
   private phaseValue: StartupDirectionPhase = "first-view";
   private phaseElapsedValue = Math.fround(0);
   private openingElapsedValue = Math.fround(0);
+  private lineFadeElapsedValue = Math.fround(0);
   private stateValue: GameStateValue = GameState.Prepare;
   private sequence = 0;
   private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
@@ -260,9 +261,11 @@ export class StartupDirectionController {
   }
 
   private advanceParallelOwners(delta: number): void {
+    if (this.purpose === "move-time-reconstruction" || this.sceneValue.linePhase === "visible") return;
     if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
       this.phaseValue !== "voice-wait" && this.phaseValue !== "movie-before-sound" &&
       this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
+    const lineStarted = this.openingElapsedValue >= LINE_DELAY;
     this.openingElapsedValue = Math.fround(this.openingElapsedValue + delta);
     const elapsed = this.openingElapsedValue;
     const hud = unit(elapsed, HUD_FADE);
@@ -270,16 +273,18 @@ export class StartupDirectionController {
     const stage = stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_TRANSFORM);
     const characterElapsed = Math.fround(stageElapsed - CHARACTER_DELAY);
     const character = characterElapsed <= 0 ? Math.fround(0) : unit(characterElapsed, CHARACTER_FADE);
-    const lineElapsed = Math.fround(elapsed - LINE_DELAY);
-    const line = lineElapsed <= 0 ? Math.fround(0) : unit(lineElapsed, LINE_FADE);
+    // The asynchronous line coroutine starts its own fade clock after the wait;
+    // time beyond the wait threshold does not shorten that fade.
+    const line = lineStarted ? advance(this.lineFadeElapsedValue, LINE_FADE, delta) : null;
+    if (line !== null) this.lineFadeElapsedValue = line.elapsed;
     this.publish({
       hudAlpha: hud,
       darkCoverAlpha: Math.fround(1 - stage),
       stagePhase: stageElapsed <= 0 ? "waiting" : stage < 1 ? "introducing" : "idle",
       stageProgress: stage,
       characterAlpha: character,
-      linePhase: lineElapsed <= 0 ? "waiting" : line < 1 ? "fading" : "visible",
-      lineAlpha: line,
+      linePhase: line === null ? "waiting" : line.done ? "visible" : "fading",
+      lineAlpha: line?.ratio ?? Math.fround(0),
     });
   }
 
@@ -291,6 +296,10 @@ export class StartupDirectionController {
       );
     }
     return this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
+  }
+
+  advancePlayablePresentation(deltaTimeSeconds: number): void {
+    if (this.phaseValue === "playing-sound") this.advanceParallelOwners(deltaTimeSeconds);
   }
 
   pauseMovie(): SimulatorResult<void> {

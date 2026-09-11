@@ -239,6 +239,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   readonly id = "pixi-v8-renderer";
 
   readonly stage: Container;
+
+  applyStartupLineAlpha(alpha: number): void {
+    for (const object of this.objects.values()) {
+      if ((object.role === "field-line" || object.role === "judge-line") && object.lastTransform !== null) {
+        object.node.alpha = object.lastTransform.color.alpha.value * alpha;
+      }
+    }
+  }
   private readonly recording = new RecordingSimulatorRendererBackend();
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly objectIdsByNode = new Map<Container, string>();

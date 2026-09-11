@@ -236,6 +236,7 @@ export class InGameManager {
       this.currentGameStateValue = this.startupDirection.snapshot().currentGameState;
       return ok(undefined);
     }
+    this.startupDirection?.advancePlayablePresentation(deltaTimeSeconds);
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.advancePausedPresentation(deltaTimeSeconds);
     }

@@ -37,7 +37,6 @@ export interface PixiStartupDirectionScene extends StartupDirectionSceneBackend 
     darkCoverAlpha: number;
     stageProgress: number;
     characterAlpha: number;
-    lineAlpha: number;
     dynamicTextureCount: number;
   }>;
 }
@@ -110,7 +109,6 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly darkCover: Graphics;
   private readonly stageBackdrop: Sprite | null;
   private readonly characters: readonly Sprite[];
-  private readonly lineOwner = new Container({ label: "StartupLineUiOwner", sortableChildren: false });
   private disposed = false;
 
   constructor(
@@ -187,7 +185,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       const full = informationSprite(common.fullLiveLabel, "StartupFullLive", 161, 293, 70, 34);
       this.information.addChild(full);
     }
-    this.foregroundRoot.addChild(this.information, this.lineOwner);
+    this.foregroundRoot.addChild(this.information);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
       hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0,
@@ -204,8 +202,6 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.darkCover.visible = state.darkCoverAlpha > 0;
     if (this.stageBackdrop !== null) this.stageBackdrop.alpha = state.stageProgress;
     for (const character of this.characters) character.alpha = state.characterAlpha;
-    this.lineOwner.alpha = state.lineAlpha;
-    this.lineOwner.visible = state.lineAlpha > 0;
   }
 
   snapshot() {
@@ -217,7 +213,6 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       darkCoverAlpha: this.darkCover.alpha,
       stageProgress: this.stageBackdrop?.alpha ?? 0,
       characterAlpha: this.characters[0]?.alpha ?? 0,
-      lineAlpha: this.lineOwner.alpha,
       dynamicTextureCount: this.dynamicTextures.length,
     });
   }

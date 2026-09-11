@@ -38,6 +38,7 @@ export function createPixiCombinedScene(
   mvStage?: Container,
   particleHighStage?: Container,
   gameplayRenderOrder?: PixiGameplayRenderOrder,
+  applyLineAlpha?: (alpha: number) => void,
 ): SimulatorResult<PixiCombinedScene> {
   if (
     !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
@@ -95,7 +96,7 @@ export function createPixiCombinedScene(
       "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
     );
   }
-  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene, mvStage, particleHighStage));
+  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene, mvStage, particleHighStage, applyLineAlpha));
 }
 
 class OwnedPixiCombinedScene implements PixiCombinedScene {
@@ -108,6 +109,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     private readonly startupScene?: PixiStartupDirectionScene,
     private readonly mvStage?: Container,
     private readonly particleHighStage?: Container,
+    private readonly applyLineAlpha?: (alpha: number) => void,
   ) {}
 
   applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void> {
@@ -119,6 +121,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       );
     }
     this.startupScene.publish(state);
+    this.applyLineAlpha?.(state.lineAlpha);
     this.ordinaryStage.visible = state.hudAlpha > 0;
     this.ordinaryStage.alpha = state.hudAlpha;
     return ok(undefined);

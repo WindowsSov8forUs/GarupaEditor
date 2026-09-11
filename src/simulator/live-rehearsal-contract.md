@@ -46,6 +46,8 @@ Launch owned投影仍为`{chartData,presentation,config}`；键顺序和额外ho
 
 ## Original Live settings lifecycle
 
+入场场地线按 SD08 的独立协程推进：请求后等待 2.5 秒，再用独立的 1 秒时钟淡入，不把等待越界余量带入淡入。进入 PlayingSound 后仍继续推进至结束；MoveTime 重建保持已完成状态。`StartupDirectionController` 的 lineAlpha 经组合场景作用于实际 field-line / judge-line 对象并保留资源基础颜色，不再写入空容器。来源为 Reverse `startup-direction-runtime-contract-10-1-4` 与 `startup-direction-portable-pack-10-1-4`；实际 Pixi 对象的内存消费检查覆盖开始播放时未完成和最终 alpha=1，不构成 GPU 或整个入场演出验收。
+
 Schema 13必填Primary A `-30..30`、Secondary B `-5..5`、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness `0..70 step10`。配置在initial冻结；Retry fresh必须复用同一identity，MoveTime reconstruction复用配置但显式bypass Primary startup counter，Pause/Resume不重载且不热切换。
 
 A>0延迟BGM resume A个outer updates；A<0先启动BGM，再冻结gameplay/input/Note/judgement/Score/Life/particle `abs(A)`帧；B仍是独立Note position/Slide轴。Pause冻结Primary与MV dark-cover/lane-effect动画，Pause入口清除活动lane effect；resume不补算冻结帧。视觉bool不改变业务判定和音频/粒子owner。
