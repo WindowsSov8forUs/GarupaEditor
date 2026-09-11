@@ -202,11 +202,13 @@ export interface SimulatorIntegrityFailure {
 
 export type SimulatorResult<T> = SimulatorOk<T> | SimulatorIntegrityFailure;
 
-export function ok<T>(value: T, evidenceNotices: readonly EvidenceNotice[] = []): SimulatorOk<T> {
+const EMPTY_EVIDENCE_NOTICES: readonly EvidenceNotice[] = Object.freeze([]);
+
+export function ok<T>(value: T, evidenceNotices: readonly EvidenceNotice[] = EMPTY_EVIDENCE_NOTICES): SimulatorOk<T> {
   return Object.freeze({
     status: "ok",
     value,
-    evidenceNotices: Object.freeze(evidenceNotices.map(freezeEvidenceNotice)),
+    evidenceNotices: evidenceNotices.length === 0 ? EMPTY_EVIDENCE_NOTICES : Object.freeze(evidenceNotices.map(freezeEvidenceNotice)),
   });
 }
 

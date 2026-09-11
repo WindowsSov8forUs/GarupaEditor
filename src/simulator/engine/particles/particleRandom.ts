@@ -11,7 +11,7 @@ export interface ParticleRandomStep {
   readonly value: number;
 }
 
-const FLOAT32_SCALE_BITS = 0x34000001;
+const FLOAT32_SCALE = float32FromUint32(0x34000001);
 const SEED_RECURRENCE = 1812433253;
 
 /** Current libunity process-subsystem seed-zero xorshift manager state. */
@@ -93,7 +93,7 @@ export function particleSeedRatio(seed: number): number {
 
 /** Native module streams project the low 23 bits of each xorshift word. */
 export function particleWordRatio(word: number): number {
-  return f32Multiply(Math.fround((word >>> 0) & 0x007fffff), float32FromUint32(FLOAT32_SCALE_BITS));
+  return f32Multiply(Math.fround((word >>> 0) & 0x007fffff), FLOAT32_SCALE);
 }
 
 export function particleRandomValues(
