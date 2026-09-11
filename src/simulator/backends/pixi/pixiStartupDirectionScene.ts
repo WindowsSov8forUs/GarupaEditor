@@ -1,6 +1,7 @@
 import {
   Container,
   Graphics,
+  NineSliceSprite,
   Sprite,
   Text,
   Texture,
@@ -18,12 +19,20 @@ import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
 
+export interface PixiStartupSlicedImage {
+  readonly texture: Texture;
+  readonly leftWidth: number;
+  readonly rightWidth: number;
+  readonly topHeight: number;
+  readonly bottomHeight: number;
+}
+
 export interface PixiStartupDirectionCommonResources {
   readonly titleBase: Texture;
-  readonly difficultyBackground: Texture;
+  readonly difficultyBackground: PixiStartupSlicedImage;
   readonly lineStar: Texture;
-  readonly jacketFrame: Texture;
-  readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>;
+  readonly jacketFrame: PixiStartupSlicedImage;
+  readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", PixiStartupSlicedImage>>;
   readonly fullLiveLabel: Texture;
   readonly fontFamily: string;
 }
@@ -159,13 +168,13 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.information.addChild(titleBase, lineStar);
 
     const difficulty = STARTUP_DIFFICULTY_STYLE[presentation.difficulty.type];
-    const jacketBase = informationSprite(common.difficultyFrames[presentation.difficulty.type],
+    const jacketBase = informationSlicedSprite(common.difficultyFrames[presentation.difficulty.type],
       "StartupJacketDifficultyBase", 6, 144, 374, 374);
-    const frame = informationSprite(common.jacketFrame, "StartupJacketFrame", 0, 138, 374, 374);
+    const frame = informationSlicedSprite(common.jacketFrame, "StartupJacketFrame", 0, 138, 374, 374);
     const jacket = informationSprite(jacketTexture, "StartupJacket", 0, 138, 360, 360);
     this.information.addChild(jacketBase, frame, jacket);
 
-    const difficultyBackground = informationSprite(
+    const difficultyBackground = informationSlicedSprite(
       common.difficultyBackground,
       "StartupDifficultyBackground",
       7,
@@ -282,6 +291,14 @@ function informationSprite(
   sprite.position.set(authoredX, -authoredY);
   sprite.width = width;
   sprite.height = height;
+  return sprite;
+}
+
+function informationSlicedSprite(image: PixiStartupSlicedImage, label: string,
+  x: number, y: number, width: number, height: number): NineSliceSprite {
+  const sprite = new NineSliceSprite({ ...image, label, width, height });
+  sprite.anchor.set(0.5);
+  sprite.position.set(x, -y);
   return sprite;
 }
 

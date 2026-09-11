@@ -17,6 +17,7 @@ import {
   type SimulatorResult,
 } from "../../engine/evidence";
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
+import type { PixiStartupDirectionCommonResources, PixiStartupSlicedImage } from "./pixiStartupDirectionScene";
 import { calculateNativeParticleRendererSortDistance } from "../../engine/particles/particleBounds";
 import {
   calculateGameplayWorldZ,
@@ -292,27 +293,28 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return ok(undefined);
   }
 
-  getStartupDirectionCommonResources(): SimulatorResult<{
-    readonly titleBase: Texture;
-    readonly difficultyBackground: Texture;
-    readonly lineStar: Texture;
-    readonly jacketFrame: Texture;
-    readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>;
-    readonly fullLiveLabel: Texture;
-    readonly fontFamily: string;
-  }> {
+  getStartupDirectionCommonResources(): SimulatorResult<PixiStartupDirectionCommonResources> {
+    const sliced = (key: string): PixiStartupSlicedImage | undefined => {
+      const assetId = CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId;
+      const texture = this.spriteTextures.get(spriteKey(assetId, key));
+      const row = this.profile?.assets.find(asset => asset.logicalAssetId === assetId)?.atlasRows.find(row => row.exactKey === key);
+      if (texture === undefined || row?.borderLeft === undefined || row.borderRight === undefined ||
+        row.borderTop === undefined || row.borderBottom === undefined) return undefined;
+      return Object.freeze({ texture, leftWidth: row.borderLeft, rightWidth: row.borderRight,
+        topHeight: row.borderTop, bottomHeight: row.borderBottom });
+    };
     const titleBase = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.titleBaseLogicalAssetId);
-    const difficultyBackground = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "label_square_white"));
+    const difficultyBackground = sliced("label_square_white");
     const lineStar = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.lineStarLogicalAssetId);
-    const jacketFrame = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_base_jacket_frame"));
+    const jacketFrame = sliced("bg_base_jacket_frame");
     const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
     const font = this.decodedFonts.get(CURRENT_STARTUP_DIRECTION_BINDINGS.fontLogicalAssetId);
     const difficultyFrames = Object.freeze({
-      EASY: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_easy")),
-      NORMAL: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_normal")),
-      HARD: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_hard")),
-      EXPERT: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_expert")),
-      SPECIAL: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_special")),
+      EASY: sliced("bg_jacket_frame_rank_1_easy"),
+      NORMAL: sliced("bg_jacket_frame_rank_1_normal"),
+      HARD: sliced("bg_jacket_frame_rank_1_hard"),
+      EXPERT: sliced("bg_jacket_frame_rank_1_expert"),
+      SPECIAL: sliced("bg_jacket_frame_rank_1_special"),
     });
     if (titleBase === undefined || difficultyBackground === undefined || lineStar === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
       Object.values(difficultyFrames).some((texture) => texture === undefined)) {
@@ -327,7 +329,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       difficultyBackground,
       lineStar,
       jacketFrame,
-      difficultyFrames: difficultyFrames as Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>,
+      difficultyFrames: difficultyFrames as PixiStartupDirectionCommonResources["difficultyFrames"],
       fullLiveLabel,
       fontFamily: font.family,
     }));
