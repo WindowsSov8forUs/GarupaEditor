@@ -68,6 +68,7 @@ export class StartupDirectionController {
   private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
   private initialized = false;
   private disposed = false;
+  private stageOutro: { elapsed: number; from: number } | null = null;
   private readonly startupAudio: StartupAudioOwner | null;
 
   constructor(
@@ -284,7 +285,7 @@ export class StartupDirectionController {
       hudAlpha: hud,
       darkCoverAlpha: Math.fround(stageElapsed <= 0 ? 1 : 0),
       stagePhase: stageElapsed <= 0 ? "waiting" : stage < 1 ? "introducing" : "idle",
-      stageProgress: stage,
+      stageProgress: outQuad(stage),
       stageColorProgress: stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_COLOR_FADE),
       characterAlpha: character,
       linePhase: line === null ? "waiting" : line.done ? "visible" : "fading",
@@ -304,6 +305,23 @@ export class StartupDirectionController {
 
   advancePlayablePresentation(deltaTimeSeconds: number): void {
     if (this.phaseValue === "playing-sound") this.advanceParallelOwners(deltaTimeSeconds);
+  }
+
+  beginGameClearPresentation(): void {
+    if (this.mvBackground !== null || this.stageOutro !== null) return;
+    this.stageOutro = { elapsed: 0, from: this.sceneValue.stageProgress };
+    this.publish({ stagePhase: "leaving" });
+  }
+
+  advanceGameClearPresentation(deltaTimeSeconds: number): void {
+    if (this.stageOutro === null) return;
+    // StandardBackgroundModule.OnGameClear -> Stage.outroAnimation uses the
+    // shared TRS tween: current pose -> authored start, 4 seconds, OutQuad.
+    // Standard WaitForFinish does not wait for this tween before scene exit.
+    this.stageOutro.elapsed = Math.min(4, this.stageOutro.elapsed + deltaTimeSeconds);
+    this.publish({ stageProgress: Math.fround(
+      this.stageOutro.from * (1 - outQuad(this.stageOutro.elapsed / 4)),
+    ) });
   }
 
   pauseMovie(): SimulatorResult<void> {
@@ -362,6 +380,7 @@ function advance(elapsed: number, duration: number, delta: number): Readonly<{ e
   return Object.freeze({ elapsed: next, ratio: Math.fround(Math.min(1, next / duration)), done: false });
 }
 function unit(elapsed: number, duration: number): number { return Math.fround(Math.min(1, elapsed / duration)); }
+function outQuad(progress: number): number { return Math.fround(1 - (1 - progress) ** 2); }
 function rejected(capability: string, boundary: string) {
   return integrityFailure(capability, ["SD03", "SD05", "SD06", "SD07", "SD08", "SD09", "SD11", "SD12", "SD17"], boundary);
 }

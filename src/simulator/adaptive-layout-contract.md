@@ -125,6 +125,8 @@ Startup information consumes the current GameStartInfo hierarchy under `screenTo
 
 Jacket remains a strict 360×360 RGBA resource. Standard backdrop accepts positive intrinsic RGBA PNG dimensions and draws the original 1920×1440 UITexture at local Y=-170. UIRoot FitWidth and Stage's high-aspect root transform precede the TRSRoot three-second OutQuad transition from position (0,111), scale 0.7 to position (0,0), scale 0.92. A separate 0.75-second linear gray-to-white color transition starts with the stage intro; alpha is not a substitute for these transforms. Source: Reverse `705049d2890812828f36f3874fd130f0e13748de`, `simulator-entry-flash-consumption-10-1-4`. This is source-level application presentation alignment, not GPU acceptance.
 
+On natural Game Clear, StandardBackgroundModule invokes the Stage outro: the current TRS pose returns to the authored start over four seconds with OutQuad. The scene owner publishes eased transform progress during the same completion frames as HUD/particles; Pixi only applies the pose. Standard WaitForFinish does not delay exit for this tween, and MV OnGameClear is empty. Source: Reverse `3baf2930d24de0169dfd69f7f3fc967a663b8101`, `simulator-entry-flash-consumption-10-1-4/stage_clear_native.json`; current method-token bindings and IDA regions were checked against the original APK/ELF.
+
 Current InGameMovie prefab owns a 1334×750 UITexture plus `StarUIVerticalFitScreen`:
 
 - UIRoot first applies FitWidth;

@@ -188,7 +188,12 @@ export class InGameManager {
   }
 
   publishGameClearState(finished: boolean): void {
+    if (!finished) this.startupDirection?.beginGameClearPresentation();
     this.currentGameStateValue = finished ? GameState.GameClearAnimEnd : GameState.GameClearAnimStart;
+  }
+
+  advanceGameClearPresentation(deltaTimeSeconds: number): void {
+    this.startupDirection?.advanceGameClearPresentation(deltaTimeSeconds);
   }
 
   publishGameOverState(): void {

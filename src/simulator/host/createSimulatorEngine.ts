@@ -458,6 +458,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       identity: "completion-clock",
       publishOwner: () => {
         this.naturalCompletionTimeline = nextTimeline;
+        this.inGameManager.advanceGameClearPresentation(delta);
         if (isGameClearAnimationFinished(nextTimeline)) this.inGameManager.publishGameClearState(true);
         return ok(undefined);
       },
@@ -479,7 +480,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   private completionReadyToExit(): SimulatorResult<boolean> {
     if (this.naturalCompletionTimeline === null || !isGameClearAnimationFinished(this.naturalCompletionTimeline)) return ok(false);
     // Supported sessions have no full-combo character voice. MV completes after
-    // the clear animation; a Standard background has no remaining work.
+    // the clear animation; Standard WaitForFinish does not wait for its outro.
     if (this.backends.movie === undefined) return ok(true);
     const movie = mapMovieResult(this.backends.movie.observe());
     return movie.status === "ok" ? ok(movie.value.ended) : this.inGameManager.latchExternalFault(movie);

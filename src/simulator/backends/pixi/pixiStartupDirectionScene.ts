@@ -216,7 +216,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       const layout = this.surfaceLayout;
       const highAspect = layout.starUi.highAspectRatio;
       const rootScale = (1 - 0.23 * highAspect) * layout.ui.pixelsPerAuthoredUnit;
-      const eased = 1 - (1 - state.stageProgress) ** 2;
+      const eased = state.stageProgress;
       const trsScale = 0.7 + (0.92 - 0.7) * eased;
       const trsY = 111 * (1 - eased);
       this.stageBackdrop.position.set(layout.surface.viewportWidth / 2,
@@ -226,7 +226,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.stageBackdrop.height = 1440 * trsScale * rootScale;
       const brightness = 0.5 + 0.5 * state.stageColorProgress;
       this.stageBackdrop.tint = [brightness, brightness, brightness];
-      this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle";
+      this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle" ||
+        state.stagePhase === "leaving";
     }
     for (const character of this.characters) character.alpha = state.characterAlpha;
   }

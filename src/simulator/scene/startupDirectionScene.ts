@@ -1,5 +1,5 @@
 export type StartupInformationPhase = "hidden" | "revealing" | "holding" | "fading" | "complete";
-export type StartupStagePhase = "dark" | "waiting" | "introducing" | "idle";
+export type StartupStagePhase = "dark" | "waiting" | "introducing" | "idle" | "leaving";
 export type StartupLinePhase = "hidden" | "waiting" | "fading" | "visible";
 
 export interface StartupDirectionSceneState {
@@ -9,6 +9,7 @@ export interface StartupDirectionSceneState {
   readonly hudAlpha: number;
   readonly darkCoverAlpha: number;
   readonly stagePhase: StartupStagePhase;
+  /** Transform interpolation between the authored start and playing poses, after easing. */
   readonly stageProgress: number;
   readonly stageColorProgress: number;
   readonly characterAlpha: number;
