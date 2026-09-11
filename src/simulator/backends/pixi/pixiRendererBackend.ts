@@ -1557,6 +1557,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           geometryUsesWorldCoordinates: false,
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
+        orderingParents.add(parent);
         return;
       }
       case "activate-object":
@@ -1677,14 +1678,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             ? null
             : this.objects.get(command.maskObjectId)!.node;
         }
-        object.ordering = Object.freeze([
+        const ordering: PixiObjectRecord["ordering"] = [
           command.ordering.domainLayer,
           command.ordering.sourceDepthOrSortingOrder,
           command.ordering.sourceZ.value,
           command.ordering.creationSequence,
-        ]);
-        node.zIndex = orderingZIndex(object.ordering);
-        orderingParents.add(node.parent as Container);
+        ];
+        if (compareOrdering(object.ordering, ordering) !== 0) {
+          object.ordering = Object.freeze(ordering);
+          node.zIndex = orderingZIndex(ordering);
+          orderingParents.add(node.parent as Container);
+        }
         this.attachGameplayDraw(object);
         return;
       }
@@ -1707,11 +1711,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           this.spriteReferenceCounts,
           this.decodedFonts,
         );
-        applyHudOrdering(object, command);
+        if (applyHudOrdering(object, command)) orderingParents.add(object.node.parent as Container);
         for (const role of object.activeAnimationRoles) {
           applyEvidenceAnimation(object, role, object.animationElapsedByRole.get(role) ?? 0);
         }
-        orderingParents.add(object.node.parent as Container);
         return;
       }
       case "set-mesh": {
@@ -4801,7 +4804,7 @@ function rgbTint(red: number, green: number, blue: number): number {
   return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
 }
 
-function applyHudOrdering(object: PixiObjectRecord, command: SetHudCommand): void {
+function applyHudOrdering(object: PixiObjectRecord, command: SetHudCommand): boolean {
   const profile = CURRENT_ORDINARY_HUD_PROFILE;
   let sourceZ: number | null = null;
   if (command.hudRole === "add-score") sourceZ = command.state.depth;
@@ -4810,14 +4813,17 @@ function applyHudOrdering(object: PixiObjectRecord, command: SetHudCommand): voi
   else if (command.hudRole === "score" || command.hudRole === "life") {
     sourceZ = profile.sorting.frontPanelDepth * 1000;
   } else if (command.hudRole === "game-clear") sourceZ = 5000;
-  if (sourceZ === null) return;
-  object.ordering = Object.freeze([
+  if (sourceZ === null) return false;
+  const ordering: PixiObjectRecord["ordering"] = [
     profile.sorting.domainLayer,
     profile.sorting.sortingOrder,
     sourceZ,
     object.ordering[3],
-  ]);
+  ];
+  if (compareOrdering(object.ordering, ordering) === 0) return false;
+  object.ordering = Object.freeze(ordering);
   object.node.zIndex = orderingZIndex(object.ordering);
+  return true;
 }
 
 function orderingZIndex(ordering: readonly [number, number, number, number]): number {

@@ -648,7 +648,7 @@ export class DeterministicParticleSimulation {
         const profile = record.bundle.profiles[record.definition.profile]!;
         const renderer = record.bundle.rendererProfiles[profile.renderer];
         if (renderer === undefined) throw fault("particle.simulation.missing-renderer", "Every current profile renderer must resolve.");
-        if (!renderer.m_Enabled) continue;
+        if (!renderer.m_Enabled || runtime.particles.length === 0) continue;
         const material = renderer.m_Materials[0] ?? null;
         const resetRootTransform = owner.instance.kind === "note-slide" ? "slide-play" : owner.instance.kind === "game-play-button";
         const emitterTransform = positionedHierarchyTransform(record.definition.transform, owner.particleSystemSetupScale,
