@@ -247,7 +247,7 @@ function sampleAxis(group: GarupaProductTimingGroupAxis, milliseconds: number): 
   let speed = 1;
   let intercept = 0;
   for (const change of group.changes) {
-    if (milliseconds + EPSILON < change.atMilliseconds) break;
+    if (milliseconds < change.atMilliseconds) break;
     speed = change.speed;
     intercept = change.intercept;
   }
