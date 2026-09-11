@@ -15651,7 +15651,28 @@
     {
       "id": "RCB-0745",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 118,
+      "line": 21,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(\"manual.timeout-owner-value-invalid\", [\"D11\", \"MJ16\", \"MJ17\", \"MJ23\"],",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0746",
+      "file": "src/simulator/engine/data/manualJudgement.ts",
+      "line": 137,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -15670,9 +15691,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0746",
+      "id": "RCB-0747",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 138,
+      "line": 157,
       "marker": "integrity-failure-call",
       "symbol": "rate",
       "source": ": integrityFailure(",
@@ -15691,9 +15712,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0747",
+      "id": "RCB-0748",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 150,
+      "line": 169,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -15712,9 +15733,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0748",
+      "id": "RCB-0749",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 161,
+      "line": 180,
       "marker": "integrity-failure-call",
       "symbol": "seconds",
       "source": ": integrityFailure(",
@@ -15733,30 +15754,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0749",
-      "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 176,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0750",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 184,
+      "line": 195,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -15777,7 +15777,7 @@
     {
       "id": "RCB-0751",
       "file": "src/simulator/engine/data/manualJudgement.ts",
-      "line": 216,
+      "line": 203,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -15797,6 +15797,27 @@
     },
     {
       "id": "RCB-0752",
+      "file": "src/simulator/engine/data/manualJudgement.ts",
+      "line": 235,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0753",
       "file": "src/simulator/engine/data/originalLiveSettings.ts",
       "line": 123,
       "marker": "integrity-failure-call",
@@ -15817,7 +15838,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0753",
+      "id": "RCB-0754",
       "file": "src/simulator/engine/evidence.ts",
       "line": 197,
       "marker": "integrity-failure-string",
@@ -15838,7 +15859,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0754",
+      "id": "RCB-0755",
       "file": "src/simulator/engine/evidence.ts",
       "line": 226,
       "marker": "integrity-failure-call",
@@ -15859,7 +15880,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0755",
+      "id": "RCB-0756",
       "file": "src/simulator/engine/evidence.ts",
       "line": 232,
       "marker": "integrity-failure-string",
@@ -15880,7 +15901,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0756",
+      "id": "RCB-0757",
       "file": "src/simulator/engine/evidence.ts",
       "line": 246,
       "marker": "integrity-failure-call",
@@ -15901,7 +15922,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0757",
+      "id": "RCB-0758",
       "file": "src/simulator/engine/evidence.ts",
       "line": 256,
       "marker": "throw-error",
@@ -15922,7 +15943,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0758",
+      "id": "RCB-0759",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
       "line": 85,
       "marker": "rejected-call",
@@ -15943,7 +15964,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0759",
+      "id": "RCB-0760",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
       "line": 92,
       "marker": "rejected-call",
@@ -15964,7 +15985,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0760",
+      "id": "RCB-0761",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
       "line": 109,
       "marker": "rejected-call",
@@ -15985,7 +16006,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0761",
+      "id": "RCB-0762",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
       "line": 360,
       "marker": "throw-error",
@@ -16006,9 +16027,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0762",
+      "id": "RCB-0763",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 464,
+      "line": 489,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Non-finite product curve ${String(sample.curve)} for ${sample.node.identity} cannot publish render geometry.`);",
@@ -16027,9 +16048,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0763",
+      "id": "RCB-0764",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 471,
+      "line": 496,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Product Note scale is unavailable for ${sample.node.identity}.`);",
@@ -16048,9 +16069,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0764",
+      "id": "RCB-0765",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 490,
+      "line": 515,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(`${created.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);",
@@ -16069,9 +16090,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0765",
+      "id": "RCB-0766",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 497,
+      "line": 522,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -16090,9 +16111,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0766",
+      "id": "RCB-0767",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 156,
+      "line": 170,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"simulator.garupa-extension.initialize-after-dispose\", \"A disposed product timeline is terminal.\");",
@@ -16111,30 +16132,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0767",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 159,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
       "id": "RCB-0768",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 165,
+      "line": 173,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16155,7 +16155,28 @@
     {
       "id": "RCB-0769",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 183,
+      "line": 179,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-0770",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 199,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.input-in-auto\", \"Product Auto cannot consume real touches.\");",
@@ -16174,9 +16195,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0770",
+      "id": "RCB-0771",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 189,
+      "line": 205,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.invalid-manual-frame\", \"Product Manual requires one finite outer-frame delta and typed touch array.\");",
@@ -16195,9 +16216,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0771",
+      "id": "RCB-0772",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 196,
+      "line": 212,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.invalid-manual-touch\", \"Product touches require unique nonnegative finger IDs and closed phases.\");",
@@ -16216,49 +16237,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0772",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 216,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
       "id": "RCB-0773",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 223,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0774",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
       "line": 233,
       "marker": "rejected-call",
@@ -16279,9 +16258,30 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
+      "id": "RCB-0774",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 240,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
       "id": "RCB-0775",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 346,
+      "line": 250,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16302,7 +16302,7 @@
     {
       "id": "RCB-0776",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 358,
+      "line": 364,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16323,70 +16323,7 @@
     {
       "id": "RCB-0777",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 368,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-publish\", `Product reflection cannot publish from ${state}.`);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0778",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 372,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "if (index < 0) throw new Error(\"Product reflected source left its in-flight owner\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-0779",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 382,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-discard\", `Product reflection cannot discard from ${state}.`);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0780",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 395,
+      "line": 376,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16405,9 +16342,72 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
+      "id": "RCB-0778",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 386,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-publish\", `Product reflection cannot publish from ${state}.`);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-0779",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 390,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "if (index < 0) throw new Error(\"Product reflected source left its in-flight owner\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-0780",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 400,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-discard\", `Product reflection cannot discard from ${state}.`);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
       "id": "RCB-0781",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 406,
+      "line": 413,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16428,91 +16428,7 @@
     {
       "id": "RCB-0782",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 430,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-publish\", `Product batch cannot publish from ${state}.`);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0783",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 435,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Product OneFrame publication lost its staged source order\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-0784",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 442,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-discard\", `Product batch cannot discard from ${state}.`);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0785",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 488,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"simulator.garupa-extension.duplicate-finger-began\", \"One product finger cannot Begin twice before Ended.\");",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-0786",
-      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 659,
+      "line": 424,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16531,9 +16447,114 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
+      "id": "RCB-0783",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 448,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-publish\", `Product batch cannot publish from ${state}.`);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-0784",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 453,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Product OneFrame publication lost its staged source order\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-0785",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 460,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-discard\", `Product batch cannot discard from ${state}.`);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-0786",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 554,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"simulator.garupa-extension.duplicate-finger-began\", \"One product finger cannot Begin twice before Ended.\");",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
       "id": "RCB-0787",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 688,
+      "line": 814,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-0788",
+      "file": "src/simulator/engine/garupa/productTimelineManager.ts",
+      "line": 843,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.hidden-or-consumed-manual-source\", \"Product Manual requires one visible unconsumed scoring source.\");",
@@ -16552,9 +16573,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0788",
+      "id": "RCB-0789",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 898,
+      "line": 1070,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -16573,9 +16594,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0789",
+      "id": "RCB-0790",
       "file": "src/simulator/engine/garupa/slideRenderExtension.ts",
-      "line": 182,
+      "line": 185,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (result.status !== \"ok\") throw new Error(result.capability);",
@@ -16594,7 +16615,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0790",
+      "id": "RCB-0791",
       "file": "src/simulator/engine/garupa/timingGroupAxis.ts",
       "line": 331,
       "marker": "integrity-failure-call",
@@ -16615,7 +16636,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0791",
+      "id": "RCB-0792",
       "file": "src/simulator/engine/hud/scoreHighRankAnimation.ts",
       "line": 83,
       "marker": "throw-error",
@@ -16636,7 +16657,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0792",
+      "id": "RCB-0793",
       "file": "src/simulator/engine/hud/scoreHighRankAnimation.ts",
       "line": 130,
       "marker": "throw-error",
@@ -16657,7 +16678,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0793",
+      "id": "RCB-0794",
       "file": "src/simulator/engine/hud/scoreHighRankAnimation.ts",
       "line": 173,
       "marker": "throw-error",
@@ -16678,7 +16699,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0794",
+      "id": "RCB-0795",
       "file": "src/simulator/engine/hud/scoreHudOwner.ts",
       "line": 11,
       "marker": "throw-error",
@@ -16699,7 +16720,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0795",
+      "id": "RCB-0796",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
       "line": 52,
       "marker": "rejected-call",
@@ -16720,7 +16741,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0796",
+      "id": "RCB-0797",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
       "line": 61,
       "marker": "rejected-call",
@@ -16741,30 +16762,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0797",
-      "file": "src/simulator/engine/managers/frameMutationPlan.ts",
-      "line": 80,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0798",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
-      "line": 94,
+      "line": 80,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -16785,6 +16785,27 @@
     {
       "id": "RCB-0799",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
+      "line": 94,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0800",
+      "file": "src/simulator/engine/managers/frameMutationPlan.ts",
       "line": 130,
       "marker": "integrity-failure-call",
       "symbol": "if",
@@ -16804,7 +16825,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0800",
+      "id": "RCB-0801",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
       "line": 141,
       "marker": "rejected-call",
@@ -16825,7 +16846,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0801",
+      "id": "RCB-0802",
       "file": "src/simulator/engine/managers/frameMutationPlan.ts",
       "line": 144,
       "marker": "integrity-failure-call",
@@ -16846,7 +16867,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0802",
+      "id": "RCB-0803",
       "file": "src/simulator/engine/managers/inGameDirector.ts",
       "line": 58,
       "marker": "integrity-failure-call",
@@ -16867,7 +16888,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0803",
+      "id": "RCB-0804",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 112,
       "marker": "integrity-failure-call",
@@ -16888,7 +16909,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0804",
+      "id": "RCB-0805",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 144,
       "marker": "integrity-failure-string",
@@ -16909,7 +16930,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0805",
+      "id": "RCB-0806",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 150,
       "marker": "integrity-failure-string",
@@ -16930,7 +16951,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0806",
+      "id": "RCB-0807",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 161,
       "marker": "integrity-failure-string",
@@ -16951,30 +16972,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0807",
-      "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 206,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0808",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 226,
+      "line": 206,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -16995,6 +16995,27 @@
     {
       "id": "RCB-0809",
       "file": "src/simulator/engine/managers/inGameManager.ts",
+      "line": 226,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0810",
+      "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 298,
       "marker": "integrity-failure-string",
       "symbol": "if",
@@ -17014,7 +17035,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0810",
+      "id": "RCB-0811",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 308,
       "marker": "integrity-failure-string",
@@ -17035,7 +17056,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0811",
+      "id": "RCB-0812",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 316,
       "marker": "integrity-failure-string",
@@ -17056,7 +17077,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0812",
+      "id": "RCB-0813",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 330,
       "marker": "integrity-failure-string",
@@ -17077,7 +17098,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0813",
+      "id": "RCB-0814",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 348,
       "marker": "integrity-failure-string",
@@ -17098,7 +17119,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0814",
+      "id": "RCB-0815",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 359,
       "marker": "integrity-failure-string",
@@ -17119,7 +17140,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0815",
+      "id": "RCB-0816",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 429,
       "marker": "integrity-failure-call",
@@ -17140,7 +17161,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0816",
+      "id": "RCB-0817",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 438,
       "marker": "integrity-failure-string",
@@ -17161,7 +17182,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0817",
+      "id": "RCB-0818",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 444,
       "marker": "integrity-failure-string",
@@ -17182,7 +17203,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0818",
+      "id": "RCB-0819",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 488,
       "marker": "integrity-failure-call",
@@ -17203,7 +17224,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0819",
+      "id": "RCB-0820",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 502,
       "marker": "integrity-failure-call",
@@ -17224,30 +17245,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0820",
-      "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 514,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0821",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 526,
+      "line": 514,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17268,7 +17268,7 @@
     {
       "id": "RCB-0822",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 538,
+      "line": 526,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17289,6 +17289,27 @@
     {
       "id": "RCB-0823",
       "file": "src/simulator/engine/managers/inGameManager.ts",
+      "line": 538,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0824",
+      "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 545,
       "marker": "integrity-failure-string",
       "symbol": "if",
@@ -17308,7 +17329,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0824",
+      "id": "RCB-0825",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 560,
       "marker": "integrity-failure-call",
@@ -17329,7 +17350,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0825",
+      "id": "RCB-0826",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 568,
       "marker": "integrity-failure-call",
@@ -17350,7 +17371,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0826",
+      "id": "RCB-0827",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 600,
       "marker": "integrity-failure-call",
@@ -17371,7 +17392,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0827",
+      "id": "RCB-0828",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 608,
       "marker": "integrity-failure-call",
@@ -17392,7 +17413,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0828",
+      "id": "RCB-0829",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 631,
       "marker": "integrity-failure-string",
@@ -17413,7 +17434,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0829",
+      "id": "RCB-0830",
       "file": "src/simulator/engine/managers/inGameManager.ts",
       "line": 727,
       "marker": "integrity-failure-string",
@@ -17434,7 +17455,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0830",
+      "id": "RCB-0831",
       "file": "src/simulator/engine/managers/inGameMusicScoreController.ts",
       "line": 79,
       "marker": "integrity-failure-call",
@@ -17455,7 +17476,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0831",
+      "id": "RCB-0832",
       "file": "src/simulator/engine/managers/inGameMusicScoreController.ts",
       "line": 109,
       "marker": "integrity-failure-call",
@@ -17476,7 +17497,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0832",
+      "id": "RCB-0833",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 156,
       "marker": "integrity-failure-call",
@@ -17497,7 +17518,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0833",
+      "id": "RCB-0834",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 164,
       "marker": "integrity-failure-call",
@@ -17518,7 +17539,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0834",
+      "id": "RCB-0835",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 181,
       "marker": "integrity-failure-call",
@@ -17539,7 +17560,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0835",
+      "id": "RCB-0836",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 188,
       "marker": "integrity-failure-call",
@@ -17560,7 +17581,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0836",
+      "id": "RCB-0837",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 202,
       "marker": "integrity-failure-call",
@@ -17581,7 +17602,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0837",
+      "id": "RCB-0838",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 214,
       "marker": "integrity-failure-call",
@@ -17602,7 +17623,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0838",
+      "id": "RCB-0839",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 236,
       "marker": "integrity-failure-call",
@@ -17623,7 +17644,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0839",
+      "id": "RCB-0840",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 250,
       "marker": "integrity-failure-call",
@@ -17644,7 +17665,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0840",
+      "id": "RCB-0841",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 265,
       "marker": "throw-error",
@@ -17665,7 +17686,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0841",
+      "id": "RCB-0842",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 276,
       "marker": "throw-error",
@@ -17686,7 +17707,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0842",
+      "id": "RCB-0843",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 290,
       "marker": "integrity-failure-call",
@@ -17707,7 +17728,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0843",
+      "id": "RCB-0844",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 298,
       "marker": "integrity-failure-call",
@@ -17728,7 +17749,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0844",
+      "id": "RCB-0845",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 313,
       "marker": "integrity-failure-call",
@@ -17749,30 +17770,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0845",
-      "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 334,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0846",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 358,
+      "line": 334,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17793,7 +17793,7 @@
     {
       "id": "RCB-0847",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 377,
+      "line": 358,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17814,7 +17814,7 @@
     {
       "id": "RCB-0848",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 385,
+      "line": 377,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17835,7 +17835,7 @@
     {
       "id": "RCB-0849",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 399,
+      "line": 385,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17856,7 +17856,7 @@
     {
       "id": "RCB-0850",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 420,
+      "line": 399,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17877,7 +17877,7 @@
     {
       "id": "RCB-0851",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 446,
+      "line": 420,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17898,7 +17898,7 @@
     {
       "id": "RCB-0852",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 484,
+      "line": 446,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17919,6 +17919,27 @@
     {
       "id": "RCB-0853",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
+      "line": 484,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0854",
+      "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 494,
       "marker": "integrity-failure-call",
       "symbol": "setupBusinessData",
@@ -17938,7 +17959,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0854",
+      "id": "RCB-0855",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 513,
       "marker": "integrity-failure-call",
@@ -17959,7 +17980,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0855",
+      "id": "RCB-0856",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 520,
       "marker": "integrity-failure-call",
@@ -17980,7 +18001,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0856",
+      "id": "RCB-0857",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 532,
       "marker": "integrity-failure-call",
@@ -18001,7 +18022,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0857",
+      "id": "RCB-0858",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 548,
       "marker": "integrity-failure-call",
@@ -18022,7 +18043,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0858",
+      "id": "RCB-0859",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 572,
       "marker": "integrity-failure-call",
@@ -18043,7 +18064,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0859",
+      "id": "RCB-0860",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 582,
       "marker": "integrity-failure-call",
@@ -18064,7 +18085,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0860",
+      "id": "RCB-0861",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 609,
       "marker": "integrity-failure-call",
@@ -18085,7 +18106,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0861",
+      "id": "RCB-0862",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 686,
       "marker": "integrity-failure-string",
@@ -18106,7 +18127,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0862",
+      "id": "RCB-0863",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 702,
       "marker": "integrity-failure-call",
@@ -18127,7 +18148,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0863",
+      "id": "RCB-0864",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 725,
       "marker": "integrity-failure-call",
@@ -18148,7 +18169,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0864",
+      "id": "RCB-0865",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 755,
       "marker": "integrity-failure-string",
@@ -18169,7 +18190,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0865",
+      "id": "RCB-0866",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 770,
       "marker": "throw-error",
@@ -18190,7 +18211,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0866",
+      "id": "RCB-0867",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 815,
       "marker": "integrity-failure-call",
@@ -18211,7 +18232,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0867",
+      "id": "RCB-0868",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
       "line": 975,
       "marker": "integrity-failure-call",
@@ -18232,7 +18253,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0868",
+      "id": "RCB-0869",
       "file": "src/simulator/engine/managers/inGameRecord.ts",
       "line": 96,
       "marker": "throw-error",
@@ -18253,7 +18274,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0869",
+      "id": "RCB-0870",
       "file": "src/simulator/engine/managers/inGameRecord.ts",
       "line": 120,
       "marker": "throw-error",
@@ -18274,7 +18295,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0870",
+      "id": "RCB-0871",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 79,
       "marker": "integrity-failure-call",
@@ -18295,7 +18316,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0871",
+      "id": "RCB-0872",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 96,
       "marker": "integrity-failure-call",
@@ -18316,7 +18337,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0872",
+      "id": "RCB-0873",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 111,
       "marker": "integrity-failure-call",
@@ -18337,7 +18358,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0873",
+      "id": "RCB-0874",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 122,
       "marker": "integrity-failure-call",
@@ -18358,7 +18379,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0874",
+      "id": "RCB-0875",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 129,
       "marker": "integrity-failure-call",
@@ -18379,7 +18400,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0875",
+      "id": "RCB-0876",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 138,
       "marker": "integrity-failure-call",
@@ -18400,30 +18421,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0876",
-      "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 151,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0877",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 163,
+      "line": 151,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18444,7 +18444,7 @@
     {
       "id": "RCB-0878",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 193,
+      "line": 163,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18465,7 +18465,7 @@
     {
       "id": "RCB-0879",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 201,
+      "line": 193,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18486,6 +18486,27 @@
     {
       "id": "RCB-0880",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
+      "line": 201,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0881",
+      "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 318,
       "marker": "throw-error",
       "symbol": "if",
@@ -18505,7 +18526,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0881",
+      "id": "RCB-0882",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 334,
       "marker": "integrity-failure-call",
@@ -18526,7 +18547,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0882",
+      "id": "RCB-0883",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 342,
       "marker": "integrity-failure-call",
@@ -18547,7 +18568,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0883",
+      "id": "RCB-0884",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 377,
       "marker": "integrity-failure-call",
@@ -18568,7 +18589,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0884",
+      "id": "RCB-0885",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 441,
       "marker": "integrity-failure-call",
@@ -18589,7 +18610,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0885",
+      "id": "RCB-0886",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 508,
       "marker": "integrity-failure-call",
@@ -18610,7 +18631,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0886",
+      "id": "RCB-0887",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 617,
       "marker": "throw-error",
@@ -18631,7 +18652,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0887",
+      "id": "RCB-0888",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
       "line": 657,
       "marker": "integrity-failure-call",
@@ -18652,7 +18673,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0888",
+      "id": "RCB-0889",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 402,
       "marker": "integrity-failure-call",
@@ -18673,7 +18694,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0889",
+      "id": "RCB-0890",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 417,
       "marker": "integrity-failure-call",
@@ -18694,7 +18715,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0890",
+      "id": "RCB-0891",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 446,
       "marker": "integrity-failure-string",
@@ -18715,7 +18736,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0891",
+      "id": "RCB-0892",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 481,
       "marker": "integrity-failure-call",
@@ -18736,7 +18757,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0892",
+      "id": "RCB-0893",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 491,
       "marker": "integrity-failure-call",
@@ -18757,7 +18778,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0893",
+      "id": "RCB-0894",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 498,
       "marker": "integrity-failure-call",
@@ -18778,7 +18799,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0894",
+      "id": "RCB-0895",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 514,
       "marker": "integrity-failure-call",
@@ -18799,7 +18820,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0895",
+      "id": "RCB-0896",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 567,
       "marker": "integrity-failure-call",
@@ -18820,7 +18841,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0896",
+      "id": "RCB-0897",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 574,
       "marker": "integrity-failure-call",
@@ -18841,7 +18862,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0897",
+      "id": "RCB-0898",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 583,
       "marker": "integrity-failure-call",
@@ -18862,7 +18883,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0898",
+      "id": "RCB-0899",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 615,
       "marker": "integrity-failure-string",
@@ -18883,7 +18904,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0899",
+      "id": "RCB-0900",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 620,
       "marker": "integrity-failure-string",
@@ -18904,7 +18925,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0900",
+      "id": "RCB-0901",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 644,
       "marker": "integrity-failure-call",
@@ -18925,7 +18946,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0901",
+      "id": "RCB-0902",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 785,
       "marker": "integrity-failure-call",
@@ -18946,7 +18967,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0902",
+      "id": "RCB-0903",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 824,
       "marker": "integrity-failure-call",
@@ -18967,7 +18988,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0903",
+      "id": "RCB-0904",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 862,
       "marker": "integrity-failure-call",
@@ -18988,7 +19009,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0904",
+      "id": "RCB-0905",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 966,
       "marker": "integrity-failure-call",
@@ -19009,7 +19030,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0905",
+      "id": "RCB-0906",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1002,
       "marker": "integrity-failure-call",
@@ -19030,7 +19051,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0906",
+      "id": "RCB-0907",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1045,
       "marker": "integrity-failure-call",
@@ -19051,7 +19072,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0907",
+      "id": "RCB-0908",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1062,
       "marker": "integrity-failure-call",
@@ -19072,7 +19093,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0908",
+      "id": "RCB-0909",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1070,
       "marker": "integrity-failure-call",
@@ -19093,7 +19114,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0909",
+      "id": "RCB-0910",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1147,
       "marker": "integrity-failure-call",
@@ -19114,7 +19135,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0910",
+      "id": "RCB-0911",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1165,
       "marker": "integrity-failure-call",
@@ -19135,7 +19156,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0911",
+      "id": "RCB-0912",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1184,
       "marker": "integrity-failure-call",
@@ -19156,7 +19177,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0912",
+      "id": "RCB-0913",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1229,
       "marker": "integrity-failure-call",
@@ -19177,7 +19198,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0913",
+      "id": "RCB-0914",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1248,
       "marker": "integrity-failure-call",
@@ -19198,7 +19219,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0914",
+      "id": "RCB-0915",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1342,
       "marker": "integrity-failure-call",
@@ -19219,7 +19240,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0915",
+      "id": "RCB-0916",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1358,
       "marker": "integrity-failure-call",
@@ -19240,7 +19261,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0916",
+      "id": "RCB-0917",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1437,
       "marker": "integrity-failure-call",
@@ -19261,7 +19282,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0917",
+      "id": "RCB-0918",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1492,
       "marker": "integrity-failure-call",
@@ -19282,7 +19303,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0918",
+      "id": "RCB-0919",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1509,
       "marker": "integrity-failure-call",
@@ -19303,7 +19324,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0919",
+      "id": "RCB-0920",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1779,
       "marker": "integrity-failure-call",
@@ -19324,7 +19345,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0920",
+      "id": "RCB-0921",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1863,
       "marker": "integrity-failure-call",
@@ -19345,7 +19366,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0921",
+      "id": "RCB-0922",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1880,
       "marker": "integrity-failure-call",
@@ -19366,7 +19387,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0922",
+      "id": "RCB-0923",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1900,
       "marker": "integrity-failure-call",
@@ -19387,7 +19408,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0923",
+      "id": "RCB-0924",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 1983,
       "marker": "integrity-failure-call",
@@ -19408,7 +19429,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0924",
+      "id": "RCB-0925",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2001,
       "marker": "integrity-failure-call",
@@ -19429,7 +19450,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0925",
+      "id": "RCB-0926",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2024,
       "marker": "integrity-failure-call",
@@ -19450,7 +19471,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0926",
+      "id": "RCB-0927",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2030,
       "marker": "integrity-failure-call",
@@ -19471,7 +19492,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0927",
+      "id": "RCB-0928",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2094,
       "marker": "integrity-failure-call",
@@ -19492,7 +19513,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0928",
+      "id": "RCB-0929",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2108,
       "marker": "integrity-failure-call",
@@ -19513,7 +19534,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0929",
+      "id": "RCB-0930",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2113,
       "marker": "integrity-failure-call",
@@ -19534,7 +19555,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0930",
+      "id": "RCB-0931",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2118,
       "marker": "integrity-failure-call",
@@ -19555,7 +19576,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0931",
+      "id": "RCB-0932",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2123,
       "marker": "integrity-failure-call",
@@ -19576,7 +19597,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0932",
+      "id": "RCB-0933",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2132,
       "marker": "integrity-failure-call",
@@ -19597,7 +19618,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0933",
+      "id": "RCB-0934",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2138,
       "marker": "throw-error",
@@ -19618,7 +19639,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0934",
+      "id": "RCB-0935",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2221,
       "marker": "integrity-failure-call",
@@ -19639,7 +19660,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0935",
+      "id": "RCB-0936",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2237,
       "marker": "throw-error",
@@ -19660,7 +19681,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0936",
+      "id": "RCB-0937",
       "file": "src/simulator/engine/managers/noteManager.ts",
       "line": 2251,
       "marker": "integrity-failure-call",
@@ -19681,7 +19702,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0937",
+      "id": "RCB-0938",
       "file": "src/simulator/engine/managers/primaryJudgementAdjustmentOwner.ts",
       "line": 131,
       "marker": "integrity-failure-call",
@@ -19702,7 +19723,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0938",
+      "id": "RCB-0939",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 108,
       "marker": "integrity-failure-call",
@@ -19723,7 +19744,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0939",
+      "id": "RCB-0940",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 116,
       "marker": "integrity-failure-call",
@@ -19744,7 +19765,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0940",
+      "id": "RCB-0941",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 170,
       "marker": "integrity-failure-call",
@@ -19765,7 +19786,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0941",
+      "id": "RCB-0942",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 185,
       "marker": "integrity-failure-call",
@@ -19786,7 +19807,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0942",
+      "id": "RCB-0943",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 194,
       "marker": "integrity-failure-call",
@@ -19807,7 +19828,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0943",
+      "id": "RCB-0944",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 206,
       "marker": "integrity-failure-call",
@@ -19828,30 +19849,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0944",
-      "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
-      "line": 215,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0945",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
-      "line": 268,
+      "line": 215,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19872,7 +19872,7 @@
     {
       "id": "RCB-0946",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
-      "line": 285,
+      "line": 268,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19893,7 +19893,7 @@
     {
       "id": "RCB-0947",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
-      "line": 301,
+      "line": 285,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19914,6 +19914,27 @@
     {
       "id": "RCB-0948",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
+      "line": 301,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0949",
+      "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 311,
       "marker": "integrity-failure-call",
       "symbol": "record",
@@ -19933,7 +19954,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0949",
+      "id": "RCB-0950",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 331,
       "marker": "integrity-failure-call",
@@ -19954,7 +19975,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0950",
+      "id": "RCB-0951",
       "file": "src/simulator/engine/managers/scoreLifeStateManager.ts",
       "line": 400,
       "marker": "integrity-failure-call",
@@ -19975,7 +19996,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0951",
+      "id": "RCB-0952",
       "file": "src/simulator/engine/managers/singlePlayScoreGauge.ts",
       "line": 34,
       "marker": "integrity-failure-call",
@@ -19996,7 +20017,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0952",
+      "id": "RCB-0953",
       "file": "src/simulator/engine/managers/singlePlayScoreGauge.ts",
       "line": 64,
       "marker": "integrity-failure-call",
@@ -20017,7 +20038,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0953",
+      "id": "RCB-0954",
       "file": "src/simulator/engine/managers/singlePlayScoreGauge.ts",
       "line": 85,
       "marker": "integrity-failure-call",
@@ -20038,7 +20059,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0954",
+      "id": "RCB-0955",
       "file": "src/simulator/engine/managers/singlePlayScoreGauge.ts",
       "line": 115,
       "marker": "throw-error",
@@ -20059,30 +20080,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0955",
-      "file": "src/simulator/engine/managers/slideNoteManager.ts",
-      "line": 36,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-0956",
       "file": "src/simulator/engine/managers/slideNoteManager.ts",
-      "line": 51,
+      "line": 63,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -20103,7 +20103,7 @@
     {
       "id": "RCB-0957",
       "file": "src/simulator/engine/managers/slideNoteManager.ts",
-      "line": 77,
+      "line": 78,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -20124,7 +20124,28 @@
     {
       "id": "RCB-0958",
       "file": "src/simulator/engine/managers/slideNoteManager.ts",
-      "line": 150,
+      "line": 104,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-0959",
+      "file": "src/simulator/engine/managers/slideNoteManager.ts",
+      "line": 177,
       "marker": "integrity-failure-call",
       "symbol": "invalidJudgeGeometry",
       "source": "return integrityFailure(",
@@ -20143,7 +20164,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0959",
+      "id": "RCB-0960",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 93,
       "marker": "rejected-call",
@@ -20164,7 +20185,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0960",
+      "id": "RCB-0961",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 97,
       "marker": "rejected-call",
@@ -20185,7 +20206,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0961",
+      "id": "RCB-0962",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 107,
       "marker": "rejected-call",
@@ -20206,7 +20227,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0962",
+      "id": "RCB-0963",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 142,
       "marker": "rejected-call",
@@ -20227,7 +20248,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0963",
+      "id": "RCB-0964",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 187,
       "marker": "rejected-call",
@@ -20248,7 +20269,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0964",
+      "id": "RCB-0965",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 215,
       "marker": "rejected-call",
@@ -20269,7 +20290,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0965",
+      "id": "RCB-0966",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 293,
       "marker": "rejected-call",
@@ -20290,7 +20311,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0966",
+      "id": "RCB-0967",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 322,
       "marker": "integrity-failure-string",
@@ -20311,7 +20332,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0967",
+      "id": "RCB-0968",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 361,
       "marker": "rejected-call",
@@ -20332,7 +20353,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0968",
+      "id": "RCB-0969",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
       "line": 362,
       "marker": "integrity-failure-call",
@@ -20353,7 +20374,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0969",
+      "id": "RCB-0970",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 119,
       "marker": "rejected-call",
@@ -20374,7 +20395,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0970",
+      "id": "RCB-0971",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 175,
       "marker": "rejected-call",
@@ -20395,7 +20416,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0971",
+      "id": "RCB-0972",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 243,
       "marker": "rejected-call",
@@ -20416,7 +20437,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0972",
+      "id": "RCB-0973",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 252,
       "marker": "throw-error",
@@ -20437,7 +20458,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0973",
+      "id": "RCB-0974",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 257,
       "marker": "throw-error",
@@ -20458,7 +20479,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0974",
+      "id": "RCB-0975",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 339,
       "marker": "throw-error",
@@ -20479,7 +20500,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-0975",
+      "id": "RCB-0976",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 343,
       "marker": "rejected-call",
@@ -20500,7 +20521,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0976",
+      "id": "RCB-0977",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 346,
       "marker": "rejected-call",
@@ -20521,7 +20542,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0977",
+      "id": "RCB-0978",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 348,
       "marker": "rejected-call",
@@ -20542,7 +20563,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0978",
+      "id": "RCB-0979",
       "file": "src/simulator/engine/managers/tapLaneEffectOwner.ts",
       "line": 349,
       "marker": "integrity-failure-call",
@@ -20563,7 +20584,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0979",
+      "id": "RCB-0980",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 48,
       "marker": "rejected-call",
@@ -20584,7 +20605,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0980",
+      "id": "RCB-0981",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 50,
       "marker": "rejected-call",
@@ -20605,7 +20626,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0981",
+      "id": "RCB-0982",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 58,
       "marker": "rejected-call",
@@ -20626,7 +20647,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0982",
+      "id": "RCB-0983",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 69,
       "marker": "rejected-call",
@@ -20647,7 +20668,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0983",
+      "id": "RCB-0984",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 80,
       "marker": "rejected-call",
@@ -20668,7 +20689,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0984",
+      "id": "RCB-0985",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 93,
       "marker": "rejected-call",
@@ -20689,7 +20710,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0985",
+      "id": "RCB-0986",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 110,
       "marker": "rejected-call",
@@ -20710,7 +20731,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0986",
+      "id": "RCB-0987",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 125,
       "marker": "rejected-call",
@@ -20731,7 +20752,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0987",
+      "id": "RCB-0988",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 145,
       "marker": "rejected-call",
@@ -20752,7 +20773,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0988",
+      "id": "RCB-0989",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 151,
       "marker": "rejected-call",
@@ -20773,7 +20794,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0989",
+      "id": "RCB-0990",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 160,
       "marker": "rejected-call",
@@ -20794,7 +20815,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0990",
+      "id": "RCB-0991",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 166,
       "marker": "rejected-call",
@@ -20815,7 +20836,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0991",
+      "id": "RCB-0992",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 204,
       "marker": "rejected-call",
@@ -20836,7 +20857,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0992",
+      "id": "RCB-0993",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 231,
       "marker": "integrity-failure-call",
@@ -20857,7 +20878,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0993",
+      "id": "RCB-0994",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 242,
       "marker": "rejected-call",
@@ -20878,7 +20899,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0994",
+      "id": "RCB-0995",
       "file": "src/simulator/engine/movie/inGameMovieManager.ts",
       "line": 243,
       "marker": "integrity-failure-call",
@@ -20899,7 +20920,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-0995",
+      "id": "RCB-0996",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 35,
       "marker": "rejected-call",
@@ -20920,7 +20941,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0996",
+      "id": "RCB-0997",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 45,
       "marker": "rejected-call",
@@ -20941,7 +20962,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0997",
+      "id": "RCB-0998",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 62,
       "marker": "rejected-call",
@@ -20962,7 +20983,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0998",
+      "id": "RCB-0999",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 77,
       "marker": "rejected-call",
@@ -20983,7 +21004,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-0999",
+      "id": "RCB-1000",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 88,
       "marker": "rejected-call",
@@ -21004,7 +21025,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1000",
+      "id": "RCB-1001",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 142,
       "marker": "rejected-call",
@@ -21025,7 +21046,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1001",
+      "id": "RCB-1002",
       "file": "src/simulator/engine/movie/mvBackgroundModule.ts",
       "line": 143,
       "marker": "integrity-failure-call",
@@ -21046,7 +21067,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1002",
+      "id": "RCB-1003",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 144,
       "marker": "integrity-failure-call",
@@ -21067,7 +21088,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1003",
+      "id": "RCB-1004",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 173,
       "marker": "integrity-failure-string",
@@ -21088,7 +21109,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1004",
+      "id": "RCB-1005",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 242,
       "marker": "integrity-failure-call",
@@ -21109,7 +21130,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1005",
+      "id": "RCB-1006",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 264,
       "marker": "integrity-failure-call",
@@ -21130,7 +21151,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1006",
+      "id": "RCB-1007",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 279,
       "marker": "integrity-failure-call",
@@ -21151,7 +21172,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1007",
+      "id": "RCB-1008",
       "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 314,
       "marker": "integrity-failure-call",
@@ -21172,30 +21193,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1008",
-      "file": "src/simulator/engine/notes/noteBase.ts",
-      "line": 329,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1009",
       "file": "src/simulator/engine/notes/noteBase.ts",
-      "line": 340,
+      "line": 329,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21216,7 +21216,7 @@
     {
       "id": "RCB-1010",
       "file": "src/simulator/engine/notes/noteBase.ts",
-      "line": 351,
+      "line": 340,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21237,6 +21237,27 @@
     {
       "id": "RCB-1011",
       "file": "src/simulator/engine/notes/noteBase.ts",
+      "line": 351,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1012",
+      "file": "src/simulator/engine/notes/noteBase.ts",
       "line": 374,
       "marker": "integrity-failure-call",
       "symbol": "unimplementedStatePhase",
@@ -21256,30 +21277,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1012",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 68,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1013",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 80,
+      "line": 71,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21300,9 +21300,9 @@
     {
       "id": "RCB-1014",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 119,
+      "line": 83,
       "marker": "integrity-failure-call",
-      "symbol": "forcePerfect",
+      "symbol": "if",
       "source": "return integrityFailure(",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
@@ -21321,10 +21321,10 @@
     {
       "id": "RCB-1015",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 131,
+      "line": 122,
       "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "? integrityFailure(",
+      "symbol": "forcePerfect",
+      "source": "return integrityFailure(",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
       "userReachability": "typed action-or-session integrity boundary",
@@ -21342,7 +21342,7 @@
     {
       "id": "RCB-1016",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 172,
+      "line": 134,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21363,7 +21363,28 @@
     {
       "id": "RCB-1017",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 215,
+      "line": 175,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "? integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1018",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 218,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21382,9 +21403,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1018",
+      "id": "RCB-1019",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 242,
+      "line": 245,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Normal Began commit lost its owner-produced judgement plan\");",
@@ -21403,9 +21424,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1019",
+      "id": "RCB-1020",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 247,
+      "line": 250,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Normal Began commit could not deactivate the judged note\");",
@@ -21424,9 +21445,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1020",
+      "id": "RCB-1021",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 329,
+      "line": 332,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21445,9 +21466,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1021",
+      "id": "RCB-1022",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 367,
+      "line": 370,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21466,9 +21487,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1022",
+      "id": "RCB-1023",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 391,
+      "line": 394,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long Began commit lost its type4 reservation\");",
@@ -21487,9 +21508,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1023",
+      "id": "RCB-1024",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 399,
+      "line": 402,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long Began commit could not enter Stop state\");",
@@ -21508,9 +21529,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1024",
+      "id": "RCB-1025",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 445,
+      "line": 448,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21529,30 +21550,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1025",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 552,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1026",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 603,
+      "line": 555,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21573,7 +21573,7 @@
     {
       "id": "RCB-1027",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 611,
+      "line": 603,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21594,6 +21594,27 @@
     {
       "id": "RCB-1028",
       "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 611,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1029",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 655,
       "marker": "throw-error",
       "symbol": "if",
@@ -21613,7 +21634,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1029",
+      "id": "RCB-1030",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 661,
       "marker": "throw-error",
@@ -21634,7 +21655,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1030",
+      "id": "RCB-1031",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 665,
       "marker": "throw-error",
@@ -21655,7 +21676,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1031",
+      "id": "RCB-1032",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 674,
       "marker": "integrity-failure-call",
@@ -21676,7 +21697,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1032",
+      "id": "RCB-1033",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 690,
       "marker": "integrity-failure-call",
@@ -21697,7 +21718,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1033",
+      "id": "RCB-1034",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 722,
       "marker": "integrity-failure-call",
@@ -21718,7 +21739,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1034",
+      "id": "RCB-1035",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 775,
       "marker": "integrity-failure-call",
@@ -21739,7 +21760,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1035",
+      "id": "RCB-1036",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 799,
       "marker": "integrity-failure-call",
@@ -21760,7 +21781,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1036",
+      "id": "RCB-1037",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 831,
       "marker": "integrity-failure-call",
@@ -21781,7 +21802,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1037",
+      "id": "RCB-1038",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 842,
       "marker": "integrity-failure-call",
@@ -21802,7 +21823,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1038",
+      "id": "RCB-1039",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 853,
       "marker": "integrity-failure-call",
@@ -21823,7 +21844,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1039",
+      "id": "RCB-1040",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1028,
       "marker": "integrity-failure-call",
@@ -21844,7 +21865,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1040",
+      "id": "RCB-1041",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1049,
       "marker": "integrity-failure-call",
@@ -21865,7 +21886,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1041",
+      "id": "RCB-1042",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1093,
       "marker": "integrity-failure-call",
@@ -21886,7 +21907,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1042",
+      "id": "RCB-1043",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1159,
       "marker": "throw-error",
@@ -21907,7 +21928,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1043",
+      "id": "RCB-1044",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1168,
       "marker": "throw-error",
@@ -21928,7 +21949,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1044",
+      "id": "RCB-1045",
       "file": "src/simulator/engine/notes/noteTypes.ts",
       "line": 1186,
       "marker": "integrity-failure-call",
@@ -21949,30 +21970,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1045",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1247,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1046",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1281,
+      "line": 1241,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21993,112 +21993,7 @@
     {
       "id": "RCB-1047",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1341,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "? integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1048",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1454,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Slide current cursor changed after preflight\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-1049",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1459,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Slide Multiple group changed after preflight\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-1050",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1471,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Slide current node changed after preflight\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-1051",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1477,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Slide completion could not deactivate parent\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-1052",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1486,
+      "line": 1275,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22117,9 +22012,114 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-1048",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1333,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "? integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1049",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1446,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Slide current cursor changed after preflight\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-1050",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1451,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Slide Multiple group changed after preflight\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-1051",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1463,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Slide current node changed after preflight\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
+      "id": "RCB-1052",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1469,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Slide completion could not deactivate parent\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
       "id": "RCB-1053",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1501,
+      "line": 1478,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22140,28 +22140,7 @@
     {
       "id": "RCB-1054",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1534,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "? integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1055",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1591,
+      "line": 1493,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22180,9 +22159,30 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-1055",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1526,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "? integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-1056",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1608,
+      "line": 1580,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22203,7 +22203,7 @@
     {
       "id": "RCB-1057",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1658,
+      "line": 1597,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22224,28 +22224,7 @@
     {
       "id": "RCB-1058",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1736,
-      "marker": "throw-error",
-      "symbol": "if",
-      "source": "throw new Error(\"Slide invisible current changed during parent-owned timeout cleanup\");",
-      "productSemanticsId": null,
-      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
-      "userReachability": "caught internal exception boundary",
-      "currentEffect": "exception-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of exception handling and atomic cleanup"
-    },
-    {
-      "id": "RCB-1059",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1747,
+      "line": 1647,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22264,9 +22243,30 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-1059",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1724,
+      "marker": "throw-error",
+      "symbol": "if",
+      "source": "throw new Error(\"Slide invisible current changed during parent-owned timeout cleanup\");",
+      "productSemanticsId": null,
+      "trigger": "internal invariant or backend exception that cannot return a typed partial result",
+      "userReachability": "caught internal exception boundary",
+      "currentEffect": "exception-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of exception handling and atomic cleanup"
+    },
+    {
       "id": "RCB-1060",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1758,
+      "line": 1735,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22287,7 +22287,7 @@
     {
       "id": "RCB-1061",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1770,
+      "line": 1746,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22308,7 +22308,7 @@
     {
       "id": "RCB-1062",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1794,
+      "line": 1758,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22329,7 +22329,28 @@
     {
       "id": "RCB-1063",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1886,
+      "line": 1782,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1064",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 1874,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22348,9 +22369,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1064",
+      "id": "RCB-1065",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1919,
+      "line": 1907,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Began commit lost its owner-produced cached judgement\");",
@@ -22369,9 +22390,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1065",
+      "id": "RCB-1066",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1925,
+      "line": 1913,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Began commit could not enter Wait state\");",
@@ -22390,9 +22411,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1066",
+      "id": "RCB-1067",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1967,
+      "line": 1955,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22411,9 +22432,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1067",
+      "id": "RCB-1068",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1993,
+      "line": 1981,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22432,9 +22453,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1068",
+      "id": "RCB-1069",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2028,
+      "line": 2016,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Moved commit could not deactivate the judged note\");",
@@ -22453,9 +22474,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1069",
+      "id": "RCB-1070",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2101,
+      "line": 2089,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22474,9 +22495,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1070",
+      "id": "RCB-1071",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2119,
+      "line": 2107,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22495,30 +22516,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1071",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2196,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1072",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2207,
+      "line": 2184,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22539,7 +22539,28 @@
     {
       "id": "RCB-1073",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2226,
+      "line": 2195,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1074",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2214,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional Began commit lost its group owner\");",
@@ -22558,9 +22579,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1074",
+      "id": "RCB-1075",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2240,
+      "line": 2228,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22579,9 +22600,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1075",
+      "id": "RCB-1076",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2248,
+      "line": 2236,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22600,9 +22621,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1076",
+      "id": "RCB-1077",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2311,
+      "line": 2297,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional commit lost its preflight group owner\");",
@@ -22621,9 +22642,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1077",
+      "id": "RCB-1078",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2315,
+      "line": 2301,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional group use changed after preflight\");",
@@ -22642,30 +22663,9 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1078",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2338,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
       "id": "RCB-1079",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2369,
+      "line": 2324,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22686,28 +22686,7 @@
     {
       "id": "RCB-1080",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2493,
-      "marker": "integrity-failure-call",
-      "symbol": "if",
-      "source": "if (this.resolvePresentationState === null) return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1081",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2531,
+      "line": 2355,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22726,9 +22705,30 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-1081",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2479,
+      "marker": "integrity-failure-call",
+      "symbol": "if",
+      "source": "if (this.resolvePresentationState === null) return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-1082",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2565,
+      "line": 2517,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22749,7 +22749,7 @@
     {
       "id": "RCB-1083",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2587,
+      "line": 2551,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22770,7 +22770,7 @@
     {
       "id": "RCB-1084",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2608,
+      "line": 2573,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22791,7 +22791,7 @@
     {
       "id": "RCB-1085",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2625,
+      "line": 2594,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22812,7 +22812,7 @@
     {
       "id": "RCB-1086",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2635,
+      "line": 2611,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22833,7 +22833,7 @@
     {
       "id": "RCB-1087",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2642,
+      "line": 2621,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22854,7 +22854,7 @@
     {
       "id": "RCB-1088",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2660,
+      "line": 2628,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22875,7 +22875,7 @@
     {
       "id": "RCB-1089",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2683,
+      "line": 2646,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22896,7 +22896,7 @@
     {
       "id": "RCB-1090",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2699,
+      "line": 2669,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22917,7 +22917,7 @@
     {
       "id": "RCB-1091",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2712,
+      "line": 2685,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22938,7 +22938,7 @@
     {
       "id": "RCB-1092",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2733,
+      "line": 2698,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22959,7 +22959,7 @@
     {
       "id": "RCB-1093",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2755,
+      "line": 2719,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22980,7 +22980,7 @@
     {
       "id": "RCB-1094",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2790,
+      "line": 2741,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23001,91 +23001,7 @@
     {
       "id": "RCB-1095",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2845,
-      "marker": "integrity-failure-call",
-      "symbol": "module-scope",
-      "source": "return integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1096",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2853,
-      "marker": "integrity-failure-call",
-      "symbol": "module-scope",
-      "source": ": integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1097",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2873,
-      "marker": "integrity-failure-call",
-      "symbol": "validRole",
-      "source": ": integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1098",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2887,
-      "marker": "integrity-failure-call",
-      "symbol": "validateConcreteNoteOwner",
-      "source": ": integrityFailure(",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1099",
-      "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2911,
+      "line": 2776,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23104,9 +23020,93 @@
       "regression": "module integrity and atomicity regression"
     },
     {
+      "id": "RCB-1096",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2831,
+      "marker": "integrity-failure-call",
+      "symbol": "module-scope",
+      "source": "return integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1097",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2839,
+      "marker": "integrity-failure-call",
+      "symbol": "module-scope",
+      "source": ": integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1098",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2859,
+      "marker": "integrity-failure-call",
+      "symbol": "validRole",
+      "source": ": integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
+      "id": "RCB-1099",
+      "file": "src/simulator/engine/notes/noteTypes.ts",
+      "line": 2873,
+      "marker": "integrity-failure-call",
+      "symbol": "validateConcreteNoteOwner",
+      "source": ": integrityFailure(",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-1100",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 3019,
+      "line": 2979,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",

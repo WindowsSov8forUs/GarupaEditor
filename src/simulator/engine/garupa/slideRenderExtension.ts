@@ -25,6 +25,7 @@ export interface ExtensionRenderFrame {
 
 export interface ExtensionSlideState {
   readonly root: OrdinaryLongNormalChildState;
+  readonly rootJudgeY: number;
   readonly children: readonly OrdinarySlideChildState[];
   readonly rootVisible: boolean;
   readonly waits: readonly number[];
@@ -60,14 +61,16 @@ export function advanceExtensionSlide(
       if (state.status !== "ok") return state;
       states.push(state.value);
     }
-    previous = { root: states[0]!.lifecycle, children: states.slice(1), rootVisible: head.visible,
+    previous = { root: states[0]!.lifecycle, rootJudgeY: states[0]!.judgeY, children: states.slice(1), rootVisible: head.visible,
       waits: sources.map(() => 0), flashActive: false, finished: false, playableFinished: false };
   }
   if (previous.finished) return ok({ state: previous, segments: [] });
   const advancedRoot = advanceExtensionMotion(previous.root, head, frame, input, scene, axis, usesAxis);
   if (advancedRoot.status !== "ok") return advancedRoot;
   let root = advancedRoot.value;
-  if (frame.judged.has(head.identity) && previous.root.phase !== "stop") {
+  const rootJudgeY = previous.root.phase === "stop" ? previous.rootJudgeY
+    : Math.max(root.renderedTransform.position.y.value, scene.virtualPerfectLine);
+  if ((frame.judged.has(head.identity) || frame.missed.has(head.identity)) && previous.root.phase !== "stop") {
     const placed = repositionOrdinaryNoteToJudgeLine(root.motionState,
       frame.forcePerfect ? "perspective" : root.renderedTransform.localScale);
     if (placed.status !== "ok") return placed;
@@ -130,7 +133,7 @@ export function advanceExtensionSlide(
     ? (previous.flashActive || nodes.some(node => frame.judged.has(node.identity)))
     : frame.heldChains.has(head.chainIdentity!));
   if (playableFinished) children = children.map(child => ({ ...child, visible: false }));
-  return ok({ state: { root, children, rootVisible: previous.rootVisible && !hides.has(-1) && !playableFinished,
+  return ok({ state: { root, rootJudgeY, children, rootVisible: previous.rootVisible && !hides.has(-1) && !playableFinished,
     waits: waits.map(wait => wait.counter), flashActive, finished, playableFinished }, segments });
 }
 

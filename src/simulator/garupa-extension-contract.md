@@ -167,6 +167,8 @@ Deferred product input retains the adjusted music position and BPM captured when
 The following rules define additional graph/coordinate behaviour. They do not
 exempt ordinary judgement or gesture rules from the original implementation.
 
+Slide contact uses committed shared-lifecycle virtual positions and `SlideNoteManager.Judge`; held normal nodes use the same Perfect/correction gate as `NoteSlide`. Terminal gestures share the perfect-line/origin/leave-grace gate, and directional width uses the original full-distance threshold. Release resolves the current node immediately. Miss deadlines are separate from hit windows: Single uses its elapsed counter; bound standalone Flick uses its seven-frame completion; Slide uses shared midpoint/successor rules, negative-B stop wait and terminal Flick frame count. Miss clears Flash/hold audio until a new Began. These owner states participate in outer-frame rollback and are released with the generation. Source: Reverse `manual-input-runtime-contract-10-1-4` correction files and registered NoteSingle/NoteFlickBase/NoteSlide/NoteSlideAfter instruction slices. The product contact consumer matches 65 committed native spatial rows with the later native clamp rule; the shared terminal gate matches 18 native outputs. This does not close arbitration between original and extended owners or establish whole-simulator equivalence.
+
 - A chain owns one finger continuity state. Hidden nodes are geometry anchors.
   Every visible node is judged by its own type.
 - A visible authored head establishes the owner. With a Hidden head, the first

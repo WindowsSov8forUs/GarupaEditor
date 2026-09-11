@@ -24,8 +24,10 @@ import {
   JudgeTiming,
   NoteResultType,
   getManualScreenDistanceRate,
-  getSecondsWithDistance,
   judgeManualNote,
+  isManualTimeoutOver,
+  MANUAL_MISS_SECONDS,
+  directionalGestureThreshold,
   type JudgeTimingValue,
   type ManualNoteJudgement,
   type NoteResultTypeValue,
@@ -33,6 +35,7 @@ import {
 import type { ManualInputPosition } from "../data/manualInput";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 import { advanceSlideStopWait, queueSlideRenderHideBefore } from "../rendering/ordinarySlideChildLifecycle";
+import { advanceSlideGestureContact, slideHeldNodeResult, slideHeadTimeoutDue, slideAfterTimeoutDue } from "../managers/slideNoteManager";
 
 export class NoteFrontBase extends NoteBase {}
 
@@ -95,7 +98,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     this.missSecondCounterValue = Math.fround(
       this.missSecondCounterValue + Math.fround(deltaTimeSeconds),
     );
-    if (this.missSecondCounterValue <= float32FromBits(0x3e5dddde)) {
+    if (this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
       return ok(undefined);
     }
     const manualRuntime = this.manualRuntime;
@@ -563,10 +566,7 @@ export class NoteLong extends NoteFrontBase {
           if (fullRate.status !== "ok") {
             return fullRate;
           }
-          const unitRate = float32FromBits(0x3c23d70a);
-          const threshold = Math.fround(
-            Math.fround(Math.fround(group.count - 1) * unitRate) + unitRate,
-          );
+          const threshold = directionalGestureThreshold(group.count);
           movementSucceeded = fullRate.value > threshold;
         }
       }
@@ -1207,12 +1207,8 @@ export class NoteSlide extends NoteFrontBase {
       if (slideDecision.status !== "ok") {
         return slideDecision;
       }
-      const result =
-        slideDecision.value.result === NoteResultType.Great &&
-          runtime.value.getJudgementAdjustValueB() !== 0
-          ? NoteResultType.Perfect
-          : slideDecision.value.result;
-      if (slideDecision.value.correction > 1 || result !== NoteResultType.Perfect) {
+      const result = slideHeldNodeResult(slideDecision.value, runtime.value.getJudgementAdjustValueB());
+      if (result === NoteResultType.None) {
         return ok(this.noManualSlideJudgementPlan());
       }
       return this.reserveManualSlideNode(
@@ -1237,12 +1233,10 @@ export class NoteSlide extends NoteFrontBase {
     if (inside.status !== "ok") {
       return inside;
     }
-    const nextGrace = inside.value
-      ? Math.fround(8)
-      : Math.fround(this.manualAfterMoveTimeValue - runtime.value.getExecuteFrame());
-    const origin = judgement.value.result === NoteResultType.None || !judgement.value.hasReachedPerfectLine
-      ? input.currentPosition
-      : this.manualTouchOriginValue;
+    const contact = advanceSlideGestureContact(judgement.value, inside.value,
+      this.manualAfterMoveTimeValue, runtime.value.getExecuteFrame(), this.manualTouchOriginValue, input.currentPosition);
+    const nextGrace = contact.grace;
+    const origin = contact.origin;
     if (origin === null) {
       return integrityFailure(
         "manual.slide-touch-origin-unavailable",
@@ -1302,9 +1296,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     if (
       !movementSucceeded ||
-      judgement.value.result === NoteResultType.None ||
-      !judgement.value.hasReachedPerfectLine ||
-      nextGrace <= Math.fround(0)
+      !contact.ready || judgement.value.result === NoteResultType.None
     ) {
       return ok(this.noManualSlideJudgementPlan(origin, nextGrace));
     }
@@ -1559,10 +1551,7 @@ export class NoteSlide extends NoteFrontBase {
         !after.judged &&
         !after.source.isInvisible,
     );
-    const remaining = Math.fround((nextVisible?.source.absolutePos ?? 0) - adjusted);
-    const midpointOver = remaining <= 0 ||
-      Math.fround(adjusted - information.absolutePos) > remaining;
-    if (!frontOver.value && !midpointOver) {
+    if (!slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
       return ok(undefined);
     }
     const submitted = runtime.value.submitJudgement({
@@ -1680,15 +1669,14 @@ export class NoteSlide extends NoteFrontBase {
     } else {
       const over = isManualTimeoutOver(current.source.absolutePos, adjusted, runtime.value.getCurrentBpm());
       if (over.status !== "ok") return over;
-      let successorOver = !current.isTerminal && nextVisible === undefined;
+      let nextStopped = false;
       if (nextVisible !== undefined) {
         const nextPhase = runtime.value.getSlideChildPhase(nextVisible.sourceIndex);
         if (nextPhase.status !== "ok") return nextPhase;
-        const remaining = Math.fround(nextVisible.source.absolutePos - adjusted);
-        successorOver = nextPhase.value === "stop" ||
-          (remaining > 0 && Math.fround(adjusted - current.source.absolutePos) > remaining);
+        nextStopped = nextPhase.value === "stop";
       }
-      if (!over.value && !successorOver) return ok(undefined);
+      if (!slideAfterTimeoutDue(over.value, adjusted, current.source.absolutePos,
+        current.isTerminal, nextVisible?.source.absolutePos, nextStopped)) return ok(undefined);
     }
     const submitted = runtime.value.submitJudgement({
       noteInformation: current.source,
@@ -2279,9 +2267,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return horizontalRate;
     }
     const unitRate = float32FromBits(0x3c23d70a);
-    const countThreshold = Math.fround(
-      Math.fround(Math.fround(group.count - 1) * unitRate) + unitRate,
-    );
+    const countThreshold = directionalGestureThreshold(group.count);
     if (
       horizontalRate.value <= unitRate ||
       fullRate.value <= countThreshold
@@ -2895,32 +2881,6 @@ function isInt32Position(value: number): boolean {
   return Number.isInteger(value) &&
     value >= -0x80000000 &&
     value <= 0x7fffffff;
-}
-
-function isManualTimeoutOver(
-  absolutePosition: number,
-  adjustedMusicPosition: number,
-  bpm: number,
-): SimulatorResult<boolean> {
-  if (
-    !Number.isFinite(absolutePosition) ||
-    !Number.isFinite(adjustedMusicPosition) ||
-    !Number.isFinite(bpm) ||
-    bpm <= 0
-  ) {
-    return integrityFailure(
-      "manual.timeout-owner-value-invalid",
-      ["D11", "MJ16", "MJ17", "MJ23"],
-      "Manual timeout requires finite production positions and a positive finite BPM.",
-    );
-  }
-  const distance = Math.fround(
-    Math.fround(adjustedMusicPosition) - Math.fround(absolutePosition),
-  );
-  const seconds = getSecondsWithDistance(distance, bpm);
-  return seconds.status === "ok"
-    ? ok(seconds.value > float32FromBits(0x3e5dddde))
-    : seconds;
 }
 
 function manualLongAfterJudgeNoteType(

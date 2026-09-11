@@ -7,6 +7,25 @@ const MUSIC_BAR_DIVISION_COUNT = 192;
 const SECONDS_PER_MINUTE_TIMES_FOUR = Math.fround(240);
 const FRAME_SECOND = float32FromBits(0x3c888889);
 
+export const MANUAL_MISS_SECONDS = float32FromBits(0x3e5dddde);
+
+export function directionalGestureThreshold(width: number): number {
+  const unit = float32FromBits(0x3c23d70a);
+  return Math.fround(Math.fround(Math.fround(width - 1) * unit) + unit);
+}
+
+export function isManualTimeoutOver(absolutePosition: number, adjustedMusicPosition: number,
+  bpm: number): SimulatorResult<boolean> {
+  if (!Number.isFinite(absolutePosition) || !Number.isFinite(adjustedMusicPosition) ||
+      !Number.isFinite(bpm) || bpm <= 0) {
+    return integrityFailure("manual.timeout-owner-value-invalid", ["D11", "MJ16", "MJ17", "MJ23"],
+      "Manual timeout requires finite production positions and a positive finite BPM.");
+  }
+  const distance = Math.fround(Math.fround(adjustedMusicPosition) - Math.fround(absolutePosition));
+  const seconds = getSecondsWithDistance(distance, bpm);
+  return seconds.status === "ok" ? ok(seconds.value > MANUAL_MISS_SECONDS) : seconds;
+}
+
 export const NoteResultType = {
   None: -1,
   Miss: 0,

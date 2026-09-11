@@ -16,6 +16,9 @@ import {
   JudgeTiming,
   NoteResultType,
   judgeManualNote,
+  isManualTimeoutOver,
+  MANUAL_MISS_SECONDS,
+  directionalGestureThreshold,
   getManualScreenDistanceRate,
   type JudgeTimingValue,
   type ManualJudgementOwnership,
@@ -25,6 +28,8 @@ import {
 import type { NoteInformation } from "../chart/types";
 import type { OneFrameJudgementBatch } from "../data/oneFrameData";
 import type { InGameMusicScoreController } from "../managers/inGameMusicScoreController";
+import { SlideNoteManager, advanceSlideGestureContact, slideHeldNodeResult, slideHeadTimeoutDue,
+  slideAfterTimeoutDue, type SlideJudgeDecision } from "../managers/slideNoteManager";
 import type {
   InGameOneFrameJudgementController,
   OneFrameJudgementBatchTransaction,
@@ -34,6 +39,9 @@ import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/frameMutationPlan";
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaRenderInputAdapter } from "./garupaRenderInputAdapter";
+import { advanceSlideStopWait } from "../rendering/ordinarySlideChildLifecycle";
+
+interface ProductTimeoutState { readonly seconds: number; readonly frames: number; readonly stopWait: number; readonly boundFlick: boolean }
 
 interface PendingGesture {
   readonly node: GarupaProductNode;
@@ -70,10 +78,12 @@ interface ProductJudgementSubmission {
 
 interface ProductManualFrame extends ManualInputFrame {
   readonly judgementPosition: number;
+  readonly musicPosition: number;
   readonly currentBpm: number;
 }
 
 interface ProductTimelineMutableSnapshot {
+  readonly timeouts: readonly (readonly [string, ProductTimeoutState])[];
   readonly holdSounds: readonly HoldSoundEvent[];
   readonly judgedSources: readonly NoteInformation[];
   readonly missedSources: readonly NoteInformation[];
@@ -95,6 +105,8 @@ interface ProductFingerOwner {
   last: ManualInputPosition;
   chainIdentity: string | null;
   pendingGesture: PendingGesture | null;
+  gestureGrace: number;
+  flashActive: boolean;
 }
 
 export interface GarupaProductTimelineSnapshot {
@@ -109,6 +121,8 @@ export interface GarupaProductTimelineSnapshot {
 }
 
 export class GarupaProductTimelineManager {
+  private readonly slideJudge = new SlideNoteManager();
+  private readonly timeouts = new Map<string, ProductTimeoutState>();
   private readonly orderedVisibleNodes: readonly GarupaProductNode[];
   private readonly judgedSources = new Set<NoteInformation>();
   private readonly missedSources = new Set<NoteInformation>();
@@ -169,6 +183,8 @@ export class GarupaProductTimelineManager {
     }
     const render = this.render?.validate() ?? ok(undefined);
     if (render.status !== "ok") return render;
+    const slide = this.slideJudge.initialize(this.manualGeometry ?? undefined);
+    if (slide.status !== "ok") return slide;
     this.initialized = true;
     return ok(undefined);
   }
@@ -206,6 +222,7 @@ export class GarupaProductTimelineManager {
       }));
     }
     this.pendingManualFrame = Object.freeze({ touches: Object.freeze(touches),
+      musicPosition: this.music.musicPosition,
       judgementPosition: this.music.getAdjustedMusicPosition(this.judgementAdjustValueB),
       currentBpm: this.music.currentBpm });
     return ok(undefined);
@@ -252,7 +269,7 @@ export class GarupaProductTimelineManager {
         this.advanceChain(node);
       }
     } else {
-      const manual = this.processManualFrame(judgementPosition);
+      const manual = this.processManualFrame(judgementPosition, deltaTimeSeconds);
       if (manual.status !== "ok") return rollback(manual);
       judgedThisFrame.push(...manual.value);
     }
@@ -262,7 +279,8 @@ export class GarupaProductTimelineManager {
       deltaTimeSeconds,
       { currentBpm: this.music.currentBpm, launcherMusicPosition: this.music.launcherMusicPosition,
         adjustedMusicPosition: judgementPosition, adjustment: this.judgementAdjustValueB,
-        forcePerfect: this.shouldForcePerfect, heldChains: new Set(this.chainFinger.keys()),
+        forcePerfect: this.shouldForcePerfect, heldChains: new Set([...this.chainFinger]
+          .filter(([, finger]) => this.fingers.get(finger)?.flashActive === true).map(([chain]) => chain)),
         missed: new Set(this.pendingJudgements.filter(entry => entry.missed).map(entry => entry.node.identity)) },
     ) ?? ok(null);
     if (render.status !== "ok") return rollback(render);
@@ -449,6 +467,7 @@ export class GarupaProductTimelineManager {
 
   private processManualFrame(
     judgementPosition: number,
+    deltaTimeSeconds: number,
   ): SimulatorResult<readonly GarupaProductNode[]> {
     const judged: GarupaProductNode[] = [];
     const frame = this.pendingManualFrame;
@@ -460,20 +479,67 @@ export class GarupaProductTimelineManager {
     }
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
-      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source) ||
-        judgementPosition <= node.absolutePosition) continue;
-      const timing = this.judgeNode(node, judgementPosition);
-      if (timing.status !== "ok") return timing;
-      if (timing.value.result !== NoteResultType.None) continue;
-      const missed = this.submitManual(node, NoteResultType.Miss, JudgeTiming.None);
+      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
+      const expired = this.advanceTimeout(node, judgementPosition, deltaTimeSeconds);
+      if (expired.status !== "ok") return expired;
+      if (expired.value === null) continue;
+      const missed = this.submitManual(node, expired.value, JudgeTiming.None);
       if (missed.status !== "ok") return missed;
-      if (node.chainIdentity !== null) {
+      if (expired.value === NoteResultType.Perfect) judged.push(node);
+      if (node.chainIdentity !== null && expired.value === NoteResultType.Miss) {
         this.pendingHoldSounds.push({ ownerKey: `slide:${node.chainIdentity}`, action: "fade" });
+        const finger = this.chainFinger.get(node.chainIdentity);
+        const owner = finger === undefined ? undefined : this.fingers.get(finger);
+        if (owner !== undefined) owner.flashActive = false;
       }
       this.advanceChain(node);
       this.clearPendingGesture(node);
     }
     return ok(Object.freeze(judged));
+  }
+
+  private advanceTimeout(node: GarupaProductNode, position: number, delta: number): SimulatorResult<0 | 4 | null> {
+    const existing = this.timeouts.get(node.identity);
+    if (position < node.absolutePosition && existing?.boundFlick !== true) {
+      this.timeouts.delete(node.identity);
+      return ok(null);
+    }
+    let state = existing ?? { seconds: 0, frames: 0, stopWait: 0, boundFlick: false };
+    if (node.chainIdentity === null) {
+      if (state.boundFlick) {
+        state = { ...state, frames: Math.fround(state.frames + this.music.executeFrame) };
+        this.timeouts.set(node.identity, state);
+        return ok(state.frames >= 7 ? NoteResultType.Perfect : null);
+      }
+      state = { ...state, seconds: Math.fround(state.seconds + delta) };
+      this.timeouts.set(node.identity, state);
+      return ok(state.seconds > MANUAL_MISS_SECONDS ? NoteResultType.Miss : null);
+    }
+    const chain = this.chart.slideChains.find(chain => chain.identity === node.chainIdentity)!;
+    const visibleIndex = chain.visibleConnectionIdentities.indexOf(node.identity);
+    const nextId = chain.visibleConnectionIdentities[visibleIndex + 1];
+    const next = nextId === undefined ? undefined : this.chart.nodeByIdentity.get(nextId)!;
+    const head = visibleIndex === 0;
+    const phase = this.render?.getSlideNodePhase(node) ?? null;
+    if (!head && (phase !== "stop" || this.currentChainNode(node.chainIdentity) ===
+        this.chart.nodeByIdentity.get(chain.visibleConnectionIdentities[0]!))) return ok(null);
+    if (!head) {
+      const wait = advanceSlideStopWait(state.stopWait, next !== undefined, this.judgementAdjustValueB);
+      state = { ...state, stopWait: wait.counter };
+      this.timeouts.set(node.identity, state);
+      if (wait.waited) return ok(null);
+      if (next === undefined && node.type === "Flick") {
+        state = { ...state, frames: Math.fround(state.frames + this.music.executeFrame) };
+        this.timeouts.set(node.identity, state);
+        return ok(state.frames >= 7 ? NoteResultType.Miss : null);
+      }
+    }
+    const over = isManualTimeoutOver(node.absolutePosition, position, this.music.currentBpm);
+    if (over.status !== "ok") return over;
+    const due = head ? slideHeadTimeoutDue(over.value, position, node.absolutePosition, next?.absolutePosition)
+      : slideAfterTimeoutDue(over.value, position, node.absolutePosition, next === undefined, next?.absolutePosition,
+        next !== undefined && this.render?.getSlideNodePhase(next) === "stop");
+    return ok(due ? NoteResultType.Miss : null);
   }
 
   private processTouch(
@@ -487,15 +553,20 @@ export class GarupaProductTimelineManager {
       if (this.fingers.has(touch.fingerId)) {
         return rejected("simulator.garupa-extension.duplicate-finger-began", "One product finger cannot Begin twice before Ended.");
       }
-      const candidate = this.selectCandidate(touch.position, judgementPosition, null, currentBpm);
+      const candidate = this.selectCandidate(touch.position, null);
       if (candidate.status !== "ok") return candidate;
       if (candidate.value === null) return ok(undefined);
+      const contact = this.judgeContact(candidate.value, judgementPosition, currentBpm);
+      if (contact.status !== "ok") return contact;
+      if (contact.value.result === NoteResultType.None) return ok(undefined);
       const owner: ProductFingerOwner = {
         fingerId: touch.fingerId,
         began: touch.position,
         last: touch.position,
         chainIdentity: candidate.value.chainIdentity,
         pendingGesture: null,
+        gestureGrace: Math.fround(0),
+        flashActive: true,
       };
       if (owner.chainIdentity !== null) {
         const existing = this.chainFinger.get(owner.chainIdentity);
@@ -503,7 +574,7 @@ export class GarupaProductTimelineManager {
         this.chainFinger.set(owner.chainIdentity, touch.fingerId);
       }
       this.fingers.set(touch.fingerId, owner);
-      const consumed = this.consumeCandidate(owner, candidate.value, touch.position, judgementPosition, currentBpm, judged);
+      const consumed = this.consumeCandidate(owner, candidate.value, touch.position, judgementPosition, currentBpm, judged, true);
       if (consumed.status === "ok" && owner.chainIdentity !== null &&
           this.chainFinger.get(owner.chainIdentity) === owner.fingerId) {
         this.pendingHoldSounds.push({ ownerKey: `slide:${owner.chainIdentity}`, action: "start" });
@@ -515,22 +586,36 @@ export class GarupaProductTimelineManager {
     if (owner === undefined) return ok(undefined);
     owner.last = touch.position;
     if (touch.phase === ManualTouchPhase.Ended) {
+      if (owner.chainIdentity !== null) {
+        const node = this.currentChainNode(owner.chainIdentity);
+        if (node !== null) {
+          let result: Exclude<NoteResultTypeValue, -1> = NoteResultType.Miss;
+          let timing: JudgeTimingValue = JudgeTiming.None;
+          const chain = this.chart.slideChains.find(chain => chain.identity === owner.chainIdentity)!;
+          if (node.identity === chain.visibleConnectionIdentities[chain.visibleConnectionIdentities.length - 1] &&
+              (node.type === "Single" || node.type === "Skill")) {
+            const inside = this.scene!.isInsideContinuousSpan(touch.position, node.spanStart, node.width);
+            if (inside.status !== "ok") return inside;
+            if (inside.value) {
+              const contact = this.judgeContact(node, judgementPosition, currentBpm);
+              if (contact.status !== "ok") return contact;
+              if (contact.value.result !== NoteResultType.None) {
+                result = contact.value.result;
+                timing = contact.value.timing;
+              }
+            }
+          }
+          const submitted = this.submitManual(node, result, timing);
+          if (submitted.status !== "ok") return submitted;
+          if (result !== NoteResultType.Miss) judged.push(node);
+          this.advanceChain(node);
+        }
+      }
       this.releaseFinger(owner);
       return ok(undefined);
     }
     if (owner.pendingGesture !== null) {
-      const gesture = gestureSucceeded(this.manualGeometry!, owner.pendingGesture, touch.position);
-      if (gesture.status !== "ok") return gesture;
-      if (gesture.value) {
-        const pending = owner.pendingGesture;
-        const submitted = this.submitManual(pending.node, pending.result, pending.timing);
-        if (submitted.status !== "ok") return submitted;
-        judged.push(pending.node);
-        owner.pendingGesture = null;
-        this.advanceChain(pending.node);
-        if (owner.chainIdentity === null) this.releaseFinger(owner);
-      }
-      return ok(undefined);
+      return this.consumeGesture(owner, touch.position, judgementPosition, currentBpm, judged);
     }
     if (owner.chainIdentity === null) return ok(undefined);
     const candidate = this.currentChainNode(owner.chainIdentity);
@@ -539,7 +624,8 @@ export class GarupaProductTimelineManager {
       return ok(undefined);
     }
     const inside = this.scene!.isInsideContinuousSpan(touch.position, candidate.spanStart, candidate.width);
-    if (inside.status !== "ok" || !inside.value) return inside.status === "ok" ? ok(undefined) : inside;
+    if (inside.status !== "ok") return inside;
+    if (!inside.value && candidate.type !== "Flick" && candidate.type !== "Directional") return ok(undefined);
     return this.consumeCandidate(owner, candidate, touch.position, judgementPosition, currentBpm, judged);
   }
 
@@ -550,24 +636,31 @@ export class GarupaProductTimelineManager {
     judgementPosition: number,
     currentBpm: number,
     judged: GarupaProductNode[],
+    began = false,
   ): SimulatorResult<void> {
-    const timing = this.judgeNode(node, judgementPosition, currentBpm);
+    const timing = this.judgeContact(node, judgementPosition, currentBpm);
     if (timing.status !== "ok" || timing.value.result === NoteResultType.None) {
       return timing.status === "ok" ? ok(undefined) : timing;
     }
     if (node.type === "Flick" || node.type === "Directional") {
+      if (node.chainIdentity === null) this.timeouts.set(node.identity,
+        { seconds: 0, frames: 0, stopWait: 0, boundFlick: true });
       owner.pendingGesture = Object.freeze({
         node,
-        origin: position,
+        origin: began ? position : owner.began,
         result: timing.value.result as Exclude<NoteResultTypeValue, -1>,
         timing: timing.value.timing,
       });
+      return began ? ok(undefined) : this.consumeGesture(owner, position, judgementPosition, currentBpm, judged);
+    }
+    if (!began && timing.value.slide !== null &&
+        slideHeldNodeResult(timing.value.slide, this.judgementAdjustValueB) === NoteResultType.None) {
       return ok(undefined);
     }
     const submitted = this.submitManual(
       node,
-      timing.value.result as Exclude<NoteResultTypeValue, -1>,
-      timing.value.timing,
+      !began && timing.value.slide !== null ? NoteResultType.Perfect : timing.value.result,
+      !began && timing.value.slide !== null ? JudgeTiming.None : timing.value.timing,
     );
     if (submitted.status !== "ok") return submitted;
     judged.push(node);
@@ -577,6 +670,40 @@ export class GarupaProductTimelineManager {
       return ok(undefined);
     }
     return this.consumeEqualPositionChainNodes(owner, position, judgementPosition, currentBpm, judged);
+  }
+
+  private consumeGesture(owner: ProductFingerOwner, position: ManualInputPosition,
+    judgementPosition: number, currentBpm: number, judged: GarupaProductNode[]): SimulatorResult<void> {
+    let pending = owner.pendingGesture!;
+    if (owner.chainIdentity !== null) {
+      const contact = this.judgeContact(pending.node, judgementPosition, currentBpm);
+      if (contact.status !== "ok") return contact;
+      const inside = this.scene!.isInsideContinuousSpan(position, pending.node.spanStart, pending.node.width);
+      if (inside.status !== "ok") return inside;
+      const decision = contact.value.slide;
+      if (decision === null) return ok(undefined);
+      const next = advanceSlideGestureContact(decision, inside.value, owner.gestureGrace,
+        this.music.executeFrame, pending.origin, position);
+      owner.gestureGrace = next.grace;
+      owner.pendingGesture = Object.freeze({ ...pending, origin: next.origin! });
+      if (!next.ready || decision.result === NoteResultType.None) return ok(undefined);
+      pending = Object.freeze({ ...pending,
+        result: this.judgementAdjustValueB >= 1 ? NoteResultType.Perfect : decision.result,
+        timing: JudgeTiming.None,
+      });
+      owner.pendingGesture = pending;
+      if (owner.gestureGrace <= 0) return ok(undefined);
+    }
+    const gesture = gestureSucceeded(this.manualGeometry!, pending, position);
+    if (gesture.status !== "ok" || !gesture.value) return gesture.status === "ok" ? ok(undefined) : gesture;
+    const submitted = this.submitManual(pending.node, pending.result, pending.timing);
+    if (submitted.status !== "ok") return submitted;
+    judged.push(pending.node);
+    owner.pendingGesture = null;
+    owner.gestureGrace = Math.fround(0);
+    this.advanceChain(pending.node);
+    if (owner.chainIdentity === null) this.releaseFinger(owner);
+    return ok(undefined);
   }
 
   private consumeEqualPositionChainNodes(
@@ -597,7 +724,7 @@ export class GarupaProductTimelineManager {
       const inside = this.scene!.isInsideContinuousSpan(position, next.spanStart, next.width);
       if (inside.status !== "ok" || !inside.value) return inside.status === "ok" ? ok(undefined) : inside;
       if (next.type === "Flick" || next.type === "Directional") {
-        const timing = this.judgeNode(next, judgementPosition, currentBpm);
+        const timing = this.judgeContact(next, judgementPosition, currentBpm);
         if (timing.status !== "ok" || timing.value.result === NoteResultType.None) {
           return timing.status === "ok" ? ok(undefined) : timing;
         }
@@ -617,14 +744,17 @@ export class GarupaProductTimelineManager {
 
   private selectCandidate(
     position: ManualInputPosition,
-    judgementPosition: number,
     chainIdentity: string | null,
-    currentBpm: number,
   ): SimulatorResult<GarupaProductNode | null> {
-    const candidates: GarupaProductNode[] = [];
+    let ordinary: GarupaProductNode | null = null;
+    let slide: GarupaProductNode | null = null;
+    const musicPosition = this.pendingManualFrame?.musicPosition ?? this.music.musicPosition;
+    const nearest = (first: GarupaProductNode, second: GarupaProductNode) =>
+      this.slideJudge.selectNearJudgeLineSource(this.render!.getInputPositionY(first)!, this.render!.getInputPositionY(second)!);
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
       if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
+      if (this.timeouts.get(node.identity)?.boundFlick === true || this.render?.getInputPositionY(node) == null) continue;
       if (chainIdentity === null) {
         if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
         if (node.chainIdentity !== null && this.chainFinger.has(node.chainIdentity)) continue;
@@ -632,15 +762,20 @@ export class GarupaProductTimelineManager {
       const inside = this.scene!.isInsideContinuousSpan(position, node.spanStart, node.width);
       if (inside.status !== "ok") return inside;
       if (!inside.value) continue;
-      const judgement = this.judgeNode(node, judgementPosition, currentBpm);
-      if (judgement.status !== "ok") return judgement;
-      if (judgement.value.result !== NoteResultType.None) candidates.push(node);
+      if (node.chainIdentity === null) {
+        if (ordinary === null || Math.abs(Math.fround(node.absolutePosition - musicPosition)) <
+            Math.abs(Math.fround(ordinary.absolutePosition - musicPosition))) ordinary = node;
+      } else if (slide === null) slide = node;
+      else {
+        const selected = nearest(slide, node);
+        if (selected.status !== "ok") return selected;
+        if (selected.value === "second") slide = node;
+      }
     }
-    candidates.sort((left, right) =>
-      Math.abs(left.absolutePosition - judgementPosition) - Math.abs(right.absolutePosition - judgementPosition) ||
-      left.chartItemIndex - right.chartItemIndex ||
-      (left.connectionIndex ?? -1) - (right.connectionIndex ?? -1));
-    return ok(candidates[0] ?? null);
+    if (ordinary === null) return ok(slide);
+    if (slide === null) return ok(ordinary);
+    const selected = nearest(ordinary, slide);
+    return selected.status === "ok" ? ok(selected.value === "first" ? ordinary : slide) : selected;
   }
 
   private judgeNode(node: GarupaProductNode, currentPosition: number, currentBpm = this.music.currentBpm) {
@@ -650,6 +785,26 @@ export class GarupaProductTimelineManager {
       Math.fround(currentPosition),
       currentBpm,
     );
+  }
+
+  private judgeContact(node: GarupaProductNode, currentPosition: number, currentBpm: number): SimulatorResult<{
+    readonly result: NoteResultTypeValue;
+    readonly timing: JudgeTimingValue;
+    readonly slide: SlideJudgeDecision | null;
+  }> {
+    if (node.chainIdentity === null) {
+      const judged = this.judgeNode(node, currentPosition, currentBpm);
+      return judged.status === "ok" ? ok({ ...judged.value, slide: null }) : judged;
+    }
+    const position = this.render?.getSlideJudgePosition(node) ?? null;
+    if (position === null) return ok({ result: NoteResultType.None, timing: JudgeTiming.None, slide: null });
+    const judged = this.slideJudge.judge(node.scoringSource!, position);
+    return judged.status === "ok" ? ok({
+      result: judged.value.result,
+      timing: judged.value.result === NoteResultType.Perfect || judged.value.correction <= 0
+        ? JudgeTiming.None : JudgeTiming.Fast,
+      slide: judged.value,
+    }) : judged;
   }
 
   private submitAuto(node: GarupaProductNode): SimulatorResult<void> {
@@ -705,6 +860,7 @@ export class GarupaProductTimelineManager {
   }
 
   private markJudged(node: GarupaProductNode, missed: boolean): void {
+    this.timeouts.delete(node.identity);
     const source = node.scoringSource!;
     if (missed) {
       this.missedSources.add(source);
@@ -742,7 +898,10 @@ export class GarupaProductTimelineManager {
 
   private clearPendingGesture(node: GarupaProductNode): void {
     for (const owner of this.fingers.values()) {
-      if (owner.pendingGesture?.node === node) owner.pendingGesture = null;
+      if (owner.pendingGesture?.node === node) {
+        owner.pendingGesture = null;
+        if (owner.chainIdentity === null) this.releaseFinger(owner);
+      }
     }
   }
 
@@ -782,6 +941,8 @@ export class GarupaProductTimelineManager {
   }
 
   commitDispose(): void {
+    this.timeouts.clear();
+    this.slideJudge.dispose();
     this.render?.releaseInputs();
     this.pendingManualFrame = null;
     this.pendingJudgements.length = 0;
@@ -799,6 +960,7 @@ export class GarupaProductTimelineManager {
 
   private captureMutableState(): ProductTimelineMutableSnapshot {
     return Object.freeze({
+      timeouts: Object.freeze([...this.timeouts]),
       holdSounds: [...this.pendingHoldSounds],
       judgedSources: Object.freeze([...this.judgedSources]),
       missedSources: Object.freeze([...this.missedSources]),
@@ -819,6 +981,8 @@ export class GarupaProductTimelineManager {
   }
 
   private restoreMutableState(snapshot: ProductTimelineMutableSnapshot): void {
+    this.timeouts.clear();
+    for (const [identity, state] of snapshot.timeouts) this.timeouts.set(identity, state);
     this.pendingHoldSounds.splice(0, this.pendingHoldSounds.length, ...snapshot.holdSounds);
     replaceSet(this.judgedSources, snapshot.judgedSources);
     replaceSet(this.missedSources, snapshot.missedSources);
@@ -858,6 +1022,8 @@ function cloneFingerOwner(owner: ProductFingerOwner): ProductFingerOwner {
     began: Object.freeze({ ...owner.began }),
     last: Object.freeze({ ...owner.last }),
     chainIdentity: owner.chainIdentity,
+    gestureGrace: owner.gestureGrace,
+    flashActive: owner.flashActive,
     pendingGesture: owner.pendingGesture === null
       ? null
       : Object.freeze({
@@ -891,7 +1057,13 @@ function gestureSucceeded(
   const rate = getManualScreenDistanceRate(geometry, {
     beganPosition: pending.origin, currentPosition: current, horizontalOnly: directional,
   });
-  return rate.status === "ok" ? ok(rate.value > Math.fround(directional ? 0.01 : 0.04)) : rate;
+  if (rate.status !== "ok") return rate;
+  if (rate.value <= Math.fround(directional ? 0.01 : 0.04)) return ok(false);
+  if (!directional || pending.node.width <= 1) return ok(true);
+  const full = getManualScreenDistanceRate(geometry, {
+    beganPosition: pending.origin, currentPosition: current, horizontalOnly: false,
+  });
+  return full.status === "ok" ? ok(full.value > directionalGestureThreshold(pending.node.width)) : full;
 }
 
 function rejected<T>(capability: string, boundary: string): SimulatorResult<T> {

@@ -373,6 +373,31 @@ export class GarupaRenderInputAdapter {
     const state = this.slideStates.get(identity);
     return state === undefined ? null : { transform: state.root.renderedTransform, active: state.flashActive };
   }
+
+  getSlideJudgePosition(node: GarupaProductNode): number | null {
+    if (node.chainIdentity === null || node.connectionIndex === null) return null;
+    const state = this.slideStates.get(node.chainIdentity);
+    return state === undefined ? null : node.connectionIndex === 0
+      ? state.rootJudgeY : state.children[node.connectionIndex - 1]?.judgeY ?? null;
+  }
+
+  getSlideNodePhase(node: GarupaProductNode): "wait" | "move" | "stop" | null {
+    if (node.chainIdentity === null || node.connectionIndex === null) return null;
+    const state = this.slideStates.get(node.chainIdentity);
+    return state === undefined ? null : node.connectionIndex === 0
+      ? state.root.phase : state.children[node.connectionIndex - 1]?.lifecycle.phase ?? null;
+  }
+
+  getInputPositionY(node: GarupaProductNode): number | null {
+    if (node.chainIdentity === null) {
+      const state = this.singleStates.get(node.identity);
+      return state === undefined || state.phase === "wait" ? null : state.renderedTransform.position.y.value;
+    }
+    const state = this.slideStates.get(node.chainIdentity);
+    if (state === undefined || state.root.phase === "wait" || state.playableFinished) return null;
+    return node.connectionIndex === 0 ? state.root.renderedTransform.position.y.value
+      : state.children[node.connectionIndex! - 1]?.lifecycle.renderedTransform.position.y.value ?? null;
+  }
 }
 
 interface ProductAnimationBinding {

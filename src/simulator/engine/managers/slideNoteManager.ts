@@ -1,11 +1,38 @@
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { NoteInformation } from "../chart/types";
+import type { ManualInputPosition } from "../data/manualInput";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export interface SlideJudgeDecision {
   readonly result: -1 | 1 | 2 | 3 | 4;
   readonly correction: number;
   readonly hasReachedPerfectLine: boolean;
+}
+
+export function slideHeldNodeResult(decision: SlideJudgeDecision, adjustment: number): -1 | 4 {
+  const result = decision.result === 3 && adjustment !== 0 ? 4 : decision.result;
+  return decision.correction <= 1 && result === 4 ? 4 : -1;
+}
+
+export function advanceSlideGestureContact(decision: SlideJudgeDecision, inside: boolean,
+  previousGrace: number, executeFrame: number, previousOrigin: ManualInputPosition | null,
+  position: ManualInputPosition) {
+  const reached = decision.result !== -1 && decision.hasReachedPerfectLine;
+  const grace = inside ? Math.fround(8) : Math.fround(previousGrace - executeFrame);
+  return { origin: reached ? previousOrigin : position, grace, ready: reached && grace > 0 };
+}
+
+export function slideHeadTimeoutDue(over: boolean, position: number, sourcePosition: number, nextPosition: number | undefined): boolean {
+  const remaining = Math.fround((nextPosition ?? 0) - position);
+  return over || remaining <= 0 || Math.fround(position - sourcePosition) > remaining;
+}
+
+export function slideAfterTimeoutDue(over: boolean, position: number, sourcePosition: number,
+  terminal: boolean, nextPosition: number | undefined, nextStopped: boolean): boolean {
+  if (over) return true;
+  if (nextPosition === undefined) return !terminal;
+  const remaining = Math.fround(nextPosition - position);
+  return nextStopped || remaining > 0 && Math.fround(position - sourcePosition) > remaining;
 }
 
 export class SlideNoteManager {
