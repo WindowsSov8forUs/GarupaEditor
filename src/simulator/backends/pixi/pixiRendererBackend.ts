@@ -1596,7 +1596,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           const node = object.spriteContent!;
           node.texture = this.spriteTextures.get(bindingKey)!;
           node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
-          node.blendMode = asset.textureSettings!.blendMode;
+          // Long/Slide TouchingFlash uses SpriteAdditive even when its sprite
+          // shares the ordinary note atlas. Blending belongs to the renderer.
+          node.blendMode = command.exactKey!.startsWith("note_long_flash_")
+            ? "add" : asset.textureSettings!.blendMode;
           object.spritePixelsPerUnit = asset.atlasRows.find(
             (row) => row.exactKey === command.exactKey,
           )!.pixelsPerUnit;
