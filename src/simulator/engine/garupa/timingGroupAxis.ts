@@ -204,14 +204,16 @@ function positionsToMilliseconds(positionDelta: number, bpm: number): number {
 }
 
 function sampleAxis(group: GarupaProductTimingGroupAxis, milliseconds: number): number {
-  let speed = 1;
-  let intercept = 0;
-  for (const change of group.changes) {
-    if (milliseconds < change.atMilliseconds) break;
-    speed = change.speed;
-    intercept = change.intercept;
+  let low = 0;
+  let high = group.changes.length - 1;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    if (group.changes[middle]!.atMilliseconds <= milliseconds) low = middle + 1;
+    else high = middle - 1;
   }
-  return intercept + speed * milliseconds;
+  // Keep the last authored change at equal times, including group/global ties.
+  const change = group.changes[high];
+  return change === undefined ? milliseconds : change.intercept + change.speed * milliseconds;
 }
 
 function compareTimingGroup(

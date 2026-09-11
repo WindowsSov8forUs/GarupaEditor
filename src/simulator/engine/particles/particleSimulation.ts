@@ -54,6 +54,7 @@ import {
   type ParticleRandomStateU32,
 } from "./particleRandom";
 
+const float32View = new DataView(new ArrayBuffer(4));
 const TWO_PI = float32FromBits(0x40C90FDB);
 const DEG_TO_RAD = float32FromBits(0x3C8EFA35);
 const SHAPE_DIRECTION_EPSILON_SQUARED = float32FromBits(0x0da24260);
@@ -2354,13 +2355,13 @@ function colorBits(value: Color4) {
 }
 
 function float32FromBits(value: number): number {
-  const view = new DataView(new ArrayBuffer(4));
+  const view = float32View;
   view.setUint32(0, value >>> 0, true);
   return view.getFloat32(0, true);
 }
 
 function bits(value: number): string {
-  const view = new DataView(new ArrayBuffer(4));
+  const view = float32View;
   view.setFloat32(0, f32(value), true);
   return `0x${view.getUint32(0, true).toString(16).toUpperCase().padStart(8, "0")}`;
 }
