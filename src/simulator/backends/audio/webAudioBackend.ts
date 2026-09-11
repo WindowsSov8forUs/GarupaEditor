@@ -46,6 +46,7 @@ interface PendingWebAudioBatch {
 export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   readonly id = "web-audio";
   private fadingHoldSequence = 0;
+  private previousOneShotSequence = 0;
 
   private recording = new RecordingSimulatorAudioBackend();
   private readonly decodedByCue = new Map<string, AudioBuffer>();
@@ -413,7 +414,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           this.applyPauseAll(command.paused, command.delay_seconds_bits);
           break;
         case "se.play-one-shot":
-          this.replaceVoice(
+          this.startOneShot(
             `se:${command.voice_key}`,
             command.cue,
             "se",
@@ -530,7 +531,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     return voice;
   }
 
-  private replaceVoice(
+  private startOneShot(
     voiceKey: string,
     cue: string,
     category: WebAudioVoice["category"],
@@ -541,8 +542,11 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   ): void {
     const existing = this.voices.get(voiceKey);
     if (existing !== undefined) {
-      this.releaseVoice(existing);
+      // CE.SePlayer reuses its dispatch owner and retains the latest playback
+      // handle, but Play/Start does not stop an earlier one-shot's tail.
       this.voices.delete(voiceKey);
+      existing.voiceKey = `previous-one-shot:${++this.previousOneShotSequence}`;
+      this.voices.set(existing.voiceKey, existing);
     }
     this.createVoice(voiceKey, cue, category, gainValue, offsetSeconds, loopStart, loopEnd);
   }
