@@ -13236,7 +13236,7 @@
     {
       "id": "RCB-0630",
       "file": "src/simulator/backends/pixi/pixiStartupDirectionScene.ts",
-      "line": 64,
+      "line": 65,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -13257,7 +13257,7 @@
     {
       "id": "RCB-0631",
       "file": "src/simulator/backends/pixi/pixiStartupDirectionScene.ts",
-      "line": 108,
+      "line": 109,
       "marker": "integrity-failure-call",
       "symbol": "for",
       "source": "return integrityFailure(",
@@ -13278,7 +13278,7 @@
     {
       "id": "RCB-0632",
       "file": "src/simulator/backends/pixi/pixiStartupDirectionScene.ts",
-      "line": 218,
+      "line": 219,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.disposed) throw new Error(\"startup scene disposed\");",

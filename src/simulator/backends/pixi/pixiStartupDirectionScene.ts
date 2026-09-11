@@ -15,6 +15,7 @@ import type {
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiTextureDecoder } from "./pixiRendererBackend";
 import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
+import { linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
 
 export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
@@ -182,11 +183,11 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       97,
       27,
     );
-    difficultyBackground.tint = difficulty.background;
+    difficultyBackground.tint = linearTintFromSrgbColor(difficulty.background);
     this.information.addChild(difficultyBackground);
     const difficultyLabel = text(presentation.difficulty.type, common.fontFamily,
       7 + difficulty.offsetX, -79, 20, "StartupDifficulty");
-    difficultyLabel.style.stroke = { color: difficulty.outline, width: 2 };
+    difficultyLabel.style.stroke = { color: linearTintFromSrgbColor(difficulty.outline), width: 2 };
     difficultyLabel.style.letterSpacing = difficulty.spacing;
     fitText(difficultyLabel, 94);
     this.information.addChild(difficultyLabel);
@@ -316,7 +317,7 @@ function text(value: string, fontFamily: string, x: number, y: number, fontSize:
   const result = new Text({
     text: value,
     label,
-    style: { fill, fontFamily, fontSize, align: "center" },
+    style: { fill: linearTintFromSrgbColor(fill), fontFamily, fontSize, align: "center" },
   });
   result.anchor.set(0.5);
   result.position.set(x, -y);

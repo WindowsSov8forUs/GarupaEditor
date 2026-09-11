@@ -121,6 +121,8 @@ The hit shape is therefore a circle of pixel radius `0.12 * height/2`, not the r
 
 ## Startup, standard backdrop and MV
 
+Startup UILabel fill/outline and difficulty widget colors use the shared NGUI sRGB-to-linear conversion before the common linear-output pass. This includes the serialized title gray (0x505050); passing that sRGB value directly as a linear Pixi fill changes its displayed color.
+
 Startup information consumes the current GameStartInfo hierarchy under `screenToSafeChildScale`: title base, line-star, difficulty-colored jacket backing, jacket/frame, separate difficulty label, title, band, fixed-position prefixed credits and Full Live label. Missing credits hide their own authored label and do not trigger invented reflow. DifficultyLabelObject retains white outlined text, original X offset and letter spacing; its optional Frame is hidden during startup, and no extra level number is drawn.
 
 JacketFrame, JacketDifficultyBase and DifficultyLabelObject/Bg use Sliced widgets, with borders read from their selected atlas rows. Their Pixi consumers use NineSliceSprite at the authored widget size; only the center/edges stretch, while corners retain their source dimensions. FullLiveLabel remains Simple. Source: Reverse `6ec4dd5f19450dab7b4dc1f6051fc229f85225cb`, `simulator-entry-flash-consumption-10-1-4/serialized.json`, verified against the current APK. Resource identity and widget size alone do not determine this drawing branch.
