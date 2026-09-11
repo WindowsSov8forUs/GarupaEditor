@@ -48,7 +48,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private fadingHoldSequence = 0;
   private previousOneShotSequence = 0;
 
-  private recording = new RecordingSimulatorAudioBackend();
+  private recording = new RecordingSimulatorAudioBackend(false);
   private readonly decodedByCue = new Map<string, AudioBuffer>();
   private readonly loopByCue = new Map<string, { readonly startSeconds: number; readonly endSeconds: number }>();
   private readonly voices = new Map<string, WebAudioVoice>();
@@ -101,7 +101,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         return audioAccepted(Uint8Array.from(copied));
       },
     };
-    const candidate = new RecordingSimulatorAudioBackend();
+    const candidate = new RecordingSimulatorAudioBackend(false);
     const prepared = await candidate.prepare(
       sessionId,
       profile,

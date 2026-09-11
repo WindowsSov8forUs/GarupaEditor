@@ -13299,7 +13299,7 @@
     {
       "id": "RCB-0633",
       "file": "src/simulator/backends/recordingAudioBackend.ts",
-      "line": 380,
+      "line": 382,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "\"integrity-failure\",",
@@ -13320,7 +13320,7 @@
     {
       "id": "RCB-0634",
       "file": "src/simulator/backends/recordingAudioBackend.ts",
-      "line": 559,
+      "line": 561,
       "marker": "integrity-failure-string",
       "symbol": "transitionRejected",
       "source": "\"integrity-failure\",",
@@ -13488,7 +13488,7 @@
     {
       "id": "RCB-0642",
       "file": "src/simulator/backends/recordingRendererBackend.ts",
-      "line": 541,
+      "line": 543,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",
@@ -13509,7 +13509,7 @@
     {
       "id": "RCB-0643",
       "file": "src/simulator/backends/recordingRendererBackend.ts",
-      "line": 576,
+      "line": 578,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",

@@ -249,7 +249,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
     }
   }
-  private readonly recording = new RecordingSimulatorRendererBackend();
+  private readonly recording = new RecordingSimulatorRendererBackend(false);
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly objectIdsByNode = new Map<Container, string>();
   private readonly baseTextures = new Map<string, Texture>();
@@ -440,7 +440,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const frozenProfile = validateAndFreezeRenderProfile(profile);
     if (frozenProfile.status !== "ok") return frozenProfile;
     const cache = new CachingProvider(provider);
-    const validator = new RecordingSimulatorRendererBackend();
+    const validator = new RecordingSimulatorRendererBackend(false);
     const validated = await validator.prepare(
       sessionId,
       frozenProfile.value,

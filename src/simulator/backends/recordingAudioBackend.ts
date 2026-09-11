@@ -64,6 +64,8 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
   private pendingBatch: PendingAudioBatch | null = null;
   private fault: AudioBackendFault | null = null;
 
+  constructor(private readonly recordCommands = true) {}
+
   async prepare(
     sessionId: string,
     profile: AudioResourceProfileSet,
@@ -223,7 +225,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
       );
     }
     this.semantic = pending.semantic;
-    this.commands.push(...pending.commands);
+    if (this.recordCommands) this.commands.push(...pending.commands);
     this.nextSequence += pending.commands.length;
     this.pendingBatch = null;
     return audioAccepted(undefined);

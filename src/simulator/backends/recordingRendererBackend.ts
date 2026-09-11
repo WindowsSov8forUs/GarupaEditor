@@ -66,6 +66,8 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   private profile: RenderResourceProfile | null = null;
   private pendingBatch: PendingRenderBatch | null = null;
 
+  constructor(private readonly recordCommands = true) {}
+
   async prepare(
     sessionId: string,
     profile: RenderResourceProfile,
@@ -217,7 +219,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     for (const [objectId, object] of pending.objects) {
       this.objects.set(objectId, object);
     }
-    this.commands.push(...pending.commands);
+    if (this.recordCommands) this.commands.push(...pending.commands);
     this.nextSequence += pending.commands.length;
     this.pendingBatch = null;
     return ok(undefined);
