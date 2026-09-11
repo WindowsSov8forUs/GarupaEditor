@@ -16155,7 +16155,7 @@
     {
       "id": "RCB-0769",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 173,
+      "line": 175,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"simulator.garupa-extension.initialize-after-dispose\", \"A disposed product timeline is terminal.\");",
@@ -16176,7 +16176,7 @@
     {
       "id": "RCB-0770",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 176,
+      "line": 178,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16197,7 +16197,7 @@
     {
       "id": "RCB-0771",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 182,
+      "line": 184,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16218,7 +16218,7 @@
     {
       "id": "RCB-0772",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 202,
+      "line": 204,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.input-in-auto\", \"Product Auto cannot consume real touches.\");",
@@ -16239,7 +16239,7 @@
     {
       "id": "RCB-0773",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 208,
+      "line": 210,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.invalid-manual-frame\", \"Product Manual requires one finite outer-frame delta and typed touch array.\");",
@@ -16260,7 +16260,7 @@
     {
       "id": "RCB-0774",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 215,
+      "line": 217,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.invalid-manual-touch\", \"Product touches require unique nonnegative finger IDs and closed phases.\");",
@@ -16281,7 +16281,7 @@
     {
       "id": "RCB-0775",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 236,
+      "line": 238,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16302,7 +16302,7 @@
     {
       "id": "RCB-0776",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 243,
+      "line": 245,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16323,7 +16323,7 @@
     {
       "id": "RCB-0777",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 253,
+      "line": 255,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16344,7 +16344,7 @@
     {
       "id": "RCB-0778",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 374,
+      "line": 381,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16365,7 +16365,7 @@
     {
       "id": "RCB-0779",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 386,
+      "line": 393,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16386,7 +16386,7 @@
     {
       "id": "RCB-0780",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 396,
+      "line": 403,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-publish\", `Product reflection cannot publish from ${state}.`);",
@@ -16407,7 +16407,7 @@
     {
       "id": "RCB-0781",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 400,
+      "line": 407,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (index < 0) throw new Error(\"Product reflected source left its in-flight owner\");",
@@ -16428,7 +16428,7 @@
     {
       "id": "RCB-0782",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 410,
+      "line": 417,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-discard\", `Product reflection cannot discard from ${state}.`);",
@@ -16449,7 +16449,7 @@
     {
       "id": "RCB-0783",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 423,
+      "line": 430,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16470,7 +16470,7 @@
     {
       "id": "RCB-0784",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 434,
+      "line": 441,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16491,7 +16491,7 @@
     {
       "id": "RCB-0785",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 458,
+      "line": 465,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-publish\", `Product batch cannot publish from ${state}.`);",
@@ -16512,7 +16512,7 @@
     {
       "id": "RCB-0786",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 463,
+      "line": 470,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Product OneFrame publication lost its staged source order\");",
@@ -16533,7 +16533,7 @@
     {
       "id": "RCB-0787",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 470,
+      "line": 477,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-discard\", `Product batch cannot discard from ${state}.`);",
@@ -16554,7 +16554,7 @@
     {
       "id": "RCB-0788",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 564,
+      "line": 571,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.duplicate-finger-began\", \"One product finger cannot Begin twice before Ended.\");",
@@ -16575,7 +16575,7 @@
     {
       "id": "RCB-0789",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 823,
+      "line": 831,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16596,7 +16596,7 @@
     {
       "id": "RCB-0790",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 830,
+      "line": 838,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (first.y === undefined || second.y === undefined) return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16617,7 +16617,7 @@
     {
       "id": "RCB-0791",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 886,
+      "line": 894,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16638,7 +16638,7 @@
     {
       "id": "RCB-0792",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 915,
+      "line": 923,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.hidden-or-consumed-manual-source\", \"Product Manual requires one visible unconsumed scoring source.\");",
@@ -16659,7 +16659,7 @@
     {
       "id": "RCB-0793",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 1142,
+      "line": 1158,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",

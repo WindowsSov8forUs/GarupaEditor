@@ -296,7 +296,7 @@ export class GarupaRenderInputAdapter {
         binding: existing?.binding ?? null,
         animations: [...existing?.animations ?? [], { ownerObjectId: slideFlashObjectId(chain.identity),
           ...resolveProductSlideFlashBinding(rootNode, this.resources), animationRole: "note-long-flash",
-          lifetime: chain.identity, revision: state.flashActive ? 1 : null }] };
+          lifetime: chain.identity, revision: state.flashActive ? frame.flashRevisions.get(chain.identity)! : null }] };
       if (index < 0) plans.push(plan); else plans[index] = plan;
     }
     for (const [first, second, direction] of directionalEdges) {

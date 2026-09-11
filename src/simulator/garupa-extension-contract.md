@@ -11,6 +11,14 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
+- Extended Slide Flash playback has a monotonically increasing per-chain
+  revision, incremented on successful manual Began/reacquisition and on the
+  first visible auto node. Visibility is separate: an active→inactive→active
+  sequence within one outer frame must still restart the clip. Revisions are
+  captured/restored with the timeline transaction and cleared on disposal;
+  the shared render owner remains responsible for pause, stop and sample clocks.
+  Authority: Reverse `audio-runtime-contract-10-1-4/arm64/0321c46c__NoteSlide__playFlashAnimation.arm64.tsv`
+  sets active/enabled and calls Animator.Play with normalized time zero.
 - Garupa JSON deliberately ignores the original Long/Slide distinction for
   indistinguishable straight two-node holds. On the directly representable
   original path, two visible nodes with the same lane span and strictly increasing

@@ -85,6 +85,7 @@ interface ProductManualFrame extends ManualInputFrame {
 }
 
 interface ProductTimelineMutableSnapshot {
+  readonly flashRevisions: readonly (readonly [string, number])[];
   readonly timeouts: readonly (readonly [string, ProductTimeoutState])[];
   readonly holdSounds: readonly HoldSoundEvent[];
   readonly judgedSources: readonly NoteInformation[];
@@ -131,6 +132,7 @@ export class GarupaProductTimelineManager {
   private readonly queuedSources = new Set<NoteInformation>();
   private readonly fingers = new Map<number, ProductFingerOwner>();
   private readonly chainFinger = new Map<string, number>();
+  private readonly flashRevisions = new Map<string, number>();
   private readonly pendingHoldSounds: HoldSoundEvent[] = [];
 
   takeHoldSounds(): readonly HoldSoundEvent[] { return this.pendingHoldSounds.splice(0); }
@@ -269,6 +271,10 @@ export class GarupaProductTimelineManager {
         const source = node.scoringSource!;
         if (this.judgedSources.has(source) || this.missedSources.has(source)) continue;
         judgedThisFrame.push(node);
+        if (node.chainIdentity !== null && node.identity === this.chart.slideChains
+          .find(chain => chain.identity === node.chainIdentity)!.visibleConnectionIdentities[0]) {
+          this.restartFlash(node.chainIdentity);
+        }
         this.advanceChain(node);
       }
     } else {
@@ -281,6 +287,7 @@ export class GarupaProductTimelineManager {
       judgedThisFrame,
       deltaTimeSeconds,
       { currentBpm: this.music.currentBpm, launcherMusicPosition: this.music.launcherMusicPosition,
+        flashRevisions: this.flashRevisions,
         adjustedMusicPosition: judgementPosition, adjustment: this.judgementAdjustValueB,
         forcePerfect: this.shouldForcePerfect, heldChains: new Set([...this.chainFinger]
           .filter(([, finger]) => this.fingers.get(finger)?.flashActive === true).map(([chain]) => chain)),
@@ -589,6 +596,7 @@ export class GarupaProductTimelineManager {
       const consumed = this.consumeCandidate(owner, candidate.value, touch.position, judgementPosition, currentBpm, judged, true);
       if (consumed.status === "ok" && owner.chainIdentity !== null &&
           this.chainFinger.get(owner.chainIdentity) === owner.fingerId) {
+        this.restartFlash(owner.chainIdentity);
         this.pendingHoldSounds.push({ ownerKey: `slide:${owner.chainIdentity}`, action: "start" });
       }
       return consumed;
@@ -977,6 +985,10 @@ export class GarupaProductTimelineManager {
     }
   }
 
+  private restartFlash(chainIdentity: string): void {
+    this.flashRevisions.set(chainIdentity, (this.flashRevisions.get(chainIdentity) ?? 0) + 1);
+  }
+
   private releaseFinger(owner: ProductFingerOwner): void {
     this.fingers.delete(owner.fingerId);
     if (owner.chainIdentity !== null && this.chainFinger.get(owner.chainIdentity) === owner.fingerId) {
@@ -1026,12 +1038,14 @@ export class GarupaProductTimelineManager {
     this.queuedSources.clear();
     this.fingers.clear();
     this.chainFinger.clear();
+    this.flashRevisions.clear();
     this.initialized = false;
     this.disposed = true;
   }
 
   private captureMutableState(): ProductTimelineMutableSnapshot {
     return Object.freeze({
+      flashRevisions: Object.freeze([...this.flashRevisions]),
       timeouts: Object.freeze([...this.timeouts]),
       holdSounds: [...this.pendingHoldSounds],
       judgedSources: Object.freeze([...this.judgedSources]),
@@ -1053,6 +1067,8 @@ export class GarupaProductTimelineManager {
   }
 
   private restoreMutableState(snapshot: ProductTimelineMutableSnapshot): void {
+    this.flashRevisions.clear();
+    for (const [identity, revision] of snapshot.flashRevisions) this.flashRevisions.set(identity, revision);
     this.timeouts.clear();
     for (const [identity, state] of snapshot.timeouts) this.timeouts.set(identity, state);
     this.pendingHoldSounds.splice(0, this.pendingHoldSounds.length, ...snapshot.holdSounds);

@@ -21,6 +21,7 @@ export interface ExtensionRenderFrame {
   readonly judged: ReadonlySet<string>;
   readonly missed: ReadonlySet<string>;
   readonly heldChains: ReadonlySet<string>;
+  readonly flashRevisions: ReadonlyMap<string, number>;
 }
 
 export interface ExtensionSlideState {
