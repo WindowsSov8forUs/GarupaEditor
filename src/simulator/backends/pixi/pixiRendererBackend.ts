@@ -72,6 +72,7 @@ import {
   CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS,
 } from "../resources/currentFiveVisualCorrectionProfile";
 import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
+import { pixiFlashBlendMode } from "./pixiFlashBlend";
 import {
   linearTintFromSrgbColor,
   linearTintFromSrgbChannels,
@@ -1605,7 +1606,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           // Long/Slide TouchingFlash uses SpriteAdditive even when its sprite
           // shares the ordinary note atlas. Blending belongs to the renderer.
           node.blendMode = command.exactKey!.startsWith("note_long_flash_")
-            ? "add" : asset.textureSettings!.blendMode;
+            ? pixiFlashBlendMode(asset.textureSettings!.premultiplyAlpha) : asset.textureSettings!.blendMode;
           object.spritePixelsPerUnit = asset.atlasRows.find(
             (row) => row.exactKey === command.exactKey,
           )!.pixelsPerUnit;

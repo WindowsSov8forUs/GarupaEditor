@@ -138,6 +138,20 @@ The transactional render owner now carries the phase, phase time, accumulated X 
 
 Source-branch review and direct execution at zero, 0.1, 0.2 and exact Float32 0.14-second deltas agree on phase resets, increments, raw alpha and completion. At 0.1-second cadence the active resumes produce X offsets 8,16,17,18,19,20 before completion, rather than selecting later phases from global elapsed time. TypeScript compilation verifies the command handoff. This closes the AddScore phase rule; it is not a device cadence or raster equivalence claim.
 
+## Flash additive destination alpha
+
+Long/Slide Flash uses the source `Mobile/Particles/Additive` pass: both RGB and
+alpha blend with SrcAlpha/One. Pixi's stock additive alpha factors are One/One,
+so `pixiFlashBlend` supplies two Flash-only WebGL batch modes. Straight textures
+use RGB SrcAlpha/One; premultiplied textures use RGB One/One; both use alpha
+SrcAlpha/One. The result is `Ad + As²`, without an extra brightness multiplier.
+The adapter is installed on the owning browser surface and released on disposal;
+stock blend modes, unrelated renderers and the Flash animation clip are unchanged.
+Authority: Reverse `simulator-renderer-sort-consumption-10-1-4/serialized_sort_ordinary.json`,
+Shader `Resources/unity_builtin_extra:10720`, object SHA256
+`3526642731510FA05F4E80F1EEBC625ECCE50B3B59EA5EC6DCDD844F0766A75E`.
+This is source-level blend-state alignment, not GPU or transparent-output acceptance.
+
 ## HUD-CLOCKS — independent animation and visibility clocks
 
 The source-bound `simulator-score-ngui-native-domain-10-1-4/high_rank_presentation_rules.json` (Reverse `b8565a070366612e8fb616b1c3e95051cd8defd1`) supplements the original domain contract with authored TweenAlpha keys and native update branches. The high-rank transform clip loops every 3 seconds; BigStar alpha has 0.8-second legs and Flash 1-second legs. `scoreHighRankAnimation` evaluates the unweighted Hermite curve, clamps its output, then interpolates alpha. Flash is quadratic, not linear: factor 0.5 gives approximately 0.075 for SS and 0.125 for SSS. The previous elapsed-time modulo and linear 0/3/6-second examples are superseded. Each enabled tween retains its own factor and direction, including the source reflection rule after a long frame; switching clips preserves Flash phase and activates BigStars independently. Pixi samples the playing clip until the explicit Play command selects its replacement, so an intervening HUD update cannot reset or mismatch the animation clock. Current single-player scoring reaches SS; direct SSS consumer validation does not add a new scoring mode.

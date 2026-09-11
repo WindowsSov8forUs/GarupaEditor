@@ -1,4 +1,5 @@
 import { Application, type Container } from "pixi.js";
+import { installPixiFlashBlend } from "../../simulator/backends/pixi/pixiFlashBlend";
 import {
   installPixiLinearOutput,
   type PixiLinearOutputOwner,
@@ -70,6 +71,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
   private mountOwner: Container | null = null;
   private linearOutputOwner: PixiLinearOutputOwner | null = null;
   private readonly resizeObserver: ResizeObserver | null;
+  private readonly releaseFlashBlend: () => void;
 
   private constructor(
     private readonly app: Application,
@@ -77,6 +79,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     private readonly host: HTMLElement,
     private readonly safeAreaPolicy: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"],
   ) {
+    this.releaseFlashBlend = installPixiFlashBlend(app.renderer);
     const width = canvas.width, height = canvas.height;
     const safeArea = safeAreaPolicy === "full-surface"
       ? { x: 0, y: 0, width, height }
@@ -188,6 +191,7 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
     this.mountOwner = null;
     this.linearOutputOwner?.dispose();
     this.linearOutputOwner = null;
+    this.releaseFlashBlend();
     this.app.destroy({ removeView: true }, { children: false, texture: false, textureSource: false });
   }
 }
