@@ -11,6 +11,25 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
+- Garupa JSON deliberately ignores the original Long/Slide distinction for
+  indistinguishable straight two-node holds. On the directly representable
+  original path, two visible nodes with the same lane span and strictly increasing
+  quantized positions become one Long root with a parent-owned tail. The head is
+  Single/Skill; the tail is Single/Skill/Flick or a single-lane Directional.
+  Integer lane spans of width 1–7 include even widths. Hidden/interior nodes,
+  changed spans and multi-lane directional gestures retain their Slide graph.
+  No JSON field is added. The original 786 Special straight Slides at beats
+  108–110 (lane 4) and 110–112 (lane 2) are **刻意为之的忽略**: normalization is
+  intentional and is not a claim of lossless original type recovery.
+  Named groups and neutral SV preserve this mapping; non-neutral SV/continuous
+  coordinates still use the existing extension owner and are not covered by
+  this Long-path alignment. Construction consumes the existing Long graph
+  (`afterNoteAbsolutePos`, tail rhythm flag and additional type), so scoring,
+  manual/auto judgement, audio, particles and sprite selection use the Long
+  consumers. Mixed SyncLines read the parent-owned tail transform separately.
+  Sources: Reverse `score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/`
+  original chart bytes, `simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/`,
+  and `audio-runtime-contract-10-1-4` NoteLong Activate/ExecTouchBegan/ForcePerfect.
 - Public request Schema 13 supplies only canonical `GarupaChartJson`, BGM bytes
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.

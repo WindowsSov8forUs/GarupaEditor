@@ -137,7 +137,8 @@ function constructOriginalCompatibleGarupaChart(
       continue;
     }
     if (item.type === "Slide") {
-      const slide = createSlide(item, sourceOrder, slideOrdinal, nextIndex);
+      const long = isLongShape(item);
+      const slide = long ? createLong(item, nextIndex) : createSlide(item, sourceOrder, slideOrdinal, nextIndex);
       if (slide.status !== "ok") return slide;
       records.push(Object.freeze({
         absolutePos: slide.value.root.absolutePos,
@@ -155,7 +156,7 @@ function constructOriginalCompatibleGarupaChart(
         }));
       }
       nextIndex = slide.value.nextIndex;
-      slideOrdinal += 1;
+      if (!long) slideOrdinal += 1;
       isMultiRangeNotes ||= slide.value.isMultiRange;
       continue;
     }
@@ -222,7 +223,7 @@ function constructOriginalCompatibleGarupaChart(
   for (const node of extensions.authoredNodes) {
     const root = roots.get(node.chartItemIndex);
     if (root === undefined) continue;
-    const source = node.connectionIndex === null || node.connectionIndex === 0
+    const source = node.connectionIndex === null || node.connectionIndex === 0 || root.fireNoteType === FrontNoteType.Long
       ? root : root.slideNoteList[node.connectionIndex - 1];
     if (source !== undefined) originalSources.set(node.identity, source);
   }
@@ -325,7 +326,8 @@ function buildGarupaProductChartProfile(
     const group = productTimingGroup(item.timingGroup);
     const compatible = item.type === "Slide"
       ? isOriginalCompatibleSlide(item) && item.connections.every((node) =>
-          isOriginalCompatibleLane(node) && !needsAxisExtension(
+          (isLongShape(item) ? Number.isInteger(node.lane) && node.lane >= 0 && node.lane + node.width <= LANE_COUNT
+            : isOriginalCompatibleLane(node)) && !needsAxisExtension(
             node.timingGroup === undefined ? group : productTimingGroup(node.timingGroup)))
       : isOriginalCompatibleLane(item) && !needsAxisExtension(group);
     if (compatible) originalItemIndices.add(index);
@@ -445,6 +447,46 @@ export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<numb
   return absolutePos <= MAX_POSITION
     ? ok(absolutePos)
     : invalidPosition("Garupa JSON beat floors outside the evidenced signed Int32 target position domain.");
+}
+
+/** Garupa intentionally normalizes the indistinguishable straight Slide case.
+ * Hidden/interior nodes and multi-lane directional gestures retain their Slide graph. */
+function isLongShape(slide: GarupaChartJsonSlideItem): boolean {
+  if (slide.connections.length !== 2) return false;
+  const head = slide.connections[0]!, tail = slide.connections[1]!;
+  return (head.type === "Single" || head.type === "Skill") &&
+    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick" ||
+      tail.type === "Directional" && tail.width === 1) &&
+    head.lane === tail.lane && head.width === tail.width &&
+    Math.floor(tail.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT) >
+      Math.floor(head.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT);
+}
+
+function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number) {
+  const head = slide.connections[0]! as GarupaChartJsonSimpleNote;
+  const tail = slide.connections[1]!;
+  const span = rhythmSpan(head);
+  if (span.status !== "ok") return span;
+  const start = positionFields(head.beat);
+  if (start.status !== "ok") return start;
+  const end = positionFields(tail.beat);
+  if (end.status !== "ok") return end;
+  const root = createBaseNote({
+    index: firstIndex, position: start.value, span: span.value,
+    kinds: { game: GameNoteType.Long, front: FrontNoteType.Long,
+      after: tail.type === "Flick" ? AfterNoteType.Flick : tail.type === "Directional"
+        ? tail.direction === "Left" ? AfterNoteType.DirectionalFlickLeft : AfterNoteType.DirectionalFlickRight
+        : AfterNoteType.Normal },
+    additional: head.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
+    terminalAdditional: tail.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
+    afterNoteAbsolutePos: end.value.absolutePos,
+    afterNoteShortRhythmUnder8beat: end.value.shortRhythmUnder8beat,
+    ccNum: ccForButton(span.value.primary) + 40,
+  });
+  const longChannels = span.value.ccNums.map(cc => cc + 40);
+  registerMultiRangeSourceIdentity(root, { ccNums: longChannels, afterCcNums: longChannels });
+  return ok({ root, additionalRoots: [] as readonly NoteInformation[], nextIndex: firstIndex + 1,
+    isMultiRange: span.value.buttons.length > 1 });
 }
 
 function createSlide(
@@ -591,6 +633,7 @@ function createBaseNote(input: {
   readonly bpmString?: string;
   readonly ccNum?: number;
   readonly afterNoteAbsolutePos?: number;
+  readonly afterNoteShortRhythmUnder8beat?: boolean;
 }): NoteInformation {
   const note: NoteInformation = {
     index: input.index,
@@ -613,7 +656,7 @@ function createBaseNote(input: {
     absolutePos: input.position.absolutePos,
     afterNoteAbsolutePos: input.afterNoteAbsolutePos ?? -1,
     shortRhythmUnder8beat: input.position.shortRhythmUnder8beat,
-    afterNoteShortRhythmUnder8beat: false,
+    afterNoteShortRhythmUnder8beat: input.afterNoteShortRhythmUnder8beat ?? false,
     bpm: input.bpm ?? 0,
     bpmString: input.bpmString ?? "",
     storedAbsolutePos: input.position.absolutePos,

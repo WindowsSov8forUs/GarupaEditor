@@ -2,6 +2,7 @@ import type { SimulatorBackends } from "../backends/contracts";
 import {
   ButtonType,
   FrontNoteType,
+  GameNoteType,
   type ChartConstructionResult,
   type NoteInformation,
 } from "../engine/chart/types";
@@ -1139,12 +1140,14 @@ export function createSimulatorEngine(
           (identity) => {
             const source = productProfile.originalSources.get(identity);
             if (source === undefined) return ok(null);
-            const presentation = noteManager.getCommittedNotePresentation(source);
+            const node = productProfile.nodeByIdentity.get(identity)!;
+            const longAfter = source.fireNoteType === FrontNoteType.Long && node.connectionIndex === 1;
+            const presentation = noteManager.getCommittedNotePresentation(source, longAfter);
             if (presentation === null) return ok(null);
             if (presentation.lossyScaleX.status !== "ok") return presentation.lossyScaleX;
             return ok({ visible: presentation.visible, target: {
               position: presentation.position, localScaleX: presentation.localScaleX,
-              lossyScaleX: presentation.lossyScaleX.value, gameNoteType: source.gameNoteType,
+              lossyScaleX: presentation.lossyScaleX.value, gameNoteType: longAfter ? GameNoteType.None : source.gameNoteType,
             } });
           },
         );
@@ -1205,11 +1208,16 @@ export function createSimulatorEngine(
   }
   const inputManager = new InputManager(inGameCalculatedData.mode);
   if (productProfile?.hasExtensions) {
-    const originalNodes = new Map([...productProfile.originalSources].map(([identity, source]) =>
+    const originalNodes = new Map([...productProfile.originalSources].filter(([identity, source]) =>
+      source.fireNoteType !== FrontNoteType.Long || productProfile.nodeByIdentity.get(identity)!.connectionIndex !== 1).map(([identity, source]) =>
+      [source, productProfile.nodeByIdentity.get(identity)!] as const));
+    const longTails = new Map([...productProfile.originalSources].filter(([identity, source]) =>
+      source.fireNoteType === FrontNoteType.Long && productProfile.nodeByIdentity.get(identity)!.connectionIndex === 1).map(([identity, source]) =>
       [source, productProfile.nodeByIdentity.get(identity)!] as const));
     const extensionPositions = new Set(productProfile.visibleNodes.map(node => node.absolutePosition));
-    noteManager.setExtensionSyncConnection((first, second) => {
-      const a = originalNodes.get(first), b = originalNodes.get(second);
+    noteManager.setExtensionSyncConnection((first, second, afterA, afterB) => {
+      const a = afterA && first.fireNoteType === FrontNoteType.Long ? longTails.get(first) : originalNodes.get(first);
+      const b = afterB && second.fireNoteType === FrontNoteType.Long ? longTails.get(second) : originalNodes.get(second);
       return a === undefined || b === undefined || a.absolutePosition !== b.absolutePosition ||
         !extensionPositions.has(a.absolutePosition);
     });

@@ -232,20 +232,21 @@ export class NoteManager {
     lineFor: (note, after) => this.syncLineForEndpoint(note, after),
     connect: (a, afterA, b, afterB, existing) => this.connectSyncEndpoints(a, afterA, b, afterB, existing),
   });
-  private extensionSyncConnection: (first: NoteInformation, second: NoteInformation) => boolean = () => true;
+  private extensionSyncConnection: (first: NoteInformation, second: NoteInformation, afterA: boolean, afterB: boolean) => boolean = () => true;
 
-  setExtensionSyncConnection(filter: (first: NoteInformation, second: NoteInformation) => boolean): void {
+  setExtensionSyncConnection(filter: typeof this.extensionSyncConnection): void {
     this.extensionSyncConnection = filter;
   }
 
-  getCommittedNotePresentation(source: NoteInformation) {
+  getCommittedNotePresentation(source: NoteInformation, longAfter = false) {
     for (const note of this.activeNotesValue) {
       const root = note.noteInformation;
       if (root === null) continue;
       const index = root.slideNoteList.indexOf(source);
       if (root !== source && index < 0) continue;
       const child = index < 0 ? undefined : this.ordinarySlideRenderStates.get(note)?.[index];
-      const state = child?.lifecycle ?? this.ordinaryRenderMotionStates.get(note);
+      const state = longAfter ? this.ordinaryLongRenderStates.get(note)
+        : child?.lifecycle ?? this.ordinaryRenderMotionStates.get(note);
       if (state === undefined) return null;
       return {
         position: state.renderedTransform.position,
@@ -254,7 +255,8 @@ export class NoteManager {
         lossyScaleX: createRenderFloat32(calculateOrdinaryNoteWorldScaleAxis(
           state.renderedTransform.localScale.x.value, state.motionState.noteParentScale.value,
         )),
-        visible: child === undefined ? this.syncEndpointMoving(note, false) : child.visible && child.lifecycle.phase === "move",
+        visible: longAfter ? this.syncEndpointMoving(note, true)
+          : child === undefined ? this.syncEndpointMoving(note, false) : child.visible && child.lifecycle.phase === "move",
       };
     }
     return null;
@@ -1448,9 +1450,9 @@ export class NoteManager {
   ): SimulatorResult<void> {
     const childrenA = targetA.noteInformation?.slideNoteList;
     const childrenB = targetB.noteInformation?.slideNoteList;
-    const first = afterA ? childrenA?.[childrenA.length - 1] : targetA.noteInformation;
-    const second = afterB ? childrenB?.[childrenB.length - 1] : targetB.noteInformation;
-    if (first && second && !this.extensionSyncConnection(first, second)) return ok(undefined);
+    const first = afterA ? childrenA?.[childrenA.length - 1] ?? targetA.noteInformation : targetA.noteInformation;
+    const second = afterB ? childrenB?.[childrenB.length - 1] ?? targetB.noteInformation : targetB.noteInformation;
+    if (first && second && !this.extensionSyncConnection(first, second, afterA, afterB)) return ok(undefined);
     if (!this.inGameCalculatedData.isSyncLineEnabled) {
       this.suppressedOrdinarySyncLinePairCountValue += 1;
       return ok(undefined);
