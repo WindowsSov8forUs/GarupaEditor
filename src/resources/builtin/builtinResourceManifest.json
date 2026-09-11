@@ -67,6 +67,11 @@
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
     },
     {
+      "path": "game/loading/background.png",
+      "byteLength": 1170,
+      "sha256": "CDA5675E68C428323ACCFD81CDA08EC1E5BDC98A92ABE0D0C878A5D6A77582A8"
+    },
+    {
       "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",
       "byteLength": 2024,
       "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"

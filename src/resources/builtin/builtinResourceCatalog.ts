@@ -20,6 +20,7 @@ import chartUiPrimaryFontUrl from "../../assets/fonts/TTShinGoM.ttf?url&no-inlin
 import chartUiFallbackFontUrl from "../../assets/fonts/GB18030.ttf?url&no-inline";
 import defaultCoverUrl from "../../assets/default-cover.png?url&no-inline";
 import applicationBackgroundUrl from "../../assets/live.png?url&no-inline";
+import loadingBackgroundUrl from "../../assets/game/loading/background.png?url&no-inline";
 import manifestJson from "./builtinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -48,6 +49,11 @@ interface BuiltinDefinition {
 }
 
 const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
+  Object.freeze({
+    slot: "ui.loading-background", id: "builtin/ui/loading-background",
+    path: "game/loading/background.png", title: "Loading background",
+    kind: "image", mediaType: "image/png", url: loadingBackgroundUrl,
+  }),
   icon("ui.icon.apply-action", "builtin/ui/icon/apply-action", "icons/apply-action.svg", "Apply", applyActionUrl),
   icon("ui.icon.back-arrow", "builtin/ui/icon/back-arrow", "icons/back-arrow.svg", "Back", backArrowUrl),
   icon("ui.icon.clear-action", "builtin/ui/icon/clear-action", "icons/clear-action.svg", "Clear", clearActionUrl),

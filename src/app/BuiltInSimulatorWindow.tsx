@@ -1,7 +1,7 @@
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useApplicationResourceManager } from "../resources/applicationResourceContext";
+import { useApplicationResourceManager, useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { installProductionAutonomousSimulatorPlatform } from "../simulator/platform/platformComposition";
 import type { AutonomousSimulatorPlatformCapabilities } from "../simulator/platform/platformComposition";
 import { launchSimulatorModule } from "../simulator/public";
@@ -45,6 +45,7 @@ function routeRequestId(): string {
 
 function BuiltInSimulatorWindow() {
   const manager = useApplicationResourceManager();
+  const loadingBackground = useApplicationResourceUrl("ui.loading-background");
   const hostRef = useRef<HTMLDivElement | null>(null);
   const ownerRef = useRef<BrowserSimulatorLaunchOwner | null>(null);
   const [descriptor, setDescriptor] = useState<SimulatorLaunchTransportDescriptor | null>(null);
@@ -204,6 +205,7 @@ function BuiltInSimulatorWindow() {
   const overlay = renderOverlay(
     launchState,
     transportFailure,
+    loadingBackground,
     activateAudioFromPointer,
     () => { void leavePlayer(); },
   );
@@ -218,15 +220,20 @@ function BuiltInSimulatorWindow() {
 function renderOverlay(
   state: BrowserSimulatorLaunchState,
   transportFailure: string | null,
+  loadingBackground: string,
   onActivationPointer: () => void,
   onLeave: () => void,
 ) {
+  // Reverse adf35169: LoadingBgController.Other uses the full texture UV.
+  // The host fills its viewport; startup scrolling/comic content is not used.
+  const backdropStyle = { ...preparationOverlayStyle,
+    backgroundImage: `url("${loadingBackground}")`, backgroundSize: "100% 100%" };
   if (state.phase === "running" || state.phase === "closing") return null;
   if (state.phase === "awaiting-host-activation") {
     return (
       <section
         onPointerDown={onActivationPointer}
-        style={{ ...preparationOverlayStyle, cursor: "pointer", touchAction: "none" }}
+        style={{ ...backdropStyle, cursor: "pointer", touchAction: "none" }}
       >
         <p style={preparationTextStyle}>点击任意位置继续</p>
       </section>
@@ -238,9 +245,9 @@ function renderOverlay(
   };
   if (state.phase === "rejected" || failure !== null) {
     return (
-      <section style={preparationOverlayStyle}>
+      <section style={backdropStyle}>
         <div style={preparationPanelStyle}>
-          <p style={{ ...preparationTextStyle, color: "#ffd6de" }}>
+          <p style={{ ...preparationTextStyle, color: "#a21e42" }}>
             Simulator启动失败：{failure?.capability ?? "app.simulator.unknown"}
           </p>
           <p style={{ ...preparationTextStyle, fontSize: 14 }}>{failure?.boundary ?? "未知平台故障"}</p>
@@ -253,7 +260,7 @@ function renderOverlay(
   }
   if (state.phase === "closed" || state.phase === "disposed") return null;
   return (
-    <section style={preparationOverlayStyle}>
+    <section style={backdropStyle} aria-busy="true">
       <div style={preparationPanelStyle}>
         <p style={preparationTextStyle}>{preparationText(state.phase)}</p>
         <button type="button" className="simulator-mobile-back-button" onClick={onLeave} style={returnButtonStyle}>
@@ -266,16 +273,10 @@ function renderOverlay(
 
 function preparationText(phase: BrowserSimulatorLaunchState["phase"]): string {
   switch (phase) {
-    case "waiting-descriptor": return "正在等待主窗口资源快照…";
-    case "preparing-window": return "正在固定播放器窗口…";
-    case "refreshing-catalog": return "正在刷新资源目录…";
-    case "acquiring-media": return "正在获取谱面媒体快照…";
-    case "building-request": return "正在构建Simulator请求…";
-    case "checking-audio": return "正在检查设备音频能力…";
-    case "creating-platform": return "正在创建播放器平台…";
-    case "installing-launcher": return "正在安装Simulator平台…";
-    case "launching": return "正在启动Simulator…";
-    default: return "正在准备Simulator…";
+    case "refreshing-catalog": return "正在加载资源目录…";
+    case "acquiring-media": return "正在加载歌曲…";
+    case "checking-audio": return "正在准备音频…";
+    default: return "正在准备演奏…";
   }
 }
 
@@ -288,8 +289,8 @@ const preparationOverlayStyle = Object.freeze({
   inset: 0,
   display: "grid",
   placeItems: "center",
-  background: "rgba(2,5,13,.94)",
-  color: "white",
+  backgroundColor: "#fff",
+  color: "#505050",
   zIndex: 20,
 } as const);
 const preparationPanelStyle = Object.freeze({ textAlign: "center", maxWidth: 640, padding: 24 } as const);

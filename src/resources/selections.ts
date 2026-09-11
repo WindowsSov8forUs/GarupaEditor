@@ -23,6 +23,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "ui.font.chart-ui-fallback",
   "ui.default-cover",
   "ui.application-background",
+  "ui.loading-background",
   "skin.rhythm",
   "skin.directional",
   "skin.rhythm-se",
