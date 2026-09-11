@@ -2,7 +2,7 @@ import { Container, NineSliceSprite, type Text, type Texture } from "pixi.js";
 
 type Pair = readonly [number, number];
 interface SpriteProfile { readonly position: Pair; readonly size: Pair; readonly depth: number; }
-interface LabelProfile extends SpriteProfile { readonly fontSize: number; readonly pivot: "left" | "center"; }
+interface LabelProfile extends SpriteProfile { readonly spacingX?: number; readonly fontSize: number; readonly pivot: "left" | "center"; }
 export interface SerializedDialogProfile {
   readonly identity: string;
   readonly window: SpriteProfile;
@@ -75,6 +75,7 @@ export function createSerializedDialog(
     const title = createText(titleText, profile.title.fontSize, palette.title,
       `${profile.identity}:title`,
       profile.title.size[0], profile.title.size[1], profile.title.pivot);
+    title.style.letterSpacing = profile.title.spacingX ?? 0;
     title.anchor.set(profile.title.pivot === "left" ? 0 : 0.5, 0.5);
     titleComponent.addChild(title);
     headerComponent.addChild(titleComponent);
