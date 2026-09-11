@@ -145,7 +145,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.execUpdate(deltaTimeSeconds);
     }
-    if (this.inGameManager.snapshot().paused) {
+    if (this.inGameManager.getPlaybackState().paused) {
       return this.inGameDirector.update(deltaTimeSeconds);
     }
     const deltaValidation = validateDirectorDeltaTime(deltaTimeSeconds);
@@ -156,7 +156,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       const advanced = this.advanceNaturalCompletionPresentation(deltaTimeSeconds);
       return advanced.status === "ok" ? ok(undefined) : advanced;
     }
-    const beforeUpdate = this.inGameManager.snapshot();
+    const beforeUpdate = this.inGameManager.getPlaybackState();
     if (beforeUpdate.currentGameState === GameState.GameOverMotionFirstStart) return ok(undefined);
     if (!beforeUpdate.playable) {
       if (inputFrame !== undefined && inputFrame.touches.length > 0) {
@@ -168,7 +168,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       }
       return this.inGameDirector.update(deltaTimeSeconds);
     }
-    if (beforeUpdate.primaryJudgementAdjustment?.gameplayBlocked === true) {
+    if (beforeUpdate.gameplayBlocked) {
       // Original slow-counter branch returns before time/input/Note updates.
       return this.inGameDirector.update(deltaTimeSeconds);
     }
@@ -204,7 +204,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
-    const managerSnapshot = this.inGameManager.snapshot();
+    const managerSnapshot = this.inGameManager.getPlaybackState();
     if (this.inGameManager.state !== "initialized" || managerSnapshot.paused || !managerSnapshot.playable) {
       return integrityFailure(
         "manual-input.resolve-outside-active-session",
@@ -212,7 +212,7 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Raw input geometry can be resolved only by an initialized, running and PlayingSound manual engine session.",
       );
     }
-    if (managerSnapshot.noteManager.calculatedData.isAutoPlay) {
+    if (this.inGameManager.noteManager.inGameCalculatedData.isAutoPlay) {
       return integrityFailure(
         "manual-input.resolve-in-auto-live",
         ["D03", "D14", "MJ25"],
@@ -251,8 +251,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.pause();
     }
-    const manager = this.inGameManager.snapshot();
-    if (manager.startupDirection?.playable === false) {
+    const manager = this.inGameManager.getPlaybackState();
+    if (!manager.startupPlayable) {
       return integrityFailure(
         "startup-direction.pause-during-opening",
         ["SD09"],
@@ -297,8 +297,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.resume();
     }
-    const manager = this.inGameManager.snapshot();
-    if (manager.startupDirection?.playable === false && !manager.paused) {
+    const manager = this.inGameManager.getPlaybackState();
+    if (!manager.startupPlayable && !manager.paused) {
       return integrityFailure(
         "startup-direction.resume-during-opening",
         ["SD09"],
@@ -336,7 +336,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.state !== "initialized" || this.audioProducer === null ||
-      this.inGameManager.snapshot().currentGameState !== GameState.PlayingSound) {
+      this.inGameManager.getPlaybackState().currentGameState !== GameState.PlayingSound) {
       return integrityFailure(
         "audio.complete.without-active-session",
         [],
@@ -598,6 +598,14 @@ class SimulatorEngineHost implements SimulatorEngine {
       : audioFault;
   }
 
+  getPlaybackState() {
+    if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
+      this.pollAudioFault();
+      this.pollMovieFault();
+    }
+    return ok(this.inGameManager.getPlaybackState());
+  }
+
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
       this.pollAudioFault();
@@ -717,7 +725,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   private transitionGameEndState(deltaTimeSeconds: number): SimulatorResult<void> {
-    const manager = this.inGameManager.snapshot();
+    const manager = this.inGameManager.getPlaybackState();
     if (manager.currentGameState !== GameState.PlayingSound || this.naturalCompletionClearStatus !== null) {
       return ok(undefined);
     }
@@ -726,8 +734,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     // Original transitionGameEndState chooses clear before Life-zero, after
     // all judgement/Record/HUD reflection for the current gameplay update.
     if (!ended.value) {
-      return manager.scoreLifeState?.record.singleGameOver === true &&
-        manager.noteManager.calculatedData.sessionMode === "live"
+      return manager.singleGameOver &&
+        this.inGameManager.noteManager.inGameCalculatedData.mode.sessionMode === "live"
         ? this.commitGameOver()
         : ok(undefined);
     }

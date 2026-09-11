@@ -236,6 +236,10 @@ export class StartupDirectionController {
     return ok(undefined);
   }
 
+  getPlaybackState() {
+    return { playable: this.stateValue === GameState.PlayingSound, hudAlpha: this.sceneValue.hudAlpha, scene: this.sceneValue };
+  }
+
   snapshot(): StartupDirectionSnapshot {
     return Object.freeze({
       phase: this.phaseValue,

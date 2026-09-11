@@ -705,17 +705,19 @@ function freezeParticleInstance(instance: ParticleInstanceIdentity): ParticleIns
   });
 }
 
+const particleFloat32View = new DataView(new ArrayBuffer(4));
+
 export function particleFloat32ToBits(value: number): string | null {
   const rounded = Math.fround(value);
   if (!Number.isFinite(value) || !Number.isFinite(rounded) || rounded !== value) return null;
-  const view = new DataView(new ArrayBuffer(4));
+  const view = particleFloat32View;
   view.setFloat32(0, rounded, false);
   return `0x${view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
 export function particleFloat32FromBits(bits: string): number | null {
   if (!FLOAT32_BITS_PATTERN.test(bits)) return null;
-  const view = new DataView(new ArrayBuffer(4));
+  const view = particleFloat32View;
   view.setUint32(0, Number.parseInt(bits.slice(2), 16), false);
   const value = view.getFloat32(0, false);
   return Number.isFinite(value) ? value : null;

@@ -231,10 +231,9 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       this.naturalCompletionPresentationActive = true;
       return Object.freeze({ status: "running" as const });
     }
-    const snapshot = this.engine.snapshot();
+    const snapshot = this.engine.getPlaybackState();
     if (snapshot.status !== "ok") return rejectedStep(snapshot);
-    const record = snapshot.value.managers.scoreLifeState?.record ?? null;
-    if (record?.singleGameOver === true && this.sessionMode === "live") {
+    if (snapshot.value.singleGameOver && this.sessionMode === "live") {
       if (this.gameOverElapsedSeconds === null) this.gameOverElapsedSeconds = 0;
       else this.gameOverElapsedSeconds += deltaTimeSeconds;
       if (this.gameOverElapsedSeconds >= GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS) {

@@ -48,6 +48,17 @@ import type {
 } from "./tapLaneEffectOwner";
 import { FrameMutationPlan, type FrameMutationParticipant } from "./frameMutationPlan";
 
+export interface InGamePlaybackState {
+  readonly playable: boolean;
+  readonly paused: boolean;
+  readonly currentGameState: GameStateValue;
+  readonly startupPlayable: boolean;
+  readonly gameplayBlocked: boolean;
+  readonly hudAlpha: number;
+  readonly singleGameOver: boolean;
+  readonly startupScene: StartupDirectionSnapshot["scene"] | null;
+}
+
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: SimulatorIntegrityFailure | null;
   readonly currentGameState: GameStateValue;
@@ -791,6 +802,20 @@ export class InGameManager {
     return latched;
   }
 
+  getPlaybackState(): InGamePlaybackState {
+    const startup = this.startupDirection?.getPlaybackState();
+    const gameplayBlocked = this.primaryJudgementAdjustment?.snapshot().gameplayBlocked === true;
+    const playable = (startup?.playable ?? true) &&
+      this.currentGameStateValue !== GameState.GameOverMotionFirstStart &&
+      this.currentGameStateValue !== GameState.GameClearAnimStart &&
+      this.currentGameStateValue !== GameState.GameClearAnimEnd && !gameplayBlocked;
+    return { playable, paused: this.isPaused(), currentGameState: this.currentGameStateValue,
+      startupPlayable: startup?.playable ?? true, gameplayBlocked,
+      hudAlpha: startup?.hudAlpha ?? (playable ? 1 : 0),
+      singleGameOver: this.scoreLifeStateManager?.record.singleGameOver === true,
+      startupScene: startup?.scene ?? null };
+  }
+
   snapshot(): InGameManagerSnapshot {
     return {
       state: this.lifecycleState,
@@ -815,11 +840,7 @@ export class InGameManager {
             laneChanged: this.habahiroLanePhase === "playing-after-change" || this.habahiroLanePhase === "complete",
           })
         : null,
-      playable: (this.startupDirection?.snapshot().playable ?? true) &&
-        this.currentGameStateValue !== GameState.GameOverMotionFirstStart &&
-        this.currentGameStateValue !== GameState.GameClearAnimStart &&
-        this.currentGameStateValue !== GameState.GameClearAnimEnd &&
-        this.primaryJudgementAdjustment?.snapshot().gameplayBlocked !== true,
+      playable: this.getPlaybackState().playable,
     };
   }
 }

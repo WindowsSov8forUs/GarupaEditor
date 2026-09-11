@@ -9666,7 +9666,7 @@
     {
       "id": "RCB-0460",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 279,
+      "line": 278,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9687,7 +9687,7 @@
     {
       "id": "RCB-0461",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 280,
+      "line": 279,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9708,7 +9708,7 @@
     {
       "id": "RCB-0462",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 326,
+      "line": 325,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9729,7 +9729,7 @@
     {
       "id": "RCB-0463",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 327,
+      "line": 326,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9750,7 +9750,7 @@
     {
       "id": "RCB-0464",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 366,
+      "line": 365,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9771,7 +9771,7 @@
     {
       "id": "RCB-0465",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 374,
+      "line": 373,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9792,7 +9792,7 @@
     {
       "id": "RCB-0466",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 446,
+      "line": 445,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9813,7 +9813,7 @@
     {
       "id": "RCB-0467",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 447,
+      "line": 446,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9834,7 +9834,7 @@
     {
       "id": "RCB-0468",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 458,
+      "line": 457,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9855,7 +9855,7 @@
     {
       "id": "RCB-0469",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 459,
+      "line": 458,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9876,7 +9876,7 @@
     {
       "id": "RCB-0470",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 539,
+      "line": 538,
       "marker": "integrity-failure-string",
       "symbol": "rejectedStep",
       "source": "function rejectedStep(result: { readonly status: \"integrity-failure\"; readonly capability: string; readonly boundary: string }): SimulatorOwnedSessionStepResult {",
@@ -9897,7 +9897,7 @@
     {
       "id": "RCB-0471",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 544,
+      "line": 543,
       "marker": "integrity-failure-string",
       "symbol": "fromEngineFailure",
       "source": "result: Extract<SimulatorResult<T>, { status: \"integrity-failure\" }>,",
@@ -9918,7 +9918,7 @@
     {
       "id": "RCB-0472",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 546,
+      "line": 545,
       "marker": "integrity-failure-string",
       "symbol": "fromEngineFailure",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -9939,7 +9939,7 @@
     {
       "id": "RCB-0473",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 546,
+      "line": 545,
       "marker": "rejected-call",
       "symbol": "fromEngineFailure",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -9960,7 +9960,7 @@
     {
       "id": "RCB-0474",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 550,
+      "line": 549,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "return moduleFailure(\"integrity-failure\", result.capability, result.boundary);",
@@ -9981,7 +9981,7 @@
     {
       "id": "RCB-0475",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 554,
+      "line": 553,
       "marker": "rejected-call",
       "symbol": "closedFailure",
       "source": "return rejected(",
@@ -10716,7 +10716,7 @@
     {
       "id": "RCB-0510",
       "file": "src/simulator/backends/particleValidation.ts",
-      "line": 1148,
+      "line": 1150,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return particleRejected(\"integrity-failure\", capability, boundary);",
@@ -11535,7 +11535,7 @@
     {
       "id": "RCB-0549",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1221,
+      "line": 1223,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -11556,7 +11556,7 @@
     {
       "id": "RCB-0550",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1230,
+      "line": 1232,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -11577,7 +11577,7 @@
     {
       "id": "RCB-0551",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1246,
+      "line": 1248,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -11598,7 +11598,7 @@
     {
       "id": "RCB-0552",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1663,
+      "line": 1666,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.spriteContent === null) throw new Error(\"Sprite flip requires a bound Sprite owner.\");",
@@ -11619,7 +11619,7 @@
     {
       "id": "RCB-0553",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1669,
+      "line": 1672,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Tap Lane SpriteRenderer uses only the serialized shared MaskImage, not a command-owned mask.\");",
@@ -11640,7 +11640,7 @@
     {
       "id": "RCB-0554",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1747,
+      "line": 1750,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clip === undefined) throw new Error(\"Score high-rank play requires its current HUD clip.\");",
@@ -11661,7 +11661,7 @@
     {
       "id": "RCB-0555",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1806,
+      "line": 1809,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Pixi sibling ordering encountered an unowned scene object\");",
@@ -11682,7 +11682,7 @@
     {
       "id": "RCB-0556",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1840,
+      "line": 1843,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (transform === null) throw new Error(\"A gameplay draw owner requires its parent transform before publication.\");",
@@ -11703,7 +11703,7 @@
     {
       "id": "RCB-0557",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1844,
+      "line": 1847,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (parent === undefined) throw new Error(\"A gameplay draw owner lost its registered parent.\");",
@@ -11724,7 +11724,7 @@
     {
       "id": "RCB-0558",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1966,
+      "line": 1969,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Tap Lane SpriteMask consumer must retain the single scene-owned MaskImage identity.\");",
@@ -11745,7 +11745,7 @@
     {
       "id": "RCB-0559",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 1971,
+      "line": 1974,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Tap Lane SpriteMask requires the prepared renderer stage parent.\");",
@@ -11766,7 +11766,7 @@
     {
       "id": "RCB-0560",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2004,
+      "line": 2007,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Tap Lane SpriteMask consumer identity diverged from the scene-owned MaskImage.\");",
@@ -11787,7 +11787,7 @@
     {
       "id": "RCB-0561",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2208,
+      "line": 2211,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (initialized.status !== \"ok\") throw new Error(initialized.capability);",
@@ -11808,7 +11808,7 @@
     {
       "id": "RCB-0562",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2219,
+      "line": 2222,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (this.disposed) return integrityFailure(\"render.in-game-control.after-dispose\", [\"LR-C03\", \"PAU-B01\"], \"Disposed InGame controls reject timeline publication.\");",
@@ -11829,7 +11829,7 @@
     {
       "id": "RCB-0563",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2230,
+      "line": 2233,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (this.disposed || typeof active !== \"boolean\") return integrityFailure(\"render.in-game-control.invalid-move-state\", [\"LR-E11\"], \"Only the live control owner may publish an explicit MoveTime availability state.\");",
@@ -11850,7 +11850,7 @@
     {
       "id": "RCB-0564",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2238,
+      "line": 2241,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"render.pause-control.invalid-state\", [\"PAU-B01\", \"PAU-B05\"], \"Pause visuals consume one live scene snapshot bound to the exact initial surface revision.\");",
@@ -11871,7 +11871,7 @@
     {
       "id": "RCB-0565",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2363,
+      "line": 2366,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (owner === null || contents === null) throw new Error(\"Persistent countdown Prefab graph is incomplete.\");",
@@ -11892,7 +11892,7 @@
     {
       "id": "RCB-0566",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2371,
+      "line": 2374,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (current === undefined) throw new Error(`Pause countdown channel is missing: ${channel}`);",
@@ -11913,7 +11913,7 @@
     {
       "id": "RCB-0567",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2378,
+      "line": 2381,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (node === null) throw new Error(`Pause countdown component is missing: ${path}`);",
@@ -11934,7 +11934,7 @@
     {
       "id": "RCB-0568",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2392,
+      "line": 2395,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (fadeout === null) throw new Error(\"Pause Count1Fadeout is missing.\");",
@@ -11955,7 +11955,7 @@
     {
       "id": "RCB-0569",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2398,
+      "line": 2401,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (fill === null) throw new Error(\"Pause countdown Fill is missing.\");",
@@ -11976,7 +11976,7 @@
     {
       "id": "RCB-0570",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2492,
+      "line": 2495,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (path === undefined) throw new Error(\"Pause serialized button component path is missing.\");",
@@ -11997,7 +11997,7 @@
     {
       "id": "RCB-0571",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2543,
+      "line": 2546,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Serialized Pause UILabel requires finite positive font and widget dimensions.\");",
@@ -12018,7 +12018,7 @@
     {
       "id": "RCB-0572",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2661,
+      "line": 2664,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual.kind !== command.hudRole) throw new Error(\"HUD visual route cannot change owner kind\");",
@@ -12039,7 +12039,7 @@
     {
       "id": "RCB-0573",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2736,
+      "line": 2739,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (profile === undefined) throw new Error(\"Game-clear runtime profile is missing\");",
@@ -12060,7 +12060,7 @@
     {
       "id": "RCB-0574",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2844,
+      "line": 2847,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!Number.isFinite(value)) throw new Error(`Game-clear clip produced a non-finite channel: ${channel}`);",
@@ -12081,7 +12081,7 @@
     {
       "id": "RCB-0575",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2881,
+      "line": 2884,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!Object.is(value, Math.fround(0))) throw new Error(\"Game-clear startRotation static channel diverged from its particle profile\");",
@@ -12102,7 +12102,7 @@
     {
       "id": "RCB-0576",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2886,
+      "line": 2889,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!Object.is(value, Math.fround(1))) throw new Error(\"Game-clear looping static channel diverged from its particle profile\");",
@@ -12123,7 +12123,7 @@
     {
       "id": "RCB-0577",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2889,
+      "line": 2892,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Game-clear AnimationClip channel is unclassified: ${channel}`);",
@@ -12144,7 +12144,7 @@
     {
       "id": "RCB-0578",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2897,
+      "line": 2900,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (markerIndex < 0) throw new Error(`Game-clear channel marker is absent: ${channel}`);",
@@ -12165,7 +12165,7 @@
     {
       "id": "RCB-0579",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2900,
+      "line": 2903,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (root === undefined) throw new Error(\"Game-clear branch graph has no serialized root\");",
@@ -12186,7 +12186,7 @@
     {
       "id": "RCB-0580",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2903,
+      "line": 2906,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (node === undefined) throw new Error(`Game-clear channel owner is absent: ${path}`);",
@@ -12207,7 +12207,7 @@
     {
       "id": "RCB-0581",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2931,
+      "line": 2934,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (parent === undefined) throw new Error(`Life serialized hierarchy parent is missing: ${String(row.parent)}`);",
@@ -12228,7 +12228,7 @@
     {
       "id": "RCB-0582",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2955,
+      "line": 2958,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (parent === undefined) throw new Error(`Life serialized component parent is missing: ${String(profile.parent)}`);",
@@ -12249,7 +12249,7 @@
     {
       "id": "RCB-0583",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 2979,
+      "line": 2982,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (kind === \"score\" && scoreProfile === undefined) throw new Error(\"Score HUD source-bound native profile is missing\");",
@@ -12270,7 +12270,7 @@
     {
       "id": "RCB-0584",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3086,
+      "line": 3089,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (node === undefined) throw new Error(`Serialized HUD component is missing: ${path}`);",
@@ -12291,7 +12291,7 @@
     {
       "id": "RCB-0585",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3464,
+      "line": 3467,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (parent === null) throw new Error(\"Life fill mask requires the serialized component parent.\");",
@@ -12312,7 +12312,7 @@
     {
       "id": "RCB-0586",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3485,
+      "line": 3488,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Life sgm label font is missing\");",
@@ -12333,7 +12333,7 @@
     {
       "id": "RCB-0587",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3490,
+      "line": 3493,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Life label requires current/maximum encoded segments\");",
@@ -12354,7 +12354,7 @@
     {
       "id": "RCB-0588",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3552,
+      "line": 3555,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Persistent Life UILabel/UISprite graph is incomplete\");",
@@ -12375,7 +12375,7 @@
     {
       "id": "RCB-0589",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3587,
+      "line": 3590,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (font === undefined) throw new Error(\"Life sgm label font is missing\");",
@@ -12396,7 +12396,7 @@
     {
       "id": "RCB-0590",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3590,
+      "line": 3593,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Life label requires current/maximum encoded segments\");",
@@ -12417,7 +12417,7 @@
     {
       "id": "RCB-0591",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3615,
+      "line": 3618,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!/^[0-9A-F]{8}$/.test(bits)) throw new Error(\"HUD profile Float32 requires eight uppercase hexadecimal digits.\");",
@@ -12438,7 +12438,7 @@
     {
       "id": "RCB-0592",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3623,
+      "line": 3626,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.ordinaryVisibleProfile === undefined) throw new Error(\"ordinary visible HUD profile is missing\");",
@@ -12459,7 +12459,7 @@
     {
       "id": "RCB-0593",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3628,
+      "line": 3631,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.scoreHudNativeProfile === undefined) throw new Error(\"source-bound Score/NGUI native profile is missing\");",
@@ -12480,7 +12480,7 @@
     {
       "id": "RCB-0594",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3634,
+      "line": 3637,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (node === undefined) throw new Error(`Score GameObject is missing: ${path}`);",
@@ -12501,7 +12501,7 @@
     {
       "id": "RCB-0595",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3643,
+      "line": 3646,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (widget === undefined) throw new Error(`Score NGUI widget is missing: ${path}`);",
@@ -12522,7 +12522,7 @@
     {
       "id": "RCB-0596",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3648,
+      "line": 3651,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!/^[0-9A-Fa-f]{8}$/.test(bits)) throw new Error(\"invalid little-endian Float32 bytes\");",
@@ -12543,7 +12543,7 @@
     {
       "id": "RCB-0597",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3683,
+      "line": 3686,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Score TotalScore sgm UILabel font owner is missing\");",
@@ -12564,7 +12564,7 @@
     {
       "id": "RCB-0598",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3781,
+      "line": 3784,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (rankLabelProfile.font_size === undefined) throw new Error(\"Score Rank UILabel font size is missing\");",
@@ -12585,7 +12585,7 @@
     {
       "id": "RCB-0599",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3800,
+      "line": 3803,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (rankFont === undefined) throw new Error(\"Score Rank label font is missing\");",
@@ -12606,7 +12606,7 @@
     {
       "id": "RCB-0600",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3836,
+      "line": 3839,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Persistent Score TotalScore sgm UILabel owner is incomplete\");",
@@ -12627,7 +12627,7 @@
     {
       "id": "RCB-0601",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3857,
+      "line": 3860,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (foreground === null || foregroundMask === null) throw new Error(\"Persistent Score gauge foreground graph is incomplete\");",
@@ -12648,7 +12648,7 @@
     {
       "id": "RCB-0602",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 3903,
+      "line": 3906,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual.scoreHighRankPanelMask === null) throw new Error(\"Score high-rank panel mask owner is missing\");",
@@ -12669,7 +12669,7 @@
     {
       "id": "RCB-0603",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4026,
+      "line": 4029,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!componentOwners.has(name)) throw new Error(`Score high-rank sibling is missing: ${name}`);",
@@ -12690,7 +12690,7 @@
     {
       "id": "RCB-0604",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4086,
+      "line": 4089,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (texture === undefined) throw new Error(`missing Score HUD texture ${logicalAssetId}:${exactKey}`);",
@@ -12711,7 +12711,7 @@
     {
       "id": "RCB-0605",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4107,
+      "line": 4110,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Result HUD requires exactly one selected Judge texture for ${exactKey}; found ${matches.length}.`);",
@@ -12732,7 +12732,7 @@
     {
       "id": "RCB-0606",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4164,
+      "line": 4167,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clip === undefined) throw new Error(\"Combo scale clip is missing\");",
@@ -12753,7 +12753,7 @@
     {
       "id": "RCB-0607",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4177,
+      "line": 4180,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"All Perfect Sprite clip/owner is missing\");",
@@ -12774,7 +12774,7 @@
     {
       "id": "RCB-0608",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4192,
+      "line": 4195,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Score high-rank source-backed visual/clip is missing\");",
@@ -12795,7 +12795,7 @@
     {
       "id": "RCB-0609",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4194,
+      "line": 4197,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.scoreHighRankPlayback === null) throw new Error(\"Score high-rank animation has not started.\");",
@@ -12816,7 +12816,7 @@
     {
       "id": "RCB-0610",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4223,
+      "line": 4226,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Game-clear animation owner/profile/state is missing\");",
@@ -12837,7 +12837,7 @@
     {
       "id": "RCB-0611",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4236,
+      "line": 4239,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual?.kind !== \"result\") throw new Error(\"GameJudge requires the persistent Result/other child graph.\");",
@@ -12858,7 +12858,7 @@
     {
       "id": "RCB-0612",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4248,
+      "line": 4251,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (visual?.kind !== \"life\") throw new Error(\"Life warning animation owner is missing\");",
@@ -12879,7 +12879,7 @@
     {
       "id": "RCB-0613",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4259,
+      "line": 4262,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (text === null || text === undefined) throw new Error(\"Life GameOver label animation owner is missing\");",
@@ -12900,7 +12900,7 @@
     {
       "id": "RCB-0614",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4267,
+      "line": 4270,
       "marker": "throw-error",
       "symbol": "applyOrdinaryNoteAnimation",
       "source": "throw new Error(\"unsupported HUD animation role\");",
@@ -12921,7 +12921,7 @@
     {
       "id": "RCB-0615",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4277,
+      "line": 4280,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (object.hudVisual?.kind !== \"result\") throw new Error(\"GameJudge stop requires the persistent other child.\");",
@@ -12942,7 +12942,7 @@
     {
       "id": "RCB-0616",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4321,
+      "line": 4324,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"ordinary Note animation owner/profile/resource binding is missing\");",
@@ -12963,7 +12963,7 @@
     {
       "id": "RCB-0617",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4338,
+      "line": 4341,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clipId === null) throw new Error(\"ordinary Note animation resource key does not select a current clip\");",
@@ -12984,7 +12984,7 @@
     {
       "id": "RCB-0618",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4340,
+      "line": 4343,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (clip === undefined) throw new Error(\"ordinary Note animation clip is missing\");",
@@ -13005,7 +13005,7 @@
     {
       "id": "RCB-0619",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4408,
+      "line": 4411,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (asset === undefined) throw new Error(\"UISpriteNumber atlas profile is missing\");",
@@ -13026,7 +13026,7 @@
     {
       "id": "RCB-0620",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4414,
+      "line": 4417,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"UISpriteNumber exact Sprite row/border is missing\");",
@@ -13047,7 +13047,7 @@
     {
       "id": "RCB-0621",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4437,
+      "line": 4440,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (key === undefined) throw new Error(\"HUD streamed clip curve has no current key\");",
@@ -13068,7 +13068,7 @@
     {
       "id": "RCB-0622",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4476,
+      "line": 4479,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceAnimationRole(role)) throw new Error(\"unsupported animation role\");",
@@ -13089,7 +13089,7 @@
     {
       "id": "RCB-0623",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4533,
+      "line": 4536,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"spatial Sprite transform requires one bound atlas row\");",
@@ -13110,7 +13110,7 @@
     {
       "id": "RCB-0624",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4630,
+      "line": 4633,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceLine(command)) throw new Error(\"line outside R2 profile\");",
@@ -13131,7 +13131,7 @@
     {
       "id": "RCB-0625",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4688,
+      "line": 4691,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!isEvidenceMesh(command)) throw new Error(\"mesh outside current source-bound profile\");",
@@ -13152,7 +13152,7 @@
     {
       "id": "RCB-0626",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4720,
+      "line": 4723,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (color === undefined) throw new Error(\"validated mesh lost its uniform color\");",
@@ -13173,7 +13173,7 @@
     {
       "id": "RCB-0627",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4750,
+      "line": 4753,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (texture === null) throw new Error(\"geometry material texture is missing after validated preflight\");",
@@ -13194,7 +13194,7 @@
     {
       "id": "RCB-0628",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4755,
+      "line": 4758,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"geometry material profile is missing after validated preflight\");",
@@ -13215,7 +13215,7 @@
     {
       "id": "RCB-0629",
       "file": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "line": 4921,
+      "line": 4924,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(",
@@ -16974,7 +16974,7 @@
     {
       "id": "RCB-0808",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 112,
+      "line": 123,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -16995,7 +16995,7 @@
     {
       "id": "RCB-0809",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 144,
+      "line": 155,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (fieldSetup?.status === \"integrity-failure\") return fieldSetup;",
@@ -17016,7 +17016,7 @@
     {
       "id": "RCB-0810",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 150,
+      "line": 161,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectSetup?.status === \"integrity-failure\") return tapLaneEffectSetup;",
@@ -17037,7 +17037,7 @@
     {
       "id": "RCB-0811",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 161,
+      "line": 172,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (hudSetup?.status === \"integrity-failure\") return hudSetup;",
@@ -17058,7 +17058,7 @@
     {
       "id": "RCB-0812",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 211,
+      "line": 222,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17079,7 +17079,7 @@
     {
       "id": "RCB-0813",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 231,
+      "line": 242,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17100,7 +17100,7 @@
     {
       "id": "RCB-0814",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 303,
+      "line": 314,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (businessPlan?.status === \"integrity-failure\") {",
@@ -17121,7 +17121,7 @@
     {
       "id": "RCB-0815",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 313,
+      "line": 324,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particlePlan?.status === \"integrity-failure\") {",
@@ -17142,7 +17142,7 @@
     {
       "id": "RCB-0816",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 321,
+      "line": 332,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioPlan?.status === \"integrity-failure\") {",
@@ -17163,7 +17163,7 @@
     {
       "id": "RCB-0817",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 335,
+      "line": 346,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectStatePlan?.status === \"integrity-failure\") {",
@@ -17184,7 +17184,7 @@
     {
       "id": "RCB-0818",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 353,
+      "line": 364,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderPlan?.status === \"integrity-failure\") {",
@@ -17205,7 +17205,7 @@
     {
       "id": "RCB-0819",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 364,
+      "line": 375,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (productReflect?.status === \"integrity-failure\") {",
@@ -17226,7 +17226,7 @@
     {
       "id": "RCB-0820",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 434,
+      "line": 445,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return this.latchFault(integrityFailure(",
@@ -17247,7 +17247,7 @@
     {
       "id": "RCB-0821",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 443,
+      "line": 454,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectAdvance?.status === \"integrity-failure\") {",
@@ -17268,7 +17268,7 @@
     {
       "id": "RCB-0822",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 449,
+      "line": 460,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particleAdvance?.status === \"integrity-failure\") {",
@@ -17289,7 +17289,7 @@
     {
       "id": "RCB-0823",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 493,
+      "line": 504,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17310,7 +17310,7 @@
     {
       "id": "RCB-0824",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 507,
+      "line": 518,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17331,7 +17331,7 @@
     {
       "id": "RCB-0825",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 519,
+      "line": 530,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17352,7 +17352,7 @@
     {
       "id": "RCB-0826",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 531,
+      "line": 542,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17373,7 +17373,7 @@
     {
       "id": "RCB-0827",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 543,
+      "line": 554,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17394,7 +17394,7 @@
     {
       "id": "RCB-0828",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 550,
+      "line": 561,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (laneEffect?.status === \"integrity-failure\") return this.latchFault(laneEffect);",
@@ -17415,7 +17415,7 @@
     {
       "id": "RCB-0829",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 565,
+      "line": 576,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17436,7 +17436,7 @@
     {
       "id": "RCB-0830",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 573,
+      "line": 584,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17457,7 +17457,7 @@
     {
       "id": "RCB-0831",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 605,
+      "line": 616,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17478,7 +17478,7 @@
     {
       "id": "RCB-0832",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 613,
+      "line": 624,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17499,7 +17499,7 @@
     {
       "id": "RCB-0833",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 636,
+      "line": 647,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectDispose?.status === \"integrity-failure\") return tapLaneEffectDispose;",
@@ -17520,7 +17520,7 @@
     {
       "id": "RCB-0834",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 732,
+      "line": 743,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (hudAnimation?.status === \"integrity-failure\") {",
@@ -20376,7 +20376,7 @@
     {
       "id": "RCB-0970",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 298,
+      "line": 302,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20397,7 +20397,7 @@
     {
       "id": "RCB-0971",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 344,
+      "line": 348,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioTransition?.status === \"integrity-failure\") return audioTransition;",
@@ -20418,7 +20418,7 @@
     {
       "id": "RCB-0972",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 384,
+      "line": 388,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "function rejected(capability: string, boundary: string) {",
@@ -20439,7 +20439,7 @@
     {
       "id": "RCB-0973",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 385,
+      "line": 389,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [\"SD03\", \"SD05\", \"SD06\", \"SD07\", \"SD08\", \"SD09\", \"SD11\", \"SD12\", \"SD17\"], boundary);",
@@ -26970,7 +26970,7 @@
     {
       "id": "RCB-1284",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 626,
+      "line": 634,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.domain-dispose-threw\", [],",
@@ -26991,7 +26991,7 @@
     {
       "id": "RCB-1285",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 632,
+      "line": 640,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(result.capability, result.requiredEvidence,",
@@ -27012,7 +27012,7 @@
     {
       "id": "RCB-1286",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 637,
+      "line": 645,
       "marker": "integrity-failure-call",
       "symbol": "physical",
       "source": "return result.status === \"ok\" ? physical : physical.status === \"ok\" ? result : integrityFailure(",
@@ -27033,7 +27033,7 @@
     {
       "id": "RCB-1287",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 660,
+      "line": 668,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (rendererValidation?.status === \"integrity-failure\") return rendererValidation;",
@@ -27054,7 +27054,7 @@
     {
       "id": "RCB-1288",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 662,
+      "line": 670,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27075,7 +27075,7 @@
     {
       "id": "RCB-1289",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 673,
+      "line": 681,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (release?.status === \"integrity-failure\") return release;",
@@ -27096,7 +27096,7 @@
     {
       "id": "RCB-1290",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 693,
+      "line": 701,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.backend-dispose-threw\", [],",
@@ -27117,7 +27117,7 @@
     {
       "id": "RCB-1291",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 699,
+      "line": 707,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -27138,7 +27138,7 @@
     {
       "id": "RCB-1292",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 736,
+      "line": 744,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27159,7 +27159,7 @@
     {
       "id": "RCB-1293",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 748,
+      "line": 756,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27180,7 +27180,7 @@
     {
       "id": "RCB-1294",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 750,
+      "line": 758,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audio?.status === \"integrity-failure\") {",
@@ -27201,7 +27201,7 @@
     {
       "id": "RCB-1295",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 810,
+      "line": 818,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") {",
@@ -27222,7 +27222,7 @@
     {
       "id": "RCB-1296",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 858,
+      "line": 866,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27243,7 +27243,7 @@
     {
       "id": "RCB-1297",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 883,
+      "line": 891,
       "marker": "integrity-failure-call",
       "symbol": "wrapper",
       "source": "? integrityFailure(",
@@ -27264,7 +27264,7 @@
     {
       "id": "RCB-1298",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 897,
+      "line": 905,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27285,7 +27285,7 @@
     {
       "id": "RCB-1299",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 916,
+      "line": 924,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27306,7 +27306,7 @@
     {
       "id": "RCB-1300",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 929,
+      "line": 937,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27327,7 +27327,7 @@
     {
       "id": "RCB-1301",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 941,
+      "line": 949,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": "return host !== null ? host.stepForMoveTime(deltaTimeSeconds) : integrityFailure(",
@@ -27348,7 +27348,7 @@
     {
       "id": "RCB-1302",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 966,
+      "line": 974,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27369,7 +27369,7 @@
     {
       "id": "RCB-1303",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 983,
+      "line": 991,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27390,7 +27390,7 @@
     {
       "id": "RCB-1304",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1003,
+      "line": 1011,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (producerValidation?.status === \"integrity-failure\") return producerValidation;",
@@ -27411,7 +27411,7 @@
     {
       "id": "RCB-1305",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1012,
+      "line": 1020,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27432,7 +27432,7 @@
     {
       "id": "RCB-1306",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1027,
+      "line": 1035,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27453,7 +27453,7 @@
     {
       "id": "RCB-1307",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1034,
+      "line": 1042,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27474,7 +27474,7 @@
     {
       "id": "RCB-1308",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1113,
+      "line": 1121,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27495,7 +27495,7 @@
     {
       "id": "RCB-1309",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1124,
+      "line": 1132,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27516,7 +27516,7 @@
     {
       "id": "RCB-1310",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1307,
+      "line": 1315,
       "marker": "integrity-failure-call",
       "symbol": "state",
       "source": "? integrityFailure(",
@@ -27537,7 +27537,7 @@
     {
       "id": "RCB-1311",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1322,
+      "line": 1330,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27558,7 +27558,7 @@
     {
       "id": "RCB-1312",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1332,
+      "line": 1340,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27579,7 +27579,7 @@
     {
       "id": "RCB-1313",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1352,
+      "line": 1360,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -27600,7 +27600,7 @@
     {
       "id": "RCB-1314",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1366,
+      "line": 1374,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27621,7 +27621,7 @@
     {
       "id": "RCB-1315",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1401,
+      "line": 1409,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27642,7 +27642,7 @@
     {
       "id": "RCB-1316",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1413,
+      "line": 1421,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27663,7 +27663,7 @@
     {
       "id": "RCB-1317",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1429,
+      "line": 1437,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27684,7 +27684,7 @@
     {
       "id": "RCB-1318",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1448,
+      "line": 1456,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27705,7 +27705,7 @@
     {
       "id": "RCB-1319",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1474,
+      "line": 1482,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27726,7 +27726,7 @@
     {
       "id": "RCB-1320",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1486,
+      "line": 1494,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27747,7 +27747,7 @@
     {
       "id": "RCB-1321",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1504,
+      "line": 1512,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27831,7 +27831,7 @@
     {
       "id": "RCB-1325",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 269,
+      "line": 268,
       "marker": "rejected-call",
       "symbol": "active",
       "source": ": rejected(",
@@ -27978,7 +27978,7 @@
     {
       "id": "RCB-1332",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 437,
+      "line": 435,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -27999,7 +27999,7 @@
     {
       "id": "RCB-1333",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 477,
+      "line": 475,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28020,7 +28020,7 @@
     {
       "id": "RCB-1334",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 501,
+      "line": 499,
       "marker": "rejected-call",
       "symbol": "produced",
       "source": "return rejected(",
@@ -28041,7 +28041,7 @@
     {
       "id": "RCB-1335",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 507,
+      "line": 505,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28062,7 +28062,7 @@
     {
       "id": "RCB-1336",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 516,
+      "line": 514,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28083,7 +28083,7 @@
     {
       "id": "RCB-1337",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 525,
+      "line": 523,
       "marker": "rejected-call",
       "symbol": "failure",
       "source": "? rejected(",
@@ -28104,7 +28104,7 @@
     {
       "id": "RCB-1338",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 564,
+      "line": 562,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.invalid-manual-frame\", \"Replay journaling accepts only an explicit touch array.\");",
@@ -28125,7 +28125,7 @@
     {
       "id": "RCB-1339",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 570,
+      "line": 568,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.invalid-manual-touch\", \"Replay journaling requires immutable raw touch records.\");",
@@ -28146,7 +28146,7 @@
     {
       "id": "RCB-1340",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 578,
+      "line": 576,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.invalid-resolution-capability\", \"Manual replay consumes wrapper-issued button capabilities only.\");",
@@ -28167,7 +28167,7 @@
     {
       "id": "RCB-1341",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 582,
+      "line": 580,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.foreign-resolution-capability\", \"Foreign manual resolution capabilities are rejected.\");",
@@ -28188,7 +28188,7 @@
     {
       "id": "RCB-1342",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 586,
+      "line": 584,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.stale-resolution-capability\", \"Discarded-future manual capabilities cannot cross MoveTime.\");",
@@ -28209,7 +28209,7 @@
     {
       "id": "RCB-1343",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 608,
+      "line": 606,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.manual-resolution-mismatch\", \"Timeline replay must reproduce manual geometry decisions.\");",
@@ -28230,7 +28230,7 @@
     {
       "id": "RCB-1344",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 619,
+      "line": 617,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"timeline.replay.missing-reconstructed-resolution\", \"A replayed touch references a missing prior geometry capability.\");",
@@ -28251,7 +28251,7 @@
     {
       "id": "RCB-1345",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 636,
+      "line": 634,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.state === \"disposed\") return rejected(\"timeline.replay.after-dispose\", \"Disposed timeline owner rejects all new operations.\");",
@@ -28272,7 +28272,7 @@
     {
       "id": "RCB-1346",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 637,
+      "line": 635,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.state === \"replaying\") return rejected(\"timeline.replay.concurrent-operation\", \"No host operation may interleave with MoveTime reconstruction.\");",
@@ -28293,7 +28293,7 @@
     {
       "id": "RCB-1347",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 656,
+      "line": 654,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "return candidate.status === \"integrity-failure\" && typeof candidate.capability === \"string\" &&",
@@ -28314,7 +28314,7 @@
     {
       "id": "RCB-1348",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 659,
+      "line": 657,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "function rejected(capability: string, boundary: string): SimulatorIntegrityFailure {",
@@ -28335,7 +28335,7 @@
     {
       "id": "RCB-1349",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 660,
+      "line": 658,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -28356,7 +28356,7 @@
     {
       "id": "RCB-1350",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 668,
+      "line": 666,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "disposed = integrityFailure(\"timeline.engine-dispose-threw\", [],",
@@ -28377,7 +28377,7 @@
     {
       "id": "RCB-1351",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 674,
+      "line": 672,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "settled = integrityFailure(\"timeline.engine-resource-release-threw\", [],",
@@ -28398,7 +28398,7 @@
     {
       "id": "RCB-1352",
       "file": "src/simulator/host/portableReplaySession.ts",
-      "line": 684,
+      "line": 682,
       "marker": "integrity-failure-call",
       "symbol": "appendEngineCleanupFailure",
       "source": "return cleanup.status === \"ok\" ? failure : integrityFailure(",
@@ -28545,7 +28545,7 @@
     {
       "id": "RCB-1359",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 708,
+      "line": 709,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "return integrityFailure(\"simulator.composition.owner-dispose-threw\", [],",
@@ -28566,7 +28566,7 @@
     {
       "id": "RCB-1360",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 721,
+      "line": 722,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": "? integrityFailure(",
@@ -28587,7 +28587,7 @@
     {
       "id": "RCB-1361",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 726,
+      "line": 727,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": ": integrityFailure(",
@@ -28608,7 +28608,7 @@
     {
       "id": "RCB-1362",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 734,
+      "line": 735,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": "(error: unknown) => integrityFailure(\"simulator.composition.resource-lease-release-threw\", [],",
@@ -28629,7 +28629,7 @@
     {
       "id": "RCB-1363",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 738,
+      "line": 739,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (combinedDisposed.status === \"integrity-failure\") {",
@@ -28650,7 +28650,7 @@
     {
       "id": "RCB-1364",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 741,
+      "line": 742,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -28671,7 +28671,7 @@
     {
       "id": "RCB-1365",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 751,
+      "line": 752,
       "marker": "integrity-failure-call",
       "symbol": "settleDisposal",
       "source": "return this.resourceDisposal ?? Promise.resolve(integrityFailure(",
@@ -28692,7 +28692,7 @@
     {
       "id": "RCB-1366",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 785,
+      "line": 786,
       "marker": "rejected-call",
       "symbol": "se",
       "source": "? rejected(",
@@ -28713,7 +28713,7 @@
     {
       "id": "RCB-1367",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 786,
+      "line": 787,
       "marker": "integrity-failure-string",
       "symbol": "se",
       "source": "\"integrity-failure\",",
@@ -28734,7 +28734,7 @@
     {
       "id": "RCB-1368",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 807,
+      "line": 808,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28755,7 +28755,7 @@
     {
       "id": "RCB-1369",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 823,
+      "line": 824,
       "marker": "rejected-call",
       "symbol": "checked",
       "source": "return rejected(",
@@ -28776,7 +28776,7 @@
     {
       "id": "RCB-1370",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 893,
+      "line": 894,
       "marker": "integrity-failure-string",
       "symbol": "code",
       "source": ": result.status === \"integrity-failure\"",
@@ -28797,7 +28797,7 @@
     {
       "id": "RCB-1371",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 894,
+      "line": 895,
       "marker": "integrity-failure-string",
       "symbol": "code",
       "source": "? \"integrity-failure\"",
@@ -28818,7 +28818,7 @@
     {
       "id": "RCB-1372",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 896,
+      "line": 897,
       "marker": "rejected-call",
       "symbol": "code",
       "source": "return rejected(code, result.failure.capability, result.failure.boundary);",
@@ -28839,7 +28839,7 @@
     {
       "id": "RCB-1373",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 904,
+      "line": 905,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "readonly status: \"integrity-failure\";",
@@ -28860,7 +28860,7 @@
     {
       "id": "RCB-1374",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 908,
+      "line": 909,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -28881,7 +28881,7 @@
     {
       "id": "RCB-1375",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 908,
+      "line": 909,
       "marker": "rejected-call",
       "symbol": "fromIntegrity",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",

@@ -191,10 +191,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
     const available = this.available<void>();
     if (available !== null) return available;
-    const before = this.active.snapshot();
+    const before = this.active.getPlaybackState();
     if (before.status !== "ok") return before;
-    if (!before.value.managers.playable ||
-      before.value.managers.primaryJudgementAdjustment?.gameplayBlocked === true) {
+    if (!before.value.playable || before.value.gameplayBlocked) {
       return this.active.step(deltaTimeSeconds, inputFrame);
     }
     const prepared = this.controlMode.sessionMode === "rehearsal"
@@ -203,7 +202,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (prepared.status !== "ok") return prepared;
     const stepped = this.active.step(deltaTimeSeconds, prepared.value.engineFrame ?? undefined);
     if (stepped.status !== "ok") return stepped;
-    if (!before.value.managers.paused) {
+    if (!before.value.paused) {
       this.timelineSecondsValue = Math.fround(this.timelineSecondsValue + deltaTimeSeconds);
     }
     if (this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
@@ -272,6 +271,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         );
   }
   getAdjustedMusicPosition(): SimulatorResult<number> { return this.active.getAdjustedMusicPosition(); }
+  getPlaybackState() { return this.active.getPlaybackState(); }
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     if (this.state === "disposed") return this.active.snapshot();
     const available = this.available<SimulatorSnapshot>();
@@ -413,17 +413,15 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState> {
     const available = this.available<SimulatorTimelineControlState>();
     if (available !== null) return available;
-    const snapshot = this.active.snapshot();
+    const snapshot = this.active.getPlaybackState();
     if (snapshot.status !== "ok") return snapshot;
     return ok(Object.freeze({
       mode: this.controlMode,
       timelineSeconds: this.timelineSecondsValue,
-      playable: snapshot.value.managers.playable &&
-        snapshot.value.managers.primaryJudgementAdjustment?.gameplayBlocked !== true &&
+      playable: snapshot.value.playable && !snapshot.value.gameplayBlocked &&
         this.active.getNaturalCompletionClearStatus() === null,
-      hudAlpha: snapshot.value.managers.startupDirection?.scene.hudAlpha ??
-        (snapshot.value.managers.playable ? Math.fround(1) : Math.fround(0)),
-      paused: snapshot.value.managers.paused,
+      hudAlpha: snapshot.value.hudAlpha,
+      paused: snapshot.value.paused,
       moveTimeInProgress: false,
     }));
   }

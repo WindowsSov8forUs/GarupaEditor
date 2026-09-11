@@ -645,9 +645,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return this.recording.recordTerminalFault("", "");
     }
     try {
+      const orderingParents = new Set<Container>();
       for (const command of pending.commands) {
-        this.apply(command, pending.reservedNodes, pending.reservedGeometry, pending.reservedMasks);
+        this.apply(command, pending.reservedNodes, pending.reservedGeometry, pending.reservedMasks, orderingParents);
       }
+      for (const parent of orderingParents) if (!parent.destroyed) this.sortSiblings(parent);
     } catch (error) {
       this.pending.delete(batch);
       this.recording.discard(pending.recordingBatch);
@@ -1509,6 +1511,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     reservedNodes: ReadonlyMap<number, Container>,
     reservedGeometry: ReadonlyMap<number, Mesh>,
     reservedMasks: ReadonlyMap<number, Graphics>,
+    orderingParents: Set<Container>,
   ): void {
     switch (command.kind) {
       case "create-object":
@@ -1681,7 +1684,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           command.ordering.creationSequence,
         ]);
         node.zIndex = orderingZIndex(object.ordering);
-        this.sortSiblings(node.parent as Container);
+        orderingParents.add(node.parent as Container);
         this.attachGameplayDraw(object);
         return;
       }
@@ -1708,7 +1711,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         for (const role of object.activeAnimationRoles) {
           applyEvidenceAnimation(object, role, object.animationElapsedByRole.get(role) ?? 0);
         }
-        this.sortSiblings(object.node.parent as Container);
+        orderingParents.add(object.node.parent as Container);
         return;
       }
       case "set-mesh": {

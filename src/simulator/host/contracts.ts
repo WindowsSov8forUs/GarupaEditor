@@ -25,7 +25,7 @@ import type {
   RenderEngineResourceBindings,
 } from "../engine/rendering/renderCommandProducer";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
-import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
+import type { InGameManagerSnapshot, InGamePlaybackState } from "../engine/managers/inGameManager";
 import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
 import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
 import type { GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
@@ -104,6 +104,7 @@ export interface SimulatorEngine {
   advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean>;
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;
   getAdjustedMusicPosition(): SimulatorResult<number>;
+  getPlaybackState(): SimulatorResult<InGamePlaybackState>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;
   /** Completes asynchronous host resource release after synchronous disposal. */

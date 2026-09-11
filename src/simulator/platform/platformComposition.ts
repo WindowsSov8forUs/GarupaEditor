@@ -650,9 +650,9 @@ class MountedSimulatorEngine implements SimulatorEngine {
     return this.controlOverlay.updateTimeline(0);
   }
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
-    const before = this.engine.snapshot();
+    const before = this.engine.getPlaybackState();
     if (before.status !== "ok") return before;
-    const wasPlayable = before.value.managers.playable;
+    const wasPlayable = before.value.playable;
     const stepped = this.engine.step(deltaTimeSeconds, inputFrame);
     if (stepped.status !== "ok") return stepped;
     const startup = this.applyStartupSnapshot();
@@ -667,10 +667,10 @@ class MountedSimulatorEngine implements SimulatorEngine {
     return this.engine.resolveManualInputButton(position);
   }
   private applyStartupSnapshot(): SimulatorResult<void> {
-    const snapshot = this.engine.snapshot();
+    const snapshot = this.engine.getPlaybackState();
     if (snapshot.status !== "ok") return snapshot;
-    const startup = snapshot.value.managers.startupDirection;
-    return startup === null ? ok(undefined) : this.combinedScene.applyStartupState(startup.scene);
+    const startup = snapshot.value.startupScene;
+    return startup === null ? ok(undefined) : this.combinedScene.applyStartupState(startup);
   }
   pause(): SimulatorResult<void> {
     const paused = this.engine.pause();
@@ -698,6 +698,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
   getAdjustedMusicPosition(): SimulatorResult<number> {
     return this.engine.getAdjustedMusicPosition();
   }
+  getPlaybackState() { return this.engine.getPlaybackState(); }
   snapshot(): SimulatorResult<SimulatorSnapshot> { return this.engine.snapshot(); }
   dispose(): SimulatorResult<void> {
     if (this.disposed) return this.engine.dispose();

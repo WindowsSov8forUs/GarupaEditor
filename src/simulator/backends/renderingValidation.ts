@@ -237,6 +237,8 @@ export function validateAndFreezeRenderProfile(
   }));
 }
 
+const renderFloat32View = new DataView(new ArrayBuffer(4));
+
 export function createRenderFloat32(value: number): SimulatorResult<RenderFloat32> {
   const rounded = Math.fround(value);
   if (!Number.isFinite(value) || !Number.isFinite(rounded) || rounded !== value) {
@@ -245,8 +247,7 @@ export function createRenderFloat32(value: number): SimulatorResult<RenderFloat3
       "Renderer values must already be frozen at an evidence-confirmed Float32 owner write.",
     );
   }
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
+  const view = renderFloat32View;
   view.setFloat32(0, rounded, false);
   return ok(Object.freeze({
     value: rounded,
@@ -264,10 +265,9 @@ export function validateRenderFloat32(value: RenderFloat32): boolean {
   ) {
     return false;
   }
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
+  const view = renderFloat32View;
   view.setFloat32(0, value.value, false);
-  return view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0") === value.bits;
+  return view.getUint32(0, false) === Number.parseInt(value.bits, 16);
 }
 
 export function freezeRenderVector2(value: RenderVector2): RenderVector2 {
