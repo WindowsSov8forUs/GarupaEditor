@@ -28,6 +28,7 @@ import type {
 import { particleFloat32FromBits } from "../../backends/particleValidation";
 import { selectedParticleRangeLength } from "./particleRangePrefabs";
 import {
+  applyNativeParticleMatrixPoint,
   applyNativeParticleMatrixVector,
   applyNativeParticleSetupScale,
   type ParticleSetupScale,
@@ -35,7 +36,6 @@ import {
   calculateNativeParticleEmitterOrigin,
   calculateNativeParticleHierarchyScale,
   calculateNativeParticleRuntimeTransform,
-  calculateNativeParticleWorldPosition,
   type ParticleHierarchyPositionTransform,
   type ParticleHierarchyTransform,
   type ParticleRuntimeTransform,
@@ -668,6 +668,10 @@ export class DeterministicParticleSimulation {
           runtimeTransform.localToWorld[offset]!, runtimeTransform.localToWorld[offset + 1]!,
           runtimeTransform.localToWorld[offset + 2]!,
         ]))) as NonNullable<ParticleRenderSample["simulationToWorld"]>;
+        const instance = Object.freeze({ ...owner.instance });
+        const ownerSortOrdinal = particleOwnerSortOrdinal(owner.instance);
+        const transformSizeBits = vectorBits(transformSize);
+        const sortingFudgeBits = bits(renderer.m_SortingFudge!);
         for (const particle of runtime.particles) {
           const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
@@ -708,16 +712,16 @@ export class DeterministicParticleSimulation {
           const customData1 = custom === null ? null : customData(custom, 1, normalizedAge, particle.randomSeed);
           // Native local SoA is projected only after integration, using the
           // current system Transform. The sample position remains world-space.
-          const worldPosition = calculateNativeParticleWorldPosition(emitterTransform, parentTransforms, profile.system.scalingMode, particle.position);
+          const worldPosition = applyNativeParticleMatrixPoint(runtimeTransform.localToWorld, particle.position);
           samples.push(Object.freeze({
             particleId: particle.particleId,
             ownerKey: owner.ownerKey,
-            instance: Object.freeze({ ...owner.instance }),
+            instance,
             root: owner.root,
             systemId: identity,
             sourceOrdinal: record.definition.sourceOrdinal!,
             ownerGeneration: owner.generation,
-            ownerSortOrdinal: particleOwnerSortOrdinal(owner.instance),
+            ownerSortOrdinal,
             creationSequence: particle.creationSequence,
             position: vectorBits([...worldPosition]),
             nativeOwnerHierarchy: resetRootTransform !== false || owner.instance.kind === "game-clear",
@@ -727,7 +731,7 @@ export class DeterministicParticleSimulation {
             ...(rendererWorldBounds === undefined ? {} : { rendererWorldBounds }),
             size: vectorBits(size),
             sizeBeforeTransform,
-            transformSize: vectorBits(transformSize),
+            transformSize: transformSizeBits,
             rotation: vectorBits(particle.rotation),
             color: colorBits(color),
             agePercentBits: bits(particle.agePercent),
@@ -736,7 +740,7 @@ export class DeterministicParticleSimulation {
             uvFrame,
             sortingOrder: renderer.m_SortingOrder,
             sortingLayerId: renderer.m_SortingLayerID!,
-            sortingFudgeBits: bits(renderer.m_SortingFudge!),
+            sortingFudgeBits,
             rendererSortDistanceBits,
             rendererPriority: renderer.m_RendererPriority!,
             renderMode: renderer.m_RenderMode,

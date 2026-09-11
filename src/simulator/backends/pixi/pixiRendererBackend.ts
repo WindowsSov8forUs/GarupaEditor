@@ -190,7 +190,7 @@ interface PixiHudVisual {
   gameClearSampledPhaseSeconds: number | null;
   gameClearAdditionalState: GameClearAdditionalState | "base-only";
   gameClearAdditionalClipName: string | null;
-  gameClearChannelValuesBits: readonly string[];
+  gameClearChannelValues: readonly number[];
   gameClearChannelDispositionCounts: Readonly<Record<string, number>>;
   fillRatios: readonly [number, number];
 }
@@ -1127,7 +1127,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ? value.hudVisual.gameClearAdditionalClipName
         : null,
       hudGameClearChannelValuesBits: value.hudVisual?.kind === "game-clear"
-        ? value.hudVisual.gameClearChannelValuesBits
+        ? Object.freeze(value.hudVisual.gameClearChannelValues.map(float32LittleEndianBytesHex))
         : null,
       hudGameClearChannelDispositionCounts: value.hudVisual?.kind === "game-clear"
         ? value.hudVisual.gameClearChannelDispositionCounts
@@ -2788,7 +2788,8 @@ function applyGameClearGraphSample(
   visual.gameClearSampledPhaseSeconds = sample.phaseSeconds;
   visual.gameClearAdditionalState = sample.state;
   visual.gameClearAdditionalClipName = sample.clipName;
-  visual.gameClearChannelValuesBits = Object.freeze(sample.values.map(float32LittleEndianBytesHex));
+  // Encode diagnostic bytes only when an explicit snapshot is requested.
+  visual.gameClearChannelValues = sample.values;
   visual.gameClearChannelDispositionCounts = Object.freeze(Object.fromEntries(
     Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
   ));
@@ -3029,7 +3030,7 @@ function createHudVisual(
     gameClearSampledPhaseSeconds: null,
     gameClearAdditionalState: "base-only",
     gameClearAdditionalClipName: null,
-    gameClearChannelValuesBits: Object.freeze([]),
+    gameClearChannelValues: Object.freeze([]),
     gameClearChannelDispositionCounts: Object.freeze({}),
     fillRatios: Object.freeze([0, 0]),
   };

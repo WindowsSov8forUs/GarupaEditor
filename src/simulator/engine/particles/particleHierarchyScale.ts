@@ -49,19 +49,6 @@ export function calculateNativeParticleEmitterOrigin(
   return position;
 }
 
-// Reverse BND-C83: runtime68 -> worker128 -> 12CEDFC..12CEE68.
-// This is the pre-pivot world point, with the original matrix preparation and
-// X + (Y + (Z + translation)) grouping. Mode1 does not normalize its quaternion.
-export function calculateNativeParticleWorldPosition(
-  self: ParticleHierarchyPositionTransform,
-  rootToImmediateParents: readonly ParticleHierarchyPositionTransform[],
-  scalingMode: 0 | 1,
-  localPosition: Vector3,
-): Vector3 {
-  const transform = calculateNativeParticleRuntimeTransform(self, rootToImmediateParents, scalingMode);
-  return applyNativeParticleMatrixPoint(transform.localToWorld, localPosition);
-}
-
 // Reverse BND-C81/C85: complete runtime68/212/348 preparation for selector0.
 export function calculateNativeParticleRuntimeTransform(
   self: ParticleHierarchyPositionTransform,
