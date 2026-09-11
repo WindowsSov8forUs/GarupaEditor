@@ -49,14 +49,12 @@ export class InGameMusicScoreController {
     this.currentBpmStringValue = this.basicBpmStringValue;
     this.nextBpmValue = this.basicBpmValue;
     this.nextBpmStringValue = this.basicBpmStringValue;
-    let launcherLead = Math.fround(Math.fround(
+    const launcherLead = Math.fround(Math.fround(
       Math.fround(noteArrivalSeconds * this.basicBpmValue) / 240,
     ) * MUSIC_BAR_DIVISION_COUNT);
-    while (launcherLead >= MUSIC_BAR_DIVISION_COUNT) {
-      launcherLead = Math.fround(launcherLead - MUSIC_BAR_DIVISION_COUNT);
-      this.launcherMusicBarProgressValue += 1;
-    }
-    this.launcherMusicBeatProgressValue = launcherLead;
+    // Carry every complete bar without an unbounded Float32 subtraction loop.
+    this.launcherMusicBarProgressValue = Math.floor(launcherLead / MUSIC_BAR_DIVISION_COUNT);
+    this.launcherMusicBeatProgressValue = Math.fround(launcherLead % MUSIC_BAR_DIVISION_COUNT);
     this.tempoCommands = chart.noteBatches.flatMap((batch) => {
       const command = batch.informationList.find(isBpmCommand);
       return command === undefined ? [] : [command];

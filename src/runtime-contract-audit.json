@@ -17541,7 +17541,7 @@
     {
       "id": "RCB-0835",
       "file": "src/simulator/engine/managers/inGameMusicScoreController.ts",
-      "line": 78,
+      "line": 76,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17562,7 +17562,7 @@
     {
       "id": "RCB-0836",
       "file": "src/simulator/engine/managers/inGameMusicScoreController.ts",
-      "line": 108,
+      "line": 106,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
