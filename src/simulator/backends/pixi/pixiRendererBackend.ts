@@ -1,3 +1,4 @@
+import { createSerializedDialog, type DialogColor } from "../../../components/pixi/SerializedDialog";
 import {
   Container,
   Graphics,
@@ -2449,108 +2450,14 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     buttonTexts: readonly string[],
     annotationText: string | null,
   ): void {
-    const dialog = new Container({ label: profile.identity, sortableChildren: true });
-    dialog.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
-    dialog.scale.set(snapshot.layout.controlScale);
-    dialog.zIndex = 5;
-    graph.addChild(dialog);
-
-    const windowComponent = new Container({ label: paths.window, sortableChildren: true });
-    windowComponent.position.set(profile.window.position[0], profile.window.position[1]);
-    windowComponent.zIndex = profile.window.depth;
-    const window = new NineSliceSprite({
-      texture: this.pauseTextures.window,
-      ...CURRENT_PAUSE_ATLAS_BORDERS.window,
-      width: profile.window.size[0], height: profile.window.size[1],
-      anchor: { x: 0.5, y: 0.5 },
-      label: profile.identity === "RetryablePauseDialog" ? "pause-window"
-        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-window" : "abort-confirm-window",
-    });
-    windowComponent.addChild(window);
-    dialog.addChild(windowComponent);
-
-    const headerComponent = new Container({ label: paths.header, sortableChildren: true });
-    headerComponent.position.set(profile.header.position[0], profile.header.position[1]);
-    headerComponent.zIndex = profile.header.depth;
-    const header = new NineSliceSprite({
-      texture: this.pauseTextures.header,
-      ...CURRENT_PAUSE_ATLAS_BORDERS.header,
-      width: profile.header.size[0], height: profile.header.size[1],
-      anchor: { x: 0.5, y: 0.5 }, label: "pause-dialog-header",
-    });
-    headerComponent.addChild(header);
-    windowComponent.addChild(headerComponent);
-
-    const titlePath = paths.title;
-    const titleComponent = new Container({ label: titlePath });
-    titleComponent.position.set(profile.title.position[0], profile.title.position[1]);
-    titleComponent.zIndex = profile.title.depth;
-    const title = this.textBox(titleText, profile.title.fontSize, 0x333333,
-      profile.identity === "RetryablePauseDialog" ? "pause-title"
-        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-title" : "abort-confirm-title",
-      profile.title.size[0], profile.title.size[1], profile.title.pivot);
-    title.anchor.set(profile.title.pivot === "left" ? 0 : 0.5, 0.5);
-    titleComponent.addChild(title);
-    headerComponent.addChild(titleComponent);
-
-    const contentComponent = new Container({ label: paths.content });
-    contentComponent.position.set(profile.content.position[0], profile.content.position[1]);
-    contentComponent.zIndex = profile.content.depth;
-    const content = this.textBox(contentText, profile.content.fontSize, 0x333333,
-      profile.identity === "RetryablePauseDialog" ? "pause-message"
-        : profile.identity === "SelectableCommonDialog" ? "retry-confirm-message" : "abort-confirm-message",
-      profile.content.size[0], profile.content.size[1], profile.content.pivot);
-    content.anchor.set(profile.content.pivot === "left" ? 0 : 0.5, 0.5);
-    contentComponent.addChild(content);
-    windowComponent.addChild(contentComponent);
-
-    if ("annotation" in profile && annotationText !== null && paths.annotation !== undefined) {
-      const annotationComponent = new Container({ label: paths.annotation });
-      annotationComponent.position.set(profile.annotation.position[0], profile.annotation.position[1]);
-      annotationComponent.zIndex = profile.annotation.depth;
-      const annotation = this.textBox(
-        annotationText, profile.annotation.fontSize, 0x555555, "abort-confirm-annotation",
-        profile.annotation.size[0], profile.annotation.size[1], profile.annotation.pivot,
-      );
-      annotation.anchor.set(0.5);
-      annotationComponent.addChild(annotation);
-      windowComponent.addChild(annotationComponent);
-    }
-
-    const buttonGroup = new Container({ label: `${profile.identity}/Buttons`, sortableChildren: true });
-    windowComponent.addChild(buttonGroup);
-    profile.buttons.forEach((buttonProfile, index) => {
-      const path = "abortButton" in paths && index === 0 ? paths.abortButton
-        : "retryButton" in paths && index === 1 ? paths.retryButton
-        : "resumeButton" in paths && index === 2 ? paths.resumeButton
-        : index === 0 ? paths.cancelButton : paths.confirmButton;
-      if (path === undefined) throw new Error("Pause serialized button component path is missing.");
-      const component = new Container({ label: path, sortableChildren: true });
-      component.position.set(buttonProfile.position[0], buttonProfile.position[1]);
-      component.zIndex = buttonProfile.spriteDepth;
-      const texture = buttonProfile.spriteName === "button_pink" ? this.pauseTextures.pink : this.pauseTextures.gray;
-      const legacy = profile.identity === "RetryablePauseDialog"
-        ? ["pause-abort", "pause-retry", "pause-resume"][index]!
-        : profile.identity === "SelectableCommonDialog"
-          ? ["retry-cancel", "retry-confirm"][index]!
-          : ["abort-cancel", "abort-confirm"][index]!;
-      const button = new NineSliceSprite({
-        texture, ...CURRENT_PAUSE_ATLAS_BORDERS.button,
-        width: buttonProfile.spriteSize[0], height: buttonProfile.spriteSize[1],
-        anchor: { x: 0.5, y: 0.5 }, label: legacy,
-      });
-      button.zIndex = buttonProfile.spriteDepth;
-      const caption = this.textBox(
-        buttonTexts[index]!, buttonProfile.fontSize,
-        buttonProfile.spriteName === "button_pink" ? 0xffffff : 0x555555, `${legacy}-label`,
-        buttonProfile.labelSize[0], buttonProfile.labelSize[1], "center",
-      );
-      caption.anchor.set(0.5);
-      caption.position.set(buttonProfile.labelPosition[0], buttonProfile.labelPosition[1]);
-      caption.zIndex = buttonProfile.labelDepth;
-      component.addChild(button, caption);
-      buttonGroup.addChild(component);
-    });
+    createSerializedDialog(graph, snapshot.layout, profile, {
+      ...paths,
+      buttons: paths.abortButton !== undefined
+        ? [paths.abortButton, paths.retryButton!, paths.resumeButton!]
+        : [paths.cancelButton!, paths.confirmButton!],
+    }, titleText, contentText,
+      buttonTexts, annotationText, this.pauseTextures, CURRENT_PAUSE_ATLAS_BORDERS,
+      { title: 0x333333, content: 0x333333, annotation: 0x555555, button: 0x555555, positiveButton: 0xffffff }, this.textBox.bind(this));
   }
   private text(value: string, size: number, fill: number, label: string): Text {
     return new Text({
@@ -2568,7 +2475,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private textBox(
     value: string,
     size: number,
-    fill: number,
+    fill: DialogColor,
     label: string,
     width: number,
     height: number,
@@ -2580,7 +2487,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const text = new Text({
       text: value,
       style: {
-        fill: linearTintFromSrgbColor(fill),
+        fill: typeof fill === "number" ? linearTintFromSrgbColor(fill) : linearTintFromSrgbChannels(...fill),
         fontFamily: this.fontFamily,
         fontSize: size,
         fontWeight: "normal",
