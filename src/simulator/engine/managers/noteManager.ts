@@ -1,5 +1,11 @@
 import { SyncLineConnectionRules, selectDirectionalSyncEndpoints } from "../rendering/syncLineConnectionRules";
 import type { HoldSoundEvent } from "../audio/audioCommandProducer";
+import type { ManualInputPosition } from "../data/manualInput";
+
+export interface ManualCandidateExtensionFrame {
+  readonly reserved: Set<string>;
+  readonly selected: Map<number, string | null>;
+}
 import {
   AfterNoteType,
   ButtonType,
@@ -191,6 +197,8 @@ export class NoteManager {
   >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
   private manualNoteDeactivatedOwner: ((note: NoteBase) => void) | null = null;
+  private manualCandidateExtension: ((ordinary: NoteBase | null, slide: NoteBase | null,
+    position: ManualInputPosition, projection: ManualCandidateExtensionFrame, fingerId: number) => SimulatorResult<NoteBase | null>) | null = null;
   private readonly ordinaryRenderMotionStates = new WeakMap<
     NoteBase,
     OrdinaryRenderedNoteState
@@ -793,8 +801,11 @@ export class NoteManager {
   }
 
   selectManualCandidateBeforeJudgement(
-    buttonType: ButtonTypeValue,
+    buttonType: ButtonTypeValue | null,
     projectedFingerOwners?: ReadonlyMap<NoteBase, number>,
+    position?: ManualInputPosition,
+    reservedExtensions?: ManualCandidateExtensionFrame,
+    fingerId = -1,
   ): SimulatorResult<NoteBase | null> {
     let ordinaryCandidate: NoteBase | null = null;
     let ordinaryDistance = Number.POSITIVE_INFINITY;
@@ -802,7 +813,7 @@ export class NoteManager {
     const musicPosition = Math.fround(this.musicScoreController.musicPosition);
 
     for (const note of this.activeNotesValue) {
-      if (!note.isContainsButton(buttonType)) {
+      if (buttonType === null || !note.isContainsButton(buttonType)) {
         continue;
       }
       if (note instanceof NoteSlide) {
@@ -835,6 +846,9 @@ export class NoteManager {
         ordinaryDistance = distance;
       }
     }
+    if (this.manualCandidateExtension !== null && position !== undefined && reservedExtensions !== undefined) {
+      return this.manualCandidateExtension(ordinaryCandidate, slideCandidate, position, reservedExtensions, fingerId);
+    }
     if (ordinaryCandidate === null) {
       return ok(slideCandidate);
     }
@@ -849,19 +863,26 @@ export class NoteManager {
   }
 
   private selectNearestRenderedCandidate(first: NoteBase, second: NoteBase): SimulatorResult<"first" | "second"> {
-    const localY = (note: NoteBase): number | undefined => {
-      const source = note instanceof NoteSlide ? note.manualCandidateSource : note.noteInformation;
-      const index = source === null ? undefined : this.manualSlideSources.get(source)?.sourceIndex;
-      return index !== undefined && index >= 0
-        ? this.ordinarySlideRenderStates.get(note)?.[index]?.lifecycle.renderedTransform.position.y.value
-        : this.ordinaryRenderMotionStates.get(note)?.renderedTransform.position.y.value;
-    };
-    const firstY = localY(first);
-    const secondY = localY(second);
+    const firstY = this.getManualCandidatePresentation(first)?.y;
+    const secondY = this.getManualCandidatePresentation(second)?.y;
     return firstY === undefined || secondY === undefined
       ? integrityFailure("manual.candidate-button-owner-unavailable", ["D04", "D10", "MJ04"],
           "Near-line arbitration requires both candidates' committed local positions.")
       : this.slideNoteManager.selectNearJudgeLineSource(firstY, secondY);
+  }
+
+  setManualCandidateExtension(selector: NonNullable<NoteManager["manualCandidateExtension"]>): void {
+    this.manualCandidateExtension = selector;
+  }
+
+  getManualCandidatePresentation(note: NoteBase): { source: NoteInformation; y: number | undefined } | null {
+    const source = note instanceof NoteSlide ? note.manualCandidateSource : note.noteInformation;
+    if (source === null) return null;
+    const index = this.manualSlideSources.get(source)?.sourceIndex;
+    const y = index !== undefined && index >= 0
+      ? this.ordinarySlideRenderStates.get(note)?.[index]?.lifecycle.renderedTransform.position.y.value
+      : this.ordinaryRenderMotionStates.get(note)?.renderedTransform.position.y.value;
+    return { source, y };
   }
 
   snapshot(): NoteManagerSnapshot {
@@ -891,6 +912,7 @@ export class NoteManager {
   }
 
   dispose(): SimulatorResult<void> {
+    this.manualCandidateExtension = null;
     for (const pool of this.notePoolsValue.values()) {
       for (const note of pool.objects) {
         const reset = note.resetForDispose();

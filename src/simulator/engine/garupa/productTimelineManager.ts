@@ -40,6 +40,8 @@ import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/fr
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaRenderInputAdapter } from "./garupaRenderInputAdapter";
 import { advanceSlideStopWait } from "../rendering/ordinarySlideChildLifecycle";
+import type { NoteBase } from "../notes/noteBase";
+import type { ManualCandidateExtensionFrame } from "../managers/noteManager";
 
 interface ProductTimeoutState { readonly seconds: number; readonly frames: number; readonly stopWait: number; readonly boundFlick: boolean }
 
@@ -154,6 +156,7 @@ export class GarupaProductTimelineManager {
     private readonly isMoveTime: () => boolean = () => false,
     private readonly originalHandledTouch: (fingerId: number) => boolean = () => false,
     private readonly manualGeometry: SimulatorManualInputGeometryBackend | null = null,
+    private readonly selectedCandidate?: (fingerId: number) => string | null | undefined,
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
@@ -553,7 +556,9 @@ export class GarupaProductTimelineManager {
       if (this.fingers.has(touch.fingerId)) {
         return rejected("simulator.garupa-extension.duplicate-finger-began", "One product finger cannot Begin twice before Ended.");
       }
-      const candidate = this.selectCandidate(touch.position, null);
+      const prepared = this.selectedCandidate?.(touch.fingerId);
+      const candidate = prepared === undefined ? this.selectCandidate(touch.position, null)
+        : ok(prepared === null ? null : this.chart.nodeByIdentity.get(prepared)!);
       if (candidate.status !== "ok") return candidate;
       if (candidate.value === null) return ok(undefined);
       const contact = this.judgeContact(candidate.value, judgementPosition, currentBpm);
@@ -746,6 +751,18 @@ export class GarupaProductTimelineManager {
     position: ManualInputPosition,
     chainIdentity: string | null,
   ): SimulatorResult<GarupaProductNode | null> {
+    const domains = this.selectCandidateDomains(position, chainIdentity);
+    if (domains.status !== "ok") return domains;
+    const { ordinary, slide } = domains.value;
+    if (ordinary === null) return ok(slide);
+    if (slide === null) return ok(ordinary);
+    const selected = this.slideJudge.selectNearJudgeLineSource(
+      this.render!.getInputPositionY(ordinary)!, this.render!.getInputPositionY(slide)!);
+    return selected.status === "ok" ? ok(selected.value === "first" ? ordinary : slide) : selected;
+  }
+
+  private selectCandidateDomains(position: ManualInputPosition, chainIdentity: string | null,
+    reserved?: ReadonlySet<string>): SimulatorResult<{ ordinary: GarupaProductNode | null; slide: GarupaProductNode | null }> {
     let ordinary: GarupaProductNode | null = null;
     let slide: GarupaProductNode | null = null;
     const musicPosition = this.pendingManualFrame?.musicPosition ?? this.music.musicPosition;
@@ -754,6 +771,7 @@ export class GarupaProductTimelineManager {
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
       if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
+      if (reserved?.has(node.chainIdentity ?? node.identity)) continue;
       if (this.timeouts.get(node.identity)?.boundFlick === true || this.render?.getInputPositionY(node) == null) continue;
       if (chainIdentity === null) {
         if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
@@ -772,10 +790,54 @@ export class GarupaProductTimelineManager {
         if (selected.value === "second") slide = node;
       }
     }
-    if (ordinary === null) return ok(slide);
-    if (slide === null) return ok(ordinary);
-    const selected = nearest(ordinary, slide);
-    return selected.status === "ok" ? ok(selected.value === "first" ? ordinary : slide) : selected;
+    return ok({ ordinary, slide });
+  }
+
+  arbitrateBegan(ordinary: NoteBase | null, slide: NoteBase | null, position: ManualInputPosition,
+    projection: ManualCandidateExtensionFrame, fingerId: number,
+    readOriginal: (note: NoteBase) => { source: NoteInformation; y: number | undefined } | null
+  ): SimulatorResult<NoteBase | null> {
+    projection.selected.set(fingerId, null);
+    const product = this.selectCandidateDomains(position, null, projection.reserved);
+    if (product.status !== "ok") return product;
+    type Candidate = { original: NoteBase | null; node: GarupaProductNode | null; absolutePosition: number; y: number | undefined };
+    const native = (note: NoteBase | null): Candidate | null => {
+      if (note === null) return null;
+      const view = readOriginal(note);
+      return view === null ? null : { original: note, node: null, absolutePosition: view.source.absolutePos, y: view.y };
+    };
+    const extended = (node: GarupaProductNode | null): Candidate | null => node === null ? null
+      : { original: null, node, absolutePosition: node.absolutePosition, y: this.render!.getInputPositionY(node)! };
+    const originalNormal = native(ordinary), originalSlide = native(slide);
+    if (ordinary !== null && originalNormal === null || slide !== null && originalSlide === null) {
+      return rejected("manual.candidate-button-owner-unavailable",
+        "Unified input arbitration requires each original candidate's committed presentation.");
+    }
+    const extendedNormal = extended(product.value.ordinary), extendedSlide = extended(product.value.slide);
+    const nearest = (first: Candidate | null, second: Candidate | null): SimulatorResult<Candidate | null> => {
+      if (first === null) return ok(second);
+      if (second === null) return ok(first);
+      if (first.y === undefined || second.y === undefined) return rejected("manual.candidate-button-owner-unavailable",
+        "Near-line arbitration requires both candidates' committed local positions.");
+      const selected = this.slideJudge.selectNearJudgeLineSource(first.y, second.y);
+      return selected.status === "ok" ? ok(selected.value === "first" ? first : second) : selected;
+    };
+    const music = this.pendingManualFrame?.musicPosition ?? this.music.musicPosition;
+    const normal = originalNormal === null ? extendedNormal : extendedNormal === null ? originalNormal
+      : Math.abs(Math.fround(extendedNormal.absolutePosition - music)) < Math.abs(Math.fround(originalNormal.absolutePosition - music))
+        ? extendedNormal : originalNormal;
+    const selectedSlide = nearest(originalSlide, extendedSlide);
+    if (selectedSlide.status !== "ok") return selectedSlide;
+    const selected = nearest(normal, selectedSlide.value);
+    if (selected.status !== "ok") return selected;
+    if (selected.value === null || selected.value.original !== null) return ok(selected.value?.original ?? null);
+    const node = selected.value.node!;
+    projection.selected.set(fingerId, node.identity);
+    const contact = this.judgeContact(node, this.pendingManualFrame?.judgementPosition ??
+      this.music.getAdjustedMusicPosition(this.judgementAdjustValueB), this.pendingManualFrame?.currentBpm ?? this.music.currentBpm);
+    if (contact.status !== "ok") return contact;
+    if (contact.value.result !== NoteResultType.None) projection.reserved.add(node.chainIdentity ?? node.identity);
+    return ok(null);
   }
 
   private judgeNode(node: GarupaProductNode, currentPosition: number, currentBpm = this.music.currentBpm) {

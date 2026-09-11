@@ -1140,6 +1140,7 @@ export function createSimulatorEngine(
       () => inGameManager.isMoveTime,
       (fingerId) => inputDispatcher.handledTouch(fingerId),
       backends.manualInputGeometry,
+      (fingerId) => inputDispatcher.extendedCandidate(fingerId),
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -1195,6 +1196,11 @@ export function createSimulatorEngine(
     });
   }
   const inputDispatcher = new GamePlayInputDispatcher(noteManager, tapLaneEffectOwner);
+  if (productTimeline !== null) {
+    noteManager.setManualCandidateExtension((ordinary, slide, position, reserved, fingerId) =>
+      productTimeline!.arbitrateBegan(ordinary, slide, position, reserved, fingerId,
+        note => noteManager.getManualCandidatePresentation(note)));
+  }
   particleCoordinator?.producer.setSlidePresentationReader((source) => {
     const extension = productProfile?.scoringNodeBySource.get(source);
     if (extension?.chainIdentity != null) {

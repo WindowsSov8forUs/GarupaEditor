@@ -167,7 +167,7 @@ Deferred product input retains the adjusted music position and BPM captured when
 The following rules define additional graph/coordinate behaviour. They do not
 exempt ordinary judgement or gesture rules from the original implementation.
 
-Slide contact uses committed shared-lifecycle virtual positions and `SlideNoteManager.Judge`; held normal nodes use the same Perfect/correction gate as `NoteSlide`. Terminal gestures share the perfect-line/origin/leave-grace gate, and directional width uses the original full-distance threshold. Release resolves the current node immediately. Miss deadlines are separate from hit windows: Single uses its elapsed counter; bound standalone Flick uses its seven-frame completion; Slide uses shared midpoint/successor rules, negative-B stop wait and terminal Flick frame count. Miss clears Flash/hold audio until a new Began. These owner states participate in outer-frame rollback and are released with the generation. Source: Reverse `manual-input-runtime-contract-10-1-4` correction files and registered NoteSingle/NoteFlickBase/NoteSlide/NoteSlideAfter instruction slices. The product contact consumer matches 65 committed native spatial rows with the later native clamp rule; the shared terminal gate matches 18 native outputs. This does not close arbitration between original and extended owners or establish whole-simulator equivalence.
+Slide contact uses committed shared-lifecycle virtual positions and `SlideNoteManager.Judge`; held normal nodes use the same Perfect/correction gate as `NoteSlide`. Terminal gestures share the perfect-line/origin/leave-grace gate, and directional width uses the original full-distance threshold. Release resolves the current node immediately. Miss deadlines are separate from hit windows: Single uses its elapsed counter; bound standalone Flick uses its seven-frame completion; Slide uses shared midpoint/successor rules, negative-B stop wait and terminal Flick frame count. Miss clears Flash/hold audio until a new Began. These owner states participate in outer-frame rollback and are released with the generation. Source: Reverse `manual-input-runtime-contract-10-1-4` correction files and registered NoteSingle/NoteFlickBase/NoteSlide/NoteSlideAfter instruction slices. The product contact consumer matches 65 committed native spatial rows with the later native clamp rule; the shared terminal gate matches 18 native outputs. These local comparisons do not establish whole-simulator equivalence.
 
 - A chain owns one finger continuity state. Hidden nodes are geometry anchors.
   Every visible node is judged by its own type.
@@ -183,8 +183,17 @@ Slide contact uses committed shared-lifecycle virtual positions and `SlideNoteMa
   Continuous lane coordinate is derived from world X and existing lane spacing.
   A span accepts X from half a lane before its start through half a lane after its
   end. It is not snapped to a button.
-- Overlap arbitration is stable by hit position, chart item identity and authored
-  connection index. Equal-position visible nodes are processed in authored order
+- Original and extended candidates share the original input preflight: ordinary
+  candidates compare distance from the captured unadjusted music position;
+  Slide candidates and the final cross-family choice compare committed Y
+  distance from the center gameplay button. Existing original scan winners
+  precede appended extension candidates on ties. Selection happens before the
+  hit-window check, with one shared per-frame extension reservation. The exact
+  selected extended identity is committed by the input dispatcher and consumed
+  by the deferred product owner without reselection. A selected original owner
+  with no accepted judgement does not cause a second extension attempt.
+  MJ04/MJ06 source-rule checks cover same-domain ties and two-finger reservation
+  through deferred consumption. Equal-position visible nodes are processed in authored order
   within one outer-frame transaction.
 - Miss/timeout, Combo, Life, score quota, SE and particles continue through the
   existing managers. The product owner contributes only candidate geometry,

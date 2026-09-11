@@ -20,7 +20,7 @@ import {
   type ManualNoteContinuationPlan,
   type ManualNoteTouchInput,
 } from "../notes/noteBase";
-import type { NoteManager } from "./noteManager";
+import type { ManualCandidateExtensionFrame, NoteManager } from "./noteManager";
 import type {
   TapLaneEffectOwner,
   TapLaneEffectTransaction,
@@ -247,6 +247,7 @@ interface GamePlayButtonProjection {
 }
 
 interface GamePlayButtonTouchPlan {
+  readonly blocksExtension?: boolean;
   readonly phase: "began" | "moved" | "ended" | "none";
   readonly touchPhase: ManualNoteTouchInput["phase"];
   readonly deltaTimeSeconds: number | null;
@@ -266,6 +267,7 @@ interface GamePlayInputOperation {
 }
 
 interface GamePlayInputPlan extends ManualInputDispatchPlan {
+  readonly extendedSelections: readonly (readonly [number, string | null])[];
   readonly operations: readonly GamePlayInputOperation[];
   readonly judgementTransaction: ManualJudgementTransaction;
   readonly tapLaneEffectTransaction: TapLaneEffectTransaction | null;
@@ -287,10 +289,15 @@ export interface GamePlayInputDispatcherSnapshot {
 }
 
 export class GamePlayInputDispatcher implements ManualInputDispatcher {
+  private readonly extendedSelections = new Map<number, string | null>();
   private readonly handledTouches = new Set<number>();
 
   handledTouch(fingerId: number): boolean {
     return this.handledTouches.has(fingerId);
+  }
+
+  extendedCandidate(fingerId: number): string | null | undefined {
+    return this.extendedSelections.get(fingerId);
   }
   private readonly buttonsValue: readonly GamePlayButton[];
   private readonly ownedButtons = new WeakSet<GamePlayButton>();
@@ -365,6 +372,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     const projectedInputButtons = [...this.buttonWithFingerId];
     const projections = new Map<GamePlayButton, GamePlayButtonProjection>();
     const projectedFingerOwners = new Map<NoteBase, number>();
+    const reservedExtensions: ManualCandidateExtensionFrame = { reserved: new Set(), selected: new Map() };
     const operations: GamePlayInputOperation[] = [];
     const tapLaneEffectEvents: TapLaneEffectInputEvent[] = [];
 
@@ -389,11 +397,16 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
             projectedFingerOwners,
             judgementTransaction,
             frame.deltaTimeSeconds,
+            reservedExtensions,
           );
           if (planned.status !== "ok") {
             return planned;
           }
           buttonPlan = planned.value;
+        } else {
+          const selected = this.noteManager.selectManualCandidateBeforeJudgement(
+            null, projectedFingerOwners, touch.position, reservedExtensions, touch.fingerId);
+          if (selected.status !== "ok") return selected;
         }
       } else {
         inputButton = projectedInputButtons[touch.fingerId] ?? null;
@@ -426,6 +439,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     if (tapLaneEffect.status !== "ok") return tapLaneEffect;
 
     const plan: GamePlayInputPlan = Object.freeze({
+      extendedSelections: Object.freeze([...reservedExtensions.selected]),
       touchCount: frame.touches.length,
       operations: Object.freeze(operations),
       judgementTransaction,
@@ -448,8 +462,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     const laneEffectExternal = ownedPlan.tapLaneEffectTransaction?.commitBackend() ?? ok(undefined);
     if (laneEffectExternal.status !== "ok") return laneEffectExternal;
     this.handledTouches.clear();
+    this.extendedSelections.clear();
+    for (const [finger, node] of ownedPlan.extendedSelections) this.extendedSelections.set(finger, node);
     for (const operation of ownedPlan.operations) {
-      if (operation.buttonPlan?.note !== null && operation.buttonPlan?.note !== undefined &&
+      if (operation.buttonPlan?.blocksExtension === true ||
+          operation.buttonPlan?.note !== null && operation.buttonPlan?.note !== undefined &&
           operation.buttonPlan.phase !== "none") this.handledTouches.add(operation.fingerId);
       if (operation.inputButton !== null) {
         this.buttonWithFingerId[operation.fingerId] = operation.inputButton;
@@ -476,6 +493,8 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
 
   dispose(): void {
     this.buttonWithFingerId.fill(null);
+    this.handledTouches.clear();
+    this.extendedSelections.clear();
     for (const button of this.buttonsValue) {
       button.dispose();
     }
@@ -503,6 +522,7 @@ export class GamePlayButton {
     projectedFingerOwners: Map<NoteBase, number>,
     judgementTransaction: ManualJudgementTransaction,
     deltaTimeSeconds: number | null,
+    reservedExtensions: ManualCandidateExtensionFrame = { reserved: new Set(), selected: new Map() },
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     if (this.noteManager === undefined) {
       return integrityFailure(
@@ -514,6 +534,9 @@ export class GamePlayButton {
     const selected = this.noteManager.selectManualCandidateBeforeJudgement(
       this.buttonType,
       projectedFingerOwners,
+      touch.position,
+      reservedExtensions,
+      touch.fingerId,
     );
     if (selected.status !== "ok") {
       return selected;
@@ -537,7 +560,7 @@ export class GamePlayButton {
     const projectedFinger = projectedFingerOwners.get(candidate) ?? candidate.fingerId;
     if (judgement.value.outcome === "none" || projectedFinger >= 0) {
       projection.touchNotes[touch.fingerId] = null;
-      return ok(noNotePlan("began", touch, deltaTimeSeconds));
+      return ok(noNotePlan("began", touch, deltaTimeSeconds, true));
     }
     const commitPreflight = candidate.preflightManualTouchBeganCommit(
       beganInput,
@@ -739,8 +762,10 @@ function noNotePlan(
   phase: GamePlayButtonTouchPlan["phase"],
   touch: PreparedManualInputTouch,
   deltaTimeSeconds: number | null,
+  blocksExtension = false,
 ): GamePlayButtonTouchPlan {
   return Object.freeze({
+    blocksExtension,
     phase,
     touchPhase: touch.phase,
     deltaTimeSeconds,
