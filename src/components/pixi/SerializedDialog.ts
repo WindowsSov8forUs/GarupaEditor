@@ -131,3 +131,34 @@ export function createSerializedDialog(
     });
   return dialog;
 }
+
+/** Original AbstractDialog presentation; time is supplied by its host. */
+export class SerializedDialogTransition {
+  private startedAt = 0;
+  private opening = false;
+  private scaleFrom = 0;
+  private alphaFrom = 0.01;
+
+  constructor(private readonly window: Container, private readonly cover: Container) {
+    window.scale.set(0);
+    cover.alpha = 0;
+  }
+
+  setOpen(open: boolean, now: number): void {
+    if (this.opening === open) return;
+    this.scaleFrom = this.window.scale.x;
+    this.alphaFrom = open ? 0.01 : this.cover.alpha;
+    this.opening = open;
+    this.startedAt = now;
+  }
+
+  update(now: number): boolean {
+    // Reverse 5514c30b: linear DOScale 0.15 s, background fade 0.14 s.
+    const elapsed = Math.max(0, now - this.startedAt);
+    const scalePhase = Math.min(1, elapsed / 0.15);
+    const fadePhase = Math.min(1, elapsed / 0.14);
+    this.window.scale.set(this.scaleFrom + ((this.opening ? 1 : 0) - this.scaleFrom) * scalePhase);
+    this.cover.alpha = this.alphaFrom + ((this.opening ? 0.5 : 0) - this.alphaFrom) * fadePhase;
+    return this.opening || elapsed < 0.15;
+  }
+}

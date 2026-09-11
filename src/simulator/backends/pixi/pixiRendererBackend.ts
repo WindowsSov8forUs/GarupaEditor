@@ -1,4 +1,4 @@
-import { createSerializedDialog, type DialogColor } from "../../../components/pixi/SerializedDialog";
+import { createSerializedDialog, SerializedDialogTransition, type DialogColor } from "../../../components/pixi/SerializedDialog";
 import {
   Container,
   Graphics,
@@ -67,6 +67,7 @@ import {
 import {
   CURRENT_PAUSE_ATLAS_BORDERS,
   CURRENT_PAUSE_SERIALIZED_GRAPHS,
+  CURRENT_PAUSE_DIALOG_COLORS,
 } from "../resources/currentPauseSerializedProfile";
 import {
   CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
@@ -2099,6 +2100,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private readonly rehearsalRoot = new Container({ label: "rehearsal-control-root", sortableChildren: true });
   private readonly modalRoot = new Container({ label: "pause-modal-root", sortableChildren: true });
   private readonly persistentModalGraphs = new Map<string, Container>();
+  private readonly modalTransitions = new Map<string, SerializedDialogTransition>();
   private readonly autoLiveCaptionRoot: Container | null;
   private readonly pauseButton: Sprite;
   private readonly returnButton: Sprite | null;
@@ -2288,6 +2290,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
       : null;
     this.rebuildModal(snapshot, countdownNumber);
+    this.updateModalTransitions(snapshot);
     return ok(undefined);
   }
 
@@ -2298,13 +2301,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.root.removeFromParent();
     this.root.destroy({ children: true });
     this.persistentModalGraphs.clear();
+    this.modalTransitions.clear();
     return ok(undefined);
   }
 
   private rebuildModal(snapshot: PauseControlSceneSnapshot, countdownNumber: number | null): void {
     const graphKey = snapshot.state === "resume-countdown" ? "resume-countdown" : snapshot.state;
-    this.modalRoot.visible = snapshot.state !== "playing";
-    for (const [key, graph] of this.persistentModalGraphs) graph.visible = key === graphKey;
+    for (const [key, graph] of this.persistentModalGraphs) {
+      if (!this.modalTransitions.has(key)) graph.visible = key === graphKey;
+    }
     if (snapshot.state === "playing") return;
     const existing = this.persistentModalGraphs.get(graphKey);
     if (existing !== undefined) {
@@ -2323,12 +2328,12 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
       owner.scale.set(snapshot.layout.controlScale);
       const contents = new Container({ label: "Contents", sortableChildren: true, visible: false });
-      const fill = new Graphics({ label: "Contents/Fill" }).rect(
+      const fill = new Graphics({ label: "Contents/Fill", visible: false }).rect(
         -snapshot.layout.viewportWidth / snapshot.layout.controlScale / 2,
         -snapshot.layout.viewportHeight / snapshot.layout.controlScale / 2,
         snapshot.layout.viewportWidth / snapshot.layout.controlScale,
         snapshot.layout.viewportHeight / snapshot.layout.controlScale,
-      ).fill(0xffffff);
+      ).fill(0x000000);
       fill.alpha = 0;
       fill.zIndex = 0;
       const addCount = (label: string, texture: Texture, x: number): Sprite => {
@@ -2390,7 +2395,17 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         snapshot.words.abort.annotation,
       );
     }
+    const dialog = graph.children.find((child) => child !== cover)!;
+    this.modalTransitions.set(graphKey, new SerializedDialogTransition(dialog.children[0]!, cover));
     graph.sortChildren();
+  }
+
+  private updateModalTransitions(snapshot: PauseControlSceneSnapshot): void {
+    for (const [key, transition] of this.modalTransitions) {
+      transition.setOpen(key === snapshot.state, snapshot.presentationSeconds);
+      this.persistentModalGraphs.get(key)!.visible = transition.update(snapshot.presentationSeconds);
+    }
+    this.modalRoot.visible = this.modalRoot.children.some((graph) => graph.visible);
   }
 
   private updateCountdownGraph(graph: Container, _countdownNumber: number, snapshot: PauseControlSceneSnapshot): void {
@@ -2457,7 +2472,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         : [paths.cancelButton!, paths.confirmButton!],
     }, titleText, contentText,
       buttonTexts, annotationText, this.pauseTextures, CURRENT_PAUSE_ATLAS_BORDERS,
-      { title: 0x333333, content: 0x333333, annotation: 0x555555, button: 0x555555, positiveButton: 0xffffff }, this.textBox.bind(this));
+      CURRENT_PAUSE_DIALOG_COLORS, this.textBox.bind(this));
   }
   private text(value: string, size: number, fill: number, label: string): Text {
     return new Text({

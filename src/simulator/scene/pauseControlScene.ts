@@ -60,6 +60,7 @@ export interface PauseControlLayout {
 }
 
 export interface PauseControlSceneSnapshot {
+  readonly presentationSeconds: number;
   readonly state: PauseControlState;
   readonly surfaceRevision: number;
   readonly mode: SimulatorTimelineControlState["mode"];
@@ -125,6 +126,7 @@ const issuedCommands = new WeakMap<object, IssuedPauseCommand>();
 export class PauseControlSceneOwner {
   private state: PauseControlState = "playing";
   private countdown = Math.fround(0);
+  private presentationSeconds = 0;
   private readonly pressed = new Map<number, PressTarget>();
   private disposed = false;
 
@@ -145,6 +147,7 @@ export class PauseControlSceneOwner {
         "The Pause owner consumes one live owner, exact four-mode state, initial-surface layout, finite non-negative Float32 frame and explicit raw touch array.",
       );
     }
+    this.presentationSeconds += deltaTimeSeconds;
     const commands: Array<PauseControlCommand | RehearsalControlCommand> = [];
     const touches = manualFrame?.touches ?? [];
     const gameplay: ManualInputTouch[] = [];
@@ -244,6 +247,7 @@ export class PauseControlSceneOwner {
   ): PauseControlSceneSnapshot {
     return deepFreeze({
       state: this.state,
+      presentationSeconds: this.presentationSeconds,
       surfaceRevision: layout.surfaceRevision,
       mode,
       playable,

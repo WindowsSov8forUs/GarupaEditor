@@ -78,3 +78,12 @@ export const CURRENT_PAUSE_SERIALIZED_GRAPHS = Object.freeze({
     ]),
   }),
 });
+
+/** Reverse 5514c30b: original UILabel colors, independent of dialog actions. */
+export const CURRENT_PAUSE_DIALOG_COLORS = Object.freeze({
+  title: [0.3137255012989044, 0.3137255012989044, 0.3137255012989044] as const,
+  content: [0.3014705777168274, 0.3014705777168274, 0.3014705777168274] as const,
+  annotation: [0.3014705777168274, 0.3014705777168274, 0.3014705777168274] as const,
+  button: [0.3137255012989044, 0.3137255012989044, 0.3137255012989044] as const,
+  positiveButton: 0xffffff,
+});
