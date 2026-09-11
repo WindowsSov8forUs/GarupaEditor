@@ -4181,10 +4181,21 @@ function applyEvidenceAnimation(
     }
     const visual = object.hudVisual;
     if (state.clearStatus !== 1) {
-      applyGameClearGraphSample(
-        visual,
-        sampleGameClearAdditionalAnimation(profile, state.clearStatus as 2 | 3, elapsedSeconds),
-      );
+      const sample = sampleGameClearAdditionalAnimation(profile, state.clearStatus as 2 | 3, elapsedSeconds);
+      if (visual.gameClearAdditionalClipName !== sample.clipName) {
+        // Both FC/AP states write defaults. In particular, text-out does not
+        // bind the transparent star's scale; it must not retain text-in's 3x.
+        const branch = state.clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+        for (const row of branch.graph.objects) {
+          const node = visual.serializedComponentNodes.get(row.path)!;
+          applyGameClearInitialTransform(node, row);
+          const widget = row.components.find((component) => component.widget !== undefined)?.widget;
+          if (widget !== undefined) {
+            for (const child of node.children) child.alpha = f32FromLittleEndianBytes(widget.color_f32_bits[3]);
+          }
+        }
+      }
+      applyGameClearGraphSample(visual, sample);
     }
     return;
   }
