@@ -2,7 +2,7 @@ import { GameNoteType } from "../chart/types";
 import { buildGarupaSyncInputs, advanceGarupaSyncInputs, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
 import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { slideAxisInterval } from "./slideAxisMesh";
-import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
 import type {
   RenderAnimationRole,
   RenderFloat32,
@@ -276,7 +276,8 @@ export class GarupaRenderInputAdapter {
       const animation = iconOwners.has(node.identity) ? productAnimationBinding(node, objectId, this.resources) : null;
       plans.push({ id: objectId, lifetime: visualOwners.get(node.identity)!.identity, kind: "body", visible: sample.visible,
         position: sample.position, localScale: sample.uniformScale === null ? null : vector3(sample.uniformScale.value, sample.uniformScale.value, 0),
-        binding: frontBinding(node, this.resources, this.noteColor, this.chainByIdentity),
+        binding: frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
+          node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop"),
         animations: animation === null ? [] : [{ ...animation, lifetime: visualOwners.get(node.identity)!.identity }] });
     }
     // Flash is a child of the actual Slide root, including an invisible authored head.
@@ -415,6 +416,7 @@ function frontBinding(
   resources: RenderEngineResourceBindings,
   noteColor: boolean,
   chains: ReadonlyMap<string, GarupaProductSlideChain>,
+  heldSlideHead: boolean,
 ) {
   const chain = node.chainIdentity === null ? undefined : chains.get(node.chainIdentity);
   const chainHead = chain !== undefined && node.connectionIndex === 0;
@@ -426,6 +428,8 @@ function frontBinding(
     : node.type === "Skill" ? "note_skill"
     : noteColor && node.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
   const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && node.width <= 7;
+  if (chainHead && heldSlideHead) return noteSlideHeldBodyBinding(resources, node.width,
+    node.spanStart + (node.width - 1) / 2, habahiro);
   return noteBodyBinding(resources, family, resourceSuffix(node, habahiro), node.width, habahiro,
     node.type === "Directional" ? node.direction === "Left" ? "l" : "r" : null);
 }

@@ -1,4 +1,4 @@
-import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import type {
   RenderColor,
@@ -2467,6 +2467,7 @@ export class RenderCommandProducer {
     motionState: OrdinaryNoteMotionState,
     scene: OrdinaryFixedNoteSceneInput,
     goalScale: OrdinaryNoteGoalScale | null = null,
+    heldSlideHead: NoteInformation | null = null,
   ): SimulatorResult<PreparedOrdinaryNoteMotion> {
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
@@ -2479,6 +2480,10 @@ export class RenderCommandProducer {
         "Ordinary Move requires its committed engine-authored pool root identity.",
       );
     }
+    const lane = heldSlideHead === null ? null : resolveOrdinarySlideCenterLane(heldSlideHead);
+    if (lane !== null && lane.status !== "ok") return lane;
+    const bodyBinding = heldSlideHead === null || lane === null ? undefined : noteSlideHeldBodyBinding(
+      this.resources, motionState.buttonCount, lane.value, this.isCompleteHabahiro());
     return this.preflightOrdinaryNoteMotion(poolObjectId, motionState, {
       color: scene.noteTint,
       ordering: Object.freeze({
@@ -2488,7 +2493,7 @@ export class RenderCommandProducer {
         creationSequence,
       }),
       maskObjectId: null,
-    }, goalScale);
+    }, goalScale, bodyBinding);
   }
 
   preflightOrdinaryNoteMotion(
@@ -2496,6 +2501,7 @@ export class RenderCommandProducer {
     motionState: OrdinaryNoteMotionState,
     visualState: OrdinaryNoteTransformVisualState,
     goalScale: OrdinaryNoteGoalScale | null = null,
+    bodyBinding?: NoteSpriteBinding,
   ): SimulatorResult<PreparedOrdinaryNoteMotion> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2525,6 +2531,7 @@ export class RenderCommandProducer {
       ordering: Object.freeze({ ...visualState.ordering, sourceZ: motion.value.position.z }),
       maskObjectId: null,
     }];
+    if (bodyBinding !== undefined) appendNoteSpriteBinding(commands, base, renderObjectId, bodyBinding);
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
       ? ok(Object.freeze({ motion: motion.value, transaction: transaction.value }))
@@ -2730,6 +2737,11 @@ export class RenderCommandProducer {
       }
       const animations = new Map(previous?.animations);
       if (plan.kind === "body") {
+        if (previous?.plan.kind === "body" &&
+          (previous.plan.binding?.logicalAssetId !== plan.binding?.logicalAssetId ||
+            previous.plan.binding?.exactKey !== plan.binding?.exactKey)) {
+          appendNoteSpriteBinding(commands, base, plan.id, plan.binding);
+        }
         if (plan.visible && plan.position !== null && plan.localScale !== null) {
           appendNoteTransform(commands, base, plan.id, plan.position, plan.localScale, scene.noteParentScale,
             scene.noteTint, scene.noteDomainLayer, sequence(plan.id));

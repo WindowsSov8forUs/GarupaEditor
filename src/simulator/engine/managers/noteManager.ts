@@ -1121,6 +1121,7 @@ export class NoteManager {
       }),
       this.ordinaryNoteScene,
       placement === "preserve" ? current.renderedTransform.localScale : placement,
+      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop ? note.noteInformation : null,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
