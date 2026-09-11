@@ -8280,7 +8280,7 @@
     {
       "id": "RCB-0394",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 745,
+      "line": 747,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"validated directional span escaped direct Garupa chart construction\");",
@@ -8301,7 +8301,7 @@
     {
       "id": "RCB-0395",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 847,
+      "line": 849,
       "marker": "integrity-failure-call",
       "symbol": "invalidPosition",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-position\", [\"GJP-E01\", \"GJP-E02\", \"GJP-D01\"], boundary);",
@@ -8322,7 +8322,7 @@
     {
       "id": "RCB-0396",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 850,
+      "line": 852,
       "marker": "integrity-failure-call",
       "symbol": "invalidBpm",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-bpm\", [\"GJP-E05\", \"GJP-E06\", \"GJP-E07\"], boundary);",
@@ -8343,7 +8343,7 @@
     {
       "id": "RCB-0397",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 853,
+      "line": 855,
       "marker": "integrity-failure-call",
       "symbol": "invalidLane",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-lane-span\", [], boundary);",
@@ -8364,7 +8364,7 @@
     {
       "id": "RCB-0398",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 856,
+      "line": 858,
       "marker": "integrity-failure-call",
       "symbol": "unsupportedSlide",
       "source": "return integrityFailure(\"simulator.garupa-json.unsupported-slide-shape\", [], boundary);",

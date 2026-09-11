@@ -86,9 +86,11 @@ Reverse remains the only authority for original behavior.
 
 ## Position and lane
 
-- Garupa beat enters the existing adapter position bridge as
-  `floor(beat * 48)`. BPM records that collide after this bridge fail closed;
-  same-position SV records retain source order and later records win. Authored
+- Note and BPM beats enter the existing adapter position bridge as
+  `floor(beat * 48)`. BPM records that collide after this bridge fail closed.
+  SV events use continuous `beat * 48` positions: original judgement quantization
+  must not widen or collapse an authored visual-axis pulse. Same-position SV
+  records retain source order and later records win. Authored
   Slide connections may share a position and retain authored connection order.
 - Lane is any finite number. Width is a positive integer and is never clamped.
 - Rhythm span starts at `lane`. Directional Right starts at `lane`; Directional
@@ -139,7 +141,7 @@ Reverse remains the only authority for original behavior.
   controls visual axis.
 - SV values are finite signed values normalized to six decimal places. Initial
   speed is 1. A non-Global group inherits all Global SV events.
-- Events are ordered by bridged position and source order. At one position, a
+- Events are ordered by continuous position and source order. At one position, a
   group event is applied before a Global event, so Global wins at that exact
   boundary. Two events from the same owner keep source order and the later event
   wins.

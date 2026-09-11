@@ -5,6 +5,7 @@ export type GarupaProductTimingGroupId = "#Global" | `#${string}`;
 
 export interface GarupaProductSvEvent {
   readonly sourceOrder: number;
+  /** Continuous original position units (48 per beat), without judgement quantization. */
   readonly absolutePosition: number;
   readonly value: number;
   readonly timingGroup: GarupaProductTimingGroupId;

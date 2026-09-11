@@ -258,7 +258,9 @@ function buildGarupaProductChartProfile(
       if (position.status !== "ok") return position;
       svEvents.push({
         sourceOrder,
-        absolutePosition: position.value,
+        // SV is a visual-axis event, not an original integer judgement position.
+        // Preserve sub-tick pulses; only the shared position unit is reused.
+        absolutePosition: item.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT,
         value: normalizeProductSvValue(item.value),
         timingGroup: productTimingGroup(item.timingGroup),
       });
