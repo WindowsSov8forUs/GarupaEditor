@@ -5,7 +5,7 @@
   "status": "classified",
   "classificationRule": "Every production entry must become continue-product, action-unavailable, integrity-failure, terminal-fault before final acceptance.",
   "summary": {
-    "productionEntryCount": 1470,
+    "productionEntryCount": 1471,
     "pendingClassificationCount": 0,
     "markerCounts": {
       "evidence-required-call": 0,
@@ -14,7 +14,7 @@
       "integrity-failure-string": 107,
       "observational-gap-string": 19,
       "product-semantic-call": 1,
-      "terminal-close": 17,
+      "terminal-close": 18,
       "exact-prototype": 0,
       "exact-key-order": 0,
       "rejected-call": 243,
@@ -10212,7 +10212,7 @@
     {
       "id": "RCB-0486",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 428,
+      "line": 429,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"invalid live-start voice release state\");",
@@ -10233,7 +10233,7 @@
     {
       "id": "RCB-0487",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 452,
+      "line": 453,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (voice === undefined) throw new Error(\"missing startup loop voice\");",
@@ -10254,7 +10254,7 @@
     {
       "id": "RCB-0488",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 476,
+      "line": 477,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (voice === undefined) throw new Error(\"missing Hold voice\");",
@@ -10275,7 +10275,7 @@
     {
       "id": "RCB-0489",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 511,
+      "line": 512,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.voices.has(voiceKey)) throw new Error(\"duplicate Web Audio voice\");",
@@ -10296,7 +10296,7 @@
     {
       "id": "RCB-0490",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 552,
+      "line": 556,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (buffer === undefined) throw new Error(\"missing decoded cue\");",
@@ -10317,7 +10317,7 @@
     {
       "id": "RCB-0491",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 622,
+      "line": 626,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"invalid owned-loop fade state\");",
@@ -10338,7 +10338,7 @@
     {
       "id": "RCB-0492",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 645,
+      "line": 649,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (fade === null || voice.source === null || voice.paused) throw new Error(\"inactive owned-loop fade\");",
@@ -10359,7 +10359,7 @@
     {
       "id": "RCB-0493",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 656,
+      "line": 660,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (resource === undefined) throw new Error(\"missing validated loop resource\");",
@@ -10380,7 +10380,7 @@
     {
       "id": "RCB-0494",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 668,
+      "line": 672,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!paused) throw new Error(\"delayed resume is unsupported\");",
@@ -10401,7 +10401,7 @@
     {
       "id": "RCB-0495",
       "file": "src/simulator/backends/audio/webAudioBackend.ts",
-      "line": 773,
+      "line": 777,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return audioRejected(\"integrity-failure\", capability, boundary);",
@@ -17037,7 +17037,7 @@
     {
       "id": "RCB-0811",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 206,
+      "line": 211,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17058,7 +17058,7 @@
     {
       "id": "RCB-0812",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 226,
+      "line": 231,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17079,7 +17079,7 @@
     {
       "id": "RCB-0813",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 298,
+      "line": 303,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (businessPlan?.status === \"integrity-failure\") {",
@@ -17100,7 +17100,7 @@
     {
       "id": "RCB-0814",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 308,
+      "line": 313,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particlePlan?.status === \"integrity-failure\") {",
@@ -17121,7 +17121,7 @@
     {
       "id": "RCB-0815",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 316,
+      "line": 321,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioPlan?.status === \"integrity-failure\") {",
@@ -17142,7 +17142,7 @@
     {
       "id": "RCB-0816",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 330,
+      "line": 335,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectStatePlan?.status === \"integrity-failure\") {",
@@ -17163,7 +17163,7 @@
     {
       "id": "RCB-0817",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 348,
+      "line": 353,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderPlan?.status === \"integrity-failure\") {",
@@ -17184,7 +17184,7 @@
     {
       "id": "RCB-0818",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 359,
+      "line": 364,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (productReflect?.status === \"integrity-failure\") {",
@@ -17205,7 +17205,7 @@
     {
       "id": "RCB-0819",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 429,
+      "line": 434,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return this.latchFault(integrityFailure(",
@@ -17226,7 +17226,7 @@
     {
       "id": "RCB-0820",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 438,
+      "line": 443,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectAdvance?.status === \"integrity-failure\") {",
@@ -17247,7 +17247,7 @@
     {
       "id": "RCB-0821",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 444,
+      "line": 449,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particleAdvance?.status === \"integrity-failure\") {",
@@ -17268,7 +17268,7 @@
     {
       "id": "RCB-0822",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 488,
+      "line": 493,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17289,7 +17289,7 @@
     {
       "id": "RCB-0823",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 502,
+      "line": 507,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17310,7 +17310,7 @@
     {
       "id": "RCB-0824",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 514,
+      "line": 519,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17331,7 +17331,7 @@
     {
       "id": "RCB-0825",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 526,
+      "line": 531,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17352,7 +17352,7 @@
     {
       "id": "RCB-0826",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 538,
+      "line": 543,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17373,7 +17373,7 @@
     {
       "id": "RCB-0827",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 545,
+      "line": 550,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (laneEffect?.status === \"integrity-failure\") return this.latchFault(laneEffect);",
@@ -17394,7 +17394,7 @@
     {
       "id": "RCB-0828",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 560,
+      "line": 565,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17415,7 +17415,7 @@
     {
       "id": "RCB-0829",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 568,
+      "line": 573,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17436,7 +17436,7 @@
     {
       "id": "RCB-0830",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 600,
+      "line": 605,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17457,7 +17457,7 @@
     {
       "id": "RCB-0831",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 608,
+      "line": 613,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17478,7 +17478,7 @@
     {
       "id": "RCB-0832",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 631,
+      "line": 636,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectDispose?.status === \"integrity-failure\") return tapLaneEffectDispose;",
@@ -17499,7 +17499,7 @@
     {
       "id": "RCB-0833",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 727,
+      "line": 732,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (hudAnimation?.status === \"integrity-failure\") {",
@@ -20229,7 +20229,7 @@
     {
       "id": "RCB-0963",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 94,
+      "line": 95,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"startup-direction.initialize-after-dispose\", \"A disposed startup owner cannot be reconstructed.\");",
@@ -20250,7 +20250,7 @@
     {
       "id": "RCB-0964",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 98,
+      "line": 99,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20271,7 +20271,7 @@
     {
       "id": "RCB-0965",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 108,
+      "line": 109,
       "marker": "rejected-call",
       "symbol": "startupAudio",
       "source": "? rejected(",
@@ -20292,7 +20292,7 @@
     {
       "id": "RCB-0966",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 144,
+      "line": 145,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"startup-direction.invalid-step\", \"Startup direction accepts only initialized exact non-negative Float32 engine delta.\");",
@@ -20313,7 +20313,7 @@
     {
       "id": "RCB-0967",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 189,
+      "line": 190,
       "marker": "rejected-call",
       "symbol": "playing",
       "source": "const playing = this.startupAudio?.isLiveStartVoicePlaying() ?? rejected(",
@@ -20334,7 +20334,7 @@
     {
       "id": "RCB-0968",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 217,
+      "line": 218,
       "marker": "rejected-call",
       "symbol": "completed",
       "source": "const completed = this.mvBackground?.stepBeforeSound(deltaTimeSeconds) ?? rejected(",
@@ -20355,7 +20355,7 @@
     {
       "id": "RCB-0969",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 297,
+      "line": 298,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20376,7 +20376,7 @@
     {
       "id": "RCB-0970",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 326,
+      "line": 344,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioTransition?.status === \"integrity-failure\") return audioTransition;",
@@ -20397,7 +20397,7 @@
     {
       "id": "RCB-0971",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 365,
+      "line": 384,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "function rejected(capability: string, boundary: string) {",
@@ -20418,7 +20418,7 @@
     {
       "id": "RCB-0972",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 366,
+      "line": 385,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [\"SD03\", \"SD05\", \"SD06\", \"SD07\", \"SD08\", \"SD09\", \"SD11\", \"SD12\", \"SD17\"], boundary);",
@@ -26865,7 +26865,7 @@
     {
       "id": "RCB-1279",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 497,
+      "line": 498,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26886,7 +26886,7 @@
     {
       "id": "RCB-1280",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 511,
+      "line": 512,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (manager === null) return integrityFailure(",
@@ -26907,7 +26907,7 @@
     {
       "id": "RCB-1281",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 519,
+      "line": 520,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (render?.status === \"integrity-failure\") {",
@@ -26928,7 +26928,7 @@
     {
       "id": "RCB-1282",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 550,
+      "line": 551,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26949,7 +26949,7 @@
     {
       "id": "RCB-1283",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 623,
+      "line": 624,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.domain-dispose-threw\", [],",
@@ -26970,7 +26970,7 @@
     {
       "id": "RCB-1284",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 629,
+      "line": 630,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(result.capability, result.requiredEvidence,",
@@ -26991,7 +26991,7 @@
     {
       "id": "RCB-1285",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 634,
+      "line": 635,
       "marker": "integrity-failure-call",
       "symbol": "physical",
       "source": "return result.status === \"ok\" ? physical : physical.status === \"ok\" ? result : integrityFailure(",
@@ -27012,7 +27012,7 @@
     {
       "id": "RCB-1286",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 657,
+      "line": 658,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (rendererValidation?.status === \"integrity-failure\") return rendererValidation;",
@@ -27033,7 +27033,7 @@
     {
       "id": "RCB-1287",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 659,
+      "line": 660,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27054,7 +27054,7 @@
     {
       "id": "RCB-1288",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 670,
+      "line": 671,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (release?.status === \"integrity-failure\") return release;",
@@ -27075,7 +27075,7 @@
     {
       "id": "RCB-1289",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 690,
+      "line": 691,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.backend-dispose-threw\", [],",
@@ -27096,7 +27096,7 @@
     {
       "id": "RCB-1290",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 696,
+      "line": 697,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -27117,7 +27117,7 @@
     {
       "id": "RCB-1291",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 733,
+      "line": 734,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27138,7 +27138,7 @@
     {
       "id": "RCB-1292",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 745,
+      "line": 746,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27159,7 +27159,7 @@
     {
       "id": "RCB-1293",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 747,
+      "line": 748,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audio?.status === \"integrity-failure\") {",
@@ -27180,7 +27180,7 @@
     {
       "id": "RCB-1294",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 807,
+      "line": 808,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") {",
@@ -27201,7 +27201,7 @@
     {
       "id": "RCB-1295",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 855,
+      "line": 856,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27222,7 +27222,7 @@
     {
       "id": "RCB-1296",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 880,
+      "line": 881,
       "marker": "integrity-failure-call",
       "symbol": "wrapper",
       "source": "? integrityFailure(",
@@ -27243,7 +27243,7 @@
     {
       "id": "RCB-1297",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 894,
+      "line": 895,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27264,7 +27264,7 @@
     {
       "id": "RCB-1298",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 913,
+      "line": 914,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27285,7 +27285,7 @@
     {
       "id": "RCB-1299",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 926,
+      "line": 927,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27306,7 +27306,7 @@
     {
       "id": "RCB-1300",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 938,
+      "line": 939,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": "return host !== null ? host.stepForMoveTime(deltaTimeSeconds) : integrityFailure(",
@@ -27327,7 +27327,7 @@
     {
       "id": "RCB-1301",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 963,
+      "line": 964,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27348,7 +27348,7 @@
     {
       "id": "RCB-1302",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 980,
+      "line": 981,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27369,7 +27369,7 @@
     {
       "id": "RCB-1303",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1000,
+      "line": 1001,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (producerValidation?.status === \"integrity-failure\") return producerValidation;",
@@ -27390,7 +27390,7 @@
     {
       "id": "RCB-1304",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1009,
+      "line": 1010,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27411,7 +27411,7 @@
     {
       "id": "RCB-1305",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1024,
+      "line": 1025,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27432,7 +27432,7 @@
     {
       "id": "RCB-1306",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1031,
+      "line": 1032,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27453,7 +27453,7 @@
     {
       "id": "RCB-1307",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1108,
+      "line": 1109,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27474,7 +27474,7 @@
     {
       "id": "RCB-1308",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1119,
+      "line": 1120,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27495,7 +27495,7 @@
     {
       "id": "RCB-1309",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1295,
+      "line": 1296,
       "marker": "integrity-failure-call",
       "symbol": "state",
       "source": "? integrityFailure(",
@@ -27516,7 +27516,7 @@
     {
       "id": "RCB-1310",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1310,
+      "line": 1311,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27537,7 +27537,7 @@
     {
       "id": "RCB-1311",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1320,
+      "line": 1321,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27558,7 +27558,7 @@
     {
       "id": "RCB-1312",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1340,
+      "line": 1341,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -27579,7 +27579,7 @@
     {
       "id": "RCB-1313",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1354,
+      "line": 1355,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27600,7 +27600,7 @@
     {
       "id": "RCB-1314",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1389,
+      "line": 1390,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27621,7 +27621,7 @@
     {
       "id": "RCB-1315",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1401,
+      "line": 1402,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27642,7 +27642,7 @@
     {
       "id": "RCB-1316",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1417,
+      "line": 1418,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27663,7 +27663,7 @@
     {
       "id": "RCB-1317",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1436,
+      "line": 1437,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27684,7 +27684,7 @@
     {
       "id": "RCB-1318",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1462,
+      "line": 1463,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27705,7 +27705,7 @@
     {
       "id": "RCB-1319",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1474,
+      "line": 1475,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27726,7 +27726,7 @@
     {
       "id": "RCB-1320",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1492,
+      "line": 1493,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -29763,7 +29763,28 @@
     {
       "id": "RCB-1417",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 184,
+      "line": 186,
+      "marker": "terminal-close",
+      "symbol": "if",
+      "source": "this.closeTerminal(commandState.failure);",
+      "productSemanticsId": null,
+      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
+      "userReachability": "session-internal terminal boundary",
+      "currentEffect": "session-terminal-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of autonomous cleanup and single-close ownership"
+    },
+    {
+      "id": "RCB-1418",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 191,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(applied.failure);",
@@ -29782,9 +29803,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1418",
+      "id": "RCB-1419",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 192,
+      "line": 199,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(controlLayout.failure);",
@@ -29803,9 +29824,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1419",
+      "id": "RCB-1420",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 197,
+      "line": 204,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
@@ -29822,32 +29843,32 @@
       },
       "disposition": "integrity-failure",
       "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1420",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 197,
-      "marker": "terminal-close",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
-      "productSemanticsId": null,
-      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
-      "userReachability": "session-internal terminal boundary",
-      "currentEffect": "session-terminal-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
       "id": "RCB-1421",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 208,
+      "line": 204,
+      "marker": "terminal-close",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", pauseLayout.capability, pauseLayout.boundary));",
+      "productSemanticsId": null,
+      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
+      "userReachability": "session-internal terminal boundary",
+      "currentEffect": "session-terminal-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of autonomous cleanup and single-close ownership"
+    },
+    {
+      "id": "RCB-1422",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 215,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
@@ -29864,32 +29885,32 @@
       },
       "disposition": "integrity-failure",
       "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1422",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 208,
-      "marker": "terminal-close",
-      "symbol": "if",
-      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
-      "productSemanticsId": null,
-      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
-      "userReachability": "session-internal terminal boundary",
-      "currentEffect": "session-terminal-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "terminal-fault",
-      "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
       "id": "RCB-1423",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
       "line": 215,
+      "marker": "terminal-close",
+      "symbol": "if",
+      "source": "this.closeTerminal(moduleFailure(\"integrity-failure\", routed.capability, routed.boundary));",
+      "productSemanticsId": null,
+      "trigger": "runtime detected an unrecoverable consistency failure after ownership transfer",
+      "userReachability": "session-internal terminal boundary",
+      "currentEffect": "session-terminal-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "terminal-fault",
+      "regression": "Source review of autonomous cleanup and single-close ownership"
+    },
+    {
+      "id": "RCB-1424",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 222,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(applied.failure);",
@@ -29908,9 +29929,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1424",
+      "id": "RCB-1425",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 224,
+      "line": 231,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(refreshed.failure);",
@@ -29929,9 +29950,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1425",
+      "id": "RCB-1426",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 237,
+      "line": 244,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(published.failure);",
@@ -29950,9 +29971,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1426",
+      "id": "RCB-1427",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 247,
+      "line": 254,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(stepped.failure);",
@@ -29971,9 +29992,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1427",
+      "id": "RCB-1428",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 253,
+      "line": 260,
       "marker": "terminal-close",
       "symbol": "if",
       "source": "this.closeTerminal(moduleFailure(",
@@ -29992,9 +30013,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1428",
+      "id": "RCB-1429",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 269,
+      "line": 276,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -30013,33 +30034,12 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1429",
+      "id": "RCB-1430",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 270,
+      "line": 277,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
-      "productSemanticsId": null,
-      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
-      "userReachability": "typed action-or-session integrity boundary",
-      "currentEffect": "typed-integrity-result-candidate",
-      "authority": "integrity-or-internal-assertion-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "module integrity and atomicity regression"
-    },
-    {
-      "id": "RCB-1430",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 294,
-      "marker": "integrity-failure-string",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
       "userReachability": "typed action-or-session integrity boundary",
@@ -30057,28 +30057,7 @@
     {
       "id": "RCB-1431",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 294,
-      "marker": "rejected-call",
-      "symbol": "if",
-      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
-      "productSemanticsId": null,
-      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
-      "userReachability": "typed internal boundary",
-      "currentEffect": "typed-rejection-candidate",
-      "authority": "integrity-product-or-internal-review",
-      "risk": {
-        "security": null,
-        "corruptBytesOrStorage": null,
-        "ownershipOrAtomicity": null,
-        "irreversibleMutation": null
-      },
-      "disposition": "integrity-failure",
-      "regression": "Source review of module integrity and atomicity"
-    },
-    {
-      "id": "RCB-1432",
-      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 313,
+      "line": 301,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
@@ -30097,9 +30076,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1433",
+      "id": "RCB-1432",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 313,
+      "line": 301,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
@@ -30118,9 +30097,51 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
+      "id": "RCB-1433",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 320,
+      "marker": "integrity-failure-string",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
+      "userReachability": "typed action-or-session integrity boundary",
+      "currentEffect": "typed-integrity-result-candidate",
+      "authority": "integrity-or-internal-assertion-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "module integrity and atomicity regression"
+    },
+    {
       "id": "RCB-1434",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 319,
+      "line": 320,
+      "marker": "rejected-call",
+      "symbol": "if",
+      "source": "return rejected(\"integrity-failure\", consumed.capability, consumed.boundary);",
+      "productSemanticsId": null,
+      "trigger": "typed invalid input, integrity, ownership, or internal transition rejection",
+      "userReachability": "typed internal boundary",
+      "currentEffect": "typed-rejection-candidate",
+      "authority": "integrity-product-or-internal-review",
+      "risk": {
+        "security": null,
+        "corruptBytesOrStorage": null,
+        "ownershipOrAtomicity": null,
+        "irreversibleMutation": null
+      },
+      "disposition": "integrity-failure",
+      "regression": "Source review of module integrity and atomicity"
+    },
+    {
+      "id": "RCB-1435",
+      "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "line": 326,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -30139,9 +30160,9 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1435",
+      "id": "RCB-1436",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 320,
+      "line": 327,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -30160,9 +30181,9 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1436",
+      "id": "RCB-1437",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 355,
+      "line": 362,
       "marker": "terminal-close",
       "symbol": "closeTerminal",
       "source": "private closeTerminal(failure: SimulatorModuleFailure): void {",
@@ -30181,9 +30202,9 @@
       "regression": "Source review of autonomous cleanup and single-close ownership"
     },
     {
-      "id": "RCB-1437",
+      "id": "RCB-1438",
       "file": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-      "line": 388,
+      "line": 395,
       "marker": "integrity-failure-string",
       "symbol": "catch",
       "source": "return moduleFailure(\"integrity-failure\", \"simulator.runtime.async-session-cleanup-threw\",",
@@ -30202,7 +30223,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1438",
+      "id": "RCB-1439",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 14,
       "marker": "rejected-call",
@@ -30223,7 +30244,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1439",
+      "id": "RCB-1440",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 21,
       "marker": "rejected-call",
@@ -30244,7 +30265,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1440",
+      "id": "RCB-1441",
       "file": "src/simulator/runtime/moduleEntryBinding.ts",
       "line": 35,
       "marker": "rejected-call",
@@ -30265,7 +30286,7 @@
       "regression": "Source review of module integrity and atomicity"
     },
     {
-      "id": "RCB-1441",
+      "id": "RCB-1442",
       "file": "src/simulator/scene/originalSurfaceLayout.ts",
       "line": 360,
       "marker": "integrity-failure-call",
@@ -30286,7 +30307,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1442",
+      "id": "RCB-1443",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 142,
       "marker": "integrity-failure-call",
@@ -30307,7 +30328,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1443",
+      "id": "RCB-1444",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 229,
       "marker": "product-semantic-call",
@@ -30328,7 +30349,7 @@
       "regression": "Source comparison of registered product semantics"
     },
     {
-      "id": "RCB-1444",
+      "id": "RCB-1445",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 325,
       "marker": "integrity-failure-call",
@@ -30349,7 +30370,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1445",
+      "id": "RCB-1446",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 332,
       "marker": "integrity-failure-call",
@@ -30370,7 +30391,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1446",
+      "id": "RCB-1447",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 404,
       "marker": "integrity-failure-call",
@@ -30391,7 +30412,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1447",
+      "id": "RCB-1448",
       "file": "src/simulator/scene/pauseControlScene.ts",
       "line": 410,
       "marker": "integrity-failure-call",
@@ -30412,7 +30433,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1448",
+      "id": "RCB-1449",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 88,
       "marker": "integrity-failure-call",
@@ -30433,7 +30454,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1449",
+      "id": "RCB-1450",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 132,
       "marker": "integrity-failure-call",
@@ -30454,7 +30475,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1450",
+      "id": "RCB-1451",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 144,
       "marker": "integrity-failure-call",
@@ -30475,7 +30496,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1451",
+      "id": "RCB-1452",
       "file": "src/simulator/scene/rehearsalControlScene.ts",
       "line": 160,
       "marker": "integrity-failure-call",
@@ -30496,7 +30517,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1452",
+      "id": "RCB-1453",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 299,
       "marker": "integrity-failure-call",
@@ -30517,7 +30538,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1453",
+      "id": "RCB-1454",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 357,
       "marker": "integrity-failure-call",
@@ -30538,7 +30559,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1454",
+      "id": "RCB-1455",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 360,
       "marker": "integrity-failure-call",
@@ -30559,7 +30580,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1455",
+      "id": "RCB-1456",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 370,
       "marker": "throw-error",
@@ -30580,7 +30601,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1456",
+      "id": "RCB-1457",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 413,
       "marker": "throw-error",
@@ -30601,7 +30622,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1457",
+      "id": "RCB-1458",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 513,
       "marker": "throw-error",
@@ -30622,7 +30643,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1458",
+      "id": "RCB-1459",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 518,
       "marker": "throw-error",
@@ -30643,7 +30664,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1459",
+      "id": "RCB-1460",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 524,
       "marker": "throw-error",
@@ -30664,7 +30685,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1460",
+      "id": "RCB-1461",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 806,
       "marker": "throw-error",
@@ -30685,7 +30706,7 @@
       "regression": "Source review of exception handling and atomic cleanup"
     },
     {
-      "id": "RCB-1461",
+      "id": "RCB-1462",
       "file": "src/simulator/scene/simulatorSceneLayout.ts",
       "line": 827,
       "marker": "integrity-failure-call",
@@ -30706,7 +30727,7 @@
       "regression": "module integrity and atomicity regression"
     },
     {
-      "id": "RCB-1462",
+      "id": "RCB-1463",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 139,
       "marker": "throw-error",
@@ -30727,7 +30748,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1463",
+      "id": "RCB-1464",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 146,
       "marker": "throw-error",
@@ -30748,7 +30769,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1464",
+      "id": "RCB-1465",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 299,
       "marker": "throw-error",
@@ -30769,7 +30790,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1465",
+      "id": "RCB-1466",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 320,
       "marker": "throw-error",
@@ -30790,7 +30811,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1466",
+      "id": "RCB-1467",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 364,
       "marker": "throw-error",
@@ -30811,7 +30832,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1467",
+      "id": "RCB-1468",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 370,
       "marker": "throw-error",
@@ -30832,7 +30853,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1468",
+      "id": "RCB-1469",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 379,
       "marker": "throw-error",
@@ -30853,7 +30874,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1469",
+      "id": "RCB-1470",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 388,
       "marker": "throw-error",
@@ -30874,7 +30895,7 @@
       "regression": "resources/app action-state regression"
     },
     {
-      "id": "RCB-1470",
+      "id": "RCB-1471",
       "file": "src/skin/resourceSkinDecoder.ts",
       "line": 394,
       "marker": "throw-error",

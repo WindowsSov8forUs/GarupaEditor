@@ -46,6 +46,10 @@ Launch owned投影仍为`{chartData,presentation,config}`；键顺序和额外ho
 
 ## Original Live settings lifecycle
 
+判定短音共用的是派发 owner，不是互斥声部。`CE.SePlayer.PlayOneShot → SoundResource.Play → CriAtomSource.Play → InternalPlayCue.Start` 不主动停止前一次播放；Web Audio 保留旧 source 直至自然结束或显式生命周期清理，稳定 owner 的播放观察仍对应最新请求。依据 Reverse `75f44ceb0493e98daf1d656f5722581368f17798` 的 `audio-runtime-contract-10-1-4/one_shot_start_semantics.json`。不仿真 CRI 的声部分配和硬件混音。
+
+浏览器可见性事件是宿主接口适配：同帧的暂停/恢复命令按提交后的会话状态依次消费，输入侧同步推进本批次的暂停状态。只恢复可见性适配自身施加的暂停，不能解除用户菜单暂停；非 playable 的入场和通关阶段不调用仅接受 PlayingSound/PauseSound 的游玩暂停接口。该宿主规则不声称复刻 Android OnApplicationPause 或 Unity 生命周期。
+
 入场场地线按 SD08 的独立协程推进：请求后等待 2.5 秒，再用独立的 1 秒时钟淡入，不把等待越界余量带入淡入。进入 PlayingSound 后仍继续推进至结束；MoveTime 重建保持已完成状态。`StartupDirectionController` 的 lineAlpha 经组合场景作用于实际 field-line / judge-line 对象并保留资源基础颜色，不再写入空容器。来源为 Reverse `startup-direction-runtime-contract-10-1-4` 与 `startup-direction-portable-pack-10-1-4`；实际 Pixi 对象的内存消费检查覆盖开始播放时未完成和最终 alpha=1，不构成 GPU 或整个入场演出验收。
 
 Schema 13必填Primary A `-30..30`、Secondary B `-5..5`、SyncLine、NoteColor、VisibleTapLaneEffect与MvDarkness `0..70 step10`。配置在initial冻结；Retry fresh必须复用同一identity，MoveTime reconstruction复用配置但显式bypass Primary startup counter，Pause/Resume不重载且不热切换。
