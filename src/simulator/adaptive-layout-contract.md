@@ -121,9 +121,9 @@ The hit shape is therefore a circle of pixel radius `0.12 * height/2`, not the r
 
 ## Startup, standard backdrop and MV
 
-Startup information consumes the committed GameStartInfo hierarchy under `screenToSafeChildScale`: line-star, jacket/frame, difficulty, title, band, nullable fixed-position credits and Full Live label. Missing credits hide their own authored label and do not trigger invented reflow.
+Startup information consumes the current GameStartInfo hierarchy under `screenToSafeChildScale`: title base, line-star, difficulty-colored jacket backing, jacket/frame, separate difficulty label, title, band, fixed-position prefixed credits and Full Live label. Missing credits hide their own authored label and do not trigger invented reflow. DifficultyLabelObject retains white outlined text, original X offset and letter spacing; its optional Frame is hidden during startup, and no extra level number is drawn.
 
-Jacket remains a strict 360×360 RGBA resource. Standard portable backdrop accepts any positive intrinsic RGBA PNG and fills the current surface; intrinsic resource size is no longer conflated with viewport size. This backdrop mapping remains the existing portable presentation contract and is not claimed as original stage/GPU parity.
+Jacket remains a strict 360×360 RGBA resource. Standard backdrop accepts positive intrinsic RGBA PNG dimensions and draws the original 1920×1440 UITexture at local Y=-170. UIRoot FitWidth and Stage's high-aspect root transform precede the TRSRoot three-second OutQuad transition from position (0,111), scale 0.7 to position (0,0), scale 0.92. A separate 0.75-second linear gray-to-white color transition starts with the stage intro; alpha is not a substitute for these transforms. Source: Reverse `705049d2890812828f36f3874fd130f0e13748de`, `simulator-entry-flash-consumption-10-1-4`. This is source-level application presentation alignment, not GPU acceptance.
 
 Current InGameMovie prefab owns a 1334×750 UITexture plus `StarUIVerticalFitScreen`:
 
