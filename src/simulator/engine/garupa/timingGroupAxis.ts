@@ -5,7 +5,6 @@ import type {
   GarupaProductTimingGroupId,
 } from "./productChartProfile";
 
-const EPSILON = 1e-9;
 const POSITION_UNITS_PER_BEAT = 48;
 const axisProfileByChart = new WeakMap<ChartConstructionResult, GarupaProductTimingGroupAxisProfile>();
 
@@ -29,11 +28,6 @@ export interface GarupaProductTimingGroupAxis {
   readonly changes: readonly GarupaProductAxisChange[];
 }
 
-export interface GarupaProductVisibilityWindow {
-  readonly fromMilliseconds: number;
-  readonly toMilliseconds: number;
-}
-
 export interface GarupaProductTimingGroupAxisProfile {
   readonly bpmSegments: readonly GarupaProductBpmSegment[];
   readonly groups: readonly GarupaProductTimingGroupAxis[];
@@ -48,14 +42,7 @@ export interface GarupaProductTimingGroupAxisProfile {
     noteAbsolutePosition: number,
     currentAbsolutePosition: number,
   ) => SimulatorResult<number>;
-  readonly findVisibilityWindows: (
-    timingGroup: GarupaProductTimingGroupId,
-    noteAbsolutePosition: number,
-    travelAxisMilliseconds: number,
-    viewportBottomAxisMilliseconds: number,
-    chartStartMilliseconds: number,
-    chartEndMilliseconds: number,
-  ) => SimulatorResult<readonly GarupaProductVisibilityWindow[]>;
+
 }
 
 export function registerGarupaProductTimingGroupAxisProfile(
@@ -150,32 +137,6 @@ export function createGarupaProductTimingGroupAxisProfile(
     if (nowAxis.status !== "ok") return nowAxis;
     return ok(noteAxis.value - nowAxis.value);
   };
-  const findWindows = (
-    timingGroup: GarupaProductTimingGroupId,
-    noteAbsolutePosition: number,
-    travelAxisMilliseconds: number,
-    viewportBottomAxisMilliseconds: number,
-    chartStartMilliseconds: number,
-    chartEndMilliseconds: number,
-  ): SimulatorResult<readonly GarupaProductVisibilityWindow[]> => {
-    const group = groupById.get(timingGroup);
-    const noteTime = positionToMilliseconds(noteAbsolutePosition);
-    if (group === undefined || noteTime.status !== "ok") {
-      return noteTime.status !== "ok" ? noteTime : invalidAxis(`Unknown TimingGroup ${timingGroup}.`);
-    }
-    const windows = findWindowsForGroup(
-      group,
-      sampleAxis(group, noteTime.value),
-      travelAxisMilliseconds,
-      viewportBottomAxisMilliseconds,
-      chartStartMilliseconds,
-      chartEndMilliseconds,
-    );
-    return windows === null
-      ? invalidAxis("Visibility-range inputs must remain finite and ordered.")
-      : ok(Object.freeze(windows));
-  };
-
   return ok(Object.freeze({
     bpmSegments,
     groups: frozenGroups,
@@ -183,7 +144,6 @@ export function createGarupaProductTimingGroupAxisProfile(
     positionToMilliseconds,
     axisAtMilliseconds,
     displacementAtPosition,
-    findVisibilityWindows: findWindows,
   }));
 }
 
@@ -252,66 +212,6 @@ function sampleAxis(group: GarupaProductTimingGroupAxis, milliseconds: number): 
     intercept = change.intercept;
   }
   return intercept + speed * milliseconds;
-}
-
-function findWindowsForGroup(
-  group: GarupaProductTimingGroupAxis,
-  noteAxis: number,
-  travelAxis: number,
-  viewportBottomAxis: number,
-  chartStart: number,
-  chartEnd: number,
-): GarupaProductVisibilityWindow[] | null {
-  if (![noteAxis, travelAxis, viewportBottomAxis, chartStart, chartEnd].every(Number.isFinite) ||
-    chartEnd <= chartStart) return null;
-  const lower = noteAxis - Math.abs(travelAxis);
-  const upper = noteAxis + Math.max(0, viewportBottomAxis);
-  const boundaries = [
-    chartStart,
-    ...group.changes.map((change) => change.atMilliseconds)
-      .filter((at) => at > chartStart && at < chartEnd),
-    chartEnd,
-  ].sort((left, right) => left - right);
-  const windows: GarupaProductVisibilityWindow[] = [];
-  for (let index = 0; index + 1 < boundaries.length; index += 1) {
-    const start = boundaries[index]!;
-    const end = boundaries[index + 1]!;
-    const startAxis = sampleAxis(group, start);
-    const endAxis = sampleAxis(group, end);
-    const delta = endAxis - startAxis;
-    if (Math.abs(delta) <= EPSILON) {
-      if (startAxis >= lower - EPSILON && startAxis <= upper + EPSILON) {
-        pushWindow(windows, start, end);
-      }
-      continue;
-    }
-    const first = (lower - startAxis) / delta;
-    const second = (upper - startAxis) / delta;
-    const lo = Math.max(0, Math.min(first, second));
-    const hi = Math.min(1, Math.max(first, second));
-    if (hi + EPSILON < 0 || lo - EPSILON > 1 || hi - lo <= EPSILON) continue;
-    pushWindow(windows, start + (end - start) * lo, start + (end - start) * hi);
-  }
-  return windows;
-}
-
-function pushWindow(
-  windows: GarupaProductVisibilityWindow[],
-  first: number,
-  second: number,
-): void {
-  const start = Math.min(first, second);
-  const end = Math.max(first, second);
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end - start <= EPSILON) return;
-  const previous = windows[windows.length - 1];
-  if (previous !== undefined && start <= previous.toMilliseconds + EPSILON) {
-    windows[windows.length - 1] = Object.freeze({
-      fromMilliseconds: previous.fromMilliseconds,
-      toMilliseconds: Math.max(previous.toMilliseconds, end),
-    });
-  } else {
-    windows.push(Object.freeze({ fromMilliseconds: start, toMilliseconds: end }));
-  }
 }
 
 function compareTimingGroup(
