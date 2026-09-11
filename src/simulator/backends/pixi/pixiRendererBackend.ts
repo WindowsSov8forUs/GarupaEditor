@@ -4537,7 +4537,7 @@ function applySpatialSpriteTransform(
       profile.scene.projection,
     );
     const parentScale = object.role === "tap-lane-effect"
-      ? object.surfaceLayout.gameplay.noteSettingScale
+      ? object.surfaceLayout.gameplay.screenWidthAdjustRate
       : Math.fround(1);
     const textureScale = Math.fround(
       profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit * parentScale,
