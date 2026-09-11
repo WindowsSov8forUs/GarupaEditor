@@ -2773,7 +2773,9 @@ function applyGameClearHud(
         f32FromLittleEndianBytes(widget.color_f32_bits[2]),
       );
       sprite.alpha = f32FromLittleEndianBytes(widget.color_f32_bits[3]);
-      sprite.zIndex = widget.depth;
+      // These widgets are siblings below content. Sort their owners: a depth
+      // on the sole Sprite inside each owner cannot order different widgets.
+      node.zIndex = widget.depth;
       node.addChild(sprite);
       visual.digitSprites.push(sprite);
       retainHudBinding(object, binding.key, referenceCounts);
@@ -2789,7 +2791,7 @@ function applyGameClearHud(
 function applyGameClearInitialTransform(node: Container, row: GameClearGraphObject): void {
   node.position.set(row.local_position[0], -row.local_position[1]);
   node.scale.set(row.local_scale[0], row.local_scale[1]);
-  node.rotation = quaternionZRadians(row.local_rotation);
+  node.rotation = -quaternionZRadians(row.local_rotation);
   node.visible = row.active;
 }
 function profileCenter(value: number): number { return Math.fround(value / 2); }
@@ -2869,7 +2871,7 @@ function applyGameClearChannel(
     const node = requiredGameClearChannelNode(visual, channel, ".localEulerAnglesRaw.");
     const axis = channel.slice(channel.indexOf(".localEulerAnglesRaw.") + ".localEulerAnglesRaw.".length);
     if (axis === "z") {
-      node.rotation = Math.fround(value * Math.PI / 180);
+      node.rotation = Math.fround(-value * Math.PI / 180);
       return "pixi-local-rotation-z";
     }
     if (axis === "x" || axis === "y") return "portable-2d-redundant-euler";
