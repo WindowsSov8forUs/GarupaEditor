@@ -79,6 +79,7 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
   pause(): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
+    if (this.state === "ended") return movieAccepted(undefined);
     if (this.state !== "playing") return this.invalid("pause", "playing");
     this.state = "paused";
     return movieAccepted(undefined);
@@ -87,6 +88,7 @@ export class RecordingSimulatorMovieBackend implements SimulatorMovieBackend {
   resume(): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
+    if (this.state === "ended") return movieAccepted(undefined);
     if (this.state !== "paused") return this.invalid("resume", "paused");
     this.state = "playing";
     return movieAccepted(undefined);

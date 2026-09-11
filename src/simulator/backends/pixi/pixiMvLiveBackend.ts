@@ -168,6 +168,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   pause(): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
+    if (this.state === "ended") return movieAccepted(undefined);
     if ((this.state !== "playing" && this.state !== "play-pending") || this.video === null) {
       return this.invalid("pause", "playing or play-pending");
     }
@@ -183,6 +184,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   resume(): MovieOperationResult<void> {
     const terminal = this.terminal<void>();
     if (terminal !== null) return terminal;
+    if (this.state === "ended") return movieAccepted(undefined);
     if (this.state !== "paused" || this.video === null) return this.invalid("resume", "paused");
     return this.beginPlay("resume");
   }

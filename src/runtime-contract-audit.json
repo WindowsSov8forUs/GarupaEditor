@@ -11136,7 +11136,7 @@
     {
       "id": "RCB-0530",
       "file": "src/simulator/backends/pixi/pixiMvLiveBackend.ts",
-      "line": 436,
+      "line": 438,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return movieRejected(\"integrity-failure\", capability, boundary);",
@@ -13404,7 +13404,7 @@
     {
       "id": "RCB-0638",
       "file": "src/simulator/backends/recordingMovieBackend.ts",
-      "line": 240,
+      "line": 242,
       "marker": "integrity-failure-string",
       "symbol": "reject",
       "source": "return movieRejected(\"integrity-failure\", capability, boundary);",

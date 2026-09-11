@@ -119,7 +119,7 @@ Project-authored probe只验证adapter：
 
 - Playing pause：physical pause，state `3→4`，game state 7；resume为physical resume、`4→3`、game state 5；
 - Waiting pause：state `1→2`并冻结delay timer；resume为`2→1`，不会提前启动video；
-- movie早于chart结束：ended隐藏movie并标记finished，BGM/gameplay继续；
+- movie早于chart结束：ended隐藏movie并标记finished，BGM/gameplay继续；此后会话仍可暂停/恢复，媒体后端接受操作并保留ended，不调用play重播，也不因媒体已结束终止会话。原作onFinishedMovie只隐藏媒体并设置finished标志，Pause/Resume仍可传递至媒体owner；Pixi与recording消费者采用同一结束后不重播语义。
 - chart/BGM早于movie结束：自然完成等待movie finished后才进入terminal result；
 - user close/natural completion先Stop movie，再释放media/Pixi；
 - cleanup逐项尝试audio、movie、particle和renderer；首故障稳定，后续失败附加为secondary；
