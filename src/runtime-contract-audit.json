@@ -16554,7 +16554,7 @@
     {
       "id": "RCB-0788",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 813,
+      "line": 816,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16575,7 +16575,7 @@
     {
       "id": "RCB-0789",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 820,
+      "line": 823,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (first.y === undefined || second.y === undefined) return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16596,7 +16596,7 @@
     {
       "id": "RCB-0790",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 876,
+      "line": 879,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16617,7 +16617,7 @@
     {
       "id": "RCB-0791",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 905,
+      "line": 908,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.hidden-or-consumed-manual-source\", \"Product Manual requires one visible unconsumed scoring source.\");",
@@ -16638,7 +16638,7 @@
     {
       "id": "RCB-0792",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 1132,
+      "line": 1135,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",

@@ -762,7 +762,7 @@ export class GarupaProductTimelineManager {
   }
 
   private selectCandidateDomains(position: ManualInputPosition, chainIdentity: string | null,
-    reserved?: ReadonlySet<string>): SimulatorResult<{ ordinary: GarupaProductNode | null; slide: GarupaProductNode | null }> {
+    reserved?: ReadonlySet<string>, initialSlidePresent = false): SimulatorResult<{ ordinary: GarupaProductNode | null; slide: GarupaProductNode | null }> {
     let ordinary: GarupaProductNode | null = null;
     let slide: GarupaProductNode | null = null;
     const musicPosition = this.pendingManualFrame?.musicPosition ?? this.music.musicPosition;
@@ -771,11 +771,14 @@ export class GarupaProductTimelineManager {
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
       if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
-      if (reserved?.has(node.chainIdentity ?? node.identity)) continue;
+      if (node.chainIdentity === null && reserved?.has(node.identity)) continue;
       if (this.timeouts.get(node.identity)?.boundFlick === true || this.render?.getInputPositionY(node) == null) continue;
       if (chainIdentity === null) {
         if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
-        if (node.chainIdentity !== null && this.chainFinger.has(node.chainIdentity)) continue;
+        // Native GetMoveEndTimeNearestZeroNote checks finger ownership only when
+        // establishing its first Slide candidate; later occupied Slides still compete.
+        if (node.chainIdentity !== null && slide === null && !initialSlidePresent &&
+            (this.chainFinger.has(node.chainIdentity) || reserved?.has(node.chainIdentity))) continue;
       } else if (node.chainIdentity !== chainIdentity || this.currentChainNode(chainIdentity) !== node) continue;
       const inside = this.scene!.isInsideContinuousSpan(position, node.spanStart, node.width);
       if (inside.status !== "ok") return inside;
@@ -798,7 +801,7 @@ export class GarupaProductTimelineManager {
     readOriginal: (note: NoteBase) => { source: NoteInformation; y: number | undefined } | null
   ): SimulatorResult<NoteBase | null> {
     projection.selected.set(fingerId, null);
-    const product = this.selectCandidateDomains(position, null, projection.reserved);
+    const product = this.selectCandidateDomains(position, null, projection.reserved, slide !== null);
     if (product.status !== "ok") return product;
     type Candidate = { original: NoteBase | null; node: GarupaProductNode | null; absolutePosition: number; y: number | undefined };
     const native = (note: NoteBase | null): Candidate | null => {

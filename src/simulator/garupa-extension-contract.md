@@ -192,6 +192,11 @@ Slide contact uses committed shared-lifecycle virtual positions and `SlideNoteMa
   selected extended identity is committed by the input dispatcher and consumed
   by the deferred product owner without reselection. A selected original owner
   with no accepted judgement does not cause a second extension attempt.
+  Slide ownership is checked only when establishing the first Slide candidate;
+  subsequent occupied Slides still participate and can block a later touch.
+  This also applies to same-frame reservations and to extension candidates after
+  an original Slide winner, matching native `GetMoveEndTimeNearestZeroNote`
+  at `0x37771C8–0x377723C`; ownership is still enforced when consuming Began.
   MJ04/MJ06 source-rule checks cover same-domain ties and two-finger reservation
   through deferred consumption. Equal-position visible nodes are processed in authored order
   within one outer-frame transaction.
