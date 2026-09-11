@@ -87,6 +87,10 @@ Reverse remains the only authority for original behavior.
 
 ## Position and lane
 
+- A Slide resolves the effective axis of each connection after inheritance; a chain's default group cannot override a connection's explicit group. Neutral connections retain ordinary motion and stopping rules inside a mixed chain.
+- Signed SV changes rendered displacement, while Slide contact judgement, virtual-line delay and Stop transitions use the ordinary time-driven vertical trajectory. Stopped endpoints follow the shared BPM-driven Slide lifecycle.
+- Strip clipping and visibility use the endpoints after that lifecycle has updated them. A waiting boundary uses the original virtual mesh width, including an unlaunched front when signed SV reveals the after node first. Both-waiting or fully offscreen strips have no presentation geometry; partially visible strips retain the shared mesh and UV rules.
+
 - Note and BPM beats enter the existing adapter position bridge as
   `floor(beat * 48)`. BPM records that collide after this bridge fail closed.
   SV events use continuous `beat * 48` positions: original judgement quantization

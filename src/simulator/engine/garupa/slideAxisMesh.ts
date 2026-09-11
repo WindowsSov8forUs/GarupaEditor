@@ -4,6 +4,22 @@ import { ok, type SimulatorResult } from "../evidence";
 import { buildOrdinaryLongNormalMesh, type OrdinaryLongNormalMeshInput } from "../rendering/ordinaryLongChildLifecycle";
 import { buildNoteMeshStrip, calculateNoteMeshHalfWidth, type OrdinaryBaseNoteMeshGeometry } from "../rendering/ordinaryNoteGeometry";
 import type { GarupaProductNode } from "./productChartProfile";
+import type { OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+
+export const UNPRESENTED_SLIDE_MESH: OrdinaryBaseNoteMeshGeometry = Object.freeze({
+  vertices: Object.freeze([]), indices: Object.freeze([]), uv: Object.freeze([]), colors: Object.freeze([]),
+});
+
+/** Clip the geometry that the shared lifecycle actually produced. Only an
+ * overflowing moving endpoint needs its unrepresentable axis coordinate. */
+export function slideRenderedCurve(state: OrdinaryLongNormalChildState, node: GarupaProductNode,
+  rawCurve: number, scene: GarupaProductSceneLayout): number {
+  if (state.phase === "move" && (scene.projectLaneAtCurve(center(node), rawCurve).status !== "ok" ||
+    scene.projectNoteScaleAtCurve(rawCurve, node.width).status !== "ok")) return rawCurve;
+  const line = scene.fieldLines[0]!;
+  return (state.renderedTransform.position.y.value - line.start.y.value) /
+    (line.goal.y.value - line.start.y.value);
+}
 
 /** Signed SV can put either end beyond the field, including outside the numeric
  * coordinate range. Clip only that additional domain; keep source strip rules. */
@@ -11,7 +27,8 @@ export function buildSlideAxisMesh(input: OrdinaryLongNormalMeshInput,
   from: GarupaProductNode, to: GarupaProductNode, first: number, second: number,
   scene: GarupaProductSceneLayout): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
   const interval = slideAxisInterval(first, second, scene.visibleCurveRange);
-  if (interval === null || interval[0] === 0 && interval[1] === 1)
+  if (interval === null) return ok(UNPRESENTED_SLIDE_MESH);
+  if (interval[0] === 0 && interval[1] === 1)
     return buildOrdinaryLongNormalMesh(input);
   const width = (scale: number, count: number) => calculateNoteMeshHalfWidth(scale, count,
     input.screenToSafeAreaRatio.value, input.widthRate.value);

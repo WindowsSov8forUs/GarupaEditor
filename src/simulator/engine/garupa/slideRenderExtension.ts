@@ -1,10 +1,10 @@
-import { buildSlideAxisMesh } from "./slideAxisMesh";
+import { buildSlideAxisMesh, slideRenderedCurve, UNPRESENTED_SLIDE_MESH } from "./slideAxisMesh";
 import type { RenderFloat32 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { ok, type SimulatorResult } from "../evidence";
-import { advanceOrdinaryLongNormalChild, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
-import { calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
+import { advanceOrdinaryLongNormalChild, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+import { advanceOrdinaryNoteVerticalMotion, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
 import { advanceOrdinarySlideChildren, advanceSlideStopWait, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
 import type { OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import type { GarupaProductNode } from "./productChartProfile";
@@ -44,9 +44,10 @@ export function advanceExtensionSlide(
   scene: GarupaProductSceneLayout,
   ordinaryScene: OrdinaryFixedNoteSceneInput,
   axis: GarupaProductTimingGroupAxisProfile,
-  usesAxis: boolean,
+  usesAxis: (node: GarupaProductNode) => boolean,
 ): SimulatorResult<{ readonly state: ExtensionSlideState; readonly segments: OrdinarySlideFrameResult["segments"] }> {
   const head = nodes[0]!;
+  const chainUsesAxis = nodes.some(usesAxis);
   const sources: SlideGeometrySource[] = nodes.slice(1).map(geometrySource);
   const input: OrdinaryLongNormalChildFrameInput = {
     deltaTime: f32(frame.deltaTimeSeconds), launcherMusicPosition: f32(frame.launcherMusicPosition),
@@ -66,11 +67,13 @@ export function advanceExtensionSlide(
       waits: sources.map(() => 0), flashActive: false, finished: false, playableFinished: false };
   }
   if (previous.finished) return ok({ state: previous, segments: [] });
-  const advancedRoot = advanceExtensionMotion(previous.root, head, frame, input, scene, axis, usesAxis);
+  const advancedRoot = advanceExtensionMotion(previous.root, head, frame, input, scene, axis, usesAxis(head));
   if (advancedRoot.status !== "ok") return advancedRoot;
   let root = advancedRoot.value;
+  const rootJudgementY = usesAxis(head) ? slideJudgementY(root) : ok(root.renderedTransform.position.y.value);
+  if (rootJudgementY.status !== "ok") return rootJudgementY;
   const rootJudgeY = previous.root.phase === "stop" ? previous.rootJudgeY
-    : Math.max(root.renderedTransform.position.y.value, scene.virtualPerfectLine);
+    : Math.max(rootJudgementY.value, scene.virtualPerfectLine);
   if ((frame.judged.has(head.identity) || frame.missed.has(head.identity)) && previous.root.phase !== "stop") {
     const placed = repositionOrdinaryNoteToJudgeLine(root.motionState,
       frame.forcePerfect ? "perspective" : root.renderedTransform.localScale);
@@ -93,16 +96,14 @@ export function advanceExtensionSlide(
   let segments: OrdinarySlideFrameResult["segments"] = [];
   if (children.length > 0) {
     const curves: number[] = [];
-    if (usesAxis) {
+    if (chainUsesAxis) {
       const arrival = getOrdinaryNoteArrivalSeconds(root.motionState.specificSpeed);
       if (arrival.status !== "ok") return arrival;
-      for (const [index, node] of nodes.entries()) {
-        const stopped = index === 0 ? root.phase === "stop" : children[index - 1]!.lifecycle.phase === "stop";
+      for (const node of nodes) {
         const displacement = axis.displacementAtPosition(node.timingGroup, node.absolutePosition, frame.absolutePosition);
         if (displacement.status !== "ok") return displacement;
         const progress = 1 - displacement.value / (arrival.value.value * 1000);
-        const waiting = index === 0 ? root.phase === "wait" : children[index - 1]!.lifecycle.phase === "wait";
-        curves.push(stopped ? 1 : waiting && progress < 0 ? 0 : calculateNoteMotionCurve(progress, true));
+        curves.push(calculateNoteMotionCurve(progress, true));
       }
     }
     let meshIndex = 0;
@@ -116,10 +117,25 @@ export function advanceExtensionSlide(
         virtualLaneDeltaX: scene.laneSpacingWorld.value,
         stoppedChildWaited: waits.map(wait => wait.waited),
       }, ordinaryScene.habahiro?.meshWidthSetting, {
-        advanceChild: (child, index) => advanceExtensionMotion(child, nodes[index + 1]!, frame, input, scene, axis, usesAxis),
-        ...(usesAxis ? { isAfterHitTime: (index: number) => frame.absolutePosition > nodes[index + 1]!.absolutePosition, buildMesh: (input: import("../rendering/ordinaryLongChildLifecycle").OrdinaryLongNormalMeshInput) => {
+        advanceChild: (child, index) => advanceExtensionMotion(child, nodes[index + 1]!, frame, input, scene, axis, usesAxis(nodes[index + 1]!)),
+        ...(chainUsesAxis ? { judgementY: (state: OrdinaryLongNormalChildState, index: number) =>
+            usesAxis(nodes[index + 1]!) ? slideJudgementY(state) : ok(state.renderedTransform.position.y.value),
+          isAfterHitTime: (index: number) => usesAxis(nodes[index + 1]!)
+            ? frame.absolutePosition > nodes[index + 1]!.absolutePosition : undefined,
+          buildMesh: (input: import("../rendering/ordinaryLongChildLifecycle").OrdinaryLongNormalMeshInput,
+            after: OrdinaryLongNormalChildState, before: OrdinaryLongNormalChildState | undefined) => {
           const index = meshIndex++;
-          return buildSlideAxisMesh(input, nodes[index]!, nodes[index + 1]!, curves[index]!, curves[index + 1]!, scene);
+          const front = { ...(before ?? root), renderedTransform: input.front };
+          if (front.phase === "wait" && after.phase === "wait") return ok(UNPRESENTED_SLIDE_MESH);
+          // Signed SV may reveal the after node first. The unlaunched front
+          // then needs the same virtual mesh width as an ordinary waiting after.
+          const frontScale = getOrdinaryNoteMeshAfterScale(front, after.motionState.goalPosition.y, input.screenToSafeAreaRatio);
+          if (frontScale.status !== "ok") return frontScale;
+          const meshInput = { ...input, front: { ...input.front,
+            localScale: { ...input.front.localScale, x: frontScale.value } } };
+          return buildSlideAxisMesh(meshInput, nodes[index]!, nodes[index + 1]!,
+            slideRenderedCurve(front, nodes[index]!, curves[index]!, scene),
+            slideRenderedCurve(after, nodes[index + 1]!, curves[index + 1]!, scene), scene);
         } } : {}),
       });
     if (advanced.status !== "ok") return advanced;
@@ -138,6 +154,13 @@ export function advanceExtensionSlide(
   if (playableFinished) children = children.map(child => ({ ...child, visible: false }));
   return ok({ state: { root, rootJudgeY, children, rootVisible: previous.rootVisible && !hides.has(-1) && !playableFinished,
     waits: waits.map(wait => wait.counter), flashActive, finished, playableFinished }, segments });
+}
+
+function slideJudgementY(state: OrdinaryLongNormalChildState): SimulatorResult<number> {
+  // SV changes visual displacement. Stop/judgement still uses the ordinary
+  // time-driven vertical trajectory, including its virtual-line delay.
+  const vertical = advanceOrdinaryNoteVerticalMotion({ ...state.motionState, deltaTime: f32(0) });
+  return vertical.status === "ok" ? ok(vertical.value.y) : vertical;
 }
 
 export function advanceExtensionMotion(

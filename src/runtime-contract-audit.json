@@ -15987,7 +15987,7 @@
     {
       "id": "RCB-0761",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 85,
+      "line": 88,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16008,7 +16008,7 @@
     {
       "id": "RCB-0762",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 92,
+      "line": 95,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(",
@@ -16029,7 +16029,7 @@
     {
       "id": "RCB-0763",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 109,
+      "line": 112,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16050,7 +16050,7 @@
     {
       "id": "RCB-0764",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 362,
+      "line": 368,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (projected.status !== \"ok\" || origin.status !== \"ok\") throw new Error(\"SyncLine endpoint projection is not finite.\");",
@@ -16071,7 +16071,7 @@
     {
       "id": "RCB-0765",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 494,
+      "line": 500,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Non-finite product curve ${String(sample.curve)} for ${sample.node.identity} cannot publish render geometry.`);",
@@ -16092,7 +16092,7 @@
     {
       "id": "RCB-0766",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 501,
+      "line": 507,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`Product Note scale is unavailable for ${sample.node.identity}.`);",
@@ -16113,7 +16113,7 @@
     {
       "id": "RCB-0767",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 520,
+      "line": 526,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (created.status !== \"ok\") throw new Error(`${created.capability}: value=${String(value)} rounded=${String(Math.fround(value))}`);",
@@ -16134,7 +16134,7 @@
     {
       "id": "RCB-0768",
       "file": "src/simulator/engine/garupa/garupaRenderInputAdapter.ts",
-      "line": 527,
+      "line": 533,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -16680,7 +16680,7 @@
     {
       "id": "RCB-0794",
       "file": "src/simulator/engine/garupa/slideRenderExtension.ts",
-      "line": 195,
+      "line": 218,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (result.status !== \"ok\") throw new Error(result.capability);",
@@ -25038,7 +25038,7 @@
     {
       "id": "RCB-1192",
       "file": "src/simulator/engine/rendering/ordinarySlideChildLifecycle.ts",
-      "line": 358,
+      "line": 365,
       "marker": "integrity-failure-call",
       "symbol": "reject",
       "source": "return integrityFailure(capability, [",

@@ -68,8 +68,10 @@ export type SlideGeometrySource = Pick<NoteInformation,
 /** Extensions supply motion inputs, not a second Slide lifecycle. */
 export interface SlideMotionExtension {
   advanceChild(state: OrdinaryLongNormalChildState, index: number): SimulatorResult<OrdinaryLongNormalChildState>;
-  buildMesh?: typeof buildOrdinaryLongNormalMesh;
-  isAfterHitTime?: (index: number) => boolean;
+  buildMesh?: (input: Parameters<typeof buildOrdinaryLongNormalMesh>[0], after: OrdinaryLongNormalChildState,
+    before: OrdinaryLongNormalChildState | undefined) => ReturnType<typeof buildOrdinaryLongNormalMesh>;
+  isAfterHitTime?: (index: number) => boolean | undefined;
+  judgementY?: (state: OrdinaryLongNormalChildState, index: number) => SimulatorResult<number>;
 }
 
 export interface SlideRenderHideRequest {
@@ -197,8 +199,10 @@ export function advanceOrdinarySlideChildren(
     let visible = state.visible;
     let segmentStartIndex = state.segmentStartIndex;
     let judgeY = state.judgeY;
+    const judgementY = extension?.judgementY?.(lifecycle, index) ?? ok(lifecycle.renderedTransform.position.y.value);
+    if (judgementY.status !== "ok") return judgementY;
     if (stopControl.advanceMotion && state.lifecycle.phase !== "stop") {
-      judgeY = Math.max(lifecycle.renderedTransform.position.y.value, stopControl.virtualPerfectLine);
+      judgeY = Math.max(judgementY.value, stopControl.virtualPerfectLine);
     }
     if (stopControl.advanceMotion && state.lifecycle.phase === "move") {
       const hasAfter = index + 1 < childStates.length;
@@ -207,8 +211,8 @@ export function advanceOrdinarySlideChildren(
         ? lifecycle.motionState.goalPosition.y.value
         : stopControl.virtualPerfectLine;
       const crossed = (extension?.isAfterHitTime?.(index) ?? lifecycle.renderedTransform.progressRate.value > 1) &&
-        lifecycle.renderedTransform.position.y.value <= stopLine;
-      if (crossed && lifecycle.renderedTransform.position.y.value < lifecycle.motionState.goalPosition.y.value) {
+        judgementY.value <= stopLine;
+      if (crossed && judgementY.value < lifecycle.motionState.goalPosition.y.value) {
         meshVisible = false;
       }
       lifecycle = Object.freeze({ ...lifecycle, phase: crossed ? "stop" as const : "move" as const });
@@ -273,6 +277,7 @@ export function advanceOrdinarySlideChildren(
   }
   let previousTransform = frontTransform;
   let previousMotionState = stopControl.rootMotionState;
+  let previousLifecycle: OrdinaryLongNormalChildState | undefined;
   let previousButtonCount = frontButtonCount;
   for (const state of nextStates) {
     const widthRate = habahiroMeshWidthSetting === undefined
@@ -284,7 +289,7 @@ export function advanceOrdinarySlideChildren(
     if (widthRate.status !== "ok") return widthRate;
     const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);
     if (afterScale.status !== "ok") return afterScale;
-    const mesh = (extension?.buildMesh ?? buildOrdinaryLongNormalMesh)({
+    const meshInput = {
       front: previousTransform,
       after: state.lifecycle.renderedTransform,
       afterScaleX: afterScale.value,
@@ -294,11 +299,13 @@ export function advanceOrdinarySlideChildren(
       widthRate: widthRate.value,
       color,
       advanced: state.lifecycle.motionState.virtualLaneControllerPresent,
-    });
+    };
+    const mesh = extension?.buildMesh?.(meshInput, state.lifecycle, previousLifecycle) ?? buildOrdinaryLongNormalMesh(meshInput);
     if (mesh.status !== "ok") return mesh;
     segments.push(Object.freeze({ sourceIndex: state.sourceIndex, geometry: mesh.value }));
     previousTransform = state.lifecycle.renderedTransform;
     previousMotionState = state.lifecycle.motionState;
+    previousLifecycle = state.lifecycle;
     previousButtonCount = state.buttonCount;
   }
   return ok(Object.freeze({
