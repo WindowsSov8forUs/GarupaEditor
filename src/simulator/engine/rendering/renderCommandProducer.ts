@@ -180,6 +180,7 @@ export interface OriginalSkinFieldSceneInput {
 }
 
 export interface OrdinaryFixedNoteSceneInput {
+  readonly noteLineClipY: RenderFloat32;
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
@@ -283,10 +284,6 @@ export class RenderOwnerTransaction {
 }
 
 const RENDER_ONE = Object.freeze({ value: 1, bits: "3F800000" });
-const CURRENT_SUDDEN_THRESHOLD = Object.freeze({
-  value: Math.fround(712.711181640625),
-  bits: "44322D84",
-});
 
 const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
 const HABAHIRO_ROOT_EFFECT_OBJECT =
@@ -1914,7 +1911,7 @@ export class RenderCommandProducer {
         ...base(commands.length),
         kind: "set-threshold",
         renderObjectId: meshObjectId,
-        threshold: CURRENT_SUDDEN_THRESHOLD,
+        threshold: scene.noteLineClipY,
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
       const afterBinding = completeHabahiro
@@ -2115,6 +2112,7 @@ export class RenderCommandProducer {
     ownerState: OrdinaryMultipleDirectionalLineOwnerState,
     materialDirection: "left" | "right",
     phase: "initialize" | "show" | "hide",
+    noteLineClipY: RenderFloat32,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2151,7 +2149,7 @@ export class RenderCommandProducer {
     const commands: RenderCommand[] = [];
     const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
       { kind: "multiple-directional-line", state: ownerState }, true,
-      this.creationSequenceByObjectId.get(renderObjectId)!);
+      this.creationSequenceByObjectId.get(renderObjectId)!, noteLineClipY);
     return appended.status === "ok" ? this.preflight(commands) : appended;
   }
 
@@ -2159,6 +2157,7 @@ export class RenderCommandProducer {
     poolIndex: number,
     ownerState: OrdinarySyncLineOwnerState,
     visible: boolean,
+    noteLineClipY: RenderFloat32,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2180,7 +2179,7 @@ export class RenderCommandProducer {
     const commands: RenderCommand[] = [];
     const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
       { kind: "sync-line", state: ownerState }, visible,
-      this.creationSequenceByObjectId.get(renderObjectId)!);
+      this.creationSequenceByObjectId.get(renderObjectId)!, noteLineClipY);
     return appended.status === "ok" ? this.preflight(commands) : appended;
   }
 
@@ -2188,7 +2187,7 @@ export class RenderCommandProducer {
     commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
     line: { kind: "sync-line"; state: OrdinarySyncLineOwnerState | null } |
       { kind: "multiple-directional-line"; state: OrdinaryMultipleDirectionalLineOwnerState | null },
-    visible: boolean, creationSequence: number,
+    visible: boolean, creationSequence: number, noteLineClipY: RenderFloat32,
   ): SimulatorResult<void> {
     if (!visible || line.state === null) {
       commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
@@ -2204,6 +2203,8 @@ export class RenderCommandProducer {
         sourceZ: zero, creationSequence }, maskObjectId: null });
     commands.push({ ...base(commands.length), kind: "set-line", renderObjectId,
       ...geometry.value, materialRole: line.kind });
+    commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId,
+      threshold: noteLineClipY });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
     return ok(undefined);
   }
@@ -2764,7 +2765,7 @@ export class RenderCommandProducer {
           if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
         } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
       } else if (plan.visible || previous?.visible) {
-        const line = this.appendNoteLine(commands, base, plan.id, plan, plan.visible, sequence(plan.id));
+        const line = this.appendNoteLine(commands, base, plan.id, plan, plan.visible, sequence(plan.id), scene.noteLineClipY);
         if (line.status !== "ok") return line;
       }
       next.set(plan.id, { plan, visible: plan.visible, animations });
@@ -2965,6 +2966,8 @@ export function validateOrdinaryFixedNoteSceneInput(
   ];
   if (
     !validateRenderFloat32(scene.specificSpeed) ||
+    !validateRenderFloat32(scene.noteLineClipY) ||
+    scene.noteLineClipY.value < 0 ||
     !validateRenderFloat32(scene.noteParentScale) ||
     scene.noteParentScale.value <= 0 ||
     !validateRenderFloat32(scene.noteSettingScale) ||
@@ -3031,7 +3034,7 @@ function appendCurveMesh(
       ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
   }
   commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
-  if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: CURRENT_SUDDEN_THRESHOLD });
+  if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: scene.noteLineClipY });
 }
 
 function appendNoteAnimationFrame(

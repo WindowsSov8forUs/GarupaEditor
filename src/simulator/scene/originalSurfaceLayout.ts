@@ -11,6 +11,9 @@ export const ORIGINAL_REFERENCE_SCREEN_SIZE_X = Math.fround(9.578571319580078);
 export const ORIGINAL_ANDROID_FULL_SAFE_RATIO = Math.fround(0.8999999761581421);
 
 const AUTHORED_BUTTON_Y = Math.fround(-3.450000047683716);
+// RhythmGame level3: NoteLane Transform and UITexture, consumed by SetupSudden.
+export const ORIGINAL_NOTE_LANE_BOTTOM_Y = -240;
+const ORIGINAL_NOTE_LANE_HEIGHT = 610;
 const AUTHORED_LAUNCHER_Y = Math.fround(5.420000076293945);
 const AUTHORED_BUTTON_SPACING = Math.fround(2.200000047683716);
 const LAUNCH_DISTANCE_RATE = Math.fround(0.05000000074505806);
@@ -59,6 +62,7 @@ export interface OriginalGameplayLayout {
   readonly laneSpacingWorld: number;
   readonly vanishingY: number;
   readonly noteStartY: number;
+  readonly noteLineClipY: number;
 }
 
 export interface OriginalUiLayout {
@@ -204,6 +208,10 @@ export function createOriginalSurfaceLayout(
       laneSpacingWorld,
       vanishingY,
       noteStartY,
+      // The supported SuddenRate is zero: GetSuddenPos returns SuddenTopPos.y.
+      noteLineClipY: add(centerY, mul(
+        ORIGINAL_NOTE_LANE_BOTTOM_Y + ORIGINAL_NOTE_LANE_HEIGHT, screenToSafeChildScale,
+      )),
     }),
     ui: Object.freeze({
       pixelsPerAuthoredUnit,

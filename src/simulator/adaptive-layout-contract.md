@@ -154,6 +154,17 @@ Validation uses actual fitting/adapter methods for ten aspect/safe-area/input ma
 
 ## Provenance gate
 
+Note-line clipping uses the current initial surface, not a captured pixel threshold.
+`ButtonManager.SetupSudden` (`0x3882974`) projects the serialized NoteLane bottom
+and top; `InGameCalculatedData.GetSuddenPos` (`0x32f1b1c`) interpolates them.
+For the supported SuddenRate=0, the bottom-left cutoff is
+`height/2 + (-240 + 610) * screenToSafeChildScale`: -240 and 610 are the level3
+NoteLane Transform/UITexture values, while the scale and viewport are runtime
+inputs. The existing committed resource-rendering ARM64 slices and multiaspect
+level3 bytes own this rule. Long/Slide meshes, SyncLine and MultipleDirectional
+lines share it, including Garupa extension consumers; repeated line geometry
+updates retain the same mask. CSS resizing still preserves the initial surface.
+
 Production layout scalars must be one of:
 
 - `original-serialized`;

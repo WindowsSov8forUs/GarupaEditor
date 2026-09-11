@@ -1469,7 +1469,7 @@ export class NoteManager {
     const ownerState = this.ordinarySyncLineOwnerState(line);
     if (ownerState.status !== "ok") return ownerState;
     // Original Setup resets width to zero; the following OnUpdate publishes visible geometry.
-    const prepared = this.renderProducer!.preflightOrdinarySyncLine(poolIndex, ownerState.value, false);
+    const prepared = this.renderProducer!.preflightOrdinarySyncLine(poolIndex, ownerState.value, false, this.ordinaryNoteScene!.noteLineClipY);
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.commit();
     if (committed.status !== "ok") return committed;
@@ -1497,6 +1497,7 @@ export class NoteManager {
         line.poolIndex,
         ownerState.value,
         this.syncEndpointMoving(line.targetA, line.afterA) && this.syncEndpointMoving(line.targetB, line.afterB),
+        this.ordinaryNoteScene!.noteLineClipY,
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.commit();
@@ -1549,7 +1550,7 @@ export class NoteManager {
     const ownerState = this.multipleDirectionalLineOwnerState(line);
     if (ownerState.status !== "ok") return ownerState;
     const prepared = this.renderProducer!.preflightOrdinaryMultipleDirectionalLine(
-      poolIndex, ownerState.value, line.materialDirection, "initialize");
+      poolIndex, ownerState.value, line.materialDirection, "initialize", this.ordinaryNoteScene!.noteLineClipY);
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.commit();
     if (committed.status !== "ok") return committed;
@@ -1742,6 +1743,7 @@ export class NoteManager {
         ownerState.value,
         line.materialDirection,
         this.syncEndpointMoving(line.targetA, line.afterA) && this.syncEndpointMoving(line.targetB, line.afterB) ? "show" : "hide",
+        this.ordinaryNoteScene!.noteLineClipY,
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.commit();

@@ -8,6 +8,7 @@ import {
 } from "../platform/surfaceContracts";
 import {
   createOriginalSurfaceLayout,
+  ORIGINAL_NOTE_LANE_BOTTOM_Y,
   originalBottomLeftScreenToWorld,
   type OriginalSurfaceLayout,
 } from "./originalSurfaceLayout";
@@ -143,6 +144,7 @@ export function createSimulatorSceneLayout(
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,
+    noteLineClipY: f32(originalLayout.value.gameplay.noteLineClipY),
     noteStartPositions: values.value.noteStartPositions,
     goalPositions: values.value.goalPositions,
     tapLaneEffectPositions: Object.freeze(AUTHORED_TAP_LANE_EFFECT_X.map((authoredX) =>
@@ -678,7 +680,7 @@ function createOriginalSkinFieldScene(
         bindings.backgroundLineLogicalAssetId,
         "bg_line_rhythm",
         0,
-        -240,
+        ORIGINAL_NOTE_LANE_BOTTOM_Y,
         null,
         1,
         0,
@@ -717,11 +719,11 @@ function createPortableHabahiroScene(
   const plans = (field: typeof bindings.fieldBefore): readonly RenderFieldObjectPlan[] => Object.freeze([
     fieldObject(
       "render:habahiro:rhythm-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, -240, null, 1, 0,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 0,
     ),
     fieldObject(
       "render:habahiro:sudden-area-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, -240, null, 1, 1,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 1,
       1, 1, 1, false,
     ),
     fieldObject(

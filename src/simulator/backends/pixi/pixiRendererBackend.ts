@@ -561,9 +561,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const reservedNodes = new Map<number, Container>();
     const reservedGeometry = new Map<number, Mesh>();
     const reservedMasks = new Map<number, Graphics>();
+    const plannedThresholds = new Map<string, number | null>();
     try {
       for (const command of commands) {
         if (command.kind === "create-object" || command.kind === "acquire-object") {
+          plannedThresholds.set(command.renderObjectId, null);
           const node = this.objectFactory.create(
             command.role,
             command.renderObjectId,
@@ -594,6 +596,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         } else if (command.kind === "set-mask") {
           reservedMasks.set(command.sequence, createEvidenceMask(command));
         } else if (command.kind === "set-threshold") {
+          const previous = plannedThresholds.has(command.renderObjectId)
+            ? plannedThresholds.get(command.renderObjectId)
+            : this.objects.get(command.renderObjectId)?.threshold;
+          plannedThresholds.set(command.renderObjectId, command.threshold.value);
+          if (previous === command.threshold.value) continue;
           reservedMasks.set(command.sequence, createThresholdMask(
             command.threshold.value,
             this.profile!.scene.projection,
@@ -1483,10 +1490,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         }
         case "set-threshold":
-          if (shadow.get(command.renderObjectId)!.role !== "note-mesh") {
+          if (!["note-mesh", "sync-line", "multiple-directional-line"].includes(shadow.get(command.renderObjectId)!.role)) {
             return reject(
               "render.pixi.threshold-role-mismatch",
-              "The current bottom-left threshold semantic applies only to a NoteMesh owner.",
+              "The bottom-left threshold applies to NoteMesh, SyncLine and MultipleDirectional line owners.",
             );
           }
           break;
@@ -1721,6 +1728,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const mesh = reservedGeometry.get(command.sequence)!;
         applyGeometryMaterial(mesh, object, this.profile!);
         object.node.addChild(mesh);
+        if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
         object.geometryCenterZ = geometryCenterZ([command.start, command.end]);
         object.geometryUsesWorldCoordinates = true;
@@ -1766,8 +1774,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "set-threshold": {
         const object = this.objects.get(command.renderObjectId)!;
+        const mask = reservedMasks.get(command.sequence);
+        if (mask === undefined) return;
         if (object.thresholdMaskContent !== null) object.thresholdMaskContent.destroy();
-        const mask = reservedMasks.get(command.sequence)!;
         object.node.addChild(mask);
         if (object.geometryContent !== null) object.geometryContent.mask = mask;
         object.thresholdMaskContent = mask;
