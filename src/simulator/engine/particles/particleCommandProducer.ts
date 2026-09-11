@@ -264,8 +264,7 @@ export class ParticleCommandProducer {
         if (isTapKeepStopJudgeNoteType(entry.noteType)) {
           stopButtonTapKeep(buttonType, projected, commands);
         }
-        if (isTapKeepStartJudgeNoteType(entry.noteType) ||
-          (note.fireNoteType === FrontNoteType.Long && entry.phase === "head" && entry.adjustedResult > 0)) {
+        if (isTapKeepStartJudgeNoteType(entry.noteType)) {
           playButtonTapKeep(buttonType, entry.buttonTypes.length, this.particleScene!, projected, commands);
         }
         const slideRoot = this.slideRootByNode.get(note);

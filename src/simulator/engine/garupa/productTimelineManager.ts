@@ -294,6 +294,13 @@ export class GarupaProductTimelineManager {
           render.value?.discard();
           return rollback(submitted);
         }
+        if (node.chainIdentity !== null && !this.isMoveTime()) {
+          const chain = this.chart.slideChains.find(chain => chain.identity === node.chainIdentity)!;
+          const visible = chain.visibleConnectionIdentities;
+          const ownerKey = `slide:${node.chainIdentity}`;
+          if (node.identity === visible[0]) this.pendingHoldSounds.push({ ownerKey, action: "start" });
+          if (node.identity === visible[visible.length - 1]) this.pendingHoldSounds.push({ ownerKey, action: "fade" });
+        }
       }
     }
     const submission = this.preflightPendingJudgementBatch();

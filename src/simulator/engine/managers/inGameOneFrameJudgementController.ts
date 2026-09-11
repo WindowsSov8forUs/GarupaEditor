@@ -1042,10 +1042,12 @@ function isClosedAutoLiveJudgementRequest(
     }
     switch (source.fireNoteType) {
       case FrontNoteType.Normal:
+        return request.noteType === 0;
       case FrontNoteType.Long:
+        return request.noteType === 4;
       case FrontNoteType.SlideA:
       case FrontNoteType.SlideB:
-        return request.noteType === 0;
+        return request.noteType === 8;
       case FrontNoteType.Flick:
         return request.noteType === 3;
       case FrontNoteType.DirectionalFlick:

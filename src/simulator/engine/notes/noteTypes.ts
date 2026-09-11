@@ -703,12 +703,13 @@ export class NoteLong extends NoteFrontBase {
     const submitted = runtime.value.submitJudgement({
       noteInformation,
       phase: "head",
-      noteType: 0,
+      noteType: 4,
       absolutePosition: noteInformation.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
       this.flashAnimationRevision = ++this.flashRestartSequence;
+      this.onTouchKeepSound?.(noteInformation.index, "start");
       return this.changeState(NoteState.Stop);
     }
     return submitted;
@@ -1506,13 +1507,14 @@ export class NoteSlide extends NoteFrontBase {
     const submitted = runtime.value.submitJudgement({
       noteInformation,
       phase: "head",
-      noteType: 0,
+      noteType: 8,
       absolutePosition: noteInformation.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
       this.manualHeadJudgedValue = true;
       this.flashAnimationRevision = ++this.flashRestartSequence;
+      this.updateTouchKeepSound("start");
       return this.changeState(NoteState.Stop);
     }
     return submitted;

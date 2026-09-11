@@ -108,3 +108,8 @@ Product continuous timeline保持`PRODUCT_ONLY`，但同样遵守事务：可变
 ## 明确删除
 
 `playMode`、`practice.enabled`、`startMilliseconds`、deferred scene publication、suppressed initial WebAudio output与caller-authored replay checkpoint均不属于最终合同。旧IPS-P01–P05只保留历史审计，不再提供production capability。
+
+
+## 自动播放头部事件
+
+Long/Slide 的 Force Perfect 仍须承接原作 Began 副作用：Long 成功头部判定类型为 4，Slide 为 8，并启动 SE_RHYTHM_TAP_LONG；不以普通 Tap 类型 0 替代。持续音沿现有 owner 派发与 0.3 秒淡出流程处理，Slide 中间节点不重新启动；TimingGroup 链从首个可判定节点启动、最后一个可判定节点淡出。MoveTime 保留原作 GameState 14 的启动抑制。判定接收器按恢复后的类型校验，粒子直接消费类型 4，撤销按 Long 家族补偿错误类型 0 的条件。依据已提交 Reverse audio-runtime-contract-10-1-4 的 Long/Slide Force Perfect、ExecTouchBegan、Play/Fade 导出及 manual-input-runtime-contract-10-1-4 的 Slide Force Perfect 导出；其中 Long 0x30EB108 写类型 4，Slide 0x321C06C 写类型 8。CS-V1 分值公式与评分单位身份不变。
