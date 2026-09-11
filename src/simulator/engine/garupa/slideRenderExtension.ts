@@ -172,7 +172,11 @@ export function advanceExtensionMotion(
   }
   if (position.status !== "ok") return position;
   if (scale.status !== "ok") return scale;
-  const semanticProgress = 1 + (frame.absolutePosition - node.absolutePosition) * 60 / (48 * frame.currentBpm * arrival.value.value);
+  const noteTime = axis.positionToMilliseconds(node.absolutePosition);
+  const currentTime = axis.positionToMilliseconds(frame.absolutePosition);
+  if (noteTime.status !== "ok") return noteTime;
+  if (currentTime.status !== "ok") return currentTime;
+  const semanticProgress = 1 + (currentTime.value - noteTime.value) / (arrival.value.value * 1000);
   const transform: OrdinaryNoteMotionResult = { progressRate: f32(semanticProgress), position: { ...position.value, z: state.motionState.currentPositionZ },
     localScale: { x: scale.value, y: scale.value, z: f32(0) } };
   return ok({ ...state, phase: entered ? "move" : "wait",

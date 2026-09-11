@@ -147,6 +147,7 @@ Reverse remains the only authority for original behavior.
   boundary. Two events from the same owner keep source order and the later event
   wins.
 - Sampling applies an event only at or after its authored timestamp. No fixed epsilon advances an SV boundary or merges a short pulse.
+- Slide's judgement-motion progress uses elapsed milliseconds from the existing BPM timeline; it does not convert an entire position interval using only the current BPM. SV changes spatial motion without replacing this time basis for the shared stopped-child lifecycle.
 - Let an event at milliseconds `t` change old speed to `v`. The continuous axis
   intercept is updated as:
 

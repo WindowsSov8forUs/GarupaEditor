@@ -16680,7 +16680,7 @@
     {
       "id": "RCB-0794",
       "file": "src/simulator/engine/garupa/slideRenderExtension.ts",
-      "line": 191,
+      "line": 195,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (result.status !== \"ok\") throw new Error(result.capability);",
