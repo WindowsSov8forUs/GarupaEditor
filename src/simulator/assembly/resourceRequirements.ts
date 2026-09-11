@@ -66,6 +66,7 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
     "SE_RHYTHM_CLEAR.mp3", "SE_RHYTHM_FULLCOMBO.mp3", "SE_RHYTHM_GAYA.mp3",
     "SE_RHYTHM_TAP_SKILL.mp3", "bad.mp3", "miss.mp3",
   ]),
+  requirement("audio.common-se", "sound/common-se", ["decide_1.mp3"]),
 ]);
 
 export function selectSimulatorResourceRequirements(

@@ -286,6 +286,12 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
+  playUiDecisionSound(): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const sound = this.audioProducer.preflightUiDecisionSound();
+    return sound.status === "ok" ? this.commitAudio(sound.value) : sound;
+  }
+
   resume(): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;

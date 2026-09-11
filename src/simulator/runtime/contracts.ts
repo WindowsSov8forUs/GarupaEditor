@@ -76,6 +76,7 @@ export interface SimulatorOwnedSession {
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorAssemblyResult<void>;
   pause(): SimulatorAssemblyResult<void>;
   resume(): SimulatorAssemblyResult<void>;
+  playUiDecisionSound(): SimulatorAssemblyResult<void>;
   moveTime(
     direction: "return-five" | "advance-five",
   ): Promise<SimulatorAssemblyResult<void>>;

@@ -18,7 +18,7 @@ export type PauseControlState =
   | "abort-confirm"
   | "resume-countdown";
 
-export type PauseControlCommandKind = "pause" | "resume" | "retry" | "abort";
+export type PauseControlCommandKind = "pause" | "resume" | "retry" | "abort" | "ui-decide";
 export interface PauseControlCommand {
   readonly kind: PauseControlCommandKind;
   readonly capability: object;
@@ -70,6 +70,8 @@ export interface PauseControlSceneSnapshot {
   readonly terminalPresentationActive: boolean;
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
+  readonly resumeCountdownElapsedSeconds: number | null;
+  readonly pressedButtons: readonly string[];
   readonly words: {
     readonly pause: { readonly title: "一時停止"; readonly message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。"; readonly buttons: readonly ["中断", "リトライ", "再開"] };
     readonly retry: { readonly title: "リトライ"; readonly message: "リトライしてライブを最初からプレイしますか？"; readonly buttons: readonly ["キャンセル", "リトライ"] };
@@ -127,6 +129,7 @@ const issuedCommands = new WeakMap<object, IssuedPauseCommand>();
 export class PauseControlSceneOwner {
   private state: PauseControlState = "playing";
   private countdown = Math.fround(0);
+  private countdownStartedAt: number | null = null;
   private presentationSeconds = 0;
   private readonly pressed = new Map<number, PressTarget>();
   private disposed = false;
@@ -161,8 +164,10 @@ export class PauseControlSceneOwner {
         this.pressed.clear();
         hardwareBackProductSemanticsId = "GE-PS-BACK-PLAYING-OPENS-PAUSE";
       } else if (this.state === "pause-menu" && controlState.playable && controlState.paused && !controlState.moveTimeInProgress) {
+        commands.push(issue("ui-decide", controlState.mode, layout.surfaceRevision));
         this.state = "resume-countdown";
         this.countdown = RESUME_COUNTDOWN_SECONDS;
+        this.countdownStartedAt = this.presentationSeconds;
         this.pressed.clear();
       } else if (this.state === "retry-confirm" || this.state === "abort-confirm") {
         this.state = "pause-menu";
@@ -175,7 +180,7 @@ export class PauseControlSceneOwner {
 
     if (this.state === "resume-countdown") {
       if (!controlState.paused) return this.reject("pause.control.countdown-engine-not-paused", "Resume countdown requires the engine to remain paused until its exact three-second callback.");
-      this.countdown = Math.fround(this.countdown - Math.fround(deltaTimeSeconds));
+      this.countdown = Math.fround(RESUME_COUNTDOWN_SECONDS - (this.presentationSeconds - this.countdownStartedAt!));
       if (this.countdown <= 0) {
         this.countdown = Math.fround(0);
         commands.push(issue("resume", controlState.mode, layout.surfaceRevision));
@@ -256,6 +261,8 @@ export class PauseControlSceneOwner {
       terminalPresentationActive,
       layout,
       resumeCountdownSecondsRemaining: this.state === "resume-countdown" ? this.countdown : null,
+      resumeCountdownElapsedSeconds: this.countdownStartedAt === null ? null : this.presentationSeconds - this.countdownStartedAt,
+      pressedButtons: Object.freeze([...new Set(this.pressed.values())]),
       words: VISIBLE_WORDS,
     });
   }
@@ -283,10 +290,12 @@ export class PauseControlSceneOwner {
     const pressed = this.pressed.get(touch.fingerId) ?? null;
     this.pressed.delete(touch.fingerId);
     if (pressed === null || target !== pressed) return ok(undefined);
+    commands.push(issue("ui-decide", controlState.mode, layout.surfaceRevision));
     if (this.state === "pause-menu") {
       if (pressed === "resume") {
         this.state = "resume-countdown";
         this.countdown = RESUME_COUNTDOWN_SECONDS;
+        this.countdownStartedAt = this.presentationSeconds;
         this.pressed.clear();
       } else if (pressed === "retry") {
         this.state = "retry-confirm";
@@ -404,7 +413,7 @@ export function consumePauseControlCommand(
   surface: SimulatorSurfaceState,
 ): SimulatorResult<PauseControlCommandKind> {
   if (command === null || typeof command !== "object" ||
-    !["pause", "resume", "retry", "abort"].includes(command.kind) ||
+    !["pause", "resume", "retry", "abort", "ui-decide"].includes(command.kind) ||
     command.capability === null || typeof command.capability !== "object") {
     return integrityFailure("pause.control.invalid-command", ["PAU-B01", "PAU-B04"], "Only opaque one-use Pause scene commands are accepted.");
   }

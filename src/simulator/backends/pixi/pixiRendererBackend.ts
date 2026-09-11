@@ -2286,10 +2286,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.autoLiveCaptionRoot.visible = snapshot.mode.isAutoLive;
       this.autoLiveCaptionRoot.alpha = snapshot.terminalPresentationActive ? 1 : hudAlpha;
     }
-    const countdownNumber = snapshot.state === "resume-countdown"
-      ? Math.max(1, Math.min(3, Math.ceil(snapshot.resumeCountdownSecondsRemaining ?? 0)))
-      : null;
-    this.rebuildModal(snapshot, countdownNumber);
+    this.rebuildModal(snapshot);
     this.updateModalTransitions(snapshot);
     return ok(undefined);
   }
@@ -2305,17 +2302,24 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     return ok(undefined);
   }
 
-  private rebuildModal(snapshot: PauseControlSceneSnapshot, countdownNumber: number | null): void {
-    const graphKey = snapshot.state === "resume-countdown" ? "resume-countdown" : snapshot.state;
+  private rebuildModal(snapshot: PauseControlSceneSnapshot): void {
+    const graphKey = snapshot.state;
+    const countdownElapsed = snapshot.resumeCountdownElapsedSeconds;
+    const countdownVisible = countdownElapsed !== null && countdownElapsed < this.pauseCountdownAnimation.continueClip.durationSeconds;
     for (const [key, graph] of this.persistentModalGraphs) {
-      if (!this.modalTransitions.has(key)) graph.visible = key === graphKey;
+      if (!this.modalTransitions.has(key)) graph.visible = key === "resume-countdown" ? countdownVisible : key === graphKey;
+      if (key === "resume-countdown" && countdownVisible) this.updateCountdownGraph(graph, snapshot);
+      const dialogProfile = key === "pause-menu" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable :
+        key === "retry-confirm" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable :
+        key === "abort-confirm" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated : null;
+      if (dialogProfile !== null) for (const button of dialogProfile.buttons) {
+        const cover = graph.getChildByLabel(`${dialogProfile.identity}:${button.identity}-pressed`, true);
+        if (cover !== null) cover.visible = key === graphKey && snapshot.pressedButtons.includes(button.identity);
+      }
     }
     if (snapshot.state === "playing") return;
     const existing = this.persistentModalGraphs.get(graphKey);
     if (existing !== undefined) {
-      if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
-        this.updateCountdownGraph(existing, countdownNumber, snapshot);
-      }
       return;
     }
 
@@ -2323,7 +2327,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     graph.eventMode = "none";
     this.modalRoot.addChild(graph);
     this.persistentModalGraphs.set(graphKey, graph);
-    if (snapshot.state === "resume-countdown" && countdownNumber !== null) {
+    if (snapshot.state === "resume-countdown") {
       const owner = new Container({ label: "InGameCountDownAnimation", sortableChildren: true });
       owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
       owner.scale.set(snapshot.layout.controlScale);
@@ -2336,22 +2340,25 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       ).fill(0x000000);
       fill.alpha = 0;
       fill.zIndex = 0;
-      const addCount = (label: string, texture: Texture, x: number): Sprite => {
-        const sprite = new Sprite({ texture, label, visible: false });
+      const addCount = (label: string, texture: Texture, x: number, width: number, height: number, depth: number): void => {
+        const transform = new Container({ label, visible: false });
+        const sprite = new Sprite({ texture });
         sprite.anchor.set(0.5);
-        sprite.position.set(x, 0);
-        sprite.zIndex = 10;
-        contents.addChild(sprite);
-        return sprite;
+        sprite.width = width;
+        sprite.height = height;
+        transform.position.set(x, 0);
+        transform.zIndex = depth;
+        transform.addChild(sprite);
+        contents.addChild(transform);
       };
       contents.addChild(fill);
-      addCount("Contents/Count3", this.pauseTextures.countdown[2], 0);
-      addCount("Contents/Count2", this.pauseTextures.countdown[1], 0);
-      addCount("Contents/Count1", this.pauseTextures.countdown[0], -5);
-      addCount("Contents/Count1Fadeout", this.pauseTextures.countdown[0], -5);
+      addCount("Contents/Count3", this.pauseTextures.countdown[2], 0, 100, 122, 10);
+      addCount("Contents/Count2", this.pauseTextures.countdown[1], 0, 100, 120, 11);
+      addCount("Contents/Count1", this.pauseTextures.countdown[0], -5, 52, 120, 12);
+      addCount("Contents/Count1Fadeout", this.pauseTextures.countdown[0], -5, 52, 120, 12);
       owner.addChild(contents);
       graph.addChild(owner);
-      this.updateCountdownGraph(graph, countdownNumber, snapshot);
+      this.updateCountdownGraph(graph, snapshot);
       return;
     }
     const coverPath = snapshot.state === "pause-menu"
@@ -2361,7 +2368,10 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.cover;
     const cover = new NineSliceSprite({
       texture: this.pauseTextures.cover,
-      ...CURRENT_PAUSE_ATLAS_BORDERS.cover,
+      leftWidth: CURRENT_PAUSE_ATLAS_BORDERS.cover.left,
+      rightWidth: CURRENT_PAUSE_ATLAS_BORDERS.cover.right,
+      topHeight: CURRENT_PAUSE_ATLAS_BORDERS.cover.top,
+      bottomHeight: CURRENT_PAUSE_ATLAS_BORDERS.cover.bottom,
       width: snapshot.layout.viewportWidth,
       height: snapshot.layout.viewportHeight,
       tint: 0x000000,
@@ -2408,14 +2418,13 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     this.modalRoot.visible = this.modalRoot.children.some((graph) => graph.visible);
   }
 
-  private updateCountdownGraph(graph: Container, _countdownNumber: number, snapshot: PauseControlSceneSnapshot): void {
+  private updateCountdownGraph(graph: Container, snapshot: PauseControlSceneSnapshot): void {
     const owner = graph.getChildByLabel("InGameCountDownAnimation", true) as Container | null;
     const contents = owner?.getChildByLabel("Contents", true) as Container | null;
     if (owner === null || contents === null) throw new Error("Persistent countdown Prefab graph is incomplete.");
     owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
     owner.scale.set(snapshot.layout.controlScale);
-    const remaining = snapshot.resumeCountdownSecondsRemaining ?? this.pauseCountdownAnimation.callbackSeconds;
-    const elapsed = Math.fround(Math.max(0, this.pauseCountdownAnimation.callbackSeconds - remaining));
+    const elapsed = Math.fround(snapshot.resumeCountdownElapsedSeconds!);
     const sample = samplePauseCountdownClip(this.pauseCountdownAnimation.continueClip, elapsed);
     const value = (channel: string): number => {
       const current = sample.get(channel);
@@ -2425,7 +2434,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const active = (path: string): boolean => value(`${path}.m_IsActive.value`) >= 0.5;
     const alpha = (path: string): number => Math.max(0, Math.min(1, value(`${path}.mColor.a.value`)));
     const transform = (path: string): void => {
-      const node = contents.getChildByLabel(path, true) as Sprite | null;
+      const node = contents.getChildByLabel(path, true) as Container | null;
       if (node === null) throw new Error(`Pause countdown component is missing: ${path}`);
       node.visible = active(path);
       node.scale.set(
@@ -2439,7 +2448,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     transform("Contents/Count2");
     transform("Contents/Count1");
     transform("Contents/Count1Fadeout");
-    const fadeout = contents.getChildByLabel("Contents/Count1Fadeout", true) as Sprite | null;
+    const fadeout = contents.getChildByLabel("Contents/Count1Fadeout", true) as Container | null;
     if (fadeout === null) throw new Error("Pause Count1Fadeout is missing.");
     fadeout.position.set(
       value("Contents/Count1Fadeout.m_LocalPosition.x"),

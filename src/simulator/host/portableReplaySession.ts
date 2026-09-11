@@ -243,6 +243,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   resume(): SimulatorResult<void> {
     return this.commitSimpleEvent("resume", () => this.active.resume());
   }
+  playUiDecisionSound(): SimulatorResult<void> {
+    return this.active.playUiDecisionSound();
+  }
   continueLive(): SimulatorResult<void> {
     return this.commitSimpleEvent("continue-live", () => this.active.continueLive());
   }

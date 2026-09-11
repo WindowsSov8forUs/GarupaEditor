@@ -6,14 +6,14 @@ import type {
   AudioResourceProvider,
 } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
-import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
+import type { PreparedSourceAudioPackage } from "../resources/sourcePackageDecoder";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 
 const EXPECTED_CUES = new Set([
   "directional_fl", "directional_fl_2", "directional_fl_3",
   "SE_RHYTHM_CLEAR", "SE_RHYTHM_FULLCOMBO", "SE_RHYTHM_GAYA", "SE_RHYTHM_TAP_SKILL", "bad", "miss",
-  "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect",
+  "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect", "decide_1",
 ]);
 
 export interface PreparedLeasedAudioResources {
@@ -23,7 +23,7 @@ export interface PreparedLeasedAudioResources {
 
 export async function prepareLeasedAudioResources(
   chartAudio: PreparedSessionBgmResource,
-  packs: readonly PreparedSkinSourcePackage[],
+  packs: readonly PreparedSourceAudioPackage[],
   preflight: AudioResourcePreflightAdapter,
 ): Promise<SimulatorAssemblyResult<PreparedLeasedAudioResources>> {
   const dynamic: AudioFixedSeResourceProfile[] = [];
@@ -131,7 +131,7 @@ function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function invalid<T>(capability: string): SimulatorAssemblyResult<T> {
-  return rejected("resource-integrity", capability, "Leased common and selected Skin audio must publish exactly 15 evidenced cues with decoded metadata and explicit loop ownership; no fixed hash allowlist, alias or silent replacement is allowed.");
+  return rejected("resource-integrity", capability, "Leased common and selected Skin audio must publish the complete selected cue inventory with decoded metadata and explicit loop ownership; no fixed hash allowlist, alias or silent replacement is allowed.");
 }
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {
   return Object.freeze({ status: "accepted" as const, value });

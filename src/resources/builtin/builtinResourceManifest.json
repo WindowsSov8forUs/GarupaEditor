@@ -357,6 +357,11 @@
       "sha256": "C487F13EF46209ACF101A15A92C057679F9AB1D06986CBFCC60D2FA1A1E029F8"
     },
     {
+      "path": "game/sound/common-se/decide_1.mp3",
+      "byteLength": 17690,
+      "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"
+    },
+    {
       "path": "icons/apply-action.svg",
       "byteLength": 552,
       "sha256": "E3EC9859FF144CC23D022434C666B5AB7F412F5E0C91B3E8F6F93619A2BCF1FD"

@@ -251,6 +251,9 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   resume(): SimulatorAssemblyResult<void> {
     return this.apply(() => this.engine.resume());
   }
+  playUiDecisionSound(): SimulatorAssemblyResult<void> {
+    return this.apply(() => this.engine.playUiDecisionSound());
+  }
 
   getSurfaceState(): SimulatorAssemblyResult<SimulatorSurfaceState> {
     return this.state === "running" ? accepted(this.surface) : closedFailure();

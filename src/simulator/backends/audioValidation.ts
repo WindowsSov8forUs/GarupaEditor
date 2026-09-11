@@ -22,6 +22,7 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
   SE_RHYTHM_TAP_SKILL: "sound/common",
   bad: "sound/common",
   miss: "sound/common",
+  decide_1: "sound/common-se",
   SE_RHYTHM_TAP_LONG: "sound/tapseskin/skin00",
   flick: "sound/tapseskin/skin00",
   game_button: "sound/tapseskin/skin00",

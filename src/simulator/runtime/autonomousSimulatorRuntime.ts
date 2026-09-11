@@ -295,13 +295,14 @@ export class AutonomousSimulatorModule {
     if (command.kind === "platform-resume") {
       return controlState.playable && controlState.paused ? this.session!.resume() : accepted(undefined);
     }
-    if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort") {
+    if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort" || command.kind === "ui-decide") {
       const consumed = consumePauseControlCommand(command, controlState, surface);
       if (consumed.status !== "ok") {
         return rejected("integrity-failure", consumed.capability, consumed.boundary);
       }
       if (consumed.value === "pause") return this.session!.pause();
       if (consumed.value === "resume") return this.session!.resume();
+      if (consumed.value === "ui-decide") return this.session!.playUiDecisionSound();
       if (consumed.value === "retry") return this.session!.retry();
       const report = this.session!.close("user-closed");
       this.closePublished(report);

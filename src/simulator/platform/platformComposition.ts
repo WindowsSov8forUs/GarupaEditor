@@ -677,6 +677,9 @@ class MountedSimulatorEngine implements SimulatorEngine {
     if (paused.status === "ok") this.paused = true;
     return paused;
   }
+  playUiDecisionSound(): SimulatorResult<void> {
+    return this.engine.playUiDecisionSound();
+  }
   resume(): SimulatorResult<void> {
     const resumed = this.engine.resume();
     if (resumed.status === "ok") this.paused = false;

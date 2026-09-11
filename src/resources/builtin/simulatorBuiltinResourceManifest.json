@@ -530,6 +530,14 @@
       "sourceReverseCommit": "b8565a070366612e8fb616b1c3e95051cd8defd1",
       "sourcePath": "artifacts/investigations/simulator-score-ngui-native-domain-10-1-4/score_ngui_native_domain_contract.json",
       "sourceRelation": "source-derived-projection"
+    },
+    {
+      "path": "game/sound/common-se/decide_1.mp3",
+      "byteLength": 17690,
+      "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1",
+      "sourceReverseCommit": "1b1957dcaddb224cf19c9531637a6044cdb6cdeb",
+      "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/decide_1.mp3",
+      "sourceRelation": "byte-identical"
     }
   ],
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",

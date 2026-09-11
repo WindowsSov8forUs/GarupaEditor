@@ -45,15 +45,22 @@ const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const renderCatalog = parseRenderCatalog(renderCatalogJson);
 const particleCatalog = parseParticleCatalog(particleCatalogJson);
 
+export type PreparedSourceAudioPackage = Pick<PreparedSkinSourcePackage, "logicalResource" | "profile" | "files">;
+
 export async function prepareSourceAudioPackage(
   logicalResource: string,
   lease: SimulatorResourceLease,
-): Promise<SimulatorAssemblyResult<PreparedSkinSourcePackage>> {
+): Promise<SimulatorAssemblyResult<PreparedSourceAudioPackage>> {
   const opened = await OriginalResourcePackageView.open(lease, logicalResource);
   if (opened.status === "rejected") {
     return rejected(opened.failure.code === "resource-platform-unavailable" ? "platform-unavailable" : "resource-integrity", opened.failure.capability, opened.failure.boundary);
   }
-  return decodeSourcePackage("tap-se", logicalResource, opened.value);
+  const files: PreparedSkinSourceFile[] = [];
+  const audio = readPortableAudio(opened.value, files);
+  if (audio.status === "rejected") return audio;
+  if (audio.value.length === 0) return invalid("simulator.audio.empty-source", `${logicalResource} has no MP3 cues.`);
+  return accepted(Object.freeze({ logicalResource,
+    profile: Object.freeze({ portableAudio: audio.value }), files: Object.freeze(files) }));
 }
 
 export async function prepareSelectedSkinSourcePackages(
@@ -148,31 +155,9 @@ function decodeSourcePackage(
   }
   const spriteRows = buildSpriteRows(role, view, textureIds);
   if (spriteRows.status === "rejected") return spriteRows;
-  const portableAudio: Array<Readonly<Record<string, unknown>>> = [];
-  for (const path of view.pathsWithSuffix(".mp3")) {
-    const leasedFile = view.requireFile(path);
-    const bytes = view.requireBytes(path);
-    if (leasedFile.status === "rejected") return invalid(leasedFile.failure.capability, leasedFile.failure.boundary);
-    if (bytes.status === "rejected") return invalid(bytes.failure.capability, bytes.failure.boundary);
-    if (leasedFile.value.mediaType !== "audio/mpeg" || typeof leasedFile.value.sha256 !== "string") {
-      return invalid("simulator.skin.source-audio-lease-identity", `${logicalResource}/${path} has no application-snapshot MP3 identity.`);
-    }
-    const cue = basenameWithoutExtension(path);
-    const mp3 = inspectMp3FirstFrame(bytes.value);
-    if (mp3.status === "rejected") {
-      return invalid("simulator.skin.source-audio-mp3", `${logicalResource}/${path} is not a structurally valid MP3 resource.`);
-    }
-    files.push(Object.freeze({
-      id: `cue:${cue}`,
-      logicalPath: leasedFile.value.logicalPath,
-      mime: "audio/mpeg" as const,
-      bytes: bytes.value,
-      sha256: leasedFile.value.sha256,
-      width: null,
-      height: null,
-    }));
-    portableAudio.push(Object.freeze({ cue, loop: cue === "SE_RHYTHM_TAP_LONG" }));
-  }
+  const decodedAudio = readPortableAudio(view, files);
+  if (decodedAudio.status === "rejected") return decodedAudio;
+  const portableAudio = decodedAudio.value;
   if (role === "tap-se" && portableAudio.length === 0) {
     return invalid("simulator.skin.source-audio-empty", `${logicalResource} contains no MP3 cue files.`);
   }
@@ -223,6 +208,39 @@ function decodeSourcePackage(
     }))),
     files: Object.freeze(files),
   }));
+}
+
+function readPortableAudio(
+  view: OriginalResourcePackageView,
+  files: PreparedSkinSourceFile[],
+): SimulatorAssemblyResult<readonly Readonly<Record<string, unknown>>[]> {
+  const logicalResource = view.logicalResource;
+  const portableAudio: Array<Readonly<Record<string, unknown>>> = [];
+  for (const path of view.pathsWithSuffix(".mp3")) {
+    const leasedFile = view.requireFile(path);
+    const bytes = view.requireBytes(path);
+    if (leasedFile.status === "rejected") return invalid(leasedFile.failure.capability, leasedFile.failure.boundary);
+    if (bytes.status === "rejected") return invalid(bytes.failure.capability, bytes.failure.boundary);
+    if (leasedFile.value.mediaType !== "audio/mpeg" || typeof leasedFile.value.sha256 !== "string") {
+      return invalid("simulator.skin.source-audio-lease-identity", `${logicalResource}/${path} has no application-snapshot MP3 identity.`);
+    }
+    const cue = basenameWithoutExtension(path);
+    const mp3 = inspectMp3FirstFrame(bytes.value);
+    if (mp3.status === "rejected") {
+      return invalid("simulator.skin.source-audio-mp3", `${logicalResource}/${path} is not a structurally valid MP3 resource.`);
+    }
+    files.push(Object.freeze({
+      id: `cue:${cue}`,
+      logicalPath: leasedFile.value.logicalPath,
+      mime: "audio/mpeg" as const,
+      bytes: bytes.value,
+      sha256: leasedFile.value.sha256,
+      width: null,
+      height: null,
+    }));
+    portableAudio.push(Object.freeze({ cue, loop: cue === "SE_RHYTHM_TAP_LONG" }));
+  }
+  return accepted(Object.freeze(portableAudio));
 }
 
 function validateSourceBundle(

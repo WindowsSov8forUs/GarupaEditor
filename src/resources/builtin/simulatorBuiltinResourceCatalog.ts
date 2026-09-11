@@ -1,4 +1,5 @@
 import comboNumberUrl from "../../assets/game/atlas/bms/ui/iconcombonumber/combo-number.png?url&no-inline";
+import decide1Url from "../../assets/game/sound/common-se/decide_1.mp3?url&no-inline";
 import rhythmGameAdditiveUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png?url&no-inline";
 import rhythmGameUiUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-ui.png?url&no-inline";
 import tapLaneEffect1Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-1.png?url&no-inline";
@@ -144,6 +145,9 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/pause/countdown-2.png", "countdown-2.png", "image/png", countdown2Url),
     file("game/prefabs/bms/pause/countdown-3.png", "countdown-3.png", "image/png", countdown3Url),
     file("game/prefabs/bms/pause/countdown-animation-profile.json", "countdown-animation-profile.json", "application/json", countdownAnimationProfileUrl),
+  ]),
+  resource("sound/common-se", "Original CommonSE UI sound", "package", [
+    file("game/sound/common-se/decide_1.mp3", "decide_1.mp3", "audio/mpeg", decide1Url),
   ]),
   resource("prefabs/bms/rhythmgamegauge/score", "Score gauge portable resources", "package", [
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),

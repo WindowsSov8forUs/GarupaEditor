@@ -99,6 +99,7 @@ export interface SimulatorEngine {
   ): SimulatorResult<ManualInputButtonResolution | null>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
+  playUiDecisionSound(): SimulatorResult<void>;
   continueLive(): SimulatorResult<void>;
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
   advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean>;

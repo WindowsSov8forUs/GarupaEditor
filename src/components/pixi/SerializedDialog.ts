@@ -48,7 +48,8 @@ export function createSerializedDialog(
     windowComponent.zIndex = profile.window.depth;
     const window = new NineSliceSprite({
       texture: textures.window,
-      ...borders.window,
+      leftWidth: borders.window.left, rightWidth: borders.window.right,
+      topHeight: borders.window.top, bottomHeight: borders.window.bottom,
       width: profile.window.size[0], height: profile.window.size[1],
       anchor: { x: 0.5, y: 0.5 },
       label: `${profile.identity}:window`,
@@ -61,7 +62,8 @@ export function createSerializedDialog(
     headerComponent.zIndex = profile.header.depth;
     const header = new NineSliceSprite({
       texture: textures.header,
-      ...borders.header,
+      leftWidth: borders.header.left, rightWidth: borders.header.right,
+      topHeight: borders.header.top, bottomHeight: borders.header.bottom,
       width: profile.header.size[0], height: profile.header.size[1],
       anchor: { x: 0.5, y: 0.5 }, label: `${profile.identity}:header`,
     });
@@ -114,7 +116,8 @@ export function createSerializedDialog(
       const texture = buttonProfile.spriteName === "button_pink" ? textures.pink : textures.gray;
       const legacy = `${profile.identity}:${buttonProfile.identity}`;
       const button = new NineSliceSprite({
-        texture, ...borders.button,
+        texture, leftWidth: borders.button.left, rightWidth: borders.button.right,
+        topHeight: borders.button.top, bottomHeight: borders.button.bottom,
         width: buttonProfile.spriteSize[0], height: buttonProfile.spriteSize[1],
         anchor: { x: 0.5, y: 0.5 }, label: legacy,
       });
@@ -127,7 +130,15 @@ export function createSerializedDialog(
       caption.anchor.set(0.5);
       caption.position.set(buttonProfile.labelPosition[0], buttonProfile.labelPosition[1]);
       caption.zIndex = buttonProfile.labelDepth;
-      component.addChild(button, caption);
+      // StarUIButton uses the same sliced sprite as a white half-alpha press cover.
+      const pressedCover = new NineSliceSprite({
+        texture, leftWidth: borders.button.left, rightWidth: borders.button.right,
+        topHeight: borders.button.top, bottomHeight: borders.button.bottom,
+        width: buttonProfile.spriteSize[0], height: buttonProfile.spriteSize[1],
+        anchor: { x: 0.5, y: 0.5 }, label: `${legacy}-pressed`, visible: false, alpha: 0.5,
+      });
+      pressedCover.zIndex = 20;
+      component.addChild(button, caption, pressedCover);
       buttonGroup.addChild(component);
     });
   return dialog;

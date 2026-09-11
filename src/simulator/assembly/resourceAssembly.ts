@@ -110,6 +110,8 @@ export async function assembleSimulatorResources(
   if (skinPacks.status === "rejected") return skinPacks;
   const commonAudio = await prepareSourceAudioPackage("sound/common", lease);
   if (commonAudio.status === "rejected") return commonAudio;
+  const commonSe = await prepareSourceAudioPackage("sound/common-se", lease);
+  if (commonSe.status === "rejected") return commonSe;
   const commonRender = await prepareLeasedCommonRenderResources(lease);
   if (commonRender.status === "rejected") return commonRender;
   const skinRender = await prepareSkinRenderOverlay(
@@ -183,7 +185,7 @@ export async function assembleSimulatorResources(
   });
   const audio = await prepareLeasedAudioResources(
     chartAudio,
-    Object.freeze([...skinPacks.value, commonAudio.value]),
+    Object.freeze([...skinPacks.value, commonAudio.value, commonSe.value]),
     targets.audio.preflight,
   );
   if (audio.status === "rejected") return audio;

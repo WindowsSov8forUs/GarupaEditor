@@ -360,6 +360,7 @@ export class AudioCommandProducer {
         kind: "hold.pause" as const,
         owner_key: hold.ownerKey,
       })),
+      oneShot("decide_1", "pause-ui"),
     ];
     return this.preflightCommands(commands);
   }
@@ -391,6 +392,10 @@ export class AudioCommandProducer {
       }
     }
     return this.preflightCommands(commands);
+  }
+
+  preflightUiDecisionSound(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([oneShot("decide_1", "pause-ui")]);
   }
 
   preflightJudgement(
