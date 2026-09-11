@@ -135,17 +135,7 @@ function createMesh(
   premultiplyOutput: boolean,
   vertexColors: Float32Array,
 ): PixiParticleLinearColorMesh {
-  const values = [...color].map(Math.fround);
-  if (texture.destroyed || typeof particleId !== "string" || particleId.length === 0 ||
-    positions.length < 8 || positions.length % 2 !== 0 || uvs.length !== positions.length ||
-    indices.length < 3 || indices.length % 3 !== 0 ||
-    [...positions, ...uvs].some((value) => !Number.isFinite(value)) ||
-    [...indices].some((value) => !Number.isSafeInteger(value) || value < 0 || value >= positions.length / 2) ||
-    values.some((value) => !Number.isFinite(value) || value < 0 || value > 1) ||
-    vertexColors.length !== positions.length * 2 ||
-    vertexColors.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) {
-    throw new Error("Particle native mesh requires exact finite primitive, source texture and unit color fields.");
-  }
+  const values = validateMeshData(texture, particleId, positions, uvs, indices, color, vertexColors);
   const geometry = new MeshGeometry({
     positions: new Float32Array(positions),
     uvs: new Float32Array(uvs),
@@ -187,11 +177,42 @@ function createMesh(
     particleLinearColor: {
       value: Object.freeze(values) as readonly [number, number, number, number],
       enumerable: true,
+      writable: true,
     },
     particleTextureLabel: { value: texture.label ?? "", enumerable: true },
     particleMaterialName: { value: materialName, enumerable: true },
   });
   return mesh;
+}
+
+function validateMeshData(texture: Texture, particleId: string, positions: Float32Array,
+  uvs: Float32Array, indices: Uint32Array, color: readonly [number, number, number, number],
+  vertexColors: Float32Array): readonly [number, number, number, number] {
+  const values = [...color].map(Math.fround);
+  if (texture.destroyed || typeof particleId !== "string" || particleId.length === 0 ||
+    positions.length < 8 || positions.length % 2 !== 0 || uvs.length !== positions.length ||
+    indices.length < 3 || indices.length % 3 !== 0 ||
+    [...positions, ...uvs].some((value) => !Number.isFinite(value)) ||
+    [...indices].some((value) => !Number.isSafeInteger(value) || value < 0 || value >= positions.length / 2) ||
+    values.some((value) => !Number.isFinite(value) || value < 0 || value > 1) ||
+    vertexColors.length !== positions.length * 2 ||
+    vertexColors.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) {
+    throw new Error("Particle native mesh requires exact finite primitive, source texture and unit color fields.");
+  }
+  return Object.freeze(values) as readonly [number, number, number, number];
+}
+
+export function updatePixiParticleNativePrimitiveMesh(mesh: PixiParticleLinearColorMesh,
+  texture: Texture, primitive: ParticleNativeRenderPrimitive): void {
+  const color = validateMeshData(texture, primitive.particleId, primitive.positions, primitive.uvs,
+    primitive.indices, primitive.linearColor, primitive.vertexColors);
+  // The caller supplies a hidden generation with the same texture/shader/blend
+  // binding. Updating it cannot change the currently displayed generation.
+  mesh.geometry.uvs = primitive.uvs;
+  mesh.geometry.positions = primitive.positions;
+  mesh.geometry.indices = primitive.indices;
+  mesh.geometry.getBuffer("aParticleColor").data = primitive.vertexColors;
+  Object.defineProperty(mesh, "particleLinearColor", { value: color });
 }
 
 export function destroyPixiParticleLinearColorMesh(mesh: PixiParticleLinearColorMesh): void {

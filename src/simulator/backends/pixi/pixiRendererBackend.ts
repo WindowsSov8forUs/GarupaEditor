@@ -143,8 +143,21 @@ interface PendingPixiBatch {
   readonly recordingBatch: RenderCommandBatch;
   readonly commands: readonly RenderCommand[];
   readonly reservedNodes: ReadonlyMap<number, Container>;
-  readonly reservedGeometry: ReadonlyMap<number, Mesh>;
+  readonly reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>;
   readonly reservedMasks: ReadonlyMap<number, Graphics>;
+}
+
+interface PixiGeometryData {
+  readonly positions: Float32Array;
+  readonly uvs: Float32Array;
+  readonly indices: Uint32Array;
+  readonly tint: number;
+  readonly alpha: number;
+}
+
+interface PixiGeometryReservation {
+  readonly data: PixiGeometryData;
+  readonly mesh: Mesh | null;
 }
 
 interface PixiHudVisual {
@@ -561,13 +574,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return supported;
     }
     const reservedNodes = new Map<number, Container>();
-    const reservedGeometry = new Map<number, Mesh>();
+    const reservedGeometry = new Map<number, PixiGeometryReservation>();
+    const plannedGeometry = new Map<string, boolean>();
     const reservedMasks = new Map<number, Graphics>();
     const plannedThresholds = new Map<string, number | null>();
     try {
       for (const command of commands) {
         if (command.kind === "create-object" || command.kind === "acquire-object") {
           plannedThresholds.set(command.renderObjectId, null);
+          plannedGeometry.set(command.renderObjectId, false);
           const node = this.objectFactory.create(
             command.role,
             command.renderObjectId,
@@ -584,17 +599,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           node.label = command.renderObjectId;
           node.visible = false;
           reservedNodes.set(command.sequence, node);
-        } else if (command.kind === "set-mesh") {
-          reservedGeometry.set(command.sequence, createEvidenceMesh(
-            command,
-            this.profile!.scene.projection,
-            this.surfaceLayout!,
-          ));
-        } else if (command.kind === "set-line") {
-          reservedGeometry.set(command.sequence, createEvidenceLine(
-            command,
-            this.profile!.scene.projection,
-          ));
+        } else if (command.kind === "set-mesh" || command.kind === "set-line") {
+          const data = command.kind === "set-mesh"
+            ? createEvidenceMeshData(command, this.profile!.scene.projection, this.surfaceLayout!)
+            : createEvidenceLineData(command, this.profile!.scene.projection);
+          const exists = plannedGeometry.get(command.renderObjectId) ??
+            (this.objects.get(command.renderObjectId)?.geometryContent != null);
+          reservedGeometry.set(command.sequence, { data, mesh: exists ? null : createGeometryMesh(data) });
+          plannedGeometry.set(command.renderObjectId, true);
         } else if (command.kind === "set-mask") {
           reservedMasks.set(command.sequence, createEvidenceMask(command));
         } else if (command.kind === "set-threshold") {
@@ -613,7 +625,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       for (const node of reservedNodes.values()) {
         node.destroy({ children: true } as DestroyOptions);
       }
-      for (const mesh of reservedGeometry.values()) destroyMesh(mesh);
+      for (const { mesh } of reservedGeometry.values()) if (mesh !== null) destroyMesh(mesh);
       for (const mask of reservedMasks.values()) mask.destroy();
       this.recording.discard(recordingBatch.value);
       return reject(
@@ -1162,8 +1174,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const pending = [...this.pending.values()];
     this.pending.clear();
     for (const [batchIndex, value] of pending.entries()) {
-      for (const [sequence, mesh] of value.reservedGeometry) {
-        release(`pending:${batchIndex}:geometry:${sequence}`, () => destroyMesh(mesh));
+      for (const [sequence, { mesh }] of value.reservedGeometry) {
+        if (mesh !== null) release(`pending:${batchIndex}:geometry:${sequence}`, () => destroyMesh(mesh));
       }
       for (const [sequence, mask] of value.reservedMasks) {
         release(`pending:${batchIndex}:mask:${sequence}`, () => mask.destroy());
@@ -1305,18 +1317,39 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     commands: readonly RenderCommand[],
   ): SimulatorResult<void> {
     const shadow = new Map<string, PixiShadowObject>();
-    for (const [id, value] of this.objects) {
-      shadow.set(id, {
+    const released = new Set<string>();
+    const parentOf = (value: PixiObjectRecord): string | null => value.node.parent === this.stage
+      ? null
+      : this.objectIdsByNode.get(value.node.parent as Container) ?? null;
+    // Copy only command consumers; preflight never mutates the live objects.
+    const getObject = (id: string): PixiShadowObject | undefined => {
+      const staged = shadow.get(id);
+      if (staged) return staged;
+      if (released.has(id)) return undefined;
+      const value = this.objects.get(id);
+      if (!value) return undefined;
+      const copy: PixiShadowObject = {
         role: value.role,
-        parentObjectId: value.node.parent === this.stage
-          ? null
-          : this.objectIdsByNode.get(value.node.parent as Container) ?? null,
+        parentObjectId: parentOf(value),
         materialBound: value.materialTexture !== null,
         spriteBindingKey: value.spriteBindingKey,
         maskConfigured: value.maskContent !== null,
         activeAnimationRoles: new Set(value.activeAnimationRoles),
-      });
-    }
+      };
+      shadow.set(id, copy);
+      return copy;
+    };
+    const hasLiveChildren = (parentId: string): boolean => {
+      for (const [id, value] of this.objects) {
+        if (released.has(id)) continue;
+        const staged = shadow.get(id);
+        if ((staged ? staged.parentObjectId : parentOf(value)) === parentId) return true;
+      }
+      for (const [id, value] of shadow) {
+        if (!this.objects.has(id) && value.parentObjectId === parentId) return true;
+      }
+      return false;
+    };
     for (const command of commands) {
       if (!this.supports(command)) {
         return reject(
@@ -1327,6 +1360,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       switch (command.kind) {
         case "create-object":
         case "acquire-object":
+          released.delete(command.renderObjectId);
           shadow.set(command.renderObjectId, {
             role: command.role,
             parentObjectId: command.parentObjectId,
@@ -1337,18 +1371,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           });
           break;
         case "release-object":
-          if ([...shadow.values()].some(
-            (candidate) => candidate.parentObjectId === command.renderObjectId,
-          )) {
+          if (hasLiveChildren(command.renderObjectId)) {
             return reject(
               "render.pixi.release-object-with-live-children",
               "Pixi child identities must be released before their parent identity.",
             );
           }
           shadow.delete(command.renderObjectId);
+          released.add(command.renderObjectId);
           break;
         case "clear-sprite": {
-          const object = shadow.get(command.renderObjectId)!;
+          const object = getObject(command.renderObjectId)!;
           if (!spriteObjectRole(object.role)) return reject(
             "render.pixi.clear-non-sprite", "Only sprite contents can be cleared.",
           );
@@ -1356,7 +1389,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         }
         case "bind-resource": {
-          const role = shadow.get(command.renderObjectId)!.role;
+          const role = getObject(command.renderObjectId)!.role;
           if (!validateTypedRenderResourceBinding(command, role, this.profile!)) {
             return reject(
               "render.pixi.resource-binding-role-mismatch",
@@ -1364,13 +1397,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             );
           }
           shadow.set(command.renderObjectId, {
-            ...shadow.get(command.renderObjectId)!,
+            ...getObject(command.renderObjectId)!,
             materialBound: command.binding === "material"
               ? true
-              : shadow.get(command.renderObjectId)!.materialBound,
+              : getObject(command.renderObjectId)!.materialBound,
             spriteBindingKey: command.binding === "sprite"
               ? spriteKey(command.logicalAssetId, command.exactKey!)
-              : shadow.get(command.renderObjectId)!.spriteBindingKey,
+              : getObject(command.renderObjectId)!.spriteBindingKey,
           });
           break;
         }
@@ -1378,7 +1411,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "deactivate-object":
           break;
         case "hide-object":
-          if (command.contentsOnly && !spriteObjectRole(shadow.get(command.renderObjectId)!.role)) {
+          if (command.contentsOnly && !spriteObjectRole(getObject(command.renderObjectId)!.role)) {
             return reject("render.pixi.hide-non-sprite",
               "Hiding sprite contents requires a sprite owner and preserves its child objects.");
           }
@@ -1386,8 +1419,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "set-transform":
           if (
             command.maskObjectId !== null &&
-            (shadow.get(command.maskObjectId)?.role !== "mask" ||
-              !shadow.get(command.maskObjectId)?.maskConfigured)
+            (getObject(command.maskObjectId)?.role !== "mask" ||
+              !getObject(command.maskObjectId)?.maskConfigured)
           ) {
             return reject(
               "render.pixi.invalid-mask-reference",
@@ -1396,19 +1429,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }
           break;
         case "set-mask":
-          if (shadow.get(command.renderObjectId)!.role !== "mask") {
+          if (getObject(command.renderObjectId)!.role !== "mask") {
             return reject(
               "render.pixi.mask-role-mismatch",
               "Only an explicit mask object may receive portable polygon geometry.",
             );
           }
           shadow.set(command.renderObjectId, {
-            ...shadow.get(command.renderObjectId)!,
+            ...getObject(command.renderObjectId)!,
             maskConfigured: true,
           });
           break;
         case "set-mesh": {
-          const object = shadow.get(command.renderObjectId)!;
+          const object = getObject(command.renderObjectId)!;
           const roleMatches = object.role === "note-mesh"
             ? command.materialRole === "long-note" || command.materialRole === "curve-note"
             : object.role === "habahiro-flash-mesh" && command.materialRole === "habahiro-flash";
@@ -1422,12 +1455,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         case "set-line":
           if (
-            (shadow.get(command.renderObjectId)!.role === "sync-line"
+            (getObject(command.renderObjectId)!.role === "sync-line"
               ? command.materialRole !== "sync-line"
-              : shadow.get(command.renderObjectId)!.role === "multiple-directional-line"
+              : getObject(command.renderObjectId)!.role === "multiple-directional-line"
               ? command.materialRole !== "multiple-directional-line"
               : true) ||
-            !shadow.get(command.renderObjectId)!.materialBound ||
+            !getObject(command.renderObjectId)!.materialBound ||
             !isEvidenceLine(command)
           ) {
             return reject(
@@ -1439,19 +1472,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "set-hud":
           if (!isEvidenceHud(
             command,
-            shadow.get(command.renderObjectId)!.role,
+            getObject(command.renderObjectId)!.role,
             this.spriteTextures,
             this.decodedFonts,
             this.profile!.gameClearProfile,
           )) {
             return reject(
               "render.pixi.hud-outside-r3-profile",
-              `Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys. role=${shadow.get(command.renderObjectId)!.role} command=${JSON.stringify(command)}.`,
+              `Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys. role=${getObject(command.renderObjectId)!.role} command=${JSON.stringify(command)}.`,
             );
           }
           break;
         case "play-animation": {
-          const object = shadow.get(command.renderObjectId)!;
+          const object = getObject(command.renderObjectId)!;
           if (
             !animationRoleMatchesObject(command.animationRole, object.role) ||
             !animationBindingMatchesProfile(
@@ -1476,7 +1509,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         case "sample-animation":
         case "stop-animation": {
-          const object = shadow.get(command.renderObjectId)!;
+          const object = getObject(command.renderObjectId)!;
           if (!object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
             return reject(
               "render.pixi.animation-owner-not-playing",
@@ -1494,7 +1527,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         }
         case "set-threshold":
-          if (!["note-mesh", "sync-line", "multiple-directional-line"].includes(shadow.get(command.renderObjectId)!.role)) {
+          if (!["note-mesh", "sync-line", "multiple-directional-line"].includes(getObject(command.renderObjectId)!.role)) {
             return reject(
               "render.pixi.threshold-role-mismatch",
               "The bottom-left threshold applies to NoteMesh, SyncLine and MultipleDirectional line owners.",
@@ -1509,7 +1542,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private apply(
     command: RenderCommand,
     reservedNodes: ReadonlyMap<number, Container>,
-    reservedGeometry: ReadonlyMap<number, Mesh>,
+    reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>,
     reservedMasks: ReadonlyMap<number, Graphics>,
     orderingParents: Set<Container>,
   ): void {
@@ -1719,10 +1752,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "set-mesh": {
         const object = this.objects.get(command.renderObjectId)!;
-        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
-        const mesh = reservedGeometry.get(command.sequence)!;
+        const mesh = commitGeometry(object, reservedGeometry.get(command.sequence)!);
         applyGeometryMaterial(mesh, object, this.profile!);
-        object.node.addChild(mesh);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
         object.geometryCenterZ = geometryCenterZ(command.vertices);
@@ -1732,10 +1763,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "set-line": {
         const object = this.objects.get(command.renderObjectId)!;
-        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
-        const mesh = reservedGeometry.get(command.sequence)!;
+        const mesh = commitGeometry(object, reservedGeometry.get(command.sequence)!);
         applyGeometryMaterial(mesh, object, this.profile!);
-        object.node.addChild(mesh);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
         object.geometryCenterZ = geometryCenterZ([command.start, command.end]);
@@ -1855,7 +1884,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   private destroyUnownedReservations(
     reservedNodes: ReadonlyMap<number, Container>,
-    reservedGeometry: ReadonlyMap<number, Mesh>,
+    reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>,
     reservedMasks: ReadonlyMap<number, Graphics>,
   ): void {
     const ownedNodes = new Set([...this.objects.values()].map((value) => value.node));
@@ -1874,8 +1903,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         node.destroy({ children: true } as DestroyOptions);
       }
     }
-    for (const mesh of reservedGeometry.values()) {
-      if (!ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
+    for (const { mesh } of reservedGeometry.values()) {
+      if (mesh !== null && !ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
     }
     for (const mask of reservedMasks.values()) {
       if (!ownedMasks.has(mask) && !mask.destroyed) mask.destroy();
@@ -1932,8 +1961,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       cleanupFailures.push("tap-lane-effect-mask-owner");
     }
     for (const [batchIndex, pendingValue] of pendingValues.entries()) {
-      for (const [sequence, mesh] of pendingValue.reservedGeometry) {
-        if (!mesh.destroyed) {
+      for (const [sequence, { mesh }] of pendingValue.reservedGeometry) {
+        if (mesh !== null && !mesh.destroyed) {
           try {
             destroyMesh(mesh);
           } catch {
@@ -4629,10 +4658,10 @@ function isEvidenceLine(command: SetLineCommand): boolean {
     command.width.value > 0;
 }
 
-function createEvidenceLine(
+function createEvidenceLineData(
   command: SetLineCommand,
   projection: RenderOrthographicProjectionProfile,
-): Mesh {
+): PixiGeometryData {
   if (!isEvidenceLine(command)) throw new Error("line outside R2 profile");
   const [startX, startY] = projectWorldPoint(command.start.x.value, command.start.y.value, projection);
   const [endX, endY] = projectWorldPoint(command.end.x.value, command.end.y.value, projection);
@@ -4643,7 +4672,7 @@ function createEvidenceLine(
   // Coincident endpoints retain a zero-area quad until the line separates again.
   const nx = length === 0 ? 0 : -dy / length * halfWidth;
   const ny = length === 0 ? 0 : dx / length * halfWidth;
-  const geometry = new MeshGeometry({
+  return {
     positions: new Float32Array([
       startX + nx, startY + ny,
       endX + nx, endY + ny,
@@ -4652,10 +4681,9 @@ function createEvidenceLine(
     ]),
     uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
     indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
-    topology: "triangle-list",
-    shrinkBuffersToFit: true,
-  });
-  return new Mesh({ geometry, texture: Texture.EMPTY, roundPixels: false });
+    tint: 0xFFFFFF,
+    alpha: 1,
+  };
 }
 
 function isEvidenceMesh(command: SetMeshCommand): boolean {
@@ -4686,11 +4714,11 @@ function isEvidenceMesh(command: SetMeshCommand): boolean {
   return (base || advanced) && command.coordinateSpace !== "authored-ui" && command.meshIdentity === undefined;
 }
 
-function createEvidenceMesh(
+function createEvidenceMeshData(
   command: SetMeshCommand,
   projection: RenderOrthographicProjectionProfile,
   surfaceLayout: OriginalSurfaceLayout,
-): Mesh {
+): PixiGeometryData {
   if (!isEvidenceMesh(command)) throw new Error("mesh outside current source-bound profile");
   const positions = new Float32Array(command.vertices.length * 2);
   const uvs = new Float32Array(command.uv.length * 2);
@@ -4708,16 +4736,36 @@ function createEvidenceMesh(
     uvs[index * 2] = command.uv[index]!.x.value;
     uvs[index * 2 + 1] = command.uv[index]!.y.value;
   }
-  const geometry = new MeshGeometry({
+  return {
     positions,
     uvs,
     indices: Uint32Array.from(command.indices),
-    topology: "triangle-list",
-    shrinkBuffersToFit: true,
-  });
-  const mesh = new Mesh({ geometry, texture: Texture.WHITE, roundPixels: false });
-  mesh.tint = rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value);
-  mesh.alpha = firstColor(command).alpha.value;
+    tint: rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value),
+    alpha: firstColor(command).alpha.value,
+  };
+}
+
+function createGeometryMesh(data: PixiGeometryData): Mesh {
+  return new Mesh({ geometry: new MeshGeometry({
+    positions: data.positions, uvs: data.uvs, indices: data.indices,
+    topology: "triangle-list", shrinkBuffersToFit: false,
+  }), texture: Texture.EMPTY, roundPixels: false });
+}
+
+function commitGeometry(object: PixiObjectRecord, reservation: PixiGeometryReservation): Mesh {
+  const mesh = object.geometryContent ?? reservation.mesh!;
+  const { data } = reservation;
+  if (object.geometryContent === null) object.node.addChild(mesh);
+  else {
+    // Preflight owns fresh CPU data. Live buffers change only after validation,
+    // retaining the Mesh/Geometry and GPU allocation across ordinary updates.
+    const geometry = mesh.geometry as MeshGeometry;
+    geometry.uvs = data.uvs;
+    geometry.positions = data.positions;
+    geometry.indices = data.indices;
+  }
+  mesh.tint = data.tint;
+  mesh.alpha = data.alpha;
   return mesh;
 }
 
