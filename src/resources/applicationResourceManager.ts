@@ -84,6 +84,7 @@ export class ApplicationResourceManager {
   private readonly installed = new Map<string, StoredResourceRecord>();
   private readonly providers = new Map<string, ResourceCatalogProvider>();
   private readonly activeCatalogs = new Map<string, ResourceCatalogSnapshot>();
+  private readonly catalogRefreshes = new Map<string, Promise<ResourceResult<ResourceCatalogSnapshot>>>();
   private readonly registeredNetwork = new Map<string, NetworkResourceDescriptor>();
   private selection: ApplicationResourceSelection = createEmptyApplicationResourceSelection();
   private builtinDocumentLease: ResourceConsumerLease | null = null;
@@ -255,7 +256,19 @@ export class ApplicationResourceManager {
     return resourceAccepted(this.selection);
   }
 
-  async refreshCatalog(providerId: string): Promise<ResourceResult<ResourceCatalogSnapshot>> {
+  refreshCatalog(providerId: string): Promise<ResourceResult<ResourceCatalogSnapshot>> {
+    const existing = this.catalogRefreshes.get(providerId);
+    if (existing !== undefined) return existing;
+    // Bootstrap and the simulator launch can request the same refresh together.
+    // Share only the in-flight transaction; later requests still refresh normally.
+    const pending = this.refreshCatalogOnce(providerId).finally(() => {
+      this.catalogRefreshes.delete(providerId);
+    });
+    this.catalogRefreshes.set(providerId, pending);
+    return pending;
+  }
+
+  private async refreshCatalogOnce(providerId: string): Promise<ResourceResult<ResourceCatalogSnapshot>> {
     const provider = this.providers.get(providerId);
     if (provider === undefined) return invalid("resources.manager.unknown-catalog-provider");
     const cached = await this.backend.loadCatalogSnapshot(providerId);
