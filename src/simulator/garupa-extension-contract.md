@@ -163,7 +163,11 @@ Reverse remains the only authority for original behavior.
   The new speed applies at the event boundary. Negative values reverse, zero
   stops, and positive values are not clamped.
 - Note displacement is `axis(noteHitMs) - axis(nowMs)`. Reverse/stop segments
-  may leave and re-enter the viewport while alive. Retirement is persistent:
+  may leave and re-enter the viewport while alive. Before judgement, Slide
+  endpoints may return from Move to Wait when signed entry progress falls below
+  zero, restoring the original launcher transform and virtual strip width;
+  positive progress enters through the same motion and mesh path again.
+  Retirement is persistent:
   Single notes follow their judgement/timeout owner; Slide nodes and meshes
   follow the shared predecessor-hide and Stop lifecycle. SV never rewinds those
   states or changes BPM hit time. Pausing freezes motion and animation; Retry

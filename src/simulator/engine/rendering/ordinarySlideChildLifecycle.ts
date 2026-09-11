@@ -204,7 +204,7 @@ export function advanceOrdinarySlideChildren(
     if (stopControl.advanceMotion && state.lifecycle.phase !== "stop") {
       judgeY = Math.max(judgementY.value, stopControl.virtualPerfectLine);
     }
-    if (stopControl.advanceMotion && state.lifecycle.phase === "move") {
+    if (stopControl.advanceMotion && state.lifecycle.phase === "move" && lifecycle.phase !== "wait") {
       const hasAfter = index + 1 < childStates.length;
       const realLine = stopControl.rootWaiting && hasAfter;
       const stopLine = realLine

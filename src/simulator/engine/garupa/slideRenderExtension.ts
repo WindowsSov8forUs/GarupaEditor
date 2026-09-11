@@ -3,7 +3,7 @@ import type { RenderFloat32 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { ok, type SimulatorResult } from "../evidence";
-import { advanceOrdinaryLongNormalChild, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+import { advanceOrdinaryLongNormalChild, createOrdinaryLongNormalChildState, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { advanceOrdinaryNoteVerticalMotion, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
 import { advanceOrdinarySlideChildren, advanceSlideStopWait, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
 import type { OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
@@ -179,10 +179,11 @@ export function advanceExtensionMotion(
   if (displacement.status !== "ok") return displacement;
   const progress = 1 - displacement.value / (arrival.value.value * 1000);
   const due = frame.adjustedMusicPosition >= node.absolutePosition;
-  const entered = progress >= 0 || due || state.phase !== "wait";
+  const entered = progress >= 0 || due;
   // An unlaunched endpoint stays at the original launcher transform. Its strip
   // can remain visible even though the endpoint sprite has not entered yet.
-  if (!entered) return ok(state);
+  if (!entered) return state.phase === "wait" ? ok(state)
+    : createOrdinaryLongNormalChildState(state.motionState, state.afterAbsolutePosition, state.noteBpm);
   const rawCurve = calculateNoteMotionCurve(progress, true);
   // Clip only coordinates outside the drawable field. A stopped/judged endpoint
   // is subsequently governed by the shared Slide lifecycle, never by SV again.
