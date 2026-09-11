@@ -56,7 +56,7 @@ A>0延迟BGM resume A个outer updates；A<0先启动BGM，再冻结gameplay/inpu
 
 Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/sample metadata均由simulator在严格MP3检查与浏览器解码后内部生成。Public chart另只接受显式`isFullLength: boolean`，不接受五个Life数值。simulator内部固定普通单曲初始化`initialLife=1000`、`playerMaxLife=1000`、`lifeUpperLimit=2000`；non-full使用Miss/Bad `-100/-50`，full使用`-50/-25`。该boolean只携带原作`musicDataType == "full"`的已解析结果，不从BGM duration、Garupa JSON内容、文件名、sessionMode或inputMode推断。initial engine、Retry和MoveTime fresh generation复用同一frozen分类。
 
-- Live Life归零：走现有terminal Game Over链并关闭会话。
+- Live Life归零：走现有terminal Game Over链，立即停止玩法输入；会话保留音频资源，至少覆盖既有两次 Pause 命令的累计延迟（0.05 秒、再 0.1 秒）后才关闭，避免同帧 dispose 抹掉已安排的音频输出。延迟由 `AudioCommandProducer` 的原命令共同派生，不增加 Continue 对话框或完整 GameOver 演出。
 - 帧末先选择成功结束，再选择Life归零失败。Reverse `c3e3e48f43d0ef2412482a691709150fc022c605` 的 `simulator-game-clear-native-domain-10-1-4/game_end_branch_order.json` 绑定 `transitionGameEndState@0x32FD008`、`isGameClear@0x32FB778` 与现有updatePlayState/onGameOver原指令。生产在全部判定、Record、HUD反映后选择分支；失败音频暂停、粒子清理、lane-effect all-off只在失败分支提交，随后发布GameState 8并停止后续玩法输入。自然结束与Life归零同帧时只启动成功分支，不能先在判定批次中清理失败粒子或暂停成功音频。Rehearsal仍保留Life归零事实并继续。此修复沿用关闭会话的既有合同，不增加Continue对话框。
 - Rehearsal Life归零：Record保留`singleGameOver`事实，但不关闭会话。LR-R01实测本轮69次Life0/GameOver后的`ExecUpdate`；此前已提交R1另有1216次。
 - Reverse `99d40bcc`以19条accepted R1（并由`770af437`补全恢复倒计时owner/三PNG）、四个精确mode rows、level3 `Pause`/三种modal serialized owners、现有RhythmGameUI/UICommon/sgm资源及六组参数化布局关闭旧`41f4ecfe`阻断。Pause touch-began先于MoveTime/gameplay；modal覆盖触摸且按钮在release回调；Resume保持engine paused并执行3秒countdown后恢复，Retry fresh、Abort与两类cancel均使用opaque one-use命令。Android Back进入右侧Resume；Desktop native X仍是平台关闭。

@@ -41,6 +41,7 @@ import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
 import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings";
+import { GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS } from "../engine/audio/audioCommandProducer";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 13;
@@ -155,6 +156,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private closeReport: SimulatorModuleCloseReport | null = null;
   private naturalCompletionPresentationActive = false;
   private naturalCompletionReadyToClose = false;
+  private gameOverElapsedSeconds: number | null = null;
 
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
@@ -227,8 +229,12 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (snapshot.status !== "ok") return rejectedStep(snapshot);
     const record = snapshot.value.managers.scoreLifeState?.record ?? null;
     if (record?.singleGameOver === true && this.sessionMode === "live") {
-      const report = this.finish("game-over", null);
-      return Object.freeze({ status: "closed" as const, report });
+      if (this.gameOverElapsedSeconds === null) this.gameOverElapsedSeconds = 0;
+      else this.gameOverElapsedSeconds += deltaTimeSeconds;
+      if (this.gameOverElapsedSeconds >= GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS) {
+        const report = this.finish("game-over", null);
+        return Object.freeze({ status: "closed" as const, report });
+      }
     }
     return Object.freeze({ status: "running" as const });
   }
@@ -280,7 +286,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (surface.status === "rejected") return surface;
     const state = this.engine.getTimelineControlState();
     if (state.status !== "ok") return fromEngineFailure(state);
-    return accepted(!this.naturalCompletionPresentationActive
+    return accepted(!this.naturalCompletionPresentationActive && this.gameOverElapsedSeconds === null
       ? Object.freeze({ ...state.value, terminalPresentationActive: false })
       : Object.freeze({ ...state.value, playable: false, terminalPresentationActive: true }));
   }

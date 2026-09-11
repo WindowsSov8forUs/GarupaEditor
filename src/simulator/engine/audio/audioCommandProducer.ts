@@ -31,6 +31,10 @@ export interface HoldSoundEvent {
   readonly action: "start" | "fade";
 }
 
+const GAME_OVER_PAUSE_DELAY_BITS = ["0x3D4CCCCD", "0x3DCCCCCD"] as const;
+export const GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS = GAME_OVER_PAUSE_DELAY_BITS
+  .reduce((total, bits) => total + audioFloat32FromBits(bits)!, 0);
+
 interface TapStatusSnapshot {
   readonly beforeJudgeNoteType: number;
   readonly beforeMultipleDirectionalFlickNoteCount: number;
@@ -433,18 +437,9 @@ export class AudioCommandProducer {
         "The life-zero Game Over audio coroutine starts once.",
       );
     }
-    return this.preflightCommands([
-      {
-        kind: "audio.pause-all",
-        paused: true,
-        delay_seconds_bits: "0x3D4CCCCD",
-      },
-      {
-        kind: "audio.pause-all",
-        paused: true,
-        delay_seconds_bits: "0x3DCCCCCD",
-      },
-    ], () => { this.gameOverTriggered = true; });
+    return this.preflightCommands(GAME_OVER_PAUSE_DELAY_BITS.map(delay => ({
+      kind: "audio.pause-all" as const, paused: true, delay_seconds_bits: delay,
+    })), () => { this.gameOverTriggered = true; });
   }
 
   pollBgmNaturalEnd(): SimulatorResult<boolean> {

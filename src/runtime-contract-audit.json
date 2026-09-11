@@ -9519,7 +9519,7 @@
     {
       "id": "RCB-0453",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 77,
+      "line": 78,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9540,7 +9540,7 @@
     {
       "id": "RCB-0454",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 78,
+      "line": 79,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9561,7 +9561,7 @@
     {
       "id": "RCB-0455",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 98,
+      "line": 99,
       "marker": "rejected-call",
       "symbol": "initial",
       "source": "return rejected(",
@@ -9582,7 +9582,7 @@
     {
       "id": "RCB-0456",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 112,
+      "line": 113,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(fresh.failure.capability, [], fresh.failure.boundary);",
@@ -9603,7 +9603,7 @@
     {
       "id": "RCB-0457",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 125,
+      "line": 126,
       "marker": "integrity-failure-call",
       "symbol": "disposed",
       "source": "return integrityFailure(",
@@ -9624,7 +9624,7 @@
     {
       "id": "RCB-0458",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 187,
+      "line": 189,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9645,7 +9645,7 @@
     {
       "id": "RCB-0459",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 267,
+      "line": 273,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9666,7 +9666,7 @@
     {
       "id": "RCB-0460",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 268,
+      "line": 274,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9687,7 +9687,7 @@
     {
       "id": "RCB-0461",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 314,
+      "line": 320,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9708,7 +9708,7 @@
     {
       "id": "RCB-0462",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 315,
+      "line": 321,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9729,7 +9729,7 @@
     {
       "id": "RCB-0463",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 354,
+      "line": 360,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9750,7 +9750,7 @@
     {
       "id": "RCB-0464",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 362,
+      "line": 368,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9771,7 +9771,7 @@
     {
       "id": "RCB-0465",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 434,
+      "line": 440,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9792,7 +9792,7 @@
     {
       "id": "RCB-0466",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 435,
+      "line": 441,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9813,7 +9813,7 @@
     {
       "id": "RCB-0467",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 446,
+      "line": 452,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -9834,7 +9834,7 @@
     {
       "id": "RCB-0468",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 447,
+      "line": 453,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -9855,7 +9855,7 @@
     {
       "id": "RCB-0469",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 527,
+      "line": 533,
       "marker": "integrity-failure-string",
       "symbol": "rejectedStep",
       "source": "function rejectedStep(result: { readonly status: \"integrity-failure\"; readonly capability: string; readonly boundary: string }): SimulatorOwnedSessionStepResult {",
@@ -9876,7 +9876,7 @@
     {
       "id": "RCB-0470",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 532,
+      "line": 538,
       "marker": "integrity-failure-string",
       "symbol": "fromEngineFailure",
       "source": "result: Extract<SimulatorResult<T>, { status: \"integrity-failure\" }>,",
@@ -9897,7 +9897,7 @@
     {
       "id": "RCB-0471",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 534,
+      "line": 540,
       "marker": "integrity-failure-string",
       "symbol": "fromEngineFailure",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -9918,7 +9918,7 @@
     {
       "id": "RCB-0472",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 534,
+      "line": 540,
       "marker": "rejected-call",
       "symbol": "fromEngineFailure",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -9939,7 +9939,7 @@
     {
       "id": "RCB-0473",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 538,
+      "line": 544,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "return moduleFailure(\"integrity-failure\", result.capability, result.boundary);",
@@ -9960,7 +9960,7 @@
     {
       "id": "RCB-0474",
       "file": "src/simulator/assembly/sessionRecipe.ts",
-      "line": 542,
+      "line": 548,
       "marker": "rejected-call",
       "symbol": "closedFailure",
       "source": "return rejected(",
@@ -13971,7 +13971,7 @@
     {
       "id": "RCB-0665",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 53,
+      "line": 57,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -13992,7 +13992,7 @@
     {
       "id": "RCB-0666",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 67,
+      "line": 71,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14013,7 +14013,7 @@
     {
       "id": "RCB-0667",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 84,
+      "line": 88,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14034,7 +14034,7 @@
     {
       "id": "RCB-0668",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 136,
+      "line": 140,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14055,7 +14055,7 @@
     {
       "id": "RCB-0669",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 144,
+      "line": 148,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14076,7 +14076,7 @@
     {
       "id": "RCB-0670",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 155,
+      "line": 159,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -14097,7 +14097,7 @@
     {
       "id": "RCB-0671",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 162,
+      "line": 166,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14118,7 +14118,7 @@
     {
       "id": "RCB-0672",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 172,
+      "line": 176,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14139,7 +14139,7 @@
     {
       "id": "RCB-0673",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 311,
+      "line": 315,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"audio.startup-voice.invalid-cue\", \"Live-start voice requires the internally derived non-empty session cue.\");",
@@ -14160,7 +14160,7 @@
     {
       "id": "RCB-0674",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 326,
+      "line": 330,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14181,7 +14181,7 @@
     {
       "id": "RCB-0675",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 341,
+      "line": 345,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14202,7 +14202,7 @@
     {
       "id": "RCB-0676",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 403,
+      "line": 407,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14223,7 +14223,7 @@
     {
       "id": "RCB-0677",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 431,
+      "line": 435,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14244,7 +14244,7 @@
     {
       "id": "RCB-0678",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 453,
+      "line": 448,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -14265,7 +14265,7 @@
     {
       "id": "RCB-0679",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 468,
+      "line": 463,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14286,7 +14286,7 @@
     {
       "id": "RCB-0680",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 486,
+      "line": 481,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14307,7 +14307,7 @@
     {
       "id": "RCB-0681",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 516,
+      "line": 511,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14328,7 +14328,7 @@
     {
       "id": "RCB-0682",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 537,
+      "line": 532,
       "marker": "integrity-failure-call",
       "symbol": "mapAudioResult",
       "source": ": integrityFailure(",
@@ -14349,7 +14349,7 @@
     {
       "id": "RCB-0683",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 561,
+      "line": 556,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -14370,7 +14370,7 @@
     {
       "id": "RCB-0684",
       "file": "src/simulator/engine/audio/audioCommandProducer.ts",
-      "line": 648,
+      "line": 643,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
