@@ -202,6 +202,7 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
   private stopped = true;
   private sequence = 0;
   private previousTimestamp: number | null = null;
+  private generation = 0;
 
   constructor(private readonly render: () => void) {}
   setTargetFrameRate(value: 60 | 120): void { this.target = value; }
@@ -209,21 +210,24 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
   start(consumer: (tick: { sequence: number; deltaTimeSeconds: number }) => Promise<void>): SimulatorAssemblyResult<SimulatorFrameSubscription> {
     if (!this.stopped) return rejected("launch-failed", "simulator.browser.scheduler-already-started", "Browser scheduler can start only once per autonomous runtime.");
     this.stopped = false;
+    this.sequence = 0;
+    this.previousTimestamp = null;
+    const generation = ++this.generation;
     const tick = (timestamp: number) => {
-      if (this.stopped) return;
+      if (this.stopped || generation !== this.generation) return;
       const delta = this.previousTimestamp === null
         ? Math.fround(1 / this.target)
         : Math.fround((timestamp - this.previousTimestamp) / 1000);
       this.previousTimestamp = timestamp;
       const sequence = this.sequence++;
       void consumer(Object.freeze({ sequence, deltaTimeSeconds: delta })).then(() => {
-        if (!this.stopped) this.render();
+        if (!this.stopped && generation === this.generation) this.render();
       }).finally(() => {
-        if (!this.stopped) this.frameId = requestAnimationFrame(tick);
+        if (!this.stopped && generation === this.generation) this.frameId = requestAnimationFrame(tick);
       });
     };
     this.frameId = requestAnimationFrame(tick);
-    return assemblyAccepted(Object.freeze({ stop: () => this.dispose() }));
+    return assemblyAccepted(Object.freeze({ stop: () => { if (generation === this.generation) this.dispose(); } }));
   }
 
   dispose(): void {

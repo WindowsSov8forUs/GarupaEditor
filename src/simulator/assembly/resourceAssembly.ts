@@ -46,6 +46,10 @@ export interface SimulatorResourceAssemblyTargets {
   readonly rendering: {
     readonly backend: SimulatorRendererBackend;
     readonly preflight: RenderResourcePreflightAdapter;
+    readonly onPrepared?: (
+      scene: SimulatorSceneLayout,
+      backgroundImage: PreparedSimulatorResourceAssembly["backgroundImage"],
+    ) => Promise<SimulatorAssemblyResult<void>>;
   };
   readonly audio: {
     readonly backend: SimulatorAudioBackend;
@@ -108,10 +112,6 @@ export async function assembleSimulatorResources(
     : selection.skin.resources;
   const skinPacks = await prepareSelectedSkinSourcePackages(sourcePackageSelection, lease);
   if (skinPacks.status === "rejected") return skinPacks;
-  const commonAudio = await prepareSourceAudioPackage("sound/common", lease);
-  if (commonAudio.status === "rejected") return commonAudio;
-  const commonSe = await prepareSourceAudioPackage("sound/common-se", lease);
-  if (commonSe.status === "rejected") return commonSe;
   const commonRender = await prepareLeasedCommonRenderResources(lease);
   if (commonRender.status === "rejected") return commonRender;
   const skinRender = await prepareSkinRenderOverlay(
@@ -183,35 +183,6 @@ export async function assembleSimulatorResources(
       }),
     }),
   });
-  const audio = await prepareLeasedAudioResources(
-    chartAudio,
-    Object.freeze([...skinPacks.value, commonAudio.value, commonSe.value]),
-    targets.audio.preflight,
-  );
-  if (audio.status === "rejected") return audio;
-  const defaultParticles = await prepareLeasedDefaultParticleProvider(lease);
-  if (defaultParticles.status === "rejected") return defaultParticles;
-  const gameplayParticles = prepareSkinParticleProvider(
-    selection.skin.resolved,
-    skinPacks.value,
-    defaultParticles.value,
-  );
-  if (gameplayParticles.status === "rejected") return gameplayParticles;
-  const gameClearProfile = commonRender.value.profile.gameClearProfile;
-  if (gameClearProfile === undefined || gameClearProfile.nativeSemantic === undefined) {
-    return rejected(
-      "resource-integrity",
-      "simulator.assembly.game-clear-native-profile-missing",
-      "The launch generation requires its source-bound Game-clear graph and native semantic sidecar before particle backend preparation.",
-    );
-  }
-  const particles = await prepareGameClearParticleProvider(
-    gameplayParticles.value,
-    gameClearProfile,
-    lease,
-  );
-  if (particles.status === "rejected") return particles;
-
   const prepared: Array<{ readonly identity: string; readonly dispose: () => unknown }> = [];
   const rollback = (): readonly SimulatorModuleCleanupFailure[] => {
     const failures: SimulatorModuleCleanupFailure[] = [];
@@ -238,6 +209,43 @@ export async function assembleSimulatorResources(
   );
   if (renderReady.status !== "ok") return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
   prepared.push({ identity: "renderer", dispose: () => targets.rendering.backend.dispose() });
+  if (targets.rendering.onPrepared !== undefined) {
+    const presented = await targets.rendering.onPrepared(scene.value, skinRender.value.backgroundImage);
+    if (presented.status === "rejected") return rejectedWithCleanup(presented, rollback());
+  }
+  const commonAudio = await prepareSourceAudioPackage("sound/common", lease);
+  if (commonAudio.status === "rejected") return rejectedWithCleanup(commonAudio, rollback());
+  const commonSe = await prepareSourceAudioPackage("sound/common-se", lease);
+  if (commonSe.status === "rejected") return rejectedWithCleanup(commonSe, rollback());
+  const audio = await prepareLeasedAudioResources(
+    chartAudio,
+    Object.freeze([...skinPacks.value, commonAudio.value, commonSe.value]),
+    targets.audio.preflight,
+  );
+  if (audio.status === "rejected") return rejectedWithCleanup(audio, rollback());
+  const defaultParticles = await prepareLeasedDefaultParticleProvider(lease);
+  if (defaultParticles.status === "rejected") return rejectedWithCleanup(defaultParticles, rollback());
+  const gameplayParticles = prepareSkinParticleProvider(
+    selection.skin.resolved,
+    skinPacks.value,
+    defaultParticles.value,
+  );
+  if (gameplayParticles.status === "rejected") return rejectedWithCleanup(gameplayParticles, rollback());
+  const gameClearProfile = commonRender.value.profile.gameClearProfile;
+  if (gameClearProfile === undefined || gameClearProfile.nativeSemantic === undefined) {
+    return rejectedWithCleanup(rejected(
+      "resource-integrity",
+      "simulator.assembly.game-clear-native-profile-missing",
+      "The launch generation requires its source-bound Game-clear graph and native semantic sidecar before particle backend preparation.",
+    ), rollback());
+  }
+  const particles = await prepareGameClearParticleProvider(
+    gameplayParticles.value,
+    gameClearProfile,
+    lease,
+  );
+  if (particles.status === "rejected") return rejectedWithCleanup(particles, rollback());
+
   const audioReady = await targets.audio.backend.prepare(
     targets.sessionId,
     audio.value.profile,

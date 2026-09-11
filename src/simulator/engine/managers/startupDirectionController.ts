@@ -16,7 +16,7 @@ import {
   type StartupDirectionSceneState,
 } from "../../scene/startupDirectionScene";
 
-const FIRST_VIEW_FADE = Math.fround(0.1);
+export const STARTUP_FIRST_VIEW_FADE_SECONDS = Math.fround(0.1);
 const INFORMATION_HOLD = Math.fround(0.9);
 const INFORMATION_FADE = Math.fround(1.0);
 const HUD_FADE = Math.fround(0.5);
@@ -79,6 +79,7 @@ export class StartupDirectionController {
     private readonly purpose: StartupDirectionPurpose = "initial",
     private readonly mvBackground: MvBackgroundModule | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
+    private readonly firstViewElapsedSeconds = 0,
   ) {
     this.startupAudio = audio === null
       ? null
@@ -132,9 +133,10 @@ export class StartupDirectionController {
       });
       return ok(undefined);
     }
+    this.phaseElapsedValue = Math.fround(this.firstViewElapsedSeconds);
     this.publish({
       informationPhase: "revealing",
-      informationAlpha: Math.fround(0),
+      informationAlpha: Math.fround(this.phaseElapsedValue / STARTUP_FIRST_VIEW_FADE_SECONDS),
     });
     return ok(undefined);
   }
@@ -151,7 +153,7 @@ export class StartupDirectionController {
     this.advanceParallelOwners(deltaTimeSeconds);
     switch (this.phaseValue) {
       case "first-view": {
-        const sample = advance(this.phaseElapsedValue, FIRST_VIEW_FADE, deltaTimeSeconds);
+        const sample = advance(this.phaseElapsedValue, STARTUP_FIRST_VIEW_FADE_SECONDS, deltaTimeSeconds);
         this.phaseElapsedValue = sample.elapsed;
         this.publish({ informationPhase: "revealing", informationAlpha: sample.ratio });
         if (sample.done) this.enter("information-hold", GameState.OPFirstAnimStart);

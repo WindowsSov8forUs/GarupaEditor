@@ -1,7 +1,7 @@
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useApplicationResourceManager, useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 import { installProductionAutonomousSimulatorPlatform } from "../simulator/platform/platformComposition";
 import type { AutonomousSimulatorPlatformCapabilities } from "../simulator/platform/platformComposition";
 import { launchSimulatorModule } from "../simulator/public";
@@ -45,7 +45,6 @@ function routeRequestId(): string {
 
 function BuiltInSimulatorWindow() {
   const manager = useApplicationResourceManager();
-  const loadingBackground = useApplicationResourceUrl("ui.loading-background");
   const hostRef = useRef<HTMLDivElement | null>(null);
   const ownerRef = useRef<BrowserSimulatorLaunchOwner | null>(null);
   const [descriptor, setDescriptor] = useState<SimulatorLaunchTransportDescriptor | null>(null);
@@ -205,7 +204,6 @@ function BuiltInSimulatorWindow() {
   const overlay = renderOverlay(
     launchState,
     transportFailure,
-    loadingBackground,
     activateAudioFromPointer,
     () => { void leavePlayer(); },
   );
@@ -220,14 +218,10 @@ function BuiltInSimulatorWindow() {
 function renderOverlay(
   state: BrowserSimulatorLaunchState,
   transportFailure: string | null,
-  loadingBackground: string,
   onActivationPointer: () => void,
   onLeave: () => void,
 ) {
-  // Reverse adf35169: LoadingBgController.Other uses the full texture UV.
-  // The host fills its viewport; startup scrolling/comic content is not used.
-  const backdropStyle = { ...preparationOverlayStyle,
-    backgroundImage: `url("${loadingBackground}")`, backgroundSize: "100% 100%" };
+  const backdropStyle = preparationOverlayStyle;
   if (state.phase === "running" || state.phase === "closing") return null;
   if (state.phase === "awaiting-host-activation") {
     return (
@@ -259,25 +253,7 @@ function renderOverlay(
     );
   }
   if (state.phase === "closed" || state.phase === "disposed") return null;
-  return (
-    <section style={backdropStyle} aria-busy="true">
-      <div style={preparationPanelStyle}>
-        <p style={preparationTextStyle}>{preparationText(state.phase)}</p>
-        <button type="button" className="simulator-mobile-back-button" onClick={onLeave} style={returnButtonStyle}>
-          返回编辑器
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function preparationText(phase: BrowserSimulatorLaunchState["phase"]): string {
-  switch (phase) {
-    case "refreshing-catalog": return "正在加载资源目录…";
-    case "acquiring-media": return "正在加载歌曲…";
-    case "checking-audio": return "正在准备音频…";
-    default: return "正在准备演奏…";
-  }
+  return null;
 }
 
 function dependencyFailure(capability: string, boundary: string): BrowserSimulatorLaunchDependencyError {

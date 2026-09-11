@@ -2279,7 +2279,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     // Original R1 keeps the serialized Pause Sprite visible while the dialog owns input;
     // DisableButton is a setup/terminal mutation, not the menu-open transition.
     const displayVisible = snapshot.playable || snapshot.terminalPresentationActive;
-    this.pauseButton.visible = displayVisible;
+    this.pauseButton.visible = displayVisible || (snapshot.hudAlpha ?? 0) > 0;
+    this.pauseButton.alpha = snapshot.terminalPresentationActive ? 1 : (snapshot.hudAlpha ?? (snapshot.playable ? 1 : 0));
     this.rehearsalRoot.visible = displayVisible && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
     if (this.autoLiveCaptionRoot !== null) {
       const hudAlpha = snapshot.hudAlpha ?? (snapshot.playable ? 1 : 0);
