@@ -8,7 +8,6 @@ import type { MusicPosition } from "../data/noteData";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 
 export const MUSIC_BAR_DIVISION_COUNT = 192;
-const LAUNCHER_LEAD_SECONDS = Math.fround(0.8);
 const JUDGE_OFFSET_STEP_SECONDS = Math.fround(1 / 60);
 
 export interface MusicScoreControllerSnapshot {
@@ -43,19 +42,19 @@ export class InGameMusicScoreController {
   private musicPositionCallbackCountValue = 0;
   private readonly tempoCommands: readonly NoteInformation[];
 
-  constructor(chart: ChartConstructionResult) {
+  constructor(chart: ChartConstructionResult, noteArrivalSeconds: number) {
     this.basicBpmValue = Math.fround(chart.startBpm);
     this.basicBpmStringValue = chart.startBpmString;
     this.currentBpmValue = this.basicBpmValue;
     this.currentBpmStringValue = this.basicBpmStringValue;
     this.nextBpmValue = this.basicBpmValue;
     this.nextBpmStringValue = this.basicBpmStringValue;
-    let launcherLead = Math.fround(
-      this.basicBpmValue * LAUNCHER_LEAD_SECONDS,
-    );
-    if (launcherLead >= MUSIC_BAR_DIVISION_COUNT) {
+    let launcherLead = Math.fround(Math.fround(
+      Math.fround(noteArrivalSeconds * this.basicBpmValue) / 240,
+    ) * MUSIC_BAR_DIVISION_COUNT);
+    while (launcherLead >= MUSIC_BAR_DIVISION_COUNT) {
       launcherLead = Math.fround(launcherLead - MUSIC_BAR_DIVISION_COUNT);
-      this.launcherMusicBarProgressValue = 1;
+      this.launcherMusicBarProgressValue += 1;
     }
     this.launcherMusicBeatProgressValue = launcherLead;
     this.tempoCommands = chart.noteBatches.flatMap((batch) => {

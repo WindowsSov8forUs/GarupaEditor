@@ -39,6 +39,7 @@ import { TapLaneEffectOwner } from "../engine/managers/tapLaneEffectOwner";
 import { InGameMovieManager, mapMovieResult } from "../engine/movie/inGameMovieManager";
 import { MvBackgroundModule } from "../engine/movie/mvBackgroundModule";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
+import { getOrdinaryNoteArrivalSeconds } from "../engine/rendering/ordinaryNoteGeometry";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
 import { createConstructedChartScoringPlan } from "../engine/scoring/constructedChartScoringAdapter";
@@ -1101,7 +1102,9 @@ export function createSimulatorEngine(
       );
   if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
   const scoreLifeStateManager = scoreLifeStateResult.value;
-  const musicScoreController = new InGameMusicScoreController(input.chart);
+  const noteArrival = getOrdinaryNoteArrivalSeconds(input.runtime.specificSpeed);
+  if (noteArrival.status !== "ok") return noteArrival;
+  const musicScoreController = new InGameMusicScoreController(input.chart, noteArrival.value.value);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   let productTimeline: GarupaProductTimelineManager | null = null;
   if (productProfile?.hasExtensions) {

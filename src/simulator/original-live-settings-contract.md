@@ -14,6 +14,8 @@ Evidence lives only in `artifacts/investigations/simulator-original-live-setting
 
 ## Public Schema 13
 
+Note speed also determines scheduler initialization. The platform supplies the same current `specificSpeed` to scene motion and engine runtime for initial, retry and move-time reconstruction builds. The engine reuses `GetNoteArrivalSeconds`, then initializes launcher progress as `arrivalSeconds * basicBpm / 240 * 192`, carrying across every complete bar. A fixed one-second lead is invalid outside speed 10. Authority: Reverse `13c58ac1`, `simulator-launcher-speed-10-1-4/launcher_native.json`, original `NoteManager.ExecAwakeEnd` and `InGameMusicScoreController.SetupFirstGameProgress`.
+
 The owned root projection remains `{ chartData, presentation, config }`. Field order, plain/frozen prototype and unrelated host metadata do not affect validation; the copy reads only the following mandatory `config` semantics and drops additional fields:
 
 ```ts

@@ -423,6 +423,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const engine = createSimulatorEngine({
       chart: chart.value,
       runtime: {
+        specificSpeed: assembly.value.sceneLayout.ordinaryNoteScene.specificSpeed,
         originalLiveSettings: originalLiveSettings.value,
         mode: score.value.mode,
       },

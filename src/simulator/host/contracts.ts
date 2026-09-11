@@ -13,7 +13,7 @@ import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
 import type { AudioBackendSnapshot } from "../backends/audioContracts";
 import type { MovieBackendSnapshot } from "../backends/movieContracts";
-import type { RenderBackendSnapshot } from "../backends/renderingContracts";
+import type { RenderBackendSnapshot, RenderFloat32 } from "../backends/renderingContracts";
 import type {
   ParticleBackendSnapshot,
   ParticlePixiSceneProfile,
@@ -55,6 +55,7 @@ export interface SimulatorParticleSessionInput {
 export interface SimulatorEngineInput {
   readonly chart: ChartConstructionResult;
   readonly runtime: {
+    readonly specificSpeed: RenderFloat32;
     readonly originalLiveSettings: OriginalLiveSettings;
     readonly mode: SimulatorModeIdentity;
   };
