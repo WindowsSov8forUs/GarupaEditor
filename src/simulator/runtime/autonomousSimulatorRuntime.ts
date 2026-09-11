@@ -95,11 +95,11 @@ export class AutonomousSimulatorModule {
         "simulator.runtime.scheduler-start-threw",
         "The internal frame scheduler threw before launch publication; the prepared session is closed without ownership transfer.",
       );
-      const rejectedFailure = this.closeBeforeTransfer(failure);
+      const rejectedFailure = await this.closeBeforeTransfer(failure);
       return Object.freeze({ status: "rejected" as const, failure: rejectedFailure });
     }
     if (scheduled.status === "rejected") {
-      const rejectedFailure = this.closeBeforeTransfer(scheduled.failure);
+      const rejectedFailure = await this.closeBeforeTransfer(scheduled.failure);
       return Object.freeze({ status: "rejected" as const, failure: rejectedFailure });
     }
     this.frameSubscription = scheduled.value;
@@ -323,7 +323,8 @@ export class AutonomousSimulatorModule {
     );
   }
 
-  private closeBeforeTransfer(failure: SimulatorModuleFailure): SimulatorModuleFailure {
+  private async closeBeforeTransfer(failure: SimulatorModuleFailure): Promise<SimulatorModuleFailure> {
+    const session = this.session;
     let sessionFailure = null;
     try {
       const report = this.session?.close("terminal-fault", failure);
@@ -342,10 +343,12 @@ export class AutonomousSimulatorModule {
     this.resolveClosed = null;
     this.closedPromise = null;
     this.state = "closed";
+    const resourceFailure = await this.settleSession(session);
     return appendSimulatorCleanupFailures(failure, [
       ...(sessionFailure ?? []),
       schedulerFailure,
       inputFailure,
+      resourceFailure,
     ]);
   }
 
@@ -373,8 +376,21 @@ export class AutonomousSimulatorModule {
     this.state = "closing";
     const schedulerFailure = this.stopScheduler();
     const inputFailure = this.disposeInput();
+    const session = this.session;
     this.session = null;
-    const cleanupFailures = [schedulerFailure, inputFailure];
+    void this.settleSession(session).then(resourceFailure =>
+      this.finishClosedReport(report, [schedulerFailure, inputFailure, resourceFailure]));
+  }
+
+  private async settleSession(session: SimulatorOwnedSession | null): Promise<SimulatorModuleFailure | null> {
+    try { return await session?.settleCleanup?.() ?? null; }
+    catch (error) {
+      return moduleFailure("integrity-failure", "simulator.runtime.async-session-cleanup-threw",
+        `Asynchronous session cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private finishClosedReport(report: SimulatorModuleCloseReport, cleanupFailures: readonly (SimulatorModuleFailure | null)[]): void {
     const firstCleanupFailure = cleanupFailures.find(
       (failure): failure is SimulatorModuleFailure => failure !== null,
     ) ?? null;

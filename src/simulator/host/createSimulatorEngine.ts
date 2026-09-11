@@ -617,8 +617,29 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   dispose(): SimulatorResult<void> {
+    let result: SimulatorResult<void>;
+    try { result = this.disposeDomainOutputs(); }
+    catch (error) {
+      result = integrityFailure("engine.domain-dispose-threw", [],
+        `Domain cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (result.status !== "ok") {
+      try { this.inGameManager.disposeAfterTerminalBackendFault(); }
+      catch (error) {
+        result = integrityFailure(result.capability, result.requiredEvidence,
+          `${result.boundary} Domain terminal cleanup also threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    const physical = this.disposePhysicalBackends();
+    return result.status === "ok" ? physical : physical.status === "ok" ? result : integrityFailure(
+      result.capability, result.requiredEvidence,
+      `${result.boundary} Secondary cleanup failure: ${physical.capability}: ${physical.boundary}`,
+    );
+  }
+
+  private disposeDomainOutputs(): SimulatorResult<void> {
     if (this.inGameManager.state === "disposed") {
-      return this.disposePhysicalBackends();
+      return ok(undefined);
     }
     const rendererState = this.backends.rendering?.snapshot().state;
     const movieState = this.backends.movie?.snapshot().state;
@@ -630,7 +651,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       particleBackendState === "faulted" || particleBackendState === "disposed" ||
       particleRendererState === "faulted" || particleRendererState === "disposed") {
       this.inGameManager.disposeAfterTerminalBackendFault();
-      return this.disposePhysicalBackends();
+      return ok(undefined);
     }
     const rendererValidation = this.renderProducer?.validate();
     if (rendererValidation?.status === "integrity-failure") return rendererValidation;
@@ -639,15 +660,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     const domainDispose = this.inGameManager.dispose();
     if (domainDispose.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
-      this.inGameManager.disposeAfterTerminalBackendFault();
-      const physical = this.disposePhysicalBackends();
-      return physical.status === "ok"
-        ? domainDispose
-        : integrityFailure(
-            domainDispose.capability,
-            domainDispose.requiredEvidence,
-            `${domainDispose.boundary} Secondary cleanup failure: ${physical.capability}.`,
-          );
+      return domainDispose;
     }
     if (particle?.status === "ok") {
       const external = particle.value.commitExternal();
@@ -665,12 +678,18 @@ class SimulatorEngineHost implements SimulatorEngine {
       const published = particle.value.publishDomain();
       if (published.status !== "ok") return published;
     }
-    return this.disposePhysicalBackends();
+    return ok(undefined);
   }
 
   private disposePhysicalBackends(): SimulatorResult<void> {
     let primary: import("../engine/evidence").SimulatorIntegrityFailure | null = null;
-    const capture = (result: SimulatorResult<void>): void => {
+    const capture = (owner: string, operation: () => SimulatorResult<void>): void => {
+      let result: SimulatorResult<void>;
+      try { result = operation(); }
+      catch (error) {
+        result = integrityFailure("engine.backend-dispose-threw", [],
+          `${owner} cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
       if (result.status === "ok") return;
       primary = primary === null
         ? result
@@ -680,10 +699,10 @@ class SimulatorEngineHost implements SimulatorEngine {
             `${primary.boundary} Secondary cleanup failure: ${result.capability}.`,
           );
     };
-    capture(this.disposeAudio());
-    capture(this.disposeMovie());
-    capture(this.disposeParticles());
-    capture(this.backends.rendering?.dispose() ?? ok(undefined));
+    capture("audio", () => this.disposeAudio());
+    capture("movie", () => this.disposeMovie());
+    capture("particles", () => this.disposeParticles());
+    capture("rendering", () => this.backends.rendering?.dispose() ?? ok(undefined));
     return primary ?? ok(undefined);
   }
 
@@ -811,8 +830,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   private disposeParticles(): SimulatorResult<void> {
-    if (this.particleCoordinator === null ||
-      this.backends.particles?.snapshot().state === "disposed") {
+    if (this.particleCoordinator === null) {
       return ok(undefined);
     }
     return this.particleCoordinator.disposeBackends();

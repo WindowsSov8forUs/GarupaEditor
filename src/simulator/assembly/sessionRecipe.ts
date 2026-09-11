@@ -5,6 +5,8 @@ import type {
 } from "../host/contracts";
 import {
   createPortableReplaySimulatorEngine,
+  disposeSimulatorEngine,
+  appendEngineCleanupFailure,
   type PortableReplaySimulatorEngine,
   type SimulatorTimelineControlState,
 } from "../host/portableReplaySession";
@@ -122,18 +124,17 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         if (identityMatches && surfaceMatches) {
           return ok(fresh.value.engine);
         }
-        const disposed = fresh.value.engine.dispose();
+        const disposed = await disposeSimulatorEngine(fresh.value.engine);
         return integrityFailure(
           "simulator.recipe.fresh-composition-mismatch",
           [],
           "A fresh Retry or MoveTime generation must retain chart/settings/Skin identity and the session logical surface." +
-            (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}.`),
+            (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}: ${disposed.boundary}`),
         );
       },
     });
     if (replay.status !== "ok") {
-      initial.value.engine.dispose();
-      return fromEngineFailure(replay);
+      return fromEngineFailure(appendEngineCleanupFailure(replay, await disposeSimulatorEngine(initial.value.engine)));
     }
     return accepted(new RecipeOwnedSession(
       replay.value,
@@ -168,6 +169,11 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly controlLayout: OriginalSurfaceLayout,
     private readonly readSurface: () => SimulatorAssemblyResult<SimulatorSurfaceState>,
   ) {}
+
+  async settleCleanup(): Promise<SimulatorModuleFailure | null> {
+    const settled = await this.engine.settleDisposal?.() ?? ok(undefined);
+    return settled.status === "ok" ? null : moduleFailure("integrity-failure", settled.capability, settled.boundary);
+  }
 
   async synchronizeSurface() {
     if (this.state !== "running") {

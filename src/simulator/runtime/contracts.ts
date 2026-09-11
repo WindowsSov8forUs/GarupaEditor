@@ -64,6 +64,7 @@ export type SimulatorSurfaceSynchronizationResult =
   | { readonly status: "rejected"; readonly failure: SimulatorModuleFailure };
 
 export interface SimulatorOwnedSession {
+  settleCleanup?(): Promise<SimulatorModuleFailure | null>;
   synchronizeSurface?(): Promise<SimulatorSurfaceSynchronizationResult>;
   step(
     deltaTimeSeconds: number,

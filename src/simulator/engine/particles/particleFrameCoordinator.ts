@@ -279,9 +279,19 @@ export class ParticleFrameCoordinator {
   }
 
   disposeBackends(): SimulatorResult<void> {
-    const renderer = this.renderer?.dispose() ?? null;
-    if (renderer !== null && renderer.status !== "accepted") return mapParticleResult(renderer);
-    return mapParticleResult(this.backend.dispose());
+    const dispose = (owner: string, operation: () => ParticleOperationResult<void>): SimulatorResult<void> => {
+      try { return mapParticleResult(operation()); }
+      catch (error) {
+        return integrityFailure("particle.backend-dispose-threw", [],
+          `${owner} cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    const renderer = this.renderer === null ? ok(undefined) : dispose("renderer", () => this.renderer!.dispose());
+    const backend = dispose("simulation", () => this.backend.dispose());
+    return renderer.status === "ok" ? backend : backend.status === "ok" ? renderer : integrityFailure(
+      renderer.capability, renderer.requiredEvidence,
+      `${renderer.boundary} Secondary cleanup failure: ${backend.capability}: ${backend.boundary}`,
+    );
   }
 
   finishFrame(frame: number): void {

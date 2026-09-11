@@ -105,6 +105,8 @@ export interface SimulatorEngine {
   getAdjustedMusicPosition(): SimulatorResult<number>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;
+  /** Completes asynchronous host resource release after synchronous disposal. */
+  settleDisposal?(): Promise<SimulatorResult<void>>;
 }
 
 export type CreateSimulatorEngine = (

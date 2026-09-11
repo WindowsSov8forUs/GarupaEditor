@@ -43,6 +43,8 @@ src/simulator/
 
 Required resources are prepared and decoded before backend, scene or engine mutation. Particle semantics retain exact application revision/file receipts, official UnityFS/component identities and independent encoded/decoded texture digests; ordinary, directional and Game-clear enter one cached immutable prepare token shared by simulation and Pixi. Missing or incompatible resources make the action unavailable; unsafe paths, corrupt bytes, ownership violations and non-rollbackable consistency failures remain fail-closed. Silent media, white textures, nearest-name aliases, stale revisions and default-Skin substitution are forbidden.
 
+Session close stops frame scheduling, input and physical backends immediately; its public close report waits for the application resource lease release and includes asynchronous release failures. Retry/MoveTime also await release of replaced or rejected generations. Domain release preflight failures retain the primary error while all physical backends still receive cleanup; particle renderer and simulation cleanup cannot skip one another. These are host ownership guarantees, not Unity resource-manager emulation.
+
 Frame mutation uses detached backend capabilities. Potentially failing portable/physical commits run before OneFrame, score/life, particle, audio semantic, HUD and tap-lane owner publication. Physical AudioNode effects and GPU/context scene mutation cannot be rolled back and are reported as external side-effect boundaries; they never authorize a claim of cross-device physical atomicity.
 
 ## Current capability boundary

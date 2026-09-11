@@ -539,6 +539,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (registered.status !== "ok") {
       return rejectedWithCleanup(fromIntegrity(registered), [
         simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
+        simulatorCleanupFailureFromResult("resources-after-wrapper-registration-failure", await mountedEngine.settleDisposal()),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
     }
     return accepted(Object.freeze({
@@ -606,6 +607,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
 class MountedSimulatorEngine implements SimulatorEngine {
   private disposed = false;
+  private resourceDisposal: Promise<SimulatorResult<void>> | null = null;
   private paused = false;
   private timelineSeconds = Math.fround(0);
   private mount: SimulatorGraphicsMount | null;
@@ -699,8 +701,15 @@ class MountedSimulatorEngine implements SimulatorEngine {
   dispose(): SimulatorResult<void> {
     if (this.disposed) return this.engine.dispose();
     this.disposed = true;
-    let result = this.engine.dispose();
-    const overlayDisposed = this.controlOverlay.dispose();
+    const disposeOwner = (owner: string, operation: () => SimulatorResult<void>): SimulatorResult<void> => {
+      try { return operation(); }
+      catch (error) {
+        return integrityFailure("simulator.composition.owner-dispose-threw", [],
+          `${owner} cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    let result = disposeOwner("engine", () => this.engine.dispose());
+    const overlayDisposed = disposeOwner("control-overlay", () => this.controlOverlay.dispose());
     if (result.status === "ok" && overlayDisposed.status !== "ok") result = overlayDisposed;
     const mount = this.mount;
     this.mount = null;
@@ -719,8 +728,12 @@ class MountedSimulatorEngine implements SimulatorEngine {
             `${result.boundary} Secondary cleanup failure: simulator.composition.visual-unmount-threw.`,
           );
     }
-    void this.resourceLease.release().catch(() => {});
-    const combinedDisposed = this.combinedScene.dispose();
+    this.resourceDisposal = Promise.resolve().then(() => this.resourceLease.release()).then(
+      () => ok(undefined),
+      (error: unknown) => integrityFailure("simulator.composition.resource-lease-release-threw", [],
+        `The disposed generation could not release its application resource lease: ${error instanceof Error ? error.message : String(error)}`),
+    );
+    const combinedDisposed = disposeOwner("combined-scene", () => this.combinedScene.dispose());
     if (combinedDisposed.status === "integrity-failure") {
       return result.status === "ok"
         ? combinedDisposed
@@ -731,6 +744,13 @@ class MountedSimulatorEngine implements SimulatorEngine {
           );
     }
     return result;
+  }
+
+  settleDisposal(): Promise<SimulatorResult<void>> {
+    return this.resourceDisposal ?? Promise.resolve(integrityFailure(
+      "simulator.composition.cleanup-before-disposal", [],
+      "Resource release can settle only after the generation has been disposed.",
+    ));
   }
 }
 

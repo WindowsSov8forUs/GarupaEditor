@@ -378,15 +378,13 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (revised.status !== "ok") return this.rejectCandidate(fresh, revised);
 
     const previous = this.active;
-    const disposed = previous.dispose();
+    const disposed = await disposeSimulatorEngine(previous);
     if (disposed.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(disposed);
+      return this.latchReplayFault(appendEngineCleanupFailure(disposed, await disposeSimulatorEngine(fresh)));
     }
     const published = publishMoveTimeAudio(fresh, targetSeconds);
     if (published.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(published);
+      return this.latchReplayFault(appendEngineCleanupFailure(published, await disposeSimulatorEngine(fresh)));
     }
     this.active = fresh;
     this.currentResolutions = replayResolutions;
@@ -452,16 +450,14 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     }
     const fresh = freshResult.value;
     const previous = this.active;
-    const disposed = previous.dispose();
+    const disposed = await disposeSimulatorEngine(previous);
     if (disposed.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(disposed);
+      return this.latchReplayFault(appendEngineCleanupFailure(disposed, await disposeSimulatorEngine(fresh)));
     }
     if (this.factory.requireVisualPublication === true) {
       const published = publishFreshEngineVisual(fresh);
       if (published.status !== "ok") {
-        fresh.dispose();
-        return this.latchReplayFault(published);
+        return this.latchReplayFault(appendEngineCleanupFailure(published, await disposeSimulatorEngine(fresh)));
       }
     }
     this.active = fresh;
@@ -490,6 +486,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       this.currentResolutions.clear();
     }
     return result;
+  }
+
+  settleDisposal(): Promise<SimulatorResult<void>> {
+    return this.active.settleDisposal?.() ?? Promise.resolve(ok(undefined));
   }
 
   private async createFreshCandidate(
@@ -521,24 +521,24 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.usedEngines.add(fresh);
     const before = fresh.snapshot();
     if (before.status !== "ok" || !isPristine(before.value)) {
-      fresh.dispose();
-      return before.status === "ok"
+      const failure = before.status === "ok"
         ? rejected(
             "timeline.replay.factory-engine-not-pristine",
             "The reconstruction factory must return one pristine whole engine.",
           )
         : before;
+      return appendEngineCleanupFailure(failure, await disposeSimulatorEngine(fresh));
     }
     const initialized = fresh.initialize();
-    if (initialized.status !== "ok") { fresh.dispose(); return initialized; }
+    if (initialized.status !== "ok") return appendEngineCleanupFailure(initialized, await disposeSimulatorEngine(fresh));
     return ok(fresh);
   }
 
-  private rejectCandidate<T>(fresh: SimulatorEngine, failure: SimulatorIntegrityFailure): SimulatorResult<T> {
-    fresh.dispose();
+  private async rejectCandidate<T>(fresh: SimulatorEngine, failure: SimulatorIntegrityFailure): Promise<SimulatorResult<T>> {
+    const disposed = await disposeSimulatorEngine(fresh);
     setMoveTimeVisualState(this.active, false);
     this.state = "ready";
-    return failure;
+    return appendEngineCleanupFailure(failure, disposed);
   }
 
   private commitSimpleEvent(
@@ -658,4 +658,31 @@ function isSimulatorResult(value: unknown): value is SimulatorResult<unknown> {
 }
 function rejected(capability: string, boundary: string): SimulatorIntegrityFailure {
   return integrityFailure(capability, [], boundary);
+}
+
+/** Stops a generation immediately, then observes its application resource release. */
+export async function disposeSimulatorEngine(engine: SimulatorEngine): Promise<SimulatorResult<void>> {
+  let disposed: SimulatorResult<void>;
+  try { disposed = engine.dispose(); }
+  catch (error) {
+    disposed = integrityFailure("timeline.engine-dispose-threw", [],
+      `Engine disposal threw: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  let settled: SimulatorResult<void>;
+  try { settled = await engine.settleDisposal?.() ?? ok(undefined); }
+  catch (error) {
+    settled = integrityFailure("timeline.engine-resource-release-threw", [],
+      `Engine resource release threw: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return disposed.status === "ok" ? settled : appendEngineCleanupFailure(disposed, settled);
+}
+
+export function appendEngineCleanupFailure(
+  failure: SimulatorIntegrityFailure,
+  cleanup: SimulatorResult<void>,
+): SimulatorIntegrityFailure {
+  return cleanup.status === "ok" ? failure : integrityFailure(
+    failure.capability, failure.requiredEvidence,
+    `${failure.boundary} Candidate cleanup also failed: ${cleanup.capability}: ${cleanup.boundary}`,
+  );
 }
