@@ -108,6 +108,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly information = new Container({ label: "StartupInformation", sortableChildren: false });
   private readonly darkCover: Graphics;
   private readonly stageBackdrop: Sprite | null;
+  private stageProgress = 0;
   private readonly characters: readonly Sprite[];
   private disposed = false;
 
@@ -116,7 +117,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     common: PixiStartupDirectionCommonResources,
     private readonly dynamicTextures: readonly Texture[],
     isFullLength: boolean,
-    surfaceLayout: OriginalSurfaceLayout,
+    private readonly surfaceLayout: OriginalSurfaceLayout,
     includeStandardStage: boolean,
   ) {
     this.backgroundRoot.sortableChildren = false;
@@ -126,11 +127,10 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (includeStandardStage) {
       const stageTexture = dynamicTextures[0]!;
       const characterTextures = dynamicTextures.slice(1, -1);
-      this.stageBackdrop = aspectCoverSprite(
+      this.stageBackdrop = informationSprite(
         stageTexture,
         "StartupStageBackdrop",
-        surfaceLayout.surface.viewportWidth,
-        surfaceLayout.surface.viewportHeight,
+        0, -170, 1920, 1440,
       );
       this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(
         texture,
@@ -148,7 +148,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.darkCover = new Graphics({ label: "StartupDarkCover" })
       .rect(0, 0, viewportWidth, viewportHeight)
       .fill({ color: 0x000000, alpha: 1 });
-    this.foregroundRoot.addChild(this.darkCover);
+    this.backgroundRoot.addChildAt(this.darkCover, 0);
     this.information.position.set(viewportWidth / 2, viewportHeight / 2);
     this.information.scale.set(surfaceLayout.ui.screenToSafeChildScale);
 
@@ -188,7 +188,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.foregroundRoot.addChild(this.information);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
-      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0,
+      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0,
       characterAlpha: 0, linePhase: "hidden", lineAlpha: 0,
       gameplayVisible: false, rehearsalControlsVisible: false,
     });
@@ -200,7 +200,23 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.information.visible = state.informationPhase !== "hidden" && state.informationPhase !== "complete";
     this.darkCover.alpha = state.darkCoverAlpha;
     this.darkCover.visible = state.darkCoverAlpha > 0;
-    if (this.stageBackdrop !== null) this.stageBackdrop.alpha = state.stageProgress;
+    this.stageProgress = state.stageProgress;
+    if (this.stageBackdrop !== null) {
+      const layout = this.surfaceLayout;
+      const highAspect = layout.starUi.highAspectRatio;
+      const rootScale = (1 - 0.23 * highAspect) * layout.ui.pixelsPerAuthoredUnit;
+      const eased = 1 - (1 - state.stageProgress) ** 2;
+      const trsScale = 0.7 + (0.92 - 0.7) * eased;
+      const trsY = 111 * (1 - eased);
+      this.stageBackdrop.position.set(layout.surface.viewportWidth / 2,
+        layout.surface.viewportHeight / 2 -
+          (14 * highAspect * layout.ui.pixelsPerAuthoredUnit + (trsY - 170 * trsScale) * rootScale));
+      this.stageBackdrop.width = 1920 * trsScale * rootScale;
+      this.stageBackdrop.height = 1440 * trsScale * rootScale;
+      const brightness = 0.5 + 0.5 * state.stageColorProgress;
+      this.stageBackdrop.tint = [brightness, brightness, brightness];
+      this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle";
+    }
     for (const character of this.characters) character.alpha = state.characterAlpha;
   }
 
@@ -211,7 +227,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       foregroundLabel: this.foregroundRoot.label,
       informationAlpha: this.information.alpha,
       darkCoverAlpha: this.darkCover.alpha,
-      stageProgress: this.stageBackdrop?.alpha ?? 0,
+      stageProgress: this.stageProgress,
       characterAlpha: this.characters[0]?.alpha ?? 0,
       dynamicTextureCount: this.dynamicTextures.length,
     });
@@ -226,20 +242,6 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.foregroundRoot.destroy({ children: true });
     for (const texture of this.dynamicTextures) texture.destroy(true);
   }
-}
-
-function aspectCoverSprite(
-  texture: Texture,
-  label: string,
-  width: number,
-  height: number,
-): Sprite {
-  const sprite = new Sprite({ texture, label });
-  const scale = Math.max(width / texture.width, height / texture.height);
-  sprite.anchor.set(0.5);
-  sprite.position.set(width / 2, height / 2);
-  sprite.scale.set(scale);
-  return sprite;
 }
 
 function fullFrameSprite(

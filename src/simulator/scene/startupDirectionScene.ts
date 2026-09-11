@@ -10,6 +10,7 @@ export interface StartupDirectionSceneState {
   readonly darkCoverAlpha: number;
   readonly stagePhase: StartupStagePhase;
   readonly stageProgress: number;
+  readonly stageColorProgress: number;
   readonly characterAlpha: number;
   readonly linePhase: StartupLinePhase;
   readonly lineAlpha: number;
@@ -27,7 +28,7 @@ export function freezeStartupDirectionSceneState(
 ): StartupDirectionSceneState {
   for (const field of [
     value.informationAlpha, value.hudAlpha, value.darkCoverAlpha,
-    value.stageProgress, value.characterAlpha, value.lineAlpha,
+    value.stageProgress, value.stageColorProgress, value.characterAlpha, value.lineAlpha,
   ]) {
     if (!Number.isFinite(field) || field < 0 || field > 1 || !Object.is(field, Math.fround(field))) {
       throw new TypeError("Startup scene scalar must be an exact finite Float32 unit value.");
@@ -47,6 +48,7 @@ export const INITIAL_STARTUP_DIRECTION_SCENE_STATE = freezeStartupDirectionScene
   darkCoverAlpha: Math.fround(1),
   stagePhase: "dark",
   stageProgress: Math.fround(0),
+  stageColorProgress: Math.fround(0),
   characterAlpha: Math.fround(0),
   linePhase: "hidden",
   lineAlpha: Math.fround(0),

@@ -22,7 +22,8 @@ const INFORMATION_FADE = Math.fround(1.0);
 const HUD_FADE = Math.fround(0.5);
 const BACKGROUND_PRE_DELAY = Math.fround(0.5);
 const STAGE_WAIT = Math.fround(1.5);
-const STAGE_TRANSFORM = Math.fround(0.75);
+const STAGE_TRANSFORM = Math.fround(3);
+const STAGE_COLOR_FADE = Math.fround(0.75);
 const CHARACTER_DELAY = Math.fround(0.25);
 const CHARACTER_FADE = Math.fround(1.25);
 const LINE_DELAY = Math.fround(2.5);
@@ -121,6 +122,7 @@ export class StartupDirectionController {
         darkCoverAlpha: Math.fround(0),
         stagePhase: "idle",
         stageProgress: Math.fround(1),
+        stageColorProgress: Math.fround(1),
         characterAlpha: Math.fround(1),
         linePhase: "visible",
         lineAlpha: Math.fround(1),
@@ -261,7 +263,8 @@ export class StartupDirectionController {
   }
 
   private advanceParallelOwners(delta: number): void {
-    if (this.purpose === "move-time-reconstruction" || this.sceneValue.linePhase === "visible") return;
+    if (this.purpose === "move-time-reconstruction" ||
+      (this.sceneValue.linePhase === "visible" && this.sceneValue.stagePhase === "idle")) return;
     if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
       this.phaseValue !== "voice-wait" && this.phaseValue !== "movie-before-sound" &&
       this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
@@ -279,9 +282,10 @@ export class StartupDirectionController {
     if (line !== null) this.lineFadeElapsedValue = line.elapsed;
     this.publish({
       hudAlpha: hud,
-      darkCoverAlpha: Math.fround(1 - stage),
+      darkCoverAlpha: Math.fround(stageElapsed <= 0 ? 1 : 0),
       stagePhase: stageElapsed <= 0 ? "waiting" : stage < 1 ? "introducing" : "idle",
       stageProgress: stage,
+      stageColorProgress: stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_COLOR_FADE),
       characterAlpha: character,
       linePhase: line === null ? "waiting" : line.done ? "visible" : "fading",
       lineAlpha: line?.ratio ?? Math.fround(0),
