@@ -1,7 +1,8 @@
 import { Container, type Texture } from "pixi.js";
 import profile from "../../engine/skin/stageSpeakers.json";
 import type { OneFrameJudgementBatch } from "../../engine/data/oneFrameData";
-import { StageSpeakerAnimation, stageSpeakerClipForJudgement } from "../../engine/rendering/stageSpeakerAnimation";
+import { stageSpeakerClipForJudgement } from "../../engine/rendering/stageSpeakerAnimation";
+import { StageClipAnimation } from "../../engine/rendering/stageClipAnimation";
 import { createStageImage } from "./pixiStageImage";
 
 export class PixiStageSpeakers {
@@ -22,7 +23,7 @@ export class PixiStageSpeakers {
         (node.parent === null ? parent : nodes.get(node.parent)!.container).addChild(container);
         nodes.set(node.path, { container, image });
       }
-      const animation = new StageSpeakerAnimation(profile.clips);
+      const animation = new StageClipAnimation(profile.clips, "idle");
       return { source, nodes, animation };
     });
     for (const speaker of this.speakers) this.publish(speaker, true);
