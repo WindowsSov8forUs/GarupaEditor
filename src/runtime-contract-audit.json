@@ -5739,7 +5739,7 @@
     {
       "id": "RCB-0273",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 626,
+      "line": 649,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (ref === undefined) throw new Error(`resource slot is not leased: ${slot}`);",
@@ -5760,7 +5760,7 @@
     {
       "id": "RCB-0274",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 628,
+      "line": 651,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (read.status === \"rejected\") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);",
@@ -5781,7 +5781,7 @@
     {
       "id": "RCB-0275",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 638,
+      "line": 661,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (file === undefined) throw new Error(`resource file metadata is not leased: ${slot}/${logicalPath}`);",
@@ -5802,7 +5802,7 @@
     {
       "id": "RCB-0276",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 652,
+      "line": 675,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${released.failure.capability}: ${released.failure.boundary}`);",
@@ -5823,7 +5823,7 @@
     {
       "id": "RCB-0277",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 657,
+      "line": 680,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.released) throw new Error(\"resource lease is closed\");",
@@ -5844,7 +5844,7 @@
     {
       "id": "RCB-0278",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 686,
+      "line": 709,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ")) return integrityFailure(\"resources.manager.builtin-registration-integrity\");",
@@ -5865,7 +5865,7 @@
     {
       "id": "RCB-0279",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 721,
+      "line": 744,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (this.loadBytes === null) return integrityFailure(\"resources.manager.builtin-loader-missing\");",

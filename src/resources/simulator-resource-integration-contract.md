@@ -51,6 +51,8 @@ The current dynamic JP catalog covers all 133 locked Skin-package logical identi
 
 Future resources may be catalogued, installed and retained without a new application release. A current Simulator consumer may use one only when its evidence-backed resolver and semantic structure checks accept it. Compatibility rejection does not delete the record and never triggers a default, alias or old-revision fallback.
 
+Simulator startup prepares its directory from the active catalog or the last complete persisted catalog, retaining `offline-cached` freshness for a stored copy. It waits for a refresh when no complete copy exists. A selected package missing from that cached directory also resolves through one refresh before rejection; installed/Builtin resource integrity and immutable Snapshot/Lease acquisition remain unchanged. Explicit and background refreshes retain their existing transaction owner and in-flight deduplication.
+
 All source files in selected SE and particle packages may be installed. Simulator publishes only Reverse-confirmed cues and registered current particle roots. Resource presence does not authorize character, CutIn, Fever, multiplayer or Live2D behavior.
 
 ### Source-bound particle preparation

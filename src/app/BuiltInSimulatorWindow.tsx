@@ -118,8 +118,8 @@ function BuiltInSimulatorWindow() {
             );
           }
         },
-        async refreshCatalog() {
-          const refreshed = await manager.refreshCatalog("bestdori");
+        async prepareCatalog() {
+          const refreshed = await manager.prepareCatalog("bestdori");
           if (refreshed.status === "rejected") throw dependencyFailure(
             refreshed.failure.capability,
             refreshed.failure.boundary,

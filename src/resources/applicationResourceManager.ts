@@ -256,6 +256,21 @@ export class ApplicationResourceManager {
     return resourceAccepted(this.selection);
   }
 
+  async prepareCatalog(providerId: string): Promise<ResourceResult<ResourceCatalogSnapshot>> {
+    if (!this.providers.has(providerId)) return this.refreshCatalog(providerId);
+    const active = this.activeCatalogs.get(providerId);
+    if (active !== undefined) return resourceAccepted(active);
+    const cached = await this.backend.loadCatalogSnapshot(providerId);
+    if (cached.status === "rejected") return cached;
+    // A concurrent explicit refresh may have published while storage was read.
+    const refreshed = this.activeCatalogs.get(providerId);
+    if (refreshed !== undefined) return resourceAccepted(refreshed);
+    if (cached.value === null) return this.refreshCatalog(providerId);
+    const available = freezeCatalog({ ...cached.value, freshness: "offline-cached" });
+    this.activeCatalogs.set(providerId, available);
+    return resourceAccepted(available);
+  }
+
   refreshCatalog(providerId: string): Promise<ResourceResult<ResourceCatalogSnapshot>> {
     const existing = this.catalogRefreshes.get(providerId);
     if (existing !== undefined) return existing;
@@ -333,7 +348,15 @@ export class ApplicationResourceManager {
         return resourceAccepted(existing.value.descriptor);
       }
     }
-    const descriptor = this.findNetworkDescriptor(ref.id);
+    let descriptor = this.findNetworkDescriptor(ref.id);
+    const providerId = ref.id.split("/", 1)[0];
+    if (descriptor === null && this.activeCatalogs.get(providerId)?.freshness === "offline-cached") {
+      // A cached directory can serve startup immediately, but cannot disprove
+      // the existence of a newly selected package. Resolve that miss once.
+      const refreshed = await this.refreshCatalog(providerId);
+      if (refreshed.status === "rejected") return refreshed;
+      descriptor = this.findNetworkDescriptor(ref.id);
+    }
     if (descriptor === null) {
       return resourceRejected(
         "resource-unavailable",

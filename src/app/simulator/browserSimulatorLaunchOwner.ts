@@ -13,7 +13,7 @@ import type {
 export type BrowserSimulatorLaunchPhase =
   | "waiting-descriptor"
   | "preparing-window"
-  | "refreshing-catalog"
+  | "preparing-catalog"
   | "acquiring-media"
   | "building-request"
   | "checking-audio"
@@ -45,7 +45,7 @@ export interface BrowserSimulatorLaunchPlatformOwner {
 
 export interface BrowserSimulatorLaunchOwnerDependencies {
   lockWindow(): Promise<void>;
-  refreshCatalog(): Promise<void>;
+  prepareCatalog(): Promise<void>;
   acquireMedia(snapshotId: SimulatorLaunchTransportDescriptor["mediaSnapshotId"]): Promise<ResourceConsumerLease>;
   buildRequest(
     descriptor: SimulatorLaunchTransportDescriptor,
@@ -159,8 +159,8 @@ export class BrowserSimulatorLaunchOwner {
       await this.dependencies.lockWindow();
       if (await this.stopIfCancelled()) return;
 
-      this.publish("refreshing-catalog", null);
-      await this.dependencies.refreshCatalog();
+      this.publish("preparing-catalog", null);
+      await this.dependencies.prepareCatalog();
       if (await this.stopIfCancelled()) return;
 
       this.publish("acquiring-media", null);
