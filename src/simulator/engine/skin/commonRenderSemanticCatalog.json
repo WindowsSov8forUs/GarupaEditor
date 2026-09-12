@@ -1430,6 +1430,48 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "stage-speaker.png",
+        "profile": {
+          "logicalAssetId": "stage/speaker",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 187,
+          "height": 256,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "stage-speaker-glow.png",
+        "profile": {
+          "logicalAssetId": "stage/speaker-glow",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 118,
+          "height": 114,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [

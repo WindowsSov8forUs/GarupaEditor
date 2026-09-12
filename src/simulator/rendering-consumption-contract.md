@@ -1287,3 +1287,11 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 `StageLightAnimation` 实现原作每灯 7 项蓝色表、初始化随机选一个浅蓝位置、起始延迟、逐项线性渐变与循环。每次渐变完成后时间归零，不跨项传递超时；暂停不重启颜色表，重试随新舞台重新初始化。`PixiStageLights` 消费原布局、颜色与原始 Tex_miniShine，复用 SrcAlpha/One 的 RGB/Alpha 加法混合，不额外放大亮度；随现有 Stage/TRSRoot 入场和退场变换。每帧只更新已创建 Sprite 的颜色，未加入采样历史、额外贴图解码或逐帧对象构造。标准数学、颜色转换和宿主随机数属于平台适配。
 
 验证包括原作方法绑定、指令字节、完整对象读写回环、portable 再生成、生产消费链源级核对、TypeScript 与生产构建/资源字节检查；未新增测试或进行视觉验收。
+
+### 普通舞台音箱
+
+来源为已验证并推送的 Reverse `ef4f11a5271f09e2504646917e6752a0f1d1fefb` 中 `simulator-standard-stage-speakers-10-1-4`。`stageSpeakers.json`、音箱切片和光晕 PNG 按字节复制 portable 输出，沿用普通舞台资源包和 Live/Practice/MV 分支。
+
+已提交的 OneFrame 判定送入现有 Startup/Stage owner：只选择 buttonTypes 的 0/6，普通、Slide、长按尾非 Miss 播放 normal；Flick 家族非 Miss 播放 exciting；长按头非 Miss 播放 continuous；LongMiss 回 idle。isSync 不作选择条件。每次选中动画从零重播，continuous 循环，其余结束保持；不添加新的状态机、计分或音频事件。生产消费原始曲线、常量轨、默认属性、SpeakerRoot 的位移/1.3 倍缩放及左侧镜像；切换时还原当前动画未写入的默认属性。
+
+音箱本体与透明叠层使用原 UIAtlas 切片和各自尺寸，光晕使用独立贴图/加法混合。`pixiStageImage` 明确执行 straight texture RGBA × widget RGBA，避免 Pixi Sprite 的顶点 RGB 预乘再次进入 SrcAlpha 混合。动画使用固定通道缓冲和推进游标；退出销毁本会话的几何/Shader 对象，共享 GlProgram 与资源贴图保留各自既有所有权，Retry 不销毁后继场景使用的程序。未新增测试；完成原作全通道起点覆盖检查、资源再生成及生产类型/构建/资源字节检查，未作视觉验收。

@@ -407,6 +407,16 @@
       "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE"
     },
     {
+      "path": "game/prefabs/bms/stage/stage-speaker-glow.png",
+      "byteLength": 19194,
+      "sha256": "253BCC151DFCE9970E6FF489D323B54AF569E3C11BAE6FAF91C55509A6F9E07D"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-speaker.png",
+      "byteLength": 49298,
+      "sha256": "64E6B46209A632EA51EE7CA548FD0D52DDF7D4B03D6A0D3C226385F621B1FDDB"
+    },
+    {
       "path": "game/sound/common-se/decide_1.mp3",
       "byteLength": 17690,
       "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"

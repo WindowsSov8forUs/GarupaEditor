@@ -134,7 +134,7 @@ function commonLogicalResource(file: string): string | null {
   if (file === "ui-common.png") return "atlas/bms/ui/uicommon";
   if (file === "rank-label-font.ttf") return "fonts/sgm";
   if (file === "startup-line-star.png" || file === "startup-title-base.png") return "prefabs/bms/information";
-  if (file === "stage-light.png") return "prefabs/bms/stage";
+  if (file === "stage-light.png" || file === "stage-speaker.png" || file === "stage-speaker-glow.png") return "prefabs/bms/stage";
   if (file.startsWith("countdown-")) return "prefabs/bms/pause";
   if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
   if (/^(?:AllPerfect|FullCombo|Tex_parSet)_/.test(file)) return "prefabs/bms/gameclear";

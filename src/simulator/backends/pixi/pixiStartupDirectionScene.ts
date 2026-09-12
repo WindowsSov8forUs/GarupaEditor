@@ -17,6 +17,8 @@ import type { PixiTextureDecoder } from "./pixiRendererBackend";
 import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 import { linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
 import { PixiStageLights } from "./pixiStageLights";
+import { PixiStageSpeakers } from "./pixiStageSpeakers";
+import type { OneFrameJudgementBatch } from "../../engine/data/oneFrameData";
 
 export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
@@ -34,6 +36,8 @@ export interface PixiStartupDirectionCommonResources {
   readonly difficultyBackground: PixiStartupSlicedImage;
   readonly lineStar: Texture;
   readonly stageLight: Texture;
+  readonly stageSpeaker: Texture;
+  readonly stageSpeakerGlow: Texture;
   readonly jacketFrame: PixiStartupSlicedImage;
   readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", PixiStartupSlicedImage>>;
   readonly fullLiveLabel: Texture;
@@ -125,6 +129,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly darkCover: Graphics;
   private readonly stageBackdrop: Sprite | null;
   private readonly stageLights: PixiStageLights | null;
+  private readonly stageSpeakers: PixiStageSpeakers | null;
   private stageProgress = 0;
   private readonly characters: readonly Sprite[];
   private disposed = false;
@@ -215,6 +220,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.foregroundRoot.addChild(this.information);
     this.stageLights = includeStandardStage && includeStageEffects ? new PixiStageLights(common.stageLight) : null;
     if (this.stageLights !== null) this.backgroundRoot.addChild(this.stageLights.root);
+    this.stageSpeakers = includeStandardStage && includeStageEffects ? new PixiStageSpeakers(common.stageSpeaker, common.stageSpeakerGlow) : null;
+    if (this.stageSpeakers !== null) this.backgroundRoot.addChild(this.stageSpeakers.root);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
       hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0,
@@ -246,12 +253,13 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.stageBackdrop.tint = [brightness, brightness, brightness];
       this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle" ||
         state.stagePhase === "leaving";
-      if (this.stageLights !== null) {
-        this.stageLights.root.position.set(layout.surface.viewportWidth / 2,
+      for (const root of [this.stageLights?.root, this.stageSpeakers?.root]) {
+        if (root === undefined) continue;
+        root.position.set(layout.surface.viewportWidth / 2,
           layout.surface.viewportHeight / 2 -
             (14 * highAspect * layout.ui.pixelsPerAuthoredUnit + trsY * rootScale));
-        this.stageLights.root.scale.set(trsScale * rootScale);
-        this.stageLights.root.visible = this.stageBackdrop.visible;
+        root.scale.set(trsScale * rootScale);
+        root.visible = this.stageBackdrop.visible;
       }
     }
     for (const character of this.characters) character.alpha = state.characterAlpha;
@@ -273,11 +281,18 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   advanceStageEffects(deltaSeconds: number): void {
     if (this.disposed) throw new Error("startup scene disposed");
     this.stageLights?.advance(deltaSeconds);
+    this.stageSpeakers?.advance(deltaSeconds);
+  }
+
+  reflectStageJudgements(batch: OneFrameJudgementBatch): void {
+    if (this.disposed) throw new Error("startup scene disposed");
+    this.stageSpeakers?.reflect(batch);
   }
 
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.stageSpeakers?.dispose();
     this.backgroundRoot.removeFromParent();
     this.foregroundRoot.removeFromParent();
     this.backgroundRoot.destroy({ children: true });

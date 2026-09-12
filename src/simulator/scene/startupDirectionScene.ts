@@ -1,3 +1,5 @@
+import type { OneFrameJudgementBatch } from "../engine/data/oneFrameData";
+
 export type StartupInformationPhase = "hidden" | "revealing" | "holding" | "fading" | "complete";
 export type StartupStagePhase = "dark" | "waiting" | "introducing" | "idle" | "leaving";
 export type StartupLinePhase = "hidden" | "waiting" | "fading" | "visible";
@@ -22,6 +24,7 @@ export interface StartupDirectionSceneState {
 export interface StartupDirectionSceneBackend {
   publish(state: StartupDirectionSceneState): void;
   advanceStageEffects(deltaSeconds: number): void;
+  reflectStageJudgements(batch: OneFrameJudgementBatch): void;
   dispose(): void;
 }
 

@@ -442,6 +442,7 @@ export class InGameManager {
         }
         const committedFrame = framePlan.value.commit();
         if (committedFrame.status !== "ok") return this.latchFault(committedFrame);
+        this.startupDirection?.reflectStageJudgements(batch);
         particleAdvanced ||= particlePlan?.status === "ok";
         firstJudgementBatch = false;
         const nextProductBatch = this.garupaProduct?.submitPendingJudgementBatch() ?? ok({

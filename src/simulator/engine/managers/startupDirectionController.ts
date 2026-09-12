@@ -1,4 +1,5 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
+import type { OneFrameJudgementBatch } from "../data/oneFrameData";
 import { GameState, type GameStateValue } from "../data/inGameState";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
@@ -324,6 +325,10 @@ export class StartupDirectionController {
       this.scene?.advanceStageEffects(deltaTimeSeconds);
       this.advanceParallelOwners(deltaTimeSeconds);
     }
+  }
+
+  reflectStageJudgements(batch: OneFrameJudgementBatch): void {
+    this.scene?.reflectStageJudgements(batch);
   }
 
   beginGameClearPresentation(): void {

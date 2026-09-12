@@ -546,6 +546,22 @@
       "sourceReverseCommit": "1f0111f6f52e80d55eec666e214235890647a481",
       "sourcePath": "artifacts/investigations/simulator-standard-stage-lights-10-1-4/portable/stage-light.png",
       "sourceRelation": "byte-identical"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-speaker.png",
+      "byteLength": 49298,
+      "sha256": "64E6B46209A632EA51EE7CA548FD0D52DDF7D4B03D6A0D3C226385F621B1FDDB",
+      "sourceReverseCommit": "ef4f11a5271f09e2504646917e6752a0f1d1fefb",
+      "sourcePath": "artifacts/investigations/simulator-standard-stage-speakers-10-1-4/portable/stage-speaker.png",
+      "sourceRelation": "byte-identical"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-speaker-glow.png",
+      "byteLength": 19194,
+      "sha256": "253BCC151DFCE9970E6FF489D323B54AF569E3C11BAE6FAF91C55509A6F9E07D",
+      "sourceReverseCommit": "ef4f11a5271f09e2504646917e6752a0f1d1fefb",
+      "sourcePath": "artifacts/investigations/simulator-standard-stage-speakers-10-1-4/portable/stage-speaker-glow.png",
+      "sourceRelation": "byte-identical"
     }
   ],
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",
