@@ -82,6 +82,7 @@ export class StartupDirectionController {
     private readonly mvBackground: MvBackgroundModule | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
     private readonly firstViewPresented = false,
+    private readonly stageButtonTypes: ReadonlyMap<number, readonly number[]> | null = null,
   ) {
     this.startupAudio = audio === null
       ? null
@@ -330,7 +331,20 @@ export class StartupDirectionController {
   }
 
   reflectStageJudgements(batch: OneFrameJudgementBatch): void {
-    this.scene?.reflectStageJudgements(batch);
+    if (this.scene === null) return;
+    if (this.stageButtonTypes === null || !batch.entries.some((entry) => this.stageButtonTypes!.has(entry.noteIndex))) {
+      this.scene.reflectStageJudgements(batch);
+      return;
+    }
+    // Product scoring identities intentionally use ButtonType.None. Only the
+    // presentation receives authored edge lanes; scoring/ownership stays intact.
+    this.scene.reflectStageJudgements({
+      ...batch,
+      entries: batch.entries.map((entry) => {
+        const buttons = this.stageButtonTypes!.get(entry.noteIndex);
+        return buttons === undefined ? entry : { ...entry, buttonTypes: buttons };
+      }),
+    });
   }
 
   reflectStageMusicProgress(beatProgress: number, bpm: number): void {

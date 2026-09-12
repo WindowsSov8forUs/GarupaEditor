@@ -20439,7 +20439,7 @@
     {
       "id": "RCB-0973",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 98,
+      "line": 99,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"startup-direction.initialize-after-dispose\", \"A disposed startup owner cannot be reconstructed.\");",
@@ -20460,7 +20460,7 @@
     {
       "id": "RCB-0974",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 102,
+      "line": 103,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20481,7 +20481,7 @@
     {
       "id": "RCB-0975",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 112,
+      "line": 113,
       "marker": "rejected-call",
       "symbol": "startupAudio",
       "source": "? rejected(",
@@ -20502,7 +20502,7 @@
     {
       "id": "RCB-0976",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 154,
+      "line": 155,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"startup-direction.invalid-step\", \"Startup direction accepts only initialized exact non-negative Float32 engine delta.\");",
@@ -20523,7 +20523,7 @@
     {
       "id": "RCB-0977",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 200,
+      "line": 201,
       "marker": "rejected-call",
       "symbol": "playing",
       "source": "const playing = this.startupAudio?.isLiveStartVoicePlaying() ?? rejected(",
@@ -20544,7 +20544,7 @@
     {
       "id": "RCB-0978",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 228,
+      "line": 229,
       "marker": "rejected-call",
       "symbol": "completed",
       "source": "const completed = this.mvBackground?.stepBeforeSound(deltaTimeSeconds) ?? rejected(",
@@ -20565,7 +20565,7 @@
     {
       "id": "RCB-0979",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 317,
+      "line": 318,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20586,7 +20586,7 @@
     {
       "id": "RCB-0980",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 389,
+      "line": 403,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioTransition?.status === \"integrity-failure\") return audioTransition;",
@@ -20607,7 +20607,7 @@
     {
       "id": "RCB-0981",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 424,
+      "line": 438,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "function rejected(capability: string, boundary: string) {",
@@ -20628,7 +20628,7 @@
     {
       "id": "RCB-0982",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 425,
+      "line": 439,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [\"SD03\", \"SD05\", \"SD06\", \"SD07\", \"SD08\", \"SD09\", \"SD11\", \"SD12\", \"SD17\"], boundary);",
@@ -27684,7 +27684,7 @@
     {
       "id": "RCB-1318",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1130,
+      "line": 1138,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27705,7 +27705,7 @@
     {
       "id": "RCB-1319",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1141,
+      "line": 1149,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27726,7 +27726,7 @@
     {
       "id": "RCB-1320",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1325,
+      "line": 1334,
       "marker": "integrity-failure-call",
       "symbol": "state",
       "source": "? integrityFailure(",
@@ -27747,7 +27747,7 @@
     {
       "id": "RCB-1321",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1340,
+      "line": 1349,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27768,7 +27768,7 @@
     {
       "id": "RCB-1322",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1350,
+      "line": 1359,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27789,7 +27789,7 @@
     {
       "id": "RCB-1323",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1370,
+      "line": 1379,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -27810,7 +27810,7 @@
     {
       "id": "RCB-1324",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1384,
+      "line": 1393,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27831,7 +27831,7 @@
     {
       "id": "RCB-1325",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1419,
+      "line": 1428,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27852,7 +27852,7 @@
     {
       "id": "RCB-1326",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1431,
+      "line": 1440,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27873,7 +27873,7 @@
     {
       "id": "RCB-1327",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1447,
+      "line": 1456,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27894,7 +27894,7 @@
     {
       "id": "RCB-1328",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1466,
+      "line": 1475,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27915,7 +27915,7 @@
     {
       "id": "RCB-1329",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1492,
+      "line": 1501,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27936,7 +27936,7 @@
     {
       "id": "RCB-1330",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1504,
+      "line": 1513,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27957,7 +27957,7 @@
     {
       "id": "RCB-1331",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1522,
+      "line": 1531,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
