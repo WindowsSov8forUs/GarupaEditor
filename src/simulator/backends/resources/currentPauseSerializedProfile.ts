@@ -37,7 +37,8 @@ const button = (
 export const CURRENT_PAUSE_ATLAS_BORDERS = Object.freeze({
   window: Object.freeze({ left: 12, right: 12, top: 12, bottom: 12 }),
   header: Object.freeze({ left: 28, right: 4, top: 0, bottom: 0 }),
-  button: Object.freeze({ left: 14, right: 20, top: 22, bottom: 12 }),
+  // UIAtlas serializes UISpriteData as left, right, top, bottom.
+  button: Object.freeze({ left: 14, right: 20, top: 12, bottom: 22 }),
   cover: Object.freeze({ left: 1, right: 1, top: 1, bottom: 1 }),
 });
 
