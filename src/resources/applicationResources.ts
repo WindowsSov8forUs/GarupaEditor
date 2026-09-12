@@ -36,8 +36,8 @@ async function bootstrap(onLoadingReady?: (manager: ApplicationResourceManager) 
   if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
   if (builtins.status === "rejected") return builtins;
-  const builtinLease = await manager.prepareBuiltinDocumentLease(listApplicationBuiltinResourceSlots());
-  if (builtinLease.status === "rejected") return builtinLease;
+  const builtinUrls = manager.prepareBuiltinDocumentUrls(listApplicationBuiltinResourceSlots());
+  if (builtinUrls.status === "rejected") return builtinUrls;
   installBuiltinDocumentResources(manager);
   await onLoadingReady?.(manager);
   const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);

@@ -56,7 +56,7 @@ export interface BuiltinResourceRegistration {
 }
 
 interface RegisteredBuiltinResource {
-  readonly descriptor: BuiltinResourceDescriptor;
+  readonly descriptor: BuiltinResourceDescriptor & { readonly files: readonly ResourceFileRecord[] };
   readonly filesByPath: ReadonlyMap<string, ManagedBuiltinFile>;
 }
 
@@ -81,13 +81,13 @@ export interface AdoptedLegacyChartMedia {
 
 export class ApplicationResourceManager {
   private readonly builtins = new Map<string, RegisteredBuiltinResource>();
+  private readonly builtinInstalls = new Map<string, Promise<ResourceResult<ResourceDescriptor>>>();
   private readonly installed = new Map<string, StoredResourceRecord>();
   private readonly providers = new Map<string, ResourceCatalogProvider>();
   private readonly activeCatalogs = new Map<string, ResourceCatalogSnapshot>();
   private readonly catalogRefreshes = new Map<string, Promise<ResourceResult<ResourceCatalogSnapshot>>>();
   private readonly registeredNetwork = new Map<string, NetworkResourceDescriptor>();
   private selection: ApplicationResourceSelection = createEmptyApplicationResourceSelection();
-  private builtinDocumentLease: ResourceConsumerLease | null = null;
   private readonly builtinDocumentUrls = new Map<ApplicationResourceSlot, string>();
   private initialized = false;
 
@@ -140,7 +140,7 @@ export class ApplicationResourceManager {
       input.logicalPlacement ?? builtinPlacementFor(reference.value.id),
     );
     if (placement.status === "rejected") return placement;
-    const descriptor: BuiltinResourceDescriptor = Object.freeze({
+    const descriptor: RegisteredBuiltinResource["descriptor"] = Object.freeze({
       ref: reference.value,
       origin: "builtin" as const,
       kind: input.kind,
@@ -151,29 +151,13 @@ export class ApplicationResourceManager {
       sourceUrl: input.sourceUrl,
       logicalPlacement: placement.value,
     });
-    const installFiles: ResourceInstallFile[] = [];
-    for (const record of prepared.value.records) {
-      const owner = prepared.value.filesByPath.get(record.logicalPath);
-      if (owner === undefined) return integrityFailure("resources.manager.builtin-file-missing");
-      const loaded = await owner.read();
-      if (loaded.status === "rejected") return loaded;
-      installFiles.push(Object.freeze({
-        logicalPath: record.logicalPath,
-        mediaType: record.mediaType,
-        bytes: loaded.value,
-      }));
-    }
-    const committed = await this.backend.installBuiltinResource(Object.freeze({
-      descriptor,
-      files: Object.freeze(installFiles),
-    }));
-    if (committed.status === "rejected") return committed;
-    this.installed.set(reference.value.id, committed.value);
+    // Registration describes the shipped payload. Only a byte consumer needs
+    // backend materialization; opening a window must not reinstall every asset.
     this.builtins.set(reference.value.id, Object.freeze({
-      descriptor: committed.value.descriptor as BuiltinResourceDescriptor,
+      descriptor,
       filesByPath: prepared.value.filesByPath,
     }));
-    return resourceAccepted(committed.value.descriptor);
+    return resourceAccepted(descriptor);
   }
 
   registerNetworkResource(
@@ -197,48 +181,65 @@ export class ApplicationResourceManager {
   resolveBuiltinSlotUrl(slot: ApplicationResourceSlot): ResourceResult<string> {
     const url = this.builtinDocumentUrls.get(slot);
     return url === undefined
-      ? invalid("resources.manager.builtin-slot-lease-not-prepared")
+      ? invalid("resources.manager.builtin-slot-url-not-prepared")
       : resourceAccepted(url);
   }
 
-  async prepareBuiltinDocumentLease(
+  prepareBuiltinDocumentUrls(
     slots: readonly ApplicationResourceSlot[],
-  ): Promise<ResourceResult<void>> {
-    if (slots.length === 0) return invalid("resources.manager.invalid-builtin-document-lease-state");
-    if (this.builtinDocumentLease !== null) {
-      return slots.every((slot) => this.builtinDocumentUrls.has(slot))
-        ? resourceAccepted(undefined)
-        : invalid("resources.manager.builtin-document-lease-does-not-cover-slot");
-    }
-    const bindings: Record<string, ResourceRef> = {};
+  ): ResourceResult<void> {
+    if (slots.length === 0) return invalid("resources.manager.empty-builtin-document-slots");
+    const urls = new Map<ApplicationResourceSlot, string>();
     for (const slot of slots) {
       const ref = this.selection[slot];
-      if (ref === null || !this.builtins.has(ref.id) || bindings[slot] !== undefined) {
+      const builtin = ref == null ? undefined : this.builtins.get(ref.id);
+      if (builtin === undefined || urls.has(slot) || builtin.descriptor.files.length !== 1 ||
+        !["image", "font"].includes(builtin.descriptor.kind)) {
         return invalid("resources.manager.invalid-builtin-document-slot");
       }
-      bindings[slot] = ref;
+      // Fixed document assets are owned by the application build. The browser
+      // reads its immutable URL directly; no CAS, IPC or temporary Blob copy.
+      urls.set(slot, builtin.descriptor.sourceUrl);
     }
-    const receipt = await this.createSnapshotFromRefs(Object.freeze(bindings));
-    if (receipt.status === "rejected") return receipt;
-    const lease = await this.acquireSnapshot(receipt.value.snapshotId);
-    if (lease.status === "rejected") return lease;
-    try {
-      for (const slot of slots) {
-        const files = lease.value.listFiles(slot);
-        if (files.length !== 1) throw new Error("resources.manager.builtin-document-file-count");
-        this.builtinDocumentUrls.set(slot, await lease.value.openObjectUrl(slot, files[0]!.logicalPath));
-      }
-    } catch (error) {
-      await lease.value.release();
-      this.builtinDocumentUrls.clear();
-      return resourceRejected(
-        "resource-integrity",
-        "resources.manager.builtin-document-lease-failed",
-        error instanceof Error ? error.message : String(error),
-      );
-    }
-    this.builtinDocumentLease = lease.value;
+    for (const [slot, url] of urls) this.builtinDocumentUrls.set(slot, url);
     return resourceAccepted(undefined);
+  }
+
+  private async ensureBuiltinAvailable(builtin: RegisteredBuiltinResource): Promise<ResourceResult<ResourceDescriptor>> {
+    const { descriptor } = builtin;
+    const installed = this.installed.get(descriptor.ref.id);
+    if (installed?.descriptor.origin === "builtin" &&
+      installed.descriptor.kind === descriptor.kind &&
+      sameResourceFiles(installed.files, descriptor.files)) {
+      // This only reuses the installation. The backend still verifies persisted
+      // bytes when creating/opening a snapshot and on each byte read.
+      return resourceAccepted(descriptor);
+    }
+    let pending = this.builtinInstalls.get(descriptor.ref.id);
+    if (pending === undefined) {
+      pending = this.installBuiltin(builtin);
+      this.builtinInstalls.set(descriptor.ref.id, pending);
+    }
+    try {
+      return await pending;
+    } finally {
+      if (this.builtinInstalls.get(descriptor.ref.id) === pending) this.builtinInstalls.delete(descriptor.ref.id);
+    }
+  }
+
+  private async installBuiltin(builtin: RegisteredBuiltinResource): Promise<ResourceResult<ResourceDescriptor>> {
+    const files: ResourceInstallFile[] = [];
+    for (const record of builtin.descriptor.files) {
+      const owner = builtin.filesByPath.get(record.logicalPath);
+      if (owner === undefined) return integrityFailure("resources.manager.builtin-file-missing");
+      const loaded = await owner.read();
+      if (loaded.status === "rejected") return loaded;
+      files.push(Object.freeze({ logicalPath: record.logicalPath, mediaType: record.mediaType, bytes: loaded.value }));
+    }
+    const committed = await this.backend.installBuiltinResource({ descriptor: builtin.descriptor, files });
+    if (committed.status === "rejected") return committed;
+    this.installed.set(builtin.descriptor.ref.id, committed.value);
+    return resourceAccepted(builtin.descriptor);
   }
 
   replaceSelection(
@@ -340,7 +341,7 @@ export class ApplicationResourceManager {
     options: { readonly refresh?: boolean } = {},
   ): Promise<ResourceResult<ResourceDescriptor>> {
     const builtin = this.builtins.get(ref.id);
-    if (builtin !== undefined) return resourceAccepted(builtin.descriptor);
+    if (builtin !== undefined) return this.ensureBuiltinAvailable(builtin);
     if (options.refresh !== true) {
       const existing = await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
@@ -597,6 +598,11 @@ export class ApplicationResourceManager {
   }
 
   async verify(ref: ResourceRef): Promise<ResourceResult<ResourceDescriptor>> {
+    const builtin = this.builtins.get(ref.id);
+    if (builtin !== undefined) {
+      const available = await this.ensureBuiltinAvailable(builtin);
+      if (available.status === "rejected") return available;
+    }
     return this.backend.verify(ref);
   }
 
@@ -682,6 +688,17 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
 }
 
 let nextLeaseIdentity = 1;
+
+function sameResourceFiles(left: readonly ResourceFileRecord[], right: readonly ResourceFileRecord[]): boolean {
+  if (left.length !== right.length) return false;
+  const byPath = new Map(left.map((file) => [file.logicalPath, file]));
+  if (byPath.size !== right.length) return false;
+  return right.every((file) => {
+    const stored = byPath.get(file.logicalPath);
+    return stored?.mediaType === file.mediaType && stored.integrity.byteLength === file.integrity.byteLength &&
+      stored.integrity.sha256.toUpperCase() === file.integrity.sha256.toUpperCase();
+  });
+}
 
 async function prepareFiles(
   files: readonly BuiltinResourceRegistrationFile[],

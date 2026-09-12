@@ -16,7 +16,7 @@ This product contract is not Reverse evidence and does not change any original-g
 
 User uploads are limited to BGM, cover, MV and stage backdrop and always enter the current-session workspace. Bestdori BGM, jacket and MV selected for a chart are downloaded into the same workspace rather than installed as global media records. Skin, SE, HUD, particle, font and other reusable packages remain global; user upload for them is not exposed. Legacy `user/media/*` is migration input only.
 
-Consumers do not branch on scope or provenance. Every selected resource enters a consumer through a resource snapshot and lease.
+Domain consumers do not branch on scope or provenance. Selected chart and Simulator resources enter through a resource snapshot and lease. Fixed application document images/fonts are resolved by the manager to the shipped build URL, as specified below.
 
 ## Identity and no-version-lock rule
 
@@ -50,7 +50,9 @@ A source-bound semantic consumer may additionally require the lease revision and
 
 ## Dependency boundary
 
-Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create source-resource object URLs. Builtins are materialized through the same backend transaction and application-lifetime Snapshot/Lease as other bytes; synchronous UI hooks expose only already-open lease Object URLs, not Vite source URLs. Domain consumers receive leases and must not import `ApplicationResourceManager`; consumer-generated derivatives are owned and released with their lease.
+Only resource provider/composition code may import Vite assets, invoke Tauri resource commands, access resource network endpoints or create source-resource object URLs. Builtin registration records descriptors and manifest integrity without fetching or installing all payloads. Fixed application document images/fonts use manager-resolved, single-file build URLs through the existing synchronous UI hook. The browser owns loading, caching and decoding; these assets do not require a CAS installation, IPC byte transfer or Blob URL before display. Their source-manifest and final packaged-byte checks remain mandatory at build time; this path does not claim per-display runtime SHA-256 verification.
+
+Builtin byte consumers, including Simulator, still use backend transactions and Snapshot/Lease. Before snapshot creation, the manager reuses an installed Builtin only when its kind and complete logical-path/MIME/byte-length/SHA-256 file set match the current manifest. Missing or changed content is loaded, verified and installed on demand; concurrent requests within a manager share that installation. Reuse does not bypass backend integrity checks when acquiring or reading persisted bytes, and corrupt matching content is not silently replaced. Domain consumers receive leases and must not import `ApplicationResourceManager`; consumer-generated derivatives are owned and released with their lease.
 
 Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v5.json`; v2 raw bytes and v3/v4 global refs are accepted only by one-time migration paths. A legacy identity that cannot be proved from committed bytes or its provider descriptor is reported and leaves the current migration/action unavailable without clearing existing durable data; it is never retained as an alias or replaced with a default.
 
