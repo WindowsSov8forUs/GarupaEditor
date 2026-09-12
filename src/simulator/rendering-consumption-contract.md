@@ -1292,15 +1292,21 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 
 来源为已验证并推送的 Reverse `ef4f11a5271f09e2504646917e6752a0f1d1fefb` 中 `simulator-standard-stage-speakers-10-1-4`。`stageSpeakers.json`、音箱切片和光晕 PNG 按字节复制 portable 输出，沿用普通舞台资源包和 Live/Practice/MV 分支。
 
+SV/TimingGroup 产品节点的计分身份保留 ButtonType.None；装配按实际 spanStart..spanEnd 包含的原作边轨0/6建立一次只读映射，Startup owner仅在送往舞台时替换判定位置，计分、声音和对象所有权不变。SV不影响音箱选择，跨两个边轨时两侧均响应。
+
 已提交的 OneFrame 判定送入现有 Startup/Stage owner：只选择 buttonTypes 的 0/6，普通、Slide、长按尾非 Miss 播放 normal；Flick 家族非 Miss 播放 exciting；长按头非 Miss 播放 continuous；LongMiss 回 idle。isSync 不作选择条件。每次选中动画从零重播，continuous 循环，其余结束保持；不添加新的状态机、计分或音频事件。生产消费原始曲线、常量轨、默认属性、SpeakerRoot 的位移/1.3 倍缩放及左侧镜像；切换时还原当前动画未写入的默认属性。
 
 音箱本体与透明叠层使用原 UIAtlas 切片和各自尺寸，光晕使用独立贴图/加法混合。`pixiStageImage` 明确执行 straight texture RGBA × widget RGBA，避免 Pixi Sprite 的顶点 RGB 预乘再次进入 SrcAlpha 混合。动画使用固定通道缓冲和推进游标；退出销毁本会话的几何/Shader 对象，共享 GlProgram 与资源贴图保留各自既有所有权，Retry 不销毁后继场景使用的程序。未新增测试；完成原作全通道起点覆盖检查、资源再生成及生产类型/构建/资源字节检查，未作视觉验收。
 ### 普通舞台荧光棒资源与入退场
 
-来源为已验证并推送的 Reverse `a7767e817a9743d78bde8fcde92ff930100175f1`，`simulator-standard-stage-psyllium-10-1-4`。73 个原作位置、Mirror 翻转与 Bottom pivot 保留。166×138 原纹理按 UITexture.mRect 分区：主光取右半，core 取左半；各自仍以原作 64×128 控件尺寸绘制。修正了此前导出遗漏 mRect、两层均采样整图的问题。Flip、FixedAspect、Border、类型与锚点经原序列化对象核对；底灯和音箱光晕使用全域 UV，没有同类遗漏。
+来源为已验证并推送的 Reverse `f39a1de00782661f46108e5d1c7ac222699b767f`，`simulator-standard-stage-psyllium-10-1-4`。73 个原作位置、Mirror 翻转与 Bottom pivot 保留。166×138 原纹理按 UITexture.mRect 分区：主光取右半，core 取左半；各自仍以原作 64×128 控件尺寸绘制。修正了此前导出遗漏 mRect、两层均采样整图的问题。Flip、FixedAspect、Border、类型与锚点经原序列化对象核对；底灯和音箱光晕使用全域 UV，没有同类遗漏。
 
 初始颜色来自构造函数和 Awake 写回。StartIdle 四秒循环；Stage 入场开始 1.5 秒后，RGB 按原作 45 次帧更新淡出，下一次恢复写透明黑。各实例独立保存淡出状态，屏外关闭中止自身淡出并保留当前颜色。Clear 激活全部实例，以当前 BPM/240 从起点播放原作 Cheer 循环；不能用 StartIdle 替代，也不能因通常已透明而省略此事件。NoteManager 的整数 beatProgress 回退且非负时才触发进度回调，默认未选动作只更新速度，不按每个音符重播。
 
 `StagePsylliumAnimation` 与音箱共用 `StageClipAnimation`；`PixiStagePsyllium` 使用一个保留批次绘制 146 个四边形，纹理 RGBA 与线性控件 RGBA 相乘后执行 SrcAlpha/One 混合。复用 Stage/TRSRoot 变换、应用资源租约、实际谱面进度和 Clear 事件；全部不可见时停止无输出几何更新，不累积帧历史。
 
-当前入口仍没有原作整曲应援配色/动作命令，不从普通音符猜测生成。另已核对：纸花属于 FeverStart 成功分支，背景效应器属于特殊背景皮肤选择，不是普通 Clear 或普通 Live 必然触发；既有角色技能/Fever/多人排除项继续适用，SD 不恢复。Reverse 原始提取/round-trip/指令字节检查及生产 TypeScript、build、104 项内置资源字节验证通过；没有新增测试或运行视觉验收。
+可选公共输入 `presentation.stage.commandNotes` 承接独立演出指令谱的构造结果，每项为 `{absolutePosition, soundValue}`，一拍48单位；位置非负递增（同位置保持输入顺序），只接受已承载的四种动作和十一种配色命令。输入复制冻结后通过 Recipe→platformComposition→StartupDirectionController→PixiStagePsyllium 消费；当前只在普通Live生效，不改变Garupa JSON格式，不自动下载或猜测指令。原作资源入口使用专用BMSCommandFileName的`.bms`→`.txt`替换，不能假定与选中难度谱面同名。
+
+按原CommandNoteManager每次演奏更新最多提交一组到期指令；暂停分支不消费指令。任何荧光棒指令先重播已选动作再处理配色，小节进度回退亦重播，速度为当前BPM/240。Idle/Sway/Jump不循环，Cheer按原clip循环；Jump缩放与mColor.a、Sway缩放与主光m_IsActive均送入现有批次，不另建演出渲染器。配色按实例序号对Pattern取模，core恢复原默认色，停止旧淡出但不激活隐藏对象。新会话重置指令游标；没有变化的非循环末帧不重复上传几何。
+
+用户授权的开发期专用指令谱仅在ignored临时验证中使用，不进入默认播放、公共资源包或正式谱面格式。已完成Manual/Auto到期分组、原作Jump起点全通道、动作/配色、小节重播、隐藏对象、Clear/新会话检查；原入场/退场曲线、UV、位置与初始颜色保持字节对应。这里是源级和CPU验证，未运行应用或作GPU/视觉验收。另已核对：纸花属于 FeverStart 成功分支，背景效应器属于特殊背景皮肤选择，不是普通 Clear 或普通 Live 必然触发；既有角色技能/Fever/多人排除项继续适用，SD 不恢复。Reverse 原始提取/round-trip/指令字节检查及生产 TypeScript、build、104 项内置资源字节验证通过；没有恢复项目测试体系；本阶段仅使用用户授权的临时指令谱检查，未运行视觉验收。

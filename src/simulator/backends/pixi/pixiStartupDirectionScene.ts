@@ -297,6 +297,11 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.stageSpeakers?.reflect(batch);
   }
 
+  reflectStageCommand(command: import("../../engine/data/stageCommand").StagePsylliumCommand | null, speed: number): void {
+    if (this.disposed) throw new Error("startup scene disposed");
+    this.stagePsyllium?.executeCommand(command, speed);
+  }
+
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;

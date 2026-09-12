@@ -285,6 +285,7 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
     }
+    this.startupDirection?.reflectStageCommands(this.musicScoreController.musicPosition, this.musicScoreController.currentBpm);
     this.startupDirection?.reflectStageMusicProgress(
       this.musicScoreController.currentBeatProgress, this.musicScoreController.currentBpm,
     );

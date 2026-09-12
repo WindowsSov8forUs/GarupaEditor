@@ -7,6 +7,7 @@ import {
   type SimulatorAssemblyResult,
 } from "./result";
 import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
+import { isStagePsylliumCommand, type StageCommandNote } from "../engine/data/stageCommand";
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
 
 export interface ValidatedPngStructure {
@@ -49,9 +50,19 @@ export function copyAndFreezeSimulatorPresentation(
     return invalid("Difficulty requires one confirmed uppercase type and one positive integer level.");
   }
   if (!isSemanticObject(presentation.stage, "backdropPng")) {
-    return invalid("The standard 2D stage requires exactly one backdrop; startup characters and live-start voice are absent simulator-owned resources, so caller keys or placeholders are forbidden by SDN01/SDN02/SDN03/SDN04.");
+    return invalid("The standard 2D stage requires one backdrop and accepts optional commandNotes; startup characters and live-start voice remain absent simulator-owned resources.");
   }
   const jacket = copyPng(presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height, "jacket");
+  const commandNotes: StageCommandNote[] = [];
+  if (presentation.stage.commandNotes !== undefined) {
+    if (!Array.isArray(presentation.stage.commandNotes)) return invalid("Stage commandNotes must be an ordered presentation score.");
+    for (const note of presentation.stage.commandNotes) {
+      if (note === null || typeof note !== "object" || !Number.isSafeInteger(note.absolutePosition) ||
+        note.absolutePosition < 0 || note.absolutePosition < (commandNotes[commandNotes.length - 1]?.absolutePosition ?? 0) ||
+        !isStagePsylliumCommand(note.soundValue)) return invalid("Stage commands require ordered non-negative original positions and supported Psyllium command names.");
+      commandNotes.push(Object.freeze({ absolutePosition: note.absolutePosition, soundValue: note.soundValue }));
+    }
+  }
   if (jacket.status === "rejected") return jacket;
   const backdrop = copyPng(presentation.stage.backdropPng, null, null, "stage-backdrop");
   if (backdrop.status === "rejected") return backdrop;
@@ -72,6 +83,7 @@ export function copyAndFreezeSimulatorPresentation(
     jacketPng: jacket.value,
     stage: Object.freeze({
       backdropPng: backdrop.value,
+      ...(commandNotes.length === 0 ? {} : { commandNotes: Object.freeze(commandNotes) }),
     }),
     mv: mv.value,
   }));

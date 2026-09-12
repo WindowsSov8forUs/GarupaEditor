@@ -1,4 +1,6 @@
 import type { GarupaChartJson } from "../../chart";
+import type { StageCommandNote } from "../engine/data/stageCommand";
+export type { StageCommandNote } from "../engine/data/stageCommand";
 
 export type SimulatorPublicSessionMode = "live" | "rehearsal";
 export type SimulatorPublicInputMode = "manual" | "auto";
@@ -31,6 +33,8 @@ export interface SimulatorPresentationPackage {
   readonly jacketPng: SimulatorPresentationPng;
   readonly stage: {
     readonly backdropPng: SimulatorPresentationPng;
+    /** Optional independent presentation score; not inferred from playable notes. */
+    readonly commandNotes?: readonly StageCommandNote[];
   };
   readonly mv: SimulatorPresentationMvPackage | null;
 }

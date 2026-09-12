@@ -1,6 +1,7 @@
 export { launchSimulatorModule } from "./launch";
 
 export type {
+  StageCommandNote,
   LaunchSimulatorModule,
   SimulatorBackgroundFidelity,
   SimulatorCapabilityGateStatus,

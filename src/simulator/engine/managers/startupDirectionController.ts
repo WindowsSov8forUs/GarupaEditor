@@ -1,5 +1,6 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import type { OneFrameJudgementBatch } from "../data/oneFrameData";
+import type { StageCommandNote } from "../data/stageCommand";
 import { GameState, type GameStateValue } from "../data/inGameState";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
@@ -69,6 +70,7 @@ export class StartupDirectionController {
   private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
   private initialized = false;
   private previousStageBeatProgress = 0;
+  private nextStageCommand = 0;
   private disposed = false;
   private stageOutro: { elapsed: number; from: number } | null = null;
   private readonly startupAudio: StartupAudioOwner | null;
@@ -83,6 +85,7 @@ export class StartupDirectionController {
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
     private readonly firstViewPresented = false,
     private readonly stageButtonTypes: ReadonlyMap<number, readonly number[]> | null = null,
+    private readonly stageCommands: readonly StageCommandNote[] = [],
   ) {
     this.startupAudio = audio === null
       ? null
@@ -350,12 +353,23 @@ export class StartupDirectionController {
   reflectStageMusicProgress(beatProgress: number, bpm: number): void {
     const current = Math.trunc(beatProgress);
     if (this.previousStageBeatProgress > current && current >= 0) {
-      // NoteManager's bar-wrap callback updates the default animation speed;
-      // no chart command has selected a motion that needs to be restarted.
       const speed = Math.fround(bpm / 240);
       if (speed !== this.sceneValue.stagePsylliumSpeed) this.publish({ stagePsylliumSpeed: speed });
+      this.scene?.reflectStageCommand(null, speed);
     }
     this.previousStageBeatProgress = current;
+  }
+
+  reflectStageCommands(musicPosition: number, bpm: number): void {
+    if (this.mode.sessionMode !== "live" || this.mvBackground !== null || this.purpose === "move-time-reconstruction") return;
+    const first = this.stageCommands[this.nextStageCommand];
+    if (first === undefined || first.absolutePosition > musicPosition) return;
+    const speed = Math.fround(bpm / 240);
+    if (speed !== this.sceneValue.stagePsylliumSpeed) this.publish({ stagePsylliumSpeed: speed });
+    // CommandNoteManager executes one due group per update, preserving its order.
+    do {
+      this.scene?.reflectStageCommand(this.stageCommands[this.nextStageCommand++]!.soundValue, speed);
+    } while (this.stageCommands[this.nextStageCommand]?.absolutePosition === first.absolutePosition);
   }
 
   beginGameClearPresentation(bpm: number): void {

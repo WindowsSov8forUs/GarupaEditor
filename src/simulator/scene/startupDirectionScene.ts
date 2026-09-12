@@ -1,4 +1,5 @@
 import type { OneFrameJudgementBatch } from "../engine/data/oneFrameData";
+import type { StagePsylliumCommand } from "../engine/data/stageCommand";
 
 export type StartupInformationPhase = "hidden" | "revealing" | "holding" | "fading" | "complete";
 export type StartupStagePhase = "dark" | "waiting" | "introducing" | "idle" | "leaving";
@@ -27,6 +28,8 @@ export interface StartupDirectionSceneBackend {
   publish(state: StartupDirectionSceneState): void;
   advanceStageEffects(deltaSeconds: number): void;
   reflectStageJudgements(batch: OneFrameJudgementBatch): void;
+  /** null is the original bar-wrap replay of the currently selected motion. */
+  reflectStageCommand(command: StagePsylliumCommand | null, speed: number): void;
   dispose(): void;
 }
 

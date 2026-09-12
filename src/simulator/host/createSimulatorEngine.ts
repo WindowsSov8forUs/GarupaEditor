@@ -1283,6 +1283,7 @@ export function createSimulatorEngine(
         primaryJudgementAdjustment,
         input.startupDirection.firstViewPresented,
         productStageButtons.size === 0 ? null : productStageButtons,
+        input.startupDirection.commandNotes,
       );
   const inGameManager: InGameManager = new InGameManager(
     musicScoreController,

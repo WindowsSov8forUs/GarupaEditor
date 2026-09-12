@@ -3,6 +3,7 @@ import type {
   SimulatorBackendTraceEvent,
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
+import type { StageCommandNote } from "../engine/data/stageCommand";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import type {
   ManualInputButtonResolution,
@@ -71,6 +72,7 @@ export interface SimulatorEngineInput {
   readonly startupDirection?: {
     readonly scene: StartupDirectionSceneBackend | null;
     readonly firstViewPresented?: boolean;
+    readonly commandNotes?: readonly StageCommandNote[];
     readonly liveStartVoiceCue: string | null;
     readonly purpose: StartupDirectionPurpose;
   };

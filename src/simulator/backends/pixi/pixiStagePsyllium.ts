@@ -4,6 +4,7 @@ import { StagePsylliumAnimation } from "../../engine/rendering/stagePsylliumAnim
 import { srgbChannelToLinear } from "./hud/nguiMaterialPipeline";
 import { pixiFlashBlendMode } from "./pixiFlashBlend";
 import type { StartupStagePhase } from "../../scene/startupDirectionScene";
+import type { StagePsylliumCommand } from "../../engine/data/stageCommand";
 
 let program: GlProgram | null = null;
 
@@ -14,17 +15,14 @@ export class PixiStagePsyllium {
   private readonly positions = new Float32Array(profile.positions.length * profile.nodes.length * 8);
   private readonly colors = new Float32Array(profile.positions.length * profile.nodes.length * 16);
   private readonly poses = profile.nodes.map(node => ({
-    x: node.position[0]!, y: node.position[1]!, cosine: 1, sine: 0,
-    indices: {
-      StartIdle: {
-        position: profile.clips.StartIdle.bindings.find(b => b.path === node.path && b.property === "position")!.index,
-        rotation: profile.clips.StartIdle.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
-      },
-      Cheer: {
-        position: profile.clips.Cheer.bindings.find(b => b.path === node.path && b.property === "position")!.index,
-        rotation: profile.clips.Cheer.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
-      },
-    },
+    x: node.position[0]!, y: node.position[1]!, cosine: 1, sine: 0, sx: 1, sy: 1,
+    indices: Object.fromEntries(Object.entries(profile.clips).map(([name, clip]) => [name, {
+      position: clip.bindings.find(b => b.path === node.path && b.property === "position")!.index,
+      rotation: clip.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
+      scale: clip.bindings.find(b => b.path === node.path && b.property === "scale")?.index,
+      alpha: clip.bindings.find(b => b.path === node.path && b.property === "alpha")?.index,
+      active: clip.bindings.find(b => b.path === node.path && b.property === "active")?.index,
+    }])),
   }));
   private readonly mesh;
   private phase: StartupStagePhase = "dark";
@@ -58,6 +56,11 @@ export class PixiStagePsyllium {
   }
 
   beginFade(): void { if (this.animation.beginFade()) this.publish(); }
+
+  executeCommand(command: StagePsylliumCommand | null, speed: number): void {
+    this.animation.executeCommand(command, speed);
+    this.publish();
+  }
 
   advance(deltaSeconds: number): void {
     if (this.animation.advance(deltaSeconds)) this.publish();
@@ -101,26 +104,30 @@ export class PixiStagePsyllium {
     const values = this.animation.animation.values;
     for (let n = 0; n < profile.nodes.length; n++) {
       const node = profile.nodes[n]!, pose = this.poses[n]!;
-      const indices = pose.indices[this.animation.clipName];
+      const indices = pose.indices[this.animation.clipName]!;
       pose.x = values[indices.position]!; pose.y = values[indices.position + 1]!;
       const angle = values[indices.rotation + 2]! * Math.PI / 180;
       pose.cosine = Math.cos(angle); pose.sine = Math.sin(angle);
-      const color = n === 0 ? profile.initialColor : profile.coreColor;
+      pose.sx = indices.scale === undefined ? node.scale[0]! : values[indices.scale]!;
+      pose.sy = indices.scale === undefined ? node.scale[1]! : values[indices.scale + 1]!;
+      const visible = indices.active === undefined || values[indices.active]! >= 0.5;
       for (let i = 0; i < profile.positions.length; i++) {
         const factor = this.animation.colorFactors[i]!;
-        const r = srgbChannelToLinear(color[0]! * factor);
-        const g = srgbChannelToLinear(color[1]! * factor);
-        const b = srgbChannelToLinear(color[2]! * factor);
+        const color = n === 0 ? this.animation.mainColors : profile.coreColor, offset = n === 0 ? i * 3 : 0;
+        const r = srgbChannelToLinear(color[offset]! * factor);
+        const g = srgbChannelToLinear(color[offset + 1]! * factor);
+        const b = srgbChannelToLinear(color[offset + 2]! * factor);
         const source = profile.positions[i]!, quad = n * profile.positions.length + i;
         const sx = source.scale[0]! * (source.mirror ? -1 : 1), sy = source.scale[1]!;
         for (let corner = 0; corner < 4; corner++) {
-          const x = (corner === 0 || corner === 3 ? -0.5 : 0.5) * node.width;
-          const y = (corner < 2 ? 1 : 0) * node.height;
+          const x = (corner === 0 || corner === 3 ? -0.5 : 0.5) * node.width * pose.sx;
+          const y = (corner < 2 ? 1 : 0) * node.height * pose.sy;
           const vertex = quad * 4 + corner;
           this.positions[vertex * 2] = source.position[0]! + (pose.x + pose.cosine * x - pose.sine * y) * sx;
           this.positions[vertex * 2 + 1] = -(source.position[1]! + (pose.y + pose.sine * x + pose.cosine * y) * sy);
           this.colors[vertex * 4] = r; this.colors[vertex * 4 + 1] = g; this.colors[vertex * 4 + 2] = b;
-          this.colors[vertex * 4 + 3] = this.animation.alphas[i]! * this.animation.active[i]!;
+          this.colors[vertex * 4 + 3] = visible ?
+            (indices.alpha === undefined ? this.animation.alphas[i]! : values[indices.alpha]!) * this.animation.active[i]! : 0;
         }
       }
     }

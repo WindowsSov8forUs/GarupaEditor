@@ -487,6 +487,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             }),
         startupDirection: {
           scene: startupScene,
+          commandNotes: recipe.request.presentation.stage.commandNotes,
           firstViewPresented: !moveTimeCandidate,
           liveStartVoiceCue: null,
           purpose,
