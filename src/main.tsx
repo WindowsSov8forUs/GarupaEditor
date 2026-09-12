@@ -4,7 +4,7 @@ import App from "./App";
 import "./App.css";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
-import { SimulatorLoadingScreen } from "./app/simulator/SimulatorLoadingScreen";
+import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { isMobileRuntime } from "./app/mobileRuntime";
@@ -14,7 +14,7 @@ interface AppErrorBoundaryState {
   message: string;
 }
 
-class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBoundaryState> {
+class AppErrorBoundary extends Component<{ children: ReactNode; onError?: (error: unknown) => void }, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = {
     hasError: false,
     message: "",
@@ -27,6 +27,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
     console.error("App render error:", error, info.componentStack);
+    this.props.onError?.(error);
   }
 
   render(): ReactNode {
@@ -77,16 +78,16 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
-const simulatorWindow = window.location.hash.startsWith("#simulator");
+const simulatorWindow = window.location.hash.startsWith("#simulator") && !isMobileRuntime();
 async function showSimulatorWindow(): Promise<void> {
   if (simulatorWindow && isTauri() && !isMobileRuntime()) await getCurrentWebviewWindow().show();
 }
 
 void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
   await new Promise<void>((resolve, reject) => {
-    root.render(<ApplicationResourceProvider manager={manager}>
-      <SimulatorLoadingScreen progress={null} onReady={(error) => error === undefined ? resolve() : reject(error)} />
-    </ApplicationResourceProvider>);
+    root.render(<AppErrorBoundary onError={reject}><ApplicationResourceProvider manager={manager}>
+      <SimulatorLoadingBoundary resourcesReady={false} onReady={(error) => error === undefined ? resolve() : reject(error)} />
+    </ApplicationResourceProvider></AppErrorBoundary>);
   });
   await showSimulatorWindow();
 } : undefined).then(async (resources) => {
@@ -94,7 +95,7 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
     <AppErrorBoundary>
       {resources.status === "accepted" ? (
         <ApplicationResourceProvider manager={resources.value}>
-          <App />
+          {simulatorWindow ? <SimulatorLoadingBoundary><App /></SimulatorLoadingBoundary> : <App />}
         </ApplicationResourceProvider>
       ) : (
         <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "20px" }}>

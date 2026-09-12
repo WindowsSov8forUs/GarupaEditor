@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 
 // ScreenLayerLoading / MenuAtlas, 10.1.4/230. With no account comic list,
@@ -19,6 +19,8 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
   const onpu2 = useApplicationResourceUrl("ui.loading.onpu2");
   const shadow = useApplicationResourceUrl("ui.loading.shadow");
   const host = useRef<HTMLElement | null>(null);
+  const [frameReady, setFrameReady] = useState<true | Error | null>(null);
+  const onFrameReady = useCallback((error?: Error) => setFrameReady(error ?? true), []);
   const [size, setSize] = useState({ width: 0, scale: 0 });
   useLayoutEffect(() => {
     const element = host.current!;
@@ -30,7 +32,8 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (onReady === undefined) return;
+    if (onReady === undefined || !frameReady) return;
+    if (frameReady instanceof Error) { onReady(frameReady); return; }
     let cancelled = false;
     const urls = [background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow];
     void Promise.all(urls.map(async (src) => {
@@ -43,7 +46,8 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
       if (!cancelled) onReady();
     }).catch((error: unknown) => { if (!cancelled) onReady(error); });
     return () => { cancelled = true; };
-  }, [onReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
+  }, [onReady, frameReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
+  if (frameReady instanceof Error && onReady === undefined) throw frameReady;
   const p = Math.min(1, Math.max(0, progress ?? 0));
   const comicY = 60;
   const gauge = sliced(frame, "14", "7px");
@@ -61,7 +65,7 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
     </svg>
     <div style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 750,
       transform: `translate(-50%, -50%) scale(${size.scale})`, fontFamily: '"ChartUI", "TTShinGoM", sans-serif' }}>
-      <LoadingComicFrame source={frame} style={at(0, comicY, 680, 460)} />
+      <LoadingComicFrame source={frame} style={at(0, comicY, 680, 460)} onReady={onFrameReady} />
       <div style={{ ...at(0, comicY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
       <div style={{ ...at(0, comicY + 186, 640, 30), ...sliced(caption, "0 13 0 41", "0px 13px 0px 41px") }} />
       <img src={comic} alt="" style={at(0, comicY - 30, 485, 352)} />
@@ -97,9 +101,8 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
   </section>;
 }
 
-function LoadingComicFrame({ source, style }: { source: string; style: CSSProperties }) {
+function LoadingComicFrame({ source, style, onReady }: { source: string; style: CSSProperties; onReady: (error?: Error) => void }) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
-  const [failure, setFailure] = useState<Error | null>(null);
   useLayoutEffect(() => {
     let cancelled = false;
     const image = new Image();
@@ -127,12 +130,12 @@ function LoadingComicFrame({ source, style }: { source: string; style: CSSProper
             xEdges[column + 1] - xEdges[column], yEdges[row + 1] - yEdges[row]);
         }
       }
+      onReady();
     }).catch((error: unknown) => {
-      if (!cancelled) setFailure(error instanceof Error ? error : new Error(String(error)));
+      if (!cancelled) onReady(error instanceof Error ? error : new Error(String(error)));
     });
     return () => { cancelled = true; };
-  }, [source]);
-  if (failure !== null) throw failure;
+  }, [source, onReady]);
   return <canvas ref={canvas} width={680} height={460} aria-hidden="true" style={style} />;
 }
 

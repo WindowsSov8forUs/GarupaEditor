@@ -46,6 +46,7 @@ export interface SimulatorResourceAssemblyTargets {
   readonly rendering: {
     readonly backend: SimulatorRendererBackend;
     readonly preflight: RenderResourcePreflightAdapter;
+    readonly onProgress?: (completed: number, total: number) => void;
     readonly onPrepared?: (
       scene: SimulatorSceneLayout,
       backgroundImage: PreparedSimulatorResourceAssembly["backgroundImage"],
@@ -112,8 +113,10 @@ export async function assembleSimulatorResources(
     : selection.skin.resources;
   const skinPacks = await prepareSelectedSkinSourcePackages(sourcePackageSelection, lease);
   if (skinPacks.status === "rejected") return skinPacks;
+  targets.rendering.onProgress?.(1, 4);
   const commonRender = await prepareLeasedCommonRenderResources(lease);
   if (commonRender.status === "rejected") return commonRender;
+  targets.rendering.onProgress?.(2, 4);
   const skinRender = await prepareSkinRenderOverlay(
     selection.skin.resolved,
     skinPacks.value,
@@ -124,6 +127,7 @@ export async function assembleSimulatorResources(
       ? skinRender
       : rejected("resource-integrity", "simulator.assembly.skin-render-empty", "Every current resolved Skin recipe must publish its exact leased render overlay.");
   }
+  targets.rendering.onProgress?.(3, 4);
   const combinedAssets = Object.freeze([
     ...commonRender.value.profile.assets,
     ...skinRender.value.assets,
@@ -209,6 +213,7 @@ export async function assembleSimulatorResources(
   );
   if (renderReady.status !== "ok") return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
   prepared.push({ identity: "renderer", dispose: () => targets.rendering.backend.dispose() });
+  targets.rendering.onProgress?.(4, 4);
   if (targets.rendering.onPrepared !== undefined) {
     const presented = await targets.rendering.onPrepared(scene.value, skinRender.value.backgroundImage);
     if (presented.status === "rejected") return rejectedWithCleanup(presented, rollback());

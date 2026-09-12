@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { isMobileRuntime } from "./app/mobileRuntime";
-import { SimulatorLoadingScreen } from "./app/simulator/SimulatorLoadingScreen";
+import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
 
 const ChartEditorController = lazy(() => import("./app/ChartEditorController"));
 const StaticChartRenderWindow = lazy(() => import("./app/StaticChartRenderWindow"));
@@ -98,9 +98,9 @@ function App() {
   }
   if (!mobileRuntime && isSimulatorRoute) {
     return (
-      <Suspense fallback={<SimulatorLoadingScreen progress={null} />}>
+      <SimulatorLoadingBoundary><Suspense fallback={null}>
         <BuiltInSimulatorWindow />
-      </Suspense>
+      </Suspense></SimulatorLoadingBoundary>
     );
   }
 
@@ -113,9 +113,11 @@ function App() {
       </AppErrorBoundary>
       {mobileRuntime && (isStaticRenderRoute || isSimulatorRoute) ? (
         <div className="mobile-route-overlay" role="presentation">
-          <Suspense fallback={isSimulatorRoute ? <SimulatorLoadingScreen progress={null} /> : routeLoadingFallback}>
-            {isStaticRenderRoute ? <StaticChartRenderWindow /> : <BuiltInSimulatorWindow />}
-          </Suspense>
+          {isSimulatorRoute ? <SimulatorLoadingBoundary key={hash}>
+            <Suspense fallback={null}><BuiltInSimulatorWindow /></Suspense>
+          </SimulatorLoadingBoundary> : <Suspense fallback={routeLoadingFallback}>
+            <StaticChartRenderWindow />
+          </Suspense>}
         </div>
       ) : null}
     </>

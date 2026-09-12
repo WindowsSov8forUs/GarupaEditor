@@ -121,6 +121,7 @@ export interface SimulatorGraphicsSurface {
 }
 
 export interface AutonomousSimulatorPlatformCapabilities {
+  readonly publishRenderPreparationProgress?: (completed: number, total: number) => void;
   readonly resources: SimulatorResourceCapability;
   readonly audioContext: AudioContext;
   readonly graphics: SimulatorGraphicsSurface;
@@ -321,6 +322,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           rendering: {
             backend: renderer,
             preflight: new PortableRenderResourcePreflightAdapter(),
+            onProgress: this.platform.publishRenderPreparationProgress,
             onPrepared: async (scene, backgroundImage) => {
               const surfaceBound = renderer.bindOriginalSurfaceLayout(scene.surfaceLayout);
               if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);

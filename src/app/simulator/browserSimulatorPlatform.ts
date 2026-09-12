@@ -43,6 +43,7 @@ export async function createBrowserSimulatorPlatform(input: {
   readonly safeArea: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"];
   readonly onLifecycleState: (state: SimulatorLifecycleBackendState) => void;
   readonly onPresentationReady: () => void;
+  readonly onRenderPreparationProgress?: (completed: number, total: number) => void;
 }): Promise<BrowserSimulatorPlatformOwner> {
   const graphics = await BrowserPixiGraphicsSurface.create(
     input.host, input.safeArea, input.onPresentationReady, () => scheduler.resetClock(),
@@ -57,6 +58,7 @@ export async function createBrowserSimulatorPlatform(input: {
     input: pointerInput,
     requestTargetFrameRate(value: 60 | 120) { scheduler.setTargetFrameRate(value); },
     publishLifecycleState: input.onLifecycleState,
+    publishRenderPreparationProgress: input.onRenderPreparationProgress,
   });
   return Object.freeze({
     platform,

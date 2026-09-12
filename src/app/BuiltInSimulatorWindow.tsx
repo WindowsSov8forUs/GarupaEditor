@@ -16,7 +16,7 @@ import {
   type BrowserSimulatorLaunchState,
 } from "./simulator/browserSimulatorLaunchOwner";
 import { createSimulatorResourceCapability } from "./simulator/createSimulatorResourceCapability";
-import { SimulatorLoadingScreen } from "./simulator/SimulatorLoadingScreen";
+import { useSimulatorLoading } from "./simulator/SimulatorLoadingBoundary";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -47,15 +47,20 @@ function routeRequestId(): string {
 
 function BuiltInSimulatorWindow() {
   const manager = useApplicationResourceManager();
+  const loading = useSimulatorLoading();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const ownerRef = useRef<BrowserSimulatorLaunchOwner | null>(null);
   const [descriptor, setDescriptor] = useState<SimulatorLaunchTransportDescriptor | null>(null);
   const [launchState, setLaunchState] = useState<BrowserSimulatorLaunchState>(INITIAL_LAUNCH_STATE);
-  const [preparationProgress, setPreparationProgress] = useState<number | null>(null);
-  const [presentationReady, setPresentationReady] = useState(false);
   const [transportFailure, setTransportFailure] = useState<string | null>(null);
   const requestId = routeRequestId();
   const mobile = isMobileRuntime();
+
+  useEffect(() => { loading.report("module"); }, [loading]);
+  useEffect(() => {
+    if (transportFailure !== null || launchState.phase === "rejected" || launchState.phase === "closing" ||
+        launchState.phase === "closed" || launchState.phase === "disposed") loading.finish();
+  }, [loading, launchState.phase, transportFailure]);
 
   useEffect(() => {
     if (!mobile) return;
@@ -136,14 +141,28 @@ function BuiltInSimulatorWindow() {
         buildRequest: buildSimulatorLaunchRequest,
         createAudio: createBrowserAudioContextCapability,
         async createPlatform(audioContext): Promise<BrowserSimulatorLaunchPlatformOwner> {
-          return createBrowserSimulatorPlatform({
+          loading.report("media");
+          const platform = await createBrowserSimulatorPlatform({
             host,
             audioContext,
-            resources: createSimulatorResourceCapability(manager, "jp", (completed, total) => setPreparationProgress(completed / total)),
+            resources: {
+              async acquire(requirements) {
+                const result = await createSimulatorResourceCapability(manager, "jp", (completed, total) =>
+                  loading.report("availability", completed / total)).acquire(requirements);
+                if (result.status === "accepted") loading.report("lease");
+                return result;
+              },
+            },
             safeArea: mobile ? "css-safe-area" : "full-surface",
             onLifecycleState: () => {},
-            onPresentationReady: () => flushSync(() => setPresentationReady(true)),
+            onRenderPreparationProgress: (completed, total) => loading.report("rendering", completed / total),
+            onPresentationReady: () => flushSync(() => {
+              loading.report("presentation");
+              loading.finish();
+            }),
           });
+          loading.report("platform");
+          return platform;
         },
         validatePlatform(platformOwner) {
           const platform = platformOwner.platform as AutonomousSimulatorPlatformCapabilities;
@@ -177,7 +196,7 @@ function BuiltInSimulatorWindow() {
     );
     ownerRef.current = owner;
     void owner.begin();
-  }, [descriptor, manager, mobile, requestId, transportFailure]);
+  }, [descriptor, loading, manager, mobile, requestId, transportFailure]);
 
   useEffect(() => () => {
     const owner = ownerRef.current;
@@ -211,8 +230,6 @@ function BuiltInSimulatorWindow() {
     transportFailure,
     activateAudioFromPointer,
     () => { void leavePlayer(); },
-    preparationProgress,
-    presentationReady,
   );
   return (
     <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
@@ -227,11 +244,9 @@ function renderOverlay(
   transportFailure: string | null,
   onActivationPointer: () => void,
   onLeave: () => void,
-  preparationProgress: number | null,
-  presentationReady: boolean,
 ) {
   const backdropStyle = preparationOverlayStyle;
-  if ((state.phase === "running" && presentationReady) || state.phase === "closing") return null;
+  if (state.phase === "running" || state.phase === "closing") return null;
   if (state.phase === "awaiting-host-activation") {
     return (
       <section
@@ -262,7 +277,7 @@ function renderOverlay(
     );
   }
   if (state.phase === "closed" || state.phase === "disposed") return null;
-  return <SimulatorLoadingScreen progress={preparationProgress} />;
+  return null;
 }
 
 function dependencyFailure(capability: string, boundary: string): BrowserSimulatorLaunchDependencyError {
