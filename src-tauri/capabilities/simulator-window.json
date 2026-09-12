@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-close",
+    "core:window:allow-show",
     "core:window:allow-is-resizable",
     "core:window:allow-set-resizable"
   ]

@@ -15,12 +15,14 @@ import { registerSimulatorBuiltinResources } from "./builtin/simulatorBuiltinRes
 
 let bootstrapPromise: Promise<ResourceResult<ApplicationResourceManager>> | null = null;
 
-export function bootstrapApplicationResources(): Promise<ResourceResult<ApplicationResourceManager>> {
-  bootstrapPromise ??= bootstrap();
+export function bootstrapApplicationResources(
+  onLoadingReady?: (manager: ApplicationResourceManager) => Promise<void>,
+): Promise<ResourceResult<ApplicationResourceManager>> {
+  bootstrapPromise ??= bootstrap(onLoadingReady);
   return bootstrapPromise;
 }
 
-async function bootstrap(): Promise<ResourceResult<ApplicationResourceManager>> {
+async function bootstrap(onLoadingReady?: (manager: ApplicationResourceManager) => Promise<void>): Promise<ResourceResult<ApplicationResourceManager>> {
   const backend = isTauriRuntime()
     ? new TauriApplicationResourceBackend()
     : new MemoryApplicationResourceBackend();
@@ -34,11 +36,13 @@ async function bootstrap(): Promise<ResourceResult<ApplicationResourceManager>> 
   if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
   if (builtins.status === "rejected") return builtins;
-  const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);
-  if (simulatorBuiltins.status === "rejected") return simulatorBuiltins;
   const builtinLease = await manager.prepareBuiltinDocumentLease(listApplicationBuiltinResourceSlots());
   if (builtinLease.status === "rejected") return builtinLease;
   installBuiltinDocumentResources(manager);
+  await onLoadingReady?.(manager);
+  const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);
+  if (simulatorBuiltins.status === "rejected") return simulatorBuiltins;
+
   void manager.refreshCatalog("bestdori");
   return resourceAccepted(manager);
 }

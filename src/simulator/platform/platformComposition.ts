@@ -115,7 +115,6 @@ export interface SimulatorGraphicsSurface {
 
 export interface AutonomousSimulatorPlatformCapabilities {
   readonly resources: SimulatorResourceCapability;
-  readonly onResourcePreparationProgress?: (completed: number, total: number) => void;
   readonly audioContext: AudioContext;
   readonly graphics: SimulatorGraphicsSurface;
   readonly scheduler: SimulatorFrameScheduler;
@@ -301,7 +300,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       resourceLease.value,
       {
         sessionId,
-        onProgress: purpose === "initial" ? this.platform.onResourcePreparationProgress : undefined,
         rendering: {
           backend: renderer,
           preflight: new PortableRenderResourcePreflightAdapter(),

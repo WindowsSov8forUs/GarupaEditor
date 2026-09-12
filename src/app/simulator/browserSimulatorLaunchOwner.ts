@@ -174,6 +174,9 @@ export class BrowserSimulatorLaunchOwner {
 
       this.publish("building-request", null);
       const request = await this.dependencies.buildRequest(this.descriptor, media);
+      // The request owns decoded bytes. Finish the transport lease's asynchronous
+      // cleanup before any startup frames can run behind the loading overlay.
+      await this.releaseMedia();
       if (await this.stopIfCancelled()) return;
 
       this.publish("checking-audio", null);
@@ -221,7 +224,6 @@ export class BrowserSimulatorLaunchOwner {
 
       this.publish("launching", null);
       const launched = await this.dependencies.launch(request);
-      await this.releaseMedia();
       if (launched.status === "rejected") throwFailure(launched.failure);
       if (this.disposed || this.terminal) {
         await this.stopIfCancelled();

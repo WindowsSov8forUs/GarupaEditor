@@ -2379,7 +2379,7 @@
     {
       "id": "RCB-0113",
       "file": "src/app/BuiltInSimulatorWindow.tsx",
-      "line": 69,
+      "line": 71,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (requestId.length === 0) throw new Error(\"缺少播放器请求标识。\");",
@@ -2400,7 +2400,7 @@
     {
       "id": "RCB-0114",
       "file": "src/app/BuiltInSimulatorWindow.tsx",
-      "line": 73,
+      "line": 75,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"移动端播放器快照不可用。\");",
@@ -3534,7 +3534,7 @@
     {
       "id": "RCB-0168",
       "file": "src/app/simulator/ApplicationSimulatorResourceCapability.ts",
-      "line": 96,
+      "line": 97,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.released) throw new Error(\"Simulator application resource lease is closed\");",
@@ -3555,7 +3555,7 @@
     {
       "id": "RCB-0169",
       "file": "src/app/simulator/ApplicationSimulatorResourceCapability.ts",
-      "line": 98,
+      "line": 99,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (slot === undefined) throw new Error(`Simulator logical resource is not leased: ${logicalResource}`);",
@@ -3681,7 +3681,7 @@
     {
       "id": "RCB-0175",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 123,
+      "line": 122,
       "marker": "throw-error",
       "symbol": "if",
       "source": ") throw new Error(\"Browser Pixi surface cannot map its backing-store viewport to renderer logical coordinates.\");",
@@ -3702,7 +3702,7 @@
     {
       "id": "RCB-0176",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 140,
+      "line": 139,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"launch-failed\", \"simulator.browser.graphics-invalid-mount\", \"Browser graphics accepts one live combined scene root exactly once.\");",
@@ -3723,7 +3723,7 @@
     {
       "id": "RCB-0177",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 213,
+      "line": 212,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (!this.stopped) return rejected(\"launch-failed\", \"simulator.browser.scheduler-already-started\", \"Browser scheduler can start only once per autonomous runtime.\");",
@@ -3744,7 +3744,7 @@
     {
       "id": "RCB-0178",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 280,
+      "line": 288,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"launch-failed\", \"simulator.browser.input-disposed\", \"Disposed browser input cannot publish empty fallback frames.\");",
@@ -5718,7 +5718,7 @@
     {
       "id": "RCB-0272",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 620,
+      "line": 626,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (ref === undefined) throw new Error(`resource slot is not leased: ${slot}`);",
@@ -5739,7 +5739,7 @@
     {
       "id": "RCB-0273",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 622,
+      "line": 628,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (read.status === \"rejected\") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);",
@@ -5760,7 +5760,7 @@
     {
       "id": "RCB-0274",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 632,
+      "line": 638,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (file === undefined) throw new Error(`resource file metadata is not leased: ${slot}/${logicalPath}`);",
@@ -5781,7 +5781,7 @@
     {
       "id": "RCB-0275",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 646,
+      "line": 652,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(`${released.failure.capability}: ${released.failure.boundary}`);",
@@ -5802,7 +5802,7 @@
     {
       "id": "RCB-0276",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 651,
+      "line": 657,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (this.released) throw new Error(\"resource lease is closed\");",
@@ -5823,7 +5823,7 @@
     {
       "id": "RCB-0277",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 680,
+      "line": 686,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ")) return integrityFailure(\"resources.manager.builtin-registration-integrity\");",
@@ -5844,7 +5844,7 @@
     {
       "id": "RCB-0278",
       "file": "src/resources/applicationResourceManager.ts",
-      "line": 715,
+      "line": 721,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (this.loadBytes === null) return integrityFailure(\"resources.manager.builtin-loader-missing\");",
@@ -5886,7 +5886,7 @@
     {
       "id": "RCB-0280",
       "file": "src/resources/builtin/builtinResourceCatalog.ts",
-      "line": 187,
+      "line": 195,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (!response.ok) throw new Error(`builtin resource fetch failed: ${response.status}`);",
@@ -5907,7 +5907,7 @@
     {
       "id": "RCB-0281",
       "file": "src/resources/builtin/builtinResourceCatalog.ts",
-      "line": 189,
+      "line": 197,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (bytes.byteLength === 0) throw new Error(\"builtin resource fetch returned empty bytes\");",
@@ -8889,7 +8889,7 @@
     {
       "id": "RCB-0423",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 105,
+      "line": 104,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"launch-failed\", \"simulator.assembly.invalid-session\", \"Autonomous resource assembly requires one internally generated non-empty session identity.\");",
@@ -8910,7 +8910,7 @@
     {
       "id": "RCB-0424",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 132,
+      "line": 125,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"resource-integrity\", \"simulator.assembly.skin-render-empty\", \"Every current resolved Skin recipe must publish its exact leased render overlay.\");",
@@ -8931,7 +8931,7 @@
     {
       "id": "RCB-0425",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 140,
+      "line": 132,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"resource-integrity\", \"simulator.assembly.duplicate-render-logical-id\", \"Leased common and Skin render assets must be disjoint before renderer preparation.\");",
@@ -8952,7 +8952,7 @@
     {
       "id": "RCB-0426",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 218,
+      "line": 210,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (renderReady.status !== \"ok\") return rejected(\"resource-integrity\", renderReady.capability, renderReady.boundary);",
@@ -8973,7 +8973,7 @@
     {
       "id": "RCB-0427",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 245,
+      "line": 236,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejectedWithCleanup(rejected(",
@@ -8994,7 +8994,7 @@
     {
       "id": "RCB-0428",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 265,
+      "line": 256,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejectedWithCleanup(rejected(mapAudioFailure(audioReady.status), audioReady.failure.capability, audioReady.failure.boundary), rollback());",
@@ -9015,7 +9015,7 @@
     {
       "id": "RCB-0429",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 278,
+      "line": 268,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejectedWithCleanup(rejected(mapParticleFailure(particleReady.status), particleReady.failure.capability, particleReady.failure.boundary), rollback());",
@@ -9036,7 +9036,7 @@
     {
       "id": "RCB-0430",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 289,
+      "line": 278,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejectedWithCleanup(rejected(mapParticleFailure(particleRendererReady.status), particleRendererReady.failure.capability, particleRendererReady.failure.boundary), rollback());",
@@ -9057,7 +9057,7 @@
     {
       "id": "RCB-0431",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 315,
+      "line": 303,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"resource-integrity\", \"simulator.assembly.invalid-skin-resource-selection\", \"Resolved Skin assembly requires one canonical recipe identity and complete application-leased requirements.\");",
@@ -9078,7 +9078,7 @@
     {
       "id": "RCB-0432",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 321,
+      "line": 309,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"resource-integrity\", \"simulator.assembly.duplicate-skin-resource\", \"Skin source resources require unique role/logical-resource pairs without keys, URLs, profiles or aliases.\");",
@@ -9099,7 +9099,7 @@
     {
       "id": "RCB-0433",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 341,
+      "line": 329,
       "marker": "integrity-failure-string",
       "symbol": "mapAudioFailure",
       "source": "function mapAudioFailure(code: Exclude<Awaited<ReturnType<SimulatorAudioBackend[\"prepare\"]>>, { status: \"accepted\" }>[\"status\"]): \"integrity-failure\" | \"resource-unavailable\" | \"resource-integrity\" | \"resource-decode\" | \"platform-unavailable\" | \"launch-failed\" {",
@@ -9120,7 +9120,7 @@
     {
       "id": "RCB-0434",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 346,
+      "line": 334,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "return code === \"integrity-failure\" ? \"integrity-failure\" : \"launch-failed\";",
@@ -9141,7 +9141,7 @@
     {
       "id": "RCB-0435",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 348,
+      "line": 336,
       "marker": "integrity-failure-string",
       "symbol": "mapParticleFailure",
       "source": "function mapParticleFailure(code: \"integrity-failure\" | \"particle-resource-unavailable\" | \"particle-resource-integrity\" | \"particle-resource-decode\" | \"particle-backend-fault\" | \"terminal-disposed\"): \"integrity-failure\" | \"resource-unavailable\" | \"resource-integrity\" | \"resource-decode\" | \"launch-fa",
@@ -9162,7 +9162,7 @@
     {
       "id": "RCB-0436",
       "file": "src/simulator/assembly/resourceAssembly.ts",
-      "line": 352,
+      "line": 340,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "return code === \"integrity-failure\" ? \"integrity-failure\" : \"launch-failed\";",
@@ -28482,7 +28482,7 @@
     {
       "id": "RCB-1356",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 160,
+      "line": 159,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28503,7 +28503,7 @@
     {
       "id": "RCB-1357",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 210,
+      "line": 209,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28524,7 +28524,7 @@
     {
       "id": "RCB-1358",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 211,
+      "line": 210,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "\"integrity-failure\",",
@@ -28545,7 +28545,7 @@
     {
       "id": "RCB-1359",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 279,
+      "line": 278,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "rejected(",
@@ -28566,7 +28566,7 @@
     {
       "id": "RCB-1360",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 355,
+      "line": 353,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (startupScene === null) throw new Error(\"Prepared renderer did not publish its startup scene.\");",
@@ -28587,7 +28587,7 @@
     {
       "id": "RCB-1361",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 612,
+      "line": 610,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -28608,7 +28608,7 @@
     {
       "id": "RCB-1362",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 620,
+      "line": 618,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(mounted.failure.capability, [\"LR-C03\", \"PAU-B04\"], mounted.failure.boundary);",
@@ -28629,7 +28629,7 @@
     {
       "id": "RCB-1363",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 694,
+      "line": 692,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "return integrityFailure(\"simulator.composition.owner-dispose-threw\", [],",
@@ -28650,7 +28650,7 @@
     {
       "id": "RCB-1364",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 707,
+      "line": 705,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": "? integrityFailure(",
@@ -28671,7 +28671,7 @@
     {
       "id": "RCB-1365",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 712,
+      "line": 710,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": ": integrityFailure(",
@@ -28692,7 +28692,7 @@
     {
       "id": "RCB-1366",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 720,
+      "line": 718,
       "marker": "integrity-failure-call",
       "symbol": "mount",
       "source": "(error: unknown) => integrityFailure(\"simulator.composition.resource-lease-release-threw\", [],",
@@ -28713,7 +28713,7 @@
     {
       "id": "RCB-1367",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 724,
+      "line": 722,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (combinedDisposed.status === \"integrity-failure\") {",
@@ -28734,7 +28734,7 @@
     {
       "id": "RCB-1368",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 727,
+      "line": 725,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -28755,7 +28755,7 @@
     {
       "id": "RCB-1369",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 737,
+      "line": 735,
       "marker": "integrity-failure-call",
       "symbol": "settleDisposal",
       "source": "return this.resourceDisposal ?? Promise.resolve(integrityFailure(",
@@ -28776,7 +28776,7 @@
     {
       "id": "RCB-1370",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 771,
+      "line": 769,
       "marker": "rejected-call",
       "symbol": "se",
       "source": "? rejected(",
@@ -28797,7 +28797,7 @@
     {
       "id": "RCB-1371",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 772,
+      "line": 770,
       "marker": "integrity-failure-string",
       "symbol": "se",
       "source": "\"integrity-failure\",",
@@ -28818,7 +28818,7 @@
     {
       "id": "RCB-1372",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 793,
+      "line": 791,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -28839,7 +28839,7 @@
     {
       "id": "RCB-1373",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 809,
+      "line": 807,
       "marker": "rejected-call",
       "symbol": "checked",
       "source": "return rejected(",
@@ -28860,7 +28860,7 @@
     {
       "id": "RCB-1374",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 879,
+      "line": 877,
       "marker": "integrity-failure-string",
       "symbol": "code",
       "source": ": result.status === \"integrity-failure\"",
@@ -28881,7 +28881,7 @@
     {
       "id": "RCB-1375",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 880,
+      "line": 878,
       "marker": "integrity-failure-string",
       "symbol": "code",
       "source": "? \"integrity-failure\"",
@@ -28902,7 +28902,7 @@
     {
       "id": "RCB-1376",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 882,
+      "line": 880,
       "marker": "rejected-call",
       "symbol": "code",
       "source": "return rejected(code, result.failure.capability, result.failure.boundary);",
@@ -28923,7 +28923,7 @@
     {
       "id": "RCB-1377",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 890,
+      "line": 888,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "readonly status: \"integrity-failure\";",
@@ -28944,7 +28944,7 @@
     {
       "id": "RCB-1378",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 894,
+      "line": 892,
       "marker": "integrity-failure-string",
       "symbol": "fromIntegrity",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",
@@ -28965,7 +28965,7 @@
     {
       "id": "RCB-1379",
       "file": "src/simulator/platform/platformComposition.ts",
-      "line": 894,
+      "line": 892,
       "marker": "rejected-call",
       "symbol": "fromIntegrity",
       "source": "return rejected(\"integrity-failure\", result.capability, result.boundary);",

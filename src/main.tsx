@@ -3,6 +3,10 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
+import { SimulatorLoadingScreen } from "./app/simulator/SimulatorLoadingScreen";
+import { isTauri } from "@tauri-apps/api/core";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { isMobileRuntime } from "./app/mobileRuntime";
 
 interface AppErrorBoundaryState {
   hasError: boolean;
@@ -72,7 +76,19 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
-void bootstrapApplicationResources().then((resources) => {
+const simulatorWindow = window.location.hash.startsWith("#simulator");
+async function showSimulatorWindow(): Promise<void> {
+  if (simulatorWindow && isTauri() && !isMobileRuntime()) await getCurrentWebviewWindow().show();
+}
+
+void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
+  await new Promise<void>((resolve, reject) => {
+    root.render(<ApplicationResourceProvider manager={manager}>
+      <SimulatorLoadingScreen progress={null} onReady={(error) => error === undefined ? resolve() : reject(error)} />
+    </ApplicationResourceProvider>);
+  });
+  await showSimulatorWindow();
+} : undefined).then(async (resources) => {
   root.render(
     <AppErrorBoundary>
       {resources.status === "accepted" ? (
@@ -88,4 +104,8 @@ void bootstrapApplicationResources().then((resources) => {
       )}
     </AppErrorBoundary>,
   );
+  if (resources.status === "rejected") await showSimulatorWindow();
+}).catch(async (error: unknown) => {
+  root.render(<main style={{ padding: 20 }}>资源系统初始化失败：{error instanceof Error ? error.message : String(error)}</main>);
+  await showSimulatorWindow();
 });

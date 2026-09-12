@@ -531,17 +531,23 @@ export class ApplicationResourceManager {
 
   async createSnapshotFromRefs(
     bindings: Readonly<Record<string, ResourceRef>>,
+    onProgress?: (completed: number, total: number) => void,
   ): Promise<ResourceResult<ResourceSnapshotReceipt>> {
     const entries = Object.entries(bindings);
     if (entries.length === 0) return invalid("resources.manager.empty-explicit-snapshot-request");
+    if (entries.some(([slot, ref]) => !safeSemanticSlot(slot) || createResourceRef(ref?.id).status === "rejected")) {
+      return invalid("resources.manager.invalid-explicit-snapshot-binding");
+    }
     const slots: Record<string, ResourceRef> = {};
+    const ready = new Set<string>();
+    const total = new Set(entries.map(([, ref]) => ref.id)).size;
+    onProgress?.(0, total);
     for (const [slot, ref] of entries) {
-      if (!safeSemanticSlot(slot) || slots[slot] !== undefined || createResourceRef(ref?.id).status === "rejected") {
-        return invalid("resources.manager.invalid-explicit-snapshot-binding");
-      }
       const available = await this.ensureAvailable(ref);
       if (available.status === "rejected") return available;
       slots[slot] = ref;
+      ready.add(ref.id);
+      onProgress?.(ready.size, total);
     }
     const created = await this.backend.createSnapshot(Object.freeze(slots));
     return created.status === "rejected" ? created : resourceAccepted(Object.freeze({

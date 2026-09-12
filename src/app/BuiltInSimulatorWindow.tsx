@@ -1,6 +1,7 @@
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 import { installProductionAutonomousSimulatorPlatform } from "../simulator/platform/platformComposition";
 import type { AutonomousSimulatorPlatformCapabilities } from "../simulator/platform/platformComposition";
@@ -50,7 +51,8 @@ function BuiltInSimulatorWindow() {
   const ownerRef = useRef<BrowserSimulatorLaunchOwner | null>(null);
   const [descriptor, setDescriptor] = useState<SimulatorLaunchTransportDescriptor | null>(null);
   const [launchState, setLaunchState] = useState<BrowserSimulatorLaunchState>(INITIAL_LAUNCH_STATE);
-  const [preparationProgress, setPreparationProgress] = useState(0);
+  const [preparationProgress, setPreparationProgress] = useState<number | null>(null);
+  const [presentationReady, setPresentationReady] = useState(false);
   const [transportFailure, setTransportFailure] = useState<string | null>(null);
   const requestId = routeRequestId();
   const mobile = isMobileRuntime();
@@ -137,10 +139,10 @@ function BuiltInSimulatorWindow() {
           return createBrowserSimulatorPlatform({
             host,
             audioContext,
-            resources: createSimulatorResourceCapability(manager, "jp"),
-            onResourcePreparationProgress: (completed, total) => setPreparationProgress(completed / total),
+            resources: createSimulatorResourceCapability(manager, "jp", (completed, total) => setPreparationProgress(completed / total)),
             safeArea: mobile ? "css-safe-area" : "full-surface",
             onLifecycleState: () => {},
+            onPresentationReady: () => flushSync(() => setPresentationReady(true)),
           });
         },
         validatePlatform(platformOwner) {
@@ -210,6 +212,7 @@ function BuiltInSimulatorWindow() {
     activateAudioFromPointer,
     () => { void leavePlayer(); },
     preparationProgress,
+    presentationReady,
   );
   return (
     <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
@@ -224,10 +227,11 @@ function renderOverlay(
   transportFailure: string | null,
   onActivationPointer: () => void,
   onLeave: () => void,
-  preparationProgress: number,
+  preparationProgress: number | null,
+  presentationReady: boolean,
 ) {
   const backdropStyle = preparationOverlayStyle;
-  if (state.phase === "running" || state.phase === "closing") return null;
+  if ((state.phase === "running" && presentationReady) || state.phase === "closing") return null;
   if (state.phase === "awaiting-host-activation") {
     return (
       <section

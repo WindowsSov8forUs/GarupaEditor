@@ -19,6 +19,7 @@ export class ApplicationSimulatorResourceCapability implements SimulatorResource
   constructor(
     private readonly manager: ApplicationResourceManager,
     private readonly refsByLogicalResource: Readonly<Record<string, ResourceRef>>,
+    private readonly onProgress?: (completed: number, total: number) => void,
   ) {}
 
   async acquire(
@@ -50,7 +51,7 @@ export class ApplicationSimulatorResourceCapability implements SimulatorResource
       bindings[slot] = ref;
       slotsByLogicalResource.set(logicalResource, slot);
     }
-    const receipt = await this.manager.createSnapshotFromRefs(Object.freeze(bindings));
+    const receipt = await this.manager.createSnapshotFromRefs(Object.freeze(bindings), this.onProgress);
     if (receipt.status === "rejected") return fromApplicationFailure(receipt);
     const acquired = await this.manager.acquireSnapshot(receipt.value.snapshotId);
     if (acquired.status === "rejected") return fromApplicationFailure(acquired);

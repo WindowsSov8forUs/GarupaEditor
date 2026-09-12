@@ -39,16 +39,15 @@ export async function createBrowserSimulatorPlatform(input: {
   readonly host: HTMLElement;
   readonly audioContext: AudioContext;
   readonly resources: SimulatorResourceCapability;
-  readonly onResourcePreparationProgress?: (completed: number, total: number) => void;
   readonly safeArea: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"];
   readonly onLifecycleState: (state: SimulatorLifecycleBackendState) => void;
+  readonly onPresentationReady: () => void;
 }): Promise<BrowserSimulatorPlatformOwner> {
   const graphics = await BrowserPixiGraphicsSurface.create(input.host, input.safeArea);
   const pointerInput = new BrowserPointerInputSource(graphics.canvas, () => graphics.readSurfaceState());
-  const scheduler = new BrowserRafScheduler(() => graphics.render());
+  const scheduler = new BrowserRafScheduler(() => graphics.render(), input.onPresentationReady);
   const platform: AutonomousSimulatorPlatformCapabilities = Object.freeze({
     resources: input.resources,
-    onResourcePreparationProgress: input.onResourcePreparationProgress,
     audioContext: input.audioContext,
     graphics,
     scheduler,
@@ -206,7 +205,7 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
   private previousTimestamp: number | null = null;
   private generation = 0;
 
-  constructor(private readonly render: () => void) {}
+  constructor(private readonly render: () => void, private readonly onPresentationReady: () => void) {}
   setTargetFrameRate(value: 60 | 120): void { this.target = value; }
 
   start(consumer: (tick: { sequence: number; deltaTimeSeconds: number }) => Promise<void>): SimulatorAssemblyResult<SimulatorFrameSubscription> {
@@ -217,13 +216,22 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
     const generation = ++this.generation;
     const tick = (timestamp: number) => {
       if (this.stopped || generation !== this.generation) return;
-      const delta = this.previousTimestamp === null
+      // Prepare the initial frame at t=0 behind Loading. Its CPU/GPU setup cost
+      // must not consume the information reveal before the host presents it.
+      const preparing = this.sequence === 0;
+      const delta = preparing ? 0 : this.previousTimestamp === null
         ? Math.fround(1 / this.target)
         : Math.fround((timestamp - this.previousTimestamp) / 1000);
       this.previousTimestamp = timestamp;
       const sequence = this.sequence++;
       void consumer(Object.freeze({ sequence, deltaTimeSeconds: delta })).then(() => {
-        if (!this.stopped && generation === this.generation) this.render();
+        if (!this.stopped && generation === this.generation) {
+          this.render();
+          if (preparing) {
+            this.previousTimestamp = null;
+            this.onPresentationReady();
+          }
+        }
       }).finally(() => {
         if (!this.stopped && generation === this.generation) this.frameId = requestAnimationFrame(tick);
       });

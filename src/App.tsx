@@ -98,7 +98,7 @@ function App() {
   }
   if (!mobileRuntime && isSimulatorRoute) {
     return (
-      <Suspense fallback={<SimulatorLoadingScreen progress={0} />}>
+      <Suspense fallback={<SimulatorLoadingScreen progress={null} />}>
         <BuiltInSimulatorWindow />
       </Suspense>
     );
@@ -111,7 +111,7 @@ function App() {
       </AppErrorBoundary>
       {mobileRuntime && (isStaticRenderRoute || isSimulatorRoute) ? (
         <div className="mobile-route-overlay" role="presentation">
-          <Suspense fallback={isSimulatorRoute ? <SimulatorLoadingScreen progress={0} /> : routeLoadingFallback}>
+          <Suspense fallback={isSimulatorRoute ? <SimulatorLoadingScreen progress={null} /> : routeLoadingFallback}>
             {isStaticRenderRoute ? <StaticChartRenderWindow /> : <BuiltInSimulatorWindow />}
           </Suspense>
         </div>

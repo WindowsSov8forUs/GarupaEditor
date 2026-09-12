@@ -5865,6 +5865,7 @@ function ChartEditorController() {
       );
 
       const simulatorWindow = new WebviewWindow(requestId, {
+        visible: false,
         title: `${metadata.title} - playing`,
         width: descriptor.requestedWindow.width,
         height: descriptor.requestedWindow.height,

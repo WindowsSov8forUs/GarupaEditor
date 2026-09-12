@@ -13,6 +13,7 @@ import { ApplicationSimulatorResourceCapability } from "./ApplicationSimulatorRe
 export function createSimulatorResourceCapability(
   manager: ApplicationResourceManager,
   server = "jp",
+  onProgress?: (completed: number, total: number) => void,
 ): SimulatorResourceCapability {
   return Object.freeze({
     async acquire(requirements: readonly SimulatorResourceRequirement[]): Promise<SimulatorResourceResult<SimulatorResourceLease>> {
@@ -37,7 +38,7 @@ export function createSimulatorResourceCapability(
         }
         bindings[requirement.logicalResource] = network.value;
       }
-      return new ApplicationSimulatorResourceCapability(manager, Object.freeze(bindings)).acquire(requirements);
+      return new ApplicationSimulatorResourceCapability(manager, Object.freeze(bindings), onProgress).acquire(requirements);
     },
   });
 }
