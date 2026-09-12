@@ -24,6 +24,7 @@ import startupLineStarUrl from "../../assets/game/prefabs/bms/information/startu
 import startupTitleBaseUrl from "../../assets/game/prefabs/bms/information/startup-title-base.png?url&no-inline";
 import stageLightUrl from "../../assets/game/prefabs/bms/stage/stage-light.png?url&no-inline";
 import stageSpeakerUrl from "../../assets/game/prefabs/bms/stage/stage-speaker.png?url&no-inline";
+import stagePsylliumUrl from "../../assets/game/prefabs/bms/stage/stage-psyllium.png?url&no-inline";
 import stageSpeakerGlowUrl from "../../assets/game/prefabs/bms/stage/stage-speaker-glow.png?url&no-inline";
 import countdown1Url from "../../assets/game/prefabs/bms/pause/countdown-1.png?url&no-inline";
 import countdown2Url from "../../assets/game/prefabs/bms/pause/countdown-2.png?url&no-inline";
@@ -147,6 +148,7 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/stage/stage-light.png", "stage-light.png", "image/png", stageLightUrl),
     file("game/prefabs/bms/stage/stage-speaker.png", "stage-speaker.png", "image/png", stageSpeakerUrl),
     file("game/prefabs/bms/stage/stage-speaker-glow.png", "stage-speaker-glow.png", "image/png", stageSpeakerGlowUrl),
+    file("game/prefabs/bms/stage/stage-psyllium.png", "stage-psyllium.png", "image/png", stagePsylliumUrl),
   ]),
   resource("prefabs/bms/pause", "In-game Pause countdown resources", "package", [
     file("game/prefabs/bms/pause/countdown-1.png", "countdown-1.png", "image/png", countdown1Url),

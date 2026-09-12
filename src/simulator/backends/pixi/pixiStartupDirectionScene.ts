@@ -17,6 +17,7 @@ import type { PixiTextureDecoder } from "./pixiRendererBackend";
 import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 import { linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
 import { PixiStageLights } from "./pixiStageLights";
+import { PixiStagePsyllium } from "./pixiStagePsyllium";
 import { PixiStageSpeakers } from "./pixiStageSpeakers";
 import type { OneFrameJudgementBatch } from "../../engine/data/oneFrameData";
 
@@ -38,6 +39,7 @@ export interface PixiStartupDirectionCommonResources {
   readonly stageLight: Texture;
   readonly stageSpeaker: Texture;
   readonly stageSpeakerGlow: Texture;
+  readonly stagePsyllium: Texture;
   readonly jacketFrame: PixiStartupSlicedImage;
   readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", PixiStartupSlicedImage>>;
   readonly fullLiveLabel: Texture;
@@ -130,6 +132,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly stageBackdrop: Sprite | null;
   private readonly stageLights: PixiStageLights | null;
   private readonly stageSpeakers: PixiStageSpeakers | null;
+  private readonly stagePsyllium: PixiStagePsyllium | null;
   private stageProgress = 0;
   private readonly characters: readonly Sprite[];
   private disposed = false;
@@ -222,9 +225,11 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.stageLights !== null) this.backgroundRoot.addChild(this.stageLights.root);
     this.stageSpeakers = includeStandardStage && includeStageEffects ? new PixiStageSpeakers(common.stageSpeaker, common.stageSpeakerGlow) : null;
     if (this.stageSpeakers !== null) this.backgroundRoot.addChild(this.stageSpeakers.root);
+    this.stagePsyllium = includeStandardStage && includeStageEffects ? new PixiStagePsyllium(common.stagePsyllium) : null;
+    if (this.stagePsyllium !== null) this.backgroundRoot.addChild(this.stagePsyllium.root);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
-      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0,
+      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0, stagePsylliumFading: false,
       characterAlpha: 0, linePhase: "hidden", lineAlpha: 0,
       gameplayVisible: false, rehearsalControlsVisible: false,
     });
@@ -253,7 +258,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.stageBackdrop.tint = [brightness, brightness, brightness];
       this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle" ||
         state.stagePhase === "leaving";
-      for (const root of [this.stageLights?.root, this.stageSpeakers?.root]) {
+      for (const root of [this.stageLights?.root, this.stageSpeakers?.root, this.stagePsyllium?.root]) {
         if (root === undefined) continue;
         root.position.set(layout.surface.viewportWidth / 2,
           layout.surface.viewportHeight / 2 -
@@ -262,6 +267,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
         root.visible = this.stageBackdrop.visible;
       }
     }
+    if (state.stagePsylliumFading) this.stagePsyllium?.beginFade();
+    this.stagePsyllium?.updateStage(state.stagePhase, state.stageProgress, this.surfaceLayout.surface.viewportWidth, this.surfaceLayout.surface.viewportHeight);
     for (const character of this.characters) character.alpha = state.characterAlpha;
   }
 
@@ -282,6 +289,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.disposed) throw new Error("startup scene disposed");
     this.stageLights?.advance(deltaSeconds);
     this.stageSpeakers?.advance(deltaSeconds);
+    this.stagePsyllium?.advance(deltaSeconds);
   }
 
   reflectStageJudgements(batch: OneFrameJudgementBatch): void {
@@ -293,6 +301,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.disposed) return;
     this.disposed = true;
     this.stageSpeakers?.dispose();
+    this.stagePsyllium?.dispose();
     this.backgroundRoot.removeFromParent();
     this.foregroundRoot.removeFromParent();
     this.backgroundRoot.destroy({ children: true });

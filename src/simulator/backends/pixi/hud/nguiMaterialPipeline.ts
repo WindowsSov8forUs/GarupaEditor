@@ -27,7 +27,7 @@ export function linearTintFromSrgbChannels(red: number, green: number, blue: num
   return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
 }
 
-function srgbChannelToLinear(value: number): number {
+export function srgbChannelToLinear(value: number): number {
   if (!Number.isFinite(value) || value < 0 || value > 1) {
     throw new Error("NGUI sRGB color channel must be finite in [0, 1].");
   }

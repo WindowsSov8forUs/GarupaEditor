@@ -324,6 +324,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const stageLight = this.baseTextures.get("stage/bottom-light");
     const stageSpeaker = this.baseTextures.get("stage/speaker");
     const stageSpeakerGlow = this.baseTextures.get("stage/speaker-glow");
+    const stagePsyllium = this.baseTextures.get("stage/psyllium");
     const jacketFrame = sliced("bg_base_jacket_frame");
     const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
     const font = this.decodedFonts.get(CURRENT_STARTUP_DIRECTION_BINDINGS.fontLogicalAssetId);
@@ -335,7 +336,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       SPECIAL: sliced("bg_jacket_frame_rank_1_special"),
     });
     if (titleBase === undefined || difficultyBackground === undefined || lineStar === undefined || stageLight === undefined ||
-      stageSpeaker === undefined || stageSpeakerGlow === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
+      stageSpeaker === undefined || stageSpeakerGlow === undefined || stagePsyllium === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
       Object.values(difficultyFrames).some((texture) => texture === undefined)) {
       return integrityFailure(
         "render.startup-direction.common-resources-unavailable",
@@ -350,6 +351,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       stageLight,
       stageSpeaker,
       stageSpeakerGlow,
+      stagePsyllium,
       jacketFrame,
       difficultyFrames: difficultyFrames as PixiStartupDirectionCommonResources["difficultyFrames"],
       fullLiveLabel,

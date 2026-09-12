@@ -562,6 +562,14 @@
       "sourceReverseCommit": "ef4f11a5271f09e2504646917e6752a0f1d1fefb",
       "sourcePath": "artifacts/investigations/simulator-standard-stage-speakers-10-1-4/portable/stage-speaker-glow.png",
       "sourceRelation": "byte-identical"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-psyllium.png",
+      "byteLength": 4811,
+      "sha256": "210805D32A663DEB517699D9A3C132C9736484D195DE53B0F94F18109F9101BD",
+      "sourceReverseCommit": "51193d1faaf3c304995af81fc1f6e98ccc81aaf0",
+      "sourcePath": "artifacts/investigations/simulator-standard-stage-psyllium-10-1-4/portable/stage-psyllium.png",
+      "sourceRelation": "byte-identical"
     }
   ],
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",

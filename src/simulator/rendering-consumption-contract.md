@@ -1295,3 +1295,10 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 已提交的 OneFrame 判定送入现有 Startup/Stage owner：只选择 buttonTypes 的 0/6，普通、Slide、长按尾非 Miss 播放 normal；Flick 家族非 Miss 播放 exciting；长按头非 Miss 播放 continuous；LongMiss 回 idle。isSync 不作选择条件。每次选中动画从零重播，continuous 循环，其余结束保持；不添加新的状态机、计分或音频事件。生产消费原始曲线、常量轨、默认属性、SpeakerRoot 的位移/1.3 倍缩放及左侧镜像；切换时还原当前动画未写入的默认属性。
 
 音箱本体与透明叠层使用原 UIAtlas 切片和各自尺寸，光晕使用独立贴图/加法混合。`pixiStageImage` 明确执行 straight texture RGBA × widget RGBA，避免 Pixi Sprite 的顶点 RGB 预乘再次进入 SrcAlpha 混合。动画使用固定通道缓冲和推进游标；退出销毁本会话的几何/Shader 对象，共享 GlProgram 与资源贴图保留各自既有所有权，Retry 不销毁后继场景使用的程序。未新增测试；完成原作全通道起点覆盖检查、资源再生成及生产类型/构建/资源字节检查，未作视觉验收。
+### 普通舞台荧光棒入场
+
+来源为已验证并推送的 Reverse `51193d1faaf3c304995af81fc1f6e98ccc81aaf0`，`simulator-standard-stage-psyllium-10-1-4`。恢复 73 个原作位置、Mirror 翻转、Bottom pivot 的主纹理/core 两层及 StartIdle 四秒循环；初始颜色来自构造函数和 Awake 写回，不能消费序列化透明占位值。Stage 入场开始 1.5 秒后，RGB 按原作 45 次帧更新淡出，完成后写透明黑；不改为固定秒数的 alpha 插值。舞台变换结束按主纹理朝内上角执行屏外检查。
+
+`StagePsylliumAnimation` 与音箱共用 `StageClipAnimation` 采样器；`PixiStagePsyllium` 使用一个保留批次绘制 146 个四边形，直接做纹理 RGBA 与线性控件 RGBA 相乘，再执行原作 SrcAlpha/One 混合。复用原有 Stage/TRSRoot 变换、应用资源租约及启动消费者，透明完成后停止无输出的逐帧几何更新。
+
+当前入口没有原作荧光棒配色/动作命令，不能据普通音符自动生成整曲应援；本项只恢复默认入场。角色技能、Fever/TeamLiveFestival、SD 与纸花不属于本项完成声明。Reverse 重新提取、全对象 round-trip 与原始指令字节验证通过；生产 TypeScript、构建与 104 项内置资源字节验证通过，没有新增测试或运行视觉验收。

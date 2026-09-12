@@ -407,6 +407,11 @@
       "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE"
     },
     {
+      "path": "game/prefabs/bms/stage/stage-psyllium.png",
+      "byteLength": 4811,
+      "sha256": "210805D32A663DEB517699D9A3C132C9736484D195DE53B0F94F18109F9101BD"
+    },
+    {
       "path": "game/prefabs/bms/stage/stage-speaker-glow.png",
       "byteLength": 19194,
       "sha256": "253BCC151DFCE9970E6FF489D323B54AF569E3C11BAE6FAF91C55509A6F9E07D"

@@ -305,6 +305,7 @@ export class StartupDirectionController {
       stageProgress: outQuad(stage),
       stageColorProgress: stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_COLOR_FADE),
       characterAlpha: character,
+      stagePsylliumFading: stageElapsed >= STAGE_WAIT,
       linePhase: line === null ? "waiting" : line.done ? "visible" : "fading",
       lineAlpha: line?.ratio ?? Math.fround(0),
     });

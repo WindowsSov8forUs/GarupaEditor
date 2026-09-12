@@ -14,6 +14,7 @@ export interface StartupDirectionSceneState {
   /** Transform interpolation between the authored start and playing poses, after easing. */
   readonly stageProgress: number;
   readonly stageColorProgress: number;
+  readonly stagePsylliumFading: boolean;
   readonly characterAlpha: number;
   readonly linePhase: StartupLinePhase;
   readonly lineAlpha: number;
@@ -54,6 +55,7 @@ export const INITIAL_STARTUP_DIRECTION_SCENE_STATE = freezeStartupDirectionScene
   stagePhase: "dark",
   stageProgress: Math.fround(0),
   stageColorProgress: Math.fround(0),
+  stagePsylliumFading: false,
   characterAlpha: Math.fround(0),
   linePhase: "hidden",
   lineAlpha: Math.fround(0),

@@ -1472,6 +1472,27 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "stage-psyllium.png",
+        "profile": {
+          "logicalAssetId": "stage/psyllium",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 166,
+          "height": 138,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [
