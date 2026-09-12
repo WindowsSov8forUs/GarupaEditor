@@ -48,8 +48,13 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
   const comicY = 60;
   const gauge = sliced(frame, "14", "7px");
   return <section ref={host} aria-label="加载演奏" style={{ position: "absolute", inset: 0, zIndex: 10,
-    overflow: "hidden", backgroundImage: `url("${background}")`, backgroundPosition: "center",
-    backgroundSize: `100% ${size.width * 1000 / 1334}px`, backgroundRepeat: "no-repeat" }}>
+    overflow: "hidden" }}>
+    {/* UITexture is Tiled: fill from the widget's bottom-left in texture-sized
+        blocks, then scale the whole widget. Partial edge blocks retain their UVs. */}
+    <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 1000,
+      transform: `translate(-50%, -50%) scale(${size.width / 1334})`, pointerEvents: "none",
+      backgroundImage: `url("${background}")`, backgroundPosition: "left bottom",
+      backgroundSize: "117px 142px", backgroundRepeat: "repeat" }} />
     <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
       <filter id="simulator-loading-gray" colorInterpolationFilters="sRGB"><feFlood floodColor="rgb(197.26415,197.26415,197.26415)" /><feComposite in2="SourceGraphic" operator="in" /></filter>
       <filter id="simulator-loading-pink" colorInterpolationFilters="sRGB"><feFlood floodColor="#ff3b72" /><feComposite in2="SourceGraphic" operator="in" /></filter>
