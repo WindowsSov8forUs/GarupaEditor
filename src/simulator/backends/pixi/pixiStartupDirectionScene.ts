@@ -229,7 +229,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.stagePsyllium !== null) this.backgroundRoot.addChild(this.stagePsyllium.root);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
-      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0, stagePsylliumFading: false,
+      hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0, stagePsylliumFading: false, stagePsylliumSpeed: 1,
       characterAlpha: 0, linePhase: "hidden", lineAlpha: 0,
       gameplayVisible: false, rehearsalControlsVisible: false,
     });
@@ -268,7 +268,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       }
     }
     if (state.stagePsylliumFading) this.stagePsyllium?.beginFade();
-    this.stagePsyllium?.updateStage(state.stagePhase, state.stageProgress, this.surfaceLayout.surface.viewportWidth, this.surfaceLayout.surface.viewportHeight);
+    this.stagePsyllium?.updateStage(state.stagePhase, state.stageProgress, this.surfaceLayout.surface.viewportWidth, this.surfaceLayout.surface.viewportHeight, state.stagePsylliumSpeed);
     for (const character of this.characters) character.alpha = state.characterAlpha;
   }
 

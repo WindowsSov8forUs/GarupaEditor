@@ -199,7 +199,7 @@ export class InGameManager {
   }
 
   publishGameClearState(finished: boolean): void {
-    if (!finished) this.startupDirection?.beginGameClearPresentation();
+    if (!finished) this.startupDirection?.beginGameClearPresentation(this.musicScoreController.currentBpm);
     this.currentGameStateValue = finished ? GameState.GameClearAnimEnd : GameState.GameClearAnimStart;
   }
 
@@ -285,6 +285,9 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
     }
+    this.startupDirection?.reflectStageMusicProgress(
+      this.musicScoreController.currentBeatProgress, this.musicScoreController.currentBpm,
+    );
     const productUpdate = this.garupaProduct?.update(deltaTimeSeconds) ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
     const holdSounds = [...this.noteManager.takeHoldSounds(), ...this.garupaProduct?.takeHoldSounds() ?? []];

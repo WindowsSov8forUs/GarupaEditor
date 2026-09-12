@@ -68,6 +68,7 @@ export class StartupDirectionController {
   private sequence = 0;
   private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
   private initialized = false;
+  private previousStageBeatProgress = 0;
   private disposed = false;
   private stageOutro: { elapsed: number; from: number } | null = null;
   private readonly startupAudio: StartupAudioOwner | null;
@@ -332,10 +333,21 @@ export class StartupDirectionController {
     this.scene?.reflectStageJudgements(batch);
   }
 
-  beginGameClearPresentation(): void {
+  reflectStageMusicProgress(beatProgress: number, bpm: number): void {
+    const current = Math.trunc(beatProgress);
+    if (this.previousStageBeatProgress > current && current >= 0) {
+      // NoteManager's bar-wrap callback updates the default animation speed;
+      // no chart command has selected a motion that needs to be restarted.
+      const speed = Math.fround(bpm / 240);
+      if (speed !== this.sceneValue.stagePsylliumSpeed) this.publish({ stagePsylliumSpeed: speed });
+    }
+    this.previousStageBeatProgress = current;
+  }
+
+  beginGameClearPresentation(bpm: number): void {
     if (this.mvBackground !== null || this.stageOutro !== null) return;
     this.stageOutro = { elapsed: 0, from: this.sceneValue.stageProgress };
-    this.publish({ stagePhase: "leaving" });
+    this.publish({ stagePhase: "leaving", stagePsylliumSpeed: Math.fround(bpm / 240) });
   }
 
   advanceGameClearPresentation(deltaTimeSeconds: number): void {

@@ -15,6 +15,7 @@ export interface StartupDirectionSceneState {
   readonly stageProgress: number;
   readonly stageColorProgress: number;
   readonly stagePsylliumFading: boolean;
+  readonly stagePsylliumSpeed: number;
   readonly characterAlpha: number;
   readonly linePhase: StartupLinePhase;
   readonly lineAlpha: number;
@@ -40,6 +41,9 @@ export function freezeStartupDirectionSceneState(
       throw new TypeError("Startup scene scalar must be an exact finite Float32 unit value.");
     }
   }
+  if (!Number.isFinite(value.stagePsylliumSpeed) || value.stagePsylliumSpeed <= 0) {
+    throw new TypeError("Stage psyllium speed must be finite and positive.");
+  }
   if (!Number.isSafeInteger(value.sequence) || value.sequence < 0) {
     throw new TypeError("Startup scene sequence must be a non-negative safe integer.");
   }
@@ -56,6 +60,7 @@ export const INITIAL_STARTUP_DIRECTION_SCENE_STATE = freezeStartupDirectionScene
   stageProgress: Math.fround(0),
   stageColorProgress: Math.fround(0),
   stagePsylliumFading: false,
+  stagePsylliumSpeed: 1,
   characterAlpha: Math.fround(0),
   linePhase: "hidden",
   lineAlpha: Math.fround(0),

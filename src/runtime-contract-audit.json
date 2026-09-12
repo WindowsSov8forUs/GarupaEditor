@@ -17289,7 +17289,7 @@
     {
       "id": "RCB-0823",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 323,
+      "line": 326,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (businessPlan?.status === \"integrity-failure\") {",
@@ -17310,7 +17310,7 @@
     {
       "id": "RCB-0824",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 333,
+      "line": 336,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particlePlan?.status === \"integrity-failure\") {",
@@ -17331,7 +17331,7 @@
     {
       "id": "RCB-0825",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 341,
+      "line": 344,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioPlan?.status === \"integrity-failure\") {",
@@ -17352,7 +17352,7 @@
     {
       "id": "RCB-0826",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 355,
+      "line": 358,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectStatePlan?.status === \"integrity-failure\") {",
@@ -17373,7 +17373,7 @@
     {
       "id": "RCB-0827",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 373,
+      "line": 376,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderPlan?.status === \"integrity-failure\") {",
@@ -17394,7 +17394,7 @@
     {
       "id": "RCB-0828",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 384,
+      "line": 387,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (productReflect?.status === \"integrity-failure\") {",
@@ -17415,7 +17415,7 @@
     {
       "id": "RCB-0829",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 455,
+      "line": 458,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return this.latchFault(integrityFailure(",
@@ -17436,7 +17436,7 @@
     {
       "id": "RCB-0830",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 464,
+      "line": 467,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectAdvance?.status === \"integrity-failure\") {",
@@ -17457,7 +17457,7 @@
     {
       "id": "RCB-0831",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 470,
+      "line": 473,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particleAdvance?.status === \"integrity-failure\") {",
@@ -17478,7 +17478,7 @@
     {
       "id": "RCB-0832",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 514,
+      "line": 517,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17499,7 +17499,7 @@
     {
       "id": "RCB-0833",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 528,
+      "line": 531,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17520,7 +17520,7 @@
     {
       "id": "RCB-0834",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 540,
+      "line": 543,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17541,7 +17541,7 @@
     {
       "id": "RCB-0835",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 552,
+      "line": 555,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17562,7 +17562,7 @@
     {
       "id": "RCB-0836",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 564,
+      "line": 567,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17583,7 +17583,7 @@
     {
       "id": "RCB-0837",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 571,
+      "line": 574,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (laneEffect?.status === \"integrity-failure\") return this.latchFault(laneEffect);",
@@ -17604,7 +17604,7 @@
     {
       "id": "RCB-0838",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 586,
+      "line": 589,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17625,7 +17625,7 @@
     {
       "id": "RCB-0839",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 594,
+      "line": 597,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17646,7 +17646,7 @@
     {
       "id": "RCB-0840",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 626,
+      "line": 629,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17667,7 +17667,7 @@
     {
       "id": "RCB-0841",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 634,
+      "line": 637,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17688,7 +17688,7 @@
     {
       "id": "RCB-0842",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 657,
+      "line": 660,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (tapLaneEffectDispose?.status === \"integrity-failure\") return tapLaneEffectDispose;",
@@ -17709,7 +17709,7 @@
     {
       "id": "RCB-0843",
       "file": "src/simulator/engine/managers/inGameManager.ts",
-      "line": 753,
+      "line": 756,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (hudAnimation?.status === \"integrity-failure\") {",
@@ -20439,7 +20439,7 @@
     {
       "id": "RCB-0973",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 97,
+      "line": 98,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"startup-direction.initialize-after-dispose\", \"A disposed startup owner cannot be reconstructed.\");",
@@ -20460,7 +20460,7 @@
     {
       "id": "RCB-0974",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 101,
+      "line": 102,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20481,7 +20481,7 @@
     {
       "id": "RCB-0975",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 111,
+      "line": 112,
       "marker": "rejected-call",
       "symbol": "startupAudio",
       "source": "? rejected(",
@@ -20502,7 +20502,7 @@
     {
       "id": "RCB-0976",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 153,
+      "line": 154,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"startup-direction.invalid-step\", \"Startup direction accepts only initialized exact non-negative Float32 engine delta.\");",
@@ -20523,7 +20523,7 @@
     {
       "id": "RCB-0977",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 199,
+      "line": 200,
       "marker": "rejected-call",
       "symbol": "playing",
       "source": "const playing = this.startupAudio?.isLiveStartVoicePlaying() ?? rejected(",
@@ -20544,7 +20544,7 @@
     {
       "id": "RCB-0978",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 227,
+      "line": 228,
       "marker": "rejected-call",
       "symbol": "completed",
       "source": "const completed = this.mvBackground?.stepBeforeSound(deltaTimeSeconds) ?? rejected(",
@@ -20565,7 +20565,7 @@
     {
       "id": "RCB-0979",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 316,
+      "line": 317,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -20586,7 +20586,7 @@
     {
       "id": "RCB-0980",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 377,
+      "line": 389,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audioTransition?.status === \"integrity-failure\") return audioTransition;",
@@ -20607,7 +20607,7 @@
     {
       "id": "RCB-0981",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 412,
+      "line": 424,
       "marker": "rejected-call",
       "symbol": "rejected",
       "source": "function rejected(capability: string, boundary: string) {",
@@ -20628,7 +20628,7 @@
     {
       "id": "RCB-0982",
       "file": "src/simulator/engine/managers/startupDirectionController.ts",
-      "line": 413,
+      "line": 425,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [\"SD03\", \"SD05\", \"SD06\", \"SD07\", \"SD08\", \"SD09\", \"SD11\", \"SD12\", \"SD17\"], boundary);",

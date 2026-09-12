@@ -11,13 +11,20 @@ let program: GlProgram | null = null;
 export class PixiStagePsyllium {
   readonly root = new Container({ label: "StagePsyllium" });
   private readonly animation = new StagePsylliumAnimation();
-  private readonly active = new Uint8Array(profile.positions.length).fill(1);
   private readonly positions = new Float32Array(profile.positions.length * profile.nodes.length * 8);
   private readonly colors = new Float32Array(profile.positions.length * profile.nodes.length * 16);
   private readonly poses = profile.nodes.map(node => ({
     x: node.position[0]!, y: node.position[1]!, cosine: 1, sine: 0,
-    positionIndex: profile.clip.bindings.find(b => b.path === node.path && b.property === "position")!.index,
-    rotationIndex: profile.clip.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
+    indices: {
+      StartIdle: {
+        position: profile.clips.StartIdle.bindings.find(b => b.path === node.path && b.property === "position")!.index,
+        rotation: profile.clips.StartIdle.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
+      },
+      Cheer: {
+        position: profile.clips.Cheer.bindings.find(b => b.path === node.path && b.property === "position")!.index,
+        rotation: profile.clips.Cheer.bindings.find(b => b.path === node.path && b.property === "euler")!.index,
+      },
+    },
   }));
   private readonly mesh;
   private phase: StartupStagePhase = "dark";
@@ -27,7 +34,10 @@ export class PixiStagePsyllium {
     const quads = profile.positions.length * profile.nodes.length;
     const uvs = new Float32Array(quads * 8), indices = new Uint32Array(quads * 6);
     for (let i = 0; i < quads; i++) {
-      uvs.set([0, 0, 1, 0, 1, 1, 0, 1], i * 8);
+      const rect = profile.nodes[Math.floor(i / profile.positions.length)]!.uvRect;
+      const left = rect[0]!, right = left + rect[2]!;
+      const top = 1 - rect[1]! - rect[3]!, bottom = 1 - rect[1]!;
+      uvs.set([left, top, right, top, right, bottom, left, bottom], i * 8);
       indices.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
     }
     const geometry = new MeshGeometry({ positions: this.positions, uvs, indices });
@@ -53,9 +63,10 @@ export class PixiStagePsyllium {
     if (this.animation.advance(deltaSeconds)) this.publish();
   }
 
-  updateStage(phase: StartupStagePhase, progress: number, width: number, height: number): void {
+  updateStage(phase: StartupStagePhase, progress: number, width: number, height: number, speed: number): void {
+    this.animation.speed = speed;
     if (phase === "leaving" && this.phase !== "leaving") {
-      this.active.fill(1);
+      this.animation.beginClear();
       this.transformCompleted = false;
       this.publish();
     }
@@ -70,7 +81,7 @@ export class PixiStagePsyllium {
         const y = profile.nodes[0]!.height;
         const worldX = this.root.x + (source.position[0]! + (pose.x + pose.cosine * x - pose.sine * y) * sx) * this.root.scale.x;
         const worldY = this.root.y - (source.position[1]! + (pose.y + pose.sine * x + pose.cosine * y) * source.scale[1]!) * this.root.scale.y;
-        this.active[i] = worldX >= 0 && worldX < width && worldY > 0 && worldY <= height ? 1 : 0;
+        if (!(worldX >= 0 && worldX < width && worldY > 0 && worldY <= height)) this.animation.hide(i);
       }
       this.transformCompleted = true;
       this.publish();
@@ -86,18 +97,20 @@ export class PixiStagePsyllium {
   }
 
   private publish(): void {
-    this.mesh.visible = this.animation.alpha !== 0;
+    this.mesh.visible = this.animation.hasVisible;
     const values = this.animation.animation.values;
     for (let n = 0; n < profile.nodes.length; n++) {
       const node = profile.nodes[n]!, pose = this.poses[n]!;
-      pose.x = values[pose.positionIndex]!; pose.y = values[pose.positionIndex + 1]!;
-      const angle = values[pose.rotationIndex + 2]! * Math.PI / 180;
+      const indices = pose.indices[this.animation.clipName];
+      pose.x = values[indices.position]!; pose.y = values[indices.position + 1]!;
+      const angle = values[indices.rotation + 2]! * Math.PI / 180;
       pose.cosine = Math.cos(angle); pose.sine = Math.sin(angle);
       const color = n === 0 ? profile.initialColor : profile.coreColor;
-      const r = srgbChannelToLinear(color[0]! * this.animation.colorFactor);
-      const g = srgbChannelToLinear(color[1]! * this.animation.colorFactor);
-      const b = srgbChannelToLinear(color[2]! * this.animation.colorFactor);
       for (let i = 0; i < profile.positions.length; i++) {
+        const factor = this.animation.colorFactors[i]!;
+        const r = srgbChannelToLinear(color[0]! * factor);
+        const g = srgbChannelToLinear(color[1]! * factor);
+        const b = srgbChannelToLinear(color[2]! * factor);
         const source = profile.positions[i]!, quad = n * profile.positions.length + i;
         const sx = source.scale[0]! * (source.mirror ? -1 : 1), sy = source.scale[1]!;
         for (let corner = 0; corner < 4; corner++) {
@@ -107,7 +120,7 @@ export class PixiStagePsyllium {
           this.positions[vertex * 2] = source.position[0]! + (pose.x + pose.cosine * x - pose.sine * y) * sx;
           this.positions[vertex * 2 + 1] = -(source.position[1]! + (pose.y + pose.sine * x + pose.cosine * y) * sy);
           this.colors[vertex * 4] = r; this.colors[vertex * 4 + 1] = g; this.colors[vertex * 4 + 2] = b;
-          this.colors[vertex * 4 + 3] = this.animation.alpha * this.active[i]!;
+          this.colors[vertex * 4 + 3] = this.animation.alphas[i]! * this.animation.active[i]!;
         }
       }
     }

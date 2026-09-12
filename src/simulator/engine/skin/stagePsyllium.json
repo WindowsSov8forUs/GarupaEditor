@@ -819,7 +819,13 @@
       ],
       "width": 64,
       "height": 128,
-      "depth": 1
+      "depth": 1,
+      "uvRect": [
+        0.5,
+        0.0,
+        0.5,
+        1.0
+      ]
     },
     {
       "path": "penlight_core",
@@ -835,7 +841,13 @@
       ],
       "width": 64,
       "height": 128,
-      "depth": 2
+      "depth": 2,
+      "uvRect": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ]
     }
   ],
   "initialColor": [
@@ -852,377 +864,752 @@
   ],
   "fadeFrames": 45,
   "fadeDelay": 1.5,
-  "clip": {
-    "duration": 4.0,
-    "loop": true,
-    "curveCount": 12,
-    "constants": [],
-    "bindings": [
-      {
-        "path": "penlight",
-        "property": "position",
-        "index": 0,
-        "size": 3
-      },
-      {
-        "path": "penlight_core",
-        "property": "position",
-        "index": 3,
-        "size": 3
-      },
-      {
-        "path": "penlight",
-        "property": "euler",
-        "index": 6,
-        "size": 3
-      },
-      {
-        "path": "penlight_core",
-        "property": "euler",
-        "index": 9,
-        "size": 3
-      }
-    ],
-    "frames": [
-      {
-        "time": 0.0,
-        "keys": [
-          {
-            "index": 0,
-            "coefficients": [
-              -7.5,
-              22.5,
-              0.0,
-              -15.0
-            ]
-          },
-          {
-            "index": 1,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 2,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 3,
-            "coefficients": [
-              -7.5,
-              22.5,
-              0.0,
-              -15.0
-            ]
-          },
-          {
-            "index": 4,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 5,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 6,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 7,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 8,
-            "coefficients": [
-              5.0,
-              -15.0,
-              0.0,
-              10.0
-            ]
-          },
-          {
-            "index": 9,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 10,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 11,
-            "coefficients": [
-              5.0,
-              -15.0,
-              0.0,
-              10.0
-            ]
-          }
-        ]
-      },
-      {
-        "time": 2.0,
-        "keys": [
-          {
-            "index": 0,
-            "coefficients": [
-              7.5,
-              -22.5,
-              0.0,
-              15.0
-            ]
-          },
-          {
-            "index": 1,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 2,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 3,
-            "coefficients": [
-              7.5,
-              -22.5,
-              0.0,
-              15.0
-            ]
-          },
-          {
-            "index": 4,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 5,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 6,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 7,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 8,
-            "coefficients": [
-              -5.0,
-              15.0,
-              0.0,
-              -10.0
-            ]
-          },
-          {
-            "index": 9,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 10,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 11,
-            "coefficients": [
-              -5.0,
-              15.0,
-              0.0,
-              -10.0
-            ]
-          }
-        ]
-      },
-      {
-        "time": 4.0,
-        "keys": [
-          {
-            "index": 0,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              -15.0
-            ]
-          },
-          {
-            "index": 1,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 2,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 3,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              -15.0
-            ]
-          },
-          {
-            "index": 4,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              20.0
-            ]
-          },
-          {
-            "index": 5,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 6,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 7,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 8,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              10.0
-            ]
-          },
-          {
-            "index": 9,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 10,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          },
-          {
-            "index": 11,
-            "coefficients": [
-              0.0,
-              0.0,
-              0.0,
-              10.0
-            ]
-          }
-        ]
-      }
-    ]
+  "clips": {
+    "StartIdle": {
+      "duration": 4.0,
+      "loop": true,
+      "curveCount": 12,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "penlight",
+          "property": "position",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "penlight_core",
+          "property": "position",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "penlight",
+          "property": "euler",
+          "index": 6,
+          "size": 3
+        },
+        {
+          "path": "penlight_core",
+          "property": "euler",
+          "index": 9,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -7.5,
+                22.5,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                -7.5,
+                22.5,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                5.0,
+                -15.0,
+                0.0,
+                10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                5.0,
+                -15.0,
+                0.0,
+                10.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                7.5,
+                -22.5,
+                0.0,
+                15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                7.5,
+                -22.5,
+                0.0,
+                15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                -5.0,
+                15.0,
+                0.0,
+                -10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                -5.0,
+                15.0,
+                0.0,
+                -10.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 4.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                10.0
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Cheer": {
+      "duration": 0.3333333432674408,
+      "loop": true,
+      "curveCount": 12,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "penlight",
+          "property": "position",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "penlight_core",
+          "property": "position",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "penlight",
+          "property": "euler",
+          "index": 6,
+          "size": 3
+        },
+        {
+          "path": "penlight_core",
+          "property": "euler",
+          "index": 9,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -12960.0,
+                3240.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                -12960.0,
+                3240.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                8640.0,
+                -2160.0,
+                0.0,
+                10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                8640.0,
+                -2160.0,
+                0.0,
+                10.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.1666666716337204,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                12960.0,
+                -3240.0,
+                0.0,
+                15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                12960.0,
+                -3240.0,
+                0.0,
+                15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                -8640.0,
+                2160.0,
+                0.0,
+                -10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                -8640.0,
+                2160.0,
+                0.0,
+                -10.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3333333432674408,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -15.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                20.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                10.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                10.0
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 }
