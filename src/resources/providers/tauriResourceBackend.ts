@@ -202,5 +202,9 @@ function encodeBase64(bytes: Uint8Array): string {
 
 function decodeBase64(value: string): Uint8Array {
   const binary = atob(value);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }

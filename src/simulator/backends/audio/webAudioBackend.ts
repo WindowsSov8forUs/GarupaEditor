@@ -133,7 +133,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         let buffer: AudioBuffer;
         if (preflight.getDecodedBuffer !== undefined) {
-          const cached = preflight.getDecodedBuffer(bytes);
+          const cached = await preflight.getDecodedBuffer(bytes);
           if (cached.status !== "accepted") {
             candidate.dispose();
             return cached;

@@ -9,7 +9,7 @@ import {
   particleRejected,
   validateSelectedSkinParticlePack,
 } from "../backends/particleValidation";
-import { sha256UpperHex } from "../backends/resources/sha256";
+import { sha256UpperHexAsync } from "../backends/resources/sha256";
 import { getNativeParticlePlayOrdinal, getNativeParticlePlayActive } from "../backends/resources/currentParticlePlayOrder";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { OriginalResourcePackageView } from "../resources/originalResourcePackageView";
@@ -53,7 +53,7 @@ export async function prepareLeasedDefaultParticleProvider(
     if (png.status === "rejected") {
       return rejected("resource-decode", png.failure.capability, png.failure.boundary);
     }
-    if (bytes.value.byteLength !== rawEntry.bytes || sha256UpperHex(bytes.value) !== rawEntry.sha256 ||
+    if (bytes.value.byteLength !== rawEntry.bytes || await sha256UpperHexAsync(bytes.value) !== rawEntry.sha256 ||
       png.value.width !== rawEntry.width || png.value.height !== rawEntry.height) {
       return invalid("simulator.particle.default-texture-identity");
     }

@@ -86,7 +86,9 @@ export function installPixiLinearOutput(
       disposed = true;
       root.filters = null;
       root.filterArea = undefined;
-      filter.destroy(true);
+      // GlProgram.from shares this program with the next mounted generation.
+      // Release this filter's bindings without invalidating that shared program.
+      filter.destroy();
     },
   });
 }

@@ -128,7 +128,7 @@ export interface AudioResourcePreflightAdapter {
   inspect(bytes: Uint8Array): Promise<AudioOperationResult<AudioDecodedResourceMetadata>>;
   getDecodedBuffer?(
     bytes: Uint8Array,
-  ): AudioOperationResult<AudioBuffer>;
+  ): Promise<AudioOperationResult<AudioBuffer>>;
 }
 
 export type AudioCommand =

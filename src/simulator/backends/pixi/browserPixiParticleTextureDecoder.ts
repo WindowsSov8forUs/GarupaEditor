@@ -1,7 +1,7 @@
 import { ImageSource, Texture } from "pixi.js";
 import type { ParticleOperationResult, ParticleResourceAllowlistEntry } from "../particleContracts";
 import { particleAccepted, particleRejected } from "../particleValidation";
-import { sha256UpperHex } from "../resources/sha256";
+import { sha256UpperHexAsync } from "../resources/sha256";
 import type { ParticlePixiTextureDecoder } from "./pixiParticleRendererBackend";
 
 export class BrowserPixiParticleTextureDecoder implements ParticlePixiTextureDecoder {
@@ -11,7 +11,7 @@ export class BrowserPixiParticleTextureDecoder implements ParticlePixiTextureDec
   ): Promise<ParticleOperationResult<Texture>> {
     if (asset.mime !== "image/png" || asset.width === null || asset.height === null ||
       !(bytes instanceof Uint8Array) || bytes.byteLength === 0 || bytes.byteLength !== asset.byteLength ||
-      sha256UpperHex(bytes) !== asset.sha256) {
+      await sha256UpperHexAsync(bytes) !== asset.sha256) {
       return reject(
         "particle.pixi.browser-invalid-decode-input",
         "Browser particle decode accepts only one source-bound PNG identity whose owned bytes match the independent application-snapshot length and SHA-256.",

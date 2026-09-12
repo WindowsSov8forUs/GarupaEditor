@@ -5,7 +5,7 @@ import type {
   ParticleResourceProvider,
 } from "../particleContracts";
 import { particleAccepted, particleRejected } from "../particleValidation";
-import { sha256UpperHex } from "./sha256";
+import { sha256UpperHexAsync } from "./sha256";
 
 export interface LocalParticleResource {
   readonly logicalAssetId: string;
@@ -53,7 +53,7 @@ export class PortableParticleResourcePreflightAdapter implements ParticleResourc
   async sha256(bytes: Uint8Array): Promise<ParticleOperationResult<string>> {
     return !(bytes instanceof Uint8Array) || bytes.byteLength === 0
       ? reject("particle.resources.invalid-hash-input", "SHA-256 accepts only non-empty particle bytes.")
-      : particleAccepted(sha256UpperHex(bytes));
+      : particleAccepted(await sha256UpperHexAsync(bytes));
   }
 
   async inspectPng(bytes: Uint8Array): Promise<ParticleOperationResult<ParticleDecodedResourceMetadata>> {

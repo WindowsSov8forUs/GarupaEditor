@@ -10,7 +10,7 @@ import {
   buildGameClearParticleBundle,
   type GameClearRuntimeProfile,
 } from "../backends/resources/currentGameClearProfile";
-import { sha256UpperHex } from "../backends/resources/sha256";
+import { sha256UpperHexAsync } from "../backends/resources/sha256";
 import type { SimulatorResourceLease } from "../platform/resourceContracts";
 import { OriginalResourcePackageView } from "../resources/originalResourcePackageView";
 import { rejected, type SimulatorAssemblyResult } from "./result";
@@ -69,7 +69,7 @@ export async function prepareGameClearParticleProvider(
     const logicalAssetId = `particle-texture:game-clear:${texture.name}`;
     if (
       pngBytes.has(logicalAssetId) || inspected.value.bytes.byteLength !== source.png_bytes ||
-      sha256UpperHex(inspected.value.bytes) !== source.png_sha256 ||
+      await sha256UpperHexAsync(inspected.value.bytes) !== source.png_sha256 ||
       inspected.value.width !== source.width || inspected.value.height !== source.height ||
       texture.rgbaSha256 !== source.rgba_sha256 ||
       texture.rgbaBytes !== source.width * source.height * 4

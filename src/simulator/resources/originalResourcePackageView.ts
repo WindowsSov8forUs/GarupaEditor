@@ -13,6 +13,13 @@ const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const REVISION_PATTERN = /^[A-Za-z0-9._:/-]{1,512}$/;
 
 export class OriginalResourcePackageView {
+  // A lease pins immutable snapshot bytes. Share only validated package input;
+  // render/audio owners remain per generation and callers receive byte copies.
+  private static readonly openedByLease = new WeakMap<
+    SimulatorResourceLease,
+    Map<string, Promise<SimulatorResourceResult<OriginalResourcePackageView>>>
+  >();
+
   private constructor(
     readonly logicalResource: string,
     readonly revision: string,
@@ -31,6 +38,32 @@ export class OriginalResourcePackageView {
     }
     const files = lease.listFiles(logicalResource);
     if (files.length === 0) return reject("empty", `Logical resource ${logicalResource} has no leased files.`);
+    let opened = this.openedByLease.get(lease);
+    if (opened === undefined) {
+      opened = new Map();
+      this.openedByLease.set(lease, opened);
+    }
+    const key = `${logicalResource}\0${revision}`;
+    const cached = opened.get(key);
+    if (cached !== undefined) return cached;
+    const pending = this.read(lease, logicalResource, revision, files);
+    opened.set(key, pending);
+    try {
+      const result = await pending;
+      if (result.status === "rejected") opened.delete(key);
+      return result;
+    } catch (error) {
+      opened.delete(key);
+      throw error;
+    }
+  }
+
+  private static async read(
+    lease: SimulatorResourceLease,
+    logicalResource: string,
+    revision: string,
+    files: readonly SimulatorResourceFile[],
+  ): Promise<SimulatorResourceResult<OriginalResourcePackageView>> {
     const bytesByPath = new Map<string, Uint8Array>();
     const pathByBasename = new Map<string, string>();
     const foldedPaths = new Set<string>();

@@ -2,7 +2,7 @@ import type {
   AudioResourcePreflightAdapter,
   AudioSessionBgmResourceProfile,
 } from "../backends/audioContracts";
-import { sha256UpperHex } from "../backends/resources/sha256";
+import { sha256UpperHexAsync } from "../backends/resources/sha256";
 import {
   rejected,
   type SimulatorAssemblyResult,
@@ -79,7 +79,7 @@ export async function deriveSessionBgmResource(
     );
   }
 
-  const sha256 = sha256UpperHex(bytes);
+  const sha256 = await sha256UpperHexAsync(bytes);
   const cue = `session_bgm_${sha256}`;
   const profile: AudioSessionBgmResourceProfile = Object.freeze({
     role: "bgm",

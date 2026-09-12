@@ -4,7 +4,7 @@ import type {
   AudioResourcePreflightAdapter,
 } from "../audioContracts";
 import { audioAccepted, audioRejected } from "../audioValidation";
-import { sha256UpperHex } from "../resources/sha256";
+import { sha256UpperHexAsync } from "../resources/sha256";
 
 interface CachedBrowserDecode {
   readonly buffer: AudioBuffer;
@@ -25,7 +25,7 @@ export class BrowserAudioResourcePreflightAdapter
         "Audio SHA-256 accepts only one non-empty owned byte sequence.",
       );
     }
-    return audioAccepted(sha256UpperHex(bytes));
+    return audioAccepted(await sha256UpperHexAsync(bytes));
   }
 
   async inspect(
@@ -46,7 +46,7 @@ export class BrowserAudioResourcePreflightAdapter
         "Audio inspection requires the autonomous module's existing running AudioContext and never resumes or recreates it.",
       );
     }
-    const digest = sha256UpperHex(bytes);
+    const digest = await sha256UpperHexAsync(bytes);
     const cached = this.decodedBySha256.get(digest);
     if (cached !== undefined) return audioAccepted(cached.metadata);
     try {
@@ -99,7 +99,7 @@ export class BrowserAudioResourcePreflightAdapter
     }
   }
 
-  getDecodedBuffer(bytes: Uint8Array): AudioOperationResult<AudioBuffer> {
+  async getDecodedBuffer(bytes: Uint8Array): Promise<AudioOperationResult<AudioBuffer>> {
     if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0) {
       return audioRejected(
         "audio-resource-decode",
@@ -107,7 +107,7 @@ export class BrowserAudioResourcePreflightAdapter
         "Decoded-buffer reuse accepts only the exact non-empty byte sequence previously inspected.",
       );
     }
-    const cached = this.decodedBySha256.get(sha256UpperHex(bytes));
+    const cached = this.decodedBySha256.get(await sha256UpperHexAsync(bytes));
     return cached === undefined
       ? audioRejected(
           "audio-resource-decode",
