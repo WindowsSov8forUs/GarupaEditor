@@ -155,6 +155,7 @@ export class StartupDirectionController {
       const movie = this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
       if (movie.status !== "ok") return movie;
     }
+    this.scene?.advanceStageEffects(deltaTimeSeconds);
     this.advanceParallelOwners(deltaTimeSeconds);
     switch (this.phaseValue) {
       case "first-view": {
@@ -319,7 +320,10 @@ export class StartupDirectionController {
   }
 
   advancePlayablePresentation(deltaTimeSeconds: number): void {
-    if (this.phaseValue === "playing-sound") this.advanceParallelOwners(deltaTimeSeconds);
+    if (this.phaseValue === "playing-sound") {
+      this.scene?.advanceStageEffects(deltaTimeSeconds);
+      this.advanceParallelOwners(deltaTimeSeconds);
+    }
   }
 
   beginGameClearPresentation(): void {
@@ -330,6 +334,7 @@ export class StartupDirectionController {
 
   advanceGameClearPresentation(deltaTimeSeconds: number): void {
     if (this.stageOutro === null) return;
+    this.scene?.advanceStageEffects(deltaTimeSeconds);
     // StandardBackgroundModule.OnGameClear -> Stage.outroAnimation uses the
     // shared TRS tween: current pose -> authored start, 4 seconds, OutQuad.
     // Standard WaitForFinish does not wait for this tween before scene exit.

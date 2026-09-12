@@ -1409,6 +1409,27 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "stage-light.png",
+        "profile": {
+          "logicalAssetId": "stage/bottom-light",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 128,
+          "height": 128,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "add"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [

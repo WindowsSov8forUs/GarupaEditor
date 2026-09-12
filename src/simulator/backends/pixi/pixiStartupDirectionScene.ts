@@ -16,6 +16,7 @@ import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiTextureDecoder } from "./pixiRendererBackend";
 import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 import { linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
+import { PixiStageLights } from "./pixiStageLights";
 
 export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
@@ -32,6 +33,7 @@ export interface PixiStartupDirectionCommonResources {
   readonly titleBase: Texture;
   readonly difficultyBackground: PixiStartupSlicedImage;
   readonly lineStar: Texture;
+  readonly stageLight: Texture;
   readonly jacketFrame: PixiStartupSlicedImage;
   readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", PixiStartupSlicedImage>>;
   readonly fullLiveLabel: Texture;
@@ -60,6 +62,7 @@ export async function createPixiStartupDirectionScene(
   isFullLength: boolean,
   surfaceLayout: OriginalSurfaceLayout,
   includeStandardStage = true,
+  includeStageEffects = true,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
   if (presentation.sdCharacters.length !== 0) {
     return integrityFailure(
@@ -103,6 +106,7 @@ export async function createPixiStartupDirectionScene(
       isFullLength,
       surfaceLayout,
       includeStandardStage,
+      includeStageEffects,
     ));
   } catch {
     for (const texture of prepared) texture.destroy(true);
@@ -120,6 +124,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly information = new Container({ label: "StartupInformation", sortableChildren: false });
   private readonly darkCover: Graphics;
   private readonly stageBackdrop: Sprite | null;
+  private readonly stageLights: PixiStageLights | null;
   private stageProgress = 0;
   private readonly characters: readonly Sprite[];
   private disposed = false;
@@ -131,6 +136,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     isFullLength: boolean,
     private readonly surfaceLayout: OriginalSurfaceLayout,
     includeStandardStage: boolean,
+    includeStageEffects: boolean,
   ) {
     this.backgroundRoot.sortableChildren = false;
     this.foregroundRoot.sortableChildren = false;
@@ -207,6 +213,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.information.addChild(full);
     }
     this.foregroundRoot.addChild(this.information);
+    this.stageLights = includeStandardStage && includeStageEffects ? new PixiStageLights(common.stageLight) : null;
+    if (this.stageLights !== null) this.backgroundRoot.addChild(this.stageLights.root);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
       hudAlpha: 0, darkCoverAlpha: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0,
@@ -238,6 +246,13 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.stageBackdrop.tint = [brightness, brightness, brightness];
       this.stageBackdrop.visible = state.stagePhase === "introducing" || state.stagePhase === "idle" ||
         state.stagePhase === "leaving";
+      if (this.stageLights !== null) {
+        this.stageLights.root.position.set(layout.surface.viewportWidth / 2,
+          layout.surface.viewportHeight / 2 -
+            (14 * highAspect * layout.ui.pixelsPerAuthoredUnit + trsY * rootScale));
+        this.stageLights.root.scale.set(trsScale * rootScale);
+        this.stageLights.root.visible = this.stageBackdrop.visible;
+      }
     }
     for (const character of this.characters) character.alpha = state.characterAlpha;
   }
@@ -253,6 +268,11 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       characterAlpha: this.characters[0]?.alpha ?? 0,
       dynamicTextureCount: this.dynamicTextures.length,
     });
+  }
+
+  advanceStageEffects(deltaSeconds: number): void {
+    if (this.disposed) throw new Error("startup scene disposed");
+    this.stageLights?.advance(deltaSeconds);
   }
 
   dispose(): void {

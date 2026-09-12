@@ -22,6 +22,7 @@ import defaultParticleDirectionalDefaultUrl from "../../assets/game/portable/pro
 import defaultParticleDirectionalSet1Url from "../../assets/game/portable/profiles/default-particle/particle-portable-textures/directional/directional-tex_parSet_1.png?url&no-inline";
 import startupLineStarUrl from "../../assets/game/prefabs/bms/information/startup-line-star.png?url&no-inline";
 import startupTitleBaseUrl from "../../assets/game/prefabs/bms/information/startup-title-base.png?url&no-inline";
+import stageLightUrl from "../../assets/game/prefabs/bms/stage/stage-light.png?url&no-inline";
 import countdown1Url from "../../assets/game/prefabs/bms/pause/countdown-1.png?url&no-inline";
 import countdown2Url from "../../assets/game/prefabs/bms/pause/countdown-2.png?url&no-inline";
 import countdown3Url from "../../assets/game/prefabs/bms/pause/countdown-3.png?url&no-inline";
@@ -139,6 +140,9 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   resource("prefabs/bms/information", "Startup information resources", "image", [
     file("game/prefabs/bms/information/startup-line-star.png", "startup-line-star.png", "image/png", startupLineStarUrl),
     file("game/prefabs/bms/information/startup-title-base.png", "startup-title-base.png", "image/png", startupTitleBaseUrl),
+  ]),
+  resource("prefabs/bms/stage", "Ordinary stage resources", "image", [
+    file("game/prefabs/bms/stage/stage-light.png", "stage-light.png", "image/png", stageLightUrl),
   ]),
   resource("prefabs/bms/pause", "In-game Pause countdown resources", "package", [
     file("game/prefabs/bms/pause/countdown-1.png", "countdown-1.png", "image/png", countdown1Url),

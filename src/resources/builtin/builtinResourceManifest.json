@@ -402,6 +402,11 @@
       "sha256": "C487F13EF46209ACF101A15A92C057679F9AB1D06986CBFCC60D2FA1A1E029F8"
     },
     {
+      "path": "game/prefabs/bms/stage/stage-light.png",
+      "byteLength": 4379,
+      "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE"
+    },
+    {
       "path": "game/sound/common-se/decide_1.mp3",
       "byteLength": 17690,
       "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"

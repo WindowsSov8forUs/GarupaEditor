@@ -1279,3 +1279,11 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 入场音频遵守Gaya淡出→PlayingNone→后续更新的判定调整门槛→prepared BGM恢复→PlayingSound；Stage和轨道并行演出不额外阻塞音乐。Gaya在音乐门槛开始1.5秒淡出，不等待循环音源自然结束。普通无语音/MV额外等待时，Play后的串行阶段名义合计4.9秒，另有帧边界；封面首次显示至音乐还包含资源准备等待，不能称为固定5秒。原作已发布Practice记录中，首屏淡入完成至Play间隔1.721秒，Play至PlayingSound间隔4.956秒；这是该次运行的观察值，不作为产品延时常量。语音/MV/判定调整仍按各自分支处理。
 
 切入PlayingSound的同帧继续消费输入和更新音符。依据已发布`simulator-original-live-settings-runtime-contract-10-1-4`的`updatePlayState`，0x32F8DA8调用updatePlayingSound后会继续到0x32F8E20的NoteManager.ExecUpdate。生产在该交接帧补齐已由入场路由排除游戏触点的空输入帧，继续正常音符/计分/结束条件处理；Stage和MV不因交接重复推进。当前编辑器使用的Primary判定调整为0；既有非零调整门槛仍单独处理，不由本项声明扩展为所有设置逐帧等价。
+
+### 普通舞台底灯
+
+来源为已验证并推送的 Reverse `1f0111f6f52e80d55eec666e214235890647a481` 中 `simulator-standard-stage-lights-10-1-4`。普通 Live 恢复 12 组彩光/白光，共 24 个对象；练习模式与 MV 不启用。`stageLightLayout.json` 与 `stage-light.png` 字节复制自该证据的 portable 输出，贴图通过 Application Snapshot/Lease 与内置资源清单提供。SD 角色仍排除；这项不构成音箱、荧光棒或整个舞台完成声明。
+
+`StageLightAnimation` 实现原作每灯 7 项蓝色表、初始化随机选一个浅蓝位置、起始延迟、逐项线性渐变与循环。每次渐变完成后时间归零，不跨项传递超时；暂停不重启颜色表，重试随新舞台重新初始化。`PixiStageLights` 消费原布局、颜色与原始 Tex_miniShine，复用 SrcAlpha/One 的 RGB/Alpha 加法混合，不额外放大亮度；随现有 Stage/TRSRoot 入场和退场变换。每帧只更新已创建 Sprite 的颜色，未加入采样历史、额外贴图解码或逐帧对象构造。标准数学、颜色转换和宿主随机数属于平台适配。
+
+验证包括原作方法绑定、指令字节、完整对象读写回环、portable 再生成、生产消费链源级核对、TypeScript 与生产构建/资源字节检查；未新增测试或进行视觉验收。

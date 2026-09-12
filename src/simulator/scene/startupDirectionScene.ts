@@ -21,6 +21,7 @@ export interface StartupDirectionSceneState {
 
 export interface StartupDirectionSceneBackend {
   publish(state: StartupDirectionSceneState): void;
+  advanceStageEffects(deltaSeconds: number): void;
   dispose(): void;
 }
 

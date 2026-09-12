@@ -538,6 +538,14 @@
       "sourceReverseCommit": "1b1957dcaddb224cf19c9531637a6044cdb6cdeb",
       "sourcePath": "artifacts/investigations/in-game-pause-ui-runtime-contract-10-1-4/portable-assets/decide_1.mp3",
       "sourceRelation": "byte-identical"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-light.png",
+      "byteLength": 4379,
+      "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE",
+      "sourceReverseCommit": "1f0111f6f52e80d55eec666e214235890647a481",
+      "sourcePath": "artifacts/investigations/simulator-standard-stage-lights-10-1-4/portable/stage-light.png",
+      "sourceRelation": "byte-identical"
     }
   ],
   "sourceRepository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse",

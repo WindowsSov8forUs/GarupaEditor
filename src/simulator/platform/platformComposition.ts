@@ -333,6 +333,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               const created = await createPixiStartupDirectionScene(
                 effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
                 recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
+                score.value.mode.sessionMode === "live",
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
