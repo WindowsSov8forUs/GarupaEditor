@@ -3744,7 +3744,7 @@
     {
       "id": "RCB-0178",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 271,
+      "line": 273,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (!this.stopped) return rejected(\"launch-failed\", \"simulator.browser.scheduler-already-started\", \"Browser scheduler can start only once per autonomous runtime.\");",
@@ -3765,7 +3765,7 @@
     {
       "id": "RCB-0179",
       "file": "src/app/simulator/browserSimulatorPlatform.ts",
-      "line": 347,
+      "line": 360,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"launch-failed\", \"simulator.browser.input-disposed\", \"Disposed browser input cannot publish empty fallback frames.\");",

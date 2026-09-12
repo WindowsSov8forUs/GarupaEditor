@@ -256,6 +256,7 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
   private stopped = true;
   private sequence = 0;
   private previousTimestamp: number | null = null;
+  private nextFrameTimestamp: number | null = null;
   private generation = 0;
 
   constructor(private readonly render: () => void, private readonly onPresentationReady: () => void) {}
@@ -264,7 +265,8 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
   resetClock(): void {
     // Resource preparation belongs to the generation handoff, not to the
     // first frame of the newly mounted Retry/MoveTime scene.
-    this.previousTimestamp = null;
+    this.previousTimestamp = performance.now();
+    this.nextFrameTimestamp = this.previousTimestamp + 1000 / this.target;
   }
 
   start(consumer: (tick: { sequence: number; deltaTimeSeconds: number }) => Promise<void>): SimulatorAssemblyResult<SimulatorFrameSubscription> {
@@ -272,9 +274,20 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
     this.stopped = false;
     this.sequence = 0;
     this.previousTimestamp = null;
+    this.nextFrameTimestamp = null;
     const generation = ++this.generation;
     const tick = (timestamp: number) => {
       if (this.stopped || generation !== this.generation) return;
+      if (this.nextFrameTimestamp !== null && timestamp < this.nextFrameTimestamp) {
+        this.frameId = requestAnimationFrame(tick);
+        return;
+      }
+      const interval = 1000 / this.target;
+      const deadline = this.nextFrameTimestamp ?? timestamp;
+      // Keep the requested cadence on high-refresh displays. Missed deadlines
+      // are skipped; they never create extra gameplay/animation updates.
+      this.nextFrameTimestamp = deadline +
+        (Math.floor(Math.max(0, timestamp - deadline) / interval) + 1) * interval;
       // Prepare the engine's initial frame at t=0. Its CPU/GPU setup cost
       // must not consume the opening phase before the host presents that frame.
       const preparing = this.sequence === 0;
@@ -287,8 +300,8 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
         if (!this.stopped && generation === this.generation) {
           this.render();
           if (preparing) {
-            this.previousTimestamp = null;
             this.onPresentationReady();
+            this.resetClock();
           }
         }
       }).finally(() => {

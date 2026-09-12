@@ -142,6 +142,8 @@ The transactional render owner now carries the phase, phase time, accumulated X 
 
 Source-branch review and direct execution at zero, 0.1, 0.2 and exact Float32 0.14-second deltas agree on phase resets, increments, raw alpha and completion. At 0.1-second cadence the active resumes produce X offsets 8,16,17,18,19,20 before completion, rather than selecting later phases from global elapsed time. TypeScript compilation verifies the command handoff. This closes the AddScore phase rule; it is not a device cadence or raster equivalence claim.
 
+The host applies the requested 60/120 FPS cadence before dispatching an outer update. RAF callbacks before the next deadline do not advance the engine; missed deadlines do not synthesize catch-up updates. Accepted updates retain actual elapsed time, and startup/Retry mount restarts the clock after presentation work. AddScore retains its native per-resume +8/+1/+1 motion rather than converting it to a guessed fixed-distance clip. The requested rate is a scheduling ceiling, not a guarantee that an overloaded host reaches it.
+
 ## Flash additive destination alpha
 
 Long/Slide Flash uses the source `Mobile/Particles/Additive` pass: both RGB and
