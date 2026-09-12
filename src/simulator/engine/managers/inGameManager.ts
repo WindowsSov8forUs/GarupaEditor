@@ -246,22 +246,31 @@ export class InGameManager {
       );
     }
     if (this.currentGameStateValue === GameState.GameOverMotionFirstStart) return ok(undefined);
+    let enteredPlayingSound = false;
     if (this.startupDirection !== null && !this.startupDirection.snapshot().playable) {
       const startup = this.startupDirection.step(deltaTimeSeconds);
       if (startup.status !== "ok") return this.latchFault(startup);
       this.currentGameStateValue = this.startupDirection.snapshot().currentGameState;
-      return ok(undefined);
+      if (!this.startupDirection.snapshot().playable) return ok(undefined);
+      enteredPlayingSound = true;
     }
-    this.startupDirection?.advancePlayablePresentation(deltaTimeSeconds);
+    if (!enteredPlayingSound) this.startupDirection?.advancePlayablePresentation(deltaTimeSeconds);
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.advancePausedPresentation(deltaTimeSeconds);
     }
     if (this.currentGameStateValue !== GameState.PauseSound) {
-      const movieUpdate = this.advanceMovie(deltaTimeSeconds);
+      const movieUpdate = enteredPlayingSound ? ok(undefined) : this.advanceMovie(deltaTimeSeconds);
       if (movieUpdate.status !== "ok") return movieUpdate;
       const primaryGate = this.primaryJudgementAdjustment?.consumeGameplayGate() ?? ok(false);
       if (primaryGate.status !== "ok") return this.latchFault(primaryGate);
       if (primaryGate.value) return this.commitParticleAdvance(deltaTimeSeconds, true);
+    }
+    if (enteredPlayingSound) {
+      // The opening input router has consumed UI input and rejected gameplay
+      // touches. Stage that empty frame before continuing the native same-update
+      // updatePlayingSound -> InputManager -> NoteManager chain.
+      const input = this.inputManager.prepareOuterFrame({ touches: [] }, deltaTimeSeconds);
+      if (input.status !== "ok") return this.latchFault(input);
     }
     const inputResult = this.inputManager.execInput(this.currentGameStateValue);
     if (inputResult.status !== "ok") {

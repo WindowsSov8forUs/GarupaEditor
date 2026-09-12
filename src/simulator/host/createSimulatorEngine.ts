@@ -166,7 +166,10 @@ class SimulatorEngineHost implements SimulatorEngine {
           "Manual touches cannot enter the input owner before PlayingSound.",
         );
       }
-      return this.inGameDirector.update(deltaTimeSeconds);
+      const updated = this.inGameDirector.update(deltaTimeSeconds);
+      if (updated.status !== "ok") return updated;
+      return this.inGameManager.getPlaybackState().playable
+        ? this.transitionGameEndState(deltaTimeSeconds) : updated;
     }
     if (beforeUpdate.gameplayBlocked) {
       // Original slow-counter branch returns before time/input/Note updates.
