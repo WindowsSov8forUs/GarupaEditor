@@ -9,6 +9,7 @@ export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstructio
 export type StartupAudioOwnerPhase =
   | "created"
   | "opening"
+  | "waiting-music"
   | "playing"
   | "faulted"
   | "disposed";
@@ -158,14 +159,29 @@ export class StartupAudioOwner {
     return ok(undefined);
   }
 
-  preflightEnterPlaying(): SimulatorResult<StartupAudioTransition> {
+  beginMusicWait(): SimulatorResult<void> {
     if (this.phaseValue !== "opening") {
+      return rejected("startup-audio.fade-outside-opening", "The startup Gaya fade begins once before PlayingNone.");
+    }
+    if (this.gayaRequired) {
+      const fade = this.producer.preflightFadeStartupGaya("startup:gaya");
+      if (fade.status !== "ok") return fade;
+      const committed = fade.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    this.timeline.push(this.gayaRequired ? "gaya.fade-stop-at-zero" : "gaya.fade-null-safe");
+    this.phaseValue = "waiting-music";
+    return ok(undefined);
+  }
+
+  preflightEnterPlaying(): SimulatorResult<StartupAudioTransition> {
+    if (this.phaseValue !== "waiting-music") {
       return rejected(
         "startup-audio.enter-playing-outside-opening",
-        `Playing publication requires one prepared opening owner, not ${this.phaseValue}.`,
+        `Playing publication requires one prepared music-wait owner, not ${this.phaseValue}.`,
       );
     }
-    const planned = this.producer.preflightEnterStartupPlaying(this.gayaRequired);
+    const planned = this.producer.preflightPlayPreparedStartupBgm();
     if (planned.status !== "ok") {
       this.phaseValue = "faulted";
       return planned;
@@ -173,9 +189,6 @@ export class StartupAudioOwner {
     return ok(new StartupAudioTransition(
       planned.value,
       () => {
-        this.timeline.push(this.gayaRequired
-          ? "gaya.fade-stop-at-zero"
-          : "gaya.fade-null-safe");
         this.timeline.push("bgm.resume");
         this.phaseValue = "playing";
       },

@@ -71,7 +71,8 @@ InGameMusicVideoState = None(0) / WaitingPlay(1) /
 state 17
 → movie Playing(3) / Play
 → Float32(delayMilliseconds / 1000) pre-sound wait
-→ PlayingNone(4) / BGM resume
+→ PlayingNone(4)
+→ 下一次更新通过判定调整门槛 / BGM resume
 → PlayingSound(5) / gameplay
 ```
 
@@ -83,7 +84,8 @@ state 17
 
 ```text
 state 17 / pre-sound returns without Play
-→ PlayingNone(4) / BGM resume / movie WaitingPlay(1)
+→ PlayingNone(4)
+→ 下一次更新通过判定调整门槛 / BGM resume / movie WaitingPlay(1)
 → PlayingSound(5) / gameplay already enabled
 → Float32 timer += Float32(delta), state 2 freezes timer
 → timer >= Float32(abs(delayMilliseconds) / 1000)
@@ -140,3 +142,5 @@ star3DLiveView: "excluded";
 ```
 
 `closed-portable`只声明上述browser语义、serialized movie-widget多比例映射及owner lifecycle，不升级original codec/device exact。播放期间物理窗口变化按[adaptive合同](adaptive-layout-contract.md#surface-revision-disposition)拟合现有画布，保持MV/BGM与结算状态，不重建或重新播放媒体。
+
+共同音乐入口服从原作`startup-audio-callgraph-10-1-4`：Gaya淡出与PlayingNone发布在前，下一次updatePlayingSound中的判定调整协程恢复prepared BGM，再进入PlayingSound。MV的after-sound计时从BGM实际恢复后开始，不从预检或PlayingNone首次发布时提前计时。

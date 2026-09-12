@@ -228,10 +228,14 @@ export class StartupDirectionController {
         }
         break;
       }
-      case "playing-none":
+      case "playing-none": {
+        const started = this.startPreparedMusic();
+        if (started.status !== "ok") return started;
+        if (!started.value) break;
         this.enter("playing-sound", GameState.PlayingSound);
         this.publish({ gameplayVisible: true, rehearsalControlsVisible: this.mode.sessionMode === "rehearsal" });
         break;
+      }
       case "playing-sound":
         break;
     }
@@ -343,24 +347,26 @@ export class StartupDirectionController {
   }
 
   private enterPlayingNone(): SimulatorResult<void> {
+    const fade = this.startupAudio?.beginMusicWait() ?? ok(undefined);
+    if (fade.status !== "ok") return fade;
+    this.enter("playing-none", GameState.PlayingNone);
+    return ok(undefined);
+  }
+
+  private startPreparedMusic(): SimulatorResult<boolean> {
     const primaryGate = this.primaryJudgementAdjustment?.preflightMusicStart() ?? ok(true);
     if (primaryGate.status !== "ok") return primaryGate;
-    if (!primaryGate.value) return ok(undefined);
+    if (!primaryGate.value) return ok(false);
     const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
     if (audioTransition?.status === "integrity-failure") return audioTransition;
-    if (this.mvBackground !== null) {
-      const afterSound = this.mvBackground.startAfterSound();
-      if (afterSound.status !== "ok") {
-        if (audioTransition?.status === "ok") audioTransition.value.discard();
-        return afterSound;
-      }
-    }
-    this.enter("playing-none", GameState.PlayingNone);
     const committed = audioTransition?.status === "ok"
       ? audioTransition.value.commit()
       : ok(undefined);
     if (committed.status !== "ok") return committed;
-    return this.primaryJudgementAdjustment?.commitMusicStarted() ?? committed;
+    const afterSound = this.mvBackground?.startAfterSound() ?? ok(undefined);
+    if (afterSound.status !== "ok") return afterSound;
+    const primary = this.primaryJudgementAdjustment?.commitMusicStarted() ?? committed;
+    return primary.status === "ok" ? ok(true) : primary;
   }
 
   private enter(phase: StartupDirectionPhase, state: GameStateValue): void {

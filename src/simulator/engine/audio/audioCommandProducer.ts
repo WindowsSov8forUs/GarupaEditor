@@ -277,19 +277,6 @@ export class AudioCommandProducer {
     return this.preflightCommands([{ kind: "bgm.resume" }]);
   }
 
-  preflightEnterStartupPlaying(includeGayaFade: boolean): SimulatorResult<AudioOwnerTransaction> {
-    const commands: AudioCommand[] = [];
-    if (includeGayaFade) commands.push({
-      kind: "se.fade-owned-loop",
-      owner_key: "startup:gaya",
-      target_bits: "0x00000000",
-      duration_bits: "0x3FC00000",
-      stop_at_zero: true,
-    });
-    commands.push({ kind: "bgm.resume" });
-    return this.preflightCommands(commands);
-  }
-
   preflightStartStartupGaya(ownerKey: string): SimulatorResult<AudioOwnerTransaction> {
     return this.preflightCommands([{
       kind: "se.start-owned-loop",
