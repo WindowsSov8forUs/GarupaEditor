@@ -30,8 +30,6 @@ async function bootstrap(onLoadingReady?: (manager: ApplicationResourceManager) 
     backend,
     new BrowserResourceObjectUrlFactory(),
   );
-  const initialized = await manager.initialize();
-  if (initialized.status === "rejected") return initialized;
   const provider = manager.registerCatalogProvider(new BestdoriApplicationResourceProvider());
   if (provider.status === "rejected") return provider;
   const builtins = await registerApplicationBuiltinResources(manager);
@@ -39,7 +37,11 @@ async function bootstrap(onLoadingReady?: (manager: ApplicationResourceManager) 
   const builtinUrls = manager.prepareBuiltinDocumentUrls(listApplicationBuiltinResourceSlots());
   if (builtinUrls.status === "rejected") return builtinUrls;
   installBuiltinDocumentResources(manager);
+  // Fixed loading assets use build URLs and need no persistent resource store.
+  // Show that screen before restoring the store in this new WebView.
   await onLoadingReady?.(manager);
+  const initialized = await manager.initialize();
+  if (initialized.status === "rejected") return initialized;
   const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);
   if (simulatorBuiltins.status === "rejected") return simulatorBuiltins;
 

@@ -149,7 +149,7 @@ import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/best
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
-import { buildSimulatorLaunchDescriptor } from "./simulator/buildSimulatorLaunchDescriptor";
+import { buildSimulatorLaunchDescriptor, createSimulatorLaunchRequestId } from "./simulator/buildSimulatorLaunchDescriptor";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS } from "./simulator/preAdaptationContract";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
@@ -5770,33 +5770,93 @@ function ChartEditorController() {
     let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
     let pendingLease: ResourceConsumerLease | null = null;
+    let activeRequestId: string | null = null;
+    let simulatorWindow: WebviewWindow | null = null;
+    let abandoned = false;
+    let readyLabel: string | null = null;
+    let descriptor: Awaited<ReturnType<typeof buildSimulatorLaunchDescriptor>>["descriptor"] | null = null;
+    let published = false;
     const clearReadySubscription = () => {
-      if (readyUnlisten) {
-        void readyUnlisten();
-        readyUnlisten = null;
-      }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        timeoutId = null;
-      }
+      if (readyUnlisten) { void readyUnlisten(); readyUnlisten = null; }
+      if (timeoutId !== null) { window.clearTimeout(timeoutId); timeoutId = null; }
     };
     const clearClosedSubscription = () => {
-      if (closedUnlisten) {
-        void closedUnlisten();
-        closedUnlisten = null;
-      }
+      if (closedUnlisten) { void closedUnlisten(); closedUnlisten = null; }
     };
-    const releaseHandoff = (requestId: string) => {
-      const lease = simulatorHandoffLeasesRef.current.get(requestId);
+    const releaseHandoff = () => {
+      if (activeRequestId === null) return;
+      const lease = simulatorHandoffLeasesRef.current.get(activeRequestId);
       if (lease === undefined) return;
-      simulatorHandoffLeasesRef.current.delete(requestId);
+      simulatorHandoffLeasesRef.current.delete(activeRequestId);
       void lease.release();
+    };
+    const abandon = () => {
+      abandoned = true;
+      clearReadySubscription();
+      clearClosedSubscription();
+      releaseHandoff();
+    };
+    const fail = (error: unknown) => {
+      if (abandoned) return;
+      abandon();
+      const message = error instanceof Error ? error.message : String(error);
+      setStatusMessage(`播放器窗口启动失败：${message}`);
+      if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
+        setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
+      });
+    };
+    const publishDescriptor = async () => {
+      if (abandoned || published || readyLabel === null || descriptor === null) return;
+      published = true;
+      await emitTo(readyLabel, SIMULATOR_WINDOW_PAYLOAD_EVENT, { requestId: activeRequestId, descriptor });
+      if (!abandoned) setStatusMessage("播放器参数与资源快照已同步。");
     };
 
     try {
+      const requestId = createSimulatorLaunchRequestId();
+      activeRequestId = requestId;
       const playbackPreset = WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
         ?? WINDOW_SIZE_PRESETS[0] ?? WINDOW_SIZE_PRESETS[1];
+      const width = Number(playbackPreset?.width ?? 1366);
+      const height = Number(playbackPreset?.height ?? 768);
+      const targetUrl = new URL(window.location.href);
+      targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
+      closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
+        if (event.payload?.requestId !== requestId) return;
+        abandon();
+        if (event.payload.status === "rejected") {
+          const capability = event.payload.capability ?? "app.simulator.action-unavailable";
+          const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
+          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
+        }
+      });
+      if (!isMobileRuntime()) {
+        readyUnlisten = await listen<SimulatorWindowReadyPayload>(SIMULATOR_WINDOW_READY_EVENT, (event) => {
+          const readyPayload = event.payload ?? {};
+          if (abandoned || readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
+          readyLabel = readyPayload.label;
+          clearReadySubscription();
+          void publishDescriptor().catch(fail);
+        });
+        // Start the loading window before media availability, snapshot hashing
+        // and transport preparation. Either readiness edge may arrive first.
+        simulatorWindow = new WebviewWindow(requestId, {
+          visible: false,
+          title: `${metadata.title} - playing`,
+          width, height, center: true, resizable: false,
+          url: targetUrl.toString(),
+        });
+        void simulatorWindow.once("tauri://error", (event) => {
+          fail(event?.payload ? JSON.stringify(event.payload) : "播放器窗口创建失败");
+        });
+        void simulatorWindow.once("tauri://destroyed", abandon);
+        timeoutId = window.setTimeout(() => {
+          if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
+        }, 15000);
+        setStatusMessage("播放器窗口正在打开。");
+      }
       const prepared = await buildSimulatorLaunchDescriptor({
+        requestId,
         manager: resourceManager,
         chartJson: garupaChartJsonText,
         media: chartMediaResources,
@@ -5810,35 +5870,16 @@ function ChartEditorController() {
         allPerfectStatusDisplayMode: playbackAllPerfectStatusDisplayMode,
         bgmGainPercent: playbackVolumePercent,
         seGainPercent: playbackVolumePercent * noteSeVolumeScale,
-        requestedWindowWidth: Number(playbackPreset?.width ?? 1366),
-        requestedWindowHeight: Number(playbackPreset?.height ?? 768),
+        requestedWindowWidth: width,
+        requestedWindowHeight: height,
       });
       pendingLease = prepared.handoffLease;
-      const descriptor = prepared.descriptor;
-      const requestId = descriptor.requestId;
+      if (abandoned) { await pendingLease.release(); pendingLease = null; return; }
+      descriptor = prepared.descriptor;
       simulatorHandoffLeasesRef.current.set(requestId, pendingLease);
       pendingLease = null;
-      const targetUrl = new URL(window.location.href);
-      targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
-
-      closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
-        if (event.payload?.requestId !== requestId) return;
-        releaseHandoff(requestId);
-        if (event.payload.status === "rejected") {
-          const capability = event.payload.capability ?? "app.simulator.action-unavailable";
-          const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
-          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
-        }
-        if (closedUnlisten) {
-          void closedUnlisten();
-          closedUnlisten = null;
-        }
-      });
       if (isMobileRuntime()) {
-        const wrotePayload = writeMobileRoutePayload(requestId, { requestId, descriptor });
-        if (!wrotePayload) {
-          clearClosedSubscription();
-          releaseHandoff(requestId);
+        if (!writeMobileRoutePayload(requestId, { requestId, descriptor })) {
           throw new Error("移动端播放器数据写入失败。");
         }
         setMobileSimulatorImmersive(true);
@@ -5846,59 +5887,10 @@ function ChartEditorController() {
         setStatusMessage("已切换到移动端播放器。");
         return;
       }
-
-      readyUnlisten = await listen<SimulatorWindowReadyPayload>(
-        SIMULATOR_WINDOW_READY_EVENT,
-        async (event) => {
-          const readyPayload = event.payload ?? {};
-          if (readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
-          clearReadySubscription();
-          try {
-            await emitTo(readyPayload.label, SIMULATOR_WINDOW_PAYLOAD_EVENT, { requestId, descriptor });
-            setStatusMessage("播放器参数与资源快照已同步。");
-          } catch (error) {
-            releaseHandoff(requestId);
-            const message = error instanceof Error ? error.message : String(error);
-            setStatusMessage(`播放器参数发送失败：${message}`);
-          }
-        },
-      );
-
-      const simulatorWindow = new WebviewWindow(requestId, {
-        visible: false,
-        title: `${metadata.title} - playing`,
-        width: descriptor.requestedWindow.width,
-        height: descriptor.requestedWindow.height,
-        center: true,
-        resizable: false,
-        url: targetUrl.toString(),
-      });
-      simulatorWindow.once("tauri://error", (event) => {
-        clearReadySubscription();
-        clearClosedSubscription();
-        releaseHandoff(requestId);
-        const message = event?.payload ? JSON.stringify(event.payload) : "未知错误";
-        setStatusMessage(`播放器窗口创建失败：${message}`);
-      });
-      simulatorWindow.once("tauri://destroyed", () => {
-        clearReadySubscription();
-        clearClosedSubscription();
-        releaseHandoff(requestId);
-      });
-      timeoutId = window.setTimeout(() => {
-        if (!readyUnlisten) return;
-        clearReadySubscription();
-        clearClosedSubscription();
-        releaseHandoff(requestId);
-        setStatusMessage("播放器窗口握手超时，请重试。");
-      }, 15000);
-      setStatusMessage("播放器窗口已打开。");
+      await publishDescriptor();
     } catch (error) {
-      clearReadySubscription();
-      clearClosedSubscription();
       if (pendingLease !== null) void pendingLease.release();
-      const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`播放器窗口启动失败：${message}`);
+      fail(error);
     }
   }, [
     WINDOW_SIZE_PRESETS,
@@ -6239,7 +6231,6 @@ function ChartEditorController() {
 }
 
 export default ChartEditorController;
-
 
 
 

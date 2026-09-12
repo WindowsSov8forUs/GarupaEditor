@@ -15,6 +15,7 @@ import {
 } from "./transportContracts";
 
 export interface BuildSimulatorLaunchDescriptorInput {
+  readonly requestId: string;
   readonly manager: ApplicationResourceManager;
   readonly chartJson: string;
   readonly media: ChartMediaResources;
@@ -60,7 +61,7 @@ export async function buildSimulatorLaunchDescriptor(
   const cover = input.media.cover ?? requireRef("builtin/ui/default-cover");
   let stage = input.media.stageBackdrop;
   if (stage === null) {
-    const refreshed = await input.manager.refreshCatalog("bestdori");
+    const refreshed = await input.manager.prepareCatalog("bestdori");
     if (refreshed.status === "rejected") {
       throw new Error(`${refreshed.failure.capability}: ${refreshed.failure.boundary}`);
     }
@@ -85,7 +86,7 @@ export async function buildSimulatorLaunchDescriptor(
   }
   const descriptor: SimulatorLaunchTransportDescriptor = Object.freeze({
     schemaVersion: 3,
-    requestId: requestIdentity(),
+    requestId: input.requestId,
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),
     isFullLength: false,
@@ -113,7 +114,7 @@ function requireRef(id: string): ResourceRef {
   return reference.value;
 }
 
-function requestIdentity(): string {
+export function createSimulatorLaunchRequestId(): string {
   if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
     throw new Error("Simulator transport requires crypto.randomUUID; time/random fallback is forbidden.");
   }

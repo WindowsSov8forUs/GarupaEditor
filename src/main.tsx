@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./App.css";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
 import { SimulatorLoadingScreen } from "./app/simulator/SimulatorLoadingScreen";
