@@ -56,7 +56,6 @@ import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime
 import type {
   AutonomousSimulatorEnvironment,
   SimulatorFrameScheduler,
-  SimulatorFrameSubscription,
   SimulatorRuntimeInputSource,
 } from "../runtime/contracts";
 import {
@@ -96,8 +95,6 @@ import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene, type PixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
-import { INITIAL_STARTUP_DIRECTION_SCENE_STATE } from "../scene/startupDirectionScene";
-import { STARTUP_FIRST_VIEW_FADE_SECONDS } from "../engine/managers/startupDirectionController";
 import type { SimulatorResourceCapability, SimulatorResourceLease } from "./resourceContracts";
 import {
   copyAndValidateInitialSimulatorSurface,
@@ -118,6 +115,7 @@ export interface SimulatorGraphicsSurface {
 
 export interface AutonomousSimulatorPlatformCapabilities {
   readonly resources: SimulatorResourceCapability;
+  readonly onResourcePreparationProgress?: (completed: number, total: number) => void;
   readonly audioContext: AudioContext;
   readonly graphics: SimulatorGraphicsSurface;
   readonly scheduler: SimulatorFrameScheduler;
@@ -296,22 +294,14 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       new BrowserPixiParticleTextureDecoder(),
       gameplayRenderOrder,
     );
-    const firstView: { scene: PixiStartupDirectionScene | null; elapsed: number } = { scene: null, elapsed: 0 };
-    let preparationMount: SimulatorGraphicsMount | null = null;
-    let preparationFrames: SimulatorFrameSubscription | null = null;
-    const preparationRoot = new Container({ label: "GarupaSimulatorResourcePreparation" });
-    const finishPreparationView = () => {
-      preparationFrames?.stop();
-      preparationMount?.dispose();
-      preparationRoot.removeChildren();
-      preparationRoot.destroy();
-    };
+    const firstView: { scene: PixiStartupDirectionScene | null } = { scene: null };
     const assembly = await assembleSimulatorResources(
       bgm.value,
       selection,
       resourceLease.value,
       {
         sessionId,
+        onProgress: purpose === "initial" ? this.platform.onResourcePreparationProgress : undefined,
         rendering: {
           backend: renderer,
           preflight: new PortableRenderResourcePreflightAdapter(),
@@ -328,21 +318,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             );
             if (created.status !== "ok") return fromIntegrity(created);
             firstView.scene = created.value;
-            if (purpose !== "initial") return accepted(undefined);
-            // Original ExecStart reveals this same information scene while the
-            // remaining sound/particle resources are still being prepared.
-            preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
-            const mounted = this.platform.graphics.mount(sessionId, preparationRoot);
-            if (mounted.status === "rejected") return mounted;
-            preparationMount = mounted.value;
-            const frames = this.platform.scheduler.start(async (tick) => {
-              firstView.elapsed = Math.fround(Math.min(STARTUP_FIRST_VIEW_FADE_SECONDS, firstView.elapsed + tick.deltaTimeSeconds));
-              created.value.publish({ ...INITIAL_STARTUP_DIRECTION_SCENE_STATE,
-                sequence: tick.sequence, informationPhase: "revealing",
-                informationAlpha: Math.fround(firstView.elapsed / STARTUP_FIRST_VIEW_FADE_SECONDS) });
-            });
-            if (frames.status === "rejected") return frames;
-            preparationFrames = frames.value;
             return accepted(undefined);
           },
         },
@@ -371,7 +346,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         },
       },
     );
-    finishPreparationView();
     if (assembly.status === "rejected") {
       firstView.scene?.dispose();
       await resourceLease.value.release();
@@ -466,7 +440,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           }),
       startupDirection: {
         scene: startupScene,
-        firstViewElapsedSeconds: firstView.elapsed,
         liveStartVoiceCue: null,
         purpose,
       },

@@ -72,6 +72,31 @@
       "sha256": "CDA5675E68C428323ACCFD81CDA08EC1E5BDC98A92ABE0D0C878A5D6A77582A8"
     },
     {
+      "path": "game/loading/bg_base_r12.png",
+      "byteLength": 353,
+      "sha256": "AFC5DD18D6D02E0B5ABD8CF57B15CE51697E471108F8A6EA4A26D85D86FFD131"
+    },
+    {
+      "path": "game/loading/bg_dialog_caption.png",
+      "byteLength": 1120,
+      "sha256": "1A0DFCB41B3CFEA6BCA4A8C4F570E7B71A7FE758E811B87E048320A779387B02"
+    },
+    {
+      "path": "game/loading/comic_001.png",
+      "byteLength": 145298,
+      "sha256": "B3A98C09170DA1DA1E17AACFED6B737D822D16A3DB9F7A91B19FA707B45F351C"
+    },
+    {
+      "path": "game/loading/frame_back.png",
+      "byteLength": 1015,
+      "sha256": "AAEC2AC846D6073D1AA86D7EF0123F93E81B5BB21AC25138BC45F574C5E8FB82"
+    },
+    {
+      "path": "game/loading/nowloading.png",
+      "byteLength": 4231,
+      "sha256": "896BF9DDCAA7B7C4B7A459562DA0BE89CB33FFD5D0F33487DB870BACE893DE88"
+    },
+    {
       "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",
       "byteLength": 2024,
       "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"

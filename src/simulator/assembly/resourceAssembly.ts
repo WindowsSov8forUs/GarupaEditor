@@ -43,6 +43,7 @@ import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface SimulatorResourceAssemblyTargets {
   readonly sessionId: string;
+  readonly onProgress?: (completed: number, total: number) => void;
   readonly rendering: {
     readonly backend: SimulatorRendererBackend;
     readonly preflight: RenderResourcePreflightAdapter;
@@ -103,6 +104,10 @@ export async function assembleSimulatorResources(
   if (typeof targets.sessionId !== "string" || targets.sessionId.length === 0) {
     return rejected("launch-failed", "simulator.assembly.invalid-session", "Autonomous resource assembly requires one internally generated non-empty session identity.");
   }
+  let completed = 0;
+  // Seven actual preparation owners; progress never advances from elapsed time.
+  const preparedStep = () => targets.onProgress?.(++completed, 7);
+  targets.onProgress?.(0, 7);
   const skinSelection = validateSkinResourceSelection(selection);
   if (skinSelection.status === "rejected") return skinSelection;
   const exactDefaultParticles = usesExactDefaultParticlePack(selection.skin.resolved);
@@ -112,8 +117,10 @@ export async function assembleSimulatorResources(
     : selection.skin.resources;
   const skinPacks = await prepareSelectedSkinSourcePackages(sourcePackageSelection, lease);
   if (skinPacks.status === "rejected") return skinPacks;
+  preparedStep();
   const commonRender = await prepareLeasedCommonRenderResources(lease);
   if (commonRender.status === "rejected") return commonRender;
+  preparedStep();
   const skinRender = await prepareSkinRenderOverlay(
     selection.skin.resolved,
     skinPacks.value,
@@ -124,6 +131,7 @@ export async function assembleSimulatorResources(
       ? skinRender
       : rejected("resource-integrity", "simulator.assembly.skin-render-empty", "Every current resolved Skin recipe must publish its exact leased render overlay.");
   }
+  preparedStep();
   const combinedAssets = Object.freeze([
     ...commonRender.value.profile.assets,
     ...skinRender.value.assets,
@@ -209,6 +217,7 @@ export async function assembleSimulatorResources(
   );
   if (renderReady.status !== "ok") return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
   prepared.push({ identity: "renderer", dispose: () => targets.rendering.backend.dispose() });
+  preparedStep();
   if (targets.rendering.onPrepared !== undefined) {
     const presented = await targets.rendering.onPrepared(scene.value, skinRender.value.backgroundImage);
     if (presented.status === "rejected") return rejectedWithCleanup(presented, rollback());
@@ -256,6 +265,7 @@ export async function assembleSimulatorResources(
     return rejectedWithCleanup(rejected(mapAudioFailure(audioReady.status), audioReady.failure.capability, audioReady.failure.boundary), rollback());
   }
   prepared.push({ identity: "audio", dispose: () => targets.audio.backend.dispose() });
+  preparedStep();
   const particleReady = await targets.particles.backend.prepare(
     targets.sessionId,
     Object.freeze({
@@ -268,6 +278,7 @@ export async function assembleSimulatorResources(
     return rejectedWithCleanup(rejected(mapParticleFailure(particleReady.status), particleReady.failure.capability, particleReady.failure.boundary), rollback());
   }
   prepared.push({ identity: "particle-backend", dispose: () => targets.particles.backend.dispose() });
+  preparedStep();
   const particleRendererReady = await targets.particles.renderer.prepare(
     targets.sessionId,
     scene.value.particleScene,
@@ -277,6 +288,7 @@ export async function assembleSimulatorResources(
   if (particleRendererReady.status !== "accepted") {
     return rejectedWithCleanup(rejected(mapParticleFailure(particleRendererReady.status), particleRendererReady.failure.capability, particleRendererReady.failure.boundary), rollback());
   }
+  preparedStep();
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
     skinRecipeIdentity: selection.skin.recipeIdentity,

@@ -1265,3 +1265,11 @@ Android treats serialized keepCrisp=OnDesktop(1) as false and uses pixelDensity1
 The independent actual-calculator audit matches80 fitting digit/color-boundary cases and7 nonnegative Int32 score cases. Original arithmetic executes float conversion/division, advance multiplication, accumulation, comparison/condition, decrement, trailing subtraction and ceil;26 failed-fit candidate transitions also reproduce. Both TypeScript noEmit checks and the1446-entry runtime audit pass. No product tests/fixtures were added or modified, and no application or visual capture ran.
 
 This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII branch selection is static; the Pillow/FreeType glyph metrics remain explicit ABI rather than captured native CharacterInfo outputs. Full WrapText/ProcessText execution, actual glyph bearings/baseline, runtime property writers, renderer/raster integration and complete clipping remain OPEN. Compile or conditional arithmetic agreement does not establish overall simulator equivalence.
+
+### 演奏前加载层与封面交接
+
+`SimulatorLoadingScreen`由应用资源库提供Other背景、MenuAtlas切片及原作`comic_001`，覆盖Simulator模块加载和资源准备；来源为Reverse `fdadb3a6`的`simulator-loading-background-10-1-4`。当前没有账号漫画列表，明确采用原作空列表的dummy选择，不声称实现漫画轮播。正常路径不显示调试加载文案或返回按钮；错误与宿主音频激活提示仍由启动所有者处理。
+
+底部条显示七个实际资源准备阶段的完成比例，不用计时器模拟下载进度。布局承接原作widget及父缩放，标题使用粉色八向描边，百分比使用黑色四向描边；字体栅格化和九宫格由宿主处理。加载音符装饰动画不在本次覆盖内。
+
+封面0.1秒淡入从可见的场景交接开始，资源准备不得在加载层后推进其时钟。入场音频遵守Gaya淡出→PlayingNone→后续更新的判定调整门槛→prepared BGM恢复→PlayingSound；Stage和轨道的并行入场演出不额外阻塞音乐。

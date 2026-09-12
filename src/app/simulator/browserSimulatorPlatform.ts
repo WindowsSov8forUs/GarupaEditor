@@ -39,6 +39,7 @@ export async function createBrowserSimulatorPlatform(input: {
   readonly host: HTMLElement;
   readonly audioContext: AudioContext;
   readonly resources: SimulatorResourceCapability;
+  readonly onResourcePreparationProgress?: (completed: number, total: number) => void;
   readonly safeArea: "full-surface" | "css-safe-area" | SimulatorSurfaceState["safeArea"];
   readonly onLifecycleState: (state: SimulatorLifecycleBackendState) => void;
 }): Promise<BrowserSimulatorPlatformOwner> {
@@ -47,6 +48,7 @@ export async function createBrowserSimulatorPlatform(input: {
   const scheduler = new BrowserRafScheduler(() => graphics.render());
   const platform: AutonomousSimulatorPlatformCapabilities = Object.freeze({
     resources: input.resources,
+    onResourcePreparationProgress: input.onResourcePreparationProgress,
     audioContext: input.audioContext,
     graphics,
     scheduler,

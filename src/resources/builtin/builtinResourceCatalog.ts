@@ -21,6 +21,11 @@ import chartUiFallbackFontUrl from "../../assets/fonts/GB18030.ttf?url&no-inline
 import defaultCoverUrl from "../../assets/default-cover.png?url&no-inline";
 import applicationBackgroundUrl from "../../assets/live.png?url&no-inline";
 import loadingBackgroundUrl from "../../assets/game/loading/background.png?url&no-inline";
+import loadingFrameUrl from "../../assets/game/loading/bg_base_r12.png?url&no-inline";
+import loadingCaptionUrl from "../../assets/game/loading/bg_dialog_caption.png?url&no-inline";
+import loadingPatternUrl from "../../assets/game/loading/frame_back.png?url&no-inline";
+import loadingLabelUrl from "../../assets/game/loading/nowloading.png?url&no-inline";
+import loadingComicUrl from "../../assets/game/loading/comic_001.png?url&no-inline";
 import manifestJson from "./builtinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -49,6 +54,11 @@ interface BuiltinDefinition {
 }
 
 const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
+  Object.freeze({ slot: "ui.loading.frame", id: "builtin/ui/loading/frame", path: "game/loading/bg_base_r12.png", title: "Loading frame", kind: "image", mediaType: "image/png", url: loadingFrameUrl }),
+  Object.freeze({ slot: "ui.loading.caption", id: "builtin/ui/loading/caption", path: "game/loading/bg_dialog_caption.png", title: "Loading caption", kind: "image", mediaType: "image/png", url: loadingCaptionUrl }),
+  Object.freeze({ slot: "ui.loading.pattern", id: "builtin/ui/loading/pattern", path: "game/loading/frame_back.png", title: "Loading pattern", kind: "image", mediaType: "image/png", url: loadingPatternUrl }),
+  Object.freeze({ slot: "ui.loading.label", id: "builtin/ui/loading/label", path: "game/loading/nowloading.png", title: "Loading label", kind: "image", mediaType: "image/png", url: loadingLabelUrl }),
+  Object.freeze({ slot: "ui.loading.comic", id: "builtin/ui/loading/comic", path: "game/loading/comic_001.png", title: "Loading comic", kind: "image", mediaType: "image/png", url: loadingComicUrl }),
   Object.freeze({
     slot: "ui.loading-background", id: "builtin/ui/loading-background",
     path: "game/loading/background.png", title: "Loading background",

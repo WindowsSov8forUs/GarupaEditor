@@ -15,6 +15,7 @@ import {
   type BrowserSimulatorLaunchState,
 } from "./simulator/browserSimulatorLaunchOwner";
 import { createSimulatorResourceCapability } from "./simulator/createSimulatorResourceCapability";
+import { SimulatorLoadingScreen } from "./simulator/SimulatorLoadingScreen";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -49,6 +50,7 @@ function BuiltInSimulatorWindow() {
   const ownerRef = useRef<BrowserSimulatorLaunchOwner | null>(null);
   const [descriptor, setDescriptor] = useState<SimulatorLaunchTransportDescriptor | null>(null);
   const [launchState, setLaunchState] = useState<BrowserSimulatorLaunchState>(INITIAL_LAUNCH_STATE);
+  const [preparationProgress, setPreparationProgress] = useState(0);
   const [transportFailure, setTransportFailure] = useState<string | null>(null);
   const requestId = routeRequestId();
   const mobile = isMobileRuntime();
@@ -136,6 +138,7 @@ function BuiltInSimulatorWindow() {
             host,
             audioContext,
             resources: createSimulatorResourceCapability(manager, "jp"),
+            onResourcePreparationProgress: (completed, total) => setPreparationProgress(completed / total),
             safeArea: mobile ? "css-safe-area" : "full-surface",
             onLifecycleState: () => {},
           });
@@ -206,6 +209,7 @@ function BuiltInSimulatorWindow() {
     transportFailure,
     activateAudioFromPointer,
     () => { void leavePlayer(); },
+    preparationProgress,
   );
   return (
     <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
@@ -220,6 +224,7 @@ function renderOverlay(
   transportFailure: string | null,
   onActivationPointer: () => void,
   onLeave: () => void,
+  preparationProgress: number,
 ) {
   const backdropStyle = preparationOverlayStyle;
   if (state.phase === "running" || state.phase === "closing") return null;
@@ -253,7 +258,7 @@ function renderOverlay(
     );
   }
   if (state.phase === "closed" || state.phase === "disposed") return null;
-  return null;
+  return <SimulatorLoadingScreen progress={preparationProgress} />;
 }
 
 function dependencyFailure(capability: string, boundary: string): BrowserSimulatorLaunchDependencyError {

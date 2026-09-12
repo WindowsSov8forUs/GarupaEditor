@@ -79,7 +79,6 @@ export class StartupDirectionController {
     private readonly purpose: StartupDirectionPurpose = "initial",
     private readonly mvBackground: MvBackgroundModule | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
-    private readonly firstViewElapsedSeconds = 0,
   ) {
     this.startupAudio = audio === null
       ? null
@@ -133,7 +132,7 @@ export class StartupDirectionController {
       });
       return ok(undefined);
     }
-    this.phaseElapsedValue = Math.fround(this.firstViewElapsedSeconds);
+    this.phaseElapsedValue = 0;
     this.publish({
       informationPhase: "revealing",
       informationAlpha: Math.fround(this.phaseElapsedValue / STARTUP_FIRST_VIEW_FADE_SECONDS),
