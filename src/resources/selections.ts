@@ -29,6 +29,10 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "ui.loading.pattern",
   "ui.loading.label",
   "ui.loading.comic",
+  "ui.loading.guitar",
+  "ui.loading.onpu1",
+  "ui.loading.onpu2",
+  "ui.loading.shadow",
 
   "skin.rhythm",
   "skin.directional",

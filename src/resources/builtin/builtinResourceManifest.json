@@ -92,9 +92,29 @@
       "sha256": "AAEC2AC846D6073D1AA86D7EF0123F93E81B5BB21AC25138BC45F574C5E8FB82"
     },
     {
+      "path": "game/loading/icon_guitar.png",
+      "byteLength": 2588,
+      "sha256": "16AF077FFF42E437AF5498E664588FD098894713DE14BE3BD4DC3FA67C5B2E77"
+    },
+    {
+      "path": "game/loading/icon_onpu1.png",
+      "byteLength": 1223,
+      "sha256": "22C73770F34C3CCD63EE32E89A5A8CB0A8C83AFB83B1ABB3908A1CDA12978A25"
+    },
+    {
+      "path": "game/loading/icon_onpu2.png",
+      "byteLength": 1281,
+      "sha256": "ADE28C180AC1C969E45F9E2445A44B633A77C5CECF544FB68487B0219846BA07"
+    },
+    {
       "path": "game/loading/nowloading.png",
       "byteLength": 4231,
       "sha256": "896BF9DDCAA7B7C4B7A459562DA0BE89CB33FFD5D0F33487DB870BACE893DE88"
+    },
+    {
+      "path": "game/loading/onpu_shadow.png",
+      "byteLength": 278,
+      "sha256": "9FA14ACB50A3320F42C82AF6D7688E7667AFBF2F1D7877295FB2ABA9A4E00F70"
     },
     {
       "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",

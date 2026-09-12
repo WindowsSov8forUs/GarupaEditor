@@ -26,6 +26,10 @@ import loadingCaptionUrl from "../../assets/game/loading/bg_dialog_caption.png?u
 import loadingPatternUrl from "../../assets/game/loading/frame_back.png?url&no-inline";
 import loadingLabelUrl from "../../assets/game/loading/nowloading.png?url&no-inline";
 import loadingComicUrl from "../../assets/game/loading/comic_001.png?url&no-inline";
+import loadingGuitarUrl from "../../assets/game/loading/icon_guitar.png?url&no-inline";
+import loadingOnpu1Url from "../../assets/game/loading/icon_onpu1.png?url&no-inline";
+import loadingOnpu2Url from "../../assets/game/loading/icon_onpu2.png?url&no-inline";
+import loadingShadowUrl from "../../assets/game/loading/onpu_shadow.png?url&no-inline";
 import manifestJson from "./builtinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -59,6 +63,10 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
   Object.freeze({ slot: "ui.loading.pattern", id: "builtin/ui/loading/pattern", path: "game/loading/frame_back.png", title: "Loading pattern", kind: "image", mediaType: "image/png", url: loadingPatternUrl }),
   Object.freeze({ slot: "ui.loading.label", id: "builtin/ui/loading/label", path: "game/loading/nowloading.png", title: "Loading label", kind: "image", mediaType: "image/png", url: loadingLabelUrl }),
   Object.freeze({ slot: "ui.loading.comic", id: "builtin/ui/loading/comic", path: "game/loading/comic_001.png", title: "Loading comic", kind: "image", mediaType: "image/png", url: loadingComicUrl }),
+  Object.freeze({ slot: "ui.loading.guitar", id: "builtin/ui/loading/guitar", path: "game/loading/icon_guitar.png", title: "Loading guitar", kind: "image", mediaType: "image/png", url: loadingGuitarUrl }),
+  Object.freeze({ slot: "ui.loading.onpu1", id: "builtin/ui/loading/onpu1", path: "game/loading/icon_onpu1.png", title: "Loading note 1", kind: "image", mediaType: "image/png", url: loadingOnpu1Url }),
+  Object.freeze({ slot: "ui.loading.onpu2", id: "builtin/ui/loading/onpu2", path: "game/loading/icon_onpu2.png", title: "Loading note 2", kind: "image", mediaType: "image/png", url: loadingOnpu2Url }),
+  Object.freeze({ slot: "ui.loading.shadow", id: "builtin/ui/loading/shadow", path: "game/loading/onpu_shadow.png", title: "Loading shadow", kind: "image", mediaType: "image/png", url: loadingShadowUrl }),
   Object.freeze({
     slot: "ui.loading-background", id: "builtin/ui/loading-background",
     path: "game/loading/background.png", title: "Loading background",
