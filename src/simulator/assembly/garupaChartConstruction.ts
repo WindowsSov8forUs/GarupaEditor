@@ -218,6 +218,7 @@ function constructOriginalCompatibleGarupaChart(
     left.absolutePos - right.absolutePos ||
     left.sourceOrder - right.sourceOrder ||
     left.localOrder - right.localOrder);
+  for (const record of records) extensions.originalSourceOrder.set(record.note, record.sourceOrder);
   const noteBatches = createBatches(records);
   const roots = new Map(records.filter((record) => record.localOrder === 0).map((record) => [record.sourceOrder, record.note]));
   for (const node of extensions.authoredNodes) {

@@ -83,7 +83,7 @@ export class NoteBase {
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
   private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
   private manualRuntimeValue: ManualNoteRuntime | null = null;
-  private preflightRenderDeactivation: (() => SimulatorResult<RenderOwnerTransaction>) | null = null;
+  private preflightRenderDeactivation: (() => SimulatorResult<RenderOwnerTransaction | null>) | null = null;
   private advanceRenderMotion: ((deltaTimeSeconds: number) => SimulatorResult<void>) | null = null;
   private fingerIdValue = -1;
 
@@ -128,7 +128,7 @@ export class NoteBase {
   }
 
   registerRenderDeactivationOwner(
-    owner: () => SimulatorResult<RenderOwnerTransaction>,
+    owner: () => SimulatorResult<RenderOwnerTransaction | null>,
   ): void {
     this.preflightRenderDeactivation = owner;
   }
@@ -182,7 +182,7 @@ export class NoteBase {
       this.onDeactivated();
       this.fingerIdValue = -1;
     }
-    if (renderDeactivation?.status === "ok") {
+    if (renderDeactivation?.status === "ok" && renderDeactivation.value !== null) {
       const committed = renderDeactivation.value.commit();
       if (committed.status !== "ok") return committed;
     }

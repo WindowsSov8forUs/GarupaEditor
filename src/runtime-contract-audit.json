@@ -8343,7 +8343,7 @@
     {
       "id": "RCB-0397",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 747,
+      "line": 748,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"validated directional span escaped direct Garupa chart construction\");",
@@ -8364,7 +8364,7 @@
     {
       "id": "RCB-0398",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 849,
+      "line": 850,
       "marker": "integrity-failure-call",
       "symbol": "invalidPosition",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-position\", [\"GJP-E01\", \"GJP-E02\", \"GJP-D01\"], boundary);",
@@ -8385,7 +8385,7 @@
     {
       "id": "RCB-0399",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 852,
+      "line": 853,
       "marker": "integrity-failure-call",
       "symbol": "invalidBpm",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-bpm\", [\"GJP-E05\", \"GJP-E06\", \"GJP-E07\"], boundary);",
@@ -8406,7 +8406,7 @@
     {
       "id": "RCB-0400",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 855,
+      "line": 856,
       "marker": "integrity-failure-call",
       "symbol": "invalidLane",
       "source": "return integrityFailure(\"simulator.garupa-json.invalid-lane-span\", [], boundary);",
@@ -8427,7 +8427,7 @@
     {
       "id": "RCB-0401",
       "file": "src/simulator/assembly/garupaChartConstruction.ts",
-      "line": 858,
+      "line": 859,
       "marker": "integrity-failure-call",
       "symbol": "unsupportedSlide",
       "source": "return integrityFailure(\"simulator.garupa-json.unsupported-slide-shape\", [], boundary);",
@@ -16386,7 +16386,7 @@
     {
       "id": "RCB-0780",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 173,
+      "line": 185,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (this.disposed) return rejected(\"simulator.garupa-extension.initialize-after-dispose\", \"A disposed product timeline is terminal.\");",
@@ -16407,7 +16407,7 @@
     {
       "id": "RCB-0781",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 176,
+      "line": 188,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16428,7 +16428,7 @@
     {
       "id": "RCB-0782",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 182,
+      "line": 194,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16449,7 +16449,7 @@
     {
       "id": "RCB-0783",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 202,
+      "line": 214,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.input-in-auto\", \"Product Auto cannot consume real touches.\");",
@@ -16470,7 +16470,7 @@
     {
       "id": "RCB-0784",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 208,
+      "line": 220,
       "marker": "rejected-call",
       "symbol": "if",
       "source": ": rejected(\"simulator.garupa-extension.invalid-manual-frame\", \"Product Manual requires one finite outer-frame delta and typed touch array.\");",
@@ -16491,7 +16491,7 @@
     {
       "id": "RCB-0785",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 215,
+      "line": 227,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.invalid-manual-touch\", \"Product touches require unique nonnegative finger IDs and closed phases.\");",
@@ -16512,7 +16512,7 @@
     {
       "id": "RCB-0786",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 236,
+      "line": 248,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16533,7 +16533,7 @@
     {
       "id": "RCB-0787",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 243,
+      "line": 255,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16554,7 +16554,7 @@
     {
       "id": "RCB-0788",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 253,
+      "line": 265,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16575,7 +16575,7 @@
     {
       "id": "RCB-0789",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 358,
+      "line": 374,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16596,7 +16596,7 @@
     {
       "id": "RCB-0790",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 370,
+      "line": 386,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16617,7 +16617,7 @@
     {
       "id": "RCB-0791",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 380,
+      "line": 396,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-publish\", `Product reflection cannot publish from ${state}.`);",
@@ -16638,7 +16638,7 @@
     {
       "id": "RCB-0792",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 384,
+      "line": 400,
       "marker": "throw-error",
       "symbol": "if",
       "source": "if (index < 0) throw new Error(\"Product reflected source left its in-flight owner\");",
@@ -16659,7 +16659,7 @@
     {
       "id": "RCB-0793",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 394,
+      "line": 410,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.repeated-reflect-discard\", `Product reflection cannot discard from ${state}.`);",
@@ -16680,7 +16680,7 @@
     {
       "id": "RCB-0794",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 407,
+      "line": 423,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16701,7 +16701,7 @@
     {
       "id": "RCB-0795",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 416,
+      "line": 432,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16722,7 +16722,7 @@
     {
       "id": "RCB-0796",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 438,
+      "line": 454,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-publish\", `Product batch cannot publish from ${state}.`);",
@@ -16743,7 +16743,7 @@
     {
       "id": "RCB-0797",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 443,
+      "line": 459,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Product OneFrame publication lost its staged source order\");",
@@ -16764,7 +16764,7 @@
     {
       "id": "RCB-0798",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 450,
+      "line": 466,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (state !== \"pending\") return rejected(\"simulator.garupa-extension.repeated-batch-discard\", `Product batch cannot discard from ${state}.`);",
@@ -16785,7 +16785,7 @@
     {
       "id": "RCB-0799",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 544,
+      "line": 551,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.duplicate-finger-began\", \"One product finger cannot Begin twice before Ended.\");",
@@ -16806,7 +16806,7 @@
     {
       "id": "RCB-0800",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 804,
+      "line": 811,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16827,7 +16827,7 @@
     {
       "id": "RCB-0801",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 811,
+      "line": 818,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "if (first.y === undefined || second.y === undefined) return rejected(\"manual.candidate-button-owner-unavailable\",",
@@ -16848,7 +16848,7 @@
     {
       "id": "RCB-0802",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 867,
+      "line": 874,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(",
@@ -16869,7 +16869,7 @@
     {
       "id": "RCB-0803",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 896,
+      "line": 903,
       "marker": "rejected-call",
       "symbol": "if",
       "source": "return rejected(\"simulator.garupa-extension.hidden-or-consumed-manual-source\", \"Product Manual requires one visible unconsumed scoring source.\");",
@@ -16890,7 +16890,7 @@
     {
       "id": "RCB-0804",
       "file": "src/simulator/engine/garupa/productTimelineManager.ts",
-      "line": 1131,
+      "line": 1141,
       "marker": "integrity-failure-call",
       "symbol": "rejected",
       "source": "return integrityFailure(capability, [], boundary);",
@@ -17793,7 +17793,7 @@
     {
       "id": "RCB-0847",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 164,
+      "line": 166,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17814,7 +17814,7 @@
     {
       "id": "RCB-0848",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 172,
+      "line": 174,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17835,7 +17835,7 @@
     {
       "id": "RCB-0849",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 189,
+      "line": 191,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17856,7 +17856,7 @@
     {
       "id": "RCB-0850",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 196,
+      "line": 198,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17877,7 +17877,7 @@
     {
       "id": "RCB-0851",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 210,
+      "line": 212,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17898,7 +17898,7 @@
     {
       "id": "RCB-0852",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 222,
+      "line": 224,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17919,7 +17919,7 @@
     {
       "id": "RCB-0853",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 242,
+      "line": 244,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -17940,7 +17940,7 @@
     {
       "id": "RCB-0854",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 263,
+      "line": 265,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual OneFrame transaction received a foreign or repeated plan\");",
@@ -17961,7 +17961,7 @@
     {
       "id": "RCB-0855",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 274,
+      "line": 276,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual OneFrame transaction finished before every reserved plan committed\");",
@@ -17982,7 +17982,7 @@
     {
       "id": "RCB-0856",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 306,
+      "line": 308,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"one-frame.invalid-submission-batch\", [\"PLSO-O01\", \"PLSO-B01\"],",
@@ -18003,7 +18003,7 @@
     {
       "id": "RCB-0857",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 316,
+      "line": 318,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"one-frame.duplicate-submission-source\", [\"PLSO-B01\"],",
@@ -18024,7 +18024,7 @@
     {
       "id": "RCB-0858",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 326,
+      "line": 328,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"one-frame.invalid-submission-capability\", [\"PLSO-B01\"],",
@@ -18045,7 +18045,7 @@
     {
       "id": "RCB-0859",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 366,
+      "line": 371,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"one-frame.invalid-submission-batch\", [\"R02\", \"R03\"],",
@@ -18066,7 +18066,7 @@
     {
       "id": "RCB-0860",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 389,
+      "line": 394,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18087,7 +18087,7 @@
     {
       "id": "RCB-0861",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 399,
+      "line": 404,
       "marker": "integrity-failure-call",
       "symbol": "setupBusinessData",
       "source": "return integrityFailure(",
@@ -18108,7 +18108,7 @@
     {
       "id": "RCB-0862",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 418,
+      "line": 423,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18129,7 +18129,7 @@
     {
       "id": "RCB-0863",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 425,
+      "line": 430,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18150,7 +18150,7 @@
     {
       "id": "RCB-0864",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 437,
+      "line": 442,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18171,7 +18171,7 @@
     {
       "id": "RCB-0865",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 453,
+      "line": 458,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18192,7 +18192,7 @@
     {
       "id": "RCB-0866",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 477,
+      "line": 482,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18213,7 +18213,7 @@
     {
       "id": "RCB-0867",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 487,
+      "line": 492,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18234,7 +18234,7 @@
     {
       "id": "RCB-0868",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 515,
+      "line": 520,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18255,7 +18255,7 @@
     {
       "id": "RCB-0869",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 594,
+      "line": 599,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (business?.status === \"integrity-failure\") return business;",
@@ -18276,7 +18276,7 @@
     {
       "id": "RCB-0870",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 610,
+      "line": 615,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18297,7 +18297,7 @@
     {
       "id": "RCB-0871",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 633,
+      "line": 638,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18318,7 +18318,7 @@
     {
       "id": "RCB-0872",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 663,
+      "line": 668,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (business?.status === \"integrity-failure\") return business;",
@@ -18339,7 +18339,7 @@
     {
       "id": "RCB-0873",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 678,
+      "line": 683,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual OneFrame preflight reservation changed before commit\");",
@@ -18360,7 +18360,7 @@
     {
       "id": "RCB-0874",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 723,
+      "line": 728,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18381,7 +18381,7 @@
     {
       "id": "RCB-0875",
       "file": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-      "line": 883,
+      "line": 888,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18654,7 +18654,7 @@
     {
       "id": "RCB-0888",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 325,
+      "line": 326,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"GamePlayInputDispatcher could not register its note cleanup owner\");",
@@ -18675,7 +18675,7 @@
     {
       "id": "RCB-0889",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 341,
+      "line": 342,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18696,7 +18696,7 @@
     {
       "id": "RCB-0890",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 349,
+      "line": 350,
       "marker": "integrity-failure-call",
       "symbol": "button",
       "source": "? integrityFailure(",
@@ -18717,10 +18717,10 @@
     {
       "id": "RCB-0891",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 385,
+      "line": 386,
       "marker": "integrity-failure-call",
       "symbol": "if",
-      "source": "return integrityFailure(",
+      "source": "return integrityFailure(\"input.foreign-game-play-button\", [\"D03\", \"D15\", \"MJ05\", \"MJ26\"],",
       "productSemanticsId": null,
       "trigger": "malformed bytes/state, ownership violation, impossible internal transition, or non-atomic mutation candidate",
       "userReachability": "typed action-or-session integrity boundary",
@@ -18738,7 +18738,7 @@
     {
       "id": "RCB-0892",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 455,
+      "line": 440,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18759,7 +18759,7 @@
     {
       "id": "RCB-0893",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 528,
+      "line": 513,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18780,7 +18780,7 @@
     {
       "id": "RCB-0894",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 640,
+      "line": 625,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Manual note commit lost its preflight transaction\");",
@@ -18801,7 +18801,7 @@
     {
       "id": "RCB-0895",
       "file": "src/simulator/engine/managers/inputBoundaries.ts",
-      "line": 680,
+      "line": 665,
       "marker": "integrity-failure-call",
       "symbol": "execTouchBegan",
       "source": "return integrityFailure(",
@@ -18822,7 +18822,7 @@
     {
       "id": "RCB-0896",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 412,
+      "line": 416,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18843,7 +18843,7 @@
     {
       "id": "RCB-0897",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 427,
+      "line": 431,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18864,7 +18864,7 @@
     {
       "id": "RCB-0898",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 456,
+      "line": 460,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderSetup?.status === \"integrity-failure\") return renderSetup;",
@@ -18885,7 +18885,7 @@
     {
       "id": "RCB-0899",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 491,
+      "line": 496,
       "marker": "integrity-failure-call",
       "symbol": "phase",
       "source": "? integrityFailure(\"manual.slide-child-phase-unavailable\", [\"D11\", \"MJ23\"],",
@@ -18906,7 +18906,7 @@
     {
       "id": "RCB-0900",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 501,
+      "line": 506,
       "marker": "integrity-failure-call",
       "symbol": "progress",
       "source": "? integrityFailure(\"manual.note-motion-progress-unavailable\", [\"D11\", \"MJ23\"],",
@@ -18927,7 +18927,7 @@
     {
       "id": "RCB-0901",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 508,
+      "line": 513,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"manual.slide-head-motion-unavailable\", [\"D10\", \"MJ23\"],",
@@ -18948,7 +18948,7 @@
     {
       "id": "RCB-0902",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 524,
+      "line": 529,
       "marker": "integrity-failure-call",
       "symbol": "y",
       "source": "? integrityFailure(\"manual.slide-judge-motion-unavailable\", [\"D10\", \"MJ20\"],",
@@ -18969,7 +18969,7 @@
     {
       "id": "RCB-0903",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 577,
+      "line": 582,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -18990,7 +18990,7 @@
     {
       "id": "RCB-0904",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 584,
+      "line": 589,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19011,7 +19011,7 @@
     {
       "id": "RCB-0905",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 593,
+      "line": 598,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19032,7 +19032,7 @@
     {
       "id": "RCB-0906",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 625,
+      "line": 630,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderFrame?.status === \"integrity-failure\") return renderFrame;",
@@ -19053,7 +19053,7 @@
     {
       "id": "RCB-0907",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 630,
+      "line": 635,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (renderSubstep?.status === \"integrity-failure\") return renderSubstep;",
@@ -19074,7 +19074,7 @@
     {
       "id": "RCB-0908",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 654,
+      "line": 659,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19095,7 +19095,7 @@
     {
       "id": "RCB-0909",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 795,
+      "line": 800,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19116,7 +19116,7 @@
     {
       "id": "RCB-0910",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 837,
+      "line": 842,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19137,7 +19137,7 @@
     {
       "id": "RCB-0911",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 871,
+      "line": 876,
       "marker": "integrity-failure-call",
       "symbol": "secondY",
       "source": "? integrityFailure(\"manual.candidate-button-owner-unavailable\", [\"D04\", \"D10\", \"MJ04\"],",
@@ -19158,7 +19158,7 @@
     {
       "id": "RCB-0912",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 990,
+      "line": 996,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19179,7 +19179,7 @@
     {
       "id": "RCB-0913",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1026,
+      "line": 1032,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19200,7 +19200,7 @@
     {
       "id": "RCB-0914",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1069,
+      "line": 1075,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19221,7 +19221,7 @@
     {
       "id": "RCB-0915",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1086,
+      "line": 1093,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19242,7 +19242,7 @@
     {
       "id": "RCB-0916",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1094,
+      "line": 1101,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19263,7 +19263,7 @@
     {
       "id": "RCB-0917",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1172,
+      "line": 1179,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (current === undefined) return integrityFailure(",
@@ -19284,7 +19284,7 @@
     {
       "id": "RCB-0918",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1190,
+      "line": 1197,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -19305,7 +19305,7 @@
     {
       "id": "RCB-0919",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1209,
+      "line": 1216,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19326,7 +19326,7 @@
     {
       "id": "RCB-0920",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1254,
+      "line": 1261,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -19347,7 +19347,7 @@
     {
       "id": "RCB-0921",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1273,
+      "line": 1280,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19368,7 +19368,7 @@
     {
       "id": "RCB-0922",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1367,
+      "line": 1374,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19389,7 +19389,7 @@
     {
       "id": "RCB-0923",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1383,
+      "line": 1390,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19410,7 +19410,7 @@
     {
       "id": "RCB-0924",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1462,
+      "line": 1469,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"render.note.sync-line-pool-exhausted\", [\"RPR-D06\", \"RPR-D13\", \"PR16\", \"PR39\"],",
@@ -19431,7 +19431,7 @@
     {
       "id": "RCB-0925",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1518,
+      "line": 1525,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19452,7 +19452,7 @@
     {
       "id": "RCB-0926",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1535,
+      "line": 1542,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(\"render.note.multiple-directional-line-pool-exhausted\",",
@@ -19473,7 +19473,7 @@
     {
       "id": "RCB-0927",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1806,
+      "line": 1826,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19494,7 +19494,7 @@
     {
       "id": "RCB-0928",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1890,
+      "line": 1910,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19515,7 +19515,7 @@
     {
       "id": "RCB-0929",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1907,
+      "line": 1927,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19536,7 +19536,7 @@
     {
       "id": "RCB-0930",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 1927,
+      "line": 1948,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19557,7 +19557,7 @@
     {
       "id": "RCB-0931",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2010,
+      "line": 2033,
       "marker": "integrity-failure-call",
       "symbol": "switch",
       "source": "return integrityFailure(",
@@ -19578,7 +19578,7 @@
     {
       "id": "RCB-0932",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2028,
+      "line": 2051,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19599,7 +19599,7 @@
     {
       "id": "RCB-0933",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2051,
+      "line": 2074,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19620,7 +19620,7 @@
     {
       "id": "RCB-0934",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2057,
+      "line": 2080,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19641,7 +19641,7 @@
     {
       "id": "RCB-0935",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2121,
+      "line": 2144,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19662,7 +19662,7 @@
     {
       "id": "RCB-0936",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2135,
+      "line": 2158,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "resolveButton: () => integrityFailure(",
@@ -19683,7 +19683,7 @@
     {
       "id": "RCB-0937",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2140,
+      "line": 2163,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "screenToWorld: () => integrityFailure(",
@@ -19704,7 +19704,7 @@
     {
       "id": "RCB-0938",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2145,
+      "line": 2168,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "getDistanceNormalization: () => integrityFailure(",
@@ -19725,7 +19725,7 @@
     {
       "id": "RCB-0939",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2150,
+      "line": 2173,
       "marker": "integrity-failure-call",
       "symbol": "unavailableManualInputGeometry",
       "source": "isInsideTargetButtons: () => integrityFailure(",
@@ -19746,7 +19746,7 @@
     {
       "id": "RCB-0940",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2159,
+      "line": 2182,
       "marker": "integrity-failure-call",
       "symbol": "createUnavailableManualJudgementTransaction",
       "source": "preflight: () => integrityFailure(",
@@ -19767,7 +19767,7 @@
     {
       "id": "RCB-0941",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2165,
+      "line": 2188,
       "marker": "throw-error",
       "symbol": "createUnavailableManualJudgementTransaction",
       "source": "throw new Error(\"Unavailable manual judgement transaction cannot commit\");",
@@ -19788,7 +19788,7 @@
     {
       "id": "RCB-0942",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2248,
+      "line": 2271,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -19809,7 +19809,7 @@
     {
       "id": "RCB-0943",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2264,
+      "line": 2287,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional manual finger owner changed after preflight\");",
@@ -19830,7 +19830,7 @@
     {
       "id": "RCB-0944",
       "file": "src/simulator/engine/managers/noteManager.ts",
-      "line": 2278,
+      "line": 2301,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21426,7 +21426,7 @@
     {
       "id": "RCB-1020",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 71,
+      "line": 72,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21447,7 +21447,7 @@
     {
       "id": "RCB-1021",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 83,
+      "line": 84,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21468,7 +21468,7 @@
     {
       "id": "RCB-1022",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 122,
+      "line": 123,
       "marker": "integrity-failure-call",
       "symbol": "forcePerfect",
       "source": "return integrityFailure(",
@@ -21489,7 +21489,7 @@
     {
       "id": "RCB-1023",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 134,
+      "line": 135,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21510,7 +21510,7 @@
     {
       "id": "RCB-1024",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 175,
+      "line": 176,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21531,7 +21531,7 @@
     {
       "id": "RCB-1025",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 218,
+      "line": 219,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21552,7 +21552,7 @@
     {
       "id": "RCB-1026",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 245,
+      "line": 246,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Normal Began commit lost its owner-produced judgement plan\");",
@@ -21573,7 +21573,7 @@
     {
       "id": "RCB-1027",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 250,
+      "line": 251,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Normal Began commit could not deactivate the judged note\");",
@@ -21594,7 +21594,7 @@
     {
       "id": "RCB-1028",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 332,
+      "line": 333,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21615,7 +21615,7 @@
     {
       "id": "RCB-1029",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 370,
+      "line": 371,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21636,7 +21636,7 @@
     {
       "id": "RCB-1030",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 394,
+      "line": 395,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long Began commit lost its type4 reservation\");",
@@ -21657,7 +21657,7 @@
     {
       "id": "RCB-1031",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 402,
+      "line": 403,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long Began commit could not enter Stop state\");",
@@ -21678,7 +21678,7 @@
     {
       "id": "RCB-1032",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 448,
+      "line": 449,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21699,7 +21699,7 @@
     {
       "id": "RCB-1033",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 555,
+      "line": 556,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21720,7 +21720,7 @@
     {
       "id": "RCB-1034",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 603,
+      "line": 604,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21741,7 +21741,7 @@
     {
       "id": "RCB-1035",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 611,
+      "line": 612,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21762,7 +21762,7 @@
     {
       "id": "RCB-1036",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 655,
+      "line": 656,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long Multiple after group changed after preflight\");",
@@ -21783,7 +21783,7 @@
     {
       "id": "RCB-1037",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 661,
+      "line": 662,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long tail after owner changed after preflight\");",
@@ -21804,7 +21804,7 @@
     {
       "id": "RCB-1038",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 665,
+      "line": 666,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Long tail commit could not deactivate its parent\");",
@@ -21825,7 +21825,7 @@
     {
       "id": "RCB-1039",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 674,
+      "line": 675,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21846,7 +21846,7 @@
     {
       "id": "RCB-1040",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 690,
+      "line": 691,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21867,7 +21867,7 @@
     {
       "id": "RCB-1041",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 723,
+      "line": 724,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21888,7 +21888,7 @@
     {
       "id": "RCB-1042",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 776,
+      "line": 777,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -21909,7 +21909,7 @@
     {
       "id": "RCB-1043",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 800,
+      "line": 801,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21930,7 +21930,7 @@
     {
       "id": "RCB-1044",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 832,
+      "line": 833,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21951,7 +21951,7 @@
     {
       "id": "RCB-1045",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 843,
+      "line": 844,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21972,7 +21972,7 @@
     {
       "id": "RCB-1046",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 854,
+      "line": 855,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -21993,7 +21993,7 @@
     {
       "id": "RCB-1047",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1029,
+      "line": 1030,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22014,7 +22014,7 @@
     {
       "id": "RCB-1048",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1050,
+      "line": 1051,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22035,7 +22035,7 @@
     {
       "id": "RCB-1049",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1094,
+      "line": 1095,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22056,7 +22056,7 @@
     {
       "id": "RCB-1050",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1160,
+      "line": 1161,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide head commit lost its type8 reservation\");",
@@ -22077,7 +22077,7 @@
     {
       "id": "RCB-1051",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1169,
+      "line": 1170,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide head commit could not enter Stop state\");",
@@ -22098,7 +22098,7 @@
     {
       "id": "RCB-1052",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1187,
+      "line": 1188,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22119,7 +22119,7 @@
     {
       "id": "RCB-1053",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1242,
+      "line": 1243,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22140,7 +22140,7 @@
     {
       "id": "RCB-1054",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1276,
+      "line": 1277,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22161,7 +22161,7 @@
     {
       "id": "RCB-1055",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1334,
+      "line": 1335,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22182,7 +22182,7 @@
     {
       "id": "RCB-1056",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1447,
+      "line": 1448,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide current cursor changed after preflight\");",
@@ -22203,7 +22203,7 @@
     {
       "id": "RCB-1057",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1452,
+      "line": 1453,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide Multiple group changed after preflight\");",
@@ -22224,7 +22224,7 @@
     {
       "id": "RCB-1058",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1464,
+      "line": 1465,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide current node changed after preflight\");",
@@ -22245,7 +22245,7 @@
     {
       "id": "RCB-1059",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1470,
+      "line": 1471,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide completion could not deactivate parent\");",
@@ -22266,7 +22266,7 @@
     {
       "id": "RCB-1060",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1479,
+      "line": 1480,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22287,7 +22287,7 @@
     {
       "id": "RCB-1061",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1494,
+      "line": 1495,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22308,7 +22308,7 @@
     {
       "id": "RCB-1062",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1528,
+      "line": 1529,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22329,7 +22329,7 @@
     {
       "id": "RCB-1063",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1582,
+      "line": 1583,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22350,7 +22350,7 @@
     {
       "id": "RCB-1064",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1599,
+      "line": 1600,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22371,7 +22371,7 @@
     {
       "id": "RCB-1065",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1649,
+      "line": 1650,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22392,7 +22392,7 @@
     {
       "id": "RCB-1066",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1726,
+      "line": 1727,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Slide invisible current changed during parent-owned timeout cleanup\");",
@@ -22413,7 +22413,7 @@
     {
       "id": "RCB-1067",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1737,
+      "line": 1738,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22434,7 +22434,7 @@
     {
       "id": "RCB-1068",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1748,
+      "line": 1749,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22455,7 +22455,7 @@
     {
       "id": "RCB-1069",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1760,
+      "line": 1761,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22476,7 +22476,7 @@
     {
       "id": "RCB-1070",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1784,
+      "line": 1785,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22497,7 +22497,7 @@
     {
       "id": "RCB-1071",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1876,
+      "line": 1877,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22518,7 +22518,7 @@
     {
       "id": "RCB-1072",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1909,
+      "line": 1910,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Began commit lost its owner-produced cached judgement\");",
@@ -22539,7 +22539,7 @@
     {
       "id": "RCB-1073",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1915,
+      "line": 1916,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Began commit could not enter Wait state\");",
@@ -22560,7 +22560,7 @@
     {
       "id": "RCB-1074",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1957,
+      "line": 1958,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22581,7 +22581,7 @@
     {
       "id": "RCB-1075",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 1983,
+      "line": 1984,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22602,7 +22602,7 @@
     {
       "id": "RCB-1076",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2018,
+      "line": 2019,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Flick Moved commit could not deactivate the judged note\");",
@@ -22623,7 +22623,7 @@
     {
       "id": "RCB-1077",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2091,
+      "line": 2092,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22644,7 +22644,7 @@
     {
       "id": "RCB-1078",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2109,
+      "line": 2110,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22665,7 +22665,7 @@
     {
       "id": "RCB-1079",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2186,
+      "line": 2187,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22686,7 +22686,7 @@
     {
       "id": "RCB-1080",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2197,
+      "line": 2198,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22707,7 +22707,7 @@
     {
       "id": "RCB-1081",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2216,
+      "line": 2217,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional Began commit lost its group owner\");",
@@ -22728,7 +22728,7 @@
     {
       "id": "RCB-1082",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2230,
+      "line": 2231,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -22749,7 +22749,7 @@
     {
       "id": "RCB-1083",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2238,
+      "line": 2239,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22770,7 +22770,7 @@
     {
       "id": "RCB-1084",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2299,
+      "line": 2300,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional commit lost its preflight group owner\");",
@@ -22791,7 +22791,7 @@
     {
       "id": "RCB-1085",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2303,
+      "line": 2304,
       "marker": "throw-error",
       "symbol": "if",
       "source": "throw new Error(\"Multiple Directional group use changed after preflight\");",
@@ -22812,7 +22812,7 @@
     {
       "id": "RCB-1086",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2326,
+      "line": 2327,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22833,7 +22833,7 @@
     {
       "id": "RCB-1087",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2357,
+      "line": 2358,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22854,7 +22854,7 @@
     {
       "id": "RCB-1088",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2481,
+      "line": 2482,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (this.resolvePresentationState === null) return integrityFailure(",
@@ -22875,7 +22875,7 @@
     {
       "id": "RCB-1089",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2519,
+      "line": 2520,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22896,7 +22896,7 @@
     {
       "id": "RCB-1090",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2553,
+      "line": 2554,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22917,7 +22917,7 @@
     {
       "id": "RCB-1091",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2575,
+      "line": 2576,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22938,7 +22938,7 @@
     {
       "id": "RCB-1092",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2596,
+      "line": 2597,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22959,7 +22959,7 @@
     {
       "id": "RCB-1093",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2613,
+      "line": 2614,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -22980,7 +22980,7 @@
     {
       "id": "RCB-1094",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2623,
+      "line": 2624,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23001,7 +23001,7 @@
     {
       "id": "RCB-1095",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2630,
+      "line": 2631,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23022,7 +23022,7 @@
     {
       "id": "RCB-1096",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2648,
+      "line": 2649,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23043,7 +23043,7 @@
     {
       "id": "RCB-1097",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2671,
+      "line": 2672,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23064,7 +23064,7 @@
     {
       "id": "RCB-1098",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2687,
+      "line": 2688,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23085,7 +23085,7 @@
     {
       "id": "RCB-1099",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2700,
+      "line": 2701,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23106,7 +23106,7 @@
     {
       "id": "RCB-1100",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2721,
+      "line": 2722,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23127,7 +23127,7 @@
     {
       "id": "RCB-1101",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2743,
+      "line": 2744,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23148,7 +23148,7 @@
     {
       "id": "RCB-1102",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2778,
+      "line": 2781,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -23169,7 +23169,7 @@
     {
       "id": "RCB-1103",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2833,
+      "line": 2836,
       "marker": "integrity-failure-call",
       "symbol": "module-scope",
       "source": "return integrityFailure(",
@@ -23190,7 +23190,7 @@
     {
       "id": "RCB-1104",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2841,
+      "line": 2844,
       "marker": "integrity-failure-call",
       "symbol": "module-scope",
       "source": ": integrityFailure(",
@@ -23211,7 +23211,7 @@
     {
       "id": "RCB-1105",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2861,
+      "line": 2864,
       "marker": "integrity-failure-call",
       "symbol": "validRole",
       "source": ": integrityFailure(",
@@ -23232,7 +23232,7 @@
     {
       "id": "RCB-1106",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2875,
+      "line": 2878,
       "marker": "integrity-failure-call",
       "symbol": "validateConcreteNoteOwner",
       "source": ": integrityFailure(",
@@ -23253,7 +23253,7 @@
     {
       "id": "RCB-1107",
       "file": "src/simulator/engine/notes/noteTypes.ts",
-      "line": 2981,
+      "line": 2984,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26697,7 +26697,7 @@
     {
       "id": "RCB-1271",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 163,
+      "line": 164,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26718,7 +26718,7 @@
     {
       "id": "RCB-1272",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 212,
+      "line": 213,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26739,7 +26739,7 @@
     {
       "id": "RCB-1273",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 219,
+      "line": 220,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26760,7 +26760,7 @@
     {
       "id": "RCB-1274",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 259,
+      "line": 260,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26781,7 +26781,7 @@
     {
       "id": "RCB-1275",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 311,
+      "line": 312,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26802,7 +26802,7 @@
     {
       "id": "RCB-1276",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 349,
+      "line": 350,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26823,7 +26823,7 @@
     {
       "id": "RCB-1277",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 356,
+      "line": 357,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26844,7 +26844,7 @@
     {
       "id": "RCB-1278",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 363,
+      "line": 364,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -26865,7 +26865,7 @@
     {
       "id": "RCB-1279",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 373,
+      "line": 374,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (rendering?.status === \"integrity-failure\") {",
@@ -26886,7 +26886,7 @@
     {
       "id": "RCB-1280",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 436,
+      "line": 437,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26907,7 +26907,7 @@
     {
       "id": "RCB-1281",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 449,
+      "line": 450,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -26928,7 +26928,7 @@
     {
       "id": "RCB-1282",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 451,
+      "line": 452,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (planned?.status === \"integrity-failure\") {",
@@ -26949,7 +26949,7 @@
     {
       "id": "RCB-1283",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 509,
+      "line": 510,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -26970,7 +26970,7 @@
     {
       "id": "RCB-1284",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 523,
+      "line": 524,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "if (manager === null) return integrityFailure(",
@@ -26991,7 +26991,7 @@
     {
       "id": "RCB-1285",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 531,
+      "line": 532,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (render?.status === \"integrity-failure\") {",
@@ -27012,7 +27012,7 @@
     {
       "id": "RCB-1286",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 562,
+      "line": 563,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27033,7 +27033,7 @@
     {
       "id": "RCB-1287",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 643,
+      "line": 644,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.domain-dispose-threw\", [],",
@@ -27054,7 +27054,7 @@
     {
       "id": "RCB-1288",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 649,
+      "line": 650,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(result.capability, result.requiredEvidence,",
@@ -27075,7 +27075,7 @@
     {
       "id": "RCB-1289",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 654,
+      "line": 655,
       "marker": "integrity-failure-call",
       "symbol": "physical",
       "source": "return result.status === \"ok\" ? physical : physical.status === \"ok\" ? result : integrityFailure(",
@@ -27096,7 +27096,7 @@
     {
       "id": "RCB-1290",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 677,
+      "line": 678,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (rendererValidation?.status === \"integrity-failure\") return rendererValidation;",
@@ -27117,7 +27117,7 @@
     {
       "id": "RCB-1291",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 679,
+      "line": 680,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27138,7 +27138,7 @@
     {
       "id": "RCB-1292",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 690,
+      "line": 691,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (release?.status === \"integrity-failure\") return release;",
@@ -27159,7 +27159,7 @@
     {
       "id": "RCB-1293",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 710,
+      "line": 711,
       "marker": "integrity-failure-call",
       "symbol": "catch",
       "source": "result = integrityFailure(\"engine.backend-dispose-threw\", [],",
@@ -27180,7 +27180,7 @@
     {
       "id": "RCB-1294",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 716,
+      "line": 717,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": ": integrityFailure(",
@@ -27201,7 +27201,7 @@
     {
       "id": "RCB-1295",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 753,
+      "line": 754,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27222,7 +27222,7 @@
     {
       "id": "RCB-1296",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 765,
+      "line": 766,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") return particle;",
@@ -27243,7 +27243,7 @@
     {
       "id": "RCB-1297",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 767,
+      "line": 768,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (audio?.status === \"integrity-failure\") {",
@@ -27264,7 +27264,7 @@
     {
       "id": "RCB-1298",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 827,
+      "line": 828,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (particle?.status === \"integrity-failure\") {",
@@ -27285,7 +27285,7 @@
     {
       "id": "RCB-1299",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 875,
+      "line": 876,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27306,7 +27306,7 @@
     {
       "id": "RCB-1300",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 900,
+      "line": 901,
       "marker": "integrity-failure-call",
       "symbol": "wrapper",
       "source": "? integrityFailure(",
@@ -27327,7 +27327,7 @@
     {
       "id": "RCB-1301",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 914,
+      "line": 915,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27348,7 +27348,7 @@
     {
       "id": "RCB-1302",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 933,
+      "line": 934,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27369,7 +27369,7 @@
     {
       "id": "RCB-1303",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 946,
+      "line": 947,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": ": integrityFailure(",
@@ -27390,7 +27390,7 @@
     {
       "id": "RCB-1304",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 958,
+      "line": 959,
       "marker": "integrity-failure-call",
       "symbol": "host",
       "source": "return host !== null ? host.stepForMoveTime(deltaTimeSeconds) : integrityFailure(",
@@ -27411,7 +27411,7 @@
     {
       "id": "RCB-1305",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 983,
+      "line": 984,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27432,7 +27432,7 @@
     {
       "id": "RCB-1306",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1000,
+      "line": 1001,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27453,7 +27453,7 @@
     {
       "id": "RCB-1307",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1020,
+      "line": 1021,
       "marker": "integrity-failure-string",
       "symbol": "if",
       "source": "if (producerValidation?.status === \"integrity-failure\") return producerValidation;",
@@ -27474,7 +27474,7 @@
     {
       "id": "RCB-1308",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1029,
+      "line": 1030,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27495,7 +27495,7 @@
     {
       "id": "RCB-1309",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1044,
+      "line": 1045,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27516,7 +27516,7 @@
     {
       "id": "RCB-1310",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1051,
+      "line": 1052,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27537,7 +27537,7 @@
     {
       "id": "RCB-1311",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1112,
+      "line": 1113,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27558,7 +27558,7 @@
     {
       "id": "RCB-1312",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1123,
+      "line": 1124,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27579,7 +27579,7 @@
     {
       "id": "RCB-1313",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1308,
+      "line": 1310,
       "marker": "integrity-failure-call",
       "symbol": "state",
       "source": "? integrityFailure(",
@@ -27600,7 +27600,7 @@
     {
       "id": "RCB-1314",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1323,
+      "line": 1325,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27621,7 +27621,7 @@
     {
       "id": "RCB-1315",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1333,
+      "line": 1335,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27642,7 +27642,7 @@
     {
       "id": "RCB-1316",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1353,
+      "line": 1355,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "? integrityFailure(",
@@ -27663,7 +27663,7 @@
     {
       "id": "RCB-1317",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1367,
+      "line": 1369,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27684,7 +27684,7 @@
     {
       "id": "RCB-1318",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1402,
+      "line": 1404,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27705,7 +27705,7 @@
     {
       "id": "RCB-1319",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1414,
+      "line": 1416,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27726,7 +27726,7 @@
     {
       "id": "RCB-1320",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1430,
+      "line": 1432,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27747,7 +27747,7 @@
     {
       "id": "RCB-1321",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1449,
+      "line": 1451,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27768,7 +27768,7 @@
     {
       "id": "RCB-1322",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1475,
+      "line": 1477,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27789,7 +27789,7 @@
     {
       "id": "RCB-1323",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1487,
+      "line": 1489,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",
@@ -27810,7 +27810,7 @@
     {
       "id": "RCB-1324",
       "file": "src/simulator/host/createSimulatorEngine.ts",
-      "line": 1505,
+      "line": 1507,
       "marker": "integrity-failure-call",
       "symbol": "if",
       "source": "return integrityFailure(",

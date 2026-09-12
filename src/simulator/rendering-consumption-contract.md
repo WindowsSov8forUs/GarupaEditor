@@ -1292,7 +1292,7 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 
 来源为已验证并推送的 Reverse `ef4f11a5271f09e2504646917e6752a0f1d1fefb` 中 `simulator-standard-stage-speakers-10-1-4`。`stageSpeakers.json`、音箱切片和光晕 PNG 按字节复制 portable 输出，沿用普通舞台资源包和 Live/Practice/MV 分支。
 
-SV/TimingGroup 产品节点的计分身份保留 ButtonType.None；装配按实际 spanStart..spanEnd 包含的原作边轨0/6建立一次只读映射，Startup owner仅在送往舞台时替换判定位置，计分、声音和对象所有权不变。SV不影响音箱选择，跨两个边轨时两侧均响应。
+判定创建时统一输出 laneSpan、rangeLength 及其包含的原作轨道按钮。音箱直接消费同一 OneFrame 事件，不再维护 SV/TimingGroup 专用位置映射或改写舞台批次。SV 不影响音箱选择，范围同时包含 0/6 时两侧均响应；连续坐标不做最近轨道替代。
 
 已提交的 OneFrame 判定送入现有 Startup/Stage owner：只选择 buttonTypes 的 0/6，普通、Slide、长按尾非 Miss 播放 normal；Flick 家族非 Miss 播放 exciting；长按头非 Miss 播放 continuous；LongMiss 回 idle。isSync 不作选择条件。每次选中动画从零重播，continuous 循环，其余结束保持；不添加新的状态机、计分或音频事件。生产消费原始曲线、常量轨、默认属性、SpeakerRoot 的位移/1.3 倍缩放及左侧镜像；切换时还原当前动画未写入的默认属性。
 

@@ -33,6 +33,7 @@ import {
 } from "../evidence";
 import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
 import { judgementGeometry } from "../data/judgementGeometry";
+import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
 
 const ONE_FRAME_CAPACITY = 5;
 
@@ -115,6 +116,7 @@ interface QueuedJudgement {
 }
 
 export class InGameOneFrameJudgementController {
+  constructor(private readonly onJudgementPublished: (entry: OneFrameDataPayload) => void = () => {}) {}
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
   private readonly ownedHandles = new WeakMap<OneFrameDataHandle, OneFrameDataContainer>();
@@ -335,7 +337,10 @@ export class InGameOneFrameJudgementController {
   }
 
   private publishJudgements(entries: readonly QueuedJudgement[]): void {
-    for (const entry of entries) this.queuedJudgements.push(entry);
+    for (const entry of entries) {
+      this.queuedJudgements.push(entry);
+      this.onJudgementPublished(entry.payload);
+    }
     this.fillAvailableSlots();
   }
 
@@ -906,6 +911,7 @@ function isClosedAutoLiveJudgementRequest(
     request.noteInformation.index < 0 ||
     request.noteInformation.index > 0x7fffffff ||
     request.noteInformation.isInvisible ||
+    (!hasContinuousNoteGeometry(request.noteInformation) && (
     request.noteInformation.buttonType < ButtonType.Button_00_BMS_1P_SC ||
     request.noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
     !Array.isArray(request.noteInformation.buttonTypes) ||
@@ -924,7 +930,8 @@ function isClosedAutoLiveJudgementRequest(
     request.noteInformation.buttonTypesArray.some((button) =>
       !Number.isInteger(button) ||
       button < ButtonType.Button_00_BMS_1P_SC ||
-      button > ButtonType.Button_15_BMS_2P_SC) ||
+      button > ButtonType.Button_15_BMS_2P_SC)
+    )) ||
     !Number.isInteger(request.noteType) ||
     !Number.isInteger(request.multipleDirectionalFlickNoteCount) ||
     !Number.isFinite(request.absolutePosition)

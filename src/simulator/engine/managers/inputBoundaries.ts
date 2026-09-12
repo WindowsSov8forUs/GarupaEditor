@@ -274,7 +274,7 @@ interface GamePlayInputPlan extends ManualInputDispatchPlan {
 }
 
 export interface GamePlayButtonSnapshot {
-  readonly buttonType: ButtonTypeValue;
+  readonly buttonType: ButtonTypeValue | null;
   readonly touchOwners: readonly {
     readonly fingerId: number;
     readonly beganPosition: ManualInputPosition | null;
@@ -311,10 +311,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     private readonly noteManager: NoteManager,
     private readonly tapLaneEffectOwner: TapLaneEffectOwner | null = null,
   ) {
-    this.buttonsValue = Object.freeze(Array.from(
-      { length: GAME_PLAY_BUTTON_COUNT },
-      (_, buttonType) => new GamePlayButton(buttonType as ButtonTypeValue, noteManager),
-    ));
+    this.buttonsValue = Object.freeze([
+      ...Array.from({ length: GAME_PLAY_BUTTON_COUNT },
+        (_, buttonType) => new GamePlayButton(buttonType as ButtonTypeValue, noteManager)),
+      new GamePlayButton(null, noteManager),
+    ]);
     for (const button of this.buttonsValue) {
       this.ownedButtons.add(button);
     }
@@ -380,34 +381,18 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       let inputButton: GamePlayButton | null = null;
       let buttonPlan: GamePlayButtonTouchPlan | null = null;
       if (touch.phase === ManualTouchPhase.Began) {
-        if (touch.buttonOwner !== null) {
-          if (!(touch.buttonOwner instanceof GamePlayButton) || !this.ownedButtons.has(touch.buttonOwner)) {
-            return integrityFailure(
-              "input.foreign-game-play-button",
-              ["D03", "D15", "MJ05", "MJ26"],
-              "A resolved button must be the exact GamePlayButton owned by this engine dispatcher.",
-            );
-          }
-          inputButton = touch.buttonOwner;
-          projectedInputButtons[touch.fingerId] = inputButton;
-          const projection = projectionFor(inputButton, projections);
-          const planned = inputButton.preflightTouchBegan(
-            touch,
-            projection,
-            projectedFingerOwners,
-            judgementTransaction,
-            frame.deltaTimeSeconds,
-            reservedExtensions,
-          );
-          if (planned.status !== "ok") {
-            return planned;
-          }
-          buttonPlan = planned.value;
-        } else {
-          const selected = this.noteManager.selectManualCandidateBeforeJudgement(
-            null, projectedFingerOwners, touch.position, reservedExtensions, touch.fingerId);
-          if (selected.status !== "ok") return selected;
+        const owner = touch.buttonOwner ?? this.buttonsValue[GAME_PLAY_BUTTON_COUNT]!;
+        if (!(owner instanceof GamePlayButton) || !this.ownedButtons.has(owner)) {
+          return integrityFailure("input.foreign-game-play-button", ["D03", "D15", "MJ05", "MJ26"],
+            "A resolved input receiver must be owned by this engine dispatcher.");
         }
+        inputButton = owner;
+        projectedInputButtons[touch.fingerId] = inputButton;
+        const projection = projectionFor(inputButton, projections);
+        const planned = inputButton.preflightTouchBegan(touch, projection, projectedFingerOwners,
+          judgementTransaction, frame.deltaTimeSeconds, reservedExtensions);
+        if (planned.status !== "ok") return planned;
+        buttonPlan = planned.value;
       } else {
         inputButton = projectedInputButtons[touch.fingerId] ?? null;
         if (inputButton !== null) {
@@ -424,9 +409,9 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
           buttonPlan = planned.value;
         }
       }
-      if (inputButton !== null && touch.phase === ManualTouchPhase.Began) {
+      if (inputButton !== null && inputButton.buttonType !== null && touch.phase === ManualTouchPhase.Began) {
         tapLaneEffectEvents.push(Object.freeze({ buttonType: inputButton.buttonType, kind: "on" as const }));
-      } else if (inputButton !== null && touch.phase === ManualTouchPhase.Ended) {
+      } else if (inputButton !== null && inputButton.buttonType !== null && touch.phase === ManualTouchPhase.Ended) {
         tapLaneEffectEvents.push(Object.freeze({ buttonType: inputButton.buttonType, kind: "animated-off" as const }));
       }
       operations.push(Object.freeze({
@@ -512,7 +497,7 @@ export class GamePlayButton {
   );
 
   constructor(
-    readonly buttonType: ButtonTypeValue,
+    readonly buttonType: ButtonTypeValue | null,
     private readonly noteManager?: NoteManager,
   ) {}
 

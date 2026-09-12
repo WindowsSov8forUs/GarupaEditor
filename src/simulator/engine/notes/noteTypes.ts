@@ -34,6 +34,7 @@ import {
 } from "../data/manualJudgement";
 import type { ManualInputPosition } from "../data/manualInput";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
+import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
 import { advanceSlideStopWait, queueSlideRenderHideBefore } from "../rendering/ordinarySlideChildLifecycle";
 import { advanceSlideGestureContact, slideHeldNodeResult, slideHeadTimeoutDue, slideAfterTimeoutDue } from "../managers/slideNoteManager";
 
@@ -2714,7 +2715,7 @@ export function validateAutoLiveChartOwnership(
   const roots: NoteInformation[] = [];
   for (const batch of batches) {
     for (const information of batch.informationList) {
-      if (information.buttonType === ButtonType.None) {
+      if (information.buttonType === ButtonType.None && information.laneSpan === undefined) {
         continue;
       }
       if (playableRoots.has(information)) {
@@ -2756,6 +2757,8 @@ function validatePlayableButtonIdentity(
   noteInformation: NoteInformation,
 ): SimulatorResult<void> {
   const buttons = noteInformation.buttonTypesArray;
+  if (hasContinuousNoteGeometry(noteInformation) && Number.isInteger(noteInformation.index) &&
+    noteInformation.index >= 0 && noteInformation.index <= 0x7fffffff) return ok(undefined);
   if (
     !Number.isInteger(noteInformation.index) ||
     noteInformation.index < 0 ||

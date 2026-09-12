@@ -17,7 +17,6 @@ import {
   NoteResultType,
   judgeManualNote,
   isManualTimeoutOver,
-  MANUAL_MISS_SECONDS,
   directionalGestureThreshold,
   getManualScreenDistanceRate,
   type JudgeTimingValue,
@@ -26,7 +25,7 @@ import {
   type NoteResultTypeValue,
 } from "../data/manualJudgement";
 import type { NoteInformation } from "../chart/types";
-import type { OneFrameJudgementBatch } from "../data/oneFrameData";
+import type { OneFrameDataPayload, OneFrameJudgementBatch } from "../data/oneFrameData";
 import type { InGameMusicScoreController } from "../managers/inGameMusicScoreController";
 import { SlideNoteManager, advanceSlideGestureContact, slideHeldNodeResult, slideHeadTimeoutDue,
   slideAfterTimeoutDue, type SlideJudgeDecision } from "../managers/slideNoteManager";
@@ -40,10 +39,10 @@ import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/fr
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaRenderInputAdapter } from "./garupaRenderInputAdapter";
 import { advanceSlideStopWait } from "../rendering/ordinarySlideChildLifecycle";
-import type { NoteBase } from "../notes/noteBase";
+import { NoteState, type NoteBase } from "../notes/noteBase";
 import type { ManualCandidateExtensionFrame } from "../managers/noteManager";
 
-interface ProductTimeoutState { readonly seconds: number; readonly frames: number; readonly stopWait: number; readonly boundFlick: boolean }
+interface ProductTimeoutState { readonly frames: number; readonly stopWait: number }
 
 interface PendingGesture {
   readonly node: GarupaProductNode;
@@ -98,6 +97,7 @@ interface ProductTimelineMutableSnapshot {
   readonly judgedNodeCount: number;
   readonly missedNodeCount: number;
   readonly nextAutoIndex: number;
+  readonly sharedJudgements: readonly GarupaProductNode[];
 }
 
 interface ProductFingerOwner {
@@ -122,6 +122,16 @@ export interface GarupaProductTimelineSnapshot {
 }
 
 export class GarupaProductTimelineManager {
+  private readonly sharedNodesByIndex = new Map<number, GarupaProductNode>();
+  private readonly sharedJudgements: GarupaProductNode[] = [];
+
+  observeSharedJudgement(entry: OneFrameDataPayload): void {
+    const node = this.sharedNodesByIndex.get(entry.noteIndex);
+    if (node === undefined) return;
+    this.markJudged(node, entry.rawResult === NoteResultType.Miss);
+    this.sharedJudgements.push(node);
+  }
+
   private readonly slideJudge = new SlideNoteManager();
   private readonly timeouts = new Map<string, ProductTimeoutState>();
   private readonly orderedVisibleNodes: readonly GarupaProductNode[];
@@ -157,10 +167,12 @@ export class GarupaProductTimelineManager {
     private readonly originalHandledTouch: (fingerId: number) => boolean = () => false,
     private readonly manualGeometry: SimulatorManualInputGeometryBackend | null = null,
     private readonly selectedCandidate?: (fingerId: number) => string | null | undefined,
+    private readonly sharedNote: (source: NoteInformation) => NoteBase | null = () => null,
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
     for (const chain of chart.slideChains) this.nextVisibleIndexByChain.set(chain.identity, 0);
+    for (const node of chart.visibleNodes) if (node.chainIdentity === null) this.sharedNodesByIndex.set(node.scoringSource!.index, node);
   }
 
   private get shouldForcePerfect(): boolean {
@@ -260,12 +272,13 @@ export class GarupaProductTimelineManager {
       this.restoreMutableState(before);
       return result;
     };
-    const judgedThisFrame: GarupaProductNode[] = [];
+    const judgedThisFrame = [...this.sharedJudgements];
     if (this.shouldForcePerfect) {
       while (this.nextAutoIndex < this.orderedVisibleNodes.length) {
         const node = this.orderedVisibleNodes[this.nextAutoIndex]!;
         if (judgementPosition < node.absolutePosition) break;
         this.nextAutoIndex += 1;
+        if (node.chainIdentity === null) continue;
         const source = node.scoringSource!;
         if (this.judgedSources.has(source) || this.missedSources.has(source)) continue;
         judgedThisFrame.push(node);
@@ -276,7 +289,7 @@ export class GarupaProductTimelineManager {
         this.advanceChain(node);
       }
     } else {
-      const manual = this.processManualFrame(judgementPosition, deltaTimeSeconds);
+      const manual = this.processManualFrame(judgementPosition);
       if (manual.status !== "ok") return rollback(manual);
       judgedThisFrame.push(...manual.value);
     }
@@ -289,11 +302,13 @@ export class GarupaProductTimelineManager {
         adjustedMusicPosition: judgementPosition, adjustment: this.judgementAdjustValueB,
         forcePerfect: this.shouldForcePerfect, heldChains: new Set([...this.chainFinger]
           .filter(([, finger]) => this.fingers.get(finger)?.flashActive === true).map(([chain]) => chain)),
-        missed: new Set(this.pendingJudgements.filter(entry => entry.missed).map(entry => entry.node.identity)) },
+        missed: new Set([...this.pendingJudgements.filter(entry => entry.missed).map(entry => entry.node.identity),
+          ...this.sharedJudgements.filter(node => this.missedSources.has(node.scoringSource!)).map(node => node.identity)]) },
     ) ?? ok(null);
     if (render.status !== "ok") return rollback(render);
     if (this.shouldForcePerfect) {
       for (const node of judgedThisFrame) {
+        if (node.chainIdentity === null) continue;
         const submitted = this.submitAuto(node);
         if (submitted.status !== "ok") {
           render.value?.discard();
@@ -329,6 +344,7 @@ export class GarupaProductTimelineManager {
       identity: "product-timeline",
       publishOwner: () => {
         this.pendingManualFrame = null;
+        this.sharedJudgements.length = 0;
         return ok(undefined);
       },
       discard: () => {
@@ -457,7 +473,6 @@ export class GarupaProductTimelineManager {
 
   private processManualFrame(
     judgementPosition: number,
-    deltaTimeSeconds: number,
   ): SimulatorResult<readonly GarupaProductNode[]> {
     const judged: GarupaProductNode[] = [];
     const frame = this.pendingManualFrame;
@@ -468,9 +483,10 @@ export class GarupaProductTimelineManager {
       }
     }
     for (const node of this.orderedVisibleNodes) {
+      if (node.chainIdentity === null) continue;
       const source = node.scoringSource!;
       if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
-      const expired = this.advanceTimeout(node, judgementPosition, deltaTimeSeconds);
+      const expired = this.advanceTimeout(node, judgementPosition);
       if (expired.status !== "ok") return expired;
       if (expired.value === null) continue;
       const missed = this.submitManual(node, expired.value, JudgeTiming.None);
@@ -488,23 +504,14 @@ export class GarupaProductTimelineManager {
     return ok(Object.freeze(judged));
   }
 
-  private advanceTimeout(node: GarupaProductNode, position: number, delta: number): SimulatorResult<0 | 4 | null> {
+  private advanceTimeout(node: GarupaProductNode, position: number): SimulatorResult<0 | 4 | null> {
+    if (node.chainIdentity === null) return ok(null);
     const existing = this.timeouts.get(node.identity);
-    if (position < node.absolutePosition && existing?.boundFlick !== true) {
+    if (position < node.absolutePosition) {
       this.timeouts.delete(node.identity);
       return ok(null);
     }
-    let state = existing ?? { seconds: 0, frames: 0, stopWait: 0, boundFlick: false };
-    if (node.chainIdentity === null) {
-      if (state.boundFlick) {
-        state = { ...state, frames: Math.fround(state.frames + this.music.executeFrame) };
-        this.timeouts.set(node.identity, state);
-        return ok(state.frames >= 7 ? NoteResultType.Perfect : null);
-      }
-      state = { ...state, seconds: Math.fround(state.seconds + delta) };
-      this.timeouts.set(node.identity, state);
-      return ok(state.seconds > MANUAL_MISS_SECONDS ? NoteResultType.Miss : null);
-    }
+    let state = existing ?? { frames: 0, stopWait: 0 };
     const chain = this.chart.slideChains.find(chain => chain.identity === node.chainIdentity)!;
     const visibleIndex = chain.visibleConnectionIdentities.indexOf(node.identity);
     const nextId = chain.visibleConnectionIdentities[visibleIndex + 1];
@@ -636,8 +643,6 @@ export class GarupaProductTimelineManager {
       return timing.status === "ok" ? ok(undefined) : timing;
     }
     if (node.type === "Flick" || node.type === "Directional") {
-      if (node.chainIdentity === null) this.timeouts.set(node.identity,
-        { seconds: 0, frames: 0, stopWait: 0, boundFlick: true });
       owner.pendingGesture = Object.freeze({
         node,
         origin: began ? position : owner.began,
@@ -758,9 +763,10 @@ export class GarupaProductTimelineManager {
       this.slideJudge.selectNearJudgeLineSource(this.render!.getInputPositionY(first)!, this.render!.getInputPositionY(second)!);
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
+      if (node.chainIdentity === null && this.sharedNote(source)?.state !== NoteState.Move) continue;
       if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
       if (node.chainIdentity === null && reserved?.has(node.identity)) continue;
-      if (this.timeouts.get(node.identity)?.boundFlick === true || this.render?.getInputPositionY(node) == null) continue;
+      if (this.render?.getInputPositionY(node) == null) continue;
       if (chainIdentity === null) {
         if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
         // Native GetMoveEndTimeNearestZeroNote checks finger ownership only when
@@ -798,7 +804,8 @@ export class GarupaProductTimelineManager {
       return view === null ? null : { original: note, node: null, absolutePosition: view.source.absolutePos, y: view.y };
     };
     const extended = (node: GarupaProductNode | null): Candidate | null => node === null ? null
-      : { original: null, node, absolutePosition: node.absolutePosition, y: this.render!.getInputPositionY(node)! };
+      : { original: node.chainIdentity === null ? this.sharedNote(node.scoringSource!) : null, node,
+          absolutePosition: node.absolutePosition, y: this.render!.getInputPositionY(node)! };
     const originalNormal = native(ordinary), originalSlide = native(slide);
     if (ordinary !== null && originalNormal === null || slide !== null && originalSlide === null) {
       return rejected("manual.candidate-button-owner-unavailable",
@@ -971,13 +978,13 @@ export class GarupaProductTimelineManager {
   }
 
   getAutoLiveJudgementOwnership(source: NoteInformation): AutoLiveJudgementOwnership | null {
-    return this.chart.scoringNodeBySource.has(source)
+    return this.chart.scoringNodeBySource.get(source)?.chainIdentity != null
       ? Object.freeze({ multipleDirectionalFlickNoteCount: null, productExtension: "garupa-visible-node" as const })
       : null;
   }
 
   getManualJudgementOwnership(source: NoteInformation): ManualJudgementOwnership | null {
-    if (!this.chart.scoringNodeBySource.has(source)) return null;
+    if (this.chart.scoringNodeBySource.get(source)?.chainIdentity == null) return null;
     return Object.freeze({
       multipleDirectionalFlickNoteCount: null,
       multipleDirectionalFlickButtonTypes: null,
@@ -994,11 +1001,12 @@ export class GarupaProductTimelineManager {
   }
 
   ownsScoringSource(source: NoteInformation): boolean {
-    return this.chart.scoringNodeBySource.has(source);
+    return this.chart.scoringNodeBySource.get(source)?.chainIdentity != null;
   }
 
   commitDispose(): void {
     this.timeouts.clear();
+    this.sharedJudgements.length = 0;
     this.slideJudge.dispose();
     this.render?.releaseInputs();
     this.pendingManualFrame = null;
@@ -1036,6 +1044,7 @@ export class GarupaProductTimelineManager {
       judgedNodeCount: this.judgedNodeCount,
       missedNodeCount: this.missedNodeCount,
       nextAutoIndex: this.nextAutoIndex,
+      sharedJudgements: [...this.sharedJudgements],
     });
   }
 
@@ -1061,6 +1070,7 @@ export class GarupaProductTimelineManager {
     this.judgedNodeCount = snapshot.judgedNodeCount;
     this.missedNodeCount = snapshot.missedNodeCount;
     this.nextAutoIndex = snapshot.nextAutoIndex;
+    this.sharedJudgements.splice(0, this.sharedJudgements.length, ...snapshot.sharedJudgements);
   }
 
   snapshot(): GarupaProductTimelineSnapshot {

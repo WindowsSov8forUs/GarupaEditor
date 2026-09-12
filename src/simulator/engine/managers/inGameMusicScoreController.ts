@@ -163,6 +163,9 @@ export class InGameMusicScoreController {
   }
 
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {
+    if (batch.informationList.every(note => note.laneSpan !== undefined)) {
+      return ok(batch.absolutePos <= this.launcherMusicPosition);
+    }
     const first = batch.informationList.find(
       (note) => note.buttonType !== ButtonType.None || isBpmCommand(note),
     );

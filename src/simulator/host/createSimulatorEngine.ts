@@ -1,3 +1,4 @@
+import { runtimeNoteBatches } from "../engine/garupa/runtimeNoteBatches";
 import type { SimulatorBackends } from "../backends/contracts";
 import {
   ButtonType,
@@ -1104,7 +1105,7 @@ export function createSimulatorEngine(
   const noteArrival = getOrdinaryNoteArrivalSeconds(input.runtime.specificSpeed);
   if (noteArrival.status !== "ok") return noteArrival;
   const musicScoreController = new InGameMusicScoreController(input.chart, noteArrival.value.value);
-  const oneFrameJudgementController = new InGameOneFrameJudgementController();
+  const oneFrameJudgementController = new InGameOneFrameJudgementController(entry => productTimeline?.observeSharedJudgement(entry));
   let productTimeline: GarupaProductTimelineManager | null = null;
   if (productProfile?.hasExtensions) {
     const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);
@@ -1165,6 +1166,7 @@ export function createSimulatorEngine(
       (fingerId) => inputDispatcher.handledTouch(fingerId),
       backends.manualInputGeometry,
       (fingerId) => inputDispatcher.extendedCandidate(fingerId),
+      source => noteManager.getActiveNote(source),
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -1174,7 +1176,7 @@ export function createSimulatorEngine(
     if (businessOwner.status !== "ok") return businessOwner;
   }
   const noteManager = new NoteManager(
-    input.chart.noteBatches,
+    runtimeNoteBatches(input.chart),
     slideNoteManager,
     musicScoreController,
     musicScoreController,

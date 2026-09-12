@@ -29,8 +29,8 @@ export interface GarupaProductNode {
   readonly timingGroup: GarupaProductTimingGroupId;
   readonly visible: boolean;
   /**
-   * Private CS-V1/transaction identity. ButtonType.None deliberately means the
-   * product geometry is not an original button and must never enter NoteManager.
+   * CS-V1/transaction identity. ButtonType.None accompanies explicit laneSpan;
+   * geometry does not select another standalone-note judgement owner.
    */
   readonly scoringSource: NoteInformation | null;
 }
@@ -49,6 +49,7 @@ export interface GarupaProductChartProfile {
   readonly originalItemIndices: ReadonlySet<number>;
   readonly hasExtensions: boolean;
   readonly originalSources: ReadonlyMap<string, NoteInformation>;
+  readonly originalSourceOrder: WeakMap<NoteInformation, number>;
   readonly authoredNodes: readonly GarupaProductNode[];
   readonly svEvents: readonly GarupaProductSvEvent[];
   readonly nodes: readonly GarupaProductNode[];
@@ -98,6 +99,7 @@ export function freezeGarupaProductChartProfile(input: {
   return Object.freeze({
     originalItemIndices: input.originalItemIndices,
     originalSources: new Map(),
+    originalSourceOrder: new WeakMap(),
     authoredNodes,
     hasExtensions: nodes.length > 0,
     svEvents: Object.freeze(input.svEvents.map((event) => Object.freeze(event))),

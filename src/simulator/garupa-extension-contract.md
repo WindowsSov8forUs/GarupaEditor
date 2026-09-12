@@ -65,13 +65,21 @@ Reverse remains the only authority for original behavior.
   particles consume committed owner transforms. Flick distance retains the
   original screen-to-world and distance normalization.
 
+## 当前实际共用边界
+
+- OneFrameJudgementController 统一接收 Auto 与 Manual 提交，按提交顺序填充同一五槽池；剩余项在上一批反映释放后继续填充。扩展 owner 不再另行决定补交批次。评分、音频、HUD、舞台、轨道闪光与粒子消费同一批事件，后续批次的时间增量为零。
+- 无连接链的 Single/Skill/Flick/Directional 已通过 runtimeNoteBatches 进入同一 NoteManager 发射队列、对象管理和 NoteNormal/NoteFlick/NoteDirectionalFlick 状态类。独立 Single 超时和 Flick 七帧等待实现已删除；连续坐标输入复用 GamePlayButton 的输入事务与手指清理，使用没有固定轨道号的接收者。额外位置批次不占用原作批次的发射机会；同拍输入按原始谱面次序合并。
+- 时间轴/几何投影仍交给适配器，原作普通渲染器不为这些投影音符再创建一套闲置 Sprite。负 SV 不改变判定时间，也不恢复已判定节点。
+- 普通击打粒子的资源选择、Play 提交与方向手指选择已合并。连续位置是否存在固定粒子接收者仍是几何适配边界。
+- **尚未完成共用**：扩展 Slide 仍由 productTimelineManager 持有链、手指和结束状态；其渲染适配器仍有根/子节点呈现状态，Slide 持有粒子的状态路由仍分支。SV 输入下同形 Long、原作多格 Directional 的构造及事件语义还需收拢。此前将这些部分描述为已经共用完整状态机的声明撤销；不能以共用辅助函数或后端作为完成依据。
+
 ## Original Skin reuse
 
 - Product-extension charts consume the same frozen original Skin recipe as original-compatible charts; they do not expose a second custom-Judge or rip-map mode.
 - Note and Directional fronts use the selected original atlas bindings directly at continuous authored coordinates. No lane clamp or nearest-Sprite fallback is introduced.
 - Field, background, Judge and Tap/Judge/Directional SE remain session-global selected owners.
 - The former `GE-PS-PRODUCT-JUDGEMENT-VISUAL` rectangular flash is withdrawn: a selected ParticleSystem texture cannot be stretched across a synthetic NoteMesh or replaced by `Default-Particle`/first-texture selection.
-- `GE-PS-PRODUCT-COMPATIBLE-PARTICLE-ROUTE` permits a product node to reuse one exact selected original particle root only when it has width one, an integer original button owner in `0..6`, a supported Single/Skill/Flick/Directional family and a successful judgement. This is a product reuse rule, not evidence that SV itself is original-compatible.
+- `GE-PS-PRODUCT-COMPATIBLE-PARTICLE-ROUTE` permits a product node to reuse one exact selected original particle root only when it has width one, an integer original button owner in `0..6`, a supported Single/Skill/Flick/Directional family and a successful judgement. This is a geometry reuse boundary, not evidence that SV itself exists in the original.
 - Fractional/outside/wide nodes continue judgement, Judge HUD, score/life, SE and lifecycle atomically without inventing a nearest button or substitute particle. `GE-PS-PRODUCT-NONDISCRETE-PARTICLE-OMISSION` records that isolated product behavior; it is not a launch/session failure and makes no original visual-equivalence claim.
 - The selected TapEffect/Directional whole-pack module graph remains prepared by the shared deterministic particle backend. Only that backend may consume its particle textures and renderer/material profiles.
 
@@ -80,7 +88,7 @@ Reverse remains the only authority for original behavior.
 - Primary/Secondary judgement adjustment and MvDarkness use the same global original owners; product charts do not create alternate clocks or movie-opacity controls.
 - Product nodes freeze `shortRhythmUnder8beat`; NoteColor uses the original normal/normal16 predicate and selected atlas.
 - SyncLine endpoints enter the shared `SyncLineConnectionRules` in source batch order, preserving connection ownership, pending-tail decisions and directional endpoint selection. Extended connections are resolved once as chart relationships: signed SV may reveal batches out of music order, so music launcher time cannot gate their creation a second time. Display requires both committed endpoints to be visible and in Move; ordinary endpoints still obtain that state from NoteManager. The ordinary command producer owns line objects, material binding and geometry.
-- VisibleTapLaneEffect remains owned by the common 13-slot GamePlayButton owner. Compatible integer width-one product nodes reuse its exact slot/texture mapping; the product renderer creates no duplicate fixed-`NoteLaneEffect_4` sidecar. Fractional/outside/wide nodes do not use nearest-slot substitution. Turning it Off does not disable selected particles, Judge, SE, Combo, Score or Life.
+- VisibleTapLaneEffect remains owned by the common 13-slot GamePlayButton owner. The shared judgement span selects a slot only when its exact center coincides with one of the 13 fixed centers and the span is inside the original field; no nearest-slot substitution or duplicate fixed-`NoteLaneEffect_4` sidecar is created. Turning it Off does not disable selected particles, Judge, SE, Combo, Score or Life.
 - Product Slide strips use the selected curve texture with the original base-mesh white RGB and `0.8` alpha. Hidden connections preserve geometry continuity but do not add an invented chain-wide tint or alpha reduction. The texture is not recolored with a second saturated-green multiplier.
 - SV entry uses progress zero of the shared note motion equation, not an empirical curve cutoff. An endpoint that has not entered retains its original launcher transform; sprite visibility does not independently kill its strip. Signed-SV strip clipping uses the current camera viewport mapped through the same start/goal projection and preserves the original UV fraction. Curve one is the judgement position, not the viewport bottom. The common original NoteLane mask still applies. Multi-directional viewport selection includes both authored launcher spacing and travelled spacing.
 - These continuous/outside projections are `closed-product-extension`. They are not evidence that the original discrete GamePlayButton/NoteSyncLine owners accept fractional or outside lanes.
@@ -283,11 +291,11 @@ physical speaker onset or Stage 9 application integration.
 
 多格 Directional、不同音符间的 SyncLine、Slide 连续跟随与持续粒子均为原作已有功能，不作为扩展渲染链路保留。
 
-旧 `GarupaProductRenderProducer` 已删除。[Garupa 输入适配器](engine/garupa/garupaRenderInputAdapter.ts) 仅提交时间轴、坐标和图结构产生的呈现输入；[RenderCommandProducer](engine/rendering/renderCommandProducer.ts) 统一拥有资源绑定、对象、绘制命令、动画计时与会话释放。原作池路径及适配输入共用完整连接线命令、Slide 网格提交、变换和动画推进。Slide 闪光属于实际根节点，不再建立影子根节点。粒子统一使用 `note-slide` 所有者，不以原作/扩展标签分流。
+旧 `GarupaProductRenderProducer` 已删除。[Garupa 输入适配器](engine/garupa/garupaRenderInputAdapter.ts) 仅提交时间轴、坐标和图结构产生的呈现输入；[RenderCommandProducer](engine/rendering/renderCommandProducer.ts) 统一拥有资源绑定、对象、绘制命令、动画计时与会话释放。原作池路径及适配输入共用完整连接线命令、Slide 网格提交、变换和动画推进。Slide 闪光属于实际根节点，不再建立影子根节点。粒子使用共同的 `note-slide` 输出所有者；持有状态路由仍有待合并分支，不能据输出类型相同宣布生命周期共用。
 
 | 保留输入 | 原作输入域外的必要适配 | 进入的共用路径 |
 | --- | --- | --- |
-| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 裁剪反向、停止及坐标溢出区间 | 原作运动、Slide 状态机、曲线和网格条带；组名本身不切换规则 |
+| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 裁剪反向、停止及坐标溢出区间 | 独立音符已进入同一 NoteManager；原作运动函数、曲线和网格条带已共用，Slide 状态归属仍待合并 |
 | 连续/域外坐标及超出原作域的宽度 | [simulatorSceneLayout](scene/simulatorSceneLayout.ts) 投影新增坐标；Directional 跨度提供单格主体及端点输入；缺少原作精确资源键时采用明确字形映射 | 原作主体、方向图标、连接线、缩放、深度、动画和粒子；多格本身不是扩展 |
 | 原作不支持的 Slide 图结构 | [slideRenderExtension](engine/garupa/slideRenderExtension.ts) 将单节点、同拍、隐藏首尾及内部新增类型转换为状态输入 | 原作根跟随、Wait/Move/Stop、隐藏、网格和闪光；[garupaSyncInputs](engine/garupa/garupaSyncInputs.ts) 只组织端点，连接决策由 [SyncLineConnectionRules](engine/rendering/syncLineConnectionRules.ts) 同时供原作 NoteManager 与适配输入使用 |
 | CS-V1 超出预置数位的加分数值 | 超出原作数字对象容量时增加数字 Sprite | 原作数字 atlas、布局、间距、缩放、透明度和层级 |

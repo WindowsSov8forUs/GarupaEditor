@@ -162,6 +162,10 @@ interface DirectionalVisualTailOwner {
 }
 
 export class NoteManager {
+  private readonly activeBySource = new Map<NoteInformation, NoteBase>();
+  private readonly projectedNotes = new WeakSet<NoteBase>();
+  getActiveNote(source: NoteInformation): NoteBase | null { return this.activeBySource.get(source) ?? null; }
+
   private readonly activeNotesValue: NoteBase[] = [];
   private readonly activeBpmChangesValue: NoteBpmChange[] = [];
   private readonly bpmPoolValue = Array.from(
@@ -418,7 +422,7 @@ export class NoteManager {
     const requiresSyncLinePool = this.renderProducer !== null && !degradedHabahiro &&
       this.inGameCalculatedData.isSyncLineEnabled &&
       this.batches.reduce((count, batch) => count + batch.informationList.filter(information =>
-        !isNonPlayableCommand(information)).length, 0) > 1;
+        !isNonPlayableCommand(information) && information.laneSpan === undefined).length, 0) > 1;
     if (
       requiresSyncLinePool &&
       (this.ordinaryNoteScene === null ||
@@ -441,13 +445,13 @@ export class NoteManager {
       );
     const renderSetup = this.renderProducer?.preflightPoolSetup(
       [...familyNotes].flatMap(([family, notes]) =>
-        notes.map((information, index) => Object.freeze({
+        notes.flatMap((information, index) => information.laneSpan !== undefined ? [] : [Object.freeze({
           family,
           poolObjectId: `${family}:${index}`,
           ...(family === "slide" && !degradedHabahiro
             ? { slideChildCount: information.slideNoteList.length }
             : {}),
-        }))),
+        })])),
       requiresSyncLinePool ? SYNC_LINE_POOL_LENGTH : 0,
       requiresMultipleDirectionalLinePool
         ? MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH
@@ -456,8 +460,9 @@ export class NoteManager {
     if (renderSetup?.status === "integrity-failure") return renderSetup;
 
     for (const [family, notes] of familyNotes) {
-      const objects = notes.map((_, index) => {
+      const objects = notes.map((source, index) => {
         const note = this.createPoolObject(family, `${family}:${index}`);
+        if (source.laneSpan !== undefined) this.projectedNotes.add(note);
         if (note instanceof NoteSlide || note instanceof NoteLong) note.onTouchKeepSound = (index, action) => {
           if (action === "start" && this.isMoveTime()) return;
           this.pendingHoldSounds.push({ ownerKey: `${note instanceof NoteSlide ? "slide" : "long"}:${index}`, action });
@@ -531,7 +536,7 @@ export class NoteManager {
         });
         if (this.renderProducer !== null) {
           note.registerRenderDeactivationOwner(() =>
-            this.renderProducer!.preflightNoteDeactivation(
+            note.noteInformation?.laneSpan !== undefined ? ok(null) : this.renderProducer!.preflightNoteDeactivation(
               note.poolObjectId,
               this.ordinarySyncLinePoolIndicesForNote(note),
               this.ordinaryLongRenderStates.has(note),
@@ -699,7 +704,7 @@ export class NoteManager {
         return multipleDirectionalLineUpdate;
       }
 
-      const activationResult = this.activateCurrentBatch(substepIndex);
+      const activationResult = this.activateDueBatches(substepIndex);
       if (activationResult.status !== "ok") {
         return activationResult;
       }
@@ -937,6 +942,7 @@ export class NoteManager {
   }
 
   private clearRuntimeForDispose(): void {
+    this.activeBySource.clear();
     this.pendingHoldSounds.length = 0;
     for (const bpm of this.bpmPoolValue) {
       bpm.resetForDispose();
@@ -1082,6 +1088,7 @@ export class NoteManager {
     useGoalDepth = false,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"],
   ): SimulatorResult<void> {
+    if (note.noteInformation?.laneSpan !== undefined) return ok(undefined);
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return integrityFailure(
         "render.note.ordinary-scene-unavailable",
@@ -1752,6 +1759,19 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  private activateDueBatches(substepIndex: number): SimulatorResult<void> {
+    for (;;) {
+      const index = this.nextBatchIndexValue;
+      const batch = this.batches[index];
+      const activated = this.activateCurrentBatch(substepIndex);
+      if (activated.status !== "ok") return activated;
+      // Additional geometry-only positions must not consume an original batch's
+      // launcher opportunity. The original batch still ends this substep's scan.
+      if (this.nextBatchIndexValue === index || batch === undefined ||
+        batch.informationList.some(source => source.laneSpan === undefined)) return ok(undefined);
+    }
+  }
+
   private activateCurrentBatch(substepIndex: number): SimulatorResult<void> {
     const batch = this.batches[this.nextBatchIndexValue];
     if (batch === undefined) {
@@ -1801,7 +1821,7 @@ export class NoteManager {
       let renderedState: OrdinaryRenderedNoteState | null = null;
       let longChildState: OrdinaryLongNormalChildState | null = null;
       let slideChildStates: readonly OrdinarySlideChildState[] | null = null;
-      if (this.renderProducer !== null) {
+      if (this.renderProducer !== null && noteInformation.laneSpan === undefined) {
         if (this.ordinaryNoteScene === null) {
           return integrityFailure(
             "render.note.ordinary-scene-unavailable",
@@ -1914,7 +1934,8 @@ export class NoteManager {
     for (let offset = 0; offset < pool.objects.length; offset += 1) {
       const index = (pool.cursor + offset) % pool.objects.length;
       const note = pool.objects[index];
-      if (note === undefined || note.state !== NoteState.Deactive) {
+      if (note === undefined || note.state !== NoteState.Deactive ||
+        this.projectedNotes.has(note) !== (noteInformation.laneSpan !== undefined)) {
         continue;
       }
       return ok({
@@ -1932,12 +1953,14 @@ export class NoteManager {
   }
 
   private appendActiveNote(note: NoteBase): void {
+    if (note.noteInformation !== null) this.activeBySource.set(note.noteInformation, note);
     if (!this.activeNotesValue.includes(note)) {
       this.activeNotesValue.push(note);
     }
   }
 
   private removeActiveNote(note: NoteBase): void {
+    if (note.noteInformation !== null) this.activeBySource.delete(note.noteInformation);
     const index = this.activeNotesValue.indexOf(note);
     if (index >= 0) {
       this.activeNotesValue.splice(index, 1);
@@ -2128,7 +2151,7 @@ function validateBpmCommand(
 }
 
 function isNonPlayableCommand(noteInformation: NoteInformation): boolean {
-  return noteInformation.buttonType === ButtonType.None;
+  return noteInformation.buttonType === ButtonType.None && noteInformation.laneSpan === undefined;
 }
 
 const unavailableManualInputGeometry: SimulatorManualInputGeometryBackend = {
