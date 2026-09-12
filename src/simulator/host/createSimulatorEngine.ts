@@ -1270,6 +1270,7 @@ export function createSimulatorEngine(
         input.startupDirection.purpose,
         movieBackgroundResult.value,
         primaryJudgementAdjustment,
+        input.startupDirection.firstViewPresented,
       );
   const inGameManager: InGameManager = new InGameManager(
     musicScoreController,

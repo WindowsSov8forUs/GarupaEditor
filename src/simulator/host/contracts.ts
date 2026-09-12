@@ -70,6 +70,7 @@ export interface SimulatorEngineInput {
   };
   readonly startupDirection?: {
     readonly scene: StartupDirectionSceneBackend | null;
+    readonly firstViewPresented?: boolean;
     readonly liveStartVoiceCue: string | null;
     readonly purpose: StartupDirectionPurpose;
   };

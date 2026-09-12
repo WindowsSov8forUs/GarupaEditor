@@ -1272,4 +1272,6 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 
 底部条显示请求批次中已成功就绪的唯一资源数/资源总数，已缓存资源可立即计入，失败资源不计入；不是七等分的阶段计数、剩余时间或CPU解码完成度。当前file-list加载分支从入口即调用showLoadingGauge，漫画Y固定60；首次资源通知前为0，不因暂未取得总量调用另一个hideLoadingGauge分支。原作AllProgress直接赋给Slider，百分比截断；Sliced前景显示宽度为14+666p，p<0.001禁用。Other背景依据Reverse `928a304d`的UITexture type=2与TiledFill：从1334×1000区域左下角开始，按117×142纹理尺寸平铺，边缘不足一块时截取对应UV；随后整体按屏幕宽度缩放并居中裁去视口外部分。不能将单张纹理直接拉伸成整个背景；原有RGB约38–47不变，frame_back也平铺。白色漫画底板以MenuAtlas边框14和680×460尺寸在同一2D画布绘制九宫格，再随UI根缩放；内部切片不再由CSS border-image分别缩放。六个启用装饰Tween保留父缩放、底部枢轴、初始延迟与PingPong，曲线2f−f²由宿主动画实现；同一对象的同步位移/缩放合并采样。字体栅格化和九宫格仍由宿主处理。
 
-封面0.1秒淡入从可见的场景交接开始。传输lease先释放，宿主完成delta=0的初始化帧后同步移除加载层并重新建立RAF时钟基准；初始化耗时不得消耗淡入。入场音频遵守Gaya淡出→PlayingNone→后续更新的判定调整门槛→prepared BGM恢复→PlayingSound；Stage和轨道并行演出不额外阻塞音乐。Gaya在音乐门槛开始1.5秒淡出，不等待循环音源自然结束；普通入口约5秒来自串行阶段和帧边界，不是全局固定延时，语音/MV/判定调整仍按各自分支处理。
+封面时序依据已发布的`startup-direction-runtime-contract-10-1-4`：`ExecStart`先显示首屏，再准备剩余资源，`onOPDirector`中的Play等待首屏显示完成后才进入0.9秒停留和1秒淡出。生产在封面所需渲染资源就绪时启动原有0.1秒淡入，并与剩余音频/粒子准备并行；淡入完成后保持alpha=1，不能在加载层后提前消耗，也不能把所有准备移到封面之前。宿主先提交delta=0画面再同步移除加载层；首屏已显示的正式演出从停留段接续，不重复淡入。Retry的临时首屏持续到新场景接管，挂载时重建宿主帧时钟，资源准备耗时不计入新一局；MoveTime仍走既有重建路径。
+
+入场音频遵守Gaya淡出→PlayingNone→后续更新的判定调整门槛→prepared BGM恢复→PlayingSound；Stage和轨道并行演出不额外阻塞音乐。Gaya在音乐门槛开始1.5秒淡出，不等待循环音源自然结束。普通无语音/MV额外等待时，Play后的串行阶段名义合计4.9秒，另有帧边界；封面首次显示至音乐还包含资源准备等待，不能称为固定5秒。原作已发布Practice记录中，首屏淡入完成至Play间隔1.721秒，Play至PlayingSound间隔4.956秒；这是该次运行的观察值，不作为产品延时常量。语音/MV/判定调整仍按各自分支处理。

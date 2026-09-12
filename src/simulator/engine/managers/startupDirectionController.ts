@@ -79,6 +79,7 @@ export class StartupDirectionController {
     private readonly purpose: StartupDirectionPurpose = "initial",
     private readonly mvBackground: MvBackgroundModule | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
+    private readonly firstViewPresented = false,
   ) {
     this.startupAudio = audio === null
       ? null
@@ -130,6 +131,11 @@ export class StartupDirectionController {
         gameplayVisible: true,
         rehearsalControlsVisible: this.mode.sessionMode === "rehearsal",
       });
+      return ok(undefined);
+    }
+    if (this.firstViewPresented) {
+      this.enter("information-hold", GameState.OPFirstAnimStart);
+      this.publish({ informationPhase: "holding", informationAlpha: Math.fround(1) });
       return ok(undefined);
     }
     this.phaseElapsedValue = 0;

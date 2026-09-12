@@ -1,4 +1,5 @@
 import { Container } from "pixi.js";
+import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { BrowserAudioResourcePreflightAdapter } from "../backends/audio/browserAudioResourcePreflightAdapter";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
 import { BrowserMovieResourcePreflightAdapter } from "../backends/movie/browserMovieResourcePreflightAdapter";
@@ -105,8 +106,14 @@ export interface SimulatorGraphicsMount {
   dispose(): void;
 }
 
+export interface SimulatorPreparationPresentation {
+  readonly ready: Promise<void>;
+  stop(): void;
+}
+
 export interface SimulatorGraphicsSurface {
   readSurfaceState(): SimulatorSurfaceState;
+  presentPreparation(root: Container, advance: (deltaSeconds: number) => boolean): SimulatorPreparationPresentation;
   mount(
     sessionId: string,
     sceneRoot: Container,
@@ -293,250 +300,298 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       new BrowserPixiParticleTextureDecoder(),
       gameplayRenderOrder,
     );
-    const firstView: { scene: PixiStartupDirectionScene | null } = { scene: null };
-    const assembly = await assembleSimulatorResources(
-      bgm.value,
-      selection,
-      resourceLease.value,
-      {
-        sessionId,
-        rendering: {
-          backend: renderer,
-          preflight: new PortableRenderResourcePreflightAdapter(),
-          onPrepared: async (scene, backgroundImage) => {
-            const surfaceBound = renderer.bindOriginalSurfaceLayout(scene.surfaceLayout);
-            if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);
-            const effectivePresentation = replacePreparedSessionStageBackdrop(presentation.value, backgroundImage);
-            if (effectivePresentation.status === "rejected") return effectivePresentation;
-            const common = renderer.getStartupDirectionCommonResources();
-            if (common.status !== "ok") return fromIntegrity(common);
-            const created = await createPixiStartupDirectionScene(
-              effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
-              recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
+    const firstView: {
+      scene: PixiStartupDirectionScene | null;
+      presentation: SimulatorPreparationPresentation | null;
+      ready: Promise<SimulatorAssemblyResult<void>> | null;
+    } = { scene: null, presentation: null, ready: null };
+    const presentationFailure = (error: unknown): SimulatorAssemblyResult<void> => rejected(
+      "launch-failed", "simulator.composition.first-view-presentation-failed",
+      `The prepared first view could not be presented: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    let preparationTransferred = false;
+    const preparationRoot = new Container();
+    try {
+      const assembly = await assembleSimulatorResources(
+        bgm.value,
+        selection,
+        resourceLease.value,
+        {
+          sessionId,
+          rendering: {
+            backend: renderer,
+            preflight: new PortableRenderResourcePreflightAdapter(),
+            onPrepared: async (scene, backgroundImage) => {
+              const surfaceBound = renderer.bindOriginalSurfaceLayout(scene.surfaceLayout);
+              if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);
+              const effectivePresentation = replacePreparedSessionStageBackdrop(presentation.value, backgroundImage);
+              if (effectivePresentation.status === "rejected") return effectivePresentation;
+              const common = renderer.getStartupDirectionCommonResources();
+              if (common.status !== "ok") return fromIntegrity(common);
+              const created = await createPixiStartupDirectionScene(
+                effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
+                recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
+              );
+              if (created.status !== "ok") return fromIntegrity(created);
+              firstView.scene = created.value;
+              if (!moveTimeCandidate) {
+                const direction = new StartupDirectionController(score.value.mode, created.value);
+                const initialized = direction.initialize();
+                if (initialized.status !== "ok") return fromIntegrity(initialized);
+                preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
+                try {
+                  firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
+                    if (direction.snapshot().phase !== "first-view") return true;
+                    const advanced = direction.step(Math.fround(delta));
+                    if (advanced.status !== "ok") throw new Error(advanced.boundary);
+                    return direction.snapshot().phase !== "first-view";
+                  });
+                  // ExecStart loads the remaining resources while ShowAnimation
+                  // reveals the card. Play waits for both resource and view readiness.
+                  firstView.ready = firstView.presentation.ready.then(() => accepted(undefined), presentationFailure);
+                } catch (error) {
+                  return presentationFailure(error);
+                }
+              }
+              return accepted(undefined);
+            },
+          },
+          audio: {
+            backend: audio,
+            preflight: this.audioPreflight,
+          },
+          particles: {
+            backend: particles,
+            renderer: particleRenderer,
+            preflight: new PortableParticleResourcePreflightAdapter(),
+          },
+          createSceneLayout: (kind, resources, fieldBindings) => {
+            const scene = createSimulatorSceneLayout(
+              surface.value,
+              {
+                ...recipe.request.config.visual,
+                judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
+                syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
+              },
+              kind,
+              resources,
+              fieldBindings,
             );
-            if (created.status !== "ok") return fromIntegrity(created);
-            firstView.scene = created.value;
-            return accepted(undefined);
+            return scene.status === "ok" ? accepted(scene.value) : fromIntegrity(scene);
           },
         },
+      );
+      if (assembly.status === "rejected") {
+        firstView.scene?.dispose();
+        await resourceLease.value.release();
+        return rejectedWithCleanup(assembly, releasePendingMovie());
+      }
+      const startupScene = firstView.scene;
+      if (startupScene === null) throw new Error("Prepared renderer did not publish its startup scene.");
+      const presented = await firstView.ready;
+      if (presented?.status === "rejected") {
+        startupScene.dispose();
+        return rejectedWithCleanup(presented, Object.freeze([
+          ...disposeAssembly(assembly.value, null),
+          ...releasePendingMovie(),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ]));
+      }
+      const movie = mvResource.value === null
+        ? null
+        : new PixiMvLiveBackend(false, originalLayout.value.movie);
+      if (movie !== null) {
+        const prepared = await movie.prepare(sessionId, mvResource.value!);
+        if (prepared.status !== "accepted") {
+          startupScene.dispose();
+          return rejectedWithCleanup(
+            fromMovieOperation(prepared),
+            Object.freeze([
+              ...disposeAssembly(assembly.value, movie),
+              ...releasePendingMovie(),
+              ...await releaseResourceLeaseCleanup(resourceLease.value),
+            ]),
+          );
+        }
+        pendingMovieOwned = false;
+      }
+      const gains = gainBits(recipe.request);
+      if (gains.status === "rejected") {
+        startupScene.dispose();
+        return rejectedWithCleanup(gains, Object.freeze([
+          ...disposeAssembly(assembly.value, movie),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ]));
+      }
+      const tracing = createRecordingSimulatorBackends();
+      const backends: SimulatorBackends = Object.freeze({
+        renderer: tracing.renderer,
+        rendering: assembly.value.rendererBackend,
+        audio: assembly.value.audioBackend,
+        ...(movie === null ? {} : { movie }),
+        particles: assembly.value.particleBackend,
+        particleRendering: assembly.value.particleRendererBackend,
+        input: tracing.input,
+        resources: tracing.resources,
+        lifecycle: Object.freeze({
+          recordState: (state: SimulatorLifecycleBackendState) => {
+            this.platform.publishLifecycleState(state);
+          },
+        }),
+        frameRate: Object.freeze({
+          requestTargetFrameRate: (value: 60 | 120) => {
+            this.platform.requestTargetFrameRate(value);
+          },
+        }),
+        manualInputGeometry: assembly.value.sceneLayout.manualInputGeometry,
+        snapshot: () => tracing.snapshot(),
+      });
+      const engine = createSimulatorEngine({
+        chart: chart.value,
+        runtime: {
+          specificSpeed: assembly.value.sceneLayout.ordinaryNoteScene.specificSpeed,
+          originalLiveSettings: originalLiveSettings.value,
+          mode: score.value.mode,
+        },
+        scoreLifeState: score.value,
+        rendering: {
+          sessionId,
+          resources: assembly.value.renderBindings,
+          ordinaryNoteScene: assembly.value.sceneLayout.ordinaryNoteScene,
+          garupaProductScene: assembly.value.sceneLayout.garupaProductScene,
+        },
         audio: {
-          backend: audio,
-          preflight: this.audioPreflight,
+          sessionId,
+          bgmCue: bgm.value.profile.cue,
+          seekMilliseconds: 0,
+          masterGainBits: gains.value.master,
+          bgmGainBits: gains.value.bgm,
+          seGainBits: gains.value.se,
         },
         particles: {
-          backend: particles,
-          renderer: particleRenderer,
-          preflight: new PortableParticleResourcePreflightAdapter(),
+          sessionId,
+          scene: assembly.value.sceneLayout.particleScene,
+          gameClearProfile: assembly.value.gameClearProfile,
         },
-        createSceneLayout: (kind, resources, fieldBindings) => {
-          const scene = createSimulatorSceneLayout(
-            surface.value,
-            {
-              ...recipe.request.config.visual,
-              judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
-              syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
-            },
-            kind,
-            resources,
-            fieldBindings,
-          );
-          return scene.status === "ok" ? accepted(scene.value) : fromIntegrity(scene);
+        ...(movie === null || mvResource.value === null
+          ? {}
+          : {
+              movie: {
+                sessionId,
+                musicStartDelayMilliseconds:
+                  mvResource.value.profile.musicStartDelayMilliseconds,
+              },
+            }),
+        startupDirection: {
+          scene: startupScene,
+          firstViewPresented: !moveTimeCandidate,
+          liveStartVoiceCue: null,
+          purpose,
         },
-      },
-    );
-    if (assembly.status === "rejected") {
-      firstView.scene?.dispose();
-      await resourceLease.value.release();
-      return rejectedWithCleanup(assembly, releasePendingMovie());
-    }
-    const startupScene = firstView.scene;
-    if (startupScene === null) throw new Error("Prepared renderer did not publish its startup scene.");
-    const movie = mvResource.value === null
-      ? null
-      : new PixiMvLiveBackend(false, originalLayout.value.movie);
-    if (movie !== null) {
-      const prepared = await movie.prepare(sessionId, mvResource.value!);
-      if (prepared.status !== "accepted") {
+      }, backends);
+      if (engine.status !== "ok") {
         startupScene.dispose();
         return rejectedWithCleanup(
-          fromMovieOperation(prepared),
+          fromIntegrity(engine),
+          Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
+        );
+      }
+      const controlOverlay = renderer.createInGameControlOverlay(
+        score.value.mode,
+        bgm.value.profile.durationSeconds,
+        assembly.value.sceneLayout.surfaceLayout,
+      );
+      if (controlOverlay.status !== "ok") {
+        const cleanup = simulatorCleanupFailureFromResult(
+          "engine-after-control-overlay-failure",
+          engine.value.dispose(),
+        );
+        return rejectedWithCleanup(
+          fromIntegrity(controlOverlay),
           Object.freeze([
-            ...disposeAssembly(assembly.value, movie),
-            ...releasePendingMovie(),
+            ...(cleanup === null ? [] : [cleanup]),
             ...await releaseResourceLeaseCleanup(resourceLease.value),
           ]),
         );
       }
-      pendingMovieOwned = false;
-    }
-    const gains = gainBits(recipe.request);
-    if (gains.status === "rejected") {
-      startupScene.dispose();
-      return rejectedWithCleanup(gains, Object.freeze([
-        ...disposeAssembly(assembly.value, movie),
-        ...await releaseResourceLeaseCleanup(resourceLease.value),
-      ]));
-    }
-    const tracing = createRecordingSimulatorBackends();
-    const backends: SimulatorBackends = Object.freeze({
-      renderer: tracing.renderer,
-      rendering: assembly.value.rendererBackend,
-      audio: assembly.value.audioBackend,
-      ...(movie === null ? {} : { movie }),
-      particles: assembly.value.particleBackend,
-      particleRendering: assembly.value.particleRendererBackend,
-      input: tracing.input,
-      resources: tracing.resources,
-      lifecycle: Object.freeze({
-        recordState: (state: SimulatorLifecycleBackendState) => {
-          this.platform.publishLifecycleState(state);
-        },
-      }),
-      frameRate: Object.freeze({
-        requestTargetFrameRate: (value: 60 | 120) => {
-          this.platform.requestTargetFrameRate(value);
-        },
-      }),
-      manualInputGeometry: assembly.value.sceneLayout.manualInputGeometry,
-      snapshot: () => tracing.snapshot(),
-    });
-    const engine = createSimulatorEngine({
-      chart: chart.value,
-      runtime: {
-        specificSpeed: assembly.value.sceneLayout.ordinaryNoteScene.specificSpeed,
-        originalLiveSettings: originalLiveSettings.value,
-        mode: score.value.mode,
-      },
-      scoreLifeState: score.value,
-      rendering: {
-        sessionId,
-        resources: assembly.value.renderBindings,
-        ordinaryNoteScene: assembly.value.sceneLayout.ordinaryNoteScene,
-        garupaProductScene: assembly.value.sceneLayout.garupaProductScene,
-      },
-      audio: {
-        sessionId,
-        bgmCue: bgm.value.profile.cue,
-        seekMilliseconds: 0,
-        masterGainBits: gains.value.master,
-        bgmGainBits: gains.value.bgm,
-        seGainBits: gains.value.se,
-      },
-      particles: {
-        sessionId,
-        scene: assembly.value.sceneLayout.particleScene,
-        gameClearProfile: assembly.value.gameClearProfile,
-      },
-      ...(movie === null || mvResource.value === null
-        ? {}
-        : {
-            movie: {
-              sessionId,
-              musicStartDelayMilliseconds:
-                mvResource.value.profile.musicStartDelayMilliseconds,
-            },
-          }),
-      startupDirection: {
-        scene: startupScene,
-        liveStartVoiceCue: null,
-        purpose,
-      },
-    }, backends);
-    if (engine.status !== "ok") {
-      startupScene.dispose();
-      return rejectedWithCleanup(
-        fromIntegrity(engine),
-        Object.freeze([...disposeAssembly(assembly.value, movie), ...await releaseResourceLeaseCleanup(resourceLease.value)]),
+      renderer.stage.visible = false;
+      renderer.stage.alpha = 0;
+      preparationRoot.removeChildren();
+      const combinedScene = createPixiCombinedScene(
+        particleRenderer.stage,
+        renderer.stage,
+        startupScene,
+        movie?.stage,
+        particleRenderer.highSortingStage,
+        gameplayRenderOrder,
+        alpha => renderer.applyStartupLineAlpha(alpha),
       );
-    }
-    const controlOverlay = renderer.createInGameControlOverlay(
-      score.value.mode,
-      bgm.value.profile.durationSeconds,
-      assembly.value.sceneLayout.surfaceLayout,
-    );
-    if (controlOverlay.status !== "ok") {
-      const cleanup = simulatorCleanupFailureFromResult(
-        "engine-after-control-overlay-failure",
-        engine.value.dispose(),
-      );
-      return rejectedWithCleanup(
-        fromIntegrity(controlOverlay),
-        Object.freeze([
-          ...(cleanup === null ? [] : [cleanup]),
-          ...await releaseResourceLeaseCleanup(resourceLease.value),
-        ]),
-      );
-    }
-    renderer.stage.visible = false;
-    renderer.stage.alpha = 0;
-    const combinedScene = createPixiCombinedScene(
-      particleRenderer.stage,
-      renderer.stage,
-      startupScene,
-      movie?.stage,
-      particleRenderer.highSortingStage,
-      gameplayRenderOrder,
-      alpha => renderer.applyStartupLineAlpha(alpha),
-    );
-    if (combinedScene.status !== "ok") {
-      const cleanups = [
-        simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value.dispose()),
-        simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose()),
-        ...await releaseResourceLeaseCleanup(resourceLease.value),
-      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-      return rejectedWithCleanup(fromIntegrity(combinedScene), cleanups);
-    }
-    const deferredMount = purpose !== "initial";
-    combinedScene.value.root.visible = !deferredMount;
-    let mount: SimulatorGraphicsMount | null = null;
-    if (!deferredMount) {
-      const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
-      if (mounted.status === "rejected") {
+      if (combinedScene.status !== "ok") {
         const cleanups = [
-          simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value.dispose()),
-          simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
-          simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+          simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value.dispose()),
+          simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose()),
           ...await releaseResourceLeaseCleanup(resourceLease.value),
         ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-        return rejectedWithCleanup(mounted, cleanups);
+        return rejectedWithCleanup(fromIntegrity(combinedScene), cleanups);
       }
-      mount = mounted.value;
+      const deferredMount = purpose !== "initial";
+      combinedScene.value.root.visible = !deferredMount || firstView.presentation !== null;
+      if (firstView.presentation !== null) preparationRoot.addChild(combinedScene.value.root);
+      let mount: SimulatorGraphicsMount | null = null;
+      if (!deferredMount) {
+        const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
+        if (mounted.status === "rejected") {
+          const cleanups = [
+            simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value.dispose()),
+            simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
+            simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+            ...await releaseResourceLeaseCleanup(resourceLease.value),
+          ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+          return rejectedWithCleanup(mounted, cleanups);
+        }
+        mount = mounted.value;
+      }
+      const mountedEngine = new MountedSimulatorEngine(
+        engine.value,
+        mount,
+        combinedScene.value,
+        controlOverlay.value,
+        resourceLease.value,
+        this.platform.graphics,
+        sessionId,
+        firstView.presentation,
+      );
+      preparationTransferred = true;
+      const registered = registerSimulatorEngineMoveTimeWrapper(
+        mountedEngine,
+        engine.value,
+        () => mountedEngine.publishMount(),
+        (active) => controlOverlay.value.setMoveTimeInProgress(active),
+      );
+      if (registered.status !== "ok") {
+        return rejectedWithCleanup(fromIntegrity(registered), [
+          simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
+          simulatorCleanupFailureFromResult("resources-after-wrapper-registration-failure", await mountedEngine.settleDisposal()),
+        ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
+      }
+      return accepted(Object.freeze({
+        engine: mountedEngine,
+        bgmDurationSeconds: bgm.value.profile.durationSeconds,
+        mode: score.value.mode,
+        chartFidelity: getGarupaProductChartProfile(chart.value)?.hasExtensions
+          ? "garupa-product-extension" as const
+          : "standard-original-compatible" as const,
+        originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings.value),
+        skinRecipeIdentity: assembly.value.skinRecipeIdentity,
+        skinFidelity: skin.value.fidelity,
+        surface: surface.value,
+        controlLayout: originalLayout.value,
+        readSurface: () => readPlatformSurface(this.platform.graphics),
+      }));
+    } finally {
+      if (!preparationTransferred) firstView.presentation?.stop();
+      if (firstView.presentation === null) preparationRoot.destroy({ children: false });
     }
-    const mountedEngine = new MountedSimulatorEngine(
-      engine.value,
-      mount,
-      combinedScene.value,
-      controlOverlay.value,
-      resourceLease.value,
-      this.platform.graphics,
-      sessionId,
-    );
-    const registered = registerSimulatorEngineMoveTimeWrapper(
-      mountedEngine,
-      engine.value,
-      () => mountedEngine.publishMount(),
-      (active) => controlOverlay.value.setMoveTimeInProgress(active),
-    );
-    if (registered.status !== "ok") {
-      return rejectedWithCleanup(fromIntegrity(registered), [
-        simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
-        simulatorCleanupFailureFromResult("resources-after-wrapper-registration-failure", await mountedEngine.settleDisposal()),
-      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
-    }
-    return accepted(Object.freeze({
-      engine: mountedEngine,
-      bgmDurationSeconds: bgm.value.profile.durationSeconds,
-      mode: score.value.mode,
-      chartFidelity: getGarupaProductChartProfile(chart.value)?.hasExtensions
-        ? "garupa-product-extension" as const
-        : "standard-original-compatible" as const,
-      originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings.value),
-      skinRecipeIdentity: assembly.value.skinRecipeIdentity,
-      skinFidelity: skin.value.fidelity,
-      surface: surface.value,
-      controlLayout: originalLayout.value,
-      readSurface: () => readPlatformSurface(this.platform.graphics),
-    }));
   }
 
   private deriveSkin(
@@ -601,11 +656,18 @@ class MountedSimulatorEngine implements SimulatorEngine {
     private readonly resourceLease: SimulatorResourceLease,
     private readonly graphics: SimulatorGraphicsSurface,
     private readonly sessionId: string,
+    private preparation: SimulatorPreparationPresentation | null = null,
   ) {
     this.mount = mount;
+    if (mount !== null) {
+      this.preparation?.stop();
+      this.preparation = null;
+    }
   }
 
   publishMount(): SimulatorResult<void> {
+    this.preparation?.stop();
+    this.preparation = null;
     if (this.disposed || this.mount !== null || this.combinedScene.root.parent !== null) {
       return integrityFailure(
         "simulator.composition.invalid-fresh-visual-publication",
@@ -686,6 +748,8 @@ class MountedSimulatorEngine implements SimulatorEngine {
   dispose(): SimulatorResult<void> {
     if (this.disposed) return this.engine.dispose();
     this.disposed = true;
+    this.preparation?.stop();
+    this.preparation = null;
     const disposeOwner = (owner: string, operation: () => SimulatorResult<void>): SimulatorResult<void> => {
       try { return operation(); }
       catch (error) {
@@ -783,6 +847,7 @@ function validatePlatform(
     platform.audioContext == null || typeof platform.audioContext !== "object" ||
     platform.graphics == null || typeof platform.graphics.mount !== "function" ||
     typeof platform.graphics.readSurfaceState !== "function" ||
+    typeof platform.graphics.presentPreparation !== "function" ||
     platform.scheduler == null || typeof platform.scheduler.start !== "function" ||
     platform.input == null || typeof platform.input.consume !== "function" || typeof platform.input.dispose !== "function" ||
     typeof platform.requestTargetFrameRate !== "function" ||
