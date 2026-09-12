@@ -72,8 +72,6 @@ export interface ProductJudgementReflectTransaction {
 }
 
 interface ProductJudgementSubmission {
-  readonly submitted: number;
-  readonly remaining: number;
   publishOwner(): SimulatorResult<void>;
   discard(): SimulatorResult<void>;
 }
@@ -352,27 +350,6 @@ export class GarupaProductTimelineManager {
     return committed.status === "ok" ? committed : rollback(committed);
   }
 
-  submitPendingJudgementBatch(): SimulatorResult<{
-    readonly submitted: number;
-    readonly remaining: number;
-  }> {
-    const planned = this.preflightPendingJudgementBatch();
-    if (planned.status !== "ok") return planned;
-    if (planned.value === null) {
-      return ok(Object.freeze({
-        submitted: 0,
-        remaining: this.pendingJudgements.length,
-      }));
-    }
-    const committed = planned.value.publishOwner();
-    return committed.status === "ok"
-      ? ok(Object.freeze({
-          submitted: planned.value.submitted,
-          remaining: planned.value.remaining,
-        }))
-      : committed;
-  }
-
   preflightReflectJudgementBatch(
     batch: OneFrameJudgementBatch,
   ): SimulatorResult<ProductJudgementReflectTransaction | null> {
@@ -387,12 +364,12 @@ export class GarupaProductTimelineManager {
       entry.noteIndex === pending.request.noteInformation.index &&
       entry.absolutePosition === pending.node.absolutePosition && entry.phase === "head"));
     if (reflected.length === 0) return ok(null);
-    if (reflected.length !== this.inFlightJudgements.length || reflected.some((pending) =>
+    if (reflected.some((pending) =>
       batch.entries.filter((entry) => entry.noteIndex === pending.request.noteInformation.index &&
         entry.absolutePosition === pending.node.absolutePosition && entry.phase === "head").length !== 1)) {
       return rejected(
         "simulator.garupa-extension.reflect-source-mismatch",
-        "Every in-flight product judgement must map exactly once into the same immutable OneFrame reflection batch.",
+        "Every in-flight product judgement must map exactly once into the corresponding immutable OneFrame reflection batch.",
       );
     }
     let state: "pending" | "committed" | "discarded" = "pending";
@@ -433,9 +410,7 @@ export class GarupaProductTimelineManager {
       );
     }
     if (this.pendingJudgements.length === 0) return ok(null);
-    const capacity = this.oneFrame.availableCapacity();
-    if (capacity === 0) return ok(null);
-    const count = Math.min(capacity, 5, this.pendingJudgements.length);
+    const count = this.pendingJudgements.length;
     const entries = Object.freeze(this.pendingJudgements.slice(0, count));
     if (entries.some((entry) => entry.kind !== (this.shouldForcePerfect ? "auto" : "manual"))) {
       return rejected(
@@ -459,8 +434,6 @@ export class GarupaProductTimelineManager {
     }
     let state: "pending" | "committed" | "discarded" = "pending";
     return ok(Object.freeze({
-      submitted: count,
-      remaining: this.pendingJudgements.length - count,
       publishOwner: (): SimulatorResult<void> => {
         if (state !== "pending") return rejected("simulator.garupa-extension.repeated-batch-publish", `Product batch cannot publish from ${state}.`);
         const committed = transaction.commit();

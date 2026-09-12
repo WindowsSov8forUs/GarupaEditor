@@ -449,19 +449,7 @@ export class InGameManager {
         this.startupDirection?.reflectStageJudgements(batch);
         particleAdvanced ||= particlePlan?.status === "ok";
         firstJudgementBatch = false;
-        const nextProductBatch = this.garupaProduct?.submitPendingJudgementBatch() ?? ok({
-          submitted: 0,
-          remaining: 0,
-        });
-        if (nextProductBatch.status !== "ok") return this.latchFault(nextProductBatch);
-        if (nextProductBatch.value.remaining > 0 && nextProductBatch.value.submitted === 0 &&
-          !this.oneFrameJudgementController.existsOneFrameData()) {
-          return this.latchFault(integrityFailure(
-            "one-frame.product-batch-no-progress",
-            ["PLSO-O01", "PLSO-B01"],
-            "A product due set must reserve at least one free fixed-pool slot after Reflect/release.",
-          ));
-        }
+
       }
     }
     const tapLaneEffectAdvance = this.tapLaneEffect?.preflightAdvance(deltaTimeSeconds) ?? null;

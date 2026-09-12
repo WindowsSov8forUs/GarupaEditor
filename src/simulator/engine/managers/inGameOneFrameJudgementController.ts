@@ -77,6 +77,7 @@ export interface OneFrameJudgementBatchTransaction {
 export interface OneFrameJudgementControllerSnapshot {
   readonly initialized: boolean;
   readonly capacity: 5;
+  readonly queuedJudgementCount: number;
   readonly slots: readonly {
     readonly slot: number;
     readonly containerId: string;
@@ -108,6 +109,11 @@ export type OneFrameBusinessOwner = (
   source: NoteInformation,
 ) => SimulatorResult<OneFrameBusinessData>;
 
+interface QueuedJudgement {
+  readonly kind: "auto" | "manual";
+  readonly payload: OneFrameDataPayload;
+}
+
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
@@ -119,8 +125,9 @@ export class InGameOneFrameJudgementController {
   private manualJudgementOwner: ManualJudgementOwner | null = null;
   private businessOwner: OneFrameBusinessOwner | null = null;
   private pendingReflectPlan: OneFrameReflectPlan | null = null;
-  private pendingAutoBatchToken: object | null = null;
-  private pendingManualBatchToken: object | null = null;
+  private pendingBatchToken: object | null = null;
+  private readonly queuedJudgements: QueuedJudgement[] = [];
+  private queueCursor = 0;
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -223,9 +230,7 @@ export class InGameOneFrameJudgementController {
   }
 
   createManualJudgementTransaction(): ManualJudgementTransaction {
-    const available = this.containers.filter((container) => !container.inUse);
     const plans = new Map<ManualJudgementCommitPlan, {
-      readonly container: OneFrameDataContainer;
       readonly payload: OneFrameDataPayload;
       committed: boolean;
     }>();
@@ -233,7 +238,7 @@ export class InGameOneFrameJudgementController {
     let finished = false;
     return {
       preflight: (request) => {
-        if (aborted || finished) {
+        if (aborted || finished || !this.initializedValue) {
           return integrityFailure(
             "one-frame.manual-transaction-closed",
             ["D14", "D15", "MJ25", "MJ26"],
@@ -246,18 +251,10 @@ export class InGameOneFrameJudgementController {
         }
         const payload = this.prepareManualJudgementPayload(request);
         if (payload.status !== "ok") return payload;
-        const container = available[plans.size];
-        if (container === undefined) {
-          return integrityFailure(
-            "one-frame.pool-exhausted",
-            ["R02", "R03", "D15"],
-            "Manual preflight cannot reserve beyond the fixed five native OneFrameData slots.",
-          );
-        }
         const plan: ManualJudgementCommitPlan = Object.freeze({
           manualJudgementPlan: true,
         });
-        plans.set(plan, { container, payload: payload.value, committed: false });
+        plans.set(plan, { payload: payload.value, committed: false });
         return ok(plan);
       },
       commit: (plan) => {
@@ -266,7 +263,7 @@ export class InGameOneFrameJudgementController {
           throw new Error("Manual OneFrame transaction received a foreign or repeated plan");
         }
         owned.committed = true;
-        this.commitManualJudgementData(owned.container, owned.payload);
+        this.publishJudgements([{ kind: "manual", payload: owned.payload }]);
       },
       abort: () => {
         aborted = true;
@@ -285,189 +282,96 @@ export class InGameOneFrameJudgementController {
   preflightAutoLiveJudgementBatch(
     requests: readonly AutoLiveJudgementRequest[],
   ): SimulatorResult<OneFrameJudgementBatchTransaction> {
-    if (!this.initializedValue || this.pendingAutoBatchToken !== null ||
-      this.pendingManualBatchToken !== null || this.pendingReflectPlan !== null || !Array.isArray(requests) ||
-      requests.length < 1 || requests.length > ONE_FRAME_CAPACITY) {
-      return integrityFailure(
-        "one-frame.invalid-product-auto-batch",
-        ["PLSO-O01", "PLSO-B01"],
-        "Product Auto batching requires one initialized idle controller and one ordered batch of one to five requests.",
-      );
-    }
-    const available = this.containers.filter((container) => !container.inUse);
-    if (requests.length > available.length) {
-      return integrityFailure(
-        "one-frame.product-auto-batch-capacity",
-        ["PLSO-O01", "PLSO-B01"],
-        "A product Auto batch must fit the currently free subset of the fixed five native OneFrameData slots.",
-      );
-    }
-    const entries: {
-      readonly container: OneFrameDataContainer;
-      readonly payload: OneFrameDataPayload;
-      readonly request: AutoLiveJudgementRequest;
-    }[] = [];
-    const sources = new Set<NoteInformation>();
-    for (let index = 0; index < requests.length; index += 1) {
-      const request = requests[index]!;
-      if (sources.has(request.noteInformation)) {
-        return integrityFailure(
-          "one-frame.duplicate-product-auto-source",
-          ["PLSO-B01"],
-          "One product batch cannot reserve the same immutable scoring source twice.",
-        );
-      }
-      const validation = this.validateAutoLiveJudgementRequest(request);
-      if (validation.status !== "ok") return validation;
-      const payload = this.prepareAutoLiveJudgementPayload(request);
-      if (payload.status !== "ok") return payload;
-      sources.add(request.noteInformation);
-      entries.push({ container: available[index]!, payload: payload.value, request });
-    }
-    const token = Object.freeze({});
-    this.pendingAutoBatchToken = token;
-    let state: "pending" | "committed" | "discarded" = "pending";
-    return ok(Object.freeze({
-      requestCount: entries.length,
-      commit: (): SimulatorResult<void> => {
-        if (state !== "pending" || this.pendingAutoBatchToken !== token ||
-          entries.some(({ container }) => container.inUse || container.payload !== null)) {
-          return integrityFailure(
-            "one-frame.invalid-product-auto-batch-commit",
-            ["PLSO-O01", "PLSO-B01"],
-            "Only the exact pending product batch may atomically commit to unchanged free slots.",
-          );
-        }
-        for (const { container, payload, request } of entries) {
-          this.traceValue.push({ kind: "one-frame.get-usable", containerId: container.containerId });
-          container.payload = payload;
-          container.inUse = true;
-          this.traceValue.push({
-            kind: "one-frame.setup-auto-live",
-            containerId: container.containerId,
-            noteIndex: payload.noteIndex,
-            phase: payload.phase,
-            multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
-          });
-        }
-        state = "committed";
-        this.pendingAutoBatchToken = null;
-        return ok(undefined);
-      },
-      discard: (): SimulatorResult<void> => {
-        if (state !== "pending" || this.pendingAutoBatchToken !== token) {
-          return integrityFailure(
-            "one-frame.invalid-product-auto-batch-discard",
-            ["PLSO-B01"],
-            "Only the exact pending uncommitted product batch may be discarded.",
-          );
-        }
-        state = "discarded";
-        this.pendingAutoBatchToken = null;
-        return ok(undefined);
-      },
-    }));
+    return this.preflightJudgementBatch(requests, "auto", request => {
+      const valid = this.validateAutoLiveJudgementRequest(request);
+      return valid.status === "ok" ? this.prepareAutoLiveJudgementPayload(request) : valid;
+    });
   }
 
   preflightManualJudgementBatch(
     requests: readonly ManualJudgementRequest[],
   ): SimulatorResult<OneFrameJudgementBatchTransaction> {
-    if (!this.initializedValue || this.pendingManualBatchToken !== null ||
-      this.pendingAutoBatchToken !== null || this.pendingReflectPlan !== null || !Array.isArray(requests) ||
-      requests.length < 1 || requests.length > ONE_FRAME_CAPACITY) {
-      return integrityFailure(
-        "one-frame.invalid-product-manual-batch",
-        ["PLSO-O01", "PLSO-B01"],
-        "Product Manual batching requires one initialized idle controller and one ordered batch of one to five requests.",
-      );
+    return this.preflightJudgementBatch(requests, "manual", request => {
+      const valid = this.validateManualJudgementRequest(request);
+      return valid.status === "ok" ? this.prepareManualJudgementPayload(request) : valid;
+    });
+  }
+
+  private preflightJudgementBatch<T extends AutoLiveJudgementRequest | ManualJudgementRequest>(
+    requests: readonly T[], kind: QueuedJudgement["kind"],
+    prepare: (request: T) => SimulatorResult<OneFrameDataPayload>,
+  ): SimulatorResult<OneFrameJudgementBatchTransaction> {
+    if (!this.initializedValue || this.pendingBatchToken !== null || this.pendingReflectPlan !== null ||
+      !Array.isArray(requests) || requests.length === 0) {
+      return integrityFailure("one-frame.invalid-submission-batch", ["PLSO-O01", "PLSO-B01"],
+        "Judgement submission requires an initialized idle controller and a nonempty ordered request list.");
     }
-    const available = this.containers.filter((container) => !container.inUse);
-    if (requests.length > available.length) {
-      return integrityFailure(
-        "one-frame.product-manual-batch-capacity",
-        ["PLSO-O01", "PLSO-B01"],
-        "A product Manual batch must fit the currently free subset of the fixed five native OneFrameData slots.",
-      );
-    }
-    const entries: {
-      readonly container: OneFrameDataContainer;
-      readonly payload: OneFrameDataPayload;
-    }[] = [];
-    const sources = new Set<NoteInformation>();
-    for (let index = 0; index < requests.length; index += 1) {
-      const request = requests[index]!;
-      if (sources.has(request.noteInformation)) {
-        return integrityFailure(
-          "one-frame.duplicate-product-manual-source",
-          ["PLSO-B01"],
-          "One product Manual batch cannot reserve the same immutable scoring source twice.",
-        );
-      }
-      const validation = this.validateManualJudgementRequest(request);
-      if (validation.status !== "ok") return validation;
-      const payload = this.prepareManualJudgementPayload(request);
+    const entries: QueuedJudgement[] = [];
+    const sources = new Set<string>();
+    for (const request of requests) {
+      const payload = prepare(request);
       if (payload.status !== "ok") return payload;
-      sources.add(request.noteInformation);
-      entries.push({ container: available[index]!, payload: payload.value });
+      const identity = `${payload.value.noteIndex}|${payload.value.phase}|${payload.value.absolutePosition}`;
+      if (sources.has(identity)) {
+        return integrityFailure("one-frame.duplicate-submission-source", ["PLSO-B01"],
+          "One submission cannot reserve the same scoring source, phase and position twice.");
+      }
+      sources.add(identity);
+      entries.push({ kind, payload: payload.value });
     }
-    const token = Object.freeze({});
-    this.pendingManualBatchToken = token;
-    let state: "pending" | "committed" | "discarded" = "pending";
-    return ok(Object.freeze({
-      requestCount: entries.length,
-      commit: (): SimulatorResult<void> => {
-        if (state !== "pending" || this.pendingManualBatchToken !== token ||
-          entries.some(({ container }) => container.inUse || container.payload !== null)) {
-          return integrityFailure(
-            "one-frame.invalid-product-manual-batch-commit",
-            ["PLSO-O01", "PLSO-B01"],
-            "Only the exact pending product Manual batch may atomically commit to unchanged free slots.",
-          );
-        }
-        for (const { container, payload } of entries) {
-          this.traceValue.push({ kind: "one-frame.get-usable", containerId: container.containerId });
-          container.payload = payload;
-          container.inUse = true;
-          this.traceValue.push({
-            kind: "one-frame.setup-manual",
-            containerId: container.containerId,
-            noteIndex: payload.noteIndex,
-            noteType: payload.noteType,
-            phase: payload.phase,
-            rawResult: payload.rawResult,
-            multipleDirectionalFlickNoteCount: payload.multipleDirectionalFlickNoteCount,
-          });
-        }
-        state = "committed";
-        this.pendingManualBatchToken = null;
-        return ok(undefined);
-      },
-      discard: (): SimulatorResult<void> => {
-        if (state !== "pending" || this.pendingManualBatchToken !== token) {
-          return integrityFailure(
-            "one-frame.invalid-product-manual-batch-discard",
-            ["PLSO-B01"],
-            "Only the exact pending uncommitted product Manual batch may be discarded.",
-          );
-        }
-        state = "discarded";
-        this.pendingManualBatchToken = null;
-        return ok(undefined);
-      },
-    }));
+    const token = {};
+    this.pendingBatchToken = token;
+    const finish = (publish: boolean): SimulatorResult<void> => {
+      if (this.pendingBatchToken !== token) {
+        return integrityFailure("one-frame.invalid-submission-capability", ["PLSO-B01"],
+          "Only the pending judgement submission may publish or discard its prepared entries once.");
+      }
+      if (publish) this.publishJudgements(entries);
+      this.pendingBatchToken = null;
+      return ok(undefined);
+    };
+    return ok(Object.freeze({ requestCount: entries.length,
+      commit: () => finish(true), discard: () => finish(false) }));
+  }
+
+  private publishJudgements(entries: readonly QueuedJudgement[]): void {
+    for (const entry of entries) this.queuedJudgements.push(entry);
+    this.fillAvailableSlots();
+  }
+
+  private fillAvailableSlots(): void {
+    for (const container of this.containers) {
+      if (container.inUse || this.queueCursor === this.queuedJudgements.length) continue;
+      const entry = this.queuedJudgements[this.queueCursor++]!;
+      if (entry.kind === "manual") this.commitManualJudgementData(container, entry.payload);
+      else {
+        this.traceValue.push({ kind: "one-frame.get-usable", containerId: container.containerId });
+        container.payload = entry.payload;
+        container.inUse = true;
+        this.traceValue.push({ kind: "one-frame.setup-auto-live", containerId: container.containerId,
+          noteIndex: entry.payload.noteIndex, phase: entry.payload.phase,
+          multipleDirectionalFlickNoteCount: entry.payload.multipleDirectionalFlickNoteCount });
+      }
+    }
+    if (this.queueCursor === this.queuedJudgements.length) {
+      this.queuedJudgements.length = 0;
+      this.queueCursor = 0;
+    }
   }
 
   setupAutoLiveJudgement(
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
+    if (!this.initializedValue || this.pendingReflectPlan !== null) {
+      return integrityFailure("one-frame.invalid-submission-batch", ["R02", "R03"],
+        "Judgement submission requires an initialized controller outside a pending reflection.");
+    }
     const validation = this.validateAutoLiveJudgementRequest(request);
     if (validation.status !== "ok") return validation;
     const payload = this.prepareAutoLiveJudgementPayload(request);
     if (payload.status !== "ok") return payload;
-    const handle = this.getUsableOneFrameData();
-    if (handle.status !== "ok") return handle;
-    const container = this.ownedHandles.get(handle.value)!;
-    return this.commitAutoLiveJudgementData(container, payload.value, request);
+    this.publishJudgements([{ kind: "auto", payload: payload.value }]);
+    return ok(undefined);
   }
 
   setupAutoLiveJudgementData(
@@ -602,6 +506,7 @@ export class InGameOneFrameJudgementController {
       containerIds: plan.batch.entries.map((entry) => entry.containerId),
       noteIndices: plan.batch.entries.map((entry) => entry.noteIndex),
     });
+    this.fillAvailableSlots();
     return ok(cloneBatch(plan.batch));
   }
 
@@ -632,8 +537,9 @@ export class InGameOneFrameJudgementController {
 
   dispose(): void {
     this.pendingReflectPlan = null;
-    this.pendingAutoBatchToken = null;
-    this.pendingManualBatchToken = null;
+    this.pendingBatchToken = null;
+    this.queuedJudgements.length = 0;
+    this.queueCursor = 0;
     for (const container of this.containers) {
       container.inUse = false;
       container.payload = null;
@@ -644,6 +550,7 @@ export class InGameOneFrameJudgementController {
     return {
       initialized: this.initializedValue,
       capacity: 5,
+      queuedJudgementCount: this.queuedJudgements.length - this.queueCursor,
       slots: this.containers.map((container) => ({
         slot: container.slot,
         containerId: container.containerId,
