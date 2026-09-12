@@ -1270,6 +1270,6 @@ This closes the bounded spacing and ASCII shrink recurrence. Source field/ASCII 
 
 `SimulatorLoadingScreen`由应用资源库提供Other背景、MenuAtlas切片及原作`comic_001`，覆盖窗口资源初始化、Simulator模块加载和资源准备；来源为Reverse `38eac9bb`的`simulator-loading-background-10-1-4`。当前没有账号漫画列表，明确采用原作空列表的dummy选择，不声称实现漫画轮播。独立窗口在加载资源解码就绪后显示，正常路径没有空白底色阶段、调试加载文案或返回按钮；错误与宿主音频激活提示仍由启动所有者处理。
 
-底部条显示请求批次中已成功就绪的唯一资源数/资源总数，已缓存资源可立即计入，失败资源不计入；不是七等分的阶段计数、剩余时间或CPU解码完成度。未知总量时按原作hideLoadingGauge隐藏条并把漫画Y恢复0，已知时Y为60。原作AllProgress直接赋给Slider，百分比截断；Sliced前景显示宽度为14+666p，p<0.001禁用。1334×1000背景按屏幕宽度缩放并居中裁剪，frame_back平铺。六个启用装饰Tween保留父缩放、底部枢轴、初始延迟与PingPong，曲线2f−f²由宿主动画实现；同一对象的同步位移/缩放合并采样。字体栅格化和九宫格仍由宿主处理。
+底部条显示请求批次中已成功就绪的唯一资源数/资源总数，已缓存资源可立即计入，失败资源不计入；不是七等分的阶段计数、剩余时间或CPU解码完成度。当前file-list加载分支从入口即调用showLoadingGauge，漫画Y固定60；首次资源通知前为0，不因暂未取得总量调用另一个hideLoadingGauge分支。原作AllProgress直接赋给Slider，百分比截断；Sliced前景显示宽度为14+666p，p<0.001禁用。1334×1000背景按屏幕宽度缩放并居中裁剪，使用原有RGB约38–47的低对比度深灰纹理，frame_back平铺。白色漫画底板以MenuAtlas边框14和680×460尺寸在同一2D画布绘制九宫格，再随UI根缩放；内部切片不再由CSS border-image分别缩放。六个启用装饰Tween保留父缩放、底部枢轴、初始延迟与PingPong，曲线2f−f²由宿主动画实现；同一对象的同步位移/缩放合并采样。字体栅格化和九宫格仍由宿主处理。
 
 封面0.1秒淡入从可见的场景交接开始。传输lease先释放，宿主完成delta=0的初始化帧后同步移除加载层并重新建立RAF时钟基准；初始化耗时不得消耗淡入。入场音频遵守Gaya淡出→PlayingNone→后续更新的判定调整门槛→prepared BGM恢复→PlayingSound；Stage和轨道并行演出不额外阻塞音乐。Gaya在音乐门槛开始1.5秒淡出，不等待循环音源自然结束；普通入口约5秒来自串行阶段和帧边界，不是全局固定延时，语音/MV/判定调整仍按各自分支处理。

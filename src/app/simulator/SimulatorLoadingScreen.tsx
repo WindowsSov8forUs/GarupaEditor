@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 
 // ScreenLayerLoading / MenuAtlas, 10.1.4/230. With no account comic list,
-// ComicController selects comic_001. A null progress hides DownloadingProgress.
+// ComicController selects comic_001. This is the file-list loading branch:
+// showLoadingGauge is called on entry, before any progress notification arrives.
 export function SimulatorLoadingScreen({ progress, onReady }: {
   readonly progress: number | null;
   readonly onReady?: (error?: unknown) => void;
@@ -43,8 +44,8 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
     }).catch((error: unknown) => { if (!cancelled) onReady(error); });
     return () => { cancelled = true; };
   }, [onReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
-  const p = progress === null ? null : Math.min(1, Math.max(0, progress));
-  const comicY = p === null ? 0 : 60;
+  const p = Math.min(1, Math.max(0, progress ?? 0));
+  const comicY = 60;
   const gauge = sliced(frame, "14", "7px");
   return <section ref={host} aria-label="加载演奏" style={{ position: "absolute", inset: 0, zIndex: 10,
     overflow: "hidden", backgroundImage: `url("${background}")`, backgroundPosition: "center",
@@ -55,14 +56,14 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
     </svg>
     <div style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 750,
       transform: `translate(-50%, -50%) scale(${size.scale})`, fontFamily: '"ChartUI", "TTShinGoM", sans-serif' }}>
-      <div style={{ ...at(0, comicY, 680, 460), ...sliced(frame, "14", "14px") }} />
+      <LoadingComicFrame source={frame} style={at(0, comicY, 680, 460)} />
       <div style={{ ...at(0, comicY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
       <div style={{ ...at(0, comicY + 186, 640, 30), ...sliced(caption, "0 13 0 41", "0px 13px 0px 41px") }} />
       <img src={comic} alt="" style={at(0, comicY - 30, 485, 352)} />
       <div style={{ ...at(-276 + 581 / 2, comicY + 190, 581, 56), display: "flex", alignItems: "center",
         color: "white", fontSize: 28, whiteSpace: "nowrap",
         textShadow: "-2px -2px #ff3b72, 2px -2px #ff3b72, -2px 2px #ff3b72, 2px 2px #ff3b72, -2px 0 #ff3b72, 2px 0 #ff3b72, 0 -2px #ff3b72, 0 2px #ff3b72" }}>香澄＆有咲①「香澄語３級」</div>
-      {p !== null && <>
+      <>
         <img src={label} alt="Now Loading" style={at(-151.7, -236, 274, 33)} />
         <div style={{ ...at(85, -237.3, 200, 50), fontSize: 39, color: "#ff3b72", display: "flex", alignItems: "center",
           textShadow: "-2px -2px white, 2px -2px white, -2px 2px white, 2px 2px white, -2px 0 white, 2px 0 white, 0 -2px white, 0 2px white" }}>...</div>
@@ -86,9 +87,48 @@ export function SimulatorLoadingScreen({ progress, onReady }: {
         <div style={{ ...at(239, -242, 200, 77), color: "white", fontSize: 30, textAlign: "right",
           display: "flex", alignItems: "center", justifyContent: "flex-end",
           textShadow: "-1px -1px black, 1px -1px black, -1px 1px black, 1px 1px black" }}>{Math.trunc(p * 100)}%</div>
-      </>}
+      </>
     </div>
   </section>;
+}
+
+function LoadingComicFrame({ source, style }: { source: string; style: CSSProperties }) {
+  const canvas = useRef<HTMLCanvasElement | null>(null);
+  const [failure, setFailure] = useState<Error | null>(null);
+  useLayoutEffect(() => {
+    let cancelled = false;
+    const image = new Image();
+    image.src = source;
+    void image.decode().then(() => {
+      if (cancelled) return;
+      const target = canvas.current!;
+      const context = target.getContext("2d");
+      if (context === null) throw new Error("Loading comic frame requires a 2D drawing context.");
+      // MenuAtlas bg_base_r12: 32×32, L/R/T/B=14. Draw the source nine-slice
+      // into one authored-size image, then scale that image with the UI root.
+      // All adjoining regions share exact boundaries; no overlap or gap filler.
+      const border = 14;
+      const sourceX = [0, border, image.naturalWidth - border, image.naturalWidth];
+      const sourceY = [0, border, image.naturalHeight - border, image.naturalHeight];
+      const xEdges = [0, border, target.width - border, target.width];
+      const yEdges = [0, border, target.height - border, target.height];
+      context.clearRect(0, 0, target.width, target.height);
+      for (let row = 0; row < 3; row++) {
+        for (let column = 0; column < 3; column++) {
+          context.drawImage(image,
+            sourceX[column], sourceY[row],
+            sourceX[column + 1] - sourceX[column], sourceY[row + 1] - sourceY[row],
+            xEdges[column], yEdges[row],
+            xEdges[column + 1] - xEdges[column], yEdges[row + 1] - yEdges[row]);
+        }
+      }
+    }).catch((error: unknown) => {
+      if (!cancelled) setFailure(error instanceof Error ? error : new Error(String(error)));
+    });
+    return () => { cancelled = true; };
+  }, [source]);
+  if (failure !== null) throw failure;
+  return <canvas ref={canvas} width={680} height={460} aria-hidden="true" style={style} />;
 }
 
 function LoadingIcon({ src, x, y, width, height, depth, from, to, duration, delay = 0, bottom = false }: {
