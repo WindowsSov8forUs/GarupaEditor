@@ -1,8 +1,12 @@
+import type { NoteLaneSpan } from "../chart/types";
+
 export interface OneFrameDataHandle {
   readonly containerId: string;
 }
 
 export interface AutoLiveJudgementData {
+  readonly laneSpan: NoteLaneSpan;
+  readonly rangeLength: number;
   readonly noteIndex: number;
   readonly buttonTypes: readonly number[];
   readonly noteType: number;
@@ -16,6 +20,8 @@ export interface AutoLiveJudgementData {
 }
 
 export interface ManualJudgementData {
+  readonly laneSpan: NoteLaneSpan;
+  readonly rangeLength: number;
   readonly noteIndex: number;
   readonly buttonTypes: readonly number[];
   readonly noteType: number;

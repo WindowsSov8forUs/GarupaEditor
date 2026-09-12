@@ -110,6 +110,8 @@ export type VirtualLaneDirectionValue =
   (typeof VirtualLaneDirection)[keyof typeof VirtualLaneDirection];
 
 export interface NoteInformation {
+  /** Authored continuous geometry, when the seven-button representation is insufficient. */
+  readonly laneSpan?: NoteLaneSpan;
   readonly index: number;
   readonly isResult: boolean;
   readonly isSlideNoteHead: boolean;
@@ -140,6 +142,11 @@ export interface NoteInformation {
   readonly gameNoteAdditionalTypeLongNoteEnd: GameNoteAdditionalTypeValue;
   readonly virtualLaneDirection: VirtualLaneDirectionValue;
   readonly virtualLaneDistance: number;
+}
+
+export interface NoteLaneSpan {
+  readonly start: number;
+  readonly end: number;
 }
 
 export interface NoteBatchInformation {

@@ -19,7 +19,7 @@ import {
   type NoteInformation,
 } from "../chart/types";
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
-import { NoteResultType, type NoteResultTypeValue } from "../data/manualJudgement";
+import { NoteResultType } from "../data/manualJudgement";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
 import {
   getGarupaProductChartProfile,
@@ -111,7 +111,6 @@ export class ParticleCommandProducer {
   private readonly notesByJudgementKey = new Map<string, NoteInformation[]>();
   private readonly slideRootByNode = new WeakMap<NoteInformation, NoteInformation>();
   private readonly registeredNotes = new WeakSet<NoteInformation>();
-  private readonly productScoringKeys = new Set<string>();
   private readonly productScoringNodes = new Map<string, GarupaProductNode>();
   private readonly productSlideNodesByIdentity = new Map<string, readonly GarupaProductNode[]>();
   private chartIdentityValid = true;
@@ -175,11 +174,10 @@ export class ParticleCommandProducer {
             node.scoringSource.index,
             node.absolutePosition,
           );
-          if (this.productScoringKeys.has(key) && this.productScoringNodes.get(key) !== node) {
+          if (this.productScoringNodes.has(key) && this.productScoringNodes.get(key) !== node) {
             this.chartIdentityValid = false;
             continue;
           }
-          this.productScoringKeys.add(key);
           this.productScoringNodes.set(key, node);
         }
       }
@@ -206,66 +204,41 @@ export class ParticleCommandProducer {
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
-    if (!isJudgementBatchShape(batch, this.productScoringKeys)) {
+    if (!isJudgementBatchShape(batch)) {
       return rejected(
         "particle.producer.invalid-judgement-batch",
-        `Judgement particle routing consumes one immutable owner-produced OneFrame batch. ${describeInvalidJudgementBatch(batch, this.productScoringKeys)}`,
+        `Judgement particle routing consumes one immutable owner-produced OneFrame batch. ${describeInvalidJudgementBatch(batch)}`,
       );
     }
     const projected = cloneState(this.state);
     const commands: ParticleCommand[] = [];
     if (!projected.suppressedUntilReplay) {
       for (const entry of batch.entries) {
-        const productKey = productScoringKey(
-          entry.noteIndex,
-          entry.absolutePosition,
-        );
-        if (this.productScoringKeys.has(productKey)) {
-          const node = this.productScoringNodes.get(productKey);
-          if (node === undefined) {
-            return rejected(
-              "particle.producer.missing-product-node-owner",
-              "A registered product scoring key must retain its exact immutable chart node owner.",
-            );
-          }
-          const slideLifecycle = this.routeProductSlideTapKeep(node, entry, projected, commands);
-          if (slideLifecycle.status !== "ok") return slideLifecycle;
-          const routed = compatibleProductParticleRoot(node, entry.adjustedResult);
-          if (routed !== null) {
-            const buttonType = compatibleProductParticleButton(node)!;
-            const rangeLength = routed.startsWith("directional:") ? null : node.width;
-            commands.push(playRoot(
-              buttonParticleOwnerKey(buttonType, routed, rangeLength),
-              buttonInstance(buttonType, rangeLength, this.particleScene!),
-              routed,
-            ));
-            const fingerRoot = compatibleProductDirectionalFingerRoot(node, entry.adjustedResult);
-            if (fingerRoot !== null) {
-              commands.push(playRoot(
-                buttonParticleOwnerKey(buttonType, fingerRoot, null),
-                buttonInstance(buttonType, null, this.particleScene!),
-                fingerRoot,
-              ));
-            }
-          }
-          continue;
-        }
-        const resolvedNote = this.resolveJudgementNote(entry);
+        const productNode = this.productScoringNodes.get(productScoringKey(entry.noteIndex, entry.absolutePosition));
+        const resolvedNote = productNode === undefined
+          ? this.resolveJudgementNote(entry) : ok(productNode.scoringSource!);
         if (resolvedNote.status !== "ok") return resolvedNote;
         const note = resolvedNote.value;
-        const buttonType = targetCenterButtonType(note);
-        if (buttonType === null || !entry.buttonTypes.includes(buttonType) ||
-          entry.buttonTypes.length < 1 || entry.buttonTypes.length > 7) {
+        const buttonType = productNode === undefined
+          ? targetCenterButtonType(note) : compatibleProductParticleButton(productNode);
+        const rangeLength = entry.rangeLength;
+        if (productNode !== undefined) {
+          const slideLifecycle = this.routeProductSlideTapKeep(productNode, entry, projected, commands);
+          if (slideLifecycle.status !== "ok") return slideLifecycle;
+          if (buttonType === null) continue;
+        } else if (buttonType === null || !entry.buttonTypes.includes(buttonType) ||
+          !isRangeLength(rangeLength)) {
           return rejected(
             "particle.producer.invalid-button-owner",
             "The particle receiver and range must come from the judged note's target-center GamePlayButton owner and current 1..7 button span.",
           );
         }
+        if (buttonType === null) continue;
         if (isTapKeepStopJudgeNoteType(entry.noteType)) {
           stopButtonTapKeep(buttonType, projected, commands);
         }
         if (isTapKeepStartJudgeNoteType(entry.noteType)) {
-          playButtonTapKeep(buttonType, entry.buttonTypes.length, this.particleScene!, projected, commands);
+          playButtonTapKeep(buttonType, rangeLength, this.particleScene!, projected, commands);
         }
         const slideRoot = this.slideRootByNode.get(note);
         if (slideRoot !== undefined && entry.phase === "tail") {
@@ -302,16 +275,14 @@ export class ParticleCommandProducer {
           gameNoteType: judgementGameNoteType(note, entry),
           isSkillNote: isSkillEntry(note, entry),
           multipleDirectionalFlickNoteCount: entry.multipleDirectionalFlickNoteCount,
-          rangeLength: entry.buttonTypes.length,
+          rangeLength: rangeLength,
         });
         if (routed.status !== "ok") return routed;
         if (routed.value !== null) {
-          const rangeLength = routed.value.startsWith("directional:")
-            ? null
-            : entry.buttonTypes.length;
+          const particleRange = routed.value.startsWith("directional:") ? null : rangeLength;
           commands.push(playRoot(
-            buttonParticleOwnerKey(buttonType, routed.value, rangeLength),
-            buttonInstance(buttonType, rangeLength, this.particleScene!),
+            buttonParticleOwnerKey(buttonType, routed.value, particleRange),
+            buttonInstance(buttonType, particleRange, this.particleScene!),
             routed.value,
           ));
         }
@@ -1044,47 +1015,6 @@ function compatibleProductParticleButton(node: GarupaProductNode): number | null
     : null;
 }
 
-function compatibleProductParticleRoot(
-  node: GarupaProductNode,
-  result: NoteResultTypeValue,
-): ParticleRootId | null {
-  if (compatibleProductParticleButton(node) === null || result < NoteResultType.Good) return null;
-  if (node.type === "Skill") {
-    return result === NoteResultType.Perfect
-      ? "ordinary:effect_tap_skill_perfect"
-      : result === NoteResultType.Great
-      ? "ordinary:effect_tap_skill_great"
-      : "ordinary:effect_tap_skill_good";
-  }
-  if (node.type === "Flick") return "ordinary:effect_tap_swipe";
-  if (node.type === "Directional") {
-    return node.direction === "Left"
-      ? "directional:effect_tap_directional_flick_l"
-      : node.direction === "Right"
-      ? "directional:effect_tap_directional_flick_r"
-      : null;
-  }
-  if (node.type !== "Single") return null;
-  return result === NoteResultType.Perfect
-    ? "ordinary:effect_tap_perfect"
-    : result === NoteResultType.Great
-    ? "ordinary:effect_tap_great"
-    : "ordinary:effect_tap_good";
-}
-
-function compatibleProductDirectionalFingerRoot(
-  node: GarupaProductNode,
-  result: NoteResultTypeValue,
-): ParticleRootId | null {
-  if (compatibleProductParticleButton(node) === null ||
-    node.type !== "Directional" || result < NoteResultType.Good) return null;
-  return node.direction === "Left"
-    ? "directional:effect_tap_directional_flick_l_finger"
-    : node.direction === "Right"
-      ? "directional:effect_tap_directional_flick_r_finger"
-      : null;
-}
-
 function isDirectionalJudgeNoteType(noteType: number): boolean {
   return noteType === 6 || noteType === 7 || noteType === 9 || noteType === 10;
 }
@@ -1143,7 +1073,6 @@ function isRangeLength(value: number): boolean {
 
 function isJudgementBatchShape(
   batch: OneFrameJudgementBatch,
-  productScoringKeys: ReadonlySet<string>,
 ): boolean {
   return batch !== null && typeof batch === "object" &&
     Number.isSafeInteger(batch.batchIndex) && batch.batchIndex >= 0 &&
@@ -1155,26 +1084,22 @@ function isJudgementBatchShape(
       Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
       Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
       (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
-      isJudgementButtonSpan(entry, productScoringKeys) &&
+      isJudgementButtonSpan(entry) &&
       Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
       entry.multipleDirectionalFlickNoteCount >= 0);
 }
 
 function isJudgementButtonSpan(
   entry: OneFrameJudgementBatch["entries"][number],
-  productScoringKeys: ReadonlySet<string>,
 ): boolean {
-  if (!Array.isArray(entry.buttonTypes) || entry.buttonTypes.length === 0 ||
-    !entry.buttonTypes.every(Number.isSafeInteger)) return false;
-  return entry.buttonTypes.every(isButtonType) || productScoringKeys.has(productScoringKey(
-    entry.noteIndex,
-    entry.absolutePosition,
-  ));
+  return Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
+    entry.laneSpan !== null && typeof entry.laneSpan === "object" &&
+    Number.isFinite(entry.laneSpan.start) && Number.isFinite(entry.laneSpan.end) &&
+    entry.laneSpan.end >= entry.laneSpan.start;
 }
 
 function describeInvalidJudgementBatch(
   batch: OneFrameJudgementBatch,
-  productScoringKeys: ReadonlySet<string>,
 ): string {
   if (batch === null || typeof batch !== "object") return "The batch root is null or non-object.";
   if (!Number.isSafeInteger(batch.batchIndex) || batch.batchIndex < 0) {
@@ -1190,7 +1115,7 @@ function describeInvalidJudgementBatch(
     Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
     Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
     (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
-    isJudgementButtonSpan(entry, productScoringKeys) &&
+    isJudgementButtonSpan(entry) &&
     Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
     entry.multipleDirectionalFlickNoteCount >= 0));
   const entry = batch.entries[index];

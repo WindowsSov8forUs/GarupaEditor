@@ -1068,38 +1068,12 @@ export function createSimulatorEngine(
     input.startupDirection?.purpose ?? "initial",
   );
   const productProfile = getGarupaProductChartProfile(input.chart);
-  const productLaneEffectButtons = new Map<number, readonly number[]>();
-  const productStageButtons = new Map<number, readonly number[]>();
-  if (productProfile?.hasExtensions) {
-    for (const node of productProfile.visibleNodes) {
-      const noteIndex = node.scoringSource?.index;
-      if (noteIndex !== undefined) {
-        // SV changes travel, not judgement position. Continuous/extended spans
-        // reach a speaker only when they contain that original edge lane.
-        productStageButtons.set(noteIndex, Object.freeze(
-          [0, 6].filter((lane) => node.spanStart <= lane && lane <= node.spanEnd),
-        ));
-      }
-      if (noteIndex === undefined || !Number.isInteger(node.spanStart) ||
-        !Number.isInteger(node.spanEnd) || node.spanStart < 0 || node.spanEnd > 6) continue;
-      productLaneEffectButtons.set(
-        noteIndex,
-        Object.freeze(Array.from(
-          { length: node.spanEnd - node.spanStart + 1 },
-          (_, index) => node.spanStart + index,
-        )),
-      );
-    }
-  }
   const tapLaneEffectOwner = renderProducer !== null && input.rendering !== undefined &&
     input.rendering.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds.length === 4
     ? new TapLaneEffectOwner(
         renderProducer,
         input.rendering.ordinaryNoteScene,
         originalLiveSettings.visibleTapLaneEffect,
-        productLaneEffectButtons.size === 0
-          ? null
-          : (noteIndex) => productLaneEffectButtons.get(noteIndex) ?? null,
       )
     : null;
   const movieBackgroundResult = createMovieBackground(
@@ -1282,7 +1256,6 @@ export function createSimulatorEngine(
         movieBackgroundResult.value,
         primaryJudgementAdjustment,
         input.startupDirection.firstViewPresented,
-        productStageButtons.size === 0 ? null : productStageButtons,
         input.startupDirection.commandNotes,
       );
   const inGameManager: InGameManager = new InGameManager(

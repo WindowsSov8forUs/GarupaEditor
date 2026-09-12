@@ -35,5 +35,6 @@ function freezeNoteInformation(
   Object.freeze(note.buttonTypesArray);
   Object.freeze(note.slideNoteList);
   Object.freeze(note.soundValueList);
+  if (note.laneSpan !== undefined) Object.freeze(note.laneSpan);
   Object.freeze(note);
 }

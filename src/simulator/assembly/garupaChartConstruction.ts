@@ -361,7 +361,7 @@ function buildProductNode(
     ? `garupa-note:${chartItemIndex}`
     : `garupa-slide:${chartItemIndex}:connection:${connectionIndex}`;
   const scoringSource = visible
-    ? createBaseNote({
+    ? Object.freeze({ ...createBaseNote({
         index: scoringIndex,
         position: position.value,
         span: commandSpan(),
@@ -369,7 +369,7 @@ function buildProductNode(
         additional: connection.type === "Skill"
           ? GameNoteAdditionalType.Skill
           : GameNoteAdditionalType.None,
-      })
+      }), laneSpan: Object.freeze({ start: spanStart, end: spanStart + connection.width - 1 }) })
     : null;
   return ok(Object.freeze({
     identity,

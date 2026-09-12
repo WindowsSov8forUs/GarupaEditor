@@ -32,6 +32,7 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
+import { judgementGeometry } from "../data/judgementGeometry";
 
 const ONE_FRAME_CAPACITY = 5;
 
@@ -672,7 +673,7 @@ export class InGameOneFrameJudgementController {
   ): SimulatorResult<OneFrameDataPayload> {
     const judgement: OneFrameJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
-      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
+      ...judgementGeometry(request.noteInformation, request.noteInformation.buttonTypesArray),
       noteType: request.noteType,
       phase: request.phase,
       rawResult: 4,
@@ -737,7 +738,7 @@ export class InGameOneFrameJudgementController {
           request.noteInformation.buttonTypesArray);
     const judgement: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
-      buttonTypes: Object.freeze([...buttonTypes]),
+      ...judgementGeometry(request.noteInformation, buttonTypes),
       noteType: request.noteType,
       phase,
       rawResult: request.rawResult,

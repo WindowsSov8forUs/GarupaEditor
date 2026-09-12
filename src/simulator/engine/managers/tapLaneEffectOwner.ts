@@ -110,7 +110,6 @@ export class TapLaneEffectOwner {
     private readonly producer: RenderCommandProducer,
     private readonly scene: OrdinaryFixedNoteSceneInput,
     private readonly visible: boolean,
-    private readonly resolveProductButtonTypes: ((noteIndex: number) => readonly number[] | null) | null = null,
   ) {}
 
   preflightInitialize(): SimulatorResult<TapLaneEffectTransaction> {
@@ -160,8 +159,7 @@ export class TapLaneEffectOwner {
     const projected = [...this.slots];
     const changed = new Set<number>();
     for (const entry of batch.entries) {
-      const productButtons = this.resolveProductButtonTypes?.(entry.noteIndex) ?? null;
-      const slot = judgementSlot(productButtons ?? entry.buttonTypes);
+      const slot = judgementSlot(entry.laneSpan.start, entry.laneSpan.end);
       if (slot === null) continue;
       projected[slot] = frozenSlot(slot, "idle", OFF_RESERVE_UPDATES, 0);
       changed.add(slot);
@@ -315,13 +313,9 @@ function fullButtonSlot(buttonType: number): number | null {
     : null;
 }
 
-function judgementSlot(buttonTypes: readonly number[]): number | null {
-  if (!Array.isArray(buttonTypes) || buttonTypes.length === 0 ||
-    buttonTypes.some((button) => !Number.isInteger(button) || button < 0 || button > 6)) return null;
-  const first = buttonTypes[0]!;
-  const last = buttonTypes[buttonTypes.length - 1]!;
-  const slot = first + last;
-  return slot >= 0 && slot < SLOT_COUNT ? slot : null;
+function judgementSlot(start: number, end: number): number | null {
+  const slot = start + end;
+  return start >= 0 && end <= 6 && Number.isInteger(slot) && slot >= 0 && slot < SLOT_COUNT ? slot : null;
 }
 
 function frozenSlot(slot: number, phase: TapLaneEffectPhase, reserveCounter: number, fadeElapsedSeconds: number): TapLaneEffectSlotState {
