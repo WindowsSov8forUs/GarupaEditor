@@ -607,7 +607,7 @@ export class NoteLong extends NoteFrontBase {
         "Long tail reservation requires its root and parent-owned after source.",
       );
     }
-    const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
+    const noteType = longAfterJudgeNoteType(after.afterNoteType);
     if (noteType === null) {
       return integrityFailure(
         "manual.long-after-type-unrepresented",
@@ -796,7 +796,7 @@ export class NoteLong extends NoteFrontBase {
     if (over.status !== "ok" || !over.value) {
       return over.status === "ok" ? ok(undefined) : over;
     }
-    const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
+    const noteType = longAfterJudgeNoteType(after.afterNoteType);
     if (noteType === null) {
       return integrityFailure(
         "manual.long-timeout-after-type-unrepresented",
@@ -863,7 +863,7 @@ export class NoteLong extends NoteFrontBase {
       phase: "tail",
       noteType,
       absolutePosition: after.absolutePosition,
-      multipleDirectionalFlickNoteCount: 0,
+      multipleDirectionalFlickNoteCount: noteType === 7 ? this.longAfterMultipleGroupValue!.count : 0,
     });
     if (submitted.status !== "ok") {
       return submitted;
@@ -2888,7 +2888,10 @@ function isInt32Position(value: number): boolean {
     value <= 0x7fffffff;
 }
 
-function manualLongAfterJudgeNoteType(
+// Reverse 10.1.4: forcePerfectOnUpdate (0x30EA8E4) finishes through
+// judgeAfterNote (0x30EB8D0), which emits 2/5/6/7 for Normal/Flick/Directional. Tail
+// judgement kinds must retain Long-end semantics for audio and TapKeep cleanup.
+function longAfterJudgeNoteType(
   afterNoteType: AfterNoteTypeValue,
 ): 2 | 5 | 6 | 7 | null {
   switch (afterNoteType) {
@@ -2902,22 +2905,6 @@ function manualLongAfterJudgeNoteType(
     case AfterNoteType.MultipleDirectionalFlickLeft:
     case AfterNoteType.MultipleDirectionalFlickRight:
       return 7;
-    default:
-      return null;
-  }
-}
-
-function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): 1 | 3 | 9 | null {
-  switch (afterNoteType) {
-    case AfterNoteType.Normal:
-      return 1;
-    case AfterNoteType.Flick:
-      return 3;
-    case AfterNoteType.DirectionalFlickLeft:
-    case AfterNoteType.DirectionalFlickRight:
-    case AfterNoteType.MultipleDirectionalFlickLeft:
-    case AfterNoteType.MultipleDirectionalFlickRight:
-      return 9;
     default:
       return null;
   }

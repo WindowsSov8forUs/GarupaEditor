@@ -1098,7 +1098,8 @@ export class NoteManager {
     }
     return {
       multipleDirectionalFlickNoteCount:
-        this.multipleDirectionalGroups.get(information)?.count ?? null,
+        this.multipleDirectionalGroups.get(information)?.count ??
+        this.longAfterMultipleGroups.get(information)?.count ?? null,
     };
   }
 

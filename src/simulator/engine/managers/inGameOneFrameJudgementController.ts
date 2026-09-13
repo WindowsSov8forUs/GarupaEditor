@@ -995,7 +995,7 @@ function isClosedAutoLiveJudgementRequest(
     return true;
   }
 
-  if (request.phase !== "tail" || request.multipleDirectionalFlickNoteCount !== 0) {
+  if (request.phase !== "tail") {
     return false;
   }
   if (
@@ -1003,21 +1003,27 @@ function isClosedAutoLiveJudgementRequest(
     validateAutoLiveActivationGraph(source).status === "ok" &&
     request.absolutePosition === source.afterNoteAbsolutePos
   ) {
+    if (request.noteType === 7
+      ? expectedMultipleDirectionalCount === null || expectedMultipleDirectionalCount < 2 ||
+        request.multipleDirectionalFlickNoteCount !== expectedMultipleDirectionalCount
+      : request.multipleDirectionalFlickNoteCount !== 0) return false;
     switch (source.afterNoteType) {
       case AfterNoteType.Normal:
-        return request.noteType === 1;
+        return request.noteType === 2;
       case AfterNoteType.Flick:
-        return request.noteType === 3;
+        return request.noteType === 5;
       case AfterNoteType.DirectionalFlickLeft:
       case AfterNoteType.DirectionalFlickRight:
+        return request.noteType === 6;
       case AfterNoteType.MultipleDirectionalFlickLeft:
       case AfterNoteType.MultipleDirectionalFlickRight:
-        return request.noteType === 9;
+        return request.noteType === 7;
       default:
         return false;
     }
   }
   if (
+    request.multipleDirectionalFlickNoteCount !== 0 ||
     request.absolutePosition !== source.absolutePos ||
     source.isSlideNoteHead ||
     source.fireNoteType !== FrontNoteType.None ||
