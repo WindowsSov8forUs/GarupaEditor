@@ -468,8 +468,8 @@ export class NoteLong extends NoteFrontBase {
       const normalAfter = after.afterNoteType === AfterNoteType.Normal;
       let normalInside = false;
       if (normalAfter) {
-        const inside = runtime.value.geometry.isInsideTargetButtons(
-          input.currentPosition,
+        const inside = runtime.value.isInsideSource(
+          input.currentPosition, information,
           targetButtons,
         );
         if (inside.status !== "ok") {
@@ -510,8 +510,8 @@ export class NoteLong extends NoteFrontBase {
     const nextOrigin = judgement.value.result === NoteResultType.None
       ? input.currentPosition
       : origin;
-    const inside = runtime.value.geometry.isInsideTargetButtons(
-      input.currentPosition,
+    const inside = runtime.value.isInsideSource(
+      input.currentPosition, information,
       targetButtons,
     );
     if (inside.status !== "ok") {
@@ -1194,8 +1194,8 @@ export class NoteSlide extends NoteFrontBase {
     }
     if (!current.isTerminal || current.terminalJudgeNoteType === 8) {
       if (!current.source.isInvisible) {
-        const inside = runtime.value.geometry.isInsideTargetButtons(
-          input.currentPosition,
+        const inside = runtime.value.isInsideSource(
+          input.currentPosition, current.source,
           current.source.buttonTypesArray,
         );
         if (inside.status !== "ok") {
@@ -1228,8 +1228,8 @@ export class NoteSlide extends NoteFrontBase {
     }
     const group = this.slideAfterMultipleGroupValue;
     const targetButtons = group?.buttonTypes ?? current.source.buttonTypesArray;
-    const inside = runtime.value.geometry.isInsideTargetButtons(
-      input.currentPosition,
+    const inside = runtime.value.isInsideSource(
+      input.currentPosition, current.source,
       targetButtons,
     );
     if (inside.status !== "ok") {
@@ -1343,8 +1343,8 @@ export class NoteSlide extends NoteFrontBase {
     let result: Exclude<NoteResultTypeValue, -1> = NoteResultType.Miss;
     let timing: JudgeTimingValue = JudgeTiming.None;
     if (current.isTerminal && noteType === 8) {
-      const inside = runtime.value.geometry.isInsideTargetButtons(
-        input.currentPosition,
+      const inside = runtime.value.isInsideSource(
+        input.currentPosition, current.source,
         current.source.buttonTypesArray,
       );
       if (inside.status !== "ok") return inside;

@@ -1,9 +1,13 @@
+import { projectedNodeLane } from "./productChartProfile";
+import { FrontNoteType } from "../chart/types";
+import { NoteState } from "../notes/noteBase";
+import { NoteLong, NoteSlide } from "../notes/noteTypes";
 import { buildSlideAxisMesh, slideRenderedCurve, UNPRESENTED_SLIDE_MESH } from "./slideAxisMesh";
 import type { RenderFloat32 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { ok, type SimulatorResult } from "../evidence";
-import { advanceOrdinaryLongNormalChild, createOrdinaryLongNormalChildState, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+import { advanceLongChildFrame, advanceOrdinaryLongNormalChild, createOrdinaryLongNormalChildState, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { advanceOrdinaryNoteVerticalMotion, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
 import { advanceOrdinarySlideChildren, advanceSlideStopWait, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
 import type { OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
@@ -45,6 +49,8 @@ export function advanceExtensionSlide(
   ordinaryScene: OrdinaryFixedNoteSceneInput,
   axis: GarupaProductTimingGroupAxisProfile,
   usesAxis: (node: GarupaProductNode) => boolean,
+  owner?: NoteLong | NoteSlide | null,
+  advanceRoot = true,
 ): SimulatorResult<{ readonly state: ExtensionSlideState; readonly segments: OrdinarySlideFrameResult["segments"] }> {
   const head = nodes[0]!;
   const chainUsesAxis = nodes.some(usesAxis);
@@ -67,21 +73,57 @@ export function advanceExtensionSlide(
       waits: sources.map(() => 0), flashActive: false, finished: false, playableFinished: false };
   }
   if (previous.finished) return ok({ state: previous, segments: [] });
-  const advancedRoot = advanceExtensionMotion(previous.root, head, frame, input, scene, axis, usesAxis(head));
+  const advancedRoot = advanceRoot ? advanceExtensionMotion(previous.root, head, frame, input, scene, axis, usesAxis(head)) : ok(previous.root);
   if (advancedRoot.status !== "ok") return advancedRoot;
   let root = advancedRoot.value;
   const rootJudgementY = usesAxis(head) ? slideJudgementY(root) : ok(root.renderedTransform.position.y.value);
   if (rootJudgementY.status !== "ok") return rootJudgementY;
   const rootJudgeY = previous.root.phase === "stop" ? previous.rootJudgeY
     : Math.max(rootJudgementY.value, scene.virtualPerfectLine);
-  if ((frame.judged.has(head.identity) || frame.missed.has(head.identity)) && previous.root.phase !== "stop") {
+  if ((owner === undefined ? frame.judged.has(head.identity) || frame.missed.has(head.identity)
+    : owner !== null && (owner.state === NoteState.Stop || owner.state === NoteState.Wait)) && previous.root.phase !== "stop") {
     const placed = repositionOrdinaryNoteToJudgeLine(root.motionState,
       frame.forcePerfect ? "perspective" : root.renderedTransform.localScale);
     if (placed.status !== "ok") return placed;
     root = { ...root, phase: "stop", renderedTransform: placed.value };
   }
+  if (head.runtimeRoot?.fireNoteType === FrontNoteType.Long) {
+    const tail = nodes[1]!;
+    const child = previous.children[0]!;
+    const long = advanceLongChildFrame(child.lifecycle, root.renderedTransform, input,
+      ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, ordinaryScene.habahiro?.meshWidthSetting, {
+        advance: () => {
+          const moved = advanceExtensionMotion(child.lifecycle, tail, frame, input, scene, axis, usesAxis(tail));
+          if (moved.status !== "ok") return moved;
+          return ok(child.lifecycle.phase === "move" && frame.adjustedMusicPosition >= tail.absolutePosition
+            ? { ...moved.value, phase: "stop" as const } : moved.value);
+        },
+        ...(chainUsesAxis ? {
+          visible: (next: OrdinaryLongNormalChildState) => root.phase !== "wait" || next.phase !== "wait",
+          mesh: (meshInput: import("../rendering/ordinaryLongChildLifecycle").OrdinaryLongNormalMeshInput,
+            next: OrdinaryLongNormalChildState) => {
+            const arrival = getOrdinaryNoteArrivalSeconds(root.motionState.specificSpeed);
+            if (arrival.status !== "ok") return arrival;
+            const curves: number[] = [];
+            for (const node of nodes) {
+              const displacement = axis.displacementAtPosition(node.timingGroup, node.absolutePosition, frame.absolutePosition);
+              if (displacement.status !== "ok") return displacement;
+              curves.push(calculateNoteMotionCurve(1 - displacement.value / (arrival.value.value * 1000), true));
+            }
+            return buildSlideAxisMesh(meshInput, head, tail, slideRenderedCurve(root, head, curves[0]!, scene),
+              slideRenderedCurve(next, tail, curves[1]!, scene), scene);
+          },
+        } : {}),
+      });
+    if (long.status !== "ok") return long;
+    const finished = previous.finished || frame.judged.has(tail.identity) || frame.missed.has(tail.identity);
+    return ok({ state: { ...previous, root, rootJudgeY, children: [{ ...child, lifecycle: long.value.childState,
+      visible: !finished, meshVisible: long.value.mesh !== null }], rootVisible: !finished, finished,
+      playableFinished: finished, flashActive: owner != null && owner.flashAnimationRevision !== null && !finished },
+      segments: [{ sourceIndex: 0, geometry: long.value.mesh ?? UNPRESENTED_SLIDE_MESH }] });
+  }
   const hides = new Map<number, SlideRenderHideRequest>();
-  for (const [index, node] of nodes.entries()) {
+  for (const [index, node] of (owner === undefined ? nodes : []).entries()) {
     if (index > 0 && frame.judged.has(node.identity))
       queueSlideRenderHideBefore(hides, index - 1, sources, false, frame.forcePerfect);
     if (frame.missed.has(node.identity)) {
@@ -89,8 +131,10 @@ export function advanceExtensionSlide(
       if (index > 0) queueSlideRenderHideBefore(hides, index - 1, sources, true, false);
     }
   }
+  if (owner instanceof NoteSlide) for (const [index, hide] of owner.pendingRenderHides) hides.set(index, hide);
   const waits = previous.children.map((child, index) => child.lifecycle.phase !== "stop"
     ? { counter: previous!.waits[index]!, waited: false }
+    : owner instanceof NoteSlide ? { counter: 0, waited: owner.afterNotes[index]?.stopAdjustmentWaited ?? false }
     : advanceSlideStopWait(previous!.waits[index]!, sources.slice(index + 1).some(source => !source.isInvisible), frame.adjustment));
   let children = previous.children;
   let segments: OrdinarySlideFrameResult["segments"] = [];
@@ -144,11 +188,12 @@ export function advanceExtensionSlide(
     segments = advanced.value.segments;
   }
   const lastVisible = [...nodes].reverse().find(node => node.visible);
-  const playableFinished = previous.playableFinished || lastVisible === undefined ||
-    frame.judged.has(lastVisible.identity) || frame.missed.has(lastVisible.identity);
+  const playableFinished = previous.playableFinished || (owner === undefined
+    ? lastVisible === undefined || frame.judged.has(lastVisible.identity) || frame.missed.has(lastVisible.identity)
+    : lastVisible !== undefined && (frame.judged.has(lastVisible.identity) || frame.missed.has(lastVisible.identity)));
   const tail = nodes[nodes.length - 1]!;
   const finished = playableFinished && (tail.visible || frame.adjustedMusicPosition > tail.absolutePosition);
-  const flashActive = !playableFinished && (frame.forcePerfect
+  const flashActive = owner !== undefined ? owner != null && owner.flashAnimationRevision !== null && !playableFinished : !playableFinished && (frame.forcePerfect
     ? (previous.flashActive || nodes.some(node => frame.judged.has(node.identity)))
     : frame.heldChains.has(head.chainIdentity!));
   if (playableFinished) children = children.map(child => ({ ...child, visible: false }));
@@ -213,7 +258,7 @@ function geometrySource(node: GarupaProductNode): SlideGeometrySource {
   return { absolutePos: node.absolutePosition, isInvisible: !node.visible,
     virtualLaneDirection: 0, virtualLaneDistance: 0 };
 }
-function center(node: GarupaProductNode): number { return node.spanStart + (node.width - 1) / 2; }
+function center(node: GarupaProductNode): number { return projectedNodeLane(node); }
 function f32(value: number): RenderFloat32 {
   const result = createRenderFloat32(Math.fround(value));
   if (result.status !== "ok") throw new Error(result.capability);

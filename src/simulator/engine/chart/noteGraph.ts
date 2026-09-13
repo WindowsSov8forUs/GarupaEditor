@@ -290,6 +290,7 @@ function isDirectionalFlick(note: NoteInformation): boolean {
 }
 
 export interface DirectionalGraphSource<B extends number = number> {
+  readonly laneSpan?: { readonly start: number; readonly end: number };
   readonly absolutePos: number;
   readonly afterNoteAbsolutePos: number;
   readonly buttonType: B;
@@ -297,7 +298,7 @@ export interface DirectionalGraphSource<B extends number = number> {
   readonly gameNoteType: number;
   readonly afterNoteType: number;
   readonly isInvisible: boolean;
-  readonly slideNoteList: readonly { readonly absolutePos: number; readonly buttonType: B }[];
+  readonly slideNoteList: readonly { readonly absolutePos: number; readonly buttonType: B; readonly laneSpan?: { readonly start: number; readonly end: number } }[];
 }
 
 export function directionalEndpointPosition(note: DirectionalGraphSource): number {
@@ -313,6 +314,12 @@ export function directionalEndpointButton<B extends number>(note: DirectionalGra
     return note.slideNoteList[note.slideNoteList.length - 1]!.buttonType;
   }
   return note.buttonType;
+}
+
+export function directionalEndpointLane(note: DirectionalGraphSource): number {
+  const source = (note.fireNoteType === FrontNoteType.SlideA || note.fireNoteType === FrontNoteType.SlideB)
+    ? note.slideNoteList[note.slideNoteList.length - 1] ?? note : note;
+  return source.laneSpan?.start ?? source.buttonType;
 }
 
 type Direction = "left" | "right";
@@ -407,7 +414,7 @@ export function isSameDirectionalGroup(
   if (kind === null || !matchesDirectionalKind(target, kind)) {
     return false;
   }
-  const difference = directionalEndpointButton(source) - directionalEndpointButton(target);
+  const difference = directionalEndpointLane(source) - directionalEndpointLane(target);
   if (source.fireNoteType === kind.familyFireNoteType) {
     return kind.direction === "left"
       ? difference >= 1 && difference <= 2
@@ -501,4 +508,42 @@ function slideDirectionalReplacement(
     fireNoteType: FrontNoteType.None,
     replaceTypes: false,
   };
+}
+
+export function groupMultipleDirectionalInformationList(
+  informationList: readonly NoteInformation[],
+): readonly (readonly NoteInformation[])[] {
+  const groups: NoteInformation[][] = [];
+  let currentGroup: NoteInformation[] = [];
+  for (const information of informationList) {
+    if (information.buttonType === ButtonType.None && information.laneSpan === undefined) {
+      continue;
+    }
+    if (information.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
+      if (currentGroup.length > 0) {
+        groups.push(currentGroup);
+        currentGroup = [];
+      }
+      continue;
+    }
+    const previous = currentGroup[currentGroup.length - 1];
+    if (
+      previous !== undefined &&
+      previous.gameNoteType === information.gameNoteType &&
+      (previous.laneSpan === undefined || previous.laneSpan.end === previous.laneSpan.start) &&
+      (information.laneSpan === undefined || information.laneSpan.end === information.laneSpan.start) &&
+      Math.abs((previous.laneSpan?.start ?? previous.buttonType) - (information.laneSpan?.start ?? information.buttonType)) === 1
+    ) {
+      currentGroup.push(information);
+      continue;
+    }
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+    currentGroup = [information];
+  }
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup);
+  }
+  return groups;
 }

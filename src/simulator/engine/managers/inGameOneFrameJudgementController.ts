@@ -650,7 +650,7 @@ export class InGameOneFrameJudgementController {
           request.noteInformation.buttonTypesArray);
     const judgement: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
-      ...judgementGeometry(request.noteInformation, buttonTypes),
+      ...judgementGeometry(request.noteInformation, buttonTypes, ownership.judgementLaneSpan ?? request.noteInformation.laneSpan),
       noteType: request.noteType,
       phase,
       rawResult: request.rawResult,
@@ -765,7 +765,13 @@ function isClosedManualRequest(
         request.multipleDirectionalFlickNoteCount,
         expectedMultipleCount,
         expectedMultipleButtons,
-      );
+      ) || phase === "head" && request.noteType === 10 && request.rawResult !== NoteResultType.Miss &&
+        request.absolutePosition === source.absolutePos && request.multipleDirectionalFlickNoteCount === expectedMultipleCount &&
+        ownership.multipleDirectionalMembers !== undefined && ownership.multipleDirectionalMembers.includes(source) &&
+        (ownership.multipleDirectionalMembers.length === expectedMultipleCount && ownership.multipleDirectionalMembers.every(member =>
+          member.laneSpan !== undefined && member.laneSpan.end === member.laneSpan.start && Number.isFinite(member.laneSpan.start)) ||
+          ownership.multipleDirectionalMembers.length === 1 && ownership.judgementLaneSpan !== undefined &&
+          (ownership.judgementLaneSpan.width ?? ownership.judgementLaneSpan.end - ownership.judgementLaneSpan.start + 1) === expectedMultipleCount);
   }
   if (ownership.slidePhase !== null) {
     const allowedTypes = ownership.slideAllowedNoteTypes;

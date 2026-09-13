@@ -1,8 +1,13 @@
-import { GameNoteType } from "../chart/types";
+import { projectedNodeLane } from "./productChartProfile";
+import { type NoteBase } from "../notes/noteBase";
+import { NoteLong, NoteSlide } from "../notes/noteTypes";
+import type { NoteInformation } from "../chart/types";
+import type { ProjectedNoteGeometry } from "../managers/noteManager";
+import { FrontNoteType, GameNoteType } from "../chart/types";
 import { buildGarupaSyncInputs, buildGarupaSyncConnections, garupaSyncPairs, type GarupaSyncState, type SyncInput } from "./garupaSyncInputs";
 import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { slideAxisInterval, slideRenderedCurve } from "./slideAxisMesh";
-import { noteBodyBinding, noteFlickIconBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
+import { noteBodyBinding, noteLongFlashBinding, noteFlickIconBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
 import type {
   RenderAnimationRole,
   RenderFloat32,
@@ -10,8 +15,8 @@ import type {
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
-import { RenderCommandProducer, type NotePresentation, type RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
+import { calculateOrdinaryNoteStartDepth, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
+import { resolveProjectedNoteBinding, RenderCommandProducer, type NotePresentation, type RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import { advanceExtensionSlide, advanceExtensionMotion, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
 import type { OrdinarySlideFrameResult } from "../rendering/ordinarySlideChildLifecycle";
 import { integrityFailure, ok, type SimulatorResult } from "../evidence";
@@ -42,7 +47,96 @@ export interface GarupaProductRenderSnapshot {
 }
 
 export class GarupaRenderInputAdapter {
+  private readonly sourceNodes = new WeakMap<NoteInformation, GarupaProductNode>();
   private frame = 0;
+  private sharedOwner: (source: NoteInformation) => NoteBase | null = () => null;
+  private sharedFrame: () => ExtensionRenderFrame = () => { throw new Error("Shared projection clock is not connected"); };
+  private readonly sharedSegments = new Map<string, OrdinarySlideFrameResult["segments"]>();
+
+  connectSharedRuntime(owner: typeof this.sharedOwner, frame: typeof this.sharedFrame): ProjectedNoteGeometry {
+    this.sharedOwner = owner;
+    this.sharedFrame = frame;
+    const nodeFor = (source: NoteInformation) => this.sourceNodes.get(source);
+    const required = <T>(value: T | null | undefined): SimulatorResult<T> => value == null
+      ? rejected("render.note.projected-motion-unavailable", "Shared note state requires its current source projection.") : ok(value);
+    return {
+      advance: (note, delta, placement, children) => this.advanceShared(note, delta, placement, children),
+      childPhase: (source, index) => {
+        const node = nodeFor(source);
+        return required(node?.chainIdentity == null ? null : this.slideStates.get(node.chainIdentity)?.children[index]?.lifecycle.phase);
+      },
+      progress: source => {
+        const node = nodeFor(source);
+        return required(node?.chainIdentity == null ? node == null ? null : this.singleStates.get(node.identity)?.motionState.progressRate.value
+          : this.slideStates.get(node.chainIdentity)?.root.motionState.progressRate.value);
+      },
+      judgeY: source => { const node = nodeFor(source); return required(node == null ? null : this.getSlideJudgePosition(node)); },
+      inside: (position, source) => {
+        const node = nodeFor(source);
+        const span = node == null ? source.laneSpan : { start: node.spanStart, end: node.spanEnd, width: node.width };
+        return span === undefined ? rejected("manual.note.projected-span-unavailable", "Continuous input requires authored span.")
+          : this.scene.isInsideContinuousSpan(position, span.start, span.width ?? span.end - span.start + 1);
+      },
+    };
+  }
+
+  private advanceShared(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null,
+    children: boolean): SimulatorResult<void> {
+    const source = note.noteInformation;
+    const authored = source === null ? undefined : this.sourceNodes.get(source);
+    if (authored === undefined) return ok(undefined); // Directional side members share their authored projection.
+    const frame = { ...this.sharedFrame(), deltaTimeSeconds: delta };
+    const node = noteRenderInput(authored);
+    const input = { deltaTime: f32(delta), launcherMusicPosition: f32(frame.launcherMusicPosition), adjustedMusicPosition: f32(frame.adjustedMusicPosition) };
+    if (node.chainIdentity === null) {
+      if (children) return ok(undefined);
+      let state = this.singleStates.get(node.identity);
+      if (state === undefined) {
+        const motion = this.scene.motionStateAtLane(projectedNodeLane(node), node.width, node.absolutePosition);
+        if (motion.status !== "ok") return motion;
+        const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, f32(bpmAtNode(this.axis, node.absolutePosition)));
+        if (created.status !== "ok") return created;
+        state = created.value;
+      }
+      const advanced = advanceExtensionMotion(state, node, frame, input, this.scene, this.axis, this.axisGroups.has(node.timingGroup));
+      if (advanced.status !== "ok") return advanced;
+      this.singleStates.set(node.identity, advanced.value.phase === "stop" ? { ...advanced.value, phase: "move" } : advanced.value);
+      return ok(undefined);
+    }
+    if (!(note instanceof NoteLong || note instanceof NoteSlide)) return ok(undefined);
+    const chain = this.chainByIdentity.get(node.chainIdentity)!;
+    const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+    let state = this.slideStates.get(chain.identity);
+    if (state === undefined) {
+      const created = advanceExtensionSlide(nodes, undefined, { ...frame, deltaTimeSeconds: 0 }, this.scene, this.ordinaryScene,
+        this.axis, node => this.axisGroups.has(node.timingGroup), note, false);
+      if (created.status !== "ok") return created;
+      state = created.value.state;
+    }
+    if (!children) {
+      const moved = placement === null ? advanceExtensionMotion(state.root, nodes[0]!, frame, input,
+        this.scene, this.axis, this.axisGroups.has(nodes[0]!.timingGroup)) : ok(state.root);
+      if (moved.status !== "ok") return moved;
+      let root = placement === null && moved.value.phase === "stop" ? { ...moved.value, phase: "move" as const } : moved.value;
+      const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: f32(0) });
+      if (vertical.status !== "ok") return vertical;
+      const rootJudgeY = state.root.phase === "stop" ? state.rootJudgeY : Math.max(vertical.value.y, this.scene.virtualPerfectLine);
+      if (placement !== null) {
+        const placed = repositionOrdinaryNoteToJudgeLine(root.motionState, placement === "preserve" ? root.renderedTransform.localScale : placement);
+        if (placed.status !== "ok") return placed;
+        root = { ...root, phase: "stop", renderedTransform: placed.value };
+      }
+      this.slideStates.set(chain.identity, { ...state, root, rootJudgeY });
+      return ok(undefined);
+    }
+    const advanced = advanceExtensionSlide(nodes, state, frame, this.scene, this.ordinaryScene, this.axis,
+      node => this.axisGroups.has(node.timingGroup), note, false);
+    if (advanced.status !== "ok") return advanced;
+    this.slideStates.set(chain.identity, advanced.value.state);
+    this.sharedSegments.set(chain.identity, advanced.value.segments);
+    if (note instanceof NoteSlide) note.commitRenderHides();
+    return ok(undefined);
+  }
   private syncState: GarupaSyncState | undefined;
   private readonly syncInputs: readonly SyncInput[];
   private readonly adaptedSyncPositions: ReadonlySet<number>;
@@ -68,6 +162,10 @@ export class GarupaRenderInputAdapter {
       readonly target: OrdinarySyncLineTargetState; readonly visible: boolean;
     } | null>,
   ) {
+    for (const node of chart.nodes) {
+      const source = node.scoringSource ?? chart.originalSources.get(node.identity);
+      if (source !== undefined && !this.sourceNodes.has(source)) this.sourceNodes.set(source, node);
+    }
     this.syncInputs = buildGarupaSyncInputs(chart);
     this.adaptedSyncPositions = new Set(chart.visibleNodes.map(node => node.absolutePosition));
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
@@ -137,7 +235,7 @@ export class GarupaRenderInputAdapter {
       let uniformScale: RenderFloat32 | null = null;
       if (Number.isFinite(curve)) {
         const projected = this.scene.projectLaneAtCurve(
-          node.spanStart + (node.width - 1) / 2,
+          projectedNodeLane(node),
           curve,
         );
         const scale = this.scene.projectNoteScaleAtCurve(curve, node.width);
@@ -173,13 +271,14 @@ export class GarupaRenderInputAdapter {
       if (node.chainIdentity !== null || plannedJudged.has(node.identity)) continue;
       let state = plannedSingles.get(node.identity);
       if (state === undefined) {
-        const motion = this.scene.motionStateAtLane(node.spanStart + (node.width - 1) / 2, node.width, node.absolutePosition);
+        const motion = this.scene.motionStateAtLane(projectedNodeLane(node), node.width, node.absolutePosition);
         if (motion.status !== "ok") return motion;
         const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, f32(bpmAtNode(this.axis, node.absolutePosition)));
         if (created.status !== "ok") return created;
         state = created.value;
       }
-      const advanced = advanceExtensionMotion(state, node, frame, motionInput, this.scene, this.axis, this.axisGroups.has(node.timingGroup));
+      const advanced = node.runtimeRoot !== undefined && this.sharedOwner(node.runtimeRoot) !== null ? ok(state)
+        : advanceExtensionMotion(state, node, frame, motionInput, this.scene, this.axis, this.axisGroups.has(node.timingGroup));
       if (advanced.status !== "ok") return advanced;
       // Single notes keep moving until the judgement/timeout consumer retires them.
       state = advanced.value.phase === "stop" ? { ...advanced.value, phase: "move" } : advanced.value;
@@ -193,12 +292,21 @@ export class GarupaRenderInputAdapter {
     const slideSegments = new Map<string, OrdinarySlideFrameResult["segments"]>();
     for (const chain of this.chart.slideChains) {
       const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
-      const advanced = advanceExtensionSlide(nodes, this.slideStates.get(chain.identity), frame, this.scene, this.ordinaryScene, this.axis,
-      node => this.axisGroups.has(node.timingGroup));
+      const root = nodes[0]!.runtimeRoot;
+      const owner = root === undefined ? undefined : this.sharedOwner(root);
+      const cached = this.slideStates.get(chain.identity);
+      const advanced = root !== undefined && owner !== null && cached !== undefined && this.sharedSegments.has(chain.identity)
+        ? ok({ state: cached, segments: this.sharedSegments.get(chain.identity)! })
+        : advanceExtensionSlide(nodes, cached, frame, this.scene, this.ordinaryScene, this.axis,
+          node => this.axisGroups.has(node.timingGroup), owner instanceof NoteLong || owner instanceof NoteSlide ? owner : root === undefined ? undefined : null);
       if (advanced.status !== "ok") return advanced;
-      const state = advanced.value.state;
+      const terminal = nodes[nodes.length - 1]!;
+      const complete = root !== undefined && plannedJudged.has(terminal.identity);
+      const state = complete ? { ...advanced.value.state, finished: true, playableFinished: true,
+        flashActive: false, rootVisible: false } : advanced.value.state;
       plannedSlides.set(chain.identity, state);
       slideSegments.set(chain.identity, advanced.value.segments);
+      if (root !== undefined) this.sharedSegments.set(chain.identity, advanced.value.segments);
       for (const [index, node] of nodes.entries()) {
         const previous = samples.get(node.identity)!;
         const lifecycle = index === 0 ? state.root : state.children[index - 1]!.lifecycle;
@@ -269,7 +377,7 @@ export class GarupaRenderInputAdapter {
         samples.set(part.identity, { ...baseSample, node: part,
           position: position.status === "ok" && anchor.status === "ok" && baseSample.position !== null
             ? vector3(baseSample.position.x.value + position.value.x.value - anchor.value.x.value,
-                baseSample.position.y.value, baseSample.position.z.value) : null });
+                baseSample.position.y.value, calculateOrdinaryNoteStartDepth(this.ordinaryScene.noteStartPositions[3]!.z.value, node.absolutePosition, lane)) : null });
         visualNodes.push(part); visualOwners.set(part.identity, authored);
       }
       for (let index = 1; index < parts.length; index += 1)
@@ -279,10 +387,12 @@ export class GarupaRenderInputAdapter {
       const sample = samples.get(node.identity)!;
       const objectId = nodeObjectId(node);
       const animation = iconOwners.has(node.identity) ? productAnimationBinding(node, objectId, this.resources) : null;
+      const binding = frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
+        node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop");
+      if (binding.status !== "ok") return binding;
       plans.push({ id: objectId, lifetime: visualOwners.get(node.identity)!.identity, kind: "body", visible: sample.visible,
         position: sample.position, localScale: sample.uniformScale === null ? null : vector3(sample.uniformScale.value, sample.uniformScale.value, 0),
-        binding: frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
-          node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop"),
+        binding: binding.value,
         animations: animation === null ? [] : [{ ...animation, lifetime: visualOwners.get(node.identity)!.identity }] });
     }
     // Flash is a child of the actual Slide root, including an invisible authored head.
@@ -301,7 +411,8 @@ export class GarupaRenderInputAdapter {
         binding: existing?.binding ?? null,
         animations: [...existing?.animations ?? [], { ownerObjectId: slideFlashObjectId(chain.identity),
           ...resolveProductSlideFlashBinding(rootNode, this.resources), animationRole: "note-long-flash",
-          lifetime: chain.identity, revision: state.flashActive ? frame.flashRevisions.get(chain.identity)! : null }] };
+          lifetime: chain.identity, revision: state.flashActive ? (rootNode.runtimeRoot === undefined ? frame.flashRevisions.get(chain.identity)!
+            : (this.sharedOwner(rootNode.runtimeRoot) as NoteLong | NoteSlide | null)?.flashAnimationRevision ?? null) : null }] };
       if (index < 0) plans.push(plan); else plans[index] = plan;
     }
     for (const [first, second, direction] of directionalEdges) {
@@ -357,7 +468,7 @@ export class GarupaRenderInputAdapter {
       node.type === "Directional" && node.width > 1
       ? { ...original, gameNoteType: node.direction === "Left" ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideADirectionalFlickRightAdd }
       : original;
-    const anchor = node.type === "Directional" ? node.lane : node.spanStart + (node.width - 1) / 2;
+    const anchor = node.type === "Directional" ? node.lane : projectedNodeLane(node);
     if (anchor === lane) return target;
     // Recover the curve from the committed root Y for original endpoints too.
     const startY = this.ordinaryScene.noteStartPositions[3]!.y.value;
@@ -375,6 +486,7 @@ export class GarupaRenderInputAdapter {
     this.judgedNodeIdentities.clear();
     this.singleStates.clear();
     this.slideStates.clear();
+    this.sharedSegments.clear();
   }
 
   getSlidePresentation(identity: string) {
@@ -435,10 +547,13 @@ function frontBinding(
     : node.type === "Skill" ? "note_skill"
     : noteColor && node.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
   const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && node.width <= 7;
-  if (chainHead && heldSlideHead) return noteSlideHeldBodyBinding(resources, node.width,
-    node.spanStart + (node.width - 1) / 2, habahiro);
-  return noteBodyBinding(resources, family, resourceSuffix(node, habahiro), node.width, habahiro,
-    node.type === "Directional" ? node.direction === "Left" ? "l" : "r" : null);
+  if (chainHead && heldSlideHead && node.runtimeRoot?.fireNoteType !== FrontNoteType.Long) return ok(noteSlideHeldBodyBinding(resources, node.width,
+    projectedNodeLane(node), habahiro));
+  if (node.runtimeRoot !== undefined && node.scoringSource !== null) return resolveProjectedNoteBinding(
+    node.runtimeRoot, node.scoringSource, node.scoringPhase ?? "head", resources, noteColor,
+    { lane: productResourceLane(node), suffix: resourceSuffix(node, habahiro), width: node.width }, habahiro);
+  return ok(noteBodyBinding(resources, family, resourceSuffix(node, habahiro), node.width, habahiro,
+    node.type === "Directional" ? node.direction === "Left" ? "l" : "r" : null));
 }
 
 function productAnimationBinding(
@@ -454,7 +569,7 @@ function productAnimationBinding(
 }
 
 function productResourceLane(node: GarupaProductNode): number {
-  const center = node.spanStart + (node.width - 1) / 2;
+  const center = projectedNodeLane(node);
   if (Number.isInteger(center) && center >= 0 && center <= 6) return center;
   // Product semantics: fractional/outside nodes use one fixed center glyph of
   // the selected family. This is neither a nearest-lane lookup nor an
@@ -466,7 +581,7 @@ function resourceSuffix(front: GarupaProductNode, habahiro: boolean): string {
   if (!habahiro) return String(productResourceLane(front));
   if (Number.isInteger(front.spanStart) && front.spanStart >= 0 && front.spanEnd <= 6)
     return Array.from({ length: front.width }, (_, index) => front.spanStart + index).join("_");
-  const center = front.spanStart + (front.width - 1) / 2;
+  const center = projectedNodeLane(front);
   const suffix = front.width === 1 ? "3"
     : front.width === 2 ? center <= 3 ? "2_3" : "3_4"
     : front.width === 3 ? "2_3_4"
@@ -483,7 +598,8 @@ export function resolveProductSlideFlashBinding(
   resources: RenderEngineResourceBindings,
 ): Readonly<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   const habahiro = resources.habahiroAtlasLogicalAssetIds !== undefined && front.width <= 7;
-  return noteSlideFlashBinding(resources, front.width, front.spanStart + (front.width - 1) / 2, habahiro);
+  if (front.runtimeRoot?.fireNoteType === FrontNoteType.Long) return noteLongFlashBinding(resources, resourceSuffix(front, habahiro), habahiro);
+  return noteSlideFlashBinding(resources, front.width, projectedNodeLane(front), habahiro);
 }
 
 function syncTarget(sample: ProductNodeSample, parentScale: RenderFloat32): OrdinarySyncLineTargetState {

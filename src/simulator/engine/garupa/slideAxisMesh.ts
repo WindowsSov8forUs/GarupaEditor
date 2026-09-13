@@ -1,3 +1,4 @@
+import { projectedNodeLane } from "./productChartProfile";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import { ok, type SimulatorResult } from "../evidence";
@@ -98,4 +99,4 @@ function stableRatio(first: number, second: number, target: number): number {
 function interpolate(first: number, second: number, rate: number): number {
   return Math.fround(Math.fround(first * Math.fround(1 - rate)) + Math.fround(second * rate));
 }
-function center(node: GarupaProductNode): number { return node.spanStart + (node.width - 1) / 2; }
+function center(node: GarupaProductNode): number { return projectedNodeLane(node); }

@@ -22,6 +22,7 @@ import {
   type GameNoteTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
+  type NoteLaneSpan,
 } from "../engine/chart/types";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/evidence";
 import { registerConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
@@ -63,6 +64,7 @@ interface PositionFields {
 }
 
 interface ButtonSpan {
+  readonly laneSpan?: NoteLaneSpan;
   readonly buttons: readonly ButtonTypeValue[];
   readonly primary: ButtonTypeValue;
   readonly ccNums: readonly number[];
@@ -82,16 +84,40 @@ export function constructChartFromGarupaChartJson(
   if (profile.status !== "ok") return profile;
   const originalSources = new Map<string, NoteInformation>();
   const extensions = Object.freeze({ ...profile.value, originalSources });
-  const constructed = constructOriginalCompatibleGarupaChart(chart, extensions, originalSources);
+  const constructed = constructGarupaNoteGraphs(chart, extensions, originalSources);
   if (constructed.status !== "ok") return constructed;
   const axis = createGarupaProductTimingGroupAxisProfile(constructed.value, profile.value);
   if (axis.status !== "ok") return axis;
-  registerGarupaProductChartProfile(constructed.value, extensions);
+  const roots = new Map<number, NoteInformation>();
+  const membersByOrder = new Map<number, NoteInformation[]>();
+  for (const batch of constructed.value.noteBatches) for (const source of batch.informationList) {
+    const order = extensions.originalSourceOrder.get(source);
+    if (order !== undefined) {
+      if (!roots.has(order)) roots.set(order, source);
+      const members = membersByOrder.get(order) ?? [];
+      members.push(source); membersByOrder.set(order, members);
+    }
+  }
+  const bound = freezeGarupaProductChartProfile({
+    originalItemIndices: extensions.originalItemIndices, svEvents: [...extensions.svEvents],
+    slideChains: [...extensions.slideChains],
+    nodes: extensions.authoredNodes.map(node => {
+      const root = roots.get(node.chartItemIndex);
+      const source = originalSources.get(node.identity);
+      return root === undefined || source === undefined ? node : { ...node,
+        scoringSource: node.visible ? source : null, runtimeRoot: root,
+        runtimeMembers: Object.freeze(membersByOrder.get(node.chartItemIndex)!),
+        scoringPhase: node.connectionIndex === null || node.connectionIndex === 0 ? "head"
+          : source === root || source === root.slideNoteList[root.slideNoteList.length - 1] ? "tail" : "intermediate" };
+    }),
+  });
+  registerGarupaProductChartProfile(constructed.value, Object.freeze({ ...bound,
+    originalSources, originalSourceOrder: extensions.originalSourceOrder }));
   registerGarupaProductTimingGroupAxisProfile(constructed.value, axis.value);
   return constructed;
 }
 
-function constructOriginalCompatibleGarupaChart(
+function constructGarupaNoteGraphs(
   chart: GarupaChartJson,
   extensions: GarupaProductChartProfile,
   originalSources: Map<string, NoteInformation>,
@@ -132,13 +158,14 @@ function constructOriginalCompatibleGarupaChart(
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder];
     if (item === undefined || item.type === "SV" || item.type === "BPM") continue;
-    if (!extensions.originalItemIndices.has(sourceOrder)) {
-      if (item.type === "Slide") slideOrdinal += 1;
+    if (item.type === "Slide" && !isOriginalCompatibleSlide(item)) {
+      slideOrdinal += 1;
       continue;
     }
+    const projected = !extensions.originalItemIndices.has(sourceOrder);
     if (item.type === "Slide") {
       const long = isLongShape(item);
-      const slide = long ? createLong(item, nextIndex) : createSlide(item, sourceOrder, slideOrdinal, nextIndex);
+      const slide = long ? createLong(item, nextIndex, projected) : createSlide(item, sourceOrder, slideOrdinal, nextIndex, projected);
       if (slide.status !== "ok") return slide;
       records.push(Object.freeze({
         absolutePos: slide.value.root.absolutePos,
@@ -163,16 +190,19 @@ function constructOriginalCompatibleGarupaChart(
     const position = positionFields(item.beat);
     if (position.status !== "ok") return position;
     if (item.type === "Directional") {
-      const span = directionalSpan(item);
+      const span = directionalSpan(item, projected);
       if (span.status !== "ok") return span;
-      const multiple = span.value.buttons.length > 1;
+      const multiple = item.width > 1;
       isMultiRangeNotes ||= multiple;
-      for (let localOrder = 0; localOrder < span.value.buttons.length; localOrder += 1) {
-        const button = span.value.buttons[localOrder]!;
+      // Only the original seven-lane domain has individual button members.
+      // Wider extension spans retain one group owner and their exact count.
+      const compact = item.width > LANE_COUNT;
+      for (let localOrder = 0; localOrder < (compact ? 1 : item.width); localOrder += 1) {
+        const lane = (item.direction === "Left" ? item.lane - item.width + 1 : item.lane) + localOrder;
         const note = createBaseNote({
           index: nextIndex++,
           position: position.value,
-          span: singleButtonSpan(button),
+          span: projectedSpan(lane, compact ? item.width : 1, projected),
           kinds: directionalKinds(item.direction, multiple),
           additional: GameNoteAdditionalType.None,
         });
@@ -180,7 +210,7 @@ function constructOriginalCompatibleGarupaChart(
       }
       continue;
     }
-    const span = rhythmSpan(item);
+    const span = rhythmSpan(item, projected);
     if (span.status !== "ok") return span;
     isMultiRangeNotes ||= span.value.buttons.length > 1;
     const note = createBaseNote({
@@ -273,6 +303,7 @@ function buildGarupaProductChartProfile(
       const connectionIdentities: string[] = [];
       const visibleConnectionIdentities: string[] = [];
       let containsHidden = false;
+      const additionalTopology = !isOriginalCompatibleSlide(item);
       for (let connectionIndex = 0; connectionIndex < item.connections.length; connectionIndex += 1) {
         const connection = item.connections[connectionIndex]!;
         const built = buildProductNode(
@@ -285,6 +316,7 @@ function buildGarupaProductChartProfile(
           connection.timingGroup === undefined
             ? ownerGroup
             : productTimingGroup(connection.timingGroup),
+          additionalTopology,
         );
         if (built.status !== "ok") return built;
         nodes.push(built.value);
@@ -314,6 +346,7 @@ function buildGarupaProductChartProfile(
       authoredOrder++,
       scoringIndex++,
       productTimingGroup(item.timingGroup),
+      false,
     );
     if (built.status !== "ok") return built;
     nodes.push(built.value);
@@ -351,6 +384,7 @@ function buildProductNode(
   authoredOrder: number,
   scoringIndex: number,
   timingGroup: GarupaProductTimingGroupId,
+  additionalTopology: boolean,
 ): SimulatorResult<GarupaProductNode> {
   const position = positionFields(connection.beat);
   if (position.status !== "ok") return position;
@@ -361,7 +395,7 @@ function buildProductNode(
   const identity = connectionIndex === null
     ? `garupa-note:${chartItemIndex}`
     : `garupa-slide:${chartItemIndex}:connection:${connectionIndex}`;
-  const scoringSource = visible
+  const scoringSource = visible && additionalTopology
     ? Object.freeze({ ...createBaseNote({
         index: scoringIndex,
         position: position.value,
@@ -370,7 +404,7 @@ function buildProductNode(
         additional: connection.type === "Skill"
           ? GameNoteAdditionalType.Skill
           : GameNoteAdditionalType.None,
-      }), laneSpan: Object.freeze({ start: spanStart, end: spanStart + connection.width - 1 }) })
+      }), laneSpan: Object.freeze({ start: spanStart, end: spanStart + connection.width - 1, width: connection.width }) })
     : null;
   return ok(Object.freeze({
     identity,
@@ -465,10 +499,10 @@ function isLongShape(slide: GarupaChartJsonSlideItem): boolean {
       Math.floor(head.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT);
 }
 
-function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number) {
+function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, projected = false) {
   const head = slide.connections[0]! as GarupaChartJsonSimpleNote;
   const tail = slide.connections[1]!;
-  const span = rhythmSpan(head);
+  const span = rhythmSpan(head, projected);
   if (span.status !== "ok") return span;
   const start = positionFields(head.beat);
   if (start.status !== "ok") return start;
@@ -497,6 +531,7 @@ function createSlide(
   sourceOrder: number,
   slideOrdinal: number,
   firstIndex: number,
+  projected = false,
 ): SimulatorResult<{
   readonly root: NoteInformation;
   readonly additionalRoots: readonly NoteInformation[];
@@ -537,7 +572,7 @@ function createSlide(
   const familyA = slideOrdinal % 2 === 0;
   const familyFront = familyA ? FrontNoteType.SlideA : FrontNoteType.SlideB;
   const familyGame = familyA ? GameNoteType.SlideA : GameNoteType.SlideB;
-  const headSpan = rhythmSpan(head);
+  const headSpan = rhythmSpan(head, projected);
   if (headSpan.status !== "ok") return headSpan;
   let nextIndex = firstIndex;
   let isMultiRange = headSpan.value.buttons.length > 1;
@@ -546,15 +581,15 @@ function createSlide(
     const connection = slide.connections[index]!;
     const isTerminal = index === slide.connections.length - 1;
     const fullSpan = connection.type === "Directional"
-      ? directionalSpan(connection)
-      : rhythmSpan(connection);
+      ? directionalSpan(connection, projected)
+      : rhythmSpan(connection, projected);
     if (fullSpan.status !== "ok") return fullSpan;
     isMultiRange ||= fullSpan.value.buttons.length > 1;
     const span = isTerminal && connection.type === "Directional"
-      ? singleButtonSpan(connection.lane as ButtonTypeValue)
+      ? projectedSpan(connection.lane, 1, projected)
       : fullSpan.value;
     const terminalKinds = isTerminal
-      ? slideTerminalKinds(connection, familyA, fullSpan.value.buttons.length > 1)
+      ? slideTerminalKinds(connection, familyA, connection.width > 1)
       : Object.freeze({ game: familyGame, front: familyFront, after: AfterNoteType.None });
     const child = createBaseNote({
       index: nextIndex + index,
@@ -584,16 +619,17 @@ function createSlide(
   });
   const additionalRoots: NoteInformation[] = [];
   if (tail.type === "Directional" && tail.width > 1) {
-    const tailSpan = requireDirectionalSpan(tail);
+    const tailStart = tail.direction === "Left" ? tail.lane - tail.width + 1 : tail.lane;
     const helperFront = familyA
       ? FrontNoteType.SlideAMultipleDirectionalFlickAdd
       : FrontNoteType.SlideBMultipleDirectionalFlickAdd;
-    for (const button of tailSpan.buttons) {
-      if (button === tail.lane) continue;
+    for (let offset = 0; offset < tail.width; offset += 1) {
+      const lane = tailStart + offset;
+      if (lane === tail.lane) continue;
       additionalRoots.push(createBaseNote({
         index: nextIndex + slide.connections.length + additionalRoots.length,
         position: positions[positions.length - 1]!,
-        span: singleButtonSpan(button),
+        span: projectedSpan(lane, 1, projected),
         kinds: Object.freeze({
           game: familyA
             ? tail.direction === "Left" ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideADirectionalFlickRightAdd
@@ -610,7 +646,7 @@ function createSlide(
   registerMultiRangeSourceIdentity(root, {
     ccNums: headSpan.value.ccNums,
     afterCcNums: tail.type === "Directional"
-      ? requireDirectionalSpan(tail).ccNums
+      ? projectedSpan(tail.direction === "Left" ? tail.lane - tail.width + 1 : tail.lane, tail.width, projected).ccNums
       : terminal.buttonTypes.map(ccForButton),
   });
   nextIndex += slide.connections.length + additionalRoots.length;
@@ -644,6 +680,7 @@ function createBaseNote(input: {
     isSlideNoteHead: input.isSlideNoteHead ?? false,
     isMultiRangeCombine: false,
     isInvisible: input.invisible ?? false,
+    ...(input.span.laneSpan === undefined ? {} : { laneSpan: input.span.laneSpan }),
     buttonType: input.span.primary,
     buttonTypes: [...input.span.buttons],
     buttonTypesArray: [...input.span.buttons],
@@ -714,15 +751,22 @@ function positionFieldsFromAbsolute(absolutePos: number): PositionFields {
   });
 }
 
-function rhythmSpan(connection: GarupaChartJsonSimpleNote): SimulatorResult<ButtonSpan> {
-  return spanFromStart(connection.lane, connection.width);
+function rhythmSpan(connection: GarupaChartJsonSimpleNote, projected = false): SimulatorResult<ButtonSpan> {
+  return projected ? ok(projectedSpan(connection.lane, connection.width, true)) : spanFromStart(connection.lane, connection.width);
 }
 
-function directionalSpan(connection: GarupaChartJsonDirectionalNote): SimulatorResult<ButtonSpan> {
+function directionalSpan(connection: GarupaChartJsonDirectionalNote, projected = false): SimulatorResult<ButtonSpan> {
   const start = connection.direction === "Left"
     ? connection.lane - connection.width + 1
     : connection.lane;
-  return spanFromStart(start, connection.width);
+  return projected ? ok(projectedSpan(start, connection.width, true)) : spanFromStart(start, connection.width);
+}
+
+function projectedSpan(start: number, width: number, projected: boolean): ButtonSpan {
+  const native = spanFromStart(start, width);
+  if (!projected && native.status === "ok") return native.value;
+  return { ...(native.status === "ok" ? native.value : commandSpan()),
+    laneSpan: Object.freeze({ start, end: start + width - 1, width }) };
 }
 
 function spanFromStart(start: number, width: number): SimulatorResult<ButtonSpan> {
@@ -740,23 +784,6 @@ function spanFromStart(start: number, width: number): SimulatorResult<ButtonSpan
       ? Math.trunc(buttons.reduce<number>((sum, button) => sum + button, 0) / buttons.length)
       : -1,
   }));
-}
-
-function requireDirectionalSpan(connection: GarupaChartJsonDirectionalNote): ButtonSpan {
-  const span = directionalSpan(connection);
-  if (span.status !== "ok") {
-    throw new Error("validated directional span escaped direct Garupa chart construction");
-  }
-  return span.value;
-}
-
-function singleButtonSpan(button: ButtonTypeValue): ButtonSpan {
-  return Object.freeze({
-    buttons: Object.freeze([button]),
-    primary: button,
-    ccNums: Object.freeze([ccForButton(button)]),
-    halfButtonIndex: -1,
-  });
 }
 
 function commandSpan(): ButtonSpan {

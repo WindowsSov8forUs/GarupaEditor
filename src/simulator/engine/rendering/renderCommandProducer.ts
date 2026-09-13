@@ -3234,11 +3234,12 @@ export function resolveFrontSpriteBinding(
   habahiro: boolean,
   resources: RenderEngineResourceBindings,
   noteColor: boolean,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<{
   readonly logicalAssetId: string;
   readonly exactKey: string;
 }> {
-  const laneSuffix = resolveFrontLaneSuffix(information, habahiro);
+  const laneSuffix = geometry === undefined ? resolveFrontLaneSuffix(information, habahiro) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (
     information.fireNoteType === FrontNoteType.DirectionalFlick ||
@@ -3304,8 +3305,9 @@ function resolveHabahiroFrontSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
   noteColor: boolean,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<NoteSpriteBinding | null> {
-  const laneSuffix = resolveLaneSuffix(information, true);
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (
     information.fireNoteType === FrontNoteType.DirectionalFlick ||
@@ -3324,7 +3326,7 @@ function resolveHabahiroFrontSpriteBinding(
       ? noteColor && information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal"
     : information.fireNoteType === FrontNoteType.Flick ? "note_flick" : "note_long";
   return ok(noteBodyBinding(resources, family, laneSuffix.value,
-    information.buttonTypesArray.length || information.buttonTypes.length || 1, true));
+    (geometry?.width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1)), true));
 }
 
 function resolveHabahiroIconBinding(
@@ -3376,8 +3378,9 @@ function resolveHabahiroIconBinding(
 function resolveHabahiroAfterSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<NoteSpriteBinding | null> {
-  const laneSuffix = resolveLaneSuffix(information, true);
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (afterTypeIsDirectional(information.afterNoteType)) {
     return ok(resolveHabahiroDirectionalBodyBinding(
@@ -3398,12 +3401,13 @@ function resolveHabahiroSlideChildBinding(
   information: NoteInformation,
   terminal: boolean,
   resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<NoteSpriteBinding | null> {
-  const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
+  const buttonCount = geometry?.width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1);
   if (!terminal) {
     return ok(noteBodyBinding(resources, "note_slide_among", "", buttonCount, true));
   }
-  const laneSuffix = resolveLaneSuffix(information, true);
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (gameTypeIsDirectional(information.gameNoteType)) {
     return ok(resolveHabahiroDirectionalBodyBinding(
@@ -3415,6 +3419,24 @@ function resolveHabahiroSlideChildBinding(
     information.gameNoteType === GameNoteType.SlideEndFlickA ||
     information.gameNoteType === GameNoteType.SlideEndFlickB;
   return ok(noteBodyBinding(resources, flick ? "note_flick" : "note_long", laneSuffix.value, buttonCount, true));
+}
+
+interface NoteBindingGeometry {
+  readonly lane: number;
+  readonly suffix: string;
+  readonly width: number;
+}
+
+/** Shared note-family routing; extensions supply only their resource-coordinate mapping. */
+export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteInformation,
+  phase: "head" | "intermediate" | "tail", resources: RenderEngineResourceBindings, noteColor: boolean,
+  geometry: NoteBindingGeometry, habahiro: boolean): SimulatorResult<NoteSpriteBinding | null> {
+  if (phase === "head") return habahiro ? resolveHabahiroFrontSpriteBinding(source, resources, noteColor, geometry)
+    : resolveFrontSpriteBinding(source, false, resources, noteColor, geometry);
+  if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
+    : resolveAfterSpriteBinding(root, resources, geometry);
+  return habahiro ? resolveHabahiroSlideChildBinding(source, phase === "tail", resources, geometry)
+    : resolveSlideChildSpriteBinding(source, phase === "tail", resources, geometry);
 }
 
 interface NoteSpriteBinding {
@@ -3676,8 +3698,9 @@ function resolveOrdinarySlideCenterLane(
 function resolveAfterSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
-  const lane = resolveOrdinarySlideCenterLane(information);
+  const lane = geometry === undefined ? resolveOrdinarySlideCenterLane(information) : ok(geometry.lane);
   if (lane.status !== "ok") return lane;
   if (afterTypeIsDirectional(information.afterNoteType)) {
     return ok(Object.freeze({
@@ -3697,11 +3720,12 @@ function resolveSlideChildSpriteBinding(
   information: NoteInformation,
   terminal: boolean,
   resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   if (!terminal) {
     return ok(noteBodyBinding(resources, "note_slide_among", "", 1, false)!);
   }
-  const lane = resolveOrdinarySlideCenterLane(information);
+  const lane = geometry === undefined ? resolveOrdinarySlideCenterLane(information) : ok(geometry.lane);
   if (lane.status !== "ok") return lane;
   if (gameTypeIsDirectional(information.gameNoteType)) {
     return ok(noteBodyBinding(resources, "note_flick", String(lane.value), 1, false,

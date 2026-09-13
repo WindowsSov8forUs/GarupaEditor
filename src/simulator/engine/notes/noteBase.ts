@@ -49,6 +49,8 @@ export interface ManualNoteRuntime {
   readonly judgeSlide: (
     source: NoteInformation,
   ) => SimulatorResult<import("../managers/slideNoteManager").SlideJudgeDecision>;
+  readonly isInsideSource: (position: ManualInputPosition, source: NoteInformation,
+    buttons: readonly ButtonTypeValue[]) => SimulatorResult<boolean>;
   readonly geometry: SimulatorManualInputGeometryBackend;
   readonly beginJudgementTransaction: () => ManualJudgementTransaction;
   readonly submitJudgement: (

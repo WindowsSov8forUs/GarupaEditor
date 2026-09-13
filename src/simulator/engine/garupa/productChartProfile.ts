@@ -33,6 +33,10 @@ export interface GarupaProductNode {
    * geometry does not select another standalone-note judgement owner.
    */
   readonly scoringSource: NoteInformation | null;
+  /** The shared NoteManager root; absent only for additional authored topology. */
+  readonly runtimeRoot?: NoteInformation;
+  readonly runtimeMembers?: readonly NoteInformation[];
+  readonly scoringPhase?: "head" | "intermediate" | "tail";
 }
 
 export interface GarupaProductSlideChain {
@@ -117,4 +121,12 @@ function freezeProductScoringSource(source: NoteInformation): void {
   Object.freeze(source.slideNoteList);
   Object.freeze(source.soundValueList);
   Object.freeze(source);
+}
+
+/** Keep the original range representative when it exists; interpolate only new coordinates. */
+export function projectedNodeLane(node: GarupaProductNode): number {
+  if (node.type === "Directional") return node.lane;
+  const source = node.scoringSource ?? node.runtimeRoot?.slideNoteList[(node.connectionIndex ?? 0) - 1];
+  return node.runtimeRoot !== undefined && source != null && source.buttonType >= 0 && source.buttonType <= 6
+    ? source.buttonType : node.spanStart + (node.width - 1) / 2;
 }

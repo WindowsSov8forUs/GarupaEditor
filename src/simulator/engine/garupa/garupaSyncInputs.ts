@@ -1,3 +1,4 @@
+import { projectedNodeLane } from "./productChartProfile";
 import { AfterNoteType, FrontNoteType, GameNoteType } from "../chart/types";
 import { type DirectionalGraphSource } from "../chart/noteGraph";
 import { SyncLineConnectionRules, selectDirectionalSyncEndpoints, type SyncConnection } from "../rendering/syncLineConnectionRules";
@@ -85,7 +86,7 @@ export function garupaSyncPairs(state: GarupaSyncState): readonly GarupaSyncInpu
   return state.lines.map((line, index) => {
     const first = line.afterA ? line.targetA.tail! : line.targetA.front;
     const second = line.afterB ? line.targetB.tail! : line.targetB.front;
-    const lane = (node: GarupaProductNode) => node.type === "Directional" ? node.lane : node.spanStart + (node.width - 1) / 2;
+    const lane = (node: GarupaProductNode) => node.type === "Directional" ? node.lane : projectedNodeLane(node);
     const extremes = (node: GarupaProductNode, after: boolean) => {
       const endpoint = { node, after, lane: lane(node) };
       // The original front MultipleDirectional inherits the base self result.
@@ -111,7 +112,7 @@ function input(front: GarupaProductNode, tail: GarupaProductNode | null, chart: 
       ? tail.direction === "Left" ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight
       : tail.direction === "Left" ? AfterNoteType.SlideDirectionalFlickEndLeft : AfterNoteType.SlideDirectionalFlickEndRight
     : tail?.type === "Flick" ? AfterNoteType.SlideFlickEnd : AfterNoteType.None;
-  const lane = (node: GarupaProductNode) => node.type === "Directional" ? node.lane : node.spanStart + (node.width - 1) / 2;
+  const lane = (node: GarupaProductNode) => node.type === "Directional" ? node.lane : projectedNodeLane(node);
   const noteInformation: DirectionalGraphSource = {
     absolutePos: front.absolutePosition, afterNoteAbsolutePos: tail?.absolutePosition ?? front.absolutePosition,
     buttonType: lane(front), isInvisible: !front.visible,

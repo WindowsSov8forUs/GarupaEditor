@@ -16,6 +16,7 @@ export interface AutoLiveJudgementOwnership {
 }
 
 export interface MultipleDirectionalRuntimeGroup {
+  readonly members: readonly NoteInformation[];
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
   readonly isUsed: boolean;

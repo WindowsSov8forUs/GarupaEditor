@@ -16,7 +16,9 @@ import {
   type NoteInformation,
 } from "../chart/types";
 import {
+  groupMultipleDirectionalInformationList,
   directionalEndpointButton,
+  directionalEndpointLane,
   directionalEndpointPosition,
   isSameDirectionalGroup,
 } from "../chart/noteGraph";
@@ -119,6 +121,7 @@ interface NotePool {
 }
 
 interface ManualSlideSourceOwnership {
+  readonly laneSpan?: import("../chart/types").NoteLaneSpan;
   readonly sourceIndex: number;
   readonly phase: "head" | "intermediate" | "tail";
   readonly allowedNoteTypes: readonly number[];
@@ -161,8 +164,19 @@ interface DirectionalVisualTailOwner {
   readonly information: NoteInformation;
 }
 
+export interface ProjectedNoteGeometry {
+  advance(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null, children: boolean): SimulatorResult<void>;
+  childPhase(source: NoteInformation, index: number): SimulatorResult<"wait" | "move" | "stop">;
+  progress(source: NoteInformation): SimulatorResult<number>;
+  judgeY(source: NoteInformation): SimulatorResult<number>;
+  inside(position: ManualInputPosition, source: NoteInformation): SimulatorResult<boolean>;
+}
+
 export class NoteManager {
+  private projectedGeometry: ProjectedNoteGeometry | null = null;
+  setProjectedGeometry(geometry: ProjectedNoteGeometry): void { this.projectedGeometry = geometry; }
   private readonly activeBySource = new Map<NoteInformation, NoteBase>();
+  private readonly projectedVisualRoots = new WeakMap<NoteInformation, NoteInformation>();
   private readonly projectedNotes = new WeakSet<NoteBase>();
   getActiveNote(source: NoteInformation): NoteBase | null { return this.activeBySource.get(source) ?? null; }
 
@@ -379,6 +393,7 @@ export class NoteManager {
               ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType)
               : [8];
             this.manualSlideSources.set(source, Object.freeze({
+              laneSpan: terminal && slideAfterGroup !== undefined ? directionalGroupSpan(slideAfterGroup) : source.laneSpan,
               sourceIndex: slideIndex,
               phase: terminal ? "tail" : "intermediate",
               allowedNoteTypes: Object.freeze(allowedNoteTypes),
@@ -436,13 +451,14 @@ export class NoteManager {
     }
     const requiresMultipleDirectionalLinePool = this.renderProducer !== null &&
       !degradedHabahiro &&
-      this.batches.some((batch) =>
-        batch.informationList.some(information =>
+      this.batches.some((batch) => {
+        const unprojected = batch.informationList.filter(source => source.laneSpan === undefined);
+        return unprojected.some(information =>
           information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
           information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
           information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd) ||
-        groupMultipleDirectionalInformationList(batch.informationList).some(group => group.length > 1)
-      );
+          groupMultipleDirectionalInformationList(unprojected).some(group => group.length > 1);
+      });
     const renderSetup = this.renderProducer?.preflightPoolSetup(
       [...familyNotes].flatMap(([family, notes]) =>
         notes.flatMap((information, index) => information.laneSpan !== undefined ? [] : [Object.freeze({
@@ -491,6 +507,8 @@ export class NoteManager {
         note.registerManualRuntime({
           getExecuteFrame: () => this.musicScoreController.executeFrame,
           getSlideChildPhase: (index) => {
+            if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null)
+              return this.projectedGeometry.childPhase(note.noteInformation, index);
             const phase = this.ordinarySlideRenderStates.get(note)?.[index]?.lifecycle.phase;
             return phase === undefined
               ? integrityFailure("manual.slide-child-phase-unavailable", ["D11", "MJ23"],
@@ -501,6 +519,10 @@ export class NoteManager {
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           getJudgementAdjustValueB: () => this.judgementAdjustValueB,
           hasCrossedMotionLine: () => {
+            if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
+              const progress = this.projectedGeometry.progress(note.noteInformation);
+              return progress.status === "ok" ? ok(progress.value > 1) : progress;
+            }
             const progress = this.ordinaryRenderMotionStates.get(note)?.motionState.progressRate.value;
             return progress === undefined
               ? integrityFailure("manual.note-motion-progress-unavailable", ["D11", "MJ23"],
@@ -508,6 +530,17 @@ export class NoteManager {
               : ok(progress > 1);
           },
           stopSlideHeadAtJudgeLine: () => {
+            if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
+              const progress = this.projectedGeometry.progress(note.noteInformation);
+              const y = this.projectedGeometry.judgeY(note.noteInformation);
+              const line = this.slideNoteManager.getVirtualPerfectLine(note.noteInformation);
+              if (progress.status !== "ok") return progress;
+              if (y.status !== "ok") return y;
+              if (line.status !== "ok") return line;
+              if (progress.value <= 1 || y.value > line.value) return ok(false);
+              const placed = this.projectedGeometry.advance(note, 0, "target-button", false);
+              return placed.status === "ok" ? ok(true) : placed;
+            }
             const current = this.ordinaryRenderMotionStates.get(note);
             if (current === undefined || note.noteInformation === null) {
               return integrityFailure("manual.slide-head-motion-unavailable", ["D10", "MJ23"],
@@ -522,6 +555,10 @@ export class NoteManager {
             return snapped.status === "ok" ? ok(true) : snapped;
           },
           judgeSlide: (source) => {
+            if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
+              const y = this.projectedGeometry.judgeY(source);
+              return y.status === "ok" ? this.slideNoteManager.judge(source, y.value) : y;
+            }
             const index = this.manualSlideSources.get(source)?.sourceIndex;
             const y = index === -1 ? this.ordinaryRenderMotionStates.get(note)?.slideJudgeY
               : index === undefined ? undefined : this.ordinarySlideRenderStates.get(note)?.[index]?.judgeY;
@@ -530,6 +567,8 @@ export class NoteManager {
                   "Slide judgement requires the committed motion of its chart-owned node.")
               : this.slideNoteManager.judge(source, y);
           },
+          isInsideSource: (position, source, buttons) => source.laneSpan !== undefined && this.projectedGeometry !== null
+            ? this.projectedGeometry.inside(position, source) : this.manualInputGeometry.isInsideTargetButtons(position, buttons),
           geometry: this.manualInputGeometry,
           beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
@@ -681,6 +720,11 @@ export class NoteManager {
         activeIndex -= 1;
       }
 
+      for (const note of this.activeNotesValue) {
+        if (note.noteInformation?.laneSpan === undefined) continue;
+        const projected = this.projectedGeometry?.advance(note, substepDelta, null, true);
+        if (projected?.status === "integrity-failure") return projected;
+      }
       const longChildUpdate = this.updateOrdinaryLongChildren(substepDelta);
       if (longChildUpdate.status !== "ok") {
         return longChildUpdate;
@@ -690,7 +734,7 @@ export class NoteManager {
         return slideChildUpdate;
       }
 
-      for (const visual of this.directionalVisualTailOwners.keys()) {
+      for (const visual of this.activeNotesValue.filter((note): note is NoteMultipleDirectionalVisual => note instanceof NoteMultipleDirectionalVisual)) {
         const updated = visual.updatePresentationState();
         if (updated.status !== "ok") return updated;
       }
@@ -716,7 +760,7 @@ export class NoteManager {
   advanceNoteAnimations(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.renderProducer !== null) {
       const animation = this.renderProducer.preflightNoteAnimationFrame(Math.fround(deltaTimeSeconds),
-        this.activeNotesValue.flatMap((note) => note instanceof NoteLong || note instanceof NoteSlide
+        this.activeNotesValue.flatMap((note) => note.noteInformation?.laneSpan === undefined && (note instanceof NoteLong || note instanceof NoteSlide)
           ? [{ poolObjectId: note.poolObjectId, revision: note.flashAnimationRevision }]
           : []));
       if (animation.status !== "ok") return animation;
@@ -768,6 +812,8 @@ export class NoteManager {
     return Object.freeze({
       multipleDirectionalFlickNoteCount:
         this.multipleDirectionalGroups.get(noteInformation)?.count ?? null,
+      judgementLaneSpan: slideSource?.laneSpan ?? directionalGroupSpan(this.multipleDirectionalGroups.get(noteInformation)),
+      multipleDirectionalMembers: this.multipleDirectionalGroups.get(noteInformation)?.members,
       multipleDirectionalFlickButtonTypes:
         this.multipleDirectionalGroups.get(noteInformation)?.buttonTypes ?? null,
       longAfterAbsolutePosition: isLong
@@ -820,7 +866,7 @@ export class NoteManager {
     const musicPosition = Math.fround(this.musicScoreController.musicPosition);
 
     for (const note of this.activeNotesValue) {
-      if (buttonType === null || !note.isContainsButton(buttonType)) {
+      if (note.noteInformation?.laneSpan !== undefined || buttonType === null || !note.isContainsButton(buttonType)) {
         continue;
       }
       if (note instanceof NoteSlide) {
@@ -1035,6 +1081,7 @@ export class NoteManager {
           `Slide root ${root.index} has a Multiple terminal without its chart-owned side group.`,
         );
       }
+      if (root.laneSpan !== undefined) for (const member of members.slice(1)) this.projectedVisualRoots.set(member, root);
       this.slideAfterMultipleGroups.set(
         root,
         new MultipleDirectionalGroupOwner(members, directionalEndpointButton),
@@ -1088,7 +1135,8 @@ export class NoteManager {
     useGoalDepth = false,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"],
   ): SimulatorResult<void> {
-    if (note.noteInformation?.laneSpan !== undefined) return ok(undefined);
+    if (note.noteInformation?.laneSpan !== undefined)
+      return this.projectedGeometry?.advance(note, deltaTimeSeconds, placement, false) ?? ok(undefined);
     if (this.renderProducer === null || this.ordinaryNoteScene === null) {
       return integrityFailure(
         "render.note.ordinary-scene-unavailable",
@@ -1671,6 +1719,14 @@ export class NoteManager {
   }
 
   private directionalVisualState(visual: NoteMultipleDirectionalVisual): NoteState {
+    const source = visual.noteInformation;
+    const root = source === null ? undefined : this.projectedVisualRoots.get(source);
+    if (root !== undefined) {
+      const owner = this.getActiveNote(root);
+      if (owner === null || owner.state === NoteState.Deactive) return NoteState.Deactive;
+      const phase = this.projectedGeometry?.childPhase(root, root.slideNoteList.length - 1);
+      return phase?.status === "ok" ? phase.value === "wait" ? NoteState.Wait : phase.value === "stop" ? NoteState.Stop : NoteState.Move : NoteState.Wait;
+    }
     const owners = this.directionalVisualTailOwners.get(visual);
     // NotesCheck gives the left tail precedence, including its Deactive state.
     const owner = owners?.left ?? owners?.right;
@@ -2087,42 +2143,6 @@ export function validateOrdinaryRenderedBatchAuthorization(
   return ok(undefined);
 }
 
-export function groupMultipleDirectionalInformationList(
-  informationList: readonly NoteInformation[],
-): readonly (readonly NoteInformation[])[] {
-  const groups: NoteInformation[][] = [];
-  let currentGroup: NoteInformation[] = [];
-  for (const information of informationList) {
-    if (isNonPlayableCommand(information)) {
-      continue;
-    }
-    if (information.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
-      if (currentGroup.length > 0) {
-        groups.push(currentGroup);
-        currentGroup = [];
-      }
-      continue;
-    }
-    const previous = currentGroup[currentGroup.length - 1];
-    if (
-      previous !== undefined &&
-      previous.gameNoteType === information.gameNoteType &&
-      Math.abs(previous.buttonType - information.buttonType) === 1
-    ) {
-      currentGroup.push(information);
-      continue;
-    }
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup);
-    }
-    currentGroup = [information];
-  }
-  if (currentGroup.length > 0) {
-    groups.push(currentGroup);
-  }
-  return groups;
-}
-
 function isBpmCommand(noteInformation: NoteInformation): boolean {
   return noteInformation.ccNum === 3 || noteInformation.ccNum === 8;
 }
@@ -2245,6 +2265,7 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   private usedValue = false;
   private activeManualFingerId = -1;
   private readonly projectedManualFingers = new WeakMap<object, number>();
+  readonly members: readonly NoteInformation[];
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
 
@@ -2253,7 +2274,9 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     getButtonType: (information: NoteInformation) => ButtonTypeValue =
       (information) => information.buttonType,
   ) {
-    this.count = group.length;
+    this.members = Object.freeze([...group]);
+    this.count = group.length === 1 && group[0]!.laneSpan !== undefined
+      ? group[0]!.laneSpan!.width ?? group[0]!.laneSpan!.end - group[0]!.laneSpan!.start + 1 : group.length;
     this.buttonTypes = Object.freeze(group.map(getButtonType));
   }
 
@@ -2307,4 +2330,11 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     this.usedValue = true;
     return ok(undefined);
   }
+}
+
+function directionalGroupSpan(group: MultipleDirectionalRuntimeGroup | undefined) {
+  if (group === undefined || !group.members.some(source => source.laneSpan !== undefined)) return undefined;
+  if (group.members.length === 1) return group.members[0]!.laneSpan;
+  const lanes = group.members.map(source => source.slideNoteList.length === 0 ? source.laneSpan?.start ?? source.buttonType : directionalEndpointLane(source));
+  return Object.freeze({ start: Math.min(...lanes), end: Math.max(...lanes), width: group.count });
 }

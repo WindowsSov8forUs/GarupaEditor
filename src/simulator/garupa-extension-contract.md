@@ -67,11 +67,14 @@ Reverse remains the only authority for original behavior.
 
 ## 当前实际共用边界
 
-- OneFrameJudgementController 统一接收 Auto 与 Manual 提交，按提交顺序填充同一五槽池；剩余项在上一批反映释放后继续填充。扩展 owner 不再另行决定补交批次。评分、音频、HUD、舞台、轨道闪光与粒子消费同一批事件，后续批次的时间增量为零。
-- 无连接链的 Single/Skill/Flick/Directional 已通过 runtimeNoteBatches 进入同一 NoteManager 发射队列、对象管理和 NoteNormal/NoteFlick/NoteDirectionalFlick 状态类。独立 Single 超时和 Flick 七帧等待实现已删除；连续坐标输入复用 GamePlayButton 的输入事务与手指清理，使用没有固定轨道号的接收者。额外位置批次不占用原作批次的发射机会；同拍输入按原始谱面次序合并。
-- 时间轴/几何投影仍交给适配器，原作普通渲染器不为这些投影音符再创建一套闲置 Sprite。负 SV 不改变判定时间，也不恢复已判定节点。
-- 普通击打粒子的资源选择、Play 提交与方向手指选择已合并。连续位置是否存在固定粒子接收者仍是几何适配边界。
-- **尚未完成共用**：扩展 Slide 仍由 productTimelineManager 持有链、手指和结束状态；其渲染适配器仍有根/子节点呈现状态，Slide 持有粒子的状态路由仍分支。SV 输入下同形 Long、原作多格 Directional 的构造及事件语义还需收拢。此前将这些部分描述为已经共用完整状态机的声明撤销；不能以共用辅助函数或后端作为完成依据。
+- 独立音符及原作可承载拓扑的 Slide/Long 在构造阶段直接进入同一份 NoteInformation 图和 noteBatches。runtimeNoteBatches 二次合并及这些节点的私有评分源已删除；SV、TimingGroup、连续坐标不选择判定状态机。
+- 实际 NoteNormal/NoteFlick/NoteDirectionalFlick/NoteMultipleDirectionalFlick/NoteLong/NoteSlide 实例拥有输入事务、手指、超时、子节点推进、Flash 重启、持续音效及退场。多格 Directional 的运行成员与评分别名共用分组函数；超出七轨的宽度采用压缩成员描述保留精确数量，不按无界宽度分配对象。
+- OneFrameJudgementController 统一按提交顺序消费五槽队列。Long 的 head/tail、Slide 的 head/intermediate/tail 保留实际来源；评分、音频、HUD、舞台、轨道闪光、粒子消费同一批事件，后续批次时间增量为零。
+- 投影使用同一子步时钟与 SlideNoteManager，读取实际 Note 状态，只扩展坐标、轴位移和裁剪。资源族调用原作同一组 front/Long-after/Slide-child 函数；Long 尾端/网格与 Slide 子节点共用原计算。保留原作范围代表轨道、Long/Slide 各自的 Flash 选择及成员深度；不额外创建闲置普通 Sprite/连接线池。
+- 连续输入保留作者给出的整数宽度，不从浮点端点差反推数量。负 SV 可使未判定端点退出并再次入场，已判定节点不复活。普通击打及 Slide 持续粒子只有共同资源路由和开始/移动/停止入口。
+- 只为原作无法承载的单连接、隐藏首尾、同位置节点、内部手势及超出终点分组域保留附加拓扑策略。它维护新增连接顺序，使用同一时钟、SlideNoteManager、原作判定/接触/等待规则、五槽队列、网格和输出消费者；普通拓扑不进入该策略，SV 或连续坐标本身也不触发它。
+
+以上说明生产实现归属，不代表应用运行、视觉或整个 Simulator 算法等价验收。无离散接收者的单点粒子省略仍属于既有扩展限制。
 
 ## Original Skin reuse
 
@@ -291,11 +294,11 @@ physical speaker onset or Stage 9 application integration.
 
 多格 Directional、不同音符间的 SyncLine、Slide 连续跟随与持续粒子均为原作已有功能，不作为扩展渲染链路保留。
 
-旧 `GarupaProductRenderProducer` 已删除。[Garupa 输入适配器](engine/garupa/garupaRenderInputAdapter.ts) 仅提交时间轴、坐标和图结构产生的呈现输入；[RenderCommandProducer](engine/rendering/renderCommandProducer.ts) 统一拥有资源绑定、对象、绘制命令、动画计时与会话释放。原作池路径及适配输入共用完整连接线命令、Slide 网格提交、变换和动画推进。Slide 闪光属于实际根节点，不再建立影子根节点。粒子使用共同的 `note-slide` 输出所有者；持有状态路由仍有待合并分支，不能据输出类型相同宣布生命周期共用。
+旧 `GarupaProductRenderProducer` 已删除。[Garupa 输入适配器](engine/garupa/garupaRenderInputAdapter.ts) 仅提交时间轴、坐标和图结构产生的呈现输入；[RenderCommandProducer](engine/rendering/renderCommandProducer.ts) 统一拥有资源绑定、对象、绘制命令、动画计时与会话释放。原作池路径及适配输入共用完整连接线命令、Slide 网格提交、变换和动画推进。Slide 闪光属于实际根节点，不再建立影子根节点。粒子使用共同的 `note-slide` 输出所有者与唯一的持续效果状态路由。
 
 | 保留输入 | 原作输入域外的必要适配 | 进入的共用路径 |
 | --- | --- | --- |
-| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 裁剪反向、停止及坐标溢出区间 | 独立音符已进入同一 NoteManager；原作运动函数、曲线和网格条带已共用，Slide 状态归属仍待合并 |
+| TimingGroup / 有符号 SV | [timingGroupAxis](engine/garupa/timingGroupAxis.ts) 提供轴位移；[slideAxisMesh](engine/garupa/slideAxisMesh.ts) 裁剪反向、停止及坐标溢出区间 | 同一 NoteManager 状态实例、Long/Slide 子节点计算、原作曲线与网格条带 |
 | 连续/域外坐标及超出原作域的宽度 | [simulatorSceneLayout](scene/simulatorSceneLayout.ts) 投影新增坐标；Directional 跨度提供单格主体及端点输入；缺少原作精确资源键时采用明确字形映射 | 原作主体、方向图标、连接线、缩放、深度、动画和粒子；多格本身不是扩展 |
 | 原作不支持的 Slide 图结构 | [slideRenderExtension](engine/garupa/slideRenderExtension.ts) 将单节点、同拍、隐藏首尾及内部新增类型转换为状态输入 | 原作根跟随、Wait/Move/Stop、隐藏、网格和闪光；[garupaSyncInputs](engine/garupa/garupaSyncInputs.ts) 只组织端点，连接决策由 [SyncLineConnectionRules](engine/rendering/syncLineConnectionRules.ts) 同时供原作 NoteManager 与适配输入使用 |
 | CS-V1 超出预置数位的加分数值 | 超出原作数字对象容量时增加数字 Sprite | 原作数字 atlas、布局、间距、缩放、透明度和层级 |

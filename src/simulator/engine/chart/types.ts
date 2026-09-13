@@ -145,6 +145,8 @@ export interface NoteInformation {
 }
 
 export interface NoteLaneSpan {
+  /** Authored count, retained without reconstructing it from fractional endpoints. */
+  readonly width?: number;
   readonly start: number;
   readonly end: number;
 }

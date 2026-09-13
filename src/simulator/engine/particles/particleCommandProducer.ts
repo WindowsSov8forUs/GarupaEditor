@@ -179,6 +179,8 @@ export class ParticleCommandProducer {
             continue;
           }
           this.productScoringNodes.set(key, node);
+          if (node.chainIdentity === null) for (const member of node.runtimeMembers ?? [])
+            this.productScoringNodes.set(productScoringKey(member.index, node.absolutePosition), node);
         }
       }
     }
@@ -215,17 +217,20 @@ export class ParticleCommandProducer {
     if (!projected.suppressedUntilReplay) {
       for (const entry of batch.entries) {
         const productNode = this.productScoringNodes.get(productScoringKey(entry.noteIndex, entry.absolutePosition));
-        const resolvedNote = productNode === undefined
+        const resolvedNote = productNode === undefined || productNode.runtimeRoot !== undefined
           ? this.resolveJudgementNote(entry) : ok(productNode.scoringSource!);
         if (resolvedNote.status !== "ok") return resolvedNote;
         const note = resolvedNote.value;
-        const buttonType = productNode === undefined
-          ? targetCenterButtonType(note) : compatibleProductParticleButton(productNode);
+        const buttonType = productNode === undefined ? targetCenterButtonType(note)
+          : productNode.runtimeRoot === undefined ? compatibleProductParticleButton(productNode)
+          : note.laneSpan === undefined ? targetCenterButtonType(note)
+          : Number.isInteger((note.laneSpan.start + note.laneSpan.end) / 2) && (note.laneSpan.start + note.laneSpan.end) / 2 >= 0 &&
+            (note.laneSpan.start + note.laneSpan.end) / 2 <= 6 ? (note.laneSpan.start + note.laneSpan.end) / 2 : null;
         const rangeLength = entry.rangeLength;
+        const slideLifecycle = this.routeSlideTapKeep(note, productNode, entry, projected, commands);
+        if (slideLifecycle.status !== "ok") return slideLifecycle;
         if (productNode !== undefined) {
-          const slideLifecycle = this.routeProductSlideTapKeep(productNode, entry, projected, commands);
-          if (slideLifecycle.status !== "ok") return slideLifecycle;
-          if (buttonType === null) continue;
+          if (buttonType === null || !isRangeLength(rangeLength)) continue;
         } else if (buttonType === null || !entry.buttonTypes.includes(buttonType) ||
           !isRangeLength(rangeLength)) {
           return rejected(
@@ -239,35 +244,6 @@ export class ParticleCommandProducer {
         }
         if (isTapKeepStartJudgeNoteType(entry.noteType)) {
           playButtonTapKeep(buttonType, rangeLength, this.particleScene!, projected, commands);
-        }
-        const slideRoot = this.slideRootByNode.get(note);
-        if (slideRoot !== undefined && entry.phase === "tail") {
-          stopSlideTapKeep(slideIdentity(slideRoot), projected, commands);
-        } else if (slideRoot !== undefined && entry.adjustedResult > 0) {
-          const target = nextOriginalSlideTarget(slideRoot, note, entry.phase);
-          if (target !== null) {
-            const targetButton = targetCenterButtonType(target);
-            const targetRange = target.buttonTypesArray.length;
-            if (targetButton === null || !isRangeLength(targetRange)) {
-              return rejected(
-                "particle.producer.invalid-slide-current-node",
-                "Slide tap-keep movement requires the exact current after-node target-center button and 1..7 range.",
-              );
-            }
-            const identity = slideIdentity(slideRoot);
-            const transform = originalSlideTransform(targetButton, this.particleScene!);
-            if (entry.phase === "head") {
-              playSlideTapKeep(
-                identity, targetButton, targetRange, transform,
-                this.particleScene!, projected, commands,
-              );
-            } else {
-              moveSlideTapKeep(
-                identity, targetButton, targetRange, transform,
-                this.particleScene!, projected, commands,
-              );
-            }
-          }
         }
         const routed = resolveParticleJudgementRoot({
           result: entry.adjustedResult,
@@ -499,68 +475,38 @@ export class ParticleCommandProducer {
     });
   }
 
-  private routeProductSlideTapKeep(
-    node: GarupaProductNode,
-    entry: OneFrameJudgementEntry,
-    projected: MutableParticleOwnerState,
-    commands: ParticleCommand[],
-  ): SimulatorResult<void> {
-    const nodes = this.productSlideNodesByIdentity.get(node.identity);
-    if (nodes === undefined) return ok(undefined);
-    const nodeIndex = nodes.indexOf(node);
-    const head = nodes[0];
-    if (nodeIndex < 0 || head?.scoringSource === null || head === undefined) {
-      return rejected(
-        "particle.producer.invalid-product-slide-owner",
-        "A product Slide chain must retain its ordered visible nodes and one stable head owner.",
-      );
-    }
-    const identity = slideIdentity(head.scoringSource);
-    if (nodeIndex === nodes.length - 1) {
+  private routeSlideTapKeep(note: NoteInformation, node: GarupaProductNode | undefined,
+    entry: OneFrameJudgementEntry, projected: MutableParticleOwnerState, commands: ParticleCommand[]): SimulatorResult<void> {
+    const nativeRoot = this.slideRootByNode.get(note);
+    const extraNodes = node?.runtimeRoot === undefined ? this.productSlideNodesByIdentity.get(node?.identity ?? "") : undefined;
+    const index = node === undefined || extraNodes === undefined ? -1 : extraNodes.indexOf(node);
+    const root = nativeRoot ?? extraNodes?.[0]?.scoringSource;
+    if (root == null) return ok(undefined);
+    const targetNode = extraNodes?.[index + 1];
+    const targetSource = nativeRoot === undefined ? targetNode?.scoringSource ?? null : nextOriginalSlideTarget(nativeRoot, note, entry.phase);
+    const terminal = nativeRoot === undefined ? index === extraNodes!.length - 1 : entry.phase === "tail";
+    const identity = slideIdentity(root);
+    if (terminal || entry.adjustedResult <= 0) {
       stopSlideTapKeep(identity, projected, commands);
       return ok(undefined);
     }
-    if (entry.adjustedResult <= 0) {
-      stopSlideTapKeep(identity, projected, commands);
-      return ok(undefined);
-    }
-    const target = nodes[nodeIndex + 1]!;
-    if (this.productScene === null) {
-      return rejected(
-        "particle.producer.product-slide-scene-missing",
-        "Product Slide tap-keep movement requires the same continuous scene projection used by its visible root.",
-      );
-    }
-    const actual = this.slidePresentation?.(head.scoringSource);
-    const position = this.productScene.projectLaneAtCurve(
-      node.spanStart + (node.width - 1) / 2,
-      1,
-    );
-    if (position.status !== "ok") return position;
-    // Product continuous X remains a product adapter, while the current
-    // NoteSlide pool setup scale and outer NoteSetting scale stay original-owned.
-    const transform = slideTransform(
-      actual?.x ?? position.value.x.value,
-      actual?.y ?? position.value.y.value,
-      this.particleScene!,
-    );
-    if (transform === null) {
-      return rejected(
-        "particle.producer.invalid-product-slide-transform",
-        "The current product Slide after-node must project to one finite typed owner transform.",
-      );
-    }
-    if (nodeIndex === 0) {
-      playSlideTapKeep(
-        identity, target.spanStart, target.width, transform,
-        this.particleScene!, projected, commands,
-      );
-    } else {
-      moveSlideTapKeep(
-        identity, target.spanStart, target.width, transform,
-        this.particleScene!, projected, commands,
-      );
-    }
+    if (targetSource === null) return ok(undefined);
+    const span = targetNode === undefined ? targetSource.laneSpan : { start: targetNode.spanStart, end: targetNode.spanEnd, width: targetNode.width };
+    const button = span === undefined ? targetCenterButtonType(targetSource) : (span.start + span.end) / 2;
+    const width = span === undefined ? targetSource.buttonTypesArray.length : span.width ?? span.end - span.start + 1;
+    if (button === null) return rejected("particle.producer.invalid-slide-current-node", "Slide movement requires its current target geometry.");
+    const actual = this.slidePresentation?.(root);
+    let transform: ParticleOwnerTransform | null;
+    if (actual != null) transform = slideTransform(actual.x, actual.y, this.particleScene!);
+    else if (span !== undefined && this.productScene !== null) {
+      const position = this.productScene.projectLaneAtCurve(button, 1);
+      if (position.status !== "ok") return position;
+      transform = slideTransform(position.value.x.value, position.value.y.value, this.particleScene!);
+    } else transform = originalSlideTransform(button, this.particleScene!);
+    if (transform === null) return rejected("particle.producer.invalid-slide-transform", "Slide movement requires a finite published transform.");
+    const head = nativeRoot === undefined ? index === 0 : entry.phase === "head";
+    if (head) playSlideTapKeep(identity, button, width, transform, this.particleScene!, projected, commands);
+    else moveSlideTapKeep(identity, button, width, transform, this.particleScene!, projected, commands);
     return ok(undefined);
   }
 
@@ -607,6 +553,9 @@ export class ParticleCommandProducer {
   private resolveJudgementNote(
     entry: OneFrameJudgementEntry,
   ): SimulatorResult<NoteInformation> {
+    const unique = this.ambiguousNoteIndices.has(entry.noteIndex) ? undefined : this.notesByIndex.get(entry.noteIndex);
+    if (unique !== undefined && (unique.absolutePos === entry.absolutePosition ||
+      entry.phase === "tail" && unique.afterNoteAbsolutePos === entry.absolutePosition)) return ok(unique);
     const candidates = this.notesByJudgementKey.get(judgementKey(
       entry.absolutePosition,
       entry.buttonTypes,

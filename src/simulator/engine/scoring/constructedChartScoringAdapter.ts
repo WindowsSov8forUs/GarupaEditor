@@ -1,3 +1,4 @@
+import { groupMultipleDirectionalInformationList } from "../chart/noteGraph";
 import {
   FrontNoteType,
   GameNoteAdditionalType,
@@ -36,7 +37,7 @@ export function createConstructedChartScoringPlan(
   if (productProfile?.hasExtensions) {
     for (const node of productProfile.visibleNodes) {
       const source = node.scoringSource;
-      if (source === null) continue;
+      if (source === null || node.runtimeRoot !== undefined) continue;
       candidates.push({
         source,
         aliases: [source],
@@ -221,26 +222,7 @@ function createMultipleDirectionalIdentityMap(
 ): WeakMap<NoteInformation, string> {
   const identities = new WeakMap<NoteInformation, string>();
   for (const batch of chart.noteBatches) {
-    const groups: NoteInformation[][] = [];
-    let current: NoteInformation[] = [];
-    for (const source of batch.informationList) {
-      if (source.gameNoteType === GameNoteType.None ||
-          source.gameNoteAdditionalType === GameNoteAdditionalType.LaneChange) continue;
-      if (source.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
-        if (current.length > 0) groups.push(current);
-        current = [];
-        continue;
-      }
-      const previous = current[current.length - 1];
-      if (previous !== undefined && previous.gameNoteType === source.gameNoteType &&
-          Math.abs(previous.buttonType - source.buttonType) === 1) {
-        current.push(source);
-      } else {
-        if (current.length > 0) groups.push(current);
-        current = [source];
-      }
-    }
-    if (current.length > 0) groups.push(current);
+    const groups = groupMultipleDirectionalInformationList(batch.informationList);
     for (const group of groups) {
       const first = group[0]!;
       const identity = `multiple-directional:${first.absolutePos}:${first.gameNoteType}:` +

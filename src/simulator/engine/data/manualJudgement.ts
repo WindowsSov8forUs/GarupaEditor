@@ -71,7 +71,9 @@ export interface ManualJudgementRequest {
 }
 
 export interface ManualJudgementOwnership {
+  readonly judgementLaneSpan?: import("../chart/types").NoteLaneSpan;
   readonly multipleDirectionalFlickNoteCount: number | null;
+  readonly multipleDirectionalMembers?: readonly import("../chart/types").NoteInformation[];
   readonly multipleDirectionalFlickButtonTypes: readonly ButtonTypeValue[] | null;
   readonly longAfterAbsolutePosition: number | null;
   readonly longAfterNoteType: number | null;

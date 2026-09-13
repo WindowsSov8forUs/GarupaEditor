@@ -123,7 +123,7 @@ export class AudioCommandProducer {
     const product = getGarupaProductChartProfile(chart);
     if (product?.hasExtensions) {
       for (const node of product.visibleNodes) {
-        if (node.scoringSource !== null) this.registerNote(node.scoringSource);
+        if (node.runtimeRoot === undefined && node.scoringSource !== null) this.registerNote(node.scoringSource);
       }
     }
   }

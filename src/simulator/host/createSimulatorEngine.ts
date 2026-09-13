@@ -1,4 +1,3 @@
-import { runtimeNoteBatches } from "../engine/garupa/runtimeNoteBatches";
 import type { SimulatorBackends } from "../backends/contracts";
 import {
   ButtonType,
@@ -1156,6 +1155,7 @@ export function createSimulatorEngine(
         );
     productTimeline = new GarupaProductTimelineManager(
       productProfile,
+      slideNoteManager,
       modeValidation.value,
       musicScoreController,
       oneFrameJudgementController,
@@ -1176,7 +1176,7 @@ export function createSimulatorEngine(
     if (businessOwner.status !== "ok") return businessOwner;
   }
   const noteManager = new NoteManager(
-    runtimeNoteBatches(input.chart),
+    input.chart.noteBatches,
     slideNoteManager,
     musicScoreController,
     musicScoreController,
@@ -1192,6 +1192,8 @@ export function createSimulatorEngine(
     input.rendering?.ordinaryNoteScene ?? null,
     () => inGameManager.isMoveTime,
   );
+  const projectedGeometry = productTimeline?.connectSharedProjection();
+  if (projectedGeometry !== undefined) noteManager.setProjectedGeometry(projectedGeometry);
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(
       (noteInformation) =>

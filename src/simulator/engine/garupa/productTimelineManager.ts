@@ -15,7 +15,6 @@ import {
 import {
   JudgeTiming,
   NoteResultType,
-  judgeManualNote,
   isManualTimeoutOver,
   directionalGestureThreshold,
   getManualScreenDistanceRate,
@@ -39,6 +38,7 @@ import { FrameMutationPlan, type FrameMutationParticipant } from "../managers/fr
 import type { GarupaProductChartProfile, GarupaProductNode } from "./productChartProfile";
 import type { GarupaRenderInputAdapter } from "./garupaRenderInputAdapter";
 import { advanceSlideStopWait } from "../rendering/ordinarySlideChildLifecycle";
+import { NoteLong, NoteSlide } from "../notes/noteTypes";
 import { NoteState, type NoteBase } from "../notes/noteBase";
 import type { ManualCandidateExtensionFrame } from "../managers/noteManager";
 
@@ -85,9 +85,9 @@ interface ProductTimelineMutableSnapshot {
   readonly flashRevisions: readonly (readonly [string, number])[];
   readonly timeouts: readonly (readonly [string, ProductTimeoutState])[];
   readonly holdSounds: readonly HoldSoundEvent[];
-  readonly judgedSources: readonly NoteInformation[];
-  readonly missedSources: readonly NoteInformation[];
-  readonly queuedSources: readonly NoteInformation[];
+  readonly judgedSources: readonly string[];
+  readonly missedSources: readonly string[];
+  readonly queuedSources: readonly string[];
   readonly fingers: readonly (readonly [number, ProductFingerOwner])[];
   readonly chainFinger: readonly (readonly [string, number])[];
   readonly nextVisibleIndexByChain: readonly (readonly [string, number])[];
@@ -122,22 +122,23 @@ export interface GarupaProductTimelineSnapshot {
 }
 
 export class GarupaProductTimelineManager {
-  private readonly sharedNodesByIndex = new Map<number, GarupaProductNode>();
+  private readonly sharedNodesByIndex = new Map<string, GarupaProductNode>();
   private readonly sharedJudgements: GarupaProductNode[] = [];
 
   observeSharedJudgement(entry: OneFrameDataPayload): void {
-    const node = this.sharedNodesByIndex.get(entry.noteIndex);
+    const node = this.sharedNodesByIndex.get(`${entry.noteIndex}:${entry.phase}`);
     if (node === undefined) return;
+    if (this.judgedSources.has(node.identity) || this.missedSources.has(node.identity)) return;
     this.markJudged(node, entry.rawResult === NoteResultType.Miss);
     this.sharedJudgements.push(node);
   }
 
-  private readonly slideJudge = new SlideNoteManager();
   private readonly timeouts = new Map<string, ProductTimeoutState>();
   private readonly orderedVisibleNodes: readonly GarupaProductNode[];
-  private readonly judgedSources = new Set<NoteInformation>();
-  private readonly missedSources = new Set<NoteInformation>();
-  private readonly queuedSources = new Set<NoteInformation>();
+  private readonly additionalTopologyNodes: readonly GarupaProductNode[];
+  private readonly judgedSources = new Set<string>();
+  private readonly missedSources = new Set<string>();
+  private readonly queuedSources = new Set<string>();
   private readonly fingers = new Map<number, ProductFingerOwner>();
   private readonly chainFinger = new Map<string, number>();
   private readonly flashRevisions = new Map<string, number>();
@@ -157,6 +158,7 @@ export class GarupaProductTimelineManager {
 
   constructor(
     private readonly chart: GarupaProductChartProfile,
+    private readonly slideJudge: SlideNoteManager,
     private readonly mode: SimulatorModeIdentity,
     private readonly music: InGameMusicScoreController,
     private readonly oneFrame: InGameOneFrameJudgementController,
@@ -171,8 +173,23 @@ export class GarupaProductTimelineManager {
   ) {
     this.orderedVisibleNodes = Object.freeze([...chart.visibleNodes].sort((left, right) =>
       left.absolutePosition - right.absolutePosition || left.authoredOrder - right.authoredOrder));
+    this.additionalTopologyNodes = this.orderedVisibleNodes.filter(node => node.runtimeRoot === undefined && node.chainIdentity !== null);
     for (const chain of chart.slideChains) this.nextVisibleIndexByChain.set(chain.identity, 0);
-    for (const node of chart.visibleNodes) if (node.chainIdentity === null) this.sharedNodesByIndex.set(node.scoringSource!.index, node);
+    for (const node of chart.visibleNodes) if (node.runtimeRoot !== undefined || node.chainIdentity === null) {
+      const sources = node.chainIdentity === null ? node.runtimeMembers ?? [node.scoringSource!] : [node.scoringSource!];
+      for (const source of sources) this.sharedNodesByIndex.set(`${source.index}:${node.scoringPhase ?? "head"}`, node);
+    }
+  }
+
+  connectSharedProjection() {
+    return this.render?.connectSharedRuntime(this.sharedNote, () => ({
+      absolutePosition: this.music.musicPosition, currentBpm: this.music.currentBpm,
+      launcherMusicPosition: this.music.launcherMusicPosition,
+      adjustedMusicPosition: this.music.getAdjustedMusicPosition(this.judgementAdjustValueB),
+      deltaTimeSeconds: 0, adjustment: this.judgementAdjustValueB, forcePerfect: this.shouldForcePerfect,
+      judged: new Set(this.sharedJudgements.map(node => node.identity)), missed: this.missedSources,
+      heldChains: new Set<string>(), flashRevisions: this.flashRevisions,
+    }));
   }
 
   private get shouldForcePerfect(): boolean {
@@ -198,8 +215,6 @@ export class GarupaProductTimelineManager {
     }
     const render = this.render?.validate() ?? ok(undefined);
     if (render.status !== "ok") return render;
-    const slide = this.slideJudge.initialize(this.manualGeometry ?? undefined);
-    if (slide.status !== "ok") return slide;
     this.initialized = true;
     return ok(undefined);
   }
@@ -267,20 +282,19 @@ export class GarupaProductTimelineManager {
         "Product visual and judgement sampling requires finite BPM-clock positions and one exact nonnegative Float32 outer-frame delta.",
       );
     }
-    const before = this.captureMutableState();
+    const before = this.additionalTopologyNodes.length === 0 ? null : this.captureMutableState();
     const rollback = <T>(result: SimulatorResult<T>): SimulatorResult<T> => {
-      this.restoreMutableState(before);
+      if (before !== null) this.restoreMutableState(before);
       return result;
     };
     const judgedThisFrame = [...this.sharedJudgements];
     if (this.shouldForcePerfect) {
-      while (this.nextAutoIndex < this.orderedVisibleNodes.length) {
-        const node = this.orderedVisibleNodes[this.nextAutoIndex]!;
+      while (this.nextAutoIndex < this.additionalTopologyNodes.length) {
+        const node = this.additionalTopologyNodes[this.nextAutoIndex]!;
         if (judgementPosition < node.absolutePosition) break;
         this.nextAutoIndex += 1;
-        if (node.chainIdentity === null) continue;
-        const source = node.scoringSource!;
-        if (this.judgedSources.has(source) || this.missedSources.has(source)) continue;
+        if (node.runtimeRoot !== undefined || node.chainIdentity === null) continue;
+        if (this.judgedSources.has(node.identity) || this.missedSources.has(node.identity)) continue;
         judgedThisFrame.push(node);
         if (node.chainIdentity !== null && node.identity === this.chart.slideChains
           .find(chain => chain.identity === node.chainIdentity)!.visibleConnectionIdentities[0]) {
@@ -303,12 +317,12 @@ export class GarupaProductTimelineManager {
         forcePerfect: this.shouldForcePerfect, heldChains: new Set([...this.chainFinger]
           .filter(([, finger]) => this.fingers.get(finger)?.flashActive === true).map(([chain]) => chain)),
         missed: new Set([...this.pendingJudgements.filter(entry => entry.missed).map(entry => entry.node.identity),
-          ...this.sharedJudgements.filter(node => this.missedSources.has(node.scoringSource!)).map(node => node.identity)]) },
+          ...this.sharedJudgements.filter(node => this.missedSources.has(node.identity)).map(node => node.identity)]) },
     ) ?? ok(null);
     if (render.status !== "ok") return rollback(render);
     if (this.shouldForcePerfect) {
       for (const node of judgedThisFrame) {
-        if (node.chainIdentity === null) continue;
+        if (node.runtimeRoot !== undefined || node.chainIdentity === null) continue;
         const submitted = this.submitAuto(node);
         if (submitted.status !== "ok") {
           render.value?.discard();
@@ -348,7 +362,7 @@ export class GarupaProductTimelineManager {
         return ok(undefined);
       },
       discard: () => {
-        this.restoreMutableState(before);
+        if (before !== null) this.restoreMutableState(before);
         return ok(undefined);
       },
     }));
@@ -482,10 +496,8 @@ export class GarupaProductTimelineManager {
         if (processed.status !== "ok") return processed;
       }
     }
-    for (const node of this.orderedVisibleNodes) {
-      if (node.chainIdentity === null) continue;
-      const source = node.scoringSource!;
-      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
+    for (const node of this.additionalTopologyNodes) {
+      if (this.judgedSources.has(node.identity) || this.missedSources.has(node.identity) || this.queuedSources.has(node.identity)) continue;
       const expired = this.advanceTimeout(node, judgementPosition);
       if (expired.status !== "ok") return expired;
       if (expired.value === null) continue;
@@ -763,21 +775,26 @@ export class GarupaProductTimelineManager {
       this.slideJudge.selectNearJudgeLineSource(this.render!.getInputPositionY(first)!, this.render!.getInputPositionY(second)!);
     for (const node of this.orderedVisibleNodes) {
       const source = node.scoringSource!;
-      if (node.chainIdentity === null && this.sharedNote(source)?.state !== NoteState.Move) continue;
-      if (this.judgedSources.has(source) || this.missedSources.has(source) || this.queuedSources.has(source)) continue;
+      const shared = node.runtimeRoot === undefined ? node.chainIdentity === null ? this.sharedNote(source) : null : this.sharedNote(node.runtimeRoot);
+      if (node.runtimeRoot !== undefined || node.chainIdentity === null) {
+        if (shared === null || shared.state === NoteState.Deactive) continue;
+        if (shared instanceof NoteSlide && shared.manualCandidateSource !== source) continue;
+        if (shared instanceof NoteLong && node.scoringPhase === "tail") continue;
+      }
+      if (this.judgedSources.has(node.identity) || this.missedSources.has(node.identity) || this.queuedSources.has(node.identity)) continue;
       if (node.chainIdentity === null && reserved?.has(node.identity)) continue;
       if (this.render?.getInputPositionY(node) == null) continue;
       if (chainIdentity === null) {
-        if (node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
+        if (node.runtimeRoot === undefined && node.chainIdentity !== null && this.currentChainNode(node.chainIdentity) !== node) continue;
         // Native GetMoveEndTimeNearestZeroNote checks finger ownership only when
         // establishing its first Slide candidate; later occupied Slides still compete.
         if (node.chainIdentity !== null && slide === null && !initialSlidePresent &&
-            (this.chainFinger.has(node.chainIdentity) || reserved?.has(node.chainIdentity))) continue;
+            (shared !== null ? shared.fingerId >= 0 : this.chainFinger.has(node.chainIdentity) || reserved?.has(node.chainIdentity))) continue;
       } else if (node.chainIdentity !== chainIdentity || this.currentChainNode(chainIdentity) !== node) continue;
       const inside = this.scene!.isInsideContinuousSpan(position, node.spanStart, node.width);
       if (inside.status !== "ok") return inside;
       if (!inside.value) continue;
-      if (node.chainIdentity === null) {
+      if (node.chainIdentity === null || shared instanceof NoteLong) {
         if (ordinary === null || Math.abs(Math.fround(node.absolutePosition - musicPosition)) <
             Math.abs(Math.fround(ordinary.absolutePosition - musicPosition))) ordinary = node;
       } else if (slide === null) slide = node;
@@ -803,9 +820,20 @@ export class GarupaProductTimelineManager {
       const view = readOriginal(note);
       return view === null ? null : { original: note, node: null, absolutePosition: view.source.absolutePos, y: view.y };
     };
-    const extended = (node: GarupaProductNode | null): Candidate | null => node === null ? null
-      : { original: node.chainIdentity === null ? this.sharedNote(node.scoringSource!) : null, node,
-          absolutePosition: node.absolutePosition, y: this.render!.getInputPositionY(node)! };
+    const extended = (node: GarupaProductNode | null): Candidate | null => {
+      if (node === null) return null;
+      let original = node.runtimeRoot !== undefined ? this.sharedNote(node.runtimeRoot)
+        : node.chainIdentity === null ? this.sharedNote(node.scoringSource!) : null;
+      if (node.chainIdentity === null && node.runtimeMembers !== undefined) {
+        for (const source of node.runtimeMembers) {
+          const span = source.laneSpan;
+          if (span === undefined) continue;
+          const inside = this.scene!.isInsideContinuousSpan(position, span.start, span.width ?? span.end - span.start + 1);
+          if (inside.status === "ok" && inside.value) { original = this.sharedNote(source); break; }
+        }
+      }
+      return { original, node, absolutePosition: node.absolutePosition, y: this.render!.getInputPositionY(node)! };
+    };
     const originalNormal = native(ordinary), originalSlide = native(slide);
     if (ordinary !== null && originalNormal === null || slide !== null && originalSlide === null) {
       return rejected("manual.candidate-button-owner-unavailable",
@@ -838,24 +866,11 @@ export class GarupaProductTimelineManager {
     return ok(null);
   }
 
-  private judgeNode(node: GarupaProductNode, currentPosition: number, currentBpm = this.music.currentBpm) {
-    return judgeManualNote(
-      0,
-      Math.fround(node.absolutePosition),
-      Math.fround(currentPosition),
-      currentBpm,
-    );
-  }
-
-  private judgeContact(node: GarupaProductNode, currentPosition: number, currentBpm: number): SimulatorResult<{
+  private judgeContact(node: GarupaProductNode, _currentPosition: number, _currentBpm: number): SimulatorResult<{
     readonly result: NoteResultTypeValue;
     readonly timing: JudgeTimingValue;
     readonly slide: SlideJudgeDecision | null;
   }> {
-    if (node.chainIdentity === null) {
-      const judged = this.judgeNode(node, currentPosition, currentBpm);
-      return judged.status === "ok" ? ok({ ...judged.value, slide: null }) : judged;
-    }
     const position = this.render?.getSlideJudgePosition(node) ?? null;
     if (position === null) return ok({ result: NoteResultType.None, timing: JudgeTiming.None, slide: null });
     const judged = this.slideJudge.judge(node.scoringSource!, position);
@@ -869,8 +884,8 @@ export class GarupaProductTimelineManager {
 
   private submitAuto(node: GarupaProductNode): SimulatorResult<void> {
     const source = node.scoringSource;
-    if (source === null || this.judgedSources.has(source) || this.missedSources.has(source) ||
-      this.queuedSources.has(source)) {
+    if (source === null || this.judgedSources.has(node.identity) || this.missedSources.has(node.identity) ||
+      this.queuedSources.has(node.identity)) {
       return rejected(
         "simulator.garupa-extension.invalid-auto-source",
         "Every due non-Hidden product node must own one unconsumed CS-V1 source.",
@@ -888,7 +903,7 @@ export class GarupaProductTimelineManager {
         multipleDirectionalFlickNoteCount: 0,
       }),
     }));
-    this.queuedSources.add(source);
+    this.queuedSources.add(node.identity);
     return ok(undefined);
   }
 
@@ -898,8 +913,8 @@ export class GarupaProductTimelineManager {
     timing: JudgeTimingValue,
   ): SimulatorResult<void> {
     const source = node.scoringSource;
-    if (source === null || this.judgedSources.has(source) || this.missedSources.has(source) ||
-      this.queuedSources.has(source)) {
+    if (source === null || this.judgedSources.has(node.identity) || this.missedSources.has(node.identity) ||
+      this.queuedSources.has(node.identity)) {
       return rejected("simulator.garupa-extension.hidden-or-consumed-manual-source", "Product Manual requires one visible unconsumed scoring source.");
     }
     this.pendingJudgements.push(Object.freeze({
@@ -915,18 +930,17 @@ export class GarupaProductTimelineManager {
         absolutePosition: node.absolutePosition,
       }),
     }));
-    this.queuedSources.add(source);
+    this.queuedSources.add(node.identity);
     return ok(undefined);
   }
 
   private markJudged(node: GarupaProductNode, missed: boolean): void {
     this.timeouts.delete(node.identity);
-    const source = node.scoringSource!;
     if (missed) {
-      this.missedSources.add(source);
+      this.missedSources.add(node.identity);
       this.missedNodeCount += 1;
     } else {
-      this.judgedSources.add(source);
+      this.judgedSources.add(node.identity);
       this.judgedNodeCount += 1;
     }
   }
@@ -978,13 +992,13 @@ export class GarupaProductTimelineManager {
   }
 
   getAutoLiveJudgementOwnership(source: NoteInformation): AutoLiveJudgementOwnership | null {
-    return this.chart.scoringNodeBySource.get(source)?.chainIdentity != null
+    return this.chart.scoringNodeBySource.get(source)?.runtimeRoot === undefined && this.chart.scoringNodeBySource.get(source)?.chainIdentity != null
       ? Object.freeze({ multipleDirectionalFlickNoteCount: null, productExtension: "garupa-visible-node" as const })
       : null;
   }
 
   getManualJudgementOwnership(source: NoteInformation): ManualJudgementOwnership | null {
-    if (this.chart.scoringNodeBySource.get(source)?.chainIdentity == null) return null;
+    if (this.chart.scoringNodeBySource.get(source)?.runtimeRoot !== undefined || this.chart.scoringNodeBySource.get(source)?.chainIdentity == null) return null;
     return Object.freeze({
       multipleDirectionalFlickNoteCount: null,
       multipleDirectionalFlickButtonTypes: null,
@@ -1001,13 +1015,12 @@ export class GarupaProductTimelineManager {
   }
 
   ownsScoringSource(source: NoteInformation): boolean {
-    return this.chart.scoringNodeBySource.get(source)?.chainIdentity != null;
+    return this.chart.scoringNodeBySource.get(source)?.runtimeRoot === undefined && this.chart.scoringNodeBySource.get(source)?.chainIdentity != null;
   }
 
   commitDispose(): void {
     this.timeouts.clear();
     this.sharedJudgements.length = 0;
-    this.slideJudge.dispose();
     this.render?.releaseInputs();
     this.pendingManualFrame = null;
     this.pendingJudgements.length = 0;
