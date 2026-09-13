@@ -12,6 +12,7 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import {
+  getHabahiroMeshWidthRate,
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   buildOrdinaryAdvancedNoteMesh,
@@ -218,4 +219,26 @@ function reject(capability: string, detail: string): SimulatorResult<never> {
     "PR15",
     "PR39",
   ], detail);
+}
+
+/** One Long tail/strip calculation, with optional displacement and clipping inputs. */
+export function advanceLongChildFrame(state: OrdinaryLongNormalChildState, front: OrdinaryNoteMotionResult,
+  input: OrdinaryLongNormalChildFrameInput, ratio: RenderFloat32, color: RenderColor, widthSetting?: RenderFloat32,
+  projection?: {
+    advance: () => SimulatorResult<OrdinaryLongNormalChildState>;
+    visible?: (next: OrdinaryLongNormalChildState) => boolean;
+    mesh?: (input: OrdinaryLongNormalMeshInput, next: OrdinaryLongNormalChildState) => SimulatorResult<OrdinaryBaseNoteMeshGeometry>;
+  }): SimulatorResult<{ readonly childState: OrdinaryLongNormalChildState; readonly mesh: OrdinaryBaseNoteMeshGeometry | null }> {
+  const next = projection?.advance() ?? advanceOrdinaryLongNormalChild(state, input);
+  if (next.status !== "ok") return next;
+  const width = widthSetting === undefined ? createRenderFloat32(1) : getHabahiroMeshWidthRate(state.motionState.buttonCount, widthSetting);
+  if (width.status !== "ok") return width;
+  const visible = projection?.visible?.(next.value) ?? next.value.renderedTransform.position.y.value > state.motionState.goalPosition.y.value;
+  const scale = getOrdinaryNoteMeshAfterScale(next.value, state.motionState.goalPosition.y, ratio);
+  if (scale.status !== "ok") return scale;
+  const meshInput: OrdinaryLongNormalMeshInput = { front, after: next.value.renderedTransform, afterScaleX: scale.value,
+    frontButtonCount: state.motionState.buttonCount, afterButtonCount: state.motionState.buttonCount,
+    screenToSafeAreaRatio: ratio, widthRate: width.value, color, advanced: state.motionState.virtualLaneControllerPresent };
+  const mesh = visible ? projection?.mesh?.(meshInput, next.value) ?? buildOrdinaryLongNormalMesh(meshInput) : ok(null);
+  return mesh.status === "ok" ? ok({ childState: next.value, mesh: mesh.value }) : mesh;
 }

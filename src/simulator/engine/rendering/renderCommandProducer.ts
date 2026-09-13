@@ -38,7 +38,7 @@ import { resolveDisplayedAllPerfect } from "../hud/comboHudOwner";
 import { resolveResultJudgeKey } from "../hud/resultHudOwner";
 export { resolveDisplayedAllPerfect, resolveResultJudgeKey };
 import {
-  advanceOrdinaryLongNormalChild,
+  advanceLongChildFrame,
   buildOrdinaryLongNormalMesh,
   createOrdinaryLongNormalChildState,
   getOrdinaryNoteMeshAfterScale,
@@ -2249,32 +2249,13 @@ export class RenderCommandProducer {
         "Long child frames require explicit positive safe-area ratio and typed base-mesh color inputs.",
       );
     }
-    const next = advanceOrdinaryLongNormalChild(childState, input);
-    if (next.status !== "ok") return next;
-    const widthRate = this.isCompleteHabahiro()
-      ? getHabahiroMeshWidthRate(
-          childState.motionState.buttonCount,
-          scene.habahiro!.meshWidthSetting,
-        )
-      : createRenderFloat32(Math.fround(1));
-    const zero = createRenderFloat32(Math.fround(0));
-    if (widthRate.status !== "ok") return widthRate;
+    const frame = advanceLongChildFrame(childState, frontTransform, input, scene.screenToSafeAreaRatio,
+      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.meshWidthSetting : undefined);
+    if (frame.status !== "ok") return frame;
+    const next = ok(frame.value.childState);
+    const mesh = ok(frame.value.mesh);
+    const zero = createRenderFloat32(0);
     if (zero.status !== "ok") return zero;
-    const meshVisible = next.value.renderedTransform.position.y.value > childState.motionState.goalPosition.y.value;
-    const afterScale = getOrdinaryNoteMeshAfterScale(next.value, childState.motionState.goalPosition.y, scene.screenToSafeAreaRatio);
-    if (afterScale.status !== "ok") return afterScale;
-    const mesh = meshVisible ? buildOrdinaryLongNormalMesh({
-      front: frontTransform,
-      after: next.value.renderedTransform,
-      afterScaleX: afterScale.value,
-      frontButtonCount: childState.motionState.buttonCount,
-      afterButtonCount: childState.motionState.buttonCount,
-      screenToSafeAreaRatio: scene.screenToSafeAreaRatio,
-      widthRate: widthRate.value,
-      color: scene.longMeshColor,
-      advanced: childState.motionState.virtualLaneControllerPresent,
-    }) : ok(null);
-    if (mesh.status !== "ok") return mesh;
     const afterObjectId = longAfterRenderObjectId(poolObjectId);
     const meshObjectId = longMeshRenderObjectId(poolObjectId);
     const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
