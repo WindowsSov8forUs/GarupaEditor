@@ -1,0 +1,246 @@
+{
+  "result-detail.json": {
+    "nodes": {
+      "RightContainer/MyResult/Detail/Judgement/BAD/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Score/MyScore/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Perfect/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Good/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/MISS/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot/Text": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/COMBO/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Great/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/Buttons/NextButton/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      }
+    }
+  },
+  "result-clear.json": {
+    "clearNodes": {
+      "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/Score": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      },
+      "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/Caption": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "ComponentRoot/ClearJudgement/Window/MiddleContainer/NextButton/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      }
+    },
+    "bannerNodes": {},
+    "rankNodes": {
+      "Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      }
+    },
+    "headerNodes": {},
+    "difficultyNodes": {
+      "Difficulty": {
+        "spacingY": 0,
+        "alignment": 2,
+        "maxLines": 0,
+        "overflow": 0
+      }
+    }
+  },
+  "result-effects.json": {
+    "rankNodes": {},
+    "bannerNodes": {}
+  },
+  "result-navigation.json": {
+    "rewardNodes": {
+      "ComponentRoot/BottomRight/PlayAgainButton/StarUILabelButton/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      },
+      "ComponentRoot/BottomRight/ButtonNext/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      }
+    },
+    "unrecordNodes": {
+      "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/Buttons/NextButton/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Score/MyScore/DemoPlayScore": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/BAD/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Score/MyScore/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Good/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Perfect/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/MISS/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot/Text": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/COMBO/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/Great/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/UnrecordCaution/Caution": {
+        "spacingY": 4,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/autoLiveLabel": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      },
+      "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Value": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 0,
+        "overflow": 0
+      }
+    },
+    "unrecordReplayNodes": {
+      "RightContainer/Buttons/PlayAgainButton/StarUILabelButton/Label": {
+        "spacingY": 0,
+        "alignment": 0,
+        "maxLines": 1,
+        "overflow": 0
+      }
+    }
+  },
+  "result-header.json": {
+    "title": {
+      "spacingY": 0,
+      "alignment": 0,
+      "maxLines": 1,
+      "overflow": 0
+    },
+    "levelCaption": {
+      "spacingY": 0,
+      "alignment": 0,
+      "maxLines": 0,
+      "overflow": 0
+    },
+    "level": {
+      "spacingY": 0,
+      "alignment": 0,
+      "maxLines": 0,
+      "overflow": 0
+    }
+  }
+}

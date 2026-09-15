@@ -1,4 +1,4 @@
-import { axisAtMs, type TimingGroupDef } from "../simulator/engine/timingGroup";
+import { axisAtMs, type TimingGroupDef } from "../chart";
 
 const ZERO_BEAT_RENDER_OFFSET_PX = 4;
 const MIN_PIXELS_PER_SECOND = 1e-6;

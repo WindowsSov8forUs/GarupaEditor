@@ -1,0 +1,1621 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-pause-countdown-animation-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "callbackSeconds": 3.0,
+  "continueClip": {
+    "source": {
+      "path": "static/apktool/base/assets/bin/Data/a4660f7b1ac3c4c298deeb2af80e6e34",
+      "bytes": 5968,
+      "sha256": "A6A664347AE2ACAC5ED7D63FDF50D906B9B24A0CAB7A646D86EDC3E44408D219"
+    },
+    "name": "ContinueCountDownAnimation",
+    "sampleRate": 60.0,
+    "durationSeconds": 3.5,
+    "loop": true,
+    "curveCount": 25,
+    "streamedCurveCount": 25,
+    "bindings": [
+      {
+        "pathHash": 1500492123,
+        "path": "Contents/Count1Fadeout",
+        "attributeHash": 1,
+        "attribute": "m_LocalPosition",
+        "typeId": 4,
+        "channels": [
+          "Contents/Count1Fadeout.m_LocalPosition.x",
+          "Contents/Count1Fadeout.m_LocalPosition.y",
+          "Contents/Count1Fadeout.m_LocalPosition.z"
+        ]
+      },
+      {
+        "pathHash": 621344001,
+        "path": "Contents/Count3",
+        "attributeHash": 3,
+        "attribute": "m_LocalScale",
+        "typeId": 4,
+        "channels": [
+          "Contents/Count3.m_LocalScale.x",
+          "Contents/Count3.m_LocalScale.y",
+          "Contents/Count3.m_LocalScale.z"
+        ]
+      },
+      {
+        "pathHash": 1376765335,
+        "path": "Contents/Count2",
+        "attributeHash": 3,
+        "attribute": "m_LocalScale",
+        "typeId": 4,
+        "channels": [
+          "Contents/Count2.m_LocalScale.x",
+          "Contents/Count2.m_LocalScale.y",
+          "Contents/Count2.m_LocalScale.z"
+        ]
+      },
+      {
+        "pathHash": 3406205997,
+        "path": "Contents/Count1",
+        "attributeHash": 3,
+        "attribute": "m_LocalScale",
+        "typeId": 4,
+        "channels": [
+          "Contents/Count1.m_LocalScale.x",
+          "Contents/Count1.m_LocalScale.y",
+          "Contents/Count1.m_LocalScale.z"
+        ]
+      },
+      {
+        "pathHash": 1500492123,
+        "path": "Contents/Count1Fadeout",
+        "attributeHash": 3,
+        "attribute": "m_LocalScale",
+        "typeId": 4,
+        "channels": [
+          "Contents/Count1Fadeout.m_LocalScale.x",
+          "Contents/Count1Fadeout.m_LocalScale.y",
+          "Contents/Count1Fadeout.m_LocalScale.z"
+        ]
+      },
+      {
+        "pathHash": 1301050145,
+        "path": "Contents",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 1376765335,
+        "path": "Contents/Count2",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents/Count2.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 3406205997,
+        "path": "Contents/Count1",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents/Count1.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 621344001,
+        "path": "Contents/Count3",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents/Count3.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 621344001,
+        "path": "Contents/Count3",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/Count3.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 1376765335,
+        "path": "Contents/Count2",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/Count2.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 3406205997,
+        "path": "Contents/Count1",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/Count1.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 1500492123,
+        "path": "Contents/Count1Fadeout",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents/Count1Fadeout.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 1500492123,
+        "path": "Contents/Count1Fadeout",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/Count1Fadeout.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 3646253876,
+        "path": "Contents/Fill",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/Fill.mColor.a.value"
+        ]
+      }
+    ],
+    "frames": [
+      {
+        "time": 0.0,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              -3.82403826713562,
+              11.344646453857422,
+              2.2921347618103027,
+              -11.800000190734863
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              -90.64958190917969,
+              77.98306274414062,
+              -21.77217674255371,
+              3.0
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              -86.78751373291016,
+              75.50700378417969,
+              -21.408832550048828,
+              3.01096248626709
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              33.75,
+              -16.875,
+              0.0,
+              1.625
+            ]
+          },
+          {
+            "index": 12,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 13,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 14,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 15,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 18,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 19,
+            "coefficients": [
+              -19.852941513061523,
+              11.029412269592285,
+              0.0,
+              0.5098039507865906
+            ]
+          },
+          {
+            "index": 22,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 23,
+            "coefficients": [
+              -0.2363683134317398,
+              0.701225996017456,
+              0.33707866072654724,
+              0.0
+            ]
+          },
+          {
+            "index": 24,
+            "coefficients": [
+              -0.05668294429779053,
+              0.25223907828330994,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.01666666753590107,
+        "keys": [
+          {
+            "index": 15,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.3333333432674408,
+        "keys": [
+          {
+            "index": 3,
+            "coefficients": [
+              0.3374997675418854,
+              -0.337499737739563,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              0.2635021507740021,
+              -0.2635021507740021,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 19,
+            "coefficients": [
+              -3.507355213165283,
+              1.2352954149246216,
+              0.7352940440177917,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.9833333492279053,
+        "keys": [
+          {
+            "index": 6,
+            "coefficients": [
+              -432001.21875,
+              7200.013671875,
+              120.00011444091797,
+              1.0
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              -432001.1875,
+              7200.01220703125,
+              120.00010681152344,
+              1.0109626054763794
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              -135000.390625,
+              2250.00439453125,
+              37.50003433227539,
+              1.0
+            ]
+          },
+          {
+            "index": 16,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 20,
+            "coefficients": [
+              105882.6484375,
+              -1764.7093505859375,
+              -29.41179084777832,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.0,
+        "keys": [
+          {
+            "index": 3,
+            "coefficients": [
+              13.670334815979004,
+              -24.977113723754883,
+              15.075703620910645,
+              1.0
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              13.440631866455078,
+              -24.646177291870117,
+              14.940726280212402,
+              1.0109626054763794
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 6,
+            "coefficients": [
+              -46.79001235961914,
+              49.079654693603516,
+              -17.007787704467773,
+              3.0
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              -53.43491744995117,
+              53.39741516113281,
+              -17.74336051940918,
+              3.01096248626709
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              39.36431884765625,
+              -18.698055267333984,
+              0.0,
+              1.625
+            ]
+          },
+          {
+            "index": 15,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 16,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 19,
+            "coefficients": [
+              139.76483154296875,
+              -37.0588493347168,
+              -2.2941181659698486,
+              1.0
+            ]
+          },
+          {
+            "index": 20,
+            "coefficients": [
+              -2.930176258087158,
+              3.388293981552124,
+              0.0,
+              0.5098039507865906
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.1666666269302368,
+        "keys": [
+          {
+            "index": 19,
+            "coefficients": [
+              -57.176456451416016,
+              19.058826446533203,
+              -3.000000238418579,
+              0.23529411852359772
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.3166667222976685,
+        "keys": [
+          {
+            "index": 6,
+            "coefficients": [
+              0.3374997675418854,
+              -0.337499737739563,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              0.2635021507740021,
+              -0.2635021507740021,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.3333333730697632,
+        "keys": [
+          {
+            "index": 19,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.6666666269302368,
+        "keys": [
+          {
+            "index": 3,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.9666666984558105,
+        "keys": [
+          {
+            "index": 9,
+            "coefficients": [
+              -432001.21875,
+              7200.013671875,
+              120.00011444091797,
+              1.0
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              -432001.1875,
+              7200.01220703125,
+              120.00010681152344,
+              1.0109626054763794
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              -135000.390625,
+              2250.00439453125,
+              37.50003433227539,
+              1.0
+            ]
+          },
+          {
+            "index": 17,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 21,
+            "coefficients": [
+              105882.6484375,
+              -1764.7093505859375,
+              -29.41179084777832,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.9833333492279053,
+        "keys": [
+          {
+            "index": 6,
+            "coefficients": [
+              13.670333862304688,
+              -24.977113723754883,
+              15.075703620910645,
+              1.0
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              13.440632820129395,
+              -24.64617919921875,
+              14.940726280212402,
+              1.0109626054763794
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              -46.790000915527344,
+              49.07965087890625,
+              -17.007787704467773,
+              3.0
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              -53.43489456176758,
+              53.397403717041016,
+              -17.74336051940918,
+              3.01096248626709
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              39.364356994628906,
+              -18.69806671142578,
+              0.0,
+              1.625
+            ]
+          },
+          {
+            "index": 17,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 20,
+            "coefficients": [
+              110.51370239257812,
+              -32.996192932128906,
+              -1.8363085985183716,
+              1.0
+            ]
+          },
+          {
+            "index": 21,
+            "coefficients": [
+              -6.704684257507324,
+              7.099892616271973,
+              0.0,
+              0.5098039507865906
+            ]
+          }
+        ]
+      },
+      {
+        "time": 2.1666667461395264,
+        "keys": [
+          {
+            "index": 20,
+            "coefficients": [
+              -49.66849136352539,
+              16.5561466217041,
+              -2.7914438247680664,
+              0.23529411852359772
+            ]
+          }
+        ]
+      },
+      {
+        "time": 2.299999952316284,
+        "keys": [
+          {
+            "index": 9,
+            "coefficients": [
+              0.33749961853027344,
+              -0.3374996483325958,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              0.33749961853027344,
+              -0.3374996483325958,
+              0.0,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 2.3333332538604736,
+        "keys": [
+          {
+            "index": 20,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 2.6500000953674316,
+        "keys": [
+          {
+            "index": 6,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 2.9666666984558105,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              -120.00011444091797,
+              -5.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 12,
+            "coefficients": [
+              -33.09275817871094,
+              1.9539544582366943,
+              11.914505958557129,
+              1.0
+            ]
+          },
+          {
+            "index": 13,
+            "coefficients": [
+              -32.77751159667969,
+              1.7227718830108643,
+              11.956889152526855,
+              1.0
+            ]
+          },
+          {
+            "index": 14,
+            "coefficients": [
+              0.0,
+              0.0,
+              -0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 21,
+            "coefficients": [
+              2239.91162109375,
+              -239.09567260742188,
+              -5.486047267913818,
+              1.0
+            ]
+          },
+          {
+            "index": 22,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 23,
+            "coefficients": [
+              82.15460205078125,
+              -26.832439422607422,
+              -1.7432249784469604,
+              1.0
+            ]
+          },
+          {
+            "index": 24,
+            "coefficients": [
+              0.0,
+              4.190952154203842e-07,
+              -1.387490153312683,
+              0.7399947047233582
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.0333333015441895,
+        "keys": [
+          {
+            "index": 21,
+            "coefficients": [
+              -893.3849487304688,
+              119.11786651611328,
+              -7.500007152557373,
+              0.23529411852359772
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.049999952316284,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              -59.99999237060547,
+              -15.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.0999999046325684,
+        "keys": [
+          {
+            "index": 21,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.1666667461395264,
+        "keys": [
+          {
+            "index": 23,
+            "coefficients": [
+              -17.999967575073242,
+              10.235283851623535,
+              -2.617647171020508,
+              0.23529411852359772
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.3333332538604736,
+        "keys": [
+          {
+            "index": 9,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 12,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 13,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 14,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 23,
+            "coefficients": [
+              -25.411766052246094,
+              8.470592498779297,
+              -0.7058830261230469,
+              0.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 3.5,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              -42.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 10,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 11,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 12,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 13,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              4.0
+            ]
+          },
+          {
+            "index": 14,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 23,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 24,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    ],
+    "constants": []
+  },
+  "resumeOneSecondClip": {
+    "source": {
+      "path": "static/apktool/base/assets/bin/Data/f38918dc176784068a1b986ea9f04b84",
+      "bytes": 3800,
+      "sha256": "90028960CD080D89655E82A8710AB701E79A926BE57D4EA87BE0D65F4CCBDFCB"
+    },
+    "name": "ResumeCountDownOneSecAnimamtion",
+    "sampleRate": 60.0,
+    "durationSeconds": 1.899999976158142,
+    "loop": true,
+    "curveCount": 10,
+    "streamedCurveCount": 10,
+    "bindings": [
+      {
+        "pathHash": 3033962386,
+        "path": "Contents/TimeMove",
+        "attributeHash": 3,
+        "attribute": "m_LocalScale",
+        "typeId": 4,
+        "channels": [
+          "Contents/TimeMove.m_LocalScale.x",
+          "Contents/TimeMove.m_LocalScale.y",
+          "Contents/TimeMove.m_LocalScale.z"
+        ]
+      },
+      {
+        "pathHash": 1301050145,
+        "path": "Contents",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 3033962386,
+        "path": "Contents/TimeMove",
+        "attributeHash": 2086281974,
+        "attribute": "m_IsActive",
+        "typeId": 1,
+        "channels": [
+          "Contents/TimeMove.m_IsActive.value"
+        ]
+      },
+      {
+        "pathHash": 1233135213,
+        "path": "Contents/TimeMove/BG",
+        "attributeHash": 3305885265,
+        "attribute": "m_Enabled",
+        "typeId": 114,
+        "channels": [
+          "Contents/TimeMove/BG.m_Enabled.value"
+        ]
+      },
+      {
+        "pathHash": 1233135213,
+        "path": "Contents/TimeMove/BG",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/TimeMove/BG.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 832647235,
+        "path": "Contents/TimeMove/Slider",
+        "attributeHash": 1614703993,
+        "attribute": "attribute_hash:1614703993",
+        "typeId": 114,
+        "channels": [
+          "Contents/TimeMove/Slider.attribute_hash:1614703993.value"
+        ]
+      },
+      {
+        "pathHash": 832647235,
+        "path": "Contents/TimeMove/Slider",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/TimeMove/Slider.mColor.a.value"
+        ]
+      },
+      {
+        "pathHash": 339390850,
+        "path": "Contents/TimeMove/Arrow/Arrow",
+        "attributeHash": 4224524717,
+        "attribute": "mColor.a",
+        "typeId": 114,
+        "channels": [
+          "Contents/TimeMove/Arrow/Arrow.mColor.a.value"
+        ]
+      }
+    ],
+    "frames": [
+      {
+        "time": 0.0,
+        "keys": [
+          {
+            "index": 3,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.5
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.5
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.38333332538604736,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              257.7776184082031,
+              -58.66664505004883,
+              0.0,
+              1.5
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              257.7776184082031,
+              -58.66664505004883,
+              0.0,
+              1.5
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              -29.629579544067383,
+              6.666656970977783,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 3,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 4,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 6,
+            "coefficients": [
+              0.15009191632270813,
+              -0.6501837968826294,
+              0.8500918745994568,
+              0.3499999940395355
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              0.06878447532653809,
+              -0.046600937843322754,
+              0.9778162837028503,
+              0.0
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.8331623077392578,
+              -2.1663246154785156,
+              1.8331623077392578,
+              0.5
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              0.8295896053314209,
+              -2.159179210662842,
+              1.829589605331421,
+              0.5
+            ]
+          }
+        ]
+      },
+      {
+        "time": 0.5333333611488342,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              -0.11398321390151978,
+              0.2629755437374115,
+              -0.19999980926513672,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              -0.11398321390151978,
+              0.2629755437374115,
+              -0.19999980926513672,
+              1.0499999523162842
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.16283316910266876,
+              -0.2076122760772705,
+              0.0,
+              1.0499999523162842
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.3833333253860474,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              60.564659118652344,
+              -36.895572662353516,
+              7.458558559417725,
+              1.0
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              61.77642059326172,
+              -37.42066955566406,
+              7.515443801879883,
+              1.0
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 5,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 6,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.699999988079071
+            ]
+          },
+          {
+            "index": 7,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              -71.5841293334961,
+              39.07831954956055,
+              -9.72187614440918,
+              1.0
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              -41.841522216796875,
+              27.682981491088867,
+              -8.649136543273926,
+              1.0
+            ]
+          }
+        ]
+      },
+      {
+        "time": 1.600000023841858,
+        "keys": [
+          {
+            "index": 0,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.5
+            ]
+          },
+          {
+            "index": 1,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.5
+            ]
+          },
+          {
+            "index": 2,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "index": 8,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          {
+            "index": 9,
+            "coefficients": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    ],
+    "constants": []
+  }
+}

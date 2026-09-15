@@ -10,6 +10,19 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{Emitter, Manager};
 
+mod resource_manager;
+use resource_manager::{
+    resource_abort_workspace_media_import, resource_append_workspace_media_chunk,
+    resource_begin_workspace_media_import, resource_collect_garbage,
+    resource_commit_catalog_snapshot, resource_commit_workspace_media_import,
+    resource_create_snapshot, resource_finalize_legacy_media_migration,
+    resource_initialize, resource_install_builtin_package, resource_install_network_package,
+    resource_list_records, resource_load_catalog_snapshot, resource_open_snapshot,
+    resource_read_record, resource_read_snapshot_file, resource_reconcile_workspace_media,
+    resource_release_snapshot, resource_remove, resource_shutdown, resource_verify,
+    ApplicationResourceState,
+};
+
 const DOWNLOAD_PROGRESS_EVENT: &str = "download-progress";
 const BESTDORI_LOGIN_API: &str = "https://bestdori.com/api/user/login";
 const BESTDORI_ME_API: &str = "https://bestdori.com/api/user/me";
@@ -29,6 +42,14 @@ const SESSION_COVER_FILE_NAME: &str = "cover.bin";
 const SESSION_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_RESOURCES_DIR_NAME: &str = "chart-resources";
 const CHART_RESOURCES_META_NAME: &str = "chart-resources.v2.json";
+const CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v5.json";
+const CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v5.bak.json";
+const CHART_RESOURCE_REFS_TEMP_NAME: &str = "chart-resources.v5.tmp.json";
+const LEGACY_V4_CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v4.json";
+const LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v4.bak.json";
+const LEGACY_CHART_RESOURCE_REFS_META_NAME: &str = "chart-resources.v3.json";
+const LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME: &str = "chart-resources.v3.bak.json";
+const CHART_RESOURCE_REFS_MIGRATION_REPORT: &str = "chart-resources.v5.migration.json";
 const CHART_COVER_FILE_NAME: &str = "cover.bin";
 const CHART_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_MV_FILE_NAME: &str = "mv.bin";
@@ -1240,6 +1261,7 @@ struct SessionResourceInput {
 #[serde(rename_all = "camelCase")]
 struct SaveEditorChartCachePayload {
     chart_json: String,
+    resource_refs: Option<serde_json::Value>,
     cover: Option<SessionResourceInput>,
     audio: Option<SessionResourceInput>,
     mv: Option<SessionResourceInput>,
@@ -1270,6 +1292,8 @@ struct ChartResourcesMeta {
 #[serde(rename_all = "camelCase")]
 struct LoadedEditorChartCache {
     chart_json: String,
+    resource_refs: Option<serde_json::Value>,
+    resource_refs_schema_version: Option<u32>,
     cover_data_url: Option<String>,
     audio_base64: Option<String>,
     audio_mime_type: Option<String>,
@@ -1708,6 +1732,7 @@ fn save_editor_chart_cache(
 ) -> Result<(), String> {
     let SaveEditorChartCachePayload {
         chart_json,
+        resource_refs,
         cover,
         audio,
         mv,
@@ -1731,6 +1756,29 @@ fn save_editor_chart_cache(
         &chart_temp_path,
         &chart_json,
     )?;
+
+    let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
+    if let Some(resource_refs) = resource_refs {
+        if !resource_refs.is_object() {
+            return Err("chart resource refs must be an object".to_string());
+        }
+        let refs_text = serde_json::to_string(&resource_refs)
+            .map_err(|error| format!("serialize chart resource refs failed: {error}"))?;
+        write_text_with_backup(
+            &refs_path,
+            &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
+            &resources_root.join(CHART_RESOURCE_REFS_TEMP_NAME),
+            &refs_text,
+        )?;
+        for legacy in [
+            LEGACY_V4_CHART_RESOURCE_REFS_META_NAME,
+            LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME,
+            LEGACY_CHART_RESOURCE_REFS_META_NAME,
+            LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME,
+        ] {
+            remove_file_if_exists(&resources_root.join(legacy))?;
+        }
+    }
 
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let mut meta = read_chart_resources_meta(&meta_path)?;
@@ -1814,6 +1862,8 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
 
             return Ok(Some(LoadedEditorChartCache {
                 chart_json: legacy_json,
+                resource_refs: None,
+                resource_refs_schema_version: Some(2),
                 cover_data_url,
                 audio_base64,
                 audio_mime_type: legacy_meta.audio_mime_type,
@@ -1825,6 +1875,25 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
     };
 
     let resources_root = resolve_chart_resources_root(&root)?;
+    let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
+    let (resource_refs, resource_refs_schema_version) = match load_json_text_with_backup(
+        &refs_path,
+        &resources_root.join(CHART_RESOURCE_REFS_BACKUP_NAME),
+    )? {
+        Some(text) => (Some(serde_json::from_str(&text)
+            .map_err(|error| format!("parse chart resource refs failed: {error}"))?), Some(5)),
+        None => {
+            let legacy_v4 = load_json_text_with_backup(
+                &resources_root.join(LEGACY_V4_CHART_RESOURCE_REFS_META_NAME),
+                &resources_root.join(LEGACY_V4_CHART_RESOURCE_REFS_BACKUP_NAME),
+            )?;
+            match legacy_v4 {
+                Some(text) => (Some(serde_json::from_str(&text)
+                    .map_err(|error| format!("parse v4 chart resource refs failed: {error}"))?), Some(4)),
+                None => (migrate_chart_resource_refs_v3(&resources_root)?, Some(3)),
+            }
+        }
+    };
     let meta_path = resources_root.join(CHART_RESOURCES_META_NAME);
     let meta = read_chart_resources_meta(&meta_path)?;
 
@@ -1849,6 +1918,8 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
 
     Ok(Some(LoadedEditorChartCache {
         chart_json,
+        resource_refs,
+        resource_refs_schema_version,
         cover_data_url,
         audio_base64,
         audio_mime_type: meta.audio_mime_type,
@@ -1856,6 +1927,115 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
         mv_data_url,
         mv_file_name: meta.mv_file_name,
     }))
+}
+
+fn migrate_chart_resource_refs_v3(resources_root: &Path) -> Result<Option<serde_json::Value>, String> {
+    let legacy_path = resources_root.join(LEGACY_CHART_RESOURCE_REFS_META_NAME);
+    let Some(text) = load_json_text_with_backup(
+        &legacy_path,
+        &resources_root.join(LEGACY_CHART_RESOURCE_REFS_BACKUP_NAME),
+    )? else {
+        return Ok(None);
+    };
+    let value: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|error| format!("parse legacy chart resource refs failed: {error}"))?;
+    let object = value.as_object().ok_or_else(|| "legacy chart resource refs root must be an object".to_string())?;
+    let mut migrated = serde_json::Map::new();
+    let mut skipped = Vec::new();
+    for (slot, raw) in object {
+        if raw.is_null() {
+            migrated.insert(slot.clone(), serde_json::Value::Null);
+            continue;
+        }
+        let id = raw.get("id").and_then(serde_json::Value::as_str);
+        let mapped = id.and_then(migrate_resource_id_v3);
+        match mapped {
+            Some(id) => {
+                migrated.insert(slot.clone(), serde_json::json!({ "id": id }));
+            }
+            None => {
+                skipped.push(format!("{slot}:{}", id.unwrap_or("invalid")));
+                migrated.insert(slot.clone(), serde_json::Value::Null);
+            }
+        }
+    }
+    let migrated_value = serde_json::Value::Object(migrated);
+    let report = serde_json::to_string(&serde_json::json!({
+        "fromSchema": 3,
+        "targetSchema": 5,
+        "status": "pending-workspace-adoption",
+        "skipped": skipped,
+    })).map_err(|error| format!("serialize chart resource migration report failed: {error}"))?;
+    fs::write(resources_root.join(CHART_RESOURCE_REFS_MIGRATION_REPORT), report)
+        .map_err(|error| format!("write chart resource migration report failed: {error}"))?;
+    Ok(Some(migrated_value))
+}
+
+fn migrate_resource_id_v3(value: &str) -> Option<String> {
+    if value.starts_with("builtin/") || value.starts_with("user/") {
+        return Some(value.to_string());
+    }
+    let parts: Vec<&str> = value.split('/').collect();
+    if parts.len() < 4 || parts[0] != "bestdori" {
+        return None;
+    }
+    let server = parts[1];
+    if !matches!(server, "jp" | "en" | "tw" | "cn" | "kr") {
+        return None;
+    }
+    if matches!(parts[2], "ingameskin" | "sound" | "musicjacket" | "movie") {
+        return Some(value.to_string());
+    }
+    let family = parts[2];
+    let native = parts[3..].join("/");
+    let logical = match family {
+        "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapeffect" | "stageskin" => format!("ingameskin/{family}/{native}"),
+        "tapseskin" => format!("sound/tapseskin/{native}"),
+        "sound-common" => "sound/common".to_string(),
+        value if value.starts_with("media-") => {
+            let decoded = percent_decode(&native)?;
+            logical_path_from_bestdori_url(&decoded, server)?
+        }
+        _ => return None,
+    };
+    Some(format!("bestdori/{server}/{logical}"))
+}
+
+fn logical_path_from_bestdori_url(value: &str, expected_server: &str) -> Option<String> {
+    let url_start = value.find("https://")?;
+    let url = &value[url_start..];
+    if !url.starts_with("https://bestdori.com/") && !url.starts_with("https://www.bestdori.com/") {
+        return None;
+    }
+    let marker = format!("/assets/{expected_server}/");
+    let start = url.find(&marker)? + marker.len();
+    let path = url[start..].split(['?', '#']).next()?;
+    let mut parts: Vec<String> = path.split('/').map(str::to_string).collect();
+    if parts.len() < 2 || parts.iter().any(|part| part.is_empty() || part == "." || part == "..") {
+        return None;
+    }
+    let package_index = parts.len() - 2;
+    parts[package_index] = parts[package_index].strip_suffix("_rip")?.to_string();
+    Some(parts.join("/"))
+}
+
+fn percent_decode(value: &str) -> Option<String> {
+    let bytes = value.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            if index + 2 >= bytes.len() { return None; }
+            let high = (bytes[index + 1] as char).to_digit(16)?;
+            let low = (bytes[index + 2] as char).to_digit(16)?;
+            output.push(((high << 4) | low) as u8);
+            index += 3;
+        } else {
+            output.push(bytes[index]);
+            index += 1;
+        }
+    }
+    String::from_utf8(output).ok()
 }
 
 #[tauri::command]
@@ -1989,6 +2169,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .manage(BestdoriAuthState::default())
+        .manage(ApplicationResourceState::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
             let state = app_handle.state::<BestdoriAuthState>();
@@ -2015,8 +2196,36 @@ pub fn run() {
             load_editor_settings_cache,
             save_chart_json_via_dialog,
             save_chart_png_via_dialog,
-            share_file
+            share_file,
+            resource_initialize,
+            resource_list_records,
+            resource_read_record,
+            resource_load_catalog_snapshot,
+            resource_commit_catalog_snapshot,
+            resource_install_builtin_package,
+            resource_install_network_package,
+            resource_begin_workspace_media_import,
+            resource_append_workspace_media_chunk,
+            resource_commit_workspace_media_import,
+            resource_reconcile_workspace_media,
+            resource_finalize_legacy_media_migration,
+            resource_abort_workspace_media_import,
+            resource_create_snapshot,
+            resource_open_snapshot,
+            resource_read_snapshot_file,
+            resource_release_snapshot,
+            resource_verify,
+            resource_remove,
+            resource_collect_garbage
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                let state = app_handle.state::<ApplicationResourceState>();
+                if let Err(error) = resource_shutdown(app_handle, state.inner()) {
+                    eprintln!("clean resource runtime state on exit failed: {error}");
+                }
+            }
+        });
 }

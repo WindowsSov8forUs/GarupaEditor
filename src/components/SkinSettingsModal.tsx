@@ -1,5 +1,5 @@
 import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { useModalLayer } from "./useModalLayer";
@@ -9,6 +9,7 @@ type SkinSettingsModalProps = {
   open: boolean;
   onClose: () => void;
   pendingSkinSelection: SkinSelection;
+  catalogStatus: string;
   rhythmTypeTitle: string;
   onRhythmTypeChange: (value: string) => void;
   onDirectionalTypeChange: (value: string) => void;
@@ -114,6 +115,7 @@ export function SkinSettingsModal({
   open,
   onClose,
   pendingSkinSelection,
+  catalogStatus,
   rhythmTypeTitle,
   rhythmCatalogKind,
   onRhythmTypeChange,
@@ -134,6 +136,7 @@ export function SkinSettingsModal({
   isSkinApplying,
   onApplySkinSelection,
 }: SkinSettingsModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
 
@@ -175,6 +178,7 @@ export function SkinSettingsModal({
         </header>
 
         <div className="modal-body">
+          <p className="metadata-upload-source-empty" role="status">{catalogStatus}</p>
           <div className="skin-settings-page-shell">
             <div className="app-settings-group-list">
               <section className="app-settings-group">

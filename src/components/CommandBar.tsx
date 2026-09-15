@@ -1,9 +1,5 @@
 ﻿import { memo, type KeyboardEvent } from "react";
-import importJsonIcon from "../assets/icons/json-import.svg";
-import exportJsonIcon from "../assets/icons/json-export.svg";
-import skinIcon from "../assets/icons/skin.svg";
-import previewIcon from "../assets/icons/preview.svg";
-import simulatorIcon from "../assets/icons/display.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
 type CommandBarProps = {
   onImportJson: () => void;
@@ -28,6 +24,11 @@ export const CommandBar = memo(function CommandBar({
   userUsername,
   onUserBarClick,
 }: CommandBarProps) {
+  const importJsonIcon = useApplicationResourceUrl("ui.icon.json-import");
+  const exportJsonIcon = useApplicationResourceUrl("ui.icon.json-export");
+  const skinIcon = useApplicationResourceUrl("ui.icon.skin");
+  const previewIcon = useApplicationResourceUrl("ui.icon.preview");
+  const simulatorIcon = useApplicationResourceUrl("ui.icon.display");
   const nickname = typeof userNickname === "string" ? userNickname.trim() : "";
   const username = typeof userUsername === "string" ? userUsername.trim() : "";
   const hasNickname = nickname.length > 0;

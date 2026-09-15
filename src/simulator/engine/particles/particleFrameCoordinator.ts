@@ -1,0 +1,328 @@
+import type {
+  ParticleFrameBatch,
+  ParticleOperationResult,
+  ParticleRendererFrameBatch,
+  SimulatorParticleBackend,
+  SimulatorParticleRendererBackend,
+} from "../../backends/particleContracts";
+import {
+  particleFloat32ToBits,
+} from "../../backends/particleValidation";
+import type { OneFrameJudgementBatch } from "../data/oneFrameData";
+import { integrityFailure, ok, type SimulatorResult } from "../result";
+import {
+  ParticleCommandOwnerTransaction,
+  ParticleCommandProducer,
+} from "./particleCommandProducer";
+import {
+  GameClearParticleOwner,
+  GameClearParticleOwnerTransaction,
+} from "./gameClearParticleOwner";
+
+export class ParticleOuterFrameTransaction {
+  private state: "pending" | "external-committed" | "committed" | "discarded" = "pending";
+
+  constructor(
+    private readonly coordinator: ParticleFrameCoordinator,
+    private readonly backendBatch: ParticleFrameBatch,
+    private readonly rendererBatch: ParticleRendererFrameBatch | null,
+    private readonly ownerTransaction: ParticleCommandOwnerTransaction | null,
+    private readonly gameClearTransaction: GameClearParticleOwnerTransaction | null,
+  ) {}
+
+  /** Commits only the portable executor; every Simulator-owned state remains detached. */
+  commitExternal(): SimulatorResult<void> {
+    if (this.state !== "pending") return transactionRejected("external commit", this.state);
+    const rendered = this.rendererBatch === null
+      ? ok(undefined)
+      : mapParticleResult(this.coordinator.renderer!.commitFrame(this.rendererBatch));
+    if (rendered.status !== "ok") {
+      // Renderer/context failure is an explicit external boundary. The native
+      // simulation and both command owners still roll back to the prior frame.
+      this.coordinator.backend.discardFrame(this.backendBatch);
+      this.ownerTransaction?.discard();
+      this.gameClearTransaction?.discard();
+      this.state = "discarded";
+      return rendered;
+    }
+    this.state = "external-committed";
+    return ok(undefined);
+  }
+
+  /** No-fail publication after the exact detached backend/owner capabilities survived external commit. */
+  publishDomain(): SimulatorResult<void> {
+    if (this.state !== "external-committed") return transactionRejected("domain publish", this.state);
+    const committed = mapParticleResult(this.coordinator.backend.commitFrame(this.backendBatch));
+    if (committed.status !== "ok") return committed;
+    const owner = this.ownerTransaction?.commit() ?? ok(undefined);
+    if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearTransaction?.commit() ?? ok(undefined);
+    if (gameClear.status !== "ok") return gameClear;
+    this.state = "committed";
+    this.coordinator.finishFrame(this.backendBatch.frame);
+    return ok(undefined);
+  }
+
+  discard(): SimulatorResult<void> {
+    if (this.state !== "pending") return transactionRejected("discard", this.state);
+    if (this.rendererBatch !== null) {
+      const renderer = mapParticleResult(this.coordinator.renderer!.discardFrame(this.rendererBatch));
+      if (renderer.status !== "ok") return renderer;
+    }
+    const backend = mapParticleResult(this.coordinator.backend.discardFrame(this.backendBatch));
+    if (backend.status !== "ok") return backend;
+    const owner = this.ownerTransaction?.discard() ?? ok(undefined);
+    if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearTransaction?.discard() ?? ok(undefined);
+    if (gameClear.status !== "ok") return gameClear;
+    this.state = "discarded";
+    return ok(undefined);
+  }
+}
+
+export class ParticleFrameCoordinator {
+  private frame = 0;
+
+  constructor(
+    readonly sessionId: string,
+    readonly producer: ParticleCommandProducer,
+    readonly backend: SimulatorParticleBackend,
+    readonly renderer: SimulatorParticleRendererBackend | null,
+    readonly gameClearOwner: GameClearParticleOwner,
+  ) {}
+
+  validate(): SimulatorResult<void> {
+    if (typeof this.sessionId !== "string" || this.sessionId.length === 0) {
+      return rejected("particle.session.invalid-id", "Particle sessions require one non-empty host identity.");
+    }
+    const backend = this.backend.status();
+    if (backend.state !== "ready" || backend.sessionId !== this.sessionId || backend.fault !== null ||
+      backend.nextFrame !== null || backend.nextSequence !== 0) {
+      return rejected(
+        "particle.session.backend-not-fresh-ready",
+        "Engine creation requires a freshly prepared exact-session particle backend with zero committed frames/commands.",
+      );
+    }
+    if (this.renderer !== null) {
+      const renderer = this.renderer.snapshot();
+      if (renderer.state !== "ready" || renderer.sessionId !== this.sessionId || renderer.fault !== null ||
+        renderer.nextFrame !== null || renderer.nodeCount !== 0) {
+        return rejected(
+          "particle.session.renderer-not-fresh-ready",
+          "Particle Pixi mapping requires a freshly prepared exact-session empty renderer.",
+        );
+      }
+    }
+    const producer = this.producer.validate();
+    return producer.status === "ok"
+      ? this.gameClearOwner.validateFresh()
+      : producer;
+  }
+
+  pollFaults(): SimulatorResult<void> {
+    const backend = this.backend.status();
+    if (backend.fault !== null) {
+      return integrityFailure(
+        `particle.${backend.fault.code}.${backend.fault.capability}`,
+        backend.fault.boundary,
+      );
+    }
+    if (backend.state !== "ready") {
+      return rejected("particle.session.backend-left-ready-state", "An active particle backend cannot leave ready state.");
+    }
+    if (this.renderer !== null) {
+      const renderer = this.renderer.snapshot();
+      if (renderer.fault !== null) {
+        return integrityFailure(
+          `particle.renderer.${renderer.fault.code}.${renderer.fault.capability}`,
+          renderer.fault.boundary,
+        );
+      }
+      if (renderer.state !== "ready") {
+        return rejected("particle.session.renderer-left-ready-state", "An active particle renderer cannot leave ready state.");
+      }
+    }
+    return ok(undefined);
+  }
+
+  preflightAdvance(
+    deltaTimeSeconds: number,
+    paused: boolean,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    if (this.producer.snapshot().terminal) {
+      return rejected(
+        "particle.frame.advance-after-terminal",
+        "No additional particle outer frame may follow terminal cleanup before a fresh retry/reset session.",
+      );
+    }
+    if (paused) return this.preflight(deltaTimeSeconds, true, null);
+    const owner = this.producer.preflightSlidePresentation();
+    return owner.status === "ok" ? this.preflight(deltaTimeSeconds, false, owner.value) : owner;
+  }
+
+  preflightJudgement(
+    deltaTimeSeconds: number,
+    batch: OneFrameJudgementBatch,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightJudgement(batch);
+    return owner.status === "ok"
+      ? this.preflight(deltaTimeSeconds, false, owner.value)
+      : owner;
+  }
+
+  preflightGameClearStart(
+    clearStatus: 1 | 2 | 3,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightTerminal("natural-end");
+    if (owner.status !== "ok") return owner;
+    const gameClear = this.gameClearOwner.preflightStart(clearStatus);
+    if (gameClear.status !== "ok") {
+      owner.value.discard();
+      return gameClear;
+    }
+    return this.preflight(0, false, owner.value, gameClear.value);
+  }
+
+  preflightGameClearAdvance(
+    deltaTimeSeconds: number,
+    baseStartedAtSeconds: number | null,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    const gameClear = this.gameClearOwner.preflightAdvance(deltaTimeSeconds, baseStartedAtSeconds);
+    return gameClear.status === "ok"
+      ? this.preflight(0, false, null, gameClear.value)
+      : gameClear;
+  }
+
+  preflightTerminal(
+    reason: "game-over" | "natural-end",
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightTerminal(reason);
+    return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
+  }
+
+  preflightMoveTime(): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightMoveTime();
+    return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
+  }
+
+  preflightDispose(): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightDispose();
+    return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
+  }
+
+  rejectParticleOnlyReturnTime(): SimulatorResult<never> {
+    return this.producer.preflightReturnTime();
+  }
+
+  disposeBackends(): SimulatorResult<void> {
+    const dispose = (owner: string, operation: () => ParticleOperationResult<void>): SimulatorResult<void> => {
+      try { return mapParticleResult(operation()); }
+      catch (error) {
+        return integrityFailure("particle.backend-dispose-threw",
+          `${owner} cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    const renderer = this.renderer === null ? ok(undefined) : dispose("renderer", () => this.renderer!.dispose());
+    const backend = dispose("simulation", () => this.backend.dispose());
+    return renderer.status === "ok" ? backend : backend.status === "ok" ? renderer : integrityFailure(
+      renderer.capability,
+      `${renderer.boundary} Secondary cleanup failure: ${backend.capability}: ${backend.boundary}`,
+    );
+  }
+
+  finishFrame(frame: number): void {
+    if (frame !== this.frame) throw new Error("Particle frame coordinator committed a foreign frame");
+    this.frame += 1;
+  }
+
+  private preflight(
+    deltaTimeSeconds: number,
+    paused: boolean,
+    ownerTransaction: ParticleCommandOwnerTransaction | null,
+    gameClearTransaction: GameClearParticleOwnerTransaction | null = null,
+  ): SimulatorResult<ParticleOuterFrameTransaction> {
+    const faults = this.pollFaults();
+    if (faults.status !== "ok") {
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return faults;
+    }
+    if (typeof deltaTimeSeconds !== "number" ||
+      !Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return rejected(
+        "particle.frame.invalid-host-delta",
+        "Particle outer-frame time is one finite non-negative host delta converted once to binary32.",
+      );
+    }
+    const rounded = Math.fround(deltaTimeSeconds);
+    const deltaTimeBits = particleFloat32ToBits(rounded);
+    if (deltaTimeBits === null) {
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return rejected(
+        "particle.frame.invalid-host-delta",
+        "Particle outer-frame time is one finite non-negative host delta converted once to binary32.",
+      );
+    }
+    const commands = ownerTransaction?.commands ?? Object.freeze([]);
+    const backendBatch = this.backend.preflightFrame(Object.freeze({
+      frame: this.frame,
+      deltaTimeBits,
+      paused,
+      commands,
+      gameClearPlan: gameClearTransaction?.plan ?? null,
+    }));
+    if (backendBatch.status !== "accepted") {
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return mapParticleResult(backendBatch);
+    }
+    const preview = this.backend.previewFrame(backendBatch.value);
+    if (preview.status !== "accepted") {
+      this.backend.discardFrame(backendBatch.value);
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return mapParticleResult(preview);
+    }
+    const rendererBatch = this.renderer?.preflightFrame(Object.freeze({
+      sessionId: this.sessionId,
+      frame: this.frame,
+      samples: preview.value,
+    })) ?? null;
+    if (rendererBatch !== null && rendererBatch.status !== "accepted") {
+      this.backend.discardFrame(backendBatch.value);
+      ownerTransaction?.discard();
+      gameClearTransaction?.discard();
+      return mapParticleResult(rendererBatch);
+    }
+    return ok(new ParticleOuterFrameTransaction(
+      this,
+      backendBatch.value,
+      rendererBatch?.value ?? null,
+      ownerTransaction,
+      gameClearTransaction,
+    ));
+  }
+}
+
+export function mapParticleResult<T>(result: ParticleOperationResult<T>): SimulatorResult<T> {
+  return result.status === "accepted"
+    ? ok(result.value)
+    : integrityFailure(
+        `particle.${result.status}.${result.failure.capability}`,
+        result.failure.boundary,
+      );
+}
+
+function transactionRejected(action: string, state: string): SimulatorResult<never> {
+  return rejected(
+    "particle.transaction.invalid-state",
+    `Particle outer-frame ${action} cannot run from ${state}.`,
+  );
+}
+
+function rejected<T = never>(capability: string, boundary: string): SimulatorResult<T> {
+  return integrityFailure(capability, boundary);
+}

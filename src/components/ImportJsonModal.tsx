@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { FileTriggerInput } from "./FileTriggerInput";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
@@ -35,6 +35,7 @@ type ImportJsonModalProps = {
 type ImportModalTab = "chart-code" | "official" | "community";
 
 export function ImportJsonModal(props: ImportJsonModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const {
     open,
     level,

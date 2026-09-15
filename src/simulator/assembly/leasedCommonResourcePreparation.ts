@@ -1,0 +1,183 @@
+import commonCatalogJson from "../../data/simulator/commonRenderSemanticCatalog.json";
+import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
+import { parseCurrentScoreHudNativeProfile } from "../backends/resources/currentScoreHudNativeProfile";
+import { parseCurrentGameClearProfile } from "../backends/resources/currentGameClearProfile";
+import { parseGameClearNativeSemanticProfile } from "../backends/resources/currentGameClearNativeSemanticProfile";
+import { parseCurrentPauseCountdownAnimationProfile } from "../backends/resources/currentPauseCountdownAnimationProfile";
+import {
+  ImmutableLocalRenderResourceProvider,
+  type LocalRenderResource,
+} from "../backends/resources/localResourceProvider";
+import type {
+  RenderResourceAssetProfile,
+  RenderResourceProfile,
+  SimulatorResourceProvider,
+} from "../backends/renderingContracts";
+import type { SimulatorResourceLease } from "../platform/resourceContracts";
+import { OriginalResourcePackageView } from "../resources/originalResourcePackageView";
+import { rejected, type SimulatorAssemblyResult } from "./result";
+
+interface SemanticEntry {
+  readonly file: string;
+  readonly profile: Omit<RenderResourceAssetProfile, "byteLength" | "sha256" | "provenance">;
+}
+
+// JSON imports widen enum literals to strings. Check required fields at build
+// time; the render profile validator checks their values before consumption.
+interface SemanticCatalogInput {
+  readonly schemaVersion: number;
+  readonly groups: Readonly<Record<string, readonly {
+    readonly file: string;
+    readonly profile: { readonly [K in keyof SemanticEntry["profile"]]: unknown };
+  }[]>>;
+}
+
+const semanticGroups = parseSemanticCatalog(commonCatalogJson);
+
+export interface PreparedLeasedCommonRenderResources {
+  readonly profile: RenderResourceProfile;
+  readonly provider: SimulatorResourceProvider;
+}
+
+export async function prepareLeasedCommonRenderResources(
+  lease: SimulatorResourceLease,
+): Promise<SimulatorAssemblyResult<PreparedLeasedCommonRenderResources>> {
+  // This immutable lease is consumed once per preparation. Several semantic
+  // files share a package; verify/read that package once, including concurrent
+  // profile reads, and release the local views when preparation finishes.
+  const packages = new Map<string, ReturnType<typeof OriginalResourcePackageView.open>>();
+  const openPackage = (logicalResource: string) => {
+    let pending = packages.get(logicalResource);
+    if (pending === undefined) {
+      pending = OriginalResourcePackageView.open(lease, logicalResource);
+      packages.set(logicalResource, pending);
+    }
+    return pending;
+  };
+  const assets: RenderResourceAssetProfile[] = [];
+  const local: LocalRenderResource[] = [];
+  for (const entry of semanticGroups) {
+    const logicalResource = commonLogicalResource(entry.file);
+    if (logicalResource === null) return invalid("simulator.resources.common-semantic-file-unmapped");
+    const view = await openPackage(logicalResource);
+    if (view.status === "rejected") return rejected("resource-unavailable", view.failure.capability, view.failure.boundary);
+    const bytes = view.value.requireBytes(entry.file);
+    if (bytes.status === "rejected") return rejected("resource-unavailable", bytes.failure.capability, bytes.failure.boundary);
+    if (entry.profile.mime === "image/png") {
+      const png = view.value.inspectPng(entry.file);
+      if (png.status === "rejected") return rejected("resource-decode", png.failure.capability, png.failure.boundary);
+      if (png.value.width !== entry.profile.width || png.value.height !== entry.profile.height) {
+        return invalid("simulator.resources.common-png-dimensions");
+      }
+    }
+    const file = view.value.requireFile(entry.file);
+    if (file.status === "rejected") return rejected("resource-unavailable", file.failure.capability, file.failure.boundary);
+    const profile: RenderResourceAssetProfile = Object.freeze({
+      ...entry.profile,
+      byteLength: bytes.value.byteLength,
+      sha256: file.value.sha256!,
+      provenance: "current-official-portable" as const,
+    });
+    assets.push(profile);
+    local.push(Object.freeze({ logicalAssetId: profile.logicalAssetId, bytes: bytes.value }));
+  }
+  const [baseProfile, ordinaryVisible, scoreNativeProfile, gameClearProfile, gameClearSemanticProfile, pauseCountdownAnimation] = await Promise.all([
+    readJson(openPackage, "portable/profiles/ordinary-render", "profile.json"),
+    readJson(openPackage, "portable/profiles/ordinary-visible", "profile.json"),
+    readJson(openPackage, "prefabs/bms/rhythmgamegauge/score", "score-hud-native-profile.json"),
+    readJson(openPackage, "prefabs/bms/gameclear", "game-clear-profile.json"),
+    readJson(openPackage, "prefabs/bms/gameclear", "game-clear-native-semantic-profile.json"),
+    readJson(openPackage, "prefabs/bms/pause", "countdown-animation-profile.json"),
+  ]);
+  if (baseProfile.status === "rejected") return baseProfile;
+  if (ordinaryVisible.status === "rejected") return ordinaryVisible;
+  if (scoreNativeProfile.status === "rejected") return scoreNativeProfile;
+  if (gameClearProfile.status === "rejected") return gameClearProfile;
+  if (gameClearSemanticProfile.status === "rejected") return gameClearSemanticProfile;
+  if (pauseCountdownAnimation.status === "rejected") return pauseCountdownAnimation;
+  const base = record(baseProfile.value);
+  const visible = parseCurrentOrdinaryVisibleProfile(ordinaryVisible.value);
+  const score = parseCurrentScoreHudNativeProfile(scoreNativeProfile.value);
+  const gameClearSemantic = parseGameClearNativeSemanticProfile(gameClearSemanticProfile.value);
+  const gameClear = gameClearSemantic === null ? null : parseCurrentGameClearProfile(gameClearProfile.value, gameClearSemantic);
+  const pauseCountdown = parseCurrentPauseCountdownAnimationProfile(pauseCountdownAnimation.value);
+  if (base === null || base.schemaVersion !== 1 || record(base.scene) === null || record(base.sample) === null || visible === null || score === null || gameClear === null || pauseCountdown === null) {
+    return invalid("simulator.resources.common-profile-shape");
+  }
+  const provider = ImmutableLocalRenderResourceProvider.create(local);
+  if (provider.status !== "ok") return rejected("resource-integrity", provider.capability, provider.boundary);
+  const profile: RenderResourceProfile = Object.freeze({
+    schemaVersion: 1,
+    sample: base.sample as RenderResourceProfile["sample"],
+    packIdentity: "application-leased-semantic-render-v1",
+    fidelity: base.fidelity as RenderResourceProfile["fidelity"],
+    networkAllowed: false,
+    automaticFallbackAllowed: false,
+    assets: Object.freeze(assets),
+    scene: base.scene as RenderResourceProfile["scene"],
+    ordinaryVisibleProfile: visible,
+    scoreHudNativeProfile: score,
+    gameClearProfile: gameClear,
+    pauseCountdownAnimation: pauseCountdown,
+  });
+  return accepted(Object.freeze({ profile, provider: provider.value }));
+}
+
+async function readJson(
+  openPackage: (logicalResource: string) => ReturnType<typeof OriginalResourcePackageView.open>,
+  logicalResource: string,
+  file: string,
+): Promise<SimulatorAssemblyResult<unknown>> {
+  const view = await openPackage(logicalResource);
+  if (view.status === "rejected") return rejected("resource-unavailable", view.failure.capability, view.failure.boundary);
+  const parsed = view.value.requireJson(file);
+  return parsed.status === "rejected"
+    ? rejected("resource-decode", parsed.failure.capability, parsed.failure.boundary)
+    : accepted(parsed.value);
+}
+
+function commonLogicalResource(file: string): string | null {
+  if (file === "combo-number.png") return "atlas/bms/ui/iconcombonumber";
+  if (file === "rhythm-game-additive.png" || file === "rhythm-game-ui.png") return "atlas/bms/ui/rhythmgameui";
+  if (file.startsWith("tap-lane-effect-")) return "atlas/bms/ui/tap-lane-effect";
+  if (file === "ui-additive-effect.png") return "atlas/bms/ui/ui-additive-effect";
+  if (file === "ui-common.png") return "atlas/bms/ui/uicommon";
+  if (["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png"].includes(file)) return "prefabs/bms/result";
+  if (file === "rank-label-font.ttf") return "fonts/sgm";
+  if (file === "startup-line-star.png" || file === "startup-title-base.png") return "prefabs/bms/information";
+  if (file === "stage-dark-cover.png" || file === "stage-light.png" || file === "stage-speaker.png" || file === "stage-speaker-glow.png" || file === "stage-psyllium.png") return "prefabs/bms/stage";
+  if (file.startsWith("countdown-")) return "prefabs/bms/pause";
+  if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
+  if (/^(?:AllPerfect|FullCombo|Tex_parSet)_/.test(file)) return "prefabs/bms/gameclear";
+  return null;
+}
+
+function parseSemanticCatalog(value: SemanticCatalogInput): readonly SemanticEntry[] {
+  const root = record(value);
+  const groups = record(root?.groups);
+  if (root?.schemaVersion !== 1 || groups === null) throw new Error("invalid common render semantic catalog");
+  const output: SemanticEntry[] = [];
+  for (const key of ["ordinaryVisible", "scoreHud", "startupDirection", "gameClear", "result"]) {
+    const values = groups[key];
+    if (!Array.isArray(values)) throw new Error("invalid common render semantic group");
+    for (const value of values) {
+      const row = record(value);
+      const profile = record(row?.profile);
+      if (typeof row?.file !== "string" || profile === null || typeof profile.logicalAssetId !== "string") {
+        throw new Error("invalid common render semantic entry");
+      }
+      output.push(Object.freeze({ file: row.file, profile: profile as unknown as SemanticEntry["profile"] }));
+    }
+  }
+  return Object.freeze(output);
+}
+
+function record(value: unknown): Record<string, any> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : null;
+}
+function invalid<T>(capability: string): SimulatorAssemblyResult<T> {
+  return rejected("resource-integrity", capability, "Application-leased common render bytes and semantic profiles must remain complete and structurally compatible without fixed content eligibility hashes or fallback.");
+}
+function accepted<T>(value: T): SimulatorAssemblyResult<T> {
+  return Object.freeze({ status: "accepted" as const, value });
+}

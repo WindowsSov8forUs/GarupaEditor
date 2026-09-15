@@ -1,5 +1,5 @@
 ﻿import { useCallback, type KeyboardEvent } from "react";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
@@ -26,6 +26,7 @@ export function BestdoriLoginModal({
   onSubmit,
   onClose,
 }: BestdoriLoginModalProps) {
+  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const { mounted, phase } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
 

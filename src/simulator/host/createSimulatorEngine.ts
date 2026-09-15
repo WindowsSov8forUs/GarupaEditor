@@ -1,0 +1,1452 @@
+import type { SimulatorBackends } from "../backends/contracts";
+import {
+  ButtonType,
+  FrontNoteType,
+  GameNoteType,
+  type ChartConstructionResult,
+  type NoteInformation,
+} from "../engine/chart/types";
+import {
+  integrityFailure,
+  ok,
+  type SimulatorResult,
+} from "../engine/result";
+import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
+import {
+  InGameCalculatedData,
+  validateSimulatorModeIdentity,
+} from "../engine/data/inGameCalculatedData";
+import {
+  snapshotOriginalLiveSettings,
+  validateOriginalLiveSettings,
+  type OriginalLiveSettings,
+} from "../engine/data/originalLiveSettings";
+import {
+  copyManualInputPosition,
+  type ManualInputButtonResolution,
+  type ManualInputFrame,
+  type ManualInputPosition,
+} from "../engine/data/manualInput";
+import {
+  InGameDirector,
+  validateDirectorDeltaTime,
+} from "../engine/managers/inGameDirector";
+import { InGameManager } from "../engine/managers/inGameManager";
+import { GameState } from "../engine/data/inGameState";
+import { StartupDirectionController } from "../engine/managers/startupDirectionController";
+import { PrimaryJudgementAdjustmentOwner } from "../engine/managers/primaryJudgementAdjustmentOwner";
+import { TapLaneEffectOwner } from "../engine/managers/tapLaneEffectOwner";
+import { InGameMovieManager, mapMovieResult } from "../engine/movie/inGameMovieManager";
+import { MvBackgroundModule } from "../engine/movie/mvBackgroundModule";
+import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
+import { getOrdinaryNoteArrivalSeconds } from "../engine/rendering/ordinaryNoteGeometry";
+import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
+import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
+import { createConstructedChartScoringPlan } from "../engine/scoring/constructedChartScoringAdapter";
+import {
+  GamePlayInputDispatcher,
+  InputManager,
+} from "../engine/managers/inputBoundaries";
+import { NoteManager } from "../engine/managers/noteManager";
+import { SlideNoteManager } from "../engine/managers/slideNoteManager";
+import {
+  RenderCommandProducer,
+  validateHabahiroScene,
+  validateOrdinaryFixedNoteSceneInput,
+} from "../engine/rendering/renderCommandProducer";
+import {
+  validateAutoLiveActivationGraph,
+  validateAutoLiveChartOwnership,
+} from "../engine/notes/noteTypes";
+import {
+  AudioCommandProducer,
+  mapAudioResult,
+  type AudioOwnerTransaction,
+} from "../engine/audio/audioCommandProducer";
+import {
+  ParticleCommandProducer,
+} from "../engine/particles/particleCommandProducer";
+import { ParticleFrameCoordinator } from "../engine/particles/particleFrameCoordinator";
+import { GameClearParticleOwner } from "../engine/particles/gameClearParticleOwner";
+import { FrameMutationPlan, type FrameMutationParticipant } from "../engine/managers/frameMutationPlan";
+import type {
+  SimulatorEngine,
+  SimulatorEngineInput,
+  SimulatorSnapshot,
+} from "./contracts";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
+import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
+import { GarupaRenderInputAdapter } from "../engine/garupa/garupaRenderInputAdapter";
+import { GarupaProductTimelineManager } from "../engine/garupa/productTimelineManager";
+
+import {
+  advanceGameClearTimeline,
+  isGameClearAnimationFinished,
+  startGameClearTimeline,
+  type GameClearTimeline,
+} from "../engine/hud/gameClearTimeline";
+
+class SimulatorEngineHost implements SimulatorEngine {
+  private naturalCompletionClearStatus: 1 | 2 | 3 | null = null;
+  private naturalCompletionTimeline: GameClearTimeline | null = null;
+
+  constructor(
+    private readonly inGameDirector: InGameDirector,
+    private readonly inGameManager: InGameManager,
+    private readonly inputDispatcher: GamePlayInputDispatcher,
+    private readonly renderingSessionId: string | null,
+    private readonly renderProducer: RenderCommandProducer | null,
+    private readonly audioProducer: AudioCommandProducer | null,
+    private readonly particleCoordinator: ParticleFrameCoordinator | null,
+    private readonly originalLiveSettings: OriginalLiveSettings,
+    readonly backends: SimulatorBackends,
+  ) {}
+
+  initialize(): SimulatorResult<void> {
+    const renderer = validateRendererSession(this.renderingSessionId, this.backends);
+    if (renderer.status !== "ok") return renderer;
+    if (
+      this.inGameManager.state === "faulted" ||
+      this.inGameManager.state === "disposed"
+    ) {
+      return this.inGameManager.initialize();
+    }
+    if (this.inGameManager.state === "initialized") return ok(undefined);
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
+    const audio = this.audioProducer?.preflightInitialize() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
+    const awake = this.inGameDirector.awake();
+    if (awake.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
+      return awake;
+    }
+    if (audio?.status === "ok") {
+      const committed = this.commitAudio(audio.value);
+      if (committed.status !== "ok") return committed;
+    }
+    return this.inGameManager.initialize();
+  }
+
+  step(
+    deltaTimeSeconds: number,
+    inputFrame?: ManualInputFrame,
+  ): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.execUpdate(deltaTimeSeconds);
+    }
+    if (this.inGameManager.getPlaybackState().paused) {
+      return this.inGameDirector.update(deltaTimeSeconds);
+    }
+    const deltaValidation = validateDirectorDeltaTime(deltaTimeSeconds);
+    if (deltaValidation.status !== "ok") {
+      return deltaValidation;
+    }
+    if (this.naturalCompletionTimeline !== null) {
+      const advanced = this.advanceNaturalCompletionPresentation(deltaTimeSeconds);
+      return advanced.status === "ok" ? ok(undefined) : advanced;
+    }
+    const beforeUpdate = this.inGameManager.getPlaybackState();
+    if (beforeUpdate.currentGameState === GameState.GameOverMotionFirstStart) return ok(undefined);
+    if (!beforeUpdate.playable) {
+      // Opening input does not enter the gameplay dispatcher or carry into the first playable frame.
+      const updated = this.inGameDirector.update(deltaTimeSeconds);
+      if (updated.status !== "ok") return updated;
+      return this.inGameManager.getPlaybackState().playable
+        ? this.transitionGameEndState(deltaTimeSeconds) : updated;
+    }
+    if (beforeUpdate.gameplayBlocked) {
+      // Original slow-counter branch returns before time/input/Note updates.
+      return this.inGameDirector.update(deltaTimeSeconds);
+    }
+    const inputValidation =
+      this.inGameManager.inputManager.prepareOuterFrame(inputFrame, deltaTimeSeconds);
+    if (inputValidation.status !== "ok") {
+      return inputValidation;
+    }
+    const updated = this.inGameDirector.update(deltaTimeSeconds);
+    if (updated.status !== "ok") return updated;
+    return this.transitionGameEndState(deltaTimeSeconds);
+  }
+
+  stepForMoveTime(deltaTimeSeconds: number): SimulatorResult<void> {
+    const validation = validateDirectorDeltaTime(deltaTimeSeconds);
+    if (validation.status !== "ok") return validation;
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    return this.inGameManager.execMoveTimeStep(deltaTimeSeconds);
+  }
+
+  resolveManualInputButton(
+    position: ManualInputPosition,
+  ): SimulatorResult<ManualInputButtonResolution | null> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    const managerSnapshot = this.inGameManager.getPlaybackState();
+    if (this.inGameManager.state !== "initialized" || managerSnapshot.paused || !managerSnapshot.playable) {
+      return integrityFailure(
+        "manual-input.resolve-outside-active-session",
+        "Raw input geometry can be resolved only by an initialized, running and PlayingSound manual engine session.",
+      );
+    }
+    if (this.inGameManager.noteManager.inGameCalculatedData.isAutoPlay) {
+      return integrityFailure(
+        "manual-input.resolve-in-auto-live",
+        "Real-touch button capabilities are unavailable in Auto Live.",
+      );
+    }
+    const copied = copyManualInputPosition(position);
+    if (copied.status !== "ok") {
+      return copied;
+    }
+    const resolved = this.backends.manualInputGeometry.resolveButton(copied.value);
+    if (resolved.status !== "ok") {
+      return resolved;
+    }
+    if (resolved.value === null) {
+      return ok(null);
+    }
+    const button = this.inputDispatcher.getButtonForResolver(resolved.value);
+    if (button.status !== "ok") {
+      return button;
+    }
+    return this.inGameManager.inputManager.issueButtonResolution(
+      copied.value,
+      button.value,
+    );
+  }
+
+  pause(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.pause();
+    }
+    const manager = this.inGameManager.getPlaybackState();
+    if (manager.currentGameState !== GameState.PlayingSound || manager.paused) return ok(undefined);
+    const audio = this.audioProducer?.preflightPause() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
+      return tapLane;
+    }
+    if (audio?.status === "ok") {
+      const external = audio.value.commitBackend();
+      if (external.status !== "ok") {
+        tapLane.value?.discard();
+        return this.inGameManager.latchExternalFault(external);
+      }
+    }
+    const pauseResult = this.inGameManager.pause(tapLane.value);
+    if (pauseResult.status !== "ok") return pauseResult;
+    if (audio?.status === "ok") {
+      const published = audio.value.publishOwner();
+      if (published.status !== "ok") return this.inGameManager.latchExternalFault(published);
+    }
+    this.backends.lifecycle.recordState("paused");
+    return ok(undefined);
+  }
+
+  startResultAudio(): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const sound = this.audioProducer.preflightResultBgm();
+    return sound.status === "ok" ? this.commitAudio(sound.value) : sound;
+  }
+  setResultCountSound(active: boolean): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const sound = this.audioProducer.preflightResultCounting(active);
+    return sound.status === "ok" ? this.commitAudio(sound.value) : sound;
+  }
+  playResultEvaluationSound(failed: boolean): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const sound = this.audioProducer.preflightResultEvaluation(failed);
+    return sound.status === "ok" ? this.commitAudio(sound.value) : sound;
+  }
+  playUiDecisionSound(): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const sound = this.audioProducer.preflightUiDecisionSound();
+    return sound.status === "ok" ? this.commitAudio(sound.value) : sound;
+  }
+  isUiDecisionSoundPlaying(): SimulatorResult<boolean> {
+    const observe = this.backends.audio.getOneShotPlaybackState;
+    if (observe === undefined) return integrityFailure("audio.ui-decision.observer-unavailable",
+      "Result exit requires observing the decision cue completion before releasing audio resources.");
+    const observed = mapAudioResult(observe.call(this.backends.audio, "pause-ui"));
+    return observed.status === "ok" ? ok(observed.value === "playing") : observed;
+  }
+
+  resume(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.resume();
+    }
+    const manager = this.inGameManager.getPlaybackState();
+    if (manager.currentGameState !== GameState.PauseSound) return ok(undefined);
+    const audio = this.audioProducer?.preflightResume() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
+    if (audio?.status === "ok") {
+      const external = audio.value.commitBackend();
+      if (external.status !== "ok") return this.inGameManager.latchExternalFault(external);
+    }
+    const resumeResult = this.inGameManager.resume();
+    if (resumeResult.status !== "ok") return resumeResult;
+    if (audio?.status === "ok") {
+      const published = audio.value.publishOwner();
+      if (published.status !== "ok") return this.inGameManager.latchExternalFault(published);
+    }
+    this.backends.lifecycle.recordState("running");
+    return ok(undefined);
+  }
+
+  continueLive(): SimulatorResult<void> {
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.continueLive()
+      : audioFault;
+  }
+
+  completeLiveAudio(clearStatus: 1 | 2 | 3, initialDeltaTimeSeconds = 0): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
+    if (this.inGameManager.state !== "initialized" || this.audioProducer === null ||
+      this.inGameManager.getPlaybackState().currentGameState !== GameState.PlayingSound) {
+      return integrityFailure(
+        "audio.complete.without-active-session",
+        "Game Clear begins from PlayingSound in an initialized explicitly configured audio session.",
+      );
+    }
+    if (clearStatus !== 1 && clearStatus !== 2 && clearStatus !== 3) {
+      return integrityFailure(
+        "audio.complete.invalid-clear-status",
+        "Current Full Combo/Game Clear routing is confirmed only for clear status 1, 2 or 3.",
+      );
+    }
+    const particle = this.particleCoordinator?.preflightGameClearStart(clearStatus) ?? null;
+    if (particle?.status === "integrity-failure") return particle;
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOffState();
+    if (tapLane.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      return tapLane;
+    }
+    const rendering = this.renderProducer?.preflightGameClear(
+      clearStatus,
+      tapLane.value?.renderStates ?? Object.freeze([]),
+    ) ?? null;
+    if (rendering?.status === "integrity-failure") {
+      tapLane.value?.discard();
+      if (particle?.status === "ok") particle.value.discard();
+      return rendering;
+    }
+    const audio = this.audioProducer.preflightCompleteLive(clearStatus);
+    if (audio.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      if (rendering?.status === "ok") rendering.value.discard();
+      tapLane.value?.discard();
+      return audio;
+    }
+    const participants: FrameMutationParticipant[] = [];
+    if (particle?.status === "ok") participants.push(Object.freeze({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "audio",
+      commitExternal: () => audio.value.commitBackend(),
+      publishOwner: () => audio.value.publishOwner(),
+      discard: () => audio.value.discard(),
+    }));
+    if (rendering?.status === "ok") participants.push(Object.freeze({
+      identity: "render",
+      commitExternal: () => rendering.value.commitBackend(),
+      publishOwner: () => rendering.value.publishOwner(),
+      discard: () => rendering.value.discard(),
+    }));
+    if (tapLane.value !== null) participants.push(Object.freeze({
+      identity: "tap-lane",
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "completion-owner",
+      publishOwner: () => {
+        this.naturalCompletionClearStatus = clearStatus;
+        this.naturalCompletionTimeline = startGameClearTimeline(initialDeltaTimeSeconds);
+        this.inGameManager.publishGameClearState(false);
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    }));
+    const ownerOrder = ["particle", "audio", "render", "tap-lane", "completion-owner"]
+      .filter((identity) => participants.some((participant) => participant.identity === identity));
+    const externalOrder = ["audio", "render", "particle"]
+      .filter((identity) => participants.some((participant) => participant.identity === identity));
+    const framePlan = FrameMutationPlan.create(participants, externalOrder, ownerOrder);
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
+    }
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+  }
+
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    if (this.naturalCompletionTimeline === null || !Number.isFinite(deltaTimeSeconds) ||
+      deltaTimeSeconds < 0) {
+      return integrityFailure(
+        "render.game-clear.invalid-presentation-advance",
+        "Game-clear presentation time advances only after natural completion with one finite non-negative host delta.",
+      );
+    }
+    const delta = Math.fround(deltaTimeSeconds);
+    const movie = this.inGameManager.advanceMovie(delta);
+    if (movie.status !== "ok") return movie;
+    const nextTimeline = advanceGameClearTimeline(this.naturalCompletionTimeline, delta);
+    const particle = this.particleCoordinator?.preflightGameClearAdvance(
+      delta, nextTimeline.baseStartedAtSeconds,
+    ) ?? null;
+    if (particle?.status === "integrity-failure") return particle;
+    const planned = this.renderProducer?.preflightHudAnimationAdvance(delta) ?? null;
+    if (planned?.status === "integrity-failure") {
+      if (particle?.status === "ok") particle.value.discard();
+      return planned;
+    }
+    const participants: FrameMutationParticipant[] = [];
+    if (particle?.status === "ok") participants.push(Object.freeze({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    }));
+    if (planned?.status === "ok") participants.push(Object.freeze({
+      identity: "render",
+      commitExternal: () => planned.value.commitBackend(),
+      publishOwner: () => planned.value.publishOwner(),
+      discard: () => planned.value.discard(),
+    }));
+    participants.push(Object.freeze({
+      identity: "completion-clock",
+      publishOwner: () => {
+        this.naturalCompletionTimeline = nextTimeline;
+        this.inGameManager.advanceGameClearPresentation(delta);
+        if (isGameClearAnimationFinished(nextTimeline)) this.inGameManager.publishGameClearState(true);
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    }));
+    const framePlan = FrameMutationPlan.create(
+      participants,
+      ["render", "particle"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+      ["particle", "render", "completion-clock"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+    );
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
+    }
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? this.completionReadyToExit() : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private completionReadyToExit(): SimulatorResult<boolean> {
+    if (this.naturalCompletionTimeline === null || !isGameClearAnimationFinished(this.naturalCompletionTimeline)) return ok(false);
+    // Supported sessions have no full-combo character voice. MV completes after
+    // the clear animation; Standard WaitForFinish does not wait for its outro.
+    if (this.backends.movie === undefined) return ok(true);
+    const movie = mapMovieResult(this.backends.movie.observe());
+    return movie.status === "ok" ? ok(movie.value.ended) : this.inGameManager.latchExternalFault(movie);
+  }
+
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
+    return this.naturalCompletionClearStatus;
+  }
+
+  publishMoveTimeAudio(targetSeconds: number): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const publish = this.backends.audio.publishMoveTimeOutput;
+    const seekMilliseconds = Math.trunc(targetSeconds * 1000);
+    if (publish === undefined || !Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0) {
+      return integrityFailure(
+        "audio.move-time.publication-owner-missing",
+        "MoveTime publication requires the prepared audio owner and trunc(InGameSec*1000) target.",
+      );
+    }
+    return mapAudioResult(publish.call(this.backends.audio, seekMilliseconds));
+  }
+
+  commitMoveTimeTimelineRevision(
+    timelineRevision: number,
+    moveTimeCount: number,
+  ): SimulatorResult<void> {
+    const manager = this.inGameManager.scoreLifeStateManager;
+    if (manager === null) return integrityFailure(
+      "score-life.move-time-without-record-owner",
+      "Rehearsal MoveTime publication requires the Score/Life/Record owner.",
+    );
+    const record = manager.preflightMoveTimeTimelineRevision(timelineRevision, moveTimeCount);
+    if (record.status !== "ok") return record;
+    const render = this.renderProducer?.preflightMoveTimeResume(record.value.record) ?? null;
+    if (render?.status === "integrity-failure") {
+      record.value.discard();
+      return render;
+    }
+    const participants: FrameMutationParticipant[] = [record.value];
+    if (render?.status === "ok") participants.push({
+      identity: "move-time-hud",
+      commitExternal: () => render.value.commitBackend(),
+      publishOwner: () => render.value.publishOwner(),
+      discard: () => render.value.discard(),
+    });
+    const plan = FrameMutationPlan.create(
+      participants,
+      render === null ? [] : ["move-time-hud"],
+      participants.map((entry) => entry.identity),
+    );
+    if (plan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return plan;
+    }
+    const committed = plan.value.commit();
+    if (committed.status !== "ok") return this.inGameManager.latchExternalFault(committed);
+    const refreshed = this.inGameManager.noteManager.refreshAfterMoveTime();
+    return refreshed.status === "ok" ? refreshed : this.inGameManager.latchExternalFault(refreshed);
+  }
+
+  enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const backendFault = this.pollAudioFault();
+    if (backendFault.status !== "ok") return backendFault;
+    if (this.inGameManager.state !== "initialized" || this.particleCoordinator === null) {
+      return integrityFailure(
+        "particle.movetime.without-whole-engine-participant",
+        "MoveTime requires one initialized particle session owned by the whole-engine replay host.",
+      );
+    }
+    if (this.particleCoordinator.producer.snapshot().terminal) {
+      return ok(undefined);
+    }
+    const planned = this.particleCoordinator.preflightMoveTime();
+    if (planned.status !== "ok") return planned;
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
+      planned.value.discard();
+      return tapLane;
+    }
+    const participants: FrameMutationParticipant[] = [Object.freeze({
+      identity: "particle",
+      commitExternal: () => planned.value.commitExternal(),
+      publishOwner: () => planned.value.publishDomain(),
+      discard: () => planned.value.discard(),
+    })];
+    if (tapLane.value !== null) participants.push(Object.freeze({
+      identity: "tap-lane",
+      commitExternal: () => tapLane.value!.commitBackend(),
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    }));
+    const framePlan = FrameMutationPlan.create(
+      participants,
+      ["tap-lane", "particle"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+      ["particle", "tap-lane"].filter((identity) => participants.some((participant) => participant.identity === identity)),
+    );
+    if (framePlan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
+    }
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+  }
+
+  getAdjustedMusicPosition(): SimulatorResult<number> {
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.getAdjustedMusicPosition()
+      : audioFault;
+  }
+
+  getPlaybackState() {
+    if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
+      this.pollAudioFault();
+      this.pollMovieFault();
+    }
+    return ok(this.inGameManager.getPlaybackState());
+  }
+
+  snapshot(): SimulatorResult<SimulatorSnapshot> {
+    if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
+      this.pollAudioFault();
+      this.pollMovieFault();
+    }
+    const adjustedMusicPosition =
+      this.inGameManager.noteManager.peekAdjustedMusicPosition();
+    return ok({
+      director: this.inGameDirector.snapshot(),
+      managers: this.inGameManager.snapshot(),
+      originalLiveSettings: snapshotOriginalLiveSettings(this.originalLiveSettings),
+      adjustedMusicPosition,
+      backendTrace: this.backends.snapshot(),
+      renderingBackend: this.backends.rendering?.snapshot() ?? null,
+      audioBackend: this.backends.audio.snapshot(),
+      movieBackend: this.backends.movie?.snapshot() ?? null,
+      particleBackend: this.backends.particles?.snapshot() ?? null,
+      particleRendererBackend: this.backends.particleRendering?.snapshot() ?? null,
+    });
+  }
+
+  dispose(): SimulatorResult<void> {
+    let result: SimulatorResult<void>;
+    try { result = this.disposeDomainOutputs(); }
+    catch (error) {
+      result = integrityFailure("engine.domain-dispose-threw",
+        `Domain cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (result.status !== "ok") {
+      try { this.inGameManager.disposeAfterTerminalBackendFault(); }
+      catch (error) {
+        result = integrityFailure(result.capability,
+          `${result.boundary} Domain terminal cleanup also threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    const physical = this.disposePhysicalBackends();
+    return result.status === "ok" ? physical : physical.status === "ok" ? result : integrityFailure(
+      result.capability,
+      `${result.boundary} Secondary cleanup failure: ${physical.capability}: ${physical.boundary}`,
+    );
+  }
+
+  private disposeDomainOutputs(): SimulatorResult<void> {
+    if (this.inGameManager.state === "disposed") {
+      return ok(undefined);
+    }
+    const rendererState = this.backends.rendering?.snapshot().state;
+    const movieState = this.backends.movie?.snapshot().state;
+    const particleBackendState = this.backends.particles?.snapshot().state;
+    const particleRendererState = this.backends.particleRendering?.snapshot().state;
+    if (this.inGameManager.state === "faulted" ||
+      rendererState === "faulted" || rendererState === "disposed" ||
+      movieState === "faulted" || movieState === "disposed" ||
+      particleBackendState === "faulted" || particleBackendState === "disposed" ||
+      particleRendererState === "faulted" || particleRendererState === "disposed") {
+      this.inGameManager.disposeAfterTerminalBackendFault();
+      return ok(undefined);
+    }
+    const rendererValidation = this.renderProducer?.validate();
+    if (rendererValidation?.status === "integrity-failure") return rendererValidation;
+    const particle = this.particleCoordinator?.preflightDispose() ?? null;
+    if (particle?.status === "integrity-failure") return particle;
+    const domainDispose = this.inGameManager.dispose();
+    if (domainDispose.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      return domainDispose;
+    }
+    if (particle?.status === "ok") {
+      const external = particle.value.commitExternal();
+      if (external.status !== "ok") return external;
+    }
+    const release = this.renderProducer?.preflightSessionRelease() ?? null;
+    if (release?.status === "integrity-failure") return release;
+    if (release?.status === "ok") {
+      const external = release.value.commitBackend();
+      if (external.status !== "ok") return external;
+      const published = release.value.publishOwner();
+      if (published.status !== "ok") return published;
+    }
+    if (particle?.status === "ok") {
+      const published = particle.value.publishDomain();
+      if (published.status !== "ok") return published;
+    }
+    return ok(undefined);
+  }
+
+  private disposePhysicalBackends(): SimulatorResult<void> {
+    let primary: import("../engine/result").SimulatorIntegrityFailure | null = null;
+    const capture = (owner: string, operation: () => SimulatorResult<void>): void => {
+      let result: SimulatorResult<void>;
+      try { result = operation(); }
+      catch (error) {
+        result = integrityFailure("engine.backend-dispose-threw",
+          `${owner} cleanup threw: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      if (result.status === "ok") return;
+      primary = primary === null
+        ? result
+        : integrityFailure(
+            primary.capability,
+            `${primary.boundary} Secondary cleanup failure: ${result.capability}.`,
+          );
+    };
+    capture("audio", () => this.disposeAudio());
+    capture("movie", () => this.disposeMovie());
+    capture("particles", () => this.disposeParticles());
+    capture("rendering", () => this.backends.rendering?.dispose() ?? ok(undefined));
+    return primary ?? ok(undefined);
+  }
+
+  private commitAudio(transaction: AudioOwnerTransaction): SimulatorResult<void> {
+    const committed = transaction.commit();
+    return committed.status === "ok"
+      ? committed
+      : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private transitionGameEndState(deltaTimeSeconds: number): SimulatorResult<void> {
+    const manager = this.inGameManager.getPlaybackState();
+    if (manager.currentGameState !== GameState.PlayingSound || this.naturalCompletionClearStatus !== null) {
+      return ok(undefined);
+    }
+    const ended = this.audioProducer?.pollBgmNaturalEnd() ?? ok(false);
+    if (ended.status !== "ok") return ended;
+    // Original transitionGameEndState chooses clear before Life-zero, after
+    // all judgement/Record/HUD reflection for the current gameplay update.
+    if (!ended.value) {
+      return manager.singleGameOver &&
+        this.inGameManager.noteManager.inGameCalculatedData.mode.sessionMode === "live"
+        ? this.commitGameOver()
+        : ok(undefined);
+    }
+    const scoreLife = this.inGameManager.scoreLifeStateManager;
+    if (scoreLife === null) {
+      return integrityFailure(
+        "audio.natural-completion.without-score-owner",
+        "Natural BGM completion requires the recovered InGameRecord clear-status owner; a default clear status is forbidden.",
+      );
+    }
+    const presentation = scoreLife.getNaturalCompletionPresentation();
+    return this.completeLiveAudio(presentation.clearStatus, deltaTimeSeconds);
+  }
+
+  private commitGameOver(): SimulatorResult<void> {
+    const particle = this.particleCoordinator?.preflightTerminal("game-over") ?? null;
+    if (particle?.status === "integrity-failure") return particle;
+    const audio = this.audioProducer?.preflightGameOver() ?? null;
+    if (audio?.status === "integrity-failure") {
+      if (particle?.status === "ok") particle.value.discard();
+      return audio;
+    }
+    const tapLane = this.inGameManager.preflightTapLaneEffectsAllOff();
+    if (tapLane.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      if (audio?.status === "ok") audio.value.discard();
+      return tapLane;
+    }
+    const participants: FrameMutationParticipant[] = [];
+    if (audio?.status === "ok") participants.push({
+      identity: "audio",
+      commitExternal: () => audio.value.commitBackend(),
+      publishOwner: () => audio.value.publishOwner(),
+      discard: () => audio.value.discard(),
+    });
+    if (tapLane.value !== null) participants.push({
+      identity: "tap-lane",
+      commitExternal: () => tapLane.value!.commitBackend(),
+      publishOwner: () => tapLane.value!.publishOwner(),
+      discard: () => tapLane.value!.discard(),
+    });
+    if (particle?.status === "ok") participants.push({
+      identity: "particle",
+      commitExternal: () => particle.value.commitExternal(),
+      publishOwner: () => particle.value.publishDomain(),
+      discard: () => particle.value.discard(),
+    });
+    participants.push({
+      identity: "game-over",
+      publishOwner: () => {
+        this.inGameManager.publishGameOverState();
+        return ok(undefined);
+      },
+      discard: () => ok(undefined),
+    });
+    const plan = FrameMutationPlan.create(
+      participants,
+      participants.filter((entry) => entry.commitExternal !== undefined).map((entry) => entry.identity),
+      participants.map((entry) => entry.identity),
+    );
+    if (plan.status !== "ok") {
+      for (const participant of [...participants].reverse()) participant.discard();
+      return plan;
+    }
+    const committed = plan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private pollMovieFault(): SimulatorResult<void> {
+    if (this.backends.movie === undefined) return ok(undefined);
+    const result = mapMovieResult(this.backends.movie.observe());
+    return result.status === "ok"
+      ? ok(undefined)
+      : this.inGameManager.latchExternalFault(result);
+  }
+
+  private pollAudioFault(): SimulatorResult<void> {
+    const particle = this.particleCoordinator?.pollFaults() ?? null;
+    if (particle?.status === "integrity-failure") {
+      return this.inGameManager.latchExternalFault(particle);
+    }
+    if (this.audioProducer === null) return ok(undefined);
+    const result = this.audioProducer.pollBackendFault();
+    return result.status === "ok"
+      ? result
+      : this.inGameManager.latchExternalFault(result);
+  }
+
+  private disposeAudio(): SimulatorResult<void> {
+    if (this.audioProducer === null || this.backends.audio.snapshot().state === "disposed") {
+      return ok(undefined);
+    }
+    return mapAudioResult(this.backends.audio.dispose());
+  }
+
+  private disposeMovie(): SimulatorResult<void> {
+    if (this.backends.movie === undefined ||
+      this.backends.movie.snapshot().state === "disposed") {
+      return ok(undefined);
+    }
+    return mapMovieResult(this.backends.movie.dispose());
+  }
+
+  private disposeParticles(): SimulatorResult<void> {
+    if (this.particleCoordinator === null) {
+      return ok(undefined);
+    }
+    return this.particleCoordinator.disposeBackends();
+  }
+}
+
+interface RegisteredMoveTimeWrapper {
+  readonly host: SimulatorEngineHost;
+  readonly publishVisual: () => SimulatorResult<void>;
+  readonly setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>;
+}
+const registeredMoveTimeWrappers = new WeakMap<object, RegisteredMoveTimeWrapper>();
+
+export function registerSimulatorEngineMoveTimeWrapper(
+  wrapper: SimulatorEngine,
+  inner: SimulatorEngine,
+  publishVisual: () => SimulatorResult<void>,
+  setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(inner);
+  if (host === null || wrapper === inner || registeredMoveTimeWrappers.has(wrapper)) {
+    return integrityFailure(
+      "timeline.movetime.invalid-engine-wrapper",
+      "A production mount may register exactly one simulator-owned wrapper around one host engine.",
+    );
+  }
+  registeredMoveTimeWrappers.set(wrapper, Object.freeze({
+    host,
+    publishVisual,
+    setMoveTimeVisualState,
+  }));
+  return ok(undefined);
+}
+
+export function setMoveTimeVisualState(
+  engine: SimulatorEngine,
+  active: boolean,
+): SimulatorResult<void> {
+  const wrapper = registeredMoveTimeWrappers.get(engine);
+  return wrapper === undefined ? ok(undefined) : wrapper.setMoveTimeVisualState(active);
+}
+
+export function publishFreshEngineVisual(engine: SimulatorEngine): SimulatorResult<void> {
+  const wrapper = registeredMoveTimeWrappers.get(engine);
+  return wrapper === undefined
+    ? integrityFailure(
+        "timeline.retry.visual-publication-owner-missing",
+        "Retry fresh generation publication requires the registered production mount wrapper after the old generation is disposed.",
+      )
+    : wrapper.publishVisual();
+}
+
+export function publishMoveTimeAudio(
+  engine: SimulatorEngine,
+  targetSeconds: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  if (host === null) {
+    return integrityFailure(
+      "audio.move-time.foreign-engine",
+      "MoveTime audio publication may run only on an engine created by the simulator host.",
+    );
+  }
+  const audio = host.publishMoveTimeAudio(targetSeconds);
+  if (audio.status !== "ok") return audio;
+  return registeredMoveTimeWrappers.get(engine)?.publishVisual() ?? ok(undefined);
+}
+
+export function commitMoveTimeTimelineRevision(
+  engine: SimulatorEngine,
+  timelineRevision: number,
+  moveTimeCount: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null
+    ? host.commitMoveTimeTimelineRevision(timelineRevision, moveTimeCount)
+    : integrityFailure(
+        "score-life.move-time-foreign-engine",
+        "Timeline revision may be committed only on an engine created by the simulator host.",
+      );
+}
+
+export function enterMoveTimeForWholeEngineReplay(
+  engine: SimulatorEngine,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null
+    ? host.enterMoveTimeForWholeEngineReplay()
+    : integrityFailure(
+        "particle.movetime.foreign-engine",
+        "Whole-engine replay accepts only an engine created by the portable simulator host.",
+      );
+}
+
+export function stepForMoveTime(
+  engine: SimulatorEngine,
+  deltaTimeSeconds: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null ? host.stepForMoveTime(deltaTimeSeconds) : integrityFailure(
+    "timeline.movetime.foreign-step-owner",
+    "MoveTime steps require an engine created by the simulator host.",
+  );
+}
+
+function resolveMoveTimeHost(engine: SimulatorEngine): SimulatorEngineHost | null {
+  if (engine instanceof SimulatorEngineHost) return engine;
+  return registeredMoveTimeWrappers.get(engine)?.host ?? null;
+}
+
+export function createSimulatorEngine(
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+): SimulatorResult<SimulatorEngine> {
+  const renderingSessionId = input.rendering?.sessionId ?? null;
+  const rendererValidation = validateRendererSession(renderingSessionId, backends);
+  if (rendererValidation.status !== "ok") return rendererValidation;
+  if (input.rendering !== undefined && backends.rendering !== undefined) {
+    const fidelity = backends.rendering.snapshot().fidelity;
+    if (
+      fidelity?.mode !== "ordinary" &&
+      !(fidelity?.mode === "habahiro" &&
+        fidelity.fidelity === "current-external-complete")
+    ) {
+      return integrityFailure(
+        "render.note.non-ordinary-scene-lifecycle-unimplemented",
+        "The connected Note lifecycle accepts exact ordinary or the functionally complete HABAHIRO current-external route; legacy degraded profiles are not production engine modes.",
+      );
+    }
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(
+      input.rendering.ordinaryNoteScene,
+    );
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (
+      fidelity?.mode === "habahiro" &&
+      fidelity.fidelity === "current-external-complete" &&
+      !validateHabahiroScene(
+        input.rendering.ordinaryNoteScene.habahiro,
+      )
+    ) {
+      return integrityFailure(
+        "render.habahiro.scene-required",
+        "Complete HABAHIRO rendering requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
+      );
+    }
+  }
+  const renderProducer = input.rendering !== undefined && backends.rendering !== undefined
+    ? new RenderCommandProducer(
+        input.rendering.sessionId,
+        backends.rendering,
+        input.rendering.resources,
+        Object.freeze({
+          isAutoPlay: input.runtime.mode.isAutoPlay,
+          allPerfectStatusPresentationEnabled:
+            input.runtime.originalLiveSettings.allPerfectStatusDisplayMode,
+        }),
+      )
+    : null;
+  const producerValidation = renderProducer?.validate();
+  if (producerValidation?.status === "integrity-failure") return producerValidation;
+  const chartValidation = validateChart(input.chart);
+  if (chartValidation.status !== "ok") {
+    return chartValidation;
+  }
+  const particleCoordinatorResult = createParticleCoordinator(input, backends,
+    source => noteManager.getManualJudgementOwnership(source));
+  if (particleCoordinatorResult.status !== "ok") return particleCoordinatorResult;
+  const particleCoordinator = particleCoordinatorResult.value;
+  if (input.audio === undefined && backends.audio.snapshot().state === "ready") {
+    return integrityFailure(
+      "audio.session.incomplete-host-binding",
+      "A prepared audio backend requires one explicit matching host audio session.",
+    );
+  }
+  const audioProducer = input.audio === undefined
+    ? null
+    : new AudioCommandProducer(input.audio, backends.audio, input.chart);
+  const audioValidation = audioProducer?.validate();
+  if (audioValidation !== undefined && audioValidation.status !== "ok") {
+    return audioValidation;
+  }
+  const runtimeMetadata = getConstructedChartRuntimeMetadata(input.chart);
+  if (runtimeMetadata === undefined) {
+    return integrityFailure(
+      "runtime.unregistered-chart-construction",
+      "The runtime only accepts the exact ChartConstructionResult produced by the recovered chart factory; cloned or caller-synthesized charts have no proven process-history BPM count.",
+    );
+  }
+  const originalLiveSettingsValidation = validateOriginalLiveSettings(
+    input.runtime.originalLiveSettings,
+  );
+  if (originalLiveSettingsValidation.status !== "ok") {
+    return originalLiveSettingsValidation;
+  }
+  const originalLiveSettings = originalLiveSettingsValidation.value;
+  const modeValidation = validateSimulatorModeIdentity(input.runtime.mode);
+  if (modeValidation.status !== "ok") return modeValidation;
+  const primaryJudgementAdjustment = new PrimaryJudgementAdjustmentOwner(
+    originalLiveSettings.core.judgementAdjustValue,
+    input.startupDirection?.purpose ?? "initial",
+  );
+  const productProfile = getGarupaProductChartProfile(input.chart);
+  const tapLaneEffectOwner = renderProducer !== null && input.rendering !== undefined &&
+    input.rendering.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds.length === 4
+    ? new TapLaneEffectOwner(
+        renderProducer,
+        input.rendering.ordinaryNoteScene,
+        originalLiveSettings.visibleTapLaneEffect && !input.chart.isMultiRangeNotes,
+      )
+    : null;
+  const movieBackgroundResult = createMovieBackground(
+    input,
+    backends,
+    modeValidation.value,
+    originalLiveSettings.core.mvDarkness,
+  );
+  if (movieBackgroundResult.status !== "ok") return movieBackgroundResult;
+  const slideNoteManager = new SlideNoteManager();
+  const inGameCalculatedData = new InGameCalculatedData(
+    modeValidation.value,
+    originalLiveSettings,
+  );
+  const scoringPlanResult = input.scoreLifeState === undefined
+    ? ok(null)
+    : createConstructedChartScoringPlan(input.chart);
+  if (scoringPlanResult.status !== "ok") return scoringPlanResult;
+  const scoreLifeStateResult = input.scoreLifeState === undefined
+    ? ok<ScoreLifeStateManager | null>(null)
+    : ScoreLifeStateManager.create(
+        input.scoreLifeState,
+        scoringPlanResult.value!,
+        modeValidation.value,
+      );
+  if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
+  const scoreLifeStateManager = scoreLifeStateResult.value;
+  const noteArrival = getOrdinaryNoteArrivalSeconds(input.runtime.specificSpeed);
+  if (noteArrival.status !== "ok") return noteArrival;
+  const musicScoreController = new InGameMusicScoreController(input.chart, noteArrival.value.value);
+  const oneFrameJudgementController = new InGameOneFrameJudgementController(entry => productTimeline?.observeSharedJudgement(entry));
+  let productTimeline: GarupaProductTimelineManager | null = null;
+  if (productProfile?.hasExtensions) {
+    const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);
+    if (productAxis === undefined) {
+      return integrityFailure(
+        "simulator.garupa-extension.axis-profile-unregistered",
+        "A product-extension chart requires its exact construction-owned TimingGroup axis profile.",
+      );
+    }
+    const productScene = input.garupaProductScene ?? input.rendering?.garupaProductScene;
+    if ((input.garupaProductScene !== undefined && input.rendering?.garupaProductScene !== undefined &&
+        input.garupaProductScene !== input.rendering.garupaProductScene) ||
+      (modeValidation.value.inputMode === "manual" && productScene === undefined) ||
+      (input.rendering !== undefined && input.rendering.garupaProductScene === undefined)) {
+      return integrityFailure(
+        "simulator.garupa-extension.scene-profile-unregistered",
+        "A rendered or Manual product-extension chart requires one unambiguous scene sibling with the unchanged seven reference field lines.",
+      );
+    }
+    const productRender = input.rendering === undefined || backends.rendering === undefined
+      ? null
+      : new GarupaRenderInputAdapter(
+          renderProducer!,
+          input.rendering.resources,
+          productProfile,
+          input.chart.noteBatches,
+          productAxis,
+          input.rendering.garupaProductScene!,
+          input.rendering.ordinaryNoteScene.specificSpeed,
+          originalLiveSettings.noteColor,
+          originalLiveSettings.syncLine,
+          input.rendering.ordinaryNoteScene.syncLineEdgeMargin!,
+          input.rendering.ordinaryNoteScene,
+          (source, longAfter) => {
+            const presentation = noteManager.getCommittedNotePresentation(source, longAfter);
+            if (presentation === null) return ok(null);
+            if (presentation.lossyScaleX.status !== "ok") return presentation.lossyScaleX;
+            return ok({ visible: presentation.visible, target: {
+              position: presentation.position, localScaleX: presentation.localScaleX, unclipped: presentation.unclipped,
+              lossyScaleX: presentation.lossyScaleX.value, gameNoteType: longAfter ? GameNoteType.None : source.gameNoteType,
+            } });
+          },
+        );
+    productTimeline = new GarupaProductTimelineManager(
+      productProfile,
+      modeValidation.value,
+      musicScoreController,
+      productRender,
+      originalLiveSettings.core.judgementAdjustValueB,
+      () => inGameManager.isMoveTime,
+      source => noteManager.getActiveNote(source),
+    );
+  }
+  if (scoreLifeStateManager !== null) {
+    const businessOwner = oneFrameJudgementController.registerBusinessOwner(
+      (judgement, source) => scoreLifeStateManager.freezeOneFrame(judgement, source),
+    );
+    if (businessOwner.status !== "ok") return businessOwner;
+  }
+  const noteManager = new NoteManager(
+    input.chart.noteBatches,
+    slideNoteManager,
+    musicScoreController,
+    musicScoreController,
+    runtimeMetadata.processBpmChangeCount,
+    originalLiveSettings.core.judgementAdjustValueB,
+    inGameCalculatedData,
+    () => oneFrameJudgementController.getUsableOneFrameData(),
+    (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
+    undefined,
+    () => oneFrameJudgementController.createManualJudgementTransaction(),
+    backends.manualInputGeometry,
+    renderProducer,
+    input.rendering?.ordinaryNoteScene ?? null,
+    () => inGameManager.isMoveTime,
+  );
+  const projectedGeometry = productTimeline?.connectSharedProjection();
+  if (projectedGeometry !== undefined) noteManager.setProjectedGeometry(projectedGeometry);
+  const judgementOwner =
+    oneFrameJudgementController.registerAutoLiveJudgementOwner(
+      (noteInformation) =>
+        noteManager.getAutoLiveJudgementOwnership(noteInformation),
+    );
+  if (judgementOwner.status !== "ok") {
+    return judgementOwner;
+  }
+  const manualJudgementOwner =
+    oneFrameJudgementController.registerManualJudgementOwner(
+      (noteInformation) =>
+        noteManager.getManualJudgementOwnership(noteInformation),
+    );
+  if (manualJudgementOwner.status !== "ok") {
+    return manualJudgementOwner;
+  }
+  const inputManager = new InputManager(inGameCalculatedData.mode);
+  const inputDispatcher = new GamePlayInputDispatcher(noteManager);
+  particleCoordinator?.producer.setSlidePresentationReader((source) => {
+    const extension = productProfile?.scoringNodeBySource.get(source);
+    if (extension?.chainIdentity != null) {
+      const actual = productTimeline?.getSlidePresentation(extension.chainIdentity);
+      return actual == null ? null : { x: actual.transform.position.x.value,
+        y: actual.transform.position.y.value, active: actual.active };
+    }
+    const actual = noteManager.getCommittedNotePresentation(source);
+    return actual === null ? null : { x: actual.position.x.value, y: actual.position.y.value,
+      active: actual.slideEffectActive };
+  });
+  const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
+  if (inputDispatcherRegistration.status !== "ok") {
+    return inputDispatcherRegistration;
+  }
+  const startupDirection = input.startupDirection === undefined
+    ? null
+    : new StartupDirectionController(
+        inGameCalculatedData.mode,
+        input.startupDirection.scene,
+        audioProducer,
+        input.startupDirection.liveStartVoiceCue,
+        input.startupDirection.purpose,
+        movieBackgroundResult.value,
+        primaryJudgementAdjustment,
+        input.startupDirection.firstViewPresented,
+        input.startupDirection.commandNotes,
+      );
+  const inGameManager: InGameManager = new InGameManager(
+    musicScoreController,
+    noteManager,
+    oneFrameJudgementController,
+    inputManager,
+    scoreLifeStateManager,
+    renderProducer,
+    audioProducer,
+    particleCoordinator,
+    input.chart.habahiroChangeAbsolutePos,
+    input.rendering?.ordinaryNoteScene ?? null,
+    startupDirection,
+    productTimeline,
+    primaryJudgementAdjustment,
+    tapLaneEffectOwner,
+  );
+  const inGameDirector = new InGameDirector(
+    inGameManager,
+    originalLiveSettings.core.highFrequencyMode,
+    backends.frameRate,
+  );
+
+  return ok(new SimulatorEngineHost(
+    inGameDirector,
+    inGameManager,
+    inputDispatcher,
+    renderingSessionId,
+    renderProducer,
+    audioProducer,
+    particleCoordinator,
+    originalLiveSettings,
+    backends,
+  ));
+}
+
+function createMovieBackground(
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+  mode: import("../engine/data/inGameCalculatedData").SimulatorModeIdentity,
+  mvDarkness: number,
+): SimulatorResult<MvBackgroundModule | null> {
+  const backend = backends.movie;
+  if (input.movie === undefined) {
+    const state = backend?.snapshot().state ?? null;
+    return state === "ready" || state === "play-pending" || state === "playing" ||
+      state === "paused" || state === "seeking" || state === "ended"
+      ? integrityFailure(
+          "movie.session.incomplete-host-binding",
+          "A prepared movie backend requires one explicit matching Live host binding and cannot become an ambient background.",
+        )
+      : ok(null);
+  }
+  if (input.movie === null || typeof input.movie !== "object" ||
+    typeof input.movie.sessionId !== "string" || input.movie.sessionId.length === 0 ||
+    !Number.isInteger(input.movie.musicStartDelayMilliseconds) ||
+    input.movie.musicStartDelayMilliseconds < -0x80000000 ||
+    input.movie.musicStartDelayMilliseconds > 0x7fffffff ||
+    input.startupDirection === undefined ||
+    input.startupDirection.purpose === "move-time-reconstruction" ||
+    mode.sessionMode !== "live" || backend === undefined) {
+    return integrityFailure(
+      "movie.session.invalid-host-binding",
+      "MV Live requires one prepared backend, exact session/delay binding, fresh Live Manual/Auto startup and no Rehearsal/MoveTime inheritance.",
+    );
+  }
+  const snapshot = backend.snapshot();
+  if (snapshot.state !== "ready" || snapshot.sessionId !== input.movie.sessionId ||
+    snapshot.resourceCount !== 1 || snapshot.fault !== null ||
+    snapshot.muted !== true || snapshot.loop !== false) {
+    return integrityFailure(
+      "movie.session.backend-not-ready",
+      "The exact muted non-looping movie backend session must be ready before engine owners are constructed.",
+    );
+  }
+  return ok(new MvBackgroundModule(
+    new InGameMovieManager(input.movie.sessionId, backend, mvDarkness),
+    input.movie.musicStartDelayMilliseconds,
+  ));
+}
+
+function createParticleCoordinator(
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+  judgementOwnership: NoteManager["getManualJudgementOwnership"],
+): SimulatorResult<ParticleFrameCoordinator | null> {
+  const backendState = backends.particles?.snapshot().state ?? null;
+  const rendererState = backends.particleRendering?.snapshot().state ?? null;
+  if (input.particles === undefined) {
+    return backendState === "ready" || rendererState === "ready"
+      ? integrityFailure(
+          "particle.session.incomplete-host-binding",
+          "A prepared particle backend/renderer requires one explicit matching host particle session.",
+        )
+      : ok(null);
+  }
+  if (input.particles === null || typeof input.particles !== "object" ||
+    Object.keys(input.particles).length !== 3 ||
+    typeof input.particles.sessionId !== "string" || input.particles.sessionId.length === 0 ||
+    input.particles.scene === undefined || input.particles.scene === null ||
+    input.particles.scene.gameClearOwner === undefined ||
+    input.particles.gameClearProfile === undefined || input.particles.gameClearProfile.nativeSemantic === undefined ||
+    backends.particles === undefined) {
+    return integrityFailure(
+      "particle.session.invalid-host-binding",
+      "Particle input contains only one non-empty session identity and requires an explicit prepared backend.",
+    );
+  }
+  const producer = new ParticleCommandProducer(
+    input.chart,
+    input.runtime.mode.isAutoPlay,
+    input.garupaProductScene ?? input.rendering?.garupaProductScene ?? null,
+    input.particles.scene,
+    judgementOwnership,
+  );
+  const coordinator = new ParticleFrameCoordinator(
+    input.particles.sessionId,
+    producer,
+    backends.particles,
+    backends.particleRendering ?? null,
+    new GameClearParticleOwner(input.particles.gameClearProfile, input.particles.scene),
+  );
+  const validated = coordinator.validate();
+  return validated.status === "ok" ? ok(coordinator) : validated;
+}
+
+function validateRendererSession(
+  sessionId: string | null,
+  backends: SimulatorBackends,
+): SimulatorResult<void> {
+  if (sessionId === null && backends.rendering === undefined) {
+    return ok(undefined);
+  }
+  if (
+    sessionId === null ||
+    sessionId.length === 0 ||
+    backends.rendering === undefined
+  ) {
+    return integrityFailure(
+      "render.session.incomplete-host-binding",
+      "A rendering engine requires both one explicit session identity and one prepared typed renderer backend.",
+    );
+  }
+  const snapshot = backends.rendering.snapshot();
+  if (
+    snapshot.state !== "ready" ||
+    snapshot.sessionId !== sessionId ||
+    snapshot.fault !== null
+  ) {
+    return integrityFailure(
+      "render.session.renderer-not-ready",
+      "Renderer readiness and the exact host session must validate before chart or domain owners are created or initialized.",
+    );
+  }
+  return ok(undefined);
+}
+
+function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {
+  if (
+    !isValidBpm(chart.startBpm) ||
+    chart.startBpmString.length === 0 ||
+    chart.bpmChangeRealValueList.length !==
+      chart.bpmChangeStringRealValueList.length
+  ) {
+    return integrityFailure(
+      "runtime.invalid-chart-bpm-state",
+      "The chart must preserve positive finite start/change BPM values and their original parallel strings.",
+    );
+  }
+
+  const ownershipValidation = validateAutoLiveChartOwnership(chart.noteBatches);
+  if (ownershipValidation.status !== "ok") {
+    return ownershipValidation;
+  }
+
+  for (const batch of chart.noteBatches) {
+    if (
+      !isInt32(batch.barIndex) ||
+      !Number.isFinite(batch.numerator) ||
+      !isInt32(batch.denominator) ||
+      !Number.isFinite(batch.absolutePos)
+    ) {
+      return integrityFailure(
+        "runtime.invalid-chart-batch-position",
+        "Runtime batches require an integer bar and denominator with finite fractional position fields.",
+      );
+    }
+    for (const noteInformation of batch.informationList) {
+      const validation = validateNoteInformation(noteInformation);
+      if (validation.status !== "ok") {
+        return validation;
+      }
+    }
+  }
+  return ok(undefined);
+}
+
+function validateNoteInformation(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  if (
+    !isInt32(noteInformation.index) ||
+    !isInt32(noteInformation.barIndex) ||
+    !Number.isFinite(noteInformation.numerator) ||
+    !isInt32(noteInformation.denominator) ||
+    !Number.isFinite(noteInformation.absolutePos)
+  ) {
+    return integrityFailure(
+      "runtime.invalid-note-position",
+      "NoteInformation requires integer identity/bar/denominator fields and finite fractional positions.",
+    );
+  }
+  if (noteInformation.ccNum === 3 || noteInformation.ccNum === 8) {
+    if (
+      noteInformation.denominator === 0 ||
+      !isValidBpm(noteInformation.bpm) ||
+      noteInformation.bpmString.length === 0
+    ) {
+      return integrityFailure(
+        "runtime.invalid-bpm-command",
+        "CC03/CC08 commands require a nonzero denominator, positive finite BPM and original string.",
+      );
+    }
+    return ok(undefined);
+  }
+  if (noteInformation.buttonType === ButtonType.None) {
+    return ok(undefined);
+  }
+  const validFrontType =
+    noteInformation.fireNoteType >= FrontNoteType.Normal &&
+    noteInformation.fireNoteType <=
+      FrontNoteType.SlideBMultipleDirectionalFlickAdd;
+  if (
+    !validFrontType
+  ) {
+    return integrityFailure(
+      "runtime.unrepresented-note-root",
+      `A surviving non-BPM record must map to a confirmed playable root family (index=${noteInformation.index}, ccNum=${noteInformation.ccNum}, buttonType=${noteInformation.buttonType}, fireNoteType=${noteInformation.fireNoteType}).`,
+    );
+  }
+  return validateAutoLiveActivationGraph(noteInformation);
+}
+
+function isValidBpm(value: number): boolean {
+  const floatValue = Math.fround(value);
+  return Number.isFinite(value) && Number.isFinite(floatValue) && floatValue > 0;
+}
+
+function isInt32(value: number): boolean {
+  return (
+    Number.isInteger(value) &&
+    value >= -0x80000000 &&
+    value <= 0x7fffffff
+  );
+}

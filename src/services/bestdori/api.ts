@@ -1,7 +1,4 @@
-import judgeRipFilesMapJson from "../../data/judge-rip-files-map.json";
-import defaultCoverImage from "../../assets/default-cover.png";
 import {
-  blobToDataUrl,
   decodeBase64ToArrayBuffer,
   invokeTauriCommand,
   isTauriRuntimeEnvironment,
@@ -9,75 +6,21 @@ import {
 
 const BESTDORI_ROOT = "https://bestdori.com";
 export type BestdoriAssetServer = "jp" | "en" | "tw" | "cn" | "kr";
-export type BestdoriAssetFamily = "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapseskin" | "sound-common";
+export type BestdoriAssetFamily =
+  | "noteskin"
+  | "fieldskin"
+  | "bgskin"
+  | "judgeskin"
+  | "tapeffect"
+  | "stageskin"
+  | "tapseskin"
+  | "sound-common"
+  | "bgm"
+  | "musicjacket"
+  | "movie-mv";
 
 export const BESTDORI_ASSET_SERVERS: readonly BestdoriAssetServer[] = ["jp", "en", "tw", "cn", "kr"];
 export const DEFAULT_BESTDORI_ASSET_SERVER: BestdoriAssetServer = "jp";
-export const BESTDORI_COMMON_TAP_SKILL_FILE_NAME = "SE_RHYTHM_TAP_SKILL.mp3";
-
-const BESTDORI_COMMON_SOUND_FILE_NAMES = Object.freeze([
-  "miss.mp3",
-  "bad.mp3",
-  BESTDORI_COMMON_TAP_SKILL_FILE_NAME,
-]);
-
-const BESTDORI_RHYTHM_TAPSE_FILE_NAMES = Object.freeze([
-  "perfect.mp3",
-  "great.mp3",
-  "good.mp3",
-  "flick.mp3",
-  "SE_RHYTHM_TAP_LONG.mp3",
-  "game_button.mp3",
-]);
-
-const BESTDORI_DIRECTIONAL_TAPSE_FILE_NAMES = Object.freeze([
-  "directional_fl.mp3",
-  "directional_fl_2.mp3",
-  "directional_fl_3.mp3",
-]);
-
-const BESTDORI_FIELD_SKIN_FILE_NAMES = Object.freeze([
-  "bg_line_rhythm.png",
-  "game_play_line.png",
-  "game_play_line_skill_adjust_effect.png",
-]);
-
-const HABAHIRO_RIP_NAME = "habahiro";
-const HABAHIRO_SAMPLE_RIP_NAME = "habahiro_sample";
-
-const JUDGE_SKIN_FILES_BY_RIP = judgeRipFilesMapJson as Record<string, string[]>;
-
-export interface PreparedBestdoriSkinAssets {
-  packageFiles: Record<string, string>;
-  samplePackageFiles: Record<string, string>;
-}
-
-export interface PreparedBestdoriTapseskinAssets {
-  packageFiles: Record<string, string>;
-}
-
-export interface PreparedBestdoriFieldSkinAssets {
-  packageFiles: Record<string, string>;
-}
-
-export interface PreparedBestdoriBgSkinAssets {
-  packageFiles: Record<string, string>;
-  previewPackageFiles?: Record<string, string> | null;
-}
-
-export interface PreparedBestdoriJudgeSkinAssets {
-  packageFiles: Record<string, string>;
-}
-
-export interface PreparedBestdoriCommonSoundAssets {
-  packageFiles: Record<string, string>;
-}
-
-export interface JudgeSkinFileEntry {
-  atlasFile: string;
-  assetFile: string;
-  bundleFile: string;
-}
 
 export interface BestdoriUserTitle {
   id: number;
@@ -94,46 +37,27 @@ export interface BestdoriUserMeResponse {
   messageCount?: number | null;
 }
 
-interface PreparedBestdoriPackage {
-  packageFiles: Record<string, string>;
-}
-
-interface PrepareBestdoriPackageParams {
-  namespace: string;
-  packageKey: string;
-  packageCacheKey?: string | null;
-  assetBaseUrl: string;
-  manifestUrl?: string | null;
-  requiredFilenames?: string[] | null;
-  fallbackFilenames?: string[] | null;
-  taskId?: string | null;
-}
-
-interface ReadBestdoriFileParams {
-  namespace: string;
-  path: string;
-}
-
-export interface PrepareBestdoriAssetPackageParams {
-  server?: BestdoriAssetServer | string | null;
-  family: BestdoriAssetFamily;
-  id: string;
-  requiredFilenames?: string[] | null;
-  fallbackFilenames?: string[] | null;
-  taskId?: string | null;
-}
-
 export type BestdoriOfficialChartDifficulty = "easy" | "normal" | "hard" | "expert" | "special";
 export type BestdoriSongDifficultyIndex = "0" | "1" | "2" | "3" | "4";
 export type BestdoriPerServerValue<T> = [T | null, T | null, T | null, T | null, T | null];
 export type BestdoriSongServerIndex = 0 | 1 | 2 | 3 | 4;
 export type BestdoriSongServerName = "jp" | "en" | "tw" | "cn" | "kr";
 
+export interface BestdoriSongMovieResource {
+  logicalPath: string;
+  url: string;
+  title: string | null;
+}
+
 export interface BestdoriSongResourceUrls {
   server: BestdoriSongServerName;
   audioUrl: string;
+  audioLogicalPath: string;
   jacketUrl: string;
+  jacketLogicalPath: string;
   mvUrl: string | null;
+  mvLogicalPath: string | null;
+  movies: readonly BestdoriSongMovieResource[];
 }
 
 export interface BestdoriBandsAll1Band {
@@ -416,7 +340,6 @@ export const SONOLUS_TEST_SERVER_ROOT = "https://sonolus.ayachan.fun/test";
 export const NOTGARUPA_SERVER_ROOT = "https://notgarupa.sov8.cn";
 const SONOLUS_TEST_LEVELS_ENDPOINT = `${SONOLUS_TEST_SERVER_ROOT}/sonolus/levels`;
 const NOTGARUPA_LEVELS_ENDPOINT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
-export const BESTDORI_DEFAULT_SONG_COVER_URL = defaultCoverImage;
 export const BESTDORI_OFFICIAL_CHART_TEAM = "=BANDORI OFFICIAL CHART TEAM=";
 
 export function normalizeBestdoriAssetServer(value: string | null | undefined): BestdoriAssetServer {
@@ -426,94 +349,10 @@ export function normalizeBestdoriAssetServer(value: string | null | undefined): 
     : DEFAULT_BESTDORI_ASSET_SERVER;
 }
 
-function buildBestdoriAssetPackageId(server: BestdoriAssetServer, family: BestdoriAssetFamily, id: string): string {
-  return `${server}-${family}-${id}`;
-}
-
-function buildBestdoriAssetPackageUrls(
-  serverInput: string | null | undefined,
-  family: BestdoriAssetFamily,
-  idInput: string,
-): { server: BestdoriAssetServer; id: string; assetBaseUrl: string; manifestUrl: string | null; packageCacheKey: string } {
-  const server = normalizeBestdoriAssetServer(serverInput);
-  const id = normalizeRipName(idInput, "id");
-  const encodedId = encodeURIComponent(id);
-  const base = `${BESTDORI_ROOT}/assets/${server}`;
-  const explorerBase = `${BESTDORI_ROOT}/api/explorer/${server}/assets`;
-  const packageCacheKey = buildBestdoriAssetPackageId(server, family, id);
-
-  switch (family) {
-    case "noteskin":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/ingameskin/noteskin/${encodedId}_rip`,
-        manifestUrl: `${explorerBase}/ingameskin/noteskin/${encodedId}.json`,
-        packageCacheKey,
-      };
-    case "fieldskin":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/ingameskin/fieldskin/${encodedId}_rip`,
-        manifestUrl: `${explorerBase}/ingameskin/fieldskin/${encodedId}.json`,
-        packageCacheKey,
-      };
-    case "bgskin":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/ingameskin/bgskin/${encodedId}_rip`,
-        manifestUrl: `${explorerBase}/ingameskin/bgskin/${encodedId}.json`,
-        packageCacheKey,
-      };
-    case "judgeskin":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/ingameskin/judgeskin/${encodedId}_rip`,
-        manifestUrl: null,
-        packageCacheKey,
-      };
-    case "tapseskin":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/sound/tapseskin/${encodedId}_rip`,
-        manifestUrl: `${explorerBase}/sound/tapseskin/${encodedId}.json`,
-        packageCacheKey,
-      };
-    case "sound-common":
-      return {
-        server,
-        id,
-        assetBaseUrl: `${base}/sound/common_rip`,
-        manifestUrl: `${explorerBase}/sound/common.json`,
-        packageCacheKey,
-      };
-  }
-}
-
 function ensureBestdoriBackendAvailable(): void {
   if (!isTauriRuntimeEnvironment()) {
     throw new Error("Bestdori backend is only available in Tauri runtime.");
   }
-}
-
-function normalizeRipName(value: string, label: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${label} cannot be empty`);
-  }
-  if (!/^[A-Za-z0-9_-]+$/.test(trimmed)) {
-    throw new Error(`${label} contains invalid characters, only [a-zA-Z0-9_-] is allowed`);
-  }
-  return trimmed;
-}
-
-function isHttpNotFoundError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return /http status 404\b/i.test(message);
 }
 
 function normalizeBestdoriOfficialChartDifficulty(
@@ -784,6 +623,15 @@ function resolveBestdoriSongServerIndex(songInfo: BestdoriSongInfo): BestdoriSon
   throw new Error("unable to resolve song server from song info");
 }
 
+function normalizeBestdoriAssetSegment(value: unknown, label: string): string {
+  if (typeof value !== "string") throw new Error(`${label} is unavailable`);
+  const normalized = value.trim();
+  if (!/^[A-Za-z0-9._-]+$/.test(normalized) || normalized === "." || normalized === "..") {
+    throw new Error(`${label} is not a safe provider-native asset segment`);
+  }
+  return normalized;
+}
+
 function formatBestdoriSongId(songId: number): string {
   return String(songId).padStart(3, "0");
 }
@@ -860,7 +708,7 @@ function resolveBestdoriSongDifficultyLevel(
 
 function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
   const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const keys = Object.keys(videos);
+  const keys = Object.keys(videos).sort();
   if (keys.length === 0) {
     return 0;
   }
@@ -878,90 +726,6 @@ function resolveBestdoriSongAudioFileName(songId: number, songInfo: BestdoriSong
     return bgmFile.toLowerCase().endsWith(".mp3") ? bgmFile : `${bgmFile}.mp3`;
   }
   return `bgm${formatBestdoriSongId(songId)}.mp3`;
-}
-
-function resolveJudgeSkinFallbackFilenamesOrThrow(ripName: string): string[] {
-  const raw = JUDGE_SKIN_FILES_BY_RIP[ripName];
-  if (!Array.isArray(raw)) {
-    throw new Error(`JudgeSkin filenames not configured for ripName: ${ripName}`);
-  }
-  const filtered = raw
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .filter((value) => value.length > 0);
-  if (filtered.length === 0) {
-    throw new Error(`JudgeSkin filenames invalid for ripName: ${ripName}`);
-  }
-  return filtered;
-}
-
-async function prepareBestdoriPackage(params: PrepareBestdoriPackageParams): Promise<PreparedBestdoriPackage> {
-  ensureBestdoriBackendAvailable();
-  return invokeTauriCommand<PreparedBestdoriPackage>("prepare_bestdori_package", {
-    params: {
-      namespace: params.namespace,
-      packageKey: params.packageKey,
-      packageCacheKey: params.packageCacheKey ?? null,
-      assetBaseUrl: params.assetBaseUrl,
-      manifestUrl: params.manifestUrl ?? null,
-      requiredFilenames: params.requiredFilenames ?? null,
-      fallbackFilenames: params.fallbackFilenames ?? null,
-      taskId: params.taskId ?? null,
-    },
-  });
-}
-
-export async function prepareBestdoriAssetPackage(
-  params: PrepareBestdoriAssetPackageParams,
-): Promise<PreparedBestdoriPackage> {
-  const urls = buildBestdoriAssetPackageUrls(params.server, params.family, params.id);
-  return prepareBestdoriPackage({
-    namespace: params.family,
-    packageKey: urls.id,
-    packageCacheKey: urls.packageCacheKey,
-    assetBaseUrl: urls.assetBaseUrl,
-    manifestUrl: urls.manifestUrl,
-    requiredFilenames: params.requiredFilenames ?? null,
-    fallbackFilenames: params.fallbackFilenames ?? null,
-    taskId: params.taskId ?? null,
-  });
-}
-
-async function readBestdoriTextFile(params: ReadBestdoriFileParams): Promise<string> {
-  ensureBestdoriBackendAvailable();
-  return invokeTauriCommand<string>("read_bestdori_text_file", { params });
-}
-
-async function readBestdoriBinaryFile(params: ReadBestdoriFileParams): Promise<string> {
-  ensureBestdoriBackendAvailable();
-  return invokeTauriCommand<string>("read_bestdori_binary_file", { params });
-}
-
-export async function prepareBestdoriSkinAssets(
-  ripName: string,
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriSkinAssets> {
-  const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const sampleRipName =
-    normalizedRipName === HABAHIRO_RIP_NAME ? HABAHIRO_SAMPLE_RIP_NAME : `${normalizedRipName}sample`;
-  const [mainPackage, samplePackage] = await Promise.all([
-    prepareBestdoriAssetPackage({
-      server,
-      family: "noteskin",
-      id: normalizedRipName,
-      taskId: operationId ?? null,
-    }),
-    prepareBestdoriAssetPackage({
-      server,
-      family: "noteskin",
-      id: sampleRipName,
-      taskId: operationId ?? null,
-    }),
-  ]);
-  return {
-    packageFiles: mainPackage.packageFiles,
-    samplePackageFiles: samplePackage.packageFiles,
-  };
 }
 
 export async function bestdoriLogin(username: string, password: string): Promise<BestdoriUserMeResponse> {
@@ -1496,7 +1260,7 @@ export async function resolveBestdoriCommunitySongResourceUrls(
       type: "bandori",
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
-      coverUrl: await fetchBestdoriSongJacketUrlWithFallback(songId, songInfo),
+      coverUrl: buildBestdoriSongJacketUrl(songId, songInfo),
     };
   }
   const llsifMisc = await fetchBestdoriLlsifMisc();
@@ -1513,46 +1277,55 @@ export function resolveBestdoriSongServerName(songInfo: BestdoriSongInfo): Bestd
   return BESTDORI_SONG_SERVER_NAME_MAP[resolveBestdoriSongServerIndex(songInfo)];
 }
 
-export function buildBestdoriSongAudioUrl(songId: number, songInfo: BestdoriSongInfo): string {
-  const normalizedSongId = normalizeBestdoriSongId(songId);
+export function buildBestdoriSongAudioLogicalPath(songInfo: BestdoriSongInfo): string {
+  const bgmId = normalizeBestdoriAssetSegment(songInfo.bgmId, "song bgmId");
+  return `sound/${bgmId}/${bgmId}.mp3`;
+}
+
+export function buildBestdoriSongAudioUrl(_songId: number, songInfo: BestdoriSongInfo): string {
   const server = resolveBestdoriSongServerName(songInfo);
-  const idPadded = formatBestdoriSongId(normalizedSongId);
-  return `${BESTDORI_ASSETS_ROOT}/${server}/sound/bgm${idPadded}_rip/bgm${idPadded}.mp3`;
+  const logicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
+  const [sound, bgmId, file] = logicalPath.split("/") as [string, string, string];
+  return `${BESTDORI_ASSETS_ROOT}/${server}/${sound}/${bgmId}_rip/${file}`;
+}
+
+export function buildBestdoriSongJacketLogicalPath(songId: number, songInfo: BestdoriSongInfo): string {
+  const normalizedSongId = normalizeBestdoriSongId(songId);
+  const jacketImage = normalizeBestdoriAssetSegment(resolveBestdoriSongJacketImageName(songInfo), "song jacket image");
+  const jacketFolder = `musicjacket${resolveBestdoriSongJacketFolderIndex(normalizedSongId)}`;
+  return `musicjacket/${jacketFolder}/assets-star-forassetbundle-startapp-musicjacket-${jacketFolder}-${jacketImage}-jacket.png`;
 }
 
 export function buildBestdoriSongJacketUrl(songId: number, songInfo: BestdoriSongInfo): string {
-  const normalizedSongId = normalizeBestdoriSongId(songId);
   const server = resolveBestdoriSongServerName(songInfo);
-  const jacketImage = resolveBestdoriSongJacketImageName(songInfo);
-  const jacketFolderIndex = resolveBestdoriSongJacketFolderIndex(normalizedSongId);
-  return `${BESTDORI_ASSETS_ROOT}/${server}/musicjacket/musicjacket${jacketFolderIndex}_rip/assets-star-forassetbundle-startapp-musicjacket-musicjacket${jacketFolderIndex}-${jacketImage}-jacket.png`;
+  const logicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
+  const [root, folder, file] = logicalPath.split("/") as [string, string, string];
+  return `${BESTDORI_ASSETS_ROOT}/${server}/${root}/${folder}_rip/${file}`;
 }
 
-export async function fetchBestdoriSongJacketUrlWithFallback(
-  songId: number,
-  songInfo: BestdoriSongInfo,
-): Promise<string> {
-  try {
-    return buildBestdoriSongJacketUrl(songId, songInfo);
-  } catch {
-    return BESTDORI_DEFAULT_SONG_COVER_URL;
+export function buildBestdoriSongMovieResources(songInfo: BestdoriSongInfo): readonly BestdoriSongMovieResource[] {
+  const videos = resolveBestdoriSongMusicVideos(songInfo);
+  const server = resolveBestdoriSongServerName(songInfo);
+  const resources: BestdoriSongMovieResource[] = [];
+  for (const key of Object.keys(videos).sort()) {
+    const target = videos[key];
+    if (!target || typeof target.assetBundleName !== "string" || target.assetBundleName.trim().length === 0) continue;
+    const packageName = normalizeBestdoriAssetSegment(key.endsWith("_hq") ? key : `${key}_hq`, "song movie package");
+    const asset = normalizeBestdoriAssetSegment(target.assetBundleName.trim(), "song movie asset");
+    const fileName = asset.endsWith("_hq") ? `${asset}.mp4` : `${asset}_hq.mp4`;
+    const logicalPath = `movie/mv/${packageName}/${fileName}`;
+    resources.push(Object.freeze({
+      logicalPath,
+      url: `${BESTDORI_ASSETS_ROOT}/${server}/movie/mv/${packageName}_rip/${fileName}`,
+      title: resolveFirstNonEmptyPerServerValue(target.title),
+    }));
   }
+  return Object.freeze(resources);
 }
 
 export function buildBestdoriSongMvUrl(songInfo: BestdoriSongInfo): string | null {
-  const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const keys = Object.keys(videos);
-  if (keys.length === 0) {
-    return null;
-  }
-  const musicVideo = keys[keys.length - 1];
-  const target = videos[musicVideo];
-  if (!target || typeof target.assetBundleName !== "string" || target.assetBundleName.trim().length === 0) {
-    return null;
-  }
-  const server = resolveBestdoriSongServerName(songInfo);
-  const assetBundleName = target.assetBundleName.trim();
-  return `${BESTDORI_ASSETS_ROOT}/${server}/movie/mv/${musicVideo}_hq_rip/${assetBundleName}_hq.mp4`;
+  const movies = buildBestdoriSongMovieResources(songInfo);
+  return movies.length === 0 ? null : movies[movies.length - 1]!.url;
 }
 
 export async function fetchBestdoriSongResourceUrls(
@@ -1562,13 +1335,20 @@ export async function fetchBestdoriSongResourceUrls(
   const songInfo = options?.songInfo ?? (await fetchBestdoriSongInfo(songId));
   const server = resolveBestdoriSongServerName(songInfo);
   const audioUrl = buildBestdoriSongAudioUrl(songId, songInfo);
-  const jacketUrl = await fetchBestdoriSongJacketUrlWithFallback(songId, songInfo);
-  const mvUrl = buildBestdoriSongMvUrl(songInfo);
+  const audioLogicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
+  const jacketUrl = buildBestdoriSongJacketUrl(songId, songInfo);
+  const jacketLogicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
+  const movies = buildBestdoriSongMovieResources(songInfo);
+  const selectedMovie = movies.length === 0 ? null : movies[movies.length - 1]!;
   return {
     server,
     audioUrl,
+    audioLogicalPath,
     jacketUrl,
-    mvUrl,
+    jacketLogicalPath,
+    mvUrl: selectedMovie?.url ?? null,
+    mvLogicalPath: selectedMovie?.logicalPath ?? null,
+    movies,
   };
 }
 
@@ -1622,211 +1402,4 @@ export async function fetchBestdoriOfficialChartImportPayload(
     },
     audioFileName: resolveBestdoriSongAudioFileName(normalizedChartId, songInfo),
   };
-}
-
-export async function prepareBestdoriTapseskinAssets(
-  ripName: string,
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriTapseskinAssets> {
-  const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const packageData = await prepareBestdoriAssetPackage({
-    server,
-    family: "tapseskin",
-    id: normalizedRipName,
-    requiredFilenames: normalizedRipName.startsWith("directionalflickskin")
-      ? [...BESTDORI_DIRECTIONAL_TAPSE_FILE_NAMES]
-      : [...BESTDORI_RHYTHM_TAPSE_FILE_NAMES],
-    taskId: operationId ?? null,
-  });
-  return { packageFiles: packageData.packageFiles };
-}
-
-export async function prepareBestdoriFieldSkinAssets(
-  ripName: string,
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriFieldSkinAssets> {
-  const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const packageData = await prepareBestdoriAssetPackage({
-    server,
-    family: "fieldskin",
-    id: normalizedRipName,
-    requiredFilenames: [...BESTDORI_FIELD_SKIN_FILE_NAMES],
-    taskId: operationId ?? null,
-  });
-  return { packageFiles: packageData.packageFiles };
-}
-
-export async function prepareBestdoriBgSkinAssets(
-  ripName: string,
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriBgSkinAssets> {
-  const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const previewRipName = `${normalizedRipName}preview`;
-  const mainPackage = await prepareBestdoriAssetPackage({
-    server,
-    family: "bgskin",
-    id: normalizedRipName,
-    taskId: operationId ?? null,
-  });
-
-  let previewPackageFiles: Record<string, string> | null = null;
-  try {
-    const previewPackage = await prepareBestdoriAssetPackage({
-      server,
-      family: "bgskin",
-      id: previewRipName,
-      requiredFilenames: ["previewBG.png"],
-      taskId: operationId ?? null,
-    });
-    previewPackageFiles = previewPackage.packageFiles;
-  } catch (error) {
-    if (!isHttpNotFoundError(error)) {
-      throw error;
-    }
-  }
-
-  return {
-    packageFiles: mainPackage.packageFiles,
-    previewPackageFiles,
-  };
-}
-
-export async function prepareBestdoriJudgeSkinAssets(
-  ripName: string,
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriJudgeSkinAssets> {
-  const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const fallbackFilenames = resolveJudgeSkinFallbackFilenamesOrThrow(normalizedRipName);
-  const packageData = await prepareBestdoriAssetPackage({
-    server,
-    family: "judgeskin",
-    id: normalizedRipName,
-    fallbackFilenames,
-    taskId: operationId ?? null,
-  });
-  return { packageFiles: packageData.packageFiles };
-}
-
-export async function prepareBestdoriCommonSoundAssets(
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<PreparedBestdoriCommonSoundAssets> {
-  const packageData = await prepareBestdoriAssetPackage({
-    server,
-    family: "sound-common",
-    id: "common",
-    requiredFilenames: [...BESTDORI_COMMON_SOUND_FILE_NAMES],
-    fallbackFilenames: [...BESTDORI_COMMON_SOUND_FILE_NAMES],
-    taskId: operationId ?? null,
-  });
-  return { packageFiles: packageData.packageFiles };
-}
-
-export async function ensureCommonSoundAsset(
-  operationId?: string,
-  server?: BestdoriAssetServer | string | null,
-): Promise<string> {
-  const packageData = await prepareBestdoriCommonSoundAssets(operationId, server);
-  const key = BESTDORI_COMMON_TAP_SKILL_FILE_NAME.toLowerCase();
-  const resolved = packageData.packageFiles[key];
-  if (!resolved) {
-    throw new Error(`Common sound asset missing: ${BESTDORI_COMMON_TAP_SKILL_FILE_NAME}`);
-  }
-  return resolved;
-}
-
-export async function readSkinTextFile(path: string): Promise<string> {
-  return readBestdoriTextFile({ namespace: "noteskin", path });
-}
-
-export async function readSkinBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "noteskin", path });
-}
-
-export async function readSoundBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "tapseskin", path });
-}
-
-export async function readCommonSoundBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "sound-common", path });
-}
-
-export async function readFieldSkinBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "fieldskin", path });
-}
-
-export async function readBgSkinBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "bgskin", path });
-}
-
-export async function readJudgeSkinTextFile(path: string): Promise<string> {
-  return readBestdoriTextFile({ namespace: "judgeskin", path });
-}
-
-export async function readJudgeSkinBinaryFile(path: string): Promise<string> {
-  return readBestdoriBinaryFile({ namespace: "judgeskin", path });
-}
-
-function resolveMimeTypeByFileName(fileName: string): string | undefined {
-  const normalized = fileName.trim().toLowerCase();
-  if (normalized.endsWith(".png")) {
-    return "image/png";
-  }
-  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) {
-    return "image/jpeg";
-  }
-  if (normalized.endsWith(".webp")) {
-    return "image/webp";
-  }
-  if (normalized.endsWith(".mp3")) {
-    return "audio/mpeg";
-  }
-  if (normalized.endsWith(".wav")) {
-    return "audio/wav";
-  }
-  if (normalized.endsWith(".ogg")) {
-    return "audio/ogg";
-  }
-  return undefined;
-}
-
-async function binaryBase64ToDataUrl(base64: string, fileName: string): Promise<string> {
-  const mimeType = resolveMimeTypeByFileName(fileName);
-  return blobToDataUrl(
-    new Blob([decodeBase64ToArrayBuffer(base64)], mimeType ? { type: mimeType } : undefined),
-  );
-}
-
-export async function readSkinBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readSkinBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
-}
-
-export async function readSoundBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readSoundBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
-}
-
-export async function readCommonSoundBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readCommonSoundBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
-}
-
-export async function readFieldSkinBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readFieldSkinBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
-}
-
-export async function readBgSkinBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readBgSkinBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
-}
-
-export async function readJudgeSkinBinaryFileAsDataUrl(path: string, fileName: string): Promise<string> {
-  const base64 = await readJudgeSkinBinaryFile(path);
-  return binaryBase64ToDataUrl(base64, fileName);
 }

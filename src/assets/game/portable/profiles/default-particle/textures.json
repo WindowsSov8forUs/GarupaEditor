@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "status": "eight-logical-textures-seven-unique-png-snapshots",
+  "sourceProfile": {
+    "path": "resource_profile.json",
+    "bytes": 3948882,
+    "sha256": "5CF5CBF7DCB39B9B7A378518806FB804AFA226C41E057756AE236AA5EB534452"
+  },
+  "logicalTextureCount": 8,
+  "uniquePngCount": 7,
+  "entries": [
+    {
+      "logicalAssetId": "particle-texture:directional:Default-ParticleSystem",
+      "path": "particle-portable-textures/directional/Default-ParticleSystem.png",
+      "bytes": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9",
+      "width": 64,
+      "height": 64,
+      "rgbaBytes": 16384,
+      "rgbaSha256": "85848AD6C50954F33C6F08707882976995212A4E23E242F74CC9C4D4DA02F90E"
+    },
+    {
+      "logicalAssetId": "particle-texture:directional:effect_circle",
+      "aliasOf": "particle-texture:ordinary:effect_circle",
+      "width": 256,
+      "height": 256,
+      "rgbaBytes": 262144,
+      "rgbaSha256": "57ABE43022A204DB0507E36768FDD13BD66322E01ECE34D276A7A874910F15C7"
+    },
+    {
+      "logicalAssetId": "particle-texture:directional:tex_parSet_1",
+      "path": "particle-portable-textures/directional/directional-tex_parSet_1.png",
+      "bytes": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814",
+      "width": 1024,
+      "height": 1024,
+      "rgbaBytes": 4194304,
+      "rgbaSha256": "51AFDD877E46A4B6592CFFA556A04AF67E3DF39AE01EF616194FB2BEAEC72C7D"
+    },
+    {
+      "logicalAssetId": "particle-texture:ordinary:Default-Particle",
+      "path": "particle-portable-textures/ordinary/Default-Particle.png",
+      "bytes": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2",
+      "width": 64,
+      "height": 64,
+      "rgbaBytes": 16384,
+      "rgbaSha256": "889596BCAF9E14DE7A7181F53F3F07415C22C065CAE5FA9C564B1A0C172A3C63"
+    },
+    {
+      "logicalAssetId": "particle-texture:ordinary:Tex_parSet_1",
+      "path": "particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9",
+      "width": 1024,
+      "height": 1024,
+      "rgbaBytes": 4194304,
+      "rgbaSha256": "E114CC275B2BD2A7B1BF4ABD80E7538F404A54FB1655CD909F5F42B161445C5B"
+    },
+    {
+      "logicalAssetId": "particle-texture:ordinary:Tex_parSet_2",
+      "path": "particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "bytes": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742",
+      "width": 1024,
+      "height": 1024,
+      "rgbaBytes": 4194304,
+      "rgbaSha256": "E9CE6B25A9A168CFCB77F01F39ECD6AC4ED0A295307369D9A329A992C3789871"
+    },
+    {
+      "logicalAssetId": "particle-texture:ordinary:effect_circle",
+      "path": "particle-portable-textures/ordinary/effect_circle.png",
+      "bytes": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9",
+      "width": 256,
+      "height": 256,
+      "rgbaBytes": 262144,
+      "rgbaSha256": "57ABE43022A204DB0507E36768FDD13BD66322E01ECE34D276A7A874910F15C7"
+    },
+    {
+      "logicalAssetId": "particle-texture:ordinary:light",
+      "path": "particle-portable-textures/ordinary/light.png",
+      "bytes": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2",
+      "width": 128,
+      "height": 128,
+      "rgbaBytes": 65536,
+      "rgbaSha256": "1CA724A895E962609CC5D3CDFCC467CFCE8AD5B70A486AD40626A0CFE429E58A"
+    }
+  ],
+  "productionBoundary": "portable Pixi texture bytes; pixel exact to current decoded RGBA, not GPU/framebuffer parity"
+}

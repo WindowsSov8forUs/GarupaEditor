@@ -43,9 +43,6 @@ export interface ChartMetadata {
   difficultyLevel: string;
   bpm: number;
   offsetMs: number;
-  bgmDataUrl: string | null;
-  coverDataUrl: string | null;
-  mvDataUrl: string | null;
   mvOffsetMs: number;
 }
 
@@ -125,51 +122,6 @@ interface ChartSkinInfo {
   fieldSkinServer?: string;
   judgeSkinServer?: string;
 }
-
-export type ChartJsonDirection = "Left" | "Right";
-type ChartJsonSimpleType = "Single" | "Flick" | "Skill" | "Hidden";
-
-interface ChartJsonSimpleNote {
-  type: ChartJsonSimpleType;
-  beat: number;
-  lane: number;
-  width: number;
-  timingGroup?: ChartTimingGroupId;
-}
-
-interface ChartJsonDirectionalNote {
-  type: "Directional";
-  beat: number;
-  lane: number;
-  width: number;
-  direction: ChartJsonDirection;
-  timingGroup?: ChartTimingGroupId;
-}
-
-export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectionalNote;
-
-export interface ChartJsonSlideItem {
-  type: "Slide";
-  connections: ChartJsonSlideConnection[];
-  timingGroup?: ChartTimingGroupId;
-}
-
-export interface ChartJsonBpmItem {
-  type: "BPM";
-  beat: number;
-  value: number;
-}
-
-export interface ChartJsonSvItem {
-  type: "SV";
-  beat: number;
-  value: number;
-  timingGroup?: ChartTimingGroupId;
-}
-
-export type ChartJsonTopLevelNote = Exclude<ChartJsonSimpleNote, { type: "Hidden" }> | ChartJsonDirectionalNote;
-type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem | ChartJsonSvItem;
-export type ChartJson = ChartJsonItem[];
 
 export interface WindowPreset {
   id: string;
@@ -273,9 +225,6 @@ export const DEFAULT_METADATA: ChartMetadata = {
   difficultyLevel: "26",
   bpm: 120,
   offsetMs: 0,
-  bgmDataUrl: null,
-  coverDataUrl: null,
-  mvDataUrl: null,
   mvOffsetMs: 0,
 };
 
@@ -912,18 +861,6 @@ export function normalizeMetadata(input: Partial<ChartMetadata>): ChartMetadata 
     difficultyLevel: normalizeDifficultyLevel(input.difficultyLevel),
     bpm: clamp(toFinite(input.bpm, DEFAULT_METADATA.bpm), 40, 300),
     offsetMs: Math.round(clamp(toFinite(input.offsetMs, DEFAULT_METADATA.offsetMs), -5000, 5000)),
-    bgmDataUrl:
-      typeof input.bgmDataUrl === "string" && input.bgmDataUrl.trim() !== ""
-        ? input.bgmDataUrl
-        : null,
-    coverDataUrl:
-      typeof input.coverDataUrl === "string" && input.coverDataUrl.trim() !== ""
-        ? input.coverDataUrl
-        : null,
-    mvDataUrl:
-      typeof input.mvDataUrl === "string" && input.mvDataUrl.trim() !== ""
-        ? input.mvDataUrl
-        : null,
     mvOffsetMs: Math.round(clamp(toFinite(input.mvOffsetMs, DEFAULT_METADATA.mvOffsetMs), -5000, 5000)),
   };
 }

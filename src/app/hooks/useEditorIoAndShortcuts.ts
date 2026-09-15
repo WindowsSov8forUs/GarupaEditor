@@ -5,13 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import {
   GLOBAL_TIMING_GROUP_ID,
   type ChartBpmEvent,
-  type ChartJson,
-  type ChartJsonBpmItem,
-  type ChartJsonDirection,
-  type ChartJsonSlideConnection,
-  type ChartJsonSlideItem,
-  type ChartJsonSvItem,
-  type ChartJsonTopLevelNote,
   type ChartMetadata,
   type ChartNote,
   type ChartSvEvent,
@@ -19,26 +12,31 @@ import {
   type NoteType,
 } from "../../chartCore";
 import {
-  combineSkinAssets,
-  ensureCommonTapSkillSeAsset,
   isHabahiroRhythmRipName,
-  setRuntimeBgSkinAssets,
-  setRuntimeFieldSkinAssets,
-  setRuntimeJudgeSkinAssets,
-  setRuntimeSeAssets,
-  type BGSkin,
-  type FieldSkinAssets,
-  type JudgeSkin,
-  type RhythmSeSkinAssets,
-  type DirectionalSeSkinAssets,
-  type DirectionalSkinAssets,
-  type AnyRhythmSkinAssets,
   type SkinSelection,
 } from "../../skinLoader";
+import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import {
-  convertBestdoriV2ToCurrentChartJson,
-  convertCurrentChartJsonToBestdoriV2,
-} from "../../chartFormatConverter";
+  bestdoriNoteskinSampleNativeId,
+  createBestdoriNetworkMediaDescriptor,
+  createBestdoriNetworkResourceRef,
+} from "../../resources/providers/bestdoriCatalogProvider";
+import type { BestdoriAssetFamily, BestdoriAssetServer } from "../../services/bestdori/api";
+import {
+  decodeAppliedSkinResources,
+  type AppliedSkinResources,
+} from "../../skin/resourceSkinDecoder";
+import {
+  convertBestdoriV2ToGarupaChartJson,
+  convertGarupaChartJsonToBestdoriV2,
+  type GarupaChartJson,
+  type GarupaChartJsonBpmItem,
+  type GarupaChartJsonDirection,
+  type GarupaChartJsonSlideConnection,
+  type GarupaChartJsonSlideItem,
+  type GarupaChartJsonSvItem,
+  type GarupaChartJsonTopLevelNote,
+} from "../../chart";
 import {
   isChartUsingExGarupa,
   isChartUsingHabahiro,
@@ -50,7 +48,6 @@ import {
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
-  fetchBestdoriFileBlob,
   fetchBestdoriCommunityPostDetails,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
@@ -81,7 +78,7 @@ type ShiftedSvItem = {
   sourceIndex: number;
 };
 
-type AppliedChartJsonSummary = {
+type AppliedGarupaChartJsonSummary = {
   visibleNoteCount: number;
   beatOffset: number;
   regressedExGarupa: boolean;
@@ -138,11 +135,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function requireBestdoriRef(
+  server: BestdoriAssetServer,
+  family: BestdoriAssetFamily,
+  nativeId: string,
+) {
+  const reference = createBestdoriNetworkResourceRef(server, family, nativeId);
+  if (reference.status === "rejected") {
+    throw new Error(`${reference.failure.capability}: ${reference.failure.boundary}`);
+  }
+  return reference.value;
+}
+
 export function useEditorIoAndShortcuts(params: any) {
   const {
     metadata,
     settings,
     appOptionSettings,
+    chartMediaResources,
+    setChartMediaResources,
+    chartMediaLease,
     skinSelection,
     bpmEvents,
     svEvents,
@@ -182,8 +194,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    setAudioObjectUrl,
-    formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
@@ -191,18 +201,10 @@ export function useEditorIoAndShortcuts(params: any) {
     normalizeSkinSelection,
     skinApplySeqRef,
     setSkinAssets,
+    setAppliedSkinResources,
     setIsSkinApplying,
     formatTypeLabel,
-    downloadBestdoriRhythmSkinAssets,
-    downloadBestdoriDirectionalSkinAssets,
-    downloadBestdoriBgSkinAssets,
-    downloadBestdoriFieldSkinAssets,
-    downloadBestdoriJudgeSkinAssets,
-    downloadBestdoriRhythmSeSkinAssets,
-    downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
-    writeSkinSelectionToStorage,
-    readSkinSelectionFromStorage,
     didInitSkinRef,
     approxEq,
     selectedNoteIds,
@@ -222,14 +224,21 @@ export function useEditorIoAndShortcuts(params: any) {
     pasteAtMousePositionByShortcut,
   } = params;
 
-  const rhythmSkinAssetsRef = useRef<AnyRhythmSkinAssets | null>(null);
-  const directionalSkinAssetsRef = useRef<DirectionalSkinAssets | null>(null);
-  const rhythmSeSkinAssetsRef = useRef<RhythmSeSkinAssets | null>(null);
-  const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
-  const bgSkinAssetsRef = useRef<BGSkin | null>(null);
-  const fieldSkinAssetsRef = useRef<FieldSkinAssets | null>(null);
-  const judgeSkinAssetsRef = useRef<JudgeSkin | null>(null);
-  const commonTapSkillSeRef = useRef<string>("");
+  const resourceManager = useApplicationResourceManager();
+  const appliedSkinResourcesRef = useRef<AppliedSkinResources | null>(null);
+  const materializeBestdoriMediaInWorkspace = async (input: Parameters<typeof createBestdoriNetworkMediaDescriptor>[0]) => {
+    const descriptor = createBestdoriNetworkMediaDescriptor(input);
+    if (descriptor.status === "rejected") throw new Error(`${descriptor.failure.capability}: ${descriptor.failure.boundary}`);
+    const materialized = await resourceManager.materializeNetworkMediaInWorkspace(descriptor.value, input.purpose);
+    if (materialized.status === "rejected") throw new Error(`${materialized.failure.capability}: ${materialized.failure.boundary}`);
+    return materialized.value.ref;
+  };
+
+  useEffect(() => () => {
+    const applied = appliedSkinResourcesRef.current;
+    appliedSkinResourcesRef.current = null;
+    if (applied !== null) void applied.dispose();
+  }, []);
 
   const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
   const toLaneValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
@@ -287,7 +296,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return shifted < 0 ? 0 : shifted;
   };
 
-  const mapDirectionFromInternalType = (type: ChartNote["type"]): ChartJsonDirection | null => {
+  const mapDirectionFromInternalType = (type: ChartNote["type"]): GarupaChartJsonDirection | null => {
     if (type === "directional_flick_left") {
       return "Left";
     }
@@ -297,7 +306,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return null;
   };
 
-  const mapTopLevelNoteToJson = (note: ChartNote): ChartJsonTopLevelNote | null => {
+  const mapTopLevelNoteToJson = (note: ChartNote): GarupaChartJsonTopLevelNote | null => {
     if (note.type === "single") {
       return {
         type: "Single",
@@ -339,7 +348,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return null;
   };
 
-  const mapSlideConnectionToJson = (note: ChartNote): ChartJsonSlideConnection | null => {
+  const mapSlideConnectionToJson = (note: ChartNote): GarupaChartJsonSlideConnection | null => {
     if (note.type === "hidden") {
       return {
         type: "Hidden",
@@ -350,11 +359,11 @@ export function useEditorIoAndShortcuts(params: any) {
       };
     }
     const topLevel = mapTopLevelNoteToJson(note);
-    return topLevel ? (topLevel as ChartJsonSlideConnection) : null;
+    return topLevel ? (topLevel as GarupaChartJsonSlideConnection) : null;
   };
 
   const buildExportItemKey = (
-    item: ChartJsonSlideConnection | ChartJsonTopLevelNote,
+    item: GarupaChartJsonSlideConnection | GarupaChartJsonTopLevelNote,
   ): string => {
     const timingGroup = toTimingGroupValue((item as { timingGroup?: string }).timingGroup);
     if (item.type === "Directional") {
@@ -368,7 +377,7 @@ export function useEditorIoAndShortcuts(params: any) {
     beat: number,
     lane: number,
     width?: number,
-    direction?: ChartJsonDirection,
+    direction?: GarupaChartJsonDirection,
     timingGroup = GLOBAL_TIMING_GROUP_ID,
   ): string => {
     const normalizedBeat = Number(beat.toFixed(6));
@@ -449,17 +458,25 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const chartJson = useMemo<ChartJson>(() => {
+  const garupaChartJson = useMemo<GarupaChartJson>(() => {
     const sortedNotes = sortNotes(notes as ChartNote[]) as ChartNote[];
-    const normalizedSlideChains = (slideChains as Array<{ noteIds: string[] }>) ?? [];
     const noteById = new Map(sortedNotes.map((note) => [note.id, note] as const));
+    const normalizedSlideChains = ((slideChains as Array<{ noteIds: string[]; timingGroup?: string }>) ?? [])
+      .map((chain) => {
+        const timingGroup = toTimingGroupValue(chain.timingGroup);
+        const mappedNotes = chain.noteIds.flatMap((id) => {
+          const note = noteById.get(id);
+          const connection = note ? mapSlideConnectionToJson({ ...note, timingGroup }) : null;
+          return connection === null ? [] : [{ id, connection }];
+        });
+        return { timingGroup, mappedNotes };
+      })
+      .filter((chain) => chain.mappedNotes.length >= 2);
     const slideNoteIdSet = new Set(
-      normalizedSlideChains.flatMap((chain: { noteIds: string[] }) =>
-        chain.noteIds.filter((id: string) => noteById.has(id)),
-      ),
+      normalizedSlideChains.flatMap((chain) => chain.mappedNotes.map(({ id }) => id)),
     );
 
-    const bpmItems: ChartJsonBpmItem[] = [
+    const bpmItems: GarupaChartJsonBpmItem[] = [
       { type: "BPM", beat: 0, value: toBpmValue(metadata.bpm) },
       ...(sortBpmEvents(bpmEvents as ChartBpmEvent[]) as ChartBpmEvent[])
         .filter((event: ChartBpmEvent) => !approxEq(event.beat, 0))
@@ -470,7 +487,7 @@ export function useEditorIoAndShortcuts(params: any) {
         })),
     ];
 
-    const svItems: ChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
+    const svItems: GarupaChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
       (event: ChartSvEvent) => ({
         type: "SV",
         beat: toBeatValue(event.beat),
@@ -480,53 +497,28 @@ export function useEditorIoAndShortcuts(params: any) {
     );
 
     const slideConnectionKeySet = new Set<string>();
-    const slideItems: ChartJsonSlideItem[] = normalizedSlideChains
-      .map((chain: { noteIds: string[]; timingGroup?: string }): ChartJsonSlideItem | null => {
-        const chainTimingGroup = toTimingGroupValue(chain.timingGroup);
-        const connections: ChartJsonSlideConnection[] = [];
-        for (const id of chain.noteIds) {
-          const note = noteById.get(id);
-          if (!note) {
-            continue;
-          }
-          const mapped = mapSlideConnectionToJson({ ...note, timingGroup: chainTimingGroup });
-          if (!mapped) {
-            continue;
-          }
-          connections.push({
-            ...mapped,
-            timingGroup: toOptionalTimingGroupValue(chainTimingGroup),
-          });
-        }
+    const slideItems: GarupaChartJsonSlideItem[] = normalizedSlideChains.map((chain) => {
+      const connections = chain.mappedNotes.map(({ connection }) => connection);
+      for (const connection of connections) {
+        if (connection.type !== "Hidden") slideConnectionKeySet.add(buildExportItemKey(connection));
+      }
+      return {
+        type: "Slide",
+        connections,
+        timingGroup: toOptionalTimingGroupValue(chain.timingGroup),
+      };
+    });
 
-        for (const connection of connections) {
-          if (connection.type === "Hidden") {
-            continue;
-          }
-          slideConnectionKeySet.add(buildExportItemKey(connection));
-        }
-
-        if (connections.length === 0) {
-          return null;
-        }
-        return {
-          type: "Slide" as const,
-          connections,
-          timingGroup: toOptionalTimingGroupValue(chainTimingGroup),
-        };
-      })
-      .filter((item: ChartJsonSlideItem | null): item is ChartJsonSlideItem => item !== null);
-
-    const topLevelItems: ChartJsonTopLevelNote[] = sortedNotes
+    const topLevelItems: GarupaChartJsonTopLevelNote[] = sortedNotes
       .filter((note) => note.type !== "hidden" && !slideNoteIdSet.has(note.id))
       .map((note) => mapTopLevelNoteToJson(note))
-      .filter((item): item is ChartJsonTopLevelNote => item !== null)
+      .filter((item): item is GarupaChartJsonTopLevelNote => item !== null)
       .filter((item) => !slideConnectionKeySet.has(buildExportItemKey(item)));
 
     return [...bpmItems, ...svItems, ...topLevelItems, ...slideItems];
   }, [approxEq, bpmEvents, metadata.bpm, notes, slideChains, sortBpmEvents, sortNotes, sortSvEvents, svEvents]);
 
-  const exportJson = useMemo(() => JSON.stringify(chartJson), [chartJson]);
+  const garupaChartJsonText = useMemo(() => JSON.stringify(garupaChartJson), [garupaChartJson]);
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
   const [importJsonModalLevel, setImportJsonModalLevel] = useState<ImportJsonModalLevel>("chart");
   const [importJsonText, setImportJsonText] = useState("");
@@ -912,7 +904,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const fileName = getExportFileName();
 
     if (!isTauriRuntimeEnvironment()) {
-      const payload = new Blob([exportJson], { type: "application/json;charset=utf-8" });
+      const payload = new Blob([garupaChartJsonText], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(payload);
       const link = document.createElement("a");
       link.href = url;
@@ -929,7 +921,7 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const savedPath = await invoke<string | null>("save_chart_json_via_dialog", {
         defaultFileName: fileName,
-        jsonText: exportJson,
+        jsonText: garupaChartJsonText,
       });
 
       if (!savedPath) {
@@ -949,7 +941,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const exportBestdoriV2ToClipboard = async () => {
     try {
-      const bestdori = convertCurrentChartJsonToBestdoriV2(chartJson);
+      const bestdori = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
       const bestdoriJsonText = JSON.stringify(bestdori);
 
       if (isTauriRuntimeEnvironment()) {
@@ -990,7 +982,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const openImportJsonModal = () => {
-    setImportJsonText(exportJson);
+    setImportJsonText(garupaChartJsonText);
     setImportJsonModalLevel("chart");
     setImportCommunityPostId("");
     setImportJsonSelectedPath("");
@@ -1014,7 +1006,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setImportJsonModalLevel("bestdori-v2");
   };
 
-  const applyParsedCurrentChartJson = (parsed: unknown): AppliedChartJsonSummary => {
+  const applyParsedGarupaChartJson = (parsed: unknown): AppliedGarupaChartJsonSummary => {
     if (!Array.isArray(parsed)) {
       throw new Error("Chart JSON top-level must be an array.");
     }
@@ -1268,7 +1260,7 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const applyChartImportStatus = (label: string, summary: AppliedChartJsonSummary) => {
+  const applyChartImportStatus = (label: string, summary: AppliedGarupaChartJsonSummary) => {
     const regressionNotices = [
       summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
       summary.regressedHabahiro ? "已按当前模式自动执行去2026愚人节回退。" : "",
@@ -1287,7 +1279,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const applyImportJsonText = () => {
     try {
       const parsed: unknown = JSON.parse(importJsonText);
-      const summary = applyParsedCurrentChartJson(parsed);
+      const summary = applyParsedGarupaChartJson(parsed);
       applyChartImportStatus("已应用 JSON 文本", summary);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1338,20 +1330,6 @@ export function useEditorIoAndShortcuts(params: any) {
     }
     return value.trim();
   };
-
-  const readBlobAsDataUrl = (blob: Blob): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("blob to data url failed"));
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-        } else {
-          reject(new Error("blob to data url returned invalid result"));
-        }
-      };
-      reader.readAsDataURL(blob);
-    });
 
   const pushBlockingProgress = (operationId: string, percent: number, message: string) => {
     if (currentDownloadOperationIdRef.current !== operationId) {
@@ -1410,80 +1388,49 @@ export function useEditorIoAndShortcuts(params: any) {
       pushImportProgress(15, "正在请求官方谱面与歌曲信息…");
       const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty]);
       pushImportProgress(42, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToCurrentChartJson(payload.chart);
+      const converted = convertBestdoriV2ToGarupaChartJson(payload.chart);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
       }
-      pushImportProgress(58, "正在应用谱面内容…");
-      const summary = applyParsedCurrentChartJson(converted);
-      let audioDecoded = false;
-      let importedBgmDataUrl: string | null = null;
-      try {
-        pushImportProgress(70, "正在下载歌曲音频…");
-        const audioBlob = await fetchBestdoriFileBlob(payload.resources.audioUrl, "audio/mpeg", "bestdori song audio");
-        if (audioBlob.size > 0) {
-          pushImportProgress(82, "正在处理音频数据…");
-          const audioObjectUrl = URL.createObjectURL(audioBlob);
-          importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return audioObjectUrl;
+      pushImportProgress(58, "正在准备当前工程媒体…");
+      const bgmRef = await materializeBestdoriMediaInWorkspace({
+        server: payload.resources.server,
+        purpose: "bgm",
+        nativeId: payload.resources.audioLogicalPath,
+        logicalPath: payload.resources.audioLogicalPath,
+        title: payload.audioFileName,
+        url: payload.resources.audioUrl,
+      });
+      const coverRef = await materializeBestdoriMediaInWorkspace({
+        server: payload.resources.server,
+        purpose: "cover",
+        nativeId: payload.resources.jacketLogicalPath,
+        logicalPath: payload.resources.jacketLogicalPath,
+        title: `${payload.metadata.title} cover`,
+        url: payload.resources.jacketUrl,
+      });
+      const mvRef = payload.resources.mvUrl === null
+        ? null
+        : await materializeBestdoriMediaInWorkspace({
+            server: payload.resources.server,
+            purpose: "mv",
+            nativeId: payload.resources.mvLogicalPath!,
+            logicalPath: payload.resources.mvLogicalPath!,
+            title: `${payload.metadata.title} MV`,
+            url: payload.resources.mvUrl,
           });
-          setAudioFileName(payload.audioFileName);
-          setAudioDurationSec(0);
-          const probe = new Audio(audioObjectUrl);
-          probe.preload = "metadata";
-          probe.onloadedmetadata = () => {
-            if (Number.isFinite(probe.duration) && probe.duration > 0) {
-              setAudioDurationSec(probe.duration);
-            } else {
-              setAudioDurationSec(0);
-            }
-          };
-          probe.onerror = () => {
-            setAudioDurationSec(0);
-          };
-          audioDecoded = true;
-        }
-      } catch {
-        audioDecoded = false;
-      }
-      if (!audioDecoded) {
-        const fallbackAudioUrl = resolveTrimmedString(payload.resources.audioUrl);
-        if (fallbackAudioUrl) {
-          importedBgmDataUrl = fallbackAudioUrl;
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return fallbackAudioUrl;
-          });
-          setAudioFileName(payload.audioFileName);
-          setAudioDurationSec(0);
-        } else {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return null;
-          });
-          setAudioFileName("");
-          setAudioDurationSec(0);
-        }
-      }
+      pushImportProgress(82, "正在应用谱面与工程媒体…");
+      const summary = applyParsedGarupaChartJson(converted);
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
+        ...current,
+        bgm: bgmRef,
+        cover: coverRef,
+        mv: mvRef,
+      }));
+      setAudioFileName(payload.audioFileName);
+      setAudioDurationSec(0);
       pushImportProgress(92, "正在写入谱面元信息…");
-      let importedCoverDataUrl = payload.resources.jacketUrl;
-      try {
-        const coverBlob = await fetchBestdoriFileBlob(payload.resources.jacketUrl, "image/png", "bestdori song jacket");
-        if (coverBlob.size > 0) {
-          importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
-        }
-      } catch {
-        // keep URL fallback when jacket download fails
-      }
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(payload.metadata.title),
@@ -1494,19 +1441,15 @@ export function useEditorIoAndShortcuts(params: any) {
         offsetMs: Number.isFinite(Number(payload.metadata.offsetMs))
           ? Math.round(Number(payload.metadata.offsetMs))
           : 0,
-        bgmDataUrl: importedBgmDataUrl,
-        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
-        mvDataUrl: resolveTrimmedString(payload.resources.mvUrl) || null,
         mvOffsetMs: 0,
       }));
-      const label = audioDecoded
-        ? `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`
-        : `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息（音频未载入）`;
+      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`;
       applyChartImportStatus(label, summary);
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
+      await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = error instanceof Error ? error.message : String(error);
       completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
       setStatusMessage(`官方谱面导入失败：${message}`);
@@ -1540,13 +1483,17 @@ export function useEditorIoAndShortcuts(params: any) {
         return fallback;
       }
     };
-    const isBestdoriHostUrl = (value: string): boolean => {
+    const bestdoriServerFromUrl = (value: string): BestdoriAssetServer | null => {
       try {
         const parsed = new URL(value);
         const host = parsed.host.toLowerCase();
-        return host === "bestdori.com" || host === "www.bestdori.com";
+        if (host !== "bestdori.com" && host !== "www.bestdori.com") return null;
+        const server = parsed.pathname.split("/").filter(Boolean)[1];
+        return server === "jp" || server === "en" || server === "tw" || server === "cn" || server === "kr"
+          ? server
+          : "jp";
       } catch {
-        return false;
+        return null;
       }
     };
     const pushImportProgress = (percent: number, message: string) =>
@@ -1568,96 +1515,54 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       pushImportProgress(34, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToCurrentChartJson(post.chart);
+      const converted = convertBestdoriV2ToGarupaChartJson(post.chart);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("社区谱面解析成功，但未解析到可见音符。");
       }
 
-      pushImportProgress(54, "正在应用谱面内容…");
-      const summary = applyParsedCurrentChartJson(converted);
+      pushImportProgress(54, "正在解析社区歌曲媒体…");
       const songResources = await resolveBestdoriCommunitySongResourceUrls(post.song);
 
-      let importedBgmDataUrl: string | null = null;
-      let importedCoverDataUrl: string | null = null;
-      let audioReadyForEditor = false;
       const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
       const coverUrl = typeof songResources?.coverUrl === "string" ? songResources.coverUrl.trim() : "";
-
-      if (audioUrl.length > 0) {
-        try {
-          if (isBestdoriHostUrl(audioUrl)) {
-            pushImportProgress(66, "正在下载社区歌曲音频…");
-            const audioBlob = await fetchBestdoriFileBlob(audioUrl, "audio/mpeg", "bestdori community song audio");
-            if (audioBlob.size > 0) {
-              const objectUrl = URL.createObjectURL(audioBlob);
-              importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
-              setAudioObjectUrl((current: string | null) => {
-                if (current) {
-                  URL.revokeObjectURL(current);
-                }
-                return objectUrl;
-              });
-              setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
-              setAudioDurationSec(0);
-              const probe = new Audio(objectUrl);
-              probe.preload = "metadata";
-              probe.onloadedmetadata = () => {
-                if (Number.isFinite(probe.duration) && probe.duration > 0) {
-                  setAudioDurationSec(probe.duration);
-                } else {
-                  setAudioDurationSec(0);
-                }
-              };
-              probe.onerror = () => {
-                setAudioDurationSec(0);
-              };
-              audioReadyForEditor = true;
-            }
-          }
-        } catch {
-          audioReadyForEditor = false;
-        }
+      const audioServer = audioUrl.length === 0 ? null : bestdoriServerFromUrl(audioUrl);
+      const coverServer = coverUrl.length === 0 ? null : bestdoriServerFromUrl(coverUrl);
+      if (audioUrl.length > 0 && audioServer === null) {
+        throw new Error("社区歌曲音频不属于已注册Bestdori资源源，不能保留裸URL。");
       }
-
-      if (!audioReadyForEditor) {
-        if (audioUrl.length > 0) {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return audioUrl;
+      if (coverUrl.length > 0 && coverServer === null) {
+        throw new Error("社区歌曲封面不属于已注册Bestdori资源源，不能保留裸URL。");
+      }
+      pushImportProgress(66, "正在安装社区歌曲媒体…");
+      const bgmRef = audioServer === null
+        ? null
+        : await materializeBestdoriMediaInWorkspace({
+            server: audioServer,
+            purpose: "bgm",
+            nativeId: `community-${postId}-bgm`,
+            title: resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`),
+            url: audioUrl,
           });
-          setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
-          setAudioDurationSec(0);
-          importedBgmDataUrl = audioUrl;
-        } else {
-          setAudioObjectUrl((current: string | null) => {
-            if (current) {
-              URL.revokeObjectURL(current);
-            }
-            return null;
+      const coverRef = coverServer === null
+        ? null
+        : await materializeBestdoriMediaInWorkspace({
+            server: coverServer,
+            purpose: "cover",
+            nativeId: `community-${postId}-cover`,
+            title: `community-post-${postId}-cover`,
+            url: coverUrl,
           });
-          setAudioFileName("");
-          setAudioDurationSec(0);
-          importedBgmDataUrl = null;
-        }
-      }
-
-      if (coverUrl.length > 0) {
-        importedCoverDataUrl = coverUrl;
-        if (isBestdoriHostUrl(coverUrl)) {
-          try {
-            pushImportProgress(78, "正在下载社区歌曲封面…");
-            const coverBlob = await fetchBestdoriFileBlob(coverUrl, "image/png", "bestdori community song cover");
-            if (coverBlob.size > 0) {
-              importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
-            }
-          } catch {
-            // fallback to raw cover url
-          }
-        }
-      }
+      pushImportProgress(82, "正在应用谱面与工程媒体…");
+      const summary = applyParsedGarupaChartJson(converted);
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
+        ...current,
+        bgm: bgmRef,
+        cover: coverRef,
+        mv: null,
+      }));
+      setAudioFileName(bgmRef === null ? "" : resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+      setAudioDurationSec(0);
 
       pushImportProgress(92, "正在写入谱面元信息…");
       setMetadata((current: ChartMetadata) => ({
@@ -1670,9 +1575,6 @@ export function useEditorIoAndShortcuts(params: any) {
           ? String(Math.round(Number(post.level)))
           : "",
         offsetMs: 0,
-        bgmDataUrl: importedBgmDataUrl,
-        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
-        mvDataUrl: null,
         mvOffsetMs: 0,
       }));
 
@@ -1684,6 +1586,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
+      await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = error instanceof Error ? error.message : String(error);
       completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
       setStatusMessage(`社区谱面导入失败：${message}`);
@@ -1711,14 +1614,21 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传社区谱面…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      const coverFileBytes = await chartMediaLease.readBytes("cover");
+      if (audioFileBytes === null || coverFileBytes === null) {
+        throw new Error("社区谱面上传需要已安装的歌曲音频和封面资源。");
+      }
       const parsedTags = uploadCommunityPostTags.length > 0 ? uploadCommunityPostTags : undefined;
       const result = await publishBestdoriCommunityChartFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
-        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
+        coverFileBytes,
+        coverFileName: "cover.png",
+        coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
         contentText: uploadCommunityPostContent,
         tags: parsedTags,
         onStage: (stage) => {
@@ -1774,18 +1684,24 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传至 NotGarupa 服务器…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      const coverFileBytes = await chartMediaLease.readBytes("cover");
+      if (audioFileBytes === null || coverFileBytes === null) {
+        throw new Error("NotGarupa上传需要已安装的歌曲音频和封面资源。");
+      }
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 1
         ? Math.trunc(difficultyValue)
         : 1;
       const result = await uploadNotGarupaLevelFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
-        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
+        coverFileBytes,
         coverFileName: "cover.png",
+        coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
         description: uploadCommunityPostContent,
         tags: uploadCommunityPostTags,
         difficulty: resolvedDifficulty,
@@ -1840,16 +1756,20 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传到测试服…");
     try {
-      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
+      const audioFileBytes = await chartMediaLease.readBytes("bgm");
+      if (audioFileBytes === null) {
+        throw new Error("测试服上传需要已安装的歌曲音频资源。");
+      }
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 0
         ? Math.trunc(difficultyValue)
         : undefined;
       const result = await uploadSonolusLevelFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
-        audioSourceUrl: resolvedAudioSource,
-        audioFileName: resolveTrimmedString(audioFileName),
+        audioFileBytes,
+        audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
+        audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
         difficulty: resolvedDifficulty,
         onStage: (stage) => {
           const entry = progressByStage[stage];
@@ -1904,7 +1824,7 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const text = await file.text();
       const parsed: unknown = JSON.parse(text);
-      const summary = applyParsedCurrentChartJson(parsed);
+      const summary = applyParsedGarupaChartJson(parsed);
       applyChartImportStatus(`已导入 ${file.name}`, summary);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1928,10 +1848,10 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const text = await file.text();
       const parsed: unknown = JSON.parse(text);
-      const converted = convertBestdoriV2ToCurrentChartJson(parsed);
+      const converted = convertBestdoriV2ToGarupaChartJson(parsed);
       setImportJsonText(JSON.stringify(converted));
       setImportJsonModalLevel("chart");
-      setStatusMessage("已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。");
+      setStatusMessage("已将 Bestdori V2 转换为Garupa 谱面 JSON，请在导入页点击“应用”。");
     } catch (error) {
       setImportBestdoriV2SelectedPath(previousSelectedPath);
       const message = error instanceof Error ? error.message : String(error);
@@ -1952,84 +1872,62 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsSkinSettingsOpen(true);
   };
 
+  const importWorkspaceMedia = async (
+    purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
+    file: File,
+  ) => {
+    const imported = await resourceManager.importWorkspaceMedia({
+      purpose,
+      fileName: file.name,
+      mediaType: file.type || "application/octet-stream",
+      bytes: new Uint8Array(await file.arrayBuffer()),
+    });
+    if (imported.status === "rejected") {
+      throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+    }
+    return imported.value.ref;
+  };
+
   const handleCoverUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMetadata((current: ChartMetadata) => ({ ...current, coverDataUrl: reader.result as string }));
-        setStatusMessage("封面已更新。");
-      }
-    };
-    reader.readAsDataURL(file);
+    if (!file) return;
+    void importWorkspaceMedia("cover", file).then((cover) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, cover }));
+      setStatusMessage("封面资源已导入。");
+    }).catch((error) => setStatusMessage(`封面导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const handleAudioUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
-
-    void (async () => {
-      let objectUrl: string | null = null;
-      try {
-        const dataUrl = await readBlobAsDataUrl(file);
-        objectUrl = URL.createObjectURL(file);
-        setMetadata((current: ChartMetadata) => ({ ...current, bgmDataUrl: dataUrl }));
-        setAudioObjectUrl((current: string | null) => {
-          if (current) {
-            URL.revokeObjectURL(current);
-          }
-          return objectUrl;
-        });
-        setAudioFileName(file.name);
-
-        const probe = new Audio(objectUrl);
-        probe.preload = "metadata";
-        probe.onloadedmetadata = () => {
-          if (Number.isFinite(probe.duration) && probe.duration > 0) {
-            setAudioDurationSec(probe.duration);
-            setStatusMessage(`Audio loaded: ${file.name} (${formatDuration(probe.duration)})`);
-          } else {
-            setAudioDurationSec(0);
-          }
-        };
-        probe.onerror = () => {
-          setStatusMessage("Audio read failed. Please check the file format.");
-        };
-      } catch {
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
-        setStatusMessage("Audio read failed. Please check the file format.");
-      }
-    })();
+    if (!file) return;
+    void importWorkspaceMedia("bgm", file).then((bgm) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, bgm }));
+      setAudioFileName(file.name);
+      setAudioDurationSec(0);
+      setStatusMessage(`音频资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`音频导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const handleMvUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
-    if (!file) {
-      return;
-    }
+    if (!file) return;
+    void importWorkspaceMedia("mv", file).then((mv) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, mv }));
+      setStatusMessage(`MV资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`MV导入失败：${error instanceof Error ? error.message : String(error)}`));
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setMetadata((current: ChartMetadata) => ({ ...current, mvDataUrl: reader.result as string }));
-        setStatusMessage(`MV资源已更新：${file.name}`);
-      }
-    };
-    reader.onerror = () => {
-      setStatusMessage("MV读取失败，请确认文件格式。");
-    };
-    reader.readAsDataURL(file);
+  const handleStageBackdropUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    void importWorkspaceMedia("stage-backdrop", file).then((stageBackdrop) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, stageBackdrop }));
+      setStatusMessage(`舞台背景资源已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`舞台背景导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
   const applyWindowPresetById = async (
@@ -2161,101 +2059,76 @@ export function useEditorIoAndShortcuts(params: any) {
     const normalized = normalizeSkinSelection(selection);
     const sequence = skinApplySeqRef.current + 1;
     skinApplySeqRef.current = sequence;
-    const downloadOperationId = `skin-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const downloadOperationId = `skin-resource-${sequence}`;
 
     setIsSkinApplying(true);
-    startDownloadProgress(downloadOperationId, "正在准备下载资源…");
-    const shouldReloadRhythm =
-      rhythmSkinAssetsRef.current === null ||
-      normalized.rhythmRipName !== skinSelection.rhythmRipName ||
-      normalized.rhythmServer !== skinSelection.rhythmServer;
-    const shouldReloadDirectional =
-      directionalSkinAssetsRef.current === null ||
-      normalized.directionalRipName !== skinSelection.directionalRipName ||
-      normalized.directionalServer !== skinSelection.directionalServer;
-    const shouldReloadRhythmSe =
-      rhythmSeSkinAssetsRef.current === null ||
-      normalized.rhythmSeRipName !== skinSelection.rhythmSeRipName ||
-      normalized.rhythmSeServer !== skinSelection.rhythmSeServer;
-    const shouldReloadDirectionalSe =
-      directionalSeSkinAssetsRef.current === null ||
-      normalized.directionalSeRipName !== skinSelection.directionalSeRipName ||
-      normalized.directionalSeServer !== skinSelection.directionalSeServer;
-    const shouldReloadBgSkin =
-      bgSkinAssetsRef.current === null ||
-      normalized.bgSkinRipName !== skinSelection.bgSkinRipName ||
-      normalized.bgSkinServer !== skinSelection.bgSkinServer;
-    const shouldReloadFieldSkin =
-      fieldSkinAssetsRef.current === null ||
-      normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName ||
-      normalized.fieldSkinServer !== skinSelection.fieldSkinServer;
-    const shouldReloadJudgeSkin =
-      judgeSkinAssetsRef.current === null ||
-      normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName ||
-      normalized.judgeSkinServer !== skinSelection.judgeSkinServer;
+    startDownloadProgress(downloadOperationId, "正在准备资源快照…");
     const rhythmCatalogKind = isHabahiroRhythmRipName(normalized.rhythmRipName) ? "habahiroRhythm" : "rhythm";
     setStatusMessage(
       `正在加载皮肤：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
     );
 
     try {
-      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextBgSkin, nextFieldSkin, nextJudgeSkin, commonTapSkillSe] = await Promise.all([
-        shouldReloadRhythm
-          ? downloadBestdoriRhythmSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(rhythmSkinAssetsRef.current),
-        shouldReloadDirectional
-          ? downloadBestdoriDirectionalSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(directionalSkinAssetsRef.current),
-        shouldReloadRhythmSe
-          ? downloadBestdoriRhythmSeSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(rhythmSeSkinAssetsRef.current),
-        shouldReloadDirectionalSe
-          ? downloadBestdoriDirectionalSeSkinAssets(normalized, { operationId: downloadOperationId })
-          : Promise.resolve(directionalSeSkinAssetsRef.current),
-        shouldReloadBgSkin
-          ? downloadBestdoriBgSkinAssets(normalized.bgSkinRipName, { operationId: downloadOperationId }, normalized.bgSkinServer)
-          : Promise.resolve(bgSkinAssetsRef.current),
-        shouldReloadFieldSkin
-          ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId }, normalized.fieldSkinServer)
-          : Promise.resolve(fieldSkinAssetsRef.current),
-        shouldReloadJudgeSkin
-          ? downloadBestdoriJudgeSkinAssets(normalized.judgeSkinRipName, { operationId: downloadOperationId }, normalized.judgeSkinServer)
-          : Promise.resolve(judgeSkinAssetsRef.current),
-        commonTapSkillSeRef.current && !shouldReloadRhythmSe
-          ? Promise.resolve(commonTapSkillSeRef.current)
-          : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId, server: normalized.rhythmSeServer }),
-      ]);
+      const catalog = await resourceManager.refreshCatalog("bestdori");
+      if (catalog.status === "rejected") {
+        throw new Error(`${catalog.failure.capability}: ${catalog.failure.boundary}`);
+      }
+      const resourceRefs = {
+        "skin.rhythm": requireBestdoriRef(normalized.rhythmServer, "noteskin", normalized.rhythmRipName),
+        "skin.directional": requireBestdoriRef(normalized.directionalServer, "noteskin", normalized.directionalRipName),
+        "skin.rhythm-se": requireBestdoriRef(normalized.rhythmSeServer, "tapseskin", normalized.rhythmSeRipName),
+        "skin.directional-se": requireBestdoriRef(normalized.directionalSeServer, "tapseskin", normalized.directionalSeRipName),
+        "skin.field": requireBestdoriRef(normalized.fieldSkinServer, "fieldskin", normalized.fieldSkinRipName),
+        "skin.background": requireBestdoriRef(normalized.bgSkinServer, "bgskin", normalized.bgSkinRipName),
+        "skin.judge": requireBestdoriRef(normalized.judgeSkinServer, "judgeskin", normalized.judgeSkinRipName),
+        "skin.common-se": requireBestdoriRef(normalized.rhythmSeServer, "sound-common", "common"),
+      } as const;
+      const sampleResourceRefs = {
+        "skin.rhythm-sample": requireBestdoriRef(
+          normalized.rhythmServer,
+          "noteskin",
+          bestdoriNoteskinSampleNativeId(normalized.rhythmRipName),
+        ),
+        "skin.directional-sample": requireBestdoriRef(
+          normalized.directionalServer,
+          "noteskin",
+          bestdoriNoteskinSampleNativeId(normalized.directionalRipName),
+        ),
+      } as const;
+      const snapshot = await resourceManager.createSnapshotFromRefs(Object.freeze({
+        ...resourceRefs,
+        ...sampleResourceRefs,
+      }));
+      if (snapshot.status === "rejected") {
+        throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
+      }
+      const lease = await resourceManager.acquireSnapshot(snapshot.value.snapshotId);
+      if (lease.status === "rejected") {
+        throw new Error(`${lease.failure.capability}: ${lease.failure.boundary}`);
+      }
+      const nextApplied = await decodeAppliedSkinResources(lease.value, {
+        rhythm: normalized.rhythmRipName,
+        directional: normalized.directionalRipName,
+        judge: normalized.judgeSkinRipName,
+      });
       if (skinApplySeqRef.current !== sequence) {
+        await nextApplied.dispose();
         return;
       }
-
-      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextBgSkin || !nextFieldSkin || !nextJudgeSkin || !commonTapSkillSe) {
-        throw new Error("Skin assets incomplete after split loading.");
+      const selected = resourceManager.replaceSelection(resourceRefs);
+      if (selected.status === "rejected") {
+        await nextApplied.dispose();
+        throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
       }
-
-      rhythmSkinAssetsRef.current = nextRhythm;
-      directionalSkinAssetsRef.current = nextDirectional;
-      rhythmSeSkinAssetsRef.current = nextRhythmSe;
-      directionalSeSkinAssetsRef.current = nextDirectionalSe;
-      bgSkinAssetsRef.current = nextBgSkin;
-      fieldSkinAssetsRef.current = nextFieldSkin;
-      judgeSkinAssetsRef.current = nextJudgeSkin;
-      commonTapSkillSeRef.current = commonTapSkillSe;
-      setRuntimeBgSkinAssets(nextBgSkin);
-      setRuntimeFieldSkinAssets(nextFieldSkin);
-      setRuntimeJudgeSkinAssets(nextJudgeSkin);
-      setRuntimeSeAssets({
-        rhythm: nextRhythmSe,
-        directional: nextDirectionalSe,
-        tapSkill: commonTapSkillSe,
-      });
-      setSkinAssets(combineSkinAssets(nextRhythm, nextDirectional));
+      const previousApplied = appliedSkinResourcesRef.current;
+      appliedSkinResourcesRef.current = nextApplied;
+      setAppliedSkinResources(nextApplied);
+      setSkinAssets(nextApplied.note);
       setSkinSelection(normalized);
       setPendingSkinSelection(normalized);
+      await previousApplied?.dispose();
 
-      if (persist) {
-        writeSkinSelectionToStorage(normalized);
-      }
+      void persist;
 
       completeDownloadProgress("资源下载完成。");
 
@@ -2289,13 +2162,12 @@ export function useEditorIoAndShortcuts(params: any) {
       return;
     }
     didInitSkinRef.current = true;
-    const initial = readSkinSelectionFromStorage();
-    void applyBestdoriSkinSelection(initial, true);
-  }, [applyBestdoriSkinSelection, didInitSkinRef, readSkinSelectionFromStorage]);
+    void applyBestdoriSkinSelection(skinSelection, false);
+  }, [applyBestdoriSkinSelection, didInitSkinRef, skinSelection]);
 
   return {
-    chartJson,
-    exportJson,
+    garupaChartJson,
+    garupaChartJsonText,
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,
@@ -2339,6 +2211,7 @@ export function useEditorIoAndShortcuts(params: any) {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
+    handleStageBackdropUpload,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
