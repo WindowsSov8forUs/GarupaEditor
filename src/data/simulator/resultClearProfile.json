@@ -1,0 +1,4918 @@
+{
+  "clearNodes": [
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge/Mask",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "mask_gauge",
+        "atlas": "menu",
+        "size": [
+          987,
+          30
+        ],
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge/Gauge",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "gauge_score_solo",
+        "atlas": "menu",
+        "size": [
+          986,
+          30
+        ],
+        "pivot": 3,
+        "depth": 9,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/Score",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "position": [
+        538.0,
+        -116.0,
+        -0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        -0.0,
+        0.0,
+        0.9999999999999962
+      ],
+      "label": {
+        "text": "0",
+        "size": [
+          300,
+          50
+        ],
+        "fontSize": 40,
+        "spacing": -1,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge/GaugeShine",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "position": [
+        492.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "gauge_score_solo",
+        "atlas": "menu",
+        "size": [
+          984,
+          28
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/Caption",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "position": [
+        64.0,
+        -112.0,
+        -0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        -0.0,
+        0.0,
+        0.9999999999999962
+      ],
+      "label": {
+        "text": "スコア",
+        "size": [
+          310,
+          38
+        ],
+        "fontSize": 24,
+        "spacing": 0,
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement",
+      "parent": "ComponentRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/Star",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "position": [
+        38.0,
+        -110.0,
+        -0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        -0.0,
+        0.0,
+        0.9999999999999962
+      ],
+      "sprite": {
+        "name": "icon_left_scorebar",
+        "atlas": "menu",
+        "size": [
+          37,
+          37
+        ],
+        "pivot": 4,
+        "depth": 5,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo",
+      "position": [
+        -540.0,
+        8.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window",
+      "parent": "ComponentRoot/ClearJudgement",
+      "position": [
+        0.0,
+        -41.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge/RankObjectRoot",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer",
+      "parent": "ComponentRoot/ClearJudgement/Window",
+      "position": [
+        0.0,
+        216.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo",
+      "position": [
+        -564.0,
+        77.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        0.9999999999999962
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/base",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        0.9999999999999923,
+        -8.742277985753229e-08,
+        -8.742278750027415e-08,
+        -1.000000000000004
+      ],
+      "sprite": {
+        "name": "bg_base_tab",
+        "atlas": "menu",
+        "size": [
+          1028,
+          103
+        ],
+        "pivot": 6,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/NextButton",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer",
+      "position": [
+        445.0,
+        -476.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "button_pink",
+        "atlas": "common",
+        "size": [
+          248,
+          72
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge/gauge",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/ScoreGauge",
+      "position": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "bg_gauge_back_gray",
+        "atlas": "menu",
+        "size": [
+          989,
+          32
+        ],
+        "pivot": 3,
+        "depth": 8,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background/tab",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot/TotalScoreInfo/Background",
+      "position": [
+        0.0,
+        -98.0,
+        0.0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        0.9999999999999923,
+        -8.742277657347603e-08,
+        -8.742277657347569e-08,
+        -1.000000000000004
+      ],
+      "sprite": {
+        "name": "bg_base_tab_active",
+        "atlas": "menu",
+        "size": [
+          754,
+          60
+        ],
+        "pivot": 6,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/TotalScoreComponentRoot",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer",
+      "position": [
+        -9.0,
+        111.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearJudgement/Window/MiddleContainer/NextButton/Label",
+      "parent": "ComponentRoot/ClearJudgement/Window/MiddleContainer/NextButton",
+      "position": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "label": {
+        "text": "次へ",
+        "size": [
+          200,
+          72
+        ],
+        "fontSize": 32,
+        "spacing": 0,
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    }
+  ],
+  "bannerNodes": [
+    {
+      "path": "Root/LiveFailedRoot",
+      "parent": "Root",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "alpha": 1.0
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        47.39999771118164,
+        -0.7000007629394531,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_si",
+        "atlas": "banner",
+        "size": [
+          122,
+          122
+        ],
+        "pivot": 4,
+        "depth": 5,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        -139.3000030517578,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_i",
+        "atlas": "banner",
+        "size": [
+          110,
+          118
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        74.59999084472656,
+        1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_sei",
+        "atlas": "banner",
+        "size": [
+          124,
+          124
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        155.3000030517578,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_pai",
+        "atlas": "banner",
+        "size": [
+          124,
+          122
+        ],
+        "pivot": 4,
+        "depth": 7,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/Par_suscces_1",
+      "parent": "Root/LiveSuccesRoot",
+      "position": [
+        0.0,
+        0.0,
+        -86.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        0.9999999999998939,
+        3.258413698859017e-07,
+        3.2584136988588444e-07,
+        -1.0000000000000533
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        -6.0,
+        3.0,
+        0.0
+      ],
+      "scale": [
+        1.0199999809265137,
+        1.0199999809265137,
+        1.0199999809265137
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        -31.599998474121094,
+        0.9000015258789062,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_bu",
+        "atlas": "banner",
+        "size": [
+          116,
+          120
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        185.99998474121094,
+        -1.5999984741210938,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_ko",
+        "atlas": "banner",
+        "size": [
+          120,
+          122
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        -47.39999771118164,
+        2.4000015258789062,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_bu",
+        "atlas": "banner",
+        "size": [
+          116,
+          120
+        ],
+        "pivot": 4,
+        "depth": 4,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        -245.39996337890625,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_ra",
+        "atlas": "banner",
+        "size": [
+          114,
+          112
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/Par_suscces_1/Par_sRing",
+      "parent": "Root/LiveSuccesRoot/Par_suscces_1",
+      "position": [
+        0.0,
+        -26.0,
+        -0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "parent": "Root/LiveSuccesRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        -151.0,
+        -1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_i",
+        "atlas": "banner",
+        "size": [
+          110,
+          118
+        ],
+        "pivot": 4,
+        "depth": 3,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot",
+      "parent": "Root",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "alpha": 1.0
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        251.79998779296875,
+        -1.2000007629394531,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_ten",
+        "atlas": "banner",
+        "size": [
+          110,
+          40
+        ],
+        "pivot": 4,
+        "depth": 8,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "alpha": 1.0
+    },
+    {
+      "path": "Root",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot",
+      "parent": "Root/LiveFailedRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        274.39996337890625,
+        -4.5,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_!",
+        "atlas": "banner",
+        "size": [
+          54,
+          112
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Root/LiveSuccesRoot/Par_suscces_1/Par_star",
+      "parent": "Root/LiveSuccesRoot/Par_suscces_1",
+      "position": [
+        0.0,
+        -0.0,
+        -0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        -246.8000030517578,
+        -0.8999996185302734,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_ra",
+        "atlas": "banner",
+        "size": [
+          114,
+          112
+        ],
+        "pivot": 4,
+        "depth": 2,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    }
+  ],
+  "rankNodes": [
+    {
+      "path": "Separator",
+      "parent": "",
+      "position": [
+        0.0,
+        -12.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "level_mark",
+        "atlas": "common",
+        "size": [
+          10,
+          7
+        ],
+        "pivot": 4,
+        "depth": 24,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "Label",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "label": {
+        "text": "S",
+        "size": [
+          55,
+          26
+        ],
+        "fontSize": 18,
+        "spacing": 0,
+        "pivot": 4,
+        "depth": 25,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "headerNodes": [
+    {
+      "path": "ComponentRoot/ClearStarRoot/ClearStar",
+      "parent": "ComponentRoot/ClearStarRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "icon_clear",
+        "atlas": "menu",
+        "size": [
+          56,
+          54
+        ],
+        "pivot": 4,
+        "depth": 9,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/DifficultyLabelPos",
+      "parent": "ComponentRoot",
+      "position": [
+        -407.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot",
+      "parent": "",
+      "position": [
+        -61.0,
+        333.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearStarRoot/APStar",
+      "parent": "ComponentRoot/ClearStarRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "icon_APclear",
+        "atlas": "menu",
+        "size": [
+          56,
+          54
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearStarRoot",
+      "parent": "ComponentRoot",
+      "position": [
+        -482.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.699999988079071,
+        0.699999988079071,
+        0.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "ComponentRoot/ClearStarRoot/NoClearStar",
+      "parent": "ComponentRoot/ClearStarRoot",
+      "position": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "scale": [
+        1.4932482242584229,
+        1.4932479858398438,
+        1.4932479858398438
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "icon_notclear_inactive",
+        "atlas": "menu",
+        "size": [
+          26,
+          26
+        ],
+        "pivot": 4,
+        "depth": 8,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "ComponentRoot/ClearStarRoot/FullComboStar",
+      "parent": "ComponentRoot/ClearStarRoot",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "icon_fullclear",
+        "atlas": "menu",
+        "size": [
+          56,
+          54
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    }
+  ],
+  "difficultyNodes": [
+    {
+      "path": "Difficulty",
+      "parent": "",
+      "position": [
+        0.0,
+        -2.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "label": {
+        "text": "HARD",
+        "size": [
+          94,
+          28
+        ],
+        "fontSize": 20,
+        "spacing": 0,
+        "pivot": 4,
+        "depth": 11,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "path": "Frame",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "label_square_white",
+        "atlas": "common",
+        "size": [
+          102,
+          34
+        ],
+        "pivot": 4,
+        "depth": 7,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "Bg",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "label_square_white",
+        "atlas": "common",
+        "size": [
+          97,
+          27
+        ],
+        "pivot": 4,
+        "depth": 8,
+        "color": [
+          0.18039214611053467,
+          0.9764706492424011,
+          0.1858823001384735,
+          1.0
+        ],
+        "type": 1
+      }
+    }
+  ],
+  "clips": {
+    "success": {
+      "duration": 2.2333333492279053,
+      "loop": false,
+      "curveCount": 33,
+      "constants": [
+        1.0199999809265137,
+        1.0199999809265137,
+        1.0199999809265137
+      ],
+      "bindings": [
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
+          "property": "position",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
+          "property": "position",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
+          "property": "position",
+          "index": 6,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
+          "property": "position",
+          "index": 9,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
+          "property": "position",
+          "index": 12,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
+          "property": "position",
+          "index": 15,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot",
+          "property": "scale",
+          "index": 18,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot",
+          "property": "active",
+          "index": 21,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot",
+          "property": "active",
+          "index": 22,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/Par_suscces_1",
+          "property": "active",
+          "index": 23,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
+          "property": "active",
+          "index": 24,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
+          "property": "active",
+          "index": 25,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
+          "property": "active",
+          "index": 26,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
+          "property": "active",
+          "index": 27,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
+          "property": "active",
+          "index": 28,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
+          "property": "active",
+          "index": 29,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot",
+          "property": "alpha",
+          "index": 30,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
+          "property": "active",
+          "index": 31,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
+          "property": "alpha",
+          "index": 32,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
+          "property": "scale",
+          "index": 33,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -245.39996337890625
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -31.599998474121094
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.9000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                185.99998474121094
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.5999984741210938
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                274.39996337890625
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -4.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.36048880219459534,
+                -0.01201629638671875,
+                -0.0009155272855423391,
+                -245.39996337890625
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.025749200955033302,
+                -0.0008583067683503032,
+                -5.722045534639619e-05,
+                -31.599998474121094
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.9000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                -0.20599360764026642,
+                0.006866454146802425,
+                0.00045776364277116954,
+                185.99998474121094
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0008046625298447907,
+                -2.6822086510946974e-05,
+                0.0,
+                -1.5999984741210938
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                -0.41198721528053284,
+                0.01373290829360485,
+                0.0009155272855423391,
+                274.39996337890625
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -4.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.03333333507180214,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -0.01673697866499424,
+                0.005235670600086451,
+                -0.0005149840726517141,
+                -245.39999389648438
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                28759.52734375,
+                -13069.20703125,
+                1951.280517578125,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                -0.0016093250596895814,
+                0.0004291533841751516,
+                -2.8610227673198096e-05,
+                -31.600000381469727
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.9000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.003218650119379163,
+                -0.0017166135367006063,
+                0.00022888182138558477,
+                186.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.5999984741210938
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.004119873046875,
+                -0.00274658203125,
+                0.00045776364277116954,
+                274.3999938964844
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -4.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.10000000149011612,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                7625.32666015625,
+                -7433.4208984375,
+                1575.5614013671875,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.1666666716337204,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -0.0037078857421875,
+                0.0012359619140625,
+                -1.1444088158896193e-05,
+                -245.40000915527344
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -15806.404296875,
+                -821.599365234375,
+                0.0,
+                96.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -31.600000381469727
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                37857.35546875,
+                -14909.734375,
+                2028.19482421875,
+                0.9000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.23333333432674408,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                -11966.1748046875,
+                -1461.6375732421875,
+                0.0,
+                96.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                27758.482421875,
+                -12211.63671875,
+                1847.234130859375,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.30000001192092896,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -31.600000381469727
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                -121.86917114257812,
+                -3831.23779296875,
+                71.324951171875,
+                96.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                186.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                32589.158203125,
+                -13631.443359375,
+                1970.1627197265625,
+                -1.5999979972839355
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3333333432674408,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -245.39999389648438
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.36666667461395264,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -11466.3466796875,
+                -1936.4417724609375,
+                71.25,
+                96.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                274.3999938964844
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                1330.9913330078125,
+                -2229.170166015625,
+                967.295166015625,
+                -4.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.4000000059604645,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -139.3000030517578
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.4333333373069763,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                186.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                -7611.712890625,
+                -2684.180419921875,
+                73.2000732421875,
+                96.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.46666666865348816,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -31.600000381469727
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.9000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.5333333611488342,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                74.59999084472656
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6000000238418579,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                186.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.5999979972839355
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6666666865348816,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                274.3999938964844
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                1507.38037109375,
+                -4576.60009765625,
+                -32.10531997680664,
+                121.0
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.8333333134651184,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                274.3999938964844
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -4.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                -0.19412106275558472,
+                0.8506706357002258,
+                -0.931550920009613,
+                1.3022211790084839
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                -0.17078176140785217,
+                0.8163854479789734,
+                -0.9189596176147461,
+                1.3022210597991943
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                -0.14706628024578094,
+                0.7818285226821899,
+                -0.9063715934753418,
+                1.3022210597991943
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.8999999761581421,
+          "keys": [
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                -2.2384612560272217,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3333333730697632,
+          "keys": [
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.029999999329447746
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3666666746139526,
+          "keys": [
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.5666667222976685,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.0,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.200000047683716,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.029999999329447746
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.2333333492279053,
+          "keys": [
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "time": 2.2333333492279053,
+          "name": "CallbackAnimation"
+        }
+      ]
+    },
+    "failed": {
+      "duration": 1.2000000476837158,
+      "loop": false,
+      "curveCount": 28,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
+          "property": "position",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
+          "property": "position",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
+          "property": "position",
+          "index": 6,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
+          "property": "position",
+          "index": 9,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
+          "property": "position",
+          "index": 12,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
+          "property": "position",
+          "index": 15,
+          "size": 3
+        },
+        {
+          "path": "Root/LiveSuccesRoot",
+          "property": "active",
+          "index": 18,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot",
+          "property": "active",
+          "index": 19,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot",
+          "property": "active",
+          "index": 20,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
+          "property": "active",
+          "index": 21,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
+          "property": "active",
+          "index": 22,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
+          "property": "active",
+          "index": 23,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
+          "property": "active",
+          "index": 24,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
+          "property": "active",
+          "index": 25,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
+          "property": "active",
+          "index": 26,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot",
+          "property": "alpha",
+          "index": 27,
+          "size": 1
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -246.8000030517578
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.8999996185302734
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -151.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -47.39999771118164
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                2.4000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                47.39999771118164
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.7000007629394531
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                155.3000030517578
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                251.79998779296875
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.2000007629394531
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -246.8000030517578
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.8999996185302734
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -151.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -47.39999771118164
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                2.4000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                47.39999771118164
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.7000007629394531
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                155.3000030517578
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                251.79998779296875
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.2000007629394531
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.03333333507180214,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -246.8000030517578
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -2170.654541015625,
+                1971.479248046875,
+                -605.7515258789062,
+                62.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.10000000149011612,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -151.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                -1380.172607421875,
+                1541.726806640625,
+                -548.302490234375,
+                62.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.1666666716337204,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -47.39999771118164
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                -1349.600341796875,
+                1444.0369873046875,
+                -510.4136962890625,
+                62.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.23333333432674408,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                47.39999771118164
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -1794.845947265625,
+                1773.5740966796875,
+                -579.5361328125,
+                62.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.30000001192092896,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                155.3000030517578
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                -683.8299560546875,
+                1110.71142578125,
+                -478.33538818359375,
+                62.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3333333432674408,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -246.8000030517578
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.8999996185302734
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.36666667461395264,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                251.79998779296875
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                -2090.064453125,
+                1980.7265625,
+                -616.7788696289062,
+                62.0
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.4000000059604645,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -151.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.46666666865348816,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -47.39999771118164
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                2.4000015258789062
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.5333333611488342,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                47.39999771118164
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -0.7000007629394531
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6000000238418579,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                155.3000030517578
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6666666865348816,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                251.79998779296875
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -1.2000007629394531
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.0,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                -5.820001602172852,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.1666666269302368,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.029999999329447746
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.2000000476837158,
+          "keys": [
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "time": 1.2000000476837158,
+          "name": "CallbackAnimation"
+        }
+      ]
+    },
+    "next": {
+      "duration": 0.30000001192092896,
+      "loop": false,
+      "curveCount": 4,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "",
+          "property": "scale",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "",
+          "property": "enabled",
+          "index": 3,
+          "size": 1
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -1259.47509765625,
+                220.40814208984375,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -1763.2650146484375,
+                308.5713806152344,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                -1259.47509765625,
+                220.40814208984375,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.11666666716337204,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                1199.9998779296875,
+                -180.0,
+                0.0,
+                1.399999976158142
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.21666666865348816,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -691.1998291015625,
+                86.39998626708984,
+                0.0,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.30000001192092896,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "time": 0.30000001192092896,
+          "name": "CallbackAnimation"
+        }
+      ]
+    }
+  }
+}

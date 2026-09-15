@@ -12,6 +12,35 @@
 - 无头/无尾 Slide 与无判定 Slide
 - 变速 SV 与 TimingGroup
 
+## 资源管理
+
+程序资源统一由主程序的 `ApplicationResourceManager` 管理：
+
+- 随程序发布的图标、字体和默认图片属于内置资源；
+- Bestdori Skin、音效、粒子等可复用包来自实时资源站目录，可离线使用最后一次完整目录和已安装全局缓存；
+- 用户文件及Bestdori歌曲BGM、封面、MV只作为当前可恢复写谱会话的工程媒体，不进入永久全局媒体库。
+
+模块只消费主程序建立的不可变资源租约，不自行下载、读取路径或选择fallback。网络资源的SHA-256在下载完成后用于检查本地完整性，不作为固定版本或资源允许列表；资源站新增ID或更新同ID内容不要求应用预先登记。Builtin总集合由source manifest生成，Application-only集合与Simulator子集分别由两个catalog拥有；两者互斥，且并集与生成的Builtin manifest一致。所有Builtin都以禁止内联的生产URL保持source-manifest原始字节，并在Vite构建后逐项复核dist的长度与SHA-256；仅编译成功不视为资源打包通过。
+
+App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/library/`只为Builtin和可复用Network包维护原作逻辑Bundle投影，不宣称复刻原作Android物理缓存。当前谱面媒体由`cache/session/project-media/`拥有，并在`chart-resources.v5.json`绑定落盘、旧Lease释放后回收；共享Blob不等于永久媒体库。Simulator的Skin、SE、粒子和歌曲媒体仍使用同一Snapshot/Lease链。
+
+内置Simulator已通过Public Schema 13与transport Schema 3接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。
+
+开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
+
+## 仓库路径与本地数据边界
+
+Tracked 文件只记录工具角色、版本、字节与摘要，不记录 checkout 机器上的绝对路径。Reverse 证据以 [`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 为 canonical identity；仅维护脚本需要本地 checkout 时，由显式参数或 `GARUPA_REVERSE_ROOT` 注入。
+
+仓库根 `.local/` 专用于私有工具、灾备和历史维护报告。它被根锚定 ignore，禁止强制加入 Git、发布附件或公开日志。提交前可执行：
+
+```powershell
+npm.cmd run repository:hygiene:check
+python scripts/verify_host_path_policy.py --staged
+```
+
+`--tree`/`--staged` 读取 Git 对象而不遍历工作树；迁移维护所需的全历史审计必须显式提供冻结 ref ledger。
+
 ## 安装
 
 目前 GarupaEditor 提供 Windows、macOS、Linux 与 Android 平台的安装包。桌面端优先推荐使用对应平台的安装器或软件包，Android 端目前提供未签名 APK。
@@ -123,7 +152,8 @@ sudo dnf install ./*_linux_x86_64.rpm
 
 - `Slide`
   - `{ type: "Slide", connections: [...], timingGroup?: string }`
-  - `connections` 不能为空。
+  - `connections.length >= 2`，按全部节点计数（包括 `Hidden`），不是可见节点数量。
+  - 单节点 Slide 是非法结构。编辑器修正退化结构时，可见节点回退为对应类型的独立音符，单个 `Hidden` 删除；通用解析器与 Simulator 不将其作为合法 Slide 接受。
   - `Hidden` 只允许出现在 `Slide.connections` 里。
 
 ### 音符字段

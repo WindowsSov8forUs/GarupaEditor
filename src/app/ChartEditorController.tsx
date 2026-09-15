@@ -45,7 +45,7 @@ import { useEditorPointerLifecycle } from "./hooks/useEditorPointerLifecycle";
 import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
-import { isMobileRuntime, writeMobileRoutePayload } from "./mobileRuntime";
+import { isMobileRuntime, setMobileSimulatorImmersive, writeMobileRoutePayload } from "./mobileRuntime";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "./slideChainCleanup";
 import {
@@ -69,53 +69,20 @@ import {
   inferPreferredHabahiroSlideWidths,
 } from "./habahiroSlideWidth";
 import {
-  BG_SKIN_TYPES,
-  FIELD_SKIN_TYPES,
-  JUDGE_SKIN_TYPES,
-  DIRECTIONAL_SKIN_TYPES,
-  DIRECTIONAL_SE_SKIN_TYPES,
-  HABAHIRO_RHYTHM_RIP_NAME,
-  HABAHIRO_RHYTHM_SKIN_TYPES,
-  HABAHIRO_RHYTHM_TYPE,
-  RHYTHM_SKIN_TYPES,
-  RHYTHM_SE_SKIN_TYPES,
-  downloadBestdoriBgSkinAssets,
-  downloadBestdoriFieldSkinAssets,
-  downloadBestdoriJudgeSkinAssets,
-  downloadBestdoriDirectionalSeSkinAssets,
-  downloadBestdoriDirectionalSkinAssets,
-  downloadBestdoriRhythmSeSkinAssets,
-  downloadBestdoriRhythmSkinAssets,
-  formatTypeLabel,
-  getRuntimeBgSkinAssets,
-  getRuntimeFieldSkinAssets,
-  getRuntimeJudgeSkinAssets,
-  getRuntimeSeAssets,
+  DEFAULT_SKIN_SELECTION,
   isHabahiroRhythmRipName,
-  loadBestdoriSkinCatalogOptions,
   normalizeSkinSelection,
-  projectCanvasRenderResourceRuntimeAssets,
-  readSkinSelectionFromStorage,
-  resolveHabahiroRhythmRipNameFromType,
-  resolveBgSkinServerFromType,
-  resolveBgSkinRipNameFromType,
-  resolveDirectionalSeServerFromType,
-  resolveDirectionalSeRipNameFromType,
-  resolveDirectionalServerFromType,
-  resolveDirectionalRipNameFromType,
-  resolveFieldSkinServerFromType,
-  resolveFieldSkinRipNameFromType,
-  resolveJudgeSkinRipNameFromType,
-  resolveRhythmSeServerFromType,
-  resolveRhythmSeRipNameFromType,
-  resolveRhythmServerFromType,
-  resolveRhythmRipNameFromType,
-  writeSkinSelectionToStorage,
+  type BestdoriCatalogKind,
   type BestdoriSkinCatalogOptions,
   type SeSkinAssets,
   type SkinAssets,
   type SkinSelection,
 } from "../skinLoader";
+import type { AppliedSkinResources } from "../skin/resourceSkinDecoder";
+import {
+  projectSkinRuntimeResourceMap,
+  reverseSkinRuntimeResourceMap,
+} from "../skin/resourceSkinProjection";
 import {
   BEAT_HEIGHT,
   DEFAULT_EDITOR_OPTION_SETTINGS,
@@ -171,27 +138,31 @@ import {
   type EditorTool,
   type NoteType,
 } from "../chartCore";
-import defaultCoverImage from "../assets/default-cover.png";
-import undoActionIcon from "../assets/icons/undo-action.svg";
-import clearActionIcon from "../assets/icons/clear-action.svg";
-import applyActionIcon from "../assets/icons/apply-action.svg";
-import copyActionIcon from "../assets/icons/copy-action.svg";
-import pasteActionIcon from "../assets/icons/paste-action.svg";
-import mirrorActionIcon from "../assets/icons/mirror-action.svg";
+import {
+  useApplicationResourceManager,
+  useApplicationResourceUrl,
+} from "../resources/applicationResourceContext";
+import type { ResourceConsumerLease } from "../resources/contracts";
+import type { ChartMediaResources } from "../resources/selections";
+import { useChartMediaLease } from "../resources/useChartMediaLease";
+import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/bestdori/catalog";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
+import { buildSimulatorLaunchDescriptor, createSimulatorLaunchRequestId } from "./simulator/buildSimulatorLaunchDescriptor";
+import { SIMULATOR_PRE_ADAPTATION_DEFAULTS } from "./simulator/preAdaptationContract";
 import {
+  SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
-  type SimulatorLaunchPayload,
+  type SimulatorWindowClosedPayload,
   type SimulatorWindowReadyPayload,
-} from "../simulator/launchPayload";
+} from "./simulator/transportContracts";
 import {
   buildTimingGroupDefs,
   normalizeTimingGroupId,
   type TimingGroupDef,
-} from "../simulator/engine/timingGroup";
+} from "../chart";
 
 const TIMELINE_REFERENCE_BPM = 120;
 const RENDER_BACKEND_MODE =
@@ -215,15 +186,6 @@ function formatDurationPrecise(sec: number): string {
   const second = Math.floor((totalMs % 60000) / 1000);
   const millisecond = totalMs % 1000;
   return `${minute}:${second.toString().padStart(2, "0")}.${millisecond.toString().padStart(3, "0")}`;
-}
-
-async function dataUrlToBlobUrl(dataUrl: string): Promise<string> {
-  const response = await fetch(dataUrl);
-  if (!response.ok) {
-    throw new Error(`mv fetch failed: ${response.status}`);
-  }
-  const blob = await response.blob();
-  return URL.createObjectURL(blob);
 }
 
 function lowerBoundByTime<T>(
@@ -551,7 +513,22 @@ function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSo
 }
 
 function ChartEditorController() {
+  const resourceManager = useApplicationResourceManager();
+  const defaultCoverImage = useApplicationResourceUrl("ui.default-cover");
+  const undoActionIcon = useApplicationResourceUrl("ui.icon.undo-action");
+  const clearActionIcon = useApplicationResourceUrl("ui.icon.clear-action");
+  const applyActionIcon = useApplicationResourceUrl("ui.icon.apply-action");
+  const copyActionIcon = useApplicationResourceUrl("ui.icon.copy-action");
+  const pasteActionIcon = useApplicationResourceUrl("ui.icon.paste-action");
+  const mirrorActionIcon = useApplicationResourceUrl("ui.icon.mirror-action");
   const [metadata, setMetadataState] = useState<ChartMetadata>(DEFAULT_METADATA);
+  const [chartMediaResources, setChartMediaResources] = useState<ChartMediaResources>(() => Object.freeze({
+    bgm: null,
+    cover: null,
+    mv: null,
+    stageBackdrop: null,
+  }));
+  const chartMediaLease = useChartMediaLease(resourceManager, chartMediaResources);
   const [settings, setSettingsState] = useState<ChartSettings>(DEFAULT_SETTINGS);
   const [appOptionSettings, setAppOptionSettings] = useState<EditorOptionSettings>(DEFAULT_EDITOR_OPTION_SETTINGS);
   const [notes, setNotesState] = useState<ChartNote[]>([]);
@@ -1186,7 +1163,7 @@ function ChartEditorController() {
 
   const [audioFileName, setAudioFileName] = useState("");
   const [audioDurationSec, setAudioDurationSec] = useState(0);
-  const [audioObjectUrl, setAudioObjectUrl] = useState<string | null>(null);
+  const audioObjectUrl = chartMediaLease.urls.bgm ?? null;
   const [isCoverLoadFailed, setIsCoverLoadFailed] = useState(false);
   const [beatInputText, setBeatInputText] = useState("");
   const [bpmInputText, setBpmInputText] = useState("");
@@ -1213,25 +1190,46 @@ function ChartEditorController() {
   const [playbackFps, setPlaybackFps] = useState(60);
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
-  const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => readSkinSelectionFromStorage());
+  const [playbackAllPerfectStatusDisplayMode, setPlaybackAllPerfectStatusDisplayMode] =
+    useState(SIMULATOR_PRE_ADAPTATION_DEFAULTS.allPerfectStatusDisplayMode);
+  const [skinSelection, setSkinSelection] = useState<SkinSelection>(() => normalizeSkinSelection(DEFAULT_SKIN_SELECTION));
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
-    readSkinSelectionFromStorage(),
+    normalizeSkinSelection(DEFAULT_SKIN_SELECTION),
   );
   const [bestdoriSkinCatalogOptions, setBestdoriSkinCatalogOptions] = useState<BestdoriSkinCatalogOptions | null>(null);
+  const [bestdoriCatalogStatus, setBestdoriCatalogStatus] = useState("正在加载资源站目录…");
+  const formatTypeLabel = useCallback((kind: BestdoriCatalogKind | null, type: string): string => {
+    const normalized = type.trim();
+    if (normalized.length === 0) return "TYPE?";
+    return kind === null
+      ? normalized
+      : bestdoriSkinCatalogOptions?.labels[kind]?.[normalized] ?? normalized;
+  }, [bestdoriSkinCatalogOptions]);
   const [skinAssets, setSkinAssets] = useState<SkinAssets | null>(null);
+  const [appliedSkinResources, setAppliedSkinResources] = useState<AppliedSkinResources | null>(null);
   const [isSkinApplying, setIsSkinApplying] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void loadBestdoriSkinCatalogOptions().then((options) => {
-      if (!cancelled) {
-        setBestdoriSkinCatalogOptions(options);
+    void (async () => {
+      const refreshed = await resourceManager.refreshCatalog("bestdori");
+      if (refreshed.status === "rejected" || cancelled) {
+        if (!cancelled) setBestdoriCatalogStatus("资源站目录不可用，且没有可用离线快照。");
+        return;
       }
-    });
+      setBestdoriCatalogStatus(refreshed.value.freshness === "offline-cached"
+        ? `离线目录快照：${refreshed.value.observedAt ?? "时间未知"}`
+        : `在线目录：${refreshed.value.observedAt ?? "刚刚"}`);
+      const listed = await resourceManager.listResources({ origin: "network", provider: "bestdori" });
+      if (listed.status === "rejected" || cancelled) return;
+      setBestdoriSkinCatalogOptions(buildBestdoriSkinCatalogOptionsFromDescriptors(
+        listed.value.filter((resource) => resource.origin === "network"),
+      ));
+    })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resourceManager]);
   const [spriteAspectRatios, setSpriteAspectRatios] = useState<Record<string, number>>({});
   const isSkinReady = skinAssets !== null;
 
@@ -1319,6 +1317,7 @@ function ChartEditorController() {
   const jsonImportRef = useRef<HTMLInputElement | null>(null);
   const bestdoriV2ImportRef = useRef<HTMLInputElement | null>(null);
   const skinApplySeqRef = useRef(0);
+  const simulatorHandoffLeasesRef = useRef<Map<string, ResourceConsumerLease>>(new Map());
   const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
   const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
@@ -1331,6 +1330,10 @@ function ChartEditorController() {
   useEffect(() => {
     activeToolRef.current = tool;
   }, [tool]);
+  useEffect(() => () => {
+    for (const lease of simulatorHandoffLeasesRef.current.values()) void lease.release();
+    simulatorHandoffLeasesRef.current.clear();
+  }, []);
   const setCursorPreview = useCallback((next: CursorPreviewState | null) => {
     canvasCursorPreviewRef.current = next;
     const shouldSyncCanvasState = activeToolRef.current === "paste";
@@ -1368,16 +1371,8 @@ function ChartEditorController() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (audioObjectUrl) {
-        URL.revokeObjectURL(audioObjectUrl);
-      }
-    };
-  }, [audioObjectUrl]);
-
-  useEffect(() => {
     setIsCoverLoadFailed(false);
-  }, [metadata.coverDataUrl]);
+  }, [chartMediaLease.urls.cover]);
 
   useEffect(() => {
     setMetadata((current) => {
@@ -1442,7 +1437,7 @@ function ChartEditorController() {
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
   const boardHeight = Math.max(1, totalDurationSec * timelinePixelsPerSecond);
-  const hasUploadedAudio = typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0;
+  const hasUploadedAudio = chartMediaResources.bgm !== null;
   const chartPlayableDurationSec = useMemo(
     () => Math.max(0, beatToSeconds(maxNoteBeat, bpmTimeline)),
     [bpmTimeline, maxNoteBeat],
@@ -2250,8 +2245,8 @@ function ChartEditorController() {
   const minSelectedLane = selectedNotes.length > 0
     ? selectedNotes.reduce((minValue, note) => Math.min(minValue, note.lane), selectedNotes[0].lane)
     : 0;
-  const coverImageSrc = metadata.coverDataUrl && !isCoverLoadFailed
-    ? metadata.coverDataUrl
+  const coverImageSrc = chartMediaLease.urls.cover && !isCoverLoadFailed
+    ? chartMediaLease.urls.cover
     : defaultCoverImage;
   const selectedBpmEvent = useMemo(
     () => {
@@ -3025,7 +3020,7 @@ function ChartEditorController() {
   });
 
   const {
-    exportJson,
+    garupaChartJsonText,
     undoLastNote,
     redoLastNote,
     clearAllNotes,
@@ -3069,6 +3064,7 @@ function ChartEditorController() {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
+    handleStageBackdropUpload,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
@@ -3079,7 +3075,9 @@ function ChartEditorController() {
     settings,
     audioFileName,
     audioDurationSec,
-    audioObjectUrl,
+    chartMediaResources,
+    setChartMediaResources,
+    chartMediaLease,
     skinSelection,
     bpmEvents,
     svEvents,
@@ -3125,8 +3123,6 @@ function ChartEditorController() {
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    setAudioObjectUrl,
-    formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
@@ -3134,18 +3130,10 @@ function ChartEditorController() {
     normalizeSkinSelection,
     skinApplySeqRef,
     setSkinAssets,
+    setAppliedSkinResources,
     setIsSkinApplying,
     formatTypeLabel,
-    downloadBestdoriRhythmSkinAssets,
-    downloadBestdoriDirectionalSkinAssets,
-    downloadBestdoriBgSkinAssets,
-    downloadBestdoriFieldSkinAssets,
-    downloadBestdoriJudgeSkinAssets,
-    downloadBestdoriRhythmSeSkinAssets,
-    downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
-    writeSkinSelectionToStorage,
-    readSkinSelectionFromStorage,
     didInitSkinRef,
     approxEq,
     selectedNoteIds,
@@ -3175,7 +3163,8 @@ function ChartEditorController() {
     svEvents,
     audioFileName,
     audioDurationSec,
-    audioObjectUrl,
+    chartMediaResources,
+    setChartMediaResources,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
     skinSelection,
@@ -3184,6 +3173,7 @@ function ChartEditorController() {
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     WINDOW_SIZE_PRESETS,
     normalizeMetadata,
     normalizeSettings,
@@ -3212,7 +3202,6 @@ function ChartEditorController() {
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
-    setAudioObjectUrl,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
     setWindowPresetId,
@@ -3220,6 +3209,7 @@ function ChartEditorController() {
     setPlaybackFps,
     setPlaybackMvMode,
     setPlaybackMvAlphaPercent,
+    setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     clearAllSelections,
@@ -4085,7 +4075,7 @@ function ChartEditorController() {
     if (!(nextTimeSec > prevTimeSec)) {
       return;
     }
-    const runtimeSe = getRuntimeSeAssets();
+    const runtimeSe = appliedSkinResources?.se ?? null;
     if (!runtimeSe) {
       return;
     }
@@ -4340,6 +4330,7 @@ function ChartEditorController() {
       });
     }
   }, [
+    appliedSkinResources,
     clamp,
     decodePlaybackSeBuffer,
     ensurePlaybackSeAudioContext,
@@ -4416,7 +4407,7 @@ function ChartEditorController() {
     const audio = playbackAudioRef.current;
     const safeDuration = Math.max(0, playbackCeilingSec);
     let safeSeconds = clamp(seconds, 0, safeDuration);
-    const runtimeSe = getRuntimeSeAssets();
+    const runtimeSe = appliedSkinResources?.se ?? null;
     await preloadPlaybackSeBuffers(runtimeSe, { waitForReady: true, timeoutMs: 240 });
     if (!isStartCurrent()) {
       return;
@@ -4476,6 +4467,7 @@ function ChartEditorController() {
     }
     playbackTickRafRef.current = requestAnimationFrame(() => playbackTickHandlerRef.current());
   }, [
+    appliedSkinResources,
     clamp,
     clearPlaybackTick,
     currentPlaybackSpeed,
@@ -4631,25 +4623,37 @@ function ChartEditorController() {
   }, [skinSelection.rhythmRipName, skinSelection.rhythmServer, skinSelection.rhythmType]);
 
   const buildHabahiroSkinSelection = useCallback((): SkinSelection => {
+    const id = bestdoriSkinCatalogOptions?.habahiroRhythm[0];
+    const resource = id === undefined
+      ? null
+      : bestdoriSkinCatalogOptions?.resources.habahiroRhythm[id] ?? null;
+    if (resource === null) {
+      throw new Error("Bestdori HABAHIRO catalog is unavailable; no fixed network candidate is substituted.");
+    }
     return normalizeSkinSelection({
       ...skinSelection,
-      rhythmType: HABAHIRO_RHYTHM_TYPE,
-      rhythmRipName: HABAHIRO_RHYTHM_RIP_NAME,
-      rhythmServer: resolveRhythmServerFromType(HABAHIRO_RHYTHM_RIP_NAME) ?? skinSelection.rhythmServer,
+      rhythmType: resource.id,
+      rhythmRipName: resource.id,
+      rhythmServer: resource.server,
     });
-  }, [normalizeSkinSelection, resolveRhythmServerFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, skinSelection]);
 
   const buildStandardRhythmSkinSelection = useCallback((): SkinSelection => {
     const remembered = lastStandardRhythmSkinRef.current;
-    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0] ?? RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
-    const fallbackRip = resolveRhythmRipNameFromType(fallbackType) ?? "skin00";
+    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0];
+    if (!remembered && !fallbackType) {
+      throw new Error("Bestdori rhythm catalog is unavailable; no fixed network candidate is substituted.");
+    }
+    const fallbackResource = fallbackType === undefined
+      ? null
+      : bestdoriSkinCatalogOptions?.resources.rhythm[fallbackType] ?? null;
     return normalizeSkinSelection({
       ...skinSelection,
-      rhythmType: remembered?.rhythmType ?? fallbackType,
-      rhythmRipName: remembered?.rhythmRipName ?? fallbackRip,
-      rhythmServer: remembered?.rhythmServer ?? resolveRhythmServerFromType(fallbackType) ?? skinSelection.rhythmServer,
+      rhythmType: remembered?.rhythmType ?? fallbackResource!.id,
+      rhythmRipName: remembered?.rhythmRipName ?? fallbackResource!.id,
+      rhythmServer: remembered?.rhythmServer ?? fallbackResource!.server,
     });
-  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, resolveRhythmRipNameFromType, resolveRhythmServerFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, skinSelection]);
 
   const requestSpRhythmRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
@@ -4819,24 +4823,35 @@ function ChartEditorController() {
     }
     const skinIsHabahiro = isHabahiroRhythmRipName(skinSelection.rhythmRipName);
     if (isHabahiroEnabled && !skinIsHabahiro) {
-      syncingHabahiroSkinRef.current = true;
-      void applyBestdoriSkinSelectionRef.current(buildHabahiroSkinSelection(), true, false)
-        .finally(() => {
-          syncingHabahiroSkinRef.current = false;
-        });
+      try {
+        const next = buildHabahiroSkinSelection();
+        syncingHabahiroSkinRef.current = true;
+        void applyBestdoriSkinSelectionRef.current(next, true, false)
+          .finally(() => {
+            syncingHabahiroSkinRef.current = false;
+          });
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : String(error));
+      }
       return;
     }
     if (!isHabahiroEnabled && skinIsHabahiro) {
-      syncingHabahiroSkinRef.current = true;
-      void applyBestdoriSkinSelectionRef.current(buildStandardRhythmSkinSelection(), true, false)
-        .finally(() => {
-          syncingHabahiroSkinRef.current = false;
-        });
+      try {
+        const next = buildStandardRhythmSkinSelection();
+        syncingHabahiroSkinRef.current = true;
+        void applyBestdoriSkinSelectionRef.current(next, true, false)
+          .finally(() => {
+            syncingHabahiroSkinRef.current = false;
+          });
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : String(error));
+      }
     }
   }, [
     isHabahiroEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
+    setStatusMessage,
     skinSelection.rhythmRipName,
   ]);
 
@@ -4883,13 +4898,8 @@ function ChartEditorController() {
   }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
 
   useEffect(() => {
-    const runtimeSe = getRuntimeSeAssets();
-    void preloadPlaybackSeBuffers(runtimeSe);
-  }, [
-    preloadPlaybackSeBuffers,
-    skinSelection.rhythmSeRipName,
-    skinSelection.directionalSeRipName,
-  ]);
+    void preloadPlaybackSeBuffers(appliedSkinResources?.se ?? null);
+  }, [appliedSkinResources, preloadPlaybackSeBuffers]);
 
   useEffect(() => {
     stopPlayback(null);
@@ -4911,7 +4921,11 @@ function ChartEditorController() {
       return;
     }
     const audio = new Audio(audioObjectUrl);
-    audio.preload = "auto";
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      setAudioDurationSec(Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0);
+    };
+    audio.onerror = () => setAudioDurationSec(0);
     audio.playbackRate = currentPlaybackSpeed;
     audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
     playbackAudioRef.current = audio;
@@ -5514,16 +5528,28 @@ function ChartEditorController() {
     resourcesVersion: canvasResourceVersion,
   });
 
-  const staticRenderRuntimeSkin = useMemo(
-    () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
-    [skinAssets],
+  const staticRenderResourceMap = useMemo(
+    () => appliedSkinResources === null ? null : projectSkinRuntimeResourceMap(appliedSkinResources.note),
+    [appliedSkinResources],
+  );
+  const staticRenderReverseResourceMap = useMemo(
+    () => staticRenderResourceMap === null ? null : reverseSkinRuntimeResourceMap(staticRenderResourceMap),
+    [staticRenderResourceMap],
   );
   const buildStaticRenderPayload = useCallback((): StaticRenderPayload | null => {
-    if (!staticRenderRuntimeSkin) {
+    if (appliedSkinResources === null || staticRenderResourceMap === null || staticRenderReverseResourceMap === null) {
       return null;
     }
+    const keyForUrl = (url: string | null): string | null => {
+      if (url === null) return null;
+      const key = staticRenderReverseResourceMap.get(url);
+      if (key === undefined) throw new Error("static render note references an unleased Skin derivative");
+      return key;
+    };
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
+      resourceSnapshotId: appliedSkinResources.snapshotId,
+      skinIdentities: appliedSkinResources.identities,
       chartTitle: metadata.title,
       boardWidth,
       boardHeight,
@@ -5561,18 +5587,19 @@ function ChartEditorController() {
         x: note.x,
         y: note.y,
         spanLanes: note.spanLanes,
-        base: note.base,
-        overlay: note.overlay,
+        baseResourceKey: keyForUrl(note.base),
+        overlayResourceKey: keyForUrl(note.overlay),
         overlayMode: note.overlayMode,
       })),
       runtimeSkin: {
-        longLine: staticRenderRuntimeSkin.longLine ?? null,
-        longLineSpecial: staticRenderRuntimeSkin.longLineSpecial ?? null,
-        simultaneousLine: staticRenderRuntimeSkin.simultaneousLine ?? null,
+        longLineResourceKey: "line.long",
+        longLineSpecialResourceKey: "line.long-special",
+        simultaneousLineResourceKey: "line.simultaneous",
       },
     };
   }, [
     LANE_WIDTH,
+    appliedSkinResources,
     beatDivision,
     beatsPerMeasure,
     boardHeight,
@@ -5585,7 +5612,8 @@ function ChartEditorController() {
     metadata.title,
     noteVisualScale,
     renderModel.connectionSegments,
-    staticRenderRuntimeSkin,
+    staticRenderResourceMap,
+    staticRenderReverseResourceMap,
     timelinePixelsPerSecond,
     totalDurationSec,
     totalSteps,
@@ -5738,248 +5766,149 @@ function ChartEditorController() {
   ]);
 
   const openSimulatorWindow = useCallback(async () => {
-    if (!skinAssets) {
-      setStatusMessage("皮肤资源尚未就绪，无法打开播放器。");
-      return;
-    }
     let readyUnlisten: UnlistenFn | null = null;
+    let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
+    let pendingLease: ResourceConsumerLease | null = null;
+    let activeRequestId: string | null = null;
+    let simulatorWindow: WebviewWindow | null = null;
+    let abandoned = false;
+    let readyLabel: string | null = null;
+    let descriptor: Awaited<ReturnType<typeof buildSimulatorLaunchDescriptor>>["descriptor"] | null = null;
+    let published = false;
     const clearReadySubscription = () => {
-      if (readyUnlisten) {
-        void readyUnlisten();
-        readyUnlisten = null;
-      }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        timeoutId = null;
-      }
+      if (readyUnlisten) { void readyUnlisten(); readyUnlisten = null; }
+      if (timeoutId !== null) { window.clearTimeout(timeoutId); timeoutId = null; }
+    };
+    const clearClosedSubscription = () => {
+      if (closedUnlisten) { void closedUnlisten(); closedUnlisten = null; }
+    };
+    const releaseHandoff = () => {
+      if (activeRequestId === null) return;
+      const lease = simulatorHandoffLeasesRef.current.get(activeRequestId);
+      if (lease === undefined) return;
+      simulatorHandoffLeasesRef.current.delete(activeRequestId);
+      void lease.release();
+    };
+    const abandon = () => {
+      abandoned = true;
+      clearReadySubscription();
+      clearClosedSubscription();
+      releaseHandoff();
+    };
+    const fail = (error: unknown) => {
+      if (abandoned) return;
+      abandon();
+      const message = error instanceof Error ? error.message : String(error);
+      setStatusMessage(`播放器窗口启动失败：${message}`);
+      if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
+        setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
+      });
+    };
+    const publishDescriptor = async () => {
+      if (abandoned || published || readyLabel === null || descriptor === null) return;
+      published = true;
+      await emitTo(readyLabel, SIMULATOR_WINDOW_PAYLOAD_EVENT, { requestId: activeRequestId, descriptor });
+      if (!abandoned) setStatusMessage("播放器参数与资源快照已同步。");
     };
 
     try {
-      const playbackPreset =
-        WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
-        ?? WINDOW_SIZE_PRESETS[0]
-        ?? WINDOW_SIZE_PRESETS[1];
-      const playbackWidth = Math.max(1, Math.floor(Number(playbackPreset?.width ?? 1366)));
-      const playbackHeight = Math.max(1, Math.floor(Number(playbackPreset?.height ?? 768)));
-      const playbackFpsValue = playbackFps === 120 ? 120 : 60;
-      const playbackNoteSizePercent = Math.max(
-        10,
-        Math.min(200, Math.round(appOptionSettings.rhythmNoteSizePercent)),
-      );
-      const playbackNoteSpeed = Number(
-        clamp(toFinite(appOptionSettings.rhythmNoteSpeed, 9.7), 1, 12).toFixed(2),
-      );
-      const playbackMvAlpha = Math.round(
-        clamp(toFinite(playbackMvAlphaPercent, 100), 30, 100) / 10,
-      ) * 10;
-      const playbackOffsetMs = Math.round(clamp(toFinite(metadata.offsetMs, 0), -5000, 5000));
-      const playbackMvOffsetMs = Math.round(clamp(toFinite(metadata.mvOffsetMs, 0), -5000, 5000));
-      const requestId = `simulator-launch-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      const windowLabel = requestId;
-      const locationHref = typeof window !== "undefined"
-        ? window.location.href
-        : "http://localhost/";
-      const targetUrl = new URL(locationHref);
+      const requestId = createSimulatorLaunchRequestId();
+      activeRequestId = requestId;
+      const playbackPreset = WINDOW_SIZE_PRESETS.find((item) => item.id === playbackWindowPresetId)
+        ?? WINDOW_SIZE_PRESETS[0] ?? WINDOW_SIZE_PRESETS[1];
+      const width = Number(playbackPreset?.width ?? 1366);
+      const height = Number(playbackPreset?.height ?? 768);
+      const targetUrl = new URL(window.location.href);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
-
-      const bgmDataUrl =
-        typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0
-          ? metadata.bgmDataUrl
-          : null;
-      let playbackMvDataUrl: string | null = metadata.mvDataUrl;
-      if (
-        typeof playbackMvDataUrl === "string"
-        && playbackMvDataUrl.startsWith("data:video/")
-      ) {
-        try {
-          playbackMvDataUrl = await dataUrlToBlobUrl(playbackMvDataUrl);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`播放器MV资源转换失败：${message}`);
+      closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
+        if (event.payload?.requestId !== requestId) return;
+        abandon();
+        if (event.payload.status === "rejected") {
+          const capability = event.payload.capability ?? "app.simulator.action-unavailable";
+          const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
+          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
         }
-      }
-      const runtimeSe = getRuntimeSeAssets();
-      const runtimeFieldSkin = getRuntimeFieldSkinAssets();
-      const runtimeBgSkin = getRuntimeBgSkinAssets();
-      const runtimeJudgeSkin = getRuntimeJudgeSkinAssets();
-      const simulatorBgmVolumePercent = clamp(playbackVolumePercent, 0, 100);
-      const audioPayload = {
-        seRuntimeAssets: runtimeSe ?? null,
-        bgmVolumePercent: simulatorBgmVolumePercent,
-        seVolumePercent: simulatorBgmVolumePercent * noteSeVolumeScale,
-      };
-      const simulatorMetadata: ChartMetadata = {
-        ...metadata,
-        offsetMs: playbackOffsetMs,
-        mvOffsetMs: playbackMvOffsetMs,
-        bgmDataUrl: bgmDataUrl ?? null,
-        mvDataUrl: playbackMvDataUrl,
-      };
-      const simulatorMetadataWithFallback = simulatorMetadata as ChartMetadata & { mvDataUrlFallback?: string | null };
-      simulatorMetadataWithFallback.mvDataUrlFallback =
-        playbackMvDataUrl !== metadata.mvDataUrl ? metadata.mvDataUrl : null;
-      const normalizedPlaybackNotes = notes.map((note) => ({
-        ...note,
-        timingGroup: normalizeTimingGroup(note.timingGroup, "#Global"),
-      }));
-      const playbackNoteById = new Map(normalizedPlaybackNotes.map((note) => [note.id, note] as const));
-      const normalizedPlaybackSlideChains = slideChains
-        .map((chain) => {
-          const validNoteIds = chain.noteIds.filter((noteId) => playbackNoteById.has(noteId));
-          if (validNoteIds.length < 2) {
-            return null;
-          }
-          const headNote = playbackNoteById.get(validNoteIds[0]);
-          const timingGroup = normalizeTimingGroup(chain.timingGroup ?? headNote?.timingGroup ?? "#Global", "#Global");
-          return {
-            id: chain.id,
-            noteIds: validNoteIds,
-            timingGroup,
-          };
-        })
-        .filter((chain): chain is { id: string; noteIds: string[]; timingGroup: string } => chain !== null);
-
-      const launchPayload: SimulatorLaunchPayload = {
-        requestId,
-        autoStart: true,
-        metadata: simulatorMetadataWithFallback,
-        settings: {
-          windowWidth: playbackWidth,
-          windowHeight: playbackHeight,
-          fps: playbackFpsValue,
-          noteSizePercent: playbackNoteSizePercent,
-          noteSpeed: playbackNoteSpeed,
-          offsetMs: playbackOffsetMs,
-          sameline: appOptionSettings.simultaneousLineEnabled,
-          colorAssist: appOptionSettings.colorAssistEnabled,
-          mirror: appOptionSettings.mirrorEnabled,
-          effectEnable: appOptionSettings.clickEffectEnabled,
-          mvMode: playbackMvMode,
-          mvAlphaPercent: playbackMvAlpha,
-          habahiro: isHabahiroEnabled,
-        },
-        audio: audioPayload,
-        skin: {
-          noteSkin: skinAssets,
-          fieldSkin: runtimeFieldSkin ?? null,
-          bgSkin: runtimeBgSkin ?? null,
-          judgeSkin: runtimeJudgeSkin ?? null,
-        },
-        chartData: {
-          baseBpm: metadata.bpm,
-          notes: normalizedPlaybackNotes,
-          slideChains: normalizedPlaybackSlideChains,
-          bpmEvents: sortBpmEvents(bpmEvents).map((event) => ({
-            id: event.id,
-            beat: event.beat,
-            bpm: event.bpm,
-          })),
-          svEvents: sortSvEvents(svEvents).map((event) => ({
-            id: event.id,
-            beat: event.beat,
-            value: event.value,
-            timingGroup: normalizeTimingGroup(event.timingGroup, "#Global"),
-          })),
-        },
-      };
-
-      if (isMobileRuntime()) {
-        const wrotePayload = writeMobileRoutePayload(requestId, {
-          requestId,
-          payload: launchPayload,
+      });
+      if (!isMobileRuntime()) {
+        readyUnlisten = await listen<SimulatorWindowReadyPayload>(SIMULATOR_WINDOW_READY_EVENT, (event) => {
+          const readyPayload = event.payload ?? {};
+          if (abandoned || readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
+          readyLabel = readyPayload.label;
+          clearReadySubscription();
+          void publishDescriptor().catch(fail);
         });
-        if (!wrotePayload) {
+        // Start the loading window before media availability, snapshot hashing
+        // and transport preparation. Either readiness edge may arrive first.
+        simulatorWindow = new WebviewWindow(requestId, {
+          visible: false,
+          title: `${metadata.title} - playing`,
+          width, height, center: true, resizable: false,
+          url: targetUrl.toString(),
+        });
+        void simulatorWindow.once("tauri://error", (event) => {
+          fail(event?.payload ? JSON.stringify(event.payload) : "播放器窗口创建失败");
+        });
+        void simulatorWindow.once("tauri://destroyed", abandon);
+        timeoutId = window.setTimeout(() => {
+          if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
+        }, 15000);
+        setStatusMessage("播放器窗口正在打开。");
+      }
+      const prepared = await buildSimulatorLaunchDescriptor({
+        requestId,
+        manager: resourceManager,
+        chartJson: garupaChartJsonText,
+        media: chartMediaResources,
+        metadata,
+        mirror: appOptionSettings.mirrorEnabled,
+        mvEnabled: playbackMvMode,
+        fps: playbackFps === 120 ? 120 : 60,
+        noteSize: appOptionSettings.rhythmNoteSizePercent,
+        noteSpeed: appOptionSettings.rhythmNoteSpeed,
+        syncLine: appOptionSettings.simultaneousLineEnabled,
+        allPerfectStatusDisplayMode: playbackAllPerfectStatusDisplayMode,
+        bgmGainPercent: playbackVolumePercent,
+        seGainPercent: playbackVolumePercent * noteSeVolumeScale,
+        requestedWindowWidth: width,
+        requestedWindowHeight: height,
+      });
+      pendingLease = prepared.handoffLease;
+      if (abandoned) { await pendingLease.release(); pendingLease = null; return; }
+      descriptor = prepared.descriptor;
+      simulatorHandoffLeasesRef.current.set(requestId, pendingLease);
+      pendingLease = null;
+      if (isMobileRuntime()) {
+        if (!writeMobileRoutePayload(requestId, { requestId, descriptor })) {
           throw new Error("移动端播放器数据写入失败。");
         }
+        setMobileSimulatorImmersive(true);
         window.location.hash = targetUrl.hash;
         setStatusMessage("已切换到移动端播放器。");
         return;
       }
-
-      readyUnlisten = await listen<SimulatorWindowReadyPayload>(
-        SIMULATOR_WINDOW_READY_EVENT,
-        async (event) => {
-          const readyPayload = event.payload ?? {};
-          if (readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") {
-            return;
-          }
-          clearReadySubscription();
-          try {
-            await emitTo(
-              readyPayload.label,
-              SIMULATOR_WINDOW_PAYLOAD_EVENT,
-              {
-                requestId,
-                payload: launchPayload,
-              },
-            );
-            setStatusMessage("播放器参数已同步。");
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            setStatusMessage(`播放器参数发送失败：${message}`);
-          }
-        },
-      );
-
-      const simulatorWindow = new WebviewWindow(windowLabel, {
-        title: `${metadata.title} - playing`,
-        width: playbackWidth,
-        height: playbackHeight,
-        minWidth: 1100,
-        minHeight: 680,
-        center: true,
-        resizable: true,
-        url: targetUrl.toString(),
-      });
-      simulatorWindow.once("tauri://error", (event) => {
-        clearReadySubscription();
-        const message = event?.payload ? JSON.stringify(event.payload) : "未知错误";
-        setStatusMessage(`播放器窗口创建失败：${message}`);
-      });
-      simulatorWindow.once("tauri://destroyed", () => {
-        clearReadySubscription();
-      });
-      timeoutId = window.setTimeout(() => {
-        if (!readyUnlisten) {
-          return;
-        }
-        clearReadySubscription();
-        setStatusMessage("播放器窗口握手超时，请重试。");
-      }, 15000);
-      setStatusMessage("播放器窗口已打开。");
+      await publishDescriptor();
     } catch (error) {
-      clearReadySubscription();
-      const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`播放器窗口启动失败：${message}`);
+      if (pendingLease !== null) void pendingLease.release();
+      fail(error);
     }
   }, [
     WINDOW_SIZE_PRESETS,
+    appOptionSettings.mirrorEnabled,
     appOptionSettings.rhythmNoteSizePercent,
     appOptionSettings.rhythmNoteSpeed,
-    appOptionSettings.clickEffectEnabled,
     appOptionSettings.simultaneousLineEnabled,
-    appOptionSettings.colorAssistEnabled,
-    appOptionSettings.mirrorEnabled,
-    audioObjectUrl,
-    clamp,
+    chartMediaResources,
+    garupaChartJsonText,
     metadata,
-    notes,
-    slideChains,
-    bpmEvents,
-    svEvents,
-    sortBpmEvents,
-    sortSvEvents,
-    normalizeTimingGroup,
     noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
-    playbackMvAlphaPercent,
+    playbackAllPerfectStatusDisplayMode,
     playbackVolumePercent,
     playbackWindowPresetId,
-    skinAssets,
+    resourceManager,
     setStatusMessage,
-    toFinite,
   ]);
 
   const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;
@@ -6012,7 +5941,7 @@ function ChartEditorController() {
         downloadJson,
         openStaticRenderWindow,
         openSimulatorWindow,
-        exportJson,
+        garupaChartJsonText,
         isImportJsonModalOpen,
         importJsonModalLevel,
         importJsonText,
@@ -6047,6 +5976,13 @@ function ChartEditorController() {
         openAppSettings,
         openSkinSettings,
         metadata,
+        chartMediaSources: Object.freeze({
+          cover: chartMediaLease.urls.cover ?? null,
+          audio: chartMediaLease.urls.bgm ?? null,
+          mv: chartMediaLease.urls.mv ?? null,
+          stageBackdrop: chartMediaLease.urls.stageBackdrop ?? null,
+        }),
+        chartMediaError: chartMediaLease.error,
         coverImageSrc,
         audioDurationSec,
         visibleNoteCount,
@@ -6254,6 +6190,7 @@ function ChartEditorController() {
         handleCoverUpload,
         handleAudioUpload,
         handleMvUpload,
+        handleStageBackdropUpload,
         isAppSettingsOpen,
         setIsAppSettingsOpen,
         appOptionSettings,
@@ -6264,38 +6201,19 @@ function ChartEditorController() {
         playbackFps,
         playbackMvMode,
         playbackMvAlphaPercent,
+        playbackAllPerfectStatusDisplayMode,
         WINDOW_SIZE_PRESETS,
         setWindowPresetId,
         setPlaybackWindowPresetId,
         setPlaybackFps,
         setPlaybackMvMode,
         setPlaybackMvAlphaPercent,
+        setPlaybackAllPerfectStatusDisplayMode,
         pendingSkinSelection,
         setPendingSkinSelection,
         normalizeSkinSelection,
-        resolveHabahiroRhythmRipNameFromType,
-        resolveRhythmRipNameFromType,
-        resolveDirectionalRipNameFromType,
-        resolveRhythmSeRipNameFromType,
-        resolveDirectionalSeRipNameFromType,
-        resolveBgSkinRipNameFromType,
-        resolveFieldSkinRipNameFromType,
-        resolveJudgeSkinRipNameFromType,
-        resolveRhythmServerFromType,
-        resolveDirectionalServerFromType,
-        resolveRhythmSeServerFromType,
-        resolveDirectionalSeServerFromType,
-        resolveBgSkinServerFromType,
-        resolveFieldSkinServerFromType,
         bestdoriSkinCatalogOptions,
-        HABAHIRO_RHYTHM_SKIN_TYPES,
-        RHYTHM_SKIN_TYPES,
-        DIRECTIONAL_SKIN_TYPES,
-        RHYTHM_SE_SKIN_TYPES,
-        DIRECTIONAL_SE_SKIN_TYPES,
-        BG_SKIN_TYPES,
-        FIELD_SKIN_TYPES,
-        JUDGE_SKIN_TYPES,
+        bestdoriCatalogStatus,
         formatTypeLabel,
         skinAssets,
         applyWindowPreset,
@@ -6313,7 +6231,6 @@ function ChartEditorController() {
 }
 
 export default ChartEditorController;
-
 
 
 

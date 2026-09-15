@@ -1,0 +1,5450 @@
+{
+  "nodes": [
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/MISS/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/MISS",
+      "position": [
+        -19.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_miss",
+        "atlas": "judge",
+        "size": [
+          166,
+          70
+        ],
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/BAD/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/BAD",
+      "position": [
+        223.0,
+        -1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "bad",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/MyScore/Value",
+      "parent": "RightContainer/MyResult/Detail/Score/MyScore",
+      "position": [
+        412.0,
+        1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "score",
+        "size": [
+          497,
+          62
+        ],
+        "fontSize": 35,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "position": [
+        48.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_perfect",
+        "atlas": "judge",
+        "size": [
+          287,
+          79
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/COMBO",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        326.0,
+        -25.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot/ScoreIcon",
+      "parent": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+      "position": [
+        -82.0,
+        4.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "icon_left_scorebar",
+        "atlas": "menu",
+        "size": [
+          37,
+          37
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "position": [
+        220.0,
+        -2.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "perfect",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/MISS",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -41.0,
+        -128.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Good/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Good",
+      "position": [
+        223.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "good",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_a",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "position": [
+        48.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_perfect",
+        "atlas": "judge",
+        "size": [
+          287,
+          79
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Great/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Great",
+      "position": [
+        -22.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_great",
+        "atlas": "judge",
+        "size": [
+          225,
+          70
+        ],
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_b",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "position": [
+        48.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_perfect",
+        "atlas": "judge",
+        "size": [
+          287,
+          79
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/COMBO/Back",
+      "parent": "RightContainer/MyResult/Detail/Judgement/COMBO",
+      "position": [
+        -1.0,
+        1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "bg_maxcombo",
+        "atlas": "menu",
+        "size": [
+          154,
+          129
+        ],
+        "pivot": 4,
+        "depth": 11,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/bg",
+      "parent": "RightContainer/MyResult",
+      "position": [
+        0.0,
+        161.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "bg_base_r12",
+        "atlas": "menu",
+        "size": [
+          552,
+          328
+        ],
+        "pivot": 0,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+      "parent": "RightContainer/MyResult/Detail/Score/MyScore",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "",
+      "parent": null,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer",
+      "parent": "",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/BAD",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -41.0,
+        -88.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -34.0,
+        -69.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          188,
+          2
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/dot",
+      "parent": "RightContainer/MyResult/Detail/Score",
+      "position": [
+        38.0,
+        -60.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_dot",
+        "atlas": "menu",
+        "size": [
+          502,
+          6
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 2
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/MISS/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/MISS",
+      "position": [
+        223.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "miss",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -34.0,
+        -27.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          188,
+          2
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement",
+      "parent": "RightContainer/MyResult/Detail",
+      "position": [
+        88.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/BAD/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/BAD",
+      "position": [
+        -20.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_bad",
+        "atlas": "judge",
+        "size": [
+          148,
+          70
+        ],
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/MyScore",
+      "parent": "RightContainer/MyResult/Detail/Score",
+      "position": [
+        120.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Great",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -41.0,
+        -6.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -34.0,
+        15.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          188,
+          2
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot/Text",
+      "parent": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+      "position": [
+        -56.0,
+        2.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "scoreTitle",
+        "size": [
+          200,
+          100
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "text": "スコア"
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/COMBO/Back/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/COMBO/Back",
+      "position": [
+        1.0,
+        26.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_maxcombo",
+        "atlas": "menu",
+        "size": [
+          116,
+          64
+        ],
+        "pivot": 4,
+        "depth": 13,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -39.0,
+        36.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/COMBO/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/COMBO",
+      "position": [
+        45.0,
+        -36.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "maxCombo",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail",
+      "parent": "RightContainer/MyResult",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -34.0,
+        -107.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          188,
+          2
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_c",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Perfect",
+      "position": [
+        48.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_perfect",
+        "atlas": "judge",
+        "size": [
+          287,
+          79
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          0.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Good/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Good",
+      "position": [
+        -22.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_good",
+        "atlas": "judge",
+        "size": [
+          219,
+          70
+        ],
+        "pivot": 3,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Great/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Great",
+      "position": [
+        223.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "great",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 0,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Score",
+      "parent": "RightContainer/MyResult/Detail",
+      "position": [
+        -3.0,
+        123.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Great/Name_additive",
+      "parent": "RightContainer/MyResult/Detail/Judgement/Great",
+      "position": [
+        -22.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "active": false
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/Good",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        -41.0,
+        -48.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult",
+      "parent": "RightContainer",
+      "position": [
+        19.0,
+        32.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/Buttons",
+      "parent": "RightContainer",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController",
+      "position": [
+        282.0,
+        -9.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/Buttons/NextButton/Label",
+      "parent": "RightContainer/Buttons/NextButton",
+      "position": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "next",
+        "size": [
+          200,
+          72
+        ],
+        "fontSize": 32,
+        "spacing": 0,
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "text": "次へ"
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController",
+      "position": [
+        282.0,
+        33.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast",
+      "position": [
+        158.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "fast",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 1,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController",
+      "position": [
+        240.0,
+        15.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          186,
+          2
+        ],
+        "pivot": 3,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/Buttons/NextButton",
+      "parent": "RightContainer/Buttons",
+      "position": [
+        446.0,
+        -298.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "button_pink",
+        "atlas": "menu",
+        "size": [
+          248,
+          72
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/Buttons/NextButton/Cover",
+      "parent": "RightContainer/Buttons/NextButton",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": false
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Value",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow",
+      "position": [
+        158.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "label": {
+        "role": "slow",
+        "size": [
+          300,
+          44
+        ],
+        "fontSize": 28,
+        "spacing": 1,
+        "pivot": 5,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController",
+      "parent": "RightContainer/MyResult/Detail/Judgement",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Name/Image",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Name",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_fast",
+        "atlas": "judge",
+        "size": [
+          144,
+          30
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Line",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController",
+      "position": [
+        344.0,
+        -32.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        0.5,
+        1.0
+      ],
+      "active": false,
+      "sprite": {
+        "name": "line_under_number",
+        "atlas": "menu",
+        "size": [
+          174,
+          2
+        ],
+        "pivot": 4,
+        "depth": 11,
+        "color": [
+          0.3137255012989044,
+          0.3137255012989044,
+          0.3137255012989044,
+          1.0
+        ],
+        "type": 1
+      }
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast/Name",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Fast",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "active": true
+    },
+    {
+      "path": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Name/Image",
+      "parent": "RightContainer/MyResult/Detail/Judgement/ResultFastSlowUIAnimationController/Slow/Name",
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "sprite": {
+        "name": "judge_slow",
+        "atlas": "judge",
+        "size": [
+          144,
+          30
+        ],
+        "pivot": 4,
+        "depth": 15,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    }
+  ],
+  "sprites": [
+    {
+      "name": "bg_base_r12",
+      "x": 1835,
+      "y": 378,
+      "width": 32,
+      "height": 32,
+      "borderLeft": 14,
+      "borderRight": 14,
+      "borderTop": 14,
+      "borderBottom": 14,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "paddingBottom": 0
+    },
+    {
+      "name": "bg_maxcombo",
+      "x": 463,
+      "y": 1510,
+      "width": 21,
+      "height": 67,
+      "borderLeft": 8,
+      "borderRight": 8,
+      "borderTop": 8,
+      "borderBottom": 58,
+      "paddingLeft": 0,
+      "paddingRight": 1,
+      "paddingTop": 1,
+      "paddingBottom": 0
+    },
+    {
+      "name": "bg_maxcombo_other",
+      "x": 168,
+      "y": 1033,
+      "width": 16,
+      "height": 69,
+      "borderLeft": 7,
+      "borderRight": 7,
+      "borderTop": 10,
+      "borderBottom": 50,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "paddingBottom": 0
+    },
+    {
+      "name": "icon_left_scorebar",
+      "x": 1420,
+      "y": 466,
+      "width": 35,
+      "height": 35,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "paddingLeft": 1,
+      "paddingRight": 1,
+      "paddingTop": 1,
+      "paddingBottom": 1
+    },
+    {
+      "name": "judge_maxcombo",
+      "x": 1588,
+      "y": 1141,
+      "width": 116,
+      "height": 63,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "paddingBottom": 1
+    },
+    {
+      "name": "line_dot",
+      "x": 1371,
+      "y": 499,
+      "width": 6,
+      "height": 6,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 8,
+      "paddingTop": 0,
+      "paddingBottom": 0
+    },
+    {
+      "name": "line_under_number",
+      "x": 1878,
+      "y": 1871,
+      "width": 100,
+      "height": 2,
+      "borderLeft": 45,
+      "borderRight": 45,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "paddingBottom": 0
+    },
+    {
+      "name": "maxcombo_wide",
+      "x": 1636,
+      "y": 831,
+      "width": 128,
+      "height": 28,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "paddingBottom": 0
+    }
+  ],
+  "textureSize": [
+    2048,
+    2048
+  ],
+  "additiveSprites": [],
+  "additiveTextureSize": [
+    2048,
+    2048
+  ],
+  "clips": {
+    "live_result_show_solo": {
+      "duration": 3.2666666507720947,
+      "loop": false,
+      "curveCount": 64,
+      "constants": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bindings": [
+        {
+          "path": "RightContainer/MyResult",
+          "property": "position",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+          "property": "position",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name",
+          "property": "scale",
+          "index": 9,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Great/Name",
+          "property": "scale",
+          "index": 12,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Good/Name",
+          "property": "scale",
+          "index": 15,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/BAD/Name",
+          "property": "scale",
+          "index": 18,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/MISS/Name",
+          "property": "scale",
+          "index": 21,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/COMBO/Back/Name",
+          "property": "scale",
+          "index": 24,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/Buttons/NextButton",
+          "property": "scale",
+          "index": 30,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_a",
+          "property": "scale",
+          "index": 33,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_b",
+          "property": "scale",
+          "index": 36,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_c",
+          "property": "scale",
+          "index": 39,
+          "size": 3
+        },
+        {
+          "path": "RightContainer/Buttons/NextButton",
+          "property": "active",
+          "index": 42,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name",
+          "property": "active",
+          "index": 45,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_b",
+          "property": "active",
+          "index": 46,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_c",
+          "property": "active",
+          "index": 47,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_a",
+          "property": "active",
+          "index": 48,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Great/Name",
+          "property": "active",
+          "index": 49,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Great/Name_additive",
+          "property": "active",
+          "index": 50,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Good/Name",
+          "property": "active",
+          "index": 51,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/BAD/Name",
+          "property": "active",
+          "index": 52,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/MISS/Name",
+          "property": "active",
+          "index": 53,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/COMBO/Back/Name",
+          "property": "active",
+          "index": 54,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+          "property": "active",
+          "index": 55,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_a",
+          "property": "spriteAlpha",
+          "index": 56,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_b",
+          "property": "spriteAlpha",
+          "index": 57,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Perfect/Name_ef_c",
+          "property": "spriteAlpha",
+          "index": 58,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Judgement/Great/Name_additive",
+          "property": "spriteAlpha",
+          "index": 59,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult",
+          "property": "alpha",
+          "index": 62,
+          "size": 1
+        },
+        {
+          "path": "RightContainer/MyResult/Detail/Score/MyScore/ScoreRoot",
+          "property": "alpha",
+          "index": 63,
+          "size": 1
+        },
+        {
+          "path": "RightContainer",
+          "property": "position",
+          "index": 64,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                85.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                32.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                66.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -143.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 35,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 36,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 37,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 38,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 39,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 40,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 41,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 42,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 43,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 44,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 45,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 46,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 47,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 48,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 49,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 50,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 51,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 52,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 53,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 54,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 55,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 56,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 57,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 58,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 60,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 61,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 62,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 63,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                27111.109375,
+                -4066.66650390625,
+                -680.0,
+                85.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                32.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                3857.14208984375,
+                -899.9998779296875,
+                -60.0,
+                0.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                8.769230842590332,
+                66.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -143.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                3.7385447025299072,
+                -3.8631627559661865,
+                -0.4838709831237793,
+                0.5
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                2.99991774559021,
+                -3.4499051570892334,
+                -0.43478262424468994,
+                0.5
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                2.460270643234253,
+                -3.116342782974243,
+                -0.3947368562221527,
+                0.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                2.0540859699249268,
+                -2.8414857387542725,
+                -0.3614457845687866,
+                0.5
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                1.7407405376434326,
+                -2.6111106872558594,
+                -0.3333333432674408,
+                0.5
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 24,
+              "coefficients": [
+                2.542273759841919,
+                -4.448978900909424,
+                -0.5714285969734192,
+                1.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.956237256526947,
+                -2.709338903427124,
+                -0.3529411852359772,
+                1.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.8812984824180603,
+                -2.599830389022827,
+                -0.33898305892944336,
+                1.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                0.27249133586883545,
+                -0.30882349610328674,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.27249133586883545,
+                -0.30882349610328674,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 35,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 36,
+              "coefficients": [
+                0.2018907070159912,
+                -0.26582276821136475,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 37,
+              "coefficients": [
+                0.2018907070159912,
+                -0.26582276821136475,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 38,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 39,
+              "coefficients": [
+                0.15555556118488312,
+                -0.23333333432674408,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 40,
+              "coefficients": [
+                0.15555556118488312,
+                -0.23333333432674408,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 41,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 42,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 43,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 44,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 45,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 46,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 47,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 48,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 49,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 50,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 51,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 52,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 53,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 54,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 56,
+              "coefficients": [
+                0.23571918904781342,
+                -0.2671484053134918,
+                -0.6055363416671753,
+                1.0
+              ]
+            },
+            {
+              "index": 57,
+              "coefficients": [
+                0.1503281593322754,
+                -0.19793207943439484,
+                -0.5212211608886719,
+                1.0
+              ]
+            },
+            {
+              "index": 58,
+              "coefficients": [
+                -0.046477850526571274,
+                0.06971681118011475,
+                0.20915032923221588,
+                0.0
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                -0.9019690752029419,
+                1.187592625617981,
+                -0.4020848870277405,
+                1.0
+              ]
+            },
+            {
+              "index": 60,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 61,
+              "coefficients": [
+                0.7592177391052246,
+                -1.6449718475341797,
+                -0.4615384340286255,
+                1.0
+              ]
+            },
+            {
+              "index": 62,
+              "coefficients": [
+                0.0,
+                0.0,
+                7.499999523162842,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.13333334028720856,
+          "keys": [
+            {
+              "index": 62,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.15000000596046448,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                -137250.015625,
+                18300.001953125,
+                -69.99996948242188,
+                -17.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                32.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.21666666865348816,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                19.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                32.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.23333333432674408,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                -52199.98828125,
+                7319.99951171875,
+                149.99998474121094,
+                -14.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 55,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 63,
+              "coefficients": [
+                0.0,
+                0.0,
+                12.000000953674316,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3166666626930237,
+          "keys": [
+            {
+              "index": 63,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.3333333432674408,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                44928.02734375,
+                -7488.001953125,
+                47.99995422363281,
+                22.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.4166666567325592,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.0333333015441895,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -949.1929931640625,
+                134.83865356445312,
+                3.508063554763794,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 45,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.1333333253860474,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                784.9995727539062,
+                -133.4999542236328,
+                1.9999995231628418,
+                0.75
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 35,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 48,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 56,
+              "coefficients": [
+                -20.770015716552734,
+                5.897562026977539,
+                -0.30276817083358765,
+                0.3137255012989044
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.149999976158142,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                -946.7385864257812,
+                134.34776306152344,
+                3.5326077938079834,
+                0.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 49,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.2333333492279053,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -338.3995361328125,
+                56.39995193481445,
+                -1.1499998569488525,
+                0.4000000059604645
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.25,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                784.9995727539062,
+                -133.4999542236328,
+                1.9999995231628418,
+                0.75
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.2666666507720947,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                -944.736328125,
+                133.94732666015625,
+                3.552630662918091,
+                0.0
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 51,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3166667222976685,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 36,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 37,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 38,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 46,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 50,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 57,
+              "coefficients": [
+                -19.871984481811523,
+                5.508415222167969,
+                -0.26061058044433594,
+                0.3137255012989044
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                286.4855041503906,
+                -49.92555236816406,
+                -1.9657484292984009,
+                0.47058823704719543
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.350000023841858,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                -338.3995361328125,
+                56.39995193481445,
+                -1.1499998569488525,
+                0.4000000059604645
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 56,
+              "coefficients": [
+                12.347794532775879,
+                -5.762305736541748,
+                -0.6722688674926758,
+                0.3137255012989044
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3666666746139526,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                784.9995727539062,
+                -133.4999542236328,
+                1.9999995231628418,
+                0.75
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3833333253860474,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                -943.07177734375,
+                133.61441040039062,
+                3.5692760944366455,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 52,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.433333396911621,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.4500000476837158,
+          "keys": [
+            {
+              "index": 59,
+              "coefficients": [
+                -397.05889892578125,
+                79.41177368164062,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.4666666984558105,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                -338.3995361328125,
+                56.39995193481445,
+                -1.1499998569488525,
+                0.4000000059604645
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.4833333492279053,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                784.9995727539062,
+                -133.4999542236328,
+                1.9999995231628418,
+                0.75
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.5,
+          "keys": [
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                -941.6661376953125,
+                133.33326721191406,
+                3.5833323001861572,
+                0.0
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 39,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 40,
+              "coefficients": [
+                -1.7283947467803955,
+                1.5555553436279297,
+                0.34999996423721313,
+                0.5
+              ]
+            },
+            {
+              "index": 41,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 47,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 53,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 58,
+              "coefficients": [
+                -12.092881202697754,
+                2.137470006942749,
+                0.10457516461610794,
+                0.3137255012989044
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.533333420753479,
+          "keys": [
+            {
+              "index": 57,
+              "coefficients": [
+                12.347794532775879,
+                -5.762305736541748,
+                -0.6722688674926758,
+                0.3137255012989044
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.5500000715255737,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.5833333730697632,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                -338.3995361328125,
+                56.39995193481445,
+                -1.1499998569488525,
+                0.4000000059604645
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 35,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 56,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                397.05889892578125,
+                -79.41177368164062,
+                0.0,
+                0.47058823704719543
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.600000023841858,
+          "keys": [
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                784.9995727539062,
+                -133.4999542236328,
+                1.9999995231628418,
+                0.75
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.6666667461395264,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.7000000476837158,
+          "keys": [
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                -338.3995361328125,
+                56.39995193481445,
+                -1.1499998569488525,
+                0.4000000059604645
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.7166666984558105,
+          "keys": [
+            {
+              "index": 58,
+              "coefficients": [
+                12.347794532775879,
+                -5.762305736541748,
+                -0.6722688674926758,
+                0.3137255012989044
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                -309.4723815917969,
+                67.73357391357422,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.75,
+          "keys": [
+            {
+              "index": 24,
+              "coefficients": [
+                -1878.5703125,
+                265.71417236328125,
+                7.2142839431762695,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 54,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.7666667699813843,
+          "keys": [
+            {
+              "index": 36,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 37,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 38,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 57,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.783333420753479,
+          "keys": [
+            {
+              "index": 21,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "index": 23,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.850000023841858,
+          "keys": [
+            {
+              "index": 24,
+              "coefficients": [
+                1569.999267578125,
+                -266.99993896484375,
+                3.9999990463256836,
+                1.5
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 59,
+              "coefficients": [
+                1.5355421304702759,
+                -3.480562210083008,
+                1.557093620300293,
+                0.47058823704719543
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.9500000476837158,
+          "keys": [
+            {
+              "index": 24,
+              "coefficients": [
+                -676.8013305664062,
+                112.80010986328125,
+                -2.2999978065490723,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 39,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 40,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.8149999976158142
+              ]
+            },
+            {
+              "index": 41,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 58,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.0333333015441895,
+          "keys": [
+            {
+              "index": 24,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 26,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.1666667461395264,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                42222.15234375,
+                -8599.990234375,
+                -339.9997863769531,
+                85.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -143.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 60,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 61,
+              "coefficients": [
+                -158.4049835205078,
+                47.52145004272461,
+                3.102567434310913,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.316666603088379,
+          "keys": [
+            {
+              "index": 61,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.316666841506958,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                -137250.25,
+                18300.015625,
+                -69.99954223632812,
+                -16.99999237060547
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -143.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.383333444595337,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                19.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -143.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.8333332538604736,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                -1867.6400146484375,
+                263.52874755859375,
+                7.323518753051758,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 43,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.933333396911621,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                1570.002685546875,
+                -267.0001220703125,
+                3.999986171722412,
+                1.5
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.950000047683716,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                -1866.9534912109375,
+                263.3902587890625,
+                7.3305158615112305,
+                0.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 42,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 2.9833333492279053,
+          "keys": [
+            {
+              "index": 59,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.0333333015441895,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                -676.8018798828125,
+                112.80020904541016,
+                -2.300002098083496,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.049999952316284,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                1569.9954833984375,
+                -266.9996032714844,
+                4.000012397766113,
+                1.5
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.116666555404663,
+          "keys": [
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.1500000953674316,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                -676.8006591796875,
+                112.80001068115234,
+                -2.2999939918518066,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.2333333492279053,
+          "keys": [
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 3.2666666507720947,
+          "keys": [
+            {
+              "index": 55,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "time": 0.4333333373069763,
+          "name": "countUpScore"
+        },
+        {
+          "time": 1.0499999523162842,
+          "name": "countUpPerfect"
+        },
+        {
+          "time": 1.1666666269302368,
+          "name": "countUpGreat"
+        },
+        {
+          "time": 1.2833333015441895,
+          "name": "countUpGood"
+        },
+        {
+          "time": 1.399999976158142,
+          "name": "countUpBad"
+        },
+        {
+          "time": 1.5166666507720947,
+          "name": "countUpMiss"
+        },
+        {
+          "time": 1.7666666507720947,
+          "name": "countUpCombo"
+        },
+        {
+          "time": 2.383333444595337,
+          "name": "countUpHighScoreRatingGroup"
+        },
+        {
+          "time": 2.8333332538604736,
+          "name": "ShowAchievementDialog"
+        },
+        {
+          "time": 3.2666666507720947,
+          "name": "CallbackAnimation"
+        },
+        {
+          "time": 3.2666666507720947,
+          "name": "AnimationFinish"
+        }
+      ]
+    },
+    "result_label_scale": {
+      "duration": 0.28333333134651184,
+      "loop": false,
+      "curveCount": 3,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "",
+          "property": "scale",
+          "index": 0,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -143.74998474121094,
+                28.749996185302734,
+                1.499999761581421,
+                1.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.20000000298023224,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                5500.0009765625,
+                -390.0000305175781,
+                -4.249999523162842,
+                1.2999999523162842
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.25,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -7200.0009765625,
+                480.0000305175781,
+                -1.9999995231628418,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.28333333134651184,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "time": 0.28333333134651184,
+          "name": "CallbackAnimation"
+        }
+      ]
+    },
+    "ShowResultFastSlowUIAnimation": {
+      "duration": 1.4333332777023315,
+      "loop": false,
+      "curveCount": 8,
+      "constants": [],
+      "bindings": [
+        {
+          "path": "Fast/Name",
+          "property": "scale",
+          "index": 0,
+          "size": 3
+        },
+        {
+          "path": "Slow/Name",
+          "property": "scale",
+          "index": 3,
+          "size": 3
+        },
+        {
+          "path": "Fast/Name",
+          "property": "active",
+          "index": 6,
+          "size": 1
+        },
+        {
+          "path": "Slow/Name",
+          "property": "active",
+          "index": 7,
+          "size": 1
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.0333333015441895,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -2999.998291015625,
+                449.99981689453125,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.1333333253860474,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                1399.9991455078125,
+                -209.99990844726562,
+                0.0,
+                1.5
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.149999976158142,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                -2999.998291015625,
+                449.99981689453125,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.2333333492279053,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                -691.198974609375,
+                86.39990997314453,
+                0.0,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.25,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                1399.9991455078125,
+                -209.99990844726562,
+                0.0,
+                1.5
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.3166667222976685,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.350000023841858,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                -691.201904296875,
+                86.40016174316406,
+                0.0,
+                0.800000011920929
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 1.4333332777023315,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": []
+    },
+    "InitResultFastSlowUIAnimation": {
+      "duration": 0.0,
+      "loop": false,
+      "curveCount": 2,
+      "constants": [
+        1.0,
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "bindings": [
+        {
+          "path": "Fast/Name",
+          "property": "active",
+          "index": 0,
+          "size": 1
+        },
+        {
+          "path": "Slow/Name",
+          "property": "active",
+          "index": 1,
+          "size": 1
+        },
+        {
+          "path": "Fast/Name",
+          "property": "scale",
+          "index": 2,
+          "size": 3
+        },
+        {
+          "path": "Slow/Name",
+          "property": "scale",
+          "index": 5,
+          "size": 3
+        }
+      ],
+      "frames": [
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.0,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        }
+      ],
+      "events": []
+    }
+  }
+}

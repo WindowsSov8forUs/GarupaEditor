@@ -1,0 +1,3799 @@
+import { noteUnclippedTransform } from "./ordinaryNoteGeometry";
+import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
+import type { SlideNodeHideRequest } from "../notes/noteTypes";
+import { virtualLaneUnit } from "../chart/virtualLane";
+import type {
+  RenderColor,
+  RenderCommand,
+  RenderCommandBatch,
+  RenderFloat32,
+  RenderOrderingKey,
+  RenderVector2,
+  RenderVector3,
+  SimulatorRendererBackend,
+} from "../../backends/renderingContracts";
+import {
+  createRenderFloat32,
+  validateRenderFloat32,
+} from "../../backends/renderingValidation";
+import {
+  AfterNoteType,
+  ButtonType,
+  FrontNoteType,
+  GameNoteAdditionalType,
+  GameNoteType,
+  type NoteInformation,
+} from "../chart/types";
+import {
+  integrityFailure,
+  ok,
+  type SimulatorResult,
+} from "../result";
+import type { NoteFamily } from "../data/noteData";
+import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
+import type { InGameRecordSnapshot } from "../managers/inGameRecord";
+import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import { advanceAddScoreAnimation, type AddScoreAnimationState } from "../hud/addScoreHudOwner";
+import { InGameHudController } from "../hud/inGameHudController";
+import { HUD_PREFAB_OBJECT_IDS } from "../hud/hudContracts";
+import { resolveDisplayedAllPerfect } from "../hud/comboHudOwner";
+import { resolveResultJudgeKey } from "../hud/resultHudOwner";
+export { resolveDisplayedAllPerfect, resolveResultJudgeKey };
+import {
+  advanceLongChildFrame,
+  buildOrdinaryLongNormalMesh,
+  createOrdinaryLongNormalChildState,
+  getOrdinaryNoteMeshAfterScale,
+  type OrdinaryLongNormalChildFrameInput,
+  type OrdinaryLongNormalChildState,
+} from "./ordinaryLongChildLifecycle";
+import {
+  advanceOrdinaryNoteActivationAdjustment,
+  advanceOrdinaryNoteMotion,
+  repositionOrdinaryNoteToJudgeLine,
+  type OrdinaryNoteGoalScale,
+  buildOrdinaryMultipleDirectionalLine,
+  buildOrdinarySyncLine,
+  calculateOrdinaryNoteStartDepth,
+  calculateOrdinaryNoteWorldScaleAxis,
+  getHabahiroMeshWidthRate,
+  type OrdinaryBaseNoteMeshGeometry,
+  type OrdinaryMultipleDirectionalLineOwnerState,
+  type OrdinaryNoteMotionResult,
+  type OrdinaryNoteMotionState,
+  type OrdinarySyncLineOwnerState,
+} from "./ordinaryNoteGeometry";
+import {
+  CURRENT_HABAHIRO_SEMANTIC_PROFILE,
+  HABAHIRO_ANIMATION_COMPLETE_SECONDS,
+  HABAHIRO_CHANGE_LANE_SECONDS,
+  HABAHIRO_FLASH_SPRITE_NAMES,
+  sampleCurrentHabahiroFlash,
+  type HabahiroFlashSpriteName,
+} from "./habahiroFlashAnimation";
+import {
+  advanceOrdinarySlideChildren,
+  applySlideRenderHides,
+  createOrdinarySlideChildState,
+  type OrdinarySlideChildState,
+  type OrdinarySlideStopControl,
+} from "./ordinarySlideChildLifecycle";
+
+export interface HabahiroFieldResourceBindings {
+  readonly backgroundLineLogicalAssetId: string;
+  readonly judgeLineLogicalAssetId: string;
+  readonly judgeSkillLineLogicalAssetId: string;
+}
+
+export interface HabahiroPackageResourceBindings {
+  readonly flashLogicalAssetIds: Readonly<Record<HabahiroFlashSpriteName, string>>;
+  readonly fieldBefore: HabahiroFieldResourceBindings;
+  readonly fieldAfter: HabahiroFieldResourceBindings;
+}
+
+export interface RenderEngineResourceBindings {
+  readonly noteAtlasLogicalAssetId: string;
+  readonly directionalAtlasLogicalAssetId: string;
+  readonly syncLineLogicalAssetId?: string;
+  readonly multipleDirectionalLineLeftLogicalAssetId?: string;
+  readonly multipleDirectionalLineRightLogicalAssetId?: string;
+  readonly longNoteMaterialLogicalAssetId?: string;
+  readonly curveNoteMaterialLogicalAssetId?: string;
+  readonly habahiroAtlasLogicalAssetIds?: {
+    readonly normal: string;
+    readonly normal16: string;
+    readonly skill: string;
+    readonly flick: string;
+    readonly long: string;
+    readonly longFlash: string;
+    readonly slideAmong: string;
+  };
+  readonly habahiroPackage?: HabahiroPackageResourceBindings;
+  readonly comboAnimationLogicalAssetId?: string;
+  readonly ordinaryVisible?: {
+    readonly comboNumberLogicalAssetId: string;
+    readonly judgeLogicalAssetId: string;
+    readonly lifeAdditiveLogicalAssetId: string;
+    readonly warningLogicalAssetId: string;
+    readonly tapLaneEffectLogicalAssetIds: readonly [string, string, string, string];
+  };
+  readonly scoreHud?: {
+    readonly fontLogicalAssetId: string;
+    readonly gaugeLogicalAssetId: string;
+    readonly levelMarkLogicalAssetId: string;
+    readonly rankLabelFontLogicalAssetId: string;
+    readonly highRankKiraLogicalAssetId: string;
+    readonly highRankLongStarLogicalAssetId: string;
+    readonly highRankOverlayLogicalAssetId: string;
+  };
+}
+
+export interface TapLaneEffectRenderState {
+  readonly slot: number;
+  readonly textureIndex: 0 | 1 | 2 | 3;
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly active: boolean;
+  readonly flipX: boolean;
+}
+
+export interface RenderPoolIdentityPlan {
+  readonly poolObjectId: string;
+  readonly family: NoteFamily;
+  readonly slideChildCount?: number;
+}
+
+export interface DirectionalNotePresentationPlan {
+  readonly poolObjectId: string;
+  /** null is the front, -1 the Long tail, otherwise the Slide child index. */
+  readonly childIndex: number | null;
+  readonly iconVisible: boolean;
+  readonly transform: {
+    readonly motion: OrdinaryNoteMotionResult;
+    readonly parentScale: RenderFloat32;
+  } | null;
+}
+
+export interface OrdinaryNoteTransformVisualState {
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly maskObjectId: null;
+}
+
+export interface PreparedOrdinaryNoteMotion {
+  readonly motion: OrdinaryNoteMotionResult;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface HabahiroSceneInput {
+  readonly meshWidthSetting: RenderFloat32;
+  readonly suddenLane: false;
+  readonly changeLaneSeconds: RenderFloat32;
+  readonly animationCompleteSeconds: RenderFloat32;
+  readonly fieldBefore: readonly RenderFieldObjectPlan[];
+  readonly fieldAfter: readonly RenderFieldObjectPlan[];
+  readonly fieldMasks: readonly RenderFieldMaskPlan[];
+}
+
+export interface OriginalSkinFieldSceneInput {
+  readonly objects: readonly RenderFieldObjectPlan[];
+  readonly masks: readonly RenderFieldMaskPlan[];
+}
+
+export interface OrdinaryFixedNoteSceneInput {
+  readonly pixelsPerWorldUnit?: number;
+  readonly viewportY?: readonly [number, number];
+  readonly viewportX?: readonly [number, number];
+  readonly noteLineClipY: RenderFloat32;
+  readonly specificSpeed: RenderFloat32;
+  readonly noteSettingScale: RenderFloat32;
+  readonly noteParentScale: RenderFloat32;
+  readonly launcherY: RenderFloat32;
+  readonly targetCenterY: RenderFloat32;
+  readonly highAspectRatio: RenderFloat32;
+  readonly noteStartPositions: readonly RenderVector3[];
+  readonly goalPositions: readonly RenderVector3[];
+  readonly tapLaneEffectPositions: readonly RenderVector3[];
+  readonly noteTint: RenderColor;
+  readonly noteDomainLayer: number;
+  readonly syncLineEdgeMargin?: RenderFloat32;
+  readonly screenToSafeAreaRatio?: RenderFloat32;
+  readonly longMeshColor?: RenderColor;
+  readonly field?: OriginalSkinFieldSceneInput;
+  readonly habahiro?: HabahiroSceneInput;
+}
+
+export interface PreparedOrdinaryNoteActivation {
+  readonly motionState: OrdinaryNoteMotionState;
+  readonly renderedTransform: OrdinaryNoteMotionResult;
+  readonly longChildState: OrdinaryLongNormalChildState | null;
+  readonly slideChildStates: readonly OrdinarySlideChildState[] | null;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface PreparedOrdinaryLongChildFrame {
+  readonly childState: OrdinaryLongNormalChildState;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface PreparedOrdinarySlideChildFrame {
+  readonly frontTransform: OrdinaryNoteMotionResult;
+  readonly childStates: readonly OrdinarySlideChildState[];
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface RenderFieldObjectPlan {
+  readonly renderObjectId: string;
+  readonly initiallyActive?: boolean;
+  readonly role: "field-line" | "judge-line";
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly rotationDegrees: RenderFloat32;
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly maskObjectId: string | null;
+}
+
+export interface RenderFieldMaskPlan {
+  readonly renderObjectId: string;
+  readonly polygon: readonly RenderVector2[];
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly rotationDegrees: RenderFloat32;
+  readonly ordering: RenderOrderingKey;
+}
+
+export class RenderOwnerTransaction {
+  private state: "pending" | "backend-committed" | "committed" | "discarded" = "pending";
+
+  constructor(
+    private readonly renderer: SimulatorRendererBackend,
+    private readonly batch: RenderCommandBatch | null,
+    private readonly onCommit: () => void = () => {},
+  ) {}
+
+  commitBackend(): SimulatorResult<void> {
+    if (this.state !== "pending") return transactionRejected("backend commit", this.state);
+    const committed = this.batch === null
+      ? ok(undefined)
+      : this.renderer.commit(this.batch);
+    if (committed.status === "ok") this.state = "backend-committed";
+    return committed;
+  }
+
+  publishOwner(): SimulatorResult<void> {
+    if (this.state !== "backend-committed") return transactionRejected("owner publish", this.state);
+    this.state = "committed";
+    this.onCommit();
+    return ok(undefined);
+  }
+
+  commit(): SimulatorResult<void> {
+    const backend = this.commitBackend();
+    return backend.status === "ok" ? this.publishOwner() : backend;
+  }
+
+  discard(): SimulatorResult<void> {
+    if (this.state !== "pending") {
+      return transactionRejected("discard", this.state);
+    }
+    const discarded = this.batch === null
+      ? ok(undefined)
+      : this.renderer.discard(this.batch);
+    if (discarded.status === "ok") this.state = "discarded";
+    return discarded;
+  }
+}
+
+const RENDER_ONE = Object.freeze({ value: 1, bits: "3F800000" });
+
+const HABAHIRO_ROOT_EFFECT_OBJECT =
+  `render:habahiro:root-effect:${CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.rootGameObjectPathId}`;
+const HABAHIRO_FLASH_OBJECT_PREFIX = `${HABAHIRO_ROOT_EFFECT_OBJECT}:renderer:`;
+
+const HUD_OBJECTS = Object.freeze({
+  ...HUD_PREFAB_OBJECT_IDS,
+});
+
+type NoteVisualAnimationRole =
+  | "note-flick"
+  | "note-directional-flick"
+  | "note-long-flash";
+
+/** Projected input for the ordinary presentation owner. No chart-format routing. */
+export type NotePresentation = {
+  readonly id: string;
+  readonly lifetime: string;
+  readonly visible: boolean;
+} & (
+  | { readonly kind: "body"; readonly position: RenderVector3 | null; readonly unclipped?: OrdinaryNoteMotionResult["unclipped"];
+  readonly localScale: RenderVector3 | null;
+      readonly binding: NoteSpriteBinding | null; readonly contentVisible?: boolean;
+      readonly animations: readonly (OrdinaryAnimationBinding & { readonly lifetime: string; readonly revision?: number | null; readonly visible?: boolean })[] }
+  | { readonly kind: "sync-line"; readonly state: OrdinarySyncLineOwnerState | null }
+  | { readonly kind: "multiple-directional-line"; readonly state: OrdinaryMultipleDirectionalLineOwnerState | null;
+      readonly direction: "left" | "right" }
+  | { readonly kind: "curve-note"; readonly geometry: OrdinaryBaseNoteMeshGeometry | null;
+      readonly materialRole: "long-note" | "curve-note" }
+);
+
+type PresentedObject = { readonly plan: NotePresentation; readonly visible: boolean;
+  readonly animations: ReadonlyMap<string, { readonly role: NoteVisualAnimationRole; readonly elapsed: number;
+    readonly playbackRevision?: number | null }> };
+
+export interface RenderHudSessionMode {
+  readonly isAutoPlay: boolean;
+  readonly allPerfectStatusPresentationEnabled: boolean;
+}
+
+const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
+  isAutoPlay: false,
+  allPerfectStatusPresentationEnabled: true,
+});
+
+export class RenderCommandProducer {
+  private frame = 0;
+  private substep = 0;
+  private readonly createdObjectIds: string[] = [];
+  private readonly fieldObjectIds = new Set<string>();
+  private readonly creationSequenceByObjectId = new Map<string, number>();
+  private nextCreationSequence = 0;
+  private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
+  private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
+  private readonly addScoreAnimations = new Map<string, AddScoreAnimationState>();
+  private resultAnimation: Readonly<{ elapsedSeconds: number; visibilityElapsedSeconds: number }> | null = null;
+  private scoreGaugeSsElapsedSeconds: number | null = null;
+  private scoreGaugeHighRankClip: "ScoreGaugeSS" | "ScoreGaugeSSS" | null = null;
+  private gameClearElapsedSeconds: number | null = null;
+  private readonly hud: InGameHudController;
+  private lastCombo = 0;
+  private lastAllPerfect = false;
+  private lastLifeWarning = false;
+  private lastSingleGameOver = false;
+  private readonly presentedObjects = new Map<string, PresentedObject>();
+  private readonly noteAnimationElapsedSeconds = new Map<string, {
+    readonly role: NoteVisualAnimationRole;
+    readonly elapsed: number;
+    readonly playbackRevision?: number | null;
+  }>();
+
+  constructor(
+    readonly sessionId: string,
+    private readonly renderer: SimulatorRendererBackend,
+    private readonly resources: RenderEngineResourceBindings,
+    private readonly hudSessionMode: RenderHudSessionMode = DEFAULT_RENDER_HUD_SESSION_MODE,
+  ) {
+    this.hud = new InGameHudController(
+      hudSessionMode.isAutoPlay,
+      hudSessionMode.allPerfectStatusPresentationEnabled,
+    );
+  }
+
+  isCompleteHabahiro(): boolean {
+    const fidelity = this.renderer.snapshot().fidelity;
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "current-external-complete";
+  }
+
+  validate(): SimulatorResult<void> {
+    const snapshot = this.renderer.snapshot();
+    if (
+      typeof this.sessionId !== "string" ||
+      this.sessionId.length === 0 ||
+      snapshot.state !== "ready" ||
+      snapshot.sessionId !== this.sessionId ||
+      snapshot.fault !== null ||
+      typeof this.hudSessionMode.isAutoPlay !== "boolean" ||
+      typeof this.hudSessionMode.allPerfectStatusPresentationEnabled !== "boolean" ||
+      !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
+      !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
+      (this.resources.comboAnimationLogicalAssetId !== undefined &&
+        !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
+      (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
+        this.renderer.snapshot().fidelity?.fidelity === "current-external-complete" &&
+        (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
+          Object.values(this.resources.habahiroAtlasLogicalAssetIds).some((value) => !isNonEmpty(value)) ||
+          !validateHabahiroPackageBindings(this.resources.habahiroPackage)))
+    ) {
+      return integrityFailure(
+        "render.producer.invalid-session-or-resource-bindings",
+        "The producer requires one ready renderer session and explicit exact Note/Directional logical asset IDs.",
+      );
+    }
+    return ok(undefined);
+  }
+
+  beginOuterFrame(frame: number): SimulatorResult<void> {
+    if (!Number.isSafeInteger(frame) || frame < 0 || frame < this.frame) {
+      return integrityFailure(
+        "render.producer.invalid-frame",
+        "Render frame identity is monotonic and authored by the engine outer-frame owner.",
+      );
+    }
+    this.frame = frame;
+    this.substep = 0;
+    return ok(undefined);
+  }
+
+  beginSubstep(substep: number): SimulatorResult<void> {
+    if (!Number.isSafeInteger(substep) || substep < 0) {
+      return integrityFailure(
+        "render.producer.invalid-substep",
+        "Render substep identity is a non-negative integer authored by NoteManager.",
+      );
+    }
+    this.substep = substep;
+    return ok(undefined);
+  }
+
+  preflightHudSetup(
+    record: InGameRecordSnapshot,
+    scoreGauge: SinglePlayScoreGaugeSnapshot,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const scoreHud = this.validateScoreHudBindings();
+    if (scoreHud.status !== "ok") return scoreHud;
+    const ordinaryVisible = this.validateOrdinaryVisibleBindings();
+    if (ordinaryVisible.status !== "ok") return ordinaryVisible;
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    const create = (
+      renderObjectId: string,
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-add-score" | "hud-game-clear",
+    ) => {
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length), kind: "create-object", renderObjectId,
+        poolFamily: role, role, parentObjectId: null,
+      });
+    };
+    for (let poolIndex = 0; poolIndex < HUD_OBJECTS.addScore.length; poolIndex += 1) {
+      const renderObjectId = HUD_OBJECTS.addScore[poolIndex]!;
+      create(renderObjectId, "hud-add-score");
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId,
+        hudRole: "add-score", state: Object.freeze({
+          value: 1,
+          alpha: 0,
+          localXOffset: 0,
+          poolIndex: poolIndex as 0 | 1 | 2 | 3,
+          depth: 0 as const,
+        }),
+      });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
+    create(HUD_OBJECTS.combo, "hud-combo");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
+    create(HUD_OBJECTS.comboAllPerfect, "hud-combo");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect });
+    create(HUD_OBJECTS.result, "hud-result");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+    create(HUD_OBJECTS.gameClear, "hud-game-clear");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.gameClear });
+    create(HUD_OBJECTS.score, "hud-score");
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score", state: this.hud.score.createState(record, scoreGauge),
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
+    create(HUD_OBJECTS.life, "hud-life");
+    const initialLifeState = this.hud.life.createState(record);
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: initialLifeState,
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
+    if (initialLifeState.warning) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: true,
+    });
+    if (initialLifeState.singleGameOver) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: true,
+    });
+    return this.preflight(commands, () => {
+      this.recordCreatedObjects(created);
+      this.lastLifeWarning = initialLifeState.warning;
+      this.lastSingleGameOver = initialLifeState.singleGameOver;
+      if (initialLifeState.warning) this.lifeAnimationElapsedSeconds.set("life-warning", 0);
+      if (initialLifeState.singleGameOver) this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
+    });
+  }
+
+  preflightHudReflect(
+    plan: ScoreLifeReflectPlan,
+    deltaTimeSeconds: number,
+    showAddScore: boolean,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      return integrityFailure(
+        "render.producer.invalid-hud-reflect-delta",
+        "HUD reflection requires the current finite non-negative outer delta for immediate coroutine first-resume semantics.",
+      );
+    }
+    if (validation.status !== "ok") return validation;
+    const scoreHud = this.validateScoreHudBindings();
+    if (scoreHud.status !== "ok") return scoreHud;
+    const ordinaryVisible = this.validateOrdinaryVisibleBindings();
+    if (ordinaryVisible.status !== "ok") return ordinaryVisible;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    const addScoreStarts: AddScoreAnimationState[] = [];
+    // ReflectOneFrameData calls Play for each score, before accumulating the
+    // batch total. Stage pool/depth advances until this transaction publishes.
+    for (const entry of plan.reflect.entries) {
+      if (!showAddScore || entry.score === 0) continue;
+      const initial = advanceAddScoreAnimation({
+        phase: 0,
+        phaseElapsedSeconds: 0,
+        hud: this.hud.addScore.createState(entry.score, addScoreStarts.length),
+      }, deltaTimeSeconds)!;
+      addScoreStarts.push(initial);
+      const addScoreObjectId = HUD_OBJECTS.addScore[initial.hud.poolIndex]!;
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
+        hudRole: "add-score", state: initial.hud,
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
+    }
+    const displayedAllPerfect = this.hud.combo.displayedAllPerfect(plan.record.allPerfect);
+    const comboChanged = plan.record.currentCombo !== this.lastCombo ||
+      displayedAllPerfect !== this.lastAllPerfect;
+    const normalComboPlaying = this.hudAnimationElapsedSeconds.has("normal-combo");
+    const apComboPlaying = this.hudAnimationElapsedSeconds.has("ap-combo");
+    const apAlphaPlaying = this.hudAnimationElapsedSeconds.has("ap-alpha");
+    if (comboChanged) {
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
+        hudRole: "combo",
+        state: this.hud.combo.normalState(plan.record.currentCombo),
+      });
+      if (plan.record.currentCombo > 0) {
+        commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "combo", restart: true,
+        });
+        commands.push({
+          ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.combo,
+        });
+        if (displayedAllPerfect) {
+          commands.push({
+            ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            hudRole: "combo",
+            state: this.hud.combo.allPerfectState(plan.record.currentCombo),
+          });
+          commands.push({
+            ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "combo", restart: true,
+          });
+          if (!apAlphaPlaying) commands.push({
+            ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "all-perfect", restart: true,
+          });
+          commands.push({
+            ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          });
+        } else {
+          if (apComboPlaying) commands.push({
+            ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "combo", restart: false,
+          });
+          if (apAlphaPlaying) commands.push({
+            ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+            animationRole: "all-perfect", restart: false,
+          });
+          commands.push({
+            ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          });
+        }
+      } else {
+        if (normalComboPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "combo", restart: false,
+        });
+        if (apComboPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          animationRole: "combo", restart: false,
+        });
+        if (apAlphaPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+          animationRole: "all-perfect", restart: false,
+        });
+        commands.push(
+          { ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo },
+          { ...base(commands.length + 1), kind: "hide-object", renderObjectId: HUD_OBJECTS.comboAllPerfect },
+        );
+      }
+    }
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.result });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.result,
+      hudRole: "result", state: this.hud.result.createState(
+        plan.reflect.representativeRawResult,
+        plan.reflect.representativeJudgeTiming,
+      ),
+    });
+    commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.result,
+      animationRole: "result", restart: true,
+    });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score", state: this.hud.score.createState(plan.record, plan.scoreGauge),
+    });
+    if (plan.scoreGauge.highRankEffect !== "none" &&
+      plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
+      animationRole: "score-gauge-ss", restart: true,
+    });
+    const nextLifeState = this.hud.life.createState(plan.record);
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: nextLifeState,
+    });
+    if (nextLifeState.warning && !this.lastLifeWarning) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: true,
+    });
+    if (!nextLifeState.warning && this.lastLifeWarning) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: false,
+    });
+    if (nextLifeState.singleGameOver && !this.lastSingleGameOver) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: true,
+    });
+    if (!nextLifeState.singleGameOver && this.lastSingleGameOver) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: false,
+    });
+    if (plan.record.singleGameOver) {
+      for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, ...HUD_OBJECTS.addScore]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      }
+    }
+    return this.preflight(commands, () => {
+      if (!plan.record.singleGameOver) {
+        for (const initial of addScoreStarts) {
+          // A reused root replaces its previous coroutine, including a root
+          // already started earlier in this same batch.
+          this.addScoreAnimations.set(HUD_OBJECTS.addScore[initial.hud.poolIndex]!, initial);
+        }
+      }
+      this.hud.addScore.commit(addScoreStarts.length);
+      if (comboChanged) {
+        this.hudAnimationElapsedSeconds.delete("normal-combo");
+        this.hudAnimationElapsedSeconds.delete("ap-combo");
+        if (plan.record.currentCombo > 0) {
+          this.hudAnimationElapsedSeconds.set("normal-combo", 0);
+          if (displayedAllPerfect) {
+            this.hudAnimationElapsedSeconds.set("ap-combo", 0);
+            if (!apAlphaPlaying) this.hudAnimationElapsedSeconds.set("ap-alpha", 0);
+          } else {
+            this.hudAnimationElapsedSeconds.delete("ap-alpha");
+          }
+        } else {
+          this.hudAnimationElapsedSeconds.delete("ap-alpha");
+        }
+        this.lastCombo = plan.record.currentCombo;
+        this.lastAllPerfect = displayedAllPerfect;
+      }
+      this.resultAnimation = Object.freeze({
+        elapsedSeconds: 0,
+        // CE.Result.Show starts its visibility coroutine immediately.
+        visibilityElapsedSeconds: Math.fround(deltaTimeSeconds),
+      });
+      if (plan.scoreGauge.highRankEffect !== "none" &&
+        plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) {
+        this.scoreGaugeSsElapsedSeconds = 0;
+        this.scoreGaugeHighRankClip = plan.scoreGauge.highRankEffect;
+      }
+      if (nextLifeState.warning && !this.lastLifeWarning) {
+        this.lifeAnimationElapsedSeconds.set("life-warning", 0);
+      } else if (!nextLifeState.warning) {
+        this.lifeAnimationElapsedSeconds.delete("life-warning");
+      }
+      if (nextLifeState.singleGameOver && !this.lastSingleGameOver) {
+        this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
+      } else if (!nextLifeState.singleGameOver) {
+        this.lifeAnimationElapsedSeconds.delete("life-game-over");
+      }
+      this.lastLifeWarning = nextLifeState.warning;
+      this.lastSingleGameOver = nextLifeState.singleGameOver;
+      if (plan.record.singleGameOver) {
+        this.hudAnimationElapsedSeconds.clear();
+        this.addScoreAnimations.clear();
+      }
+    });
+  }
+
+  preflightMoveTimeResume(record: InGameRecordSnapshot): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const [renderObjectId, animationRole] of [
+      [HUD_OBJECTS.combo, "combo"],
+      [HUD_OBJECTS.comboAllPerfect, "combo"],
+      [HUD_OBJECTS.comboAllPerfect, "all-perfect"],
+      [HUD_OBJECTS.result, "result"],
+      [HUD_OBJECTS.life, "life-warning"],
+      [HUD_OBJECTS.life, "life-game-over"],
+    ] as const) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId, animationRole, restart: false,
+    });
+    for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result, ...HUD_OBJECTS.addScore]) {
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
+      hudRole: "combo", state: this.hud.combo.normalState(0),
+    });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.comboAllPerfect,
+      hudRole: "combo", state: this.hud.combo.allPerfectState(0),
+    });
+    const life = this.hud.life.createState(record);
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: life,
+    });
+    return this.preflight(commands, () => {
+      this.hudAnimationElapsedSeconds.clear();
+      this.lifeAnimationElapsedSeconds.clear();
+      this.addScoreAnimations.clear();
+      this.resultAnimation = null;
+      this.lastCombo = 0;
+      this.lastAllPerfect = this.hud.combo.displayedAllPerfect(record.allPerfect);
+      this.lastLifeWarning = life.warning;
+      this.lastSingleGameOver = false;
+    });
+  }
+
+  preflightGameClear(
+    clearStatus: 1 | 2 | 3,
+    tapLaneEffectStates: readonly TapLaneEffectRenderState[] = Object.freeze([]),
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (this.gameClearElapsedSeconds !== null || ![1, 2, 3].includes(clearStatus)) {
+      return integrityFailure(
+        "render.game-clear.invalid-or-duplicate-start",
+        "One natural completion starts exactly one current base/additional clear presentation.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const renderObjectId of [
+      HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, HUD_OBJECTS.result,
+      ...HUD_OBJECTS.addScore, ...this.fieldObjectIds,
+    ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    const laneEffectCommands = this.appendTapLaneEffectUpdateCommands(
+      commands, base, tapLaneEffectStates,
+    );
+    if (laneEffectCommands.status !== "ok") return laneEffectCommands;
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.gameClear,
+      hudRole: "game-clear", state: Object.freeze({ clearStatus }),
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.gameClear });
+    commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.gameClear,
+      animationRole: "game-clear", restart: true,
+    });
+    return this.preflight(commands, () => { this.gameClearElapsedSeconds = 0; });
+  }
+
+  preflightHudAnimationAdvance(
+    deltaTimeSeconds: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      return integrityFailure(
+        "render.producer.invalid-hud-animation-delta",
+        "Portable HUD animation sampling requires one non-negative finite engine delta and never a backend ticker.",
+      );
+    }
+    if (
+      (this.hudAnimationElapsedSeconds.size === 0 &&
+        this.lifeAnimationElapsedSeconds.size === 0 &&
+        this.addScoreAnimations.size === 0 &&
+        this.resultAnimation === null &&
+        this.scoreGaugeSsElapsedSeconds === null &&
+        this.gameClearElapsedSeconds === null) ||
+      deltaTimeSeconds === 0
+    ) {
+      return ok(new RenderOwnerTransaction(this.renderer, null));
+    }
+    const next = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
+    const nextLife = new Map<"life-warning" | "life-game-over", number>();
+    const nextAddScore = new Map<string, AddScoreAnimationState>();
+    let nextResultAnimation = this.resultAnimation;
+    let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
+    let nextGameClearElapsed = this.gameClearElapsedSeconds;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const [owner, elapsed] of this.hudAnimationElapsedSeconds) {
+      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
+      const renderObjectId = owner === "normal-combo"
+        ? HUD_OBJECTS.combo
+        : HUD_OBJECTS.comboAllPerfect;
+      const animationRole = owner === "ap-alpha" ? "all-perfect" as const : "combo" as const;
+      if (animationRole === "combo" && nextElapsed >= 1) {
+        commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId,
+          animationRole, restart: false,
+        });
+      } else {
+        const sample = createRenderFloat32(nextElapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length), kind: "sample-animation", renderObjectId,
+          animationRole, elapsedSeconds: sample.value,
+        });
+        next.set(owner, nextElapsed);
+      }
+    }
+    for (const [role, elapsed] of this.lifeAnimationElapsedSeconds) {
+      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
+      const sample = createRenderFloat32(nextElapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.life,
+        animationRole: role, elapsedSeconds: sample.value,
+      });
+      nextLife.set(role, nextElapsed);
+    }
+    for (const [renderObjectId, animation] of this.addScoreAnimations) {
+      const advanced = advanceAddScoreAnimation(animation, deltaTimeSeconds);
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId,
+        hudRole: "add-score", state: advanced?.hud ?? Object.freeze({ ...animation.hud, alpha: 0 }),
+      });
+      if (advanced === null) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      } else {
+        nextAddScore.set(renderObjectId, advanced);
+      }
+    }
+    if (this.scoreGaugeSsElapsedSeconds !== null) {
+      // The clip loops at 3s, but its independent alpha tweens loop at 1.6s/2s.
+      // Each consumer wraps its own phase; score updates do not reset either.
+      nextScoreGaugeSsElapsed = Math.fround(this.scoreGaugeSsElapsedSeconds + deltaTimeSeconds);
+      const sample = createRenderFloat32(nextScoreGaugeSsElapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.score,
+        animationRole: "score-gauge-ss", elapsedSeconds: sample.value,
+      });
+    }
+    if (this.gameClearElapsedSeconds !== null) {
+      // Focused 10.1.4 controller evidence: the backend consumes the complete
+      // text-in -> text-out -> alpha-zero terminal state sequence. This clock
+      // remains independent from the delayed base Animator and its completion event.
+      nextGameClearElapsed = Math.fround(this.gameClearElapsedSeconds + deltaTimeSeconds);
+      const sample = createRenderFloat32(nextGameClearElapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.gameClear,
+        animationRole: "game-clear", elapsedSeconds: sample.value,
+      });
+    }
+    if (this.resultAnimation !== null) {
+      // MoveNext compares the time from the previous resume before accumulating
+      // the next delta. Animator sampling has a separate zero-based play clock.
+      if (this.resultAnimation.visibilityElapsedSeconds >= 1) {
+        commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.result,
+          animationRole: "result", restart: false,
+        });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+        nextResultAnimation = null;
+      } else {
+        nextResultAnimation = Object.freeze({
+          elapsedSeconds: Math.fround(this.resultAnimation.elapsedSeconds + deltaTimeSeconds),
+          visibilityElapsedSeconds: Math.fround(this.resultAnimation.visibilityElapsedSeconds + deltaTimeSeconds),
+        });
+        const sample = createRenderFloat32(nextResultAnimation.elapsedSeconds);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.result,
+          animationRole: "result", elapsedSeconds: sample.value,
+        });
+      }
+    }
+    return this.preflight(commands, () => {
+      this.hudAnimationElapsedSeconds.clear();
+      for (const [role, elapsed] of next) {
+        this.hudAnimationElapsedSeconds.set(role, elapsed);
+      }
+      this.lifeAnimationElapsedSeconds.clear();
+      for (const [role, elapsed] of nextLife) {
+        this.lifeAnimationElapsedSeconds.set(role, elapsed);
+      }
+      this.addScoreAnimations.clear();
+      for (const [renderObjectId, animation] of nextAddScore) {
+        this.addScoreAnimations.set(renderObjectId, animation);
+      }
+      this.resultAnimation = nextResultAnimation;
+      this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
+      this.gameClearElapsedSeconds = nextGameClearElapsed;
+    });
+  }
+
+  preflightFieldSetup(
+    plans: readonly RenderFieldObjectPlan[],
+    maskPlans: readonly RenderFieldMaskPlan[] = [],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const maskIds = new Set(maskPlans.map((plan) => plan.renderObjectId));
+    const objectIds = [...maskPlans, ...plans].map((plan) => plan.renderObjectId);
+    if (
+      plans.length === 0 ||
+      objectIds.some((renderObjectId) => !isNonEmpty(renderObjectId)) ||
+      new Set(objectIds).size !== objectIds.length ||
+      maskPlans.some((plan) =>
+        plan.polygon.length < 3 ||
+        plan.polygon.some((point) => !validateVector2(point)) ||
+        !validateVector3(plan.position) ||
+        !validateVector2(plan.scale) ||
+        !validateRenderFloat32(plan.rotationDegrees) ||
+        !validateOrdering(plan.ordering)
+      ) ||
+      plans.some((plan) =>
+        !isNonEmpty(plan.logicalAssetId) ||
+        !isNonEmpty(plan.exactKey) ||
+        (plan.role !== "field-line" && plan.role !== "judge-line") ||
+        (plan.initiallyActive !== undefined && typeof plan.initiallyActive !== "boolean") ||
+        (plan.maskObjectId !== null && !maskIds.has(plan.maskObjectId))
+      )
+    ) {
+      return integrityFailure(
+        "render.producer.invalid-field-plan",
+        "Field setup requires unique typed field/judge identities and every visible-inside mask must be an explicit polygon referenced within the same atomic setup.",
+      );
+    }
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    const white = renderWhite();
+    for (const plan of maskPlans) {
+      created.push(plan.renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: plan.renderObjectId,
+        poolFamily: "field-mask",
+        role: "mask",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mask",
+        renderObjectId: plan.renderObjectId,
+        mode: "visible-inside",
+        polygon: plan.polygon,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: plan.renderObjectId,
+        position: plan.position,
+        scale: plan.scale,
+        rotationDegrees: plan.rotationDegrees,
+        color: white,
+        ordering: plan.ordering,
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "activate-object",
+        renderObjectId: plan.renderObjectId,
+      });
+    }
+    for (const plan of plans) {
+      created.push(plan.renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: plan.renderObjectId,
+        poolFamily: "field",
+        role: plan.role,
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId: plan.renderObjectId,
+        binding: "sprite",
+        logicalAssetId: plan.logicalAssetId,
+        exactKey: plan.exactKey,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: plan.renderObjectId,
+        position: plan.position,
+        scale: plan.scale,
+        rotationDegrees: plan.rotationDegrees,
+        color: plan.color,
+        ordering: plan.ordering,
+        maskObjectId: plan.maskObjectId,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: plan.initiallyActive === false ? "hide-object" : "activate-object",
+        renderObjectId: plan.renderObjectId,
+      });
+    }
+    return this.preflight(commands, () => {
+      this.recordCreatedObjects(created);
+      for (const renderObjectId of created) this.fieldObjectIds.add(renderObjectId);
+    });
+  }
+
+  preflightTapLaneEffectSetup(
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const bindings = this.resources.ordinaryVisible?.tapLaneEffectLogicalAssetIds;
+    const expectedTextures = [0, 1, 2, 3, 2, 1, 0] as const;
+    if (bindings === undefined || bindings.length !== 4 || states.length !== 7 ||
+      states.some((state, index) => state.slot !== index ||
+        state.textureIndex !== expectedTextures[index] || state.active ||
+        state.flipX !== (index >= 4) ||
+        !validateVector3(state.position) || !validateVector2(state.scale) ||
+        !validateColor(state.color) || !validateOrdering(state.ordering))) {
+      return integrityFailure(
+        "render.tap-lane-effect.invalid-setup",
+        "Tap lane effects require seven ordered integer-button owners, the exact four current sprites and inactive initial states before renderer mutation.",
+      );
+    }
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    for (const state of states) {
+      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
+      created.push(renderObjectId);
+      commands.push({ ...base(commands.length), kind: "create-object", renderObjectId,
+        poolFamily: "tap-lane-effect", role: "tap-lane-effect", parentObjectId: null });
+      commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId,
+        binding: "sprite", logicalAssetId: bindings[state.textureIndex]!,
+        exactKey: `NoteLaneEffect_${state.textureIndex + 1}` });
+      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
+        color: state.color, ordering: state.ordering, maskObjectId: null,
+        spriteFlipX: state.flipX });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
+    return this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightTapLaneEffectUpdate(
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const appended = this.appendTapLaneEffectUpdateCommands(commands, base, states);
+    if (appended.status !== "ok") return appended;
+    return commands.length === 0
+      ? ok(new RenderOwnerTransaction(this.renderer, null))
+      : this.preflight(commands);
+  }
+
+  preflightPoolSetup(
+    pools: readonly RenderPoolIdentityPlan[],
+    syncLinePoolLength = 0,
+    multipleDirectionalLinePoolLength = 0,
+    existingConnections?: Readonly<{ syncLine: number; multipleDirectionalLine: number }>,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const syncLineLogicalAssetId = this.resources.syncLineLogicalAssetId;
+    const multipleDirectionalLineLeftLogicalAssetId =
+      this.resources.multipleDirectionalLineLeftLogicalAssetId;
+    const multipleDirectionalLineRightLogicalAssetId =
+      this.resources.multipleDirectionalLineRightLogicalAssetId;
+    if (
+      !Number.isSafeInteger(syncLinePoolLength) ||
+      syncLinePoolLength < 0 ||
+      (syncLinePoolLength > 0 && !isNonEmpty(syncLineLogicalAssetId))
+    ) {
+      return integrityFailure(
+        "render.producer.invalid-sync-line-pool-setup",
+        "The current simultaneous-line path requires a non-negative pool length and one explicit local material asset ID when present.",
+      );
+    }
+    if (
+      !Number.isSafeInteger(multipleDirectionalLinePoolLength) ||
+      multipleDirectionalLinePoolLength < 0 ||
+      (multipleDirectionalLinePoolLength > 0 &&
+        (!isNonEmpty(multipleDirectionalLineLeftLogicalAssetId) ||
+          !isNonEmpty(multipleDirectionalLineRightLogicalAssetId)))
+    ) {
+      return integrityFailure(
+        "render.producer.invalid-multiple-directional-line-pool-setup",
+        "The R4 MultipleDirectional path requires a non-negative back-line pool and explicit left/right local material asset IDs.",
+      );
+    }
+    if (
+      !this.isCompleteHabahiro() &&
+      pools.length === 0 &&
+      syncLinePoolLength === 0 &&
+      multipleDirectionalLinePoolLength === 0
+    ) {
+      return ok(new RenderOwnerTransaction(this.renderer, null));
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    for (const pool of pools) {
+      const slideChildCount = pool.slideChildCount ?? 0;
+      if (
+        !Number.isSafeInteger(slideChildCount) ||
+        slideChildCount < 0 ||
+        (pool.family === "slide"
+          ? slideChildCount < 1
+          : slideChildCount !== 0)
+      ) {
+        return integrityFailure(
+          "render.producer.invalid-slide-child-pool-setup",
+          "Only a Slide pool identity may declare its positive chart-owned child count.",
+        );
+      }
+      const renderObjectId = rootRenderObjectId(pool.poolObjectId);
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId,
+        poolFamily: pool.family,
+        role: pool.family === "multiple-directional-visual"
+          ? "note-side-visual"
+          : "note-root",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId,
+      });
+      if (!this.isCompleteHabahiro()) {
+        if (pool.family === "flick" || pool.family === "directional-flick" ||
+          pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryNoteIconRenderObjectId(renderObjectId),
+            `${pool.family}-icon`,
+            "note-icon",
+            renderObjectId,
+          );
+        }
+        if (pool.family === "long" || pool.family === "slide") {
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryLongFlashRenderObjectId(renderObjectId),
+            `${pool.family}-long-flash`,
+            "note-intermediate",
+            renderObjectId,
+          );
+        }
+      }
+      if (this.isCompleteHabahiro()) {
+        const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
+        created.push(iconObjectId);
+        commands.push({
+          ...base(commands.length), kind: "create-object", renderObjectId: iconObjectId,
+          poolFamily: `${pool.family}-habahiro-icon`, role: "note-icon", parentObjectId: renderObjectId,
+        });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
+      }
+      if (pool.family === "long") {
+        const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
+        const meshObjectId = longMeshRenderObjectId(pool.poolObjectId);
+        created.push(afterObjectId, meshObjectId);
+        commands.push({
+          ...base(commands.length),
+          kind: "create-object",
+          renderObjectId: afterObjectId,
+          poolFamily: pool.family,
+          role: "note-head",
+          parentObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "hide-object",
+          renderObjectId: afterObjectId,
+        });
+        appendHiddenChild(
+          commands,
+          created,
+          base,
+          ordinaryNoteIconRenderObjectId(afterObjectId),
+          `${pool.family}-after-icon`,
+          "note-icon",
+          afterObjectId,
+        );
+        commands.push({
+          ...base(commands.length),
+          kind: "create-object",
+          renderObjectId: meshObjectId,
+          poolFamily: pool.family,
+          role: "note-mesh",
+          parentObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "hide-object",
+          renderObjectId: meshObjectId,
+        });
+        if (this.resources.longNoteMaterialLogicalAssetId !== undefined) commands.push({
+          ...base(commands.length), kind: "bind-resource", renderObjectId: meshObjectId,
+          binding: "material", logicalAssetId: this.resources.longNoteMaterialLogicalAssetId,
+          exactKey: null,
+        });
+      }
+      if (pool.family === "slide") {
+        for (let index = 0; index < slideChildCount; index += 1) {
+          const childObjectId = slideChildRenderObjectId(pool.poolObjectId, index);
+          const meshObjectId = slideMeshRenderObjectId(pool.poolObjectId, index);
+          created.push(childObjectId, meshObjectId);
+          commands.push({
+            ...base(commands.length),
+            kind: "create-object",
+            renderObjectId: childObjectId,
+            poolFamily: pool.family,
+            role: "note-intermediate",
+            parentObjectId: null,
+          });
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryNoteIconRenderObjectId(childObjectId),
+            `${pool.family}-child-icon`,
+            "note-icon",
+            childObjectId,
+          );
+          commands.push({
+            ...base(commands.length),
+            kind: "create-object",
+            renderObjectId: meshObjectId,
+            poolFamily: pool.family,
+            role: "note-mesh",
+            parentObjectId: null,
+          });
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+        }
+      }
+    }
+    for (let index = existingConnections?.syncLine ?? 0; index < syncLinePoolLength; index += 1) {
+      const renderObjectId = syncLineRenderObjectId(index);
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId,
+        poolFamily: "sync-line",
+        role: "sync-line",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId,
+        binding: "material",
+        logicalAssetId: syncLineLogicalAssetId!,
+        exactKey: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId,
+      });
+    }
+    for (let index = existingConnections?.multipleDirectionalLine ?? 0; index < multipleDirectionalLinePoolLength; index += 1) {
+      const renderObjectId = multipleDirectionalLineRenderObjectId(index);
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId,
+        poolFamily: "multiple-directional-line",
+        role: "multiple-directional-line",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId,
+      });
+    }
+    if (existingConnections === undefined && this.isCompleteHabahiro()) {
+      const packageBindings = this.resources.habahiroPackage!;
+      created.push(HABAHIRO_ROOT_EFFECT_OBJECT);
+      commands.push({
+        ...base(commands.length), kind: "create-object",
+        renderObjectId: HABAHIRO_ROOT_EFFECT_OBJECT,
+        poolFamily: "habahiro-root-effect", role: "habahiro-root-effect", parentObjectId: null,
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HABAHIRO_ROOT_EFFECT_OBJECT });
+      for (const sprite of CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites) {
+        const renderObjectId = habahiroFlashRenderObjectId(sprite.spriteName);
+        created.push(renderObjectId);
+        commands.push({
+          ...base(commands.length), kind: "create-object",
+          renderObjectId,
+          poolFamily: "habahiro-root-effect", role: "habahiro-flash-mesh",
+          parentObjectId: HABAHIRO_ROOT_EFFECT_OBJECT,
+        });
+        commands.push({
+          ...base(commands.length), kind: "bind-resource", renderObjectId,
+          binding: "material", logicalAssetId: packageBindings.flashLogicalAssetIds[sprite.spriteName],
+          exactKey: null,
+        });
+        commands.push({
+          ...base(commands.length), kind: "set-mesh", renderObjectId,
+          vertices: Object.freeze(sprite.verticesAuthored.map(([x, y, z]) => renderVector3(x, y, z))),
+          indices: sprite.indicesScreenYReflected,
+          uv: Object.freeze(sprite.uvTopLeft.map(([x, y]) => renderVector2(x, y))),
+          colors: Object.freeze(sprite.verticesAuthored.map(() => renderWhite())),
+          materialRole: "habahiro-flash",
+          coordinateSpace: "authored-ui",
+          meshIdentity: sprite.rendererPathId,
+        });
+        commands.push(habahiroFlashTransformCommand(
+          base(commands.length),
+          renderObjectId,
+          sprite.sortingOrder,
+          sprite.initialColor,
+        ));
+        commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+      }
+    }
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null))
+      : this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightHabahiroFlashStart(
+    absolutePosition: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!this.isCompleteHabahiro() || !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
+      !this.creationSequenceByObjectId.has(HABAHIRO_ROOT_EFFECT_OBJECT) ||
+      HABAHIRO_FLASH_SPRITE_NAMES.some((name) =>
+        !this.creationSequenceByObjectId.has(habahiroFlashRenderObjectId(name)))) {
+      return integrityFailure(
+        "render.habahiro.invalid-flash-start",
+        "The package-backed HABAHIRO route requires all four committed Root_effect Sprite owners before the chart marker.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    return this.preflight(this.habahiroFlashSampleCommands(0, base));
+  }
+
+  preflightHabahiroAnimationAdvance(
+    previousElapsedSeconds: RenderFloat32,
+    nextElapsedSeconds: RenderFloat32,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const habahiroScene = scene.habahiro;
+    if (!this.isCompleteHabahiro() || !validateHabahiroScene(habahiroScene) ||
+      !validateRenderFloat32(previousElapsedSeconds) || !validateRenderFloat32(nextElapsedSeconds) ||
+      previousElapsedSeconds.value < 0 || nextElapsedSeconds.value < previousElapsedSeconds.value ||
+      previousElapsedSeconds.value >= habahiroScene.animationCompleteSeconds.value ||
+      nextElapsedSeconds.value > habahiroScene.animationCompleteSeconds.value ||
+      habahiroScene.fieldAfter.some((plan) => !this.creationSequenceByObjectId.has(plan.renderObjectId))) {
+      return integrityFailure(
+        "render.habahiro.invalid-animation-advance",
+        "Package-backed HABAHIRO advances monotonically within its exact one-second legacy Animation interval.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands = this.habahiroFlashSampleCommands(nextElapsedSeconds.value, base);
+    if (previousElapsedSeconds.value < habahiroScene.changeLaneSeconds.value &&
+      nextElapsedSeconds.value >= habahiroScene.changeLaneSeconds.value) {
+      this.appendHabahiroFieldRebind(commands, base, scene);
+    }
+    return this.preflight(commands);
+  }
+
+  private habahiroFlashSampleCommands(
+    elapsedSeconds: number,
+    base: RenderCommandBaseFactory,
+  ): RenderCommand[] {
+    const sampled = sampleCurrentHabahiroFlash(elapsedSeconds);
+    return CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites.map((sprite, index) =>
+      habahiroFlashTransformCommand(
+        base(index),
+        habahiroFlashRenderObjectId(sprite.spriteName),
+        sprite.sortingOrder,
+        sampled.colors[sprite.spriteName],
+      ));
+  }
+
+  private appendHabahiroFieldRebind(
+    commands: RenderCommand[],
+    base: RenderCommandBaseFactory,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): void {
+    const plans = scene.habahiro!.fieldAfter;
+    for (const plan of plans) {
+      if (!this.creationSequenceByObjectId.has(plan.renderObjectId)) {
+        throw new Error("HABAHIRO ChangeLane lost a pre-created field binding owner.");
+      }
+      commands.push({
+        ...base(commands.length), kind: "bind-resource", renderObjectId: plan.renderObjectId,
+        binding: "sprite", logicalAssetId: plan.logicalAssetId, exactKey: plan.exactKey,
+      });
+    }
+  }
+
+  preflightOrdinaryNoteActivation(
+    poolObjectId: string,
+    information: NoteInformation,
+    noteBpm: RenderFloat32,
+    launcherMusicPosition: number,
+    scene: OrdinaryFixedNoteSceneInput,
+    noteColor: boolean,
+    substep: number,
+    bpmAtNotePosition: (position: number) => SimulatorResult<RenderFloat32>,
+  ): SimulatorResult<PreparedOrdinaryNoteActivation> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (typeof noteColor !== "boolean" || !Number.isSafeInteger(substep) || substep < 0) {
+      return integrityFailure(
+        "render.producer.invalid-substep",
+        "Note activation commands require the engine-owned non-negative adaptive substep.",
+      );
+    }
+    const completeHabahiro = this.isCompleteHabahiro();
+    const habahiro = completeHabahiro;
+    if (completeHabahiro && !validateHabahiroScene(scene.habahiro)) {
+      return integrityFailure(
+        "render.habahiro.scene-required",
+        "Complete HABAHIRO rendering requires explicit mesh width, flash duration and pre/post field plans.",
+      );
+    }
+    const longTail = information.fireNoteType === FrontNoteType.Long &&
+      information.afterNoteAbsolutePos > information.absolutePos;
+    const r7Front = information.fireNoteType === FrontNoteType.Flick ||
+      information.fireNoteType === FrontNoteType.DirectionalFlick ||
+      information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+      information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+      information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+      information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd;
+    const r7Slide = (information.fireNoteType === FrontNoteType.SlideA ||
+      information.fireNoteType === FrontNoteType.SlideB) &&
+      information.slideNoteList.length > 0;
+    if (
+      information.fireNoteType !== FrontNoteType.Normal &&
+      !longTail &&
+      !r7Front &&
+      !r7Slide
+    ) {
+      return integrityFailure(
+        "render.note.invalid-front-or-child-structure",
+        "Activation requires a playable front family, a Long tail after its root, or a Slide with children.",
+      );
+    }
+    if (
+      (longTail || r7Slide) &&
+      (scene.screenToSafeAreaRatio === undefined ||
+        !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+        scene.screenToSafeAreaRatio.value <= 0 ||
+        scene.longMeshColor === undefined ||
+        !validateColor(scene.longMeshColor))
+    ) {
+      return integrityFailure(
+        "render.note.long-scene-unavailable",
+        "The ordinary Long and R4 Slide mesh paths require explicit positive safe-area ratio and typed mesh color inputs."
+      );
+    }
+    const lane = habahiro
+      ? resolveHabahiroMotionLaneIndex(information)
+      : resolveOrdinaryMotionLaneIndex(information, r7Slide);
+    if (lane.status !== "ok") return lane;
+    const binding = habahiro
+      ? resolveHabahiroFrontSpriteBinding(information, this.resources, noteColor)
+      : resolveFrontSpriteBinding(information, this.resources, noteColor);
+    if (binding.status !== "ok") return binding;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+    if (creationSequence === undefined) {
+      return integrityFailure(
+        "render.producer.note-root-not-created",
+        "Ordinary activation requires its committed engine-authored pool root identity.",
+      );
+    }
+    const start = noteStartPosition(scene.noteStartPositions[lane.value]!, information);
+    const placedStart = Object.freeze({
+      x: float32State(start.x.value),
+      y: float32State(start.y.value),
+      z: float32State(start.z.value),
+    });
+    const goal = scene.goalPositions[lane.value]!;
+    const zero = createRenderFloat32(Math.fround(0));
+    const one = createRenderFloat32(Math.fround(1));
+    if (zero.status !== "ok") return zero;
+    if (one.status !== "ok") return one;
+    const motionState: OrdinaryNoteMotionState = Object.freeze({
+      progressRate: zero.value,
+      specificSpeed: scene.specificSpeed,
+      deltaTime: zero.value,
+      realMoveSecond: zero.value,
+      goalPosition: Object.freeze({ x: goal.x, y: goal.y }),
+      noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
+      currentPositionZ: placedStart.z,
+      noteParentScale: scene.noteParentScale,
+      noteSettingScale: scene.noteSettingScale,
+      launcherY: scene.launcherY,
+      targetCenterY: scene.targetCenterY,
+      highAspectRatio: scene.highAspectRatio,
+      buttonCount: information.buttonTypesArray.length || information.buttonTypes.length || 1,
+      virtualLaneControllerPresent: information.virtualLaneDirection !== 0,
+      virtualLane: noteVirtualLane(scene, information),
+      viewportY: scene.viewportY, viewportX: scene.viewportX, pixelsPerWorldUnit: scene.pixelsPerWorldUnit,
+    });
+    const adjustment = advanceOrdinaryNoteActivationAdjustment(
+      motionState,
+      launcherMusicPosition,
+      information.absolutePos,
+      noteBpm,
+    );
+    if (adjustment.status !== "ok") return adjustment;
+    const ordering: RenderOrderingKey = Object.freeze({
+      domainLayer: scene.noteDomainLayer,
+      // SORT-C32: NoteBase assigns 70 to its root; 71 belongs to the separate directional icon.
+      sourceDepthOrSortingOrder: 70,
+      sourceZ: placedStart.z,
+      creationSequence,
+    });
+    const base = this.commandBase(substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      position: placedStart,
+      scale: noteWorldScale(Object.freeze({ x: one.value, y: one.value, z: one.value }), scene.noteParentScale),
+      rotationDegrees: zero.value,
+      color: scene.noteTint,
+      ordering,
+      maskObjectId: null,
+    }, {
+      ...base(1),
+      kind: "activate-object",
+      renderObjectId,
+    }];
+    appendNoteSpriteBinding(commands, base, renderObjectId, binding.value);
+    const ordinaryFrontAnimation = habahiro
+      ? null
+      : resolveNoteAnimationBinding(information, renderObjectId, this.resources);
+    if (ordinaryFrontAnimation !== null) {
+      const ownerValidation = validateOrdinaryAnimationOwner(
+        ordinaryFrontAnimation,
+        this.creationSequenceByObjectId,
+      );
+      if (ownerValidation.status !== "ok") return ownerValidation;
+      appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation,
+        scene.noteDomainLayer, this.creationSequenceByObjectId.get(ordinaryFrontAnimation.ownerObjectId)!);
+    }
+    const habahiroIcon = completeHabahiro
+      ? resolveHabahiroIconBinding(information, this.resources)
+      : null;
+    if (habahiroIcon !== null) {
+      const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
+      const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
+      if (iconCreationSequence === undefined) {
+        return integrityFailure(
+          "render.habahiro.icon-owner-missing",
+          "Every current-external-complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
+        );
+      }
+      appendOrdinaryAnimationStart(commands, base, {
+        ...habahiroIcon, ownerObjectId: iconObjectId,
+      }, scene.noteDomainLayer, iconCreationSequence);
+    }
+    const motion = adjustment.value.lastMotion;
+    if (motion !== null) {
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId,
+        position: motion.position, unclipped: noteUnclippedTransform(motion, scene.noteParentScale),
+        scale: noteWorldScale(motion.localScale, scene.noteParentScale),
+        rotationDegrees: zero.value,
+        color: scene.noteTint,
+        ordering: Object.freeze({ ...ordering, sourceZ: motion.position.z }),
+        maskObjectId: null,
+      });
+    }
+    const renderedTransform = adjustment.value.lastMotion ?? Object.freeze({
+      progressRate: zero.value,
+      position: placedStart,
+      localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
+    });
+    let longChildState: OrdinaryLongNormalChildState | null = null;
+    let slideChildStates: readonly OrdinarySlideChildState[] | null = null;
+    if (longTail) {
+      const afterObjectId = longAfterRenderObjectId(poolObjectId);
+      const meshObjectId = longMeshRenderObjectId(poolObjectId);
+      const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
+      const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
+      if (afterCreationSequence === undefined || meshCreationSequence === undefined) {
+        return integrityFailure(
+          "render.producer.long-child-not-created",
+          "Long activation requires committed after and mesh pool identities.",
+        );
+      }
+      const afterBpm = bpmAtNotePosition(information.afterNoteAbsolutePos);
+      if (afterBpm.status !== "ok") return afterBpm;
+      const createdChild = createOrdinaryLongNormalChildState(
+        motionState,
+        information.afterNoteAbsolutePos,
+        afterBpm.value,
+      );
+      if (createdChild.status !== "ok") return createdChild;
+      longChildState = createdChild.value;
+      const widthRate = completeHabahiro
+        ? getHabahiroMeshWidthRate(
+            motionState.buttonCount,
+            scene.habahiro!.meshWidthSetting,
+          )
+        : createRenderFloat32(Math.fround(1));
+      const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
+      if (widthRate.status !== "ok") return widthRate;
+      if (meshZ.status !== "ok") return meshZ;
+      const afterScale = getOrdinaryNoteMeshAfterScale(longChildState, motionState.goalPosition.y, scene.screenToSafeAreaRatio!);
+      if (afterScale.status !== "ok") return afterScale;
+      const mesh = buildOrdinaryLongNormalMesh({
+        front: renderedTransform,
+        after: longChildState.renderedTransform,
+        afterScaleX: afterScale.value,
+        frontButtonCount: motionState.buttonCount,
+        afterButtonCount: motionState.buttonCount,
+        screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
+        widthRate: widthRate.value,
+        color: scene.longMeshColor!,
+        advanced: information.virtualLaneDirection !== 0,
+      });
+      if (mesh.status !== "ok") return mesh;
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: afterObjectId,
+        position: longChildState.renderedTransform.position,
+        scale: noteWorldScale(Object.freeze({ x: one.value, y: one.value, z: one.value }), scene.noteParentScale),
+        rotationDegrees: zero.value,
+        color: scene.noteTint,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 70,
+          sourceZ: placedStart.z,
+          creationSequence: afterCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: meshObjectId,
+        position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
+        scale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
+        rotationDegrees: zero.value,
+        color: scene.noteTint,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 60,
+          sourceZ: meshZ.value,
+          creationSequence: meshCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      if (mesh.value.vertices.length === 0) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+      else commands.push({
+        ...base(commands.length),
+        kind: "set-mesh",
+        renderObjectId: meshObjectId,
+        viewportClipped: mesh.value.viewportClipped,
+        vertices: mesh.value.vertices,
+        indices: mesh.value.indices,
+        uv: mesh.value.uv,
+        colors: mesh.value.colors,
+        materialRole: "long-note",
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-threshold",
+        renderObjectId: meshObjectId,
+        threshold: scene.noteLineClipY,
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
+      const afterBinding = completeHabahiro
+        ? resolveHabahiroAfterSpriteBinding(information, this.resources)
+        : resolveAfterSpriteBinding(information, this.resources);
+      if (afterBinding.status !== "ok") return afterBinding;
+      appendNoteSpriteBinding(commands, base, afterObjectId, afterBinding.value);
+      const afterAnimation = resolveAfterAnimationBinding(
+        information,
+        afterObjectId,
+        this.resources,
+        completeHabahiro,
+      );
+      if (afterAnimation !== null) {
+        const ownerValidation = validateOrdinaryAnimationOwner(
+          afterAnimation,
+          this.creationSequenceByObjectId,
+        );
+        if (ownerValidation.status !== "ok") return ownerValidation;
+        appendOrdinaryAnimationStart(commands, base, afterAnimation,
+          scene.noteDomainLayer, this.creationSequenceByObjectId.get(afterAnimation.ownerObjectId)!);
+      }
+    }
+    if (r7Slide) {
+      const states: OrdinarySlideChildState[] = [];
+      let previousTransform = renderedTransform;
+      let previousMotionState = motionState;
+      let previousButtonCount = motionState.buttonCount;
+      for (let index = 0; index < information.slideNoteList.length; index += 1) {
+        const source = information.slideNoteList[index];
+        if (source === undefined) {
+          return integrityFailure(
+            "render.slide.child-source-unavailable",
+            "Each fixed Slide child identity requires its chart-owned source at the same index.",
+          );
+        }
+        const childLane = completeHabahiro
+          ? resolveHabahiroMotionLaneIndex(source)
+          : resolveOrdinaryMotionLaneIndex(source, true);
+        if (childLane.status !== "ok") return childLane;
+        const childStart = noteStartPosition(scene.noteStartPositions[childLane.value]!, source);
+        const childGoal = scene.goalPositions[childLane.value]!;
+        const childButtonCount = source.buttonTypesArray.length ||
+          source.buttonTypes.length || 1;
+        const childMotionState: OrdinaryNoteMotionState = Object.freeze({
+          ...motionState,
+          progressRate: zero.value,
+          deltaTime: zero.value,
+          realMoveSecond: zero.value,
+          goalPosition: Object.freeze({ x: childGoal.x, y: childGoal.y }),
+          noteStartPosition: Object.freeze({ x: childStart.x, y: childStart.y }),
+          currentPositionZ: float32State(childStart.z.value),
+          buttonCount: childButtonCount,
+          virtualLaneControllerPresent: source.virtualLaneDirection !== 0,
+          virtualLane: noteVirtualLane(scene, source),
+        });
+        const childBpm = bpmAtNotePosition(source.absolutePos);
+        if (childBpm.status !== "ok") return childBpm;
+        const created = createOrdinarySlideChildState(
+          index,
+          childButtonCount,
+          !source.isInvisible,
+          childMotionState,
+          source.absolutePos,
+          childBpm.value,
+        );
+        if (created.status !== "ok") return created;
+        states.push(created.value);
+        const childObjectId = slideChildRenderObjectId(poolObjectId, index);
+        const meshObjectId = slideMeshRenderObjectId(poolObjectId, index);
+        const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
+        const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
+        if (childCreationSequence === undefined || meshCreationSequence === undefined) {
+          return integrityFailure(
+            "render.producer.slide-child-not-created",
+            "Slide activation requires every chart-sized child and mesh pool identity to be committed.",
+          );
+        }
+        const childTransform = created.value.lifecycle.renderedTransform;
+        appendNoteTransform(commands, base, childObjectId, childTransform.position,
+          childTransform.localScale, scene.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, childTransform.unclipped);
+        if (created.value.visible) {
+          const childBinding = completeHabahiro
+            ? resolveHabahiroSlideChildBinding(
+                source,
+                index === information.slideNoteList.length - 1,
+                this.resources,
+              )
+            : resolveSlideChildSpriteBinding(
+                source,
+                index === information.slideNoteList.length - 1,
+                this.resources,
+              );
+          if (childBinding.status !== "ok") return childBinding;
+          appendNoteSpriteBinding(commands, base, childObjectId, childBinding.value);
+          const childAnimation = resolveNoteAnimationBinding(
+            source, childObjectId, this.resources, false, completeHabahiro,
+          );
+          if (childAnimation !== null) {
+            const ownerValidation = validateOrdinaryAnimationOwner(
+              childAnimation,
+              this.creationSequenceByObjectId,
+            );
+            if (ownerValidation.status !== "ok") return ownerValidation;
+            appendOrdinaryAnimationStart(commands, base, childAnimation,
+              scene.noteDomainLayer, this.creationSequenceByObjectId.get(childAnimation.ownerObjectId)!);
+          }
+        }
+        const segmentWidthRate = completeHabahiro
+          ? getHabahiroMeshWidthRate(
+              Math.max(previousButtonCount, childButtonCount),
+              scene.habahiro!.meshWidthSetting,
+            )
+          : createRenderFloat32(Math.fround(1));
+        if (segmentWidthRate.status !== "ok") return segmentWidthRate;
+        const afterScale = getOrdinaryNoteMeshAfterScale(created.value.lifecycle, previousMotionState.goalPosition.y, scene.screenToSafeAreaRatio!);
+        if (afterScale.status !== "ok") return afterScale;
+        const mesh = buildOrdinaryLongNormalMesh({
+          front: previousTransform,
+          after: childTransform,
+          afterScaleX: afterScale.value,
+          frontButtonCount: previousButtonCount,
+          afterButtonCount: childButtonCount,
+          screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
+          widthRate: segmentWidthRate.value,
+          color: scene.longMeshColor!,
+          advanced: information.virtualLaneDirection !== 0 || source.virtualLaneDirection !== 0,
+        });
+        if (mesh.status !== "ok") return mesh;
+        const materialRole = slideLineMaterialRole(information.slideNoteList.some(child => child.isInvisible));
+        commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId: meshObjectId,
+          binding: "material", logicalAssetId: materialRole === "curve-note"
+            ? this.resources.curveNoteMaterialLogicalAssetId! : this.resources.longNoteMaterialLogicalAssetId!, exactKey: null });
+        appendCurveMesh(commands, base, meshObjectId, mesh.value, scene, meshCreationSequence, true, materialRole);
+        commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
+        previousTransform = childTransform;
+        previousMotionState = childMotionState;
+        previousButtonCount = childButtonCount;
+      }
+      slideChildStates = Object.freeze(states);
+    }
+    const transaction = this.preflight(commands, () => {
+      if (ordinaryFrontAnimation !== null) {
+        this.noteAnimationElapsedSeconds.set(ordinaryFrontAnimation.ownerObjectId, Object.freeze({
+          role: ordinaryFrontAnimation.animationRole,
+          elapsed: 0,
+          playbackRevision: ordinaryFrontAnimation.animationRole === "note-long-flash" ? null : undefined,
+        }));
+      }
+      if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
+        habahiroIconRenderObjectId(poolObjectId),
+        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0,
+          playbackRevision: habahiroIcon.animationRole === "note-long-flash" ? null : undefined }),
+      );
+
+      if (longTail) {
+        const afterAnimation = resolveAfterAnimationBinding(
+          information,
+          longAfterRenderObjectId(poolObjectId),
+          this.resources,
+          completeHabahiro,
+        );
+        if (afterAnimation !== null) this.noteAnimationElapsedSeconds.set(
+          afterAnimation.ownerObjectId,
+          Object.freeze({ role: afterAnimation.animationRole, elapsed: 0 }),
+        );
+      }
+      for (let index = 0; index < information.slideNoteList.length; index += 1) {
+        const source = information.slideNoteList[index]!;
+        const animation = source.isInvisible
+          ? null
+          : resolveNoteAnimationBinding(
+              source,
+              slideChildRenderObjectId(poolObjectId, index),
+              this.resources,
+              false,
+              completeHabahiro,
+            );
+        if (animation !== null) this.noteAnimationElapsedSeconds.set(
+          animation.ownerObjectId,
+          Object.freeze({ role: animation.animationRole, elapsed: 0 }),
+        );
+      }
+    });
+    if (transaction.status !== "ok") return transaction;
+    return ok(Object.freeze({
+      motionState: Object.freeze({
+        ...motionState,
+        progressRate: adjustment.value.progressRate,
+        realMoveSecond: adjustment.value.realMoveSecond,
+        currentPositionZ: renderedTransform.position.z,
+      }),
+      renderedTransform,
+      longChildState,
+      slideChildStates,
+      transaction: transaction.value,
+    }));
+  }
+
+  preflightOrdinaryMultipleDirectionalLine(
+    poolIndex: number,
+    ownerState: OrdinaryMultipleDirectionalLineOwnerState,
+    materialDirection: "left" | "right",
+    phase: "initialize" | "show" | "hide",
+    noteLineClipY: RenderFloat32,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+      return integrityFailure(
+        "render.producer.invalid-multiple-directional-line-pool-index",
+        "MultipleDirectional back-line updates require a non-negative engine-owned pool index.",
+      );
+    }
+    const renderObjectId = multipleDirectionalLineRenderObjectId(poolIndex);
+    if (!this.creationSequenceByObjectId.has(renderObjectId)) {
+      return integrityFailure(
+        "render.producer.multiple-directional-line-not-created",
+        "MultipleDirectional back-line updates require a committed fixed-pool identity.",
+      );
+    }
+    if (phase !== "show") {
+      const base = this.commandBase(this.substep);
+      const commands: RenderCommand[] = [];
+      if (phase === "initialize") {
+        commands.push({
+          ...base(0), kind: "bind-resource", renderObjectId, binding: "material",
+          logicalAssetId: materialDirection === "left"
+            ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+            : this.resources.multipleDirectionalLineRightLogicalAssetId!,
+          exactKey: null,
+        });
+      }
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      return this.preflight(commands);
+    }
+    const commands: RenderCommand[] = [];
+    const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
+      { kind: "multiple-directional-line", state: ownerState }, true,
+      this.creationSequenceByObjectId.get(renderObjectId)!, noteLineClipY);
+    return appended.status === "ok" ? this.preflight(commands) : appended;
+  }
+
+  preflightOrdinarySyncLine(
+    poolIndex: number,
+    ownerState: OrdinarySyncLineOwnerState,
+    visible: boolean,
+    noteLineClipY: RenderFloat32,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+      return integrityFailure(
+        "render.producer.invalid-sync-line-pool-index",
+        "Simultaneous-line updates require one non-negative engine-owned pool index.",
+      );
+    }
+    const renderObjectId = syncLineRenderObjectId(poolIndex);
+    if (!this.creationSequenceByObjectId.has(renderObjectId)) {
+      return integrityFailure(
+        "render.producer.sync-line-not-created",
+        "Simultaneous-line updates require a committed fixed-pool identity.",
+      );
+    }
+    const commands: RenderCommand[] = [];
+    const appended = this.appendNoteLine(commands, this.commandBase(this.substep), renderObjectId,
+      { kind: "sync-line", state: ownerState }, visible,
+      this.creationSequenceByObjectId.get(renderObjectId)!, noteLineClipY);
+    return appended.status === "ok" ? this.preflight(commands) : appended;
+  }
+
+  private appendNoteLine(
+    commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+    line: { kind: "sync-line"; state: OrdinarySyncLineOwnerState | null } |
+      { kind: "multiple-directional-line"; state: OrdinaryMultipleDirectionalLineOwnerState | null },
+    visible: boolean, creationSequence: number, noteLineClipY: RenderFloat32,
+  ): SimulatorResult<void> {
+    if (!visible || line.state === null) {
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      return ok(undefined);
+    }
+    const geometry = line.kind === "sync-line" ? buildOrdinarySyncLine(line.state) : buildOrdinaryMultipleDirectionalLine(line.state);
+    if (geometry.status !== "ok") return geometry;
+    const zero = float32State(0), one = float32State(1);
+    commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+      position: { x: zero, y: zero, z: zero }, scale: { x: one, y: one, z: one },
+      rotationDegrees: zero, color: { red: one, green: one, blue: one, alpha: one },
+      ordering: { domainLayer: 3, sourceDepthOrSortingOrder: line.kind === "sync-line" ? 69 : 0,
+        sourceZ: zero, creationSequence }, maskObjectId: null });
+    commands.push({ ...base(commands.length), kind: "set-line", renderObjectId,
+      ...geometry.value, materialRole: line.kind });
+    commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId,
+      threshold: noteLineClipY });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    return ok(undefined);
+  }
+
+  preflightOrdinaryLongChildFrame(
+    poolObjectId: string,
+    childState: OrdinaryLongNormalChildState,
+    frontTransform: OrdinaryNoteMotionResult,
+    input: OrdinaryLongNormalChildFrameInput,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<PreparedOrdinaryLongChildFrame> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
+      return integrityFailure(
+        "render.habahiro.scene-required",
+        "Complete HABAHIRO Long motion requires its validated width and field profile.",
+      );
+    }
+    if (
+      scene.screenToSafeAreaRatio === undefined ||
+      !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+      scene.screenToSafeAreaRatio.value <= 0 ||
+      scene.longMeshColor === undefined ||
+      !validateColor(scene.longMeshColor)
+    ) {
+      return integrityFailure(
+        "render.note.long-scene-unavailable",
+        "Long child frames require explicit positive safe-area ratio and typed base-mesh color inputs.",
+      );
+    }
+    const frame = advanceLongChildFrame(childState, frontTransform, input, scene.screenToSafeAreaRatio,
+      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.meshWidthSetting : undefined);
+    if (frame.status !== "ok") return frame;
+    const next = ok(frame.value.childState);
+    const mesh = ok(frame.value.mesh);
+    const zero = createRenderFloat32(0);
+    if (zero.status !== "ok") return zero;
+    const afterObjectId = longAfterRenderObjectId(poolObjectId);
+    const meshObjectId = longMeshRenderObjectId(poolObjectId);
+    const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
+    if (afterCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
+      return integrityFailure(
+        "render.producer.long-child-not-created",
+        "Long child frames require committed after and mesh pool identities.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId: afterObjectId,
+      position: next.value.renderedTransform.position,
+      unclipped: noteUnclippedTransform(next.value.renderedTransform, next.value.motionState.noteParentScale),
+      scale: noteWorldScale(next.value.renderedTransform.localScale, next.value.motionState.noteParentScale),
+      rotationDegrees: zero.value,
+      color: scene.noteTint,
+      ordering: Object.freeze({
+        domainLayer: scene.noteDomainLayer,
+        sourceDepthOrSortingOrder: 70,
+        sourceZ: next.value.renderedTransform.position.z,
+        creationSequence: afterCreationSequence,
+      }),
+      maskObjectId: null,
+    }];
+    if (childState.phase === "wait" && next.value.phase === "move") {
+      for (const renderObjectId of [afterObjectId, ordinaryNoteIconRenderObjectId(afterObjectId)]) {
+        if (this.creationSequenceByObjectId.has(renderObjectId)) {
+          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+        }
+      }
+    }
+    if (mesh.value !== null && mesh.value.vertices.length > 0) {
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mesh",
+        renderObjectId: meshObjectId,
+        viewportClipped: mesh.value.viewportClipped,
+        vertices: mesh.value.vertices,
+        indices: mesh.value.indices,
+        uv: mesh.value.uv,
+        colors: mesh.value.colors,
+        materialRole: "long-note",
+      });
+    } else {
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+    }
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ childState: next.value, transaction: transaction.value }))
+      : transaction;
+  }
+
+  preflightOrdinarySlideChildFrame(
+    poolObjectId: string,
+    childStates: readonly OrdinarySlideChildState[],
+    frontTransform: OrdinaryNoteMotionResult,
+    frontButtonCount: number,
+    input: OrdinaryLongNormalChildFrameInput,
+    scene: OrdinaryFixedNoteSceneInput,
+    stopControl: OrdinarySlideStopControl,
+    hideRequests?: ReadonlyMap<number, SlideNodeHideRequest>,
+  ): SimulatorResult<PreparedOrdinarySlideChildFrame> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
+      return integrityFailure(
+        "render.habahiro.scene-required",
+        "Complete HABAHIRO Slide motion requires its validated width and field profile.",
+      );
+    }
+    if (
+      scene.screenToSafeAreaRatio === undefined ||
+      scene.longMeshColor === undefined
+    ) {
+      return integrityFailure(
+        "render.slide.scene-unavailable",
+        "R4 Slide frames require explicit safe-area ratio and typed mesh color.",
+      );
+    }
+    const advanced = advanceOrdinarySlideChildren(
+      frontTransform,
+      frontButtonCount,
+      childStates,
+      input,
+      scene.screenToSafeAreaRatio,
+      scene.longMeshColor,
+      stopControl,
+      this.isCompleteHabahiro()
+        ? scene.habahiro!.meshWidthSetting
+        : undefined,
+    );
+    if (advanced.status !== "ok") return advanced;
+    const nextChildStates = applySlideRenderHides(childStates, advanced.value.childStates, hideRequests);
+    const zero = createRenderFloat32(Math.fround(0));
+    if (zero.status !== "ok") return zero;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    if (stopControl.advanceMotion && stopControl.rootWaiting) {
+      const renderObjectId = rootRenderObjectId(poolObjectId);
+      const moved = advanced.value.frontTransform;
+      appendNoteTransform(commands, base, renderObjectId, moved.position, moved.localScale,
+        stopControl.rootMotionState.noteParentScale, scene.noteTint, scene.noteDomainLayer,
+        this.creationSequenceByObjectId.get(renderObjectId)!, moved.unclipped);
+    }
+    this.appendOrdinarySlideHides(commands, poolObjectId, childStates, nextChildStates, hideRequests);
+    for (let index = 0; index < advanced.value.childStates.length; index += 1) {
+      const state = nextChildStates[index]!;
+      const segment = advanced.value.segments[index]!;
+      const childObjectId = slideChildRenderObjectId(poolObjectId, state.sourceIndex);
+      const meshObjectId = slideMeshRenderObjectId(poolObjectId, segment.sourceIndex);
+      const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
+      if (childCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
+        return integrityFailure(
+          "render.producer.slide-child-not-created",
+          "Slide updates require every chart-sized child and segment identity to remain committed.",
+        );
+      }
+      if (state.visible) {
+        if (childStates[index]!.lifecycle.phase === "wait" && state.lifecycle.phase !== "wait") {
+          for (const renderObjectId of [childObjectId, ordinaryNoteIconRenderObjectId(childObjectId)]) {
+            if (this.creationSequenceByObjectId.has(renderObjectId)) {
+              commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+            }
+          }
+        }
+        appendNoteTransform(commands, base, childObjectId, state.lifecycle.renderedTransform.position,
+          state.lifecycle.renderedTransform.localScale, state.lifecycle.motionState.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, state.lifecycle.renderedTransform.unclipped);
+
+      }
+      appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
+        this.creationSequenceByObjectId.get(meshObjectId)!, false,
+        slideLineMaterialRole(stopControl.rootSource.slideNoteList.some(child => child.isInvisible)), state.meshVisible);
+    }
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates, transaction: transaction.value }))
+      : transaction;
+  }
+
+  preflightOrdinarySlideHides(
+    poolObjectId: string,
+    previous: readonly OrdinarySlideChildState[],
+    requests: ReadonlyMap<number, SlideNodeHideRequest>,
+  ): SimulatorResult<Omit<PreparedOrdinarySlideChildFrame, "frontTransform">> {
+    const childStates = applySlideRenderHides(previous, previous, requests);
+    const commands: RenderCommand[] = [];
+    this.appendOrdinarySlideHides(commands, poolObjectId, previous, childStates, requests);
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok" ? ok({ childStates, transaction: transaction.value }) : transaction;
+  }
+
+  private appendOrdinarySlideHides(
+    commands: RenderCommand[],
+    poolObjectId: string,
+    previous: readonly OrdinarySlideChildState[],
+    next: readonly OrdinarySlideChildState[],
+    requests?: ReadonlyMap<number, SlideNodeHideRequest>,
+  ): void {
+    const base = this.commandBase(this.substep);
+    for (const index of requests?.keys() ?? []) {
+      const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
+      for (const renderObjectId of [objectId, ordinaryNoteIconRenderObjectId(objectId)]) {
+        if (this.creationSequenceByObjectId.has(renderObjectId)) {
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId,
+            contentsOnly: renderObjectId === objectId ? true : undefined });
+        }
+      }
+    }
+    for (const [index, state] of next.entries()) {
+      if (!state.visible && previous[index]!.visible && !requests?.has(index)) {
+        const objectId = slideChildRenderObjectId(poolObjectId, state.sourceIndex);
+        for (const renderObjectId of [objectId, ordinaryNoteIconRenderObjectId(objectId)]) {
+          if (this.creationSequenceByObjectId.has(renderObjectId)) commands.push({
+            ...base(commands.length), kind: "hide-object", renderObjectId,
+          });
+        }
+      }
+      if (!state.meshVisible && previous[index]!.meshVisible) {
+        commands.push({ ...base(commands.length), kind: "hide-object",
+          renderObjectId: slideMeshRenderObjectId(poolObjectId, state.sourceIndex) });
+      }
+    }
+  }
+
+  preflightDirectionalConnectionPresentation(
+    plans: readonly DirectionalNotePresentationPlan[],
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const plan of plans) {
+      const renderObjectId = plan.childIndex === null ? rootRenderObjectId(plan.poolObjectId)
+        : plan.childIndex === -1 ? longAfterRenderObjectId(plan.poolObjectId)
+        : slideChildRenderObjectId(plan.poolObjectId, plan.childIndex);
+      const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+      if (creationSequence === undefined) return integrityFailure(
+        "render.note.directional-presentation-owner-missing",
+        "A directional connection requires both activated note render owners.",
+      );
+      if (plan.transform !== null) {
+        const { motion, parentScale } = plan.transform;
+        commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+          position: motion.position, unclipped: noteUnclippedTransform(motion, parentScale), scale: noteWorldScale(motion.localScale, parentScale),
+          rotationDegrees: zeroFloat(), color: scene.noteTint,
+          ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 70,
+            sourceZ: motion.position.z, creationSequence }, maskObjectId: null,
+        });
+      }
+      const iconObjectId = this.isCompleteHabahiro() && plan.childIndex === null
+        ? habahiroIconRenderObjectId(plan.poolObjectId) : ordinaryNoteIconRenderObjectId(renderObjectId);
+      if (this.creationSequenceByObjectId.has(iconObjectId))
+        appendNoteIconVisibility(commands, base, iconObjectId, plan.iconVisible);
+    }
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null)) : this.preflight(commands);
+  }
+
+  preflightOrdinaryNoteSceneMotion(
+    poolObjectId: string,
+    motionState: OrdinaryNoteMotionState,
+    scene: OrdinaryFixedNoteSceneInput,
+    goalScale: OrdinaryNoteGoalScale | null = null,
+    heldSlideHead: NoteInformation | null = null,
+  ): SimulatorResult<PreparedOrdinaryNoteMotion> {
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+    if (creationSequence === undefined) {
+      return integrityFailure(
+        "render.producer.note-root-not-created",
+        "Ordinary Move requires its committed engine-authored pool root identity.",
+      );
+    }
+    const lane = heldSlideHead === null ? null : resolveOrdinarySlideCenterLane(heldSlideHead);
+    if (lane !== null && lane.status !== "ok") return lane;
+    const bodyBinding = heldSlideHead === null || lane === null ? undefined : noteSlideHeldBodyBinding(
+      this.resources, motionState.buttonCount, lane.value, this.isCompleteHabahiro());
+    return this.preflightOrdinaryNoteMotion(poolObjectId, motionState, {
+      color: scene.noteTint,
+      ordering: Object.freeze({
+        domainLayer: scene.noteDomainLayer,
+        sourceDepthOrSortingOrder: 70,
+        sourceZ: motionState.currentPositionZ,
+        creationSequence,
+      }),
+      maskObjectId: null,
+    }, goalScale, bodyBinding);
+  }
+
+  preflightOrdinaryNoteMotion(
+    poolObjectId: string,
+    motionState: OrdinaryNoteMotionState,
+    visualState: OrdinaryNoteTransformVisualState,
+    goalScale: OrdinaryNoteGoalScale | null = null,
+    bodyBinding?: NoteSpriteBinding,
+  ): SimulatorResult<PreparedOrdinaryNoteMotion> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!isNonEmpty(poolObjectId) || visualState.maskObjectId !== null) {
+      return integrityFailure(
+        "render.producer.invalid-ordinary-note-transform-owner",
+        "Ordinary Note Move requires one pool identity and the confirmed unmasked root Sprite path.",
+      );
+    }
+    const motion = goalScale !== null
+      ? repositionOrdinaryNoteToJudgeLine(motionState, goalScale)
+      : advanceOrdinaryNoteMotion(motionState);
+    if (motion.status !== "ok") return motion;
+    const rotation = createRenderFloat32(Math.fround(0));
+    if (rotation.status !== "ok") return rotation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      position: motion.value.position, unclipped: noteUnclippedTransform(motion.value, motionState.noteParentScale),
+      scale: noteWorldScale(motion.value.localScale, motionState.noteParentScale),
+      rotationDegrees: rotation.value,
+      color: visualState.color,
+      ordering: Object.freeze({ ...visualState.ordering, sourceZ: motion.value.position.z }),
+      maskObjectId: null,
+    }];
+    if (bodyBinding !== undefined) appendNoteSpriteBinding(commands, base, renderObjectId, bodyBinding);
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ motion: motion.value, transaction: transaction.value }))
+      : transaction;
+  }
+
+  preflightNoteAnimationFrame(
+    deltaTimeSeconds: number,
+    flashes: readonly { readonly poolObjectId: string; readonly revision: number | null }[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const delta = createRenderFloat32(deltaTimeSeconds);
+    if (delta.status !== "ok") return delta;
+    if (deltaTimeSeconds < 0) return integrityFailure(
+      "render.note.negative-animation-delta",
+      "Note animation advances once per outer frame with a non-negative elapsed time.",
+    );
+    const revisions = new Map<string, number | null>();
+    for (const flash of flashes) {
+      revisions.set(ordinaryLongFlashRenderObjectId(rootRenderObjectId(flash.poolObjectId)), flash.revision);
+      revisions.set(habahiroIconRenderObjectId(flash.poolObjectId), flash.revision);
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    const updates = new Map<string, { role: NoteVisualAnimationRole; elapsed: number; playbackRevision?: number | null }>();
+    for (const [renderObjectId, animation] of this.noteAnimationElapsedSeconds) {
+      const playbackRevision = animation.role === "note-long-flash"
+        ? revisions.get(renderObjectId) ?? null : undefined;
+      updates.set(renderObjectId, appendNoteAnimationFrame(commands, base, renderObjectId,
+        animation, playbackRevision, delta.value.value));
+    }
+    const presentedUpdates = new Map<string, PresentedObject>();
+    for (const [id, presented] of this.presentedObjects) {
+      if (presented.animations.size === 0) continue;
+      const animations = new Map(presented.animations);
+      for (const [renderObjectId, animation] of animations) {
+        animations.set(renderObjectId, appendNoteAnimationFrame(commands, base, renderObjectId,
+          animation, animation.playbackRevision, delta.value.value));
+      }
+      presentedUpdates.set(id, { ...presented, animations });
+    }
+    const publishAnimations = () => {
+      for (const [renderObjectId, animation] of updates) this.noteAnimationElapsedSeconds.set(renderObjectId, animation);
+      for (const [id, presented] of presentedUpdates) this.presentedObjects.set(id, presented);
+    };
+    // An idle frame or stopped flashes may update owner state without drawing.
+    return commands.length === 0
+      ? ok(new RenderOwnerTransaction(this.renderer, null, publishAnimations))
+      : this.preflight(commands, publishAnimations);
+  }
+
+  preflightNoteDeactivation(
+    poolObjectId: string,
+    syncLinePoolIndices: readonly number[] = [],
+    deactivateLongChildren = false,
+    multipleDirectionalLinePoolIndices: readonly number[] = [],
+    deactivateSlideChildCount = 0,
+    deactivateBody = true,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    if (deactivateBody) {
+      for (const childObjectId of [
+        ordinaryNoteIconRenderObjectId(renderObjectId),
+        ordinaryLongFlashRenderObjectId(renderObjectId),
+        habahiroIconRenderObjectId(poolObjectId),
+      ]) appendAnimationChildTeardown(
+        commands,
+        base,
+        childObjectId,
+        this.creationSequenceByObjectId,
+        this.noteAnimationElapsedSeconds,
+      );
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+    }
+    if (
+      !Number.isSafeInteger(deactivateSlideChildCount) ||
+      deactivateSlideChildCount < 0
+    ) {
+      return integrityFailure(
+        "render.producer.invalid-slide-child-teardown-count",
+        "Slide teardown requires the non-negative chart-sized child count committed at setup.",
+      );
+    }
+    if (deactivateLongChildren) {
+      const afterObjectId = longAfterRenderObjectId(poolObjectId);
+      appendAnimationChildTeardown(
+        commands,
+        base,
+        ordinaryNoteIconRenderObjectId(afterObjectId),
+        this.creationSequenceByObjectId,
+        this.noteAnimationElapsedSeconds,
+      );
+      for (const childObjectId of [afterObjectId, longMeshRenderObjectId(poolObjectId)]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: childObjectId });
+      }
+    }
+    for (let index = 0; index < deactivateSlideChildCount; index += 1) {
+      const slideChildObjectId = slideChildRenderObjectId(poolObjectId, index);
+      for (const animationChildObjectId of [
+        ordinaryNoteIconRenderObjectId(slideChildObjectId),
+        ordinaryLongFlashRenderObjectId(slideChildObjectId),
+      ]) appendAnimationChildTeardown(
+        commands,
+        base,
+        animationChildObjectId,
+        this.creationSequenceByObjectId,
+        this.noteAnimationElapsedSeconds,
+      );
+      for (const childObjectId of [slideChildObjectId, slideMeshRenderObjectId(poolObjectId, index)]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: childObjectId });
+      }
+    }
+    for (const poolIndex of syncLinePoolIndices) {
+      if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+        return integrityFailure(
+          "render.producer.invalid-sync-line-pool-index",
+          "Simultaneous-line teardown requires only non-negative engine-owned pool indices.",
+        );
+      }
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId: syncLineRenderObjectId(poolIndex),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "deactivate-object",
+        renderObjectId: syncLineRenderObjectId(poolIndex),
+      });
+    }
+    for (const poolIndex of multipleDirectionalLinePoolIndices) {
+      if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+        return integrityFailure(
+          "render.producer.invalid-multiple-directional-line-pool-index",
+          "MultipleDirectional teardown requires only non-negative engine-owned pool indices.",
+        );
+      }
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId: multipleDirectionalLineRenderObjectId(poolIndex),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "deactivate-object",
+        renderObjectId: multipleDirectionalLineRenderObjectId(poolIndex),
+      });
+    }
+    const publish = () => {
+      for (const objectId of [
+        renderObjectId,
+        ordinaryNoteIconRenderObjectId(renderObjectId),
+        ordinaryLongFlashRenderObjectId(renderObjectId),
+        habahiroIconRenderObjectId(poolObjectId),
+        longAfterRenderObjectId(poolObjectId),
+        ordinaryNoteIconRenderObjectId(longAfterRenderObjectId(poolObjectId)),
+      ]) this.noteAnimationElapsedSeconds.delete(objectId);
+      for (let index = 0; index < deactivateSlideChildCount; index += 1) {
+        const childObjectId = slideChildRenderObjectId(poolObjectId, index);
+        this.noteAnimationElapsedSeconds.delete(childObjectId);
+        this.noteAnimationElapsedSeconds.delete(ordinaryNoteIconRenderObjectId(childObjectId));
+        this.noteAnimationElapsedSeconds.delete(ordinaryLongFlashRenderObjectId(childObjectId));
+      }
+    };
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null, publish)) : this.preflight(commands, publish);
+  }
+
+  preflightNotePresentation(
+    plans: readonly NotePresentation[], retiredLifetimes: ReadonlySet<string>,
+    scene: OrdinaryFixedNoteSceneInput, onCommit: () => void,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const commands: RenderCommand[] = [], created: string[] = [];
+    const released = new Set<string>();
+    const base = this.commandBase(this.substep);
+    const next = new Map(this.presentedObjects);
+    const current = new Map(plans.map(plan => [plan.id, plan]));
+    const sequence = (id: string) => this.creationSequenceByObjectId.get(id) ??
+      this.nextCreationSequence + created.indexOf(id);
+    const create = (id: string, role: "note-root" | "note-icon" | "note-intermediate" | "note-mesh" | "sync-line" | "multiple-directional-line", parent: string | null) => {
+      created.push(id);
+      commands.push({ ...base(commands.length), kind: "create-object", renderObjectId: id,
+        poolFamily: role, role, parentObjectId: parent });
+    };
+    // Omitted viewport parts retain their animation clock until their note retires.
+    for (const [id, previous] of next) if (!current.has(id)) current.set(id, { ...previous.plan, visible: false });
+    for (const plan of current.values()) {
+      const previous = next.get(plan.id);
+      const retired = retiredLifetimes.has(plan.lifetime) &&
+        (plan.kind !== "body" || plan.animations.every(animation => retiredLifetimes.has(animation.lifetime)));
+      if (retired) {
+        if (previous !== undefined) {
+          const children = previous.plan.kind === "body" ? previous.plan.animations.map(animation => animation.ownerObjectId).reverse() : [];
+          for (const renderObjectId of [...children, plan.id]) {
+            commands.push({ ...base(commands.length), kind: "release-object", renderObjectId });
+            released.add(renderObjectId);
+          }
+          next.delete(plan.id);
+        }
+        continue;
+      }
+      if (previous === undefined && !plan.visible) continue;
+      if (previous === undefined) {
+        create(plan.id, plan.kind === "body" ? "note-root" : plan.kind === "curve-note" ? "note-mesh" : plan.kind, null);
+        if (plan.kind === "body") {
+          appendNoteSpriteBinding(commands, base, plan.id, plan.binding);
+          for (const animation of plan.animations) {
+            create(animation.ownerObjectId, animation.animationRole === "note-long-flash" ? "note-intermediate" : "note-icon", plan.id);
+            appendOrdinaryAnimationStart(commands, base, animation, scene.noteDomainLayer, sequence(animation.ownerObjectId));
+          }
+        } else {
+          const material = plan.kind === "sync-line" ? this.resources.syncLineLogicalAssetId!
+            : plan.kind === "curve-note" ? plan.materialRole === "curve-note"
+              ? this.resources.curveNoteMaterialLogicalAssetId! : this.resources.longNoteMaterialLogicalAssetId!
+            : plan.direction === "left" ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+            : this.resources.multipleDirectionalLineRightLogicalAssetId!;
+          commands.push({ ...base(commands.length), kind: "bind-resource", renderObjectId: plan.id,
+            binding: "material", logicalAssetId: material, exactKey: null });
+        }
+      }
+      const animations = new Map(previous?.animations);
+      if (plan.kind === "body") {
+        if (previous?.plan.kind === "body" &&
+          (previous.plan.binding?.logicalAssetId !== plan.binding?.logicalAssetId ||
+            previous.plan.binding?.exactKey !== plan.binding?.exactKey)) {
+          appendNoteSpriteBinding(commands, base, plan.id, plan.binding);
+        }
+        if (plan.visible && plan.position !== null && plan.localScale !== null) {
+          appendNoteTransform(commands, base, plan.id, plan.position, plan.localScale, scene.noteParentScale,
+            scene.noteTint, scene.noteDomainLayer, sequence(plan.id), plan.unclipped);
+          if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
+          if (plan.contentVisible === false) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id, contentsOnly: true });
+        } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
+        for (const binding of plan.animations) {
+          const revision = retiredLifetimes.has(binding.lifetime) ? null
+            : binding.animationRole === "note-long-flash" ? binding.revision ?? null : undefined;
+          animations.set(binding.ownerObjectId, appendNoteAnimationPlayback(commands, base, binding.ownerObjectId,
+            animations.get(binding.ownerObjectId) ?? {
+              role: binding.animationRole, elapsed: 0,
+              // appendOrdinaryAnimationStart leaves LongFlash hidden and unplayed.
+              playbackRevision: binding.animationRole === "note-long-flash" ? null : undefined,
+            }, revision));
+          if (binding.animationRole !== "note-long-flash") {
+            const visible = revision !== null && binding.visible !== false;
+            const previousBinding = previous?.plan.kind === "body"
+              ? previous.plan.animations.find(item => item.ownerObjectId === binding.ownerObjectId) : undefined;
+            const wasVisible = previousBinding?.visible !== false &&
+              previous?.animations.get(binding.ownerObjectId)?.playbackRevision !== null;
+            if (visible !== wasVisible) appendNoteIconVisibility(commands, base, binding.ownerObjectId, visible);
+          }
+        }
+      } else if (plan.kind === "curve-note") {
+        if (plan.visible && plan.geometry !== null) {
+          appendCurveMesh(commands, base, plan.id, plan.geometry, scene, sequence(plan.id), previous === undefined, plan.materialRole);
+          if (!previous?.visible) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: plan.id });
+        } else if (previous?.visible) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: plan.id });
+      } else if (plan.visible || previous?.visible) {
+        const line = this.appendNoteLine(commands, base, plan.id, plan, plan.visible, sequence(plan.id), scene.noteLineClipY);
+        if (line.status !== "ok") return line;
+      }
+      next.set(plan.id, { plan, visible: plan.visible, animations });
+    }
+    const publish = () => {
+      this.recordCreatedObjects(created);
+      if (released.size > 0) {
+        let retained = 0;
+        for (const id of this.createdObjectIds) {
+          if (released.has(id)) this.creationSequenceByObjectId.delete(id);
+          else this.createdObjectIds[retained++] = id;
+        }
+        this.createdObjectIds.length = retained;
+      }
+      this.presentedObjects.clear();
+      for (const [id, value] of next) this.presentedObjects.set(id, value);
+      onCommit();
+    };
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null, publish)) : this.preflight(commands, publish);
+  }
+
+  notePresentationSnapshot() {
+    return { frame: this.frame, createdObjectCount: [...this.presentedObjects.values()].reduce((count, state) =>
+      count + 1 + (state.plan.kind === "body" ? state.plan.animations.length : 0), 0),
+      visibleObjectCount: [...this.presentedObjects.values()].filter(state => state.visible).length,
+      activeEffectCount: [...this.presentedObjects.values()].reduce((count, state) => count + [...state.animations.values()].filter(animation => animation.playbackRevision !== null).length, 0) };
+  }
+
+  preflightSessionRelease(): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (this.createdObjectIds.length === 0) {
+      return ok(new RenderOwnerTransaction(this.renderer, null));
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [...this.createdObjectIds]
+      .reverse()
+      .map((renderObjectId, index) => ({
+        ...base(index),
+        kind: "release-object" as const,
+        renderObjectId,
+      }));
+    return this.preflight(commands, () => {
+      this.presentedObjects.clear();
+      this.createdObjectIds.length = 0;
+      this.creationSequenceByObjectId.clear();
+      this.nextCreationSequence = 0;
+      this.fieldObjectIds.clear();
+      this.hudAnimationElapsedSeconds.clear();
+      this.lifeAnimationElapsedSeconds.clear();
+      this.addScoreAnimations.clear();
+      this.noteAnimationElapsedSeconds.clear();
+      this.resultAnimation = null;
+      this.scoreGaugeSsElapsedSeconds = null;
+      this.scoreGaugeHighRankClip = null;
+    });
+  }
+
+  private validateOrdinaryVisibleBindings(): SimulatorResult<void> {
+    const visible = this.resources.ordinaryVisible;
+    if (visible === undefined ||
+      [visible.comboNumberLogicalAssetId, visible.judgeLogicalAssetId,
+        visible.lifeAdditiveLogicalAssetId, visible.warningLogicalAssetId]
+        .some((value) => !isNonEmpty(value)) ||
+      visible.tapLaneEffectLogicalAssetIds.length !== 4 ||
+      visible.tapLaneEffectLogicalAssetIds.some((value) => !isNonEmpty(value))) {
+      return integrityFailure(
+        "render.producer.missing-ordinary-visible-bindings",
+        "Common single-player setup requires exact Combo, Judge, Life, warning and four tap-lane-effect resources before domain mutation.",
+      );
+    }
+    return ok(undefined);
+  }
+
+  private validateScoreHudBindings(): SimulatorResult<void> {
+    if (this.resources.scoreHud === undefined ||
+      Object.values(this.resources.scoreHud).some((value) => !isNonEmpty(value))) {
+      return integrityFailure(
+        "render.producer.missing-score-hud-bindings",
+        "Score HUD setup requires the exact font, gauge and high-rank resource bindings prepared before domain mutation.",
+      );
+    }
+    return ok(undefined);
+  }
+
+  private recordCreatedObjects(renderObjectIds: readonly string[]): void {
+    for (const renderObjectId of renderObjectIds) {
+      this.creationSequenceByObjectId.set(
+        renderObjectId,
+        this.nextCreationSequence++,
+      );
+      this.createdObjectIds.push(renderObjectId);
+    }
+  }
+
+  private appendTapLaneEffectUpdateCommands(
+    commands: RenderCommand[],
+    base: (offset: number) => {
+      readonly sessionId: string;
+      readonly sequence: number;
+      readonly frame: number;
+      readonly substep: number;
+    },
+    states: readonly TapLaneEffectRenderState[],
+  ): SimulatorResult<void> {
+    if (!Array.isArray(states) || new Set(states.map((state) => state.slot)).size !== states.length ||
+      states.some((state) =>
+        !Number.isInteger(state.slot) || state.slot < 0 || state.slot >= 7 ||
+        state.flipX !== (state.slot >= 4) ||
+        !this.createdObjectIds.includes(tapLaneEffectRenderObjectId(state.slot)) ||
+        !validateVector3(state.position) || !validateVector2(state.scale) ||
+        !validateColor(state.color) || !validateOrdering(state.ordering))) {
+      return integrityFailure(
+        "render.tap-lane-effect.invalid-update",
+        "Tap lane effect updates require unique setup-owned slots and finite serialized animation samples.",
+      );
+    }
+    for (const state of states) {
+      const renderObjectId = tapLaneEffectRenderObjectId(state.slot);
+      if (!state.active) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+        continue;
+      }
+      commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+        position: state.position, scale: state.scale, rotationDegrees: zeroFloat(),
+        color: state.color, ordering: state.ordering, maskObjectId: null,
+        spriteFlipX: state.flipX });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    }
+    return ok(undefined);
+  }
+
+  private preflight(
+    commands: readonly RenderCommand[],
+    onCommit: () => void = () => {},
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const batch = this.renderer.preflight(commands);
+    return batch.status === "ok"
+      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit))
+      : batch;
+  }
+
+  private commandBase(substep: number) {
+    const firstSequence = this.renderer.snapshot().nextSequence;
+    return (offset: number) => ({
+      sessionId: this.sessionId,
+      sequence: firstSequence + offset,
+      frame: this.frame,
+      substep,
+    });
+  }
+}
+
+export function validateHabahiroScene(
+  scene: HabahiroSceneInput | undefined,
+): scene is HabahiroSceneInput {
+  if (
+    scene === undefined ||
+    !validateRenderFloat32(scene.meshWidthSetting) ||
+    scene.suddenLane !== false ||
+    !validateRenderFloat32(scene.changeLaneSeconds) ||
+    scene.changeLaneSeconds.value !== HABAHIRO_CHANGE_LANE_SECONDS ||
+    !validateRenderFloat32(scene.animationCompleteSeconds) ||
+    scene.animationCompleteSeconds.value !== HABAHIRO_ANIMATION_COMPLETE_SECONDS ||
+    scene.fieldBefore.length !== 4 ||
+    scene.fieldBefore.length !== scene.fieldAfter.length ||
+    scene.fieldMasks.length !== 0
+  ) return false;
+  const beforeIds = scene.fieldBefore.map((plan) => plan.renderObjectId);
+  const afterIds = scene.fieldAfter.map((plan) => plan.renderObjectId);
+  const validateField = (plan: RenderFieldObjectPlan) =>
+    isNonEmpty(plan.renderObjectId) && isNonEmpty(plan.logicalAssetId) && isNonEmpty(plan.exactKey) &&
+    (plan.role === "field-line" || plan.role === "judge-line") &&
+    (plan.initiallyActive === undefined || typeof plan.initiallyActive === "boolean") &&
+    validateVector3(plan.position) && validateVector2(plan.scale) &&
+    validateRenderFloat32(plan.rotationDegrees) && validateColor(plan.color) &&
+    validateOrdering(plan.ordering);
+  return new Set(beforeIds).size === beforeIds.length &&
+    scene.fieldBefore.every(validateField) && scene.fieldAfter.every(validateField) &&
+    beforeIds.every((id, index) => id === afterIds[index]) &&
+    scene.fieldBefore.every((plan, index) => {
+      const after = scene.fieldAfter[index]!;
+      return plan.role === after.role && plan.exactKey === after.exactKey &&
+        plan.initiallyActive === after.initiallyActive &&
+        JSON.stringify(plan.position) === JSON.stringify(after.position) &&
+        JSON.stringify(plan.scale) === JSON.stringify(after.scale) &&
+        JSON.stringify(plan.rotationDegrees) === JSON.stringify(after.rotationDegrees) &&
+        JSON.stringify(plan.ordering) === JSON.stringify(after.ordering);
+    }) &&
+    scene.fieldMasks.every((plan) =>
+      isNonEmpty(plan.renderObjectId) && plan.polygon.length >= 3 &&
+      plan.polygon.every(validateVector2) && validateVector3(plan.position) &&
+      validateVector2(plan.scale) && validateRenderFloat32(plan.rotationDegrees) &&
+      validateOrdering(plan.ordering));
+}
+
+export function validateOrdinaryFixedNoteSceneInput(
+  scene: OrdinaryFixedNoteSceneInput,
+): SimulatorResult<void> {
+  const vectors = [
+    ...scene.noteStartPositions,
+    ...scene.goalPositions,
+    ...scene.tapLaneEffectPositions,
+  ];
+  if (
+    !validateRenderFloat32(scene.specificSpeed) ||
+    !validateRenderFloat32(scene.noteLineClipY) ||
+    scene.noteLineClipY.value < 0 ||
+    !validateRenderFloat32(scene.noteParentScale) ||
+    scene.noteParentScale.value <= 0 ||
+    !validateRenderFloat32(scene.noteSettingScale) ||
+    scene.noteSettingScale.value < 0 ||
+    !validateRenderFloat32(scene.launcherY) ||
+    !validateRenderFloat32(scene.targetCenterY) ||
+    !validateRenderFloat32(scene.highAspectRatio) ||
+    scene.noteStartPositions.length !== 7 ||
+    scene.goalPositions.length !== 7 ||
+    scene.tapLaneEffectPositions.length !== 7 ||
+    vectors.some((value) => !validateVector3(value)) ||
+    !validateColor(scene.noteTint) ||
+    !Number.isSafeInteger(scene.noteDomainLayer) ||
+    (scene.syncLineEdgeMargin !== undefined &&
+      (!validateRenderFloat32(scene.syncLineEdgeMargin) ||
+        scene.syncLineEdgeMargin.value < 0)) ||
+    (scene.screenToSafeAreaRatio !== undefined &&
+      (!validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+        scene.screenToSafeAreaRatio.value <= 0)) ||
+    (scene.longMeshColor !== undefined && !validateColor(scene.longMeshColor))
+  ) {
+    return integrityFailure(
+      "render.producer.invalid-ordinary-fixed-note-scene",
+      "The fixed ordinary Note scene requires exact speed/scale/aspect values, seven typed start/goal transforms, seven integer-button Lane-effect transforms, one color and one portable domain layer.",
+    );
+  }
+  return ok(undefined);
+}
+
+type RenderCommandBaseFactory = (offset: number) => {
+  readonly sessionId: string;
+  readonly sequence: number;
+  readonly frame: number;
+  readonly substep: number;
+};
+
+type OrdinaryAnimationBinding = Readonly<{
+  ownerObjectId: string;
+  logicalAssetId: string;
+  exactKey: string;
+  animationRole: NoteVisualAnimationRole;
+}>;
+
+function appendNoteTransform(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  position: RenderVector3, localScale: RenderVector3, parentScale: RenderFloat32,
+  color: RenderColor, domainLayer: number, creationSequence: number,
+  unclipped?: OrdinaryNoteMotionResult["unclipped"],
+): void {
+  commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+    position, unclipped: noteUnclippedTransform({ unclipped }, parentScale), scale: noteWorldScale(localScale, parentScale), rotationDegrees: float32State(0), color,
+    ordering: { domainLayer, sourceDepthOrSortingOrder: 70, sourceZ: position.z, creationSequence }, maskObjectId: null });
+}
+
+function appendCurveMesh(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  geometry: OrdinaryBaseNoteMeshGeometry, scene: OrdinaryFixedNoteSceneInput, creationSequence: number, initialize: boolean,
+  materialRole: "long-note" | "curve-note", visible = true,
+): void {
+  if (initialize) {
+    const zero = float32State(0), one = float32State(1), z = float32State(0.9900000095367432);
+    commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
+      position: { x: zero, y: zero, z }, scale: { x: one, y: one, z: one }, rotationDegrees: zero, color: scene.noteTint,
+      ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
+  }
+  if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: scene.noteLineClipY });
+  if (geometry.vertices.length === 0 || !visible) {
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    return;
+  }
+  commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
+}
+
+function appendNoteIconVisibility(commands: RenderCommand[], base: RenderCommandBaseFactory,
+  renderObjectId: string, visible: boolean): void {
+  commands.push({ ...base(commands.length), kind: visible ? "activate-object" : "hide-object", renderObjectId });
+}
+
+function appendNoteAnimationPlayback(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  animation: { readonly role: NoteVisualAnimationRole; readonly elapsed: number; readonly playbackRevision?: number | null },
+  playbackRevision: number | null | undefined,
+) {
+  const restarted = playbackRevision !== animation.playbackRevision;
+  if (restarted) {
+    if (playbackRevision !== null) commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    commands.push({ ...base(commands.length), kind: playbackRevision === null ? "stop-animation" : "play-animation",
+      renderObjectId, animationRole: animation.role, restart: playbackRevision !== null });
+    if (playbackRevision === null) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+  }
+  return { role: animation.role, elapsed: restarted ? 0 : animation.elapsed, playbackRevision };
+}
+
+function appendNoteAnimationFrame(
+  commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
+  animation: { readonly role: NoteVisualAnimationRole; readonly elapsed: number; readonly playbackRevision?: number | null },
+  playbackRevision: number | null | undefined, delta: number,
+) {
+  const playback = appendNoteAnimationPlayback(commands, base, renderObjectId, animation, playbackRevision);
+  const elapsed = advanceNoteAnimationClock(playback.elapsed, delta, false, playbackRevision !== null);
+  if (playbackRevision !== null) commands.push({ ...base(commands.length), kind: "sample-animation", renderObjectId,
+    animationRole: animation.role, elapsedSeconds: float32State(elapsed) });
+  return { ...playback, elapsed };
+}
+
+function appendNoteSpriteBinding(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  binding: NoteSpriteBinding | null,
+): void {
+  commands.push(binding === null
+    ? { ...base(commands.length), kind: "clear-sprite", renderObjectId }
+    : {
+        ...base(commands.length), kind: "bind-resource", renderObjectId,
+        binding: "sprite", logicalAssetId: binding.logicalAssetId, exactKey: binding.exactKey,
+      });
+}
+
+function appendHiddenChild(
+  commands: RenderCommand[],
+  created: string[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  poolFamily: string,
+  role: "note-icon" | "note-intermediate",
+  parentObjectId: string,
+): void {
+  created.push(renderObjectId);
+  commands.push({
+    ...base(commands.length),
+    kind: "create-object",
+    renderObjectId,
+    poolFamily,
+    role,
+    parentObjectId,
+  });
+  commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+}
+
+function noteVisualAnimationSortingOrder(role: NoteVisualAnimationRole): number {
+  // SORT-C35/C30: ordinary Flick inherits root 70; directional icons and TouchingFlash use 71.
+  switch (role) {
+    case "note-flick": return 70;
+    case "note-directional-flick":
+    case "note-long-flash": return 71;
+  }
+}
+
+function noteVisualAnimationLocalPosition(role: NoteVisualAnimationRole): RenderVector3 {
+  // C30: icon and TouchingFlash are direct note children; the animation samples local offsets.
+  return {
+    x: float32State(0),
+    y: float32State(role === "note-long-flash" ? 0 : 0.699999988079071),
+    z: float32State(role === "note-long-flash" ? -1 : 0),
+  };
+}
+
+export function appendOrdinaryAnimationStart(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  binding: OrdinaryAnimationBinding,
+  domainLayer: number,
+  creationSequence: number,
+): void {
+  const zero = float32State(0);
+  const one = float32State(1);
+  commands.push({
+    ...base(commands.length),
+    kind: "set-transform",
+    renderObjectId: binding.ownerObjectId,
+    position: noteVisualAnimationLocalPosition(binding.animationRole),
+    scale: { x: one, y: one, z: one },
+    rotationDegrees: zero,
+    color: { red: one, green: one, blue: one, alpha: one },
+    ordering: {
+      domainLayer,
+      sourceDepthOrSortingOrder: noteVisualAnimationSortingOrder(binding.animationRole),
+      sourceZ: noteVisualAnimationLocalPosition(binding.animationRole).z,
+      creationSequence,
+    },
+    maskObjectId: null,
+  });
+  commands.push({
+    ...base(commands.length),
+    kind: "bind-resource",
+    renderObjectId: binding.ownerObjectId,
+    binding: "sprite",
+    logicalAssetId: binding.logicalAssetId,
+    exactKey: binding.exactKey,
+  });
+  commands.push({
+    ...base(commands.length),
+    kind: binding.animationRole === "note-long-flash" ? "hide-object" : "activate-object",
+    renderObjectId: binding.ownerObjectId,
+  });
+  if (binding.animationRole !== "note-long-flash") commands.push({
+    ...base(commands.length),
+    kind: "play-animation",
+    renderObjectId: binding.ownerObjectId,
+    animationRole: binding.animationRole,
+    restart: true,
+  });
+}
+
+function validateOrdinaryAnimationOwner(
+  binding: OrdinaryAnimationBinding,
+  creationSequenceByObjectId: ReadonlyMap<string, number>,
+): SimulatorResult<void> {
+  return creationSequenceByObjectId.has(binding.ownerObjectId)
+    ? ok(undefined)
+    : integrityFailure(
+        "render.note.ordinary-animation-owner-missing",
+        "Current ordinary Note animation requires its fixed independent Sprite child before activation.",
+      );
+}
+
+function appendAnimationChildTeardown(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  creationSequenceByObjectId: ReadonlyMap<string, number>,
+  animations: ReadonlyMap<string, {
+    readonly role: NoteVisualAnimationRole;
+    readonly elapsed: number;
+    readonly playbackRevision?: number | null;
+  }>,
+): void {
+  if (!creationSequenceByObjectId.has(renderObjectId)) return;
+  const animation = animations.get(renderObjectId);
+  if (animation !== undefined && animation.playbackRevision !== null) commands.push({
+    ...base(commands.length),
+    kind: "stop-animation",
+    renderObjectId,
+    animationRole: animation.role,
+    restart: false,
+  });
+  commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+  commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+}
+
+export function rootRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:root`;
+}
+
+export function ordinaryNoteIconRenderObjectId(parentObjectId: string): string {
+  return `${parentObjectId}:ordinary-note-icon`;
+}
+
+export function ordinaryLongFlashRenderObjectId(parentObjectId: string): string {
+  return `${parentObjectId}:ordinary-long-flash`;
+}
+
+export function habahiroIconRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:habahiro-icon`;
+}
+
+export function longAfterRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:after`;
+}
+
+export function longMeshRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:mesh`;
+}
+
+export function slideChildRenderObjectId(poolObjectId: string, index: number): string {
+  return `render:${poolObjectId}:slide-child:${index}`;
+}
+
+export function slideMeshRenderObjectId(poolObjectId: string, index: number): string {
+  return `render:${poolObjectId}:slide-mesh:${index}`;
+}
+
+export function tapLaneEffectRenderObjectId(slot: number): string {
+  return `render:tap-lane-effect:${slot}`;
+}
+
+export function syncLineRenderObjectId(poolIndex: number): string {
+  return `render:sync-line:${poolIndex}`;
+}
+
+export function multipleDirectionalLineRenderObjectId(poolIndex: number): string {
+  return `render:multiple-directional-line:${poolIndex}`;
+}
+
+function resolveFrontSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  noteColor: boolean,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<{
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+}> {
+  const laneSuffix = geometry === undefined ? resolveFrontLaneSuffix(information) : ok(geometry.suffix);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  if (
+    information.fireNoteType === FrontNoteType.DirectionalFlick ||
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd ||
+    gameTypeIsDirectional(information.gameNoteType)
+  ) {
+    const direction = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType) ? "l" : "r"
+      : information.afterNoteType !== AfterNoteType.None && afterTypeIsDirectional(information.afterNoteType)
+      ? afterTypeIsLeft(information.afterNoteType) ? "l" : "r"
+      : null;
+    if (direction === null) {
+      return integrityFailure(
+        "render.note.directional-side-unresolved",
+        "A Directional front owner must expose its exact left/right GameNoteType before Sprite lookup.",
+      );
+    }
+    return ok(Object.freeze({
+      logicalAssetId: resources.directionalAtlasLogicalAssetId,
+      exactKey: `note_flick_${direction}_${laneSuffix.value}`,
+    }));
+  }
+
+  let family: "note_normal" | "note_normal_16" | "note_skill" | "note_long" | "note_flick";
+  if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
+    family = "note_skill";
+  } else {
+    switch (information.fireNoteType) {
+      case FrontNoteType.Normal:
+        family = noteColor && information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
+        break;
+      case FrontNoteType.Long:
+      case FrontNoteType.SlideA:
+      case FrontNoteType.SlideB:
+        family = "note_long";
+        break;
+      case FrontNoteType.Flick:
+        family = "note_flick";
+        break;
+      default:
+        return integrityFailure(
+          "render.note.front-sprite-route-unrepresented",
+          "Multiple Directional and add-visual families require their dedicated owner route rather than a guessed front Sprite.",
+        );
+    }
+  }
+  return ok(noteBodyBinding(resources, family, laneSuffix.value, 1, false)!);
+}
+
+function resolveHabahiroFrontSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  noteColor: boolean,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<NoteSpriteBinding | null> {
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  if (
+    information.fireNoteType === FrontNoteType.DirectionalFlick ||
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
+  ) {
+    const left = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType)
+      : afterTypeIsLeft(information.afterNoteType);
+    return ok(resolveHabahiroDirectionalBodyBinding(laneSuffix.value, left, resources));
+  }
+  const family = information.gameNoteAdditionalType === GameNoteAdditionalType.Skill ? "note_skill"
+    : information.fireNoteType === FrontNoteType.Normal
+      ? noteColor && information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal"
+    : information.fireNoteType === FrontNoteType.Flick ? "note_flick" : "note_long";
+  return ok(noteBodyBinding(resources, family, laneSuffix.value,
+    (geometry?.width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1)), true));
+}
+
+function resolveHabahiroIconBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+): {
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+  readonly animationRole: NoteVisualAnimationRole;
+} | null {
+  const role = information.fireNoteType === FrontNoteType.Flick
+    ? "note-flick"
+    : information.fireNoteType === FrontNoteType.DirectionalFlick ||
+        information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+        information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+        information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+        information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
+    ? "note-directional-flick"
+    : null;
+  if (role !== null) {
+    const direction = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
+      : afterTypeIsDirectional(information.afterNoteType)
+      ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+      : "up";
+    return Object.freeze({
+      ...resolveFlickIconSpriteBinding(information, resources, direction, true),
+      animationRole: role,
+    });
+  }
+  if (
+    information.fireNoteType === FrontNoteType.Long ||
+    information.fireNoteType === FrontNoteType.SlideA ||
+    information.fireNoteType === FrontNoteType.SlideB
+  ) {
+    const suffix = resolveLaneSuffix(information, true);
+    if (suffix.status !== "ok") return null;
+    return Object.freeze({
+      ...(information.fireNoteType === FrontNoteType.Long
+        ? noteLongFlashBinding(resources, suffix.value, true)
+        : noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1,
+          resolveLaneIndex(information.buttonType, false), true)),
+      animationRole: "note-long-flash",
+    });
+  }
+  return null;
+}
+
+function resolveHabahiroAfterSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<NoteSpriteBinding | null> {
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  if (afterTypeIsDirectional(information.afterNoteType)) {
+    return ok(resolveHabahiroDirectionalBodyBinding(
+      laneSuffix.value, afterTypeIsLeft(information.afterNoteType), resources,
+    ));
+  }
+  const flick = information.afterNoteType === AfterNoteType.Flick ||
+    information.afterNoteType === AfterNoteType.SlideFlickEnd;
+  return ok(Object.freeze({
+    logicalAssetId: flick
+      ? resolveHabahiroAtlasLogicalIds(resources).flick
+      : resolveHabahiroAtlasLogicalIds(resources).long,
+    exactKey: `${flick ? "note_flick" : "note_long"}_${laneSuffix.value}`,
+  }));
+}
+
+function resolveHabahiroSlideChildBinding(
+  information: NoteInformation,
+  terminal: boolean,
+  resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<NoteSpriteBinding | null> {
+  const buttonCount = geometry?.width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1);
+  if (!terminal) {
+    return ok(noteBodyBinding(resources, "note_slide_among", "", buttonCount, true));
+  }
+  const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  if (gameTypeIsDirectional(information.gameNoteType)) {
+    return ok(resolveHabahiroDirectionalBodyBinding(
+      laneSuffix.value, gameTypeIsLeft(information.gameNoteType), resources,
+    ));
+  }
+  const flick = information.gameNoteType === GameNoteType.Flick ||
+    information.gameNoteType === GameNoteType.LongEndFlick ||
+    information.gameNoteType === GameNoteType.SlideEndFlickA ||
+    information.gameNoteType === GameNoteType.SlideEndFlickB;
+  return ok(noteBodyBinding(resources, flick ? "note_flick" : "note_long", laneSuffix.value, buttonCount, true));
+}
+
+interface NoteBindingGeometry {
+  readonly lane: number;
+  readonly suffix: string;
+  readonly width: number;
+}
+
+/** Shared note-family routing; extensions supply only their resource-coordinate mapping. */
+export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteInformation,
+  phase: "head" | "intermediate" | "tail", resources: RenderEngineResourceBindings, noteColor: boolean,
+  geometry: NoteBindingGeometry, habahiro: boolean): SimulatorResult<NoteSpriteBinding | null> {
+  if (phase === "head" && source.slideGesture) return ok(noteBodyBinding(resources, "note_flick", geometry.suffix,
+    geometry.width, habahiro, source.slideGesture.direction === null ? null : source.slideGesture.direction === "Left" ? "l" : "r"));
+  if (phase === "head") return habahiro ? resolveHabahiroFrontSpriteBinding(source, resources, noteColor, geometry)
+    : resolveFrontSpriteBinding(source, resources, noteColor, geometry);
+  if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
+    : resolveAfterSpriteBinding(root, resources, geometry);
+  return habahiro ? resolveHabahiroSlideChildBinding(source, phase === "tail", resources, geometry)
+    : resolveSlideChildSpriteBinding(source, phase === "tail", resources, geometry);
+}
+
+/** Coordinate/gesture inputs still resolve icons through the original front/after functions. */
+export function resolveProjectedNoteAnimationBinding(root: NoteInformation, source: NoteInformation,
+  phase: "head" | "intermediate" | "tail", parentObjectId: string, resources: RenderEngineResourceBindings,
+  width: number, habahiro: boolean): OrdinaryAnimationBinding | null {
+  return phase !== "head" && root.fireNoteType === FrontNoteType.Long
+    ? resolveAfterAnimationBinding(root, parentObjectId, resources, habahiro, width)
+    : resolveNoteAnimationBinding(source, parentObjectId, resources, false, habahiro, width);
+}
+
+interface NoteSpriteBinding {
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+}
+
+function resolveHabahiroDirectionalBodyBinding(
+  laneSuffix: string,
+  left: boolean,
+  resources: RenderEngineResourceBindings,
+): NoteSpriteBinding | null {
+  return noteBodyBinding(resources, "note_flick", laneSuffix, 1, true, left ? "l" : "r");
+}
+
+function resolveHabahiroAtlasLogicalIds(
+  resources: RenderEngineResourceBindings,
+): NonNullable<RenderEngineResourceBindings["habahiroAtlasLogicalAssetIds"]> {
+  const atlases = resources.habahiroAtlasLogicalAssetIds;
+  if (atlases === undefined || Object.values(atlases).some((value) => !isNonEmpty(value))) {
+    throw new Error("complete HABAHIRO atlas bindings were not preflighted");
+  }
+  return atlases;
+}
+
+function resolveHabahiroMotionLaneIndex(
+  information: NoteInformation,
+): SimulatorResult<number> {
+  const lane = resolveLaneIndex(information.buttonType, true);
+  return Number.isInteger(lane) && lane >= 0 && lane < 7
+    ? ok(lane)
+    : integrityFailure(
+        "render.note.habahiro-invalid-center-lane",
+        "HABAHIRO projects the chart-authored range representative through the current 0..6 viewport without clamp.",
+      );
+}
+
+function resolveFrontLaneSuffix(
+  information: NoteInformation,
+): SimulatorResult<string> {
+  if (
+    (information.fireNoteType === FrontNoteType.SlideA ||
+      information.fireNoteType === FrontNoteType.SlideB ||
+      information.buttonTypesArray.length > 1 || information.buttonTypes.length > 1)
+  ) {
+    // The ordinary atlas has single-lane keys. Authored wide inputs reuse the
+    // same explicit representative-glyph rule as Slide; geometry retains width.
+    const lane = resolveOrdinarySlideCenterLane(information);
+    return lane.status === "ok" ? ok(String(lane.value)) : lane;
+  }
+  return resolveLaneSuffix(information, false);
+}
+
+function resolveLaneSuffix(
+  information: NoteInformation,
+  habahiro: boolean,
+): SimulatorResult<string> {
+  const buttons = information.buttonTypesArray.length > 0
+    ? information.buttonTypesArray
+    : information.buttonTypes.length > 0
+    ? information.buttonTypes
+    : [information.buttonType];
+  const lanes = buttons.map((button) => resolveLaneIndex(button, habahiro));
+  if (
+    lanes.length === 0 ||
+    lanes.some((lane) => !Number.isInteger(lane) || lane < 0 || lane > 6) ||
+    lanes.some((lane, index) => index > 0 && lane !== lanes[index - 1]! + 1)
+  ) {
+    return integrityFailure(
+      "render.note.invalid-lane-range",
+      "Sprite lookup requires one confirmed lane or one ascending contiguous HABAHIRO lane range within 0-6.",
+    );
+  }
+  if (!habahiro && lanes.length !== 1) {
+    return integrityFailure(
+      "render.note.ordinary-multi-lane-key-unavailable",
+      "The ordinary 45-Sprite atlas has only single-lane exact keys and cannot alias a multi-lane range.",
+    );
+  }
+  return ok(lanes.join("_"));
+}
+
+function resolveLaneIndex(button: number, habahiro: boolean): number {
+  if (habahiro) {
+    if (button === ButtonType.Button_00_BMS_1P_SC) return 0;
+    if (button === ButtonType.Button_15_BMS_2P_SC) return 6;
+    if (
+      button >= ButtonType.Button_08_BMS_2P_01 &&
+      button <= ButtonType.Button_14_BMS_2P_07
+    ) {
+      return button - ButtonType.Button_08_BMS_2P_01;
+    }
+  }
+  return button >= ButtonType.Button_00_BMS_1P_SC && button <= ButtonType.Button_06_BMS_1P_06
+    ? button
+    : -1;
+}
+
+export function habahiroFlashRenderObjectId(name: HabahiroFlashSpriteName): string {
+  const rendererPathId = CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites.find(
+    (sprite) => sprite.spriteName === name,
+  )?.rendererPathId;
+  if (rendererPathId === undefined) throw new Error("Unknown HABAHIRO Root_effect SpriteRenderer identity.");
+  return `${HABAHIRO_FLASH_OBJECT_PREFIX}${rendererPathId}`;
+}
+
+function habahiroFlashTransformCommand(
+  base: ReturnType<RenderCommandBaseFactory>,
+  renderObjectId: string,
+  sortingOrder: 40 | 41,
+  color: readonly [number, number, number, number],
+): Extract<RenderCommand, { readonly kind: "set-transform" }> {
+  const creationSequence = HABAHIRO_FLASH_SPRITE_NAMES.findIndex(
+    (name) => renderObjectId === habahiroFlashRenderObjectId(name),
+  ) + 1;
+  if (creationSequence <= 0) throw new Error("Unknown HABAHIRO Root_effect Sprite identity.");
+  return Object.freeze({
+    ...base,
+    kind: "set-transform" as const,
+    renderObjectId,
+    position: renderVector3(0, 0, 0),
+    scale: renderVector2(1, 1),
+    rotationDegrees: float32State(0),
+    color: renderColor(color),
+    ordering: Object.freeze({
+      domainLayer: 3,
+      sourceDepthOrSortingOrder: sortingOrder,
+      sourceZ: float32State(0),
+      creationSequence,
+    }),
+    maskObjectId: null,
+  });
+}
+
+function renderVector2(x: number, y: number): RenderVector2 {
+  return Object.freeze({ x: float32State(Math.fround(x)), y: float32State(Math.fround(y)) });
+}
+
+function renderVector3(x: number, y: number, z: number): RenderVector3 {
+  return Object.freeze({ ...renderVector2(x, y), z: float32State(Math.fround(z)) });
+}
+
+function renderColor(value: readonly [number, number, number, number]): RenderColor {
+  return Object.freeze({
+    red: float32State(Math.fround(value[0])),
+    green: float32State(Math.fround(value[1])),
+    blue: float32State(Math.fround(value[2])),
+    alpha: float32State(Math.fround(value[3])),
+  });
+}
+
+function noteVirtualLane(scene: OrdinaryFixedNoteSceneInput, source: NoteInformation): OrdinaryNoteMotionState["virtualLane"] {
+  return source.virtualLaneDirection === 0 ? undefined : {
+    source,
+    startUnit: virtualLaneUnit(scene.noteStartPositions[0]!.x.value, scene.noteStartPositions[1]!.x.value),
+    endUnit: virtualLaneUnit(scene.goalPositions[0]!.x.value, scene.goalPositions[1]!.x.value),
+  };
+}
+
+function noteStartPosition(start: RenderVector3, information: NoteInformation): RenderVector3 {
+  return Object.freeze({
+    ...start,
+    z: float32State(calculateOrdinaryNoteStartDepth(start.z.value, information.absolutePos, information.buttonType)),
+  });
+}
+
+function noteWorldScale(scale: RenderVector3, parentScale: RenderFloat32): RenderVector3 {
+  return Object.freeze({
+    x: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.x.value, parentScale.value)),
+    y: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.y.value, parentScale.value)),
+    z: float32State(calculateOrdinaryNoteWorldScaleAxis(scale.z.value, parentScale.value)),
+  });
+}
+
+function float32State(value: number): RenderFloat32 {
+  const result = createRenderFloat32(value);
+  if (result.status !== "ok") throw new Error("internal HUD Float32 invariant failed");
+  return result.value;
+}
+
+function transactionRejected(
+  operation: string,
+  state: string,
+) {
+  return integrityFailure(
+    `render.producer.transaction-${operation}-after-${state}`,
+    "A renderer owner transaction is one-use and cannot be replayed after commit or discard.",
+  );
+}
+
+function isNonEmpty(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
+function validateHabahiroPackageBindings(
+  value: HabahiroPackageResourceBindings | undefined,
+): value is HabahiroPackageResourceBindings {
+  return value !== undefined &&
+    HABAHIRO_FLASH_SPRITE_NAMES.every((name) => isNonEmpty(value.flashLogicalAssetIds[name])) &&
+    [value.fieldBefore, value.fieldAfter].every((field) =>
+      isNonEmpty(field.backgroundLineLogicalAssetId) &&
+      isNonEmpty(field.judgeLineLogicalAssetId) &&
+      isNonEmpty(field.judgeSkillLineLogicalAssetId));
+}
+
+function resolveOrdinaryMotionLaneIndex(
+  information: NoteInformation,
+  allowSlideRange = false,
+): SimulatorResult<number> {
+  if (allowSlideRange) return resolveOrdinarySlideCenterLane(information);
+  const buttons = information.buttonTypesArray.length > 0
+    ? information.buttonTypesArray
+    : information.buttonTypes.length > 0
+    ? information.buttonTypes
+    : [information.buttonType];
+  if (buttons.length !== 1) {
+    return integrityFailure(
+      "render.note.ordinary-motion-multi-lane-unavailable",
+      "The fixed ordinary motion profile accepts exactly one authored lane per front Note.",
+    );
+  }
+  const lane = resolveLaneIndex(buttons[0]!, false);
+  return Number.isInteger(lane) && lane >= 0 && lane < 7
+    ? ok(lane)
+    : integrityFailure(
+        "render.note.ordinary-motion-invalid-lane",
+        "The fixed ordinary motion profile requires one lane in the current 0..6 playfield.",
+      );
+}
+
+function resolveOrdinarySlideCenterLane(
+  information: NoteInformation,
+): SimulatorResult<number> {
+  const buttons = information.buttonTypesArray.length > 0
+    ? information.buttonTypesArray
+    : information.buttonTypes.length > 0
+    ? information.buttonTypes
+    : [information.buttonType];
+  const lanes = buttons.map((button) => resolveLaneIndex(button, false));
+  const centerLane = resolveLaneIndex(information.buttonType, false);
+  if (
+    lanes.length < 1 ||
+    lanes.length > 7 ||
+    lanes.some((lane) => !Number.isInteger(lane) || lane < 0 || lane > 6) ||
+    lanes.some((lane, index) => index > 0 && lane !== lanes[index - 1]! + 1) ||
+    !Number.isInteger(centerLane) ||
+    centerLane < lanes[0]! ||
+    centerLane > lanes[lanes.length - 1]!
+  ) {
+    return integrityFailure(
+      "render.slide.invalid-lane-range",
+      "R4 Slide roots and children require one contiguous 1..7-button range and its authored center button.",
+    );
+  }
+  return ok(centerLane);
+}
+
+function resolveAfterSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  const lane = geometry === undefined ? resolveOrdinarySlideCenterLane(information) : ok(geometry.lane);
+  if (lane.status !== "ok") return lane;
+  if (afterTypeIsDirectional(information.afterNoteType)) {
+    return ok(Object.freeze({
+      logicalAssetId: resources.directionalAtlasLogicalAssetId,
+      exactKey: `note_flick_${afterTypeIsLeft(information.afterNoteType) ? "l" : "r"}_${lane.value}`,
+    }));
+  }
+  const flick = information.afterNoteType === AfterNoteType.Flick ||
+    information.afterNoteType === AfterNoteType.SlideFlickEnd;
+  return ok(Object.freeze({
+    logicalAssetId: resources.noteAtlasLogicalAssetId,
+    exactKey: `${flick ? "note_flick" : "note_long"}_${lane.value}`,
+  }));
+}
+
+function resolveSlideChildSpriteBinding(
+  information: NoteInformation,
+  terminal: boolean,
+  resources: RenderEngineResourceBindings,
+  geometry?: NoteBindingGeometry,
+): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  if (!terminal) {
+    return ok(noteBodyBinding(resources, "note_slide_among", "", 1, false)!);
+  }
+  const lane = geometry === undefined ? resolveOrdinarySlideCenterLane(information) : ok(geometry.lane);
+  if (lane.status !== "ok") return lane;
+  if (gameTypeIsDirectional(information.gameNoteType)) {
+    return ok(noteBodyBinding(resources, "note_flick", String(lane.value), 1, false,
+      gameTypeIsLeft(information.gameNoteType) ? "l" : "r")!);
+  }
+  const flick = information.gameNoteType === GameNoteType.Flick ||
+    information.gameNoteType === GameNoteType.LongEndFlick ||
+    information.gameNoteType === GameNoteType.SlideEndFlickA ||
+    information.gameNoteType === GameNoteType.SlideEndFlickB;
+  return ok(noteBodyBinding(resources, flick ? "note_flick" : "note_long", String(lane.value), 1, false)!);
+}
+
+function resolveNoteAnimationBinding(
+  information: NoteInformation,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+  allowLongFlash = true,
+  habahiro = false,
+  width?: number,
+): OrdinaryAnimationBinding | null {
+  const role = resolveNoteAnimationRole(information);
+  if (role !== null) {
+    const direction = information.slideGesture !== undefined
+      ? information.slideGesture.direction === null ? "up" : information.slideGesture.direction === "Left" ? "left" : "right"
+      : gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
+      : afterTypeIsDirectional(information.afterNoteType)
+      ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+      : "up";
+    return Object.freeze({
+      ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
+      ...resolveFlickIconSpriteBinding(information, resources, direction, habahiro, width),
+      animationRole: role,
+    });
+  }
+  if (!allowLongFlash || (
+    information.fireNoteType !== FrontNoteType.Long &&
+    information.fireNoteType !== FrontNoteType.SlideA &&
+    information.fireNoteType !== FrontNoteType.SlideB &&
+    information.gameNoteType !== GameNoteType.Long &&
+    information.gameNoteType !== GameNoteType.SlideA &&
+    information.gameNoteType !== GameNoteType.SlideB &&
+    information.gameNoteType !== GameNoteType.SlideEndA &&
+    information.gameNoteType !== GameNoteType.SlideEndB
+  )) return null;
+  const lane = resolveOrdinarySlideCenterLane(information);
+  if (lane.status !== "ok") return null;
+  return Object.freeze({
+    ownerObjectId: ordinaryLongFlashRenderObjectId(parentObjectId),
+    ...(information.fireNoteType === FrontNoteType.SlideA || information.fireNoteType === FrontNoteType.SlideB
+      ? noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1, lane.value, false)
+      : noteLongFlashBinding(resources, String(lane.value), false)),
+    animationRole: "note-long-flash",
+  });
+}
+
+function resolveAfterAnimationBinding(
+  information: NoteInformation,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+  habahiro = false,
+  width?: number,
+): OrdinaryAnimationBinding | null {
+  const role = resolveAfterAnimationRole(information.afterNoteType);
+  if (role === null) return null;
+  const direction = afterTypeIsDirectional(information.afterNoteType)
+    ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+    : "up";
+  return Object.freeze({
+    ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
+    ...resolveFlickIconSpriteBinding(information, resources, direction, habahiro, width),
+    animationRole: role,
+  });
+}
+
+function resolveFlickIconSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+  direction: "up" | "left" | "right",
+  habahiro: boolean,
+  width?: number,
+): { readonly logicalAssetId: string; readonly exactKey: string } {
+  return noteFlickIconBinding(resources, direction,
+    width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1), habahiro);
+}
+
+function resolveAfterAnimationRole(
+  afterNoteType: number,
+): "note-flick" | "note-directional-flick" | null {
+  if (afterNoteType === AfterNoteType.Flick || afterNoteType === AfterNoteType.SlideFlickEnd) {
+    return "note-flick";
+  }
+  return afterTypeIsDirectional(afterNoteType) ? "note-directional-flick" : null;
+}
+
+function resolveNoteAnimationRole(
+  information: NoteInformation,
+): "note-flick" | "note-directional-flick" | null {
+  if (information.slideGesture !== undefined)
+    return information.slideGesture.noteType === 3 ? "note-flick" : "note-directional-flick";
+  if (
+    information.fireNoteType === FrontNoteType.Flick ||
+    information.gameNoteType === GameNoteType.Flick ||
+    information.gameNoteType === GameNoteType.LongEndFlick ||
+    information.gameNoteType === GameNoteType.SlideEndFlickA ||
+    information.gameNoteType === GameNoteType.SlideEndFlickB
+  ) return "note-flick";
+  return information.fireNoteType === FrontNoteType.DirectionalFlick ||
+      information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+      information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+      information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+      information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd ||
+      gameTypeIsDirectional(information.gameNoteType)
+    ? "note-directional-flick"
+    : null;
+}
+
+function afterTypeIsDirectional(value: number): boolean {
+  return value >= AfterNoteType.DirectionalFlickLeft &&
+    value <= AfterNoteType.MultipleDirectionalFlickRight ||
+    value >= AfterNoteType.SlideDirectionalFlickEndLeft &&
+    value <= AfterNoteType.SlideMultipleDirectionalFlickRight;
+}
+
+function afterTypeIsLeft(value: number): boolean {
+  return value === AfterNoteType.DirectionalFlickLeft ||
+    value === AfterNoteType.MultipleDirectionalFlickLeft ||
+    value === AfterNoteType.SlideDirectionalFlickEndLeft ||
+    value === AfterNoteType.SlideMultipleDirectionalFlickLeft;
+}
+
+function gameTypeIsDirectional(value: number): boolean {
+  return value >= GameNoteType.DirectionalFlickLeft &&
+    value <= GameNoteType.SlideBDirectionalFlickRightAdd;
+}
+
+function gameTypeIsLeft(value: number): boolean {
+  return value === GameNoteType.DirectionalFlickLeft ||
+    value === GameNoteType.LongDirectionalFlickLeft ||
+    value === GameNoteType.SlideADirectionalFlickLeft ||
+    value === GameNoteType.SlideBDirectionalFlickLeft ||
+    value === GameNoteType.LongDirectionalFlickLeftAdd ||
+    value === GameNoteType.SlideADirectionalFlickLeftAdd ||
+    value === GameNoteType.SlideBDirectionalFlickLeftAdd;
+}
+
+function zeroFloat(): RenderFloat32 {
+  return Object.freeze({ value: Math.fround(0), bits: "00000000" });
+}
+
+function validateVector2(value: RenderVector2): boolean {
+  return value !== null && typeof value === "object" &&
+    validateRenderFloat32(value.x) &&
+    validateRenderFloat32(value.y);
+}
+
+function validateVector3(value: RenderVector3): boolean {
+  return value !== null && typeof value === "object" &&
+    validateVector2(value) &&
+    validateRenderFloat32(value.z);
+}
+
+function validateOrdering(value: RenderOrderingKey): boolean {
+  return Number.isSafeInteger(value.domainLayer) &&
+    Number.isSafeInteger(value.sourceDepthOrSortingOrder) &&
+    validateRenderFloat32(value.sourceZ) &&
+    Number.isSafeInteger(value.creationSequence) &&
+    value.creationSequence >= 0;
+}
+
+function renderWhite(): RenderColor {
+  return Object.freeze({
+    red: RENDER_ONE,
+    green: RENDER_ONE,
+    blue: RENDER_ONE,
+    alpha: RENDER_ONE,
+  });
+}
+
+function validateColor(value: RenderColor): boolean {
+  return value !== null && typeof value === "object" &&
+    validateRenderFloat32(value.red) &&
+    validateRenderFloat32(value.green) &&
+    validateRenderFloat32(value.blue) &&
+    validateRenderFloat32(value.alpha);
+}

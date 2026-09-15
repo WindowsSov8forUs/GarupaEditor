@@ -30,18 +30,3 @@ export function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
   }
   return buffer;
 }
-
-export async function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Blob to DataURL failed."));
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Blob to DataURL returned unexpected type."));
-      }
-    };
-    reader.readAsDataURL(blob);
-  });
-}

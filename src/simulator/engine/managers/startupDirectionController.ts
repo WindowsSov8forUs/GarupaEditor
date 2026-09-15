@@ -1,0 +1,469 @@
+import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
+import type { OneFrameJudgementBatch } from "../data/oneFrameData";
+import type { StageCommandNote } from "../data/stageCommand";
+import { GameState, type GameStateValue } from "../data/inGameState";
+import { integrityFailure, ok, type SimulatorResult } from "../result";
+import type { AudioCommandProducer } from "../audio/audioCommandProducer";
+import {
+  StartupAudioOwner,
+  type StartupAudioOwnerSnapshot,
+  type StartupAudioPurpose,
+} from "../audio/startupAudioOwner";
+import type { MvBackgroundModule } from "../movie/mvBackgroundModule";
+import type { PrimaryJudgementAdjustmentOwner } from "./primaryJudgementAdjustmentOwner";
+import {
+  freezeStartupDirectionSceneState,
+  INITIAL_STARTUP_DIRECTION_SCENE_STATE,
+  type StartupDirectionSceneBackend,
+  type StartupDirectionSceneState,
+} from "../../scene/startupDirectionScene";
+
+export const STARTUP_FIRST_VIEW_FADE_SECONDS = Math.fround(0.1);
+const INFORMATION_HOLD = Math.fround(0.9);
+const INFORMATION_FADE = Math.fround(1.0);
+const HUD_FADE = Math.fround(0.5);
+const BACKGROUND_PRE_DELAY = Math.fround(0.5);
+const STAGE_WAIT = Math.fround(1.5);
+const STAGE_TRANSFORM = Math.fround(3);
+const STAGE_COLOR_FADE = Math.fround(0.75);
+// BgCoverController's ordinary Live/Practice coroutine subtracts per update,
+// independently of the stage's time-based color and transform tweens.
+const STAGE_COVER_ALPHA_STEP = Math.fround(0.0075);
+// ExecStart -> ShowScreenALittle starts both after first-view/resource readiness,
+// before the information hold/fade sequence.
+const STARTUP_COVER_FADE = Math.fround(0.5);
+const STARTUP_COVER_ALPHA = Math.fround(0.92);
+const STARTUP_SUBTRACTION_FADE = Math.fround(1);
+const STARTUP_SUBTRACTION_COLOR = Math.fround(0.25);
+const CHARACTER_DELAY = Math.fround(0.25);
+const CHARACTER_FADE = Math.fround(1.25);
+const LINE_DELAY = Math.fround(2.5);
+const LINE_FADE = Math.fround(1.0);
+const MUSIC_WAIT = Math.fround(1.0);
+
+export type StartupDirectionPurpose = StartupAudioPurpose;
+
+export type StartupDirectionPhase =
+  | "first-view"
+  | "information-hold"
+  | "information-fade"
+  | "op-first-end"
+  | "opening-last"
+  | "voice-wait"
+  | "music-wait"
+  | "movie-before-sound"
+  | "playing-none"
+  | "playing-sound";
+
+export interface StartupDirectionSnapshot {
+  readonly phase: StartupDirectionPhase;
+  readonly phaseElapsed: number;
+  readonly openingElapsed: number;
+  readonly currentGameState: GameStateValue;
+  readonly playable: boolean;
+  readonly musicStartRequested: boolean;
+  readonly liveVoiceRequired: boolean;
+  readonly audio: StartupAudioOwnerSnapshot | null;
+  readonly movie: ReturnType<MvBackgroundModule["snapshot"]> | null;
+  readonly primaryJudgementAdjustment: ReturnType<PrimaryJudgementAdjustmentOwner["snapshot"]> | null;
+  readonly scene: StartupDirectionSceneState;
+}
+
+export class StartupDirectionController {
+  private phaseValue: StartupDirectionPhase = "first-view";
+  private phaseElapsedValue = Math.fround(0);
+  private openingElapsedValue = Math.fround(0);
+  private startupCoverElapsedValue = Math.fround(0);
+  private lineFadeElapsedValue = Math.fround(0);
+  private stateValue: GameStateValue = GameState.Prepare;
+  private sequence = 0;
+  private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
+  private initialized = false;
+  private previousStageBeatProgress = 0;
+  private nextStageCommand = 0;
+  private disposed = false;
+  private stageOutro: { elapsed: number; from: number } | null = null;
+  private readonly startupAudio: StartupAudioOwner | null;
+
+  constructor(
+    private readonly mode: SimulatorModeIdentity,
+    private readonly scene: StartupDirectionSceneBackend | null,
+    audio: AudioCommandProducer | null = null,
+    private readonly liveStartVoiceCue: string | null = null,
+    private readonly purpose: StartupDirectionPurpose = "initial",
+    private readonly mvBackground: MvBackgroundModule | null = null,
+    private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
+    private readonly firstViewPresented = false,
+    private readonly stageCommands: readonly StageCommandNote[] = [],
+  ) {
+    this.startupAudio = audio === null
+      ? null
+      : new StartupAudioOwner(
+          mode,
+          purpose,
+          audio,
+          liveStartVoiceCue,
+          mvBackground !== null,
+        );
+  }
+
+  initialize(): SimulatorResult<void> {
+    if (this.disposed) return rejected("startup-direction.initialize-after-dispose", "A disposed startup owner cannot be reconstructed.");
+    if (this.initialized) return ok(undefined);
+    if (this.mvBackground !== null &&
+      (this.mode.sessionMode !== "live" || this.purpose === "move-time-reconstruction")) {
+      return rejected(
+        "startup-direction.mv-unsupported-mode-or-purpose",
+        "Current MV Live is evidenced only for fresh Live Manual/Auto startup; Practice Retry and MoveTime cannot select the Simple movie background.",
+      );
+    }
+    const movie = this.mvBackground?.initialize() ?? ok(undefined);
+    if (movie.status !== "ok") return movie;
+    this.initialized = true;
+    const startupAudio = this.startupAudio?.initialize() ?? (
+      this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null
+        ? rejected(
+            "startup-direction.live-voice-audio-owner-missing",
+            "A non-null Live voice requires one prepared audio owner.",
+          )
+        : ok(undefined)
+    );
+    if (startupAudio.status !== "ok") return startupAudio;
+    if (this.purpose === "move-time-reconstruction") {
+      this.phaseValue = "playing-sound";
+      this.stateValue = GameState.PlayingSound;
+      this.publish({
+        informationPhase: "complete",
+        informationAlpha: Math.fround(0),
+        hudAlpha: Math.fround(1),
+        darkCoverAlpha: Math.fround(0),
+        stageSubtractionColor: STARTUP_SUBTRACTION_COLOR,
+        stagePhase: "idle",
+        stageProgress: Math.fround(1),
+        stageColorProgress: Math.fround(1),
+        characterAlpha: Math.fround(1),
+        linePhase: "visible",
+        lineAlpha: Math.fround(1),
+        gameplayVisible: true,
+        rehearsalControlsVisible: this.mode.sessionMode === "rehearsal",
+      });
+      return ok(undefined);
+    }
+    if (this.firstViewPresented) {
+      this.enter("information-hold", GameState.OPFirstAnimStart);
+      this.publish({ informationPhase: "holding", informationAlpha: Math.fround(1) });
+      return ok(undefined);
+    }
+    this.phaseElapsedValue = 0;
+    this.publish({
+      informationPhase: "revealing",
+      informationAlpha: Math.fround(this.phaseElapsedValue / STARTUP_FIRST_VIEW_FADE_SECONDS),
+    });
+    return ok(undefined);
+  }
+
+  step(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (!this.initialized || this.disposed || !Number.isFinite(deltaTimeSeconds) ||
+      deltaTimeSeconds < 0) {
+      return rejected("startup-direction.invalid-step", "Startup direction accepts only initialized finite non-negative engine delta.");
+    }
+    if (this.phaseValue !== "movie-before-sound") {
+      const movie = this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
+      if (movie.status !== "ok") return movie;
+    }
+    this.scene?.advanceStageEffects(deltaTimeSeconds);
+    this.advanceStartupCovers(deltaTimeSeconds);
+    this.advanceParallelOwners(deltaTimeSeconds);
+    switch (this.phaseValue) {
+      case "first-view": {
+        const sample = advance(this.phaseElapsedValue, STARTUP_FIRST_VIEW_FADE_SECONDS, deltaTimeSeconds);
+        this.phaseElapsedValue = sample.elapsed;
+        this.publish({ informationPhase: "revealing", informationAlpha: sample.ratio });
+        if (sample.done) this.enter("information-hold", GameState.OPFirstAnimStart);
+        break;
+      }
+      case "information-hold": {
+        const sample = advance(this.phaseElapsedValue, INFORMATION_HOLD, deltaTimeSeconds);
+        this.phaseElapsedValue = sample.elapsed;
+        this.publish({ informationPhase: "holding", informationAlpha: Math.fround(1) });
+        if (sample.done) this.enter("information-fade", GameState.OPFirstAnimStart);
+        break;
+      }
+      case "information-fade": {
+        const sample = advance(this.phaseElapsedValue, INFORMATION_FADE, deltaTimeSeconds);
+        this.phaseElapsedValue = sample.elapsed;
+        this.publish({ informationPhase: "fading", informationAlpha: Math.fround(1 - sample.ratio) });
+        if (sample.done) this.enter("op-first-end", GameState.OPFirstAnimEnd);
+        break;
+      }
+      case "op-first-end":
+        this.publish({ informationPhase: "complete", informationAlpha: Math.fround(0) });
+        this.enter("opening-last", GameState.OPLastAnimStart);
+        break;
+      case "opening-last": {
+        const duration = Math.fround(BACKGROUND_PRE_DELAY + STAGE_WAIT);
+        const sample = advance(this.phaseElapsedValue, duration, deltaTimeSeconds);
+        this.phaseElapsedValue = sample.elapsed;
+        if (sample.done) this.enter("voice-wait", GameState.OPLastAnimStart);
+        break;
+      }
+      case "voice-wait": {
+        if (this.mode.sessionMode !== "live" || this.liveStartVoiceCue === null) {
+          this.enter("music-wait", GameState.OPLastAnimStart);
+          break;
+        }
+        const playing = this.startupAudio?.isLiveStartVoicePlaying() ?? rejected(
+          "startup-direction.live-voice-observer-missing",
+          "Live startup cannot pass the voice wait without the backend ended-state observer.",
+        );
+        if (playing.status !== "ok") return playing;
+        if (!playing.value) {
+          const released = this.startupAudio!.releaseFinishedLiveStartVoice();
+          if (released.status !== "ok") return released;
+          this.enter("music-wait", GameState.OPLastAnimStart);
+        }
+        break;
+      }
+      case "music-wait": {
+        const sample = advance(this.phaseElapsedValue, MUSIC_WAIT, deltaTimeSeconds);
+        this.phaseElapsedValue = sample.elapsed;
+        if (sample.done) {
+          if (this.mvBackground === null) {
+            const entered = this.enterPlayingNone();
+            if (entered.status !== "ok") return entered;
+          } else {
+            this.enter("movie-before-sound", GameState.MovieBeforeSound);
+            const started = this.mvBackground.startBeforeSound();
+            if (started.status !== "ok") return started;
+          }
+        }
+        break;
+      }
+      case "movie-before-sound": {
+        const completed = this.mvBackground?.stepBeforeSound(deltaTimeSeconds) ?? rejected(
+          "startup-direction.movie-before-sound-owner-missing",
+          "MovieBeforeSound requires the exact MV background owner.",
+        );
+        if (completed.status !== "ok") return completed;
+        if (completed.value) {
+          const entered = this.enterPlayingNone();
+          if (entered.status !== "ok") return entered;
+        }
+        break;
+      }
+      case "playing-none": {
+        const started = this.startPreparedMusic();
+        if (started.status !== "ok") return started;
+        if (!started.value) break;
+        this.enter("playing-sound", GameState.PlayingSound);
+        this.publish({ gameplayVisible: true, rehearsalControlsVisible: this.mode.sessionMode === "rehearsal" });
+        break;
+      }
+      case "playing-sound":
+        break;
+    }
+    return ok(undefined);
+  }
+
+  getPlaybackState() {
+    return { playable: this.stateValue === GameState.PlayingSound, hudAlpha: this.sceneValue.hudAlpha, scene: this.sceneValue };
+  }
+
+  snapshot(): StartupDirectionSnapshot {
+    return Object.freeze({
+      phase: this.phaseValue,
+      phaseElapsed: this.phaseElapsedValue,
+      openingElapsed: this.openingElapsedValue,
+      currentGameState: this.stateValue,
+      playable: this.stateValue === GameState.PlayingSound,
+      musicStartRequested: this.stateValue === GameState.PlayingNone ||
+        this.stateValue === GameState.PlayingSound ||
+        this.stateValue === GameState.PauseNone ||
+        this.stateValue === GameState.PauseSound,
+      liveVoiceRequired: this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null,
+      audio: this.startupAudio?.snapshot() ?? null,
+      movie: this.mvBackground?.snapshot() ?? null,
+      primaryJudgementAdjustment: this.primaryJudgementAdjustment?.snapshot() ?? null,
+      scene: this.sceneValue,
+    });
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.startupAudio?.dispose();
+    this.mvBackground?.dispose();
+    this.scene?.dispose();
+  }
+
+  private advanceStartupCovers(delta: number): void {
+    if (this.mvBackground !== null || this.purpose === "move-time-reconstruction" || this.phaseValue === "first-view") return;
+    if (this.sceneValue.stageSubtractionColor === STARTUP_SUBTRACTION_COLOR) return;
+    this.startupCoverElapsedValue = Math.fround(Math.min(STARTUP_SUBTRACTION_FADE,
+      this.startupCoverElapsedValue + delta));
+    const elapsed = this.startupCoverElapsedValue;
+    this.publish({
+      darkCoverAlpha: Math.fround(1 + (STARTUP_COVER_ALPHA - 1) * unit(elapsed, STARTUP_COVER_FADE)),
+      stageSubtractionColor: Math.fround(1 + (STARTUP_SUBTRACTION_COLOR - 1) * unit(elapsed, STARTUP_SUBTRACTION_FADE)),
+    });
+  }
+
+  private advanceParallelOwners(delta: number): void {
+    if (this.purpose === "move-time-reconstruction" ||
+      (this.sceneValue.linePhase === "visible" && this.sceneValue.stagePhase === "idle" &&
+        this.sceneValue.darkCoverAlpha === 0)) return;
+    if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
+      this.phaseValue !== "voice-wait" && this.phaseValue !== "movie-before-sound" &&
+      this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
+    const lineStarted = this.openingElapsedValue >= LINE_DELAY;
+    this.openingElapsedValue = Math.fround(this.openingElapsedValue + delta);
+    const elapsed = this.openingElapsedValue;
+    const hud = unit(elapsed, HUD_FADE);
+    const stageElapsed = Math.fround(elapsed - BACKGROUND_PRE_DELAY);
+    const stage = stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_TRANSFORM);
+    const characterElapsed = Math.fround(stageElapsed - CHARACTER_DELAY);
+    const character = characterElapsed <= 0 ? Math.fround(0) : unit(characterElapsed, CHARACTER_FADE);
+    // The asynchronous line coroutine starts its own fade clock after the wait;
+    // time beyond the wait threshold does not shorten that fade.
+    const line = lineStarted ? advance(this.lineFadeElapsedValue, LINE_FADE, delta) : null;
+    if (line !== null) this.lineFadeElapsedValue = line.elapsed;
+    this.publish({
+      hudAlpha: hud,
+      // Entering opening-last retained the current cover for the coroutine's
+      // first yield. Subsequent updates reveal the already present stage.
+      darkCoverAlpha: this.mvBackground === null
+        ? Math.fround(Math.max(0, Math.fround(this.sceneValue.darkCoverAlpha - STAGE_COVER_ALPHA_STEP)))
+        : Math.fround(stageElapsed <= 0 ? 1 : 0),
+      stagePhase: stageElapsed <= 0 ? "waiting" : stage < 1 ? "introducing" : "idle",
+      stageProgress: outQuad(stage),
+      stageColorProgress: stageElapsed <= 0 ? Math.fround(0) : unit(stageElapsed, STAGE_COLOR_FADE),
+      characterAlpha: character,
+      stagePsylliumFading: stageElapsed >= STAGE_WAIT,
+      linePhase: line === null ? "waiting" : line.done ? "visible" : "fading",
+      lineAlpha: line?.ratio ?? Math.fround(0),
+    });
+  }
+
+  stepPlayableMovie(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.phaseValue !== "playing-sound") {
+      return rejected(
+        "startup-direction.movie-step-outside-playing",
+        "The post-start MV update owner runs only after PlayingSound and is frozen by PauseSound.",
+      );
+    }
+    return this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
+  }
+
+  advancePlayablePresentation(deltaTimeSeconds: number): void {
+    if (this.phaseValue === "playing-sound") {
+      this.scene?.advanceStageEffects(deltaTimeSeconds);
+      this.advanceParallelOwners(deltaTimeSeconds);
+    }
+  }
+
+  reflectStageJudgements(batch: OneFrameJudgementBatch): void {
+    this.scene?.reflectStageJudgements(batch);
+  }
+
+  reflectStageMusicProgress(beatProgress: number, bpm: number): void {
+    const current = Math.trunc(beatProgress);
+    if (this.previousStageBeatProgress > current && current >= 0) {
+      const speed = Math.fround(bpm / 240);
+      if (speed !== this.sceneValue.stagePsylliumSpeed) this.publish({ stagePsylliumSpeed: speed });
+      this.scene?.reflectStageCommand(null, speed);
+    }
+    this.previousStageBeatProgress = current;
+  }
+
+  reflectStageCommands(musicPosition: number, bpm: number): void {
+    if (this.mode.sessionMode !== "live" || this.mvBackground !== null || this.purpose === "move-time-reconstruction") return;
+    const first = this.stageCommands[this.nextStageCommand];
+    if (first === undefined || first.absolutePosition > musicPosition) return;
+    const speed = Math.fround(bpm / 240);
+    if (speed !== this.sceneValue.stagePsylliumSpeed) this.publish({ stagePsylliumSpeed: speed });
+    // CommandNoteManager executes one due group per update, preserving its order.
+    do {
+      this.scene?.reflectStageCommand(this.stageCommands[this.nextStageCommand++]!.soundValue, speed);
+    } while (this.stageCommands[this.nextStageCommand]?.absolutePosition === first.absolutePosition);
+  }
+
+  beginGameClearPresentation(bpm: number): void {
+    if (this.mvBackground !== null || this.stageOutro !== null) return;
+    this.stageOutro = { elapsed: 0, from: this.sceneValue.stageProgress };
+    this.publish({ stagePhase: "leaving", stagePsylliumSpeed: Math.fround(bpm / 240) });
+  }
+
+  advanceGameClearPresentation(deltaTimeSeconds: number): void {
+    if (this.stageOutro === null) return;
+    this.scene?.advanceStageEffects(deltaTimeSeconds);
+    // StandardBackgroundModule.OnGameClear -> Stage.outroAnimation uses the
+    // shared TRS tween: current pose -> authored start, 4 seconds, OutQuad.
+    // Standard WaitForFinish does not wait for this tween before scene exit.
+    this.stageOutro.elapsed = Math.min(4, this.stageOutro.elapsed + deltaTimeSeconds);
+    this.publish({ stageProgress: Math.fround(
+      this.stageOutro.from * (1 - outQuad(this.stageOutro.elapsed / 4)),
+    ) });
+  }
+
+  pauseMovie(): SimulatorResult<void> {
+    return this.mvBackground?.pause() ?? ok(undefined);
+  }
+
+  resumeMovie(): SimulatorResult<void> {
+    return this.mvBackground?.resume() ?? ok(undefined);
+  }
+
+  stopMovie(): SimulatorResult<void> {
+    return this.mvBackground?.stop() ?? ok(undefined);
+  }
+
+  private enterPlayingNone(): SimulatorResult<void> {
+    const fade = this.startupAudio?.beginMusicWait() ?? ok(undefined);
+    if (fade.status !== "ok") return fade;
+    this.enter("playing-none", GameState.PlayingNone);
+    return ok(undefined);
+  }
+
+  private startPreparedMusic(): SimulatorResult<boolean> {
+    const primaryGate = this.primaryJudgementAdjustment?.preflightMusicStart() ?? ok(true);
+    if (primaryGate.status !== "ok") return primaryGate;
+    if (!primaryGate.value) return ok(false);
+    const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
+    if (audioTransition?.status === "integrity-failure") return audioTransition;
+    const committed = audioTransition?.status === "ok"
+      ? audioTransition.value.commit()
+      : ok(undefined);
+    if (committed.status !== "ok") return committed;
+    const afterSound = this.mvBackground?.startAfterSound() ?? ok(undefined);
+    if (afterSound.status !== "ok") return afterSound;
+    const primary = this.primaryJudgementAdjustment?.commitMusicStarted() ?? committed;
+    return primary.status === "ok" ? ok(true) : primary;
+  }
+
+  private enter(phase: StartupDirectionPhase, state: GameStateValue): void {
+    this.phaseValue = phase;
+    this.phaseElapsedValue = Math.fround(0);
+    this.stateValue = state;
+  }
+
+  private publish(change: Partial<StartupDirectionSceneState>): void {
+    this.sequence += 1;
+    this.sceneValue = freezeStartupDirectionSceneState({
+      ...this.sceneValue,
+      ...change,
+      sequence: this.sequence,
+    });
+    this.scene?.publish(this.sceneValue);
+  }
+}
+
+function advance(elapsed: number, duration: number, delta: number): Readonly<{ elapsed: number; ratio: number; done: boolean }> {
+  if (elapsed >= duration) return Object.freeze({ elapsed: duration, ratio: Math.fround(1), done: true });
+  const next = Math.fround(elapsed + delta);
+  return Object.freeze({ elapsed: next, ratio: Math.fround(Math.min(1, next / duration)), done: false });
+}
+function unit(elapsed: number, duration: number): number { return Math.fround(Math.min(1, elapsed / duration)); }
+function outQuad(progress: number): number { return Math.fround(1 - (1 - progress) ** 2); }
+function rejected(capability: string, boundary: string) {
+  return integrityFailure(capability, boundary);
+}

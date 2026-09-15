@@ -538,7 +538,7 @@ export function useSelectionAndEditorSync(params: any) {
           const deduped = Array.from(new Set(chain.noteIds.filter((id: string) => existing.has(id))));
           return { ...chain, noteIds: deduped };
         })
-        .filter((chain) => chain.noteIds.length > 0);
+        .filter((chain) => chain.noteIds.length >= 2);
       if (
         next.length === previous.length &&
         next.every((chain, index) => chain.id === previous[index].id && chain.noteIds.join("|") === previous[index].noteIds.join("|"))

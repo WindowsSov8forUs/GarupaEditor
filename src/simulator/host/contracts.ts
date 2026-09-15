@@ -1,0 +1,125 @@
+import type {
+  SimulatorBackends,
+  SimulatorBackendTraceEvent,
+} from "../backends/contracts";
+import type { ChartConstructionResult } from "../engine/chart/types";
+import type { StageCommandNote } from "../engine/data/stageCommand";
+import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
+import type {
+  ManualInputButtonResolution,
+  ManualInputFrame,
+  ManualInputPosition,
+} from "../engine/data/manualInput";
+import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
+import type { SimulatorResult } from "../engine/result";
+import type { AudioBackendSnapshot } from "../backends/audioContracts";
+import type { MovieBackendSnapshot } from "../backends/movieContracts";
+import type { RenderBackendSnapshot, RenderFloat32 } from "../backends/renderingContracts";
+import type {
+  ParticleBackendSnapshot,
+  ParticlePixiSceneProfile,
+  ParticleRendererBackendSnapshot,
+} from "../backends/particleContracts";
+import type { SimulatorAudioSessionInput } from "../engine/audio/audioCommandProducer";
+import type {
+  OrdinaryFixedNoteSceneInput,
+  RenderEngineResourceBindings,
+} from "../engine/rendering/renderCommandProducer";
+import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
+import type { InGameManagerSnapshot, InGamePlaybackState } from "../engine/managers/inGameManager";
+import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
+import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
+import type { GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
+import type { GameClearRuntimeProfile } from "../backends/resources/currentGameClearProfile";
+import type {
+  OriginalLiveSettings,
+  OriginalLiveSettingsSnapshot,
+} from "../engine/data/originalLiveSettings";
+
+export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
+
+export interface SimulatorRenderingSessionInput {
+  readonly sessionId: string;
+  readonly resources: RenderEngineResourceBindings;
+  readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput;
+  readonly garupaProductScene?: GarupaProductSceneLayout;
+}
+
+export interface SimulatorParticleSessionInput {
+  readonly sessionId: string;
+  /** Required by production; optional only for legacy source compilation. */
+  readonly scene?: ParticlePixiSceneProfile;
+  /** Required by production; optional only for legacy source compilation. */
+  readonly gameClearProfile?: GameClearRuntimeProfile;
+}
+
+export interface SimulatorEngineInput {
+  readonly chart: ChartConstructionResult;
+  readonly runtime: {
+    readonly specificSpeed: RenderFloat32;
+    readonly originalLiveSettings: OriginalLiveSettings;
+    readonly mode: SimulatorModeIdentity;
+  };
+  readonly scoreLifeState?: ScoreLifeStateProfile;
+  readonly garupaProductScene?: GarupaProductSceneLayout;
+  readonly rendering?: SimulatorRenderingSessionInput;
+  readonly audio?: SimulatorAudioSessionInput;
+  readonly particles?: SimulatorParticleSessionInput;
+  readonly movie?: {
+    readonly sessionId: string;
+    readonly musicStartDelayMilliseconds: number;
+  };
+  readonly startupDirection?: {
+    readonly scene: StartupDirectionSceneBackend | null;
+    readonly firstViewPresented?: boolean;
+    readonly commandNotes?: readonly StageCommandNote[];
+    readonly liveStartVoiceCue: string | null;
+    readonly purpose: StartupDirectionPurpose;
+  };
+}
+
+export interface SimulatorSnapshot {
+  readonly director: InGameDirectorSnapshot;
+  readonly managers: InGameManagerSnapshot;
+  readonly originalLiveSettings: OriginalLiveSettingsSnapshot;
+  readonly adjustedMusicPosition: number;
+  readonly backendTrace: readonly SimulatorBackendTraceEvent[];
+  readonly renderingBackend: RenderBackendSnapshot | null;
+  readonly audioBackend: AudioBackendSnapshot;
+  readonly movieBackend: MovieBackendSnapshot | null;
+  readonly particleBackend: ParticleBackendSnapshot | null;
+  readonly particleRendererBackend: ParticleRendererBackendSnapshot | null;
+}
+
+export interface SimulatorEngine {
+  initialize(): SimulatorResult<void>;
+  step(
+    deltaTimeSeconds: number,
+    inputFrame?: ManualInputFrame,
+  ): SimulatorResult<void>;
+  resolveManualInputButton(
+    position: ManualInputPosition,
+  ): SimulatorResult<ManualInputButtonResolution | null>;
+  pause(): SimulatorResult<void>;
+  resume(): SimulatorResult<void>;
+  startResultAudio(): SimulatorResult<void>;
+  setResultCountSound(active: boolean): SimulatorResult<void>;
+  playResultEvaluationSound(failed: boolean): SimulatorResult<void>;
+  playUiDecisionSound(): SimulatorResult<void>;
+  isUiDecisionSoundPlaying(): SimulatorResult<boolean>;
+  continueLive(): SimulatorResult<void>;
+  completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
+  advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean>;
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;
+  getAdjustedMusicPosition(): SimulatorResult<number>;
+  getPlaybackState(): SimulatorResult<InGamePlaybackState>;
+  snapshot(): SimulatorResult<SimulatorSnapshot>;
+  dispose(): SimulatorResult<void>;
+  /** Completes asynchronous host resource release after synchronous disposal. */
+  settleDisposal?(): Promise<SimulatorResult<void>>;
+}
+
+export type CreateSimulatorEngine = (
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+) => SimulatorResult<SimulatorEngine>;

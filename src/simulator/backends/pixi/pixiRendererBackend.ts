@@ -1,0 +1,4993 @@
+import { clipNotePolygon } from "../../engine/rendering/notePolygonClipping";
+import { coordinate, coordinateAdd, coordinateScale, coordinateDirection, copyExponentialLine, copyExponentialTransform } from "../../engine/rendering/exponentialCoordinates";
+import { NoteViewportClipper } from "./noteViewportClipping";
+import { layoutNguiText } from "./hud/nguiTextLayout";
+import type { PreparedSessionPresentation } from "../../assembly/sessionPresentationDerivation";
+import { createSerializedDialog, SerializedDialogTransition, type DialogColor, type DialogLabelLayout } from "../../../components/pixi/SerializedDialog";
+import type { SerializedButtonBorder } from "../../../components/pixi/SerializedButton";
+import {
+  Container,
+  Graphics,
+  Mesh,
+  NineSliceSprite,
+  MeshGeometry,
+  Rectangle,
+  RenderLayer,
+  Sprite,
+  Text,
+  Texture,
+  type DestroyOptions,
+} from "pixi.js";
+import {
+  integrityFailure,
+  ok,
+  type SimulatorResult,
+} from "../../engine/result";
+import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
+import { PixiResultScene } from "./pixiResultScene";
+import type { SimulatorResultRecord } from "../../host/resultPresentation";
+import type { PixiStartupDirectionCommonResources, PixiStartupSlicedImage } from "./pixiStartupDirectionScene";
+import { calculateNativeParticleRendererSortDistance } from "../../engine/particles/particleBounds";
+import {
+  calculateGameplayWorldZ,
+  PIXI_GAMEPLAY_RENDER_ORDER_LABEL,
+  type PixiGameplayRenderOrder,
+} from "./pixiGameplayRenderOrder";
+import { validateAndFreezeRenderProfile } from "../renderingValidation";
+import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
+import {
+  sampleGameClearAdditionalAnimation,
+  type GameClearAdditionalAnimationSample,
+  type GameClearAdditionalState,
+  type GameClearGraphObject,
+  type GameClearRuntimeProfile,
+} from "../resources/currentGameClearProfile";
+import {
+  CURRENT_HABAHIRO_SEMANTIC_PROFILE,
+} from "../../engine/rendering/habahiroFlashAnimation";
+import {
+  advanceScoreHighRankPlayback,
+  sampleScoreHighRankPresentation,
+  startScoreHighRankPlayback,
+  type ScoreHighRankPlayback,
+} from "../../engine/hud/scoreHighRankAnimation";
+import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
+import {
+  createRehearsalControlSceneLayout,
+  formatRehearsalTimeLabel,
+  type RehearsalControlBounds,
+  type RehearsalControlSceneLayout,
+} from "../../scene/rehearsalControlScene";
+import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
+import type { PauseControlSceneSnapshot } from "../../scene/pauseControlScene";
+import {
+  COMMON_ORDINARY_VISIBLE_BINDINGS as CURRENT_ORDINARY_VISIBLE_BINDINGS,
+  COMMON_PAUSE_CONTROL_BINDINGS as CURRENT_PAUSE_CONTROL_BINDINGS,
+  COMMON_SCORE_HUD_BINDINGS as CURRENT_SCORE_HUD_BINDINGS,
+  COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
+} from "../../engine/rendering/commonResourceBindings";
+import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
+import { CURRENT_TAP_LANE_EFFECT_SPRITE_MASK } from "../resources/currentCompleteHudProfile";
+import {
+  samplePauseCountdownClip,
+  type PauseCountdownAnimationProfile,
+} from "../resources/currentPauseCountdownAnimationProfile";
+import {
+  CURRENT_PAUSE_ATLAS_BORDERS,
+  CURRENT_PAUSE_SERIALIZED_GRAPHS,
+  CURRENT_PAUSE_DIALOG_COLORS,
+} from "../resources/currentPauseSerializedProfile";
+import {
+  CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS,
+  CURRENT_PAUSE_COMPONENT_PATHS,
+  CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS,
+} from "../resources/currentFiveVisualCorrectionProfile";
+import { applyNguiSpriteWidget } from "./hud/nguiSpriteGeometry";
+import { pixiFlashBlendMode } from "./pixiFlashBlend";
+import {
+  linearTintFromSrgbColor,
+  linearTintFromSrgbChannels,
+} from "./hud/nguiMaterialPipeline";
+import { layoutNguiEncodedLifeLabel } from "./hud/nguiLabelGeometry";
+import { layoutNguiEncodedScoreLabel } from "./hud/nguiEncodedScoreLabel";
+import { createNguiScoreSceneGraph } from "./hud/nguiSceneGraph";
+import {
+  createNguiSoftClipFilter,
+  updateNguiSoftClipFilter,
+  type NguiSoftClipFilter,
+} from "./hud/nguiPanelClip";
+import { CURRENT_SCORE_HUD_NINE_SLICE_BORDERS } from "../../engine/rendering/currentScoreHudSemanticProfile";
+import {
+  animationBindingMatchesProfile,
+  animationRoleMatchesObject,
+  validateTypedRenderHudCommand,
+  validateTypedRenderResourceBinding,
+  spriteObjectRole,
+} from "../renderingCommandValidation";
+import type {
+  RenderBackendSnapshot,
+  RenderCommand,
+  RenderCommandBatch,
+  RenderAtlasRow,
+  RenderColor,
+  RenderOrthographicProjectionProfile,
+  RenderObjectRole,
+  RenderVector3,
+  RenderResourceAssetProfile,
+  RenderResourcePreflightAdapter,
+  RenderScoreHudState,
+  RenderResourceProfile,
+  SimulatorRendererBackend,
+  SimulatorResourceProvider,
+} from "../renderingContracts";
+
+export interface PixiDecodedFont {
+  readonly family: string;
+  dispose(): void;
+}
+
+export interface PixiTextureDecoder {
+  decodePng(
+    asset: RenderResourceAssetProfile,
+    bytes: Uint8Array,
+  ): Promise<SimulatorResult<Texture>>;
+  decodeFont?(
+    asset: RenderResourceAssetProfile,
+    bytes: Uint8Array,
+  ): Promise<SimulatorResult<PixiDecodedFont>>;
+}
+
+export interface PixiSceneObjectFactory {
+  create(role: string, renderObjectId: string, roundPixels: boolean): Container;
+}
+
+export interface PixiInGameControlOverlay {
+  readonly root: Container;
+  updateTimeline(timelineSeconds: number): SimulatorResult<void>;
+  setMoveTimeInProgress(active: boolean): SimulatorResult<void>;
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
+  dispose(): SimulatorResult<void>;
+}
+
+interface PendingPixiBatch {
+  readonly recordingBatch: RenderCommandBatch;
+  readonly commands: readonly RenderCommand[];
+  readonly reservedNodes: ReadonlyMap<number, Container>;
+  readonly reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>;
+  readonly reservedMasks: ReadonlyMap<number, Graphics>;
+}
+
+interface PixiGeometryData {
+  readonly positions: Float32Array;
+  readonly uvs: Float32Array;
+  readonly indices: Uint32Array;
+  readonly tint: number;
+  readonly alpha: number;
+}
+
+interface PixiGeometryReservation {
+  readonly data: PixiGeometryData;
+  readonly mesh: Mesh | null;
+}
+
+interface PixiHudVisual {
+  readonly kind: "score" | "combo" | "result" | "life" | "add-score" | "game-clear";
+  readonly content: Container;
+  readonly lifeTextSegments: readonly [Text, Text, Text] | null;
+  readonly gameOverText: Text | null;
+  readonly animationLayer: Container;
+  readonly serializedComponentNodes: ReadonlyMap<string, Container>;
+  readonly serializedHierarchyNodes: ReadonlyMap<string, Container>;
+  readonly digitSprites: Sprite[];
+  readonly fillMasks: Graphics[];
+  readonly scoreTextSegments: readonly Text[] | null;
+  readonly scoreGaugeSprites: Container[];
+  readonly scoreRankSprites: Container[];
+  readonly scoreHighRankSprites: Sprite[];
+  readonly scoreWidgetRenderLayer: RenderLayer | null;
+  readonly scoreHighRankNodeNames: string[];
+  readonly scoreHighRankBaseScales: (readonly [number, number])[];
+  readonly scoreHighRankPanelMask: Graphics | null;
+  scoreHighRankSoftClipFilter: NguiSoftClipFilter | null;
+  scoreHighRankPanelMaskGeneration: number;
+  scoreHighRankPanelMaskBounds: readonly [number, number, number, number] | null;
+  scoreHighRankGeneration: number;
+  gameClearSampledPhaseSeconds: number | null;
+  gameClearAdditionalState: GameClearAdditionalState | "base-only";
+  gameClearAdditionalClipName: string | null;
+  gameClearChannelValues: readonly number[];
+  gameClearChannelDispositionCounts: Readonly<Record<string, number>>;
+  fillRatios: readonly [number, number];
+}
+
+type EvidenceAnimationRole =
+  | "combo"
+  | "all-perfect"
+  | "result"
+  | "life-warning"
+  | "life-game-over"
+  | "score-gauge-ss"
+  | "game-clear"
+  | "note-flick"
+  | "note-directional-flick"
+  | "note-long-flash";
+
+interface PixiObjectRecord {
+  readonly role: RenderObjectRole;
+  readonly parentObjectId: string | null;
+  readonly node: Container;
+  ordering: readonly [number, number, number, number];
+  hudState: Readonly<object> | null;
+  spriteBindingKey: string | null;
+  spritePixelsPerUnit: number | null;
+  hudBindingKeys: string[];
+  scoreHighRankBindingKeys: string[];
+  scoreHighRankPlayback: ScoreHighRankPlayback | null;
+  spriteContent: Sprite | null;
+  materialTexture: Texture | null;
+  materialLogicalAssetId: string | null;
+  geometryContent: Mesh | null;
+  maskContent: Graphics | null;
+  thresholdMaskContent: Graphics | null;
+  laneSpriteMaskContent: Graphics | null;
+  threshold: number | null;
+  maskVertexCount: number | null;
+  hudVisual: PixiHudVisual | null;
+  readonly resourceProfile: RenderResourceProfile;
+  readonly scoreGaugeSsAnimation: RenderResourceProfile["scoreGaugeSsAnimation"];
+  readonly scoreHudNativeProfile: RenderResourceProfile["scoreHudNativeProfile"];
+  readonly ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
+  readonly surfaceLayout: OriginalSurfaceLayout;
+  activeAnimationRole: EvidenceAnimationRole | null;
+  readonly activeAnimationRoles: Set<EvidenceAnimationRole>;
+  readonly animationElapsedByRole: Map<EvidenceAnimationRole, number>;
+  animationElapsedSeconds: number | null;
+  lastTransform: SetTransformCommand | null;
+  animatedLocalZ: number | null;
+  geometryCenterZ: number | null;
+  geometryUsesWorldCoordinates: boolean;
+}
+
+interface PixiShadowObject {
+  readonly role: RenderObjectRole;
+  readonly parentObjectId: string | null;
+  readonly materialBound: boolean;
+  readonly spriteBindingKey: string | null;
+  readonly maskConfigured: boolean;
+  readonly activeAnimationRoles: ReadonlySet<EvidenceAnimationRole>;
+}
+
+export class PixiRendererBackend implements SimulatorRendererBackend {
+  readonly id = "pixi-v8-renderer";
+
+  readonly stage: Container;
+
+  applyStartupLineAlpha(alpha: number): void {
+    for (const object of this.objects.values()) {
+      if ((object.role === "field-line" || object.role === "judge-line") && object.lastTransform !== null) {
+        object.node.alpha = object.lastTransform.color.alpha.value * alpha;
+      }
+    }
+  }
+  private readonly recording = new RecordingSimulatorRendererBackend(false);
+  private readonly objects = new Map<string, PixiObjectRecord>();
+  private readonly unclippedNotes = new Set<PixiObjectRecord>();
+  private readonly noteClipper = new NoteViewportClipper(
+    (sprite, mesh) => this.gameplayRenderOrder?.attachReplacement(mesh, sprite),
+    mesh => this.gameplayRenderOrder?.detach(mesh));
+  private readonly objectIdsByNode = new Map<Container, string>();
+  private readonly baseTextures = new Map<string, Texture>();
+  private readonly spriteTextures = new Map<string, Texture>();
+  private readonly spriteReferenceCounts = new Map<string, number>();
+  private readonly decodedFonts = new Map<string, PixiDecodedFont>();
+  private readonly deferredResultImages = new Map<string, { asset: RenderResourceAssetProfile; bytes: Uint8Array }>();
+  private textureGeneration = 0;
+  private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
+  private controlOverlayRoot: Container | null = null;
+  private tapLaneEffectOutsideMask: Graphics | null = null;
+  private tapLaneEffectOutsideMaskBounds: readonly [number, number, number, number] | null = null;
+  private readonly tapLaneEffectMaskConsumers = new Set<Container>();
+  private profile: RenderResourceProfile | null = null;
+  private surfaceLayout: OriginalSurfaceLayout | null = null;
+
+  constructor(
+    private readonly decoder: PixiTextureDecoder,
+    private readonly objectFactory: PixiSceneObjectFactory = defaultObjectFactory,
+    private readonly gameplayRenderOrder?: PixiGameplayRenderOrder,
+  ) {
+    this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
+    this.stage.sortableChildren = true;
+  }
+
+  bindOriginalSurfaceLayout(layout: OriginalSurfaceLayout): SimulatorResult<void> {
+    const projection = this.profile?.scene.projection;
+    if (
+      this.recording.snapshot().state !== "ready" || this.surfaceLayout !== null ||
+      this.objects.size !== 0 || this.pending.size !== 0 ||
+      projection === undefined ||
+      layout.surface.viewportWidth !== projection.viewportWidth ||
+      layout.surface.viewportHeight !== projection.viewportHeight ||
+      layout.camera.pixelsPerWorldUnit !== projection.pixelsPerWorldUnit
+    ) {
+      return integrityFailure(
+        "render.pixi.invalid-surface-layout-binding",
+        "The renderer binds exactly one original surface layout after resource prepare and before any scene object, command batch or overlay.",
+      );
+    }
+    this.surfaceLayout = layout;
+    return ok(undefined);
+  }
+
+  getStartupDirectionCommonResources(): SimulatorResult<PixiStartupDirectionCommonResources> {
+    const sliced = (key: string): PixiStartupSlicedImage | undefined => {
+      const assetId = CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId;
+      const texture = this.spriteTextures.get(spriteKey(assetId, key));
+      const row = this.profile?.assets.find(asset => asset.logicalAssetId === assetId)?.atlasRows.find(row => row.exactKey === key);
+      if (texture === undefined || row?.borderLeft === undefined || row.borderRight === undefined ||
+        row.borderTop === undefined || row.borderBottom === undefined) return undefined;
+      return Object.freeze({ texture, leftWidth: row.borderLeft, rightWidth: row.borderRight,
+        topHeight: row.borderTop, bottomHeight: row.borderBottom });
+    };
+    const titleBase = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.titleBaseLogicalAssetId);
+    const difficultyBackground = sliced("label_square_white");
+    const lineStar = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.lineStarLogicalAssetId);
+    const stageLight = this.baseTextures.get("stage/bottom-light");
+    const stageSpeaker = this.baseTextures.get("stage/speaker");
+    const stageSpeakerGlow = this.baseTextures.get("stage/speaker-glow");
+    const stagePsyllium = this.baseTextures.get("stage/psyllium");
+    const stageCover = this.spriteTextures.get(spriteKey("hud/score/rhythm-game-ui-atlas", "point_charactor_shadow"));
+    const stageDarkCover = this.baseTextures.get("stage/dark-cover");
+    const jacketFrame = sliced("bg_base_jacket_frame");
+    const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
+    const font = this.decodedFonts.get(CURRENT_STARTUP_DIRECTION_BINDINGS.fontLogicalAssetId);
+    const difficultyFrames = Object.freeze({
+      EASY: sliced("bg_jacket_frame_rank_1_easy"),
+      NORMAL: sliced("bg_jacket_frame_rank_1_normal"),
+      HARD: sliced("bg_jacket_frame_rank_1_hard"),
+      EXPERT: sliced("bg_jacket_frame_rank_1_expert"),
+      SPECIAL: sliced("bg_jacket_frame_rank_1_special"),
+    });
+    if (titleBase === undefined || difficultyBackground === undefined || lineStar === undefined || stageLight === undefined ||
+      stageSpeaker === undefined || stageSpeakerGlow === undefined || stagePsyllium === undefined || stageCover === undefined || stageDarkCover === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
+      Object.values(difficultyFrames).some((texture) => texture === undefined)) {
+      return integrityFailure(
+        "render.startup-direction.common-resources-unavailable",
+        "The startup scene requires the hash-validated line-star, current UICommon rows and current sgm font without a texture or system-font fallback.",
+      );
+    }
+    return ok(Object.freeze({
+      titleBase,
+      difficultyBackground,
+      lineStar,
+      stageLight,
+      stageSpeaker,
+      stageSpeakerGlow,
+      stagePsyllium,
+      stageCover,
+      stageDarkCover,
+      jacketFrame,
+      difficultyFrames: difficultyFrames as PixiStartupDirectionCommonResources["difficultyFrames"],
+      fullLiveLabel,
+      fontFamily: font.family,
+    }));
+  }
+
+  createResultScene(result: SimulatorResultRecord, presentation: PreparedSessionPresentation): SimulatorResult<PixiResultScene> {
+    const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    const judge = this.profile?.assets.find(asset => asset.role === "judge-atlas")?.logicalAssetId;
+    if (font === undefined || judge === undefined || this.surfaceLayout === null || this.profile === null) {
+      return reject("render.result.resources-unavailable", "Result presentation requires the active leased font, selected judgment atlas and surface.");
+    }
+    const background = this.baseTextures.get("hud/result/background");
+    if (background === undefined) return reject("render.result.background-unavailable", "Result requires the prepared default result background texture.");
+    const atlasId = (atlas: string, key: string) => atlas === "judge" ? judge
+      : atlas === "banner" ? "hud/result/banner-atlas"
+      : atlas === "rank-light" ? "hud/result/rank-light-atlas"
+      : atlas === "common" || key === "button_pink" ? CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId : "hud/result/menu-atlas";
+    const lookup = (atlas: string, key: string) => {
+      const id = atlasId(atlas, key);
+      const texture = this.spriteTextures.get(spriteKey(id, key));
+      if (texture === undefined) throw new Error(`Result sprite is absent: ${id}/${key}`);
+      return texture;
+    };
+    const border = (atlas: string, key: string) => this.atlasBorder(atlasId(atlas, key), key);
+    const stageLight = this.baseTextures.get("stage/bottom-light");
+    if (stageLight === undefined) return reject("render.result.stage-light-unavailable", "Result requires its prepared original stage-light texture.");
+    const particleTexture = (name: string) => {
+      const texture = this.baseTextures.get(`hud/result/${name}`);
+      if (texture === undefined) throw new Error(`Result particle texture is absent: ${name}`);
+      return texture;
+    };
+    return ok(new PixiResultScene(this.surfaceLayout, result, presentation, background, font.family, lookup, border, stageLight, particleTexture));
+  }
+
+  createInGameControlOverlay(
+    mode: SimulatorModeIdentity,
+    durationSeconds: number,
+    surfaceLayout: OriginalSurfaceLayout,
+  ): SimulatorResult<PixiInGameControlOverlay> {
+    if (this.surfaceLayout !== surfaceLayout) {
+      return integrityFailure(
+        "render.rehearsal-control.surface-layout-mismatch",
+        "Rehearsal controls must consume the exact original surface layout already bound to the renderer session.",
+      );
+    }
+    if (this.controlOverlayRoot !== null) {
+      return integrityFailure(
+        "render.rehearsal-control.duplicate-owner",
+        "One renderer session owns at most one Rehearsal control overlay.",
+      );
+    }
+    const snapshot = this.recording.snapshot();
+    const returnTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "btn_ingame_time_back",
+    ));
+    const advanceTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "btn_ingame_time_forward",
+    ));
+    const timeBackgroundTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "bg_base_r6_inside_rhythm",
+    ));
+    const demoBackgroundTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "label_round_white",
+    ));
+    const pauseTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "button_pause"));
+    const windowTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "bg_base_r12"));
+    const headerTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "bg_header_dialog"));
+    const grayButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_gray"));
+    const pinkButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"));
+    const coverTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "fill"));
+    const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
+    const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    const pauseCountdownAnimation = this.profile?.pauseCountdownAnimation;
+    if (snapshot.state !== "ready" || returnTexture === undefined ||
+      advanceTexture === undefined || timeBackgroundTexture === undefined ||
+      demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
+      headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
+      countdownTextures.some((texture) => texture === undefined) || font === undefined ||
+      pauseCountdownAnimation === undefined ||
+      !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return integrityFailure(
+        "render.rehearsal-control.resources-unavailable",
+        "Rehearsal controls require the ready current rhythm-game-ui atlas, exact sgm font and positive session duration; no fallback is rendered.",
+      );
+    }
+    const overlay = new PixiInGameControlOverlayOwner(
+      mode,
+      durationSeconds,
+      returnTexture,
+      advanceTexture,
+      timeBackgroundTexture,
+      demoBackgroundTexture,
+      pauseTexture,
+      windowTexture,
+      headerTexture,
+      grayButtonTexture,
+      pinkButtonTexture,
+      {
+        gray: this.atlasBorder(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_gray"),
+        pink: this.atlasBorder(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"),
+      },
+      coverTexture,
+      countdownTextures as [Texture, Texture, Texture],
+      pauseCountdownAnimation,
+      font.family,
+      createRehearsalControlSceneLayout(surfaceLayout),
+      (root) => {
+        if (this.controlOverlayRoot === root) this.controlOverlayRoot = null;
+      },
+    );
+    this.controlOverlayRoot = overlay.root;
+    this.stage.addChild(overlay.root);
+    return ok(overlay);
+  }
+
+  private atlasBorder(assetId: string, key: string): SerializedButtonBorder {
+    const row = this.profile?.assets.find(asset => asset.logicalAssetId === assetId)?.atlasRows.find(row => row.exactKey === key);
+    if (row === undefined) throw new Error(`Atlas row is absent: ${assetId}/${key}`);
+    return { left: row.borderLeft ?? 0, right: row.borderRight ?? 0, top: row.borderTop ?? 0, bottom: row.borderBottom ?? 0 };
+  }
+
+  async prepare(
+    sessionId: string,
+    profile: RenderResourceProfile,
+    provider: SimulatorResourceProvider,
+    preflight: RenderResourcePreflightAdapter,
+  ): Promise<SimulatorResult<void>> {
+    if (this.recording.snapshot().state !== "unprepared") {
+      return reject(
+        "render.pixi.prepare-invalid-state",
+        "A Pixi renderer session is prepared exactly once and never silently reloaded.",
+      );
+    }
+    if (this.stage.destroyed || this.stage.children.length !== 0) {
+      return reject(
+        "render.pixi.stage-not-empty-or-destroyed",
+        "The injected Pixi stage must be live and empty before atomic prepare.",
+      );
+    }
+    const frozenProfile = validateAndFreezeRenderProfile(profile);
+    if (frozenProfile.status !== "ok") return frozenProfile;
+    const cache = new CachingProvider(provider);
+    const validator = new RecordingSimulatorRendererBackend(false);
+    const validated = await validator.prepare(
+      sessionId,
+      frozenProfile.value,
+      cache,
+      preflight,
+    );
+    if (validated.status !== "ok") return validated;
+    validator.dispose();
+
+    try {
+      for (const asset of frozenProfile.value.assets) {
+        if (asset.mime !== "image/png" && asset.mime !== "font/ttf") continue;
+        const bytes = cache.get(asset.logicalAssetId);
+        if (bytes === undefined) {
+          this.resetPreparedTextures();
+          return reject(
+            "render.pixi.validated-bytes-unavailable",
+            "Pixi decode consumes the exact bytes already validated during the same atomic prepare.",
+          );
+        }
+        if (asset.mime === "font/ttf") {
+          if (this.decoder.decodeFont === undefined) {
+            this.resetPreparedTextures();
+            return reject(
+              "render.pixi.font-decoder-unavailable",
+              "The current Score Rank labels require the hash-validated sgm FontFace and never fall back to a system font.",
+            );
+          }
+          const decodedFont = await this.decoder.decodeFont(asset, bytes);
+          if (decodedFont.status !== "ok") {
+            this.resetPreparedTextures();
+            return decodedFont;
+          }
+          this.decodedFonts.set(asset.logicalAssetId, decodedFont.value);
+          continue;
+        }
+        if (asset.logicalAssetId.startsWith("hud/result/")) {
+          this.deferredResultImages.set(asset.logicalAssetId, { asset, bytes });
+          continue;
+        }
+        const decoded = await this.decodeImage(asset, bytes);
+        if (decoded.status !== "ok") { this.resetPreparedTextures(); return decoded; }
+      }
+    } catch {
+      this.resetPreparedTextures();
+      return reject(
+        "render.pixi.decode-or-texture-create-threw",
+        "Pixi decode and subtexture construction fail before the backend becomes ready.",
+      );
+    }
+
+    const ready = await this.recording.prepare(
+      sessionId,
+      frozenProfile.value,
+      cache,
+      preflight,
+    );
+    if (ready.status !== "ok") {
+      this.resetPreparedTextures();
+      return ready;
+    }
+    this.profile = frozenProfile.value;
+    return ok(undefined);
+  }
+
+  get resultPreparationWorkCount(): number { return this.deferredResultImages.size + 1; }
+
+  async prepareResultResources(report: (completed: number) => Promise<void>): Promise<SimulatorResult<void>> {
+    if (this.profile === null) return reject("render.result.renderer-unavailable", "Result resources require an active renderer generation.");
+    let completed = 0;
+    for (const [identity, { asset, bytes }] of this.deferredResultImages) {
+      const decoded = await this.decodeImage(asset, bytes);
+      if (decoded.status !== "ok") return decoded;
+      this.deferredResultImages.delete(identity);
+      await report(++completed);
+    }
+    return ok(undefined);
+  }
+
+  private async decodeImage(asset: RenderResourceAssetProfile, bytes: Uint8Array): Promise<SimulatorResult<void>> {
+    const generation = this.textureGeneration;
+    const decoded = await this.decoder.decodePng(asset, bytes);
+    if (decoded.status !== "ok") {
+      return decoded;
+    }
+    const base = decoded.value;
+    if (generation !== this.textureGeneration) {
+      base.destroy(true);
+      return reject("render.pixi.decode-after-release", "A released renderer cannot install an in-flight decoded image.");
+    }
+    if ([...this.baseTextures.values()].includes(base)) {
+      return reject(
+        "render.pixi.decoder-texture-alias",
+        "Each logical image asset must return one independently owned decoded Texture identity.",
+      );
+    }
+    if (base.source.width !== asset.width || base.source.height !== asset.height) {
+      base.destroy(true);
+      return reject(
+        "render.pixi.decoded-dimension-mismatch",
+        "Decoded Pixi Texture dimensions must match the hash-validated profile.",
+      );
+    }
+    this.baseTextures.set(asset.logicalAssetId, base);
+    applyTextureSettings(base, asset);
+    for (const row of asset.atlasRows) {
+      const texture = new Texture({
+        source: base.source,
+        frame: new Rectangle(row.x, row.y, row.width, row.height),
+        orig: new Rectangle(0, 0, row.width, row.height),
+        defaultAnchor: { x: row.pivotX, y: row.pivotY },
+        label: `${asset.logicalAssetId}:${row.exactKey}`,
+      });
+      this.spriteTextures.set(spriteKey(asset.logicalAssetId, row.exactKey), texture);
+    }
+    return ok(undefined);
+  }
+
+  preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
+    if (this.surfaceLayout === null) {
+      return integrityFailure(
+        "render.pixi.surface-layout-unbound",
+        "Pixi commands cannot mutate scene objects before the session-owned original surface layout is bound.",
+      );
+    }
+    const typed = this.validateTypedPreflight(commands);
+    if (typed.status !== "ok") return typed;
+    const recordingBatch = this.recording.preflight(commands);
+    if (recordingBatch.status !== "ok") {
+      if (this.recording.snapshot().state === "faulted") {
+        const cleanupFailures = this.resetSceneAfterTerminalMutation();
+        this.recording.recordSecondaryCleanupFailures(cleanupFailures);
+        this.recording.resetObjectsAfterTerminalRendererMutation();
+        return this.recording.recordTerminalFault("", "");
+      }
+      return recordingBatch;
+    }
+    const supported = this.validatePixiBatch(commands);
+    if (supported.status !== "ok") {
+      this.recording.discard(recordingBatch.value);
+      return supported;
+    }
+    const reservedNodes = new Map<number, Container>();
+    const reservedGeometry = new Map<number, PixiGeometryReservation>();
+    const plannedGeometry = new Map<string, boolean>();
+    const reservedMasks = new Map<number, Graphics>();
+    const plannedThresholds = new Map<string, number | null>();
+    try {
+      for (const command of commands) {
+        if (command.kind === "create-object" || command.kind === "acquire-object") {
+          plannedThresholds.set(command.renderObjectId, null);
+          plannedGeometry.set(command.renderObjectId, false);
+          const node = this.objectFactory.create(
+            command.role,
+            command.renderObjectId,
+            this.profile!.scene.roundPixels,
+          );
+          if (
+            node.destroyed ||
+            node.parent !== null ||
+            (spriteRole(command.role) && spriteChild(node) === null)
+          ) {
+            node.destroy({ children: true } as DestroyOptions);
+            throw new Error("invalid reserved Pixi node");
+          }
+          node.label = command.renderObjectId;
+          node.visible = false;
+          reservedNodes.set(command.sequence, node);
+        } else if (command.kind === "set-mesh" || command.kind === "set-line") {
+          const data = command.kind === "set-mesh"
+            ? createEvidenceMeshData(command, this.profile!.scene.projection, this.surfaceLayout!)
+            : createEvidenceLineData(command, this.profile!.scene.projection);
+          const exists = plannedGeometry.get(command.renderObjectId) ??
+            (this.objects.get(command.renderObjectId)?.geometryContent != null);
+          reservedGeometry.set(command.sequence, { data, mesh: exists ? null : createGeometryMesh(data) });
+          plannedGeometry.set(command.renderObjectId, true);
+        } else if (command.kind === "set-mask") {
+          reservedMasks.set(command.sequence, createEvidenceMask(command));
+        } else if (command.kind === "set-threshold") {
+          const previous = plannedThresholds.has(command.renderObjectId)
+            ? plannedThresholds.get(command.renderObjectId)
+            : this.objects.get(command.renderObjectId)?.threshold;
+          plannedThresholds.set(command.renderObjectId, command.threshold.value);
+          if (previous === command.threshold.value) continue;
+          reservedMasks.set(command.sequence, createThresholdMask(
+            command.threshold.value,
+            this.profile!.scene.projection,
+          ));
+        }
+      }
+    } catch {
+      for (const node of reservedNodes.values()) {
+        node.destroy({ children: true } as DestroyOptions);
+      }
+      for (const { mesh } of reservedGeometry.values()) if (mesh !== null) destroyMesh(mesh);
+      for (const mask of reservedMasks.values()) mask.destroy();
+      this.recording.discard(recordingBatch.value);
+      return reject(
+        "render.pixi.preflight-object-create-threw",
+        "Pixi object and geometry allocation is reserved during preflight so allocation failure precedes domain mutation.",
+      );
+    }
+    const capability = Object.freeze({ ...recordingBatch.value });
+    this.pending.set(capability, Object.freeze({
+      recordingBatch: recordingBatch.value,
+      commands: Object.freeze(commands.map(copyPixiCommand)),
+      reservedNodes,
+      reservedGeometry,
+      reservedMasks,
+    }));
+    return ok(capability);
+  }
+
+  commit(batch: RenderCommandBatch): SimulatorResult<void> {
+    const pending = this.pending.get(batch);
+    if (pending === undefined) {
+      this.recording.recordTerminalFault(
+        "render.pixi.invalid-batch-capability",
+        "Pixi accepts only its own one-use preflight capability.",
+      );
+      const cleanupFailures = this.resetSceneAfterTerminalMutation();
+      this.recording.recordSecondaryCleanupFailures(cleanupFailures);
+      this.recording.resetObjectsAfterTerminalRendererMutation();
+      return this.recording.recordTerminalFault("", "");
+    }
+    try {
+      this.noteClipper.restore();
+      const orderingParents = new Set<Container>();
+      for (const command of pending.commands) {
+        this.apply(command, pending.reservedNodes, pending.reservedGeometry, pending.reservedMasks, orderingParents);
+      }
+      for (const owner of this.unclippedNotes) if (owner.node.destroyed || !owner.lastTransform?.unclipped)
+        this.unclippedNotes.delete(owner);
+      if (this.profile && (this.unclippedNotes.size > 0 || this.noteClipper.active)) this.noteClipper.update(Array.from(this.unclippedNotes, owner => ({
+        node: owner.node, command: owner.lastTransform! })), this.profile);
+      for (const parent of orderingParents) if (!parent.destroyed) this.sortSiblings(parent);
+    } catch (error) {
+      this.pending.delete(batch);
+      this.recording.discard(pending.recordingBatch);
+      this.recording.recordTerminalFault(
+        "render.pixi.scene-mutation-threw",
+        `A Pixi scene exception terminates the renderer and is never converted to a no-op. ${error instanceof Error ? error.message : String(error)}`,
+      );
+      const cleanupFailures = this.resetSceneAfterTerminalMutation(pending);
+      this.recording.recordSecondaryCleanupFailures(cleanupFailures);
+      this.recording.resetObjectsAfterTerminalRendererMutation();
+      return this.recording.recordTerminalFault("", "");
+    }
+    const committed = this.recording.commit(pending.recordingBatch);
+    this.pending.delete(batch);
+    return committed;
+  }
+
+  discard(batch: RenderCommandBatch): SimulatorResult<void> {
+    const pending = this.pending.get(batch);
+    if (pending === undefined) {
+      this.recording.recordTerminalFault(
+        "render.pixi.invalid-discard-capability",
+        "Pixi discards only its exact pending batch capability.",
+      );
+      const cleanupFailures = this.resetSceneAfterTerminalMutation();
+      this.recording.recordSecondaryCleanupFailures(cleanupFailures);
+      this.recording.resetObjectsAfterTerminalRendererMutation();
+      return this.recording.recordTerminalFault("", "");
+    }
+    this.pending.delete(batch);
+    this.destroyUnownedReservations(
+      pending.reservedNodes,
+      pending.reservedGeometry,
+      pending.reservedMasks,
+    );
+    return this.recording.discard(pending.recordingBatch);
+  }
+
+  execute(command: RenderCommand): SimulatorResult<void> {
+    const batch = this.preflight([command]);
+    return batch.status === "ok" ? this.commit(batch.value) : batch;
+  }
+
+  snapshot(): RenderBackendSnapshot {
+    return this.recording.snapshot();
+  }
+
+  notifyContextLoss(): SimulatorResult<void> {
+    const state = this.recording.snapshot().state;
+    if (state !== "ready" && state !== "faulted") {
+      return reject(
+        "render.pixi.context-loss-outside-ready-session",
+        "Context-loss notification is valid only for an active or already faulted Pixi session.",
+      );
+    }
+    this.recording.recordTerminalFault(
+      "render.pixi.context-lost",
+      "WebGL/WebGPU context loss is terminal for the current renderer session and never auto-reloads resources.",
+    );
+    const cleanupFailures = this.resetSceneAfterTerminalMutation();
+    this.recording.recordSecondaryCleanupFailures(cleanupFailures);
+    this.recording.resetObjectsAfterTerminalRendererMutation();
+    return this.recording.recordTerminalFault("", "");
+  }
+
+  resourceSnapshot(): readonly {
+    readonly logicalAssetId: string;
+    readonly decoded: boolean;
+    readonly atlasTextureCount: number;
+    readonly spriteReferenceCount: number;
+  }[] {
+    return Object.freeze((this.profile?.assets ?? []).map((asset) => Object.freeze({
+      logicalAssetId: asset.logicalAssetId,
+      decoded: this.baseTextures.has(asset.logicalAssetId) || this.decodedFonts.has(asset.logicalAssetId),
+      atlasTextureCount: asset.atlasRows.length,
+      spriteReferenceCount: [...this.spriteReferenceCounts].reduce(
+        (total, [key, count]) => key.startsWith(`${asset.logicalAssetId}\u0000`)
+          ? total + count
+          : total,
+        0,
+      ),
+    })));
+  }
+
+  sceneSnapshot(): readonly {
+    readonly renderObjectId: string;
+    readonly role: string;
+    readonly visible: boolean;
+    readonly alpha: number;
+    readonly position: readonly [number, number];
+    readonly scale: readonly [number, number];
+    readonly rotation: number;
+    readonly parent: string | null;
+    readonly ordering: readonly [number, number, number, number];
+    readonly hudState: Readonly<object> | null;
+    readonly geometryVertexCount: number | null;
+    readonly geometryIndexCount: number | null;
+    readonly geometryPositions: readonly number[] | null;
+    readonly geometryTextureLabel: string | null;
+    readonly geometryMaterialLogicalAssetId: string | null;
+    readonly geometryBlendMode: string | null;
+    readonly maskVertexCount: number | null;
+    readonly threshold: number | null;
+    readonly hudText: string | null;
+    readonly hudFontFamily: string | null;
+    readonly spriteBindingKey: string | null;
+    readonly spriteAlpha: number | null;
+    readonly spriteTint: number | null;
+    readonly spriteBlendMode: string | null;
+    readonly spriteAnchor: readonly [number, number] | null;
+    readonly spriteLocalScale: readonly [number, number] | null;
+    readonly spriteMaskInteraction: "visible-outside" | null;
+    readonly spriteMaskBounds: readonly [number, number, number, number] | null;
+    readonly spriteWorldBounds: readonly [number, number, number, number] | null;
+    readonly hudSpriteLabels: readonly string[] | null;
+    readonly hudSpriteAlphas: readonly number[] | null;
+    readonly hudSpriteCount: number | null;
+    readonly hudSerializedComponentPaths: readonly string[] | null;
+    readonly hudSerializedActivePaths: readonly string[] | null;
+    readonly hudSerializedComponents: readonly {
+      readonly path: string;
+      readonly visible: boolean;
+      readonly position: readonly [number, number];
+      readonly zIndex: number;
+      readonly parentLabel: string | null;
+      readonly childLabels: readonly string[];
+    }[] | null;
+    readonly hudSpriteNodes: readonly {
+      readonly label: string;
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly width: number;
+      readonly height: number;
+      readonly visible: boolean;
+      readonly alpha: number;
+      readonly tint: number;
+      readonly blend: string;
+      readonly zIndex: number;
+      readonly parentLabel: string | null;
+      readonly maskLabel: string | null;
+      readonly worldBounds: readonly [number, number, number, number];
+    }[] | null;
+    readonly hudTextNodes: readonly {
+      readonly label: string;
+      readonly text: string;
+      readonly position: readonly [number, number];
+      readonly anchor: readonly [number, number];
+      readonly fontSize: number;
+      readonly fill: number;
+      readonly visible: boolean;
+      readonly alpha: number;
+      readonly tint: number;
+      readonly zIndex: number;
+    }[] | null;
+    readonly hudFillMasks: readonly {
+      readonly label: string;
+      readonly bounds: readonly [number, number, number, number];
+    }[] | null;
+    readonly hudScoreDigitCount: number | null;
+    readonly hudScoreTextRunCount: number | null;
+    readonly hudScoreTextLayout: readonly {
+      readonly label: string;
+      readonly text: string;
+      readonly position: readonly [number, number];
+      readonly anchor: readonly [number, number];
+      readonly fontFamily: string;
+      readonly fontSize: number;
+      readonly fill: number;
+      readonly visible: boolean;
+      readonly zIndex: number;
+    }[] | null;
+    readonly hudScoreRankVisualCount: number | null;
+    readonly hudScoreHighRankGeneration: number | null;
+    readonly hudScoreLayerNodes: readonly { readonly label: string; readonly zIndex: number }[] | null;
+    readonly hudScoreDigitLayout: readonly {
+      readonly label: string;
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly width: number;
+      readonly height: number;
+    }[] | null;
+    readonly hudScoreNineSliceBorders: readonly {
+      readonly label: string;
+      readonly left: number;
+      readonly top: number;
+      readonly right: number;
+      readonly bottom: number;
+    }[] | null;
+    readonly hudScoreIndicatorMask: {
+      readonly owner: "score-high-rank-panel-mask";
+      readonly consumer: "score-high-rank-animation-layer";
+      readonly generation: number;
+      readonly position: readonly [number, number];
+      readonly bounds: readonly [number, number, number, number];
+      readonly softness: readonly [20, 3];
+    } | null;
+    readonly hudFillRatios: readonly [number, number] | null;
+    readonly hudContentScale: readonly [number, number] | null;
+    readonly hudContentAlpha: number | null;
+    readonly hudResultTimingOwner: {
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly zIndex: number;
+    } | null;
+    readonly hudScoreHighRankSiblingOrder: readonly string[] | null;
+    readonly hudScoreHighRankNodes: readonly {
+      readonly name: string;
+      readonly visible: boolean;
+      readonly position: readonly [number, number];
+      readonly scale: readonly [number, number];
+      readonly rotation: number;
+    }[] | null;
+    readonly activeAnimationRole: EvidenceAnimationRole | null;
+    readonly animationElapsedSeconds: number | null;
+    readonly hudGameClearSampledPhaseSeconds: number | null;
+    readonly hudGameClearAdditionalState: GameClearAdditionalState | "base-only" | null;
+    readonly hudGameClearAdditionalClipName: string | null;
+    readonly hudGameClearChannelValuesBits: readonly string[] | null;
+    readonly hudGameClearChannelDispositionCounts: Readonly<Record<string, number>> | null;
+    readonly hudGameClearParticleSystemCount: number | null;
+    readonly hudGameClearActivatedParticleSystemIds: readonly string[] | null;
+  }[] {
+    return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
+      renderObjectId,
+      role: value.role,
+      visible: value.node.visible,
+      alpha: value.node.alpha,
+      position: Object.freeze([value.node.position.x, value.node.position.y] as const),
+      scale: Object.freeze([value.node.scale.x, value.node.scale.y] as const),
+      rotation: value.node.rotation,
+      parent: value.node.parent === this.stage
+        ? null
+        : this.objectIdsByNode.get(value.node.parent as Container) ?? null,
+      ordering: value.ordering,
+      hudState: value.hudState,
+      geometryVertexCount: value.geometryContent?.geometry.positions.length
+        ? value.geometryContent.geometry.positions.length / 2
+        : null,
+      geometryIndexCount: value.geometryContent?.geometry.indices.length ?? null,
+      geometryPositions: value.geometryContent === null
+        ? null
+        : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
+      geometryTextureLabel: value.geometryContent?.texture.label ?? null,
+      geometryMaterialLogicalAssetId: value.geometryContent === null ? null : value.materialLogicalAssetId,
+      geometryBlendMode: value.geometryContent === null ? null : String(value.geometryContent.blendMode),
+      maskVertexCount: value.maskVertexCount,
+      threshold: value.threshold,
+      hudText: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
+        ? value.hudVisual.lifeTextSegments.map((text) => text.text).join("")
+        : value.hudVisual?.kind === "score" && value.hudVisual.scoreTextSegments !== null
+        ? value.hudVisual.scoreTextSegments.map((text) => text.text).join("")
+        : null,
+      hudFontFamily: value.hudVisual?.kind === "life" && value.hudVisual.lifeTextSegments !== null
+        ? String(value.hudVisual.lifeTextSegments[0].style.fontFamily)
+        : value.hudVisual?.kind === "score" && value.hudVisual.scoreTextSegments !== null
+        ? String(value.hudVisual.scoreTextSegments[0].style.fontFamily)
+        : null,
+      spriteBindingKey: value.spriteBindingKey,
+      spriteAlpha: value.spriteContent?.alpha ?? null,
+      spriteTint: value.spriteContent?.tint ?? null,
+      spriteBlendMode: value.spriteContent === null ? null : String(value.spriteContent.blendMode),
+      spriteAnchor: value.spriteContent === null
+        ? null
+        : Object.freeze([value.spriteContent.anchor.x, value.spriteContent.anchor.y] as const),
+      spriteLocalScale: value.spriteContent === null
+        ? null
+        : Object.freeze([value.spriteContent.scale.x, value.spriteContent.scale.y] as const),
+      spriteMaskInteraction: value.laneSpriteMaskContent === null ? null : "visible-outside" as const,
+      spriteMaskBounds: value.laneSpriteMaskContent === null
+        ? null
+        : value.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+          this.tapLaneEffectOutsideMaskBounds === null
+          ? null
+          : this.tapLaneEffectOutsideMaskBounds,
+      spriteWorldBounds: value.spriteContent === null || value.role !== "tap-lane-effect"
+        ? null
+        : (() => {
+            const bounds = value.spriteContent.getBounds();
+            return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
+          })(),
+      hudSpriteLabels: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.label)),
+      hudSpriteAlphas: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.alpha)),
+      hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
+      hudSerializedComponentPaths: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes.keys()]),
+      hudSerializedActivePaths: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes]
+            .filter(([, node]) => node.visible)
+            .map(([path]) => path)),
+      hudSerializedComponents: value.hudVisual === null
+        ? null
+        : Object.freeze([...value.hudVisual.serializedComponentNodes].map(([path, node]) => Object.freeze({
+            path,
+            visible: node.visible,
+            position: Object.freeze([node.position.x, node.position.y] as const),
+            zIndex: node.zIndex,
+            parentLabel: node.parent?.label ?? null,
+            childLabels: Object.freeze(node.children.map((child) => child.label)),
+          }))),
+      hudSpriteNodes: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.digitSprites.map((sprite) => Object.freeze({
+            label: sprite.label,
+            position: Object.freeze([sprite.position.x, sprite.position.y] as const),
+            scale: Object.freeze([sprite.scale.x, sprite.scale.y] as const),
+            width: sprite.width,
+            height: sprite.height,
+            visible: sprite.visible,
+            alpha: sprite.alpha,
+            tint: Number(sprite.tint),
+            blend: String(sprite.blendMode),
+            zIndex: sprite.zIndex,
+            parentLabel: sprite.parent?.label ?? null,
+            maskLabel: sprite.mask instanceof Container ? sprite.mask.label : null,
+            worldBounds: (() => {
+              const bounds = sprite.getBounds();
+              return Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const);
+            })(),
+          }))),
+      hudTextNodes: value.hudVisual === null
+        ? null
+        : Object.freeze([
+            ...(value.hudVisual.scoreTextSegments ?? []),
+            ...(value.hudVisual.lifeTextSegments ?? []),
+            value.hudVisual.gameOverText,
+          ]
+            .filter((text): text is Text => text !== null)
+            .map((text) => Object.freeze({
+              label: text.label,
+              text: text.text,
+              position: Object.freeze([text.position.x, text.position.y] as const),
+              anchor: Object.freeze([text.anchor.x, text.anchor.y] as const),
+              fontSize: Number(text.style.fontSize),
+              fill: Number(text.style.fill),
+              visible: text.visible,
+              alpha: text.alpha,
+              tint: text.tint,
+              zIndex: text.zIndex,
+            }))),
+      hudFillMasks: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.fillMasks.map((mask) => {
+            const bounds = mask.getLocalBounds();
+            return Object.freeze({
+              label: mask.label,
+              bounds: Object.freeze([bounds.x, bounds.y, bounds.width, bounds.height] as const),
+            });
+          })),
+      hudScoreDigitCount: value.hudVisual?.kind === "score" ? 0 : null,
+      hudScoreTextRunCount: value.hudVisual?.scoreTextSegments?.length ?? null,
+      hudScoreTextLayout: value.hudVisual?.scoreTextSegments === null ||
+          value.hudVisual?.scoreTextSegments === undefined
+        ? null
+        : Object.freeze(value.hudVisual.scoreTextSegments.map((node) => Object.freeze({
+            label: node.label,
+            text: node.text,
+            position: Object.freeze([node.position.x, node.position.y] as const),
+            anchor: Object.freeze([node.anchor.x, node.anchor.y] as const),
+            fontFamily: String(node.style.fontFamily),
+            fontSize: Number(node.style.fontSize),
+            fill: Number(node.style.fill),
+            visible: node.visible,
+            zIndex: node.zIndex,
+          }))),
+      hudScoreRankVisualCount: value.hudVisual?.scoreRankSprites.length ?? null,
+      hudScoreHighRankGeneration: value.hudVisual?.scoreHighRankGeneration ?? null,
+      hudScoreLayerNodes: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(scoreHudDescendants(value.hudVisual.content).map((node) => Object.freeze({
+            label: node.label,
+            zIndex: node.zIndex,
+          }))),
+      hudScoreDigitLayout: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze([]),
+      hudScoreNineSliceBorders: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(scoreHudDescendants(value.hudVisual.content)
+            .filter((node): node is NineSliceSprite => node instanceof NineSliceSprite)
+            .map((node) => Object.freeze({
+              label: node.label,
+              left: node.leftWidth,
+              top: node.topHeight,
+              right: node.rightWidth,
+              bottom: node.bottomHeight,
+            }))),
+      hudScoreIndicatorMask: value.hudVisual?.kind !== "score" ||
+          value.hudVisual.scoreHighRankPanelMask === null ||
+          value.hudVisual.scoreHighRankPanelMaskBounds === null
+        ? null
+        : Object.freeze({
+            owner: "score-high-rank-panel-mask" as const,
+            consumer: "score-high-rank-animation-layer" as const,
+            generation: value.hudVisual.scoreHighRankPanelMaskGeneration,
+            position: Object.freeze([
+              value.hudVisual.scoreHighRankPanelMask.position.x,
+              value.hudVisual.scoreHighRankPanelMask.position.y,
+            ] as const),
+            bounds: value.hudVisual.scoreHighRankPanelMaskBounds,
+            softness: Object.freeze([20, 3] as const),
+          }),
+      hudFillRatios: value.hudVisual?.fillRatios ?? null,
+      hudContentScale: value.hudVisual === null
+        ? null
+        : Object.freeze([value.hudVisual.content.scale.x, value.hudVisual.content.scale.y] as const),
+      hudContentAlpha: value.hudVisual?.content.alpha ?? null,
+      hudResultTimingOwner: value.hudVisual?.kind !== "result"
+        ? null
+        : (() => {
+            const owner = value.hudVisual.content.getChildByLabel("result-timing-owner");
+            return owner === null
+              ? null
+              : Object.freeze({
+                  position: Object.freeze([owner.position.x, owner.position.y] as const),
+                  scale: Object.freeze([owner.scale.x, owner.scale.y] as const),
+                  zIndex: owner.zIndex,
+                });
+          })(),
+      hudScoreHighRankSiblingOrder: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(value.hudVisual.animationLayer.children.map((child) =>
+            child.label.slice(child.label.lastIndexOf("/") + 1))),
+      hudScoreHighRankNodes: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.scoreHighRankSprites.map((sprite, index) => {
+            const profile = value.scoreHudNativeProfile?.highRank.nodes[index];
+            const owner = profile === undefined ? null : value.hudVisual!.serializedHierarchyNodes.get(profile.path) ?? null;
+            return Object.freeze({
+              name: value.hudVisual!.scoreHighRankNodeNames[index]!,
+              textureKey: profile?.textureKey ?? null,
+              visible: owner?.visible ?? sprite.visible,
+              position: Object.freeze([owner?.position.x ?? sprite.position.x, owner?.position.y ?? sprite.position.y] as const),
+              scale: Object.freeze([owner?.scale.x ?? sprite.scale.x, owner?.scale.y ?? sprite.scale.y] as const),
+              size: Object.freeze([sprite.width, sprite.height] as const),
+              widgetSize: Object.freeze([profile?.width ?? null, profile?.height ?? null] as const),
+              anchor: Object.freeze([sprite.anchor.x, sprite.anchor.y] as const),
+              tint: Number(sprite.tint),
+              alpha: sprite.alpha,
+              blend: String(sprite.blendMode),
+              rotation: owner?.rotation ?? sprite.rotation,
+            });
+          })),
+      activeAnimationRole: value.activeAnimationRole,
+      animationElapsedSeconds: value.animationElapsedSeconds,
+      hudGameClearSampledPhaseSeconds: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearSampledPhaseSeconds
+        : null,
+      hudGameClearAdditionalState: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearAdditionalState
+        : null,
+      hudGameClearAdditionalClipName: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearAdditionalClipName
+        : null,
+      hudGameClearChannelValuesBits: value.hudVisual?.kind === "game-clear"
+        ? Object.freeze(value.hudVisual.gameClearChannelValues.map(float32LittleEndianBytesHex))
+        : null,
+      hudGameClearChannelDispositionCounts: value.hudVisual?.kind === "game-clear"
+        ? value.hudVisual.gameClearChannelDispositionCounts
+        : null,
+      hudGameClearParticleSystemCount: value.hudVisual?.kind === "game-clear"
+        ? value.resourceProfile.gameClearProfile?.nativeSemantic?.systems.length ?? null
+        : null,
+      // Active ParticleSystem identity moved to the shared particle backend;
+      // this HUD snapshot intentionally has no second simulation state.
+      hudGameClearActivatedParticleSystemIds: value.hudVisual?.kind === "game-clear"
+        ? null
+        : null,
+    })));
+  }
+
+  dispose(): SimulatorResult<void> {
+    this.textureGeneration++;
+    this.deferredResultImages.clear();
+    const cleanupFailures: string[] = [];
+    const release = (identity: string, action: () => void): void => {
+      try {
+        action();
+      } catch {
+        cleanupFailures.push(identity);
+      }
+    };
+    const records = [...this.objects].reverse();
+    this.noteClipper.dispose();
+    this.unclippedNotes.clear();
+    this.objects.clear();
+    this.objectIdsByNode.clear();
+    for (const [renderObjectId, value] of records) {
+      if (value.hudVisual?.scoreHighRankSoftClipFilter !== null &&
+        value.hudVisual?.scoreHighRankSoftClipFilter !== undefined) {
+        release(`${renderObjectId}:soft-clip-filter`, () =>
+          value.hudVisual!.scoreHighRankSoftClipFilter!.destroy());
+        value.hudVisual.scoreHighRankSoftClipFilter = null;
+      }
+      if (value.geometryContent !== null) {
+        release(`${renderObjectId}:geometry`, () => destroyMesh(value.geometryContent!));
+      }
+      if (value.laneSpriteMaskContent !== null) {
+        release(`${renderObjectId}:lane-mask-consumer`, () => this.detachTapLaneEffectMaskConsumer(value));
+      }
+      release(`${renderObjectId}:node`, () => {
+        value.node.removeFromParent();
+        value.node.destroy({ children: true } as DestroyOptions);
+      });
+    }
+    const pending = [...this.pending.values()];
+    this.pending.clear();
+    for (const [batchIndex, value] of pending.entries()) {
+      for (const [sequence, { mesh }] of value.reservedGeometry) {
+        if (mesh !== null) release(`pending:${batchIndex}:geometry:${sequence}`, () => destroyMesh(mesh));
+      }
+      for (const [sequence, mask] of value.reservedMasks) {
+        release(`pending:${batchIndex}:mask:${sequence}`, () => mask.destroy());
+      }
+      for (const [sequence, node] of value.reservedNodes) {
+        release(`pending:${batchIndex}:node:${sequence}`, () => node.destroy({ children: true } as DestroyOptions));
+      }
+    }
+    release("tap-lane-effect-mask-owner", () => this.destroyTapLaneEffectMaskOwner());
+    for (const [bindingKey, texture] of this.spriteTextures) {
+      release(`sprite-texture:${bindingKey}`, () => texture.destroy(false));
+    }
+    this.spriteTextures.clear();
+    this.spriteReferenceCounts.clear();
+    for (const [logicalAssetId, texture] of this.baseTextures) {
+      release(`base-texture:${logicalAssetId}`, () => texture.destroy(true));
+    }
+    this.baseTextures.clear();
+    for (const [logicalAssetId, font] of this.decodedFonts) {
+      release(`font:${logicalAssetId}`, () => font.dispose());
+    }
+    this.decodedFonts.clear();
+    release("gameplay-render-order", () => this.gameplayRenderOrder?.dispose());
+    this.controlOverlayRoot = null;
+    this.profile = null;
+    const failure = cleanupFailures.length === 0
+      ? null
+      : this.recording.recordTerminalFault(
+          "render.pixi.dispose-owner-threw",
+          `Pixi disposal continued across every owner; failed cleanup identities: ${cleanupFailures.join(",")}.`,
+        );
+    const disposed = this.recording.dispose();
+    return failure ?? disposed;
+  }
+
+  private validateTypedPreflight(commands: readonly RenderCommand[]): SimulatorResult<void> {
+    if (this.profile === null) return ok(undefined);
+    const shadow = new Map<string, { role: RenderObjectRole; spriteExactKey: string | null }>(
+      [...this.objects].map(([id, value]) => [id, {
+        role: value.role,
+        spriteExactKey: boundSpriteExactKey(value.spriteBindingKey),
+      }]),
+    );
+    for (const command of commands) {
+      if (command.kind === "create-object" || command.kind === "acquire-object") {
+        shadow.set(command.renderObjectId, { role: command.role, spriteExactKey: null });
+        continue;
+      }
+      if (command.kind === "release-object") {
+        shadow.delete(command.renderObjectId);
+        continue;
+      }
+      const object = shadow.get(command.renderObjectId);
+      if (object === undefined) continue;
+      if (command.kind === "bind-resource") {
+        if (!validateTypedRenderResourceBinding(command, object.role, this.profile)) {
+          return integrityFailure(
+            "render.pixi.invalid-typed-resource-binding",
+            "Pixi rejects a mismatched logical asset, exact atlas key or object role before backend preflight or scene mutation.",
+          );
+        }
+        if (command.binding === "sprite") object.spriteExactKey = command.exactKey;
+      } else if (command.kind === "set-hud") {
+        if (!validateTypedRenderHudCommand(command, object.role)) {
+          return integrityFailure(
+            "render.pixi.invalid-typed-hud-state",
+            "Pixi rejects a malformed discriminated HUD payload before backend preflight or scene mutation.",
+          );
+        }
+      } else if (
+        command.kind === "play-animation" || command.kind === "stop-animation" ||
+        command.kind === "sample-animation"
+      ) {
+        if (!animationRoleMatchesObject(command.animationRole, object.role) ||
+          !animationBindingMatchesProfile(
+            command.animationRole,
+            object.spriteExactKey,
+            this.profile.ordinaryVisibleProfile,
+          )) {
+          return integrityFailure(
+            "render.pixi.invalid-typed-animation-route",
+            "Pixi rejects a mismatched animation owner or Sprite binding before backend preflight or scene mutation.",
+          );
+        }
+      }
+    }
+    return ok(undefined);
+  }
+
+  private supports(command: RenderCommand): boolean {
+    switch (command.kind) {
+      case "create-object":
+      case "acquire-object":
+      case "clear-sprite":
+      case "activate-object":
+      case "hide-object":
+      case "deactivate-object":
+      case "release-object":
+        return true;
+      case "set-transform":
+      case "set-mask":
+      case "set-hud":
+        return true;
+      case "bind-resource":
+        if (command.binding === "sprite") {
+          return command.exactKey !== null &&
+            this.spriteTextures.has(spriteKey(command.logicalAssetId, command.exactKey));
+        }
+        if (command.binding === "material" && command.exactKey === null) {
+          const asset = this.profile?.assets.find(
+            (candidate) => candidate.logicalAssetId === command.logicalAssetId,
+          );
+          return (asset?.materialRole === "sync-line" ||
+            asset?.materialRole === "multiple-directional-line" ||
+            asset?.materialRole === "long-note" || asset?.materialRole === "curve-note" ||
+            asset?.materialRole === "habahiro-flash") &&
+            this.baseTextures.has(command.logicalAssetId);
+        }
+        return false;
+      case "set-mesh":
+        return command.materialRole === "long-note" || command.materialRole === "curve-note" ||
+          command.materialRole === "habahiro-flash";
+      case "set-line":
+        return command.materialRole === "sync-line" ||
+          command.materialRole === "multiple-directional-line";
+      case "play-animation":
+      case "stop-animation":
+      case "sample-animation":
+        return isEvidenceAnimationRole(command.animationRole);
+      case "set-threshold":
+        return command.threshold.value >= 0 && Number.isFinite(command.threshold.value);
+    }
+  }
+
+  private validatePixiBatch(
+    commands: readonly RenderCommand[],
+  ): SimulatorResult<void> {
+    const shadow = new Map<string, PixiShadowObject>();
+    const released = new Set<string>();
+    const parentOf = (value: PixiObjectRecord): string | null => value.node.parent === this.stage
+      ? null
+      : this.objectIdsByNode.get(value.node.parent as Container) ?? null;
+    // Copy only command consumers; preflight never mutates the live objects.
+    const getObject = (id: string): PixiShadowObject | undefined => {
+      const staged = shadow.get(id);
+      if (staged) return staged;
+      if (released.has(id)) return undefined;
+      const value = this.objects.get(id);
+      if (!value) return undefined;
+      const copy: PixiShadowObject = {
+        role: value.role,
+        parentObjectId: parentOf(value),
+        materialBound: value.materialTexture !== null,
+        spriteBindingKey: value.spriteBindingKey,
+        maskConfigured: value.maskContent !== null,
+        activeAnimationRoles: new Set(value.activeAnimationRoles),
+      };
+      shadow.set(id, copy);
+      return copy;
+    };
+    const hasLiveChildren = (parentId: string): boolean => {
+      for (const [id, value] of this.objects) {
+        if (released.has(id)) continue;
+        const staged = shadow.get(id);
+        if ((staged ? staged.parentObjectId : parentOf(value)) === parentId) return true;
+      }
+      for (const [id, value] of shadow) {
+        if (!this.objects.has(id) && value.parentObjectId === parentId) return true;
+      }
+      return false;
+    };
+    for (const command of commands) {
+      if (!this.supports(command)) {
+        return reject(
+          "render.pixi.unsupported-semantic-command",
+          "Pixi rejects unimplemented mesh, line, mask, HUD and animation mappings instead of applying defaults.",
+        );
+      }
+      switch (command.kind) {
+        case "create-object":
+        case "acquire-object":
+          released.delete(command.renderObjectId);
+          shadow.set(command.renderObjectId, {
+            role: command.role,
+            parentObjectId: command.parentObjectId,
+            materialBound: false,
+            spriteBindingKey: null,
+            maskConfigured: false,
+            activeAnimationRoles: new Set(),
+          });
+          break;
+        case "release-object":
+          if (hasLiveChildren(command.renderObjectId)) {
+            return reject(
+              "render.pixi.release-object-with-live-children",
+              "Pixi child identities must be released before their parent identity.",
+            );
+          }
+          shadow.delete(command.renderObjectId);
+          released.add(command.renderObjectId);
+          break;
+        case "clear-sprite": {
+          const object = getObject(command.renderObjectId)!;
+          if (!spriteObjectRole(object.role)) return reject(
+            "render.pixi.clear-non-sprite", "Only sprite contents can be cleared.",
+          );
+          shadow.set(command.renderObjectId, { ...object, spriteBindingKey: null });
+          break;
+        }
+        case "bind-resource": {
+          const role = getObject(command.renderObjectId)!.role;
+          if (!validateTypedRenderResourceBinding(command, role, this.profile!)) {
+            return reject(
+              "render.pixi.resource-binding-role-mismatch",
+              "Sprite and Note/line material bindings require their exact engine-authored object roles.",
+            );
+          }
+          shadow.set(command.renderObjectId, {
+            ...getObject(command.renderObjectId)!,
+            materialBound: command.binding === "material"
+              ? true
+              : getObject(command.renderObjectId)!.materialBound,
+            spriteBindingKey: command.binding === "sprite"
+              ? spriteKey(command.logicalAssetId, command.exactKey!)
+              : getObject(command.renderObjectId)!.spriteBindingKey,
+          });
+          break;
+        }
+        case "activate-object":
+        case "deactivate-object":
+          break;
+        case "hide-object":
+          if (command.contentsOnly && !spriteObjectRole(getObject(command.renderObjectId)!.role)) {
+            return reject("render.pixi.hide-non-sprite",
+              "Hiding sprite contents requires a sprite owner and preserves its child objects.");
+          }
+          break;
+        case "set-transform":
+          if (
+            command.maskObjectId !== null &&
+            (getObject(command.maskObjectId)?.role !== "mask" ||
+              !getObject(command.maskObjectId)?.maskConfigured)
+          ) {
+            return reject(
+              "render.pixi.invalid-mask-reference",
+              "A transform may reference only one configured visible-inside mask identity from the same session.",
+            );
+          }
+          break;
+        case "set-mask":
+          if (getObject(command.renderObjectId)!.role !== "mask") {
+            return reject(
+              "render.pixi.mask-role-mismatch",
+              "Only an explicit mask object may receive portable polygon geometry.",
+            );
+          }
+          shadow.set(command.renderObjectId, {
+            ...getObject(command.renderObjectId)!,
+            maskConfigured: true,
+          });
+          break;
+        case "set-mesh": {
+          const object = getObject(command.renderObjectId)!;
+          const roleMatches = object.role === "note-mesh"
+            ? command.materialRole === "long-note" || command.materialRole === "curve-note"
+            : object.role === "habahiro-flash-mesh" && command.materialRole === "habahiro-flash";
+          if (!roleMatches || !object.materialBound || !isEvidenceMesh(command)) {
+            return reject(
+              "render.pixi.mesh-outside-current-profile",
+              "Pixi accepts only current ordinary NoteMesh or exact package-backed HABAHIRO Sprite mesh geometry.",
+            );
+          }
+          break;
+        }
+        case "set-line":
+          if (
+            (getObject(command.renderObjectId)!.role === "sync-line"
+              ? command.materialRole !== "sync-line"
+              : getObject(command.renderObjectId)!.role === "multiple-directional-line"
+              ? command.materialRole !== "multiple-directional-line"
+              : true) ||
+            !getObject(command.renderObjectId)!.materialBound ||
+            !isEvidenceLine(command)
+          ) {
+            return reject(
+              "render.pixi.line-outside-r2-r4-profile",
+              "Pixi accepts only positive-width ordinary R2 sync or R4 MultipleDirectional line segments.",
+            );
+          }
+          break;
+        case "set-hud":
+          if (!isEvidenceHud(
+            command,
+            getObject(command.renderObjectId)!.role,
+            this.spriteTextures,
+            this.decodedFonts,
+            this.profile!.gameClearProfile,
+          )) {
+            return reject(
+              "render.pixi.hud-outside-r3-profile",
+              `Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys. role=${getObject(command.renderObjectId)!.role} command=${JSON.stringify(command)}.`,
+            );
+          }
+          break;
+        case "play-animation": {
+          const object = getObject(command.renderObjectId)!;
+          if (
+            !animationRoleMatchesObject(command.animationRole, object.role) ||
+            !animationBindingMatchesProfile(
+              command.animationRole,
+              boundSpriteExactKey(object.spriteBindingKey),
+              this.profile?.ordinaryVisibleProfile,
+            )
+          ) {
+            return reject(
+              "render.pixi.animation-role-mismatch",
+              "Portable R7 animation roles require their exact engine-owned HUD/Note owner and frozen Sprite key where applicable.",
+            );
+          }
+          shadow.set(command.renderObjectId, {
+            ...object,
+            activeAnimationRoles: new Set([
+              ...object.activeAnimationRoles,
+              requireEvidenceAnimationRole(command.animationRole),
+            ]),
+          });
+          break;
+        }
+        case "sample-animation":
+        case "stop-animation": {
+          const object = getObject(command.renderObjectId)!;
+          if (!object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
+            return reject(
+              "render.pixi.animation-owner-not-playing",
+              "Animation sample/stop commands require the same owner-local role to have been started first.",
+            );
+          }
+          if (command.kind === "stop-animation") {
+            shadow.set(command.renderObjectId, {
+              ...object,
+              activeAnimationRoles: new Set(
+                [...object.activeAnimationRoles].filter((role) => role !== command.animationRole),
+              ),
+            });
+          }
+          break;
+        }
+        case "set-threshold":
+          if (!["note-mesh", "sync-line", "multiple-directional-line"].includes(getObject(command.renderObjectId)!.role)) {
+            return reject(
+              "render.pixi.threshold-role-mismatch",
+              "The bottom-left threshold applies to NoteMesh, SyncLine and MultipleDirectional line owners.",
+            );
+          }
+          break;
+      }
+    }
+    return ok(undefined);
+  }
+
+  private apply(
+    command: RenderCommand,
+    reservedNodes: ReadonlyMap<number, Container>,
+    reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>,
+    reservedMasks: ReadonlyMap<number, Graphics>,
+    orderingParents: Set<Container>,
+  ): void {
+    switch (command.kind) {
+      case "create-object":
+      case "acquire-object": {
+        const node = reservedNodes.get(command.sequence)!;
+        const parent = command.parentObjectId === null
+          ? this.stage
+          : this.objects.get(command.parentObjectId)!.node;
+        parent.addChild(node);
+        this.objects.set(command.renderObjectId, {
+          role: command.role,
+          parentObjectId: command.parentObjectId,
+          node,
+          ordering: Object.freeze([0, 0, 0, command.sequence]),
+          hudState: null,
+          spriteBindingKey: null,
+          spritePixelsPerUnit: null,
+          hudBindingKeys: [],
+          scoreHighRankBindingKeys: [],
+          scoreHighRankPlayback: null,
+          spriteContent: spriteChild(node),
+          materialTexture: null,
+          materialLogicalAssetId: null,
+          geometryContent: null,
+          maskContent: null,
+          thresholdMaskContent: null,
+          laneSpriteMaskContent: null,
+          threshold: null,
+          maskVertexCount: null,
+          hudVisual: null,
+          resourceProfile: this.profile!,
+          scoreGaugeSsAnimation: this.profile?.scoreGaugeSsAnimation,
+          scoreHudNativeProfile: this.profile?.scoreHudNativeProfile,
+          ordinaryVisibleProfile: this.profile?.ordinaryVisibleProfile,
+          surfaceLayout: this.surfaceLayout!,
+          activeAnimationRole: null,
+          activeAnimationRoles: new Set(),
+          animationElapsedByRole: new Map(),
+          animationElapsedSeconds: null,
+          lastTransform: null,
+          animatedLocalZ: null,
+          geometryCenterZ: null,
+          geometryUsesWorldCoordinates: false,
+        });
+        this.objectIdsByNode.set(node, command.renderObjectId);
+        orderingParents.add(parent);
+        return;
+      }
+      case "activate-object":
+        this.objects.get(command.renderObjectId)!.node.visible = true;
+        if (this.objects.get(command.renderObjectId)!.spriteContent !== null) {
+          this.objects.get(command.renderObjectId)!.spriteContent!.visible = true;
+        }
+        return;
+      case "hide-object":
+        if (command.contentsOnly) {
+          this.objects.get(command.renderObjectId)!.spriteContent!.visible = false;
+          return;
+        }
+        this.objects.get(command.renderObjectId)!.node.visible = false;
+        return;
+      case "deactivate-object":
+        this.objects.get(command.renderObjectId)!.node.visible = false;
+        return;
+      case "release-object": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
+        for (const bindingKey of object.hudBindingKeys) this.decrementSpriteReference(bindingKey);
+        for (const bindingKey of object.scoreHighRankBindingKeys) this.decrementSpriteReference(bindingKey);
+        object.hudVisual?.scoreHighRankSoftClipFilter?.destroy();
+        if (object.hudVisual !== null) object.hudVisual.scoreHighRankSoftClipFilter = null;
+        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
+        this.detachTapLaneEffectMaskConsumer(object);
+        object.node.removeFromParent();
+        object.node.destroy({ children: true } as DestroyOptions);
+        this.objectIdsByNode.delete(object.node);
+        this.objects.delete(command.renderObjectId);
+        return;
+      }
+      case "clear-sprite": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
+        object.spriteBindingKey = null;
+        object.spritePixelsPerUnit = null;
+        object.spriteContent!.texture = Texture.EMPTY;
+        object.spriteContent!.visible = false;
+        if (object.lastTransform !== null && noteSpatialRole(object.role)) {
+          applyNoteSpatialTransform(object, object.lastTransform, this.profile!);
+        }
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "bind-resource": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const asset = this.profile!.assets.find(
+          (candidate) => candidate.logicalAssetId === command.logicalAssetId,
+        )!;
+        const bindingKey = command.binding === "sprite"
+          ? spriteKey(command.logicalAssetId, command.exactKey!)
+          : materialKey(command.logicalAssetId);
+        if (command.binding === "sprite") {
+          const node = object.spriteContent!;
+          node.texture = this.spriteTextures.get(bindingKey)!;
+          node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
+          // Long/Slide TouchingFlash uses SpriteAdditive even when its sprite
+          // shares the ordinary note atlas. Blending belongs to the renderer.
+          node.blendMode = command.exactKey!.startsWith("note_long_flash_")
+            ? pixiFlashBlendMode(asset.textureSettings!.premultiplyAlpha) : asset.textureSettings!.blendMode;
+          object.spritePixelsPerUnit = asset.atlasRows.find(
+            (row) => row.exactKey === command.exactKey,
+          )!.pixelsPerUnit;
+        } else {
+          const texture = this.baseTextures.get(command.logicalAssetId)!;
+          object.materialTexture = texture;
+          object.materialLogicalAssetId = command.logicalAssetId;
+          if (object.geometryContent !== null) {
+            object.geometryContent.texture = texture;
+            object.geometryContent.blendMode = asset.textureSettings!.blendMode;
+          }
+        }
+        if (command.binding === "sprite" && object.spriteBindingKey !== bindingKey) {
+          if (object.spriteBindingKey !== null) {
+            this.decrementSpriteReference(object.spriteBindingKey);
+          }
+          this.spriteReferenceCounts.set(
+            bindingKey,
+            (this.spriteReferenceCounts.get(bindingKey) ?? 0) + 1,
+          );
+          object.spriteBindingKey = bindingKey;
+        }
+        if (command.binding === "sprite" && object.lastTransform !== null && spatialSpriteRole(object.role)) {
+          applySpatialSpriteTransform(object, object.lastTransform, this.profile!);
+          if (object.role === "tap-lane-effect") this.ensureTapLaneEffectOutsideMask(object);
+        }
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "set-transform": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const node = object.node;
+        object.lastTransform = command;
+        if (command.unclipped) this.unclippedNotes.add(object);
+        else this.unclippedNotes.delete(object);
+        object.animatedLocalZ = null;
+        if (spatialSpriteRole(object.role)) {
+          applySpatialSpriteTransform(object, command, this.profile!);
+        } else {
+          node.position.set(command.position.x.value, command.position.y.value);
+          node.scale.set(command.scale.x.value, command.scale.y.value);
+          node.rotation = command.rotationDegrees.value * Math.PI / 180;
+        }
+        node.alpha = command.color.alpha.value;
+        node.tint = rgbTint(command.color.red.value, command.color.green.value, command.color.blue.value);
+        if (command.spriteFlipX !== undefined) {
+          if (object.spriteContent === null) throw new Error("Sprite flip requires a bound Sprite owner.");
+          object.spriteContent.scale.x = (command.spriteFlipX ? -1 : 1) *
+            Math.abs(object.spriteContent.scale.x);
+        }
+        if (object.role === "tap-lane-effect") {
+          if (command.maskObjectId !== null) {
+            throw new Error("Tap Lane SpriteRenderer uses only the serialized shared MaskImage, not a command-owned mask.");
+          }
+          this.ensureTapLaneEffectOutsideMask(object);
+        } else {
+          node.mask = command.maskObjectId === null
+            ? null
+            : this.objects.get(command.maskObjectId)!.node;
+        }
+        const ordering: PixiObjectRecord["ordering"] = [
+          command.ordering.domainLayer,
+          command.ordering.sourceDepthOrSortingOrder,
+          command.ordering.sourceZ.value,
+          command.ordering.creationSequence,
+        ];
+        if (compareOrdering(object.ordering, ordering) !== 0) {
+          object.ordering = Object.freeze(ordering);
+          node.zIndex = orderingZIndex(ordering);
+          orderingParents.add(node.parent as Container);
+        }
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "set-mask": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.maskContent !== null) object.maskContent.destroy();
+        const mask = reservedMasks.get(command.sequence)!;
+        object.node.addChild(mask);
+        object.maskContent = mask;
+        object.maskVertexCount = command.polygon.length;
+        return;
+      }
+      case "set-hud": {
+        const object = this.objects.get(command.renderObjectId)!;
+        object.hudState = Object.freeze({ ...command.state });
+        object.hudVisual = applyEvidenceHud(
+          object,
+          command,
+          this.spriteTextures,
+          this.spriteReferenceCounts,
+          this.decodedFonts,
+        );
+        if (applyHudOrdering(object, command)) orderingParents.add(object.node.parent as Container);
+        for (const role of object.activeAnimationRoles) {
+          applyEvidenceAnimation(object, role, object.animationElapsedByRole.get(role) ?? 0);
+        }
+        return;
+      }
+      case "set-mesh": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const mesh = commitGeometry(object, reservedGeometry.get(command.sequence)!);
+        applyGeometryMaterial(mesh, object, this.profile!);
+        if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
+        object.geometryContent = mesh;
+        object.geometryCenterZ = geometryCenterZ(command.vertices);
+        object.geometryUsesWorldCoordinates = command.coordinateSpace === "authored-ui";
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "set-line": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const mesh = commitGeometry(object, reservedGeometry.get(command.sequence)!);
+        applyGeometryMaterial(mesh, object, this.profile!);
+        if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
+        object.geometryContent = mesh;
+        object.geometryCenterZ = geometryCenterZ([command.start, command.end]);
+        object.geometryUsesWorldCoordinates = true;
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "play-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        if (role === "score-gauge-ss") {
+          const highRank = requireScoreNativeProfile(object).highRank;
+          const name = (object.hudState as RenderScoreHudState).highRankEffectClip;
+          const clip = highRank.clips.find((candidate) => candidate.name === name);
+          if (clip === undefined) throw new Error("Score high-rank play requires its current HUD clip.");
+          object.scoreHighRankPlayback = startScoreHighRankPlayback(clip, highRank.tweenAlpha, object.scoreHighRankPlayback);
+        }
+        object.activeAnimationRoles.add(role);
+        object.activeAnimationRole = role;
+        object.animationElapsedByRole.set(role, 0);
+        object.animationElapsedSeconds = 0;
+        applyEvidenceAnimation(object, role, 0);
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "sample-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        object.animationElapsedByRole.set(role, command.elapsedSeconds.value);
+        object.animationElapsedSeconds = command.elapsedSeconds.value;
+        applyEvidenceAnimation(object, role, command.elapsedSeconds.value);
+        this.attachGameplayDraw(object);
+        return;
+      }
+      case "stop-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        stopEvidenceAnimation(object, role);
+        object.activeAnimationRoles.delete(role);
+        object.animationElapsedByRole.delete(role);
+        object.activeAnimationRole = [...object.activeAnimationRoles][object.activeAnimationRoles.size - 1] ?? null;
+        object.animationElapsedSeconds = null;
+        return;
+      }
+      case "set-threshold": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const mask = reservedMasks.get(command.sequence);
+        if (mask === undefined) return;
+        if (object.thresholdMaskContent !== null) object.thresholdMaskContent.destroy();
+        object.node.addChild(mask);
+        if (object.geometryContent !== null) object.geometryContent.mask = mask;
+        object.thresholdMaskContent = mask;
+        object.threshold = command.threshold.value;
+        return;
+      }
+    }
+  }
+
+  private sortSiblings(parent: Container): void {
+    parent.children.sort((left, right) => {
+      if (left === this.controlOverlayRoot) return right === this.controlOverlayRoot ? 0 : 1;
+      if (right === this.controlOverlayRoot) return -1;
+      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
+      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
+      if (leftRecord === undefined || rightRecord === undefined) {
+        const externalLayer = (node: Container): boolean =>
+          node === spriteChild(parent) ||
+          node.label === "GarupaSimulatorParticles" ||
+          node.label === PIXI_GAMEPLAY_RENDER_ORDER_LABEL ||
+          node.label.startsWith("tap-lane-effect-sprite-mask:");
+        if ((leftRecord === undefined && !externalLayer(left)) ||
+          (rightRecord === undefined && !externalLayer(right))) {
+          throw new Error("Pixi sibling ordering encountered an unowned scene object");
+        }
+        return left.zIndex - right.zIndex;
+      }
+      return compareOrdering(leftRecord.ordering, rightRecord.ordering);
+    });
+  }
+
+  private attachGameplayDraw(object: PixiObjectRecord): void {
+    const order = this.gameplayRenderOrder;
+    const rendererType = gameplayRendererType(object.role);
+    if (order === undefined || rendererType === null || object.lastTransform === null ||
+      object.spriteBindingKey === null && object.geometryContent === null) return;
+    // Note roots own separately ordered icon nodes. Attaching both parent and
+    // child containers to the same RenderLayer would collect the child twice.
+    // Current Note transforms are unmasked; their Sprite leaves retain the
+    // logical transform/tint/visibility chain. Masked field/belt owners stay whole.
+    const drawOwner = noteSpatialRole(object.role) ? object.spriteContent : object.node;
+    if (drawOwner === null) return;
+    order.attach(drawOwner, () => ({
+      sortingOrder: object.ordering[1],
+      distance: calculateNativeParticleRendererSortDistance([0, 0, this.gameplayWorldZ(object)], 0),
+      rendererType,
+      sameTypeSequence: object.ordering[3],
+    }));
+  }
+
+  private gameplayWorldZ(object: PixiObjectRecord): number {
+    const centerZ = object.geometryCenterZ ?? 0;
+    if (object.geometryUsesWorldCoordinates) return centerZ;
+    const chain: { positionZ: number; scaleZ: number | undefined }[] = [];
+    let current: PixiObjectRecord | undefined = object;
+    while (current !== undefined) {
+      const transform = current.lastTransform;
+      if (transform === null) throw new Error("A gameplay draw owner requires its parent transform before publication.");
+      chain.push({ positionZ: current.animatedLocalZ ?? transform.position.z.value, scaleZ: transform.scale.z?.value });
+      if (current.parentObjectId === null) break;
+      const parent = this.objects.get(current.parentObjectId);
+      if (parent === undefined) throw new Error("A gameplay draw owner lost its registered parent.");
+      current = parent;
+    }
+    return calculateGameplayWorldZ(centerZ, chain);
+  }
+
+  private destroyUnownedReservations(
+    reservedNodes: ReadonlyMap<number, Container>,
+    reservedGeometry: ReadonlyMap<number, PixiGeometryReservation>,
+    reservedMasks: ReadonlyMap<number, Graphics>,
+  ): void {
+    const ownedNodes = new Set([...this.objects.values()].map((value) => value.node));
+    const ownedGeometry = new Set(
+      [...this.objects.values()].flatMap((value) =>
+        value.geometryContent === null ? [] : [value.geometryContent]),
+    );
+    const ownedMasks = new Set(
+      [...this.objects.values()].flatMap((value) =>
+        [value.maskContent, value.thresholdMaskContent, value.laneSpriteMaskContent].filter(
+          (mask): mask is Graphics => mask !== null,
+        )),
+    );
+    for (const node of reservedNodes.values()) {
+      if (!ownedNodes.has(node) && !node.destroyed) {
+        node.destroy({ children: true } as DestroyOptions);
+      }
+    }
+    for (const { mesh } of reservedGeometry.values()) {
+      if (mesh !== null && !ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
+    }
+    for (const mask of reservedMasks.values()) {
+      if (!ownedMasks.has(mask) && !mask.destroyed) mask.destroy();
+    }
+  }
+
+  private resetSceneAfterTerminalMutation(pending?: PendingPixiBatch): readonly string[] {
+    const cleanupFailures: string[] = [];
+    try {
+      this.gameplayRenderOrder?.dispose();
+    } catch {
+      cleanupFailures.push("gameplay-render-order");
+    }
+    const pendingValues = pending === undefined
+      ? [...this.pending.values()]
+      : [pending, ...[...this.pending.values()].filter((value) => value !== pending)];
+    this.pending.clear();
+    const records = [...this.objects].reverse();
+    this.noteClipper.dispose();
+    this.unclippedNotes.clear();
+    this.objects.clear();
+    this.objectIdsByNode.clear();
+    this.spriteReferenceCounts.clear();
+    try {
+      this.stage.removeChildren();
+    } catch {
+      cleanupFailures.push("stage:remove-children");
+    }
+    for (const [renderObjectId, value] of records) {
+      if (value.geometryContent !== null && !value.geometryContent.destroyed) {
+        try {
+          destroyMesh(value.geometryContent);
+        } catch {
+          cleanupFailures.push(`${renderObjectId}:geometry`);
+        }
+      }
+      if (value.laneSpriteMaskContent !== null) {
+        try {
+          this.detachTapLaneEffectMaskConsumer(value);
+        } catch {
+          cleanupFailures.push(`${renderObjectId}:lane-sprite-mask-consumer`);
+        }
+      }
+      if (!value.node.destroyed) {
+        try {
+          value.node.removeFromParent();
+          value.node.destroy({ children: true } as DestroyOptions);
+        } catch {
+          cleanupFailures.push(`${renderObjectId}:node`);
+        }
+      }
+    }
+    try {
+      this.destroyTapLaneEffectMaskOwner();
+    } catch {
+      cleanupFailures.push("tap-lane-effect-mask-owner");
+    }
+    for (const [batchIndex, pendingValue] of pendingValues.entries()) {
+      for (const [sequence, { mesh }] of pendingValue.reservedGeometry) {
+        if (mesh !== null && !mesh.destroyed) {
+          try {
+            destroyMesh(mesh);
+          } catch {
+            cleanupFailures.push(`pending:${batchIndex}:geometry:${sequence}`);
+          }
+        }
+      }
+      for (const [sequence, mask] of pendingValue.reservedMasks) {
+        if (!mask.destroyed) {
+          try {
+            mask.destroy();
+          } catch {
+            cleanupFailures.push(`pending:${batchIndex}:mask:${sequence}`);
+          }
+        }
+      }
+      for (const [sequence, node] of pendingValue.reservedNodes) {
+        if (!node.destroyed) {
+          try {
+            node.removeFromParent();
+            node.destroy({ children: true } as DestroyOptions);
+          } catch {
+            cleanupFailures.push(`pending:${batchIndex}:node:${sequence}`);
+          }
+        }
+      }
+    }
+    return Object.freeze(cleanupFailures);
+  }
+
+  private ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
+    if (object.laneSpriteMaskContent !== null) {
+      if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+        object.node.mask !== this.tapLaneEffectOutsideMask ||
+        !this.tapLaneEffectMaskConsumers.has(object.node)) {
+        throw new Error("Tap Lane SpriteMask consumer must retain the single scene-owned MaskImage identity.");
+      }
+      return;
+    }
+    if (object.node.parent !== this.stage) {
+      throw new Error("Tap Lane SpriteMask requires the prepared renderer stage parent.");
+    }
+    let mask = this.tapLaneEffectOutsideMask;
+    if (mask === null) {
+      const projection = object.resourceProfile.scene.projection;
+      const geometry = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK;
+      // This scene branch has no ScreenToSafeArea owner. It follows UIRoot
+      // FitWidth directly, not the serialized root scale or the note-size setting.
+      const scale = object.surfaceLayout.ui.pixelsPerAuthoredUnit;
+      const width = Math.fround(geometry.authoredWidth * scale);
+      const height = Math.fround(geometry.authoredHeight * scale);
+      const left = Math.fround((projection.viewportWidth - width) / 2);
+      const top = Math.fround(projection.viewportHeight / 2 -
+        (geometry.authoredCenterY + geometry.authoredHeight / 2) * scale);
+      mask = new Graphics({ label: "tap-lane-effect-sprite-mask:MaskImage" })
+        .rect(left, top, width, height)
+        .fill(0xffffff);
+      mask.eventMode = "none";
+      mask.zIndex = object.node.zIndex;
+      this.stage.addChild(mask);
+      this.tapLaneEffectOutsideMask = mask;
+      this.tapLaneEffectOutsideMaskBounds = Object.freeze([left, top, width, height] as const);
+    }
+    object.node.setMask({ mask, inverse: true });
+    object.laneSpriteMaskContent = mask;
+    this.tapLaneEffectMaskConsumers.add(object.node);
+    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+  }
+
+  private detachTapLaneEffectMaskConsumer(object: PixiObjectRecord): void {
+    if (object.laneSpriteMaskContent === null) return;
+    if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
+      !this.tapLaneEffectMaskConsumers.has(object.node)) {
+      throw new Error("Tap Lane SpriteMask consumer identity diverged from the scene-owned MaskImage.");
+    }
+    object.node.mask = null;
+    this.tapLaneEffectMaskConsumers.delete(object.node);
+    object.laneSpriteMaskContent = null;
+    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+  }
+
+  private excludeTapLaneEffectMaskFromOrdinaryDraw(): void {
+    const mask = this.tapLaneEffectOutsideMask;
+    if (mask === null || mask.destroyed) return;
+    // Pixi StencilMask.reset() restores these flags when one of several consumers
+    // is removed. The serialized MaskImage is one shared scene owner and must never
+    // enter the ordinary color pass while another Lane SpriteRenderer still refers to it.
+    mask.includeInBuild = false;
+    mask.measurable = false;
+  }
+
+  private destroyTapLaneEffectMaskOwner(): void {
+    const mask = this.tapLaneEffectOutsideMask;
+    for (const consumer of this.tapLaneEffectMaskConsumers) consumer.mask = null;
+    this.tapLaneEffectMaskConsumers.clear();
+    this.tapLaneEffectOutsideMask = null;
+    this.tapLaneEffectOutsideMaskBounds = null;
+    if (mask !== null && !mask.destroyed) {
+      mask.removeFromParent();
+      mask.destroy();
+    }
+  }
+
+  private resetPreparedTextures(): void {
+    this.textureGeneration++;
+    this.deferredResultImages.clear();
+    for (const texture of this.spriteTextures.values()) texture.destroy(false);
+    for (const texture of this.baseTextures.values()) texture.destroy(true);
+    this.spriteTextures.clear();
+    this.spriteReferenceCounts.clear();
+    this.baseTextures.clear();
+    for (const font of this.decodedFonts.values()) font.dispose();
+    this.decodedFonts.clear();
+  }
+
+  private decrementSpriteReference(bindingKey: string): void {
+    const next = (this.spriteReferenceCounts.get(bindingKey) ?? 0) - 1;
+    if (next <= 0) this.spriteReferenceCounts.delete(bindingKey);
+    else this.spriteReferenceCounts.set(bindingKey, next);
+  }
+
+}
+
+function applyBounds(
+  target: { readonly position: { set(x: number, y: number): void }; width: number; height: number },
+  value: RehearsalControlBounds,
+): void {
+  target.position.set(value.x, value.y);
+  target.width = value.width;
+  target.height = value.height;
+}
+
+class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
+  readonly root = new Container({ label: "in-game-control-root", sortableChildren: true });
+  private readonly rehearsalRoot = new Container({ label: "rehearsal-control-root", sortableChildren: true });
+  private readonly modalRoot = new Container({ label: "pause-modal-root", sortableChildren: true });
+  private readonly persistentModalGraphs = new Map<string, Container>();
+  private readonly modalTransitions = new Map<string, SerializedDialogTransition>();
+  private readonly autoLiveCaptionRoot: Container | null;
+  private readonly pauseButton: Sprite;
+  private readonly returnButton: Sprite | null;
+  private readonly advanceButton: Sprite | null;
+  private readonly timeText: Text | null;
+  private readonly pauseTextures: Readonly<{
+    window: Texture;
+    header: Texture;
+    gray: Texture;
+    pink: Texture;
+    cover: Texture;
+    countdown: readonly [Texture, Texture, Texture];
+  }>;
+  private disposed = false;
+  private moveTimeInProgress = false;
+  private timelineSeconds = 0;
+  private readonly surfaceRevision: number;
+
+  constructor(
+    mode: SimulatorModeIdentity,
+    private readonly durationSeconds: number,
+    returnTexture: Texture,
+    advanceTexture: Texture,
+    timeBackgroundTexture: Texture,
+    demoBackgroundTexture: Texture,
+    pauseTexture: Texture,
+    windowTexture: Texture,
+    headerTexture: Texture,
+    grayButtonTexture: Texture,
+    pinkButtonTexture: Texture,
+    private readonly buttonBorders: Readonly<{ gray: SerializedButtonBorder; pink: SerializedButtonBorder }>,
+    coverTexture: Texture,
+    countdownTextures: readonly [Texture, Texture, Texture],
+    private readonly pauseCountdownAnimation: PauseCountdownAnimationProfile,
+    private readonly fontFamily: string,
+    layout: RehearsalControlSceneLayout,
+    private readonly releaseOwner: (root: Container) => void,
+  ) {
+    this.root.zIndex = 2_000_000_000;
+    this.root.eventMode = "none";
+    this.rehearsalRoot.zIndex = 10;
+    this.rehearsalRoot.eventMode = "none";
+    this.modalRoot.zIndex = 100;
+    this.modalRoot.eventMode = "none";
+    this.modalRoot.visible = false;
+    this.pauseTextures = Object.freeze({ window: windowTexture, header: headerTexture, gray: grayButtonTexture, pink: pinkButtonTexture, cover: coverTexture, countdown: countdownTextures });
+    this.surfaceRevision = layout.surfaceRevision;
+    this.pauseButton = new Sprite({ texture: pauseTexture, label: "original-pause-button" });
+    this.pauseButton.visible = false;
+    this.pauseButton.zIndex = 50;
+    this.pauseButton.eventMode = "none";
+    this.root.addChild(this.rehearsalRoot, this.pauseButton, this.modalRoot);
+
+    if (mode.isAutoLive) {
+      const caption = layout.autoLiveCaptionBoundsTopLeft;
+      const owner = new Container({ label: "auto-live-caption-root", sortableChildren: true });
+      owner.visible = true;
+      owner.alpha = 0;
+      owner.zIndex = 20;
+      owner.eventMode = "none";
+      const sceneAnchor = new Container({ label: "AutoLiveLabelRoot" });
+      const contentRoot = new Container({ label: "AutoLiveLabelRoot/root" });
+      const prefabRoot = new Container({ label: "AutoLiveCaption", sortableChildren: true });
+      const backgroundOwner = new Container({ label: "AutoLiveCaption/background", sortableChildren: true });
+      const scale = Math.fround(caption.width / 206);
+      prefabRoot.position.set(
+        caption.x + caption.width / 2,
+        caption.y + caption.height / 2 - scale,
+      );
+      prefabRoot.scale.set(scale);
+      backgroundOwner.position.set(0, 1);
+      const autoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
+      const background = new NineSliceSprite({
+        texture: demoBackgroundTexture,
+        leftWidth: autoBorder.left,
+        topHeight: autoBorder.top,
+        rightWidth: autoBorder.right,
+        bottomHeight: autoBorder.bottom,
+        width: 206,
+        height: 38,
+        anchor: { x: 0.5, y: 0.5 },
+        label: "auto-live-caption-background",
+      });
+      background.tint = linearTintFromSrgbColor(0xff3b72);
+      background.zIndex = 10;
+      const label = this.text(
+        "オートライブ",
+        24,
+        0xffffff,
+        "auto-live-caption-label",
+      );
+      label.style.letterSpacing = -1;
+      layoutNguiText(label);
+      label.position.set(0, 0);
+      label.zIndex = 15;
+      backgroundOwner.addChild(background, label);
+      prefabRoot.addChild(backgroundOwner);
+      contentRoot.addChild(prefabRoot);
+      sceneAnchor.addChild(contentRoot);
+      owner.addChild(sceneAnchor);
+      this.autoLiveCaptionRoot = owner;
+      this.root.addChild(owner);
+    } else {
+      this.autoLiveCaptionRoot = null;
+    }
+
+    if (mode.sessionMode === "rehearsal") {
+      this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
+      applyBounds(this.returnButton, layout.returnFive.widgetBoundsTopLeft);
+      this.returnButton.zIndex = 10;
+      this.advanceButton = new Sprite({ texture: advanceTexture, label: "rehearsal-advance-five" });
+      applyBounds(this.advanceButton, layout.advanceFive.widgetBoundsTopLeft);
+      this.advanceButton.zIndex = 10;
+      const timeRegion = layout.timeLabelBoundsTopLeft;
+      const timeBackground = new NineSliceSprite({ texture: timeBackgroundTexture, ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.rehearsalTime, label: "rehearsal-time-label-background" });
+      applyBounds(timeBackground, timeRegion);
+      timeBackground.tint = 0xffffff;
+      timeBackground.zIndex = 20;
+      this.timeText = this.text("", timeRegion.height * 20 / 32, 0xff3b74, "rehearsal-time-label");
+      layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
+      this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
+      this.timeText.zIndex = 21;
+      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
+      if (mode.isDemoPlayMode) {
+        const demo = layout.demoBadgeBoundsTopLeft;
+        const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
+        const badge = new NineSliceSprite({
+          texture: demoBackgroundTexture,
+          leftWidth: demoBorder.left,
+          topHeight: demoBorder.top,
+          rightWidth: demoBorder.right,
+          bottomHeight: demoBorder.bottom,
+          label: "rehearsal-demo-badge-background",
+        });
+        applyBounds(badge, demo);
+        badge.tint = linearTintFromSrgbColor(0xff3b74);
+        badge.zIndex = 20;
+        const label = this.text("デモプレイ", demo.height * 24 / 38, 0xffffff, "rehearsal-demo-badge");
+        label.style.letterSpacing = -label.style.fontSize / 24;
+        layoutNguiText(label);
+        label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
+        label.zIndex = 21;
+        this.rehearsalRoot.addChild(badge, label);
+      }
+      const initialized = this.updateTimeline(0);
+      if (initialized.status !== "ok") throw new Error(initialized.capability);
+    } else {
+      this.returnButton = null;
+      this.advanceButton = null;
+      this.timeText = null;
+      this.rehearsalRoot.visible = false;
+    }
+    this.root.sortChildren();
+  }
+
+  updateTimeline(timelineSeconds: number): SimulatorResult<void> {
+    if (this.disposed) return integrityFailure("render.in-game-control.after-dispose", "Disposed InGame controls reject timeline publication.");
+    if (this.timeText === null) return ok(undefined);
+    const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
+    if (formatted.status !== "ok") return formatted;
+    this.timelineSeconds = timelineSeconds;
+    this.timeText.text = formatted.value;
+    layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
+    this.applyAvailability();
+    return ok(undefined);
+  }
+
+  setMoveTimeInProgress(active: boolean): SimulatorResult<void> {
+    if (this.disposed || typeof active !== "boolean") return integrityFailure("render.in-game-control.invalid-move-state", "Only the live control owner may publish an explicit MoveTime availability state.");
+    this.moveTimeInProgress = active;
+    this.applyAvailability();
+    return ok(undefined);
+  }
+
+  publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void> {
+    if (this.disposed || snapshot.surfaceRevision !== this.surfaceRevision || snapshot.surfaceRevision !== snapshot.layout.surfaceRevision) {
+      return integrityFailure("render.pause-control.invalid-state", "Pause visuals consume one live scene snapshot bound to the exact initial surface revision.");
+    }
+    applyBounds(this.pauseButton, snapshot.layout.pause.visibleBoundsTopLeft);
+    // Original R1 keeps the serialized Pause Sprite visible while the dialog owns input;
+    // DisableButton is a setup/terminal mutation, not the menu-open transition.
+    const displayVisible = snapshot.playable || snapshot.terminalPresentationActive;
+    this.pauseButton.visible = displayVisible || (snapshot.hudAlpha ?? 0) > 0;
+    this.pauseButton.alpha = snapshot.terminalPresentationActive ? 1 : (snapshot.hudAlpha ?? (snapshot.playable ? 1 : 0));
+    this.rehearsalRoot.visible = displayVisible && snapshot.state === "playing" && snapshot.mode.sessionMode === "rehearsal";
+    if (this.autoLiveCaptionRoot !== null) {
+      const hudAlpha = snapshot.hudAlpha ?? (snapshot.playable ? 1 : 0);
+      this.autoLiveCaptionRoot.visible = snapshot.mode.isAutoLive;
+      this.autoLiveCaptionRoot.alpha = snapshot.terminalPresentationActive ? 1 : hudAlpha;
+    }
+    this.rebuildModal(snapshot);
+    this.updateModalTransitions(snapshot);
+    return ok(undefined);
+  }
+
+  dispose(): SimulatorResult<void> {
+    if (this.disposed) return ok(undefined);
+    this.disposed = true;
+    this.releaseOwner(this.root);
+    this.root.removeFromParent();
+    this.root.destroy({ children: true });
+    this.persistentModalGraphs.clear();
+    this.modalTransitions.clear();
+    return ok(undefined);
+  }
+
+  private rebuildModal(snapshot: PauseControlSceneSnapshot): void {
+    const graphKey = snapshot.state;
+    const countdownElapsed = snapshot.resumeCountdownElapsedSeconds;
+    const countdownVisible = countdownElapsed !== null && countdownElapsed < this.pauseCountdownAnimation.continueClip.durationSeconds;
+    for (const [key, graph] of this.persistentModalGraphs) {
+      if (!this.modalTransitions.has(key)) graph.visible = key === "resume-countdown" ? countdownVisible : key === graphKey;
+      if (key === "resume-countdown" && countdownVisible) this.updateCountdownGraph(graph, snapshot);
+      const dialogProfile = key === "pause-menu" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable :
+        key === "retry-confirm" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable :
+        key === "abort-confirm" ? CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated : null;
+      if (dialogProfile !== null) for (const button of dialogProfile.buttons) {
+        const cover = graph.getChildByLabel(`${dialogProfile.identity}:${button.identity}-pressed`, true);
+        if (cover !== null) cover.visible = key === graphKey && snapshot.pressedButtons.includes(button.identity);
+      }
+    }
+    if (snapshot.state === "playing") return;
+    const existing = this.persistentModalGraphs.get(graphKey);
+    if (existing !== undefined) {
+      return;
+    }
+
+    const graph = new Container({ label: `pause-prefab:${graphKey}`, sortableChildren: true });
+    graph.eventMode = "none";
+    this.modalRoot.addChild(graph);
+    this.persistentModalGraphs.set(graphKey, graph);
+    if (snapshot.state === "resume-countdown") {
+      const owner = new Container({ label: "InGameCountDownAnimation", sortableChildren: true });
+      owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+      owner.scale.set(snapshot.layout.controlScale);
+      const contents = new Container({ label: "Contents", sortableChildren: true, visible: false });
+      const fill = new Graphics({ label: "Contents/Fill", visible: false }).rect(
+        -snapshot.layout.viewportWidth / snapshot.layout.controlScale / 2,
+        -snapshot.layout.viewportHeight / snapshot.layout.controlScale / 2,
+        snapshot.layout.viewportWidth / snapshot.layout.controlScale,
+        snapshot.layout.viewportHeight / snapshot.layout.controlScale,
+      ).fill(0x000000);
+      fill.alpha = 0;
+      fill.zIndex = 0;
+      const addCount = (label: string, texture: Texture, x: number, width: number, height: number, depth: number): void => {
+        const transform = new Container({ label, visible: false });
+        const sprite = new Sprite({ texture });
+        sprite.anchor.set(0.5);
+        sprite.width = width;
+        sprite.height = height;
+        transform.position.set(x, 0);
+        transform.zIndex = depth;
+        transform.addChild(sprite);
+        contents.addChild(transform);
+      };
+      contents.addChild(fill);
+      addCount("Contents/Count3", this.pauseTextures.countdown[2], 0, 100, 122, 10);
+      addCount("Contents/Count2", this.pauseTextures.countdown[1], 0, 100, 120, 11);
+      addCount("Contents/Count1", this.pauseTextures.countdown[0], -5, 52, 120, 12);
+      addCount("Contents/Count1Fadeout", this.pauseTextures.countdown[0], -5, 52, 120, 12);
+      owner.addChild(contents);
+      graph.addChild(owner);
+      this.updateCountdownGraph(graph, snapshot);
+      return;
+    }
+    const coverPath = snapshot.state === "pause-menu"
+      ? CURRENT_PAUSE_COMPONENT_PATHS.cover
+      : snapshot.state === "retry-confirm"
+        ? CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry.cover
+        : CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort.cover;
+    const cover = new NineSliceSprite({
+      texture: this.pauseTextures.cover,
+      leftWidth: CURRENT_PAUSE_ATLAS_BORDERS.cover.left,
+      rightWidth: CURRENT_PAUSE_ATLAS_BORDERS.cover.right,
+      topHeight: CURRENT_PAUSE_ATLAS_BORDERS.cover.top,
+      bottomHeight: CURRENT_PAUSE_ATLAS_BORDERS.cover.bottom,
+      width: snapshot.layout.viewportWidth,
+      height: snapshot.layout.viewportHeight,
+      tint: 0x000000,
+      alpha: 0.5,
+      label: coverPath,
+    });
+    cover.zIndex = 0;
+    graph.addChild(cover);
+    if (snapshot.state === "pause-menu") {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.retryable,
+        CURRENT_PAUSE_COMPONENT_PATHS,
+        snapshot.words.pause.title, snapshot.words.pause.message,
+        snapshot.words.pause.buttons,
+        null,
+      );
+    } else if (snapshot.state === "retry-confirm") {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry,
+        snapshot.words.retry.title, snapshot.words.retry.message,
+        snapshot.words.retry.buttons,
+        null,
+      );
+    } else {
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.abort,
+        snapshot.words.abort.title, snapshot.words.abort.message,
+        snapshot.words.abort.buttons,
+        snapshot.words.abort.annotation,
+      );
+    }
+    const dialog = graph.children.find((child) => child !== cover)!;
+    this.modalTransitions.set(graphKey, new SerializedDialogTransition(dialog.children[0]!, cover));
+    graph.sortChildren();
+  }
+
+  private updateModalTransitions(snapshot: PauseControlSceneSnapshot): void {
+    for (const [key, transition] of this.modalTransitions) {
+      transition.setOpen(key === snapshot.state, snapshot.presentationSeconds);
+      this.persistentModalGraphs.get(key)!.visible = transition.update(snapshot.presentationSeconds);
+    }
+    this.modalRoot.visible = this.modalRoot.children.some((graph) => graph.visible);
+  }
+
+  private updateCountdownGraph(graph: Container, snapshot: PauseControlSceneSnapshot): void {
+    const owner = graph.getChildByLabel("InGameCountDownAnimation", true) as Container | null;
+    const contents = owner?.getChildByLabel("Contents", true) as Container | null;
+    if (owner === null || contents === null) throw new Error("Persistent countdown Prefab graph is incomplete.");
+    owner.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+    owner.scale.set(snapshot.layout.controlScale);
+    const elapsed = Math.fround(snapshot.resumeCountdownElapsedSeconds!);
+    const sample = samplePauseCountdownClip(this.pauseCountdownAnimation.continueClip, elapsed);
+    const value = (channel: string): number => {
+      const current = sample.get(channel);
+      if (current === undefined) throw new Error(`Pause countdown channel is missing: ${channel}`);
+      return current;
+    };
+    const active = (path: string): boolean => value(`${path}.m_IsActive.value`) >= 0.5;
+    const alpha = (path: string): number => Math.max(0, Math.min(1, value(`${path}.mColor.a.value`)));
+    const transform = (path: string): void => {
+      const node = contents.getChildByLabel(path, true) as Container | null;
+      if (node === null) throw new Error(`Pause countdown component is missing: ${path}`);
+      node.visible = active(path);
+      node.scale.set(
+        value(`${path}.m_LocalScale.x`),
+        value(`${path}.m_LocalScale.y`),
+      );
+      node.alpha = alpha(path);
+    };
+    contents.visible = active("Contents");
+    transform("Contents/Count3");
+    transform("Contents/Count2");
+    transform("Contents/Count1");
+    transform("Contents/Count1Fadeout");
+    const fadeout = contents.getChildByLabel("Contents/Count1Fadeout", true) as Container | null;
+    if (fadeout === null) throw new Error("Pause Count1Fadeout is missing.");
+    fadeout.position.set(
+      value("Contents/Count1Fadeout.m_LocalPosition.x"),
+      -value("Contents/Count1Fadeout.m_LocalPosition.y"),
+    );
+    const fill = contents.getChildByLabel("Contents/Fill", true) as Graphics | null;
+    if (fill === null) throw new Error("Pause countdown Fill is missing.");
+    fill.alpha = Math.max(0, Math.min(1, value("Contents/Fill.mColor.a.value")));
+  }
+
+  private buildSerializedDialog(
+    graph: Container,
+    snapshot: PauseControlSceneSnapshot,
+    profile: typeof CURRENT_PAUSE_SERIALIZED_GRAPHS[keyof typeof CURRENT_PAUSE_SERIALIZED_GRAPHS],
+    paths: {
+      readonly window: string; readonly header: string; readonly title: string; readonly content: string;
+      readonly cancelButton?: string; readonly confirmButton?: string;
+      readonly abortButton?: string; readonly retryButton?: string; readonly resumeButton?: string;
+      readonly annotation?: string;
+    },
+    titleText: string,
+    contentText: string,
+    buttonTexts: readonly string[],
+    annotationText: string | null,
+  ): void {
+    createSerializedDialog(graph, snapshot.layout, profile, {
+      ...paths,
+      buttons: paths.abortButton !== undefined
+        ? [paths.abortButton, paths.retryButton!, paths.resumeButton!]
+        : [paths.cancelButton!, paths.confirmButton!],
+    }, titleText, contentText,
+      buttonTexts, annotationText, this.pauseTextures, { ...CURRENT_PAUSE_ATLAS_BORDERS, button: this.buttonBorders },
+      CURRENT_PAUSE_DIALOG_COLORS, this.textBox.bind(this));
+  }
+  private text(value: string, size: number, fill: number, label: string): Text {
+    return new Text({
+      text: value,
+      style: {
+        fill: linearTintFromSrgbColor(fill),
+        fontFamily: this.fontFamily,
+        fontSize: size,
+        fontWeight: "normal",
+        align: "center",
+      },
+      label,
+    });
+  }
+  private textBox(
+    value: string,
+    size: number,
+    fill: DialogColor,
+    label: string,
+    width: number,
+    height: number,
+    pivot: "left" | "center",
+    layout: DialogLabelLayout,
+  ): Text {
+    if (![size, width, height].every((entry) => Number.isFinite(entry) && entry > 0)) {
+      throw new Error("Serialized Pause UILabel requires finite positive font and widget dimensions.");
+    }
+    const text = new Text({
+      text: value,
+      style: {
+        fill: typeof fill === "number" ? linearTintFromSrgbColor(fill) : linearTintFromSrgbChannels(...fill),
+        fontFamily: this.fontFamily,
+        fontSize: size,
+        fontWeight: "normal",
+        align: pivot === "left" ? "left" : "center",
+        wordWrap: layout.maxLines !== 1,
+        wordWrapWidth: width,
+        breakWords: true,
+        whiteSpace: "pre-line",
+        lineHeight: size + layout.spacingY,
+        letterSpacing: layout.spacingX,
+      },
+      label,
+    });
+    layoutNguiText(text, pivot === "left" ? 0 : 0.5, 0.5, layout.spacingY);
+    text.hitArea = new Rectangle(pivot === "left" ? 0 : -width / 2, -height / 2, width, height);
+    return text;
+  }
+  private applyAvailability(): void {
+    if (this.returnButton !== null) this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0 ? 0.45 : 1;
+    if (this.advanceButton !== null) this.advanceButton.alpha = this.moveTimeInProgress ? 0.45 : 1;
+  }
+}
+
+class CachingProvider implements SimulatorResourceProvider {
+  private readonly bytes = new Map<string, Uint8Array>();
+
+  constructor(private readonly source: SimulatorResourceProvider) {}
+
+  async read(logicalAssetId: string): Promise<SimulatorResult<Uint8Array>> {
+    const cached = this.bytes.get(logicalAssetId);
+    if (cached !== undefined) return ok(Uint8Array.from(cached));
+    const result = await this.source.read(logicalAssetId);
+    if (result.status === "ok") this.bytes.set(logicalAssetId, Uint8Array.from(result.value));
+    return result.status === "ok" ? ok(Uint8Array.from(result.value)) : result;
+  }
+
+  get(logicalAssetId: string): Uint8Array | undefined {
+    const value = this.bytes.get(logicalAssetId);
+    return value === undefined ? undefined : Uint8Array.from(value);
+  }
+}
+
+type SetTransformCommand = Extract<RenderCommand, { readonly kind: "set-transform" }>;
+type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
+type SetLineCommand = Extract<RenderCommand, { readonly kind: "set-line" }>;
+type SetMaskCommand = Extract<RenderCommand, { readonly kind: "set-mask" }>;
+type SetHudCommand = Extract<RenderCommand, { readonly kind: "set-hud" }>;
+function createEvidenceMask(command: SetMaskCommand): Graphics {
+  const points = command.polygon.flatMap((point) => [point.x.value, point.y.value]);
+  return new Graphics().poly(points, true).fill(0xffffff);
+}
+
+function createThresholdMask(
+  threshold: number,
+  projection: RenderOrthographicProjectionProfile,
+): Graphics {
+  const topPixel = Math.fround(projection.viewportHeight - threshold);
+  return new Graphics().rect(
+    0,
+    topPixel,
+    projection.viewportWidth,
+    Math.fround(projection.viewportHeight - topPixel),
+  ).fill(0xffffff);
+}
+
+function isEvidenceHud(
+  command: SetHudCommand,
+  objectRole: string,
+  textures: ReadonlyMap<string, Texture>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+  gameClearProfile: GameClearRuntimeProfile | undefined,
+): boolean {
+  if (!validateTypedRenderHudCommand(command, objectRole)) return false;
+  switch (command.hudRole) {
+    case "score":
+      return scoreHudTexturesAvailable(textures, command.state.meterKey) &&
+        decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    case "combo": {
+      const prefix = command.state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+      return String(command.state.combo).split("").every((digit) =>
+        textures.has(spriteKey(
+          CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+          `${prefix}${digit}`,
+        )));
+    }
+    case "result":
+      return hasUniqueExactTextureBinding(textures, command.state.judgeKey) &&
+        (command.state.timingKey === null || hasUniqueExactTextureBinding(textures, command.state.timingKey));
+    case "life":
+      return ordinaryLifeTexturesAvailable(textures) &&
+        decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    case "add-score":
+      return [
+        "icon_number_plus",
+        ...String(command.state.value).split("").map((digit) => `icon_number_${digit}`),
+      ].every((key) => textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, key)));
+    case "game-clear": {
+      return gameClearProfile !== undefined && gameClearTexturesAvailable(textures, gameClearProfile);
+    }
+  }
+}
+
+function applyEvidenceHud(
+  object: PixiObjectRecord,
+  command: SetHudCommand,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): PixiHudVisual {
+  const visual = object.hudVisual ?? createHudVisual(object.node, command.hudRole, object.scoreHudNativeProfile);
+  if (visual.kind !== command.hudRole) throw new Error("HUD visual route cannot change owner kind");
+  for (const node of visual.serializedComponentNodes.values()) node.visible = false;
+  visual.fillRatios = Object.freeze([0, 0]);
+  switch (command.hudRole) {
+    case "score": {
+      applyScoreHud(object, visual, command.state, textures, referenceCounts, decodedFonts);
+      break;
+    }
+    case "combo": {
+      applyComboHud(object, visual, command.state, textures, referenceCounts);
+      break;
+    }
+    case "result": {
+      applyResultHud(object, visual, command.state, textures, referenceCounts);
+      break;
+    }
+    case "life": {
+      applyLifeHud(object, visual, command.state, textures, referenceCounts, decodedFonts);
+      break;
+    }
+    case "add-score": {
+      applyAddScoreHud(object, visual, command.state, textures, referenceCounts);
+      break;
+    }
+    case "game-clear": {
+      applyGameClearHud(object, visual, command.state.clearStatus, textures, referenceCounts);
+      break;
+    }
+  }
+  return visual;
+}
+
+function gameClearTexturesAvailable(
+  textures: ReadonlyMap<string, Texture>,
+  profile: GameClearRuntimeProfile,
+): boolean {
+  return profile.assets.length > 0 && profile.assets.every((asset) =>
+    textures.has(spriteKey(`hud/game-clear/${asset.logical_key}`, asset.logical_key)));
+}
+
+function applyGameClearHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  clearStatus: 1 | 2 | 3,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = object.resourceProfile.gameClearProfile;
+  if (profile === undefined) throw new Error("Game-clear runtime profile is missing");
+  object.node.position.set(
+    profileCenter(object.resourceProfile.scene.projection.viewportWidth),
+    profileCenter(object.resourceProfile.scene.projection.viewportHeight),
+  );
+  object.node.scale.set(authoredUiScale(object));
+  // ParticleSystem state and primitives are owned by ParticleFrameCoordinator
+  // and PixiParticleRendererBackend. This renderer owns only the NGUI graph.
+  if (visual.digitSprites.length > 0 || clearStatus === 1) {
+    visual.content.visible = true;
+    return;
+  }
+  const branch = clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+  const nodes = visual.serializedComponentNodes as Map<string, Container>;
+  for (const row of branch.graph.objects) {
+    const node = new Container({ label: `game-clear:${row.path}`, sortableChildren: true });
+    applyGameClearInitialTransform(node, row);
+    if (!row.path.includes("/")) node.zIndex = 20;
+    nodes.set(row.path, node);
+  }
+  for (const row of branch.graph.objects) {
+    const node = nodes.get(row.path)!;
+    const parentPath = row.path.includes("/") ? row.path.slice(0, row.path.lastIndexOf("/")) : null;
+    (parentPath === null ? visual.content : nodes.get(parentPath)!).addChild(node);
+    for (const component of row.components) {
+      if (component.class !== "UITexture" || component.widget === undefined) continue;
+      const widget = component.widget;
+      const logicalAssetId = `hud/game-clear/${widget.asset}`;
+      const binding = requiredTextureBinding(textures, logicalAssetId, widget.asset);
+      const sprite = new Sprite({ texture: binding.texture, label: `game-clear-widget:${row.path}` });
+      const pivot = nguiPivot(widget.pivot);
+      sprite.anchor.set(pivot.x, pivot.y);
+      sprite.width = widget.width;
+      sprite.height = widget.height;
+      sprite.tint = linearTintFromSrgbChannels(
+        f32FromLittleEndianBytes(widget.color_f32_bits[0]),
+        f32FromLittleEndianBytes(widget.color_f32_bits[1]),
+        f32FromLittleEndianBytes(widget.color_f32_bits[2]),
+      );
+      sprite.alpha = f32FromLittleEndianBytes(widget.color_f32_bits[3]);
+      // These widgets are siblings below content. Sort their owners: a depth
+      // on the sole Sprite inside each owner cannot order different widgets.
+      node.zIndex = widget.depth;
+      node.addChild(sprite);
+      visual.digitSprites.push(sprite);
+      retainHudBinding(object, binding.key, referenceCounts);
+    }
+  }
+  visual.content.visible = true;
+  applyGameClearGraphSample(
+    visual,
+    sampleGameClearAdditionalAnimation(profile, clearStatus as 2 | 3, 0),
+  );
+}
+
+function applyGameClearInitialTransform(node: Container, row: GameClearGraphObject): void {
+  node.position.set(row.local_position[0], -row.local_position[1]);
+  node.scale.set(row.local_scale[0], row.local_scale[1]);
+  node.rotation = -quaternionZRadians(row.local_rotation);
+  node.visible = row.active;
+}
+function profileCenter(value: number): number { return Math.fround(value / 2); }
+function nguiPivot(value: string): { x: number; y: number } {
+  const map: Record<string, readonly [number, number]> = {
+    TopLeft: [0, 0], Top: [0.5, 0], TopRight: [1, 0], Left: [0, 0.5], Center: [0.5, 0.5], Right: [1, 0.5],
+    BottomLeft: [0, 1], Bottom: [0.5, 1], BottomRight: [1, 1],
+  };
+  const pivot = map[value] ?? map.Center!;
+  return { x: pivot[0], y: pivot[1] };
+}
+type GameClearChannelDisposition =
+  | "particle-activation"
+  | "particle-profile-static"
+  | "particle-animated-transform"
+  | "pixi-local-position"
+  | "pixi-local-rotation-z"
+  | "pixi-local-scale"
+  | "pixi-visible"
+  | "pixi-widget-alpha"
+  | "portable-2d-projected-z"
+  | "portable-2d-redundant-euler"
+  | "portable-2d-redundant-z";
+
+function applyGameClearGraphSample(
+  visual: PixiHudVisual,
+  sample: GameClearAdditionalAnimationSample,
+): void {
+  // Focused 10.1.4 controller evidence: text-in exits unconditionally at
+  // normalized time 1 into text-out. The text-out stop-time keyframe keeps all
+  // UI owners active while setting every visible owner alpha to exact zero.
+  const counts: Record<string, number> = {};
+  for (let index = 0; index < sample.channels.length; index += 1) {
+    const disposition = applyGameClearChannel(visual, sample.channels[index]!, sample.values[index]!);
+    counts[disposition] = (counts[disposition] ?? 0) + 1;
+  }
+  visual.gameClearSampledPhaseSeconds = sample.phaseSeconds;
+  visual.gameClearAdditionalState = sample.state;
+  visual.gameClearAdditionalClipName = sample.clipName;
+  // Encode diagnostic bytes only when an explicit snapshot is requested.
+  visual.gameClearChannelValues = sample.values;
+  visual.gameClearChannelDispositionCounts = Object.freeze(Object.fromEntries(
+    Object.entries(counts).sort(([left], [right]) => left.localeCompare(right)),
+  ));
+}
+function applyGameClearChannel(
+  visual: PixiHudVisual,
+  channel: string,
+  value: number,
+): GameClearChannelDisposition {
+  if (!Number.isFinite(value)) throw new Error(`Game-clear clip produced a non-finite channel: ${channel}`);
+  const particleChannel = channel.includes("effect_par") || channel.startsWith("GameClearParticle");
+  if (channel.includes(".m_IsActive.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_IsActive.");
+    node.visible = value >= 0.5;
+    return particleChannel ? "particle-activation" : "pixi-visible";
+  }
+  if (channel.includes(".mColor.a.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".mColor.a.");
+    for (const child of node.children) child.alpha = value;
+    return "pixi-widget-alpha";
+  }
+  if (channel.includes(".m_LocalPosition.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_LocalPosition.");
+    const axis = channel.slice(channel.indexOf(".m_LocalPosition.") + ".m_LocalPosition.".length);
+    if (axis === "x") { node.x = value; return particleChannel ? "particle-animated-transform" : "pixi-local-position"; }
+    if (axis === "y") { node.y = -value; return particleChannel ? "particle-animated-transform" : "pixi-local-position"; }
+    if (axis === "z") return particleChannel ? "particle-animated-transform" : "portable-2d-redundant-z";
+  }
+  if (channel.includes(".m_LocalScale.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".m_LocalScale.");
+    const axis = channel.slice(channel.indexOf(".m_LocalScale.") + ".m_LocalScale.".length);
+    if (axis === "x") { node.scale.x = value; return "pixi-local-scale"; }
+    if (axis === "y") { node.scale.y = value; return "pixi-local-scale"; }
+    if (axis === "z") return "portable-2d-projected-z";
+  }
+  if (channel.includes(".localEulerAnglesRaw.")) {
+    const node = requiredGameClearChannelNode(visual, channel, ".localEulerAnglesRaw.");
+    const axis = channel.slice(channel.indexOf(".localEulerAnglesRaw.") + ".localEulerAnglesRaw.".length);
+    if (axis === "z") {
+      node.rotation = Math.fround(-value * Math.PI / 180);
+      return "pixi-local-rotation-z";
+    }
+    if (axis === "x" || axis === "y") return "portable-2d-redundant-euler";
+  }
+  if (channel.includes("attribute_hash:1133446416")) {
+    requiredGameClearChannelNode(visual, channel, ".attribute_hash:");
+    if (!Object.is(value, Math.fround(0))) throw new Error("Game-clear startRotation static channel diverged from its particle profile");
+    return "particle-profile-static";
+  }
+  if (channel.includes("attribute_hash:925582877")) {
+    requiredGameClearChannelNode(visual, channel, ".attribute_hash:");
+    if (!Object.is(value, Math.fround(1))) throw new Error("Game-clear looping static channel diverged from its particle profile");
+    return "particle-profile-static";
+  }
+  throw new Error(`Game-clear AnimationClip channel is unclassified: ${channel}`);
+}
+function requiredGameClearChannelNode(
+  visual: PixiHudVisual,
+  channel: string,
+  marker: string,
+): Container {
+  const markerIndex = channel.indexOf(marker);
+  if (markerIndex < 0) throw new Error(`Game-clear channel marker is absent: ${channel}`);
+  const relative = channel.slice(0, markerIndex);
+  const root = [...visual.serializedComponentNodes.keys()].find((path) => !path.includes("/"));
+  if (root === undefined) throw new Error("Game-clear branch graph has no serialized root");
+  const path = relative.length === 0 ? root : `${root}/${relative}`;
+  const node = visual.serializedComponentNodes.get(path);
+  if (node === undefined) throw new Error(`Game-clear channel owner is absent: ${path}`);
+  return node;
+}
+function float32LittleEndianBytesHex(value: number): string {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setFloat32(0, Math.fround(value), true);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+function createLifeSerializedHierarchy(
+  content: Container,
+  components: ReadonlyMap<string, Container>,
+): Map<string, Container> {
+  const current = CURRENT_ORDINARY_HUD_PROFILE.life.hierarchy;
+  const hierarchy = new Map<string, Container>();
+  for (const row of current.intermediate) {
+    const node = new Container({
+      label: `GamePlay/UI_Root/Display/LifeGauge/${row.path}`,
+      sortableChildren: true,
+    });
+    node.eventMode = "none";
+    node.position.set(row.position[0], row.position[1]);
+    node.scale.set(row.scale[0], row.scale[1]);
+    hierarchy.set(row.path, node);
+  }
+  for (const row of current.intermediate) {
+    const node = hierarchy.get(row.path)!;
+    const parent = row.parent === null ? content : hierarchy.get(row.parent);
+    if (parent === undefined) throw new Error(`Life serialized hierarchy parent is missing: ${String(row.parent)}`);
+    parent.addChild(node);
+  }
+  const rows = [
+    ["gauge_base", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG"],
+    ["primary", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge"],
+    ["second", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge"],
+    ["warning_outline", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning"],
+    ["warning_body", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody"],
+    ["game_over_background", "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage"],
+    ["skill_effect", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteBase"],
+    ["skill_effect_icon", "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/SkillEffect/SpriteIcon"],
+    ["total_label", "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total"],
+    ["game_over_text", "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text"],
+  ] as const;
+  for (const [identity, path] of rows) {
+    const profile = current.components[identity];
+    const component = serializedHudComponent(components, path);
+    component.removeFromParent();
+    component.position.set(profile.position[0], profile.position[1]);
+    component.scale.set(profile.scale[0], profile.scale[1]);
+    const parent = profile.parent === null
+      ? content
+      : hierarchy.get(profile.parent) ?? components.get(profile.parent);
+    if (parent === undefined) throw new Error(`Life serialized component parent is missing: ${String(profile.parent)}`);
+    parent.addChild(component);
+  }
+  return hierarchy;
+}
+
+function createHudVisual(
+  node: Container,
+  kind: PixiHudVisual["kind"],
+  scoreProfile: RenderResourceProfile["scoreHudNativeProfile"],
+): PixiHudVisual {
+  const content = new Container({ sortableChildren: true });
+  const componentPaths = kind === "score"
+    ? scoreProfile?.scene.widgets.map((widget) => widget.path) ?? []
+    : kind === "life"
+    ? CURRENT_LIFE_SERIALIZED_COMPONENT_PATHS
+    : Object.freeze([] as const);
+  const serializedComponentNodes = new Map<string, Container>();
+  for (const path of componentPaths) {
+    const component = new Container({ label: path, visible: false, sortableChildren: true });
+    component.eventMode = "none";
+    serializedComponentNodes.set(path, component);
+    content.addChild(component);
+  }
+  if (kind === "score" && scoreProfile === undefined) throw new Error("Score HUD source-bound native profile is missing");
+  const scoreGraph = kind === "score"
+    ? createNguiScoreSceneGraph(content, serializedComponentNodes, scoreProfile!)
+    : null;
+  const serializedHierarchyNodes = kind === "life"
+    ? createLifeSerializedHierarchy(content, serializedComponentNodes)
+    : scoreGraph?.gameObjects ?? new Map<string, Container>();
+  const scoreWidgetRenderLayer = scoreGraph === null ? null : new RenderLayer({
+    sortableChildren: true,
+    sortFunction: (left, right) => left.zIndex - right.zIndex,
+  });
+  if (scoreWidgetRenderLayer !== null) {
+    content.addChildAt(scoreWidgetRenderLayer, 0);
+    for (const [path, component] of serializedComponentNodes) {
+      if (!path.includes("/Progress/Panel/HighRankEffect/")) scoreWidgetRenderLayer.attach(component);
+    }
+  }
+  const scoreTextSegments = kind === "score"
+    ? Object.freeze(Array.from({ length: 10 }, (_, index) =>
+        new Text({ text: "", style: { fill: 0xffffff, fontSize: 28 }, label: `score-glyph-${index}` })))
+    : null;
+  const lifeTextSegments = kind === "life"
+    ? Object.freeze([
+        new Text({ text: "", style: { fill: 0x00c000, fontSize: 18 }, label: "life-current-segment" }),
+        new Text({ text: "/", style: { fill: 0x505050, fontSize: 18 }, label: "life-separator-segment" }),
+        new Text({ text: "", style: { fill: 0x00c000, fontSize: 18 }, label: "life-maximum-segment" }),
+      ] as const)
+    : null;
+  const gameOverText = kind === "life"
+    ? new Text({ text: "", style: { fill: 0xff0000, fontSize: 22 }, label: "life-game-over-label" })
+    : null;
+  const animationLayer = scoreGraph?.highRankEffect ??
+    new Container({ visible: false, label: "score-high-rank-animation-layer" });
+  animationLayer.visible = false;
+  animationLayer.zIndex = 30;
+  const scoreHighRankPanelMask = kind === "score"
+    ? new Graphics({ label: "score-high-rank-panel-mask", visible: false })
+    : null;
+  if (scoreTextSegments !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/Score/Base/TotalScore")
+      .addChild(...scoreTextSegments);
+  }
+  if (lifeTextSegments !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total")
+      .addChild(...lifeTextSegments);
+  }
+  if (gameOverText !== null) {
+    serializedHudComponent(serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text")
+      .addChild(gameOverText);
+  }
+  if (scoreGraph === null) content.addChild(animationLayer);
+  if (scoreHighRankPanelMask !== null) content.addChild(scoreHighRankPanelMask);
+  node.addChild(content);
+  return {
+    kind,
+    content,
+    scoreTextSegments,
+    lifeTextSegments,
+    gameOverText,
+    animationLayer,
+    serializedComponentNodes,
+    serializedHierarchyNodes,
+    digitSprites: [],
+    fillMasks: [],
+    scoreGaugeSprites: [],
+    scoreRankSprites: [],
+    scoreHighRankSprites: [],
+    scoreWidgetRenderLayer,
+    scoreHighRankNodeNames: [],
+    scoreHighRankBaseScales: [],
+    scoreHighRankPanelMask,
+    scoreHighRankSoftClipFilter: null,
+    scoreHighRankPanelMaskGeneration: scoreHighRankPanelMask === null ? 0 : 1,
+    scoreHighRankPanelMaskBounds: null,
+    scoreHighRankGeneration: 0,
+    gameClearSampledPhaseSeconds: null,
+    gameClearAdditionalState: "base-only",
+    gameClearAdditionalClipName: null,
+    gameClearChannelValues: Object.freeze([]),
+    gameClearChannelDispositionCounts: Object.freeze({}),
+    fillRatios: Object.freeze([0, 0]),
+  };
+}
+
+function serializedHudComponent(
+  nodes: ReadonlyMap<string, Container>,
+  path: string,
+): Container {
+  const node = nodes.get(path);
+  if (node === undefined) throw new Error(`Serialized HUD component is missing: ${path}`);
+  return node;
+}
+
+function showSerializedHudComponent(visual: PixiHudVisual, path: string): void {
+  serializedHudComponent(visual.serializedComponentNodes, path).visible = true;
+}
+
+function authoredUiScale(object: PixiObjectRecord): number {
+  return object.surfaceLayout.ui.screenToSafeChildScale;
+}
+
+function placeAuthoredUiRoot(
+  object: PixiObjectRecord,
+  authoredX: number,
+  authoredY: number,
+  localScale = 1,
+): void {
+  const projection = object.resourceProfile.scene.projection;
+  const uiScale = authoredUiScale(object);
+  object.node.position.set(
+    Math.fround(projection.viewportWidth / 2 + authoredX * uiScale),
+    Math.fround(projection.viewportHeight / 2 - authoredY * uiScale),
+  );
+  object.node.scale.set(Math.fround(uiScale * localScale));
+}
+
+function placeSafeTopAnchoredUiRoot(
+  object: PixiObjectRecord,
+  side: "left" | "right",
+): void {
+  const layout = object.surfaceLayout;
+  const safe = layout.starUi.safeArea;
+  const safeX = side === "left" ? safe.x : Math.fround(safe.x + safe.width);
+  const safeTop = Math.fround(
+    layout.surface.viewportHeight - Math.fround(safe.y + safe.height),
+  );
+  object.node.position.set(safeX, safeTop);
+  object.node.scale.set(authoredUiScale(object));
+}
+
+function applyComboHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly combo: number; readonly allPerfect: boolean },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  if (visual.digitSprites.length === 5) {
+    updatePersistentComboHud(object, visual, state, textures, referenceCounts);
+    return;
+  }
+  placeAuthoredUiRoot(object, profile.combo.rootPosition[0], profile.combo.rootPosition[1]);
+  const displayed = String(state.combo);
+  const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+  const leastSignificantKeys = [...displayed].reverse().map((digit) => `${digitPrefix}${digit}`);
+  const positions = spriteNumberPositions(
+    object.resourceProfile,
+    CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+    leastSignificantKeys,
+    CURRENT_ORDINARY_HUD_PROFILE.combo.padding,
+    "center",
+  );
+  for (let index = 0; index < 4; index += 1) {
+    const exactKey = leastSignificantKeys[index] ?? `${digitPrefix}0`;
+    const binding = requiredTextureBinding(
+      textures,
+      CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+      exactKey,
+    );
+    const sprite = new Sprite({ texture: binding.texture, label: `combo-digit-${index}` });
+    sprite.anchor.set(0.5);
+    sprite.width = profile.combo.digitSize[0];
+    sprite.height = profile.combo.digitSize[1];
+    sprite.position.set(
+      CURRENT_ORDINARY_HUD_PROFILE.combo.numberLocalPosition[0] + (positions[index] ?? 0),
+      -CURRENT_ORDINARY_HUD_PROFILE.combo.numberLocalPosition[1],
+    );
+    sprite.zIndex = CURRENT_ORDINARY_HUD_PROFILE.combo.digitDepth;
+    sprite.visible = index < leastSignificantKeys.length;
+    visual.content.addChild(sprite);
+    visual.digitSprites.push(sprite);
+    retainHudBinding(object, binding.key, referenceCounts);
+  }
+  const unitKey = state.allPerfect ? profile.combo.unit.allPerfect : profile.combo.unit.normal;
+  const unitBinding = requiredTextureBinding(
+    textures,
+    CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+    unitKey,
+  );
+  const unit = new Sprite({ texture: unitBinding.texture, label: "combo-unit" });
+  unit.anchor.set(0.5);
+  unit.width = profile.combo.unit.size[0];
+  unit.height = profile.combo.unit.size[1];
+  unit.position.set(profile.combo.unit.localPosition[0], -profile.combo.unit.localPosition[1]);
+  unit.zIndex = CURRENT_ORDINARY_HUD_PROFILE.combo.unitDepth;
+  visual.content.addChild(unit);
+  visual.digitSprites.unshift(unit);
+  retainHudBinding(object, unitBinding.key, referenceCounts);
+}
+
+function updatePersistentComboHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly combo: number; readonly allPerfect: boolean },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  placeAuthoredUiRoot(object, profile.combo.rootPosition[0], profile.combo.rootPosition[1]);
+  const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+  const keys = [...String(state.combo)].reverse().map((digit) => `${digitPrefix}${digit}`);
+  const positions = spriteNumberPositions(
+    object.resourceProfile,
+    CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+    keys,
+    CURRENT_ORDINARY_HUD_PROFILE.combo.padding,
+    "center",
+  );
+  const unitKey = state.allPerfect ? profile.combo.unit.allPerfect : profile.combo.unit.normal;
+  const unitBinding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, unitKey);
+  const unit = visual.digitSprites[0]!;
+  unit.texture = unitBinding.texture;
+  unit.width = profile.combo.unit.size[0];
+  unit.height = profile.combo.unit.size[1];
+  unit.position.set(profile.combo.unit.localPosition[0], -profile.combo.unit.localPosition[1]);
+  unit.visible = true;
+  retainHudBindingOnce(object, unitBinding.key, referenceCounts);
+  for (let index = 0; index < 4; index += 1) {
+    const sprite = visual.digitSprites[index + 1]!;
+    const exactKey = keys[index] ?? `${digitPrefix}0`;
+    const binding = requiredTextureBinding(
+      textures,
+      CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+      exactKey,
+    );
+    sprite.texture = binding.texture;
+    sprite.width = profile.combo.digitSize[0];
+    sprite.height = profile.combo.digitSize[1];
+    sprite.position.set(
+      CURRENT_ORDINARY_HUD_PROFILE.combo.numberLocalPosition[0] + (positions[index] ?? 0),
+      -CURRENT_ORDINARY_HUD_PROFILE.combo.numberLocalPosition[1],
+    );
+    sprite.visible = index < keys.length;
+    retainHudBindingOnce(object, binding.key, referenceCounts);
+  }
+}
+
+function applyAddScoreHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localXOffset: number },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
+  placeSafeTopAnchoredUiRoot(object, "left");
+  const uiScale = authoredUiScale(object);
+  object.node.position.set(
+    Math.fround(object.node.position.x +
+      (current.numberBaseAuthoredPosition[0] + current.initialLocalX + state.localXOffset) * uiScale),
+    Math.fround(object.node.position.y - current.numberBaseAuthoredPosition[1] * uiScale),
+  );
+  object.node.scale.set(Math.fround(uiScale * current.numberScale));
+  object.node.alpha = state.alpha;
+  const keys = [
+    ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`),
+    profile.addScore.digits.plus,
+  ];
+  const positions = spriteNumberPositions(
+    object.resourceProfile,
+    CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+    keys,
+    current.padding,
+    "left",
+  );
+  const capacity = Math.max(current.maxValueDigits + 1, keys.length);
+  while (visual.digitSprites.length < capacity) {
+    const sprite = new Sprite({ label: `add-score-${visual.digitSprites.length}`, visible: false });
+    sprite.anchor.set(0.5);
+    sprite.eventMode = "none";
+    visual.content.addChild(sprite);
+    visual.digitSprites.push(sprite);
+  }
+  for (let index = 0; index < visual.digitSprites.length; index += 1) {
+    const sprite = visual.digitSprites[index]!;
+    const exactKey = keys[index];
+    if (exactKey === undefined) {
+      sprite.visible = false;
+      continue;
+    }
+    const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, exactKey);
+    sprite.texture = binding.texture;
+    sprite.width = profile.addScore.digits.size[0];
+    sprite.height = profile.addScore.digits.size[1];
+    sprite.position.set(positions[index]!, 0);
+    sprite.zIndex = state.depth;
+    sprite.visible = true;
+    retainHudBindingOnce(object, binding.key, referenceCounts);
+  }
+}
+
+function applyResultHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly judgeKey: string; readonly timingKey: string | null },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  if (visual.digitSprites.length === 2) {
+    updatePersistentResultHud(object, visual, state, textures, referenceCounts);
+    return;
+  }
+  placeAuthoredUiRoot(
+    object,
+    profile.result.rootPosition[0],
+    profile.result.rootPosition[1],
+    CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
+  );
+  object.node.alpha = profile.result.alpha;
+  const judgeBinding = requiredUniqueExactTextureBinding(textures, state.judgeKey);
+  const judge = new Sprite({ texture: judgeBinding.texture, label: "result-judge" });
+  judge.anchor.set(0.5);
+  applyResultSpriteGeometry(judge, "judge");
+  judge.zIndex = CURRENT_ORDINARY_HUD_PROFILE.result.judgeDepth;
+  visual.content.addChild(judge);
+  visual.digitSprites.push(judge);
+  retainHudBinding(object, judgeBinding.key, referenceCounts);
+  {
+    const timingBinding = requiredUniqueExactTextureBinding(textures, state.timingKey ?? "judge_fast");
+    const timingOwner = new Container({ label: "result-timing-owner", sortableChildren: true });
+    timingOwner.position.set(
+      CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[0],
+      -CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalPosition[1],
+    );
+    timingOwner.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.timingLocalScale);
+    timingOwner.zIndex = CURRENT_ORDINARY_HUD_PROFILE.result.timingDepth;
+    const timing = new Sprite({ texture: timingBinding.texture, label: "result-timing" });
+    timing.anchor.set(0.5);
+    applyResultSpriteGeometry(timing, "timing");
+    timing.zIndex = 0;
+    timing.visible = state.timingKey !== null;
+    visual.content.addChild(timingOwner);
+    timingOwner.addChild(timing);
+    visual.digitSprites.push(timing);
+    retainHudBinding(object, timingBinding.key, referenceCounts);
+  }
+}
+
+function updatePersistentResultHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly judgeKey: string; readonly timingKey: string | null },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  placeAuthoredUiRoot(
+    object,
+    profile.result.rootPosition[0],
+    profile.result.rootPosition[1],
+    CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
+  );
+  object.node.alpha = profile.result.alpha;
+  const judge = visual.digitSprites[0]!;
+  const timing = visual.digitSprites[1]!;
+  const judgeBinding = requiredUniqueExactTextureBinding(textures, state.judgeKey);
+  judge.texture = judgeBinding.texture;
+  applyResultSpriteGeometry(judge, "judge");
+  judge.visible = true;
+  retainHudBindingOnce(object, judgeBinding.key, referenceCounts);
+  if (state.timingKey === null) {
+    timing.visible = false;
+  } else {
+    const timingBinding = requiredUniqueExactTextureBinding(textures, state.timingKey);
+    timing.texture = timingBinding.texture;
+    applyResultSpriteGeometry(timing, "timing");
+    timing.visible = true;
+    retainHudBindingOnce(object, timingBinding.key, referenceCounts);
+  }
+}
+
+/** Selected Judge atlas rows have no explicit padding and pixelSize=1. */
+function applyResultSpriteGeometry(sprite: Sprite, role: "judge" | "timing"): void {
+  const { width, height } = sprite.texture.orig;
+  // Result.changeSprite uses centered SetRect (round down to even); Timing
+  // uses MakePixelPerfect (round up to even). Neither uses prefab dimensions.
+  const evenSize = role === "judge" ? Math.floor : Math.ceil;
+  const widgetWidth = evenSize(width / 2) * 2;
+  const widgetHeight = evenSize(height / 2) * 2;
+  // Simple UISprite drawingDimensions reserves the odd source pixel at right/top.
+  const rightPadding = (width % 2) * widgetWidth / width;
+  const topPadding = (height % 2) * widgetHeight / height;
+  sprite.width = widgetWidth - rightPadding;
+  sprite.height = widgetHeight - topPadding;
+  sprite.position.set(-rightPadding / 2, topPadding / 2);
+}
+
+function applyLifeHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly currentLife: number; readonly label: string; readonly primaryFill: { readonly value: number }; readonly secondaryFill: { readonly value: number }; readonly color: "normal" | "danger"; readonly warning: boolean; readonly singleGameOver: boolean },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  const current = CURRENT_ORDINARY_HUD_PROFILE.life;
+  if (visual.digitSprites.length > 0) {
+    updatePersistentLifeHud(object, visual, state, decodedFonts);
+    return;
+  }
+  placeSafeTopAnchoredUiRoot(object, "right");
+  const add = (
+    logicalAssetId: string,
+    exactKey: string,
+    sceneKey: keyof typeof profile.life.sprites,
+    label: string,
+    visible = true,
+    tint = 0xffffff,
+  ) => {
+    const scene = profile.life.sprites[sceneKey];
+    const binding = requiredTextureBinding(textures, logicalAssetId, exactKey);
+    const border = current.borders[sceneKey];
+    const sprite = new NineSliceSprite({
+      texture: binding.texture,
+      width: scene.size[0],
+      height: scene.size[1],
+      anchor: { x: 0.5, y: 0.5 },
+      leftWidth: border[0],
+      rightWidth: border[1],
+      bottomHeight: border[2],
+      topHeight: border[3],
+      label,
+    });
+    sprite.position.set(0, 0);
+    sprite.zIndex = scene.depth;
+    sprite.visible = visible;
+    sprite.tint = tint;
+    sprite.blendMode = logicalAssetId === CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId
+      ? "normal"
+      : "add";
+    const componentPath = sceneKey === "gauge_base"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG"
+      : sceneKey === "primary"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge"
+      : sceneKey === "second"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge"
+      : sceneKey === "warning_outline"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning"
+      : sceneKey === "warning_body"
+      ? "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody"
+      : "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage";
+    const componentOwner = serializedHudComponent(visual.serializedComponentNodes, componentPath);
+    componentOwner.visible = visible;
+    componentOwner.addChild(sprite);
+    visual.digitSprites.push(sprite as unknown as Sprite);
+    retainHudBinding(object, binding.key, referenceCounts);
+    return sprite;
+  };
+  const clipLeftToRight = (sprite: NineSliceSprite, ratio: number, label: string): void => {
+    const mask = new Graphics({ label }).rect(
+      -sprite.width / 2,
+      -sprite.height / 2,
+      Math.fround(sprite.width * ratio),
+      sprite.height,
+    ).fill(0xffffff);
+    mask.zIndex = sprite.zIndex;
+    const parent = sprite.parent;
+    if (parent === null) throw new Error("Life fill mask requires the serialized component parent.");
+    parent.addChild(mask);
+    visual.fillMasks.push(mask);
+    sprite.mask = mask;
+  };
+  const colors = state.singleGameOver ? profile.life.colorsF32Bits.gameOverBase : profile.life.colorsF32Bits[state.color];
+  const tint = linearTintFromSrgbChannels(
+    f32FromBigEndianBits(colors[0]),
+    f32FromBigEndianBits(colors[1]),
+    f32FromBigEndianBits(colors[2]),
+  );
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health", "gauge_base", "life-gauge-base", true, 0xffffff);
+  const secondary = add(CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter", "second", "life-secondary", state.secondaryFill.value > 0);
+  clipLeftToRight(secondary, state.secondaryFill.value, "life-secondary-fill-mask");
+  const primary = add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "hp_meter", "primary", "life-primary", state.primaryFill.value > 0, tint);
+  clipLeftToRight(primary, state.primaryFill.value, "life-primary-fill-mask");
+  add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_outline", "warning_outline", "life-warning-outline", state.warning);
+  add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside", "warning_body", "life-warning-body", state.warning);
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", state.singleGameOver);
+  const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
+  if (font === undefined || visual.lifeTextSegments === null || visual.gameOverText === null) {
+    throw new Error("Life sgm label font is missing");
+  }
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total");
+  const separator = state.label.indexOf("/");
+  if (separator <= 0 || separator === state.label.length - 1) {
+    throw new Error("Life label requires current/maximum encoded segments");
+  }
+  const maximum = state.label.slice(separator + 1);
+  layoutNguiEncodedLifeLabel(
+    visual.lifeTextSegments,
+    String(state.currentLife),
+    maximum,
+    0,
+    0,
+    current.lifeLabel.fontSize,
+    font.family,
+  );
+  visual.lifeTextSegments.forEach((text) => {
+    text.zIndex = current.lifeLabel.depth;
+    text.visible = true;
+  });
+  setHudText(
+    visual.gameOverText,
+    current.gameOverLabel.text,
+    current.gameOverLabel.fontSize,
+    current.gameOverLabel.tint,
+    font.family,
+  );
+  layoutNguiText(visual.gameOverText, 0, 0.5, current.gameOverLabel.spacingY);
+  visual.gameOverText.position.set(0, 0);
+  visual.gameOverText.zIndex = current.gameOverLabel.depth;
+  visual.gameOverText.visible = state.singleGameOver;
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+  ).visible = state.singleGameOver;
+  visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
+}
+
+function updatePersistentLifeHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: {
+    readonly currentLife: number;
+    readonly label: string;
+    readonly primaryFill: { readonly value: number };
+    readonly secondaryFill: { readonly value: number };
+    readonly color: "normal" | "danger";
+    readonly warning: boolean;
+    readonly singleGameOver: boolean;
+  },
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  const current = CURRENT_ORDINARY_HUD_PROFILE.life;
+  placeSafeTopAnchoredUiRoot(object, "right");
+  const base = findHudDescendant(visual.content, "life-gauge-base") as NineSliceSprite | null;
+  const secondary = findHudDescendant(visual.content, "life-secondary") as NineSliceSprite | null;
+  const primary = findHudDescendant(visual.content, "life-primary") as NineSliceSprite | null;
+  const warningOutline = findHudDescendant(visual.content, "life-warning-outline");
+  const warningBody = findHudDescendant(visual.content, "life-warning-body");
+  const gameOver = findHudDescendant(visual.content, "life-game-over");
+  const secondaryMask = visual.fillMasks[0];
+  const primaryMask = visual.fillMasks[1];
+  if (base === null || secondary === null || primary === null || warningOutline === null ||
+    warningBody === null || gameOver === null || secondaryMask === undefined || primaryMask === undefined ||
+    visual.lifeTextSegments === null || visual.gameOverText === null) {
+    throw new Error("Persistent Life UILabel/UISprite graph is incomplete");
+  }
+  base.tint = 0xffffff;
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG");
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge").visible = state.secondaryFill.value > 0;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge").visible = state.primaryFill.value > 0;
+  secondary.visible = state.secondaryFill.value > 0;
+  primary.visible = state.primaryFill.value > 0;
+  const colors = state.singleGameOver
+    ? profile.life.colorsF32Bits.gameOverBase
+    : profile.life.colorsF32Bits[state.color];
+  primary.tint = linearTintFromSrgbChannels(
+    f32FromBigEndianBits(colors[0]),
+    f32FromBigEndianBits(colors[1]),
+    f32FromBigEndianBits(colors[2]),
+  );
+  secondaryMask.clear().rect(
+    secondary.position.x - secondary.width / 2,
+    secondary.position.y - secondary.height / 2,
+    Math.fround(secondary.width * state.secondaryFill.value),
+    secondary.height,
+  ).fill(0xffffff);
+  primaryMask.clear().rect(
+    primary.position.x - primary.width / 2,
+    primary.position.y - primary.height / 2,
+    Math.fround(primary.width * state.primaryFill.value),
+    primary.height,
+  ).fill(0xffffff);
+  warningOutline.visible = state.warning;
+  warningBody.visible = state.warning;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning").visible = state.warning;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody").visible = state.warning;
+  gameOver.visible = state.singleGameOver;
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage").visible = state.singleGameOver;
+  const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
+  if (font === undefined) throw new Error("Life sgm label font is missing");
+  const separator = state.label.indexOf("/");
+  if (separator <= 0 || separator === state.label.length - 1) {
+    throw new Error("Life label requires current/maximum encoded segments");
+  }
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/LifeGauge/life_panel/Total");
+  layoutNguiEncodedLifeLabel(
+    visual.lifeTextSegments,
+    String(state.currentLife),
+    state.label.slice(separator + 1),
+    0,
+    0,
+    current.lifeLabel.fontSize,
+    font.family,
+  );
+  visual.lifeTextSegments.forEach((text) => {
+    text.zIndex = current.lifeLabel.depth;
+    text.visible = true;
+  });
+  visual.gameOverText.visible = state.singleGameOver;
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
+  ).visible = state.singleGameOver;
+  visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
+}
+
+function f32FromBigEndianBits(bits: string): number {
+  if (!/^[0-9A-F]{8}$/.test(bits)) throw new Error("HUD profile Float32 requires eight uppercase hexadecimal digits.");
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setUint32(0, Number.parseInt(bits, 16), false);
+  return view.getFloat32(0, false);
+}
+
+function requireOrdinaryVisibleProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["ordinaryVisibleProfile"]> {
+  if (object.ordinaryVisibleProfile === undefined) throw new Error("ordinary visible HUD profile is missing");
+  return object.ordinaryVisibleProfile;
+}
+
+function requireScoreNativeProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["scoreHudNativeProfile"]> {
+  if (object.scoreHudNativeProfile === undefined) throw new Error("source-bound Score/NGUI native profile is missing");
+  return object.scoreHudNativeProfile;
+}
+
+function scoreGameObject(visual: PixiHudVisual, path: string): Container {
+  const node = visual.serializedHierarchyNodes.get(path);
+  if (node === undefined) throw new Error(`Score GameObject is missing: ${path}`);
+  return node;
+}
+
+function scoreWidget(
+  profile: NonNullable<RenderResourceProfile["scoreHudNativeProfile"]>,
+  path: string,
+) {
+  const widget = profile.scene.widgets.find((candidate) => candidate.path === path);
+  if (widget === undefined) throw new Error(`Score NGUI widget is missing: ${path}`);
+  return widget;
+}
+
+function f32FromLittleEndianBytes(bits: string): number {
+  if (!/^[0-9A-Fa-f]{8}$/.test(bits)) throw new Error("invalid little-endian Float32 bytes");
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  for (let index = 0; index < 4; index += 1) {
+    view.setUint8(index, Number.parseInt(bits.slice(index * 2, index * 2 + 2), 16));
+  }
+  return view.getFloat32(0, true);
+}
+
+function applyScoreHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: RenderScoreHudState,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  if (visual.scoreGaugeSprites.length > 0) {
+    updatePersistentScoreHud(object, visual, state, textures, referenceCounts, decodedFonts);
+    return;
+  }
+  const nativeProfile = requireScoreNativeProfile(object);
+  const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
+  const backgroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background`);
+  const coverProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Background_Cover`);
+  const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
+  // StarUIAnchor Left+Top/ScreenToSafeArea overrides the serialized root TRS.
+  // Keep the authored Base/Progress child graph relative to that runtime anchor.
+  placeSafeTopAnchoredUiRoot(object, "left");
+  showScoreBaselineComponents(visual, state.foregroundActive);
+
+  const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null || totalScoreProfile.font_size === undefined) {
+    throw new Error("Score TotalScore sgm UILabel font owner is missing");
+  }
+  const totalScoreOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+  );
+  totalScoreOwner.zIndex = totalScoreProfile.depth;
+  layoutNguiEncodedScoreLabel(
+    visual.scoreTextSegments,
+    state.scoreText,
+    0,
+    0,
+    totalScoreProfile.width,
+    totalScoreProfile.font_size,
+    scoreFont.family,
+    totalScoreProfile.depth,
+  );
+
+  const progress = scoreGameObject(visual, `${nativeProfile.scene.rootPath}/Progress`);
+  visual.scoreGaugeSprites.push(progress);
+  const gaugeAssetId = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
+  const background = scoreNineSlice(
+    requiredTextureBinding(textures, gaugeAssetId, "gauge_base_score"),
+    backgroundProfile.width,
+    backgroundProfile.height,
+    CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase,
+    "score-gauge-background",
+  );
+  background.position.set(0, 0);
+  background.zIndex = backgroundProfile.depth;
+  const backgroundOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Background",
+  );
+  backgroundOwner.zIndex = backgroundProfile.depth;
+  backgroundOwner.addChild(background);
+  retainHudBinding(object, spriteKey(gaugeAssetId, "gauge_base_score"), referenceCounts);
+
+  const cover = scoreNineSlice(
+    requiredTextureBinding(textures, gaugeAssetId, "bg_gauge_score_multi"),
+    coverProfile.width,
+    coverProfile.height,
+    CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeCover,
+    "score-gauge-cover",
+  );
+  cover.position.set(0, 0);
+  cover.zIndex = coverProfile.depth;
+  const coverOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+  );
+  coverOwner.zIndex = coverProfile.depth;
+  coverOwner.addChild(cover);
+  retainHudBinding(object, spriteKey(gaugeAssetId, "bg_gauge_score_multi"), referenceCounts);
+
+  const meterKey = state.meterKey as string;
+  const foregroundBinding = requiredTextureBinding(textures, gaugeAssetId, meterKey);
+  const borders = scoreMeterNineSliceBorders(meterKey);
+  const foreground = scoreNineSlice(
+    foregroundBinding,
+    scoreMeterFillWidth(foregroundProfile.width, state.sliderValue.value, borders),
+    foregroundProfile.height,
+    borders,
+    "score-gauge-foreground",
+  );
+  foreground.position.set(0, 0);
+  foreground.visible = state.foregroundActive && state.sliderValue.value >= Math.fround(0.001);
+  foreground.zIndex = foregroundProfile.depth;
+  const foregroundOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+  );
+  foregroundOwner.zIndex = foregroundProfile.depth;
+  foregroundOwner.addChild(foreground);
+  retainHudBinding(object, foregroundBinding.key, referenceCounts);
+
+  const markerPositions = {
+    C: state.rankMarkerCLocalX.value,
+    B: state.rankMarkerBLocalX.value,
+    A: state.rankMarkerALocalX.value,
+    S: state.rankMarkerSLocalX.value,
+    SS: state.rankMarkerSSLocalX.value,
+  } as const;
+  for (const rank of ["C", "B", "A", "S", "SS"] as const) {
+    const x = markerPositions[rank];
+    const separatorPath = `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}/Separator`;
+    const labelPath = `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}/${rank}`;
+    const separatorProfile = scoreWidget(nativeProfile, separatorPath);
+    const rankLabelProfile = scoreWidget(nativeProfile, labelPath);
+    if (rankLabelProfile.font_size === undefined) throw new Error("Score Rank UILabel font size is missing");
+    const levelMarkBinding = requiredTextureBinding(
+      textures,
+      CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId,
+      "level_mark",
+    );
+    const levelMark = new Sprite({ texture: levelMarkBinding.texture, label: `score-rank-marker-${rank}` });
+    levelMark.anchor.set(0.5, 0.5);
+    levelMark.width = separatorProfile.width;
+    levelMark.height = separatorProfile.height;
+    levelMark.position.set(0, 0);
+    levelMark.zIndex = separatorProfile.depth;
+    scoreGameObject(visual, `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}`).position.x = x;
+    const separatorOwner = serializedHudComponent(visual.serializedComponentNodes, separatorPath);
+    separatorOwner.zIndex = separatorProfile.depth;
+    separatorOwner.addChild(levelMark);
+    visual.scoreRankSprites.push(levelMark);
+    retainHudBinding(object, levelMarkBinding.key, referenceCounts);
+    const rankFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    if (rankFont === undefined) throw new Error("Score Rank label font is missing");
+    const rankLabel = new Text({
+      text: rank,
+      style: { fill: 0xffffff, fontFamily: rankFont.family, fontSize: rankLabelProfile.font_size },
+      label: `score-rank-${rank}`,
+    });
+    layoutNguiText(rankLabel);
+    rankLabel.position.set(0, 0);
+    rankLabel.zIndex = rankLabelProfile.depth;
+    const rankLabelOwner = serializedHudComponent(visual.serializedComponentNodes, labelPath);
+    rankLabelOwner.zIndex = rankLabelProfile.depth;
+    rankLabelOwner.addChild(rankLabel);
+    visual.scoreRankSprites.push(rankLabel);
+  }
+
+  updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
+  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
+  visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+}
+
+function updatePersistentScoreHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: RenderScoreHudState,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const nativeProfile = requireScoreNativeProfile(object);
+  const totalScoreProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Base/TotalScore`);
+  const foregroundProfile = scoreWidget(nativeProfile, `${nativeProfile.scene.rootPath}/Progress/Foreground`);
+  placeSafeTopAnchoredUiRoot(object, "left");
+  showScoreBaselineComponents(visual, state.foregroundActive);
+  const scoreFont = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+  if (scoreFont === undefined || visual.scoreTextSegments === null || totalScoreProfile.font_size === undefined) {
+    throw new Error("Persistent Score TotalScore sgm UILabel owner is incomplete");
+  }
+  const totalScoreOwner = serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+  );
+  totalScoreOwner.zIndex = totalScoreProfile.depth;
+  layoutNguiEncodedScoreLabel(
+    visual.scoreTextSegments,
+    state.scoreText,
+    0,
+    0,
+    totalScoreProfile.width,
+    totalScoreProfile.font_size,
+    scoreFont.family,
+    totalScoreProfile.depth,
+  );
+
+  const progress = visual.scoreGaugeSprites[0]!;
+  const foreground = findHudDescendant(progress, "score-gauge-foreground") as NineSliceSprite | null;
+  if (foreground === null) throw new Error("Persistent Score gauge foreground graph is incomplete");
+  const foregroundBinding = requiredTextureBinding(
+    textures,
+    CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+    state.meterKey,
+  );
+  foreground.texture = foregroundBinding.texture;
+  const foregroundBorders = scoreMeterNineSliceBorders(state.meterKey);
+  foreground.leftWidth = foregroundBorders.left;
+  foreground.topHeight = foregroundBorders.top;
+  foreground.rightWidth = foregroundBorders.right;
+  foreground.bottomHeight = foregroundBorders.bottom;
+  foreground.width = scoreMeterFillWidth(foregroundProfile.width, state.sliderValue.value, foregroundBorders);
+  foreground.visible = state.foregroundActive && state.sliderValue.value >= Math.fround(0.001);
+  retainHudBindingOnce(object, foregroundBinding.key, referenceCounts);
+
+  const markerPositions = [
+    state.rankMarkerCLocalX.value,
+    state.rankMarkerBLocalX.value,
+    state.rankMarkerALocalX.value,
+    state.rankMarkerSLocalX.value,
+    state.rankMarkerSSLocalX.value,
+  ];
+  for (let index = 0; index < markerPositions.length; index += 1) {
+    const rank = (["C", "B", "A", "S", "SS"] as const)[index]!;
+    scoreGameObject(
+      visual,
+      `${nativeProfile.scene.rootPath}/Progress/RankObject/rank${rank}`,
+    ).position.x = markerPositions[index]!;
+  }
+  updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
+  ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
+  visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+}
+
+function updateScorePanelClip(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  progress: Container,
+  indicatorLocalX: number,
+): void {
+  if (visual.scoreHighRankPanelMask === null) throw new Error("Score high-rank panel mask owner is missing");
+  const panel = requireScoreNativeProfile(object).panel;
+  visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
+  const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
+  const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
+  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
+  const panelCenter = Math.fround(
+    Math.fround(Math.fround(authoredLeft + panelRight) / 2),
+  );
+  const panelHeight = Math.fround(panel.topY - panel.bottomY);
+  const panelCenterY = Math.fround(
+    -Math.fround(Math.fround(panel.topY + panel.bottomY) / 2),
+  );
+  const panelLeft = Math.fround(panelCenter - Math.fround(panelWidth / 2));
+  const panelTop = Math.fround(panelCenterY - Math.fround(panelHeight / 2));
+  visual.scoreHighRankPanelMask.clear().rect(panelLeft, panelTop, panelWidth, panelHeight).fill(0xffffff);
+  visual.scoreHighRankPanelMaskBounds = Object.freeze([panelLeft, panelTop, panelWidth, panelHeight] as const);
+  updateScoreSoftClipFilter(
+    visual,
+    progress,
+    panelCenter,
+    panelCenterY,
+    panelWidth,
+    panelHeight,
+    panel.softness,
+  );
+}
+
+function updateScoreSoftClipFilter(
+  visual: PixiHudVisual,
+  panelSpace: Container,
+  centerX: number,
+  centerY: number,
+  panelWidth: number,
+  panelHeight: number,
+  softness: readonly [number, number],
+): void {
+  if (typeof document === "undefined") return;
+  if (visual.scoreHighRankSoftClipFilter === null) {
+    visual.scoreHighRankSoftClipFilter = createNguiSoftClipFilter(
+      panelSpace, centerX, centerY, panelWidth, panelHeight, softness[0], softness[1],
+    );
+    for (const sprite of visual.scoreHighRankSprites) sprite.filters = [visual.scoreHighRankSoftClipFilter];
+  } else {
+    updateNguiSoftClipFilter(
+      visual.scoreHighRankSoftClipFilter,
+      centerX,
+      centerY,
+      panelWidth,
+      panelHeight,
+      softness[0],
+      softness[1],
+    );
+  }
+}
+
+function showScoreBaselineComponents(visual: PixiHudVisual, foregroundActive: boolean): void {
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Base/TotalScore");
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Progress/Background");
+  showSerializedHudComponent(visual, "GamePlay/UI_Root/Display/Score/Progress/Background_Cover");
+  serializedHudComponent(
+    visual.serializedComponentNodes,
+    "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+  ).visible = foregroundActive;
+  for (const rank of ["C", "B", "A", "S", "SS"] as const) {
+    showSerializedHudComponent(visual, `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/${rank}`);
+    showSerializedHudComponent(visual, `GamePlay/UI_Root/Display/Score/Progress/RankObject/rank${rank}/Separator`);
+  }
+}
+
+function ensureScoreHighRankSprites(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: RenderScoreHudState,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  if (!state.highRankEffectActive) return;
+  const animation = requireScoreNativeProfile(object).highRank;
+  for (const node of animation.nodes) {
+    showSerializedHudComponent(
+      visual,
+      `GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/${node.name}`,
+    );
+  }
+  visual.animationLayer.visible = true;
+  if (visual.scoreHighRankSprites.length > 0) return;
+  visual.animationLayer.visible = true;
+  visual.scoreHighRankGeneration += 1;
+  const componentOwners = new Map<string, Container>();
+  for (const node of animation.nodes) {
+    const assetId = node.textureKey === "high-rank-kira"
+      ? CURRENT_SCORE_HUD_BINDINGS.highRankKiraLogicalAssetId
+      : node.textureKey === "high-rank-long-star"
+      ? CURRENT_SCORE_HUD_BINDINGS.highRankLongStarLogicalAssetId
+      : CURRENT_SCORE_HUD_BINDINGS.highRankOverlayLogicalAssetId;
+    const binding = requiredTextureBinding(textures, assetId, node.textureKey);
+    const sprite = new Sprite({ texture: binding.texture, label: `score-gauge-ss:${node.name}` });
+    const baseScale = applyNguiSpriteWidget(sprite, {
+      width: node.width,
+      height: node.height,
+      pivot: node.pivot === "Left" ? "left" : "center",
+      colorF32Bits: node.colorF32Bits,
+      blendMode: "normal",
+    });
+    sprite.position.set(0, 0);
+    sprite.scale.set(baseScale[0], baseScale[1]);
+    sprite.rotation = 0;
+    sprite.visible = false;
+    if (visual.scoreHighRankSoftClipFilter !== null) sprite.filters = [visual.scoreHighRankSoftClipFilter];
+    sprite.zIndex = 30;
+    const componentOwner = serializedHudComponent(
+      visual.serializedComponentNodes,
+      `GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect/${node.name}`,
+    );
+    componentOwner.addChild(sprite);
+    componentOwners.set(node.name, componentOwner);
+    visual.scoreHighRankSprites.push(sprite);
+    visual.scoreHighRankNodeNames.push(node.name);
+    visual.scoreHighRankBaseScales.push(baseScale);
+    retainScoreHighRankBinding(object, binding.key, referenceCounts);
+  }
+  for (const name of animation.siblingOrder) {
+    if (!componentOwners.has(name)) throw new Error(`Score high-rank sibling is missing: ${name}`);
+  }
+}
+
+function findHudDescendant(root: Container, label: string): Container | null {
+  for (const child of root.children) {
+    if (child.label === label) return child;
+    const nested = findHudDescendant(child, label);
+    if (nested !== null) return nested;
+  }
+  return null;
+}
+
+function scoreMeterNineSliceBorders(meterKey: string) {
+  return meterKey === "score_meter_blue"
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterBlue
+    : meterKey === "score_meter_s"
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterS
+    : CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterOther;
+}
+
+function scoreMeterFillWidth(width: number, ratio: number, borders: { readonly left: number; readonly right: number }): number {
+  // UISlider -> Sliced UISprite.drawRegion: retain both caps; resize the middle.
+  const borderWidth = borders.left + borders.right;
+  return borderWidth + (width - borderWidth) * ratio;
+}
+
+function scoreNineSlice(
+  binding: { readonly key: string; readonly texture: Texture },
+  width: number,
+  height: number,
+  borders: { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number },
+  label: string,
+): NineSliceSprite {
+  return new NineSliceSprite({
+    texture: binding.texture,
+    leftWidth: borders.left,
+    topHeight: borders.top,
+    rightWidth: borders.right,
+    bottomHeight: borders.bottom,
+    width,
+    height,
+    anchor: { x: 0, y: 0.5 },
+    label,
+  });
+}
+
+function scoreHudDescendants(root: Container): Container[] {
+  const rows: Container[] = [];
+  const visit = (node: Container): void => {
+    for (const child of node.children) {
+      rows.push(child);
+      visit(child);
+    }
+  };
+  visit(root);
+  return rows;
+}
+
+function requiredTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  logicalAssetId: string,
+  exactKey: string,
+): { readonly key: string; readonly texture: Texture } {
+  const key = spriteKey(logicalAssetId, exactKey);
+  const texture = textures.get(key);
+  if (texture === undefined) throw new Error(`missing Score HUD texture ${logicalAssetId}:${exactKey}`);
+  return Object.freeze({ key, texture });
+}
+
+function hasUniqueExactTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  exactKey: string,
+): boolean {
+  let count = 0;
+  for (const key of textures.keys()) {
+    if (boundSpriteExactKey(key) === exactKey) count += 1;
+  }
+  return count === 1;
+}
+
+function requiredUniqueExactTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  exactKey: string,
+): { readonly key: string; readonly texture: Texture } {
+  const matches = [...textures].filter(([key]) => boundSpriteExactKey(key) === exactKey);
+  if (matches.length !== 1) {
+    throw new Error(`Result HUD requires exactly one selected Judge texture for ${exactKey}; found ${matches.length}.`);
+  }
+  return Object.freeze({ key: matches[0]![0], texture: matches[0]![1] });
+}
+
+function retainHudBinding(
+  object: PixiObjectRecord,
+  bindingKey: string,
+  referenceCounts: Map<string, number>,
+): void {
+  object.hudBindingKeys.push(bindingKey);
+  referenceCounts.set(bindingKey, (referenceCounts.get(bindingKey) ?? 0) + 1);
+}
+
+function retainHudBindingOnce(
+  object: PixiObjectRecord,
+  bindingKey: string,
+  referenceCounts: Map<string, number>,
+): void {
+  if (object.hudBindingKeys.includes(bindingKey)) return;
+  retainHudBinding(object, bindingKey, referenceCounts);
+}
+
+function retainScoreHighRankBinding(
+  object: PixiObjectRecord,
+  bindingKey: string,
+  referenceCounts: Map<string, number>,
+): void {
+  object.scoreHighRankBindingKeys.push(bindingKey);
+  referenceCounts.set(bindingKey, (referenceCounts.get(bindingKey) ?? 0) + 1);
+}
+
+function setHudText(
+  text: Text,
+  value: string,
+  fontSize: number,
+  fill: number,
+  fontFamily?: string,
+): void {
+  text.text = value;
+  text.style = {
+    fill: linearTintFromSrgbColor(fill),
+    fontSize,
+    fontFamily,
+    fontWeight: fontFamily === undefined ? "bold" : "normal",
+  };
+  layoutNguiText(text);
+}
+
+function applyEvidenceAnimation(
+  object: PixiObjectRecord,
+  role: EvidenceAnimationRole,
+  elapsedSeconds: number,
+): void {
+  if (role === "combo") {
+    const profile = requireOrdinaryVisibleProfile(object);
+    const clip = profile.combo.clips.find((candidate) => candidate.clipId === "combo-scale");
+    if (clip === undefined) throw new Error("Combo scale clip is missing");
+    const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+    const uiScale = authoredUiScale(object);
+    object.node.scale.set(
+      Math.fround(values[0]! * uiScale),
+      Math.fround(values[1]! * uiScale),
+    );
+    return;
+  }
+  if (role === "all-perfect") {
+    const profile = requireOrdinaryVisibleProfile(object);
+    const clip = profile.combo.clips.find((candidate) => candidate.clipId === "combo-all-perfect");
+    if (clip === undefined || object.hudVisual?.kind !== "combo") {
+      throw new Error("All Perfect Sprite clip/owner is missing");
+    }
+    const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+    object.hudVisual.digitSprites.forEach((sprite, index) => {
+      sprite.alpha = values[Math.min(index, 4)]!;
+    });
+    return;
+  }
+  if (role === "score-gauge-ss") {
+    const visual = object.hudVisual;
+    const profile = requireScoreNativeProfile(object);
+    // A HUD update can select the next clip before its Play command arrives.
+    const clipName = object.scoreHighRankPlayback?.clipName;
+    const clip = profile.highRank.clips.find((candidate) => candidate.name === clipName);
+    if (visual === null || clip === undefined || visual.scoreHighRankSprites.length !== profile.highRank.nodes.length) {
+      throw new Error("Score high-rank source-backed visual/clip is missing");
+    }
+    if (object.scoreHighRankPlayback === null) throw new Error("Score high-rank animation has not started.");
+    object.scoreHighRankPlayback = advanceScoreHighRankPlayback(
+      object.scoreHighRankPlayback, clip, profile.highRank.tweenAlpha, elapsedSeconds,
+    );
+    const samples = sampleScoreHighRankPresentation(
+      clip,
+      profile.highRank.nodes,
+      profile.highRank.tweenAlpha,
+      elapsedSeconds,
+      object.scoreHighRankPlayback,
+    );
+    for (let index = 0; index < samples.length; index += 1) {
+      const sample = samples[index]!;
+      const node = profile.highRank.nodes[index]!;
+      const sprite = visual.scoreHighRankSprites[index]!;
+      const owner = scoreGameObject(visual, node.path);
+      owner.position.set(sample.position[0], -sample.position[1]);
+      owner.scale.set(sample.scale[0], sample.scale[1]);
+      owner.rotation = sample.rotationRadiansScreen;
+      owner.visible = sample.active;
+      sprite.visible = sample.active;
+      if (sample.tweenAlpha !== null) sprite.alpha = sample.tweenAlpha;
+    }
+    return;
+  }
+  if (role === "game-clear") {
+    const state = object.hudState as { readonly clearStatus?: number } | null;
+    const profile = object.resourceProfile.gameClearProfile;
+    if (state?.clearStatus === undefined || profile === undefined || object.hudVisual === null) {
+      throw new Error("Game-clear animation owner/profile/state is missing");
+    }
+    const visual = object.hudVisual;
+    if (state.clearStatus !== 1) {
+      const sample = sampleGameClearAdditionalAnimation(profile, state.clearStatus as 2 | 3, elapsedSeconds);
+      if (visual.gameClearAdditionalClipName !== sample.clipName) {
+        // Both FC/AP states write defaults. In particular, text-out does not
+        // bind the transparent star's scale; it must not retain text-in's 3x.
+        const branch = state.clearStatus === 2 ? profile.fullCombo : profile.allPerfect;
+        for (const row of branch.graph.objects) {
+          const node = visual.serializedComponentNodes.get(row.path)!;
+          applyGameClearInitialTransform(node, row);
+          const widget = row.components.find((component) => component.widget !== undefined)?.widget;
+          if (widget !== undefined) {
+            for (const child of node.children) child.alpha = f32FromLittleEndianBytes(widget.color_f32_bits[3]);
+          }
+        }
+      }
+      applyGameClearGraphSample(visual, sample);
+    }
+    return;
+  }
+  if (role === "result") {
+    const visual = object.hudVisual;
+    if (visual?.kind !== "result") throw new Error("GameJudge requires the persistent Result/other child graph.");
+    const values = sampleOrdinaryHudStreamedClip(
+      CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.frames,
+      CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.curveCount,
+      Math.min(elapsedSeconds, CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.durationSeconds),
+    );
+    visual.content.scale.set(values[0]!, values[1]!);
+    visual.content.alpha = values[3]!;
+    return;
+  }
+  if (role === "life-warning") {
+    const visual = object.hudVisual;
+    if (visual?.kind !== "life") throw new Error("Life warning animation owner is missing");
+    const alpha = samplePingPongAlpha(CURRENT_ORDINARY_HUD_PROFILE.life.warningTween, elapsedSeconds);
+    for (const sprite of visual.digitSprites) {
+      if (sprite.label === "life-warning-outline" || sprite.label === "life-warning-body") {
+        sprite.alpha = alpha;
+      }
+    }
+    return;
+  }
+  if (role === "life-game-over") {
+    const text = object.hudVisual?.gameOverText;
+    if (text === null || text === undefined) throw new Error("Life GameOver label animation owner is missing");
+    text.alpha = samplePingPongAlpha(CURRENT_ORDINARY_HUD_PROFILE.life.gameOverLabelTween, elapsedSeconds);
+    return;
+  }
+  if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
+    applyOrdinaryNoteAnimation(object, role, elapsedSeconds);
+    return;
+  }
+  throw new Error("unsupported HUD animation role");
+}
+
+function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimationRole): void {
+  if (role === "combo") {
+    object.node.scale.set(authoredUiScale(object));
+    object.node.alpha = 1;
+    return;
+  }
+  if (role === "result") {
+    if (object.hudVisual?.kind !== "result") throw new Error("GameJudge stop requires the persistent other child.");
+    object.hudVisual.content.scale.set(1);
+    object.hudVisual.content.alpha = 1;
+    return;
+  }
+  if (role === "all-perfect") {
+    for (const sprite of object.hudVisual?.digitSprites ?? []) sprite.alpha = 1;
+    return;
+  }
+  if (role === "score-gauge-ss") {
+    for (const sprite of object.hudVisual?.scoreHighRankSprites ?? []) sprite.visible = false;
+    return;
+  }
+  if (role === "game-clear") {
+    if (object.hudVisual !== null) object.hudVisual.content.visible = false;
+    return;
+  }
+  if (role === "life-warning") {
+    for (const sprite of object.hudVisual?.digitSprites ?? []) {
+      if (sprite.label === "life-warning-outline" || sprite.label === "life-warning-body") sprite.alpha = 1;
+    }
+    return;
+  }
+  if (role === "life-game-over") {
+    if (object.hudVisual?.gameOverText !== null && object.hudVisual?.gameOverText !== undefined) {
+      object.hudVisual.gameOverText.alpha = 1;
+    }
+    return;
+  }
+  if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
+    applyOrdinaryNoteAnimation(object, role, 0);
+    return;
+  }
+  if (object.hudVisual !== null) object.hudVisual.animationLayer.visible = false;
+}
+
+function applyOrdinaryNoteAnimation(
+  object: PixiObjectRecord,
+  role: "note-flick" | "note-directional-flick" | "note-long-flash",
+  elapsedSeconds: number,
+): void {
+  const sprite = object.spriteContent;
+  const profile = object.ordinaryVisibleProfile;
+  if (sprite === null || profile === undefined || object.spriteBindingKey === null || object.spritePixelsPerUnit === null) {
+    throw new Error("ordinary Note animation owner/profile/resource binding is missing");
+  }
+  const exactKey = object.spriteBindingKey.slice(object.spriteBindingKey.indexOf("\u0000") + 1);
+  const clipId = role === "note-flick"
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.up ||
+        /^note_flick_top(?:_[23])?$/.test(exactKey)
+      ? "note-flick-up"
+      : null
+    : role === "note-directional-flick"
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left
+      ? "note-flick-left"
+      : exactKey === profile.noteAnimations.directionalSpriteKeys.right
+      ? "note-flick-right"
+      : null
+    : exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix)
+    ? "note-long-flash"
+    : null;
+  if (clipId === null) throw new Error("ordinary Note animation resource key does not select a current clip");
+  const clip = profile.noteAnimations.clips.find((candidate) => candidate.clipId === clipId);
+  if (clip === undefined) throw new Error("ordinary Note animation clip is missing");
+  const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+  if (role === "note-long-flash") {
+    sprite.tint = rgbTint(values[0]!, values[1]!, values[2]!);
+    sprite.alpha = values[3]!;
+  } else {
+    object.animatedLocalZ = values[2]!;
+    object.node.position.set(
+      Math.fround(values[0]!),
+      Math.fround(-values[1]!),
+    );
+    object.node.rotation = Math.fround(-values[5]! * Math.PI / 180);
+  }
+}
+
+function sampleOrdinaryVisibleClip(
+  clip: OrdinaryVisibleClip,
+  elapsedSeconds: number,
+): readonly number[] {
+  const phase = clip.loop
+    ? Math.fround(elapsedSeconds % clip.durationSeconds)
+    : Math.fround(Math.min(elapsedSeconds, clip.durationSeconds));
+  return Object.freeze(clip.curves.map((curve) => {
+    if (curve.storage === "constant") return curve.value;
+    let key = curve.keys[0]!;
+    for (const candidate of curve.keys) {
+      if (candidate.time > phase) break;
+      key = candidate;
+    }
+    const delta = Math.fround(phase - key.time);
+    let value = Math.fround(Math.fround(key.coefficients[0] * delta) + key.coefficients[1]);
+    value = Math.fround(Math.fround(value * delta) + key.coefficients[2]);
+    return Math.fround(Math.fround(value * delta) + key.coefficients[3]);
+  }));
+}
+
+function ordinaryLifeTexturesAvailable(textures: ReadonlyMap<string, Texture>): boolean {
+  return [
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health"],
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "hp_meter"],
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_outline"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside"],
+  ].every(([logicalAssetId, exactKey]) => textures.has(spriteKey(logicalAssetId!, exactKey!)));
+}
+
+function scoreHudTexturesAvailable(
+  textures: ReadonlyMap<string, Texture>,
+  meterKey: string,
+): boolean {
+  const gauge = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
+  return textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId, "level_mark")) &&
+    ["gauge_base_score", "bg_gauge_score_multi", meterKey]
+      .every((key) => textures.has(spriteKey(gauge, key))) &&
+    textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.highRankKiraLogicalAssetId, "high-rank-kira")) &&
+    textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.highRankLongStarLogicalAssetId, "high-rank-long-star")) &&
+    textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.highRankOverlayLogicalAssetId, "high-rank-overlay"));
+}
+
+function spriteNumberPositions(
+  profile: RenderResourceProfile,
+  logicalAssetId: string,
+  leastSignificantKeys: readonly string[],
+  padding: number,
+  alignment: "left" | "center",
+): readonly number[] {
+  const asset = profile.assets.find((candidate) => candidate.logicalAssetId === logicalAssetId);
+  if (asset === undefined) throw new Error("UISpriteNumber atlas profile is missing");
+  let cursor = Math.fround(0);
+  let allWidth = Math.fround(0);
+  const positions = leastSignificantKeys.map((exactKey) => {
+    const row = asset.atlasRows.find((candidate) => candidate.exactKey === exactKey);
+    if (row === undefined || row.borderLeft === undefined || row.borderRight === undefined) {
+      throw new Error("UISpriteNumber exact Sprite row/border is missing");
+    }
+    const advance = Math.fround(row.width - row.borderLeft - row.borderRight + padding);
+    allWidth = Math.fround(allWidth + advance);
+    cursor = Math.fround(cursor - advance);
+    return cursor;
+  });
+  const offset = alignment === "left" ? allWidth : Math.fround(allWidth * 0.5);
+  return Object.freeze(positions.map((position) => Math.fround(position + offset)));
+}
+
+function sampleOrdinaryHudStreamedClip(
+  frames: readonly { readonly time: number; readonly keys: readonly { readonly index: number; readonly coefficients: readonly [number, number, number, number] }[] }[],
+  curveCount: number,
+  phase: number,
+): readonly number[] {
+  const latest = new Map<number, { readonly time: number; readonly coefficients: readonly [number, number, number, number] }>();
+  for (const frame of frames) {
+    if (frame.time > phase) break;
+    for (const key of frame.keys) latest.set(key.index, { time: frame.time, coefficients: key.coefficients });
+  }
+  return Object.freeze(Array.from({ length: curveCount }, (_, index) => {
+    const key = latest.get(index);
+    if (key === undefined) throw new Error("HUD streamed clip curve has no current key");
+    const delta = Math.fround(phase - key.time);
+    let value = Math.fround(Math.fround(key.coefficients[0] * delta) + key.coefficients[1]);
+    value = Math.fround(Math.fround(value * delta) + key.coefficients[2]);
+    return Math.fround(Math.fround(value * delta) + key.coefficients[3]);
+  }));
+}
+
+function samplePingPongAlpha(
+  profile: { readonly durationSeconds: number; readonly fromAlpha: number; readonly toAlpha: number },
+  elapsedSeconds: number,
+): number {
+  const period = Math.fround(profile.durationSeconds * 2);
+  const phase = Math.fround(elapsedSeconds % period);
+  const factor = phase <= profile.durationSeconds
+    ? Math.fround(phase / profile.durationSeconds)
+    : Math.fround((period - phase) / profile.durationSeconds);
+  return Math.fround(profile.fromAlpha + Math.fround((profile.toAlpha - profile.fromAlpha) * factor));
+}
+
+function quaternionZRadians(quaternion: readonly [number, number, number, number]): number {
+  return Math.fround(Math.atan2(
+    2 * (quaternion[3] * quaternion[2] + quaternion[0] * quaternion[1]),
+    1 - 2 * (quaternion[1] * quaternion[1] + quaternion[2] * quaternion[2]),
+  ));
+}
+
+function boundSpriteExactKey(bindingKey: string | null): string | null {
+  return bindingKey === null ? null : bindingKey.slice(bindingKey.indexOf("\u0000") + 1);
+}
+
+function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
+  return role === "combo" || role === "all-perfect" ||
+    role === "result" || role === "life-warning" || role === "life-game-over" ||
+    role === "score-gauge-ss" || role === "game-clear" || role === "note-flick" ||
+    role === "note-directional-flick" || role === "note-long-flash";
+}
+
+function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
+  if (!isEvidenceAnimationRole(role)) throw new Error("unsupported animation role");
+  return role;
+}
+
+function geometryCenterZ(vertices: readonly RenderVector3[]): number {
+  if (vertices.length === 0) return 0;
+  let minimum = vertices[0]!.z.value;
+  let maximum = minimum;
+  for (let index = 1; index < vertices.length; index += 1) {
+    minimum = Math.min(minimum, vertices[index]!.z.value);
+    maximum = Math.max(maximum, vertices[index]!.z.value);
+  }
+  return Math.fround(Math.fround(minimum + maximum) * 0.5);
+}
+
+function gameplayRendererType(role: RenderObjectRole): 1 | 3 | 6 | null {
+  if (noteSpatialRole(role) || role === "judge-line" || role === "tap-lane-effect" ||
+    role === "habahiro-flash-mesh") return 3;
+  if (role === "note-mesh") return 1;
+  if (role === "sync-line" || role === "multiple-directional-line") return 6;
+  return null;
+}
+
+function noteSpatialRole(role: RenderObjectRole): boolean {
+  return role === "note-root" || role === "note-head" || role === "note-icon" ||
+    role === "note-intermediate" || role === "note-side-visual";
+}
+
+function spatialSpriteRole(role: RenderObjectRole): boolean {
+  return noteSpatialRole(role) || role === "field-line" || role === "judge-line" ||
+    role === "tap-lane-effect";
+}
+
+function boundAtlasRow(
+  profile: RenderResourceProfile,
+  bindingKey: string | null,
+): RenderAtlasRow | null {
+  if (bindingKey === null) return null;
+  const separator = bindingKey.indexOf("\u0000");
+  if (separator <= 0 || separator === bindingKey.length - 1) return null;
+  const logicalAssetId = bindingKey.slice(0, separator);
+  const exactKey = bindingKey.slice(separator + 1);
+  return profile.assets.find((asset) => asset.logicalAssetId === logicalAssetId)
+    ?.atlasRows.find((row) => row.exactKey === exactKey) ?? null;
+}
+
+function applySpatialSpriteTransform(
+  object: PixiObjectRecord,
+  command: SetTransformCommand,
+  profile: RenderResourceProfile,
+): void {
+  if (noteSpatialRole(object.role)) {
+    applyNoteSpatialTransform(object, command, profile);
+    return;
+  }
+  const row = boundAtlasRow(profile, object.spriteBindingKey);
+  if (row === null || object.spriteContent === null) {
+    throw new Error("spatial Sprite transform requires one bound atlas row");
+  }
+  const node = object.node;
+  if (object.role === "field-line") {
+    const uiScale = authoredUiScale(object);
+    node.position.set(
+      Math.fround(profile.scene.projection.viewportWidth / 2 + command.position.x.value * uiScale),
+      Math.fround(profile.scene.projection.viewportHeight / 2 - command.position.y.value * uiScale),
+    );
+    node.scale.set(
+      Math.fround(command.scale.x.value * uiScale),
+      Math.fround(command.scale.y.value * uiScale),
+    );
+    object.spriteContent.anchor.set(0.5, 1);
+  } else {
+    const projected = projectWorldPoint(
+      command.position.x.value,
+      command.position.y.value,
+      profile.scene.projection,
+    );
+    const parentScale = object.role === "tap-lane-effect"
+      ? object.surfaceLayout.gameplay.screenWidthAdjustRate
+      : Math.fround(1);
+    const textureScale = Math.fround(
+      profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit * parentScale,
+    );
+    node.position.set(projected[0], projected[1]);
+    node.scale.set(
+      Math.fround(command.scale.x.value * textureScale),
+      Math.fround(command.scale.y.value * textureScale),
+    );
+  }
+  node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
+}
+
+function applyNoteSpatialTransform(
+  object: PixiObjectRecord,
+  command: SetTransformCommand,
+  profile: RenderResourceProfile,
+): void {
+  const row = boundAtlasRow(profile, object.spriteBindingKey);
+  const node = object.node;
+  // Note containers use world units; atlas pixel conversion belongs to the
+  // sprite contents, so a parent's atlas never rescales its child icons.
+  if (object.parentObjectId === null) {
+    const projected = projectWorldPoint(
+      command.position.x.value,
+      command.position.y.value,
+      profile.scene.projection,
+    );
+    node.position.set(projected[0], projected[1]);
+    node.scale.set(
+      Math.fround(command.scale.x.value * profile.scene.projection.pixelsPerWorldUnit),
+      Math.fround(command.scale.y.value * profile.scene.projection.pixelsPerWorldUnit),
+    );
+  } else {
+    node.position.set(command.position.x.value, -command.position.y.value);
+    node.scale.set(command.scale.x.value, command.scale.y.value);
+  }
+  if (object.spriteContent !== null) {
+    const pixelScale = row === null ? 1 : 1 / row.pixelsPerUnit;
+    const flipped = command.spriteFlipX ?? (object.spriteContent.scale.x < 0);
+    object.spriteContent.scale.set(
+      flipped ? -pixelScale : pixelScale,
+      pixelScale,
+    );
+  }
+  node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
+}
+
+function projectWorldPoint(
+  x: number,
+  y: number,
+  projection: RenderOrthographicProjectionProfile,
+): readonly [number, number] {
+  return Object.freeze([
+    Math.fround(
+      projection.viewportWidth / 2 +
+      Math.fround(Math.fround(x - projection.worldCenterX) * projection.pixelsPerWorldUnit),
+    ),
+    Math.fround(
+      projection.viewportHeight / 2 -
+      Math.fround(Math.fround(y - projection.worldCenterY) * projection.pixelsPerWorldUnit),
+    ),
+  ] as const);
+}
+
+function isEvidenceLine(command: SetLineCommand): boolean {
+  return (command.materialRole === "sync-line" ||
+    command.materialRole === "multiple-directional-line") &&
+    command.width.value > 0;
+}
+
+function createEvidenceLineData(
+  command: SetLineCommand,
+  projection: RenderOrthographicProjectionProfile,
+): PixiGeometryData {
+  if (!isEvidenceLine(command)) throw new Error("line outside R2 profile");
+  if (command.unclipped) {
+    const raw = command.unclipped;
+    const [ax, ay] = projectWorldPoint(raw.start[0], raw.start[1], projection);
+    const [bx, by] = projectWorldPoint(raw.end[0], raw.end[1], projection);
+    const scale = Math.max(Math.abs(ax), Math.abs(ay), Math.abs(bx), Math.abs(by), 1);
+    const dx = bx / scale - ax / scale, dy = by / scale - ay / scale, length = Math.hypot(dx, dy);
+    const half = raw.width * projection.pixelsPerWorldUnit / 2;
+    const nx = length === 0 ? 0 : -dy / length * half, ny = length === 0 ? 0 : dx / length * half;
+    const quad: import("../../engine/rendering/notePolygonClipping").NoteClipVertex[] = [{ x: ax + nx, y: ay + ny, u: 0, v: 0 }, { x: bx + nx, y: by + ny, u: 1, v: 0 },
+      { x: bx - nx, y: by - ny, u: 1, v: 1 }, { x: ax - nx, y: ay - ny, u: 0, v: 1 }];
+    if (raw.exponential) {
+      const e = raw.exponential, pixelScale = projection.pixelsPerWorldUnit;
+      const point = (p: typeof e.start) => [coordinateAdd(coordinate(projection.viewportWidth / 2 - projection.worldCenterX * pixelScale), coordinateScale(p[0], pixelScale)),
+        coordinateAdd(coordinate(projection.viewportHeight / 2 + projection.worldCenterY * pixelScale), coordinateScale(p[1], -pixelScale))] as const;
+      const a = point(e.start), b = point(e.end);
+      const [dx, dy] = coordinateDirection(coordinateAdd(b[0], coordinateScale(a[0], -1)), coordinateAdd(b[1], coordinateScale(a[1], -1)));
+      const nx = coordinateScale(e.width, -dy * pixelScale / 2), ny = coordinateScale(e.width, dx * pixelScale / 2);
+      for (const [index, p, sign] of [[0, a, 1], [1, b, 1], [2, b, -1], [3, a, -1]] as const) {
+        quad[index]!.x = 0; quad[index]!.y = 0;
+        quad[index]!.exponential = [coordinateAdd(p[0], coordinateScale(nx, sign)), coordinateAdd(p[1], coordinateScale(ny, sign))];
+      }
+    }
+    if (quad.some(point => !Number.isFinite(point.x) || !Number.isFinite(point.y))) throw new Error("Line exceeds finite host coordinates.");
+    const polygon = clipNotePolygon(quad, [0, 0, projection.viewportWidth, projection.viewportHeight]);
+    // Keep the same line mesh alive when entirely outside, as for coincident endpoints.
+    if (polygon.length < 3) return { positions: new Float32Array(8), uvs: new Float32Array(8),
+      indices: new Uint32Array([0, 1, 2, 0, 2, 3]), tint: 0xFFFFFF, alpha: 1 };
+    const indices: number[] = [];
+    for (let i = 1; i + 1 < polygon.length; i++) indices.push(0, i, i + 1);
+    return { positions: new Float32Array(polygon.flatMap(p => [p.x, p.y])),
+      uvs: new Float32Array(polygon.flatMap(p => [p.u, p.v])), indices: new Uint32Array(indices), tint: 0xFFFFFF, alpha: 1 };
+  }
+  const [startX, startY] = projectWorldPoint(command.start.x.value, command.start.y.value, projection);
+  const [endX, endY] = projectWorldPoint(command.end.x.value, command.end.y.value, projection);
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const length = Math.hypot(dx, dy);
+  const halfWidth = command.width.value * projection.pixelsPerWorldUnit / 2;
+  // Coincident endpoints retain a zero-area quad until the line separates again.
+  const nx = length === 0 ? 0 : -dy / length * halfWidth;
+  const ny = length === 0 ? 0 : dx / length * halfWidth;
+  return {
+    positions: new Float32Array([
+      startX + nx, startY + ny,
+      endX + nx, endY + ny,
+      endX - nx, endY - ny,
+      startX - nx, startY - ny,
+    ]),
+    uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
+    indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+    tint: 0xFFFFFF,
+    alpha: 1,
+  };
+}
+
+function isEvidenceMesh(command: SetMeshCommand): boolean {
+  if (command.uv.length !== command.vertices.length || command.colors.length !== command.vertices.length ||
+    command.vertices.some((vertex) => vertex.z.bits !== "00000000")) return false;
+  const first = command.colors[0];
+  if (first === undefined || !command.colors.every((color) =>
+    color.red.bits === first.red.bits && color.green.bits === first.green.bits &&
+    color.blue.bits === first.blue.bits && color.alpha.bits === first.alpha.bits)) return false;
+  if (command.materialRole === "habahiro-flash") {
+    if (command.coordinateSpace !== "authored-ui" || typeof command.meshIdentity !== "string") return false;
+    const source = CURRENT_HABAHIRO_SEMANTIC_PROFILE.flash.sprites.find(
+      (sprite) => sprite.rendererPathId === command.meshIdentity,
+    );
+    return source !== undefined && command.vertices.length === source.verticesAuthored.length &&
+      command.indices.length === source.indicesScreenYReflected.length &&
+      command.indices.every((value, index) => value === source.indicesScreenYReflected[index]) &&
+      command.vertices.every((vertex, index) => {
+        const expected = source.verticesAuthored[index]!;
+        return vertex.x.value === expected[0] && vertex.y.value === expected[1] && vertex.z.value === expected[2];
+      }) && command.uv.every((uv, index) => {
+        const expected = source.uvTopLeft[index]!;
+        return uv.x.value === expected[0] && uv.y.value === expected[1];
+      });
+  }
+  const base = command.vertices.length === 22 && command.indices.length === 60;
+  const advanced = command.vertices.length === 42 && command.indices.length === 120;
+  return (base || advanced || command.viewportClipped === true) && command.coordinateSpace !== "authored-ui" && command.meshIdentity === undefined;
+}
+
+function createEvidenceMeshData(
+  command: SetMeshCommand,
+  projection: RenderOrthographicProjectionProfile,
+  surfaceLayout: OriginalSurfaceLayout,
+): PixiGeometryData {
+  if (!isEvidenceMesh(command)) throw new Error("mesh outside current source-bound profile");
+  const positions = new Float32Array(command.vertices.length * 2);
+  const uvs = new Float32Array(command.uv.length * 2);
+  const authoredScale = surfaceLayout.ui.screenToSafeChildScale;
+  for (let index = 0; index < command.vertices.length; index += 1) {
+    const vertex = command.vertices[index]!;
+    const projected = command.coordinateSpace === "authored-ui"
+      ? [
+          Math.fround(projection.viewportWidth / 2 + Math.fround(vertex.x.value * authoredScale)),
+          Math.fround(projection.viewportHeight / 2 - Math.fround(vertex.y.value * authoredScale)),
+        ] as const
+      : projectWorldPoint(vertex.x.value, vertex.y.value, projection);
+    positions[index * 2] = projected[0];
+    positions[index * 2 + 1] = projected[1];
+    uvs[index * 2] = command.uv[index]!.x.value;
+    uvs[index * 2 + 1] = command.uv[index]!.y.value;
+  }
+  return {
+    positions,
+    uvs,
+    indices: Uint32Array.from(command.indices),
+    tint: rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value),
+    alpha: firstColor(command).alpha.value,
+  };
+}
+
+function createGeometryMesh(data: PixiGeometryData): Mesh {
+  return new Mesh({ geometry: new MeshGeometry({
+    positions: data.positions, uvs: data.uvs, indices: data.indices,
+    topology: "triangle-list", shrinkBuffersToFit: false,
+  }), texture: Texture.EMPTY, roundPixels: false });
+}
+
+function commitGeometry(object: PixiObjectRecord, reservation: PixiGeometryReservation): Mesh {
+  const mesh = object.geometryContent ?? reservation.mesh!;
+  const { data } = reservation;
+  if (object.geometryContent === null) object.node.addChild(mesh);
+  else {
+    // Preflight owns fresh CPU data. Live buffers change only after validation,
+    // retaining the Mesh/Geometry and GPU allocation across ordinary updates.
+    const geometry = mesh.geometry as MeshGeometry;
+    geometry.uvs = data.uvs;
+    geometry.positions = data.positions;
+    geometry.indices = data.indices;
+  }
+  mesh.tint = data.tint;
+  mesh.alpha = data.alpha;
+  return mesh;
+}
+
+function firstColor(command: SetMeshCommand): RenderColor {
+  const color = command.colors[0];
+  if (color === undefined) throw new Error("validated mesh lost its uniform color");
+  return color;
+}
+
+function destroyMesh(mesh: Mesh): void {
+  mesh.removeFromParent();
+  mesh.geometry.destroy();
+  mesh.destroy({ texture: false, textureSource: false } as DestroyOptions);
+}
+
+const defaultObjectFactory: PixiSceneObjectFactory = Object.freeze({
+  create(role: string, renderObjectId: string, roundPixels: boolean): Container {
+    const root = new Container({ label: renderObjectId, sortableChildren: true });
+    if (spriteRole(role)) {
+      root.addChild(new Sprite({
+        texture: Texture.EMPTY,
+        roundPixels,
+        label: `${renderObjectId}:sprite`,
+      }));
+    }
+    return root;
+  },
+});
+
+function applyGeometryMaterial(
+  mesh: Mesh,
+  object: PixiObjectRecord,
+  profile: RenderResourceProfile,
+): void {
+  const texture = object.materialTexture;
+  if (texture === null) throw new Error("geometry material texture is missing after validated preflight");
+  const asset = object.materialLogicalAssetId === null
+    ? undefined
+    : profile.assets.find((candidate) => candidate.logicalAssetId === object.materialLogicalAssetId);
+  if (asset === undefined || asset.textureSettings === null) {
+    throw new Error("geometry material profile is missing after validated preflight");
+  }
+  mesh.texture = texture;
+  mesh.blendMode = asset.textureSettings.blendMode;
+}
+
+function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfile): void {
+  const settings = asset.textureSettings!;
+  texture.source.scaleMode = settings.scaleMode;
+  texture.source.style.addressModeU = settings.wrapModeU === "repeat"
+    ? "repeat"
+    : "clamp-to-edge";
+  texture.source.style.addressModeV = settings.wrapModeV === "repeat"
+    ? "repeat"
+    : "clamp-to-edge";
+  texture.source.style.update();
+  texture.source.autoGenerateMipmaps = settings.mipmap === "on";
+  texture.source.alphaMode = settings.premultiplyAlpha
+    ? "premultiply-alpha-on-upload"
+    : "no-premultiply-alpha";
+}
+
+function spriteChild(node: Container): Sprite | null {
+  const child = node.children[0];
+  return child instanceof Sprite ? child : null;
+}
+
+function spriteRole(role: string): boolean {
+  return role === "note-root" || role === "note-head" || role === "note-icon" ||
+    role === "note-intermediate" || role === "note-side-visual" ||
+    role === "field-line" || role === "judge-line" || role === "tap-lane-effect";
+}
+
+function spriteKey(logicalAssetId: string, exactKey: string): string {
+  return `${logicalAssetId}\u0000${exactKey}`;
+}
+
+function materialKey(logicalAssetId: string): string {
+  return `${logicalAssetId}\u0000`;
+}
+
+function rgbTint(red: number, green: number, blue: number): number {
+  const byte = (value: number) => Math.round(value * 255);
+  return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
+}
+
+function applyHudOrdering(object: PixiObjectRecord, command: SetHudCommand): boolean {
+  const profile = CURRENT_ORDINARY_HUD_PROFILE;
+  let sourceZ: number | null = null;
+  if (command.hudRole === "add-score") sourceZ = command.state.depth;
+  else if (command.hudRole === "combo") sourceZ = profile.combo.digitDepth;
+  else if (command.hudRole === "result") sourceZ = profile.result.judgeDepth;
+  else if (command.hudRole === "score" || command.hudRole === "life") {
+    sourceZ = profile.sorting.frontPanelDepth * 1000;
+  } else if (command.hudRole === "game-clear") sourceZ = 5000;
+  if (sourceZ === null) return false;
+  const ordering: PixiObjectRecord["ordering"] = [
+    profile.sorting.domainLayer,
+    profile.sorting.sortingOrder,
+    sourceZ,
+    object.ordering[3],
+  ];
+  if (compareOrdering(object.ordering, ordering) === 0) return false;
+  object.ordering = Object.freeze(ordering);
+  object.node.zIndex = orderingZIndex(object.ordering);
+  return true;
+}
+
+function orderingZIndex(ordering: readonly [number, number, number, number]): number {
+  return ordering[0] * 1_000_000 + ordering[1] * 1_000 + ordering[2];
+}
+
+function compareOrdering(
+  left: readonly [number, number, number, number],
+  right: readonly [number, number, number, number],
+): number {
+  for (let index = 0; index < left.length; index += 1) {
+    const difference = left[index]! - right[index]!;
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+function copyPixiCommand(command: RenderCommand): RenderCommand {
+  if (command.kind === "set-mesh") {
+    return Object.freeze({
+      ...command,
+      vertices: Object.freeze(command.vertices.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+        z: Object.freeze({ ...value.z }),
+      }))),
+      indices: Object.freeze([...command.indices]),
+      uv: Object.freeze(command.uv.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+      }))),
+      colors: Object.freeze(command.colors.map((value) => Object.freeze({
+        red: Object.freeze({ ...value.red }),
+        green: Object.freeze({ ...value.green }),
+        blue: Object.freeze({ ...value.blue }),
+        alpha: Object.freeze({ ...value.alpha }),
+      }))),
+    });
+  }
+  if (command.kind === "set-line") {
+    return Object.freeze({
+      ...command,
+      start: Object.freeze({
+        x: Object.freeze({ ...command.start.x }),
+        y: Object.freeze({ ...command.start.y }),
+        z: Object.freeze({ ...command.start.z }),
+      }),
+      end: Object.freeze({
+        x: Object.freeze({ ...command.end.x }),
+        y: Object.freeze({ ...command.end.y }),
+        z: Object.freeze({ ...command.end.z }),
+      }),
+      width: Object.freeze({ ...command.width }),
+      ...(command.unclipped ? { unclipped: Object.freeze({ ...command.unclipped,
+        ...(command.unclipped.exponential ? { exponential: copyExponentialLine(command.unclipped.exponential) } : {}),
+        start: Object.freeze([...command.unclipped.start]) as readonly [number, number],
+        end: Object.freeze([...command.unclipped.end]) as readonly [number, number] }) } : {}),
+    });
+  }
+  if (command.kind === "set-mask") {
+    return Object.freeze({
+      ...command,
+      polygon: Object.freeze(command.polygon.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+      }))),
+    });
+  }
+  if (command.kind === "set-hud") {
+    return Object.freeze({ ...command, state: Object.freeze({ ...command.state }) }) as RenderCommand;
+  }
+  if (command.kind === "sample-animation") {
+    return Object.freeze({
+      ...command,
+      elapsedSeconds: Object.freeze({ ...command.elapsedSeconds }),
+    });
+  }
+  if (command.kind === "set-transform") {
+    return Object.freeze({
+      ...command,
+      position: Object.freeze({
+        x: Object.freeze({ ...command.position.x }),
+        y: Object.freeze({ ...command.position.y }),
+        z: Object.freeze({ ...command.position.z }),
+      }),
+      scale: Object.freeze({
+        x: Object.freeze({ ...command.scale.x }),
+        y: Object.freeze({ ...command.scale.y }),
+        ...(command.scale.z === undefined ? {} : { z: Object.freeze({ ...command.scale.z }) }),
+      }),
+      ...(command.unclipped ? { unclipped: Object.freeze({ ...command.unclipped,
+        ...(command.unclipped.exponential ? { exponential: copyExponentialTransform(command.unclipped.exponential) } : {}) }) } : {}),
+      rotationDegrees: Object.freeze({ ...command.rotationDegrees }),
+      color: Object.freeze({
+        red: Object.freeze({ ...command.color.red }),
+        green: Object.freeze({ ...command.color.green }),
+        blue: Object.freeze({ ...command.color.blue }),
+        alpha: Object.freeze({ ...command.color.alpha }),
+      }),
+      ordering: Object.freeze({
+        ...command.ordering,
+        sourceZ: Object.freeze({ ...command.ordering.sourceZ }),
+      }),
+    });
+  }
+  return Object.freeze({ ...command });
+}
+
+function reject(capability: string, boundary: string) {
+  return integrityFailure(
+    capability,
+    boundary,
+  );
+}

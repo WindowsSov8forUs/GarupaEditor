@@ -1,0 +1,298 @@
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
+import type { ButtonTypeValue, NoteInformation } from "../chart/types";
+import type { ManualInputPosition } from "./manualInput";
+import { integrityFailure, ok, type SimulatorResult } from "../result";
+
+const MUSIC_BAR_DIVISION_COUNT = 192;
+const SECONDS_PER_MINUTE_TIMES_FOUR = Math.fround(240);
+const FRAME_SECOND = float32FromBits(0x3c888889);
+
+export const MANUAL_MISS_SECONDS = float32FromBits(0x3e5dddde);
+
+export function directionalGestureThreshold(width: number): number {
+  const unit = float32FromBits(0x3c23d70a);
+  return Math.fround(Math.fround(Math.fround(width - 1) * unit) + unit);
+}
+
+export function isManualTimeoutOver(absolutePosition: number, adjustedMusicPosition: number,
+  bpm: number): SimulatorResult<boolean> {
+  if (!Number.isFinite(absolutePosition) || !Number.isFinite(adjustedMusicPosition) ||
+      !Number.isFinite(bpm) || bpm <= 0) {
+    return integrityFailure("manual.timeout-owner-value-invalid",
+      "Manual timeout requires finite production positions and a positive finite BPM.");
+  }
+  const distance = adjustedMusicPosition - absolutePosition;
+  const seconds = getSecondsWithDistance(distance, bpm);
+  return seconds.status === "ok" ? ok(seconds.value > MANUAL_MISS_SECONDS) : seconds;
+}
+
+export const NoteResultType = {
+  None: -1,
+  Miss: 0,
+  Bad: 1,
+  Good: 2,
+  Great: 3,
+  Perfect: 4,
+} as const;
+
+export type NoteResultTypeValue =
+  (typeof NoteResultType)[keyof typeof NoteResultType];
+
+export const JudgeTiming = {
+  None: 0,
+  Fast: 1,
+  Slow: 2,
+} as const;
+
+export type JudgeTimingValue =
+  (typeof JudgeTiming)[keyof typeof JudgeTiming];
+
+export interface ManualNoteJudgement {
+  readonly result: NoteResultTypeValue;
+  readonly timing: JudgeTimingValue;
+  readonly differenceSeconds: number;
+  readonly roundedFrame: number;
+}
+
+export interface ManualScreenDistanceRateRequest {
+  readonly beganPosition: ManualInputPosition;
+  readonly currentPosition: ManualInputPosition;
+  readonly horizontalOnly: boolean;
+}
+
+export interface ManualJudgementRequest {
+  readonly noteInformation: NoteInformation;
+  readonly phase?: "head" | "intermediate" | "tail";
+  readonly noteType: number;
+  readonly rawResult: Exclude<NoteResultTypeValue, -1>;
+  readonly rawTiming: JudgeTimingValue;
+  readonly absolutePosition: number;
+  readonly multipleDirectionalFlickNoteCount?: number;
+}
+
+export interface ManualJudgementOwnership {
+  readonly judgementLaneSpan?: import("../chart/types").NoteLaneSpan;
+  readonly multipleDirectionalFlickNoteCount: number | null;
+  readonly multipleDirectionalMembers?: readonly import("../chart/types").NoteInformation[];
+  readonly multipleDirectionalFlickButtonTypes: readonly ButtonTypeValue[] | null;
+  readonly longAfterAbsolutePosition: number | null;
+  readonly longAfterNoteType: number | null;
+  readonly longAfterButtonTypes: readonly ButtonTypeValue[] | null;
+  readonly longAfterMultipleCount: number | null;
+  readonly slidePhase: "head" | "intermediate" | "tail" | null;
+  readonly slideAllowedNoteTypes: readonly number[] | null;
+  readonly slideAbsolutePosition: number | null;
+  readonly slideButtonTypes: readonly ButtonTypeValue[] | null;
+}
+
+export interface ManualJudgementCommitPlan {
+  readonly manualJudgementPlan: true;
+}
+
+export interface ManualJudgementTransaction {
+  preflight(
+    request: ManualJudgementRequest,
+  ): SimulatorResult<ManualJudgementCommitPlan>;
+  commit(plan: ManualJudgementCommitPlan): void;
+  abort(): void;
+  finish(): void;
+}
+
+export function getManualScreenDistanceRate(
+  geometry: SimulatorManualInputGeometryBackend,
+  request: ManualScreenDistanceRateRequest,
+): SimulatorResult<number> {
+  const began = request.horizontalOnly
+    ? Object.freeze({ x: request.beganPosition.x, y: Math.fround(0) })
+    : request.beganPosition;
+  const current = request.horizontalOnly
+    ? Object.freeze({ x: request.currentPosition.x, y: Math.fround(0) })
+    : request.currentPosition;
+  const beganWorld = geometry.screenToWorld(began);
+  if (beganWorld.status !== "ok") {
+    return beganWorld;
+  }
+  const currentWorld = geometry.screenToWorld(current);
+  if (currentWorld.status !== "ok") {
+    return currentWorld;
+  }
+  const normalization = geometry.getDistanceNormalization();
+  if (normalization.status !== "ok") {
+    return normalization;
+  }
+  const coordinates = [
+    beganWorld.value.x,
+    beganWorld.value.y,
+    beganWorld.value.z,
+    currentWorld.value.x,
+    currentWorld.value.y,
+    currentWorld.value.z,
+    normalization.value.cameraScale,
+    normalization.value.gameplayScale,
+  ];
+  if (
+    coordinates.some((value) => !isExactFiniteFloat32(value)) ||
+    normalization.value.cameraScale === 0 ||
+    normalization.value.gameplayScale === 0
+  ) {
+    return integrityFailure(
+      "manual-input.invalid-screen-to-world-owner-output",
+      "Screen-to-world coordinates and both normalization scales must be exact finite nonzero Float32 owner values.",
+    );
+  }
+  const deltaX = Math.fround(beganWorld.value.x - currentWorld.value.x);
+  const deltaY = Math.fround(beganWorld.value.y - currentWorld.value.y);
+  const deltaZ = Math.fround(beganWorld.value.z - currentWorld.value.z);
+  const squaredX = Math.fround(deltaX * deltaX);
+  const squaredY = Math.fround(deltaY * deltaY);
+  const squaredZ = Math.fround(deltaZ * deltaZ);
+  const squaredXY = Math.fround(squaredX + squaredY);
+  const squaredDistance = Math.fround(squaredZ + squaredXY);
+  const distance = Math.fround(Math.sqrt(squaredDistance));
+  const inverseCameraScale = Math.fround(1 / normalization.value.cameraScale);
+  const cameraNormalized = Math.fround(distance * inverseCameraScale);
+  const rate = Math.fround(cameraNormalized / normalization.value.gameplayScale);
+  return Number.isFinite(rate)
+    ? ok(rate)
+    : integrityFailure(
+        "manual-input.non-finite-screen-distance-rate",
+        "The ARM64 Float32 screen-to-world distance chain must remain finite.",
+      );
+}
+
+/** Shared Flick/Directional movement gate; the caller owns contact and graph state. */
+export function hasFlickMovement(
+  geometry: SimulatorManualInputGeometryBackend,
+  beganPosition: ManualInputPosition,
+  currentPosition: ManualInputPosition,
+  direction: "Left" | "Right" | null,
+  width = 1,
+): SimulatorResult<boolean> {
+  if (direction !== null && !(direction === "Left"
+    ? currentPosition.x < beganPosition.x : currentPosition.x > beganPosition.x)) return ok(false);
+  const rate = getManualScreenDistanceRate(geometry, {
+    beganPosition, currentPosition, horizontalOnly: direction !== null,
+  });
+  if (rate.status !== "ok") return rate;
+  if (rate.value <= float32FromBits(direction === null ? 0x3d23d70a : 0x3c23d70a)) return ok(false);
+  if (direction === null || width <= 1) return ok(true);
+  const full = getManualScreenDistanceRate(geometry, { beganPosition, currentPosition, horizontalOnly: false });
+  return full.status === "ok" ? ok(full.value > directionalGestureThreshold(width)) : full;
+}
+
+export function getSecondsWithDistance(
+  distance: number,
+  bpm: number,
+): SimulatorResult<number> {
+  if (!Number.isFinite(distance) || !isExactFiniteFloat32(bpm) || bpm <= 0) {
+    return integrityFailure(
+      "manual.judgement.invalid-distance-or-bpm",
+      "GetSecWithDistance requires finite signed distance and positive finite Float32 BPM.",
+    );
+  }
+  const secondsPerBar = SECONDS_PER_MINUTE_TIMES_FOUR / bpm;
+  const scaledDistance = secondsPerBar * distance;
+  const seconds = scaledDistance / MUSIC_BAR_DIVISION_COUNT;
+  return Number.isFinite(seconds)
+    ? ok(seconds)
+    : integrityFailure(
+        "manual.judgement.non-finite-distance-result",
+        "The common distance conversion must remain finite.",
+      );
+}
+
+export function getManualNoteResult(
+  sweetFrame: number,
+  differenceSeconds: number,
+): SimulatorResult<{
+  readonly result: NoteResultTypeValue;
+  readonly roundedFrame: number;
+}> {
+  if (!Number.isInteger(sweetFrame) || !isInt32(sweetFrame) || !Number.isFinite(differenceSeconds)) {
+    return integrityFailure(
+      "manual.judgement.invalid-result-input",
+      "GetResult requires an Int32 sweetFrame and a finite second difference.",
+    );
+  }
+  const frameDistance = Math.fround(differenceSeconds / FRAME_SECOND);
+  if (!Number.isFinite(frameDistance)) {
+    return integrityFailure(
+      "manual.judgement.non-finite-frame-distance",
+      "The recovered Float32 1/60 conversion must remain finite before rounding.",
+    );
+  }
+  const roundedFrame = roundToNearestEven(frameDistance);
+  let result: NoteResultTypeValue;
+  if (roundedFrame < sweetFrame + 3) {
+    result = NoteResultType.Perfect;
+  } else if (roundedFrame < sweetFrame + 6) {
+    result = NoteResultType.Great;
+  } else if (roundedFrame < sweetFrame + 7) {
+    result = NoteResultType.Good;
+  } else if (roundedFrame < sweetFrame + 8) {
+    result = NoteResultType.Bad;
+  } else {
+    result = NoteResultType.None;
+  }
+  return ok(Object.freeze({ result, roundedFrame }));
+}
+
+export function judgeManualNote(
+  sweetFrame: number,
+  notePosition: number,
+  currentPosition: number,
+  bpm: number,
+): SimulatorResult<ManualNoteJudgement> {
+  if (
+    !Number.isFinite(notePosition) ||
+    !Number.isFinite(currentPosition)
+  ) {
+    return integrityFailure(
+      "manual.judgement.invalid-position",
+      "JudgeNote requires finite note and adjusted music positions.",
+    );
+  }
+  const distance = Math.abs(notePosition - currentPosition);
+  const difference = getSecondsWithDistance(distance, bpm);
+  if (difference.status !== "ok") {
+    return difference;
+  }
+  const result = getManualNoteResult(sweetFrame, difference.value);
+  if (result.status !== "ok") {
+    return result;
+  }
+  const timing = result.value.result === NoteResultType.Perfect
+    ? JudgeTiming.None
+    : notePosition > currentPosition
+    ? JudgeTiming.Fast
+    : JudgeTiming.Slow;
+  return ok(Object.freeze({
+    result: result.value.result,
+    timing,
+    differenceSeconds: difference.value,
+    roundedFrame: result.value.roundedFrame,
+  }));
+}
+
+function roundToNearestEven(value: number): number {
+  const lower = Math.floor(value);
+  const fraction = value - lower;
+  return fraction < 0.5 || (fraction === 0.5 && lower % 2 === 0)
+    ? lower
+    : lower + 1;
+}
+
+function isExactFiniteFloat32(value: number): boolean {
+  return Number.isFinite(value) && Object.is(value, Math.fround(value));
+}
+
+function isInt32(value: number): boolean {
+  return value >= -0x80000000 && value <= 0x7fffffff;
+}
+
+function float32FromBits(bits: number): number {
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setUint32(0, bits, true);
+  return view.getFloat32(0, true);
+}

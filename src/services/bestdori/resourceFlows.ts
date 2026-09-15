@@ -1,21 +1,16 @@
-import { convertCurrentChartJsonToBestdoriV2 } from "../../chartFormatConverter";
+import {
+  convertGarupaChartJsonToBestdoriV2,
+  type GarupaChartJson,
+} from "../../chart";
 import type { ChartMetadata } from "../../chartCore";
 import {
-  BESTDORI_COMMON_TAP_SKILL_FILE_NAME,
   SONOLUS_TEST_SERVER_ROOT,
   bestdoriGetMe,
   buildBestdoriCommunityChartPostPayload,
   buildBestdoriUploadedFileUrl,
   createBestdoriCommunityChartPost,
-  ensureCommonSoundAsset,
   fetchBestdoriFileUploadStatus,
   prepareBestdoriFileUpload,
-  readBgSkinBinaryFileAsDataUrl,
-  readCommonSoundBinaryFileAsDataUrl,
-  readFieldSkinBinaryFileAsDataUrl,
-  readJudgeSkinBinaryFileAsDataUrl,
-  readSkinBinaryFileAsDataUrl,
-  readSoundBinaryFileAsDataUrl,
   NOTGARUPA_SERVER_ROOT,
   uploadNotGarupaLevel,
   uploadSonolusLevel,
@@ -23,71 +18,6 @@ import {
   type BestdoriPostTag,
   uploadBestdoriFile,
 } from "./api";
-
-type DataUrlReader = (path: string, fileName: string) => Promise<string>;
-
-export function normalizeLowercaseFileMap(fileMap: Record<string, string>): Record<string, string> {
-  const normalized: Record<string, string> = {};
-  for (const [name, value] of Object.entries(fileMap)) {
-    normalized[name.toLowerCase()] = value;
-  }
-  return normalized;
-}
-
-async function loadPreparedBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-  reader: DataUrlReader,
-): Promise<Record<string, string>> {
-  const entries = Object.entries(fileMap);
-  const loaded = await Promise.all(
-    entries.map(async ([name, path]) => {
-      const dataUrl = await reader(path, name);
-      return [name.toLowerCase(), dataUrl] as const;
-    }),
-  );
-  return Object.fromEntries(loaded);
-}
-
-export async function loadPreparedSkinBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readSkinBinaryFileAsDataUrl);
-}
-
-export async function loadPreparedSoundBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readSoundBinaryFileAsDataUrl);
-}
-
-export async function loadPreparedCommonSoundBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readCommonSoundBinaryFileAsDataUrl);
-}
-
-export async function loadPreparedFieldSkinBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readFieldSkinBinaryFileAsDataUrl);
-}
-
-export async function loadPreparedBgSkinBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readBgSkinBinaryFileAsDataUrl);
-}
-
-export async function loadPreparedJudgeSkinBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-): Promise<Record<string, string>> {
-  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readJudgeSkinBinaryFileAsDataUrl);
-}
-
-export async function ensureCommonTapSkillSeDataUrl(options?: { operationId?: string; server?: string | null }): Promise<string> {
-  const path = await ensureCommonSoundAsset(options?.operationId, options?.server);
-  return readCommonSoundBinaryFileAsDataUrl(path, BESTDORI_COMMON_TAP_SKILL_FILE_NAME);
-}
 
 export interface UploadBestdoriFileFlowParams {
   fileName: string;
@@ -237,7 +167,6 @@ export async function uploadBestdoriFileFlow(
 }
 
 const BESTDORI_POST_URL_ROOT = "https://bestdori.com/community/charts";
-const BESTDORI_UPLOAD_FILE_URL_RE = /^https?:\/\/(?:www\.)?bestdori\.com\/api\/upload\/file\/([0-9a-f]{40})$/i;
 const BESTDORI_DIFFICULTY_TO_DIFF: Readonly<Record<ChartMetadata["difficulty"], number>> = {
   EASY: 0,
   NORMAL: 1,
@@ -256,12 +185,14 @@ export type PublishBestdoriCommunityChartStage =
   | "posting";
 
 export interface PublishBestdoriCommunityChartFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
-  audioSourceUrl?: string | null;
-  audioFileName?: string | null;
-  coverSourceUrl?: string | null;
-  coverFileName?: string | null;
+  audioFileBytes: Uint8Array;
+  audioFileName: string;
+  audioMimeType: string;
+  coverFileBytes: Uint8Array;
+  coverFileName: string;
+  coverMimeType: string;
   contentText?: string | null;
   tags?: BestdoriPostTag[] | null;
   onStage?: (stage: PublishBestdoriCommunityChartStage) => void;
@@ -299,110 +230,17 @@ function sanitizeFileNameSegment(value: string): string {
     .trim();
 }
 
-function resolveFileNameFromUrl(url: string, fallback: string): string {
-  try {
-    const parsed = new URL(url);
-    const tail = parsed.pathname.split("/").filter((item) => item.length > 0).pop();
-    if (tail) {
-      const decoded = decodeURIComponent(tail);
-      const normalized = sanitizeFileNameSegment(decoded);
-      if (normalized.length > 0) {
-        return normalized;
-      }
-    }
-  } catch {
-    // ignore and use fallback
-  }
-  return fallback;
-}
-
-function normalizeBestdoriUploadedFileUrlOrNull(url: string | null): string | null {
-  if (!url) {
-    return null;
-  }
-  const matched = BESTDORI_UPLOAD_FILE_URL_RE.exec(url);
-  if (!matched) {
-    return null;
-  }
-  return buildBestdoriUploadedFileUrl(matched[1]);
-}
-
-function inferMimeTypeByExtension(fileName: string, fallbackMimeType: string): string {
-  const normalized = fileName.trim().toLowerCase();
-  if (normalized.endsWith(".mp3")) {
-    return "audio/mpeg";
-  }
-  if (normalized.endsWith(".wav")) {
-    return "audio/wav";
-  }
-  if (normalized.endsWith(".ogg")) {
-    return "audio/ogg";
-  }
-  if (normalized.endsWith(".png")) {
-    return "image/png";
-  }
-  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) {
-    return "image/jpeg";
-  }
-  if (normalized.endsWith(".webp")) {
-    return "image/webp";
-  }
-  return fallbackMimeType;
-}
-
-function extractMimeTypeFromDataUrl(url: string): string | null {
-  const matched = /^data:([^;,]+)[;,]/i.exec(url);
-  if (!matched) {
-    return null;
-  }
-  const mimeType = matched[1]?.trim().toLowerCase() ?? "";
-  return mimeType.length > 0 ? mimeType : null;
-}
-
-function hasSvItems(chartJson: unknown): boolean {
-  if (!Array.isArray(chartJson)) {
+function hasSvItems(garupaChartJson: GarupaChartJson): boolean {
+  if (!Array.isArray(garupaChartJson)) {
     return false;
   }
-  return chartJson.some((item) => {
+  return garupaChartJson.some((item) => {
     if (!item || typeof item !== "object") {
       return false;
     }
     const type = (item as { type?: unknown }).type;
     return type === "SV";
   });
-}
-
-async function resolvePostSongFileUrl(
-  sourceUrl: string | null,
-  preferredFileName: string | null,
-  fallbackFileName: string,
-  fallbackMimeType: string,
-  onUploadStage?: () => void,
-): Promise<string | null> {
-  if (!sourceUrl) {
-    return null;
-  }
-
-  const reused = normalizeBestdoriUploadedFileUrlOrNull(sourceUrl);
-  if (reused) {
-    return reused;
-  }
-
-  const sourceFile = await resolveUploadSourceFile(
-    sourceUrl,
-    preferredFileName,
-    fallbackFileName,
-    fallbackMimeType,
-  );
-
-  onUploadStage?.();
-
-  const uploaded = await uploadBestdoriFileFlow({
-    fileName: sourceFile.fileName,
-    fileData: sourceFile.fileBytes,
-    mimeType: sourceFile.mimeType,
-  });
-  return uploaded.fileUrl;
 }
 
 function buildPostUrl(postId: number): string {
@@ -423,50 +261,36 @@ export async function publishBestdoriCommunityChartFlow(
   const level = normalizePositiveIntegerOrNull(metadata.difficultyLevel) ?? 1;
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "Untitled Chart";
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
-  const chartSource = params.chartJson;
-  const svDropped = hasSvItems(chartSource);
+  const garupaChartJson = params.garupaChartJson;
+  const svDropped = hasSvItems(garupaChartJson);
 
   params.onStage?.("converting-chart");
-  const bestdoriChart = convertCurrentChartJsonToBestdoriV2(chartSource);
-  if (!Array.isArray(bestdoriChart) || bestdoriChart.length <= 0) {
+  const bestdoriV2ChartJson = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
+  if (!Array.isArray(bestdoriV2ChartJson) || bestdoriV2ChartJson.length <= 0) {
     throw new Error("converted bestdori chart is empty");
   }
 
   const titleFileStem = sanitizeFileNameSegment(title ?? "chart") || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
-  const normalizedCoverSource = trimNonEmptyStringOrNull(params.coverSourceUrl) ?? trimNonEmptyStringOrNull(metadata.coverDataUrl);
-  if (!normalizedAudioSource) {
+  if (!(params.audioFileBytes instanceof Uint8Array) || params.audioFileBytes.byteLength === 0) {
     throw new Error("社区谱面上传需要歌曲音频，请先在谱面信息中上传音频。");
   }
-  if (!normalizedCoverSource) {
+  if (!(params.coverFileBytes instanceof Uint8Array) || params.coverFileBytes.byteLength === 0) {
     throw new Error("社区谱面上传需要歌曲封面，请先在谱面信息中上传封面。");
   }
-  const audioFallbackName = `${titleFileStem}.mp3`;
-  const coverFallbackName = `${titleFileStem}.png`;
-
   params.onStage?.("resolving-audio");
-  const audioUrl = await resolvePostSongFileUrl(
-    normalizedAudioSource,
-    trimNonEmptyStringOrNull(params.audioFileName),
-    audioFallbackName,
-    "audio/mpeg",
-    () => params.onStage?.("uploading-audio"),
-  );
-  if (!audioUrl) {
-    throw new Error("社区谱面上传需要有效歌曲音频地址。");
-  }
-
+  params.onStage?.("uploading-audio");
+  const audioUrl = (await uploadBestdoriFileFlow({
+    fileName: trimNonEmptyStringOrNull(params.audioFileName) ?? `${titleFileStem}.mp3`,
+    fileData: params.audioFileBytes,
+    mimeType: params.audioMimeType,
+  })).fileUrl;
   params.onStage?.("resolving-cover");
-  const coverUrl = await resolvePostSongFileUrl(
-    normalizedCoverSource,
-    trimNonEmptyStringOrNull(params.coverFileName),
-    coverFallbackName,
-    "image/png",
-    () => params.onStage?.("uploading-cover"),
-  );
-  if (!coverUrl) {
-    throw new Error("社区谱面上传需要有效歌曲封面地址。");
-  }
+  params.onStage?.("uploading-cover");
+  const coverUrl = (await uploadBestdoriFileFlow({
+    fileName: trimNonEmptyStringOrNull(params.coverFileName) ?? `${titleFileStem}.png`,
+    fileData: params.coverFileBytes,
+    mimeType: params.coverMimeType,
+  })).fileUrl;
 
   const song = {
     type: "custom" as const,
@@ -490,7 +314,7 @@ export async function publishBestdoriCommunityChartFlow(
     artists,
     diff,
     level,
-    chart: bestdoriChart,
+    chart: bestdoriV2ChartJson,
     content,
     song,
     tags: normalizedTags,
@@ -536,12 +360,11 @@ const NOTGARUPA_LEVEL_URL_ROOT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
 export type UploadSonolusLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
 export interface UploadSonolusLevelFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
-  audioSourceUrl?: string | null;
-  audioFileName?: string | null;
-  coverSourceUrl?: string | null;
-  coverFileName?: string | null;
+  audioFileBytes: Uint8Array;
+  audioFileName: string;
+  audioMimeType: string;
   description?: string | null;
   tags?: BestdoriPostTag[] | null;
   difficulty?: number;
@@ -568,12 +391,14 @@ function buildSonolusChartUrl(uid: string): string {
 export type UploadNotGarupaLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
 export interface UploadNotGarupaLevelFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
-  audioSourceUrl?: string | null;
-  audioFileName?: string | null;
-  coverSourceUrl?: string | null;
-  coverFileName?: string | null;
+  audioFileBytes: Uint8Array;
+  audioFileName: string;
+  audioMimeType: string;
+  coverFileBytes: Uint8Array;
+  coverFileName: string;
+  coverMimeType: string;
   description?: string | null;
   tags?: BestdoriPostTag[] | null;
   difficulty?: number;
@@ -596,77 +421,32 @@ function buildNotGarupaChartUrl(uid: string): string {
   return `${NOTGARUPA_LEVEL_URL_ROOT}/${uid}/chart.json`;
 }
 
-interface ResolvedUploadSourceFile {
-  fileName: string;
-  fileBytes: Uint8Array;
-  mimeType: string;
-}
-
-async function resolveUploadSourceFile(
-  sourceUrl: string,
-  preferredFileName: string | null,
-  fallbackFileName: string,
-  fallbackMimeType: string,
-): Promise<ResolvedUploadSourceFile> {
-  const response = await fetch(sourceUrl, {
-    method: "GET",
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`source fetch failed: ${response.status}`);
-  }
-  const blob = await response.blob();
-  const fileBytes = new Uint8Array(await blob.arrayBuffer());
-  if (fileBytes.length <= 0) {
-    throw new Error("source blob is empty");
-  }
-  const fallbackNameNormalized = sanitizeFileNameSegment(fallbackFileName) || fallbackFileName;
-  const sourceTailName = resolveFileNameFromUrl(sourceUrl, fallbackNameNormalized);
-  const fileName = sanitizeFileNameSegment(preferredFileName ?? "") || sourceTailName;
-  const mimeTypeFromDataUrl = sourceUrl.startsWith("data:") ? extractMimeTypeFromDataUrl(sourceUrl) : null;
-  const mimeType = (mimeTypeFromDataUrl ?? blob.type) || inferMimeTypeByExtension(fileName, fallbackMimeType);
-  return {
-    fileName,
-    fileBytes,
-    mimeType,
-  };
-}
-
 export async function uploadSonolusLevelFlow(
   params: UploadSonolusLevelFlowParams,
 ): Promise<UploadSonolusLevelFlowResult> {
   const metadata = params.metadata;
-  const chartSource = params.chartJson;
-  const svDropped = hasSvItems(chartSource);
+  const garupaChartJson = params.garupaChartJson;
+  const svDropped = hasSvItems(garupaChartJson);
 
   params.onStage?.("converting-chart");
-  const bestdoriChart = convertCurrentChartJsonToBestdoriV2(chartSource);
-  if (!Array.isArray(bestdoriChart) || bestdoriChart.length <= 0) {
+  const bestdoriV2ChartJson = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
+  if (!Array.isArray(bestdoriV2ChartJson) || bestdoriV2ChartJson.length <= 0) {
     throw new Error("converted bestdori chart is empty");
   }
-  const chartJsonText = JSON.stringify(bestdoriChart);
+  const bestdoriV2ChartJsonText = JSON.stringify(bestdoriV2ChartJson);
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
-  const titleFileStem = sanitizeFileNameSegment(title) || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
-  if (!normalizedAudioSource) {
-    throw new Error("sonolus upload requires audio source");
+  if (!(params.audioFileBytes instanceof Uint8Array) || params.audioFileBytes.byteLength === 0) {
+    throw new Error("sonolus upload requires audio resource bytes");
   }
   params.onStage?.("resolving-audio");
-  const audioSourceFile = await resolveUploadSourceFile(
-    normalizedAudioSource,
-    trimNonEmptyStringOrNull(params.audioFileName),
-    `${titleFileStem}.mp3`,
-    "audio/mpeg",
-  );
-
   params.onStage?.("uploading");
   const uid = await uploadSonolusLevel({
     title,
-    chart: chartJsonText,
-    bgmFileName: audioSourceFile.fileName,
-    bgmFileBytes: audioSourceFile.fileBytes,
-    bgmMimeType: audioSourceFile.mimeType,
+    chart: bestdoriV2ChartJsonText,
+    bgmFileName: params.audioFileName,
+    bgmFileBytes: params.audioFileBytes,
+    bgmMimeType: params.audioMimeType,
     difficulty: params.difficulty,
     lifetime: params.lifetime,
     hidden: params.hidden,
@@ -684,40 +464,25 @@ export async function uploadNotGarupaLevelFlow(
   params: UploadNotGarupaLevelFlowParams,
 ): Promise<UploadNotGarupaLevelFlowResult> {
   const metadata = params.metadata;
-  const chartSource = params.chartJson;
+  const garupaChartJson = params.garupaChartJson;
 
   params.onStage?.("converting-chart");
-  if (!Array.isArray(chartSource) || chartSource.length <= 0) {
+  if (!Array.isArray(garupaChartJson) || garupaChartJson.length <= 0) {
     throw new Error("garupa chart is empty");
   }
-  const chartJsonText = JSON.stringify(chartSource);
+  const garupaChartJsonText = JSON.stringify(garupaChartJson);
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
   const author = trimNonEmptyStringOrNull(metadata.charter) ?? "GarupaEditor";
-  const titleFileStem = sanitizeFileNameSegment(title) || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
-  if (!normalizedAudioSource) {
-    throw new Error("上传至 NotGarupa 服务器需要歌曲音频，请先在谱面信息中上传音频。");
+  if (!(params.audioFileBytes instanceof Uint8Array) || params.audioFileBytes.byteLength === 0) {
+    throw new Error("上传至 NotGarupa 服务器需要歌曲音频资源。");
   }
-  const normalizedCoverSource = trimNonEmptyStringOrNull(params.coverSourceUrl) ?? trimNonEmptyStringOrNull(metadata.coverDataUrl);
-  if (!normalizedCoverSource) {
-    throw new Error("上传至 NotGarupa 服务器需要歌曲封面，请先在谱面信息中上传封面。");
+  if (!(params.coverFileBytes instanceof Uint8Array) || params.coverFileBytes.byteLength === 0) {
+    throw new Error("上传至 NotGarupa 服务器需要歌曲封面资源。");
   }
   params.onStage?.("resolving-audio");
-  const audioSourceFile = await resolveUploadSourceFile(
-    normalizedAudioSource,
-    trimNonEmptyStringOrNull(params.audioFileName),
-    `${titleFileStem}.mp3`,
-    "audio/mpeg",
-  );
   params.onStage?.("resolving-cover");
-  const coverSourceFile = await resolveUploadSourceFile(
-    normalizedCoverSource,
-    trimNonEmptyStringOrNull(params.coverFileName),
-    `${titleFileStem}.png`,
-    "image/png",
-  );
   const tags = Array.isArray(params.tags)
     ? params.tags
       .map((tag) => trimNonEmptyStringOrNull(tag?.data))
@@ -727,14 +492,14 @@ export async function uploadNotGarupaLevelFlow(
   params.onStage?.("uploading");
   const uid = await uploadNotGarupaLevel({
     title,
-    chart: chartJsonText,
+    chart: garupaChartJsonText,
     chartFileName: "chart.json",
-    bgmFileName: audioSourceFile.fileName,
-    bgmFileBytes: audioSourceFile.fileBytes,
-    bgmMimeType: audioSourceFile.mimeType,
-    coverFileName: coverSourceFile.fileName,
-    coverFileBytes: coverSourceFile.fileBytes,
-    coverMimeType: coverSourceFile.mimeType,
+    bgmFileName: params.audioFileName,
+    bgmFileBytes: params.audioFileBytes,
+    bgmMimeType: params.audioMimeType,
+    coverFileName: params.coverFileName,
+    coverFileBytes: params.coverFileBytes,
+    coverMimeType: params.coverMimeType,
     artists,
     author,
     description: trimNonEmptyStringOrNull(params.description) ?? "",
@@ -750,5 +515,3 @@ export async function uploadNotGarupaLevelFlow(
     chartUrl: buildNotGarupaChartUrl(uid),
   };
 }
-
-export { BESTDORI_COMMON_TAP_SKILL_FILE_NAME };

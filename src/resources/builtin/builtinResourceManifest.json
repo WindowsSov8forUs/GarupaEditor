@@ -1,0 +1,565 @@
+{
+  "storageSchema": 1,
+  "entries": [
+    {
+      "path": "default-cover.png",
+      "byteLength": 14086,
+      "sha256": "9395BE5EF1E67A523D45709361C4429435DABCA76BD3534F8AB4C4CCACB52797"
+    },
+    {
+      "path": "fonts/GB18030.ttf",
+      "byteLength": 17507340,
+      "sha256": "01BBB65B3B21F8D445FE15412FC3B5864425033F534464BE26DE0AA7ED8150C0"
+    },
+    {
+      "path": "fonts/TTShinGoM.ttf",
+      "byteLength": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    {
+      "path": "game/atlas/bms/ui/iconcombonumber/combo-number.png",
+      "byteLength": 137053,
+      "sha256": "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C"
+    },
+    {
+      "path": "game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png",
+      "byteLength": 464153,
+      "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533"
+    },
+    {
+      "path": "game/atlas/bms/ui/rhythmgameui/rhythm-game-ui.png",
+      "byteLength": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-1.png",
+      "byteLength": 14137,
+      "sha256": "14AA04909EB54FAF55A479B512D8AF5E8745AEAC7F330CA9F2EE2B7353B09F3D"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-2.png",
+      "byteLength": 11402,
+      "sha256": "0683902F48E0CE8662B716227FDCA5DDFFECC979DCB1BC1C70AB2A5BB21CE113"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-3.png",
+      "byteLength": 7630,
+      "sha256": "D53F90B1F97D5ACFB461A46E3BF2250B07191A6E5BFACED6166A3A27E53FD0CA"
+    },
+    {
+      "path": "game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-4.png",
+      "byteLength": 5535,
+      "sha256": "5710C5079FCCDE25C2638074AFDD8FFE5A3B8305FF5BCAD1986DE82F4EF43B48"
+    },
+    {
+      "path": "game/atlas/bms/ui/ui-additive-effect/ui-additive-effect.png",
+      "byteLength": 20188,
+      "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E"
+    },
+    {
+      "path": "game/atlas/bms/ui/uicommon/ui-common.png",
+      "byteLength": 43935,
+      "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
+    },
+    {
+      "path": "game/fonts/sgm/rank-label-font.ttf",
+      "byteLength": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    {
+      "path": "game/loading/background.png",
+      "byteLength": 1170,
+      "sha256": "CDA5675E68C428323ACCFD81CDA08EC1E5BDC98A92ABE0D0C878A5D6A77582A8"
+    },
+    {
+      "path": "game/loading/bg_base_r12.png",
+      "byteLength": 353,
+      "sha256": "AFC5DD18D6D02E0B5ABD8CF57B15CE51697E471108F8A6EA4A26D85D86FFD131"
+    },
+    {
+      "path": "game/loading/bg_dialog_caption.png",
+      "byteLength": 1120,
+      "sha256": "1A0DFCB41B3CFEA6BCA4A8C4F570E7B71A7FE758E811B87E048320A779387B02"
+    },
+    {
+      "path": "game/loading/comic_001.png",
+      "byteLength": 145298,
+      "sha256": "B3A98C09170DA1DA1E17AACFED6B737D822D16A3DB9F7A91B19FA707B45F351C"
+    },
+    {
+      "path": "game/loading/frame_back.png",
+      "byteLength": 1015,
+      "sha256": "AAEC2AC846D6073D1AA86D7EF0123F93E81B5BB21AC25138BC45F574C5E8FB82"
+    },
+    {
+      "path": "game/loading/icon_guitar.png",
+      "byteLength": 2588,
+      "sha256": "16AF077FFF42E437AF5498E664588FD098894713DE14BE3BD4DC3FA67C5B2E77"
+    },
+    {
+      "path": "game/loading/icon_onpu1.png",
+      "byteLength": 1223,
+      "sha256": "22C73770F34C3CCD63EE32E89A5A8CB0A8C83AFB83B1ABB3908A1CDA12978A25"
+    },
+    {
+      "path": "game/loading/icon_onpu2.png",
+      "byteLength": 1281,
+      "sha256": "ADE28C180AC1C969E45F9E2445A44B633A77C5CECF544FB68487B0219846BA07"
+    },
+    {
+      "path": "game/loading/nowloading.png",
+      "byteLength": 4231,
+      "sha256": "896BF9DDCAA7B7C4B7A459562DA0BE89CB33FFD5D0F33487DB870BACE893DE88"
+    },
+    {
+      "path": "game/loading/onpu_shadow.png",
+      "byteLength": 278,
+      "sha256": "9FA14ACB50A3320F42C82AF6D7688E7667AFBF2F1D7877295FB2ABA9A4E00F70"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "byteLength": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/directional-tex_parSet_1.png",
+      "byteLength": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Default-Particle.png",
+      "byteLength": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/effect_circle.png",
+      "byteLength": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/light.png",
+      "byteLength": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "byteLength": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "byteLength": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/profile.json",
+      "byteLength": 694706,
+      "sha256": "76BF01D064D4D4C3D11192FFA07311669595C16164C8CD5D9C764C1042711185"
+    },
+    {
+      "path": "game/portable/profiles/default-particle/textures.json",
+      "byteLength": 3888,
+      "sha256": "D686C83270716E7299480023B7751CC23EDAC1CF53C4B04D7557B2FC9320808B"
+    },
+    {
+      "path": "game/portable/profiles/ordinary-render/profile.json",
+      "byteLength": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
+    },
+    {
+      "path": "game/portable/profiles/ordinary-visible/profile.json",
+      "byteLength": 28809,
+      "sha256": "88F0EEC71F2439D28FBBF0C43105F67F118D034AEE7B25091969E82F02355B3C"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_--A3BA440F58BA.png",
+      "byteLength": 453,
+      "sha256": "ACC20178440107A8C2DA4666FA79B0A1087D0D6CB48BBEA1B06F62DA64AB9839"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_A-128DBB295661.png",
+      "byteLength": 15529,
+      "sha256": "9A5071D0EB2A7A3ED489E1C2BC6B97343727AAFFF599DDC6FD249DBC2676DC70"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_C-4E6E52DFD15A.png",
+      "byteLength": 15128,
+      "sha256": "8F6290728EA3BF81E5CC069DE864C8A37E8C8E6026B63BC8668A4AE510CE233C"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_E_1-C9BA0359B42B.png",
+      "byteLength": 11191,
+      "sha256": "09FDFA4C4CB9AC4D6A4AC6DCABCBCC43FE64799FA5EA4BD5DC177F320D7B9090"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_e_2-6904C32130BB.png",
+      "byteLength": 1079,
+      "sha256": "1CC73F4A04BD2BE105641B78612E4982CB76C9867AC0EB4AFF79DCC34A9B3549"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_F-414E7DD71C28.png",
+      "byteLength": 9506,
+      "sha256": "1DD31271D3B35DAEB49664EF87CC5B36CF2D202F0DA0AC728F1B353A3F082B07"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_fu-96000BD8DFBE.png",
+      "byteLength": 1300,
+      "sha256": "524E010BF700432D563A062B1D40B863BA58EBBB1FB159C84CAE549BFF7DDB95"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_ku-711F3EF6A5B1.png",
+      "byteLength": 1661,
+      "sha256": "B626254F52D5F5547A3622CE6530D52158FF8E44AFFDE512FB0E1894B0C74B43"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_L-78BBF7C63D71.png",
+      "byteLength": 8527,
+      "sha256": "C4D07ED123A406560BF1315B4DEFF805F994DAA03F66DF16820E2914B9930636"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_o-D502DAE04E88.png",
+      "byteLength": 1710,
+      "sha256": "34B57CBB04EC75A14202B0928B0167B543B37B9A648A99667C82C5DADD1CFCAC"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_P-EE4423100630.png",
+      "byteLength": 10661,
+      "sha256": "EE649117398CD2CAEE7BC06A6E1CE5A0C8F9ACE53D6D3BED9DA55E151DE5A4CF"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_pa-A7BBBE0FAEAA.png",
+      "byteLength": 2020,
+      "sha256": "61394F05C5FEB16ACCDB758D34B486B9B75D60051804739F36B9B570A2CFF795"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_R-412309338FC8.png",
+      "byteLength": 13720,
+      "sha256": "A0422DD345B01025B027E682B5E4E6EAA31C5FC2689AFDE792F9F7C2A5E08382"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_ru-27F859425593.png",
+      "byteLength": 2016,
+      "sha256": "CA611C5E3BFA94E4179CB410D8C311E56BF01FFAF270D12C4294A89F97642068"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_star-7FD3FBF99A6E.png",
+      "byteLength": 5302,
+      "sha256": "822CC030173A3AC3E237E90EA66C69BD1F61A9EFFC5D07F932DEE0A749AD2B56"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_T-5618F22BF1EC.png",
+      "byteLength": 8346,
+      "sha256": "8B54503D348A51CD7B7D343E05A9C08EF5E4231134B0344FCDE6309FB113E813"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_Thunder-7B2A65ED8D4A.png",
+      "byteLength": 11294,
+      "sha256": "476A9BC9465CA96710A9287DB66FECB58ACCEC4C43B919F913B99500848271A2"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/AllPerfect_to-F66DAA868FFA.png",
+      "byteLength": 1400,
+      "sha256": "BECD8BEFD76F7149E7DD7ED4707F56A6A0919A792BCEA3330C943B542822A6AB"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_B-21DE197D24C2.png",
+      "byteLength": 9064,
+      "sha256": "F43B8793AA670C3559666E1E5F2051F37ED66445B6C72E4F16428FA559F9C4A5"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_bo-748F555F4EB0.png",
+      "byteLength": 2800,
+      "sha256": "F879FDC9188412FF28CBCB8664E44049763E912B1195A8FFD42464953BFADC80"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_C-6604C59BBF04.png",
+      "byteLength": 11146,
+      "sha256": "F193DE40C6F3FF44D26FD4436CC5FA07E188105EB19A2C11A8BE96E8599615E1"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_F-F0202DE6EB77.png",
+      "byteLength": 5801,
+      "sha256": "C4041486ECA39E6C99C1D89ADC49DD9824D541081514D861A441D3EC1FD1D75A"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_fu-0E4B7C573B42.png",
+      "byteLength": 2154,
+      "sha256": "A9BBC540799929FE55F87313BCF93BB7EC0A0AD97ACE1F56B78159AA0B80B9AF"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_ko-B515E2F47FC5.png",
+      "byteLength": 1917,
+      "sha256": "A62CB93A34559EA1FE6D33A9379E51641DAE6580591D374EE6EFA12F873CBA34"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_L-001D2D7A72A3.png",
+      "byteLength": 5297,
+      "sha256": "88C88E2F0B26F03F761AEF615F6AF9A7B4771BE5304CA00D2C93830EFC6CD447"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_M-8F2EB8EC8D8B.png",
+      "byteLength": 14441,
+      "sha256": "64887C9B5C8C16D257AB32E9F1B58BFFBA4C2613D5972D1D40684192EB8D99F6"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_O-D5D3B618F2B5.png",
+      "byteLength": 13183,
+      "sha256": "1BDFE2994CCA3D46273CAA3BAE5BF6DA05D834DA12A4737956A30B9697381576"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_ru-102D11889A10.png",
+      "byteLength": 2713,
+      "sha256": "7A666BFA6FFB3813E0DE7CA9A097872FC868B17AA8720C0E950BBD578CA85916"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_star-C44B04E96491.png",
+      "byteLength": 5071,
+      "sha256": "779258191A4D51129E584E1884B4334EC60CDD21D708BF0294BE600E92C14699"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_thunder-237A4915F2CA.png",
+      "byteLength": 7589,
+      "sha256": "AAC0288F08FD96BBACBD375CD4F7023532F18B63465BE81D3E50507222D2E8BC"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_U-55801FB5E0AB.png",
+      "byteLength": 8943,
+      "sha256": "633F68E681FE5551D60726850E97F04054A02EB50176FCFC43EC24DE1642B7F5"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/FullCombo_un-ED49CDED2ADF.png",
+      "byteLength": 2701,
+      "sha256": "217746C38CEE237533FE3453D55D2232C012BBEBE1D9D92135D091E047AAC5A9"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/game-clear-native-semantic-profile.json",
+      "byteLength": 75408,
+      "sha256": "19A32E6652E17BFD637B39C21F9565E0B4431035737D4F100002D9A896482F14"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/game-clear-profile.json",
+      "byteLength": 2237033,
+      "sha256": "558FFBC854ADA8D064D98FDC53C90D2A7DDC1ACF79368F8DB5806222CC5BCDDB"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/Tex_parSet_1-E114CC275B2B.png",
+      "byteLength": 247000,
+      "sha256": "4A51D6BDF84987FB63834B366E4DFF61EEEAAB96416970EEDEFA357435FDD92E"
+    },
+    {
+      "path": "game/prefabs/bms/gameclear/Tex_parSet_2-E9CE6B25A9A1.png",
+      "byteLength": 223909,
+      "sha256": "0EC337E4C64C7F02592EDF68A97A9A7EA8C87EA81E80BAEB762FC74C229CE7E2"
+    },
+    {
+      "path": "game/prefabs/bms/information/startup-line-star.png",
+      "byteLength": 10967,
+      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D"
+    },
+    {
+      "path": "game/prefabs/bms/information/startup-title-base.png",
+      "byteLength": 281,
+      "sha256": "FE40627CE6D725EC64C81CC75D3FC88BD4F2C507F56B49B579172065C1B21FCD"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-1.png",
+      "byteLength": 2024,
+      "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-2.png",
+      "byteLength": 10393,
+      "sha256": "9E2D4F2E5A1BD380081CD9A9AFA1D34A5B65FBA4D7216A2A5702ACF6934ABA8B"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-3.png",
+      "byteLength": 12514,
+      "sha256": "630AD98434CFBAA7AD2E8954680A130051ED8DD655DC5160DD9C2429D2893E9F"
+    },
+    {
+      "path": "game/prefabs/bms/pause/countdown-animation-profile.json",
+      "byteLength": 35030,
+      "sha256": "EB6414AFC01AA77FCA63DC7BBEB54BE34A30FD7D1E565BA48CDE09D962114E56"
+    },
+    {
+      "path": "game/prefabs/bms/result/LoginBonus.png",
+      "byteLength": 202127,
+      "sha256": "253C5D9B67EF8DFE589F166E3ADC57D69B6A4D2D086E28FFF6E93E446C810918"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-banner.png",
+      "byteLength": 1701568,
+      "sha256": "53931445365C4F03138EFBEC73613CA48616770A911C935922E4D7DB72A57367"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-menu.png",
+      "byteLength": 2231437,
+      "sha256": "D07EEFBCA0817174DE1199215E801D6A495AEC1602BD90D651F027C2EDF9F8AA"
+    },
+    {
+      "path": "game/prefabs/bms/result/rhythmBG.png",
+      "byteLength": 720224,
+      "sha256": "54D8235EA3BDC0CD1B889EAD82652EBEF33140F4EF850E574DBF46687CC5394C"
+    },
+    {
+      "path": "game/prefabs/bms/result/Tex_parSet_1.png",
+      "byteLength": 227776,
+      "sha256": "1CF604F72629777C36DBD1322A6E6F1AE7912F97EC30016EDCA9AF414E8B6E7C"
+    },
+    {
+      "path": "game/prefabs/bms/result/Tex_parSet_2.png",
+      "byteLength": 219812,
+      "sha256": "341D828873B5A744CDBE254CF6B70F4FE5DC268B9B7CC60B2239D918647178E5"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png",
+      "byteLength": 2002,
+      "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png",
+      "byteLength": 5658,
+      "sha256": "2F2BBA614FA19EA9D013D880687AF8F4EFC420A86B45E69412F41331671C2A4E"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/high-rank-overlay.png",
+      "byteLength": 908,
+      "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594"
+    },
+    {
+      "path": "game/prefabs/bms/rhythmgamegauge/score/score-hud-native-profile.json",
+      "byteLength": 140924,
+      "sha256": "C487F13EF46209ACF101A15A92C057679F9AB1D06986CBFCC60D2FA1A1E029F8"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-dark-cover.png",
+      "byteLength": 855,
+      "sha256": "64B828193CF4FC523412E56997A7C0A33AC0D2771395335B904A58D1333A146D"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-light.png",
+      "byteLength": 4379,
+      "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-psyllium.png",
+      "byteLength": 4811,
+      "sha256": "210805D32A663DEB517699D9A3C132C9736484D195DE53B0F94F18109F9101BD"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-speaker-glow.png",
+      "byteLength": 19194,
+      "sha256": "253BCC151DFCE9970E6FF489D323B54AF569E3C11BAE6FAF91C55509A6F9E07D"
+    },
+    {
+      "path": "game/prefabs/bms/stage/stage-speaker.png",
+      "byteLength": 49298,
+      "sha256": "64E6B46209A632EA51EE7CA548FD0D52DDF7D4B03D6A0D3C226385F621B1FDDB"
+    },
+    {
+      "path": "game/sound/common-se/decide_1.mp3",
+      "byteLength": 17690,
+      "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"
+    },
+    {
+      "path": "game/sound/result/after_live.mp3",
+      "byteLength": 942516,
+      "sha256": "043B6250F4078E0ADDFE5F3175BB2F8A8EBE58957B566D210FAE59C34570AA2A"
+    },
+    {
+      "path": "icons/apply-action.svg",
+      "byteLength": 552,
+      "sha256": "E3EC9859FF144CC23D022434C666B5AB7F412F5E0C91B3E8F6F93619A2BCF1FD"
+    },
+    {
+      "path": "icons/back-arrow.svg",
+      "byteLength": 499,
+      "sha256": "2708E20AFE3A41EED8866B531521F2D09308581EE1C0252682709C7F919DECF0"
+    },
+    {
+      "path": "icons/clear-action.svg",
+      "byteLength": 828,
+      "sha256": "770E64C203FFC8D6B8EB403BAE19353B776E7A0A6726D244D4033F5A4430DF67"
+    },
+    {
+      "path": "icons/copy-action.svg",
+      "byteLength": 346,
+      "sha256": "F6D131D11489C165BF7708E80448EF2AFCD362F6797DC31ABDD7EAF45A47896C"
+    },
+    {
+      "path": "icons/display.svg",
+      "byteLength": 2616,
+      "sha256": "49220C8E690E930AA1E5DC04E31F9188E8AE91C0C07275747FD12F5649F87C8A"
+    },
+    {
+      "path": "icons/edit.svg",
+      "byteLength": 3457,
+      "sha256": "79773C76E2DD8458D28D2CE7B2F7A263261D89CA358DF60B316B4FDFA6EF3B28"
+    },
+    {
+      "path": "icons/image-export.svg",
+      "byteLength": 1675,
+      "sha256": "E6061F9F1569F174070C03CE1A1BF1DDB36C2F9C82EBB5BD865DC9A580BF05B3"
+    },
+    {
+      "path": "icons/json-export.svg",
+      "byteLength": 1426,
+      "sha256": "EF8B4F706BD44E0776A002DBD11C44B4E81AB157538A353DB192010BAD9FF616"
+    },
+    {
+      "path": "icons/json-import.svg",
+      "byteLength": 1426,
+      "sha256": "72F1B8DFBD85C2AD8C3E2AC7131A32D4A338CB050728B0388F6116203159C437"
+    },
+    {
+      "path": "icons/mirror-action.svg",
+      "byteLength": 597,
+      "sha256": "4B8D67DFD5A69EC9D3C960F4F7B84E33AD4378D43545D4AA6B9FD6730DC0E179"
+    },
+    {
+      "path": "icons/options-title.svg",
+      "byteLength": 641,
+      "sha256": "AA36F2F8C4EE905E627EF7623E27BB4317F570A1FC235D25C660930FA836C728"
+    },
+    {
+      "path": "icons/paste-action.svg",
+      "byteLength": 533,
+      "sha256": "4958C683360F1196B23CC69109A2A00E8D7A8FB9139B5A9EC5D9F4A3647F1D35"
+    },
+    {
+      "path": "icons/preview.svg",
+      "byteLength": 3852,
+      "sha256": "2672575D7022983E87FCD228E03F1FC80CF0266111142ADBFAE92A1FF1D90619"
+    },
+    {
+      "path": "icons/settings.svg",
+      "byteLength": 2524,
+      "sha256": "BB0271E98458AE33111BBEBC9B8EDC954E591768A9222E880417DA508F4E40B0"
+    },
+    {
+      "path": "icons/simulator-pause.svg",
+      "byteLength": 458,
+      "sha256": "F789AEEBFBAEB883DBF460323DB6120A9C40EB3FA06474D6A9FEE7B67D603940"
+    },
+    {
+      "path": "icons/simulator-play.svg",
+      "byteLength": 346,
+      "sha256": "7CCE08F68662B7ED6CEF7143F58586DE04B32F481697A092F616FF61E779D904"
+    },
+    {
+      "path": "icons/skin.svg",
+      "byteLength": 2538,
+      "sha256": "C1A79ADC4BD5E05D36029D9AE1720D734D21BA0A88283F2F50907C373E54008A"
+    },
+    {
+      "path": "icons/undo-action.svg",
+      "byteLength": 283,
+      "sha256": "F7C9988501FF8109DF897A0BC357839FCB503B268B19D0C5DCFC8951CDD4BC80"
+    },
+    {
+      "path": "live.png",
+      "byteLength": 596898,
+      "sha256": "9396BAF609E11A76F152947F255ABABF47035504356F712DC1A0E11F908422F1"
+    }
+  ]
+}

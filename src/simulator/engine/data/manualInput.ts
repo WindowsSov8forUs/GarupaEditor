@@ -1,0 +1,313 @@
+import {
+  integrityFailure,
+  ok,
+  type SimulatorResult,
+} from "../result";
+
+export const ManualTouchPhase = {
+  Began: 0,
+  Moved: 1,
+  Stationary: 2,
+  Ended: 3,
+  Canceled: 4,
+} as const;
+
+export type ManualTouchPhaseValue =
+  (typeof ManualTouchPhase)[keyof typeof ManualTouchPhase];
+
+export interface ManualInputPosition {
+  readonly x: number;
+  readonly y: number;
+}
+
+declare const manualInputButtonResolutionBrand: unique symbol;
+
+export interface ManualInputButtonResolution {
+  readonly [manualInputButtonResolutionBrand]: true;
+}
+
+export interface ManualInputTouch {
+  readonly fingerId: number;
+  readonly phase: ManualTouchPhaseValue;
+  readonly position: ManualInputPosition;
+  readonly buttonResolution: ManualInputButtonResolution | null;
+}
+
+export interface ManualInputFrame {
+  readonly touches: readonly ManualInputTouch[];
+}
+
+export interface ManualInputTouchSnapshot {
+  readonly fingerId: number;
+  readonly phase: ManualTouchPhaseValue;
+  readonly position: ManualInputPosition;
+  readonly resolvedButton: boolean;
+}
+
+export interface ManualInputFrameSnapshot {
+  readonly frameIndex: number;
+  readonly touches: readonly ManualInputTouchSnapshot[];
+}
+
+export interface ManualInputResolutionOwnerSnapshot {
+  readonly initialized: boolean;
+  readonly disposed: boolean;
+  readonly issuedCount: number;
+  readonly consumedCount: number;
+}
+
+export interface PreparedManualInputTouch extends ManualInputTouchSnapshot {
+  readonly buttonOwner: object | null;
+}
+
+export interface PreparedManualInputFrame {
+  readonly deltaTimeSeconds: number | null;
+  readonly touches: readonly PreparedManualInputTouch[];
+  readonly buttonResolutions: readonly ManualInputButtonResolution[];
+}
+
+interface OwnedButtonResolution {
+  readonly position: ManualInputPosition;
+  readonly buttonOwner: object;
+  consumed: boolean;
+}
+
+export class ManualInputResolutionOwner {
+  private readonly ownedResolutions = new WeakMap<
+    ManualInputButtonResolution,
+    OwnedButtonResolution
+  >();
+  private readonly ownedPreparedFrames = new WeakSet<PreparedManualInputFrame>();
+  private initializedValue = false;
+  private disposedValue = false;
+  private issuedCountValue = 0;
+  private consumedCountValue = 0;
+
+  initialize(): SimulatorResult<void> {
+    if (this.disposedValue) {
+      return integrityFailure(
+        "input.resolution-owner.initialize-after-dispose",
+        "An input resolver owner remains terminal after its initialized engine session is disposed.",
+      );
+    }
+    this.initializedValue = true;
+    return ok(undefined);
+  }
+
+  issue(
+    position: ManualInputPosition,
+    buttonOwner: object,
+  ): SimulatorResult<ManualInputButtonResolution> {
+    if (!this.initializedValue || this.disposedValue) {
+      return integrityFailure(
+        "input.resolution-owner.outside-initialized-session",
+        "Button resolutions are bound to one initialized, non-disposed engine session.",
+      );
+    }
+    const positionValidation = copyManualInputPosition(position);
+    if (positionValidation.status !== "ok") {
+      return positionValidation;
+    }
+    if (buttonOwner === null || typeof buttonOwner !== "object") {
+      return integrityFailure(
+        "input.resolution-owner.invalid-button-owner",
+        "Only an engine-owned GamePlayButton object can back a resolver capability.",
+      );
+    }
+    const handle = Object.freeze({}) as ManualInputButtonResolution;
+    this.ownedResolutions.set(handle, {
+      position: positionValidation.value,
+      buttonOwner,
+      consumed: false,
+    });
+    this.issuedCountValue += 1;
+    return ok(handle);
+  }
+
+  preflight(
+    frame: ManualInputFrame,
+    deltaTimeSeconds?: number,
+  ): SimulatorResult<PreparedManualInputFrame> {
+    if (!this.initializedValue || this.disposedValue) {
+      return integrityFailure(
+        "input.frame.outside-initialized-session",
+        "Manual input frames can only be prepared by their initialized, non-disposed engine owner.",
+      );
+    }
+    const frameDeltaTime = typeof deltaTimeSeconds === "number"
+      ? Math.fround(deltaTimeSeconds)
+      : null;
+    if (
+      frameDeltaTime !== null &&
+      (!Number.isFinite(frameDeltaTime) || frameDeltaTime < 0)
+    ) {
+      return integrityFailure(
+        "input.invalid-owner-delta-time",
+        "The owner-produced outer-frame delta must remain finite and non-negative after Float32 conversion.",
+      );
+    }
+    if (frame === null || typeof frame !== "object" || !Array.isArray(frame.touches)) {
+      return integrityFailure(
+        "input.invalid-frame",
+        "A manual outer frame must explicitly provide a touch array.",
+      );
+    }
+
+    const seenFingerPhases = new Set<string>();
+    const seenResolutions = new Set<ManualInputButtonResolution>();
+    const buttonResolutions: ManualInputButtonResolution[] = [];
+    const touches: PreparedManualInputTouch[] = [];
+
+    for (const touch of frame.touches) {
+      if (touch === null || typeof touch !== "object") {
+        return invalidTouch("Each touch must be an immutable raw touch record.");
+      }
+      if (!Number.isInteger(touch.fingerId) || touch.fingerId < 0 || touch.fingerId > 14) {
+        return invalidTouch("Touch fingerId must remain in the owner array interval 0..14.");
+      }
+      if (!isManualTouchPhase(touch.phase)) {
+        return invalidTouch("Touch phases must be Began, Moved, Stationary, Ended or Canceled (0..4).");
+      }
+      const positionValidation = copyManualInputPosition(touch.position);
+      if (positionValidation.status !== "ok") {
+        return positionValidation;
+      }
+      const fingerPhaseKey = `${touch.fingerId}:${touch.phase}`;
+      if (seenFingerPhases.has(fingerPhaseKey)) {
+        return invalidTouch("A finger/phase pair cannot be duplicated in one outer frame.");
+      }
+      seenFingerPhases.add(fingerPhaseKey);
+
+      let buttonOwner: object | null = null;
+      if (touch.buttonResolution !== null) {
+        if (touch.phase !== ManualTouchPhase.Began) {
+          return invalidTouch("Only Began may bind a button resolution.");
+        }
+        if (
+          typeof touch.buttonResolution !== "object" ||
+          seenResolutions.has(touch.buttonResolution)
+        ) {
+          return invalidTouch("A resolver capability cannot be forged, aliased or consumed twice.");
+        }
+        const owned = this.ownedResolutions.get(touch.buttonResolution);
+        if (
+          owned === undefined ||
+          owned.consumed ||
+          !samePosition(owned.position, positionValidation.value)
+        ) {
+          return integrityFailure(
+            "input.foreign-or-invalid-button-resolution",
+            "The button resolution must belong to this engine session, remain unused and match the exact Float32 touch position.",
+          );
+        }
+        seenResolutions.add(touch.buttonResolution);
+        buttonResolutions.push(touch.buttonResolution);
+        buttonOwner = owned.buttonOwner;
+      }
+
+      touches.push(Object.freeze({
+        fingerId: touch.fingerId,
+        phase: touch.phase,
+        position: positionValidation.value,
+        resolvedButton: buttonOwner !== null,
+        buttonOwner,
+      }));
+    }
+
+    const prepared = Object.freeze({
+      deltaTimeSeconds: frameDeltaTime,
+      touches: Object.freeze(touches),
+      buttonResolutions: Object.freeze(buttonResolutions),
+    });
+    this.ownedPreparedFrames.add(prepared);
+    return ok(prepared);
+  }
+
+  commit(prepared: PreparedManualInputFrame): SimulatorResult<void> {
+    if (!this.initializedValue || this.disposedValue) {
+      return integrityFailure(
+        "input.frame.commit-outside-initialized-session",
+        "A prepared frame cannot consume capabilities outside its initialized engine session.",
+      );
+    }
+    if (!this.ownedPreparedFrames.has(prepared)) {
+      return integrityFailure(
+        "input.foreign-prepared-frame",
+        "Only the exact immutable frame prepared by this resolver owner can consume its capabilities.",
+      );
+    }
+    const owned: OwnedButtonResolution[] = [];
+    for (const handle of prepared.buttonResolutions) {
+      const resolution = this.ownedResolutions.get(handle);
+      if (resolution === undefined || resolution.consumed) {
+        return integrityFailure(
+          "input.foreign-or-invalid-button-resolution",
+          "Every prepared button resolution must remain owned and unused until whole-frame dispatch preflight succeeds.",
+        );
+      }
+      owned.push(resolution);
+    }
+    for (const resolution of owned) {
+      resolution.consumed = true;
+      this.consumedCountValue += 1;
+    }
+    this.ownedPreparedFrames.delete(prepared);
+    return ok(undefined);
+  }
+
+  dispose(): void {
+    this.disposedValue = true;
+  }
+
+  snapshot(): ManualInputResolutionOwnerSnapshot {
+    return Object.freeze({
+      initialized: this.initializedValue,
+      disposed: this.disposedValue,
+      issuedCount: this.issuedCountValue,
+      consumedCount: this.consumedCountValue,
+    });
+  }
+}
+
+function invalidTouch(boundary: string) {
+  return integrityFailure(
+    "input.invalid-touch",
+    boundary,
+  );
+}
+
+export function copyManualInputPosition(
+  position: ManualInputPosition,
+): SimulatorResult<ManualInputPosition> {
+  if (
+    position === null ||
+    typeof position !== "object" ||
+    !Number.isFinite(position.x) ||
+    !Number.isFinite(position.y) ||
+    !Number.isFinite(Math.fround(position.x)) ||
+    !Number.isFinite(Math.fround(position.y))
+  ) {
+    return integrityFailure(
+      "input.invalid-float32-position",
+      "Touch positions must convert to finite Float32 x/y values in bottom-left screen space.",
+    );
+  }
+  return ok(Object.freeze({ x: Math.fround(position.x), y: Math.fround(position.y) }));
+}
+
+function isManualTouchPhase(value: number): value is ManualTouchPhaseValue {
+  return (
+    value === ManualTouchPhase.Began ||
+    value === ManualTouchPhase.Moved ||
+    value === ManualTouchPhase.Stationary ||
+    value === ManualTouchPhase.Ended ||
+    value === ManualTouchPhase.Canceled
+  );
+}
+
+function samePosition(
+  left: ManualInputPosition,
+  right: ManualInputPosition,
+): boolean {
+  return left.x === right.x && left.y === right.y;
+}

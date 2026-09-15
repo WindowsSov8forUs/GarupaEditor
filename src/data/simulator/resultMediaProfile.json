@@ -1,0 +1,30 @@
+{
+  "background": {
+    "logicalResource": "bg/result/skin00",
+    "file": "rhythmBG.png",
+    "width": 1024,
+    "height": 1024,
+    "widgetWidth": 1334,
+    "widgetHeight": 1002
+  },
+  "bgm": {
+    "cue": "after_live",
+    "sampleRate": 44100,
+    "channels": 2,
+    "sampleFrames": 1654006,
+    "loop": {
+      "start": 0,
+      "end": 1653750
+    },
+    "fadeInSeconds": 0.25
+  },
+  "count": {
+    "cue": "SE_RESULT_SCORE_COUNT",
+    "sampleRate": 44100,
+    "sampleFrames": 11811,
+    "loop": {
+      "start": 0,
+      "end": 11811
+    }
+  }
+}

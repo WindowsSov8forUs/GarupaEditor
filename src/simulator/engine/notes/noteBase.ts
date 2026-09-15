@@ -1,0 +1,407 @@
+import type { TapLaneEffectInputEvent } from "../managers/tapLaneEffectOwner";
+import {
+  integrityFailure,
+  ok,
+  type SimulatorResult,
+} from "../result";
+import type { ButtonTypeValue, NoteInformation } from "../chart/types";
+import type {
+  ManualInputPosition,
+  ManualTouchPhaseValue,
+} from "../data/manualInput";
+import type {
+  ManualJudgementCommitPlan,
+  ManualJudgementRequest,
+  ManualJudgementTransaction,
+} from "../data/manualJudgement";
+import type { OneFrameDataHandle } from "../data/oneFrameData";
+import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
+import type { RenderOwnerTransaction } from "../rendering/renderCommandProducer";
+
+export enum NoteState {
+  Move = 0,
+  Wait = 1,
+  Stop = 2,
+  Deactive = 3,
+}
+
+export interface NoteLifecycleCallbacks {
+  readonly onActivate: (note: NoteBase) => void;
+  readonly onDeactivate: (note: NoteBase) => void;
+}
+
+export interface NoteStateSnapshot {
+  readonly poolObjectId: string;
+  readonly noteIndex: number | null;
+  readonly state: NoteState;
+  readonly fingerId: number;
+  readonly buttonTypes: readonly ButtonTypeValue[];
+}
+
+export interface ManualNoteRuntime {
+  readonly getExecuteFrame: () => number;
+  readonly getSlideChildPhase: (index: number) => SimulatorResult<"wait" | "move" | "stop">;
+  readonly stopSlideHeadAtJudgeLine: () => SimulatorResult<boolean>;
+  readonly hasCrossedMotionLine: () => SimulatorResult<boolean>;
+  readonly getAdjustedMusicPosition: () => number;
+  readonly getCurrentBpm: () => number;
+  readonly getJudgementAdjustValueB: () => number;
+  readonly judgeSlide: (
+    source: NoteInformation,
+  ) => SimulatorResult<import("../managers/slideNoteManager").SlideJudgeDecision>;
+  readonly isInsideSource: (position: ManualInputPosition, source: NoteInformation,
+    buttons: readonly ButtonTypeValue[], isSweetCollision?: boolean) => SimulatorResult<boolean>;
+  readonly geometry: SimulatorManualInputGeometryBackend;
+  readonly beginJudgementTransaction: () => ManualJudgementTransaction;
+  readonly submitJudgement: (
+    request: ManualJudgementRequest,
+  ) => SimulatorResult<void>;
+}
+
+export interface ManualNoteTouchInput {
+  readonly deltaTimeSeconds: number | null;
+  readonly fingerId: number;
+  readonly phase: ManualTouchPhaseValue;
+  readonly beganPosition: ManualInputPosition;
+  readonly currentPosition: ManualInputPosition;
+  readonly judgementTransaction: ManualJudgementTransaction;
+}
+
+export interface ManualNoteBeganPlan {
+  readonly outcome: "bind" | "none";
+  readonly judgementPlan: ManualJudgementCommitPlan | null;
+  readonly familyData: unknown;
+}
+
+export interface ManualNoteContinuationPlan {
+  readonly judgementPlan: ManualJudgementCommitPlan | null;
+  readonly familyData: unknown;
+}
+
+export class NoteBase {
+  onTapLaneEffect: ((event: TapLaneEffectInputEvent) => void) | null = null;
+
+  protected tapLane(kind: TapLaneEffectInputEvent["kind"], target: number | null): void {
+    if (target !== null) this.onTapLaneEffect?.({ kind, buttonType: target });
+  }
+
+  protected targetButtonLane(source = this.noteInformation): number | null {
+    if (source === null) return null;
+    const span = source.laneSpan;
+    if (span !== undefined) return span.start + Math.floor(((span.width ?? span.end - span.start + 1) - 1) / 2);
+    const buttons = source.buttonTypesArray;
+    return buttons[Math.floor((buttons.length - 1) / 2)] ?? null;
+  }
+
+  protected effectButtonLane(source = this.noteInformation): number | null {
+    if (source === null) return null;
+    if (source.laneSpan !== undefined) return (source.laneSpan.start + source.laneSpan.end) / 2;
+    const buttons = source.buttonTypesArray;
+    if (buttons.length === 0) return null;
+    return buttons.length % 2 === 1 ? buttons[(buttons.length - 1) / 2]!
+      : Math.trunc(buttons.reduce<number>((sum, button) => sum + button, 0) / buttons.length) + 0.5;
+  }
+
+  protected pulseAutoFrontTapLane(target: number | null): void {
+    const runtime = this.autoLiveRuntime;
+    if (runtime.status === "ok" && runtime.value.isAutoPlay) this.pulseTapLane(target);
+  }
+
+  protected pulseTapLane(target: number | null): void {
+    this.tapLane("on", target);
+    this.tapLane("off-reserve", target);
+  }
+
+  private stateValue = NoteState.Deactive;
+  private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
+  private noteInformationValue: NoteInformation | null = null;
+  private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
+  private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
+  private manualRuntimeValue: ManualNoteRuntime | null = null;
+  private preflightRenderDeactivation: (() => SimulatorResult<RenderOwnerTransaction | null>) | null = null;
+  private advanceRenderMotion: ((deltaTimeSeconds: number) => SimulatorResult<void>) | null = null;
+  private fingerIdValue = -1;
+
+  constructor(readonly poolObjectId: string) {}
+
+  get noteInformation(): NoteInformation | null {
+    return this.noteInformationValue;
+  }
+
+  get state(): NoteState {
+    return this.stateValue;
+  }
+
+  get fingerId(): number {
+    return this.fingerIdValue;
+  }
+
+  isContainsButton(buttonType: ButtonTypeValue): boolean {
+    return this.noteInformationValue?.buttonTypes.includes(buttonType) ?? false;
+  }
+
+  setFingerId(fingerId: number): void {
+    this.fingerIdValue = fingerId;
+  }
+
+  setLifecycleCallbacks(callbacks: NoteLifecycleCallbacks): void {
+    this.lifecycleCallbacks = callbacks;
+  }
+
+  registerCallbackGetUsableOneFrameData(
+    callback: () => SimulatorResult<OneFrameDataHandle>,
+  ): void {
+    this.getUsableOneFrameData = callback;
+  }
+
+  registerAutoLiveRuntime(runtime: NoteAutoLiveRuntime): void {
+    this.autoLiveRuntimeValue = runtime;
+  }
+
+  registerManualRuntime(runtime: ManualNoteRuntime): void {
+    this.manualRuntimeValue = runtime;
+  }
+
+  registerRenderDeactivationOwner(
+    owner: () => SimulatorResult<RenderOwnerTransaction | null>,
+  ): void {
+    this.preflightRenderDeactivation = owner;
+  }
+
+  registerRenderMotionOwner(
+    owner: (deltaTimeSeconds: number) => SimulatorResult<void>,
+  ): void {
+    this.advanceRenderMotion = owner;
+  }
+
+  requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
+    if (this.getUsableOneFrameData === null) {
+      return integrityFailure(
+        "note.one-frame-callback-unregistered",
+        "NoteBase.RegisterCallbackGetUsableOneFrameData must be installed during SetupNotes.",
+      );
+    }
+    return this.getUsableOneFrameData();
+  }
+
+  activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    this.noteInformationValue = noteInformation;
+    this.fingerIdValue = -1;
+    return this.changeState(NoteState.Move);
+  }
+
+  changeState(nextState: NoteState): SimulatorResult<void> {
+    const previousState = this.stateValue;
+    if (previousState === nextState) {
+      return ok(undefined);
+    }
+
+    const renderDeactivation =
+      previousState !== NoteState.Deactive && nextState === NoteState.Deactive
+        ? this.preflightRenderDeactivation?.() ?? null
+        : null;
+    if (renderDeactivation?.status === "integrity-failure") {
+      return renderDeactivation;
+    }
+
+    this.stateValue = nextState;
+    if (previousState === NoteState.Deactive && nextState === NoteState.Move) {
+      this.lifecycleCallbacks?.onActivate(this);
+    } else if (previousState !== NoteState.Deactive && nextState === NoteState.Deactive) {
+      this.lifecycleCallbacks?.onDeactivate(this);
+      this.onDeactivated();
+      this.fingerIdValue = -1;
+    }
+    if (renderDeactivation?.status === "ok" && renderDeactivation.value !== null) {
+      const committed = renderDeactivation.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+
+    return ok(undefined);
+  }
+
+  resetForDispose(): SimulatorResult<void> {
+    const deactivated = this.changeState(NoteState.Deactive);
+    if (deactivated.status !== "ok") {
+      return deactivated;
+    }
+    this.clearForDispose();
+    return ok(undefined);
+  }
+
+  resetAfterTerminalRendererFault(): void {
+    if (this.stateValue !== NoteState.Deactive) {
+      this.stateValue = NoteState.Deactive;
+      this.lifecycleCallbacks?.onDeactivate(this);
+      this.onDeactivated();
+    }
+    this.clearForDispose();
+  }
+
+  private clearForDispose(): void {
+    this.noteInformationValue = null;
+    this.fingerIdValue = -1;
+    this.onResetForDispose();
+  }
+
+  executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
+    if ((this.stateValue as NoteState) === NoteState.Deactive) {
+      return ok(undefined);
+    }
+
+    if (this.stateValue === NoteState.Move && this.advanceRenderMotion !== null) {
+      const renderMotion = this.advanceRenderMotion(deltaTimeSeconds);
+      if (renderMotion.status !== "ok") {
+        return renderMotion;
+      }
+    }
+
+    const phaseResult = this.executeStatePhase(deltaTimeSeconds);
+    if (phaseResult.status !== "ok") {
+      return phaseResult;
+    }
+    if (this.stateValue === NoteState.Deactive) {
+      return ok(undefined);
+    }
+    return this.onUpdate(deltaTimeSeconds);
+  }
+
+  preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    return integrityFailure(
+      "manual.note-touch-began-unimplemented",
+      "The InputManager/GamePlayButton owner path is represented, but the concrete note family must close its manual Began judgement before owner mutation.",
+    );
+  }
+
+  preflightManualTouchBeganCommit(
+    _input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    return ok(plan);
+  }
+
+  commitManualTouchBegan(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteBeganPlan,
+  ): void {}
+
+  preflightManualTouchMoved(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return integrityFailure(
+      "manual.note-touch-moved-unimplemented",
+      "The concrete Flick, Multiple, Long or Slide owner must close movement judgement before owner mutation.",
+    );
+  }
+
+  commitManualTouchMoved(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteContinuationPlan,
+  ): void {}
+
+  preflightManualTouchEnded(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return integrityFailure(
+      "manual.note-touch-ended-unimplemented",
+      "The concrete Long or Slide owner must close release judgement before owner mutation.",
+    );
+  }
+
+  commitManualTouchEnded(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteContinuationPlan,
+  ): void {}
+
+  snapshot(): NoteStateSnapshot {
+    return {
+      poolObjectId: this.poolObjectId,
+      noteIndex: this.noteInformationValue?.index ?? null,
+      state: this.stateValue,
+      fingerId: this.fingerIdValue,
+      buttonTypes: [...(this.noteInformationValue?.buttonTypes ?? [])],
+    };
+  }
+
+  protected moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return this.unimplementedStatePhase("move");
+  }
+
+  protected waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return this.unimplementedStatePhase("wait");
+  }
+
+  protected stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return this.unimplementedStatePhase("stop");
+  }
+
+  protected onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return integrityFailure(
+      "note.on-update",
+      "The original OnUpdate dispatch is confirmed; note-family behavior belongs to later slices.",
+    );
+  }
+
+  protected onResetForDispose(): void {}
+
+  protected onDeactivated(): void {}
+
+  protected validateCanActivate(
+    noteInformation: NoteInformation,
+  ): SimulatorResult<void> {
+    if (this.stateValue !== NoteState.Deactive) {
+      return integrityFailure(
+        "note-pool.activate-active-object",
+        `Pool object ${this.poolObjectId} cannot bind note ${noteInformation.index} while active.`,
+      );
+    }
+    return ok(undefined);
+  }
+
+  protected get manualRuntime(): SimulatorResult<ManualNoteRuntime> {
+    if (this.manualRuntimeValue === null) {
+      return integrityFailure(
+        "manual.note-runtime-unregistered",
+        "SetupNotes must install the adjusted-position and current-BPM manual judgement owner.",
+      );
+    }
+    return ok(this.manualRuntimeValue);
+  }
+
+  protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
+    if (this.autoLiveRuntimeValue === null) {
+      return integrityFailure(
+        "auto-live.note-runtime-unregistered",
+        "SetupNotes must install the shared Auto Live calculated-data and judgement callbacks.",
+      );
+    }
+    return ok(this.autoLiveRuntimeValue);
+  }
+
+  private executeStatePhase(deltaTimeSeconds: number): SimulatorResult<void> {
+    switch (this.stateValue) {
+      case NoteState.Move:
+        return this.moveState(deltaTimeSeconds);
+      case NoteState.Wait:
+        return this.waitState(deltaTimeSeconds);
+      case NoteState.Stop:
+        return this.stopState(deltaTimeSeconds);
+      case NoteState.Deactive:
+        return ok(undefined);
+    }
+  }
+
+  private unimplementedStatePhase(phase: string): SimulatorResult<void> {
+    return integrityFailure(
+      `note.state.${phase}`,
+      `NoteState ${phase} dispatch is confirmed, but the concrete note-family behavior is not part of the first framework batch.`,
+    );
+  }
+}
