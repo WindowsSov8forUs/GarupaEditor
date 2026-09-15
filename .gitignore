@@ -1,3 +1,6 @@
+# Repository-local private tools, backups, and maintenance data. Never track this root.
+/.local/
+
 # Logs
 logs
 *.log
@@ -11,6 +14,8 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__/
+*.pyc
 
 # Editor directories and files
 .vscode/
@@ -23,6 +28,7 @@ dist-ssr
 *.sw?
 
 # Local test / debug artifacts
+/tmp/
 /test.json
 /test-*.json
 /tsc-trace*.txt
@@ -50,5 +56,5 @@ dist-ssr
 # Local dialogue/state snapshot (not for VCS)
 /LOCAL_DIALOGUE_FULL_SNAPSHOT.md
 
-# Project-local tools, backups, and maintenance evidence
-/.local/
+# Local Claude working instructions (not for VCS)
+/CLAUDE.md
