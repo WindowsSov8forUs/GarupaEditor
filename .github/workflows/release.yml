@@ -164,12 +164,13 @@ jobs:
       - name: Setup Android SDK
         if: matrix.platform == 'android'
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android SDK packages
         if: matrix.platform == 'android'
         run: |
           sdkmanager --install \
-            "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0" \
             "ndk;29.0.13599879"
