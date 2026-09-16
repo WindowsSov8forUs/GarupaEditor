@@ -1,6 +1,6 @@
 [package]
 name = "garupa-editor"
-version = "0.3.2"
+version = "0.4.0-alpha.1"
 description = "GarupaEditor"
 authors = ["GarupaEditor contributors"]
 edition = "2021"
