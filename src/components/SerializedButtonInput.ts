@@ -1,3 +1,5 @@
+export const SERIALIZED_BUTTON_PRESS_ALPHA = 0.5;
+
 /** StarUIButton interaction shared by modal and result buttons; no rendering or page actions. */
 export class SerializedButtonInput<T extends string> {
   private readonly pressed = new Map<number, T>();
