@@ -21,16 +21,16 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => { if (!props.open) setSettingsOpen(false); }, [props.open]);
   const items: OriginalMenuItem[] = ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
-    action: item.key === "menuList_option_button" ? () => setSettingsOpen(true) : undefined,
+    action: () => setSettingsOpen(true),
   }));
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}
       bindings={{ buttons: { 54: { action: props.onClose, label: model.text(model.components.get(51)!) } } }}>
-      {items.map((item, index) => <div key={ORIGINAL_MENU_ITEMS[index]!.key} className="original-prefab-origin"
-        data-original-menu-key={ORIGINAL_MENU_ITEMS[index]!.key}
+      {items.map((item, index) => <div key={item.key} className="original-prefab-origin"
+        data-original-menu-key={item.key}
         style={{ left: cellsRoot.x + positions[index]!.x, top: -cellsRoot.y - positions[index]!.y }}>
-        <OriginalMenuCell item={item} />
+        <OriginalMenuCell item={item} large={positions[index]!.large} />
       </div>)}
     </OriginalAuthoredDialog>
     {props.resourcesReady && <OriginalGameSettingsModal {...props} open={props.open && settingsOpen} onClose={() => setSettingsOpen(false)} />}

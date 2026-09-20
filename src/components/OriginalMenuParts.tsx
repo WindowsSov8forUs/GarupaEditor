@@ -21,22 +21,20 @@ export function OriginalHeaderMenuButton({ open, onClick }: { open: boolean; onC
     </div>
   </div>;
 }
-export interface OriginalMenuItem { label: string; action?: () => void; large: boolean; icon?: string; image?: string }
-export const ORIGINAL_MENU_ITEMS = content.items.map(item => ({ ...item, label: (ORIGINAL_WORDING[item.key] ?? item.label).replace(/\\n/g, "\n") }));
+export interface OriginalMenuItem { key: string; label: string; action?: () => void; icon?: string; image?: string }
+export const ORIGINAL_MENU_ITEMS = content.items.filter(item => item.key === "menuList_option_button")
+  .map(item => ({ key: item.key, icon: item.icon, label: (ORIGINAL_WORDING[item.key] ?? item.label).replace(/\\n/g, "\n") }));
 export function originalMenuPositions(items: readonly OriginalMenuItem[]) {
   const layout = content.layout;
-  let y = layout.startY, largeInRow = false;
-  return items.map((item, index) => {
-    const position = { x: layout.startX + layout.columnWidth * (index % layout.columns), y };
-    largeInRow ||= item.large;
-    if (index % layout.columns === layout.columns - 1) {
-      y -= largeInRow ? layout.largeRowHeight : layout.smallRowHeight; largeInRow = false;
-    }
-    return position;
+  return items.map((_, index) => {
+    const row = Math.floor(index / layout.columns);
+    return { x: layout.startX + layout.columnWidth * (index % layout.columns),
+      y: layout.startY - (row === 0 ? 0 : layout.largeRowHeight + (row - 1) * layout.smallRowHeight),
+      large: row === 0 };
   });
 }
-export function OriginalMenuCell({ item }: { item: OriginalMenuItem }) {
-  const prefab = ORIGINAL_PREFABS[item.large ? "largemenulistcell" : "smallmenulistcell"]!;
+export function OriginalMenuCell({ item, large }: { item: OriginalMenuItem; large: boolean }) {
+  const prefab = ORIGINAL_PREFABS[large ? "largemenulistcell" : "smallmenulistcell"]!;
   const source = useMemo(() => new OriginalPrefabModel(prefab), [prefab]);
   const controller = [...source.components.values()].find(component => component.kind === "MenuListCell")!;
   const labelId = controller.data.label.m_PathID, iconId = controller.data.iconSprite.m_PathID;
