@@ -4,6 +4,7 @@ import { originalSurfaceRow } from "./useOriginalSurface";
 import { originalSpriteDrawingRect, originalUiRound, ORIGINAL_PROGRESS_HIDE_THRESHOLD } from "./originalSpriteGeometry";
 import { useOriginalFontRevision } from "./useOriginalFontRevision";
 import { originalLabelTextShadow } from "./originalLabelEffects";
+import { originalLabelBaseline, originalLabelFirstBaseline } from "./text/originalLabelMetrics";
 import { useOriginalButtonAction } from "./useOriginalButtonAction";
 import { useOriginalUiSound } from "./OriginalUiSound";
 import { moveOriginalOptionFocus } from "./originalOptionKeyboard";
@@ -83,6 +84,8 @@ function richText(text: string, initial: string): ReactNode {
     return <span key={index} style={{ color: colors[colors.length - 1] }}>{part}</span>;
   });
 }
+let labelMetricsContext: CanvasRenderingContext2D | null = null;
+
 function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: { model: OriginalPrefabModel;
   component: OriginalComponent; fontRevision: number; onMeasured?: (width: number) => void;
   naturalSize?: { width: boolean; height: boolean } }) {
@@ -95,7 +98,9 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: 
   const spacingY = (data.mUseFloatSpacing ? data.mFloatSpacingY : data.mSpacingY ?? 0) * scale;
   useLayoutEffect(() => {
     const element = label.current, content = element?.firstElementChild;
-    if (!visible || !element || !element.getClientRects().length || !(content instanceof HTMLElement) || data.mOverflow !== 0 || box.width <= 0 || box.height <= 0) return;
+    if (!visible || !element || !element.getClientRects().length || !(content instanceof HTMLElement) || box.width <= 0 || box.height <= 0) return;
+    content.style.transform = "none";
+    element.style.fontSize = `${fontSize}px`; element.style.lineHeight = `${fontSize + spacingY}px`;
     let widthLimit = box.width, heightLimit = box.height;
     if (naturalSize?.width || naturalSize?.height) {
       // Reverse ce9f2695: changing maxLineCount in ShrinkContent invokes
@@ -118,7 +123,7 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: 
     // ShrinkContent applies to every authored line limit, including unlimited wrapping.
     // Measure used CSS dimensions, independent of the dialog opening transform.
     // Reverse b8260bb7: UILabel.ProcessText retries ShrinkContent at size - 2.
-    for (let size = data.mFontSize; size >= 1; size -= 2) {
+    for (let size = data.mFontSize; data.mOverflow === 0 && size >= 1; size -= 2) {
       const pixels = size * scale, lineHeight = pixels + spacingY;
       element.style.fontSize = `${pixels}px`; element.style.lineHeight = `${lineHeight}px`;
       const measured = getComputedStyle(content);
@@ -129,21 +134,40 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: 
       if (width <= widthLimit + tolerance && height <= heightLimit + tolerance &&
         (data.mMaxLineCount === 0 || height <= lineHeight * data.mMaxLineCount + tolerance)) break;
     }
-    const printedWidth = Number.parseFloat(getComputedStyle(content).width);
+    const measured = getComputedStyle(content);
+    const printedWidth = Number.parseFloat(measured.width);
+    const marker = content.firstElementChild;
+    if (marker instanceof HTMLElement) {
+      labelMetricsContext ??= document.createElement("canvas").getContext("2d");
+      if (labelMetricsContext) {
+        const sourceFontSize = Number.parseFloat(measured.fontSize) / scale;
+        const sourceSpacingY = spacingY / scale;
+        labelMetricsContext.font = `${measured.fontStyle} ${measured.fontWeight} ${sourceFontSize}px ${measured.fontFamily}`;
+        const lineCount = Math.max(1, Math.round(Number.parseFloat(measured.height) / Number.parseFloat(measured.lineHeight)));
+        const pivotY = Math.floor(data.mPivot / 3) / 2;
+        const wantedBaseline = originalLabelFirstBaseline(originalLabelBaseline(labelMetricsContext, sourceFontSize),
+          sourceFontSize, lineCount, sourceSpacingY, pivotY);
+        // The zero-size inline marker reports the browser's actual alphabetic
+        // baseline in layout coordinates, unaffected by the window animation.
+        // UILabel.ApplyOffset uses printed height; widget height cancels at its pivot.
+        content.style.transform = `translateY(${heightLimit * pivotY + wantedBaseline * scale - marker.offsetTop}px)`;
+      }
+    }
     if (Number.isFinite(printedWidth)) onMeasured?.(printedWidth);
   }, [visible, fontRevision, text, box.x, box.y, box.width, box.height, fontSize, scale, transform.scaleX, spacingX, spacingY, data.mFontSize, data.mOverflow,
     data.mMaxLineCount, data.mFontStyle, data.mEncoding, data.mPivot, naturalSize?.width, naturalSize?.height, onMeasured]);
   const align = data.mAlignment === 1 ? "left" : data.mAlignment === 2 ? "center" : data.mAlignment === 3 ? "right"
     : data.mPivot % 3 === 0 ? "left" : data.mPivot % 3 === 2 ? "right" : "center";
   return <span ref={label} className="original-prefab-label" data-original-widget={component.id} style={{ ...rectStyle(model, component),
-    fontSize, alignItems: data.mPivot < 3 ? "flex-start" : data.mPivot > 5 ? "flex-end" : "center",
+    fontSize, alignItems: "flex-start",
     whiteSpace: data.mMaxLineCount === 1 ? "pre" : "pre-wrap", color: textColor, textAlign: align, justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
     fontWeight: data.mFontStyle === 1 ? 700 : 400, letterSpacing: spacingX,
     lineHeight: `${fontSize + spacingY}px`,
     textShadow: originalLabelTextShadow(data.mEffectStyle, data.mEffectDistance, data.mEffectColor,
       transform.scaleX, transform.scaleY, data.mColor.a),
     paintOrder: "stroke fill" }}><span style={data.mMaxLineCount === 1
-      ? { maxWidth: "none", flexShrink: 0 } : { overflowWrap: "anywhere" }}>
+      ? { position: "relative", maxWidth: "none", flexShrink: 0 } : { position: "relative", overflowWrap: "anywhere" }}>
+      <span aria-hidden="true" style={{ display: "inline-block", width: 0, height: 0, padding: 0, margin: 0, verticalAlign: "baseline" }} />
       {data.mEncoding ? richText(text, textColor) : text}</span></span>;
 }
 function ButtonView({ model, component, binding, beforeClick }: { model: OriginalPrefabModel;

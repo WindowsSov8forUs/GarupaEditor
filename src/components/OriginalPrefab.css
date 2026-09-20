@@ -1,7 +1,7 @@
 .original-authored-mask { padding: 0; }
 .original-authored-viewport { position: relative; flex: 0 0 auto; font-family: "ChartUI", "TTShinGoM", sans-serif; }
 .original-prefab-origin, .original-authored-window { position: absolute; width: 0; height: 0; transform-origin: 0 0; }
-.original-prefab-label { display: flex; align-items: center; overflow: hidden; white-space: pre-wrap; pointer-events: none; user-select: none; }
+.original-prefab-label { display: flex; align-items: flex-start; overflow: visible; white-space: pre-wrap; pointer-events: none; user-select: none; }
 .original-prefab-label > span { max-width: 100%; }
 button.original-button.original-prefab-hit,
 button.original-button.original-prefab-hit:hover,
