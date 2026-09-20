@@ -1,5 +1,5 @@
+import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
 import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { useModalLayer } from "./useModalLayer";
@@ -136,8 +136,7 @@ export function SkinSettingsModal({
   isSkinApplying,
   onApplySkinSelection,
 }: SkinSettingsModalProps) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
-  const { mounted, phase } = useModalTransition(open);
+  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
 
   if (!mounted) {
@@ -162,20 +161,12 @@ export function SkinSettingsModal({
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
-      <section
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
+      <OriginalDialogFrame
         className={`modal-card skin-settings-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">皮肤设置</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-        </header>
+        <OriginalDialogHeader>皮肤设置</OriginalDialogHeader>
 
         <div className="modal-body">
           <p className="metadata-upload-source-empty" role="status">{catalogStatus}</p>
@@ -265,15 +256,15 @@ export function SkinSettingsModal({
           </div>
 
           <div className="modal-actions is-centered">
-            <button type="button" className="app-settings-apply-button" onClick={onApplySkinSelection} disabled={isSkinApplying}>
+            <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onApplySkinSelection} disabled={isSkinApplying}>
               <span className="btn-content">保存</span>
-            </button>
-            <button type="button" className="app-settings-back-button" onClick={onClose} disabled={isSkinApplying}>
+            </OriginalButton>
+            <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose} disabled={isSkinApplying}>
               <span className="btn-content">关闭</span>
-            </button>
+            </OriginalButton>
           </div>
         </div>
-      </section>
+      </OriginalDialogFrame>
     </div>
   );
 }

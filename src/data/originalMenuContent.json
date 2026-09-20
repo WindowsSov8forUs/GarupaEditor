@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "sample": "jp.co.craftegg.band 10.1.4/230 arm64-v8a",
+  "items": [
+    {
+      "key": "menuList_home_button",
+      "icon": "icon_home",
+      "menuListType": 3,
+      "target": 0,
+      "large": true,
+      "label": "ホーム"
+    },
+    {
+      "key": "menuList_starShop_button",
+      "icon": "icon_star_shop",
+      "menuListType": 1,
+      "target": 390,
+      "large": true,
+      "label": "スターショップ"
+    },
+    {
+      "key": "menuList_myProfile_button",
+      "icon": "icon_profile",
+      "menuListType": 1,
+      "target": 61,
+      "large": true,
+      "label": "プロフィール"
+    },
+    {
+      "key": "menuList_exchange_button",
+      "icon": "icon_exchange",
+      "menuListType": 1,
+      "target": 71,
+      "large": true,
+      "label": "交換所"
+    },
+    {
+      "key": "menuList_friendList_button",
+      "icon": "icon_menu_friend",
+      "menuListType": 1,
+      "target": 200,
+      "large": false,
+      "label": "フレンド"
+    },
+    {
+      "key": "menuList_achievement_button",
+      "icon": "icon_achievement",
+      "menuListType": 4,
+      "target": 0,
+      "large": false,
+      "label": "実績"
+    },
+    {
+      "key": "menuList_playerStar_button",
+      "icon": "icon_possession_star",
+      "menuListType": 0,
+      "target": 56,
+      "large": false,
+      "label": "所持スター確認"
+    },
+    {
+      "key": "menuList_option_button",
+      "icon": "icon_option",
+      "menuListType": 0,
+      "target": 3,
+      "large": false,
+      "label": "オプション"
+    },
+    {
+      "key": "menuList_photo_studio_button",
+      "icon": "icon_photostudio",
+      "menuListType": 1,
+      "target": 1320,
+      "large": false,
+      "label": "フォトスタジオ"
+    },
+    {
+      "key": "menuList_friendInvite_button",
+      "icon": "icon_invite",
+      "menuListType": 1,
+      "target": 1050,
+      "large": false,
+      "label": "バディ招待"
+    },
+    {
+      "key": "menuList_inventory_button",
+      "icon": "icon_inventory",
+      "menuListType": 1,
+      "target": 53,
+      "large": false,
+      "label": "持ちもの"
+    },
+    {
+      "key": "menuList_comic_button",
+      "icon": "icon_comic",
+      "menuListType": 1,
+      "target": 251,
+      "large": false,
+      "label": "コミック"
+    },
+    {
+      "key": "menuList_takeOverData_button",
+      "icon": "icon_data_take_over",
+      "menuListType": 0,
+      "target": 135,
+      "large": false,
+      "label": "データ引き継ぎ"
+    },
+    {
+      "key": "menuList_support_button",
+      "icon": "icon_support",
+      "menuListType": 6,
+      "target": 61,
+      "large": false,
+      "label": "サポート"
+    },
+    {
+      "key": "menuList_termsNavigation_button",
+      "icon": "icon_terms_of_service",
+      "menuListType": 0,
+      "target": 343,
+      "large": false,
+      "label": "規約・各種表記"
+    },
+    {
+      "key": "menuList_title_button",
+      "icon": "icon_title",
+      "menuListType": 2,
+      "target": 0,
+      "large": false,
+      "label": "タイトル"
+    }
+  ],
+  "layout": {
+    "columns": 4,
+    "startX": -384,
+    "startY": 134,
+    "columnWidth": 256,
+    "largeRowHeight": 96,
+    "smallRowHeight": 88
+  },
+  "sourceMethods": [
+    {
+      "name": "MenuListScrollViewController$$Init",
+      "address": "0x378dd30",
+      "end": "0x378e318"
+    },
+    {
+      "name": "MenuListScrollViewController$$calculateCellsPositions",
+      "address": "0x378f06c",
+      "end": "0x378f1d0"
+    }
+  ],
+  "sourceNativeFile": "artifacts/investigations/menu-settings-ui-10-1-4/native.json",
+  "literalTableSha256": "B3E1E9776232EE1AC5B02060C8DEA0DB1EAEF58E406578D7AB2D5F41A11A2109",
+  "boundary": "Restores source menu content. Native online destinations have no editor substitute; only implemented matching actions may be enabled.",
+  "sourceNativeSha256": "50E7DAD113EA4DB005AA7BEAC9BA100B96BF4EA99FAF62268027B2912B684BC4",
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "2B555E3F4CB3EE4FE4A071E8C9A4E8A5CD4C56237B81550FFC747206F6E3A63D"
+}

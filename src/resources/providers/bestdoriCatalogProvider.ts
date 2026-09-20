@@ -26,6 +26,7 @@ interface BestdoriInfoEntry {
 }
 
 interface BestdoriAssetsInfo {
+  readonly tutorial?: unknown;
   readonly ingameskin?: {
     readonly noteskin?: Record<string, unknown>;
     readonly fieldskin?: Record<string, unknown>;
@@ -269,6 +270,7 @@ export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly
     collect(resources, server, "musicjacket", info.musicjacket, names, observedAt);
     collect(resources, server, "movie-mv", info.movie?.mv, names, observedAt);
     if (info.sound?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
+    if (info.tutorial !== undefined) resources.push(tutorialDescriptor(server, observedAt));
     collectSongMedia(resources, server, index, songs, info, observedAt);
   }
   const deduplicated = new Map<string, NetworkResourceDescriptor>();
@@ -417,6 +419,21 @@ function commonSoundDescriptor(
       identityClass: "provider-package" as const,
     }),
     source: Object.freeze(sourceFor(server, "sound-common", "common")),
+  });
+}
+
+function tutorialDescriptor(server: BestdoriAssetServer, observedAt: string): NetworkResourceDescriptor {
+  const reference = createResourceRef(`bestdori/${server}/tutorial`);
+  if (reference.status === "rejected") throw new Error(reference.failure.boundary);
+  return Object.freeze({
+    ref: reference.value, origin: "network", kind: "package",
+    title: `${server.toUpperCase()} tutorial`, availability: "remote-only", files: null,
+    catalogObservedAt: observedAt,
+    logicalPlacement: Object.freeze({ provider: "bestdori", server, canonicalPath: "tutorial",
+      identityClass: "provider-package" }),
+    source: Object.freeze({ provider: "bestdori", server, family: "tutorial", nativeId: "tutorial",
+      manifestUrl: `https://bestdori.com/api/explorer/${server}/assets/tutorial.json`,
+      assetBaseUrl: `https://bestdori.com/assets/${server}/tutorial_rip` }),
   });
 }
 

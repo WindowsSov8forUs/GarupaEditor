@@ -1,5 +1,5 @@
+import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
 ﻿import { useCallback, type KeyboardEvent } from "react";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
@@ -26,8 +26,7 @@ export function BestdoriLoginModal({
   onSubmit,
   onClose,
 }: BestdoriLoginModalProps) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
-  const { mounted, phase } = useModalTransition(open);
+  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
 
   const handleConfirm = useCallback(() => {
@@ -53,21 +52,13 @@ export function BestdoriLoginModal({
   return (
     <div
       className={`modal-mask modal-transition-mask ${transitionClassName}`}
-      style={modalLayerStyle}
+      ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}
     >
-      <section
+      <OriginalDialogFrame
         className={`modal-card bestdori-login-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">{"\u767B\u5F55"}</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-        </header>
+        <OriginalDialogHeader>{"\u767B\u5F55"}</OriginalDialogHeader>
 
         <div className="modal-body">
           <div className="bestdori-login-form">
@@ -101,20 +92,20 @@ export function BestdoriLoginModal({
           {errorMessage && <div className="bestdori-login-error">{errorMessage}</div>}
 
           <div className="modal-actions is-centered">
-            <button
+            <OriginalButton tone="pink"
               type="button"
               className="app-settings-apply-button bestdori-login-submit"
               onClick={handleConfirm}
               disabled={submitting || username.trim().length === 0 || password.trim().length === 0}
             >
               <span className="btn-content">{submitting ? "\u767B\u5F55\u4E2D..." : "\u767B\u5F55"}</span>
-            </button>
-            <button type="button" className="app-settings-back-button" onClick={onClose} disabled={submitting}>
+            </OriginalButton>
+            <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose} disabled={submitting}>
               <span className="btn-content">{"\u5173\u95ED"}</span>
-            </button>
+            </OriginalButton>
           </div>
         </div>
-      </section>
+      </OriginalDialogFrame>
     </div>
   );
 }

@@ -644,8 +644,8 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
 }
 
 function isNativeInstance(value: ParticleInstanceIdentity): boolean {
-  // Result UI has its own lifetime and draw layer, outside gameplay frame transactions.
-  if (value?.kind === "result-ui") return false;
+  // UI particles have their own lifetime and draw layer, outside gameplay frame transactions.
+  if (value?.kind === "result-ui" || value?.kind === "skin-preview") return false;
   if (value === null || typeof value !== "object" || value.ownerTransform === undefined ||
     positiveBits(value.particleSystemSetupScaleBits ?? "") === null || !finiteOwnerTransform(value.ownerTransform)) return false;
   if (value.kind === "game-clear") {
@@ -704,7 +704,7 @@ function compareSamples(left: ParticleRenderSample, right: ParticleRenderSample)
     left.creationSequence - right.creationSequence;
 }
 
-function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): void {
+export function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): void {
   texture.source.scaleMode = "linear";
   texture.source.style.addressModeU = wrapU === 0 ? "repeat" : "clamp-to-edge";
   texture.source.style.addressModeV = wrapV === 0 ? "repeat" : "clamp-to-edge";

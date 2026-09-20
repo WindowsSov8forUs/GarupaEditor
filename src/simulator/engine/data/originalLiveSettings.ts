@@ -1,9 +1,14 @@
+import { isOriginalComboPosition } from "./originalComboPosition";
+import { isOriginalSuddenRate } from "./originalSudden";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
 
 export const JUDGEMENT_ADJUST_VALUE_MIN = -30 as const;
 export const JUDGEMENT_ADJUST_VALUE_MAX = 30 as const;
 export const JUDGEMENT_ADJUST_VALUE_B_MIN = -5 as const;
 export const JUDGEMENT_ADJUST_VALUE_B_MAX = 5 as const;
+export const LONG_NOTE_LINE_BRIGHTNESS_MIN = 10;
+export const LONG_NOTE_LINE_BRIGHTNESS_MAX = 100;
+export const LONG_NOTE_LINE_BRIGHTNESS_DEFAULT = 80;
 export const MV_DARKNESS_VALUES = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70] as const);
 
 export interface OriginalLiveCoreSettings {
@@ -11,10 +16,17 @@ export interface OriginalLiveCoreSettings {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
   readonly mvDarkness: number;
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
 }
 
 export interface OriginalLiveSettings {
   readonly core: OriginalLiveCoreSettings;
+  readonly hideFastSlow: boolean;
+  readonly displayStageEffect: boolean;
+  readonly hideCombo: boolean;
+  readonly displayComboPosition: number;
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
@@ -26,6 +38,13 @@ export interface OriginalLiveSettingsInput {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
   readonly mvDarkness: number;
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
+  readonly hideFastSlow: boolean;
+  readonly displayStageEffect: boolean;
+  readonly hideCombo: boolean;
+  readonly displayComboPosition: number;
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
@@ -46,6 +65,12 @@ export function createOriginalLiveSettings(
     !integerIn(input.judgementAdjustValue, JUDGEMENT_ADJUST_VALUE_MIN, JUDGEMENT_ADJUST_VALUE_MAX) ||
     !integerIn(input.judgementAdjustValueB, JUDGEMENT_ADJUST_VALUE_B_MIN, JUDGEMENT_ADJUST_VALUE_B_MAX) ||
     !MV_DARKNESS_VALUES.includes(input.mvDarkness as typeof MV_DARKNESS_VALUES[number]) ||
+    !isOriginalLongNoteLineBrightness(input.longNoteLineBrightness) ||
+    !isOriginalSuddenRate(input.suddenRate) || typeof input.suddenLane !== "boolean" ||
+    typeof input.hideFastSlow !== "boolean" ||
+    typeof input.displayStageEffect !== "boolean" ||
+    typeof input.hideCombo !== "boolean" ||
+    !isOriginalComboPosition(input.displayComboPosition) ||
     typeof input.syncLine !== "boolean" ||
     typeof input.noteColor !== "boolean" ||
     typeof input.visibleTapLaneEffect !== "boolean" ||
@@ -59,7 +84,13 @@ export function createOriginalLiveSettings(
       judgementAdjustValue: input.judgementAdjustValue,
       judgementAdjustValueB: input.judgementAdjustValueB,
       mvDarkness: input.mvDarkness as number,
+      longNoteLineBrightness: input.longNoteLineBrightness,
+      suddenRate: input.suddenRate, suddenLane: input.suddenLane,
     }),
+    hideFastSlow: input.hideFastSlow,
+    displayStageEffect: input.displayStageEffect,
+    hideCombo: input.hideCombo,
+    displayComboPosition: input.displayComboPosition,
     syncLine: input.syncLine,
     noteColor: input.noteColor,
     visibleTapLaneEffect: input.visibleTapLaneEffect,
@@ -83,6 +114,12 @@ export function validateOriginalLiveSettings(
     judgementAdjustValue: core.judgementAdjustValue,
     judgementAdjustValueB: core.judgementAdjustValueB,
     mvDarkness: core.mvDarkness,
+    longNoteLineBrightness: core.longNoteLineBrightness,
+    suddenRate: core.suddenRate, suddenLane: core.suddenLane,
+    hideFastSlow: settings.hideFastSlow,
+    displayStageEffect: settings.displayStageEffect,
+    hideCombo: settings.hideCombo,
+    displayComboPosition: settings.displayComboPosition,
     syncLine: settings.syncLine,
     noteColor: settings.noteColor,
     visibleTapLaneEffect: settings.visibleTapLaneEffect,
@@ -96,6 +133,11 @@ export function originalLiveSettingsIdentity(value: OriginalLiveSettings): strin
     value.core.judgementAdjustValue,
     value.core.judgementAdjustValueB,
     value.core.mvDarkness,
+    value.core.longNoteLineBrightness, value.core.suddenRate, value.core.suddenLane ? 1 : 0,
+    value.hideFastSlow ? 1 : 0,
+    value.displayStageEffect ? 1 : 0,
+    value.hideCombo ? 1 : 0,
+    value.displayComboPosition,
     value.syncLine ? 1 : 0,
     value.noteColor ? 1 : 0,
     value.visibleTapLaneEffect ? 1 : 0,
@@ -108,11 +150,19 @@ export function snapshotOriginalLiveSettings(
 ): OriginalLiveSettingsSnapshot {
   return Object.freeze({
     core: Object.freeze({ ...value.core }),
+    hideFastSlow: value.hideFastSlow,
+    displayStageEffect: value.displayStageEffect,
+    hideCombo: value.hideCombo,
+    displayComboPosition: value.displayComboPosition,
     syncLine: value.syncLine,
     noteColor: value.noteColor,
     visibleTapLaneEffect: value.visibleTapLaneEffect,
     allPerfectStatusDisplayMode: value.allPerfectStatusDisplayMode,
   });
+}
+
+export function isOriginalLongNoteLineBrightness(value: unknown): value is number {
+  return integerIn(value, LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX);
 }
 
 function integerIn(value: unknown, minimum: number, maximum: number): value is number {
@@ -122,6 +172,6 @@ function integerIn(value: unknown, minimum: number, maximum: number): value is n
 function invalid(): ReturnType<typeof integrityFailure> {
   return integrityFailure(
     "runtime.invalid-original-live-settings",
-    "Original Live settings require exact booleans including コンボ状態表示, Primary -30..30, Secondary -5..5 and one persisted MV darkness value 0..70 in steps of ten; aliases, defaults, clamp and rounding are forbidden.",
+    "Original Live settings require exact booleans including コンボ状態表示, Primary -30..30, Secondary -5..5 one persisted MV darkness value 0..70 in steps of ten, integer long-note-line brightness 10..100, and integer Sudden rate 0..100 with an explicit lane-fit flag; aliases, defaults, clamp and rounding are forbidden.",
   );
 }

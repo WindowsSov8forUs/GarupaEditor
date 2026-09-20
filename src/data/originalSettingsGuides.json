@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "sample": "jp.co.craftegg.band 10.1.4/230 arm64-v8a",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "prefab": "artifacts/investigations/menu-settings-ui-10-1-4/resources/tutorialslidewindow.json",
+  "prefabSha256": "577A638F52C4C5681D09030DFCEF8C94419AF49FFF72F97F3EB2DF79DEC3E67E",
+  "routes": [
+    {
+      "key": "sudden",
+      "buttonId": 537,
+      "slideType": 28,
+      "callback": "0x38ff814",
+      "titleKey": "tutorial_slideTitle_sudden_plus",
+      "pages": [
+        "tutorial_sudden_plus1",
+        "tutorial_sudden_plus2"
+      ]
+    },
+    {
+      "key": "timingA",
+      "buttonId": 462,
+      "slideType": 30,
+      "callback": "0x38ff86c",
+      "titleKey": "tutorial_slideTitle_judgement_a",
+      "pages": [
+        "tutorial_timing_music1",
+        "tutorial_timing_music2"
+      ]
+    },
+    {
+      "key": "timingB",
+      "buttonId": 440,
+      "slideType": 31,
+      "callback": "0x38ff8c4",
+      "titleKey": "tutorial_slideTitle_judgement_b",
+      "pages": [
+        "tutorial_timing_judge1",
+        "tutorial_timing_judge2"
+      ]
+    }
+  ],
+  "navigation": {
+    "firstPage": 1,
+    "durationSeconds": 0.25,
+    "ease": 9,
+    "easeName": "OutCubic",
+    "ignoreWhileSliding": true,
+    "previousVisible": "page > 1",
+    "nextVisible": "page < count",
+    "closeVisible": "page == count",
+    "openMotion": "none",
+    "closeMotion": "none",
+    "coverAlpha": 0.5019999742507935,
+    "pageWidthSource": "contentPanel.viewSize.x",
+    "pageHeightSource": "contentPanel.viewSize.y",
+    "pageIndexUpdated": "before tween completion"
+  },
+  "sourceComponents": {
+    "windowNode": 17,
+    "frameSprite": 66,
+    "titleLabel": 69,
+    "pageLabel": 70,
+    "contentPanel": 67,
+    "gridTransform": 42,
+    "nextButton": 77,
+    "previousButton": 59,
+    "closeButton": 53
+  },
+  "assetSource": {
+    "bundle": "tutorial",
+    "manifestUrl": "https://bestdori.com/api/explorer/jp/assets/tutorial.json",
+    "manifestSha256": "99FDE29511C9042EA499401DC09531D7A1555600A784B1AE3022BAF46CBC05D3",
+    "observedAt": "2026-09-19T06:14:12.392318+00:00",
+    "boundary": "Runtime filenames come from the pinned native constructor; image digests describe the public provider observation, not an APK-embedded texture claim.",
+    "images": [
+      {
+        "file": "tutorial_sudden_plus1.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 116541,
+        "sha256": "AEC0185D306C6F2319AFF1D9B17ADC6E2C0A477606D12ED2E834DCE3C908FF1A"
+      },
+      {
+        "file": "tutorial_sudden_plus2.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 93787,
+        "sha256": "07E693DEA2F52E6DA70FDBE0B5E711DD65F705E7F3246C287FF24EC780BFC4D9"
+      },
+      {
+        "file": "tutorial_timing_music1.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 87081,
+        "sha256": "1C6A5842D75BFB9C0D558E916B78A3CCAB75AAAEFF22CB8E77E44BCAFFAF4AA5"
+      },
+      {
+        "file": "tutorial_timing_music2.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 88915,
+        "sha256": "E147CBF987F587382849067DFE16D43D042072DAF1EA336673B6384842128D57"
+      },
+      {
+        "file": "tutorial_timing_judge1.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 84453,
+        "sha256": "178003D33C6275C4BC05CB415A4DCD8F2A5FCBC7642D81E016BE65615D2AB29E"
+      },
+      {
+        "file": "tutorial_timing_judge2.png",
+        "width": 1024,
+        "height": 512,
+        "byteLength": 82070,
+        "sha256": "3DD9F8E53BBD7465FC7DDE2A8ABB8915A150D289097A144DF6C5F272DD57F2F9"
+      }
+    ]
+  },
+  "wording": {
+    "tutorial_slideTitle_sudden_plus": "リズムアイコンの表示位置を変更してみよう",
+    "tutorial_slideTitle_judgement_a": "リズムアイコンのタイミングを調節しよう！",
+    "tutorial_slideTitle_judgement_b": "判定のタイミングを調節しよう！"
+  },
+  "wordingMasterSha256": "3E02A51A2BB3F91401072C8C2545897A12ADB25916B28050CAF97F2B03DB9214",
+  "wordingByteRanges": [
+    {
+      "key": "tutorial_slideTitle_sudden_plus",
+      "text": "リズムアイコンの表示位置を変更してみよう",
+      "offset": 15683992,
+      "hex": "0a1f7475746f7269616c5f736c6964655469746c655f73756464656e5f706c7573125f0a1f7475746f7269616c5f736c6964655469746c655f73756464656e5f706c7573123ce383aae382bae383a0e382a2e382a4e382b3e383b3e381aee8a1a8e7a4bae4bd8de7bdaee38292e5a489e69bb4e38197e381a6e381bfe38288e38186"
+    },
+    {
+      "key": "tutorial_slideTitle_judgement_a",
+      "text": "リズムアイコンのタイミングを調節しよう！",
+      "offset": 15660218,
+      "hex": "0a1f7475746f7269616c5f736c6964655469746c655f6a756467656d656e745f61125f0a1f7475746f7269616c5f736c6964655469746c655f6a756467656d656e745f61123ce383aae382bae383a0e382a2e382a4e382b3e383b3e381aee382bfe382a4e3839fe383b3e382b0e38292e8aabfe7af80e38197e38288e38186efbc81"
+    },
+    {
+      "key": "tutorial_slideTitle_judgement_b",
+      "text": "判定のタイミングを調節しよう！",
+      "offset": 15660518,
+      "hex": "0a1f7475746f7269616c5f736c6964655469746c655f6a756467656d656e745f6212500a1f7475746f7269616c5f736c6964655469746c655f6a756467656d656e745f62122de588a4e5ae9ae381aee382bfe382a4e3839fe383b3e382b0e38292e8aabfe7af80e38197e38288e38186efbc81"
+    }
+  ],
+  "nativeMethods": [
+    {
+      "name": "SuddenDetail",
+      "start": "0x38ff814",
+      "end": "0x38ff86c",
+      "sha256": "565BB86484ADBC9EADB9655490F69FE4F1A2A34B087D345157865E6F8B56D8CB"
+    },
+    {
+      "name": "TimingADetail",
+      "start": "0x38ff86c",
+      "end": "0x38ff8c4",
+      "sha256": "DC4CF5CA724F6E973EE0339CA83EA365CEDBAC6ABD579E04DB96FCED61DDC061"
+    },
+    {
+      "name": "TimingBDetail",
+      "start": "0x38ff8c4",
+      "end": "0x38ff91c",
+      "sha256": "F98709193EFD2E1E348E608E806B37399B701A5C7E365BE9CC59DC0DA75D9762"
+    },
+    {
+      "name": "AddPageAndSetup",
+      "start": "0x3ab3300",
+      "end": "0x3ab3598",
+      "sha256": "C38144EBA213B693C2318356108818799FC4D412BDEF9ACC527F92AFD8EF500F"
+    },
+    {
+      "name": "NextPage",
+      "start": "0x3ab3598",
+      "end": "0x3ab3848",
+      "sha256": "CE8325C0027520CC2E00BA5915B321C33F32E5AEF12948C65B3AF3549B4341B6"
+    },
+    {
+      "name": "PrevPage",
+      "start": "0x3ab3848",
+      "end": "0x3ab3aec",
+      "sha256": "1F9D99B04EF3AD8027AEA32D9034EA3751B9769CCF191DB95A17DA837BF40DF0"
+    },
+    {
+      "name": "AutoSlide",
+      "start": "0x3ab3aec",
+      "end": "0x3ab3b70",
+      "sha256": "C445B442442D879D77CDC221E7D0452769871D09F0AF446CC4E10C936A397EEC"
+    },
+    {
+      "name": "OnInit",
+      "start": "0x3ab4730",
+      "end": "0x3ab4734",
+      "sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91"
+    },
+    {
+      "name": "UpdateButton",
+      "start": "0x3ab52e0",
+      "end": "0x3ab5344",
+      "sha256": "FF22F403AA82EBB34193B2CAF24ACB785CCD8B2BAAF482AF4AA38C9184BB0D60"
+    },
+    {
+      "name": "ActivateCloseOrNext",
+      "start": "0x3ab4734",
+      "end": "0x3ab477c",
+      "sha256": "17E316D658ED3AE4A00434178B57784BACFA28754F30A21464A27AC592A851E4"
+    }
+  ],
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "602161B6830506ECFDCD3FC91DE2B1E44CA26CCE46FF0B1109706F64E46F4A6C"
+}

@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "sample": "jp.co.craftegg.band 10.1.4/230 arm64-v8a",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "noteTypes": {
+    "Normal": 0,
+    "Skill": 1,
+    "Flick": 2,
+    "Long": 3,
+    "LongAmong": 4,
+    "LongAfter": 5,
+    "DirectionalFlickRight": 6,
+    "DirectionalFlickLeft": 7
+  },
+  "rootFields": {
+    "normalEffect": {
+      "offset": "0x78",
+      "root": "ordinary:effect_tap_perfect"
+    },
+    "skillEffect": {
+      "offset": "0x88",
+      "root": "ordinary:effect_tap_skill_perfect"
+    },
+    "flickEffect": {
+      "offset": "0x80",
+      "root": "ordinary:effect_tap_swipe"
+    },
+    "longEffect": {
+      "offset": "0x90",
+      "root": "ordinary:effect_TapKeep"
+    },
+    "directionalFlickEffectLeft": {
+      "offset": "0x98",
+      "root": "directional:effect_tap_directional_flick_l"
+    },
+    "directionalFlickEffectRight": {
+      "offset": "0xa0",
+      "root": "directional:effect_tap_directional_flick_r"
+    },
+    "directionalFlickFingerEffectLeft": {
+      "offset": "0xa8",
+      "root": "directional:effect_tap_directional_flick_l_finger"
+    },
+    "directionalFlickFingerEffectRight": {
+      "offset": "0xb0",
+      "root": "directional:effect_tap_directional_flick_r_finger"
+    }
+  },
+  "impactActions": {
+    "0": [
+      "replay:normalEffect"
+    ],
+    "1": [
+      "replay:skillEffect"
+    ],
+    "2": [
+      "replay:flickEffect"
+    ],
+    "3": [
+      "replay:normalEffect",
+      "play:longEffect"
+    ],
+    "5": [
+      "replay:normalEffect",
+      "deactivate:longEffect"
+    ],
+    "6": [
+      "replay:directionalFlickFingerEffectRight",
+      "replay:directionalFlickEffectRight"
+    ],
+    "7": [
+      "replay:directionalFlickFingerEffectLeft",
+      "replay:directionalFlickEffectLeft"
+    ]
+  },
+  "setup": {
+    "effectParentTransformId": 33,
+    "parentLocalPosition": [
+      0,
+      -2.799999952316284,
+      15
+    ],
+    "noteSizeDivisor": 100,
+    "includeInactiveParticleSystems": true,
+    "multiplyEachParticleTransformScale": true,
+    "multiplyStretchedRendererLengthScale": true,
+    "flickChildLocalEulerOverride": {
+      "path": "effect_tap_swipe/slash",
+      "y": 0
+    },
+    "frontCameraOrthographicSize": 5.400000095367432,
+    "frontCameraLocalZ": 0
+  },
+  "updatesRestartPlayback": [
+    "field",
+    "note",
+    "tap-effect",
+    "directional-note",
+    "directional-effect"
+  ],
+  "replay": "if isPlaying: Stop(); Clear(); then Play(); defaults include children",
+  "nativeMethods": [
+    {
+      "name": "SkinPreview$$LoadEffectSkin",
+      "start": "0x3a891f0",
+      "bytes": 776,
+      "sha256": "F5E5C353452E99214FD8EEC5725304124D87679144294A24AEF062EFD71F7256"
+    },
+    {
+      "name": "SkinPreview$$LoadDirectionalFlickEffect",
+      "start": "0x3a89a38",
+      "bytes": 588,
+      "sha256": "6418A25214AD06433F3025748DA337687C6A2822258659453A2CC5D647C4E0DB"
+    },
+    {
+      "name": "SkinPreview$$setupChildParticleSystemScale",
+      "start": "0x3a8a594",
+      "bytes": 396,
+      "sha256": "63F4D39C4DDC9A18F10ADDE15814EBFBF6FCFA86B2E278085EC254113228DF97"
+    },
+    {
+      "name": "SkinPreview$$loadDirectionalFlickFingerEffectAssetBundle",
+      "start": "0x3a8a2d4",
+      "bytes": 704,
+      "sha256": "7702A87D3E051BA37690343AC3156FC3285BE1D853015732499E80394D2D9674"
+    },
+    {
+      "name": "SkinPreview$$createEffect",
+      "start": "0x3a8b104",
+      "bytes": 720,
+      "sha256": "93F6E51377A09B139A0A06662D392075199A6C7E62A0333FDCB368DE5EA4F570"
+    },
+    {
+      "name": "SkinPreview$$createNote",
+      "start": "0x3a8aa68",
+      "bytes": 768,
+      "sha256": "4B8FF2D421967F533CD80B11A54E4E44A4BC478AF7C80433AA9891651E7DA43D"
+    },
+    {
+      "name": "SkinPreview$$reset",
+      "start": "0x3a89e28",
+      "bytes": 28,
+      "sha256": "6B14D2963FD99420B0AF5DBF20DC69A1AF7563CF7DDB69CB9FB0BEFF6836AACB"
+    },
+    {
+      "name": "SkinPreview$$resetEffect",
+      "start": "0x3a89eb8",
+      "bytes": 1016,
+      "sha256": "5140293EDD922B1387DD2743C2AECC80173493CBE16DE4C439B06D6D0547EE8B"
+    },
+    {
+      "name": "SkinPreview$$UpdateFieldSkin",
+      "start": "0x3a89d90",
+      "bytes": 24,
+      "sha256": "6CAFB6044FF02AEFFB7AEEBA3E2A8B0ABD6E7E0AA8C3524A30738CC808EDDAF7"
+    },
+    {
+      "name": "SkinPreview$$UpdateNoteSkin",
+      "start": "0x3a89da8",
+      "bytes": 24,
+      "sha256": "181E7D429F8E00A368DF32320EF6EEE195583CFE20B464F30F60611C32939E03"
+    },
+    {
+      "name": "SkinPreview$$UpdateTapEffectSkin",
+      "start": "0x3a89dc0",
+      "bytes": 24,
+      "sha256": "C7F604421A2DDAB2E53D76892EA67EC19564AFBEE6D60A7C5C564487CE116B4B"
+    },
+    {
+      "name": "SkinPreview$$UpdateDirectionalFlickSkin",
+      "start": "0x3a89dd8",
+      "bytes": 56,
+      "sha256": "C6C28D8C0E5371562284F17BBC6A829A2A99C8D4F9DEE06E49AC3671A12D9F45"
+    },
+    {
+      "name": "ParticleSystemUtility$$Replay",
+      "start": "0x3b08488",
+      "bytes": 68,
+      "sha256": "F5BC3B25D4D3C522307214A06C2A79B283C777C0E06C499C39BE5F65C81534CE"
+    }
+  ],
+  "literalRelocations": [
+    {
+      "gotAddress": "0x6c9ece8",
+      "relocationAddend": "0x6f9a530",
+      "literal": "effect_TapKeep"
+    },
+    {
+      "gotAddress": "0x6ccd868",
+      "relocationAddend": "0x6f9a598",
+      "literal": "effect_tap_directional_flick_r_finger"
+    },
+    {
+      "gotAddress": "0x6ccd878",
+      "relocationAddend": "0x6f9a560",
+      "literal": "effect_tap_directional_flick_l"
+    },
+    {
+      "gotAddress": "0x6ccd888",
+      "relocationAddend": "0x6f9a580",
+      "literal": "effect_tap_directional_flick_r"
+    },
+    {
+      "gotAddress": "0x6ccd898",
+      "relocationAddend": "0x6f9a5d0",
+      "literal": "effect_tap_swipe"
+    },
+    {
+      "gotAddress": "0x6ccd8a0",
+      "relocationAddend": "0x6f9a5b0",
+      "literal": "effect_tap_perfect"
+    },
+    {
+      "gotAddress": "0x6ccd8a8",
+      "relocationAddend": "0x6f9a5c8",
+      "literal": "effect_tap_skill_perfect"
+    },
+    {
+      "gotAddress": "0x6ccd8b8",
+      "relocationAddend": "0x6f9a578",
+      "literal": "effect_tap_directional_flick_l_finger"
+    },
+    {
+      "gotAddress": "0x6cdd308",
+      "relocationAddend": "0x6fa38f8",
+      "literal": "slash"
+    }
+  ],
+  "metadata": {
+    "noteEnum": "SkinPreview.NoteType",
+    "noteEnumTextSha256": "7A073825032E9730BAD6D0B58D47401AD77122916582B4DE995FF1B81742FE09",
+    "dumpCsSha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "scope": "Normal selectable skin preview; shared particle simulation/materials consume the selected source packs. This evidence does not claim editor integration or visual verification.",
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "7E0D3AC7A9BD286C2ED9CE4F1B2323379F66CD66C3248C51161EE8EF749B3100"
+}

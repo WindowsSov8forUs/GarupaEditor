@@ -62,6 +62,21 @@
       "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
     },
     {
+      "path": "game/atlas/menu/menu-atlas-cn.png",
+      "byteLength": 2283715,
+      "sha256": "1B964CC40E29B5616095BD17544FE294E67217ADC3C53B542A094864CC45BDEC"
+    },
+    {
+      "path": "game/atlas/menu/menu-atlas.png",
+      "byteLength": 2231437,
+      "sha256": "D07EEFBCA0817174DE1199215E801D6A495AEC1602BD90D651F027C2EDF9F8AA"
+    },
+    {
+      "path": "game/atlas/menu/ui-common-cn.png",
+      "byteLength": 43291,
+      "sha256": "D47ACA1208262590624AA3E946BEBF8264613596CEC0C7902A11F142574D4C4B"
+    },
+    {
       "path": "game/fonts/sgm/rank-label-font.ttf",
       "byteLength": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
@@ -115,6 +130,11 @@
       "path": "game/loading/onpu_shadow.png",
       "byteLength": 278,
       "sha256": "9FA14ACB50A3320F42C82AF6D7688E7667AFBF2F1D7877295FB2ABA9A4E00F70"
+    },
+    {
+      "path": "game/menu-preview/default-background.png",
+      "byteLength": 127555,
+      "sha256": "8BE0136D9461B0834028A94A1DD91C653AE44E3E2E6D1632602D939251F5A186"
     },
     {
       "path": "game/portable/profiles/default-particle/particle-portable-textures/directional/Default-ParticleSystem.png",
@@ -457,6 +477,46 @@
       "sha256": "64E6B46209A632EA51EE7CA548FD0D52DDF7D4B03D6A0D3C226385F621B1FDDB"
     },
     {
+      "path": "game/prefabs/bms/sudden/sudden-line.png",
+      "byteLength": 519,
+      "sha256": "31191C7E195056BAB791E4B5B9C853F87D517DFCE8B67099498AA0E58547B3AB"
+    },
+    {
+      "path": "game/settings-guides/tutorial_sudden_plus1.png",
+      "byteLength": 116541,
+      "sha256": "AEC0185D306C6F2319AFF1D9B17ADC6E2C0A477606D12ED2E834DCE3C908FF1A"
+    },
+    {
+      "path": "game/settings-guides/tutorial_sudden_plus2.png",
+      "byteLength": 93787,
+      "sha256": "07E693DEA2F52E6DA70FDBE0B5E711DD65F705E7F3246C287FF24EC780BFC4D9"
+    },
+    {
+      "path": "game/settings-guides/tutorial_timing_judge1.png",
+      "byteLength": 84453,
+      "sha256": "178003D33C6275C4BC05CB415A4DCD8F2A5FCBC7642D81E016BE65615D2AB29E"
+    },
+    {
+      "path": "game/settings-guides/tutorial_timing_judge2.png",
+      "byteLength": 82070,
+      "sha256": "3DD9F8E53BBD7465FC7DDE2A8ABB8915A150D289097A144DF6C5F272DD57F2F9"
+    },
+    {
+      "path": "game/settings-guides/tutorial_timing_music1.png",
+      "byteLength": 87081,
+      "sha256": "1C6A5842D75BFB9C0D558E916B78A3CCAB75AAAEFF22CB8E77E44BCAFFAF4AA5"
+    },
+    {
+      "path": "game/settings-guides/tutorial_timing_music2.png",
+      "byteLength": 88915,
+      "sha256": "E147CBF987F587382849067DFE16D43D042072DAF1EA336673B6384842128D57"
+    },
+    {
+      "path": "game/sound/common-se/cancel.mp3",
+      "byteLength": 6887,
+      "sha256": "C10BFDC93D2783385B397E3496636BC3E3306EC9766640C8E830436CDADDBAB7"
+    },
+    {
       "path": "game/sound/common-se/decide_1.mp3",
       "byteLength": 17690,
       "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"
@@ -465,6 +525,16 @@
       "path": "game/sound/result/after_live.mp3",
       "byteLength": 942516,
       "sha256": "043B6250F4078E0ADDFE5F3175BB2F8A8EBE58957B566D210FAE59C34570AA2A"
+    },
+    {
+      "path": "game/sound/rhythm-adjust/short.wav",
+      "byteLength": 352844,
+      "sha256": "43220F736A87E29D6CD2C2AFF3EA22A3D007633C83EDB62AD0F2CC236BF90DA3"
+    },
+    {
+      "path": "game/sound/rhythm-adjust/short2.wav",
+      "byteLength": 529244,
+      "sha256": "83212AE80CCB42938B156516DF05F46DB7984327E752AB52A959DE2BF7696962"
     },
     {
       "path": "icons/apply-action.svg",

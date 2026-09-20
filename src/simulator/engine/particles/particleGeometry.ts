@@ -429,7 +429,8 @@ function billboardHalfSize(
   const size = bitsVector3(sample.sizeBeforeTransform);
   const scale = bitsVector3(sample.transformSize);
   // Current GameCamera has orthographic size1 and a full normalized viewport.
-  const width = calculateNativeParticleOrthographicWidth(1, divide(scene.viewportWidth, scene.viewportHeight));
+  const width = calculateNativeParticleOrthographicWidth(
+    requiredBits(scene.orthographicSizeBits ?? "0x3F800000"), divide(scene.viewportWidth, scene.viewportHeight));
   return calculateNativeParticleOrthographicHalfSize([size[0], size[1]], scale[0],
     binding.renderer.m_MinParticleSize, binding.renderer.m_MaxParticleSize, width);
 }
@@ -446,9 +447,12 @@ function stretchedBillboard(
   readonly uv0: readonly Vector2[];
   readonly indices: readonly number[];
 } {
-  // Current non-Freeform worker, not a centered rotated billboard. The native
-  // camera is at (0,0,-15), looking +Z; Unity view space reflects its Z axis.
-  const cameraPosition: Vector3 = [worldCenter[0], worldCenter[1], -add(worldCenter[2], 15)];
+  // Non-Freeform stretch runs in camera space; translate back using this camera,
+  // including UI cameras whose origin differs from the gameplay camera.
+  const cameraOrigin: Vector3 = [requiredBits(scene.worldCenterXBits), requiredBits(scene.worldCenterYBits),
+    requiredBits(scene.cameraZBits ?? "0xC1700000")];
+  const cameraPosition: Vector3 = [subtract(worldCenter[0], cameraOrigin[0]), subtract(worldCenter[1], cameraOrigin[1]),
+    subtract(cameraOrigin[2], worldCenter[2])];
   // BND-C95: the stretch worker limits raw sizes using the same camera-width
   // coefficients as billboards. Its side basis applies runtime scale afterward.
   const halfSize = billboardHalfSize(binding, sample, scene);
@@ -467,9 +471,9 @@ function stretchedBillboard(
     halfWidth,
   });
   const tail: Vector3 = [
-    arithmetic.tail[0],
-    arithmetic.tail[1],
-    subtract(-15, arithmetic.tail[2]),
+    add(cameraOrigin[0], arithmetic.tail[0]),
+    add(cameraOrigin[1], arithmetic.tail[1]),
+    subtract(cameraOrigin[2], arithmetic.tail[2]),
   ];
   const side = applyBasis([arithmetic.sideXY[0], arithmetic.sideXY[1], 0], sideBasis)
     .map((value, axis) => multiply(value, outerScale[axis]!)) as unknown as Vector3;
@@ -621,6 +625,7 @@ function particleWorldCenter(sample: ParticleRenderSample, transform: ParticleOw
   if ((sample.instance.kind !== "game-play-button" || transform.source !== "game-play-button") &&
     (sample.instance.kind !== "game-clear" || transform.source !== "game-clear-ui-root") &&
     (sample.instance.kind !== "result-ui" || transform.source !== "result-ui-root") &&
+    (sample.instance.kind !== "skin-preview" || transform.source !== "skin-preview-root") &&
     (sample.instance.kind !== "note-slide" || transform.source !== "note-slide")) {
     throw fault("particle.geometry.owner-hierarchy", "World samples require their matching button, Slide, game-clear or result owner.");
   }
@@ -698,10 +703,12 @@ function nativeRendererBounds(sample: ParticleRenderSample, scene: ParticlePixiS
 }
 
 function intersectsOrthographicViewport(bounds: ParticleNativePrimitiveBounds, scene: ParticlePixiSceneProfile): boolean {
-  // The current gameplay camera is at Z=-15 with near=0/far=25.
+  const cameraZ = requiredBits(scene.cameraZBits ?? "0xC1700000");
+  const nearZ = add(cameraZ, requiredBits(scene.cameraNearClipBits ?? "0x00000000"));
+  const farZ = add(cameraZ, requiredBits(scene.cameraFarClipBits ?? "0x41C80000"));
   return bounds.right >= 0 && bounds.left <= scene.viewportWidth &&
     bounds.bottom >= 0 && bounds.top <= scene.viewportHeight &&
-    bounds.farZ >= -15 && bounds.nearZ <= 10;
+    bounds.farZ >= nearZ && bounds.nearZ <= farZ;
 }
 
 function addVector(left: Vector3, right: Vector3): Vector3 {

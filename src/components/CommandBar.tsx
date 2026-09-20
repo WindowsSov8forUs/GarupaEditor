@@ -1,4 +1,5 @@
-﻿import { memo, type KeyboardEvent } from "react";
+import { OriginalHeaderMenuButton } from "./OriginalMenuParts";
+import { memo, type KeyboardEvent } from "react";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
 type CommandBarProps = {
@@ -8,6 +9,7 @@ type CommandBarProps = {
   onOpenSimulator: () => void;
   onOpenSkinSettings: () => void;
   onOpenAppSettings: () => void;
+  menuOpen?: boolean;
   userNickname?: string | null;
   userUsername?: string | null;
   onUserBarClick?: () => void;
@@ -20,6 +22,7 @@ export const CommandBar = memo(function CommandBar({
   onOpenSimulator,
   onOpenSkinSettings,
   onOpenAppSettings,
+  menuOpen = false,
   userNickname,
   userUsername,
   onUserBarClick,
@@ -100,14 +103,7 @@ export const CommandBar = memo(function CommandBar({
           <div className="command-user-row command-user-row-nickname">{nicknameText}</div>
           <div className="command-user-row command-user-row-username">{usernameText}</div>
         </div>
-        <button type="button" className="command-icon-button" onClick={onOpenAppSettings} title="目录">
-          <span className="sr-only">目录</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="4.2" rx="1.8" />
-            <rect x="3" y="9.9" width="18" height="4.2" rx="1.8" />
-            <rect x="3" y="16.8" width="18" height="4.2" rx="1.8" />
-          </svg>
-        </button>
+        <OriginalHeaderMenuButton open={menuOpen} onClick={onOpenAppSettings} />
       </div>
     </div>
   );

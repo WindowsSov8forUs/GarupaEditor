@@ -1,0 +1,156 @@
+{
+  "sample": "10.1.4/230 ARM64",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "nativeEvidence": "artifacts/investigations/menu-settings-ui-10-1-4/native.json",
+  "layoutMethod": "LiveEffectVolumeTabPage$$.cctor",
+  "effectBlocks": [
+    {
+      "field": "liveEffectBlockTransform",
+      "address": "0x1533d10",
+      "bytes": "0000000000002ac4",
+      "position": [
+        0.0,
+        -680.0,
+        0
+      ]
+    },
+    {
+      "field": "memberIllustCutInBlockTransform",
+      "address": "0x1532bc0",
+      "bytes": "0000000000c089c4",
+      "position": [
+        0.0,
+        -1102.0,
+        0
+      ]
+    },
+    {
+      "field": "live3dBlockTransform",
+      "address": "0x1532e80",
+      "bytes": "0000000000c0b9c4",
+      "position": [
+        0.0,
+        -1486.0,
+        0
+      ]
+    },
+    {
+      "field": "mvBlockTransform",
+      "address": "0x1533848",
+      "bytes": "0000000000c0e4c4",
+      "position": [
+        0.0,
+        -1830.0,
+        0
+      ]
+    },
+    {
+      "field": "lightModeBlockTransform",
+      "address": "0x1532dd8",
+      "bytes": "00000000006008c5",
+      "position": [
+        0.0,
+        -2182.0,
+        0
+      ]
+    },
+    {
+      "field": "liveSoundVolumeBlockTransform",
+      "address": "0x15334e0",
+      "bytes": "0000000000b01ec5",
+      "position": [
+        0.0,
+        -2539.0,
+        0
+      ]
+    },
+    {
+      "field": "liveVibrationBlockTransform",
+      "address": "0x1533fa8",
+      "bytes": "0000000000503fc5",
+      "position": [
+        0.0,
+        -3061.0,
+        0
+      ]
+    }
+  ],
+  "speedMethod": "LiveSettingsHiSpeed$$changeHS",
+  "speedUpperTolerance": {
+    "address": "0x15366bc",
+    "bytes": "0ad7a33b",
+    "value": 0.004999999888241291
+  },
+  "speedLowerThreshold": {
+    "address": "0x15366c0",
+    "bytes": "3bdf7f3f",
+    "value": 0.9994999766349792
+  },
+  "effectInitialization": {
+    "nativeEvidence": "artifacts/investigations/menu-settings-ui-10-1-4/native.json",
+    "methods": [
+      "LiveEffectVolumeTabPage.initializeLiveMode @ 0x38fc8c8",
+      "LiveEffectVolumeTabPage.initializeHighFrequencyMode @ 0x38fcb78",
+      "LiveEffectVolumeTabPage.initializeMemberIllustCutIn @ 0x38fcf88",
+      "LiveEffectVolumeTabPage.initializeLowLatencySoundMode @ 0x38fdca8",
+      "LiveEffectVolumeTabPage.onInitialize @ 0x38fc6a0"
+    ],
+    "masterDecompressedSha256": "3E02A51A2BB3F91401072C8C2545897A12ADB25916B28050CAF97F2B03DB9214",
+    "labels": [
+      {
+        "field": "cutIn3DModeDescription",
+        "key": "dialog_liveSettings_3dCutinModeMessage",
+        "offset": 15385093,
+        "hex": "0a266469616c6f675f6c69766553657474696e67735f3364437574696e4d6f64654d65737361676512f2010a266469616c6f675f6c69766553657474696e67735f3364437574696e4d6f64654d65737361676512c701e280bbe3808c3344e382abe38383e38388e382a4e383b3e383a2e383bce38389e3808de382924f4ee381abe38199e3828be381a8e38081e382abe38383e38388e382a4e383b3e381af3344e381aee382ade383a3e383a9e382afe382bfe383bce3818ce799bbe5a0b4e38197e381bee38199e380820ae380804f4646e381abe38199e3828be381a8e38081e8a8ade5ae9ae38195e3828ce3819fe58b95e4bd9ce383a2e383bce38389e381a7e383a9e382a4e38396e38292e8a18ce38184e381bee38199e38082",
+        "text": "\u203b\u300c3D\u30ab\u30c3\u30c8\u30a4\u30f3\u30e2\u30fc\u30c9\u300d\u3092ON\u306b\u3059\u308b\u3068\u3001\u30ab\u30c3\u30c8\u30a4\u30f3\u306f3D\u306e\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u304c\u767b\u5834\u3057\u307e\u3059\u3002\n\u3000OFF\u306b\u3059\u308b\u3068\u3001\u8a2d\u5b9a\u3055\u308c\u305f\u52d5\u4f5c\u30e2\u30fc\u30c9\u3067\u30e9\u30a4\u30d6\u3092\u884c\u3044\u307e\u3059\u3002"
+      },
+      {
+        "field": "resolutionTypeDescription",
+        "key": "dialog_liveSettings_inGameResolutionAdvice",
+        "offset": 15354227,
+        "hex": "0a2a6469616c6f675f6c69766553657474696e67735f696e47616d655265736f6c7574696f6e41647669636512a6010a2a6469616c6f675f6c69766553657474696e67735f696e47616d655265736f6c7574696f6e4164766963651278e280bbe3808ce383a9e382a4e38396e794bbe99da2e8a7a3e5838fe5baa6e3808de38292e4bd8ee381abe38199e3828be38193e381a8e381a7e38081e383a9e382a4e38396e4b8ade381aee58b95e4bd9ce3818ce8bbbde3818fe381aae3828be5a0b4e59088e3818ce38182e3828ae381bee38199e38082",
+        "text": "\u203b\u300c\u30e9\u30a4\u30d6\u753b\u9762\u89e3\u50cf\u5ea6\u300d\u3092\u4f4e\u306b\u3059\u308b\u3053\u3068\u3067\u3001\u30e9\u30a4\u30d6\u4e2d\u306e\u52d5\u4f5c\u304c\u8efd\u304f\u306a\u308b\u5834\u5408\u304c\u3042\u308a\u307e\u3059\u3002"
+      },
+      {
+        "field": "highFrequencyModeDescription",
+        "key": "dialog_liveSettings_highFrequencyModeCaution",
+        "offset": 15305324,
+        "hex": "0a2c6469616c6f675f6c69766553657474696e67735f686967684672657175656e63794d6f646543617574696f6e129c010a2c6469616c6f675f6c69766553657474696e67735f686967684672657175656e63794d6f646543617574696f6e126ce280bbe38194e588a9e794a8e7abafe69cabe381abe38288e381a3e381a6e381afe8a8ade5ae9ae38197e3819fe38395e383ace383bce383a0e383ace383bce38388e381a7e58b95e4bd9ce38197e381aae38184e5a0b4e59088e3818ce38182e3828ae381bee38199e38082",
+        "text": "\u203b\u3054\u5229\u7528\u7aef\u672b\u306b\u3088\u3063\u3066\u306f\u8a2d\u5b9a\u3057\u305f\u30d5\u30ec\u30fc\u30e0\u30ec\u30fc\u30c8\u3067\u52d5\u4f5c\u3057\u306a\u3044\u5834\u5408\u304c\u3042\u308a\u307e\u3059\u3002"
+      },
+      {
+        "field": "cutIn3DModeDisplayCharacterDescription",
+        "key": "dialog_liveSettings_cutin3DMode_Message",
+        "offset": 15625711,
+        "hex": "0a276469616c6f675f6c69766553657474696e67735f637574696e33444d6f64655f4d657373616765128f010a276469616c6f675f6c69766553657474696e67735f637574696e33444d6f64655f4d6573736167651264e280bbe3808c3344e382abe38383e38388e382a4e383b3e383a2e383bce38389e3808de381aee382abe38383e38388e382a4e383b3e381af3344e381aee382ade383a3e383a9e382afe382bfe383bce3818ce799bbe5a0b4e38197e381bee38199e38082",
+        "text": "\u203b\u300c3D\u30ab\u30c3\u30c8\u30a4\u30f3\u30e2\u30fc\u30c9\u300d\u306e\u30ab\u30c3\u30c8\u30a4\u30f3\u306f3D\u306e\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u304c\u767b\u5834\u3057\u307e\u3059\u3002"
+      },
+      {
+        "field": "live2DModeCutInDescription",
+        "key": "dialog_liveSettings_cutinLive2dMode_Message",
+        "offset": 15438399,
+        "hex": "0a2b6469616c6f675f6c69766553657474696e67735f637574696e4c69766532644d6f64655f4d657373616765128c010a2b6469616c6f675f6c69766553657474696e67735f637574696e4c69766532644d6f64655f4d657373616765125de280bbe3808c4c6976653244e383a2e383bce38389e3808de381aee382abe38383e38388e382a4e383b3e381af4c6976653244e381aee382ade383a3e383a9e382afe382bfe383bce3818ce799bbe5a0b4e38197e381bee38199e38082",
+        "text": "\u203b\u300cLive2D\u30e2\u30fc\u30c9\u300d\u306e\u30ab\u30c3\u30c8\u30a4\u30f3\u306fLive2D\u306e\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u304c\u767b\u5834\u3057\u307e\u3059\u3002"
+      },
+      {
+        "field": "lightModeCutInDescription",
+        "key": "dialog_liveSettings_cutinLightMode_Message",
+        "offset": 15521244,
+        "hex": "0a2a6469616c6f675f6c69766553657474696e67735f637574696e4c696768744d6f64655f4d65737361676512760a2a6469616c6f675f6c69766553657474696e67735f637574696e4c696768744d6f64655f4d6573736167651248e280bbe3808ce8bbbde9878fe383a2e383bce38389e3808de381afe382abe38383e38388e382a4e383b3e381aee8a1a8e7a4bae381afe38182e3828ae381bee3819be38293e38082",
+        "text": "\u203b\u300c\u8efd\u91cf\u30e2\u30fc\u30c9\u300d\u306f\u30ab\u30c3\u30c8\u30a4\u30f3\u306e\u8868\u793a\u306f\u3042\u308a\u307e\u305b\u3093\u3002"
+      }
+    ],
+    "hiddenFields": [
+      "lowLatencySoundMode",
+      "lowLatencySoundModeDescription"
+    ],
+    "descriptionOrder": [
+      "resolutionTypeDescription",
+      "highFrequencyModeDescription"
+    ],
+    "descriptionLayout": "UIGrid.Reposition after runtime labels and visibility; vertical single column, cellHeight 25, hideInactive 1. Child order from original Transform.m_Children, not JSON object order.",
+    "scope": "Base live-mode description. Original Live2D maintenance/device-memory warning suffixes are not desktop capability claims."
+  },
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "CA586C0548362BD1AE7340D106F2A1BF42124D9C665425D7A8C7B486B12D0C7B"
+}

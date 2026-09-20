@@ -600,7 +600,7 @@ function drawSegmentFrame(args: {
   context.strokeStyle = "rgb(217, 13, 35)";
   context.fillStyle = "rgb(217, 13, 35)";
   context.lineWidth = 1;
-  context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+  context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
   context.textAlign = "right";
   context.textBaseline = "alphabetic";
   const bpmLabelX = Math.max(18, boardXOffset - 12);
@@ -620,7 +620,7 @@ function drawSegmentFrame(args: {
 
   context.save();
   context.lineWidth = 1;
-  context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+  context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
   const svLabelX = Math.min(windowWidth - 18, boardXOffset + payload.boardWidth + 12);
@@ -643,7 +643,7 @@ function drawSegmentFrame(args: {
 
   context.save();
   context.fillStyle = "rgba(222, 229, 242, 0.84)";
-  context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+  context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
   context.textAlign = "right";
   context.textBaseline = "middle";
   const timeLabelX = Math.max(18, boardXOffset - 12);
@@ -663,7 +663,7 @@ function drawSegmentFrame(args: {
 
   context.save();
   context.fillStyle = "rgba(222, 229, 242, 0.84)";
-  context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+  context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
   context.textAlign = "left";
   context.textBaseline = "middle";
   const noteCountLabelX = Math.min(windowWidth - 10, boardXOffset + logicalBoardWidth + 12);

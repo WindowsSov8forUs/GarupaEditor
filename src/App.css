@@ -141,7 +141,7 @@ textarea {
   box-shadow: none;
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   --btn-frame-top-local: var(--btn-frame-top);
   --btn-frame-bottom-local: var(--btn-frame-bottom);
   --btn-frame-border-local: var(--btn-frame-border);
@@ -172,7 +172,7 @@ button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary
     filter 120ms ease;
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   content: "";
   position: absolute;
   inset: var(--btn-gap-local);
@@ -183,7 +183,7 @@ button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary
   z-index: 0;
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) > * {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) > * {
   position: relative;
   z-index: 1;
 }
@@ -194,13 +194,13 @@ button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary
   justify-content: center;
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):hover:not(:disabled) {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):hover:not(:disabled) {
   transform: none;
   border-color: rgba(141, 149, 161, 0.96);
   filter: brightness(1.02);
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):active:not(:disabled) {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):active:not(:disabled) {
   transform: none;
   box-shadow:
     inset 0 1px 2px rgba(40, 46, 56, 0.18),
@@ -208,7 +208,7 @@ button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary
   filter: brightness(0.98);
 }
 
-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):disabled {
+button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):disabled {
   opacity: 0.42;
   cursor: not-allowed;
   filter: saturate(0.72);
@@ -525,7 +525,7 @@ textarea:focus {
   color: rgb(255, 59, 113);
 }
 
-button.chart-info-edit-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice) {
+button.chart-info-edit-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice) {
   position: relative;
   flex: 0 0 36px;
   width: 36px;
@@ -1597,7 +1597,7 @@ select.stepper-input {
   font-size: 0.86rem;
 }
 
-button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -1608,7 +1608,7 @@ button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.b
   color: #fff;
 }
 
-button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
@@ -1639,7 +1639,7 @@ button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.b
   height: 155%;
 }
 
-button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -1660,7 +1660,7 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   height: 170%;
 }
 
-button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
@@ -2405,8 +2405,6 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 .modal-mask {
   position: fixed;
   inset: 0;
-  background: rgba(48, 36, 47, 0.42);
-  backdrop-filter: blur(2px);
   z-index: 20;
   display: flex;
   align-items: center;
@@ -2418,168 +2416,9 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   width: min(760px, 100%);
   max-height: min(86vh, 740px);
   overflow: auto;
-  border: 1px solid var(--panel-border);
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 18px 44px rgba(73, 43, 66, 0.24);
 }
 
-.modal-transition-mask {
-  animation-duration: 180ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  animation-fill-mode: both;
-}
-
-.modal-transition-mask.is-enter {
-  animation-name: modal-mask-fade-in;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: auto;
-}
-
-.modal-transition-mask.is-exit {
-  animation-name: modal-mask-fade-out;
-  animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
-  pointer-events: none;
-}
-
-.modal-transition-card {
-  animation-duration: 180ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  animation-fill-mode: both;
-  transform-origin: center;
-  will-change: transform, opacity;
-}
-
-.modal-transition-card.is-enter {
-  animation-name: modal-card-scale-in;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.modal-transition-card.is-exit {
-  animation-name: modal-card-scale-out;
-  animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
-  pointer-events: none;
-}
-
-@keyframes modal-mask-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modal-mask-fade-out {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes modal-card-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes modal-card-scale-out {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: scale(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal-transition-mask,
-  .modal-transition-card {
-    animation-duration: 1ms;
-  }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 2px solid rgba(255, 93, 151, 0.68);
-}
-
-.modal-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.45rem;
-  color: #46444f;
-}
-
-.modal-titleline-header {
-  align-items: flex-start;
-  gap: 8px;
-  border-bottom: 0;
-  padding-bottom: 8px;
-}
-
-.modal-titleline-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-}
-
-.modal-titleline-icon {
-  width: auto;
-  height: 24px;
-  flex: 0 0 auto;
-  display: block;
-}
-
-.modal-titleline-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.modal-titleline-text {
-  margin: 0;
-  padding-left: 12px;
-  font-size: 1.45rem;
-  line-height: 1.1;
-  color: #46444f;
-}
-
-.modal-titleline-rule {
-  display: block;
-  width: 100%;
-  height: 3px;
-  background: rgb(255, 59, 113);
-}
-
-.modal-titleline-header .icon-button {
-  align-self: flex-start;
-}
+/* Original dialog animation is applied by the shared DOM adapter. */
 
 .modal-body {
   padding: 12px;
@@ -2934,14 +2773,14 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 }
 
 .app-settings-back-button,
-button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
-.modal-actions > button:not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
+.modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   min-width: 92px;
   min-height: 34px;
 }
 
-button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
-.modal-actions > button:not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
+.modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -2952,14 +2791,14 @@ button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bp
   color: #ffffff;
 }
 
-button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before,
-.modal-actions > button:not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before,
+.modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
 
 .app-settings-apply-button .btn-content,
-.modal-actions > button:not(.app-settings-back-button) .btn-content {
+.modal-actions > button:not(.original-button):not(.app-settings-back-button) .btn-content {
   color: #ffffff;
 }
 
@@ -3024,8 +2863,6 @@ button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bp
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(44, 31, 41, 0.36);
-  backdrop-filter: blur(1px);
 }
 
 .overlay-dialog-card {
@@ -3342,7 +3179,7 @@ button.upload-tag-chip-remove:not(.note-token):not(.bpm-label-button):not(.bpm-l
   color: rgb(255, 59, 113);
 }
 
-button.upload-tag-add-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.upload-tag-add-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   min-height: 34px;
   height: 34px;
   flex: 0 0 auto;
@@ -3432,7 +3269,7 @@ button.upload-tag-add-button:not(.note-token):not(.bpm-label-button):not(.bpm-li
   cursor: pointer;
 }
 
-button.export-tag-candidate-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.export-tag-candidate-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   min-height: 34px;
   height: 34px;
   font-size: 0.84rem;
@@ -3833,7 +3670,7 @@ button.export-tag-candidate-button:not(.note-token):not(.bpm-label-button):not(.
   padding: 0;
   border: none;
   border-radius: 0;
-  font-family: "TTShinGoM", "GB18030", sans-serif;
+  font-family: "ChartUI", "TTShinGoM", sans-serif;
   font-size: 12px;
   line-height: 1;
   color: var(--text);

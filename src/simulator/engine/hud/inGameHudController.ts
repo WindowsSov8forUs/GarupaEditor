@@ -14,8 +14,9 @@ export class InGameHudController {
   constructor(
     isAutoPlay: boolean,
     allPerfectStatusDisplayMode: boolean,
+    hideFastSlow = false,
   ) {
     this.combo = new ComboHudOwner(allPerfectStatusDisplayMode);
-    this.result = new ResultHudOwner(isAutoPlay);
+    this.result = new ResultHudOwner(isAutoPlay, hideFastSlow);
   }
 }

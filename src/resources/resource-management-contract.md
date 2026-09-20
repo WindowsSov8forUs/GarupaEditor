@@ -58,7 +58,7 @@ Builtin byte consumers, including Simulator, still use backend transactions and 
 
 Chart metadata contains no media URL. BGM, cover, MV and stage backdrop refs are persisted atomically in `chart-resources.v5.json`; v2 raw bytes and v3/v4 global refs are accepted only by one-time migration paths. A legacy identity that cannot be proved from committed bytes or its provider descriptor is reported and leaves the current migration/action unavailable without clearing existing durable data; it is never retained as an alias or replaced with a default.
 
-Simulator continues to consume source-neutral Snapshot/Lease bytes; current-session ownership does not change Public Schema 13, original behavior, resource resolver or compatibility validation.
+Simulator continues to consume source-neutral Snapshot/Lease bytes; current-session ownership does not change the ownership boundaries of Public Schema 16, original behavior, resource resolver or compatibility validation.
 
 ## Simulator loading-window handoff
 

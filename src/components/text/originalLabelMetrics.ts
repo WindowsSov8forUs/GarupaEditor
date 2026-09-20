@@ -14,3 +14,15 @@ export function roundLabelCoordinate(value: number): number {
   const lower = Math.floor(value);
   return value - lower === 0.5 ? lower + (Math.abs(lower) % 2) : Math.round(value);
 }
+
+/** First alphabetic baseline relative to the label pivot, in source UI units. */
+export function originalLabelFirstBaseline(
+  baseline: number,
+  fontSize: number,
+  lineCount: number,
+  spacingY: number,
+  pivotY: number,
+): number {
+  const printedHeight = Math.ceil(lineCount * (fontSize + spacingY));
+  return baseline - roundLabelCoordinate(printedHeight * pivotY);
+}

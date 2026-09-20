@@ -78,11 +78,18 @@ export interface SimulatorOriginalSkinSettings {
 export interface SimulatorOriginalLiveSettings {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
+  readonly hideFastSlow: boolean;
+  readonly displayStageEffect: boolean;
+  readonly hideCombo: boolean;
+  readonly displayComboPosition: number;
   readonly syncLine: boolean;
   readonly noteColor: boolean;
   readonly visibleTapLaneEffect: boolean;
   readonly allPerfectStatusDisplayMode: boolean;
   readonly mvDarkness: number;
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
 }
 
 export interface SimulatorLaunchConfig extends SimulatorOriginalLiveSettings {

@@ -1,0 +1,77 @@
+.modal-card.original-dialog-frame {
+  position: relative;
+  border: 0 solid transparent;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.original-dialog-header {
+  border: 0 solid transparent;
+  display: flex;
+  align-items: center;
+}
+
+.original-dialog-header h3 {
+  margin: 0;
+  font-weight: 400;
+  line-height: 1;
+}
+
+button.original-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 124px;
+  min-height: 36px;
+  padding: 6px 13px 8px 10px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  filter: none;
+  cursor: pointer;
+  font: inherit;
+  isolation: isolate;
+}
+
+button.original-button::before { content: none; }
+button.original-button:disabled { cursor: default; opacity: 1; }
+button.original-button:disabled > .original-button-cover { opacity: 0.5 !important; }
+button.original-button:focus-visible { outline: 2px solid #ff3b72; outline-offset: 2px; }
+
+button.original-button > .original-button-surface,
+button.original-button > .original-button-cover {
+  position: absolute;
+  inset: 0;
+  border: 0 solid transparent;
+  pointer-events: none;
+  z-index: 0;
+}
+
+button.original-button > .original-button-label { position: relative; z-index: 1; }
+button.original-button > .original-button-cover { z-index: 2; }
+button.original-button .btn-content { color: inherit; }
+
+/* Motion is sampled from SerializedDialogMotion, including interrupted transitions. */
+.modal-transition-mask[class] {
+  animation: none;
+  background: rgb(0 0 0 / var(--original-dialog-alpha, 0));
+  backdrop-filter: none;
+}
+.modal-transition-mask.is-enter,
+.modal-transition-mask.is-exit { animation: none; }
+.modal-transition-mask.is-exit { cursor: default; }
+.modal-transition-card.is-enter,
+.modal-transition-card.is-exit {
+  animation: none;
+  transform: scale(var(--original-dialog-scale, 0));
+  transform-origin: center;
+}
+
+button.original-button > .original-button-cover { filter: brightness(0) invert(1); }
+button.original-button:disabled > .original-button-cover { filter: brightness(0); }
+.modal-transition-card[data-motion="slide-left"] {
+  transform: translateX(calc(var(--original-dialog-x, -800) * var(--original-dialog-unit, 1px)));
+}

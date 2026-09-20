@@ -1,4 +1,4 @@
-﻿
+
 import {
   useCallback,
   useEffect,
@@ -3152,7 +3152,7 @@ function ChartEditorController() {
     copyCurrentSelectionByShortcut,
     pasteAtMousePositionByShortcut,
   });
-  useEditorSessionCache({
+  const settingsResourcesReady = useEditorSessionCache({
     metadata,
     settings,
     appOptionSettings,
@@ -5866,9 +5866,23 @@ function ChartEditorController() {
         fps: playbackFps === 120 ? 120 : 60,
         noteSize: appOptionSettings.rhythmNoteSizePercent,
         noteSpeed: appOptionSettings.rhythmNoteSpeed,
+        longNoteLineBrightness: appOptionSettings.longLineBrightnessPercent,
+        suddenRate: appOptionSettings.simulatorSettings.suddenRate,
+        suddenLane: appOptionSettings.simulatorSettings.suddenLane,
+        hideFastSlow: appOptionSettings.simulatorSettings.hideFastSlow,
+        displayStageEffect: appOptionSettings.simulatorSettings.displayStageEffect,
+        hideCombo: appOptionSettings.simulatorSettings.hideCombo,
+        displayComboPosition: appOptionSettings.simulatorSettings.displayComboPosition,
         syncLine: appOptionSettings.simultaneousLineEnabled,
         allPerfectStatusDisplayMode: playbackAllPerfectStatusDisplayMode,
-        bgmGainPercent: playbackVolumePercent,
+        judgementAdjustValue: appOptionSettings.simulatorSettings.judgementAdjustValue,
+        judgementAdjustValueB: appOptionSettings.simulatorSettings.judgementAdjustValueB,
+        noteColor: appOptionSettings.colorAssistEnabled,
+        visibleTapLaneEffect: appOptionSettings.clickEffectEnabled,
+        mvDarkness: 100 - playbackMvAlphaPercent,
+        skin: appOptionSettings.simulatorSettings.skin,
+        masterGainPercent: appOptionSettings.simulatorSettings.masterVolumePercent,
+        bgmGainPercent: playbackVolumePercent * appOptionSettings.simulatorSettings.musicVolumePercent / 100,
         seGainPercent: playbackVolumePercent * noteSeVolumeScale,
         requestedWindowWidth: width,
         requestedWindowHeight: height,
@@ -5894,6 +5908,8 @@ function ChartEditorController() {
     }
   }, [
     WINDOW_SIZE_PRESETS,
+    appOptionSettings,
+    playbackMvAlphaPercent,
     appOptionSettings.mirrorEnabled,
     appOptionSettings.rhythmNoteSizePercent,
     appOptionSettings.rhythmNoteSpeed,
@@ -5931,6 +5947,7 @@ function ChartEditorController() {
   return (
     <ChartEditorLayout
       vm={{
+        settingsResourcesReady,
         jsonImportRef,
         bestdoriV2ImportRef,
         handleJsonImport,
@@ -6231,7 +6248,6 @@ function ChartEditorController() {
 }
 
 export default ChartEditorController;
-
 
 
 

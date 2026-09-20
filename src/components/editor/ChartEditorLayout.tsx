@@ -1,4 +1,5 @@
-﻿import { AppSettingsModal } from "../AppSettingsModal";
+import { AppSettingsModal } from "../AppSettingsModal";
+import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
 import { CommandBar } from "../CommandBar";
@@ -1206,6 +1207,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   );
 
   return (
+    <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
+      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}>
       <input
         ref={jsonImportRef}
@@ -1233,6 +1236,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onOpenSimulator={openSimulatorWindow}
         onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
+        menuOpen={isAppSettingsOpen}
         userNickname={bestdoriNicknameDisplay}
         userUsername={bestdoriUsernameDisplay}
         onUserBarClick={openBestdoriLoginModal}
@@ -2029,6 +2033,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <AppSettingsModal
+        resourcesReady={vm.settingsResourcesReady}
+        onSettingsError={vm.setStatusMessage}
+        onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
+        onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}
         windowPresetId={windowPresetId}
@@ -2196,6 +2204,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         logs={Array.isArray(downloadProgress?.logs) ? downloadProgress.logs : []}
       />
     </main>
+    </OriginalUiSoundProvider>
   );
 }
-

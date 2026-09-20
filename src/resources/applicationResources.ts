@@ -61,12 +61,6 @@ function installBuiltinDocumentResources(manager: ApplicationResourceManager): v
         style: "normal",
         display: "swap",
       }));
-      document.fonts.add(new FontFace("ChartUI", `url(${JSON.stringify(primary.value)})`, {
-        weight: "400",
-        style: "normal",
-        display: "swap",
-        unicodeRange: "U+0000-00FF,U+0100-024F,U+0250-02AF,U+02B0-02FF,U+0300-036F,U+1E00-1EFF,U+2000-206F,U+20A0-20CF,U+2100-214F,U+2460-24FF,U+2500-257F,U+25A0-25FF,U+3000-303F,U+3040-309F,U+30A0-30FF,U+31F0-31FF,U+FF61-FF9F",
-      }));
     }
     if (fallback.status === "accepted") {
       document.fonts.add(new FontFace("GB18030", `url(${JSON.stringify(fallback.value)})`, {
@@ -78,7 +72,6 @@ function installBuiltinDocumentResources(manager: ApplicationResourceManager): v
         weight: "400",
         style: "normal",
         display: "swap",
-        unicodeRange: "U+2E80-2EFF,U+2F00-2FDF,U+31C0-31EF,U+3400-4DBF,U+4E00-9FFF,U+F900-FAFF,U+2F800-2FA1F",
       }));
     }
   }

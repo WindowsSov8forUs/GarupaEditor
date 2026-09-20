@@ -1,5 +1,5 @@
 import { CanvasTextMetrics, DOMAdapter, fontStringFromTextStyle, type Text } from "pixi.js";
-import { originalLabelBaseline, roundLabelCoordinate } from "../../../../components/text/originalLabelMetrics";
+import { originalLabelBaseline, originalLabelFirstBaseline } from "../../../../components/text/originalLabelMetrics";
 
 export interface OriginalLabelLayout {
   readonly spacingY: number;
@@ -30,8 +30,7 @@ export function layoutNguiText(text: Text, pivotX = 0.5, pivotY = 0.5, spacingY 
   const strokeWidth = typeof stroke === "object" && stroke !== null && "width" in stroke ? stroke.width ?? 0 : 0;
   const hostBaseline = strokeWidth / 2 + measured.fontProperties.ascent +
     Math.max(0, (lineHeight - measured.fontProperties.fontSize) / 2);
-  const printedHeight = Math.ceil(measured.lines.length * lineHeight);
-  const wantedBaseline = baseline - roundLabelCoordinate(printedHeight * pivotY);
+  const wantedBaseline = originalLabelFirstBaseline(baseline, style.fontSize, measured.lines.length, spacingY, pivotY);
   text.anchor.set(pivotX, (hostBaseline - wantedBaseline) / measured.height);
 }
 

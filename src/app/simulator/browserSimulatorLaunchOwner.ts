@@ -96,7 +96,7 @@ export class BrowserSimulatorLaunchOwner {
     private readonly onStateChange: (state: BrowserSimulatorLaunchState) => void,
   ) {
     if (
-      requestId.length === 0 || descriptor.schemaVersion !== 3 || descriptor.requestId !== requestId
+      requestId.length === 0 || descriptor.schemaVersion !== 6 || descriptor.requestId !== requestId
     ) {
       throw new BrowserSimulatorLaunchDependencyError(
         "app.simulator.invalid-launch-descriptor",

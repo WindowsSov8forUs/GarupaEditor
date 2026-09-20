@@ -752,5 +752,6 @@ export function useEditorSessionCache(params: any) {
     normalizeSkinSelection,
     setStatusMessage,
   ]);
+  return didRestoreAttemptFinish;
 }
 

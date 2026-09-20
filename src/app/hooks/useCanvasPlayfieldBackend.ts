@@ -1029,7 +1029,7 @@ export function useCanvasPlayfieldBackend(params: {
       context.strokeStyle = "rgb(217, 13, 35)";
       context.fillStyle = "rgb(217, 13, 35)";
       context.lineWidth = 1;
-      context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
       context.textAlign = "left";
       context.textBaseline = "alphabetic";
       const boardElement = playfieldBoardRef.current;
@@ -1060,7 +1060,7 @@ export function useCanvasPlayfieldBackend(params: {
       context.strokeStyle = "rgb(42, 188, 116)";
       context.fillStyle = "rgb(42, 188, 116)";
       context.lineWidth = 1;
-      context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
       context.textAlign = "left";
       context.textBaseline = "alphabetic";
       for (const line of snapshot.svVisualLines) {
@@ -1104,7 +1104,7 @@ export function useCanvasPlayfieldBackend(params: {
       const firstSecond = Math.max(0, Math.floor(minTime));
       const lastSecond = Math.min(Math.ceil(snapshot.totalDurationSec), Math.ceil(maxTime));
       context.fillStyle = "rgba(222, 229, 242, 0.84)";
-      context.font = "11px 'TT Shin Go M', 'GB18030', sans-serif";
+      context.font = "11px 'ChartUI', 'TTShinGoM', sans-serif";
       context.textAlign = "left";
       context.textBaseline = "middle";
       for (let second = firstSecond; second <= lastSecond; second += 1) {

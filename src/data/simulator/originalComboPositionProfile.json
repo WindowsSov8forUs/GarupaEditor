@@ -1,0 +1,86 @@
+{
+  "sample": "jp.co.craftegg.band 10.1.4/230 ARM64",
+  "sourceHashes": {
+    "apk": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "elf": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "resource": "prefabs/bms/ui/displaycombopositiondata",
+  "serializedFile": "bc70b17b0f7cc401297feea09e6ca651",
+  "serializedSha256": "3A62D1373022A3FCEF4494EED7BFB45017A428B8D927AEA6C940FEBE72A43DFD",
+  "objectSha256": "6B64A5468D671445C09634141383829F46CB537B0E7B807402F025A69046DF9A",
+  "objectPathId": 1,
+  "tree": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 1,
+      "m_PathID": 3686
+    },
+    "m_Name": "DisplayComboPositionData",
+    "comboPosition16x9": {
+      "rightTop": {
+        "x": 338.0,
+        "y": 194.0
+      },
+      "rightCenter": {
+        "x": 434.70001220703125,
+        "y": 82.80000305175781
+      },
+      "rightBottom": {
+        "x": 530.0,
+        "y": -57.0
+      },
+      "leftTop": {
+        "x": -338.0,
+        "y": 194.0
+      },
+      "leftCenter": {
+        "x": -434.70001220703125,
+        "y": 82.80000305175781
+      },
+      "leftBottom": {
+        "x": -505.0,
+        "y": -57.0
+      }
+    },
+    "comboPosition2x1": {
+      "rightTop": {
+        "x": 338.0,
+        "y": 194.0
+      },
+      "rightCenter": {
+        "x": 434.70001220703125,
+        "y": 82.80000305175781
+      },
+      "rightBottom": {
+        "x": 590.0,
+        "y": -57.0
+      },
+      "leftTop": {
+        "x": -338.0,
+        "y": 194.0
+      },
+      "leftCenter": {
+        "x": -434.70001220703125,
+        "y": 82.80000305175781
+      },
+      "leftBottom": {
+        "x": -575.0,
+        "y": -57.0
+      }
+    }
+  },
+  "declarations": {
+    "DisplayComboPosition": "public enum DisplayComboPosition // TypeDefIndex: 724\n{\n\t// Fields\n\tpublic int value__; // 0x0\n\tpublic const DisplayComboPosition LeftTop = 0;\n\tpublic const DisplayComboPosition LeftCenter = 1;\n\tpublic const DisplayComboPosition LeftBottom = 2;\n\tpublic const DisplayComboPosition RightTop = 3;\n\tpublic const DisplayComboPosition RightCenter = 4;\n\tpublic const DisplayComboPosition RightBottom = 5;\n\tpublic const DisplayComboPosition Default = 4;\n}",
+    "DisplayComboHorizontalPosition": "public enum DisplayComboHorizontalPosition // TypeDefIndex: 722\n{\n\t// Fields\n\tpublic int value__; // 0x0\n\tpublic const DisplayComboHorizontalPosition Right = 0;\n\tpublic const DisplayComboHorizontalPosition Left = 1;\n\tpublic const DisplayComboHorizontalPosition Default = 0;\n}",
+    "DisplayComboVerticalPosition": "public enum DisplayComboVerticalPosition // TypeDefIndex: 723\n{\n\t// Fields\n\tpublic int value__; // 0x0\n\tpublic const DisplayComboVerticalPosition Center = 0;\n\tpublic const DisplayComboVerticalPosition Top = 1;\n\tpublic const DisplayComboVerticalPosition Bottom = 2;\n\tpublic const DisplayComboVerticalPosition Default = 0;\n}"
+  },
+  "boundary": "Static original state/position rules; no native framebuffer claim.",
+  "reverseCommit": "8f2ef5b5b47f9b539eabf6f6c22c5428cc0f6d7a",
+  "sourceSha256": "93875974DAAC0019585865B1CE5C5A670B5158862FE9F4E166ADD40437E9D9C5"
+}

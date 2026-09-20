@@ -1,3 +1,4 @@
+import { isOriginalLongNoteLineBrightness } from "../engine/data/originalLiveSettings";
 import type {
   ManualInputWorldPosition,
   SimulatorManualInputGeometryBackend,
@@ -62,9 +63,13 @@ const AUTHORED_BUTTON_X = Object.freeze([
 ] as const);
 
 export interface SimulatorSceneVisualConfig {
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
   readonly specificSpeed: number;
   readonly noteSize: number;
   readonly judgementAdjustValueB: number;
+  readonly displayComboPosition: number;
   readonly habahiroMeshWidthSetting: number;
   readonly syncLineEdgeMargin: number;
 }
@@ -119,6 +124,7 @@ export function createSimulatorSceneLayout(
   const checkedSurface = copyAndValidateInitialSimulatorSurface(surface);
   if (checkedSurface.status !== "ok") return checkedSurface;
   if (
+    !isOriginalLongNoteLineBrightness(config.longNoteLineBrightness) ||
     !exactPositiveFloat32(config.specificSpeed) ||
     !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
     !Number.isInteger(config.judgementAdjustValueB) || config.judgementAdjustValueB < -5 || config.judgementAdjustValueB > 5 ||
@@ -130,7 +136,7 @@ export function createSimulatorSceneLayout(
       "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, [-5,5] judge offset and explicit HABAHIRO mesh width; HighAspectRatio is derived only from the platform surface.",
     );
   }
-  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize);
+  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
   if (originalLayout.status !== "ok") return originalLayout;
   const values = createSceneValues(config, originalLayout.value);
   if (values.status !== "ok") return values;
@@ -166,7 +172,8 @@ export function createSimulatorSceneLayout(
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(config.syncLineEdgeMargin),
     screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
-    longMeshColor: color(1, 1, 1, 0.8),
+    // NoteMesh.initMesh initializes alpha from the saved percentage; RGB changes preserve it.
+    longMeshColor: color(1, 1, 1, config.longNoteLineBrightness / 100),
     ...(field === undefined ? {} : { field }),
     ...(habahiro.value === undefined ? {} : { habahiro: habahiro.value }),
   });

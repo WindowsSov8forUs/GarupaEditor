@@ -1,3 +1,4 @@
+import { OriginalButton } from "./OriginalUi";
 import { StandardValueModal } from "./StandardModal";
 
 export type OverlayDialogTone = "info" | "warning" | "error";
@@ -38,13 +39,13 @@ export function OverlayDialogModal({
           <>
             <p className="overlay-dialog-message">{renderedDialog.message}</p>
             <div className="modal-actions is-centered overlay-dialog-actions">
-              <button type="button" className="app-settings-apply-button overlay-dialog-confirm-button" onClick={onConfirm}>
+              <OriginalButton tone="pink" type="button" className="app-settings-apply-button overlay-dialog-confirm-button" onClick={onConfirm}>
                 <span className="btn-content">确定</span>
-              </button>
+              </OriginalButton>
               {showCancel && (
-                <button type="button" className="app-settings-back-button overlay-dialog-cancel-button" onClick={onCancel}>
+                <OriginalButton tone="gray" type="button" className="app-settings-back-button overlay-dialog-cancel-button" onClick={onCancel}>
                   <span className="btn-content">关闭</span>
-                </button>
+                </OriginalButton>
               )}
             </div>
           </>

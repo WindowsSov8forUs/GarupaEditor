@@ -210,6 +210,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const originalLayout = createOriginalSurfaceLayout(
       surface.value,
       recipe.request.config.visual.noteSize,
+      recipe.request.config.displayComboPosition,
+      recipe.request.config.suddenRate, recipe.request.config.suddenLane,
     );
     if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
     const moveTimeCandidate = purpose === "move-time-reconstruction";
@@ -269,6 +271,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       judgementAdjustValue: recipe.request.config.judgementAdjustValue,
       judgementAdjustValueB: recipe.request.config.judgementAdjustValueB,
       mvDarkness: recipe.request.config.mvDarkness,
+      longNoteLineBrightness: recipe.request.config.longNoteLineBrightness,
+      suddenRate: recipe.request.config.suddenRate, suddenLane: recipe.request.config.suddenLane,
+      hideFastSlow: recipe.request.config.hideFastSlow,
+      displayStageEffect: recipe.request.config.displayStageEffect,
+      hideCombo: recipe.request.config.hideCombo,
+      displayComboPosition: recipe.request.config.displayComboPosition,
       syncLine: recipe.request.config.syncLine,
       noteColor: recipe.request.config.noteColor,
       visibleTapLaneEffect: recipe.request.config.visibleTapLaneEffect,
@@ -335,7 +343,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               const created = await createPixiStartupDirectionScene(
                 effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
                 recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
-                score.value.mode.sessionMode === "live",
+                score.value.mode.sessionMode === "live" && originalLiveSettings.value.displayStageEffect,
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
@@ -376,6 +384,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               {
                 ...recipe.request.config.visual,
                 judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
+                longNoteLineBrightness: originalLiveSettings.value.core.longNoteLineBrightness,
+                suddenRate: originalLiveSettings.value.core.suddenRate, suddenLane: originalLiveSettings.value.core.suddenLane,
+                displayComboPosition: originalLiveSettings.value.displayComboPosition,
                 syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
               },
               kind,

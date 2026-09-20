@@ -985,6 +985,8 @@ export function createSimulatorEngine(
         backends.rendering,
         input.rendering.resources,
         Object.freeze({
+          hideCombo: input.runtime.originalLiveSettings.hideCombo,
+          hideFastSlow: input.runtime.originalLiveSettings.hideFastSlow,
           isAutoPlay: input.runtime.mode.isAutoPlay,
           allPerfectStatusPresentationEnabled:
             input.runtime.originalLiveSettings.allPerfectStatusDisplayMode,

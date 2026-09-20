@@ -30,6 +30,17 @@ import loadingGuitarUrl from "../../assets/game/loading/icon_guitar.png?url&no-i
 import loadingOnpu1Url from "../../assets/game/loading/icon_onpu1.png?url&no-inline";
 import loadingOnpu2Url from "../../assets/game/loading/icon_onpu2.png?url&no-inline";
 import loadingShadowUrl from "../../assets/game/loading/onpu_shadow.png?url&no-inline";
+import uiCommonUrl from "../../assets/game/atlas/bms/ui/uicommon/ui-common.png?url&no-inline";
+import menuAtlasUrl from "../../assets/game/atlas/menu/menu-atlas.png?url&no-inline";
+import menuChineseAtlasUrl from "../../assets/game/atlas/menu/menu-atlas-cn.png?url&no-inline";
+import commonChineseAtlasUrl from "../../assets/game/atlas/menu/ui-common-cn.png?url&no-inline";
+import skinPreviewBackgroundUrl from "../../assets/game/menu-preview/default-background.png?url&no-inline";
+import guideImage0 from "../../assets/game/settings-guides/tutorial_sudden_plus1.png?url&no-inline";
+import guideImage1 from "../../assets/game/settings-guides/tutorial_sudden_plus2.png?url&no-inline";
+import guideImage2 from "../../assets/game/settings-guides/tutorial_timing_music1.png?url&no-inline";
+import guideImage3 from "../../assets/game/settings-guides/tutorial_timing_music2.png?url&no-inline";
+import guideImage4 from "../../assets/game/settings-guides/tutorial_timing_judge1.png?url&no-inline";
+import guideImage5 from "../../assets/game/settings-guides/tutorial_timing_judge2.png?url&no-inline";
 import manifestJson from "./builtinResourceManifest.json";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
@@ -58,6 +69,25 @@ interface BuiltinDefinition {
 }
 
 const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
+  Object.freeze({ slot: "ui.settings-guide.tutorial_sudden_plus1", id: "builtin/ui/settings-guide/tutorial_sudden_plus1",
+    path: "game/settings-guides/tutorial_sudden_plus1.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage0 }),
+  Object.freeze({ slot: "ui.settings-guide.tutorial_sudden_plus2", id: "builtin/ui/settings-guide/tutorial_sudden_plus2",
+    path: "game/settings-guides/tutorial_sudden_plus2.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage1 }),
+  Object.freeze({ slot: "ui.settings-guide.tutorial_timing_music1", id: "builtin/ui/settings-guide/tutorial_timing_music1",
+    path: "game/settings-guides/tutorial_timing_music1.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage2 }),
+  Object.freeze({ slot: "ui.settings-guide.tutorial_timing_music2", id: "builtin/ui/settings-guide/tutorial_timing_music2",
+    path: "game/settings-guides/tutorial_timing_music2.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage3 }),
+  Object.freeze({ slot: "ui.settings-guide.tutorial_timing_judge1", id: "builtin/ui/settings-guide/tutorial_timing_judge1",
+    path: "game/settings-guides/tutorial_timing_judge1.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage4 }),
+  Object.freeze({ slot: "ui.settings-guide.tutorial_timing_judge2", id: "builtin/ui/settings-guide/tutorial_timing_judge2",
+    path: "game/settings-guides/tutorial_timing_judge2.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage5 }),
+  Object.freeze({ slot: "ui.skin-preview-background", id: "builtin/ui/skin-preview-background",
+    path: "game/menu-preview/default-background.png", title: "Original SkinPreview background",
+    kind: "image", mediaType: "image/png", url: skinPreviewBackgroundUrl }),
+  Object.freeze({ slot: "ui.menu-cn-atlas", id: "builtin/ui/menu-cn-atlas", path: "game/atlas/menu/menu-atlas-cn.png", title: "Mainland menu UI atlas", kind: "image", mediaType: "image/png", url: menuChineseAtlasUrl }),
+  Object.freeze({ slot: "ui.common-cn-atlas", id: "builtin/ui/common-cn-atlas", path: "game/atlas/menu/ui-common-cn.png", title: "Mainland common UI atlas", kind: "image", mediaType: "image/png", url: commonChineseAtlasUrl }),
+  Object.freeze({ slot: "ui.menu-atlas", id: "builtin/ui/menu-atlas", path: "game/atlas/menu/menu-atlas.png", title: "Original menu UI atlas", kind: "image", mediaType: "image/png", url: menuAtlasUrl }),
+  Object.freeze({ slot: "ui.common-atlas", id: "builtin/ui/common-atlas", path: "game/atlas/bms/ui/uicommon/ui-common.png", title: "Common UI atlas", kind: "image", mediaType: "image/png", url: uiCommonUrl }),
   Object.freeze({ slot: "ui.loading.frame", id: "builtin/ui/loading/frame", path: "game/loading/bg_base_r12.png", title: "Loading frame", kind: "image", mediaType: "image/png", url: loadingFrameUrl }),
   Object.freeze({ slot: "ui.loading.caption", id: "builtin/ui/loading/caption", path: "game/loading/bg_dialog_caption.png", title: "Loading caption", kind: "image", mediaType: "image/png", url: loadingCaptionUrl }),
   Object.freeze({ slot: "ui.loading.pattern", id: "builtin/ui/loading/pattern", path: "game/loading/frame_back.png", title: "Loading pattern", kind: "image", mediaType: "image/png", url: loadingPatternUrl }),

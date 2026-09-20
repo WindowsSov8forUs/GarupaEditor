@@ -41,7 +41,7 @@ import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings"
 import { GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS } from "../engine/audio/audioCommandProducer";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 13;
+  readonly schemaVersion: 16;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -76,7 +76,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 13 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 16 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -434,6 +434,12 @@ function copyLaunchRequest(
         judgementAdjustValue: configRecord.judgementAdjustValue,
         judgementAdjustValueB: configRecord.judgementAdjustValueB,
         mvDarkness: configRecord.mvDarkness,
+        longNoteLineBrightness: configRecord.longNoteLineBrightness,
+        suddenRate: configRecord.suddenRate, suddenLane: configRecord.suddenLane,
+        hideFastSlow: configRecord.hideFastSlow,
+        displayStageEffect: configRecord.displayStageEffect,
+        hideCombo: configRecord.hideCombo,
+        displayComboPosition: configRecord.displayComboPosition,
         syncLine: configRecord.syncLine,
         noteColor: configRecord.noteColor,
         visibleTapLaneEffect: configRecord.visibleTapLaneEffect,
@@ -488,6 +494,12 @@ function copyLaunchRequest(
       judgementAdjustValue: originalLiveSettings.value.core.judgementAdjustValue,
       judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
       mvDarkness: originalLiveSettings.value.core.mvDarkness,
+      longNoteLineBrightness: originalLiveSettings.value.core.longNoteLineBrightness,
+      suddenRate: originalLiveSettings.value.core.suddenRate, suddenLane: originalLiveSettings.value.core.suddenLane,
+      hideFastSlow: originalLiveSettings.value.hideFastSlow,
+      displayStageEffect: originalLiveSettings.value.displayStageEffect,
+      hideCombo: originalLiveSettings.value.hideCombo,
+      displayComboPosition: originalLiveSettings.value.displayComboPosition,
       syncLine: originalLiveSettings.value.syncLine,
       noteColor: originalLiveSettings.value.noteColor,
       visibleTapLaneEffect: originalLiveSettings.value.visibleTapLaneEffect,

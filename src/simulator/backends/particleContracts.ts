@@ -645,13 +645,21 @@ export interface ParticleOwnerTransform {
     | "game-play-button"
     | "note-slide"
     | "game-clear-ui-root"
-    | "result-ui-root";
+    | "result-ui-root"
+    | "skin-preview-root";
   readonly position: ParticleFloat32Vector3;
   readonly rotation: ParticleFloat32Quaternion;
   readonly scale: ParticleFloat32Vector3;
 }
 
 export type ParticleInstanceIdentity =
+  | {
+      readonly kind: "skin-preview";
+      readonly buttonType: 0;
+      readonly rangeLength: null;
+      readonly ownerTransform: ParticleOwnerTransform;
+      readonly particleSystemSetupScaleBits: string;
+    }
   | {
       readonly kind: "result-ui";
       readonly buttonType: 0;
@@ -923,6 +931,11 @@ export interface ParticleSlidePoolSceneProfile {
 }
 
 export interface ParticlePixiSceneProfile {
+  /** Explicit camera parameters for authored previews; omitted values retain the live camera. */
+  readonly orthographicSizeBits?: string;
+  readonly cameraZBits?: string;
+  readonly cameraNearClipBits?: string;
+  readonly cameraFarClipBits?: string;
   readonly viewportWidth: number;
   readonly viewportHeight: number;
   readonly worldCenterXBits: string;

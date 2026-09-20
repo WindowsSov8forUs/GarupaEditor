@@ -1,0 +1,37 @@
+.original-authored-mask { padding: 0; }
+.original-authored-viewport { position: relative; flex: 0 0 auto; font-family: "ChartUI", "TTShinGoM", sans-serif; }
+.original-prefab-origin, .original-authored-window { position: absolute; width: 0; height: 0; transform-origin: 0 0; }
+.original-prefab-label { display: flex; align-items: flex-start; overflow: visible; white-space: pre-wrap; pointer-events: none; user-select: none; }
+.original-prefab-label > span { max-width: 100%; }
+button.original-button.original-prefab-hit,
+button.original-button.original-prefab-hit:hover,
+button.original-button.original-prefab-hit:active,
+button.original-button.original-prefab-hit:disabled {
+  display: block; min-width: 0; min-height: 0; margin: 0; padding: 0;
+  border: 0; border-radius: 0; background: none; box-shadow: none;
+  opacity: 1; filter: none; transform: none; transition: none; animation: none;
+  cursor: pointer; touch-action: pan-y; outline: none;
+}
+button.original-button.original-prefab-hit:disabled { cursor: default; }
+button.original-button.original-prefab-hit::before,
+button.original-button.original-prefab-hit::after { content: none; }
+button.original-button.original-prefab-hit:focus-visible { outline: 2px solid #ff3b72; outline-offset: -3px; }
+.original-prefab-scroll { position: absolute; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-y; }
+.original-prefab-scroll::-webkit-scrollbar { display: none; }
+.original-prefab-range { position: absolute; appearance: none; opacity: 0; border: 0; padding: 0; margin: 0; z-index: 1001; cursor: pointer; }
+.original-prefab-texture { width: 100%; height: 100%; display: block; }
+.original-header-slot { position: relative; flex-shrink: 0; }
+.original-header-slot > .original-prefab-origin { left: 50%; top: 50%; }
+
+.original-prefab-scrollbar-hit {
+  position: absolute; padding: 0; border: 0; background: none;
+  touch-action: none; cursor: pointer;
+}
+.original-prefab-scrollbar-hit:focus-visible { outline: 2px solid #ff3b72; }
+
+.original-prefab-slider-hit {
+  position: absolute; z-index: 1001; padding: 0; margin: 0;
+  border: 0; background: none; touch-action: none; cursor: pointer;
+}
+.original-prefab-slider-hit:focus-visible { outline: 2px solid #ff3b72; }
+.original-prefab-slider-hit[aria-disabled="true"] { cursor: default; }

@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "sample": "jp.co.craftegg.band 10.1.4/230 arm64-v8a",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "scene": {
+    "apkEntry": "assets/bin/Data/level3",
+    "bytes": 764840,
+    "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "supersessionBoundary": "Selected Sudden objects only. Older C626E705 scene hash is not this APK level3; matching selected transforms do not rebaseline unrelated objects.",
+    "buttonManagerPathId": 1153,
+    "references": {
+      "rhythmGameLines": 1443,
+      "rhythmGameLinesImage": 1200,
+      "suddenAreaImages": 1165,
+      "appearNoteBar": 1044,
+      "judgeLineSprite": 1054,
+      "judgeLineSkillAdjustEffectSprite": 1047,
+      "judgeLineSkillAdjustEffectAnimator": 881
+    },
+    "roundtrips": [
+      {
+        "pathId": 1153,
+        "bytes": 116,
+        "sha256": "9DDD49FAEB4262B4EB02E47A3A81EC057401C003AFF5C4F970D742F4C082FC1C",
+        "roundtrip": true
+      },
+      {
+        "pathId": 1093,
+        "bytes": 36,
+        "sha256": "6EF51756B2E16103E62FA856422EF015149A90B364BC71839F47A7E1EF486E99",
+        "roundtrip": true
+      },
+      {
+        "pathId": 1200,
+        "bytes": 316,
+        "sha256": "967E074999CE666411CBC99DE937FDC1EC19EF61106BAB83FE0CF5DA044993FC",
+        "roundtrip": true
+      },
+      {
+        "pathId": 1165,
+        "bytes": 316,
+        "sha256": "B8F31E6A18F9DB0AD01391EFD313EF252C7890824919E660EDCCFD2762A99ED1",
+        "roundtrip": true
+      }
+    ]
+  },
+  "rate": {
+    "minimum": 0,
+    "maximum": 100,
+    "step": 5,
+    "smallStep": 1,
+    "default": 0,
+    "wrap": true,
+    "offset": 0.05000000074505806,
+    "zeroKeepsZero": true,
+    "ratioFormula": "r == 0 ? 0 : offset + (1 - offset) * (r / 100)"
+  },
+  "noteLane": {
+    "bottomY": -240.0,
+    "width": 1160,
+    "height": 610,
+    "pivot": 7,
+    "fitScaleY": "1-ratio",
+    "fitUvHeight": "1-ratio"
+  },
+  "mask": {
+    "suddenAreaY": 128.0,
+    "parentY": 240.38999938964844,
+    "imageY": -304.2518005371094,
+    "width": 2163.36279296875,
+    "height": 608.2464599609375,
+    "scaleParentY": "ratio",
+    "cutoff": 0.20000000298023224,
+    "interaction": "visible-outside",
+    "spriteMaskEnum": {
+      "None": 0,
+      "VisibleInsideMask": 1,
+      "VisibleOutsideMask": 2
+    },
+    "ordinaryNoteRenderers": [
+      {
+        "resource": "prefabs/bms/notes/noteaddlongmultipledirectionalflickvisual",
+        "asset": "df9b4f417f37c054fb5dd3684a312756",
+        "assetSha256": "A6E108BE81AFB56667663940E04C25EF7AD0996ABEC5D6D4EDC5382C1721ED1D",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteaddlongmultipledirectionalflickvisual",
+        "asset": "df9b4f417f37c054fb5dd3684a312756",
+        "assetSha256": "A6E108BE81AFB56667663940E04C25EF7AD0996ABEC5D6D4EDC5382C1721ED1D",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteaddslidemultipledirectionalflickvisual",
+        "asset": "950b8e886664b7f49ab59fc9e2bf546a",
+        "assetSha256": "BD3036F294269272BCFEF71E2BA9A1D293AC292866DEB4E2C91BFD384EB65E13",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteaddslidemultipledirectionalflickvisual",
+        "asset": "950b8e886664b7f49ab59fc9e2bf546a",
+        "assetSha256": "BD3036F294269272BCFEF71E2BA9A1D293AC292866DEB4E2C91BFD384EB65E13",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteafternormal",
+        "asset": "30ab430a18f2749199154c8452ccd1c7",
+        "assetSha256": "73E6864EBC1F8AD4F763B988F98299177685E11D8A5ED735DBAE79F402666A75",
+        "pathId": 3,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notedirectionalflick",
+        "asset": "46a133b4fc50e4f3598f5b8ab386155d",
+        "assetSha256": "C40DFE6A4DC761D342F2197A17165CD3C86C589946A8BE3517C3EA41789290DC",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notedirectionalflick",
+        "asset": "46a133b4fc50e4f3598f5b8ab386155d",
+        "assetSha256": "C40DFE6A4DC761D342F2197A17165CD3C86C589946A8BE3517C3EA41789290DC",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notedirectionalflickafter",
+        "asset": "3a83148f97a35f34eac5ad67725de0df",
+        "assetSha256": "FD3D4059D9A21D2219E647921A15D17E1688541932898E56D8337648C716AE95",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notedirectionalflickafter",
+        "asset": "3a83148f97a35f34eac5ad67725de0df",
+        "assetSha256": "FD3D4059D9A21D2219E647921A15D17E1688541932898E56D8337648C716AE95",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteflick",
+        "asset": "aa0f4c81c20c84321b7c00a4a4d230e5",
+        "assetSha256": "C6FFCD04966200458923D4C55F35767CEF66CC28B3E829CF902854B1F2F7D99B",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteflick",
+        "asset": "aa0f4c81c20c84321b7c00a4a4d230e5",
+        "assetSha256": "C6FFCD04966200458923D4C55F35767CEF66CC28B3E829CF902854B1F2F7D99B",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteflickafter",
+        "asset": "aec7f03290f9542c98ca633ee064980d",
+        "assetSha256": "B2B201565F86265D491DD2F2C307AC516A115B3565EF877F82A3208DD7CAB1F9",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteflickafter",
+        "asset": "aec7f03290f9542c98ca633ee064980d",
+        "assetSha256": "B2B201565F86265D491DD2F2C307AC516A115B3565EF877F82A3208DD7CAB1F9",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notelong",
+        "asset": "bfd5f94b16d4647cbb2a45a61ca07b7f",
+        "assetSha256": "33459E8BB0843F7143689096A6958EC825387125BAD2830E1F29C94C7C36B81F",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notelong",
+        "asset": "bfd5f94b16d4647cbb2a45a61ca07b7f",
+        "assetSha256": "33459E8BB0843F7143689096A6958EC825387125BAD2830E1F29C94C7C36B81F",
+        "pathId": 7,
+        "maskInteraction": 0,
+        "sortingOrder": 71
+      },
+      {
+        "resource": "prefabs/bms/notes/notemultipledirectionalflick",
+        "asset": "259b2d20d6ab747968d7cd3eb58c7a46",
+        "assetSha256": "D684699D064733D74B0297F56206D6F0D910169F25381DD7DA915AEC9D8C06BB",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notemultipledirectionalflick",
+        "asset": "259b2d20d6ab747968d7cd3eb58c7a46",
+        "assetSha256": "D684699D064733D74B0297F56206D6F0D910169F25381DD7DA915AEC9D8C06BB",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notemultipledirectionalflickafter",
+        "asset": "b908454b3ed1bdc4fa6f0523b1196980",
+        "assetSha256": "729D83A2F0DC224FAB42178BBB94B2AF8CBF40822B87FAB1FBBD7AA00A614E9D",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notemultipledirectionalflickafter",
+        "asset": "b908454b3ed1bdc4fa6f0523b1196980",
+        "assetSha256": "729D83A2F0DC224FAB42178BBB94B2AF8CBF40822B87FAB1FBBD7AA00A614E9D",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/notenormal",
+        "asset": "0012568888571433dbbc3af69733c2b4",
+        "assetSha256": "EDD74B45EAD11B20BF7ED053C9FD9798965B179BF904AE576E1A48EA5136062A",
+        "pathId": 3,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslide",
+        "asset": "e5a412b8cb25043119e43a86777f70bb",
+        "assetSha256": "D674A02367F05D78E6B37BB8E8BB4D10A18C20020F0C8595EDDEB84D8F711AC2",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslide",
+        "asset": "e5a412b8cb25043119e43a86777f70bb",
+        "assetSha256": "D674A02367F05D78E6B37BB8E8BB4D10A18C20020F0C8595EDDEB84D8F711AC2",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 71
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslideafter",
+        "asset": "ce7e589fb16ab416caed832d17df63a9",
+        "assetSha256": "0240027F72311EC9DC6E4B52B6CB778647F3913F71580680C53242D5E193F679",
+        "pathId": 3,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslidedirectionalflickafter",
+        "asset": "407ecf2cdfe5d5f448b1f527a61d845c",
+        "assetSha256": "A2D76A9394530900F370379C1E5D39E6DE91649B875286915EA8A399C44CBC77",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslidedirectionalflickafter",
+        "asset": "407ecf2cdfe5d5f448b1f527a61d845c",
+        "assetSha256": "A2D76A9394530900F370379C1E5D39E6DE91649B875286915EA8A399C44CBC77",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslideflickafter",
+        "asset": "c7c0affebd50048bb961ceabbc95ea6c",
+        "assetSha256": "FE61C5DFC9DBA59B46E830F3262C771C7AAA5B17F1D0E098DBB045B2EC6FD510",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslideflickafter",
+        "asset": "c7c0affebd50048bb961ceabbc95ea6c",
+        "assetSha256": "FE61C5DFC9DBA59B46E830F3262C771C7AAA5B17F1D0E098DBB045B2EC6FD510",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslidemultipledirectionalflickafter",
+        "asset": "db6a371b3af50d84c9f7c4bff284e2b3",
+        "assetSha256": "A517FF0C18E47BFD95BDE708CEB3E3C515BEB1523E851A366CD61EDC11C24ACE",
+        "pathId": 6,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      },
+      {
+        "resource": "prefabs/bms/notes/noteslidemultipledirectionalflickafter",
+        "asset": "db6a371b3af50d84c9f7c4bff284e2b3",
+        "assetSha256": "A517FF0C18E47BFD95BDE708CEB3E3C515BEB1523E851A366CD61EDC11C24ACE",
+        "pathId": 7,
+        "maskInteraction": 2,
+        "sortingOrder": 0
+      }
+    ],
+    "unmaskedLongFlashPool": "long-long-flash"
+  },
+  "appearBar": {
+    "transformId": 466,
+    "rendererId": 1044,
+    "localY": -608.3909912109375,
+    "localScale": {
+      "x": 10.0,
+      "y": 10.0,
+      "z": 1.0
+    },
+    "minimumWidth": 1.9800000190734863,
+    "maximumWidth": 107.6500015258789,
+    "height": 0.30000001192092896,
+    "color": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 0.6980392336845398
+    },
+    "sortingOrder": 70,
+    "sprite": {
+      "m_Name": "sudden_line",
+      "m_Rect": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 120.0,
+        "height": 30.0
+      },
+      "m_Border": {
+        "x": 26.0,
+        "y": 0.0,
+        "z": 26.0,
+        "w": 0.0
+      },
+      "m_PixelsToUnits": 100.0,
+      "m_Pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "texture": {
+      "asset": "c398ebe040ce6a44586032886418dd67",
+      "assetBytes": 15200,
+      "assetSha256": "95F5BBF1E654FDD2E9737F92640FE43D73AF8199F34BFD4F8C7D143EFB96426F",
+      "width": 120,
+      "height": 30,
+      "rgbaSha256": "3AA82E8C78D43335EFB7C3228E7705656241757BC21D7C9A4BC1FEB595B667EB",
+      "pngBytes": 519,
+      "pngSha256": "31191C7E195056BAB791E4B5B9C853F87D517DFCE8B67099498AA0E58547B3AB",
+      "filter": "linear",
+      "wrap": "clamp"
+    },
+    "scaleYCompensation": "oldParentScaleY / newParentScaleY when ratio is nonzero",
+    "enabled": "ratio != 0"
+  },
+  "methods": [
+    {
+      "name": "ButtonManager.SetupSudden",
+      "start": "0x3882974",
+      "end": "0x3882d6c",
+      "bytes": 1016,
+      "sha256": "0F1BEAA28606FBDC0691FEF93FEE832D88D8B9F853B877C368E98471D93E090D"
+    },
+    {
+      "name": "MathUtility.GetNewRatio",
+      "start": "0x331cbb4",
+      "end": "0x331cbc8",
+      "bytes": 20,
+      "sha256": "6EAEB5390A74D792411617A881856E8EE6F5F3A866144C27ADEA74DFE3D88B19"
+    },
+    {
+      "name": "InGameCalculatedData.GetSuddenPos",
+      "start": "0x32f1b1c",
+      "end": "0x32f1c34",
+      "bytes": 280,
+      "sha256": "3976B621ECB941A9F9EBE7CDA1FC3583CC03A4271A5344A1DC088C47BB2BF19F"
+    },
+    {
+      "name": "InGameCalculatedData.GetSuddenRatio",
+      "start": "0x32f1c34",
+      "end": "0x32f1c4c",
+      "bytes": 24,
+      "sha256": "731EAEAC94A4A0DE7C474CF006F3EDA9C681B5EB778F05D27494B158DE021F71"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.Init",
+      "start": "0x34c9f44",
+      "end": "0x34c9fe8",
+      "bytes": 164,
+      "sha256": "D8C9855D2301D6C2A8E967A6C750774DF40443059482611CD2D68A611883D308"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.updateLabel",
+      "start": "0x34c9fe8",
+      "end": "0x34ca094",
+      "bytes": 172,
+      "sha256": "C76CBFE0E49B2388C43BAC5879A8392B3CA240FDF463B826F53C3A2BD86689DB"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.OnPressSuddenRateUpButton",
+      "start": "0x34ca094",
+      "end": "0x34ca100",
+      "bytes": 108,
+      "sha256": "40F92F9DB40E74BED0C17EECFB020ABFACEBBDF2186F64D49CF3BFBFF583C1A4"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.OnPressSuddenRateDownButton",
+      "start": "0x34ca100",
+      "end": "0x34ca170",
+      "bytes": 112,
+      "sha256": "6667B31A6F0B30951728138ED0EB89188E169B41DF77C5F225C9402FB5249AA2"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.OnPressSuddenRateSmallUpButton",
+      "start": "0x34ca170",
+      "end": "0x34ca1dc",
+      "bytes": 108,
+      "sha256": "373DE1136FBC469EC7F79387692C69DAF20E41FE6DA48DBD53DBA08F0E34074E"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.OnPressSuddenRateSmallDownButton",
+      "start": "0x34ca1dc",
+      "end": "0x34ca24c",
+      "bytes": 112,
+      "sha256": "303816E3EF2DE6595FA349D5ABC5BD982CC201F98FE399E8CE5EAD56EE217A08"
+    },
+    {
+      "name": "LiveSettingsSuddenRate.OnPressDefaultButton",
+      "start": "0x34ca24c",
+      "end": "0x34ca2a0",
+      "bytes": 84,
+      "sha256": "2794750CDB3FA840F066E20416ED254FE6441FB4DE73B8A0CC23EAEA4C0FD219"
+    }
+  ],
+  "boundary": "Host render primitives use current source coordinates, clipping, UV and Sprite borders. No Unity engine or hardware simulation.",
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "B9F9D22E2478DD8EA4B197F99F3F03DC6714DBBBA12761C34F1C1945EB153136"
+}

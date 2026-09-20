@@ -1,7 +1,7 @@
 import type { RenderResultHudState } from "../../backends/renderingContracts";
 
 export class ResultHudOwner {
-  constructor(private readonly isAutoPlay: boolean) {}
+  constructor(private readonly isAutoPlay: boolean, private readonly hideFastSlow = false) {}
 
   createState(
     result: 0 | 1 | 2 | 3 | 4,
@@ -9,7 +9,7 @@ export class ResultHudOwner {
   ): RenderResultHudState {
     return Object.freeze({
       judgeKey: resolveResultJudgeKey(result, this.isAutoPlay),
-      timingKey: timingKeyForJudgeTiming(timing),
+      timingKey: this.hideFastSlow ? null : timingKeyForJudgeTiming(timing),
     });
   }
 }

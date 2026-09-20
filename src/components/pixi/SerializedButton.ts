@@ -1,5 +1,5 @@
 import { Container, NineSliceSprite, type Texture } from "pixi.js";
-import { containsSerializedButton, SerializedButtonInput } from "../SerializedButtonInput";
+import { containsSerializedButton, SerializedButtonInput, SERIALIZED_BUTTON_PRESS_ALPHA } from "../SerializedButtonInput";
 
 export type SerializedButtonBorder = Readonly<{ left: number; right: number; top: number; bottom: number }>;
 
@@ -15,7 +15,7 @@ export function createSerializedButtonPressCover(button: NineSliceSprite, label:
   const cover = createSerializedButtonSprite(button.texture, [button.width, button.height],
     { left: button.leftWidth, right: button.rightWidth, top: button.topHeight, bottom: button.bottomHeight },
     { x: button.anchor.x, y: button.anchor.y }, label);
-  cover.visible = false; cover.alpha = 0.5; cover.zIndex = 20;
+  cover.visible = false; cover.alpha = SERIALIZED_BUTTON_PRESS_ALPHA; cover.zIndex = 20;
   return cover;
 }
 

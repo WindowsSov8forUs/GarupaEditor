@@ -1,0 +1,64 @@
+{
+  "sample": "10.1.4/230 ARM64",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "nativeEvidence": "radio-layout-native.json",
+  "initializationEvidence": "../../menu-settings-ui-10-1-4/native.json",
+  "optionRadio": {
+    "labelWidth": 48,
+    "labelHeight": 48,
+    "fontSize": 22,
+    "maxLineCount": 1,
+    "labelOffset": {
+      "x": -8,
+      "y": 0
+    },
+    "graphicsModeLabelSize": 190
+  },
+  "pageOverrides": {
+    "liveeffectvolumetabpage": {
+      "754": {
+        "labelWidth": 400
+      },
+      "784": {
+        "labelWidth": 70
+      }
+    },
+    "liveskintabpage": {
+      "288": {
+        "labelWidth": 160,
+        "labelHeight": 100
+      },
+      "302": {
+        "labelWidth": 160,
+        "labelHeight": 100
+      }
+    }
+  },
+  "notes": [
+    "OptionRadioButtonBase bool/int/enum Init applies SetLabelDimensions, font size, maximum lines, then relative label offset; it does not preserve prefab defaults.",
+    "GraphicsMode overrides ColliderSize to 190 for both dimensions. OptionRadioButtonInt Awake initially uses the base size 48.",
+    "LiveEffectVolumeTabPage.initialize3D sets star3DLiveQuality label width to 70; initializeLightMode sets lightModeIllust width to 400.",
+    "LiveSettingsNoteSkin/DirectionalFlickSkin set labels to 160 by 100 after base Init. LiveSettingsSpecialSkinRow separately initializes 220-square labels at 21, then resizes OFF to 60 and shifts its button X by +20."
+  ],
+  "specialSkinRow": {
+    "nativeEvidence": "special-radio-native.json",
+    "labelWidth": 220,
+    "labelHeight": 220,
+    "fontSize": 21,
+    "optionOverrides": {
+      "2": {
+        "labelWidth": 60,
+        "labelHeight": 60,
+        "offsetX": 20
+      }
+    },
+    "offDescription": {
+      "key": "word_off_skin_description",
+      "offset": 15472390,
+      "hex": "0a19776f72645f6f66665f736b696e5f6465736372697074696f6e12c6020a19776f72645f6f66665f736b696e5f6465736372697074696f6e12a802e280bbe69c9fe99693e99990e5ae9ae382b9e382ade383b3e38292e4bdbfe794a8e38199e3828be381a8e38081e383a9e382a4e38396e381aee58b95e4bd9ce383a2e383bce38389e381afe3808ce3838ee383bce3839ee383abe383a2e383bce38389e3808de381a8e381aae3828ae381bee38199e380820ae280bbe99990e5ae9ae382b9e382ade383b3e381afe38081e3808ce5b7a6e58fb3e38395e383aae38383e382afe382a2e382a4e382b3e383b3e3808de381abe381afe981a9e794a8e38195e3828ce381bee3819be38293e380820ae280bbe5808be588a5e8a8ade5ae9ae381abe381a6e99990e5ae9ae382b9e382ade383b3e38292e9a085e79baee38194e381a8e381abe8a8ade5ae9ae58fafe883bde381a8e381aae3828ae381bee38199e38082",
+      "text": "※期間限定スキンを使用すると、ライブの動作モードは「ノーマルモード」となります。\n※限定スキンは、「左右フリックアイコン」には適用されません。\n※個別設定にて限定スキンを項目ごとに設定可能となります。"
+    }
+  },
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "50432F1370E80B02E3C414ABA1BCDA0C8D0984E0CC5CBF3E65F87148F25ED2C2"
+}
