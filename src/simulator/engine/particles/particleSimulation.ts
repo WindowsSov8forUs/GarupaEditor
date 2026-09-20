@@ -179,6 +179,7 @@ export interface ParticleSystemTransformUpdate {
   readonly systemId: string;
   readonly transform: ParticleTransformProfile;
   readonly parentTransforms: readonly ParticleTransformProfile[];
+  readonly parentParticleSystemFlags?: readonly boolean[];
 }
 
 export class ParticleSimulationFault extends Error {
@@ -524,6 +525,8 @@ export class DeterministicParticleSimulation {
           ...record.definition,
           transform: freezeTransform(update.transform),
           parentTransforms: Object.freeze(update.parentTransforms.map(freezeTransform)),
+          parentParticleSystemFlags: update.parentParticleSystemFlags === undefined
+            ? record.definition.parentParticleSystemFlags : Object.freeze([...update.parentParticleSystemFlags]),
         }),
       });
     }
@@ -2031,6 +2034,19 @@ function parentSetupScale(
 }
 
 function particleOwnerParents(instance: ParticleInstanceIdentity): readonly ParticleHierarchyPositionTransform[] {
+  if (instance.kind === "skin-preview") {
+    const owner = instance.ownerTransform;
+    const read = (value: string): number => {
+      const number = particleFloat32FromBits(value);
+      if (number === null) throw fault("particle.simulation.preview-owner", "Preview parent fields must be finite.");
+      return number;
+    };
+    if (owner.source !== "skin-preview-root")
+      throw fault("particle.simulation.preview-owner", "Preview particles require their authored effect parent.");
+    return [{ position: [read(owner.position.xBits), read(owner.position.yBits), read(owner.position.zBits)],
+      rotation: [read(owner.rotation.xBits), read(owner.rotation.yBits), read(owner.rotation.zBits), read(owner.rotation.wBits)],
+      scale: [read(owner.scale.xBits), read(owner.scale.yBits), read(owner.scale.zBits)] }];
+  }
   if (instance.kind === "note-slide") {
     const owner = instance.ownerTransform;
     if (owner === undefined || owner.source !== "note-slide" ||
@@ -2274,7 +2290,7 @@ function particleConstructionKey(ownerKey: string, instance: ParticleInstanceIde
 }
 
 function particleOwnerSortOrdinal(instance: ParticleInstanceIdentity): number {
-  if (instance.kind === "result-ui") return 0;
+  if (instance.kind === "result-ui" || instance.kind === "skin-preview") return 0;
   if (instance.kind === "game-clear") return 10_000;
   if (instance.kind === "game-play-button") return instance.buttonType + (instance.isHalfButton ? 7 : 0);
   return 32 + (instance.poolSlot ?? 0);

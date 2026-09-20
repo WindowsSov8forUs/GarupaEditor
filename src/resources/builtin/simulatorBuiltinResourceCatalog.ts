@@ -1,3 +1,4 @@
+import suddenLineUrl from "../../assets/game/prefabs/bms/sudden/sudden-line.png?url&no-inline";
 import stageDarkCoverUrl from "../../assets/game/prefabs/bms/stage/stage-dark-cover.png?url&no-inline";
 import resultBannerUrl from "../../assets/game/prefabs/bms/result/result-banner.png?url&no-inline";
 import resultRankLightUrl from "../../assets/game/prefabs/bms/result/LoginBonus.png?url&no-inline";
@@ -5,6 +6,9 @@ import resultParticle1Url from "../../assets/game/prefabs/bms/result/Tex_parSet_
 import resultParticle2Url from "../../assets/game/prefabs/bms/result/Tex_parSet_2.png?url&no-inline";
 import comboNumberUrl from "../../assets/game/atlas/bms/ui/iconcombonumber/combo-number.png?url&no-inline";
 import decide1Url from "../../assets/game/sound/common-se/decide_1.mp3?url&no-inline";
+import cancelUiUrl from "../../assets/game/sound/common-se/cancel.mp3?url&no-inline";
+import rhythmAdjustShortUrl from "../../assets/game/sound/rhythm-adjust/short.wav?url&no-inline";
+import rhythmAdjustLongUrl from "../../assets/game/sound/rhythm-adjust/short2.wav?url&no-inline";
 import rhythmGameAdditiveUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png?url&no-inline";
 import rhythmGameUiUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-ui.png?url&no-inline";
 import tapLaneEffect1Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-1.png?url&no-inline";
@@ -109,6 +113,9 @@ interface SimulatorBuiltinResourceDefinition {
 }
 
 const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze([
+  resource("prefabs/bms/sudden", "Original Sudden appearance line", "image", [
+    file("game/prefabs/bms/sudden/sudden-line.png", "sudden-line.png", "image/png", suddenLineUrl),
+  ]),
   resource("atlas/bms/ui/iconcombonumber", "Combo number atlas", "image", [
     file("game/atlas/bms/ui/iconcombonumber/combo-number.png", "combo-number.png", "image/png", comboNumberUrl),
   ]),
@@ -178,6 +185,11 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("sound/common-se", "Original CommonSE UI sound", "package", [
     file("game/sound/common-se/decide_1.mp3", "decide_1.mp3", "audio/mpeg", decide1Url),
+    file("game/sound/common-se/cancel.mp3", "cancel.mp3", "audio/mpeg", cancelUiUrl),
+  ]),
+  resource("sound/rhythm-adjust", "Original rhythm adjustment cues", "package", [
+    file("game/sound/rhythm-adjust/short.wav", "short.wav", "audio/wav", rhythmAdjustShortUrl),
+    file("game/sound/rhythm-adjust/short2.wav", "short2.wav", "audio/wav", rhythmAdjustLongUrl),
   ]),
   resource("prefabs/bms/rhythmgamegauge/score", "Score gauge portable resources", "package", [
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),

@@ -1,3 +1,5 @@
+import { originalComboPosition, ORIGINAL_COMBO_POSITION_DEFAULT } from "../engine/data/originalComboPosition";
+import { originalSuddenLayout, isOriginalSuddenRate, type OriginalSuddenLayout } from "../engine/data/originalSudden";
 import type { SimulatorSurfaceRect, SimulatorSurfaceState } from "../platform/surfaceContracts";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/result";
 
@@ -66,6 +68,7 @@ export interface OriginalGameplayLayout {
 }
 
 export interface OriginalUiLayout {
+  readonly comboPosition: readonly [number, number];
   readonly pixelsPerAuthoredUnit: number;
   readonly screenToSafeChildScale: number;
   readonly moveTime: {
@@ -90,6 +93,7 @@ export interface OriginalSurfaceLayout {
   readonly starUi: OriginalStarUiLayout;
   readonly camera: OriginalCameraProjectionLayout;
   readonly gameplay: OriginalGameplayLayout;
+  readonly sudden: OriginalSuddenLayout;
   readonly ui: OriginalUiLayout;
   readonly movie: OriginalMovieLayout;
 }
@@ -97,7 +101,11 @@ export interface OriginalSurfaceLayout {
 export function createOriginalSurfaceLayout(
   surface: SimulatorSurfaceState,
   noteSize: number,
+  displayComboPosition = ORIGINAL_COMBO_POSITION_DEFAULT,
+  suddenRate = 0, suddenLane = false,
 ): SimulatorResult<OriginalSurfaceLayout> {
+  if (!isOriginalSuddenRate(suddenRate) || typeof suddenLane !== "boolean")
+    return reject("layout.invalid-sudden", "Sudden requires an integer percentage and lane-fit flag.");
   if (!exactFloat32(noteSize) || noteSize < 80 || noteSize > 150) {
     return reject(
       "layout.invalid-note-size",
@@ -152,6 +160,7 @@ export function createOriginalSurfaceLayout(
   const pixelsPerWorldUnit = div(height, 2);
   const pixelsPerAuthoredUnit = div(width, ORIGINAL_SCREEN_WIDTH_BASE);
   const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
+  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, screenToSafeChildScale);
   const moveOffset = mul(MOVE_TIME_CHILD_OFFSET, screenToSafeChildScale);
   const centerY = div(height, 2);
   const safeRight = add(safeArea.value.x, safeArea.value.width);
@@ -183,6 +192,7 @@ export function createOriginalSurfaceLayout(
   });
   return ok(Object.freeze({
     surface,
+    sudden,
     starUi,
     camera: Object.freeze({
       viewportWidth: width,
@@ -208,12 +218,12 @@ export function createOriginalSurfaceLayout(
       laneSpacingWorld,
       vanishingY,
       noteStartY,
-      // The supported SuddenRate is zero: GetSuddenPos returns SuddenTopPos.y.
-      noteLineClipY: add(centerY, mul(
+      noteLineClipY: suddenRate === 0 ? add(centerY, mul(
         ORIGINAL_NOTE_LANE_BOTTOM_Y + ORIGINAL_NOTE_LANE_HEIGHT, screenToSafeChildScale,
-      )),
+      )) : sudden.noteLineClipY,
     }),
     ui: Object.freeze({
+      comboPosition: originalComboPosition(displayComboPosition, highAspectRatio),
       pixelsPerAuthoredUnit,
       screenToSafeChildScale,
       moveTime: Object.freeze({

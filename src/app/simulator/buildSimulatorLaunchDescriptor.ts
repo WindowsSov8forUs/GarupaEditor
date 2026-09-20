@@ -1,3 +1,4 @@
+import type { SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
 import type { ChartMetadata } from "../../chartCore";
 import type { ApplicationResourceManager } from "../../resources/applicationResourceManager";
 import {
@@ -15,6 +16,17 @@ import {
 } from "./transportContracts";
 
 export interface BuildSimulatorLaunchDescriptorInput {
+  readonly judgementAdjustValue: number;
+  readonly judgementAdjustValueB: number;
+  readonly noteColor: boolean;
+  readonly visibleTapLaneEffect: boolean;
+  readonly mvDarkness: number;
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
+  readonly skin: SimulatorOriginalSkinSettings;
+  readonly masterGainPercent: number;
+
   readonly requestId: string;
   readonly manager: ApplicationResourceManager;
   readonly chartJson: string;
@@ -25,6 +37,10 @@ export interface BuildSimulatorLaunchDescriptorInput {
   readonly fps: 60 | 120;
   readonly noteSize: number;
   readonly noteSpeed: number;
+  readonly hideFastSlow: boolean;
+  readonly displayStageEffect: boolean;
+  readonly hideCombo: boolean;
+  readonly displayComboPosition: number;
   readonly syncLine: boolean;
   readonly allPerfectStatusDisplayMode: boolean;
   readonly bgmGainPercent: number;
@@ -50,9 +66,23 @@ export async function buildSimulatorLaunchDescriptor(
   const height = strictPositiveInteger(input.requestedWindowHeight, "window height");
   const chart = buildSimulatorGarupaChart(input.chartJson, input.mirror);
   const config = buildSimulatorPreAdaptedConfig({
+    judgementAdjustValue: input.judgementAdjustValue,
+    judgementAdjustValueB: input.judgementAdjustValueB,
+    noteColor: input.noteColor,
+    visibleTapLaneEffect: input.visibleTapLaneEffect,
+    mvDarkness: input.mvDarkness,
+    longNoteLineBrightness: input.longNoteLineBrightness,
+    suddenRate: input.suddenRate, suddenLane: input.suddenLane,
+    skin: input.skin,
+    masterGainPercent: input.masterGainPercent,
+
     fps: input.fps,
     noteSize: input.noteSize,
     noteSpeed: input.noteSpeed,
+    hideFastSlow: input.hideFastSlow,
+    displayStageEffect: input.displayStageEffect,
+    hideCombo: input.hideCombo,
+    displayComboPosition: input.displayComboPosition,
     syncLine: input.syncLine,
     allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
     bgmGainPercent: input.bgmGainPercent,
@@ -85,7 +115,7 @@ export async function buildSimulatorLaunchDescriptor(
     throw new Error(`${handoff.failure.capability}: ${handoff.failure.boundary}`);
   }
   const descriptor: SimulatorLaunchTransportDescriptor = Object.freeze({
-    schemaVersion: 3,
+    schemaVersion: 6,
     requestId: input.requestId,
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),

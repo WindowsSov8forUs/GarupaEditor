@@ -326,11 +326,14 @@ type PresentedObject = { readonly plan: NotePresentation; readonly visible: bool
     readonly playbackRevision?: number | null }> };
 
 export interface RenderHudSessionMode {
+  readonly hideCombo: boolean;
+  readonly hideFastSlow: boolean;
   readonly isAutoPlay: boolean;
   readonly allPerfectStatusPresentationEnabled: boolean;
 }
 
 const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
+  hideCombo: false, hideFastSlow: false,
   isAutoPlay: false,
   allPerfectStatusPresentationEnabled: true,
 });
@@ -370,6 +373,7 @@ export class RenderCommandProducer {
     this.hud = new InGameHudController(
       hudSessionMode.isAutoPlay,
       hudSessionMode.allPerfectStatusPresentationEnabled,
+      hudSessionMode.hideFastSlow,
     );
   }
 
@@ -386,6 +390,8 @@ export class RenderCommandProducer {
       snapshot.state !== "ready" ||
       snapshot.sessionId !== this.sessionId ||
       snapshot.fault !== null ||
+      typeof this.hudSessionMode.hideCombo !== "boolean" ||
+      typeof this.hudSessionMode.hideFastSlow !== "boolean" ||
       typeof this.hudSessionMode.isAutoPlay !== "boolean" ||
       typeof this.hudSessionMode.allPerfectStatusPresentationEnabled !== "boolean" ||
       !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
@@ -554,7 +560,7 @@ export class RenderCommandProducer {
         hudRole: "combo",
         state: this.hud.combo.normalState(plan.record.currentCombo),
       });
-      if (plan.record.currentCombo > 0) {
+      if (plan.record.currentCombo > 0 && !this.hudSessionMode.hideCombo) {
         commands.push({
           ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
           animationRole: "combo", restart: true,
@@ -670,7 +676,7 @@ export class RenderCommandProducer {
       if (comboChanged) {
         this.hudAnimationElapsedSeconds.delete("normal-combo");
         this.hudAnimationElapsedSeconds.delete("ap-combo");
-        if (plan.record.currentCombo > 0) {
+        if (plan.record.currentCombo > 0 && !this.hudSessionMode.hideCombo) {
           this.hudAnimationElapsedSeconds.set("normal-combo", 0);
           if (displayedAllPerfect) {
             this.hudAnimationElapsedSeconds.set("ap-combo", 0);

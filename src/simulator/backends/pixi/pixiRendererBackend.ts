@@ -34,7 +34,7 @@ import {
   type PixiGameplayRenderOrder,
 } from "./pixiGameplayRenderOrder";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
-import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
+import { sampleOrdinaryVisibleClip } from "../ordinaryVisibleAnimation";
 import {
   sampleGameClearAdditionalAnimation,
   type GameClearAdditionalAnimationSample,
@@ -67,7 +67,7 @@ import {
   COMMON_STARTUP_DIRECTION_BINDINGS as CURRENT_STARTUP_DIRECTION_BINDINGS,
 } from "../../engine/rendering/commonResourceBindings";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
-import { CURRENT_TAP_LANE_EFFECT_SPRITE_MASK } from "../resources/currentCompleteHudProfile";
+import { ORIGINAL_SUDDEN_BAR_ASSET } from "../../engine/data/originalSudden";
 import {
   samplePauseCountdownClip,
   type PauseCountdownAnimationProfile,
@@ -214,6 +214,7 @@ type EvidenceAnimationRole =
 
 interface PixiObjectRecord {
   readonly role: RenderObjectRole;
+  readonly poolFamily: string;
   readonly parentObjectId: string | null;
   readonly node: Container;
   ordering: readonly [number, number, number, number];
@@ -263,6 +264,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   readonly stage: Container;
 
   applyStartupLineAlpha(alpha: number): void {
+    if (this.suddenBar !== null && this.surfaceLayout !== null) this.suddenBar.alpha = this.surfaceLayout.sudden.bar.alpha * alpha;
     for (const object of this.objects.values()) {
       if ((object.role === "field-line" || object.role === "judge-line") && object.lastTransform !== null) {
         object.node.alpha = object.lastTransform.color.alpha.value * alpha;
@@ -273,8 +275,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly unclippedNotes = new Set<PixiObjectRecord>();
   private readonly noteClipper = new NoteViewportClipper(
-    (sprite, mesh) => this.gameplayRenderOrder?.attachReplacement(mesh, sprite),
-    mesh => this.gameplayRenderOrder?.detach(mesh));
+    (sprite, mesh) => {
+      this.gameplayRenderOrder?.attachReplacement(mesh, sprite);
+      const mask = this.tapLaneEffectOutsideMask;
+      if (mask !== null && sprite.mask === mask) {
+        mesh.setMask({ mask, inverse: true }); this.tapLaneEffectMaskConsumers.add(mesh);
+        this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+      }
+    },
+    mesh => {
+      mesh.mask = null; this.tapLaneEffectMaskConsumers.delete(mesh);
+      this.excludeTapLaneEffectMaskFromOrdinaryDraw(); this.gameplayRenderOrder?.detach(mesh);
+    });
   private readonly objectIdsByNode = new Map<Container, string>();
   private readonly baseTextures = new Map<string, Texture>();
   private readonly spriteTextures = new Map<string, Texture>();
@@ -284,6 +296,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private textureGeneration = 0;
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
+  private suddenBar: NineSliceSprite | null = null;
+  private readonly suddenFieldTextures = new Map<Texture, Texture>();
   private tapLaneEffectOutsideMask: Graphics | null = null;
   private tapLaneEffectOutsideMaskBounds: readonly [number, number, number, number] | null = null;
   private readonly tapLaneEffectMaskConsumers = new Set<Container>();
@@ -315,6 +329,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     this.surfaceLayout = layout;
+    if (layout.sudden.bar.enabled) {
+      const texture = this.baseTextures.get(ORIGINAL_SUDDEN_BAR_ASSET);
+      if (texture === undefined) return reject("render.sudden.missing-line", "Sudden requires the original appearance-line texture.");
+      const value = layout.sudden.bar;
+      const bar = new NineSliceSprite({ texture, leftWidth: value.sourceBorder, rightWidth: value.sourceBorder,
+        topHeight: 0, bottomHeight: 0, width: value.sourceWidth, height: value.sourceHeight });
+      bar.label = "original-sudden-appear-bar"; bar.anchor.set(0.5);
+      bar.position.set(value.centerX, value.centerY); bar.scale.set(value.scale); bar.alpha = value.alpha;
+      this.stage.addChild(bar); this.suddenBar = bar;
+      this.gameplayRenderOrder?.attach(bar, () => ({ sortingOrder: value.sortingOrder, distance: -15, rendererType: 3, sameTypeSequence: 0 }));
+    }
     return ok(undefined);
   }
 
@@ -749,6 +774,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         this.unclippedNotes.delete(owner);
       if (this.profile && (this.unclippedNotes.size > 0 || this.noteClipper.active)) this.noteClipper.update(Array.from(this.unclippedNotes, owner => ({
         node: owner.node, command: owner.lastTransform! })), this.profile);
+      this.excludeTapLaneEffectMaskFromOrdinaryDraw();
       for (const parent of orderingParents) if (!parent.destroyed) this.sortSiblings(parent);
     } catch (error) {
       this.pending.delete(batch);
@@ -1641,7 +1667,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           : this.objects.get(command.parentObjectId)!.node;
         parent.addChild(node);
         this.objects.set(command.renderObjectId, {
-          role: command.role,
+          role: command.role, poolFamily: command.poolFamily,
           parentObjectId: command.parentObjectId,
           node,
           ordering: Object.freeze([0, 0, 0, command.sequence]),
@@ -1763,7 +1789,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         if (command.binding === "sprite" && object.lastTransform !== null && spatialSpriteRole(object.role)) {
           applySpatialSpriteTransform(object, object.lastTransform, this.profile!);
-          if (object.role === "tap-lane-effect") this.ensureTapLaneEffectOutsideMask(object);
+          this.applySuddenField(object);
+          if (this.usesOriginalSuddenMask(object)) this.ensureTapLaneEffectOutsideMask(object);
         }
         this.attachGameplayDraw(object);
         return;
@@ -1777,6 +1804,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.animatedLocalZ = null;
         if (spatialSpriteRole(object.role)) {
           applySpatialSpriteTransform(object, command, this.profile!);
+          this.applySuddenField(object);
         } else {
           node.position.set(command.position.x.value, command.position.y.value);
           node.scale.set(command.scale.x.value, command.scale.y.value);
@@ -1789,7 +1817,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           object.spriteContent.scale.x = (command.spriteFlipX ? -1 : 1) *
             Math.abs(object.spriteContent.scale.x);
         }
-        if (object.role === "tap-lane-effect") {
+        if (this.usesOriginalSuddenMask(object)) {
           if (command.maskObjectId !== null) {
             throw new Error("Tap Lane SpriteRenderer uses only the serialized shared MaskImage, not a command-owned mask.");
           }
@@ -1922,7 +1950,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           node === spriteChild(parent) ||
           node.label === "GarupaSimulatorParticles" ||
           node.label === PIXI_GAMEPLAY_RENDER_ORDER_LABEL ||
-          node.label.startsWith("tap-lane-effect-sprite-mask:");
+          node === this.tapLaneEffectOutsideMask || node === this.suddenBar;
         if ((leftRecord === undefined && !externalLayer(left)) ||
           (rightRecord === undefined && !externalLayer(right))) {
           throw new Error("Pixi sibling ordering encountered an unowned scene object");
@@ -2082,55 +2110,59 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return Object.freeze(cleanupFailures);
   }
 
+  private usesOriginalSuddenMask(object: PixiObjectRecord): boolean {
+    return object.role === "tap-lane-effect" || noteSpatialRole(object.role) &&
+      object.poolFamily !== "long-long-flash" && object.poolFamily !== "long-habahiro-icon";
+  }
+
   private ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
+    if (object.surfaceLayout.sudden.ratio === 0) return;
+    const sprite = object.spriteContent;
+    if (sprite === null) throw new Error("Source SpriteMask requires a Sprite renderer leaf.");
     if (object.laneSpriteMaskContent !== null) {
-      if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
-        object.node.mask !== this.tapLaneEffectOutsideMask ||
-        !this.tapLaneEffectMaskConsumers.has(object.node)) {
-        throw new Error("Tap Lane SpriteMask consumer must retain the single scene-owned MaskImage identity.");
-      }
+      if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask || sprite.mask !== this.tapLaneEffectOutsideMask)
+        throw new Error("Original SpriteMask owner changed during its frozen scene.");
       return;
-    }
-    if (object.node.parent !== this.stage) {
-      throw new Error("Tap Lane SpriteMask requires the prepared renderer stage parent.");
     }
     let mask = this.tapLaneEffectOutsideMask;
     if (mask === null) {
-      const projection = object.resourceProfile.scene.projection;
-      const geometry = CURRENT_TAP_LANE_EFFECT_SPRITE_MASK;
-      // This scene branch has no ScreenToSafeArea owner. It follows UIRoot
-      // FitWidth directly, not the serialized root scale or the note-size setting.
-      const scale = object.surfaceLayout.ui.pixelsPerAuthoredUnit;
-      const width = Math.fround(geometry.authoredWidth * scale);
-      const height = Math.fround(geometry.authoredHeight * scale);
-      const left = Math.fround((projection.viewportWidth - width) / 2);
-      const top = Math.fround(projection.viewportHeight / 2 -
-        (geometry.authoredCenterY + geometry.authoredHeight / 2) * scale);
-      mask = new Graphics({ label: "tap-lane-effect-sprite-mask:MaskImage" })
-        .rect(left, top, width, height)
-        .fill(0xffffff);
-      mask.eventMode = "none";
-      mask.zIndex = object.node.zIndex;
-      this.stage.addChild(mask);
+      const [left, top, width, height] = object.surfaceLayout.sudden.maskBounds;
+      mask = new Graphics({ label: "original-sudden-sprite-mask:MaskImage" }).rect(left, top, width, height).fill(0xffffff);
+      // This shared owner is drawn indirectly by stencil passes, never as an ordinary color batch.
+      // Submit its source rectangle directly so an empty cached batch cannot erase the mask.
+      mask.context.batchMode = "no-batch";
+      mask.eventMode = "none"; this.stage.addChild(mask);
       this.tapLaneEffectOutsideMask = mask;
-      this.tapLaneEffectOutsideMaskBounds = Object.freeze([left, top, width, height] as const);
+      this.tapLaneEffectOutsideMaskBounds = object.surfaceLayout.sudden.maskBounds;
     }
-    object.node.setMask({ mask, inverse: true });
-    object.laneSpriteMaskContent = mask;
-    this.tapLaneEffectMaskConsumers.add(object.node);
-    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+    // SpriteMask is per renderer, not inherited by the whole NoteLong hierarchy.
+    sprite.setMask({ mask, inverse: true }); object.laneSpriteMaskContent = mask;
+    this.tapLaneEffectMaskConsumers.add(sprite); this.excludeTapLaneEffectMaskFromOrdinaryDraw();
   }
 
   private detachTapLaneEffectMaskConsumer(object: PixiObjectRecord): void {
     if (object.laneSpriteMaskContent === null) return;
-    if (object.laneSpriteMaskContent !== this.tapLaneEffectOutsideMask ||
-      !this.tapLaneEffectMaskConsumers.has(object.node)) {
-      throw new Error("Tap Lane SpriteMask consumer identity diverged from the scene-owned MaskImage.");
+    const sprite = object.spriteContent;
+    if (sprite !== null) { sprite.mask = null; this.tapLaneEffectMaskConsumers.delete(sprite); }
+    object.laneSpriteMaskContent = null; this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+  }
+
+  private applySuddenField(object: PixiObjectRecord): void {
+    if (object.role !== "field-line" || object.spriteContent === null || object.spriteBindingKey === null) return;
+    const factor = object.surfaceLayout.sudden.fieldUvHeight;
+    if (factor === 1) return;
+    if (factor === 0) { object.spriteContent.visible = false; return; }
+    const source = this.spriteTextures.get(object.spriteBindingKey);
+    if (source === undefined) throw new Error("The selected lane Sprite is unavailable.");
+    let cropped = this.suddenFieldTextures.get(source);
+    if (cropped === undefined) {
+      const frame = source.frame;
+      cropped = new Texture({ source: source.source,
+        frame: new Rectangle(frame.x, frame.y + frame.height * (1 - factor), frame.width, frame.height * factor),
+        orig: source.orig.clone(), defaultAnchor: source.defaultAnchor, label: `${source.label}:sudden-uv` });
+      this.suddenFieldTextures.set(source, cropped);
     }
-    object.node.mask = null;
-    this.tapLaneEffectMaskConsumers.delete(object.node);
-    object.laneSpriteMaskContent = null;
-    this.excludeTapLaneEffectMaskFromOrdinaryDraw();
+    object.spriteContent.texture = cropped;
   }
 
   private excludeTapLaneEffectMaskFromOrdinaryDraw(): void {
@@ -2144,6 +2176,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   private destroyTapLaneEffectMaskOwner(): void {
+    if (this.suddenBar !== null) { this.gameplayRenderOrder?.detach(this.suddenBar); this.suddenBar.destroy(); this.suddenBar = null; }
     const mask = this.tapLaneEffectOutsideMask;
     for (const consumer of this.tapLaneEffectMaskConsumers) consumer.mask = null;
     this.tapLaneEffectMaskConsumers.clear();
@@ -2156,6 +2189,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   private resetPreparedTextures(): void {
+    if (this.suddenBar !== null) { this.gameplayRenderOrder?.detach(this.suddenBar); this.suddenBar.destroy(); this.suddenBar = null; }
+    for (const texture of this.suddenFieldTextures.values()) texture.destroy(false);
+    this.suddenFieldTextures.clear();
     this.textureGeneration++;
     this.deferredResultImages.clear();
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
@@ -3151,7 +3187,7 @@ function applyComboHud(
     updatePersistentComboHud(object, visual, state, textures, referenceCounts);
     return;
   }
-  placeAuthoredUiRoot(object, profile.combo.rootPosition[0], profile.combo.rootPosition[1]);
+  placeAuthoredUiRoot(object, object.surfaceLayout.ui.comboPosition[0], object.surfaceLayout.ui.comboPosition[1]);
   const displayed = String(state.combo);
   const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
   const leastSignificantKeys = [...displayed].reverse().map((digit) => `${digitPrefix}${digit}`);
@@ -3208,7 +3244,7 @@ function updatePersistentComboHud(
   referenceCounts: Map<string, number>,
 ): void {
   const profile = requireOrdinaryVisibleProfile(object);
-  placeAuthoredUiRoot(object, profile.combo.rootPosition[0], profile.combo.rootPosition[1]);
+  placeAuthoredUiRoot(object, object.surfaceLayout.ui.comboPosition[0], object.surfaceLayout.ui.comboPosition[1]);
   const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
   const keys = [...String(state.combo)].reverse().map((digit) => `${digitPrefix}${digit}`);
   const positions = spriteNumberPositions(
@@ -4360,26 +4396,6 @@ function applyOrdinaryNoteAnimation(
   }
 }
 
-function sampleOrdinaryVisibleClip(
-  clip: OrdinaryVisibleClip,
-  elapsedSeconds: number,
-): readonly number[] {
-  const phase = clip.loop
-    ? Math.fround(elapsedSeconds % clip.durationSeconds)
-    : Math.fround(Math.min(elapsedSeconds, clip.durationSeconds));
-  return Object.freeze(clip.curves.map((curve) => {
-    if (curve.storage === "constant") return curve.value;
-    let key = curve.keys[0]!;
-    for (const candidate of curve.keys) {
-      if (candidate.time > phase) break;
-      key = candidate;
-    }
-    const delta = Math.fround(phase - key.time);
-    let value = Math.fround(Math.fround(key.coefficients[0] * delta) + key.coefficients[1]);
-    value = Math.fround(Math.fround(value * delta) + key.coefficients[2]);
-    return Math.fround(Math.fround(value * delta) + key.coefficients[3]);
-  }));
-}
 
 function ordinaryLifeTexturesAvailable(textures: ReadonlyMap<string, Texture>): boolean {
   return [
@@ -4549,7 +4565,7 @@ function applySpatialSpriteTransform(
     );
     node.scale.set(
       Math.fround(command.scale.x.value * uiScale),
-      Math.fround(command.scale.y.value * uiScale),
+      Math.fround(command.scale.y.value * uiScale * object.surfaceLayout.sudden.fieldScaleY),
     );
     object.spriteContent.anchor.set(0.5, 1);
   } else {

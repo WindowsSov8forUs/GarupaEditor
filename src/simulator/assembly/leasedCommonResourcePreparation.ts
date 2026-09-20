@@ -1,3 +1,4 @@
+import uiCommonAtlas from "../../data/uiCommonAtlas.json";
 import commonCatalogJson from "../../data/simulator/commonRenderSemanticCatalog.json";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { parseCurrentScoreHudNativeProfile } from "../backends/resources/currentScoreHudNativeProfile";
@@ -32,7 +33,9 @@ interface SemanticCatalogInput {
   }[]>>;
 }
 
-const semanticGroups = parseSemanticCatalog(commonCatalogJson);
+const semanticGroups = parseSemanticCatalog({ ...commonCatalogJson, groups: { ...commonCatalogJson.groups,
+  scoreHud: [...commonCatalogJson.groups.scoreHud, uiCommonAtlas],
+} });
 
 export interface PreparedLeasedCommonRenderResources {
   readonly profile: RenderResourceProfile;
@@ -137,6 +140,7 @@ async function readJson(
 }
 
 function commonLogicalResource(file: string): string | null {
+  if (file === "sudden-line.png") return "prefabs/bms/sudden";
   if (file === "combo-number.png") return "atlas/bms/ui/iconcombonumber";
   if (file === "rhythm-game-additive.png" || file === "rhythm-game-ui.png") return "atlas/bms/ui/rhythmgameui";
   if (file.startsWith("tap-lane-effect-")) return "atlas/bms/ui/tap-lane-effect";

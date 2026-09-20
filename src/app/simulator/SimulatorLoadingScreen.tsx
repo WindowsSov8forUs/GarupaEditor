@@ -115,7 +115,7 @@ function LoadingLabel({ x, y, width, height, fontSize, color, outline, distance,
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
-  const font = `${fontSize}px "TTShinGoM"`;
+  const font = `${fontSize}px "ChartUI", "TTShinGoM", sans-serif`;
   useEffect(() => {
     let cancelled = false;
     void document.fonts.load(font).then(() => { if (!cancelled) setReady(true); })

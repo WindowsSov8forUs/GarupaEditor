@@ -1,0 +1,132 @@
+{
+  "sample": "jp.co.craftegg.band 10.1.4/230 ARM64",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "atlasSource": "artifacts/investigations/menu-settings-ui-10-1-4/resources/atlases.json",
+  "atlasSha256": "7AC1650AA948BA9A575A0B3A37D0FD6F3DBC950C490120EDAC02A362ABB6C650",
+  "atlasPixelSize": 1,
+  "types": {
+    "simple": 0,
+    "sliced": 1,
+    "tiled": 2,
+    "filled": 3
+  },
+  "paddingFields": {
+    "left": "0x38",
+    "right": "0x3c",
+    "top": "0x40",
+    "bottom": "0x44"
+  },
+  "rules": {
+    "padding": "Sliced keeps atlas padding in authored pixels. Simple/Filled multiplies padding by widget extent divided by source extent including padding.",
+    "oddSize": "Simple/Filled adds (source extent including padding & 1) to right/top padding after calculating the denominator.",
+    "flip": "Horizontal exchanges left/right padding and UV/borders; vertical exchanges bottom/top. Negative hierarchy scale applies afterward.",
+    "border": "SlicedFill uses each atlas border times pixelSize, without proportionally shrinking opposing borders.",
+    "region": "Full drawRegion is identity. Partial drawRegion keeps opposing borders when the basic sprite has a border."
+  },
+  "progressBar": {
+    "foregroundHideBelow": 0.0010000000474974513,
+    "foregroundHideThresholdBytes": "6f12833a",
+    "localToValue": "Normalize against full foreground local corners, without border subtraction.",
+    "thumb": "Inset foreground local corners by atlas borders, interpolate edge centers, transform to the thumb parent, and round local X/Y to even.",
+    "drag": "Background press/drag uses direct normalized position. Foreground press stores current value minus pointer position; drag adds that offset. Release does not set value again."
+  },
+  "sourceBranches": {
+    "paddingAndPixelSize": [
+      "0x308854c",
+      "0x3088870"
+    ],
+    "simpleFilledExtent": [
+      "0x3088878",
+      "0x30888ec"
+    ],
+    "flipPadding": [
+      "0x30888f4",
+      "0x3088958"
+    ],
+    "partialRegion": [
+      "0x3088990",
+      "0x3088af0"
+    ],
+    "slicedBorders": [
+      "0x303e3d0",
+      "0x303e5fc"
+    ]
+  },
+  "boundary": "Current menu atlases have pixelSize=1. The host draws pixels and Pointer Events; it does not emulate Unity or ARM64.",
+  "methods": [
+    {
+      "name": "UIBasicSprite.SimpleFill",
+      "start": "0x303dde0",
+      "bytes": 1388,
+      "sha256": "083672BF4B8C09BB567D6AA61A39B6325E3C504D1BDE509BDA2AC2DF01088954"
+    },
+    {
+      "name": "UIBasicSprite.SlicedFill",
+      "start": "0x303e34c",
+      "bytes": 2756,
+      "sha256": "DF6201771AC90F11EB55475849B1C23B40D1F1A6402F97F077B920AD8E5A9F08"
+    },
+    {
+      "name": "UISprite.get_pixelSize",
+      "start": "0x3087eac",
+      "bytes": 248,
+      "sha256": "356B95742C70E952DB203280E8F3BB98C52DEA70148977B955C5574129635A19"
+    },
+    {
+      "name": "UISprite.get_drawingDimensions",
+      "start": "0x30884bc",
+      "bytes": 1652,
+      "sha256": "F3E71189C46E8D249FB5C4EB47DB501BA688700849C01A1601173C45C573D3C5"
+    },
+    {
+      "name": "UISprite.OnFill",
+      "start": "0x3089210",
+      "bytes": 652,
+      "sha256": "33BC0B45030D41DA329F22209B6F91EE3DD198EF28D708CF640175D9F0B32E69"
+    },
+    {
+      "name": "UIProgressBar.ForceUpdate",
+      "start": "0x3009ba8",
+      "bytes": 1912,
+      "sha256": "8F4E0D2D9BEE8EA470DB3408EA23BCD2415CF031967960A8DE97FCDCC8BBE0D3"
+    },
+    {
+      "name": "UIProgressBar.SetThumbPosition",
+      "start": "0x300a320",
+      "bytes": 828,
+      "sha256": "02CF26C0DD809A8D8C86A2AB1F2083B316D8DD1ACD752E516FD71091F6C4D94A"
+    },
+    {
+      "name": "UIProgressBar.LocalToValue",
+      "start": "0x3009aa0",
+      "bytes": 264,
+      "sha256": "910E4B3E728BD6F076D0B320CCFF272B127F12A90A0E8C9785582D822ADDC6CF"
+    },
+    {
+      "name": "UISlider.OnPressForeground",
+      "start": "0x300fd54",
+      "bytes": 320,
+      "sha256": "D8589A9FE7056D1B403E856A3EC9C62BD5D6B3D8B17AE843CD7044729507FAEB"
+    },
+    {
+      "name": "UISlider.OnDragForeground",
+      "start": "0x300fe94",
+      "bytes": 192,
+      "sha256": "8295877881352F5026AB61476A85D2E55ECF60EF2AFE0773DBE24565E9315634"
+    },
+    {
+      "name": "UISlider.OnPressBackground",
+      "start": "0x300fbd0",
+      "bytes": 216,
+      "sha256": "EE7B4D6EF54E6AE5F3EB2E7A367BEA73A5FDC5DFFDD332C9C66BF02003B2AD42"
+    },
+    {
+      "name": "UISlider.OnDragBackground",
+      "start": "0x300fca8",
+      "bytes": 172,
+      "sha256": "6E473C76F7B23D6C9D9CECE457FF9A92939426FD950449F26273E1EAC495ED4E"
+    }
+  ],
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "1EE825937606EE64ECEC5311FAA4B06687AC187708BE1A5615D42C0E4C7AA66F"
+}

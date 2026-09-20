@@ -1,4 +1,5 @@
-﻿import {
+import { DEFAULT_SIMULATOR_MENU_SETTINGS, normalizeSimulatorMenuSettings, type SimulatorMenuSettings } from "./app/simulator/menuSettings";
+import {
   DEFAULT_SKIN_SELECTION,
   normalizeSkinSelection,
   type SkinSelection,
@@ -53,6 +54,7 @@ export interface ChartSettings {
 }
 
 export interface EditorOptionSettings {
+  simulatorSettings: SimulatorMenuSettings;
   rhythmNoteSizePercent: number;
   rhythmNoteSpeed: number;
   longLineBrightnessPercent: number;
@@ -235,14 +237,15 @@ export const DEFAULT_SETTINGS: ChartSettings = {
 };
 
 export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
+  simulatorSettings: DEFAULT_SIMULATOR_MENU_SETTINGS,
   rhythmNoteSizePercent: 100,
   rhythmNoteSpeed: 9.7,
-  longLineBrightnessPercent: 100,
+  longLineBrightnessPercent: 80,
   clickEffectEnabled: true,
   simultaneousLineEnabled: true,
   colorAssistEnabled: true,
   mirrorEnabled: false,
-  noteSeVolumePercent: 100,
+  noteSeVolumePercent: 70,
   verticalScalePercent: 100,
   habahiro: false,
   spRhythmNoteEnabled: true,
@@ -910,14 +913,15 @@ export function normalizeEditorOptionSettings(
       100,
     ),
   );
-  const noteSeVolumePercent = Math.round(
-    clamp(toFinite(input.noteSeVolumePercent, DEFAULT_EDITOR_OPTION_SETTINGS.noteSeVolumePercent), 0, 100),
+  const noteSeVolumePercent = clamp(
+    toFinite(input.noteSeVolumePercent, DEFAULT_EDITOR_OPTION_SETTINGS.noteSeVolumePercent), 0, 100,
   );
   const verticalScalePercent = Math.round(
     clamp(toFinite(input.verticalScalePercent, DEFAULT_EDITOR_OPTION_SETTINGS.verticalScalePercent), 50, 200),
   );
 
   return {
+    simulatorSettings: normalizeSimulatorMenuSettings(input.simulatorSettings),
     rhythmNoteSizePercent,
     rhythmNoteSpeed,
     longLineBrightnessPercent,

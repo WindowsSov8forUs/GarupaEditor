@@ -1,5 +1,5 @@
+import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
 ﻿import { useEffect, useState } from "react";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { FileTriggerInput } from "./FileTriggerInput";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
@@ -35,7 +35,6 @@ type ImportJsonModalProps = {
 type ImportModalTab = "chart-code" | "official" | "community";
 
 export function ImportJsonModal(props: ImportJsonModalProps) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
   const {
     open,
     level,
@@ -56,7 +55,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
     onImportBestdoriV2File,
     onClose,
   } = props;
-  const { mounted, phase } = useModalTransition(open);
+  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ImportModalTab>(level === "bestdori-v2" ? "official" : "chart-code");
   const officialDifficultyIndex = Math.max(0, OFFICIAL_DIFFICULTIES.indexOf(officialChartDifficulty));
@@ -80,20 +79,12 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
       : onApplyChartJson;
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
-      <section
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
+      <OriginalDialogFrame
         className={`modal-card export-json-modal import-json-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">导入谱面</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-        </header>
+        <OriginalDialogHeader>导入谱面</OriginalDialogHeader>
 
         <div className="modal-body">
           <TopTabs
@@ -215,16 +206,16 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
 
           {showApplyAction && (
             <div className="modal-actions is-centered app-settings-display-actions import-json-actions">
-              <button type="button" className="app-settings-apply-button" onClick={applyHandler}>
+              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={applyHandler}>
                 <span className="btn-content">应用</span>
-              </button>
-              <button type="button" className="app-settings-back-button" onClick={onClose}>
+              </OriginalButton>
+              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
-              </button>
+              </OriginalButton>
             </div>
           )}
         </div>
-      </section>
+      </OriginalDialogFrame>
     </div>
   );
 }

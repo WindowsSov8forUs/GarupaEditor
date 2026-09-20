@@ -1,3 +1,5 @@
+import { ORIGINAL_DIALOG_HEADER } from "../../../components/originalDialogProfile";
+export { ORIGINAL_DIALOG_COLORS as CURRENT_PAUSE_DIALOG_COLORS } from "../../../components/originalDialogProfile";
 /** Reverse 72ad372f: serialized inputs plus DialogHeader.Setup and confirmation sizing. */
 export const CURRENT_PAUSE_SERIALIZED_SOURCE_COMMIT =
   "72ad372f" as const;
@@ -47,8 +49,10 @@ export const CURRENT_PAUSE_ATLAS_BORDERS = Object.freeze({
 
 // Application DialogHeader.Setup writes these values for every dialog instance.
 const dialogHeader = (width: number, height: number, titleSize: readonly [number, number]) => ({
-  header: sprite([0, -(height / 2 - 45)], [width - 62, 40], 6),
-  title: Object.freeze({ ...label([-(width - 62) / 2 + 39, -2], titleSize, 7, 28, "left"), spacingX: 1 }),
+  header: sprite([0, -(height / 2 - ORIGINAL_DIALOG_HEADER.top - ORIGINAL_DIALOG_HEADER.height / 2)],
+    [width - ORIGINAL_DIALOG_HEADER.marginX * 2, ORIGINAL_DIALOG_HEADER.height], 6),
+  title: Object.freeze({ ...label([-(width - ORIGINAL_DIALOG_HEADER.marginX * 2) / 2 + ORIGINAL_DIALOG_HEADER.labelX, ORIGINAL_DIALOG_HEADER.labelY],
+    titleSize, 7, ORIGINAL_DIALOG_HEADER.fontSize, "left"), spacingX: ORIGINAL_DIALOG_HEADER.spacingX }),
 });
 
 export const CURRENT_PAUSE_SERIALIZED_GRAPHS = Object.freeze({
@@ -84,13 +88,4 @@ export const CURRENT_PAUSE_SERIALIZED_GRAPHS = Object.freeze({
       button("confirm", [135, 240.00001525878906 - 146], "button_pink", [240, 86], 32, 2, 1),
     ]),
   }),
-});
-
-/** Reverse 5514c30b: original UILabel colors, independent of dialog actions. */
-export const CURRENT_PAUSE_DIALOG_COLORS = Object.freeze({
-  title: [0.3137255012989044, 0.3137255012989044, 0.3137255012989044] as const,
-  content: [0.3014705777168274, 0.3014705777168274, 0.3014705777168274] as const,
-  annotation: [0.3014705777168274, 0.3014705777168274, 0.3014705777168274] as const,
-  button: [0.3137255012989044, 0.3137255012989044, 0.3137255012989044] as const,
-  positiveButton: 0xffffff,
 });

@@ -1,4 +1,5 @@
-import type { SimulatorLaunchConfig } from "../../simulator/public/contracts";
+import { createOriginalLiveSettings, validateAndFreezeOriginalSkinSettings } from "../../simulator/public/settings";
+import type { SimulatorLaunchConfig, SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
 
 export const SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID =
   "app.simulator.all-perfect-status-display-default-on-v1";
@@ -28,9 +29,24 @@ export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
 });
 
 export interface SimulatorPreAdaptationInput {
+  readonly judgementAdjustValue: number;
+  readonly judgementAdjustValueB: number;
+  readonly noteColor: boolean;
+  readonly visibleTapLaneEffect: boolean;
+  readonly mvDarkness: number;
+  readonly longNoteLineBrightness: number;
+  readonly suddenRate: number;
+  readonly suddenLane: boolean;
+  readonly skin: SimulatorOriginalSkinSettings;
+  readonly masterGainPercent: number;
+
   readonly fps: 60 | 120;
   readonly noteSize: number;
   readonly noteSpeed: number;
+  readonly hideFastSlow: boolean;
+  readonly displayStageEffect: boolean;
+  readonly hideCombo: boolean;
+  readonly displayComboPosition: number;
   readonly syncLine: boolean;
   readonly allPerfectStatusDisplayMode: boolean;
   readonly bgmGainPercent: number;
@@ -40,6 +56,11 @@ export interface SimulatorPreAdaptationInput {
 export function buildSimulatorPreAdaptedConfig(
   input: SimulatorPreAdaptationInput,
 ): SimulatorLaunchConfig {
+  const live = createOriginalLiveSettings({ ...input, highFrequencyMode: input.fps === 120 });
+  if (live.status !== "ok") throw new Error("Simulator Live settings are outside the original domains.");
+  const skin = validateAndFreezeOriginalSkinSettings(input.skin);
+  if (skin.status !== "ok") throw new Error("Simulator Skin settings are outside the original domains.");
+  const masterGain = exactUnitPercent(input.masterGainPercent, "Master gain");
   const noteSize = exactFloat32(input.noteSize, "note size");
   const specificSpeed = exactFloat32(input.noteSpeed, "note speed");
   if (noteSize < 80 || noteSize > 150) throw new Error("Simulator note size must be within [80,150] without clamping.");
@@ -55,21 +76,27 @@ export function buildSimulatorPreAdaptedConfig(
     sessionMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.sessionMode,
     inputMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
     highFrequencyMode: input.fps === 120,
-    judgementAdjustValue: SIMULATOR_PRE_ADAPTATION_DEFAULTS.judgementAdjustValue,
-    judgementAdjustValueB: SIMULATOR_PRE_ADAPTATION_DEFAULTS.judgementAdjustValueB,
+    judgementAdjustValue: input.judgementAdjustValue,
+    judgementAdjustValueB: input.judgementAdjustValueB,
+    hideFastSlow: input.hideFastSlow,
+    displayStageEffect: input.displayStageEffect,
+    hideCombo: input.hideCombo,
+    displayComboPosition: input.displayComboPosition,
     syncLine: input.syncLine,
-    noteColor: SIMULATOR_PRE_ADAPTATION_DEFAULTS.noteColor,
-    visibleTapLaneEffect: SIMULATOR_PRE_ADAPTATION_DEFAULTS.visibleTapLaneEffect,
+    noteColor: input.noteColor,
+    visibleTapLaneEffect: input.visibleTapLaneEffect,
     allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
-    mvDarkness: SIMULATOR_PRE_ADAPTATION_DEFAULTS.mvDarkness,
-    skin: SIMULATOR_PRE_ADAPTATION_DEFAULTS.skin,
+    mvDarkness: input.mvDarkness,
+    longNoteLineBrightness: input.longNoteLineBrightness,
+    suddenRate: input.suddenRate, suddenLane: input.suddenLane,
+    skin: skin.value,
     visual: Object.freeze({
       specificSpeed,
       noteSize,
       habahiroMeshWidthSetting: SIMULATOR_PRE_ADAPTATION_DEFAULTS.habahiroMeshWidthSetting,
     }),
     audio: Object.freeze({
-      masterGain: SIMULATOR_PRE_ADAPTATION_DEFAULTS.masterGain,
+      masterGain,
       bgmGain,
       seGain,
     }),

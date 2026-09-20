@@ -1,0 +1,83 @@
+{
+  "sample": "10.1.4/230 ARM64",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "scriptSha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+  "templateWidths": {
+    "1": 248,
+    "2": 240,
+    "3": 192,
+    "4": 168,
+    "5": 160,
+    "6": 120,
+    "7": 80,
+    "8": 72,
+    "9": 48,
+    "10": 288,
+    "11": 88,
+    "12": 64
+  },
+  "templateHeights": {
+    "1": {
+      "height": 80,
+      "fontSize": 32
+    },
+    "2": {
+      "height": 72,
+      "fontSize": 32
+    },
+    "3": {
+      "height": 48,
+      "fontSize": 20
+    },
+    "4": {
+      "height": 64,
+      "fontSize": 24
+    }
+  },
+  "colliderWidthScale": 1.100000023841858,
+  "colliderHeightScale": 1.2000000476837158,
+  "constants": [
+    {
+      "address": "0x1533450",
+      "bytes": "5000000020000000"
+    },
+    {
+      "address": "0x1533ed8",
+      "bytes": "4800000020000000"
+    },
+    {
+      "address": "0x1533380",
+      "bytes": "3000000014000000"
+    },
+    {
+      "address": "0x1532dc0",
+      "bytes": "4000000018000000"
+    },
+    {
+      "address": "0x15360b0",
+      "bytes": "cdcc8c3f"
+    },
+    {
+      "address": "0x1536260",
+      "bytes": "9a99993f"
+    },
+    {
+      "address": "0x1536200",
+      "bytes": "cdcccc3d"
+    },
+    {
+      "address": "0x15365c4",
+      "bytes": "cdccccbd"
+    },
+    {
+      "address": "0x1536580",
+      "bytes": "0ad7233c"
+    },
+    {
+      "address": "0x1536294",
+      "bytes": "0ad723bc"
+    }
+  ],
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "36B4B2F55B6FD7FD22A783074445012422E04805D0A002688696966249E69672"
+}

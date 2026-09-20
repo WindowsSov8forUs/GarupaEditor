@@ -28,7 +28,7 @@ export type SimulatorLaunchTransportConfig = Omit<SimulatorLaunchConfig, "visual
 };
 
 export interface SimulatorLaunchTransportDescriptor {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 6;
   readonly requestId: string;
   readonly mediaSnapshotId: ResourceSnapshotId;
   readonly chartJson: string;
@@ -81,11 +81,17 @@ export function encodeSimulatorLaunchTransportConfig(
     highFrequencyMode: config.highFrequencyMode,
     judgementAdjustValue: config.judgementAdjustValue,
     judgementAdjustValueB: config.judgementAdjustValueB,
+    hideFastSlow: config.hideFastSlow,
+    displayStageEffect: config.displayStageEffect,
+    hideCombo: config.hideCombo,
+    displayComboPosition: config.displayComboPosition,
     syncLine: config.syncLine,
     noteColor: config.noteColor,
     visibleTapLaneEffect: config.visibleTapLaneEffect,
     allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
+    longNoteLineBrightness: config.longNoteLineBrightness,
+    suddenRate: config.suddenRate, suddenLane: config.suddenLane,
     skin: config.skin,
     visual: Object.freeze({
       specificSpeed: encodeFloat32(config.visual.specificSpeed, "specificSpeed"),
@@ -110,18 +116,24 @@ export function decodeSimulatorLaunchTransportConfig(
     config === null || typeof config !== "object" || Array.isArray(config) ||
     config.visual === null || typeof config.visual !== "object" || Array.isArray(config.visual) ||
     config.audio === null || typeof config.audio !== "object" || Array.isArray(config.audio)
-  ) throw new Error("Simulator transport config requires the exact Schema 13 projection and six Float32 bit strings.");
+  ) throw new Error("Simulator transport config requires the exact Schema 16 projection and six Float32 bit strings.");
   return Object.freeze({
     sessionMode: config.sessionMode,
     inputMode: config.inputMode,
     highFrequencyMode: config.highFrequencyMode,
     judgementAdjustValue: config.judgementAdjustValue,
     judgementAdjustValueB: config.judgementAdjustValueB,
+    hideFastSlow: config.hideFastSlow,
+    displayStageEffect: config.displayStageEffect,
+    hideCombo: config.hideCombo,
+    displayComboPosition: config.displayComboPosition,
     syncLine: config.syncLine,
     noteColor: config.noteColor,
     visibleTapLaneEffect: config.visibleTapLaneEffect,
     allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
+    longNoteLineBrightness: config.longNoteLineBrightness,
+    suddenRate: config.suddenRate, suddenLane: config.suddenLane,
     skin: config.skin,
     visual: Object.freeze({
       specificSpeed: decodeFloat32(config.visual.specificSpeed, "specificSpeed"),

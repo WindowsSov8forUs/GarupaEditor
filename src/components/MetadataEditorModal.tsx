@@ -1,3 +1,4 @@
+import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
 ﻿import {
   type ChangeEvent,
   type Dispatch,
@@ -15,7 +16,6 @@ import {
   toFinite,
   type ChartMetadata,
 } from "../chartCore";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
@@ -69,8 +69,7 @@ export function MetadataEditorModal({
   onMvUpload,
   onStageBackdropUpload,
 }: MetadataEditorModalProps) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
-  const { mounted, phase } = useModalTransition(open);
+  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
   const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<MetadataEditorTab>("info");
   const [levelInput, setLevelInput] = useState(metadata.difficultyLevel);
@@ -163,20 +162,12 @@ export function MetadataEditorModal({
   const stageBackdropSource = normalizeSource(mediaSources.stageBackdrop);
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
-      <section
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
+      <OriginalDialogFrame
         className={`modal-card metadata-editor-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">谱面信息</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-        </header>
+        <OriginalDialogHeader>谱面信息</OriginalDialogHeader>
 
         <div className="modal-body">
           <TopTabs
@@ -544,12 +535,12 @@ export function MetadataEditorModal({
           )}
 
           <div className="modal-actions is-centered metadata-editor-actions">
-            <button type="button" className="app-settings-back-button" onClick={onClose}>
+            <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
               <span className="btn-content">关闭</span>
-            </button>
+            </OriginalButton>
           </div>
         </div>
-      </section>
+      </OriginalDialogFrame>
     </div>
   );
 }

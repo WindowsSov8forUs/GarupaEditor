@@ -1,4 +1,4 @@
-import { Container, Filter, GlProgram, Matrix, UniformGroup } from "pixi.js";
+import { Container, Filter, GlProgram, Matrix, UniformGroup, defaultFilterVert } from "pixi.js";
 
 const VERTEX = `
 in vec2 aPosition;
@@ -29,18 +29,11 @@ void main(void) {
   vClipCoordinate = panelPosition * uClipRange0.zw + uClipRange0.xy;
 }`;
 
-const FRAGMENT = `
-in vec2 vTextureCoord;
-in vec2 vClipCoordinate;
-out vec4 finalColor;
-uniform sampler2D uTexture;
-uniform vec2 uClipArgs0;
-void main(void) {
-  vec4 sampleColor = texture(uTexture, vTextureCoord);
+const TRANSPARENT_COLOR = `
+vec4 nguiTransparentColor(vec4 sampleColor) {
   // Pixi filter inputs are premultiplied; the source shader evaluates straight color.
   if (sampleColor.a <= 0.0) {
-    finalColor = vec4(0.0);
-    return;
+    return vec4(0.0);
   }
   vec3 straightColor = sampleColor.rgb / sampleColor.a;
   float alphaPolynomial = sampleColor.a * 0.305299997 + 0.682200015;
@@ -51,11 +44,35 @@ void main(void) {
   float mixedAlpha = (gammaAlpha - sampleColor.a) * 0.649999976 + sampleColor.a;
   float luminance = dot(straightColor, vec3(0.212599993, 0.715200007, 0.0722000003));
   float currentAlpha = luminance * (alphaPolynomial - mixedAlpha) + mixedAlpha;
+  return vec4(straightColor * currentAlpha, currentAlpha);
+}`;
+
+const FRAGMENT = `
+in vec2 vTextureCoord;
+in vec2 vClipCoordinate;
+out vec4 finalColor;
+uniform sampler2D uTexture;
+uniform vec2 uClipArgs0;
+${TRANSPARENT_COLOR}
+void main(void) {
+  vec4 color = nguiTransparentColor(texture(uTexture, vTextureCoord));
   vec2 edge = (vec2(1.0) - abs(vClipCoordinate)) * uClipArgs0;
   float clipAlpha = clamp(min(edge.y, edge.x), 0.0, 1.0);
-  float finalAlpha = currentAlpha * clipAlpha;
-  finalColor = vec4(straightColor * finalAlpha, finalAlpha);
+  finalColor = color * clipAlpha;
 }`;
+
+/** The same NGUI color equation, without a panel-local soft-clip variant. */
+export function createNguiTransparentColoredFilter(): Filter {
+  return new Filter({
+    glProgram: GlProgram.from({ vertex: defaultFilterVert, name: "ngui-transparent-colored",
+      fragment: `in vec2 vTextureCoord;
+out vec4 finalColor;
+uniform sampler2D uTexture;
+${TRANSPARENT_COLOR}
+void main(void) { finalColor = nguiTransparentColor(texture(uTexture, vTextureCoord)); }` }),
+    resolution: "inherit", antialias: "off", padding: 0,
+  });
+}
 
 type SoftClipUniforms = {
   [key: string]: { value: Float32Array | number; type: "vec4<f32>" | "vec2<f32>" | "mat3x3<f32>" | "f32" };

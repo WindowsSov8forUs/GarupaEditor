@@ -1,0 +1,95 @@
+{
+  "sample": "10.1.4/230 ARM64",
+  "elfSha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "exportedMethods": 8,
+  "methods": [
+    {
+      "name": "SkinPreview.<>c__DisplayClass69_0$$<updateNotes>b__0",
+      "start": "0x3a8b634",
+      "bytes": 36,
+      "sha256": "424A18F00E63DCFDC5FF8A402F85ACCA532C6C9E57C34BF850BDD6BE0F649FBF"
+    },
+    {
+      "name": "SkinPreview$$UpdateAllSkin",
+      "start": "0x3a88bcc",
+      "bytes": 140,
+      "sha256": "784A56A7550AC7AF514432C29A8909F22F7815E58AE7DB08CE138FF85EFB65D0"
+    },
+    {
+      "name": "SkinPreview$$loadNotes",
+      "start": "0x3a88f4c",
+      "bytes": 676,
+      "sha256": "E7B63BD94E4AAE5853154EDDC640707B816E43C6005134DCFF0A36B7D9D78F03"
+    },
+    {
+      "name": "SkinPreview$$loadFieldSkin",
+      "start": "0x3a88df0",
+      "bytes": 348,
+      "sha256": "BC6D2B662A4F22396AF7E93A54B0D435A43BAC32CDC54C1240545D3321E2C4AD"
+    },
+    {
+      "name": "SkinPreview$$loadDirectionalFlickSkin",
+      "start": "0x3a895dc",
+      "bytes": 1116,
+      "sha256": "7F9988A06B3A39EA6E1C8E10AD5469E95B07588B6053EAAFF3B226803BBB0D4A"
+    },
+    {
+      "name": "SkinPreview$$resetEffect",
+      "start": "0x3a89eb8",
+      "bytes": 1016,
+      "sha256": "5140293EDD922B1387DD2743C2AECC80173493CBE16DE4C439B06D6D0547EE8B"
+    },
+    {
+      "name": "SkinPreview$$destroyNotes",
+      "start": "0x3a8a720",
+      "bytes": 840,
+      "sha256": "E9A0B45802733FFDA20BD4E2077F2577859E10D404089C5223BB7F8541D7A5A9"
+    },
+    {
+      "name": "SkinPreviewDisplayParameter$$SetParameter",
+      "start": "0x3a8ba18",
+      "bytes": 508,
+      "sha256": "EA3C770FB0E4D481629280C81D78BAACB36D9B7DC41DBC9111153C0E05F2A7E6"
+    }
+  ],
+  "impactJumpTable": {
+    "address": "0x15827ef",
+    "base": "0x3a8b18c",
+    "hex": "000f1f276e390615",
+    "destinations": [
+      "0x3a8b18c",
+      "0x3a8b1c8",
+      "0x3a8b208",
+      "0x3a8b228",
+      "0x3a8b344",
+      "0x3a8b270",
+      "0x3a8b1a4",
+      "0x3a8b1e0"
+    ]
+  },
+  "initialType": 0,
+  "nextOnImpact": {
+    "0": 1,
+    "1": 2,
+    "2": 3,
+    "3": null,
+    "5": 6,
+    "6": 7,
+    "7": 0
+  },
+  "holdHeadType": 3,
+  "holdTailType": 5,
+  "holdTailDelaySeconds": 1,
+  "parameterSource": "SkinPreviewDisplayParameter.SetParameter copies LiveCoreSettings highSpeed, noteSize, longNoteLineBrightness",
+  "scope": "note motion/state transitions only; no claim of completed particle, flick-top animation or connection mesh rendering",
+  "reverseCommit": "786f39b83e7ee3229437dd1bc1643cd2bb8cda86",
+  "sourceSha256": "E9563CEB94B5379D73AF8B91D7CC7C9A25F546661CFC8123D7C224AF6C2334C2",
+  "initialScale": 0.01,
+  "rendering": {
+    "connectionSortingOrder": 60,
+    "noteSortingOrder": 70,
+    "uiRootWidth": 1334,
+    "backgroundOffsetBase": 170,
+    "backgroundAspectBase": 1.77
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "masterDecompressedSha256": "3E02A51A2BB3F91401072C8C2545897A12ADB25916B28050CAF97F2B03DB9214",
+  "note": [
+    {
+      "masterId": 1,
+      "setting": 0,
+      "label": "TYPE1",
+      "bundleName": "skin00",
+      "offset": 16008620,
+      "hex": "08011205545950453118012206736b696e303028013500000000"
+    },
+    {
+      "masterId": 2,
+      "setting": 1,
+      "label": "TYPE2",
+      "bundleName": "skin01",
+      "offset": 16008652,
+      "hex": "08021205545950453218002206736b696e303128023500000000"
+    },
+    {
+      "masterId": 3,
+      "setting": 2,
+      "label": "TYPE3",
+      "bundleName": "skin02",
+      "offset": 16008684,
+      "hex": "08031205545950453318002206736b696e303228033500000000"
+    },
+    {
+      "masterId": 4,
+      "setting": 3,
+      "label": "TYPE4",
+      "bundleName": "skin03",
+      "offset": 16008716,
+      "hex": "08041205545950453418002206736b696e303328043500000000"
+    },
+    {
+      "masterId": 5,
+      "setting": 4,
+      "label": "TYPE5",
+      "bundleName": "skin04",
+      "offset": 16008748,
+      "hex": "08051205545950453518002206736b696e303428053500000000"
+    },
+    {
+      "masterId": 6,
+      "setting": 5,
+      "label": "TYPE6",
+      "bundleName": "skin06",
+      "offset": 16008780,
+      "hex": "08061205545950453618002206736b696e303628063500000000"
+    },
+    {
+      "masterId": 7,
+      "setting": 6,
+      "label": "TYPE7",
+      "bundleName": "skin05",
+      "offset": 16008812,
+      "hex": "08071205545950453718002206736b696e3035280735cdcc8c3f"
+    }
+  ],
+  "directional": [
+    {
+      "masterId": 1,
+      "setting": 0,
+      "label": "TYPE1",
+      "bundleName": "skin00",
+      "offset": 16010426,
+      "hex": "080110011a05545950453120012a06736b696e3030"
+    },
+    {
+      "masterId": 2,
+      "setting": 1,
+      "label": "TYPE2",
+      "bundleName": "skin01",
+      "offset": 16010453,
+      "hex": "080210021a05545950453220002a06736b696e3031"
+    },
+    {
+      "masterId": 3,
+      "setting": 2,
+      "label": "TYPE3",
+      "bundleName": "skin02",
+      "offset": 16010480,
+      "hex": "080310031a05545950453320002a06736b696e3032"
+    },
+    {
+      "masterId": 4,
+      "setting": 3,
+      "label": "TYPE4",
+      "bundleName": "skin03",
+      "offset": 16010507,
+      "hex": "080410041a05545950453420002a06736b696e3033"
+    },
+    {
+      "masterId": 5,
+      "setting": 4,
+      "label": "TYPE5",
+      "bundleName": "skin04",
+      "offset": 16010534,
+      "hex": "080510051a05545950453520002a06736b696e3034"
+    }
+  ],
+  "reverseCommit": "f3d1435f0e8e93ae16efc239680f5d0ca7519c39",
+  "sourceSha256": "93568AF89AD92A6C8D8234C91C6F318C931C0B9FE1D130A0945BCACD35937E4A"
+}

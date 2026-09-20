@@ -1,11 +1,15 @@
-import { type CSSProperties, type ReactNode } from "react";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
+import { type CSSProperties, type ReactNode, type RefObject } from "react";
+import { type OriginalAtlas } from "./useOriginalSurface";
+import { useOriginalDialogInput } from "./useOriginalDialogInput";
 import { useModalLayer } from "./useModalLayer";
-import { useModalTransition, type ModalTransitionPhase } from "./useModalTransition";
+import { useModalTransition, type ModalTransitionPhase, type DialogMotion } from "./useModalTransition";
 import { useModalTransitionValue } from "./useModalTransitionValue";
 
 type StandardModalBaseProps = {
   title: ReactNode;
+  motion?: DialogMotion;
+  atlas?: OriginalAtlas;
   maskClassName?: string;
   cardClassName?: string;
   bodyClassName?: string;
@@ -35,15 +39,17 @@ function renderStandardModalFrame(
     mounted: boolean;
     phase: ModalTransitionPhase;
     layerStyle: CSSProperties;
-    optionsTitleIcon: string;
+    transitionRef: RefObject<HTMLDivElement | null>;
   },
 ) {
   const {
     mounted,
     phase,
     layerStyle,
-    optionsTitleIcon,
+    transitionRef,
     title,
+    motion = "scale",
+    atlas = "common",
     maskClassName = "modal-mask",
     cardClassName = "",
     bodyClassName = "",
@@ -64,20 +70,14 @@ function renderStandardModalFrame(
   const showFooter = Boolean(actions) || (Boolean(onClose) && !hideCloseAction);
 
   return (
-    <div className={`${maskClassName} modal-transition-mask ${transitionClassName}`} style={layerStyle}>
-      <section
+    <div className={`${maskClassName} modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={layerStyle} tabIndex={-1}>
+      <OriginalDialogFrame atlas={atlas} role="dialog" aria-modal="true"
+        aria-label={typeof title === "string" ? title : undefined} data-motion={motion}
+        inert={phase === "exit" || layerStyle.pointerEvents === "none"}
         className={`modal-card ${cardClassName} modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">{title}</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-        </header>
+        <OriginalDialogHeader atlas={atlas}>{title}</OriginalDialogHeader>
 
         <div className={`modal-body ${bodyClassName}`}>
           {children}
@@ -85,14 +85,14 @@ function renderStandardModalFrame(
             <div className={`modal-actions is-centered ${footerClassName}`}>
               {actions}
               {onClose && !hideCloseAction && (
-                <button type="button" className="app-settings-back-button" onClick={onClose} disabled={closeDisabled}>
+                <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose} disabled={closeDisabled}>
                   <span className="btn-content">{closeLabel}</span>
-                </button>
+                </OriginalButton>
               )}
             </div>
           )}
         </div>
-      </section>
+      </OriginalDialogFrame>
     </div>
   );
 }
@@ -101,16 +101,16 @@ export function StandardModal({
   open,
   ...props
 }: StandardModalProps) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
-  const { mounted, phase } = useModalTransition(open);
+  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open, props.motion);
   const layerStyle = useModalLayer(open, mounted);
+  useOriginalDialogInput(transitionRef, mounted, props.onClose, !open || !!props.closeDisabled);
 
   return renderStandardModalFrame({
     ...props,
     mounted,
     phase,
-    layerStyle,
-    optionsTitleIcon,
+    layerStyle: { ...layerStyle, ...transitionStyle },
+    transitionRef,
   });
 }
 
@@ -120,9 +120,9 @@ export function StandardValueModal<T>({
   children,
   ...props
 }: StandardValueModalProps<T>) {
-  const optionsTitleIcon = useApplicationResourceUrl("ui.icon.options-title");
-  const { mounted, phase, renderedValue } = useModalTransitionValue(value);
+  const { mounted, phase, renderedValue, transitionStyle, transitionRef } = useModalTransitionValue(value, props.motion);
   const layerStyle = useModalLayer(value !== null, mounted);
+  useOriginalDialogInput(transitionRef, mounted, props.onClose, value === null || !!props.closeDisabled);
 
   if (!mounted || renderedValue === null) {
     return null;
@@ -132,8 +132,8 @@ export function StandardValueModal<T>({
     ...props,
     mounted,
     phase,
-    layerStyle,
-    optionsTitleIcon,
+    layerStyle: { ...layerStyle, ...transitionStyle },
+    transitionRef,
     title: typeof title === "function" ? title(renderedValue) : title,
     children: children(renderedValue),
   });
