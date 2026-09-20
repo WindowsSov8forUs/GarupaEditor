@@ -24,9 +24,19 @@
 
 App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/library/`只为Builtin和可复用Network包维护原作逻辑Bundle投影，不宣称复刻原作Android物理缓存。当前谱面媒体由`cache/session/project-media/`拥有，并在`chart-resources.v5.json`绑定落盘、旧Lease释放后回收；共享Blob不等于永久媒体库。Simulator的Skin、SE、粒子和歌曲媒体仍使用同一Snapshot/Lease链。
 
-内置Simulator已通过Public Schema 13与transport Schema 3接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。
+内置Simulator已通过Public Schema 16与transport Schema 6接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。
 
 开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
+
+## 菜单与 Simulator 设置
+
+菜单与设置消费 Reverse 已交付的预制体、按钮模板、窗口动画及设置运行逻辑。菜单仅保留“选项”入口；按用户要求，由所在行决定按钮大小，窗口保留原作尺寸预设。完整菜单资源和逆向依据仍然保留。
+
+四页设置只保留当前实现可用的入口，保留 MV 模式与亮度，移除舞台演出设置入口及未实现的账号业务。设置共用草稿，关闭后保存到主程序，下一次启动 Simulator 时经 Public Schema 16 与 transport Schema 6 生效；不热更新已运行场次。
+
+中文文本优先消费 Reverse `75b8ecf0b9460893aea8333a4fed2533684b41f5` 提取的大陆版 master 词库，并使用包体本地词条补齐已确认来源。生产中文映射包含 194 个 wording 键及 2 个原作字面文本映射，字体与图集优先使用大陆版资源，不自行翻译缺失词条。
+
+皮肤动态预览与点击判定调节复用 Simulator 的资源、几何和粒子实现，使用主程序资源租约并提前准备设置所需资源。DOM 与 Pixi 文字共用原作基线计算，标签描边由外层面板裁剪。构建与源码核对不等于完整视觉一致性验收。
 
 ## 仓库路径与本地数据边界
 
