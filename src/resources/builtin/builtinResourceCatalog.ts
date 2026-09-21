@@ -1,3 +1,11 @@
+import fieldBandLogo1Url from "../../assets/game/field-band-logos/001-logoS.png?url&no-inline";
+import fieldBandLogo2Url from "../../assets/game/field-band-logos/002-logoS.png?url&no-inline";
+import fieldBandLogo4Url from "../../assets/game/field-band-logos/004-logoS.png?url&no-inline";
+import fieldBandLogo5Url from "../../assets/game/field-band-logos/005-logoS.png?url&no-inline";
+import fieldBandLogo3Url from "../../assets/game/field-band-logos/003-logoS.png?url&no-inline";
+import fieldBandLogo21Url from "../../assets/game/field-band-logos/021-logoS.png?url&no-inline";
+import fieldBandLogo18Url from "../../assets/game/field-band-logos/018-logoS.png?url&no-inline";
+import fieldBandLogo45Url from "../../assets/game/field-band-logos/045-logoS.png?url&no-inline";
 import applyActionUrl from "../../assets/icons/apply-action.svg?url&no-inline";
 import backArrowUrl from "../../assets/icons/back-arrow.svg?url&no-inline";
 import clearActionUrl from "../../assets/icons/clear-action.svg?url&no-inline";
@@ -86,6 +94,14 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     kind: "image", mediaType: "image/png", url: skinPreviewBackgroundUrl }),
   Object.freeze({ slot: "ui.menu-cn-atlas", id: "builtin/ui/menu-cn-atlas", path: "game/atlas/menu/menu-atlas-cn.png", title: "Mainland menu UI atlas", kind: "image", mediaType: "image/png", url: menuChineseAtlasUrl }),
   Object.freeze({ slot: "ui.common-cn-atlas", id: "builtin/ui/common-cn-atlas", path: "game/atlas/menu/ui-common-cn.png", title: "Mainland common UI atlas", kind: "image", mediaType: "image/png", url: commonChineseAtlasUrl }),
+  Object.freeze({ slot: "ui.field-band-logo.001", id: "builtin/ui/field-band-logo/001", path: "game/field-band-logos/001-logoS.png", title: "Original band 1 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo1Url }),
+  Object.freeze({ slot: "ui.field-band-logo.002", id: "builtin/ui/field-band-logo/002", path: "game/field-band-logos/002-logoS.png", title: "Original band 2 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo2Url }),
+  Object.freeze({ slot: "ui.field-band-logo.004", id: "builtin/ui/field-band-logo/004", path: "game/field-band-logos/004-logoS.png", title: "Original band 4 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo4Url }),
+  Object.freeze({ slot: "ui.field-band-logo.005", id: "builtin/ui/field-band-logo/005", path: "game/field-band-logos/005-logoS.png", title: "Original band 5 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo5Url }),
+  Object.freeze({ slot: "ui.field-band-logo.003", id: "builtin/ui/field-band-logo/003", path: "game/field-band-logos/003-logoS.png", title: "Original band 3 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo3Url }),
+  Object.freeze({ slot: "ui.field-band-logo.021", id: "builtin/ui/field-band-logo/021", path: "game/field-band-logos/021-logoS.png", title: "Original band 21 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo21Url }),
+  Object.freeze({ slot: "ui.field-band-logo.018", id: "builtin/ui/field-band-logo/018", path: "game/field-band-logos/018-logoS.png", title: "Original band 18 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo18Url }),
+  Object.freeze({ slot: "ui.field-band-logo.045", id: "builtin/ui/field-band-logo/045", path: "game/field-band-logos/045-logoS.png", title: "Original band 45 logo", kind: "image", mediaType: "image/png", url: fieldBandLogo45Url }),
   Object.freeze({ slot: "ui.menu-atlas", id: "builtin/ui/menu-atlas", path: "game/atlas/menu/menu-atlas.png", title: "Original menu UI atlas", kind: "image", mediaType: "image/png", url: menuAtlasUrl }),
   Object.freeze({ slot: "ui.common-atlas", id: "builtin/ui/common-atlas", path: "game/atlas/bms/ui/uicommon/ui-common.png", title: "Common UI atlas", kind: "image", mediaType: "image/png", url: uiCommonUrl }),
   Object.freeze({ slot: "ui.loading.frame", id: "builtin/ui/loading/frame", path: "game/loading/bg_base_r12.png", title: "Loading frame", kind: "image", mediaType: "image/png", url: loadingFrameUrl }),

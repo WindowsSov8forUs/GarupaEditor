@@ -6,6 +6,8 @@ import { ORIGINAL_SUDDEN_DEFAULT, ORIGINAL_SUDDEN_MIN, ORIGINAL_SUDDEN_MAX,
 import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT } from "../simulator/public/settings";
 import type { EditorOptionSettings } from "../chartCore";
 import skinSelection from "../data/originalSkinSelection.json";
+import fieldSkinLogos from "../data/originalFieldSkinLogos.json";
+import fieldSkinSelection from "../data/originalFieldSkinSelection.json";
 import runtime from "../data/originalSettingsRuntime.json";
 import radioLayout from "../data/originalSettingsRadioLayout.json";
 import type { SimulatorMenuSettings } from "../app/simulator/menuSettings";
@@ -162,7 +164,11 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
       const nextY = ownY + start.position.y - (rows.length + 1) * manager.data.heightMargin;
       nodes[next.id] = { ...nodes[next.id], x: 0, y: nextY };
     }
-    number(278, settings.fieldSkin, 0, 14, 1, value => skin("fieldSkin", value), value => String(value + 1));
+    // LiveSkinSettings.Init sorts MasterSkinLane by seq; the numeric control
+    // owns a list position, while OptionData and resource consumers own ID - 1.
+    const fieldIndex = fieldSkinSelection.rows.findIndex(row => row.setting === settings.fieldSkin);
+    number(278, fieldIndex, 0, fieldSkinSelection.rows.length - 1, 1,
+      index => skin("fieldSkin", fieldSkinSelection.rows[index]!.setting), index => String(index + 1));
     number(232, settings.tapEffect, 0, 4, 1, value => skin("tapEffect", value), value => String(value + 1));
     number(292, settings.judgeSE, 0, 3, 1, value => skin("judgeSE", value), value => String(value + 1));
     // OptionData.IsDirectionalFlickEffectNormal is true for stored value 0 (normal), not 1 (light).
@@ -172,12 +178,18 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     // Reverse 63f4fdf1: SetActiveUnownedObject targets these serialized references,
     // not guessed node names. Editor-provided ordinary skins have no account ownership gate.
     const fieldSkin = source.components.get(278)!;
-    for (const field of ["textCover", "lockIcon", "exMissionCaption", "bandLogoLoader"]) {
+    for (const field of ["textCover", "lockIcon", "exMissionCaption"]) {
       const id = originalRef(fieldSkin.data[field]);
       const node = source.nodes.get(id) ?? source.prefab.nodes.find(item => item.transformId === id)
         ?? source.nodes.get(source.components.get(id)?.node ?? -1);
       if (node) nodes[node.id] = { active: false };
     }
+    // LiveSettingsFieldSkin.SetBandLogoObject -> setValueDisplay: logo and
+    // numeric label are mutually exclusive, independently of ownership.
+    const hasBandLogo = fieldSkinLogos.rows.some(row => row.setting === settings.fieldSkin);
+    const logoLoader = source.components.get(originalRef(fieldSkin.data.bandLogoLoader))!;
+    nodes[logoLoader.node] = { active: hasBandLogo };
+    nodes[source.components.get(originalRef(fieldSkin.data.valueLabel))!.node] = { active: !hasBandLogo };
   }
   if (page === 3) {
     retainChildren("Contents/ScrollView/Contents", ["SystemVolumeRow"]);

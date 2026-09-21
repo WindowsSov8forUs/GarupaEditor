@@ -9,6 +9,14 @@ import type { useOriginalSkinSound } from "./useOriginalSkinSound";
 import type { OriginalPreviewParticlePack } from "../simulator/public/previewParticles";
 import type { OriginalSettingsDraft } from "./originalSettingsPage";
 import selection from "../data/originalSkinSelection.json";
+import fieldSkinLogos from "../data/originalFieldSkinLogos.json";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import type { ApplicationResourceSlot } from "../resources/selections";
+
+function FieldBandLogo({ bandId }: { bandId: number }) {
+  const url = useApplicationResourceUrl(`ui.field-band-logo.${String(bandId).padStart(3, "0")}` as ApplicationResourceSlot);
+  return <img className="original-prefab-texture" src={url} alt="" />;
+}
 
 const noteModel = new OriginalPrefabModel(ORIGINAL_PREFABS.ingamesettingnoteskin!);
 const directionalModel = new OriginalPrefabModel(ORIGINAL_PREFABS.ingamesettingdirectionalflickskin!);
@@ -51,6 +59,10 @@ export function OriginalSkinSettingsPage({ model, bindings, draft, resources, an
     if (!visible) sound.stop();
     return sound.stop;
   }, [visible, sound.stop]);
+  const fieldLogo = fieldSkinLogos.rows.find(row => row.setting === draft.options.simulatorSettings.skin.fieldSkin);
+  const fieldController = model.components.get(278)!;
+  const fieldLogoLoader = model.components.get(originalRef(fieldController.data.bandLogoLoader))!;
+  const fieldLogoTexture = originalRef(fieldLogoLoader.data.texture);
   const views = useMemo<OriginalViewBindings>(() => ({ ...bindings,
     buttons: { ...bindings.buttons,
       245: sound.ready ? { action: () => sound.play("tap") } : undefined,
@@ -64,9 +76,10 @@ export function OriginalSkinSettingsPage({ model, bindings, draft, resources, an
         <SampleRow directional images={resources?.directional[selection.directional[index]!.setting]} /> },
     },
     textures: { ...bindings.textures,
+      [fieldLogoTexture]: fieldLogo ? <FieldBandLogo bandId={fieldLogo.bandId} /> : null,
       272: <OriginalSkinPreview resources={resources} animated={animated} effects={effects} speed={draft.options.rhythmNoteSpeed}
         noteSize={draft.options.rhythmNoteSizePercent} lineBrightness={draft.options.longLineBrightnessPercent} visible={visible} onError={onError} />,
     },
-  }), [bindings, resources, animated, effects, draft.options.rhythmNoteSpeed, draft.options.rhythmNoteSizePercent, draft.options.longLineBrightnessPercent, visible, onError, sound.ready, sound.play]);
+  }), [bindings, resources, animated, effects, fieldLogo, fieldLogoTexture, draft.options.rhythmNoteSpeed, draft.options.rhythmNoteSizePercent, draft.options.longLineBrightnessPercent, visible, onError, sound.ready, sound.play]);
   return <OriginalPageViewport model={previewModel} bindings={views} scrollState={scrollState} />;
 }
