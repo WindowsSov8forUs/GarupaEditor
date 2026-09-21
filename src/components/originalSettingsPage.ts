@@ -27,11 +27,10 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   const radios: Record<number, OriginalRadioBinding | undefined> = {};
   const sliders: Record<number, OriginalSliderBinding> = {};
   const checkboxes: NonNullable<OriginalViewBindings["checkboxes"]> extends Readonly<infer T> ? T : never = {};
-  const retainChildren = (path: string, names: readonly string[]) => {
-    const parent = source.nodeAt(path);
-    for (const child of source.nodes.values()) {
-      if (child.parent === parent.id && !names.includes(child.name)) nodes[child.id] = { active: false };
-    }
+  const hideChildren = (path: string, names: readonly string[]) => {
+    // Hide identified unavailable features only; their siblings may be titles,
+    // descriptions or resource presenters required by the retained controls.
+    for (const name of names) nodes[source.nodeAt(`${path}/${name}`).id] = { active: false };
   };
   const place = (path: string, y: number, x?: number) => {
     const node = source.nodeAt(path);
@@ -113,13 +112,14 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   } else if (page === 1) {
     const root = "Contents/ScrollView/Contents";
     // Expose implemented settings, not disabled controls for absent game systems.
-    retainChildren(root, ["LiveMode", "LiveEffect", "MV", "LiveSoundVolume"]);
-    retainChildren(`${root}/LiveMode`, ["OptionPageCaption", "HighFrequencyMode", "Grid"]);
-    retainChildren(`${root}/LiveMode/Grid`, ["HighFrequencyModeDescription"]);
-    retainChildren(`${root}/LiveEffect`, ["OptionPageCaption", "DisplayFastSlow", "DisplayAllPerfectStatus"]);
-    retainChildren(`${root}/LiveEffect/DisplayAllPerfectStatus`, ["DisplayAllPerfectStatusRadioButton"]);
-    retainChildren(`${root}/MV`, ["OptionPageCaption", "MVModeQuality", "MVBrightness"]);
-    retainChildren(`${root}/LiveSoundVolume`, ["OptionPageCaption", "BGMSlider", "SESlider"]);
+    hideChildren(root, ["LiveVibration", "MemberIllustCutin", "3DLive", "LightMode"]);
+    hideChildren(`${root}/LiveMode`, ["Cutin3DMode", "GraphicsMode", "ResolutionType", "Cutin3DModeDescription", "LowLatencySoundMode"]);
+    hideChildren(`${root}/LiveMode/Grid`, ["LowLatencySoundModeDescription", "ResolutionTypeDescription"]);
+    hideChildren(`${root}/LiveEffect`, ["LightFever", "LightMode", "DisplaySkillWindow", "DisplaySkillEffect", "DisplayStageEffect"]);
+    hideChildren(`${root}/LiveEffect/DisplayAllPerfectStatus`, ["MedleyComboStatusCheckBox"]);
+    // Description is the server MV-download retention notice, not playback help.
+    hideChildren(`${root}/MV`, ["MVLiveModeQuality", "HoldMVData", "Description"]);
+    hideChildren(`${root}/LiveSoundVolume`, ["VoiceSlider"]);
     // Keep the authored controls and columns, closing the removed rows/sections.
     place(`${root}/LiveMode/HighFrequencyMode`, -50);
     place(`${root}/LiveMode/Grid`, -158);
@@ -192,8 +192,8 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     nodes[source.components.get(originalRef(fieldSkin.data.valueLabel))!.node] = { active: !hasBandLogo };
   }
   if (page === 3) {
-    retainChildren("Contents/ScrollView/Contents", ["SystemVolumeRow"]);
-    retainChildren("Contents/ScrollView/Contents/SystemVolumeRow", ["ROW1", "ROW2"]);
+    hideChildren("Contents/ScrollView/Contents", ["Row_System", "Row_Download", "UnderMultiPlayMVDownloadCaution"]);
+    hideChildren("Contents/ScrollView/Contents/SystemVolumeRow", ["ROW3"]);
     volume(345, draft.options.simulatorSettings.systemBgmVolumePercent,
       value => native("systemBgmVolumePercent", value), 0.01);
     volume(477, draft.options.simulatorSettings.systemSeVolumePercent,
