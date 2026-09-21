@@ -3,8 +3,6 @@ import { memo, type KeyboardEvent } from "react";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
 type CommandBarProps = {
-  onImportJson: () => void;
-  onExportJson: () => void;
   onOpenStaticRender: () => void;
   onOpenSimulator: () => void;
   onOpenSkinSettings: () => void;
@@ -16,8 +14,6 @@ type CommandBarProps = {
 };
 
 export const CommandBar = memo(function CommandBar({
-  onImportJson,
-  onExportJson,
   onOpenStaticRender,
   onOpenSimulator,
   onOpenSkinSettings,
@@ -27,8 +23,6 @@ export const CommandBar = memo(function CommandBar({
   userUsername,
   onUserBarClick,
 }: CommandBarProps) {
-  const importJsonIcon = useApplicationResourceUrl("ui.icon.json-import");
-  const exportJsonIcon = useApplicationResourceUrl("ui.icon.json-export");
   const skinIcon = useApplicationResourceUrl("ui.icon.skin");
   const previewIcon = useApplicationResourceUrl("ui.icon.preview");
   const simulatorIcon = useApplicationResourceUrl("ui.icon.display");
@@ -52,14 +46,6 @@ export const CommandBar = memo(function CommandBar({
   return (
     <div className="command-bar">
       <div className="command-group">
-        <button type="button" className="command-icon-button" onClick={onImportJson} title="导入" aria-label="导入">
-          <img className="command-text-icon" src={importJsonIcon} alt="" aria-hidden="true" />
-          <span className="sr-only">导入</span>
-        </button>
-        <button type="button" className="command-icon-button" onClick={onExportJson} title="导出" aria-label="导出">
-          <img className="command-text-icon" src={exportJsonIcon} alt="" aria-hidden="true" />
-          <span className="sr-only">导出</span>
-        </button>
         <button
           type="button"
           className="command-icon-button"
