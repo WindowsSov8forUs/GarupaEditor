@@ -1621,6 +1621,43 @@ fn resource_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(root)
 }
 
+#[tauri::command]
+pub fn resource_read_skin_thumbnail(
+    app: tauri::AppHandle,
+    key: String,
+) -> Result<Option<String>, String> {
+    let path = resource_root(&app)?
+        .join("derived/skin-thumbnails")
+        .join(format!("{}.png", digest_text(&key)));
+    match fs::read(path) {
+        Ok(bytes) => Ok(Some(base64::engine::general_purpose::STANDARD.encode(bytes))),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(format!("read skin thumbnail failed: {error}")),
+    }
+}
+
+#[tauri::command]
+pub fn resource_write_skin_thumbnail(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, ApplicationResourceState>,
+    key: String,
+    base64_data: String,
+) -> Result<(), String> {
+    let root = resource_root(&app)?;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(base64_data)
+        .map_err(|error| format!("decode skin thumbnail failed: {error}"))?;
+    let path = root
+        .join("derived/skin-thumbnails")
+        .join(format!("{}.png", digest_text(&key)));
+    atomic_write(
+        &root,
+        &path,
+        &bytes,
+        &next_identity(state.inner(), "skin-thumbnail"),
+    )
+}
+
 fn legacy_user_media_recovery_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let mut root = app
         .path()

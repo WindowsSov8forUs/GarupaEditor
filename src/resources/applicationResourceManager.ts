@@ -80,6 +80,8 @@ export interface AdoptedLegacyChartMedia {
 }
 
 export class ApplicationResourceManager {
+  readSkinThumbnail(key: string) { return this.backend.readSkinThumbnail(key); }
+  writeSkinThumbnail(key: string, bytes: Uint8Array) { return this.backend.writeSkinThumbnail(key, bytes); }
   private readonly builtins = new Map<string, RegisteredBuiltinResource>();
   private readonly builtinInstalls = new Map<string, Promise<ResourceResult<ResourceDescriptor>>>();
   private readonly installed = new Map<string, StoredResourceRecord>();
