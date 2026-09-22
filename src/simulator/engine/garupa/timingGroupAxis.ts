@@ -1,3 +1,4 @@
+import { getSignedTempo } from "./signedTempo";
 import { findBatchBpmCommand } from "../chart/noteGraph";
 import type { ChartConstructionResult } from "../chart/types";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
@@ -66,8 +67,10 @@ export function createGarupaProductTimingGroupAxisProfile(
   const bpmSegmentsResult = buildBpmSegments(chart);
   if (bpmSegmentsResult.status !== "ok") return bpmSegmentsResult;
   const bpmSegments = bpmSegmentsResult.value;
+  const tempo = getSignedTempo(chart);
   const positionToMilliseconds = (position: number): SimulatorResult<number> =>
-    positionToMillisecondsFromSegments(bpmSegments, position);
+    tempo?.folded ? (Number.isFinite(position) ? ok(tempo.secondsAtRuntimePosition(position) * 1000) : invalidAxis("Non-finite runtime position."))
+      : positionToMillisecondsFromSegments(bpmSegments, position);
 
   const usedGroups = new Set<GarupaProductTimingGroupId>(["#Global"]);
   for (const node of product.nodes) usedGroups.add(node.timingGroup);
@@ -85,6 +88,7 @@ export function createGarupaProductTimingGroupAxisProfile(
       ...globalEvents.map((event) => ({ event, owner: "global" as const })),
     ].sort((left, right) =>
       left.event.absolutePosition - right.event.absolutePosition ||
+      (left.event.authoredPosition ?? left.event.absolutePosition) - (right.event.authoredPosition ?? right.event.absolutePosition) ||
       ownerOrder(left.owner) - ownerOrder(right.owner) ||
       left.event.sourceOrder - right.event.sourceOrder);
     let speed = 1;

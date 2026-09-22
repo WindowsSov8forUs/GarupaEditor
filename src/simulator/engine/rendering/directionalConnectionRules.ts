@@ -1,3 +1,4 @@
+import { authoredEndpointPosition } from "../chart/noteGraph";
 import { AfterNoteType, FrontNoteType, GameNoteType, type NoteInformation } from "../chart/types";
 import { noteMotionCoordinates } from "./ordinaryNoteGeometry";
 import { directionalEndpointLane, directionalEndpointPosition, directionalMembersAdjacent, frontEndpointLane, isSameDirectionalGroup } from "../chart/noteGraph";
@@ -49,7 +50,7 @@ export function connectDirectionalMemberBatch<T extends ConnectionNote>(notes: r
     if (information.directionalSlideConnection === undefined && information.gameNoteType >= GameNoteType.LongDirectionalFlickLeftAdd &&
         information.gameNoteType <= GameNoteType.SlideBDirectionalFlickRightAdd) {
       const index = host.pendingTails.findIndex(tail => tail.noteInformation !== null &&
-        directionalEndpointPosition(tail.noteInformation) === information.absolutePos && host.sameTail(tail, current, 1));
+        authoredEndpointPosition(tail.noteInformation, true) === authoredEndpointPosition(information) && host.sameTail(tail, current, 1));
       const tail = host.pendingTails[index];
       if (tail !== undefined) {
         const connected = host.connect(tail, true, current, false);

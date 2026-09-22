@@ -1,3 +1,4 @@
+import { authoredEndpointPosition } from "../chart/noteGraph";
 import { AfterNoteType, FrontNoteType, GameNoteType } from "../chart/types";
 import { directionalMembersAdjacent, frontEndpointLane, directionalEndpointLane, directionalEndpointPosition, isSameDirectionalGroup, type DirectionalGraphSource } from "../chart/noteGraph";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
@@ -73,7 +74,7 @@ export class SyncLineConnectionRules<T extends { readonly noteInformation: Direc
     const information = front.noteInformation!;
     const candidateIndex = this.host.pendingTails.findIndex((tail) =>
       tail.noteInformation !== null &&
-      directionalEndpointPosition(tail.noteInformation) === information.absolutePos &&
+      authoredEndpointPosition(tail.noteInformation, true) === authoredEndpointPosition(information) &&
       !this.isSameFrontTailDirectionalGroup(tail, front));
     const candidate = this.host.pendingTails[candidateIndex] ?? null;
     if (candidate !== null) {
@@ -100,8 +101,8 @@ export class SyncLineConnectionRules<T extends { readonly noteInformation: Direc
       const first = this.host.pendingTails[i]!;
       for (let j = 1; j < this.host.pendingTails.length; j += 1) {
         const second = this.host.pendingTails[j]!;
-        if (first === second || directionalEndpointPosition(first.noteInformation!) !==
-          directionalEndpointPosition(second.noteInformation!)) continue;
+        if (first === second || authoredEndpointPosition(first.noteInformation!, true) !==
+          authoredEndpointPosition(second.noteInformation!, true)) continue;
         const connected = this.host.connect(second, true, first, true);
         if (connected.status !== "ok") return connected;
         const multiple = [AfterNoteType.MultipleDirectionalFlickLeft, AfterNoteType.MultipleDirectionalFlickRight,

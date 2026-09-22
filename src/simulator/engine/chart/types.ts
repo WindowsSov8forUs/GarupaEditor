@@ -147,6 +147,7 @@ export interface NoteInformation {
   readonly bpm: number;
   readonly bpmString: string;
   readonly storedAbsolutePos: number;
+  readonly authoredAfterAbsolutePos?: number;
   readonly slideNoteList: readonly NoteInformation[];
   readonly soundValueList: readonly string[];
   readonly gameNoteAdditionalType: GameNoteAdditionalTypeValue;

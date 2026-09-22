@@ -1,3 +1,4 @@
+import { buildSignedTempo, registerSignedTempo, type SignedTempo } from "../engine/garupa/signedTempo";
 import { encodeVirtualLanePosition, type VirtualLaneSource } from "../engine/chart/virtualLane";
 import type {
   GarupaChartJson,
@@ -82,13 +83,16 @@ interface NoteKinds {
 export function constructChartFromGarupaChartJson(
   chart: GarupaChartJson,
 ): SimulatorResult<ChartConstructionResult> {
-  const profile = buildGarupaProductChartProfile(chart);
+  const tempo = buildSignedTempo(chart);
+  if (tempo.status !== "ok") return tempo;
+  const profile = buildGarupaProductChartProfile(chart, tempo.value);
   if (profile.status !== "ok") return profile;
   const originalSources = new Map<string, NoteInformation>();
   const extensions = Object.freeze({ ...profile.value, originalSources });
-  const constructed = constructGarupaNoteGraphs(chart, extensions, originalSources);
+  const constructed = constructGarupaNoteGraphs(chart, extensions, originalSources, tempo.value);
   if (constructed.status !== "ok") return constructed;
-  const axis = createGarupaProductTimingGroupAxisProfile(constructed.value, profile.value);
+  const projectedProfile = tempo.value.folded ? { ...profile.value, svEvents: profile.value.svEvents.map(event => ({ ...event, absolutePosition: tempo.value.runtimePosition(event.absolutePosition), authoredPosition: event.absolutePosition })) } : profile.value;
+  const axis = createGarupaProductTimingGroupAxisProfile(constructed.value, projectedProfile);
   if (axis.status !== "ok") return axis;
   const roots = new Map<number, NoteInformation>();
   const membersByOrder = new Map<number, NoteInformation[]>();
@@ -101,12 +105,13 @@ export function constructChartFromGarupaChartJson(
     }
   }
   const bound = freezeGarupaProductChartProfile({
-    originalItemIndices: extensions.originalItemIndices, svEvents: [...extensions.svEvents],
+    originalItemIndices: extensions.originalItemIndices, svEvents: [...projectedProfile.svEvents],
     slideChains: [...extensions.slideChains],
     nodes: extensions.authoredNodes.map(node => {
       const root = roots.get(node.chartItemIndex);
       const source = originalSources.get(node.identity);
       return root === undefined || source === undefined ? node : { ...node,
+        absolutePosition: tempo.value.folded ? tempo.value.runtimePosition(node.absolutePosition) : node.absolutePosition,
         scoringSource: node.visible ? source : null, runtimeRoot: root,
         runtimeMembers: Object.freeze(membersByOrder.get(node.chartItemIndex)!.filter(member =>
           member === root || (member.directionalSlideConnection === undefined
@@ -126,6 +131,7 @@ function constructGarupaNoteGraphs(
   chart: GarupaChartJson,
   extensions: GarupaProductChartProfile,
   originalSources: Map<string, NoteInformation>,
+  tempo: SignedTempo,
 ): SimulatorResult<ChartConstructionResult> {
   const bpmItems: Array<{ readonly sourceOrder: number; readonly absolutePos: number; readonly value: number; readonly text: string }> = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
@@ -133,7 +139,7 @@ function constructGarupaNoteGraphs(
     if (item === undefined || item.type !== "BPM") continue;
     const position = garupaBeatToAbsolutePosition(item.beat);
     if (position.status !== "ok") return position;
-    if (!isRuntimeBpm(item.value)) {
+    if (!tempo.folded && !isRuntimeBpm(item.value)) {
       return invalidBpm(`chart[${sourceOrder}] BPM must remain positive and finite after binary32 conversion.`);
     }
     bpmItems.push(Object.freeze({
@@ -143,6 +149,8 @@ function constructGarupaNoteGraphs(
       text: String(item.value),
     }));
   }
+  const effectiveOrders = new Set(tempo.segments.map(segment => segment.sourceOrder));
+  for (let index = bpmItems.length - 1; index >= 0; index--) if (!effectiveOrders.has(bpmItems[index]!.sourceOrder)) bpmItems.splice(index, 1);
   bpmItems.sort((left, right) => left.absolutePos - right.absolutePos || left.sourceOrder - right.sourceOrder);
   const baseItems = bpmItems.filter((item) => item.absolutePos === 0);
   if (baseItems.length === 0) {
@@ -156,13 +164,13 @@ function constructGarupaNoteGraphs(
   // Every input is constructed in the same NoteInformation/scoring namespace.
   let nextIndex = 0;
   let slideOrdinal = 0;
-  const records: PositionedRecord[] = [];
+  let records: PositionedRecord[] = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder];
     if (item === undefined || item.type === "SV" || item.type === "BPM") continue;
     const projected = !extensions.originalItemIndices.has(sourceOrder);
     if (item.type === "Slide") {
-      const long = isLongShape(item);
+      const long = isLongShape(item) && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
       const slide = long ? createLong(item, nextIndex, projected) : createSlide(item, sourceOrder, slideOrdinal, nextIndex, projected);
       if (slide.status !== "ok") return slide;
       records.push(Object.freeze({
@@ -219,7 +227,7 @@ function constructGarupaNoteGraphs(
   }
 
   for (const bpm of bpmItems) {
-    if (bpm.absolutePos === 0) continue;
+    if (bpm.absolutePos === 0 || tempo.folded) continue;
     const position = positionFieldsFromAbsolute(bpm.absolutePos);
     const note = createBaseNote({
       index: nextIndex++,
@@ -239,8 +247,28 @@ function constructGarupaNoteGraphs(
     }));
   }
 
+  if (tempo.folded) {
+    const visited = new Set<NoteInformation>();
+    const project = (note: NoteInformation): void => {
+      if (visited.has(note)) return;
+      visited.add(note);
+      const authored = note.absolutePos, authoredAfter = note.afterNoteAbsolutePos;
+      const position = tempo.runtimePosition(authored);
+      Object.assign(note, positionFieldsFromAbsolute(position), {
+        storedAbsolutePos: authored, authoredAfterAbsolutePos: authoredAfter,
+        shortRhythmUnder8beat: note.shortRhythmUnder8beat,
+        afterNoteAbsolutePos: authoredAfter < 0 ? -1 : tempo.runtimePosition(authoredAfter),
+      });
+      for (const child of note.slideNoteList) project(child);
+    };
+    for (const record of records) project(record.note);
+    records = records.map(record => ({ ...record, absolutePos: record.note.absolutePos }));
+    if (records.some(record => !Number.isFinite(record.absolutePos)))
+      return invalidBpm("Folded runtime coordinates must remain finite.");
+  }
   records.sort((left, right) =>
     left.absolutePos - right.absolutePos ||
+    left.note.storedAbsolutePos - right.note.storedAbsolutePos ||
     left.sourceOrder - right.sourceOrder ||
     left.localOrder - right.localOrder);
   for (const record of records) extensions.originalSourceOrder.set(record.note, record.sourceOrder);
@@ -253,7 +281,7 @@ function constructGarupaNoteGraphs(
       ? root : root.slideNoteList[node.connectionIndex - 1];
     if (source !== undefined) originalSources.set(node.identity, source);
   }
-  const changeItems = bpmItems.filter((item) => item.absolutePos > 0);
+  const changeItems = tempo.folded ? [] : bpmItems.filter((item) => item.absolutePos > 0);
   const result = freezeChartConstructionResult({
     noteBatches,
     startBpm: baseBpm.value,
@@ -264,12 +292,14 @@ function constructGarupaNoteGraphs(
     isMultiRangeNotes: false,
     habahiroChangeAbsolutePos: -1,
   });
+  registerSignedTempo(result, tempo);
   registerConstructedChartRuntimeMetadata(result);
   return ok(result);
 }
 
 function buildGarupaProductChartProfile(
   chart: GarupaChartJson,
+  tempo: SignedTempo,
 ): SimulatorResult<GarupaProductChartProfile> {
   const svEvents: GarupaProductSvEvent[] = [];
   const nodes: GarupaProductNode[] = [];
@@ -323,6 +353,8 @@ function buildGarupaProductChartProfile(
       }
       slideChains.push({
         identity: chainIdentity,
+        independentTiming: tempo.folded && item.connections.some((node, index) => index > 0 &&
+          tempo.secondsAt(node.beat * 48) < tempo.secondsAt(item.connections[index - 1]!.beat * 48)),
         chartItemIndex: sourceOrder,
         timingGroup: ownerGroup,
         connectionIdentities,
@@ -348,6 +380,7 @@ function buildGarupaProductChartProfile(
   // whose own geometry, topology or effective axis needs an extension use it.
   const needsAxisExtension = (group: GarupaProductTimingGroupId): boolean =>
     svEvents.some((event) => (event.timingGroup === "#Global" || event.timingGroup === group) && event.value !== 1);
+  const independentItems = new Set(slideChains.filter(chain => chain.independentTiming).map(chain => chain.chartItemIndex));
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
     if (item.type === "BPM" || item.type === "SV") continue;
@@ -359,7 +392,7 @@ function buildGarupaProductChartProfile(
           canUseFixedLaneGeometry(node) && !needsAxisExtension(
             node.timingGroup === undefined ? group : productTimingGroup(node.timingGroup)))
       : canUseFixedLaneGeometry(item) && !needsAxisExtension(group);
-    if (compatible) originalItemIndices.add(index);
+    if (compatible && !independentItems.has(index)) originalItemIndices.add(index);
   }
   return ok(freezeGarupaProductChartProfile({
     originalItemIndices,
@@ -699,7 +732,7 @@ function createBatches(records: readonly PositionedRecord[]): NoteBatchInformati
   const batches: NoteBatchInformation[] = [];
   for (const record of records) {
     const existing = batches[batches.length - 1];
-    if (existing !== undefined && existing.absolutePos === record.absolutePos) {
+    if (existing !== undefined && existing.absolutePos === record.absolutePos && existing.informationList[0]!.storedAbsolutePos === record.note.storedAbsolutePos) {
       (existing.informationList as NoteInformation[]).push(record.note);
       continue;
     }

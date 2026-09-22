@@ -161,7 +161,6 @@ export function advanceExtensionSlide(
         curves.push(calculateNoteMotionCurve(progress, true));
       }
     }
-    let meshIndex = 0;
     const advanced = advanceOrdinarySlideChildren(root.renderedTransform, head.width, children,
       input, ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, {
         advanceMotion: frame.deltaTimeSeconds > 0,
@@ -216,8 +215,7 @@ export function advanceExtensionSlide(
           isAfterHitTime: (index: number) => usesAxis(nodes[index + 1]!)
             ? frame.absolutePosition > nodes[index + 1]!.absolutePosition : undefined,
           buildMesh: (input: import("../rendering/ordinaryLongChildLifecycle").OrdinaryLongNormalMeshInput,
-            after: OrdinaryLongNormalChildState, before: OrdinaryLongNormalChildState | undefined) => {
-          const index = meshIndex++;
+            after: OrdinaryLongNormalChildState, before: OrdinaryLongNormalChildState | undefined, index: number) => {
           const front = { ...(before ?? root), renderedTransform: input.front };
           if (front.phase === "wait" && after.phase === "wait") return ok(UNPRESENTED_SLIDE_MESH);
           // Signed SV may reveal the after node first. The unlaunched front
@@ -290,6 +288,7 @@ export function advanceExtensionMotion(
 
 function geometrySource(node: GarupaProductNode): SlideGeometrySource {
   return { absolutePos: node.absolutePosition, isInvisible: !node.visible,
+    authoredAfterAbsolutePos: node.runtimeRoot?.authoredAfterAbsolutePos,
     virtualLaneDirection: 0, virtualLaneDistance: 0,
     slideExitOffset: node.scoringSource?.slideExitOffset };
 }

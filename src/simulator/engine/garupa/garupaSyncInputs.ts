@@ -1,3 +1,4 @@
+import { authoredEndpointPosition } from "../chart/noteGraph";
 import { FrontNoteType, type NoteBatchInformation, type NoteInformation } from "../chart/types";
 import { directionalEndpointPosition, isNonPlayableCommand } from "../chart/noteGraph";
 import { SyncLineConnectionRules, type SyncConnection } from "../rendering/syncLineConnectionRules";
@@ -45,7 +46,7 @@ export function createPresentationConnections(batches: readonly NoteBatchInforma
     ? directionalEndpointPosition(note.noteInformation) : note.noteInformation.absolutePos;
   const connect = (targetA: PresentationConnectionOwner, afterA: ConnectionEndpoint,
     targetB: PresentationConnectionOwner, afterB: ConnectionEndpoint, existing?: PresentationSyncConnection | null) => {
-    if (!syncEnabled) return ok(undefined);
+    if (!syncEnabled || authoredEndpointPosition(targetA.noteInformation, afterA) !== authoredEndpointPosition(targetB.noteInformation, afterB)) return ok(undefined);
     const line = { identity: existing?.identity ?? `sync:${sequence++}`, targetA, afterA, targetB, afterB };
     const index = existing == null ? sync.length : lineIndices.get(existing)!;
     if (existing != null) {

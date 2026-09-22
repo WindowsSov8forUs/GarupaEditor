@@ -1,3 +1,4 @@
+import { getSignedTempo, type SignedTempo } from "../garupa/signedTempo";
 import { findBatchBpmCommand, isBpmCommand } from "../chart/noteGraph";
 import type {
   ChartConstructionResult,
@@ -30,6 +31,7 @@ export interface MusicScoreControllerSnapshot {
 }
 
 export class InGameMusicScoreController {
+  readonly signedTempo: SignedTempo | undefined;
   private executeFrameValue = 0;
   private readonly basicBpmValue: number;
   private readonly basicBpmStringValue: string;
@@ -46,6 +48,7 @@ export class InGameMusicScoreController {
   private readonly axisBatches = new WeakSet<NoteBatchInformation>();
 
   constructor(chart: ChartConstructionResult, noteArrivalSeconds: number) {
+    this.signedTempo = getSignedTempo(chart);
     const profile = getGarupaProductChartProfile(chart);
     const axisSources = new Set<NoteInformation>();
     const axisGroups = new Set(profile?.svEvents.filter(event => event.value !== 1).map(event => event.timingGroup));
@@ -67,6 +70,13 @@ export class InGameMusicScoreController {
     // Keep position precision until projection; both input formats use this clock.
     this.launcherMusicBarProgressValue = Math.floor(launcherLead / MUSIC_BAR_DIVISION_COUNT);
     this.launcherMusicBeatProgressValue = launcherLead % MUSIC_BAR_DIVISION_COUNT;
+    if (this.signedTempo?.folded) {
+      const start = this.signedTempo.positionAtSeconds(0);
+      this.musicBarProgressValue = Math.floor(start / MUSIC_BAR_DIVISION_COUNT);
+      this.musicBeatProgressValue = start % MUSIC_BAR_DIVISION_COUNT;
+      this.launcherMusicBarProgressValue = Math.floor((start + launcherLead) / MUSIC_BAR_DIVISION_COUNT);
+      this.launcherMusicBeatProgressValue = (start + launcherLead) % MUSIC_BAR_DIVISION_COUNT;
+    }
     this.tempoCommands = chart.noteBatches.flatMap((batch) => {
       const command = findBatchBpmCommand(batch.informationList);
       return command === undefined ? [] : [command];
@@ -172,7 +182,15 @@ export class InGameMusicScoreController {
     return ok(undefined);
   }
 
-  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.axisBatches.has(batch); }
+  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.signedTempo?.folded === true || this.axisBatches.has(batch); }
+
+  get stageTiming(): { bpm: number; position: number; beatProgress: number } {
+    if (!this.signedTempo?.folded) return {
+      bpm: this.currentBpm, position: this.musicPosition, beatProgress: this.currentBeatProgress,
+    };
+    const stage = this.signedTempo.stageAtSeconds(this.signedTempo.secondsAtRuntimePosition(this.musicPosition));
+    return { ...stage, beatProgress: ((stage.position % MUSIC_BAR_DIVISION_COUNT) + MUSIC_BAR_DIVISION_COUNT) % MUSIC_BAR_DIVISION_COUNT };
+  }
 
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {
     if (this.usesIndependentVisualAxis(batch)) {

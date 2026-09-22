@@ -97,7 +97,9 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     this.missSecondCounterValue = Math.fround(
       this.missSecondCounterValue + Math.fround(deltaTimeSeconds),
     );
-    if (this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
+    const startupRuntime = this.manualRuntime;
+    const startupExpired = startupRuntime.status === "ok" && startupRuntime.value.isStartupExpired?.(noteInformation.absolutePos);
+    if (!startupExpired && this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
       return ok(undefined);
     }
     const manualRuntime = this.manualRuntime;
@@ -634,6 +636,7 @@ export class NoteLong extends NoteFrontBase {
     if (!runtime.value.shouldForcePerfect()) {
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
+      if (manual.value.isStartupExpired?.(noteInformation.absolutePos)) return this.changeState(NoteState.Wait);
       const crossed = manual.value.hasCrossedMotionLine();
       if (crossed.status !== "ok") return crossed;
       return crossed.value ? this.changeState(NoteState.Wait) : ok(undefined);
@@ -691,7 +694,7 @@ export class NoteLong extends NoteFrontBase {
       runtime.value.getAdjustedMusicPosition(),
       runtime.value.getCurrentBpm(),
     );
-    if (over.status !== "ok" || !over.value) {
+    if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(information.absolutePos))) {
       return over.status === "ok" ? ok(undefined) : over;
     }
     const transaction = runtime.value.beginJudgementTransaction();
@@ -743,7 +746,7 @@ export class NoteLong extends NoteFrontBase {
       runtime.value.getAdjustedMusicPosition(),
       runtime.value.getCurrentBpm(),
     );
-    if (over.status !== "ok" || !over.value) {
+    if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(after.absolutePosition))) {
       return over.status === "ok" ? ok(undefined) : over;
     }
     const noteType = longAfterJudgeNoteType(after.afterNoteType);
@@ -1268,6 +1271,11 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     const target = terminalTarget ?? current;
+    if (runtime.value.usesFoldedTime && (target.judged ||
+        runtime.value.getAdjustedMusicPosition() < target.source.absolutePos ||
+        target.sourceIndex > current.sourceIndex && this.afterNotesValue.slice(current.sourceIndex, target.sourceIndex)
+          .some(after => !after.judged && !after.source.isInvisible)))
+      return ok(this.noManualSlideJudgementPlan(origin, grace));
     const judgement = runtime.value.judgeSlide(target.source);
     if (judgement.status !== "ok") {
       return judgement;
@@ -1578,6 +1586,7 @@ export class NoteSlide extends NoteFrontBase {
     if (!runtime.value.shouldForcePerfect()) {
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
+      if (manual.value.isStartupExpired?.(noteInformation.absolutePos)) return this.changeState(NoteState.Wait);
       const stopped = manual.value.stopSlideHeadAtJudgeLine();
       if (stopped.status !== "ok") return stopped;
       return stopped.value ? this.changeState(NoteState.Wait) : ok(undefined);
@@ -1641,6 +1650,7 @@ export class NoteSlide extends NoteFrontBase {
       return runtime;
     }
     const adjusted = runtime.value.getAdjustedMusicPosition();
+    if (runtime.value.usesFoldedTime && adjusted < information.absolutePos) return ok(undefined);
     const frontOver = isManualTimeoutOver(
       information.absolutePos,
       adjusted,
@@ -1654,7 +1664,7 @@ export class NoteSlide extends NoteFrontBase {
         !after.judged &&
         !after.source.isInvisible,
     ) ?? (this.hiddenEndpoints ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
-    if (!slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
+    if (!runtime.value.isStartupExpired?.(information.absolutePos) && !slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
       return ok(undefined);
     }
     const submitted = runtime.value.submitJudgement({
@@ -1691,6 +1701,9 @@ export class NoteSlide extends NoteFrontBase {
     if (!runtime.value.shouldForcePerfect()) {
       return ok(undefined);
     }
+    // Folded targets must follow the connection cursor. The after-update path
+    // drains due nodes in order instead of scoring a later visible node early.
+    if (this.noteInformation?.authoredAfterAbsolutePos !== undefined) return ok(undefined);
     const selected = this.afterNotesValue.find(
       (after) => !after.source.isInvisible && !after.judged,
     );
@@ -1763,9 +1776,20 @@ export class NoteSlide extends NoteFrontBase {
   /** NoteSlide.OnUpdate runs forcePerfectOnUpdate after every child ExecuteUpdate. */
   executeAfterChildrenUpdate(): SimulatorResult<void> {
     if (this.state === NoteState.Deactive || this.allHiddenValue) return ok(undefined);
-    if (this.hiddenEndpoints && !this.manualHeadJudgedValue) return ok(undefined);
+    // A folded successor can already be due while its head is still travelling.
+    // It remains owned by the head, just like every later connection.
+    if (!this.manualHeadJudgedValue) return ok(undefined);
     if (this.headGestureNode !== null && !this.manualHeadJudgedValue && this.state === NoteState.Stop) return ok(undefined);
-    return this.forcePerfectPendingAfter();
+    if (this.noteInformation?.authoredAfterAbsolutePos === undefined) return this.forcePerfectPendingAfter();
+    // A fold can make hundreds of hidden successors due together. Advance the
+    // existing state machine until its cursor stops, without adding frame delay.
+    while ((this.state as NoteState) !== NoteState.Deactive) {
+      const before = this.currentAfterIndexValue;
+      const advanced = this.forcePerfectPendingAfter();
+      if (advanced.status !== "ok") return advanced;
+      if (this.currentAfterIndexValue === before) break;
+    }
+    return ok(undefined);
   }
 
   private executeManualSlideAfterTimeout(current: SlideAfterRuntime, canJudge: boolean): SimulatorResult<void> {
@@ -1773,6 +1797,8 @@ export class NoteSlide extends NoteFrontBase {
     if (runtime.status !== "ok") {
       return runtime;
     }
+    if (runtime.value.usesFoldedTime && this.afterNotesValue.some(after =>
+      after.sourceIndex < current.sourceIndex && !after.judged && !after.source.isInvisible)) return ok(undefined);
     const adjusted = runtime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjusted)) {
       return integrityFailure(
@@ -1780,21 +1806,25 @@ export class NoteSlide extends NoteFrontBase {
         "Slide current timeout requires a finite adjusted position.",
       );
     }
-    const phase = runtime.value.getSlideChildPhase(current.sourceIndex);
+    if (runtime.value.usesFoldedTime && adjusted < current.source.absolutePos) return ok(undefined);
+    const startupExpired = runtime.value.isStartupExpired?.(current.source.absolutePos) === true;
+    const phase = startupExpired ? ok("stop" as const) : runtime.value.getSlideChildPhase(current.sourceIndex);
     if (phase.status !== "ok") return phase;
-    if (phase.value !== "stop") return ok(undefined);
+    if (!startupExpired && phase.value !== "stop") return ok(undefined);
     const nextVisible = this.afterNotesValue.find((after) =>
       after.sourceIndex > current.sourceIndex && !after.source.isInvisible) ??
       (this.hiddenEndpoints && !current.isTerminal ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
     const adjustment = runtime.value.getJudgementAdjustValueB();
     const stopWait = advanceSlideStopWait(current.stopAdjustmentCounter, nextVisible !== undefined, adjustment);
-    if (stopWait.waited) {
+    if (!startupExpired && stopWait.waited) {
       current.stopAdjustmentCounter = stopWait.counter;
       current.stopAdjustmentWaited = true;
       return ok(undefined);
     }
     if (current.judged || !canJudge) return ok(undefined);
-    if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
+    if (startupExpired) {
+      // The approved startup cutoff has no late-input grace period.
+    } else if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
       current.timeoutFrameCounter = Math.fround(current.timeoutFrameCounter + runtime.value.getExecuteFrame());
       if (current.timeoutFrameCounter < 7) return ok(undefined);
     } else {
