@@ -1,3 +1,4 @@
+import { appLog } from "../logging/applicationLogger";
 
 import {
   useCallback,
@@ -631,12 +632,14 @@ function ChartEditorController() {
       return;
     }
     if (routed.channel === "dialog") {
+      appLog(routed.tone === "error" ? "error" : "info", "editor.dialog", { tone: routed.tone, message: routed.message });
       openOverlayDialog({
         tone: routed.tone,
         message: routed.message,
       });
       return;
     }
+    if (/失败|异常/.test(routed.message)) appLog("warn", "editor.status.failure", { message: routed.message });
     setStatusMessageState(routed.message);
   }, [openOverlayDialog]);
 
@@ -5621,6 +5624,7 @@ function ChartEditorController() {
   ]);
 
   const openStaticRenderWindow = useCallback(async () => {
+    appLog("info", "editor.window.request", { kind: "openStaticRenderWindow" });
     if (previewLoadingProgress.visible) {
       hidePreviewLoadingProgress();
     }
@@ -5766,6 +5770,7 @@ function ChartEditorController() {
   ]);
 
   const openSimulatorWindow = useCallback(async () => {
+    appLog("info", "editor.window.request", { kind: "openSimulatorWindow" });
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;

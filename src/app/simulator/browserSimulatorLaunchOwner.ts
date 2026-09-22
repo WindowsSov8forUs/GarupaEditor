@@ -1,3 +1,4 @@
+import { appLog } from "../../logging/applicationLogger";
 import type { ResourceConsumerLease } from "../../resources/contracts";
 import type {
   SimulatorModuleCloseReport,
@@ -339,6 +340,7 @@ export class BrowserSimulatorLaunchOwner {
     failure: BrowserSimulatorLaunchFailure | null,
   ): void {
     if (this.disposed && phase !== "disposed" && phase !== "closed" && phase !== "rejected") return;
+    appLog(failure ? "error" : "info", "simulator.launch.phase", { phase, failure });
     this.stateValue = freezeState(phase, failure);
     this.onStateChange(this.stateValue);
   }

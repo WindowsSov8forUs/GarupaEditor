@@ -1,3 +1,4 @@
+import { appLog, startOperation } from "../logging/applicationLogger";
 import type {
   ApplicationResourceBackend,
   ResourceCatalogProvider,
@@ -292,7 +293,10 @@ export class ApplicationResourceManager {
     if (provider === undefined) return invalid("resources.manager.unknown-catalog-provider");
     const cached = await this.backend.loadCatalogSnapshot(providerId);
     if (cached.status === "rejected") return cached;
+    const finish = startOperation("resources.catalog.refresh", { provider: providerId, cachedCount: cached.value?.resources.length ?? 0 });
     const refreshed = await provider.refresh(cached.value);
+    finish(refreshed.status === "rejected" ? refreshed.failure : undefined, refreshed.status === "accepted"
+      ? { count: refreshed.value.resources.length, freshness: refreshed.value.freshness, observedAt: refreshed.value.observedAt } : { fallbackAvailable: cached.value !== null });
     if (refreshed.status === "accepted") {
       const committed = await this.backend.commitCatalogSnapshot(refreshed.value);
       if (committed.status === "rejected") return committed;
@@ -300,6 +304,7 @@ export class ApplicationResourceManager {
       return refreshed;
     }
     if (cached.value === null) return refreshed;
+    appLog("warn", "resources.catalog.fallback", { provider: providerId, observedAt: cached.value.observedAt, count: cached.value.resources.length });
     const offline = freezeCatalog({
       ...cached.value,
       freshness: "offline-cached",
@@ -346,7 +351,10 @@ export class ApplicationResourceManager {
     const key = `${ref.id}:${options.refresh === true ? "refresh" : "cached"}`;
     const pending = this.networkInstalls.get(key);
     if (pending) return pending;
-    const operation = this.ensureResourceAvailable(ref, options);
+    const finish = startOperation("resources.ensure", { resourceId: ref.id, refresh: options.refresh === true });
+    const operation = this.ensureResourceAvailable(ref, options).then(result => {
+      finish(result.status === "rejected" ? result.failure : undefined); return result;
+    }, error => { finish(error); throw error; });
     this.networkInstalls.set(key, operation);
     try { return await operation; }
     finally { if (this.networkInstalls.get(key) === operation) this.networkInstalls.delete(key); }
@@ -362,6 +370,7 @@ export class ApplicationResourceManager {
       const existing = await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
         this.installed.set(ref.id, existing.value);
+        appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
         return resourceAccepted(existing.value.descriptor);
       }
     }
@@ -375,10 +384,13 @@ export class ApplicationResourceManager {
       descriptor = this.findNetworkDescriptor(ref.id);
     }
     if (descriptor === null) {
+      const catalog = this.activeCatalogs.get(providerId);
+      appLog("error", "resources.catalog.miss", { resourceId: ref.id, provider: providerId,
+        freshness: catalog?.freshness ?? "not-loaded", observedAt: catalog?.observedAt, count: catalog?.resources.length ?? 0 });
       return resourceRejected(
         "resource-unavailable",
         "resources.manager.resource-not-catalogued",
-        "The main program has no builtin, installed or current catalog identity for the selected resource.",
+        `No installed or catalogued resource: ${ref.id}; catalog=${this.activeCatalogs.get(providerId)?.freshness ?? "not-loaded"}.`,
       );
     }
     if (descriptor.source.family.startsWith("media-")) {
@@ -563,7 +575,10 @@ export class ApplicationResourceManager {
         );
       }
       const available = await this.ensureAvailable(ref);
-      if (available.status === "rejected") return available;
+      if (available.status === "rejected") {
+        appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
+        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`);
+      }
       slots[slot] = ref;
     }
     return this.createSnapshotFromRefs(Object.freeze(slots));
@@ -584,7 +599,10 @@ export class ApplicationResourceManager {
     onProgress?.(0, total);
     for (const [slot, ref] of entries) {
       const available = await this.ensureAvailable(ref);
-      if (available.status === "rejected") return available;
+      if (available.status === "rejected") {
+        appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
+        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`);
+      }
       slots[slot] = ref;
       ready.add(ref.id);
       onProgress?.(ready.size, total);
@@ -617,7 +635,10 @@ export class ApplicationResourceManager {
     const builtin = this.builtins.get(ref.id);
     if (builtin !== undefined) {
       const available = await this.ensureBuiltinAvailable(builtin);
-      if (available.status === "rejected") return available;
+      if (available.status === "rejected") {
+        appLog("error", "resources.verify.failed", { resourceId: ref.id, failure: available.failure });
+        return available;
+      }
     }
     return this.backend.verify(ref);
   }

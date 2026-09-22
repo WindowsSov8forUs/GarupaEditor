@@ -1,3 +1,4 @@
+import { appLog, startOperation } from "../logging/applicationLogger";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useOriginalUiSound } from "./OriginalUiSound";
 import type { EditorSettingsModalProps } from "./EditorSettingsModal";
@@ -76,6 +77,7 @@ export function OriginalGameSettingsModal(props: Props) {
       ...(special.kind === "collabo" ? { rememberedCollaboSkin: special } : { rememberedLimitedSkin: special }) } } }));
   };
   const applySpecial = async (special: SelectedSpecialSkin) => {
+    appLog("info", "settings.special-skin.select", { kind: special.kind, id: special.kind === "limited" ? special.limitedSkinId : special.seasonSpecialId });
     if (preparingRef.current) return;
     // Original radio/detail changes notify the preview immediately. Only the
     // past Limited selection dialog waits for its asset download before closing.
@@ -115,13 +117,15 @@ export function OriginalGameSettingsModal(props: Props) {
   const save = async () => {
     if (savingRef.current || preparingRef.current) return;
     savingRef.current = true; setSaving(true);
+    const finish = startOperation("settings.apply", { tab });
     try {
       const accepted = await props.onApplyOptionSettings(draft.options);
-      if (accepted === false) return;
+      if (accepted === false) { finish("Settings application rejected"); return; }
       props.onPlaybackFpsChange(draft.fps); props.onPlaybackMvModeChange(draft.mv);
       props.onPlaybackMvAlphaPercentChange(draft.alpha); props.onPlaybackAllPerfectStatusDisplayModeChange(draft.combo);
-      setReady(false); props.onClose();
+      finish(); setReady(false); props.onClose();
     } catch (error) {
+      finish(error);
       props.onSettingsError?.(error instanceof Error ? error.message : String(error));
     } finally { savingRef.current = false; setSaving(false); }
   };

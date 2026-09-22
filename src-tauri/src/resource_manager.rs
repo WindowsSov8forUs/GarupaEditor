@@ -255,7 +255,7 @@ pub fn resource_initialize(
     for resource_id in index.resource_ids {
         match read_record(&root, &resource_id) {
             Ok(record) => records.push(record.dto()),
-            Err(error) => eprintln!("ignore invalid resource record {resource_id}: {error}"),
+            Err(error) => crate::application_log::record("warn", "resources.record.invalid", serde_json::json!({"resourceId":resource_id,"error":error})),
         }
     }
     Ok(records)
@@ -306,8 +306,16 @@ pub fn resource_read_record(
     let root = resource_root(&app)?;
     let workspace = workspace_media_root(&app)?;
     let resource_id = normalize_resource_id(&reference.id)?;
-    let record = read_any_record(&root, &workspace, &resource_id)?;
-    verify_any_record(&root, &record)?;
+    let record = read_any_record(&root, &workspace, &resource_id).map_err(|error| {
+        if record_path(&root, &resource_id).exists() || workspace_record_path(&workspace, &resource_id).exists() {
+            crate::application_log::record("warn", "resources.record.read.failed", serde_json::json!({"resourceId":resource_id,"error":error}));
+        }
+        error
+    })?;
+    verify_any_record(&root, &record).map_err(|error| {
+        crate::application_log::record("warn", "resources.record.integrity.failed", serde_json::json!({"resourceId":resource_id,"error":error}));
+        error
+    })?;
     Ok(record.dto())
 }
 

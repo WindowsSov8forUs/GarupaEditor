@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 import type {
   ApplicationResourceBackend,
   BuiltinResourceInstallInput,

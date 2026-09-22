@@ -1,3 +1,4 @@
+import { appLog, initializeLogging, startOperation } from "./logging/applicationLogger";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -77,6 +78,8 @@ class AppErrorBoundary extends Component<{ children: ReactNode; onError?: (error
   }
 }
 
+initializeLogging();
+const finishBootstrap = startOperation("application.bootstrap");
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
 const simulatorWindow = window.location.hash.startsWith("#simulator") && !isMobileRuntime();
@@ -92,6 +95,7 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
   });
   await showSimulatorWindow();
 } : undefined).then(async (resources) => {
+  finishBootstrap(resources.status === "rejected" ? resources.failure : undefined);
   root.render(
     <AppErrorBoundary>
       {resources.status === "accepted" ? (
@@ -111,6 +115,7 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
   else if (!simulatorWindow) void preloadSkinResources(resources.value).catch(error =>
     console.warn("皮肤预下载暂不可用", error));
 }).catch(async (error: unknown) => {
+  finishBootstrap(error); appLog("error", "application.bootstrap.exception", { error });
   root.render(<main style={{ padding: 20 }}>资源系统初始化失败：{error instanceof Error ? error.message : String(error)}</main>);
   await showSimulatorWindow();
 });

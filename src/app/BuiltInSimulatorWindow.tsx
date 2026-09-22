@@ -1,3 +1,4 @@
+import { appLog, flushLogs } from "../logging/applicationLogger";
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -186,9 +187,11 @@ function BuiltInSimulatorWindow() {
         },
         launch: launchSimulatorModule,
         async publishClosed(result) {
+          appLog("info", "simulator.window.closed", { result });
           await emit(SIMULATOR_WINDOW_CLOSED_EVENT, { requestId, ...result });
         },
         async leaveHost() {
+          await flushLogs();
           if (mobile) navigateBackToEditor();
           else await getCurrentWebviewWindow().close();
         },

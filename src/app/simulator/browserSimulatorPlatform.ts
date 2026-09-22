@@ -1,3 +1,4 @@
+import { appLog } from "../../logging/applicationLogger";
 import { Application, type Container } from "pixi.js";
 import type { SimulatorResultPreparation } from "../../simulator/host/resultPresentation";
 import { installPixiFlashBlend } from "../../simulator/backends/pixi/pixiFlashBlend";
@@ -444,6 +445,7 @@ class BrowserPointerInputSource implements SimulatorRuntimeInputSource {
   }
 
   enqueue(command: SimulatorRuntimeCommand): void {
+    appLog("info", "simulator.command.queued", { kind: command.kind });
     if (this.disposed) return;
     if (command.kind === "user-close") {
       if (this.closeQueued) return;

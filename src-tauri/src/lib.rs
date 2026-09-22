@@ -10,6 +10,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{Emitter, Manager};
 
+mod application_log;
 mod resource_manager;
 use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail};
 use resource_manager::{
@@ -2173,13 +2174,18 @@ pub fn run() {
         .manage(ApplicationResourceState::default())
         .setup(|app| {
             let app_handle = app.handle().clone();
+            if let Err(error) = app_handle.plugin(application_log::plugin()) {
+                eprintln!("initialize application log failed: {error}");
+            }
+            application_log::initialize(&app_handle);
             let state = app_handle.state::<BestdoriAuthState>();
             if let Err(error) = restore_bestdori_auth_state(&app_handle, state.inner()) {
-                eprintln!("restore bestdori auth cache failed: {error}");
+                application_log::record("warn", "auth.restore.failed", serde_json::json!({"error": error}));
             }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            application_log::application_log_batch,
             bestdori_login,
             bestdori_get_me,
             bestdori_logout,
@@ -2227,8 +2233,9 @@ pub fn run() {
             if matches!(event, tauri::RunEvent::Exit) {
                 let state = app_handle.state::<ApplicationResourceState>();
                 if let Err(error) = resource_shutdown(app_handle, state.inner()) {
-                    eprintln!("clean resource runtime state on exit failed: {error}");
+                    application_log::record("error", "resources.shutdown.failed", serde_json::json!({"error": error}));
                 }
+                application_log::shutdown();
             }
         });
 }
