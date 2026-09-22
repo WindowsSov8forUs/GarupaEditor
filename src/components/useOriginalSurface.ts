@@ -66,8 +66,8 @@ function subscribeRatio(listener: () => void): () => void {
   };
 }
 
-function readSprite(url: string, atlas: OriginalAtlas, name: string, scale = 1, width?: number, height?: number, ratio = 1, scaleY = scale): string | Promise<string> {
-  const key = `${url}:${atlas}:${name}:${scale}:${scaleY}:${width === undefined ? width : Math.round(width * ratio)}:${height === undefined ? height : Math.round(height * ratio)}:${ratio}`;
+function readSprite(url: string, atlas: OriginalAtlas, name: string, scale = 1, width?: number, height?: number, ratio = 1, scaleY = scale, fillCenter = true): string | Promise<string> {
+  const key = `${url}:${atlas}:${name}:${scale}:${scaleY}:${width === undefined ? width : Math.round(width * ratio)}:${height === undefined ? height : Math.round(height * ratio)}:${ratio}:${fillCenter}`;
   let pending = sprites.get(key);
   if (pending === undefined) {
     const image = readAtlas(url);
@@ -78,7 +78,7 @@ function readSprite(url: string, atlas: OriginalAtlas, name: string, scale = 1, 
       canvas.width = Math.max(1, Math.round((width ?? row.width) * ratio)); canvas.height = Math.max(1, Math.round((height ?? row.height) * ratio));
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Original UI needs a 2D atlas adapter.");
-      if (width !== undefined && height !== undefined) drawNineSlice(context, source, row, canvas.width, canvas.height, scale * ratio, scaleY * ratio);
+      if (width !== undefined && height !== undefined) drawNineSlice(context, source, row, canvas.width, canvas.height, scale * ratio, scaleY * ratio, fillCenter);
       else context.drawImage(source, row.x, row.y, row.width, row.height, 0, 0, row.width, row.height);
       return canvas.toDataURL();
     };
@@ -98,14 +98,14 @@ function readSprite(url: string, atlas: OriginalAtlas, name: string, scale = 1, 
 }
 
 /** NGUI sprite coordinates/borders, adapted to the host DOM; no replacement artwork. */
-export function useOriginalSurface(name: string, scale = 0.75, atlas: OriginalAtlas = "menu", width?: number, height?: number, scaleY = scale): CSSProperties {
+export function useOriginalSurface(name: string, scale = 0.75, atlas: OriginalAtlas = "menu", width?: number, height?: number, scaleY = scale, fillCenter = true): CSSProperties {
   const dpr = useSyncExternalStore(subscribeRatio, pixelRatio, () => 1);
   const ratio = width !== undefined && height !== undefined ? dpr : 1;
   const url = useApplicationResourceUrl(atlasSlot(atlas, name));
-  const key = `${url}:${atlas}:${name}:${scale}:${scaleY}:${width === undefined ? width : Math.round(width * ratio)}:${height === undefined ? height : Math.round(height * ratio)}:${ratio}`;
+  const key = `${url}:${atlas}:${name}:${scale}:${scaleY}:${width === undefined ? width : Math.round(width * ratio)}:${height === undefined ? height : Math.round(height * ratio)}:${ratio}:${fillCenter}`;
   const [resolved, setResolved] = useState<{ key: string; image: string } | null>(null);
   const [error, setError] = useState<{ key: string; cause: Error } | null>(null);
-  const surface = useMemo(() => readSprite(url, atlas, name, scale, width, height, ratio, scaleY), [key]);
+  const surface = useMemo(() => readSprite(url, atlas, name, scale, width, height, ratio, scaleY, fillCenter), [key]);
   useEffect(() => {
     if (typeof surface === "string") return;
     let active = true;
@@ -125,13 +125,13 @@ export function useOriginalSurface(name: string, scale = 0.75, atlas: OriginalAt
   const loaded: CSSProperties = { visibility: image ? undefined : "hidden" };
   return (width !== undefined && height !== undefined) || borders.every(value => value === 0)
     ? { ...loaded, backgroundImage: image, backgroundSize: "100% 100%", backgroundRepeat: "no-repeat" }
-    : { ...loaded, borderImageSource: image, borderImageSlice: `${borders.join(" ")} fill`,
+    : { ...loaded, borderImageSource: image, borderImageSlice: `${borders.join(" ")}${fillCenter ? " fill" : ""}`,
         borderImageWidth: borders.map((value, index) => `${value * (index % 2 === 0 ? scaleY : scale)}px`).join(" "), borderImageRepeat: "stretch" };
 }
 
 /** Update an existing sprite surface before paint, without encoding/decoding a PNG per drag step. */
 export function useOriginalCanvasSurface(canvas: RefObject<HTMLCanvasElement | null>, name: string,
-  atlas: OriginalAtlas, width: number, height: number, scale: number, scaleY: number, spriteType = 1): boolean {
+  atlas: OriginalAtlas, width: number, height: number, scale: number, scaleY: number, spriteType = 1, fillCenter = true): boolean {
   const ratio = useSyncExternalStore(subscribeRatio, pixelRatio, () => 1);
   const url = useApplicationResourceUrl(atlasSlot(atlas, name));
   const [ready, setReady] = useState(false), [error, setError] = useState<Error | null>(null);
@@ -168,14 +168,14 @@ export function useOriginalCanvasSurface(canvas: RefObject<HTMLCanvasElement | n
         }
       } else if (spriteType === 0) {
         context.drawImage(image, row.x, row.y, row.width, row.height, 0, 0, w, h);
-      } else drawNineSlice(context, image, row, w, h, scale * ratio, scaleY * ratio);
+      } else drawNineSlice(context, image, row, w, h, scale * ratio, scaleY * ratio, fillCenter);
       setReady(true);
     };
     const image = readAtlas(url);
     if (image instanceof HTMLImageElement) paint(image);
     else void image.then(paint).catch(cause => { if (active) setError(cause instanceof Error ? cause : new Error(String(cause))); });
     return () => { active = false; };
-  }, [canvas, url, name, atlas, width, height, scale, scaleY, ratio, spriteType]);
+  }, [canvas, url, name, atlas, width, height, scale, scaleY, ratio, spriteType, fillCenter]);
   if (error) throw error;
   return ready;
 }
@@ -183,13 +183,20 @@ export function useOriginalCanvasSurface(canvas: RefObject<HTMLCanvasElement | n
 /** Rasterize contiguous slice boundaries before viewport scaling, avoiding DOM border-image seams. */
 function drawNineSlice(context: CanvasRenderingContext2D, image: HTMLImageElement,
   row: { x: number; y: number; width: number; height: number; borderLeft: number; borderRight: number; borderTop: number; borderBottom: number },
-  width: number, height: number, scale: number, scaleY: number): void {
+  width: number, height: number, scale: number, scaleY: number, fillCenter = true): void {
+  // SlicedFill delegates to SimpleFill when all four borders are zero.
+  if (row.borderLeft === 0 && row.borderRight === 0 && row.borderTop === 0 && row.borderBottom === 0) {
+    context.drawImage(image, row.x, row.y, row.width, row.height, 0, 0, width, height);
+    return;
+  }
   const sourceX = [0, row.borderLeft, row.width - row.borderRight, row.width];
   const sourceY = [0, row.borderTop, row.height - row.borderBottom, row.height];
   const horizontal = scale, vertical = scaleY;
   const targetX = [0, Math.round(row.borderLeft * horizontal), width - Math.round(row.borderRight * horizontal), width];
   const targetY = [0, Math.round(row.borderTop * vertical), height - Math.round(row.borderBottom * vertical), height];
   for (let y = 0; y < 3; y += 1) for (let x = 0; x < 3; x += 1) {
+    // UIBasicSprite.SlicedFill (0x303e744): Invisible center skips the middle quad.
+    if (!fillCenter && x === 1 && y === 1) continue;
     const sw = sourceX[x + 1]! - sourceX[x]!, sh = sourceY[y + 1]! - sourceY[y]!;
     const dw = targetX[x + 1]! - targetX[x]!, dh = targetY[y + 1]! - targetY[y]!;
     if (sw <= 0 || sh <= 0 || dw <= 0 || dh <= 0) continue;

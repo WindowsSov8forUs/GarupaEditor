@@ -7,21 +7,21 @@ import "./OriginalUi.css";
 
 const labelColor = (rgb: readonly number[]) => `rgb(${rgb.map(value => value * 255).join(" ")})`;
 
-type OriginalSpriteProps = HTMLAttributes<HTMLSpanElement> & { sprite: string; atlas?: OriginalAtlas; scale?: number; scaleY?: number; spriteType?: number };
+type OriginalSpriteProps = HTMLAttributes<HTMLSpanElement> & { sprite: string; atlas?: OriginalAtlas; scale?: number; scaleY?: number; spriteType?: number; fillCenter?: boolean };
 export function OriginalSprite(props: OriginalSpriteProps) {
   return typeof props.style?.width === "number" && typeof props.style?.height === "number"
     ? <OriginalCanvasSprite {...props} /> : <OriginalBackgroundSprite {...props} />;
 }
-function OriginalCanvasSprite({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType = 1, style, ...props }: OriginalSpriteProps) {
+function OriginalCanvasSprite({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType = 1, fillCenter = true, style, ...props }: OriginalSpriteProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const ready = useOriginalCanvasSurface(canvas, sprite, atlas, style!.width as number, style!.height as number, scale, scaleY, spriteType);
+  const ready = useOriginalCanvasSurface(canvas, sprite, atlas, style!.width as number, style!.height as number, scale, scaleY, spriteType, fillCenter);
   return <span {...props} aria-hidden="true" data-original-surface-ready={ready}
     style={{ display: "inline-block", border: "0 solid transparent", ...style }}>
     <canvas ref={canvas} style={{ display: "block", width: "100%", height: "100%", pointerEvents: "none" }} />
   </span>;
 }
-function OriginalBackgroundSprite({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType: _spriteType, style, ...props }: OriginalSpriteProps) {
-  const surface = useOriginalSurface(sprite, scale, atlas, typeof style?.width === "number" ? style.width : undefined, typeof style?.height === "number" ? style.height : undefined, scaleY);
+function OriginalBackgroundSprite({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType: _spriteType, fillCenter = true, style, ...props }: OriginalSpriteProps) {
+  const surface = useOriginalSurface(sprite, scale, atlas, typeof style?.width === "number" ? style.width : undefined, typeof style?.height === "number" ? style.height : undefined, scaleY, fillCenter);
   return <span {...props} aria-hidden="true" data-original-surface-ready={surface.visibility !== "hidden"}
     style={{ display: "inline-block", border: "0 solid transparent", ...surface, ...style }} />;
 }
