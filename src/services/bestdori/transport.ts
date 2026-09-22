@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 
 export function isTauriRuntimeEnvironment(): boolean {
   if (typeof window === "undefined") {

@@ -1,4 +1,5 @@
-import { invoke } from "@tauri-apps/api/core";
+import { appLog, startOperation } from "../../logging/applicationLogger";
+import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writeText as writeClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
@@ -897,6 +898,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const saveExportJsonToSelectedPath = async () => {
+    appLog("info", "editor.action", { action: "saveExportJsonToSelectedPath" });
     if (isExportJsonSaving) {
       return;
     }
@@ -940,6 +942,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const exportBestdoriV2ToClipboard = async () => {
+    appLog("info", "editor.action", { action: "exportBestdoriV2ToClipboard" });
     try {
       const bestdori = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
       const bestdoriJsonText = JSON.stringify(bestdori);
@@ -1261,6 +1264,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyChartImportStatus = (label: string, summary: AppliedGarupaChartJsonSummary) => {
+    appLog("info", "editor.chart.imported", { source: label, summary });
     const regressionNotices = [
       summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
       summary.regressedHabahiro ? "已按当前模式自动执行去2026愚人节回退。" : "",
@@ -1277,6 +1281,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyImportJsonText = () => {
+    appLog("info", "editor.action", { action: "applyImportJsonText" });
     try {
       const parsed: unknown = JSON.parse(importJsonText);
       const summary = applyParsedGarupaChartJson(parsed);
@@ -1367,6 +1372,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyImportOfficialChart = async () => {
+    appLog("info", "editor.action", { action: "applyImportOfficialChart" });
     const chartIdText = importOfficialChartId.trim();
     if (!/^\d+$/.test(chartIdText)) {
       setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
@@ -1462,6 +1468,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyImportCommunityChart = async () => {
+    appLog("info", "editor.action", { action: "applyImportCommunityChart" });
     const postIdText = importCommunityPostId.trim();
     if (!/^\d+$/.test(postIdText)) {
       setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
@@ -1599,6 +1606,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadCommunityChart = async () => {
+    appLog("info", "editor.action", { action: "applyUploadCommunityChart" });
     const uploadOperationId = `upload-community-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
       pushBlockingProgress(uploadOperationId, percent, message);
@@ -1672,6 +1680,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadNotGarupaServerChart = async () => {
+    appLog("info", "editor.action", { action: "applyUploadNotGarupaServerChart" });
     const uploadOperationId = `upload-notgarupa-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
       pushBlockingProgress(uploadOperationId, percent, message);
@@ -1745,6 +1754,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadTestServerChart = async () => {
+    appLog("info", "editor.action", { action: "applyUploadTestServerChart" });
     const uploadOperationId = `upload-test-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
       pushBlockingProgress(uploadOperationId, percent, message);
@@ -2057,6 +2067,7 @@ export function useEditorIoAndShortcuts(params: any) {
     announceSuccess = true,
   ) => {
     const normalized = normalizeSkinSelection(selection);
+    const finishSkin = startOperation("editor.skin.apply", { selection: normalized });
     const sequence = skinApplySeqRef.current + 1;
     skinApplySeqRef.current = sequence;
     const downloadOperationId = `skin-resource-${sequence}`;
@@ -2112,6 +2123,7 @@ export function useEditorIoAndShortcuts(params: any) {
         judge: normalized.judgeSkinRipName,
       });
       if (skinApplySeqRef.current !== sequence) {
+        finishSkin(undefined, { superseded: true });
         await nextApplied.dispose();
         return;
       }
@@ -2130,6 +2142,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       void persist;
 
+      finishSkin();
       completeDownloadProgress("资源下载完成。");
 
       if (announceSuccess) {
@@ -2139,10 +2152,12 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     } catch (error) {
       if (skinApplySeqRef.current !== sequence) {
+        finishSkin(undefined, { superseded: true });
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
       completeDownloadProgress(`下载失败：${message}`, 900);
+      finishSkin(error);
       setStatusMessage(`皮肤下载失败：${message}`);
     } finally {
       if (skinApplySeqRef.current === sequence) {

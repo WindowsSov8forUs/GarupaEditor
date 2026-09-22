@@ -1,4 +1,5 @@
-﻿import { invoke } from "@tauri-apps/api/core";
+import { appLog } from "../logging/applicationLogger";
+﻿import { loggedInvoke as invoke } from "../logging/applicationLogger";
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import {
@@ -864,6 +865,7 @@ export default function StaticChartRenderWindow() {
           label: currentWindow.label,
         });
       } catch (error) {
+        appLog("error", "static-render.operation.failed", { error });
         const message = error instanceof Error ? error.message : String(error);
         if (!disposed) {
           setErrorMessage(`预览窗口初始化失败：${message}`);
@@ -902,6 +904,7 @@ export default function StaticChartRenderWindow() {
       }
       setAppliedSkinResources(owned);
     })().catch((error) => {
+      appLog("error", "static-render.resources.failed", { error });
       if (!disposed) setErrorMessage(`静态渲染资源加载失败：${error instanceof Error ? error.message : String(error)}`);
     });
     return () => {
@@ -1147,6 +1150,7 @@ export default function StaticChartRenderWindow() {
       return;
     }
     didCompleteRenderRef.current = true;
+    appLog("info", "static-render.ready", { segmentCount });
     completeLoadingProgress("预览已就绪。");
   }, [allResourceImagesReady, appliedSkinResources, completeLoadingProgress, payload, segmentCount]);
 
@@ -1313,6 +1317,7 @@ export default function StaticChartRenderWindow() {
         });
       }
     } catch (error) {
+        appLog("error", "static-render.operation.failed", { error });
       const message = error instanceof Error ? error.message : String(error);
       showOverlayDialog({
         tone: "error",

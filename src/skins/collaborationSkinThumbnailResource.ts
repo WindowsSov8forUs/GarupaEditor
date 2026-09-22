@@ -1,3 +1,4 @@
+import { startOperation } from "../logging/applicationLogger";
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { readOriginalPreviewSprites } from "../components/originalPreviewSprites";
@@ -54,11 +55,15 @@ async function load(manager: ApplicationResourceManager, source: ReturnType<type
       const url = URL.createObjectURL(note); temporaryUrls.push(url); return url;
     }, new Set(["note_normal_3"]));
     if (!note) throw new Error(`Missing center-lane note: ${source.noteName}`);
-    const blob = await generateCollaborationSkinThumbnail({ note, isolateFieldBody: source.isolateFieldBody,
-      field: await readFieldImage("bg_line_rhythm.png"), judge: await readFieldImage("game_play_line.png") });
-    const written = await manager.writeSkinThumbnail(key, new Uint8Array(await blob.arrayBuffer()));
-    if (written.status === "rejected") throw new Error(written.failure.boundary);
-    return blob;
+    const finish = startOperation("skin.thumbnail.generate", { resourceId: source.refs.field.id });
+    try {
+      const blob = await generateCollaborationSkinThumbnail({ note, isolateFieldBody: source.isolateFieldBody,
+        field: await readFieldImage("bg_line_rhythm.png"), judge: await readFieldImage("game_play_line.png") });
+      const written = await manager.writeSkinThumbnail(key, new Uint8Array(await blob.arrayBuffer()));
+      if (written.status === "rejected") { finish(written.failure); throw new Error(written.failure.boundary); }
+      finish();
+      return blob;
+    } catch (error) { finish(error); throw error; }
   } finally {
     temporaryUrls.forEach(url => URL.revokeObjectURL(url));
     await lease.release();

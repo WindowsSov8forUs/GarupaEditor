@@ -1,3 +1,4 @@
+import { diagnosticEvent } from "../../logging/diagnosticEvents";
 import {
   appendSimulatorCleanupFailures,
   freezeSimulatorFailure,
@@ -56,11 +57,13 @@ export class AutonomousSimulatorModule {
         "Autonomous launch requires internal scheduler, input and session-factory capabilities before ownership transfer.",
       );
     }
+    diagnosticEvent("info", "simulator.runtime.launch");
     this.state = "launching";
     let created;
     try {
       created = await this.environment.sessions.create(request);
-    } catch {
+    } catch (error) {
+      diagnosticEvent("error", "simulator.session.create.failed", { error });
       this.state = "closed";
       const cleanupFailure = this.disposeInput();
       const primary = moduleFailure(
@@ -278,6 +281,7 @@ export class AutonomousSimulatorModule {
         "The internal UI/input owner emits only platform lifecycle, opaque Pause UI or fixed Rehearsal MoveTime commands.",
       );
     }
+    diagnosticEvent("info", "simulator.runtime.command", { kind: command.kind });
     if (command.kind === "user-close") {
       const report = this.session!.close("user-closed");
       this.closePublished(report);
@@ -416,6 +420,7 @@ export class AutonomousSimulatorModule {
           ),
         });
     const frozen = freezeCloseReport(published);
+    diagnosticEvent(frozen.failure !== null ? "error" : "info", "simulator.runtime.closed", { report: frozen });
     const resolve = this.resolveClosed;
     this.resolveClosed = null;
     this.state = "closed";
