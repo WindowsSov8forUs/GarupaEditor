@@ -59,6 +59,8 @@ export interface OpenedResourceSnapshot extends ResourceSnapshotReceipt {
 }
 
 export interface ApplicationResourceBackend {
+  readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>>;
+  writeSkinThumbnail(key: string, bytes: Uint8Array): Promise<ResourceResult<void>>;
   initialize(): Promise<ResourceResult<readonly StoredResourceRecord[]>>;
   listRecords(): Promise<ResourceResult<readonly StoredResourceRecord[]>>;
   readRecord(ref: ResourceRef): Promise<ResourceResult<StoredResourceRecord>>;

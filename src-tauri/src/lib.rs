@@ -11,6 +11,7 @@ use std::time::Duration;
 use tauri::{Emitter, Manager};
 
 mod resource_manager;
+use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail};
 use resource_manager::{
     resource_abort_workspace_media_import, resource_append_workspace_media_chunk,
     resource_begin_workspace_media_import, resource_collect_garbage,
@@ -2198,6 +2199,8 @@ pub fn run() {
             save_chart_png_via_dialog,
             share_file,
             resource_initialize,
+            resource_read_skin_thumbnail,
+            resource_write_skin_thumbnail,
             resource_list_records,
             resource_read_record,
             resource_load_catalog_snapshot,

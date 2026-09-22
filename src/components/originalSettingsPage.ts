@@ -3,9 +3,12 @@ import guideProfile from "../data/originalSettingsGuides.json";
 import type { OriginalSettingsGuideKey } from "./OriginalSettingsGuide";
 import { ORIGINAL_SUDDEN_DEFAULT, ORIGINAL_SUDDEN_MIN, ORIGINAL_SUDDEN_MAX,
   ORIGINAL_SUDDEN_STEP, ORIGINAL_SUDDEN_SMALL_STEP } from "../simulator/public/settings";
-import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT } from "../simulator/public/settings";
+import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT,
+  resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import type { EditorOptionSettings } from "../chartCore";
 import skinSelection from "../data/originalSkinSelection.json";
+import fieldSkinLogos from "../data/originalFieldSkinLogos.json";
+import fieldSkinSelection from "../data/originalFieldSkinSelection.json";
 import runtime from "../data/originalSettingsRuntime.json";
 import radioLayout from "../data/originalSettingsRadioLayout.json";
 import type { SimulatorMenuSettings } from "../app/simulator/menuSettings";
@@ -25,11 +28,10 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   const radios: Record<number, OriginalRadioBinding | undefined> = {};
   const sliders: Record<number, OriginalSliderBinding> = {};
   const checkboxes: NonNullable<OriginalViewBindings["checkboxes"]> extends Readonly<infer T> ? T : never = {};
-  const retainChildren = (path: string, names: readonly string[]) => {
-    const parent = source.nodeAt(path);
-    for (const child of source.nodes.values()) {
-      if (child.parent === parent.id && !names.includes(child.name)) nodes[child.id] = { active: false };
-    }
+  const hideChildren = (path: string, names: readonly string[]) => {
+    // Hide identified unavailable features only; their siblings may be titles,
+    // descriptions or resource presenters required by the retained controls.
+    for (const name of names) nodes[source.nodeAt(`${path}/${name}`).id] = { active: false };
   };
   const place = (path: string, y: number, x?: number) => {
     const node = source.nodeAt(path);
@@ -111,13 +113,14 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   } else if (page === 1) {
     const root = "Contents/ScrollView/Contents";
     // Expose implemented settings, not disabled controls for absent game systems.
-    retainChildren(root, ["LiveMode", "LiveEffect", "MV", "LiveSoundVolume"]);
-    retainChildren(`${root}/LiveMode`, ["OptionPageCaption", "HighFrequencyMode", "Grid"]);
-    retainChildren(`${root}/LiveMode/Grid`, ["HighFrequencyModeDescription"]);
-    retainChildren(`${root}/LiveEffect`, ["OptionPageCaption", "DisplayFastSlow", "DisplayAllPerfectStatus"]);
-    retainChildren(`${root}/LiveEffect/DisplayAllPerfectStatus`, ["DisplayAllPerfectStatusRadioButton"]);
-    retainChildren(`${root}/MV`, ["OptionPageCaption", "MVModeQuality", "MVBrightness"]);
-    retainChildren(`${root}/LiveSoundVolume`, ["OptionPageCaption", "BGMSlider", "SESlider"]);
+    hideChildren(root, ["LiveVibration", "MemberIllustCutin", "3DLive", "LightMode"]);
+    hideChildren(`${root}/LiveMode`, ["Cutin3DMode", "GraphicsMode", "ResolutionType", "Cutin3DModeDescription", "LowLatencySoundMode"]);
+    hideChildren(`${root}/LiveMode/Grid`, ["LowLatencySoundModeDescription", "ResolutionTypeDescription"]);
+    hideChildren(`${root}/LiveEffect`, ["LightFever", "LightMode", "DisplaySkillWindow", "DisplaySkillEffect", "DisplayStageEffect"]);
+    hideChildren(`${root}/LiveEffect/DisplayAllPerfectStatus`, ["MedleyComboStatusCheckBox"]);
+    // Description is the server MV-download retention notice, not playback help.
+    hideChildren(`${root}/MV`, ["MVLiveModeQuality", "HoldMVData", "Description"]);
+    hideChildren(`${root}/LiveSoundVolume`, ["VoiceSlider"]);
     // Keep the authored controls and columns, closing the removed rows/sections.
     place(`${root}/LiveMode/HighFrequencyMode`, -50);
     place(`${root}/LiveMode/Grid`, -158);
@@ -140,7 +143,9 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     volume(825, draft.options.simulatorSettings.musicVolumePercent, value => native("musicVolumePercent", value), 0.01);
     volume(684, draft.options.noteSeVolumePercent, value => option("noteSeVolumePercent", value));
   } else if (page === 2) {
-    // No special-skin selector is implemented. Keep the ordinary prefab's row origin.
+    // LiveSkinSettings.initSpecialSkinRow: insert the authored row and move the
+    // ordinary choices to the source next-row position (-615).
+    place("Contents/ScrollView/Contents/MovableContents", -615);
     nodes[source.nodeAt("Contents/ScrollView/Contents/MovableContents/ROW3/IsFixecBG").id] = { active: false };
     const settings = draft.options.simulatorSettings.skin;
     const skin = (key: keyof typeof settings, value: number | boolean) => update(old => ({ ...old,
@@ -162,7 +167,11 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
       const nextY = ownY + start.position.y - (rows.length + 1) * manager.data.heightMargin;
       nodes[next.id] = { ...nodes[next.id], x: 0, y: nextY };
     }
-    number(278, settings.fieldSkin, 0, 14, 1, value => skin("fieldSkin", value), value => String(value + 1));
+    // LiveSkinSettings.Init sorts MasterSkinLane by seq; the numeric control
+    // owns a list position, while OptionData and resource consumers own ID - 1.
+    const fieldIndex = fieldSkinSelection.rows.findIndex(row => row.setting === settings.fieldSkin);
+    number(278, fieldIndex, 0, fieldSkinSelection.rows.length - 1, 1,
+      index => skin("fieldSkin", fieldSkinSelection.rows[index]!.setting), index => String(index + 1));
     number(232, settings.tapEffect, 0, 4, 1, value => skin("tapEffect", value), value => String(value + 1));
     number(292, settings.judgeSE, 0, 3, 1, value => skin("judgeSE", value), value => String(value + 1));
     // OptionData.IsDirectionalFlickEffectNormal is true for stored value 0 (normal), not 1 (light).
@@ -172,16 +181,36 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     // Reverse 63f4fdf1: SetActiveUnownedObject targets these serialized references,
     // not guessed node names. Editor-provided ordinary skins have no account ownership gate.
     const fieldSkin = source.components.get(278)!;
-    for (const field of ["textCover", "lockIcon", "exMissionCaption", "bandLogoLoader"]) {
+    for (const field of ["textCover", "lockIcon", "exMissionCaption"]) {
       const id = originalRef(fieldSkin.data[field]);
       const node = source.nodes.get(id) ?? source.prefab.nodes.find(item => item.transformId === id)
         ?? source.nodes.get(source.components.get(id)?.node ?? -1);
       if (node) nodes[node.id] = { active: false };
     }
+    // LiveSettingsFieldSkin.SetBandLogoObject -> setValueDisplay: logo and
+    // numeric label are mutually exclusive, independently of ownership.
+    const hasBandLogo = fieldSkinLogos.rows.some(row => row.setting === settings.fieldSkin);
+    const logoLoader = source.components.get(originalRef(fieldSkin.data.bandLogoLoader))!;
+    nodes[logoLoader.node] = { active: hasBandLogo };
+    nodes[source.components.get(originalRef(fieldSkin.data.valueLabel))!.node] = { active: !hasBandLogo };
+    const recipe = resolveOriginalPreviewSkin(settings);
+    // Applied special components own their output. Ordinary values remain stored
+    // and become editable again when that component is switched off.
+    for (const [controllerId, route] of [[288, recipe.note.route], [302, recipe.directional.route],
+      [278, recipe.field.route], [232, recipe.tapEffect.route], [292, recipe.tapSE.route]] as const) {
+      if (route !== "special") continue;
+      const controller = source.components.get(controllerId)!;
+      const manager = originalRef(controller.data.radioButtonManager);
+      if (manager && radios[manager]) radios[manager] = { ...radios[manager]!, disabled: true };
+      for (const button of source.components.values()) {
+        if (button.kind === "StarUIButton" && source.isWithin(button.node, controller.node) && buttons[button.id])
+          buttons[button.id] = { ...buttons[button.id], disabled: true };
+      }
+    }
   }
   if (page === 3) {
-    retainChildren("Contents/ScrollView/Contents", ["SystemVolumeRow"]);
-    retainChildren("Contents/ScrollView/Contents/SystemVolumeRow", ["ROW1", "ROW2"]);
+    hideChildren("Contents/ScrollView/Contents", ["Row_System", "Row_Download", "UnderMultiPlayMVDownloadCaution"]);
+    hideChildren("Contents/ScrollView/Contents/SystemVolumeRow", ["ROW3"]);
     volume(345, draft.options.simulatorSettings.systemBgmVolumePercent,
       value => native("systemBgmVolumePercent", value), 0.01);
     volume(477, draft.options.simulatorSettings.systemSeVolumePercent,

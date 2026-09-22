@@ -4,6 +4,7 @@ import { OriginalGameSettingsModal } from "./OriginalGameSettingsModal";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
 import { OriginalMenuCell, originalMenuPositions, ORIGINAL_MENU_ITEMS, type OriginalMenuItem } from "./OriginalMenuParts";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
+import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
 type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
@@ -19,10 +20,15 @@ const cellsRoot = model.transform([...model.nodes.values()].find(node => node.tr
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const importIcon = useApplicationResourceUrl("ui.icon.json-import");
+  const exportIcon = useApplicationResourceUrl("ui.icon.json-export");
   useEffect(() => { if (!props.open) setSettingsOpen(false); }, [props.open]);
-  const items: OriginalMenuItem[] = ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
+  const items: OriginalMenuItem[] = [
+    { key: "editor-import", label: "导入谱面", image: importIcon, action: props.onImport },
+    { key: "editor-export", label: "导出谱面", image: exportIcon, action: props.onExport },
+    ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
     action: () => setSettingsOpen(true),
-  }));
+  }))];
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}

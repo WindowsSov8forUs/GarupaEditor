@@ -1,7 +1,8 @@
+import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
-import { createResourceRef, type ResourceConsumerLease, type ResourceRef } from "../resources/contracts";
-import { CURRENT_NORMAL_LANE_SKINS } from "../simulator/public/settings";
+import { type ResourceConsumerLease, type ResourceRef } from "../resources/contracts";
+import { type ResolvedOriginalSkinRecipe } from "../simulator/public/settings";
 import { readOriginalPreviewSprites, type OriginalPreviewSprite } from "./originalPreviewSprites";
 import selection from "../data/originalSkinSelection.json";
 
@@ -12,6 +13,7 @@ type Samples = {
 export interface OriginalSkinPreviewResources extends Samples {
   key: string;
   lane: string | null;
+  background: string | null;
   judge: OriginalPreviewSprite | null;
 }
 const EMPTY_SAMPLES: Samples = Object.freeze({ note: Object.freeze({}), directional: Object.freeze({}) });
@@ -22,7 +24,7 @@ async function image(lease: ResourceConsumerLease, slot: string, name: string): 
   return lease.openObjectUrl(slot, files[0]!.logicalPath);
 }
 function ref(logical: string): ResourceRef {
-  const value = createResourceRef(`bestdori/jp/${logical}`);
+  const value = originalSkinResourceRef(logical);
   if (value.status === "rejected") throw new Error(value.failure.boundary);
   return value.value;
 }
@@ -35,10 +37,13 @@ async function settledImages<T>(tasks: readonly Promise<T>[]): Promise<T[]> {
 }
 
 /** Sample rows and the selected lane own separate leases; lane changes do not erase the sample list. */
-export function useOriginalSkinPreviewResources(fieldSkin: number, onError?: (message: string) => void) {
+export function useOriginalSkinPreviewResources(recipe: ResolvedOriginalSkinRecipe, onError?: (message: string) => void) {
   const manager = useApplicationResourceManager(), error = useRef(onError); error.current = onError;
+  const fieldResource = recipe.field.logicalResource!, fieldBundle = recipe.field.bundleName!;
+  const backgroundResource = recipe.background.route === "special" ? `${recipe.background.logicalResource}preview` : null;
+  const key = `${fieldResource}:${backgroundResource ?? "default"}`;
   const [samples, setSamples] = useState<Samples | null>(null);
-  const [field, setField] = useState<{ setting: number; lane: string; judge: OriginalPreviewSprite } | null>(null);
+  const [field, setField] = useState<{ key: string; lane: string; judge: OriginalPreviewSprite; background: string | null } | null>(null);
   useEffect(() => {
     let active = true, finished = false, lease: ResourceConsumerLease | null = null;
     const release = () => {
@@ -87,36 +92,37 @@ export function useOriginalSkinPreviewResources(fieldSkin: number, onError?: (me
     };
     setField(null);
     void (async () => {
-      const master = CURRENT_NORMAL_LANE_SKINS.find(row => row.setting === fieldSkin);
-      if (!master) throw new Error(`Unknown original lane setting ${fieldSkin}.`);
       const catalog = await manager.prepareCatalog("bestdori");
       if (catalog.status === "rejected") throw new Error(catalog.failure.boundary);
       if (!active) return;
-      const snapshot = await manager.createSnapshotFromRefs({ "preview.field": ref(`ingameskin/fieldskin/${master.bundleName}`) });
+      const snapshot = await manager.createSnapshotFromRefs({ "preview.field": ref(fieldResource),
+        ...(backgroundResource ? { "preview.background": ref(backgroundResource) } : {}) });
       if (snapshot.status === "rejected") throw new Error(snapshot.failure.boundary);
       if (!active) return;
       const acquired = await manager.acquireSnapshot(snapshot.value.snapshotId);
       if (acquired.status === "rejected") throw new Error(acquired.failure.boundary);
       lease = acquired.value;
       if (!active) return;
+      const background = backgroundResource ? await image(lease, "preview.background", "previewbg.png") : null;
       const lane = await image(lease, "preview.field", "bg_line_rhythm.png");
-      const sprites = await readOriginalPreviewSprites(lease, "preview.field", master.bundleName, async canvas => {
+      const sprites = await readOriginalPreviewSprites(lease, "preview.field", fieldBundle, async canvas => {
         const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value =>
           value ? resolve(value) : reject(new Error("Preview sprite encoding failed."))));
         const url = URL.createObjectURL(blob); derived.add(url); return url;
       }, new Set(["game_play_line"]));
       const judge = sprites.get("game_play_line");
       if (!judge) throw new Error("Original preview requires the game_play_line Sprite.");
-      if (active) setField({ setting: fieldSkin, lane, judge });
+      if (active) setField({ key, lane, judge, background });
     })().catch(cause => {
       if (active) error.current?.(cause instanceof Error ? cause.message : String(cause));
       release();
     }).finally(() => { finished = true; if (!active) release(); });
     return () => { active = false; if (finished) release(); };
-  }, [manager, fieldSkin]);
+  }, [manager, fieldResource, fieldBundle, backgroundResource, key]);
   return useMemo<OriginalSkinPreviewResources>(() => ({
-    key: `ordinary:${fieldSkin}`, ...(samples ?? EMPTY_SAMPLES),
-    lane: field?.setting === fieldSkin ? field.lane : null,
-    judge: field?.setting === fieldSkin ? field.judge : null,
-  }), [samples, field, fieldSkin]);
+    key, ...(samples ?? EMPTY_SAMPLES),
+    lane: field?.key === key ? field.lane : null,
+    background: field?.key === key ? field.background : null,
+    judge: field?.key === key ? field.judge : null,
+  }), [samples, field, key]);
 }

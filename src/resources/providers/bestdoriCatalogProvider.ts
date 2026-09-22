@@ -26,6 +26,7 @@ interface BestdoriInfoEntry {
 }
 
 interface BestdoriAssetsInfo {
+  readonly thumb?: { readonly limitedskin?: unknown };
   readonly tutorial?: unknown;
   readonly ingameskin?: {
     readonly noteskin?: Record<string, unknown>;
@@ -271,6 +272,7 @@ export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly
     collect(resources, server, "movie-mv", info.movie?.mv, names, observedAt);
     if (info.sound?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
     if (info.tutorial !== undefined) resources.push(tutorialDescriptor(server, observedAt));
+    if (info.thumb?.limitedskin !== undefined) resources.push(limitedSkinThumbnailDescriptor(server, observedAt));
     collectSongMedia(resources, server, index, songs, info, observedAt);
   }
   const deduplicated = new Map<string, NetworkResourceDescriptor>();
@@ -419,6 +421,20 @@ function commonSoundDescriptor(
       identityClass: "provider-package" as const,
     }),
     source: Object.freeze(sourceFor(server, "sound-common", "common")),
+  });
+}
+
+/** Also registered by the consumer so older cached catalogs can load this package. */
+export function limitedSkinThumbnailDescriptor(server: BestdoriAssetServer, observedAt: string | null): NetworkResourceDescriptor {
+  const ref = createResourceRef(`bestdori/${server}/thumb/limitedskin`);
+  if (ref.status === "rejected") throw new Error(ref.failure.boundary);
+  return Object.freeze({
+    ref: ref.value, origin: "network", kind: "package", title: "limitedskin", availability: "remote-only", files: null,
+    catalogObservedAt: observedAt,
+    logicalPlacement: Object.freeze({ provider: "bestdori", server, canonicalPath: "thumb/limitedskin", identityClass: "provider-package" }),
+    source: Object.freeze({ provider: "bestdori", server, family: "limited-skin-thumbnail", nativeId: "limitedskin",
+      manifestUrl: `https://bestdori.com/api/explorer/${server}/assets/thumb/limitedskin.json`,
+      assetBaseUrl: `https://bestdori.com/assets/${server}/thumb/limitedskin_rip` }),
   });
 }
 

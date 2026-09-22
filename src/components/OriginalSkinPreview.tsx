@@ -84,10 +84,11 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
     const prepare = async () => {
       const revision = ++generation;
       const next = inputs.current;
-      if (!renderer || !next.animated || !next.effects || !next.resources.lane || !next.resources.judge) return;
-      if (currentResources?.lane === next.resources.lane && currentResources.judge === next.resources.judge &&
-        currentAnimated === next.animated && effectCache?.pack === next.effects && effectCache.size === next.noteSize) return;
-      const urls = new Set([backgroundUrl, next.resources.lane, next.resources.judge.url, next.animated.longNoteLine,
+      if (!renderer || !next.animated || !next.resources.lane || !next.resources.judge) return;
+      if (currentResources?.lane === next.resources.lane && currentResources.judge === next.resources.judge && currentResources.background === next.resources.background &&
+        currentAnimated === next.animated && (effectCache?.pack ?? null) === next.effects &&
+        (!effectCache || effectCache.size === next.noteSize)) return;
+      const urls = new Set([next.resources.background ?? backgroundUrl, next.resources.lane, next.resources.judge.url, next.animated.longNoteLine,
         ...Object.values(next.animated.bodies).map(sprite => sprite.url), ...Object.values(next.animated.flickTops).map(sprite => sprite.url)]);
       const created = new Map<string, Texture>();
       let replacement: OriginalPreviewParticleScene | null = null;
@@ -102,7 +103,7 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
           configureOriginalPreviewTexture(texture, 1, 1);
           created.set(url, texture);
         }
-        if (effectCache?.pack !== next.effects || effectCache.size !== next.noteSize)
+        if (next.effects && (effectCache?.pack !== next.effects || effectCache.size !== next.noteSize))
           replacement = await createOriginalPreviewParticleScene(next.effects, next.noteSize);
         if (!active || revision !== generation) return;
         // Commit only fully prepared replacements. The camera, canvas and unaffected
@@ -111,10 +112,11 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
         if (replacement) {
           if (particles) { replacement.retainUnchangedEffects(particles); particles.dispose(); }
           particles = replacement; replacement = null; particles.attachTo(foreground);
-          effectCache = { pack: next.effects, size: next.noteSize, lastTime: effectCache?.lastTime ?? null };
+          effectCache = { pack: next.effects!, size: next.noteSize, lastTime: effectCache?.lastTime ?? null };
         }
+        if (!next.effects) { particles?.dispose(); particles = null; effectCache = null; }
         currentResources = next.resources; currentAnimated = next.animated;
-        backdrop.texture = textures.get(backgroundUrl)!;
+        backdrop.texture = textures.get(next.resources.background ?? backgroundUrl)!;
         lane.texture = textures.get(next.resources.lane)!; lane.width = field.width; lane.height = field.height;
         const image = next.resources.judge;
         judge.texture = textures.get(image.url)!; judge.anchor.set(image.pivotX, 1 - image.pivotY);
@@ -126,7 +128,7 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
         notesById.clear(); iconsById.clear();
         for (const [url, texture] of textures) if (!urls.has(url)) { texture.destroy(true); textures.delete(url); }
         restartNotes();
-        target.dataset.previewEffectPack = next.effects.profile.packIdentity;
+        target.dataset.previewEffectPack = next.effects?.profile.packIdentity ?? "unavailable";
         setPrepared(true);
       } catch (error) {
         if (active && revision === generation) failure.current?.(error instanceof Error ? error.message : String(error));
@@ -159,7 +161,7 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
         const backgroundOffsetY = Math.trunc(-aspect * behavior.rendering.backgroundOffsetBase / behavior.rendering.backgroundAspectBase);
         backdrop.position.set(-bw / 2, -backgroundOffsetY - bh / 2);
         backdrop.width = bw; backdrop.height = bh;
-        if (animated && resources?.lane && resources.judge && particles) {
+        if (animated && resources?.lane && resources.judge) {
           const delta = lastTime === null || document.hidden ? 0 : (timestamp - lastTime) / 1000;
           motion.current!.setParameters(parameters.current.speed, parameters.current.noteSize);
           const notes = motion.current!.step(delta), currentIds = new Set(notes.map(note => note.id));
@@ -203,19 +205,25 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
               icon.rotation = -sample.rotationDegrees * Math.PI / 180;
             }
           }
-          const cached = effectCache!;
-          const effectDelta = cached.lastTime === null || document.hidden ? 0 : (timestamp - cached.lastTime) / 1000;
-          // Geometry remains in front-camera child units. Camera clipping distances are
-          // world units, so undo UI Root's 2/activeHeight and the authored Z scale.
-          const depthScale = 2 / height * source.nodes.get(18)!.scale.z;
-          particles.advance(effectDelta, width, height, projection,
-            Number(frontCamera["near clip plane"]) / depthScale,
-            Number(frontCamera["far clip plane"]) / depthScale);
-          cached.lastTime = document.hidden ? null : timestamp;
+          if (particles && effectCache) {
+            const cached = effectCache;
+            const effectDelta = cached.lastTime === null || document.hidden ? 0 : (timestamp - cached.lastTime) / 1000;
+            // Geometry remains in front-camera child units. Camera clipping distances are
+            // world units, so undo UI Root's 2/activeHeight and the authored Z scale.
+            const depthScale = 2 / height * source.nodes.get(18)!.scale.z;
+            particles.advance(effectDelta, width, height, projection,
+              Number(frontCamera["near clip plane"]) / depthScale,
+              Number(frontCamera["far clip plane"]) / depthScale);
+            cached.lastTime = document.hidden ? null : timestamp;
+            target.dataset.previewParticleCount = String(particles.sampleCount);
+            target.dataset.previewParticleRoots = particles.visibleRoots.join(",");
+            target.dataset.previewImpactCounts = JSON.stringify(particles.impactCounts);
+          } else {
+            target.dataset.previewParticleCount = "0";
+            target.dataset.previewParticleRoots = "";
+            target.dataset.previewImpactCounts = "{}";
+          }
           foreground.sortChildren();
-          target.dataset.previewParticleCount = String(particles.sampleCount);
-          target.dataset.previewParticleRoots = particles.visibleRoots.join(",");
-          target.dataset.previewImpactCounts = JSON.stringify(particles.impactCounts);
           target.dataset.previewNoteTypes = notes.map(note => note.type).join(",");
           target.dataset.previewConnection = head ? "visible" : "hidden";
           target.dataset.previewFlickIcons = String(iconsById.size);
@@ -255,7 +263,7 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
       textures.forEach(texture => texture.destroy(true)); renderer?.destroy({ removeView: false }); canvas.remove();
     };
   }, [backgroundUrl]);
-  useEffect(() => { controller.current?.update(); }, [resources.lane, resources.judge, animated, effects, noteSize]);
+  useEffect(() => { controller.current?.update(); }, [resources.lane, resources.judge, resources.background, animated, effects, noteSize]);
   useEffect(() => { controller.current?.show(); }, [visible]);
   return <div ref={host} className="original-prefab-texture" data-original-preview="source-note-motion" aria-busy={!prepared} />;
 }

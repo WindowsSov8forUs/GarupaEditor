@@ -77,6 +77,46 @@
       "sha256": "D47ACA1208262590624AA3E946BEBF8264613596CEC0C7902A11F142574D4C4B"
     },
     {
+      "path": "game/field-band-logos/001-logoS.png",
+      "byteLength": 6348,
+      "sha256": "7B9C6BEA4B727B42D428412318B9E8C365D3692EAB0553F637206B34D8CEDC6F"
+    },
+    {
+      "path": "game/field-band-logos/002-logoS.png",
+      "byteLength": 4999,
+      "sha256": "EDB995E50911A4AD35A6F96AB42AD06F68DC1771003A7323E22FB530E38C7E22"
+    },
+    {
+      "path": "game/field-band-logos/003-logoS.png",
+      "byteLength": 6099,
+      "sha256": "69DA54B88B1C3733825E676C122CF2CB942748514BBEC9BB27D89F94F14A54E2"
+    },
+    {
+      "path": "game/field-band-logos/004-logoS.png",
+      "byteLength": 7801,
+      "sha256": "05A102FC5285F8FB6FC3FBF43213FE6209FE8429D15EF1F1BA0341AAB785DAD3"
+    },
+    {
+      "path": "game/field-band-logos/005-logoS.png",
+      "byteLength": 7673,
+      "sha256": "A343B3C7AC04ECD3347F3C5E3869F618B8EC7E3D2D78DD66676FEC6BEA7C3EF7"
+    },
+    {
+      "path": "game/field-band-logos/018-logoS.png",
+      "byteLength": 4668,
+      "sha256": "979A10ADB2F7B9B65631F7A7E2E2EB61D8EF9FF298C87694E06BB8ADFC7C79D2"
+    },
+    {
+      "path": "game/field-band-logos/021-logoS.png",
+      "byteLength": 6514,
+      "sha256": "FF7D3432E6EDE43CC23224768D920EA743F5479BB1C2FEB7CF20B662FDCE6F10"
+    },
+    {
+      "path": "game/field-band-logos/045-logoS.png",
+      "byteLength": 6756,
+      "sha256": "E894EB5732480247D99FD263A6076E48E8ACB9F62215DF6019666BC280395476"
+    },
+    {
       "path": "game/fonts/sgm/rank-label-font.ttf",
       "byteLength": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"

@@ -1,11 +1,6 @@
-import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
-﻿import { useEffect, useState } from "react";
-import { FileTriggerInput } from "./FileTriggerInput";
-import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
-import { StepperIcon } from "./StepperIcon";
-import { TopTabs } from "./TopTabs";
-import { useModalLayer } from "./useModalLayer";
-import { useModalTransition } from "./useModalTransition";
+import { OriginalTransferDialog } from "./OriginalTransferDialog";
+import { useEffect, useState } from "react";
+import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormInput, OriginalDifficultySelect, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
 
 type ImportModalLevel = "chart" | "bestdori-v2";
 const OFFICIAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
@@ -55,10 +50,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
     onImportBestdoriV2File,
     onClose,
   } = props;
-  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
-  const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ImportModalTab>(level === "bestdori-v2" ? "official" : "chart-code");
-  const officialDifficultyIndex = Math.max(0, OFFICIAL_DIFFICULTIES.indexOf(officialChartDifficulty));
 
   useEffect(() => {
     if (open) {
@@ -66,12 +58,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
     }
   }, [open, level]);
 
-  if (!mounted) {
-    return null;
-  }
 
-  const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
-  const showApplyAction = tab === "chart-code" || tab === "official" || tab === "community";
   const applyHandler = tab === "official"
     ? onApplyOfficialChart
     : tab === "community"
@@ -79,32 +66,20 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
       : onApplyChartJson;
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
-      <OriginalDialogFrame
-        className={`modal-card export-json-modal import-json-modal modal-transition-card ${transitionClassName}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <OriginalDialogHeader>导入谱面</OriginalDialogHeader>
-
-        <div className="modal-body">
-          <TopTabs
-            className="import-json-tabs"
-            ariaLabel="导入谱面分组"
-            tabs={[
+    <OriginalTransferDialog open={open} title="导入谱面" onClose={onClose}
+      tabs={[
               { key: "chart-code", label: "导入谱面代码" },
               { key: "official", label: "导入官方谱面" },
               { key: "community", label: "导入社区谱面" },
             ]}
-            activeKey={tab}
-            onChange={(key) => setTab(key as ImportModalTab)}
-          />
-
+      selected={tab} onSelect={key => setTab(key as ImportModalTab)}>
+        <div className="transfer-body">
           {tab === "chart-code" && (
-            <div className="import-json-page-shell import-json-page-shell-scrollable">
-              <SettingPrimaryTitle text="谱面代码" />
+            <div className="transfer-page">
+              <OriginalFormTitle text="谱面代码" />
               <div className="export-json-field">
-                <textarea
-                  className="export-json-textarea"
+                <OriginalFormInput multiline
+                  aria-label="谱面 JSON 代码"
                   value={chartJsonText}
                   onChange={(event) => onChartJsonTextChange(event.currentTarget.value)}
                   readOnly={false}
@@ -112,90 +87,57 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
                 />
               </div>
 
-              <SettingPrimaryTitle text="加载谱面代码" />
+              <OriginalFormTitle text="加载谱面代码" followedBySubtitle />
               <div className="import-json-load-grid">
                 <div className="setting-block">
-                  <span className="setting-title-strip">加载谱面文件</span>
-                  <FileTriggerInput
-                    value={importJsonSelectedPath}
-                    placeholder="选择谱面文件"
-                    onTrigger={onImportJsonFile}
-                    ariaLabel="加载谱面文件"
-                  />
+                  <OriginalFormSubtitle text="加载谱面文件" />
+                  <div className="original-file-select">
+                    <OriginalFormInput readOnly aria-label="谱面文件路径" title={importJsonSelectedPath} value={importJsonSelectedPath || "未选择文件"} />
+                    <OriginalButton size="small" onClick={onImportJsonFile} aria-label="选择谱面文件">选择文件</OriginalButton>
+                  </div>
                 </div>
 
                 <div className="setting-block">
-                  <span className="setting-title-strip">加载 Bestdori V2 代码</span>
-                  <FileTriggerInput
-                    value={importBestdoriV2SelectedPath}
-                    placeholder="选择 Bestdori V2 文件"
-                    onTrigger={onImportBestdoriV2File}
-                    ariaLabel="加载 Bestdori V2 代码"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {tab === "official" && (
-            <div className="import-json-page-shell import-json-page-shell-static">
-              <SettingPrimaryTitle text="官方谱面" />
-              <div className="import-json-load-grid">
-                <div className="setting-block">
-                  <span className="setting-title-strip">ID</span>
-                  <input
-                    type="text"
-                    className="value-input metadata-left-input"
-                    value={officialChartId}
-                    onChange={(event) => onOfficialChartIdChange(event.currentTarget.value)}
-                  />
-                </div>
-                <div className="setting-block">
-                  <span className="setting-title-strip">难度</span>
-                  <div className="inline-stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => {
-                        const nextIndex =
-                          (officialDifficultyIndex - 1 + OFFICIAL_DIFFICULTIES.length) % OFFICIAL_DIFFICULTIES.length;
-                        onOfficialChartDifficultyChange(OFFICIAL_DIFFICULTIES[nextIndex]);
-                      }}
-                    >
-                      <StepperIcon type="left" />
-                    </button>
-                    <input
-                      type="text"
-                      className="stepper-input"
-                      value={OFFICIAL_DIFFICULTIES[officialDifficultyIndex]}
-                      readOnly
-                      tabIndex={-1}
-                    />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => {
-                        const nextIndex = (officialDifficultyIndex + 1) % OFFICIAL_DIFFICULTIES.length;
-                        onOfficialChartDifficultyChange(OFFICIAL_DIFFICULTIES[nextIndex]);
-                      }}
-                    >
-                      <StepperIcon type="right" />
-                    </button>
+                  <OriginalFormSubtitle text="加载 Bestdori V2 代码" />
+                  <div className="original-file-select">
+                    <OriginalFormInput readOnly aria-label="Bestdori V2 文件路径" title={importBestdoriV2SelectedPath} value={importBestdoriV2SelectedPath || "未选择文件"} />
+                    <OriginalButton size="small" onClick={onImportBestdoriV2File} aria-label="选择Bestdori V2 文件">选择文件</OriginalButton>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
+          {tab === "official" && (
+            <div className="transfer-page">
+              <OriginalFormTitle text="官方谱面" followedBySubtitle />
+              <div className="import-official-fields">
+                <div className="setting-block">
+                  <OriginalFormSubtitle text="ID" />
+                  <OriginalFormInput
+                    type="text"
+                    aria-label="官方歌曲 ID"
+                    value={officialChartId}
+                    onChange={(event) => onOfficialChartIdChange(event.currentTarget.value)}
+                  />
+                </div>
+                <div className="setting-block">
+                  <OriginalFormSubtitle text="难度" />
+                  <OriginalDifficultySelect value={officialChartDifficulty} onChange={onOfficialChartDifficultyChange} />
+                </div>
+              </div>
+            </div>
+          )}
+
           {tab === "community" && (
-            <div className="import-json-page-shell import-json-page-shell-static">
-              <SettingPrimaryTitle text="Bestdori 社区谱面" />
+            <div className="transfer-page">
+              <OriginalFormTitle text="Bestdori 社区谱面" followedBySubtitle />
               <div className="import-json-load-grid">
                 <div className="setting-block">
-                  <span className="setting-title-strip">谱面 ID</span>
-                  <input
+                  <OriginalFormSubtitle text="谱面 ID" />
+                  <OriginalFormInput
                     type="text"
-                    className="value-input metadata-left-input"
+                    aria-label="社区谱面 ID"
                     value={communityPostId}
                     onChange={(event) => onCommunityPostIdChange(event.currentTarget.value)}
                   />
@@ -204,19 +146,18 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
             </div>
           )}
 
-          {showApplyAction && (
-            <div className="modal-actions is-centered app-settings-display-actions import-json-actions">
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={applyHandler}>
-                <span className="btn-content">应用</span>
+          {(
+            <div className="transfer-actions">
+              <OriginalButton tone="pink" type="button" onClick={applyHandler}>
+                <span className="btn-content">导入</span>
               </OriginalButton>
-              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
+              <OriginalButton tone="gray" type="button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
               </OriginalButton>
             </div>
           )}
         </div>
-      </OriginalDialogFrame>
-    </div>
+    </OriginalTransferDialog>
   );
 }
 

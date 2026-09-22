@@ -1,0 +1,83 @@
+{
+  "reverseCommit": "ef0649a02ef1b98e20f57122d39b39b7ff7407dd",
+  "source": "artifacts/investigations/simulator-skin-settings-complete-contract-10-1-4/skin_master_catalog.json",
+  "sourceSha256": "6392D441EB3B57552702A4C765811C76486CFC3BD42389EE9DE5962BECC29BF6",
+  "algorithmSource": "artifacts/investigations/menu-settings-ui-completion-10-1-4/field-band-logos/selection-order.json",
+  "rows": [
+    {
+      "laneId": 1,
+      "setting": 0,
+      "seq": 1
+    },
+    {
+      "laneId": 2,
+      "setting": 1,
+      "seq": 2
+    },
+    {
+      "laneId": 3,
+      "setting": 2,
+      "seq": 3
+    },
+    {
+      "laneId": 4,
+      "setting": 3,
+      "seq": 4
+    },
+    {
+      "laneId": 5,
+      "setting": 4,
+      "seq": 5
+    },
+    {
+      "laneId": 13,
+      "setting": 12,
+      "seq": 6
+    },
+    {
+      "laneId": 14,
+      "setting": 13,
+      "seq": 7
+    },
+    {
+      "laneId": 6,
+      "setting": 5,
+      "seq": 101
+    },
+    {
+      "laneId": 7,
+      "setting": 6,
+      "seq": 102
+    },
+    {
+      "laneId": 8,
+      "setting": 7,
+      "seq": 103
+    },
+    {
+      "laneId": 9,
+      "setting": 8,
+      "seq": 104
+    },
+    {
+      "laneId": 10,
+      "setting": 9,
+      "seq": 105
+    },
+    {
+      "laneId": 11,
+      "setting": 10,
+      "seq": 106
+    },
+    {
+      "laneId": 12,
+      "setting": 11,
+      "seq": 107
+    },
+    {
+      "laneId": 15,
+      "setting": 14,
+      "seq": 108
+    }
+  ]
+}

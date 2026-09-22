@@ -1,5 +1,4 @@
-import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
+import { resolveOriginalPreviewSkin } from "./settings";
 import type { OriginalSkinSettings, ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import { prepareSelectedSkinSourcePackages } from "../resources/sourcePackageDecoder";
 import { prepareLeasedDefaultParticleProvider } from "../assembly/leasedDefaultParticlePreparation";
@@ -15,9 +14,7 @@ const defaultResource = "portable/profiles/default-particle";
 
 /** Preview selection follows the same master/variant resolver and exact source decoder as live. */
 export function originalPreviewParticleSelection(settings: OriginalSkinSettings) {
-  const resolved = resolveOriginalSkinRecipe(settings, createSimulatorModeIdentity("live", "manual"), "ordinary", "standard");
-  if (resolved.status !== "ok") throw new Error(resolved.boundary);
-  const recipe = resolved.value;
+  const recipe = resolveOriginalPreviewSkin(settings);
   const selected = usesExactDefaultParticlePack(recipe) ? [] : [
     { semanticRole: "preview.tap-effect", logicalResource: recipe.tapEffect.logicalResource! },
     { semanticRole: "preview.directional-effect", logicalResource: recipe.directional.effectLogicalResource },

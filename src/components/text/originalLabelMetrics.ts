@@ -5,7 +5,8 @@ export function originalLabelBaseline(
   fontSize: number,
 ): number {
   let glyph = context.measureText(")");
-  if (glyph.actualBoundingBoxAscent + glyph.actualBoundingBoxDescent === 0) glyph = context.measureText("A");
+  // CN NGUIText.Update 0x29a89ec checks maxY, not the total glyph height.
+  if (glyph.actualBoundingBoxAscent === 0) glyph = context.measureText("A");
   if (glyph.actualBoundingBoxAscent + glyph.actualBoundingBoxDescent === 0) return 0;
   return roundLabelCoordinate((fontSize + glyph.actualBoundingBoxAscent - glyph.actualBoundingBoxDescent) / 2);
 }

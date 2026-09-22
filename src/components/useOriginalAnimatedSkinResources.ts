@@ -1,8 +1,9 @@
+import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
-import { createResourceRef, type ResourceConsumerLease } from "../resources/contracts";
+import { type ResourceConsumerLease } from "../resources/contracts";
 import { readOriginalPreviewSprites, type OriginalPreviewSprite } from "./originalPreviewSprites";
-import { CURRENT_NORMAL_NOTE_SKINS, CURRENT_NORMAL_DIRECTIONAL_SKINS } from "../simulator/public/settings";
+import { type ResolvedOriginalSkinRecipe } from "../simulator/public/settings";
 import { simulatorBuiltinResourceRef } from "../resources/builtin/simulatorBuiltinResourceCatalog";
 import { parseOriginalPreviewFlickAnimations, type OriginalPreviewFlickAnimations, type OriginalPreviewFlickDirection } from "../simulator/public/preview";
 import type { OriginalPreviewNoteType } from "./originalSkinPreviewMotion";
@@ -16,10 +17,11 @@ export interface OriginalAnimatedSkinResources {
 }
 const basename = (value: string) => value.replace(/\\/g, "/").split("/").pop()!.toLowerCase();
 
-export function useOriginalAnimatedSkinResources(noteSkin: number, directionalSkin: number,
+export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRecipe,
   onError?: (message: string) => void): OriginalAnimatedSkinResources | null {
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
-  const key = `${noteSkin}:${directionalSkin}`;
+  const noteResource = recipe.note.logicalResource!, directionalResource = recipe.directional.noteLogicalResource;
+  const key = `${noteResource}:${directionalResource}`;
   const [result, setResult] = useState<OriginalAnimatedSkinResources | null>(null);
   useEffect(() => {
     let active = true, finished = false, lease: ResourceConsumerLease | null = null;
@@ -36,12 +38,9 @@ export function useOriginalAnimatedSkinResources(noteSkin: number, directionalSk
     };
     setResult(null);
     void (async () => {
-      const normal = CURRENT_NORMAL_NOTE_SKINS.find(row => row.setting === noteSkin);
-      const directionalMaster = CURRENT_NORMAL_DIRECTIONAL_SKINS.find(row => row.setting === directionalSkin);
-      if (!normal || !directionalMaster) throw new Error("Unknown original preview skin selection.");
-      const ids = [normal.bundleName, `directionalflick${directionalMaster.bundleName}`];
-      const refs = ids.map(id => {
-        const value = createResourceRef(`bestdori/jp/ingameskin/noteskin/${id}`);
+      const ids = [noteResource.split("/").pop()!, directionalResource.split("/").pop()!];
+      const refs = [noteResource, directionalResource].map(logical => {
+        const value = originalSkinResourceRef(logical);
         if (value.status === "rejected") throw new Error(value.failure.boundary);
         return value.value;
       });
@@ -90,6 +89,6 @@ export function useOriginalAnimatedSkinResources(noteSkin: number, directionalSk
       release();
     }).finally(() => { finished = true; if (!active) release(); });
     return () => { active = false; if (finished) release(); };
-  }, [manager, key, noteSkin, directionalSkin]);
+  }, [manager, key, noteResource, directionalResource]);
   return result?.key === key ? result : null;
 }

@@ -1,15 +1,11 @@
-import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
+import { OriginalTransferDialog } from "./OriginalTransferDialog";
 import { useEffect, useRef, useState } from "react";
 import {
   fetchBestdoriCommunityPostTags,
   type BestdoriPostTag,
   type BestdoriPostTagSearchEntry,
 } from "../services/bestdori/api";
-import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
-import { StepperIcon } from "./StepperIcon";
-import { TopTabs } from "./TopTabs";
-import { useModalLayer } from "./useModalLayer";
-import { useModalTransition } from "./useModalTransition";
+import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
 import { isMobileRuntime } from "../app/mobileRuntime";
 
 type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
@@ -43,12 +39,8 @@ export function ExportJsonModal({
   onApplyUploadNotGarupaServerChart,
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
-  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
-  const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ExportModalTab>("chart-code");
   const [isTagPickerOpen, setIsTagPickerOpen] = useState(false);
-  const { mounted: tagPickerMounted, phase: tagPickerPhase, transitionStyle: tagPickerTransitionStyle, transitionRef: tagPickerTransitionRef } = useModalTransition(isTagPickerOpen);
-  const tagPickerLayerStyle = useModalLayer(isTagPickerOpen, tagPickerMounted);
   const [tagPickerType, setTagPickerType] = useState("text");
   const [tagPickerKeyword, setTagPickerKeyword] = useState("");
   const [tagCandidates, setTagCandidates] = useState<BestdoriPostTagSearchEntry[]>([]);
@@ -137,86 +129,59 @@ export function ExportJsonModal({
     };
   }, [open, isTagPickerOpen, tagPickerType, tagPickerKeyword]);
 
-  if (!mounted) {
-    return null;
-  }
 
-  const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
   const uploadSettings = (
     <>
       <div className="export-json-field">
-        <span className="setting-title-strip">描述文本</span>
-        <textarea
-          className="export-json-textarea"
+        <OriginalFormSubtitle text="描述文本" />
+        <OriginalFormInput multiline
+          aria-label="上传描述"
           value={uploadCommunityPostContent}
           onChange={(event) => onUploadCommunityPostContentChange(event.currentTarget.value)}
           readOnly={false}
           spellCheck={false}
         />
       </div>
-      <p className="import-json-upload-note">
-        上传时会使用当前谱面与谱面信息（标题、艺术家、谱师、等级），并上传音频与封面资源。
-      </p>
+      <OriginalFormNote text="上传时会使用当前谱面与谱面信息（标题、艺术家、谱师、等级），并上传音频与封面资源。" />
       <div className="setting-block">
-        <span className="setting-title-strip">标签</span>
+        <OriginalFormSubtitle text="标签" />
         <div className="upload-tag-current-row">
           {uploadCommunityPostTags.map((tag, index) => (
             <div key={`${tag.type}:${tag.data}:${index}`} className="upload-tag-chip">
-              <span className="upload-tag-chip-label">
-                <span className="upload-tag-hash">#</span>
-                <span className="upload-tag-chip-data">{tag.data}</span>
-              </span>
-              <button
-                type="button"
-                className="upload-tag-chip-remove"
+              <OriginalFormInput readOnly aria-label="已选标签" title={tag.data} value={`#${tag.data}`} />
+              <OriginalButton
+                size="small"
                 onClick={() => removeTagAt(index)}
                 title="删除标签"
                 aria-label="删除标签"
               >
-                <span className="upload-tag-remove-icon" aria-hidden="true">
-                  <StepperIcon type="close" />
-                </span>
-              </button>
+                删除
+              </OriginalButton>
             </div>
           ))}
-          <button type="button" className="upload-tag-add-button" onClick={() => setIsTagPickerOpen(true)}>
-            <span className="upload-tag-add-icon" aria-hidden="true">
-              <StepperIcon type="plus" />
-            </span>
-            <span className="btn-content">添加</span>
-          </button>
+          <OriginalButton size="small" onClick={() => setIsTagPickerOpen(true)}>添加</OriginalButton>
         </div>
       </div>
     </>
   );
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
-      <OriginalDialogFrame
-        className={`modal-card export-json-modal modal-transition-card ${transitionClassName}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <OriginalDialogHeader>导出谱面</OriginalDialogHeader>
-
-        <div className="modal-body">
-          <TopTabs
-            className="export-json-tabs"
-            ariaLabel="导出谱面分组"
-            tabs={[
+    <>
+    <OriginalTransferDialog open={open} title="导出谱面" onClose={onClose}
+      tabs={[
               { key: "chart-code", label: "导出谱面代码" },
               { key: "upload-server", label: "上传至服务器" },
               { key: "upload", label: "上传社区谱面" },
               { key: "upload-test", label: "上传测试服" },
             ]}
-            activeKey={tab}
-            onChange={(key) => setTab(key as ExportModalTab)}
-          />
-
+      selected={tab} onSelect={key => setTab(key as ExportModalTab)}>
+        <div className="transfer-body">
           {tab === "chart-code" && (
-            <div className="export-json-page-shell">
+            <div className="transfer-page">
+              <OriginalFormTitle text="谱面代码" />
               <div className="export-json-field">
-                <textarea
-                  className="export-json-textarea"
+                <OriginalFormInput multiline
+                  aria-label="导出的谱面 JSON 代码"
                   value={jsonText}
                   readOnly
                   spellCheck={false}
@@ -226,122 +191,106 @@ export function ExportJsonModal({
           )}
 
           {tab === "upload-server" && (
-            <div className="export-json-page-shell">
-              <SettingPrimaryTitle text="上传至 NotGarupa 服务器" />
+            <div className="transfer-page">
+              <OriginalFormTitle text="上传至 NotGarupa 服务器" followedBySubtitle />
               {uploadSettings}
             </div>
           )}
 
           {tab === "upload" && (
-            <div className="export-json-page-shell">
-              <SettingPrimaryTitle text="上传 Bestdori 社区谱面" />
+            <div className="transfer-page">
+              <OriginalFormTitle text="上传 Bestdori 社区谱面" followedBySubtitle />
               {uploadSettings}
             </div>
           )}
 
           {tab === "upload-test" && (
-            <div className="export-json-page-shell">
-              <SettingPrimaryTitle text="上传到测试服" />
+            <div className="transfer-page">
+              <OriginalFormTitle text="上传到测试服" />
             </div>
           )}
 
           {tab === "chart-code" && (
-            <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onSaveAs}>
+            <div className="transfer-actions">
+              <OriginalButton tone="pink" type="button" onClick={onSaveAs}>
                 <span className="btn-content">另存为 .json</span>
               </OriginalButton>
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onExportBestdoriV2}>
+              <OriginalButton tone="pink" type="button" onClick={onExportBestdoriV2}>
                 <span className="btn-content">导出为 Bestdori V2</span>
               </OriginalButton>
-              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
+              <OriginalButton tone="gray" type="button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
               </OriginalButton>
             </div>
           )}
 
           {tab === "upload" && (
-            <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onApplyUploadCommunityChart}>
+            <div className="transfer-actions">
+              <OriginalButton tone="pink" type="button" onClick={onApplyUploadCommunityChart}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
-              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
+              <OriginalButton tone="gray" type="button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
               </OriginalButton>
             </div>
           )}
 
           {tab === "upload-server" && (
-            <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onApplyUploadNotGarupaServerChart}>
+            <div className="transfer-actions">
+              <OriginalButton tone="pink" type="button" onClick={onApplyUploadNotGarupaServerChart}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
-              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
+              <OriginalButton tone="gray" type="button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
               </OriginalButton>
             </div>
           )}
 
           {tab === "upload-test" && (
-            <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
-              <OriginalButton tone="pink" type="button" className="app-settings-apply-button" onClick={onApplyUploadTestServerChart}>
+            <div className="transfer-actions">
+              <OriginalButton tone="pink" type="button" onClick={onApplyUploadTestServerChart}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
-              <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose}>
+              <OriginalButton tone="gray" type="button" onClick={onClose}>
                 <span className="btn-content">关闭</span>
               </OriginalButton>
             </div>
           )}
         </div>
-      </OriginalDialogFrame>
-      {tagPickerMounted && (
-        <div
-          className={`modal-mask modal-transition-mask ${tagPickerPhase === "enter" ? "is-enter" : "is-exit"}`}
-          ref={tagPickerTransitionRef} style={{ ...tagPickerLayerStyle, ...tagPickerTransitionStyle }}
-        >
-          <OriginalDialogFrame
-            className={`modal-card export-tag-picker-modal modal-transition-card ${tagPickerPhase === "enter" ? "is-enter" : "is-exit"}`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <OriginalDialogHeader>添加标签</OriginalDialogHeader>
-            <div className="modal-body">
+    </OriginalTransferDialog>
+      <OriginalTransferDialog open={open && isTagPickerOpen} title="添加标签" onClose={() => setIsTagPickerOpen(false)}>
+            <div className="transfer-body">
               <div className="export-tag-picker-body">
                 <div className="setting-block">
-                  <span className="setting-title-strip">类型</span>
-                  <select
-                    className="value-input metadata-left-input export-tag-picker-select"
-                    value={tagPickerType}
-                    onChange={(event) => setTagPickerType(event.currentTarget.value)}
-                  >
-                    <option value="text">自定义</option>
-                  </select>
+                  <OriginalFormSubtitle text="类型" />
+                  <OriginalFormInput aria-label="标签类型" value="自定义" readOnly />
                 </div>
                 <div className="setting-block">
-                  <span className="setting-title-strip">文本</span>
-                  <input
+                  <OriginalFormSubtitle text="文本" />
+                  <OriginalFormInput
                     type="text"
-                    className="value-input metadata-left-input"
+                    aria-label="搜索标签"
                     value={tagPickerKeyword}
                     onChange={(event) => setTagPickerKeyword(event.currentTarget.value)}
                     placeholder="输入关键字搜索标签"
                   />
                 </div>
                 <div className="setting-block">
-                  <span className="setting-title-strip">标签备选</span>
+                  <OriginalFormSubtitle text="标签备选" />
                   <div className="export-tag-candidate-list">
                     {isTagCandidatesLoading && (
-                      <p className="export-tag-candidate-tip">正在搜索…</p>
+                      <OriginalFormNote text="正在搜索…" />
                     )}
                     {!isTagCandidatesLoading && tagCandidatesError && (
-                      <p className="export-tag-candidate-tip export-tag-candidate-tip-error">{tagCandidatesError}</p>
+                      <OriginalFormNote text={tagCandidatesError} />
                     )}
                     {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.length <= 0 && (
-                      <p className="export-tag-candidate-tip">暂无匹配标签</p>
+                      <OriginalFormNote text="暂无匹配标签" />
                     )}
                     {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.map((candidate, index) => (
-                      <button
-                        type="button"
+                      <OriginalButton
                         key={`${candidate.type}:${candidate.data}:${index}`}
-                        className="export-tag-candidate-button"
+                        className="original-tag-candidate"
                         onClick={() => {
                           upsertTag({ type: candidate.type, data: candidate.data });
                           setIsTagPickerOpen(false);
@@ -352,20 +301,18 @@ export function ExportJsonModal({
                           <span>{candidate.data}</span>
                         </span>
                         <span className="export-tag-candidate-count"> ({Math.max(0, Math.trunc(Number(candidate.count) || 0))})</span>
-                      </button>
+                      </OriginalButton>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="modal-actions is-centered">
-                <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={() => setIsTagPickerOpen(false)}>
+              <div className="transfer-actions">
+                <OriginalButton tone="gray" type="button" onClick={() => setIsTagPickerOpen(false)}>
                   <span className="btn-content">关闭</span>
                 </OriginalButton>
               </div>
             </div>
-          </OriginalDialogFrame>
-        </div>
-      )}
-    </div>
+      </OriginalTransferDialog>
+    </>
   );
 }

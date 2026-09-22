@@ -17,6 +17,7 @@ export const OriginalPageVisible = createContext(true);
 export interface OriginalButtonBinding { action?: () => void; disabled?: boolean; label?: string; selected?: boolean; navigationIndex?: number; role?: "tab" | "radio" | "checkbox" }
 export interface OriginalRadioBinding {
   index: number; onChange?: (index: number) => void; disabled?: boolean;
+  disabledOptions?: readonly number[];
   labelWidth?: number; labelHeight?: number; renderOption?: (index: number) => ReactNode;
   fontSize?: number; maxLineCount?: number; labelOffset?: { x: number; y: number };
   optionLayouts?: Readonly<Record<number, { labelWidth?: number; labelHeight?: number; offsetX?: number }>>;
@@ -54,7 +55,7 @@ function SpriteView({ model, component, tint }: { model: OriginalPrefabModel; co
     data.mType, transform.scaleX, transform.scaleY, data.mFlip === 1 || data.mFlip === 3,
     data.mFlip === 2 || data.mFlip === 3, data.mDrawRegion);
   if (drawingBox.width <= 0 || drawingBox.height <= 0) return null;
-  const filled = originalRef(data.mAtlas) === 1809;
+  const filled = originalRef(data.mAtlas) === 1809 || originalRef(data.mAtlas) === 1533;
   const grayscale = rgba.r === rgba.g && rgba.g === rgba.b;
   const filter = grayscale && rgba.r === 0 ? "brightness(0)"
     : filled && grayscale ? `brightness(0) invert(1) brightness(${rgba.r})`
@@ -68,7 +69,7 @@ function SpriteView({ model, component, tint }: { model: OriginalPrefabModel; co
         <feColorMatrix type="matrix" values={matrix} />
       </filter></defs>
     </svg>}
-    <OriginalSprite atlas={atlas} sprite={data.mSpriteName} spriteType={data.mType} scale={Math.abs(transform.scaleX)} scaleY={Math.abs(transform.scaleY)}
+    <OriginalSprite atlas={atlas} sprite={data.mSpriteName} spriteType={data.mType} fillCenter={data.centerType !== 0} scale={Math.abs(transform.scaleX)} scaleY={Math.abs(transform.scaleY)}
     data-original-widget={component.id} style={{ ...rectStyle(model, component), left: 0, top: 0,
       width: drawingBox.width, height: drawingBox.height, opacity: rgba.a, filter,
       transform: model.spriteMatrix(component.node, drawingBox, flipX, flipY), transformOrigin: "0 0", pointerEvents: "none" }} />
@@ -243,7 +244,7 @@ function RadioGroupView({ model, component, binding, beforeClick }: { model: Ori
           } } : undefined,
           labelMeasurements: { 14: width => setPrintedWidths(previous => previous[index] === width
             ? previous : { ...previous, [index]: width }) }, buttons: {
-          13: { label: text, selected: checked, navigationIndex: index, role: "radio", disabled: !binding?.onChange || !!binding.disabled,
+          13: { label: text, selected: checked, navigationIndex: index, role: "radio", disabled: !binding?.onChange || !!binding.disabled || binding.disabledOptions?.includes(index),
             action: binding?.onChange ? () => binding.onChange?.(index) : undefined },
         } }} />
         {binding?.renderOption?.(index)}

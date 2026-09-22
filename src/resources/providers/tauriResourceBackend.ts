@@ -26,6 +26,14 @@ interface TauriOpenedSnapshot {
 }
 
 export class TauriApplicationResourceBackend implements ApplicationResourceBackend {
+  async readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>> {
+    const result = await invokeResult<string | null>("resource_read_skin_thumbnail", { key });
+    if (result.status === "rejected") return result;
+    return resourceAccepted(result.value === null ? null : decodeBase64(result.value));
+  }
+  async writeSkinThumbnail(key: string, bytes: Uint8Array): Promise<ResourceResult<void>> {
+    return invokeResult("resource_write_skin_thumbnail", { key, base64Data: encodeBase64(bytes) });
+  }
   async initialize(): Promise<ResourceResult<readonly StoredResourceRecord[]>> {
     return invokeResult("resource_initialize");
   }

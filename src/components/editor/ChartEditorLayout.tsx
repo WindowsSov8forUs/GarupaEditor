@@ -1230,11 +1230,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <CommandBar
-        onImportJson={openImportJsonModal}
-        onExportJson={downloadJson}
         onOpenStaticRender={openStaticRenderWindow}
         onOpenSimulator={openSimulatorWindow}
-        onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
         menuOpen={isAppSettingsOpen}
         userNickname={bestdoriNicknameDisplay}

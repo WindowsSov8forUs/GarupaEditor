@@ -1,0 +1,52 @@
+.original-form-title { position: relative; height: 44px; flex-shrink: 0; min-width: 0; }
+.transfer-authored-content {
+  position: absolute; left: -475px; top: -180px; width: 950px; height: 468px;
+  color: #505050; font-size: 24px; font-weight: 400; line-height: 1.35;
+}
+.transfer-authored-content[data-tabs="false"] { top: -218px; height: 506px; }
+.transfer-body { display: grid; grid-template-rows: minmax(0, 1fr) 72px; gap: 16px; height: 100%; min-height: 0; }
+.transfer-page, .transfer-body > .export-tag-picker-body {
+  --transfer-section-gap: 16px;
+  overflow: auto; min-height: 0; display: flex; flex-direction: column;
+  gap: var(--transfer-section-gap); padding: 6px 12px 12px; scrollbar-width: none;
+}
+.transfer-actions { display: flex; justify-content: center; align-items: center; gap: 32px; }
+.transfer-authored-button { position: relative; flex-shrink: 0; }
+.transfer-authored-content .setting-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* The input paints its own original nine-slice background below its text. */
+.original-form-input { position: relative; isolation: isolate; width: 100%; min-width: 0; flex-shrink: 0; }
+.original-form-input-marker { pointer-events: none; }
+.original-form-baseline-probe { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; white-space: pre; font-family: inherit; }
+.original-form-subtitle, .original-form-note { position: relative; min-width: 0; flex-shrink: 0; }
+.transfer-authored-content .original-form-editor {
+  display: block; position: relative; min-width: 0; min-height: 0; appearance: none;
+  margin: 0; padding: 0; border: 0; border-radius: 0; outline: none;
+  background: transparent; box-shadow: none; font-family: inherit; font-weight: 400;
+  line-height: normal; text-align: left; resize: none; box-sizing: border-box;
+  text-shadow: none; text-indent: 0; text-transform: none;
+}
+.transfer-authored-content .original-form-editor::placeholder { color: var(--original-input-placeholder); opacity: 1; }
+.transfer-authored-content .original-form-editor::selection { background: var(--original-input-selection); color: inherit; }
+.transfer-authored-content textarea.original-form-editor {
+  white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal;
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: none; overscroll-behavior: contain;
+}
+.transfer-page::-webkit-scrollbar,
+.transfer-body > .export-tag-picker-body::-webkit-scrollbar,
+.transfer-authored-content textarea.original-form-editor::-webkit-scrollbar { display: none; }
+
+.import-official-fields { display: flex; flex-direction: column; gap: 16px; }
+.original-difficulty-button { position: relative; width: 102px; height: 102px; flex-shrink: 0; }
+.transfer-authored-content .export-json-field { display: flex; flex-direction: column; flex-shrink: 0; gap: 10px; min-width: 0; }
+.transfer-authored-content .import-json-load-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.transfer-authored-content .original-file-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.transfer-authored-content .original-difficulty-select { display: flex; align-items: center; gap: 16px; }
+.transfer-authored-content .upload-tag-current-row { gap: 16px; }
+.transfer-authored-content .upload-tag-chip { padding: 0; gap: 8px; border: 0; border-radius: 0; background: none; font: inherit; }
+.transfer-authored-content .export-tag-candidate-list { max-height: none; display: flex; flex-wrap: wrap; gap: 24px; padding: 12px; }
+
+.transfer-authored-content .upload-tag-current-row { display: flex; flex-wrap: wrap; align-items: center; }
+.transfer-authored-content .upload-tag-chip { display: flex; align-items: center; max-width: 100%; }
+.original-form-note { width: 100%; }
+.transfer-authored-content .upload-tag-chip { width: 100%; }
+.transfer-authored-content .upload-tag-chip > .original-form-input { flex: 1; width: auto; }

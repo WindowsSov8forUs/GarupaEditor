@@ -1,0 +1,111 @@
+{
+  "reverseCommit": "77f433117e8b8ee1b79ae4b2d35916ba121b5113",
+  "source": "artifacts/investigations/menu-settings-ui-completion-10-1-4/field-band-logos/assets.json",
+  "sourceSha256": "6635054B0AD455F14334EBF7475ABA61C75BD80D14378AF5404623B1375B6723",
+  "rows": [
+    {
+      "laneId": 6,
+      "setting": 5,
+      "bandId": 1,
+      "bundle": "band/logo/001",
+      "texture": "logoS",
+      "file": "001-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/001_rip/logoS.png",
+      "bytes": 6348,
+      "sha256": "7B9C6BEA4B727B42D428412318B9E8C365D3692EAB0553F637206B34D8CEDC6F",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 7,
+      "setting": 6,
+      "bandId": 2,
+      "bundle": "band/logo/002",
+      "texture": "logoS",
+      "file": "002-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/002_rip/logoS.png",
+      "bytes": 4999,
+      "sha256": "EDB995E50911A4AD35A6F96AB42AD06F68DC1771003A7323E22FB530E38C7E22",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 8,
+      "setting": 7,
+      "bandId": 4,
+      "bundle": "band/logo/004",
+      "texture": "logoS",
+      "file": "004-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/004_rip/logoS.png",
+      "bytes": 7801,
+      "sha256": "05A102FC5285F8FB6FC3FBF43213FE6209FE8429D15EF1F1BA0341AAB785DAD3",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 9,
+      "setting": 8,
+      "bandId": 5,
+      "bundle": "band/logo/005",
+      "texture": "logoS",
+      "file": "005-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/005_rip/logoS.png",
+      "bytes": 7673,
+      "sha256": "A343B3C7AC04ECD3347F3C5E3869F618B8EC7E3D2D78DD66676FEC6BEA7C3EF7",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 10,
+      "setting": 9,
+      "bandId": 3,
+      "bundle": "band/logo/003",
+      "texture": "logoS",
+      "file": "003-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/003_rip/logoS.png",
+      "bytes": 6099,
+      "sha256": "69DA54B88B1C3733825E676C122CF2CB942748514BBEC9BB27D89F94F14A54E2",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 11,
+      "setting": 10,
+      "bandId": 21,
+      "bundle": "band/logo/021",
+      "texture": "logoS",
+      "file": "021-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/021_rip/logoS.png",
+      "bytes": 6514,
+      "sha256": "FF7D3432E6EDE43CC23224768D920EA743F5479BB1C2FEB7CF20B662FDCE6F10",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 12,
+      "setting": 11,
+      "bandId": 18,
+      "bundle": "band/logo/018",
+      "texture": "logoS",
+      "file": "018-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/018_rip/logoS.png",
+      "bytes": 4668,
+      "sha256": "979A10ADB2F7B9B65631F7A7E2E2EB61D8EF9FF298C87694E06BB8ADFC7C79D2",
+      "width": 224,
+      "height": 106
+    },
+    {
+      "laneId": 15,
+      "setting": 14,
+      "bandId": 45,
+      "bundle": "band/logo/045",
+      "texture": "logoS",
+      "file": "045-logoS.png",
+      "url": "https://bestdori.com/assets/jp/band/logo/045_rip/logoS.png",
+      "bytes": 6756,
+      "sha256": "E894EB5732480247D99FD263A6076E48E8ACB9F62215DF6019666BC280395476",
+      "width": 224,
+      "height": 106
+    }
+  ]
+}

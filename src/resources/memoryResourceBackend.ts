@@ -37,6 +37,14 @@ interface MemorySnapshot {
 }
 
 export class MemoryApplicationResourceBackend implements ApplicationResourceBackend {
+  private readonly skinThumbnails = new Map<string, Uint8Array>();
+  async readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>> {
+    return resourceAccepted(this.skinThumbnails.get(key)?.slice() ?? null);
+  }
+  async writeSkinThumbnail(key: string, bytes: Uint8Array): Promise<ResourceResult<void>> {
+    this.skinThumbnails.set(key, bytes.slice());
+    return resourceAccepted(undefined);
+  }
   private readonly records = new Map<string, MemoryStoredResource>();
   private readonly catalogs = new Map<string, ResourceCatalogSnapshot>();
   private readonly snapshots = new Map<string, MemorySnapshot>();
