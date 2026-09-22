@@ -186,6 +186,17 @@ export function advanceOrdinarySlideChildren(
   let frontTransform = front;
   let rootExitApplied = stopControl.rootExitApplied ?? false;
   const sources = stopControl.rootSource.slideNoteList;
+  // Successor lookup is invariant within this frame; do not rescan a long
+  // hidden-node chain for every stopped child.
+  const nextVisible: (OrdinarySlideChildState | undefined)[] = new Array(childStates.length);
+  const nextMoving: number[] = new Array(childStates.length);
+  let visibleSuccessor: OrdinarySlideChildState | undefined;
+  for (let index = childStates.length - 1; index >= 0; index--) {
+    nextVisible[index] = visibleSuccessor;
+    if (!sources[index]!.isInvisible) visibleSuccessor = childStates[index];
+    nextMoving[index] = index + 1 < childStates.length && childStates[index]!.lifecycle.phase === "stop"
+      ? nextMoving[index + 1]! : index;
+  }
   const first = childStates[0]!;
   let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? true);
   if (stopControl.advanceMotion && frontCanFollow) {
@@ -257,8 +268,7 @@ export function advanceOrdinarySlideChildren(
       }
     }
     if (stopControl.advanceMotion && state.lifecycle.phase === "stop") {
-      const visibleAfter = childStates.find((candidate) => candidate.sourceIndex > index &&
-        !sources[candidate.sourceIndex]!.isInvisible) ??
+      const visibleAfter = nextVisible[index] ??
         (stopControl.hiddenEndpoints && index + 1 < childStates.length ? childStates[childStates.length - 1] : undefined);
       if (visibleAfter !== undefined) {
         // Stop keeps the endpoint on the field while its judgement motion
@@ -297,8 +307,7 @@ export function advanceOrdinarySlideChildren(
           }
           if (!stopControl.stoppedChildWaited[index]) visible = false;
         } else {
-          let nextIndex = index + 1;
-          while (nextIndex + 1 < childStates.length && childStates[nextIndex]!.lifecycle.phase === "stop") nextIndex += 1;
+          const nextIndex = nextMoving[index + 1]!;
           const nextChild = childStates[nextIndex]!;
           let currentTransform = lifecycle.renderedTransform;
           if (nextIndex !== index + 1) {

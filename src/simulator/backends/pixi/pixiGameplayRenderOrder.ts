@@ -41,20 +41,25 @@ export function calculateGameplayWorldZ(
 /** RenderLayer changes draw order while retaining the logical parent, its transform and visibility. */
 export class PixiGameplayRenderOrder {
   private readonly orders = new WeakMap<Container, () => PixiGameplayDrawOrder>();
+  private readonly sortKeys = new WeakMap<Container, PixiGameplayDrawOrder>();
   readonly layer = new RenderLayer({
     sortableChildren: true,
-    sortFunction: (left, right) => {
-      const leftOrder = this.orders.get(left);
-      const rightOrder = this.orders.get(right);
-      if (leftOrder === undefined || rightOrder === undefined) {
-        throw new Error("Gameplay render layer received an unregistered draw owner.");
-      }
-      return compareGameplayDrawOrder(leftOrder(), rightOrder());
-    },
+    sortFunction: (left, right) => compareGameplayDrawOrder(this.sortKeys.get(left)!, this.sortKeys.get(right)!),
   });
 
   constructor() {
     this.layer.label = PIXI_GAMEPLAY_RENDER_ORDER_LABEL;
+    const sort = this.layer.sortRenderLayerChildren.bind(this.layer);
+    this.layer.sortRenderLayerChildren = () => {
+      // World depth is stable during a sort. Sample each owner once instead of
+      // recomputing its entire parent transform for every comparator call.
+      for (const node of this.layer.renderLayerChildren) {
+        const order = this.orders.get(node);
+        if (order === undefined) throw new Error("Gameplay render layer received an unregistered draw owner.");
+        this.sortKeys.set(node, order());
+      }
+      sort();
+    };
   }
 
   attach(node: Container, order: () => PixiGameplayDrawOrder): void {

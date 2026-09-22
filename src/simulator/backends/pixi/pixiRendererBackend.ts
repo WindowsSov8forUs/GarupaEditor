@@ -273,6 +273,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
   private readonly recording = new RecordingSimulatorRendererBackend(false);
   private readonly objects = new Map<string, PixiObjectRecord>();
+  private readonly orderedParents = new WeakSet<Container>();
   private readonly unclippedNotes = new Set<PixiObjectRecord>();
   private readonly noteClipper = new NoteViewportClipper(
     (sprite, mesh) => {
@@ -775,7 +776,23 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       if (this.profile && (this.unclippedNotes.size > 0 || this.noteClipper.active)) this.noteClipper.update(Array.from(this.unclippedNotes, owner => ({
         node: owner.node, command: owner.lastTransform! })), this.profile);
       this.excludeTapLaneEffectMaskFromOrdinaryDraw();
-      for (const parent of orderingParents) if (!parent.destroyed) this.sortSiblings(parent);
+      for (const parent of orderingParents) {
+        if (parent.destroyed) continue;
+        if (!this.orderedParents.has(parent)) {
+          this.orderedParents.add(parent);
+          parent.sortableChildren = true;
+          parent.sortChildren = () => {
+            if (!parent.sortDirty) return;
+            parent.sortDirty = false;
+            this.sortSiblings(parent);
+          };
+        }
+        // Several command transactions update the same sibling list per frame.
+        // Pixi consumes the final original ordering once, when collecting draws.
+        parent.sortDirty = true;
+        const group = parent.renderGroup ?? parent.parentRenderGroup;
+        if (group !== null) group.structureDidChange = true;
+      }
     } catch (error) {
       this.pending.delete(batch);
       this.recording.discard(pending.recordingBatch);
@@ -1328,22 +1345,30 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   private validateTypedPreflight(commands: readonly RenderCommand[]): SimulatorResult<void> {
     if (this.profile === null) return ok(undefined);
-    const shadow = new Map<string, { role: RenderObjectRole; spriteExactKey: string | null }>(
-      [...this.objects].map(([id, value]) => [id, {
-        role: value.role,
-        spriteExactKey: boundSpriteExactKey(value.spriteBindingKey),
-      }]),
-    );
+    const shadow = new Map<string, { role: RenderObjectRole; spriteExactKey: string | null } | null>();
+    const getObject = (id: string) => {
+      if (shadow.has(id)) return shadow.get(id) ?? undefined;
+      const value = this.objects.get(id);
+      if (value === undefined) return undefined;
+      const copy = { role: value.role, spriteExactKey: boundSpriteExactKey(value.spriteBindingKey) };
+      shadow.set(id, copy);
+      return copy;
+    };
     for (const command of commands) {
       if (command.kind === "create-object" || command.kind === "acquire-object") {
         shadow.set(command.renderObjectId, { role: command.role, spriteExactKey: null });
         continue;
       }
       if (command.kind === "release-object") {
-        shadow.delete(command.renderObjectId);
+        shadow.set(command.renderObjectId, null);
         continue;
       }
-      const object = shadow.get(command.renderObjectId);
+      // Other commands have no typed binding/HUD/animation checks below;
+      // their object and value validation remains in the recording backend.
+      if (command.kind !== "bind-resource" && command.kind !== "set-hud" &&
+          command.kind !== "play-animation" && command.kind !== "stop-animation" &&
+          command.kind !== "sample-animation") continue;
+      const object = getObject(command.renderObjectId);
       if (object === undefined) continue;
       if (command.kind === "bind-resource") {
         if (!validateTypedRenderResourceBinding(command, object.role, this.profile)) {

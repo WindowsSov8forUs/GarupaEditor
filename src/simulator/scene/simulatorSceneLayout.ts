@@ -295,6 +295,10 @@ function createGarupaProductScene(
     }
     return ok(vector3(projectedX, projectedY, NOTE_WORLD_Z));
   };
+  const scaleZero = f32(0);
+  const scaleMotion = motionState(scene, 3, scaleZero, scaleZero, scaleZero);
+  const scaleSources = Array.from({ length: 7 }, (_, index) =>
+    Object.freeze({ ...scaleMotion, buttonCount: index + 1 }));
   const projectNoteScaleAtCurve = (
     curve: number,
     authoredWidth: number,
@@ -307,13 +311,8 @@ function createGarupaProductScene(
     }
     const projected = projectLaneAtCurve(3, curve);
     if (projected.status !== "ok") return projected;
-    const zero = f32(0);
-    const source = motionState(scene, 3, zero, zero, zero);
     const scaled = calculateOrdinaryNoteScaleAtY(
-      Object.freeze({
-        ...source,
-        buttonCount: authoredWidth,
-      }),
+      scaleSources[authoredWidth - 1]!,
       projected.value.y.value,
     );
     return scaled.status === "ok"

@@ -183,7 +183,7 @@ export class GarupaRenderInputAdapter {
     }
     if (!(note instanceof NoteLong || note instanceof NoteSlide)) return ok(undefined);
     const chain = this.chainByIdentity.get(node.chainIdentity)!;
-    const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+    const nodes = this.renderNodesByChain.get(chain.identity)!;
     const previous = this.slideStates.get(chain.identity);
     let state: ExtensionSlideState | undefined = previous;
     if (state === undefined) {
@@ -241,6 +241,7 @@ export class GarupaRenderInputAdapter {
   private connections: PresentationConnections | undefined;
   private readonly judgedNodeIdentities = new Set<string>();
   private readonly chainByIdentity: ReadonlyMap<string, GarupaProductSlideChain>;
+  private readonly renderNodesByChain = new Map<string, readonly GarupaProductNode[]>();
   private readonly slideStates = new Map<string, ProductSlideState>();
   private readonly singleStates = new Map<string, OrdinaryLongNormalChildState>();
   private readonly axisGroups: ReadonlySet<string>;
@@ -268,6 +269,8 @@ export class GarupaRenderInputAdapter {
     } | null>,
   ) {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
+    for (const chain of chart.slideChains) this.renderNodesByChain.set(chain.identity,
+      Object.freeze(chain.connectionIdentities.map(id => noteRenderInput(chart.nodeByIdentity.get(id)!))));
     this.axisGroups = new Set(axis.groups.filter(group => group.changes.some(change => change.speed !== 1)).map(group => group.id));
     this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming || chain.connectionIdentities.some(id =>
       this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))).map(chain => chain.identity));
@@ -478,7 +481,7 @@ export class GarupaRenderInputAdapter {
     // Signed displacement alone may require presentation before that activation.
 
     for (const chain of renderChains) {
-      const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+      const nodes = this.renderNodesByChain.get(chain.identity)!;
       const root = nodes[0]!.runtimeRoot;
       const owner = root === undefined ? null : this.sharedOwner(root);
       let cached = this.slideStates.get(chain.identity);
